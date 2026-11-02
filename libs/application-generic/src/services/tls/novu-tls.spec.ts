@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import * as https from 'node:https';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -41,27 +41,25 @@ function openssl(args: string[]): void {
 }
 
 function signLeaf(csr: string, out: string, subjectAltName: string): void {
-  execFileSync(
-    'openssl',
-    [
-      'x509',
-      '-req',
-      '-in',
-      csr,
-      '-CA',
-      'ca.pem',
-      '-CAkey',
-      'ca-key.pem',
-      '-CAcreateserial',
-      '-days',
-      '1',
-      '-out',
-      out,
-      '-extfile',
-      '/dev/stdin',
-    ],
-    { cwd: fixtureDir, input: `subjectAltName=${subjectAltName}`, stdio: 'pipe' }
-  );
+  const extFile = `${out}.ext`;
+  writeFileSync(join(fixtureDir, extFile), `subjectAltName=${subjectAltName}\n`);
+  openssl([
+    'x509',
+    '-req',
+    '-in',
+    csr,
+    '-CA',
+    'ca.pem',
+    '-CAkey',
+    'ca-key.pem',
+    '-CAcreateserial',
+    '-days',
+    '1',
+    '-out',
+    out,
+    '-extfile',
+    extFile,
+  ]);
 }
 
 describe('novu-tls', () => {

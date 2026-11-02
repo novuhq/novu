@@ -490,16 +490,14 @@ export function formatKeylessCapMessage(details: KeylessCapDetails): string {
     return formatKeylessEmailMessage(details);
   }
 
-  const count = details.cap ? `${details.cap} free messages` : 'free messages';
-  const lines = [`You've used the ${count} of this keyless demo.`];
+  const count = details.cap ? `${details.cap}-message` : 'message';
+  const lines = [`You've reached the ${count} limit of this free Agent Inbox demo.`];
 
   if (details.browserLogin) {
-    lines.push(`To keep your channels and continue, run: ${CLI_COMMAND} login`);
+    lines.push(`To keep your Agent Inbox setup and channels, run: \`${CLI_COMMAND} login\``);
 
     if (details.claimUrl) {
-      lines.push(
-        `(Or sign up from this link, which we also sent to your linked channel, then run \`${CLI_COMMAND} login\`: ${details.claimUrl})`
-      );
+      lines.push(`(Or claim this setup from this link: ${details.claimUrl}, and then run \`${CLI_COMMAND} login\`)`);
     }
 
     return lines.join('\n');
@@ -525,7 +523,7 @@ function formatKeylessEmailMessage(details: KeylessCapDetails): string {
     ];
 
     if (details.claimUrl) {
-      lines.push(`(Or sign up from this link, then run \`${CLI_COMMAND} login\`: ${details.claimUrl})`);
+      lines.push(`(Or claim this setup from this link: ${details.claimUrl}, and then run \`${CLI_COMMAND} login\`)`);
     }
 
     return lines.join('\n');

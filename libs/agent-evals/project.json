@@ -3,6 +3,9 @@
   "sourceRoot": "libs/agent-evals/src",
   "projectType": "library",
   "targets": {
+    "build": {
+      "executor": "nx:noop"
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

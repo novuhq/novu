@@ -121,7 +121,7 @@
               },
               "@novu/application-generic": {
                 "importNames": ["validateUrlSsrf"],
-                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/application-generic' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+                "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
               }
             }
           }
@@ -413,7 +413,7 @@
                   },
                   "@novu/application-generic": {
                     "importNames": ["validateUrlSsrf"],
-                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/application-generic' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true) so the connection is pinned to a validated IP and every redirect is re-validated."
                   },
                   "mongoose": "Import mongoose types from '@novu/dal' instead of 'mongoose'. The API and worker do not depend on mongoose, so a direct import fails at runtime in production."
                 },

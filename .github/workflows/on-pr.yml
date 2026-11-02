@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@30f4c4ab2949bbf258b797ced2fbf6dea34df9ce # v2
+        uses: launchdarkly/find-code-references-in-pull-request@beb8579e2a1f27acb9aaffdd73682e3733495cbc # v2.3.4
         id: find-flags
         with:
           project-key: default
@@ -172,7 +172,7 @@ jobs:
             echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-libs=$(pnpm run get-affected test --all libs | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test --all libs | tail -n 1)" >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
             echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
@@ -181,7 +181,7 @@ jobs:
             echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n 1)" >> $GITHUB_OUTPUT
           fi
 
   test_unit_providers:

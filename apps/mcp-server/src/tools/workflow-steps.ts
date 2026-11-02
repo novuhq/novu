@@ -5,7 +5,9 @@ import {
 	addPayloadProperty,
 	createEmptyPayloadSchema,
 	hasPayloadProperties,
+	type PayloadProperty,
 	removePayloadProperty,
+	toPayloadPropertyPath,
 } from "../utils/payload-schema";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
@@ -20,6 +22,7 @@ import {
 } from "../utils/workflow-request";
 import { apiError, workflowResult } from "../utils/workflow-results";
 import {
+	createPropertyPathSchema,
 	createSkipConditionSchema,
 	createWorkflowSourceInputSchema,
 	MAX_DESCRIPTION_LENGTH,
@@ -46,15 +49,23 @@ export const WORKFLOW_STEP_TOOL_NAMES = {
 } as const;
 
 const PAYLOAD_SCHEMA_REMINDER =
-	"This tool does not change the payload schema: after adding or changing {{payload.*}} variables, call update_workflow_payload_schema to declare them.";
+	"The payload schema is never inferred from the step: declare the payload variables it reads that the schema lacks (orderId for {{payload.orderId}}) in addPayloadProperties to save them with the step, or call update_workflow_payload_schema afterwards.";
 
 const workflowIdField = z
 	.string()
 	.describe("The workflow to change: its workflowId (slug) or _id, from get_workflows.");
 
+const addPayloadPropertiesField = z
+	.array(payloadPropertySchema)
+	.optional()
+	.describe(
+		"Payload properties to add to the workflow's payload schema, or replace in it, in the same save, as update_workflow_payload_schema's addProperties does. Payload validation is turned on while the schema has properties. Omit to leave the payload schema as it is.",
+	);
+
 function createNewStepFields() {
 	return {
 		__source: createWorkflowSourceInputSchema(),
+		addPayloadProperties: addPayloadPropertiesField,
 		step: workflowStepSchema.describe("The step to add, discriminated by `type`."),
 		stepId: z
 			.string()
@@ -71,6 +82,12 @@ type Mutation =
 	| { request: UpdateWorkflowRequest; message: string }
 	| { unchanged: string }
 	| { error: ToolErrorDetails };
+
+interface MutationInput {
+	workflowId: string;
+	__source?: string;
+	addPayloadProperties?: PayloadProperty[];
+}
 
 export function registerWorkflowStepTools(server: McpServer, accessors: ToolAccessors) {
 	ToolFactory.createTool(server, accessors, {
@@ -125,7 +142,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Any other control value you leave out is cleared, so send the step's current values along with your change. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(workflow, input.stepId, { editable: true });
@@ -161,6 +178,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		name: WORKFLOW_STEP_TOOL_NAMES.UPDATE_STEP_CONTENT,
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
+			addPayloadProperties: addPayloadPropertiesField,
 			content: workflowStepContentSchema.describe(
 				"New control values, discriminated by the step `type`.",
 			),
@@ -170,8 +188,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description:
-			"Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip to remove the condition. The step's content is kept. Returns the saved workflow.",
+		description: `Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip to remove the condition. The step's content is kept. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(workflow, input.stepId, { editable: true });
@@ -190,6 +207,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		name: WORKFLOW_STEP_TOOL_NAMES.UPDATE_STEP_CONDITIONS,
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
+			addPayloadProperties: addPayloadPropertiesField,
 			skip: createSkipConditionSchema(),
 			stepId: z.string().describe("stepId of the step to update."),
 			workflowId: workflowIdField,
@@ -248,24 +266,15 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 
 	ToolFactory.createTool(server, accessors, {
 		description:
-			"Add, update or remove properties in the workflow's payload JSON Schema. The step tools never change it, so call this after adding or changing {{payload.*}} variables in step content, or when the user describes the trigger payload. Use dot notation for nested properties. Payload validation is turned on while the schema has properties. Returns the saved workflow.",
+			"Add, update or remove properties in the workflow's payload JSON Schema. Nothing infers it from step content, and the step and metadata tools only add the properties passed in their addPayloadProperties, so call this to declare {{payload.*}} variables that were not declared with the change that added them, to remove properties, or when the user describes the trigger payload. Property names are relative to the payload, with dot notation for nested properties (order.total for {{payload.order.total}}). Payload validation is turned on while the schema has properties. Returns the saved workflow.",
 		handler: async (input, context) =>
-			mutateWorkflow(context, input, (request) => {
-				const schema = structuredClone(request.payloadSchema ?? createEmptyPayloadSchema());
-				for (const path of input.removeProperties ?? [])
-					removePayloadProperty(schema, path);
-				for (const property of input.addProperties ?? [])
-					addPayloadProperty(schema, property);
-
-				return {
-					message: "Updated the payload schema",
-					request: {
-						...request,
-						payloadSchema: schema,
-						validatePayload: hasPayloadProperties(schema),
-					},
-				};
-			}),
+			mutateWorkflow(context, input, (request) => ({
+				message: "Updated the payload schema",
+				request: editPayloadSchema(request, {
+					add: input.addProperties,
+					remove: input.removeProperties,
+				}),
+			})),
 		name: WORKFLOW_STEP_TOOL_NAMES.UPDATE_PAYLOAD_SCHEMA,
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
@@ -274,16 +283,18 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 				.optional()
 				.describe("Properties to add or replace."),
 			removeProperties: z
-				.array(z.string())
+				.array(createPropertyPathSchema())
 				.optional()
-				.describe("Property paths to remove (dot notation for nested)."),
+				.describe(
+					'Property paths to remove, relative to the payload like the names in addProperties (dot notation for nested, e.g. "order.total"; a leading "payload." is ignored).',
+				),
 			workflowId: workflowIdField,
 		}),
 	});
 
 	ToolFactory.createTool(server, accessors, {
 		description:
-			"Change a workflow's name, description, tags, severity or criticality. Omitted fields stay as they are; steps, preferences and the payload schema are kept. critical: true delivers regardless of subscriber preferences. Returns the saved workflow.",
+			"Change a workflow's name, description, tags, severity or criticality, and optionally declare payload properties in the same save (addPayloadProperties). Omitted fields stay as they are; steps and preferences are kept, and the payload schema only gains the properties passed in addPayloadProperties. critical: true delivers regardless of subscriber preferences. Returns the saved workflow.",
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request) => {
 				const { critical, description, name, severity, tags } = input;
@@ -305,6 +316,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		name: WORKFLOW_STEP_TOOL_NAMES.UPDATE_METADATA,
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
+			addPayloadProperties: addPayloadPropertiesField,
 			critical: z
 				.boolean()
 				.optional()
@@ -338,11 +350,13 @@ const workflowQueues = new Map<string, Promise<unknown>>();
 /**
  * Serialize read-modify-write cycles per workflow within this instance, so
  * concurrent tool calls (e.g. parallel add_workflow_step) don't overwrite
- * each other's changes.
+ * each other's changes. The input's addPayloadProperties are declared in the
+ * same PUT; a mutation that leaves the workflow unchanged saves nothing,
+ * those properties included.
  */
 function mutateWorkflow(
 	context: ToolContext,
-	input: { workflowId: string; __source?: string },
+	input: MutationInput,
 	mutate: (request: UpdateWorkflowRequest, workflow: WorkflowResponse) => Mutation,
 ): Promise<ApiResponse> {
 	const previous = workflowQueues.get(input.workflowId) ?? Promise.resolve();
@@ -356,9 +370,10 @@ function mutateWorkflow(
 	return run;
 }
 
+/** GET, change and PUT one workflow. */
 async function runMutation(
 	context: ToolContext,
-	input: { workflowId: string; __source?: string },
+	input: MutationInput,
 	mutate: (request: UpdateWorkflowRequest, workflow: WorkflowResponse) => Mutation,
 ): Promise<ApiResponse> {
 	const endpoint = `/v2/workflows/${encodeURIComponent(input.workflowId)}`;
@@ -366,13 +381,22 @@ async function runMutation(
 	if (!fetched.ok) return apiError("fetch workflow", input.workflowId, fetched);
 
 	const workflow = fetched.data as WorkflowResponse;
+	const declared = input.addPayloadProperties ?? [];
+	const declaredNames = declared.map((property) => toPayloadPropertyPath(property.name));
 	const outcome = mutate(toUpdateWorkflowRequest(workflow), workflow);
 	if ("error" in outcome) return ToolFactory.errorResult(outcome.error);
-	if ("unchanged" in outcome) return workflowResult(outcome.unchanged, workflow);
+	if ("unchanged" in outcome) {
+		return workflowResult(unchangedMessage(outcome.unchanged, declaredNames), workflow);
+	}
 
-	const body = input.__source
-		? { ...outcome.request, __source: input.__source }
-		: outcome.request;
+	let request = outcome.request;
+	let message = outcome.message;
+	if (declared.length > 0) {
+		request = editPayloadSchema(request, { add: declared });
+		message = `${message} and declared the payload properties ${declaredNames.join(", ")}`;
+	}
+
+	const body = input.__source ? { ...request, __source: input.__source } : request;
 	const saved = await ToolFactory.callApi(
 		context,
 		{ body, endpoint, method: "PUT" },
@@ -380,7 +404,36 @@ async function runMutation(
 	);
 	if (!saved.ok) return apiError("update workflow", input.workflowId, saved);
 
-	return workflowResult(outcome.message, saved.data);
+	return workflowResult(message, saved.data);
+}
+
+/**
+ * What a tool that saved nothing tells the caller: a retry of the call that
+ * added the step finds it there, and that call declared the payload
+ * properties in the same PUT.
+ */
+function unchangedMessage(unchanged: string, declaredNames: string[]): string {
+	if (declaredNames.length === 0) return unchanged;
+
+	return `${unchanged}, so nothing was saved, including the payload properties ${declaredNames.join(", ")}. If this call retries the one that added the step, that call declared them in the same save; otherwise declare them with update_workflow_payload_schema`;
+}
+
+/** Payload property paths to remove, then properties to add. */
+interface PayloadSchemaEdit {
+	add?: PayloadProperty[];
+	remove?: string[];
+}
+
+/** Removes, then adds, payload properties; validation is on while the schema has properties. */
+function editPayloadSchema(
+	request: UpdateWorkflowRequest,
+	{ add = [], remove = [] }: PayloadSchemaEdit,
+): UpdateWorkflowRequest {
+	const schema = structuredClone(request.payloadSchema ?? createEmptyPayloadSchema());
+	for (const path of remove) removePayloadProperty(schema, path);
+	for (const property of add) addPayloadProperty(schema, property);
+
+	return { ...request, payloadSchema: schema, validatePayload: hasPayloadProperties(schema) };
 }
 
 function badRequest(message: string): { error: ToolErrorDetails } {

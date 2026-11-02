@@ -73,7 +73,7 @@ import {
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
-import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
@@ -391,6 +391,7 @@ export class HumanInteractionsController {
   async setup(
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
+    @Headers() headers: Record<string, unknown>,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
     @Headers(AGENT_INBOX_HOST_HEADER) host?: string
@@ -407,6 +408,8 @@ export class HumanInteractionsController {
         agentDescription: body.agentDescription,
         inboxHandle: body.inboxHandle,
         email: body.email,
+        // Hosts hold the same key, so only the dashboard's server, which read it from Clerk, can vouch for an address.
+        emailVerified: body.emailVerified === true && carriesHumanDashboardSecret(headers),
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,

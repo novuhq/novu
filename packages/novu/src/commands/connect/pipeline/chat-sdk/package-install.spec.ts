@@ -51,7 +51,7 @@ describe('resolveChatSdkPackagesToInstall', () => {
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual([
       '@novu/chat-sdk-adapter',
-      '@chat-adapter/state-memory@4.40.0',
+      '@chat-adapter/state-memory@4.43.0',
     ]);
   });
 });

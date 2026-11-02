@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fakeWorkflowsApi } from "./fake-api";
-import { callTool, connectAllTools, tokenAccessors } from "./support";
+import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
 const inAppStep = {
 	controlValues: { body: "Hi {{payload.name}}", subject: "Hi" },
@@ -132,11 +132,118 @@ describe("create_workflow", () => {
 									required: ["city"],
 								},
 							},
+							required: ["address"],
 						},
 					},
 				},
 			},
 		});
+	});
+
+	it("creates a workflow with no steps", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Empty",
+			steps: [],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(api.requests[0].body).toMatchObject({ steps: [] });
+	});
+
+	it("requires the parents of a required nested property", async () => {
+		const api = fakeWorkflowsApi();
+
+		await callTool(await client(), "create_workflow", {
+			name: "Orders",
+			payloadProperties: [
+				{ name: "order.total", type: "number" },
+				{ isRequired: false, name: "meta.source", type: "string" },
+			],
+			steps: [inAppStep],
+		});
+
+		const schema = (api.requests[0].body as { payloadSchema: Record<string, unknown> })
+			.payloadSchema;
+		expect(schema.required).toEqual(["order"]);
+		expect(schema).toMatchObject({
+			properties: { meta: { required: [] }, order: { required: ["total"] } },
+		});
+	});
+
+	it("reads a leading payload. in a property name as the variable prefix", async () => {
+		const api = fakeWorkflowsApi();
+		const delayStep = {
+			controlValues: { dynamicKey: "payload.sendAt", type: "dynamic" },
+			name: "Wait",
+			type: "delay",
+		};
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Reminder",
+			payloadProperties: [
+				{ name: "payload.sendAt", type: "string" },
+				{ isRequired: false, name: "payload.order.total", type: "number" },
+			],
+			steps: [delayStep, inAppStep],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect((api.requests[0].body as { payloadSchema: unknown }).payloadSchema).toEqual({
+			properties: {
+				order: { properties: { total: { type: "number" } }, required: [], type: "object" },
+				sendAt: { type: "string" },
+			},
+			required: ["sendAt"],
+			type: "object",
+		});
+	});
+
+	it("rejects a payload property name that names no property, before any request", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Orders",
+			payloadProperties: [
+				{ name: "orderId", type: "string" },
+				{ name: "payload.", type: "string" },
+			],
+			steps: [inAppStep],
+		});
+
+		expect(result.isError).toBe(true);
+		expect(textOf(result)).toContain("Must name a property");
+		expect(textOf(result)).toContain("at payloadProperties[1].name");
+		expect(api.requests).toHaveLength(0);
+	});
+
+	it("keeps an explicitly optional parent optional, whichever entry comes first", async () => {
+		const parent = { isRequired: false, name: "order", type: "object" };
+		const child = { name: "order.total", type: "number" };
+
+		for (const payloadProperties of [
+			[parent, child],
+			[child, parent],
+		]) {
+			const api = fakeWorkflowsApi();
+
+			await callTool(await client(), "create_workflow", {
+				name: "Orders",
+				payloadProperties,
+				steps: [inAppStep],
+			});
+
+			const schema = (api.requests[0].body as { payloadSchema: Record<string, unknown> })
+				.payloadSchema;
+			expect(schema).toMatchObject({
+				properties: {
+					order: { properties: { total: { type: "number" } }, required: ["total"] },
+				},
+				required: [],
+			});
+			vi.unstubAllGlobals();
+		}
 	});
 
 	it("flags rejected step validation as an error", async () => {
@@ -158,6 +265,45 @@ describe("create_workflow", () => {
 		});
 
 		expect(result.isError).toBe(true);
+		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		expect(api.requests).toHaveLength(0);
+	});
+
+	it("creates a dynamic delay that reads its wait from the payload", async () => {
+		const api = fakeWorkflowsApi();
+		const delayStep = {
+			controlValues: { dynamicKey: "payload.sendAt", type: "dynamic" },
+			name: "Wait",
+			type: "delay",
+		};
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Reminder",
+			payloadProperties: [{ name: "sendAt", type: "string" }],
+			steps: [delayStep, inAppStep],
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(api.requests[0].body).toMatchObject({
+			steps: [{ controlValues: delayStep.controlValues }, {}],
+		});
+	});
+
+	it("rejects a dynamic delay key missing from the payload schema", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "create_workflow", {
+			name: "Reminder",
+			payloadProperties: [{ name: "name", type: "string" }],
+			steps: [
+				{
+					controlValues: { dynamicKey: "payload.sendAt", type: "dynamic" },
+					name: "Wait",
+					type: "delay",
+				},
+			],
+		});
+
 		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
 		expect(api.requests).toHaveLength(0);
 	});
@@ -253,5 +399,21 @@ describe("update_workflow", () => {
 
 		expect(api.puts[0].body!.__source).toBe("ai");
 		expect(result.structuredContent).toEqual({ workflow: api.workflow });
+	});
+
+	it("rejects a payload property name that names no property, before any request", async () => {
+		const api = fakeWorkflowsApi();
+
+		const result = await callTool(await client(), "update_workflow", {
+			name: "Welcome",
+			origin: "novu-cloud",
+			payloadProperties: [{ name: "", type: "string" }],
+			steps: [inAppStep],
+			workflowId: "welcome",
+		});
+
+		expect(result.isError).toBe(true);
+		expect(textOf(result)).toContain("at payloadProperties[0].name");
+		expect(api.requests).toHaveLength(0);
 	});
 });

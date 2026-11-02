@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 const SETTINGS_PATH = '/settings';
 
 /** What the relay agent is called until the operator names it (the Agent page, NV-8966). */
-const UNNAMED_AGENT_NAME = 'Human';
+const UNNAMED_AGENT_NAME = 'Agent';
 
 /** How a sentence calls an agent that has no name of its own yet. */
 const UNNAMED_AGENT_LABEL = 'your agent';

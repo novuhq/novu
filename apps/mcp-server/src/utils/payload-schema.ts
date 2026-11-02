@@ -17,6 +17,21 @@ type SchemaNode = {
 	[key: string]: unknown;
 };
 
+const PAYLOAD_VARIABLE_PREFIX = "payload.";
+
+/**
+ * A property path relative to the trigger payload. Step content reads a
+ * property as `{{payload.order.total}}`, so callers also name it
+ * `payload.order.total`: that prefix is the variable namespace, not a nested
+ * `payload` object. Only one prefix is stripped, so a top-level property that
+ * is itself named `payload` is `payload.payload`.
+ */
+export function toPayloadPropertyPath(name: string): string {
+	return name.startsWith(PAYLOAD_VARIABLE_PREFIX)
+		? name.slice(PAYLOAD_VARIABLE_PREFIX.length)
+		: name;
+}
+
 export function createEmptyPayloadSchema(): SchemaNode {
 	return { additionalProperties: false, properties: {}, required: [], type: "object" };
 }
@@ -70,11 +85,16 @@ function addPath(root: SchemaNode, path: string[], leaf: SchemaNode, isRequired:
 }
 
 export function addPayloadProperty(schema: SchemaNode, property: PayloadProperty): void {
-	addPath(schema, property.name.split("."), leafNode(property), property.isRequired !== false);
+	addPath(
+		schema,
+		toPayloadPropertyPath(property.name).split("."),
+		leafNode(property),
+		property.isRequired !== false,
+	);
 }
 
 export function removePayloadProperty(schema: SchemaNode, propertyPath: string): void {
-	const path = propertyPath.split(".");
+	const path = toPayloadPropertyPath(propertyPath).split(".");
 	let node: SchemaNode | undefined = schema;
 	for (const segment of path.slice(0, -1)) {
 		node = node?.properties?.[segment];

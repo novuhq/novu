@@ -32,7 +32,7 @@ const getNotificationsSchema = z.object({
 		.array(z.string())
 		.optional()
 		.describe(
-			"Array of template IDs or a single template ID, templateId is workflowId from get_workflows",
+			"Array of workflow database IDs: use _id from get_workflows, not workflowId or slug.",
 		),
 	topicKey: z.string().optional().describe("Topic Key for filtering notifications by topic"),
 	transactionId: z.string().optional().describe("Transaction ID for filtering"),

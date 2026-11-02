@@ -872,6 +872,7 @@ describe('CreateInteraction', () => {
       expect(response.code).to.equal('KEYLESS_HUMAN_CAP_REACHED');
       expect(response.cap).to.equal(2);
       expect(response.claimUrl).to.match(/\/claim\?token=tok$/);
+      expect(response.message).to.include("You've reached the 2-message limit of this free Agent Inbox demo.");
       expect(response.message).to.include(response.claimUrl as string);
       expect(response.browserLogin).to.equal(true);
 

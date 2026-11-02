@@ -108,6 +108,6 @@ export function createSkipConditionSchema() {
 		])
 		.optional()
 		.describe(
-			'JSONLogic condition for conditionally SKIPPING the workflow step. When the condition evaluates to true, the step is skipped. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, true] } skips when subscriber is online, { "!=": [{ "var": "payload.priority" }, "high"] } skips when priority is not high.',
+			'JSONLogic condition for conditionally RUNNING the workflow step: the step runs when the condition evaluates to true and is skipped otherwise, and a step without a condition always runs. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, false] } runs the step only when the subscriber is offline, { "!=": [{ "var": "payload.priority" }, "high"] } runs it only when the priority is not high.',
 		);
 }

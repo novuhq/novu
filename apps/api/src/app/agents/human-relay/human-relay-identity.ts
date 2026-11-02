@@ -1,5 +1,5 @@
 /** What a relay agent is called until its operator names it. */
-export const HUMAN_RELAY_DEFAULT_NAME = 'Human';
+export const HUMAN_RELAY_DEFAULT_NAME = 'Agent';
 
 export type HumanRelayProfile = {
   name?: string;

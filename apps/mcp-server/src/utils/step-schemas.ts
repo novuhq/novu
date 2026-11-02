@@ -34,8 +34,10 @@ export type StepType = z.infer<typeof stepTypeSchema>;
 
 export const timeUnitSchema = z.enum(["seconds", "minutes", "hours", "days", "weeks", "months"]);
 export type TimeUnit = z.infer<typeof timeUnitSchema>;
+// Throttle windows only accept these units (framework `throttleActionSchemas.output`).
+const throttleUnitSchema = z.enum(["minutes", "hours", "days"]);
 
-export const delayTypeSchema = z.enum(["regular", "timed"]);
+export const delayTypeSchema = z.enum(["regular", "timed", "dynamic"]);
 export type DelayType = z.infer<typeof delayTypeSchema>;
 
 export const digestTypeSchema = z.enum(["regular", "timed"]);
@@ -96,6 +98,10 @@ function createInAppControlSchema() {
 				"Avatar image URL for the in-app notification. Must be an absolute https:// URL or a /relative path.",
 			),
 		body: z.string().describe("In-app notification body."),
+		data: z
+			.record(z.string(), z.unknown())
+			.optional()
+			.describe("Custom key-value data the Inbox receives with the notification as `data`."),
 		disableOutputSanitization: z
 			.boolean()
 			.optional()
@@ -152,8 +158,35 @@ function createChatControlSchema() {
 	});
 }
 
+/** The sender, reply-to and preview-text settings both email editors save next to the content. */
+function createEmailSettingsFields() {
+	return {
+		from: z
+			.object({
+				email: z.string().optional().describe("Sender address."),
+				name: z.string().optional().describe("Sender name."),
+			})
+			.optional()
+			.describe(
+				"Sender for this step. What you leave out comes from the agent the workflow is assigned to, if any, else from the email integration.",
+			),
+		preheader: z
+			.string()
+			.optional()
+			.describe("Preview text most inboxes show after the subject line."),
+		replyTo: z.string().optional().describe("Reply-to address for this step."),
+		useProviderDefaults: z
+			.boolean()
+			.optional()
+			.describe(
+				"true skips the sender of the agent the workflow is assigned to, so the email integration's default sender fills in what `from` leaves out. It does not override `from`: a `from` on the step is still sent, and the dashboard clears `from` when it saves a step with this on, so set either this or a custom `from`, not both.",
+			),
+	};
+}
+
 function createEmailBlockControlSchema() {
 	return z.object({
+		...createEmailSettingsFields(),
 		body: mailyBodySchema.describe("Email body in Maily TipTap JSON format."),
 		disableOutputSanitization: z
 			.boolean()
@@ -174,6 +207,7 @@ function createEmailBlockControlSchema() {
 
 function createEmailHtmlControlSchema() {
 	return z.object({
+		...createEmailSettingsFields(),
 		body: z
 			.string()
 			.describe(
@@ -206,6 +240,12 @@ function createEmailControlSchema() {
 function createDelayRegularControlSchema() {
 	return z.object({
 		amount: z.number().min(1).describe("Amount of time to delay (must be >= 1)."),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
 		skip: createSkipConditionSchema(),
 		type: z.literal("regular").describe('Regular delay type ("wait for amount + unit").'),
 		unit: timeUnitSchema.describe("Time unit for the delay."),
@@ -215,8 +255,37 @@ function createDelayRegularControlSchema() {
 function createDelayTimedControlSchema() {
 	return z.object({
 		cron: z.string().describe("Cron expression for the timed delay (non-empty)."),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
 		skip: createSkipConditionSchema(),
 		type: z.literal("timed").describe('Timed delay type ("wait until cron schedule").'),
+	});
+}
+
+function createDelayDynamicControlSchema() {
+	return z.object({
+		dynamicKey: z
+			.string()
+			.min(1)
+			.describe(
+				"Payload variable path holding an ISO-8601 timestamp or an { amount, unit } duration, e.g. 'payload.sendAt'.",
+			),
+		extendToSchedule: z
+			.boolean()
+			.optional()
+			.describe(
+				"When true, extend the delay to the subscriber's next allowed schedule window.",
+			),
+		skip: createSkipConditionSchema(),
+		type: z
+			.literal("dynamic")
+			.describe(
+				"Dynamic delay type. The wait is read at runtime from the `dynamicKey` variable.",
+			),
 	});
 }
 
@@ -224,6 +293,7 @@ function createDelayControlSchema() {
 	return z.discriminatedUnion("type", [
 		createDelayRegularControlSchema(),
 		createDelayTimedControlSchema(),
+		createDelayDynamicControlSchema(),
 	]);
 }
 
@@ -308,7 +378,7 @@ function createThrottleFixedControlSchema() {
 			.describe(
 				"Fixed throttle. Allows up to `threshold` notifications per fixed window of `amount` + `unit`.",
 			),
-		unit: timeUnitSchema.describe("Time unit for the throttle window."),
+		unit: throttleUnitSchema.describe("Time unit for the throttle window."),
 	});
 }
 
@@ -363,10 +433,10 @@ function createHttpResponsePropertySchema() {
 function createHttpRequestControlSchema() {
 	return z.object({
 		body: z
-			.array(createHttpKeyValuePairSchema())
+			.union([z.string().max(65536), z.array(createHttpKeyValuePairSchema())])
 			.optional()
 			.describe(
-				"Request body as key-value pairs (only for POST/PUT/PATCH). Use template variables for dynamic values.",
+				"Request body (only for POST/PUT/PATCH): a raw JSON string, or key-value pairs for legacy workflows. Use template variables for dynamic values.",
 			),
 		continueOnFailure: z
 			.boolean()
@@ -392,7 +462,7 @@ function createHttpRequestControlSchema() {
 		responseBodySchema: z
 			.object({
 				properties: z
-					.record(createHttpResponsePropertySchema())
+					.record(z.string(), createHttpResponsePropertySchema())
 					.optional()
 					.describe(
 						'JSON Schema properties keyed by response field name, e.g. { "id": { "type": "string" } }.',

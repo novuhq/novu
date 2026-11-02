@@ -1,7 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { assertSafeOutboundUrl, PinoLogger, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
+import {
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import { SyncAgentEmailSenderName } from '../../../email/sync-agent-email-sender-name.service';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';

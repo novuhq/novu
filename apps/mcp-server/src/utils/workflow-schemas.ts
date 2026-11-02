@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { toPayloadPropertyPath } from "./payload-schema";
 import { workflowStepSchema } from "./step-schemas";
 
 /**
@@ -147,7 +148,7 @@ export const workflowAgentConfigSchema = z.object({
 			"Agent identifier (slug) from get_agents — not the Mongo _id. Required to assign the workflow to that agent.",
 		),
 	providers: z
-		.record(workflowAgentProviderConfigSchema)
+		.record(z.string(), workflowAgentProviderConfigSchema)
 		.optional()
 		.describe(
 			"Optional per-provider overrides keyed by providerId. Today only novu-email-agent.replyTo is used.",
@@ -156,15 +157,31 @@ export const workflowAgentConfigSchema = z.object({
 
 // --- Payload schema (flat-descriptor alternative) -------------------------
 
+/** Dot-separated names, none of them empty. */
+const PROPERTY_PATH_REGEX = /^[^.]+(?:\.[^.]+)*$/;
+
+/**
+ * A property path in dot notation. A path with an empty name in it (`""`,
+ * `"payload."`, `"order."`) would save a property without a name.
+ */
+export function createPropertyPathSchema() {
+	return z
+		.string()
+		.regex(
+			PROPERTY_PATH_REGEX,
+			'Must name a property: dot-separated names, none of them empty (e.g. "order.total").',
+		);
+}
+
 function createPayloadPropertyBaseSchema() {
 	return z.object({
 		isRequired: z
 			.boolean()
 			.optional()
 			.describe("Whether the property is required in the payload (default: true)."),
-		name: z
-			.string()
-			.describe('Property name. Use dot notation for nested paths, e.g. "order.total".'),
+		name: createPropertyPathSchema().describe(
+			'Property path relative to the payload, without "payload.": "orderId" for {{payload.orderId}}, "order.total" for {{payload.order.total}}.',
+		),
 	});
 }
 
@@ -186,11 +203,9 @@ export const payloadPropertySchema = z.union([
 		arrayItemProperties: z
 			.array(
 				z.object({
-					name: z
-						.string()
-						.describe(
-							'Property name. Use dot notation for nested paths (e.g. "address.city").',
-						),
+					name: createPropertyPathSchema().describe(
+						'Property name. Use dot notation for nested paths (e.g. "address.city").',
+					),
 					type: z.enum(["string", "number", "integer", "boolean"]),
 				}),
 			)
@@ -282,8 +297,9 @@ export const baseWorkflowInputSchema = z.object({
 // Create workflow specific schema
 export const createWorkflowInputSchema = baseWorkflowInputSchema.extend({
 	__source: workflowSourceSchema.optional().describe("Source of workflow creation."),
-	steps: baseWorkflowInputSchema.shape.steps
-		.min(0)
+	// Zod 4 keeps every `.min()` check, so `shape.steps.min(0)` would still require one step.
+	steps: z
+		.array(workflowStepSchema)
 		.optional()
 		.describe(
 			"Steps of the workflow, each discriminated by `type`. Omit to create an empty workflow and add steps later with add_workflow_step. Always use {{payload.variableName}} for dynamic content.",
@@ -344,7 +360,7 @@ export const triggerWorkflowInputSchema = z.object({
 			"Channel-specific overrides to select which integration to use. Use get_integrations to find available integration identifiers.",
 		),
 	payload: z
-		.record(z.any())
+		.record(z.string(), z.any())
 		.describe("The payload data for the workflow (structure obtained from get_workflow)."),
 	subscriberId: z
 		.string()
@@ -394,28 +410,36 @@ export function payloadPropertiesToJsonSchema(
 		required: [],
 		type: "object",
 	};
+	const declared = new Map(
+		properties.map((prop) => [toPayloadPropertyPath(prop.name), prop.isRequired !== false]),
+	);
 
 	for (const prop of properties) {
 		setNestedProperty(
 			root,
-			prop.name,
+			toPayloadPropertyPath(prop.name),
 			propertyDescriptorToJsonSchemaNode(prop),
-			prop.isRequired !== false,
+			declared,
 		);
 	}
 
 	return root as unknown as Record<string, unknown>;
 }
 
-/** Sets `node` at a dot-notation `path` under `root`, creating intermediate objects. */
+/**
+ * Sets `node` at a dot-notation `path` under `root`, creating intermediate objects.
+ * A path listed in `declared` keeps its own isRequired. Any other parent is required when the
+ * level below it is, otherwise a payload missing the parent skips the nested check.
+ */
 function setNestedProperty(
 	root: JsonSchemaObjectNode,
 	path: string,
 	node: JsonSchemaNode,
-	isRequired: boolean,
+	declared: ReadonlyMap<string, boolean> = new Map(),
 ): void {
 	const segments = path.split(".");
 	const leaf = segments[segments.length - 1];
+	const parents: JsonSchemaObjectNode[] = [];
 
 	let cursor = root;
 	for (let i = 0; i < segments.length - 1; i++) {
@@ -427,12 +451,27 @@ function setNestedProperty(
 				: { properties: {}, required: [], type: "object" };
 
 		cursor.properties[segment] = nextNode;
+		parents.push(cursor);
 		cursor = nextNode;
 	}
 
-	cursor.properties[leaf] = node;
-	if (isRequired && !cursor.required.includes(leaf)) {
-		cursor.required.push(leaf);
+	// An object listed after its children keeps them.
+	const existing = cursor.properties[leaf];
+	if (!(existing?.type === "object" && node.type === "object")) {
+		cursor.properties[leaf] = node;
+	}
+	parents.push(cursor);
+
+	let isRequired = true;
+	for (let i = segments.length - 1; i >= 0; i--) {
+		isRequired = declared.get(segments.slice(0, i + 1).join(".")) ?? isRequired;
+		markRequired(parents[i], segments[i], isRequired);
+	}
+}
+
+function markRequired(parent: JsonSchemaObjectNode, key: string, isRequired: boolean): void {
+	if (isRequired && !parent.required.includes(key)) {
+		parent.required.push(key);
 	}
 }
 
@@ -457,7 +496,7 @@ function propertyDescriptorToJsonSchemaNode(
 					type: "object",
 				};
 				for (const item of prop.arrayItemProperties ?? []) {
-					setNestedProperty(items, item.name, { type: item.type }, true);
+					setNestedProperty(items, item.name, { type: item.type });
 				}
 
 				return { items, type: "array" };

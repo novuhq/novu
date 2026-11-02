@@ -7,7 +7,7 @@ export const AS_METADATA_PATHS = [
 
 export const DISCOVERY_CORS_HEADERS: Record<string, string> = {
 	"Access-Control-Allow-Headers": "Authorization, Content-Type, mcp-protocol-version",
-	"Access-Control-Allow-Methods": "GET, OPTIONS",
+	"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Max-Age": "86400",
 };

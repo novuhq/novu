@@ -7,7 +7,7 @@
 
 export type { ToolAccessors } from "../utils/tool-accessors";
 export type { ToolErrorDetails } from "../utils/tool-factory";
-export type { WorkflowResponse } from "../utils/workflow-request";
+export { toSavedControlValues, type WorkflowResponse } from "../utils/workflow-request";
 export { WORKFLOW_TOOL_NAMES, type WorkflowToolName } from "./tool-names";
 export { WORKFLOW_STEP_TOOL_NAMES } from "./workflow-steps";
 export { registerWorkflowTools } from "./workflows";

@@ -192,7 +192,7 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `update_workflow_step_conditions` | Set or clear one step's skip condition |
 | `remove_workflow_step` | Remove a step |
 | `move_workflow_step` | Move a step to a new position |
-| `update_workflow_payload_schema` | Add or remove payload schema properties (step tools never change the schema) |
+| `update_workflow_payload_schema` | Add or remove payload schema properties (the step and metadata tools only add the ones passed in `addPayloadProperties`) |
 | `update_workflow_metadata` | Change a workflow's name, description, tags, severity or criticality |
 | `delete_workflow` | Delete a workflow (irreversible) |
 | `trigger_workflow` | Trigger a workflow for a subscriber with a custom payload |
@@ -202,6 +202,8 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_active_integrations` | List only the active integrations |
 | `set_primary_integration` | Make an integration the primary one for its channel |
 | `delete_integration` | Delete an integration |
+
+`add_workflow_step`, `insert_workflow_step`, `update_workflow_step_content`, `update_workflow_step_conditions` and `update_workflow_metadata` take an optional `addPayloadProperties` list that declares payload properties in the same save, as `update_workflow_payload_schema`'s `addProperties` does. Payload property names are relative to the trigger payload (`orderId` for `{{payload.orderId}}`); one leading `payload.` is ignored, so `payload.orderId` names the same property.
 
 ## 💻 Local Development
 

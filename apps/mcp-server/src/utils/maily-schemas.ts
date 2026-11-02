@@ -33,6 +33,7 @@ function createMailyLinkMarkSchema() {
 				.describe(
 					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 				),
+			class: z.string().nullable().optional(),
 			href: z
 				.string()
 				.describe(
@@ -51,14 +52,7 @@ function createMailyLinkMarkSchema() {
 	});
 }
 
-function createMailyTextNodeSchema({ plainText = false } = {}) {
-	if (plainText) {
-		return z.object({
-			text: z.string(),
-			type: z.enum(["text"]),
-		});
-	}
-
+function createMailyTextNodeSchema() {
 	return z.object({
 		marks: z
 			.array(
@@ -68,7 +62,7 @@ function createMailyTextNodeSchema({ plainText = false } = {}) {
 					createMailyLinkMarkSchema(),
 				]),
 			)
-			.nullable(),
+			.nullish(),
 		text: z.string(),
 		type: z.enum(["text"]),
 	});
@@ -148,16 +142,17 @@ function createMailyButtonSchema() {
 	});
 }
 
-function createMailyInlineContentSchema({ plainText = false } = {}) {
+function createMailyInlineContentSchema() {
 	return z.discriminatedUnion("type", [
-		createMailyTextNodeSchema({ plainText }),
+		createMailyTextNodeSchema(),
 		createMailyVariableNodeSchema(),
 		createMailyHardBreakSchema(),
 		createMailyButtonSchema(),
+		createMailyInlineImageSchema(),
 	]);
 }
 
-function createMailyParagraphSchema({ plainText = false } = {}) {
+function createMailyParagraphSchema() {
 	return z.object({
 		attrs: z
 			.object({
@@ -165,12 +160,12 @@ function createMailyParagraphSchema({ plainText = false } = {}) {
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["paragraph"]),
 	});
 }
 
-function createMailyHeadingSchema({ plainText = false } = {}) {
+function createMailyHeadingSchema() {
 	return z.object({
 		attrs: z.object({
 			level: z
@@ -179,7 +174,7 @@ function createMailyHeadingSchema({ plainText = false } = {}) {
 			showIfKey: z.string().nullable(),
 			textAlign: z.enum(["left", "center", "right"]).nullable(),
 		}),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["heading"]),
 	});
 }
@@ -200,7 +195,7 @@ function createMailyDividerSchema() {
 			.object({
 				marginBottom: z.number().nullable(),
 				marginTop: z.number().nullable(),
-				showIfKey: z.string().nullable(),
+				showIfKey: z.string().nullable().optional(),
 			})
 			.nullable(),
 		type: z.enum(["horizontalRule"]),
@@ -218,6 +213,7 @@ function createMailyImageSchema() {
 				),
 			alignment: z.enum(["left", "center", "right"]).nullable(),
 			alt: z.string().nullable().describe("Alt text for accessibility"),
+			aspectRatio: z.union([z.number(), z.string()]).nullable().optional(),
 			borderRadius: z.number().nullable(),
 			externalLink: z
 				.string()
@@ -225,7 +221,10 @@ function createMailyImageSchema() {
 				.describe(
 					"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
 				),
-			height: z.union([z.number(), z.enum(["auto"])]).nullable(),
+			height: z
+				.union([z.number(), z.string()])
+				.nullable()
+				.describe('Height in pixels, or "auto"'),
 			isExternalLinkVariable: z
 				.boolean()
 				.nullable()
@@ -238,6 +237,7 @@ function createMailyImageSchema() {
 				.describe(
 					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 				),
+			lockAspectRatio: z.boolean().nullable().optional(),
 			showIfKey: z.string().nullable(),
 			src: z
 				.string()
@@ -245,7 +245,10 @@ function createMailyImageSchema() {
 					'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
 				),
 			title: z.string().nullable(),
-			width: z.union([z.number(), z.enum(["auto"])]).nullable(),
+			width: z
+				.union([z.number(), z.string()])
+				.nullable()
+				.describe('Width in pixels, or "auto"'),
 		}),
 		type: z.enum(["image"]),
 	});
@@ -280,7 +283,7 @@ function createMailyInlineImageSchema() {
 				.describe(
 					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 				),
-			showIfKey: z.string().nullable(),
+			showIfKey: z.string().nullable().optional(),
 			src: z
 				.string()
 				.describe(
@@ -317,43 +320,44 @@ function createMailyLogoSchema() {
 	});
 }
 
-function createMailyFooterSchema({ plainText = false } = {}) {
+function createMailyFooterSchema() {
 	return z.object({
 		attrs: z
 			.object({
-				showIfKey: z.string().nullable(),
+				"maily-component": z.string().nullable().optional(),
+				showIfKey: z.string().nullable().optional(),
 				textAlign: z.enum(["left", "center", "right"]).nullable(),
 			})
 			.nullable(),
-		content: z.array(createMailyInlineContentSchema({ plainText })).nullable(),
+		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
 		type: z.enum(["footer"]),
 	});
 }
 
-function createMailyBlockquoteSchema({ plainText = false } = {}) {
+function createMailyBlockquoteSchema() {
 	return z.object({
-		content: z.array(createMailyParagraphSchema({ plainText })).nullable(),
+		content: z.array(createMailyParagraphSchema()).nullable(),
 		type: z.enum(["blockquote"]),
 	});
 }
 
-function createMailyListItemSchema({ plainText = false } = {}) {
+function createMailyListItemSchema() {
 	return z.object({
-		content: z.array(createMailyParagraphSchema({ plainText })).nullable(),
+		content: z.array(createMailyParagraphSchema()).nullable(),
 		type: z.enum(["listItem"]),
 	});
 }
 
-function createMailyOrderedListSchema({ plainText = false } = {}) {
+function createMailyOrderedListSchema() {
 	return z.object({
-		content: z.array(createMailyListItemSchema({ plainText })).nullable(),
+		content: z.array(createMailyListItemSchema()).nullable(),
 		type: z.enum(["orderedList"]),
 	});
 }
 
-function createMailyBulletListSchema({ plainText = false } = {}) {
+function createMailyBulletListSchema() {
 	return z.object({
-		content: z.array(createMailyListItemSchema({ plainText })).nullable(),
+		content: z.array(createMailyListItemSchema()).nullable(),
 		type: z.enum(["bulletList"]),
 	});
 }
@@ -373,7 +377,7 @@ function createMailyLinkCardSchema() {
 	});
 }
 
-function createMailyLeafNodeSchema({ plainText = false } = {}) {
+function createMailyLeafNodeSchema() {
 	return z.discriminatedUnion("type", [
 		createMailyLinkCardSchema(),
 		createMailyDividerSchema(),
@@ -381,8 +385,8 @@ function createMailyLeafNodeSchema({ plainText = false } = {}) {
 		createMailyButtonSchema(),
 		createMailyImageSchema(),
 		createMailyInlineImageSchema(),
-		createMailyParagraphSchema({ plainText }),
-		createMailyHeadingSchema({ plainText }),
+		createMailyParagraphSchema(),
+		createMailyHeadingSchema(),
 		createMailyLogoSchema(),
 	]);
 }
@@ -391,11 +395,11 @@ function createMailySectionAttrsSchema() {
 	return z
 		.object({
 			align: z.enum(["left", "center", "right"]).nullable(),
-			background: z.string().nullable(),
+			background: z.string().nullable().optional(),
 			backgroundColor: z.string().nullable(),
 			borderColor: z.string().nullable(),
 			borderRadius: z.number().nullable(),
-			borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable(),
+			borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable().optional(),
 			borderWidth: z.number().nullable(),
 			marginBottom: z.number().nullable(),
 			marginLeft: z.number().nullable(),
@@ -406,7 +410,7 @@ function createMailySectionAttrsSchema() {
 			paddingRight: z.number().nullable(),
 			paddingTop: z.number().nullable(),
 			showIfKey: z.string().nullable(),
-			textAlign: z.enum(["left", "center", "right"]).nullable(),
+			textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 		})
 		.nullable();
 }
@@ -422,18 +426,59 @@ function createMailyRepeatAttrsSchema() {
 		.nullable();
 }
 
-function createMailyRepeatSchema({ plainText = false } = {}) {
+function createMailyRepeatSchema() {
 	return z.object({
 		attrs: createMailyRepeatAttrsSchema(),
-		content: z.array(createMailyLeafNodeSchema({ plainText })).nullable(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
 		type: z.enum(["repeat"]),
 	});
 }
 
-function createMailySectionContentSchema({ plainText = false } = {}) {
+function createMailyColumnSchema() {
+	return z.object({
+		attrs: z
+			.object({
+				columnId: z.string().nullable(),
+				verticalAlign: z.enum(["top", "middle", "bottom"]).nullable(),
+				width: z
+					.union([z.number(), z.string()])
+					.nullable()
+					.describe('Width in percent of the row, or "auto" to share the row equally'),
+			})
+			.nullable(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
+		type: z.enum(["column"]),
+	});
+}
+
+/** A row of columns side by side; each column holds the blocks a repeat holds. */
+function createMailyColumnsSchema() {
+	return z.object({
+		attrs: z
+			.object({
+				gap: z.number().nullable().describe("Space between the columns in pixels"),
+				marginBottom: z.number().nullable(),
+				showIfKey: z.string().nullable(),
+			})
+			.nullable(),
+		content: z.array(createMailyColumnSchema()).describe("The columns, left to right"),
+		type: z.enum(["columns"]),
+	});
+}
+
+/** A section inside a section, as the dashboard's card blocks nest them. */
+function createMailyInnerSectionSchema() {
+	return z.object({
+		attrs: createMailySectionAttrsSchema(),
+		content: z.array(createMailyLeafNodeSchema()).nullable(),
+		type: z.enum(["section"]),
+	});
+}
+
+function createMailySectionContentSchema() {
 	return z.discriminatedUnion("type", [
-		createMailyParagraphSchema({ plainText }),
-		createMailyHeadingSchema({ plainText }),
+		createMailyParagraphSchema(),
+		createMailyHeadingSchema(),
 		createMailyButtonSchema(),
 		createMailySpacerSchema(),
 		createMailyDividerSchema(),
@@ -441,14 +486,17 @@ function createMailySectionContentSchema({ plainText = false } = {}) {
 		createMailyInlineImageSchema(),
 		createMailyLogoSchema(),
 		createMailyLinkCardSchema(),
-		createMailyRepeatSchema({ plainText }),
+		createMailyFooterSchema(),
+		createMailyRepeatSchema(),
+		createMailyColumnsSchema(),
+		createMailyInnerSectionSchema(),
 	]);
 }
 
-function createMailySectionSchema({ plainText = false } = {}) {
+function createMailySectionSchema() {
 	return z.object({
 		attrs: createMailySectionAttrsSchema(),
-		content: z.array(createMailySectionContentSchema({ plainText })).nullable(),
+		content: z.array(createMailySectionContentSchema()).nullable(),
 		type: z.enum(["section"]),
 	});
 }
@@ -461,8 +509,6 @@ function createMailyHtmlCodeBlockSchema() {
 }
 
 function createMailyNodeSchema() {
-	const plainText = { plainText: true };
-
 	return z.discriminatedUnion("type", [
 		createMailyParagraphSchema(),
 		createMailyHeadingSchema(),
@@ -475,10 +521,11 @@ function createMailyNodeSchema() {
 		createMailyHtmlCodeBlockSchema(),
 		createMailyFooterSchema(),
 		createMailyBlockquoteSchema(),
-		createMailyOrderedListSchema(plainText),
-		createMailyBulletListSchema(plainText),
-		createMailySectionSchema(plainText),
-		createMailyRepeatSchema(plainText),
+		createMailyOrderedListSchema(),
+		createMailyBulletListSchema(),
+		createMailySectionSchema(),
+		createMailyColumnsSchema(),
+		createMailyRepeatSchema(),
 	]);
 }
 

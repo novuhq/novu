@@ -362,7 +362,7 @@ async function inviteEmail(
       : false;
 
   if (verified && (!options.email || sameAddress)) {
-    info(`${contactId} is already verified on email (${emailChannel?.address ?? contact?.email}).`);
+    info(`${contactId} is already confirmed on email (${emailChannel?.address ?? contact?.email}).`);
 
     await setupRelay(client, {
       subscriberId: contactId,
@@ -384,12 +384,12 @@ async function inviteEmail(
     ...name,
   });
 
-  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+  info(`Confirmation email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
   if (sent.replacesVerifiedAddress) {
-    info(`A different address is already verified for ${contactId}; it stays reachable until ${email} is verified.`);
+    info(`A different address is already confirmed for ${contactId}; it stays reachable until ${email} is confirmed.`);
   }
   if (inboundAddress) {
-    info(`Once verified, replies go to ${pc.bold(inboundAddress)}.`);
+    info(`Once confirmed, replies go to ${pc.bold(inboundAddress)}.`);
   }
 
   if (options.async) {
@@ -418,7 +418,7 @@ async function waitForEmailVerification(
   requestedAt: string
 ): Promise<void> {
   const stopIndicator = startWaitIndicator(
-    `Waiting for ${contactId} to verify their email`,
+    `Waiting for ${contactId} to confirm their email`,
     `Ctrl-C detaches; resume with: ${CLI_COMMAND} contact invite ${contactId} --via email`
   );
 
@@ -428,7 +428,7 @@ async function waitForEmailVerification(
       contactId,
       agentIdentifier,
       requestedAt,
-      `${contactId} verify their email`,
+      `${contactId} confirm their email`,
       `Re-run \`${CLI_COMMAND} contact invite ${contactId} --via email\` to resend.`
     );
   } finally {
