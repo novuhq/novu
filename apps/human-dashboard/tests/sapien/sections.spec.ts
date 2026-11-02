@@ -79,6 +79,18 @@ test('the example agents stack as a vertical list on mobile and the message type
   expect(await strip.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
 });
 
+test('the inbox window tours the rows before a pointer arrives', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/sapien');
+  const stage = page.locator('#inbox').getByRole('tabpanel').locator('[data-open]');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage).toHaveAttribute('data-open', 'true');
+  const yOf = () => stage.evaluate((node) => Number.parseFloat(getComputedStyle(node).getPropertyValue('--y')));
+  const first = await yOf();
+  await expect.poll(yOf, { timeout: 12000 }).not.toBe(first);
+  await expect(stage.locator('..')).toContainText('One shape ·');
+});
+
 test('hovering the inbox example reveals the JSON the agent reads', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/sapien');

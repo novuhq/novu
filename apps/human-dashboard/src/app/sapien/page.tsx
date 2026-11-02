@@ -12,7 +12,7 @@ import { SiteFooter } from '@/components/sapien/site-footer';
 import { SiteHeader } from '@/components/sapien/site-header';
 import { UseCases } from '@/components/sapien/use-cases';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
-import { geistMono, geistPixel, inter, redaction } from '@/lib/sapien-fonts';
+import { geistMono, inter, redaction } from '@/lib/sapien-fonts';
 import { pageMetadata } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
@@ -22,14 +22,13 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-/** agentinbox.md for people (agents read `/`), in its own black, Inter, Redaction, Geist Mono and Geist Pixel. */
+/** agentinbox.md for people (agents read `/`), in its own black, Inter, Redaction and Geist Mono. */
 export default function SapienPage() {
   return (
     <div
       className={cn(
         inter.variable,
         redaction.variable,
-        geistPixel.variable,
         geistMono.variable,
         'sapien-page min-h-dvh overflow-x-clip bg-sapien-background font-sapien-sans text-sapien-foreground'
       )}

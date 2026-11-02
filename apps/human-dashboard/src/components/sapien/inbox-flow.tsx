@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { CHANNEL_NAMES } from '@/components/sapien/brand-logo';
 import { INBOX_LABELS, type InboxAgent, type InboxThread } from '@/data/sapien-inbox';
@@ -11,51 +11,67 @@ import { AgentLogo, ChannelLogo } from './brand-logo';
 import { PersonFace } from './person-face';
 
 const ROW = 60;
-/** Half the peek window: a short rounded rectangle, about one row tall. */
-const HOLE = { w: 86, h: 18 };
-const TAG_WIDTH = 168;
-/** How far each value closes on its target per frame: the window follows fast, its label trails behind it. */
-const FOLLOW = { hole: 0.2, size: 0.13, label: 0.09 };
+/** Half the peek window: a short rounded rectangle, a little taller than one line of the read. */
+const HOLE = { w: 86, h: 24 };
+/** How far the window closes on its target per frame. The tour uses the same pace, and waits between rows. */
+const FOLLOW = { hole: 0.2, size: 0.13 };
+/** How long the tour rests on a row before it moves to the next. */
+const TOUR_REST_MS = 4800;
 const mono = 'font-sapien-mono text-[11px] leading-none tracking-tight';
 const agentInk = 'text-accent';
 
-type Motion = { x: number; y: number; w: number; h: number; lx: number; ly: number };
+type Motion = { x: number; y: number; w: number; h: number };
+type Driver = 'tour' | 'pointer' | 'keys' | 'still';
+
+const prefersStill = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * The same inbox twice, stacked. People see the top layer: names, apps, messages. The agent's layer sits under
- * it, row for row, and shows through a small rectangle that follows the pointer.
+ * it, row for row, and shows through a small rectangle. The rectangle rests on a row, then moves to the next
+ * at the same pace a pointer would. A pointer or the keyboard takes it over, and the tour resumes when they leave.
  */
 export function InboxFlow({ agent }: { agent: InboxAgent }) {
   const host = hostOf(agent.host);
   const stage = useRef<HTMLDivElement>(null);
-  const target = useRef<Motion>({ x: 0, y: 0, w: 0, h: 0, lx: 0, ly: 0 });
-  const now = useRef<Motion>({ x: 0, y: 0, w: 0, h: 0, lx: 0, ly: 0 });
+  const mountStage = useCallback((node: HTMLDivElement | null) => {
+    stage.current = node;
+    if (!node || node.style.getPropertyValue('--h')) return;
+    node.style.setProperty('--x', '0px');
+    node.style.setProperty('--y', '0px');
+    node.style.setProperty('--w', '0px');
+    node.style.setProperty('--h', '0px');
+    node.style.setProperty('--o', '0');
+  }, []);
+  const target = useRef<Motion>({ x: 0, y: 0, w: 0, h: 0 });
+  const now = useRef<Motion>({ x: 0, y: 0, w: 0, h: 0 });
   const frame = useRef(0);
+  const driver = useRef<Driver>('still');
+  const rowRef = useRef<number | null>(null);
+  const onSettled = useRef<() => void>(() => {});
   const [row, setRow] = useState<number | null>(null);
+
+  const showRow = (index: number | null) => {
+    rowRef.current = index;
+    setRow(index);
+  };
 
   const paint = useCallback(() => {
     const node = stage.current;
     if (!node) return;
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const still = prefersStill();
     const goal = target.current;
     const at = now.current;
-    const step = (from: number, to: number, rate: number) => (still ? to : from + (to - from) * rate);
+    const step = (from: number, to: number, amount: number) => (still ? to : from + (to - from) * amount);
 
     at.x = step(at.x, goal.x, FOLLOW.hole);
     at.y = step(at.y, goal.y, FOLLOW.hole);
     at.w = step(at.w, goal.w, FOLLOW.size);
     at.h = step(at.h, goal.h, FOLLOW.size);
-    at.lx = step(at.lx, at.x, FOLLOW.label);
-    at.ly = step(at.ly, at.y, FOLLOW.label);
 
     node.style.setProperty('--x', `${at.x}px`);
     node.style.setProperty('--y', `${at.y}px`);
     node.style.setProperty('--w', `${Math.max(at.w, 0)}px`);
     node.style.setProperty('--h', `${Math.max(at.h, 0)}px`);
-    const tagX = Math.min(Math.max(at.lx - HOLE.w, 8), node.clientWidth - TAG_WIDTH);
-    const tagY = Math.min(Math.max(at.ly - at.h - 26, 6), node.clientHeight - 28);
-    node.style.setProperty('--lx', `${tagX}px`);
-    node.style.setProperty('--ly', `${tagY}px`);
     node.style.setProperty('--o', String(Math.min(1, at.h / 10)));
     node.dataset.open = at.h > 2 ? 'true' : 'false';
 
@@ -63,17 +79,19 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
       Math.abs(goal.x - at.x) < 0.2 &&
       Math.abs(goal.y - at.y) < 0.2 &&
       Math.abs(goal.w - at.w) < 0.2 &&
-      Math.abs(goal.h - at.h) < 0.2 &&
-      Math.abs(at.x - at.lx) < 0.2 &&
-      Math.abs(at.y - at.ly) < 0.2;
-    frame.current = settled ? 0 : requestAnimationFrame(paint);
+      Math.abs(goal.h - at.h) < 0.2;
+    if (settled) {
+      frame.current = 0;
+      onSettled.current();
+
+      return;
+    }
+    frame.current = requestAnimationFrame(paint);
   }, []);
 
   const kick = useCallback(() => {
     if (frame.current === 0) frame.current = requestAnimationFrame(paint);
   }, [paint]);
-
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   const openOn = (index: number, x: number) => {
     const node = stage.current;
@@ -82,17 +100,113 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
     const y = index * ROW + ROW / 2;
     if (goal.h === 0) {
       // A fresh window opens on the row, rather than sliding in from the last spot.
-      Object.assign(now.current, { x, y, lx: x, ly: y });
+      Object.assign(now.current, { x, y });
     }
     goal.x = x;
     goal.y = y;
     goal.w = HOLE.w;
     goal.h = HOLE.h;
-    setRow(index);
+    showRow(index);
     kick();
   };
 
+  const close = () => {
+    target.current.w = 0;
+    target.current.h = 0;
+    showRow(null);
+    kick();
+  };
+
+  const actions = useRef({ openOn, close });
+  actions.current = { openOn, close };
+  const holdTour = useRef<() => void>(() => {});
+  const releaseTour = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    const node = stage.current;
+    if (!node) return;
+    let rest = 0;
+    let visible = false;
+    const count = agent.threads.length;
+
+    const clearRest = () => window.clearTimeout(rest);
+
+    const tour = () => {
+      if (!visible || prefersStill() || driver.current === 'pointer' || driver.current === 'keys') return;
+      driver.current = 'tour';
+      const index = rowRef.current ?? 0;
+      const width = node.clientWidth;
+      if (target.current.h === 0) {
+        actions.current.openOn(index, width / 2);
+
+        return;
+      }
+      kick();
+    };
+
+    const restThenAdvance = () => {
+      clearRest();
+      if (driver.current !== 'tour' || !visible || prefersStill()) return;
+      rest = window.setTimeout(() => {
+        if (driver.current !== 'tour' || !visible || prefersStill()) return;
+        const next = ((rowRef.current ?? -1) + 1) % count;
+        actions.current.openOn(next, node.clientWidth / 2);
+      }, TOUR_REST_MS);
+    };
+
+    onSettled.current = restThenAdvance;
+    holdTour.current = clearRest;
+    releaseTour.current = () => {
+      driver.current = 'tour';
+      restThenAdvance();
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting && entry.intersectionRatio >= 0.4;
+        if (visible) {
+          tour();
+
+          return;
+        }
+        clearRest();
+        if (frame.current !== 0) cancelAnimationFrame(frame.current);
+        frame.current = 0;
+      },
+      { threshold: [0, 0.4] }
+    );
+    observer.observe(node);
+
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMotion = () => {
+      if (prefersStill()) {
+        clearRest();
+        if (driver.current === 'tour') {
+          driver.current = 'still';
+          actions.current.close();
+        }
+
+        return;
+      }
+      tour();
+    };
+    motion.addEventListener('change', onMotion);
+
+    return () => {
+      clearRest();
+      onSettled.current = () => {};
+      observer.disconnect();
+      motion.removeEventListener('change', onMotion);
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
+      holdTour.current = () => {};
+      releaseTour.current = () => {};
+    };
+  }, [agent.threads.length, kick]);
+
   const aim = (event: PointerEvent<HTMLDivElement>) => {
+    driver.current = 'pointer';
+    holdTour.current();
     const rect = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -103,15 +217,26 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
   };
 
   const reveal = (index: number) => {
+    driver.current = 'keys';
+    holdTour.current();
     const width = stage.current?.clientWidth ?? 0;
     openOn(index, width / 2);
   };
 
+  const resume = () => {
+    if (prefersStill()) {
+      driver.current = 'still';
+      holdTour.current();
+      close();
+
+      return;
+    }
+    releaseTour.current();
+  };
+
   const leave = () => {
-    target.current.w = 0;
-    target.current.h = 0;
-    setRow(null);
-    kick();
+    if (driver.current === 'keys') return;
+    resume();
   };
 
   const focused = row === null ? null : agent.threads[row];
@@ -130,7 +255,7 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
             {host.name} <span className="text-sapien-foreground/25">·</span> {agent.email}
           </span>
         </span>
-        <span className="flex items-center gap-1.5 font-sapien-pixel text-[9px] leading-none tracking-[0.08em] text-sapien-foreground/40 uppercase">
+        <span className="flex items-center gap-1.5 font-sapien-mono text-[9px] leading-none tracking-[0.08em] text-sapien-foreground/40 uppercase">
           <span
             aria-hidden="true"
             className="size-1.5 rounded-full bg-[#4ad38a] shadow-[0_0_8px_rgba(74,211,138,0.6)]"
@@ -140,28 +265,18 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
       </div>
 
       <div
-        ref={stage}
-        data-open="false"
+        ref={mountStage}
+        data-open={row === null ? 'false' : 'true'}
         onPointerEnter={aim}
         onPointerMove={aim}
         onPointerLeave={leave}
         onBlur={(event) => {
           const next = event.relatedTarget;
           if (next instanceof Node && event.currentTarget.contains(next)) return;
-          leave();
+          if (driver.current === 'pointer') return;
+          resume();
         }}
         className="group/stage relative cursor-crosshair touch-pan-y overflow-hidden select-none"
-        style={
-          {
-            '--x': '0px',
-            '--y': '0px',
-            '--w': '0px',
-            '--h': '0px',
-            '--lx': '0px',
-            '--ly': '0px',
-            '--o': '0',
-          } as CSSProperties
-        }
       >
         <ul aria-label={INBOX_LABELS.inbox} data-face="seen">
           {agent.threads.map((thread, index) => (
@@ -190,7 +305,6 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
         </section>
 
         <Rim />
-        <Tag thread={focused} />
       </div>
 
       <div className="flex items-center border-t border-sapien-border px-4 py-2.5">
@@ -210,7 +324,7 @@ export function InboxFlow({ agent }: { agent: InboxAgent }) {
               !focused && 'opacity-0'
             )}
           >
-            {focused ? `${CHANNEL_NAMES[focused.via]} in, same shape out` : INBOX_LABELS.agent}
+            {focused ? `One shape · ${CHANNEL_NAMES[focused.via]}` : INBOX_LABELS.agent}
           </span>
         </span>
       </div>
@@ -307,21 +421,6 @@ function Rim() {
       <span className={cn(corner, 'top-px right-px border-t border-r')} />
       <span className={cn(corner, 'bottom-px left-px border-b border-l')} />
       <span className={cn(corner, 'right-px bottom-px border-r border-b')} />
-    </span>
-  );
-}
-
-/** A plate that trails the hole a beat behind it, naming the conversation under the pointer. */
-function Tag({ thread }: { thread: InboxThread | null }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute top-(--ly) left-(--lx) z-10 flex items-center gap-1.5 rounded-sm bg-[#141210] px-1.5 py-1 whitespace-nowrap opacity-(--o) shadow-[0_0_0_1px_rgba(238,229,216,0.16),0_0_0_1px_rgba(255,92,48,0.45)]"
-    >
-      <span className={cn('font-sapien-pixel text-[9px] leading-none tracking-[0.14em]', agentInk)}>AGENT READ</span>
-      <span className="font-sapien-mono text-[9px] leading-none text-sapien-foreground/45">
-        {thread?.id ?? 'inbox'}
-      </span>
     </span>
   );
 }
