@@ -33,15 +33,11 @@ export interface CliConfig {
 }
 
 /**
- * The Agent Inbox site (`apps/human-dashboard`). It hosts the credential landing pages (`/connect#<token>`
- * for Telegram and Slack), and its `/api` forwards to Novu Cloud's API, so people only ever see this address.
- * The pages are only used with the default API: a self-hosted or local API falls back to the URL the server
- * itself returns (that deployment's own dashboard page).
+ * The API the CLI talks to unless told otherwise: the `/api` of the Agent Inbox site (`apps/human-dashboard`), which
+ * forwards to Novu Cloud's API, so people only ever see this address. Any other API URL is also a site's `/api`,
+ * local or self-hosted: the routes the CLI calls exist only there, not on Novu's API itself.
  */
-export const SETUP_PAGE_ORIGIN = 'https://www.agentinbox.md';
-
-/** The API the CLI talks to unless told otherwise: the Agent Inbox API on agentinbox.md. */
-export const DEFAULT_API_URL = `${SETUP_PAGE_ORIGIN}/api`;
+export const DEFAULT_API_URL = 'https://www.agentinbox.md/api';
 
 /** The relay agent the API sets up by default. It is an API name, not shown to people. */
 export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';

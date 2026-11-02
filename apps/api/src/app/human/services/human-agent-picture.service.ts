@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
-import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
+import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
 import { HumanOperatorService } from './human-operator.service';
 
@@ -34,28 +34,12 @@ export function detectPictureType(file: Buffer): PictureType | null {
   return null;
 }
 
-/** Where anyone can load the agent's picture, or nothing when it has none. */
-export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId' | 'picture'>): string | undefined {
-  if (!agent.picture?.storageKey) {
-    return undefined;
-  }
-
-  const path = `${agent._environmentId}/${agent._id}/${agent.picture.version}`;
-
-  // Where the Agent Inbox dashboard runs, its API (`/api/v1/agent-pictures/…`) forwards to this one, so the
-  // people who see the picture never see this API's address. An API without a dashboard hands out its own address.
-  if (process.env.HUMAN_DASHBOARD_URL?.trim()) {
-    return `${resolveHumanDashboardBaseUrl()}/api/v1/agent-pictures/${path}`;
-  }
-
-  return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
-}
-
 type AgentScope = { environmentId: string; organizationId: string; agentIdentifier: string };
 
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
- * public too), and set on the agent's Telegram bots. A Slack app's icon can only be changed in Slack.
+ * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
+ * after that the icon can only be changed in Slack.
  */
 @Injectable()
 export class HumanAgentPictureService {

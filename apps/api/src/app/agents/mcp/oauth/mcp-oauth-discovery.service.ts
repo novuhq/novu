@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, SsrfBlockedError, safeOutboundJsonRequest, safeOutboundRequest } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import {
   DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD,
   MCP_TOKEN_ENDPOINT_AUTH_METHODS,
   type McpTokenEndpointAuthMethod,
 } from '@novu/shared';
+import { safeOutboundJsonRequest, safeOutboundRequest } from '@novu/shared/utils/safe-outbound-http';
+import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { LRUCache } from 'lru-cache';
 import { isAcceptableIssuerMatch } from './mcp-oauth-issuer-match';
 

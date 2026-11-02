@@ -36,7 +36,7 @@ export const INBOX_SECTION = {
   index: '01',
   label: 'The inbox',
   title: { lead: 'One inbox.', accent: 'Every channel.' },
-  description: 'People write from Slack, email or Telegram. Your agent reads one shape. Hover to peek.',
+  description: 'People write from Slack, email or Telegram. Your agent reads one shape.',
   // Draft copy — not in Figma (accessible name for the tab list)
   tabsLabel: 'Example agents',
   defaultAgent: 'ops',
@@ -49,7 +49,7 @@ export const INBOX_LABELS = {
   soon: 'Soon',
   human: 'What people see',
   agent: 'What the agent reads',
-  peek: 'Hover a message to peek',
+  peek: 'One shape on every channel',
   // Screen-reader-only labels
   inbox: 'Inbox',
   unreadThread: 'New',

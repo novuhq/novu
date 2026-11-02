@@ -46,7 +46,7 @@ export const CLOSING_COMMAND_LABEL = 'Closing setup command';
 
 export const CLOSING_PROMPT_LABEL = 'Copy Prompt';
 // The setup instructions live on /agents.md, so the prompt sends an agent there.
-export const CLOSING_PROMPT = 'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md';
+export const CLOSING_PROMPT = 'Set up an Agent Inbox for yourself using https://www.agentinbox.md/agents.md';
 // Draft copy — not in Figma
 export const CLOSING_PROMPT_SUCCESS_MESSAGE = 'Prompt copied to clipboard';
 // Draft copy — not in Figma. The prompt follows it, as the page shows it nowhere else.

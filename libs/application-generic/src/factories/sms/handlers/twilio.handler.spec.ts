@@ -1,7 +1,7 @@
 import { TwilioSmsProvider } from '@novu/providers';
 import { TwilioHandler } from './twilio.handler';
 
-jest.mock('@novu/providers', () => ({ TwilioSmsProvider: jest.fn() }));
+vi.mock('@novu/providers', () => ({ TwilioSmsProvider: vi.fn() }));
 
 const credentials = {
   accountSid: 'AC123',
@@ -14,7 +14,7 @@ const credentials = {
 
 describe('TwilioHandler', () => {
   beforeEach(() => {
-    jest.mocked(TwilioSmsProvider).mockClear();
+    vi.mocked(TwilioSmsProvider).mockClear();
   });
 
   it('uses the auth token when no auth method is set, even if API key credentials exist', () => {

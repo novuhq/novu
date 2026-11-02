@@ -100,7 +100,7 @@ describe('resolveEmailContact', () => {
     });
 
     await expect(resolveEmailContact(client, 'human-relay', 'alice@acme.com')).rejects.toThrow(
-      'verified for more than one contact (ally, alice)'
+      'confirmed for more than one contact (ally, alice)'
     );
   });
 

@@ -79,6 +79,18 @@ test('the example agents stack as a vertical list on mobile and the message type
   expect(await strip.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
 });
 
+test('the inbox window tours the rows before a pointer arrives', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/sapien');
+  const stage = page.locator('#inbox').getByRole('tabpanel').locator('[data-open]');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage).toHaveAttribute('data-open', 'true');
+  const yOf = () => stage.evaluate((node) => Number.parseFloat(getComputedStyle(node).getPropertyValue('--y')));
+  const first = await yOf();
+  await expect.poll(yOf, { timeout: 12000 }).not.toBe(first);
+  await expect(stage.locator('..')).toContainText('One shape ·');
+});
+
 test('hovering the inbox example reveals the JSON the agent reads', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/sapien');
@@ -164,7 +176,7 @@ test('copy commands copies the selected snippet without prompts', async ({ page 
   await section.getByRole('button', { name: 'Copy Commands' }).click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
-    ['npx skills add agentinboxhq/skills \\', '    -g --agent hermes-agent -y'].join('\n')
+    ['hermes mcp add AgentInbox \\', '    --url https://mcp.agentinbox.md \\', '    --auth oauth'].join('\n')
   );
   await section.getByRole('tab', { name: 'MCP', exact: true }).click();
   await section.getByRole('button', { name: 'Copy URL' }).click();
@@ -199,7 +211,7 @@ test('closing prompt copy is independent of the setup command', async ({ page })
   await closing.getByRole('button', { name: 'Copy Prompt' }).click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-copied-text',
-    'Set up an agentinbox inbox for yourself using https://www.agentinbox.md/agents.md'
+    'Set up an Agent Inbox for yourself using https://www.agentinbox.md/agents.md'
   );
   await expect(closing.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
   const command = page.getByRole('group', { name: 'Closing setup command' });

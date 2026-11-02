@@ -25,6 +25,7 @@ import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/hel
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 import { agentTelegramLinkScope } from '../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
 
 const subscriberRepository = new SubscriberRepository();
 const integrationRepository = new IntegrationRepository();
@@ -779,6 +780,82 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
       const res = await anonymous.put('/v1/human/operator/default-channel', { via: 'telegram' });
 
       expect(res.status).to.equal(401);
+    });
+  });
+
+  describe('POST /v1/human/setup with a sign-in email', () => {
+    const DASHBOARD_SECRET = 'e2e-human-contacts-dashboard-secret';
+    const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+    const signUp = { subscriberId: 'dima', operator: true, email: 'Dima@Example.com', emailVerified: true };
+
+    beforeEach(() => {
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
+    });
+
+    afterEach(() => {
+      if (originalSecret === undefined) {
+        delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+      } else {
+        process.env.AGENT_INBOX_DASHBOARD_API_SECRET = originalSecret;
+      }
+    });
+
+    async function readEmail(agentId: string, subscriberId = 'dima') {
+      const contact = await humanContactRepository.findContact(session.environment._id, agentId, subscriberId);
+
+      return contact?.addresses?.[HumanChannelViaEnum.EMAIL];
+    }
+
+    function verifyUnclaimed(agentId: string, subscriberId: string, address: string) {
+      return humanContactRepository.verifyUnclaimedAddress({
+        environmentId: session.environment._id,
+        agentId,
+        subscriberId,
+        via: HumanChannelViaEnum.EMAIL,
+        address,
+      });
+    }
+
+    it('verifies the address when the dashboard vouches for it', async () => {
+      const res = await session.testAgent
+        .post('/v1/human/setup')
+        .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET)
+        .send(signUp);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      const email = await readEmail(res.body.data.agentId);
+      expect(email?.verified?.address).to.equal('dima@example.com');
+      expect(email?.pending).to.equal(undefined);
+      expect((await findSubscriber('dima'))?.email).to.equal('dima@example.com');
+    });
+
+    it('keeps the address declared without the dashboard secret', async () => {
+      const { agentId } = await setup(signUp);
+
+      const email = await readEmail(agentId);
+      expect(email?.declared?.address).to.equal('dima@example.com');
+      expect(email?.verified).to.equal(undefined);
+    });
+
+    it('takes an empty slot once, and never one that holds a verified address', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true, email: 'dima@example.com' });
+
+      const verified = await verifyUnclaimed(agentId, 'dima', 'dima@example.com');
+      expect(verified?.address).to.equal('dima@example.com');
+
+      expect(await verifyUnclaimed(agentId, 'dima', 'other@example.com')).to.equal(null);
+      expect((await readEmail(agentId))?.verified).to.deep.equal(verified);
+    });
+
+    it('leaves a slot that holds a link', async () => {
+      const { agentId } = await setup({ subscriberId: 'dima', operator: true, email: 'dima@example.com' });
+      const pending = await storeEmail(agentId, 'dima', 'work@example.com');
+
+      expect(await verifyUnclaimed(agentId, 'dima', 'dima@example.com')).to.equal(null);
+
+      const email = await readEmail(agentId);
+      expect(email?.pending).to.deep.equal(pending);
+      expect(email?.verified).to.equal(undefined);
     });
   });
 

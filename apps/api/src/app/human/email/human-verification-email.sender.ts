@@ -6,8 +6,9 @@ import type { IEmailOptions } from '@novu/shared';
 import type { ResolvedAgentOutboundEmail } from '../../agents/email/resolve-agent-outbound-email';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
+import { agentPictureOrDefaultUrl } from '../services/agent-picture-url';
 import { HumanOperatorService } from '../services/human-operator.service';
-import { buildRelayOwnerName, resolveRelaySender } from '../services/relay-owner-name';
+import { resolveRelaySender } from '../services/relay-owner-name';
 import { buildHumanVerificationEmail } from './human-verification-email.template';
 
 /**
@@ -34,7 +35,6 @@ export class HumanVerificationEmailSender {
     subscriberId: string;
     address: string;
     token: string;
-    expiresAt: string;
     outbound: ResolvedAgentOutboundEmail;
     /** Keyless setups only: the operator can claim the setup from the same email. */
     claimUrl?: string;
@@ -69,17 +69,20 @@ export class HumanVerificationEmailSender {
           )
         : Promise.resolve(null),
     ]);
-    const sender = resolveRelaySender({ agent, operator });
-    const inviteeName = buildRelayOwnerName(subscriber?.firstName, subscriber?.lastName);
+    const sender = {
+      ...resolveRelaySender({ agent, operator }),
+      pictureUrl: agentPictureOrDefaultUrl(agent),
+    };
 
     const { senderIntegration, from, senderName } = params.outbound;
 
     const verifyUrl = buildVerifyUrl(params.token);
     const content = buildHumanVerificationEmail({
       sender,
-      inviteeName,
+      inviteeName: subscriber?.firstName?.trim() || undefined,
+      address: params.address,
+      agentAddress: from,
       verifyUrl,
-      expiresAt: params.expiresAt,
       claimUrl: params.claimUrl,
       isOperatorVerification: operatorId === params.subscriberId,
     });

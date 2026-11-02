@@ -2,8 +2,8 @@ import { CacheService } from './cache.service';
 
 function buildCacheService({ isCluster, store }: { isCluster: boolean; store: Record<string, string> }) {
   const client = {
-    get: jest.fn(async (key: string) => store[key] ?? null),
-    mget: jest.fn(async (keys: string[]) => keys.map((key) => store[key] ?? null)),
+    get: vi.fn(async (key: string) => store[key] ?? null),
+    mget: vi.fn(async (keys: string[]) => keys.map((key) => store[key] ?? null)),
   };
   const provider = {
     getClient: () => client,

@@ -63,7 +63,9 @@ describe('CreateConversationInteraction', () => {
     await usecase.execute({ ...command, card } as any);
 
     expect(humanInteractionRepository.create.firstCall.args[0].content).to.deep.equal({ card });
-    expect(outboundGateway.deliver.firstCall.args[1]).to.deep.equal({ card });
+    expect(outboundGateway.deliver.firstCall.args[1]).to.deep.include({
+      card: { ...card, layoutCard: { ...card, humanKind: command.kind } },
+    });
   });
 
   it('returns the inbox cap instead of a gateway error when the thread send is over quota', async () => {

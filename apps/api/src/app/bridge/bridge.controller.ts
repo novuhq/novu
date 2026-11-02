@@ -16,27 +16,29 @@ import {
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
   AnalyticsService,
-  assertSafeOutboundUrl,
   ExternalApiAccessible,
   GeneratePreviewResponseDto,
   PreviewStep,
   PreviewStepCommand,
   RequirePermissions,
   SkipPermissionsCheck,
-  SsrfBlockedError,
+  SubscriberResponseDtoOptional,
   UserSession,
   WorkflowResponseDto,
 } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { HealthCheck, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { ContextResolved, HealthCheck, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import {
+  ActionTypeEnum,
   ChannelTypeEnum,
   ControlValuesLevelEnum,
   PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
@@ -82,15 +84,15 @@ export class BridgeController {
   async preview(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
-    @Body() data: any,
+    @Body() data: ExternalPreviewBody,
     @UserSession() user: UserSessionData
   ) {
     return this.previewStep.execute(
       PreviewStepCommand.create({
         workflowId,
         stepId,
-        controls: data?.controls,
-        payload: data?.payload,
+        controls: data.controls ?? {},
+        payload: data.payload ?? {},
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -207,13 +209,13 @@ export class BridgeController {
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
     @UserSession() user: UserSessionData,
-    @Body() body: any
+    @Body() body: ExternalControlBody
   ) {
     return this.storeControlValuesUseCase.execute(
       StoreControlValuesCommand.create({
         stepId,
         workflowId,
-        controlValues: body?.variables,
+        controlValues: body.variables ?? {},
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -256,8 +258,10 @@ export class BridgeController {
       );
 
       return { isValid: result.status === 'ok' };
-    } catch (err: any) {
-      return { isValid: false, error: err.message };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Bridge validation failed';
+
+      return { isValid: false, error: message };
     }
   }
 
@@ -321,7 +325,7 @@ export class BridgeController {
   ): Promise<GeneratePreviewResponseDto> {
     this.assertSafeStatelessBridgeUrl(body.bridgeUrl);
 
-    const previewPayload = (body.previewPayload ?? {}) as Record<string, any>;
+    const previewPayload = readPreviewPayload(body.previewPayload);
 
     const output = await this.previewStep.execute(
       PreviewStepCommand.create({
@@ -343,11 +347,11 @@ export class BridgeController {
 
     return {
       result: {
-        preview: (output.outputs ?? {}) as Record<string, unknown>,
-        type: body.stepType as unknown as ChannelTypeEnum,
+        preview: isPlainRecord(output.outputs) ? output.outputs : {},
+        type: previewResultType(body.stepType),
       },
       previewPayloadExample: previewPayload,
-    } as GeneratePreviewResponseDto;
+    };
   }
 
   // Reject SSRF candidates (blocked hostnames, private/link-local IP literals,
@@ -362,6 +366,94 @@ export class BridgeController {
         throw new BadRequestException(`bridgeUrl: ${err.message}`);
       }
       throw err;
+    }
+  }
+}
+
+type ExternalPreviewBody = {
+  controls?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+};
+
+type ExternalControlBody = {
+  variables?: Record<string, unknown>;
+};
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isSubscriber(value: unknown): value is SubscriberResponseDtoOptional {
+  return isPlainRecord(value);
+}
+
+function isContextResolved(value: unknown): value is ContextResolved {
+  if (!isPlainRecord(value)) {
+    return false;
+  }
+
+  return Object.values(value).every((entry) => {
+    if (!isPlainRecord(entry)) {
+      return false;
+    }
+
+    return typeof entry.id === 'string' && isPlainRecord(entry.data);
+  });
+}
+
+function readPreviewPayload(raw: Record<string, unknown> | undefined): {
+  payload?: Record<string, unknown>;
+  subscriber?: SubscriberResponseDtoOptional;
+  actor?: SubscriberResponseDtoOptional;
+  context?: ContextResolved;
+} {
+  if (!raw) {
+    return {};
+  }
+
+  const payload = isPlainRecord(raw.payload) ? raw.payload : undefined;
+  const subscriber = isSubscriber(raw.subscriber) ? raw.subscriber : undefined;
+  const actor = isSubscriber(raw.actor) ? raw.actor : undefined;
+  const context = isContextResolved(raw.context) ? raw.context : undefined;
+
+  return {
+    ...(payload ? { payload } : {}),
+    ...(subscriber ? { subscriber } : {}),
+    ...(actor ? { actor } : {}),
+    ...(context ? { context } : {}),
+  };
+}
+
+function previewResultType(stepType: StepTypeEnum): GeneratePreviewResponseDto['result']['type'] {
+  switch (stepType) {
+    case StepTypeEnum.IN_APP:
+      return ChannelTypeEnum.IN_APP;
+    case StepTypeEnum.EMAIL:
+      return ChannelTypeEnum.EMAIL;
+    case StepTypeEnum.SMS:
+      return ChannelTypeEnum.SMS;
+    case StepTypeEnum.CHAT:
+      return ChannelTypeEnum.CHAT;
+    case StepTypeEnum.PUSH:
+      return ChannelTypeEnum.PUSH;
+    case StepTypeEnum.TOOL:
+      return ChannelTypeEnum.TOOL;
+    case StepTypeEnum.DELAY:
+      return ActionTypeEnum.DELAY;
+    case StepTypeEnum.DIGEST:
+      return ActionTypeEnum.DIGEST;
+    case StepTypeEnum.THROTTLE:
+      return ActionTypeEnum.THROTTLE;
+    case StepTypeEnum.CUSTOM:
+      return ActionTypeEnum.CUSTOM;
+    case StepTypeEnum.HTTP_REQUEST:
+      return ActionTypeEnum.HTTP_REQUEST;
+    case StepTypeEnum.TRIGGER:
+      return ActionTypeEnum.TRIGGER;
+    default: {
+      const unsupported: never = stepType;
+
+      throw new BadRequestException(`Step type "${String(unsupported)}" cannot be previewed.`);
     }
   }
 }

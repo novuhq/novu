@@ -1,11 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import {
-  AGENT_PICTURE_MAX_BYTES,
-  agentPictureUrl,
-  detectPictureType,
-  HumanAgentPictureService,
-} from './human-agent-picture.service';
+import { agentPictureUrl } from './agent-picture-url';
+import { AGENT_PICTURE_MAX_BYTES, detectPictureType, HumanAgentPictureService } from './human-agent-picture.service';
 
 const ENV = '69f84d848bed9b0a73216d98';
 const AGENT = '69f84d848bed9b0a73216d97';

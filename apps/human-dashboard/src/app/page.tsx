@@ -19,6 +19,7 @@ import {
   HOME_LINKS,
   HOME_NOTES,
   HOME_QUICKSTART,
+  HOME_QUICKSTART_AGENT_NOTE,
   HOME_READY,
   HOME_TITLE,
   HOME_TRUST_AFTER,
@@ -100,6 +101,11 @@ export default function HomePage() {
         </header>
 
         <DocSection anchor="quickstart" title="QUICKSTART">
+          <p>
+            {HOME_QUICKSTART_AGENT_NOTE.beforeLink}
+            <Link href={HOME_QUICKSTART_AGENT_NOTE.linkHref}>{HOME_QUICKSTART_AGENT_NOTE.linkLabel}</Link>
+            {HOME_QUICKSTART_AGENT_NOTE.afterLink}
+          </p>
           <InstallTabs options={INSTALL_OPTIONS} />
           <CommandLines commands={HOME_QUICKSTART} />
         </DocSection>

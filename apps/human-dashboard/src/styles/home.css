@@ -2,6 +2,8 @@
   /* The artwork's canvas overhangs the right edge (its drawing doesn't). */
   overflow-x: clip;
   --home-background: #fbfbfb;
+  /* The viewer pane, a hair warmer than the document (#fbfbfb). */
+  --home-pane: #fbfaf9;
   --home-foreground: #403b34;
   --home-muted: #8c8985;
   --home-document-width: 744px;
@@ -338,6 +340,7 @@
   bottom: 0;
   left: calc(var(--home-inset) + var(--home-document-width) + 64px);
   border-left: 1px solid rgb(64 59 52 / 8%);
+  background: var(--home-pane);
   color: rgb(64 59 52 / 40%);
   pointer-events: none;
 }
@@ -503,6 +506,7 @@
     width: calc(100vw - 2 * var(--home-inset) + 32px);
     height: 180px;
     border-left: 0;
+    background: transparent;
   }
 
   .home-artwork-grid,

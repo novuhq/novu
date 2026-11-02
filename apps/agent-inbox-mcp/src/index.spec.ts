@@ -265,6 +265,7 @@ describe('the Agent Inbox MCP server', () => {
 
     expect(result.tools.map((tool) => tool.name).sort()).toEqual(
       [
+        'channel_add',
         'contact_invite',
         'contact_list',
         'inbox_list',
@@ -290,6 +291,7 @@ describe('the Agent Inbox MCP server', () => {
     // The review blocks a tool that leaves one out, even destructiveHint on a tool that only reads.
     expect(Object.fromEntries(result.tools.map((tool) => [tool.name, tool.annotations]))).toEqual({
       inbox_setup: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+      channel_add: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       inbox_send: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       inbox_reply: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       inbox_wait: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },

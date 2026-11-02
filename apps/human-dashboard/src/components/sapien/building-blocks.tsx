@@ -78,7 +78,7 @@ function BlockText({
         <Artwork asset={icon} className="size-4.5 shrink-0" />
         <span
           aria-hidden="true"
-          className="font-sapien-pixel text-[10px] leading-none tracking-[0.08em] text-sapien-foreground/30"
+          className="font-sapien-mono text-[10px] leading-none tracking-[0.08em] text-sapien-foreground/30"
         >
           B-{String(index + 1).padStart(2, '0')}
         </span>

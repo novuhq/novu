@@ -13,73 +13,121 @@ describe('maskEmail', () => {
 });
 
 describe('buildHumanVerificationEmail', () => {
-  const base = { verifyUrl: 'https://gethuman.md/verify/tok123', expiresAt: '2026-10-02T12:00:00.000Z' };
+  const base = {
+    verifyUrl: 'https://agentinbox.md/verify/7Q4Kabcdef',
+    address: 'maya@acme.co',
+    agentAddress: 'atlas@agentinbox.md',
+  };
+  const sender = {
+    agentName: 'Atlas',
+    operatorName: 'Dima Grossman',
+    pictureUrl: 'https://agentinbox.md/brand/agent-avatar.png',
+  };
+  const pictureOnly = { pictureUrl: sender.pictureUrl };
 
-  it('names the agent and, separately, the operator who owns it', () => {
-    const content = buildHumanVerificationEmail({
-      ...base,
-      sender: { agentName: 'Acme Ops', operatorName: 'Nikita <Grossman>' },
-      inviteeName: 'Alice <script>',
+  describe('invite', () => {
+    it('says who wants to reach them and who runs the agent', () => {
+      const content = buildHumanVerificationEmail({ ...base, sender, inviteeName: 'Maya' });
+
+      expect(content.subject).to.equal('Atlas wants to reach you');
+      expect(content.html).to.include('Atlas is an AI agent working for Dima Grossman.');
+      expect(content.html).to.include('AI agent · run by Dima Grossman');
+      expect(content.html).to.include('atlas@agentinbox.md');
+      expect(content.html).to.include('Hi Maya,');
+      expect(content.html).to.include('>Confirm email</a>');
+      expect(content.html).to.include('Sent on behalf of Dima Grossman. Atlas did the typing.');
+      expect(content.text).to.include('Confirm email: https://agentinbox.md/verify/7Q4Kabcdef');
     });
 
-    expect(content.subject).to.equal('Nikita <Grossman> wants to reach you via agent Acme Ops');
-    expect(content.html).to.include('Nikita &lt;Grossman&gt;</strong> wants to reach you via agent');
-    expect(content.html).to.include('Acme Ops</strong>. Confirm this address belongs to you:');
-    expect(content.html).to.include('Verify this email');
-    expect(content.html).to.include('https://gethuman.md/verify/tok123');
-    expect(content.html).to.include('Alice &lt;script&gt;');
-    expect(content.text.startsWith('Hi Alice <script>')).to.equal(true);
-    expect(content.text).to.not.include('&lt;');
-    expect(content.html).to.include('#ff5c30');
-    expect(content.html.toLowerCase()).to.not.include('powered by novu');
-    expect(content.text).to.include('Nikita <Grossman> wants to reach you via agent Acme Ops.');
-    expect(content.text).to.include('https://gethuman.md/verify/tok123');
-  });
+    it('shows the start of the link and hides the whole one behind it', () => {
+      const { html } = buildHumanVerificationEmail({ ...base, sender });
 
-  it('leaves the agent out when the relay was never renamed', () => {
-    const content = buildHumanVerificationEmail({ ...base, sender: { operatorName: 'Nikita Grossman' } });
-
-    expect(content.subject).to.equal('Nikita Grossman wants to reach you');
-    expect(content.html).to.include('Nikita Grossman</strong> wants to reach you.');
-    expect(content.html).to.not.include('via agent');
-    expect(content.html).to.not.include('>Human<');
-    expect(content.text).to.not.match(/\b[Hh]uman\b/);
-  });
-
-  it('says Someone when the operator never set a name', () => {
-    const content = buildHumanVerificationEmail({ ...base, sender: { agentName: 'Acme Ops' } });
-
-    expect(content.subject).to.equal('Someone wants to reach you via agent Acme Ops');
-    expect(content.text).to.include('Someone wants to reach you via agent Acme Ops.');
-  });
-
-  it('asks the operator to verify their address without presenting it as an invitation', () => {
-    const content = buildHumanVerificationEmail({
-      ...base,
-      sender: { agentName: "Nikita's Agent", operatorName: 'Nikita' },
-      inviteeName: 'Nikita',
-      isOperatorVerification: true,
+      expect(html).to.include('Button being shy? Paste this link:');
+      expect(html).to.include('>agentinbox.md/verify/7Q4K…</a>');
+      expect(html).to.include('href="https://agentinbox.md/verify/7Q4Kabcdef"');
     });
 
-    expect(content.subject).to.equal('Verify your email for Agent Inbox');
-    expect(content.html).to.include('agent inbox');
-    expect(content.html).to.include('Confirm this address so your agent can reach you through Agent Inbox:');
-    expect(content.text).to.include('Confirm this address so your agent can reach you through Agent Inbox.');
-    expect(content.html).to.not.include('wants to reach you');
-    expect(content.text).to.not.include('wants to reach you');
+    it('promises only what the link does', () => {
+      const content = buildHumanVerificationEmail({ ...base, sender });
+
+      expect(content.html).to.include('The link works for 24 hours.');
+      expect(content.html).to.not.include('can’t email you');
+      expect(content.text).to.not.include('can’t email you');
+    });
+
+    it('escapes what people typed, in the HTML only', () => {
+      const content = buildHumanVerificationEmail({
+        ...base,
+        sender: { ...sender, operatorName: 'Nikita <Grossman>' },
+        inviteeName: 'Alice <script>',
+      });
+
+      expect(content.html).to.include('Nikita &lt;Grossman&gt;');
+      expect(content.html).to.include('Alice &lt;script&gt;');
+      expect(content.text.startsWith('Hi Alice <script>')).to.equal(true);
+      expect(content.text).to.not.include('&lt;');
+    });
+
+    it('leans on the operator while the agent still has no name', () => {
+      const content = buildHumanVerificationEmail({
+        ...base,
+        sender: { ...pictureOnly, operatorName: 'Dima Grossman' },
+      });
+
+      expect(content.subject).to.equal('Dima Grossman wants to reach you');
+      expect(content.html).to.include('This is an AI agent working for Dima Grossman.');
+      expect(content.html).to.include('Sent on behalf of Dima Grossman. An AI agent did the typing.');
+      expect(content.text).to.not.match(/\b[Hh]uman\b/);
+    });
+
+    it('says Someone with no names at all', () => {
+      const content = buildHumanVerificationEmail({ ...base, sender: pictureOnly });
+
+      expect(content.subject).to.equal('Someone wants to reach you');
+      expect(content.html).to.include('Hi,');
+    });
   });
 
-  it('adds the claim section only when a claim link is given', () => {
-    const claimUrl = 'https://gethuman.md/claim?token=a';
-    const withClaim = buildHumanVerificationEmail({ ...base, sender: {}, claimUrl });
-    const without = buildHumanVerificationEmail({ ...base, sender: {} });
+  describe('confirm', () => {
+    const operator = { ...base, sender, inviteeName: 'Dima', address: 'dima@acme.co', isOperatorVerification: true };
 
-    expect(withClaim.html).to.include('Verify this email first');
-    expect(withClaim.text).to.include('Verify this email first');
-    expect(withClaim.html).to.include('Claim this setup');
-    expect(withClaim.html).to.include(claimUrl);
-    expect(withClaim.text).to.include(`Claim this setup: ${claimUrl}`);
-    expect(without.html).to.not.include('Claim this setup');
-    expect(without.text).to.not.include('Claim this setup');
+    it('asks the operator to confirm, without presenting it as an invitation', () => {
+      const content = buildHumanVerificationEmail(operator);
+
+      expect(content.subject).to.equal('Confirm your email');
+      expect(content.html).to.include('dima@acme.co');
+      expect(content.html).to.include('so Atlas knows where to find you when it needs a human.');
+      expect(content.html).to.include('The link works for 24 hours. Didn’t sign up? Ignore this. Atlas will cope.');
+      expect(content.html).to.not.include('wants to reach you');
+      expect(content.text).to.not.include('wants to reach you');
+      expect(content.html).to.include('Button being shy?');
+    });
+
+    it('has no Novu in it', () => {
+      expect(buildHumanVerificationEmail(operator).html.toLowerCase()).to.not.include('novu');
+    });
+
+    it('keeps the agent generic while it has no name', () => {
+      const { html } = buildHumanVerificationEmail({ ...operator, sender: pictureOnly });
+
+      expect(html).to.include('so your agent knows where to find you');
+      expect(html).to.include('Your agent will cope.');
+    });
+
+    it('adds the claim box only when a claim link is given, in place of the paste line', () => {
+      const claimUrl = 'https://agentinbox.md/claim?token=a';
+      const withClaim = buildHumanVerificationEmail({ ...operator, claimUrl });
+      const without = buildHumanVerificationEmail(operator);
+
+      expect(withClaim.html).to.include('DEMO SETUP');
+      expect(withClaim.html).to.include('Make this setup yours');
+      expect(withClaim.html).to.include('Remove the 5-message demo limit (Atlas has a lot to say)');
+      expect(withClaim.html).to.include('Confirm your email first. Paperwork, we know.');
+      expect(withClaim.html).to.include(claimUrl);
+      expect(withClaim.html).to.not.include('Button being shy?');
+      expect(withClaim.text).to.include(`Claim setup: ${claimUrl}`);
+      expect(without.html).to.not.include('Make this setup yours');
+      expect(without.text).to.not.include('Claim setup');
+    });
   });
 });
