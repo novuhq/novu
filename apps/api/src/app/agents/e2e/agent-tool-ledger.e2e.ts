@@ -1,6 +1,11 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocketsQueueService } from '@novu/application-generic';
-import { type ActivityView, ConversationActivityTypeEnum, ConversationStatusEnum } from '@novu/dal';
+import {
+  type ActivityView,
+  ConversationActivityRepository,
+  ConversationActivityTypeEnum,
+  ConversationStatusEnum,
+} from '@novu/dal';
 import { NOVU_RESOLVE_SCHEMA, WebSocketEventEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import type { StreamPart } from '@novu/thalamus';
@@ -269,5 +274,44 @@ describe('Agent tool ledger #novu-v2', () => {
       expect(handoff).to.include('tool_result:call_1');
       expect(handoff).to.not.include('tool_call:call_1');
     });
+
+    for (const failingType of [ConversationActivityTypeEnum.TOOL_CALL, ConversationActivityTypeEnum.TOOL_RESULT]) {
+      it(`fails the ingest when the ${failingType} row cannot be written, so the retry records it once`, async () => {
+        const conversationId = await seedConversation(ctx);
+        const events = [
+          envelope(conversationId, { type: 'tool-use-done', toolUseId: 'call_1', toolName: 'lookup_order' }, 1),
+          envelope(
+            conversationId,
+            { type: 'tool-use-result', toolUseId: 'call_1', content: [{ type: 'text', text: 'shipped' }] },
+            2
+          ),
+        ];
+        const { createAgentActivity } = ConversationActivityRepository.prototype;
+        let failed = false;
+        sinon.stub(ConversationActivityRepository.prototype, 'createAgentActivity').callsFake(async function (
+          this: ConversationActivityRepository,
+          ...args
+        ) {
+          if (!failed && args[0].type === failingType) {
+            failed = true;
+            throw new Error('mongo unavailable');
+          }
+
+          return createAgentActivity.apply(this, args);
+        });
+
+        const lost = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events });
+        expect(lost.status).to.be.at.least(500);
+
+        const retried = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events });
+        expect(retried.status).to.equal(200);
+
+        const { calls, results } = await toolRows(conversationId);
+        expect(calls.map((call) => call.identifier)).to.deep.equal([`tool-call:${conversationId}:run-bridge:call_1`]);
+        expect(results.map((result) => result.identifier)).to.deep.equal([
+          `tool-result:${conversationId}:run-bridge:call_1`,
+        ]);
+      });
+    }
   });
 });

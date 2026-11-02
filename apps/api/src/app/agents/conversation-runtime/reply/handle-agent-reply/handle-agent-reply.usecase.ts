@@ -906,27 +906,20 @@ export class HandleAgentReply {
     toolResults: ToolResultRecord[]
   ): Promise<void> {
     for (const toolResult of toolResults) {
-      try {
-        await this.conversationService.persistToolResult({
-          conversationId: conversation._id,
-          channel,
-          agentIdentifier: command.agentIdentifier,
-          toolCallId: toolResult.toolCallId,
-          toolName: toolResult.toolName,
-          output: toolResult.output,
-          content: toolResult.content,
-          isError: toolResult.isError,
-          runId: command.runId,
-          preview: toolResult.preview,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        });
-      } catch (err) {
-        this.logger.warn(
-          { err, agentIdentifier: command.agentIdentifier, toolCallId: toolResult.toolCallId },
-          `[agent:${command.agentIdentifier}] Failed to persist tool-result activity for ${toolResult.toolCallId}`
-        );
-      }
+      await this.conversationService.persistToolResult({
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: command.agentIdentifier,
+        toolCallId: toolResult.toolCallId,
+        toolName: toolResult.toolName,
+        output: toolResult.output,
+        content: toolResult.content,
+        isError: toolResult.isError,
+        runId: command.runId,
+        preview: toolResult.preview,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
     }
   }
 

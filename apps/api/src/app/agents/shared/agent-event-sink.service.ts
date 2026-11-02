@@ -965,6 +965,7 @@ export class AgentEventSink {
         operation: `record-${operation}`,
         sessionId: context.sessionId,
       });
+      throw err;
     }
   }
 
