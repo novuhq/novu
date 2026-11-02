@@ -30,8 +30,6 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
    */
   readonly requiredImports: readonly ImportRequirement[] = [];
 
-  private ajv = createAjv();
-
   private readonly compiledSchemas = new Map<string, AjvValidateFunction>();
 
   async canHandle(schema: Schema): Promise<boolean> {
@@ -76,15 +74,19 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     const key = JSON.stringify(schema);
     let validateFn = this.compiledSchemas.get(key);
 
-    if (!validateFn) {
-      if (this.compiledSchemas.size >= MAX_COMPILED_SCHEMAS) {
-        // Ajv retains every compiled schema for the lifetime of its instance, even after
-        // `removeSchema`, so replacing the instance is the only way to release them.
-        this.ajv = createAjv();
-        this.compiledSchemas.clear();
-      }
-      validateFn = this.ajv.compile(schema);
-      this.compiledSchemas.set(key, validateFn);
+    if (validateFn) {
+      this.compiledSchemas.delete(key);
+    } else {
+      // Every schema gets its own Ajv instance: a shared instance keeps every schema it has
+      // compiled in memory, even after `removeSchema`, and refuses a second schema that
+      // declares an `$id` it has already seen.
+      validateFn = createAjv().compile(schema);
+    }
+    this.compiledSchemas.set(key, validateFn);
+
+    if (this.compiledSchemas.size > MAX_COMPILED_SCHEMAS) {
+      const [oldestKey] = this.compiledSchemas.keys();
+      this.compiledSchemas.delete(oldestKey);
     }
 
     return validateFn;
