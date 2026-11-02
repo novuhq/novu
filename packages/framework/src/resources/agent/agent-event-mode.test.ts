@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { agent } from './agent.resource';
+import { requireRuntimeContext } from './agent.runtime';
 import type { AgentBridgeRequest } from './agent.types';
 import { dispatchAgentEvent } from './agent-dispatch';
 import { createMockBridgeRequest } from './bridge-request.fixture';
@@ -293,6 +294,28 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[0].some((envelope) => envelope.event.type === 'message')).toBe(false);
     expect(eventBatches[1][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
     expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+  });
+
+  it('sends executed tool results before the approval request in the same batch', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          requireRuntimeContext(ctx).emitToolResult({ toolCallId: 'tc-done', output: { ok: true }, preview: 'ok' });
+          await ctx.toolApproval.request({ id: 'tc-gated', name: 'doIt', input: { x: 1 } });
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0].map((envelope) => envelope.event.type)).toEqual([
+      'run-start',
+      'tool-use-result',
+      'tool-approval-request',
+    ]);
   });
 
   it('carries ttlSeconds/to/from onto the tool-approval-request event', async () => {
