@@ -65,6 +65,14 @@ export function isSetupUnfinished(step: SetupStep): step is 'test' | 'connect' {
 }
 
 /**
+ * Whether an operator's place is the onboarding rather than the dashboard: without an agent, and in the
+ * middle of the steps until they choose "Skip for now".
+ */
+export function belongsInOnboarding(agent: StepAgent | null, step: SetupStep, state: OnboardingState): boolean {
+  return !agent || (isSetupUnfinished(step) && !state.skippedAt);
+}
+
+/**
  * The operator is still on the test step of an agent this onboarding created. A claimed agent is
  * not, and neither is anyone who already left that step.
  */

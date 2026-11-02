@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   awaitsTestMail,
+  belongsInOnboarding,
   rememberTestReply,
   resolveStep,
   signedInSince,
@@ -143,5 +144,26 @@ describe('signedInSince', () => {
     expect(signedInSince('2026-10-28T15:39:57.471Z', agent)).toBe(true);
     expect(signedInSince('2026-10-28T10:23:26.136Z', agent)).toBe(false);
     expect(signedInSince('2026-10-28T10:23:26.136Z', { id: 'agent_1' })).toBe(true);
+  });
+});
+
+describe('belongsInOnboarding', () => {
+  const agent = { id: 'agent_1' };
+
+  it('keeps an operator without an agent in the steps, whatever else was noted', () => {
+    expect(belongsInOnboarding(null, 'address', {})).toBe(true);
+    expect(belongsInOnboarding(null, 'address', { skippedAt: '2026-11-02T10:00:00.000Z' })).toBe(true);
+  });
+
+  it.each(['test', 'connect'] as const)('keeps an operator on the %s step there', (step) => {
+    expect(belongsInOnboarding(agent, step, {})).toBe(true);
+  });
+
+  it.each(['test', 'connect'] as const)('lets go of an operator who skipped the %s step', (step) => {
+    expect(belongsInOnboarding(agent, step, { skippedAt: '2026-11-02T10:00:00.000Z' })).toBe(false);
+  });
+
+  it.each(['reach', 'done'] as const)('lets go of an operator who reached the %s step', (step) => {
+    expect(belongsInOnboarding(agent, step, {})).toBe(false);
   });
 });
