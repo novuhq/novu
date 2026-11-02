@@ -44,7 +44,6 @@ export * from './safe-set-path';
 export * from './sanitize-control-values';
 export * from './shorten-environment-name';
 export * from './slugify-or-random';
-export * from './ssrf-url-validation';
 export * from './step-overrides';
 export * from './step-resolver-control-state';
 export * from './step-type-to-control.mapper';
