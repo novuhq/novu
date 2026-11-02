@@ -166,7 +166,7 @@ export class HumanListenController {
     );
   }
 
-  /** Shows in the chat that a reply is coming, while the started host works on a message there. Asked again every few seconds. */
+  /** Shows typing while the host works on an answer the person is waiting for. An inbound message shows nothing. Asked again every few seconds. */
   @Post('/typing')
   @HttpCode(HttpStatus.OK)
   @KeylessAccessible()

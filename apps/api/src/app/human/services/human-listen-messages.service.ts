@@ -397,6 +397,77 @@ export class HumanListenMessagesService {
 
     return resolves;
   }
+
+  /**
+   * The newest thing a person did in this conversation answers a question the agent asked. An inbound message is
+   * answered later, from the inbox, so the chat does not show typing for it. A deleted one is skipped. An answer
+   * the listener already read still counts: the host is at work on it.
+   */
+  async newestIsAnswer(
+    scope: InboxScope,
+    agent: Pick<InboxRelayAgent, '_id'>,
+    conversationId: ConversationActivityEntity['_conversationId']
+  ): Promise<boolean> {
+    const rows = await this.activityRepository.find(
+      {
+        _environmentId: scope.environmentId,
+        _organizationId: scope.organizationId,
+        _conversationId: conversationId,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        type: {
+          $in: [ConversationActivityTypeEnum.MESSAGE, ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE],
+        },
+        createdAt: { $gte: new Date(Date.now() - LISTEN_MAX_AGE_MS) },
+      },
+      '*',
+      { sort: { createdAt: -1, _id: -1 }, limit: 20 }
+    );
+    if (rows.length === 0) {
+      return false;
+    }
+
+    const [revisions, questionsAnswered, cards] = await Promise.all([
+      this.revisionsOf(scope, rows),
+      this.questionsAnsweredBy(scope, agent, rows),
+      this.answeredCards(scope, rows),
+    ]);
+    const newestFirst = [...rows].sort((left, right) => {
+      const byTime = timeOf(right) - timeOf(left);
+      if (byTime !== 0) {
+        return byTime;
+      }
+
+      if (String(left._id) === String(right._id)) {
+        return 0;
+      }
+
+      return String(right._id) < String(left._id) ? -1 : 1;
+    });
+
+    for (const row of newestFirst) {
+      if (row.type === ConversationActivityTypeEnum.MESSAGE) {
+        if (revisions.deleted.has(messageKey(row))) {
+          continue;
+        }
+
+        return questionsAnswered.has(String(row._id));
+      }
+
+      const answer = readCardAnswer(row);
+      if (!answer || !SETTLED_BY_A_PERSON.includes(answer.status ?? '')) {
+        continue;
+      }
+
+      const question = cards.get(answer.interactionIdentifier);
+      if (question && !askedIn(question, row)) {
+        continue;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
 }
 
 /**

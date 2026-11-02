@@ -991,10 +991,25 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       });
     }
 
-    it('shows typing in the chat of its agent’s conversation, for the computer holding the lease', async () => {
+    it('does not show typing for an inbound message, and still says the chat can, so a later answer may', async () => {
       await holdLease(MACBOOK);
       await write('what files are in this folder?');
       const thread = await threadWith(operatorId);
+      telegramApiStub.reset();
+
+      const res = await showTyping({ conversationId: thread });
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.deep.equal({ typing: true });
+      expect(telegramApiStub.calls.filter((call) => call.method === 'sendChatAction')).to.deep.equal([]);
+    });
+
+    it('shows typing once an answer the person is waiting for is the newest thing in the conversation', async () => {
+      await holdLease(MACBOOK);
+      await write('I need a decision');
+      const thread = await threadWith(operatorId);
+      await sendCard(thread, 'ask', { title: 'Which environment?' });
+      await write('staging');
       telegramApiStub.reset();
 
       const res = await showTyping({ conversationId: thread });

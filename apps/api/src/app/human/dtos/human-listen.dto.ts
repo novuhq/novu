@@ -84,7 +84,10 @@ export class ListenTypingRequestDto extends ListenHolderDto {
 }
 
 export class ListenTypingResponseDto {
-  @ApiProperty({ description: 'Whether the chat shows it: false where it has no typing indicator, as in email.' })
+  @ApiProperty({
+    description:
+      'False where the chat has no typing indicator, as in email: the listener asks once and stops. True where it has one. An inbound message still shows nothing until an answer the person is waiting for is the newest thing in the conversation.',
+  })
   typing: boolean;
 }
 

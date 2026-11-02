@@ -649,6 +649,86 @@ describe('HumanListenMessagesService', () => {
     });
   });
 
+  describe('newestIsAnswer', () => {
+    const conversationId = 'conv1';
+
+    function questionFor(message: { senderId: string; content?: string; createdAt: Date }) {
+      return {
+        identifier: 'hi_env',
+        _conversationId: conversationId,
+        createdAt: new Date(message.createdAt.getTime() - 60_000),
+        response: {
+          type: 'text',
+          text: message.content?.trim(),
+          respondedBySubscriberId: message.senderId,
+          respondedAt: new Date(message.createdAt.getTime() + 300).toISOString(),
+        },
+      };
+    }
+
+    it('is false for an inbound message, and for one that comes after an answer', async () => {
+      const answer = row({ content: 'staging' });
+      const later = row({ content: 'and also the logs' });
+      const { service } = setup({ rows: [later], questions: [questionFor(answer)] });
+
+      expect(await service.newestIsAnswer(scope, agent, conversationId)).to.equal(false);
+
+      const followed = setup({ rows: [answer, later], questions: [questionFor(answer)] });
+
+      expect(await followed.service.newestIsAnswer(scope, agent, conversationId)).to.equal(false);
+    });
+
+    it('is true when the newest message answers a question, including one the listener already read', async () => {
+      const answer = row({ content: 'staging' });
+      const question = { ...questionFor(answer), answerReadAt: '2026-10-24T11:59:00.000Z' };
+      const { service } = setup({ rows: [answer], questions: [question] });
+
+      expect(await service.newestIsAnswer(scope, agent, conversationId)).to.equal(true);
+    });
+
+    it('is true for a pressed button, and skips a deleted message and a copy filed in another chat', async () => {
+      const pressed = row({
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+        platformMessageId: 'tg-press',
+        richContent: {
+          humanInteraction: {
+            interactionIdentifier: 'hi_ship',
+            kind: 'approve',
+            status: 'approved',
+            optionId: 'approve',
+          },
+        },
+      });
+      const deleted = row({
+        content: 'never mind',
+        platformMessageId: 'tg-gone',
+        createdAt: new Date(pressed.createdAt.getTime() + 1000),
+      });
+      const copy = row({
+        type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE,
+        _conversationId: 'conv2',
+        createdAt: new Date(pressed.createdAt.getTime() + 2000),
+        richContent: {
+          humanInteraction: {
+            interactionIdentifier: 'hi_ship',
+            kind: 'approve',
+            status: 'approved',
+            optionId: 'approve',
+          },
+        },
+      });
+      const { service } = setup({
+        rows: [pressed, deleted, copy],
+        revisions: [
+          { _conversationId: 'conv1', platformMessageId: 'tg-gone', type: ConversationActivityTypeEnum.DELETE },
+        ],
+        cards: [{ identifier: 'hi_ship', _conversationId: 'conv1', kind: HumanInteractionKindEnum.APPROVE }],
+      });
+
+      expect(await service.newestIsAnswer(scope, agent, conversationId)).to.equal(true);
+    });
+  });
+
   describe('roundOf', () => {
     const at = Date.parse('2026-10-24T11:00:00.000Z');
 
