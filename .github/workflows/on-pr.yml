@@ -256,13 +256,17 @@ jobs:
 
       - uses: ./.github/actions/setup-project
 
-      - name: Run Lint, Build, Test
-        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
+      - name: Build
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
-        with:
-          targets: build,test
-          projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
+          AFFECTED_LIBS: ${{ join(fromJson(needs.get-affected.outputs.test-libs), ',') }}
+        run: npx nx run-many -t build --projects="$AFFECTED_LIBS" --parallel=3
+
+      - name: Test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_LIBS: ${{ join(fromJson(needs.get-affected.outputs.test-libs), ',') }}
+        run: npx nx run-many -t test --projects="$AFFECTED_LIBS" --parallel=3
 
   test_unit_services:
     name: Unit test backend services
