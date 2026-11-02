@@ -1,5 +1,5 @@
 import { BadGatewayException, GatewayTimeoutException } from '@nestjs/common';
-import { HumanInteractionKindEnum, VoiceCallFailureCodeEnum } from '@novu/shared';
+import { HumanInteractionKindEnum, mintHumanOptions, VoiceCallFailureCodeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import {
@@ -163,12 +163,18 @@ describe('PlaceVoiceCall', () => {
     expect(cacheService.set.called).to.equal(false);
   });
 
-  it('retries the call lookup and still reports the dial when Redis fails twice', async () => {
+  it('keeps the placed call and stores the lookup once Redis comes back', async () => {
     sinon.stub(globalThis, 'fetch').resolves(ok('conv_a'));
+    let sweep: (() => void) | undefined;
+    sinon.stub(global, 'setInterval').callsFake((fn: TimerHandler) => {
+      sweep = fn as () => void;
+
+      return 0 as unknown as ReturnType<typeof setInterval>;
+    });
+    sinon.stub(global, 'clearInterval');
     const { place, cacheService } = service();
     cacheService.set.onFirstCall().rejects(new Error('redis down'));
-    cacheService.set.onSecondCall().rejects(new Error('redis down'));
-    cacheService.set.onThirdCall().resolves('OK');
+    cacheService.set.onSecondCall().resolves('OK');
 
     const placed = await place.execute({
       interactionId: 'hi_1',
@@ -179,26 +185,34 @@ describe('PlaceVoiceCall', () => {
       openingLine: 'Hello',
     });
 
+    // The dial is reported straight away: the lookup is only for a failure webhook.
     expect(placed.conversationId).to.equal('conv_a');
-    expect(cacheService.set.calledThrice).to.equal(true);
+    expect(cacheService.set.callCount).to.equal(1);
+
+    sweep?.();
+    await new Promise(setImmediate);
+
+    expect(cacheService.set.callCount).to.equal(2);
+    expect(cacheService.set.secondCall.args[0]).to.equal(voiceCallRegistryKey('conv_a'));
   });
 
-  it('keeps the placed call and retries the lookup later when Redis stays down', async () => {
-    sinon.stub(globalThis, 'fetch').resolves(ok('conv_a'));
+  it('drains every waiting call from one sweeper, not a timer for each dial', async () => {
+    sinon.stub(globalThis, 'fetch').callsFake(async () => ok('conv_a'));
     const timer = sinon.stub(global, 'setInterval').returns(0 as unknown as ReturnType<typeof setInterval>);
     const { place, cacheService } = service();
     cacheService.set.rejects(new Error('redis down'));
 
-    const placed = await place.execute({
-      interactionId: 'hi_1',
-      environmentId: 'env1',
-      organizationId: 'org1',
-      subscriberId: 'sub-1',
-      toNumber: '+15551212',
-      openingLine: 'Hello',
-    });
+    for (const interactionId of ['hi_1', 'hi_2', 'hi_3']) {
+      await place.execute({
+        interactionId,
+        environmentId: 'env1',
+        organizationId: 'org1',
+        subscriberId: 'sub-1',
+        toNumber: '+15551212',
+        openingLine: 'Hello',
+      });
+    }
 
-    expect(placed.conversationId).to.equal('conv_a');
     expect(cacheService.set.callCount).to.equal(3);
     expect(timer.calledOnce).to.equal(true);
   });
@@ -239,7 +253,7 @@ describe('openingLineFor', () => {
     const line = openingLineFor({
       kind: HumanInteractionKindEnum.CHOOSE,
       content: {
-        cardChrome: { title: 'Which region?', subtitle: 'Production', options: ['US', 'EU'] },
+        cardChrome: { title: 'Which region?', subtitle: 'Production', options: mintHumanOptions(['US', 'EU']) },
       },
     });
 

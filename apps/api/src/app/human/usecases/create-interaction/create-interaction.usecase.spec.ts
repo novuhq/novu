@@ -21,6 +21,7 @@ import { unconfirmedVoiceDialBody } from '../../../agents/channels/voice/voice-c
 import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
+import { HumanVoiceMinuteHoldService } from '../../services/human-voice-minute-hold.service';
 import { CreateInteraction } from './create-interaction.usecase';
 
 /** What a send into a thread hands `CreateConversationInteraction`: deliveries outside it, and word of its post. */
@@ -48,7 +49,7 @@ describe('CreateInteraction', () => {
       update: sinon.stub().resolves(undefined),
       stampDelivery: sinon.stub().resolves(undefined),
       findByIdentifier: sinon.stub().resolves(null),
-      replaceVoiceHold: sinon.stub().resolves(true),
+      narrowVoiceHold: sinon.stub().resolves(true),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
       delete: sinon.stub().resolves(undefined),
     };
@@ -177,10 +178,14 @@ describe('CreateInteraction', () => {
       humanContactRepository as any,
       subscriberRepository as any,
       analyticsService as any,
-      voiceMinuteQuota as any,
-      settlement as any,
-      recordVoiceCallEnded as any,
-      cacheService as any
+      new HumanVoiceMinuteHoldService(
+        humanInteractionRepository as any,
+        voiceMinuteQuota as any,
+        cacheService as any,
+        settlement as any,
+        recordVoiceCallEnded as any
+      ),
+      settlement as any
     );
     const command = {
       userId: 'user1',

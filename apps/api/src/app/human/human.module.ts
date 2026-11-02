@@ -56,6 +56,7 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { HumanVoiceMinuteHoldService } from './services/human-voice-minute-hold.service';
 import { HumanVoiceMinuteQuotaService } from './services/human-voice-minute-quota.service';
 import { HumanVoiceVerificationCodeService } from './services/human-voice-verification-code.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
@@ -167,6 +168,7 @@ import { VoiceCallWebhookController } from './voice-call-failure.controller';
     HumanKeylessCapService,
     HumanMessageQuotaService,
     HumanVoiceMinuteQuotaService,
+    HumanVoiceMinuteHoldService,
     CreateInteraction,
     GetInteraction,
     GetVoiceRecording,

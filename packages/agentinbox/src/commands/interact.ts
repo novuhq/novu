@@ -363,18 +363,6 @@ export async function waitForResolution(
   interaction: Interaction,
   options: Pick<SendOptions, 'timeout' | 'json'>
 ): Promise<number> {
-  if (interaction.platform === 'voice' && interaction.status === 'pending') {
-    if (options.json) {
-      process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
-    } else {
-      process.stdout.write(
-        `This is a live phone call, not a text wait. Drive it with: ${CLI_COMMAND} voice-turn ${interaction.id}\n`
-      );
-    }
-
-    return EXIT_TIMEOUT;
-  }
-
   const timeoutSeconds = options.timeout ? parseDuration(options.timeout) : Infinity;
   const deadline = Number.isFinite(timeoutSeconds) ? Date.now() + timeoutSeconds * 1000 : Infinity;
 

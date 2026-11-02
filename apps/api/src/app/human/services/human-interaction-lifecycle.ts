@@ -664,31 +664,13 @@ async function retainUnconfirmedCallers(
   unconfirmedSubscriberIds: string[]
 ): Promise<void> {
   const reserved = interaction.voiceMinutesReserved ?? 0;
-  const minutes = Math.min(reserved, unconfirmedSubscriberIds.length * VOICE_CALL_MAX_MINUTES);
-  const set: {
-    subscriberIds: string[];
-    voiceSubscriberIds: string[];
-    voiceMinutesReserved?: number;
-  } = {
-    subscriberIds: unconfirmedSubscriberIds,
+
+  await repository.narrowVoiceHold(interaction._environmentId, interaction._id, {
+    expectedMinutes: reserved,
+    minutes: Math.min(reserved, unconfirmedSubscriberIds.length * VOICE_CALL_MAX_MINUTES),
     voiceSubscriberIds: unconfirmedSubscriberIds,
-  };
-  const unset: { voiceMinutesReserved?: 1; voiceMinutesReservedAt?: 1 } = {};
-
-  if (minutes > 0) {
-    set.voiceMinutesReserved = minutes;
-  } else if (reserved > 0) {
-    unset.voiceMinutesReserved = 1;
-    unset.voiceMinutesReservedAt = 1;
-  }
-
-  await repository.update(
-    { _id: interaction._id, _environmentId: interaction._environmentId },
-    {
-      $set: set,
-      ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
-    }
-  );
+    subscriberIds: unconfirmedSubscriberIds,
+  });
 }
 
 function codedHttpException(error: unknown): error is HttpException {

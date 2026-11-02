@@ -290,40 +290,62 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Moves the saved hold from `expectedMinutes` to `nextMinutes`.
-   * Returns false when another path already took the minutes.
+   * Narrows the saved voice hold to the contacts a send actually reached.
+   *
+   * `expectedMinutes` is the compare-and-swap guard: a failure webhook running
+   * `takeVoiceMinutes` concurrently has already given those minutes back, and an
+   * unguarded write here would put them back on the row for settlement to give
+   * back a second time. Pass the minutes the caller believes are stored (0 when
+   * it believes none are) and treat `false` as "another path owns this hold now".
+   *
+   * The recipient list narrows in the same write, because a send that keeps only
+   * some callers holds minutes for exactly those callers.
    */
-  async replaceVoiceHold(
+  async narrowVoiceHold(
     environmentId: string,
     id: string,
-    expectedMinutes: number,
-    nextMinutes: number,
-    subscriberIds: string[]
+    params: {
+      expectedMinutes: number;
+      minutes: number;
+      voiceSubscriberIds: string[];
+      subscriberIds?: string[];
+    }
   ): Promise<boolean> {
-    const update =
-      nextMinutes > 0
-        ? {
-            $set: {
-              voiceMinutesReserved: nextMinutes,
-              ...(subscriberIds.length > 0 ? { voiceSubscriberIds: subscriberIds } : {}),
-            },
-            ...(subscriberIds.length === 0 ? { $unset: { voiceSubscriberIds: 1 as const } } : {}),
-          }
-        : {
-            $unset: {
-              voiceMinutesReserved: 1 as const,
-              voiceMinutesReservedAt: 1 as const,
-              voiceSubscriberIds: 1 as const,
-            },
-          };
+    const $set: {
+      voiceMinutesReserved?: number;
+      voiceSubscriberIds?: string[];
+      subscriberIds?: string[];
+    } = {};
+    const $unset: { voiceMinutesReserved?: 1; voiceMinutesReservedAt?: 1; voiceSubscriberIds?: 1 } = {};
+
+    if (params.minutes > 0) {
+      $set.voiceMinutesReserved = params.minutes;
+    } else {
+      $unset.voiceMinutesReserved = 1;
+      $unset.voiceMinutesReservedAt = 1;
+    }
+
+    if (params.voiceSubscriberIds.length > 0) {
+      $set.voiceSubscriberIds = params.voiceSubscriberIds;
+    } else {
+      $unset.voiceSubscriberIds = 1;
+    }
+
+    if (params.subscriberIds) {
+      $set.subscriberIds = params.subscriberIds;
+    }
 
     const previous = await this.findOneAndUpdate(
       {
         _id: id,
         _environmentId: environmentId,
-        voiceMinutesReserved: expectedMinutes,
+        // A hold of 0 is an absent field, not a stored zero.
+        voiceMinutesReserved: params.expectedMinutes > 0 ? params.expectedMinutes : null,
       },
-      update,
+      {
+        ...(Object.keys($set).length > 0 ? { $set } : {}),
+        ...(Object.keys($unset).length > 0 ? { $unset } : {}),
+      },
       { new: false }
     );
 

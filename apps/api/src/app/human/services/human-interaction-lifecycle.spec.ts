@@ -119,7 +119,7 @@ describe('deliverToTargets', () => {
   it('keeps an unconfirmed dial when a later recipient is a known failure', async () => {
     const repository = {
       delete: sinon.stub().resolves(undefined),
-      update: sinon.stub().resolves(undefined),
+      narrowVoiceHold: sinon.stub().resolves(true),
     };
     const logger = { warn: sinon.stub() };
 
@@ -165,10 +165,13 @@ describe('deliverToTargets', () => {
     }
 
     expect(repository.delete.called).to.equal(false);
-    expect(repository.update.firstCall.args[1].$set).to.deep.equal({
-      subscriberIds: ['sub-1'],
+    // The hold narrows to the one caller still on the line, and only from the 10 minutes it held.
+    expect(repository.narrowVoiceHold.firstCall.args.slice(0, 2)).to.deep.equal(['env1', '1']);
+    expect(repository.narrowVoiceHold.firstCall.args[2]).to.deep.equal({
+      expectedMinutes: 10,
+      minutes: 5,
       voiceSubscriberIds: ['sub-1'],
-      voiceMinutesReserved: 5,
+      subscriberIds: ['sub-1'],
     });
   });
 

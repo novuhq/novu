@@ -3,6 +3,14 @@ import { Mail, Phone } from 'lucide-react';
 import type { InviteChannelVia } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
 
+/** What a channel is called wherever it is named rather than drawn. */
+export const APP_LABELS: Record<InviteChannelVia, string> = {
+  voice: 'Voice',
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+};
+
 type AppIconSize = 'small' | 'medium' | 'large';
 
 /** 16px next to a sender's name, 28px in the list of apps, 40px at the top of an app's steps. */

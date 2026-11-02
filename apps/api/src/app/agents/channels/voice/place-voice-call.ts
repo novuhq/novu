@@ -1,4 +1,10 @@
-import { BadGatewayException, BadRequestException, GatewayTimeoutException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  GatewayTimeoutException,
+  Injectable,
+  type OnModuleDestroy,
+} from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { HumanInteractionEntity } from '@novu/dal';
 import { resolveHumanInteractionCard, VoiceCallFailureCodeEnum } from '@novu/shared';
@@ -16,8 +22,10 @@ export { VOICE_CALL_REGISTRY_TTL_SECONDS, voiceCallRegistryKey };
 /** MCP stops waiting for a send after 30 seconds, so one dial has to finish inside that. */
 export const VOICE_DIAL_TIMEOUT_MS = 20_000;
 
-const REGISTRY_WRITE_ATTEMPTS = 3;
 const REGISTRY_RETRY_INTERVAL_MS = 5_000;
+
+/** A bound on what one process holds while Redis is down, rather than one entry per dial forever. */
+const MAX_PENDING_REGISTRY_WRITES = 500;
 
 const OPENING_LINE_MAX_CHARS = 500;
 
@@ -94,7 +102,11 @@ function spoken(part: string | undefined): string {
  * correlation travels beside it.
  */
 @Injectable()
-export class PlaceVoiceCall {
+export class PlaceVoiceCall implements OnModuleDestroy {
+  /** Calls whose failure-webhook lookup is still waiting on Redis, keyed by conversation id. */
+  private readonly pendingRegistryWrites = new Map<string, { input: PlaceVoiceCallInput; deadline: number }>();
+  private registrySweeper?: ReturnType<typeof setInterval>;
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly logger: PinoLogger
@@ -171,13 +183,11 @@ export class PlaceVoiceCall {
   }
 
   private async remember(conversationId: string, input: PlaceVoiceCallInput): Promise<void> {
-    for (let attempt = 1; attempt <= REGISTRY_WRITE_ATTEMPTS; attempt += 1) {
-      if (await this.writeRegistry(conversationId, input, true)) {
-        return;
-      }
+    if (await this.writeRegistry(conversationId, input, true)) {
+      return;
     }
 
-    this.retryRegistry(conversationId, input);
+    this.scheduleRegistryWrite(conversationId, input);
   }
 
   private async writeRegistry(
@@ -205,27 +215,74 @@ export class PlaceVoiceCall {
     }
   }
 
-  /** Redis can recover after the dial. The webhook keeps retrying for about 40 minutes. */
-  private retryRegistry(conversationId: string, input: PlaceVoiceCallInput): void {
-    const startedAt = Date.now();
-    const retryWindowMs = VOICE_CALL_REGISTRY_TTL_SECONDS * 1000;
-    const timer = setInterval(() => {
-      void this.writeRegistry(conversationId, input, false).then((saved) => {
-        const expired = Date.now() - startedAt >= retryWindowMs;
-        if (!saved && !expired) {
-          return;
-        }
+  /**
+   * Redis can recover after the dial, and the webhook keeps retrying for about
+   * 40 minutes, so a missed registry write is worth retrying. One sweeper drains
+   * every waiting call: a timer per dial would multiply with call volume exactly
+   * when Redis is already struggling.
+   */
+  private scheduleRegistryWrite(conversationId: string, input: PlaceVoiceCallInput): void {
+    if (this.pendingRegistryWrites.size >= MAX_PENDING_REGISTRY_WRITES) {
+      this.logger.warn(
+        { conversationId, interactionId: input.interactionId },
+        'Dropped a voice-call failure lookup: too many are already waiting on Redis'
+      );
 
-        clearInterval(timer);
-        if (!saved) {
-          this.logger.warn(
-            { conversationId, interactionId: input.interactionId },
-            'Stopped retrying the voice-call failure lookup'
-          );
-        }
-      });
+      return;
+    }
+
+    this.pendingRegistryWrites.set(conversationId, {
+      input,
+      deadline: Date.now() + VOICE_CALL_REGISTRY_TTL_SECONDS * 1000,
+    });
+    this.startRegistrySweeper();
+  }
+
+  private startRegistrySweeper(): void {
+    if (this.registrySweeper !== undefined) {
+      return;
+    }
+
+    this.registrySweeper = setInterval(() => {
+      void this.sweepRegistryWrites();
     }, REGISTRY_RETRY_INTERVAL_MS);
-    timer.unref?.();
+    this.registrySweeper.unref?.();
+  }
+
+  private async sweepRegistryWrites(): Promise<void> {
+    for (const [conversationId, waiting] of [...this.pendingRegistryWrites]) {
+      const saved = await this.writeRegistry(conversationId, waiting.input, false);
+      if (saved) {
+        this.pendingRegistryWrites.delete(conversationId);
+        continue;
+      }
+
+      if (Date.now() >= waiting.deadline) {
+        this.pendingRegistryWrites.delete(conversationId);
+        this.logger.warn(
+          { conversationId, interactionId: waiting.input.interactionId },
+          'Stopped retrying the voice-call failure lookup'
+        );
+      }
+    }
+
+    if (this.pendingRegistryWrites.size === 0) {
+      this.stopRegistrySweeper();
+    }
+  }
+
+  private stopRegistrySweeper(): void {
+    if (this.registrySweeper === undefined) {
+      return;
+    }
+
+    clearInterval(this.registrySweeper);
+    this.registrySweeper = undefined;
+  }
+
+  onModuleDestroy(): void {
+    this.stopRegistrySweeper();
+    this.pendingRegistryWrites.clear();
   }
 }
 

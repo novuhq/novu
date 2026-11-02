@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, isAgentInboxProvider, providers as novuProviders } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  isHiddenIntegrationProvider,
+  providers as novuProviders,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -88,7 +93,7 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
 
   const groupedIntegrations = useMemo(() => {
     return integrations
-      ?.filter((i) => !isAgentInboxProvider(i.providerId))
+      ?.filter((i) => !isHiddenIntegrationProvider(i.providerId))
       .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
       .reduce(
         (acc, integration) => {
