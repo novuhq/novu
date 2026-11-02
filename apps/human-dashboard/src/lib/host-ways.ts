@@ -68,6 +68,30 @@ export type ScriptLine =
  */
 export type Script = { lines: ScriptLine[]; copy: string };
 
+/** A script as the setup box writes it: a `#` note, a command after its prompt, and a config as it is pasted. */
+export function formatScript(script: Script): string {
+  return script.lines
+    .map((line) => {
+      switch (line.kind) {
+        case 'gap':
+          return '';
+        case 'note':
+          return `# ${line.text}`;
+        case 'command':
+          return `${line.prompt} ${line.text}`;
+        case 'snippet':
+          return line.text;
+        default: {
+          const exhaustive: never = line;
+
+          return exhaustive;
+        }
+      }
+    })
+    .join('\n')
+    .trim();
+}
+
 /** Whether a line needs its own copy button: what the box's button copies doesn't have it. */
 export function copiesAlone(script: Script, line: ScriptLine): boolean {
   return (line.kind === 'command' || line.kind === 'snippet') && !script.copy.includes(line.text);

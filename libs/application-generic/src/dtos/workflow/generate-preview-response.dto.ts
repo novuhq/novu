@@ -381,7 +381,11 @@ export class GeneratePreviewResponseDto {
           | ChannelTypeEnum.CHAT
           | ChannelTypeEnum.TOOL
           | ActionTypeEnum.DELAY
-          | ActionTypeEnum.DIGEST;
+          | ActionTypeEnum.DIGEST
+          | ActionTypeEnum.THROTTLE
+          | ActionTypeEnum.CUSTOM
+          | ActionTypeEnum.HTTP_REQUEST
+          | ActionTypeEnum.TRIGGER;
         preview: Record<string, unknown>;
         error?: PreviewErrorDto;
       };

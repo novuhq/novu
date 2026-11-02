@@ -1,9 +1,6 @@
 import { cn } from '@/lib/utils';
 
-/**
- * A section's plate label, stamped like the plates on a piece of equipment: an accent square, the section's index,
- * then its name, all in Geist Pixel.
- */
+/** A section's plate: an accent square, its index, then its name. */
 export function SectionEyebrow({
   index,
   children,
@@ -16,7 +13,7 @@ export function SectionEyebrow({
   return (
     <p
       className={cn(
-        'flex items-center gap-2.5 font-sapien-pixel text-[11px] leading-none tracking-[0.08em] text-sapien-foreground/50 uppercase',
+        'flex items-center gap-2.5 font-sapien-mono text-[11px] leading-none tracking-[0.08em] text-sapien-foreground/50 uppercase',
         className
       )}
     >
@@ -31,7 +28,7 @@ export function SectionEyebrow({
   );
 }
 
-/** The accent words of a heading: Redaction italic, in the accent orange. */
+/** The accent words of a heading, in Redaction italic. */
 export function DisplayAccent({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <em className={cn('font-sapien-display font-normal tracking-[-0.02em] text-accent italic', className)}>
