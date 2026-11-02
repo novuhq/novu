@@ -5,6 +5,7 @@
   "description": "Behavioral eval harness for Novu coding-agent playbooks (suite-based).",
   "type": "module",
   "scripts": {
+    "build": "echo 'No emit step'",
     "eval": "vitest run --config vitest.evals.config.ts",
     "eval:watch": "vitest --config vitest.evals.config.ts",
     "test": "vitest run --config vitest.config.ts",
