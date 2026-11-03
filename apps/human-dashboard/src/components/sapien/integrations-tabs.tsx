@@ -1,19 +1,22 @@
 'use client';
 
+import { type LucideIcon, Plug, Sparkles, SquareTerminal } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { CopyButton } from '@/components/sapien/copy-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/sapien/tabs';
 import {
+  getIntegrationCopyLabel,
   getIntegrationCopyText,
-  INTEGRATION_COPY_LABELS,
   INTEGRATIONS_LIST_LABEL,
   type Integration,
   type IntegrationSnippet,
   integrationsAssets,
 } from '@/data/sapien-integrations';
+import type { HostId } from '@/lib/hosts';
 import { cn } from '@/lib/utils';
 
 import { Artwork } from './artwork';
+import { AgentLogo } from './brand-logo';
 
 export function IntegrationsTabs({ items, className }: { items: readonly Integration[]; className?: string }) {
   const [value, setValue] = useState(items[0]?.id ?? '');
@@ -35,9 +38,10 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
           <TabsTrigger
             key={item.id}
             value={item.id}
-            className="w-full min-w-0 border-b border-sapien-surface pt-3 pb-2.75 pl-4 text-left text-xl leading-none tracking-[-0.04em] text-sapien-foreground/50 hover:text-sapien-foreground/80 data-[state=active]:text-accent max-md:nth-[4n]:border-b-0 md:text-2xl md:last:border-b-0"
+            className="group/tab flex w-full min-w-0 items-center gap-2 border-b border-sapien-surface pt-3 pb-2.75 pl-1 text-left text-[17px] md:gap-3 leading-none tracking-[-0.04em] text-sapien-foreground/50 hover:text-sapien-foreground/80 data-[state=active]:text-sapien-foreground max-md:nth-[4n]:border-b-0 md:pl-3 md:text-2xl md:last:border-b-0"
           >
-            {item.label}
+            <IntegrationLogo id={item.id} />
+            <span className="truncate">{item.label}</span>
           </TabsTrigger>
         ))}
       </TabsList>
@@ -49,9 +53,14 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
           <TabsContent
             key={item.id}
             value={item.id}
-            className="min-h-0 flex-1 overflow-auto px-4 pt-[25.4px] pb-3 focus-visible:-outline-offset-2"
+            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-[25.4px] pb-3 focus-visible:-outline-offset-2"
           >
-            <TerminalSnippet snippet={item.snippet} />
+            <SnippetNote text={item.snippet.before} />
+            {/* Notes wrap to the window; only the code scrolls sideways. */}
+            <div className="min-w-0 shrink-0 overflow-x-auto">
+              <TerminalSnippet snippet={item.snippet} />
+            </div>
+            <SnippetNote text={item.snippet.after} />
           </TabsContent>
         ))}
         {active ? (
@@ -61,7 +70,7 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
               text={getIntegrationCopyText(active.snippet)}
               className="h-10 w-full rounded-lg bg-sapien-surface p-2 text-[15px] leading-none font-medium tracking-tight text-white hover:bg-sapien-raised"
             >
-              {INTEGRATION_COPY_LABELS[active.snippet.kind]}
+              {getIntegrationCopyLabel(active.snippet)}
             </CopyButton>
           </div>
         ) : null}
@@ -70,17 +79,52 @@ export function IntegrationsTabs({ items, className }: { items: readonly Integra
   );
 }
 
+/** Agent hosts show their own mark; the CLI, skills and MCP get an icon in a tile of the same size. */
+const INTEGRATION_HOSTS: Partial<Record<string, HostId>> = {
+  'claude-code': 'claude-code',
+  cursor: 'cursor',
+  'grok-bot': 'grok',
+  hermes: 'hermes',
+  openclaw: 'openclaw',
+};
+const INTEGRATION_ICONS: Partial<Record<string, LucideIcon>> = { cli: SquareTerminal, skills: Sparkles, mcp: Plug };
+
+function IntegrationLogo({ id }: { id: string }) {
+  const host = INTEGRATION_HOSTS[id];
+  if (host) return <AgentLogo agent={host} className="opacity-60 group-data-[state=active]/tab:opacity-100" />;
+  const Icon = INTEGRATION_ICONS[id];
+  if (!Icon) return null;
+
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sapien-surface text-sapien-foreground/60 ring-[0.75px] ring-white/8 ring-inset group-data-[state=active]/tab:bg-accent/15 group-data-[state=active]/tab:text-accent"
+    >
+      <Icon className="size-3.5" strokeWidth={1.75} />
+    </span>
+  );
+}
+
+/** A muted note above or below the code: prose, so it wraps instead of scrolling with the code. */
+function SnippetNote({ text }: { text?: string }) {
+  return text ? (
+    <p className="shrink-0 font-sapien-mono text-[13px] leading-[1.45] tracking-[-0.03em] text-sapien-foreground/50">
+      {text}
+    </p>
+  ) : null;
+}
+
 function TerminalSnippet({ snippet }: { snippet: IntegrationSnippet }) {
   return (
     <pre className="w-max min-w-full font-sapien-mono text-sm leading-[1.7] tracking-[-0.03em] text-sapien-foreground">
       <code className="font-sapien-mono">
-        {snippet.kind === 'commands' ? (
+        {snippet.kind === 'commands' || snippet.kind === 'steps' ? (
           snippet.lines.map((line, index) => (
             <Fragment key={index}>
               {line ? (
                 <>
-                  {/* A command's own line gets the prompt; the indented lines that go on with it don't. */}
-                  {line.startsWith(' ') ? null : (
+                  {/* A command's own line gets the prompt; the indented lines that go on with it, and steps, don't. */}
+                  {snippet.kind === 'steps' || line.startsWith(' ') ? null : (
                     <span aria-hidden="true" className="text-sapien-foreground/50 select-none">
                       ${' '}
                     </span>
@@ -95,7 +139,7 @@ function TerminalSnippet({ snippet }: { snippet: IntegrationSnippet }) {
           <>
             <span className="text-sapien-foreground/50 select-none">
               {snippet.file}
-              {'\n\n'}
+              {'\n'}
             </span>
             {snippet.code}
           </>

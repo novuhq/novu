@@ -358,7 +358,7 @@ describe('runInvite with --via', () => {
     const result = await runInvite('carol', { via: 'email', email: 'new@acme.com', async: true });
 
     expect(result.alreadyLinked).toBe(false);
-    expect(stdoutText()).toContain('A different address is already verified');
+    expect(stdoutText()).toContain('A different address is already confirmed');
   });
 
   it('does not send again when the address given is the one already verified', async () => {

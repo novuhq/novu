@@ -30,7 +30,9 @@ export const ACTIVITY_KINDS = [
   'signal.other',
   'tool_approval_request',
   'tool_approval_decision',
+  'tool_call',
   'tool_result',
+  'tool_result.record',
   'mcp_connection_request',
   'mcp_connection_result',
   'human_interaction_request',
@@ -61,7 +63,9 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_approval_decision: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
+  tool_call: ['operator_timeline'],
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
+  'tool_result.record': ['operator_timeline'],
   mcp_connection_request: ['client_events', 'operator_timeline'],
   mcp_connection_result: ['client_events', 'operator_timeline'],
   human_interaction_request: ['agent_handoff', 'operator_timeline'],
@@ -139,8 +143,14 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'tool_approval_decision':
       return { type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION };
 
+    case 'tool_call':
+      return { type: ConversationActivityTypeEnum.TOOL_CALL };
+
     case 'tool_result':
-      return { type: ConversationActivityTypeEnum.TOOL_RESULT };
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': { $ne: true } };
+
+    case 'tool_result.record':
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': true };
 
     case 'mcp_connection_request':
       return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };

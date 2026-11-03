@@ -87,6 +87,48 @@ describe('ActivityRetentionService', () => {
     }
   });
 
+  it('accepts a daylight-saving week when the server clock is later than the client stamp', async () => {
+    const clientNow = new Date('2026-10-30T12:00:00.000Z');
+    const hourMs = 60 * 60 * 1000;
+    const weekMs = 7 * 24 * hourMs;
+    const after = new Date(clientNow.getTime() - weekMs - hourMs);
+    const serverNow = new Date(clientNow.getTime() + 5 * 1000);
+
+    sandbox.useFakeTimers(serverNow);
+    stubOrganization(ApiServiceLevelEnum.PRO);
+
+    const range = await service.resolve({
+      organizationId: 'org-123',
+      after: after.toISOString(),
+      before: clientNow.toISOString(),
+    });
+
+    expect(range.after).to.equal(after.toISOString());
+  });
+
+  it('rejects a start past the daylight-saving buffer and request delay', async () => {
+    const serverNow = new Date('2026-10-30T12:00:05.000Z');
+    const hourMs = 60 * 60 * 1000;
+    const weekMs = 7 * 24 * hourMs;
+    const requestDelayMs = 60 * 1000;
+    const rejectedAfter = new Date(serverNow.getTime() - weekMs - hourMs - requestDelayMs - 1);
+
+    sandbox.useFakeTimers(serverNow);
+    stubOrganization(ApiServiceLevelEnum.PRO);
+
+    try {
+      await service.resolve({
+        organizationId: 'org-123',
+        after: rejectedAfter.toISOString(),
+        before: serverNow.toISOString(),
+      });
+      expect.fail('Expected the range to exceed retention');
+    } catch (error) {
+      expect(error).to.be.instanceOf(HttpException);
+      expect((error as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
+    }
+  });
+
   it('preserves the 30-day legacy free retention policy', async () => {
     const now = new Date('2026-09-24T12:00:00.000Z');
     sandbox.useFakeTimers(now);

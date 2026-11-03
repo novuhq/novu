@@ -1,7 +1,11 @@
 import { logoAssets } from '@/data/sapien-assets';
+import { BOOK_DEMO_HREF } from '@/data/sapien-scale';
+import { INBOX_PATH } from '@/lib/inbox';
 import { PACKAGE_URL, SOURCE_URL } from '@/lib/seo';
 
+/** The setup command on /sapien. `npx` runs it without a global install. */
 export const SETUP_COMMAND = 'npx @agentinbox/cli setup';
+
 export type NavigationItem = {
   label: string;
   href: string;
@@ -16,8 +20,20 @@ export const NAVIGATION: readonly NavigationItem[] = [
   },
 ];
 
-/** The header's links and its small-screen menu: the footer's, then the way into the dashboard. */
-export const HEADER_NAVIGATION: readonly NavigationItem[] = [...NAVIGATION, { label: 'sign in', href: '/sign-in' }];
+/**
+ * The header's links and its small-screen menu: the footer's without npm, a demo booking, then the
+ * dashboard. npm stays in the footer. Visit Dashboard opens the inbox; someone who is signed out
+ * signs in on the way, and someone who is already signed in lands on the inbox.
+ */
+export const HEADER_NAVIGATION: readonly NavigationItem[] = [
+  { label: 'for robots', href: '/', variant: 'outline' },
+  {
+    label: 'github',
+    href: SOURCE_URL,
+  },
+  { label: 'book a demo', href: BOOK_DEMO_HREF },
+  { label: 'Visit Dashboard', href: INBOX_PATH },
+];
 
 export const CUSTOMER_LOGOS = [
   { name: 'teamcore', asset: logoAssets.imgLogo },

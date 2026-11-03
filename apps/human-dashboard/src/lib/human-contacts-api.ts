@@ -26,6 +26,11 @@ export type Contact = {
   status: ContactStatus;
   /** The account owner's own contact: the "You" row. */
   isOperator: boolean;
+  /**
+   * Whether the agent listens to them: their messages start its hosts (`agentinbox listen`). Always to the
+   * operator; to anyone else once the operator turns it on here.
+   */
+  listenTo: boolean;
   /** The newest invite link that still works. Missing when none was sent, or it expired or was declined. */
   invite?: ContactInvite;
   createdAt: string;
@@ -89,10 +94,11 @@ export type EmailLinkSent = {
   retryAfterSeconds: number;
 };
 
-type ApiContact = Omit<Contact, 'name' | 'channels' | 'status' | 'isOperator'> & {
+type ApiContact = Omit<Contact, 'name' | 'channels' | 'status' | 'isOperator' | 'listenTo'> & {
   channels?: ContactChannel[];
   status?: ContactStatus;
   isOperator?: boolean;
+  listenTo?: boolean;
 };
 
 /** One page of the operator's contacts. */
@@ -117,6 +123,22 @@ export async function listContactsPage(
 export function removeContact(account: HumanAccount, contactId: string): Promise<RemovedContact> {
   return requestForAccount<RemovedContact>(account, `/v1/human/contacts/${encodeURIComponent(contactId)}`, {
     method: 'DELETE',
+  });
+}
+
+/**
+ * Turns a contact's "Listen to" switch on or off: whether a message from them may start one of the agent's hosts.
+ * Only the dashboard may (a host holding the key gets 403 `dashboard_only`), and the operator's own contact has
+ * no switch (400 `contact_is_operator`): the agent always listens to them.
+ */
+export function setContactListenTo(
+  account: HumanAccount,
+  contactId: string,
+  listenTo: boolean
+): Promise<{ id: string; listenTo: boolean }> {
+  return requestForAccount(account, `/v1/human/contacts/${encodeURIComponent(contactId)}`, {
+    method: 'PATCH',
+    body: { listenTo },
   });
 }
 
@@ -152,6 +174,8 @@ function toContact(contact: ApiContact): Contact {
     ...(contact.emailVerification ? { emailVerification: contact.emailVerification } : {}),
     status: contact.status === 'joined' ? 'joined' : 'invite_sent',
     isOperator: contact.isOperator === true,
+    // An older API doesn't say; the agent always listens to the operator.
+    listenTo: contact.isOperator === true || contact.listenTo === true,
     invite: contact.invite,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,

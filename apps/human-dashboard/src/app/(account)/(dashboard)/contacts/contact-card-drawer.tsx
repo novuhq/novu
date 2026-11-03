@@ -478,13 +478,16 @@ function EmailStatus({ status }: { status: 'verified' | 'pending' | 'unverified'
 
 /**
  * The line under the channels: the one the agent tries first, and the one it falls back on while that one
- * isn't connected (the channel connected first). One channel needs no order.
+ * isn't connected (the chat app connected first, with email last, as the API picks). One channel needs no order.
  */
 function describeOrder(agentHandle: string, contact: Contact, defaultVia?: ContactChannelVia): string {
   const agent = agentHandle.charAt(0).toUpperCase() + agentHandle.slice(1);
   const who = contact.isOperator ? 'you' : contact.name;
   const byConnection = [...contact.channels].sort(
-    (a, b) => Date.parse(a.connectedAt ?? '') - Date.parse(b.connectedAt ?? '') || 0
+    (a, b) =>
+      Number(a.via === 'email') - Number(b.via === 'email') ||
+      Date.parse(a.connectedAt ?? '') - Date.parse(b.connectedAt ?? '') ||
+      0
   );
   const first = byConnection.find((channel) => channel.via === defaultVia) ?? byConnection[0];
   const then = byConnection.find((channel) => channel !== first);

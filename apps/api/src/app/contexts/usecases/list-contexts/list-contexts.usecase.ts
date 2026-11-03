@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds } from '@novu/dal';
+import { ContextEntity, ContextRepository, EnforceEnvOrOrgIds, type FilterQuery } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 import { ListContextsCommand } from './list-contexts.command';
 
 @Injectable()

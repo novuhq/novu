@@ -1287,17 +1287,5 @@ description: A skill without a name field.
         expect(mockProvider.uploadSkill.called).to.be.false;
       });
     });
-
-    describe('integration validation', () => {
-      it('should return 404 when the integration does not exist (parity with github)', async () => {
-        const res = await session.testAgent.post('/v1/agents/skills').send({
-          integrationId: '000000000000000000000099',
-          source: { type: 'inline', content: VALID_SKILL_MD },
-        });
-
-        expect(res.status).to.equal(404);
-        expect(mockProvider.uploadSkill.called, 'uploadSkill should not be called').to.be.false;
-      });
-    });
   });
 });

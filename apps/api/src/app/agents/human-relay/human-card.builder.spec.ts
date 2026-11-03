@@ -2,7 +2,13 @@ import type { HumanInteractionEntity } from '@novu/dal';
 import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import type { CardElement } from 'chat';
-import { buildPendingContent, buildResolvedContent } from './human-card.builder';
+import {
+  buildDisambiguationCard,
+  buildPendingContent,
+  buildPendingDeliveryContent,
+  buildResolvedContent,
+  type HumanEmailCard,
+} from './human-card.builder';
 
 const SLACK_HEADER_MAX = 150;
 
@@ -277,5 +283,100 @@ describe('human-card.builder prompt layout', () => {
     expect(last.content).to.include('✅');
     expect(last.content).to.include('Approved');
     expect(last.content).to.include('alice');
+  });
+});
+
+describe('human-card.builder email cards', () => {
+  function layoutCardOf(content: { card?: CardElement }): HumanEmailCard {
+    return (requireCard(content.card) as CardElement & { layoutCard: HumanEmailCard }).layoutCard;
+  }
+
+  function buttonsOf(card: CardElement): Array<{ id: string; label: string }> {
+    const actions = card.children.find((child) => child.type === 'actions') as
+      | { children: Array<{ id: string; label: string }> }
+      | undefined;
+
+    return actions?.children ?? [];
+  }
+
+  it('leaves the card that chat apps and other agents get exactly as it was', () => {
+    const choose = buildPendingContent(
+      interaction({
+        kind: HumanInteractionKindEnum.CHOOSE,
+        content: {
+          cardChrome: {
+            title: 'Which time?',
+            options: [
+              { id: 'a', label: 'Tue 10:00' },
+              { id: 'b', label: 'Wed 14:30' },
+            ],
+          },
+        },
+      })
+    );
+
+    expect(buttonsOf(requireCard(choose.card)).map((button) => button.label)).to.deep.equal(['A', 'B']);
+  });
+
+  it('puts Approve first and marks the kind for email', () => {
+    const card = layoutCardOf(buildPendingContent(interaction({ card: { title: 'Deploy?' } })));
+
+    expect(card.humanKind).to.equal(HumanInteractionKindEnum.APPROVE);
+    expect(buttonsOf(card).map((button) => button.label)).to.deep.equal(['Approve', 'Deny']);
+  });
+
+  it('shows the whole option on each email button', () => {
+    const card = layoutCardOf(
+      buildPendingContent(
+        interaction({
+          kind: HumanInteractionKindEnum.CHOOSE,
+          content: {
+            cardChrome: {
+              title: 'Which time?',
+              options: [
+                { id: 'a', label: 'Tue 10:00' },
+                { id: 'b', label: 'Wed 14:30' },
+              ],
+            },
+          },
+        })
+      )
+    );
+
+    expect(buttonsOf(card).map((button) => button.label)).to.deep.equal(['Tue 10:00', 'Wed 14:30']);
+    expect(buttonsOf(card)[0]?.id).to.equal('human:hi_1:opt:a');
+  });
+
+  it('drops the chat hints from a question', () => {
+    const card = layoutCardOf(
+      buildPendingContent(interaction({ kind: HumanInteractionKindEnum.ASK, card: { title: 'What should it say?' } }))
+    );
+
+    expect(card.title).to.equal('What should it say?');
+    expect(card.children).to.deep.equal([]);
+  });
+
+  it('keeps a whole long title, which only chat apps have to cut', () => {
+    const title = 'x'.repeat(SLACK_HEADER_MAX + 20);
+    const card = layoutCardOf(buildPendingContent(interaction({ card: { title } })));
+
+    expect(card.title).to.equal(title);
+  });
+
+  it('marks a posted card with the kind of its interaction', () => {
+    const posted: CardElement = { type: 'card', title: 'Custom', children: [] };
+    const card = layoutCardOf(buildPendingDeliveryContent(interaction({ content: { card: posted } })));
+
+    expect(card).to.include({ title: 'Custom', humanKind: HumanInteractionKindEnum.APPROVE });
+  });
+
+  it('gives "which question" the whole questions on email', () => {
+    const asks = [
+      interaction({ identifier: 'hi_1', kind: HumanInteractionKindEnum.ASK, card: { title: 'First?' } }),
+      interaction({ identifier: 'hi_2', kind: HumanInteractionKindEnum.ASK, card: { title: 'Second?' } }),
+    ];
+    const card = layoutCardOf({ card: buildDisambiguationCard(asks, 'answer-1') });
+
+    expect(buttonsOf(card).map((button) => button.label)).to.deep.equal(['First?', 'Second?']);
   });
 });

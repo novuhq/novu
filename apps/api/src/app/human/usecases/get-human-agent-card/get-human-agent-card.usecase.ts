@@ -16,7 +16,7 @@ import {
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { HumanAgentCardResult } from '../../dtos/human-agent-card.dto';
-import { agentPictureUrl } from '../../services/human-agent-picture.service';
+import { agentPictureUrl } from '../../services/agent-picture-url';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { HumanTelegramBotService } from '../../services/human-telegram-bot.service';
 import { resolveRelayAgentName } from '../../services/relay-owner-name';

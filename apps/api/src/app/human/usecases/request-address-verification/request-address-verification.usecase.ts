@@ -188,7 +188,6 @@ export class RequestAddressVerification {
           subscriberId: params.subscriberId,
           address: params.address,
           token: issued.token,
-          expiresAt: issued.expiresAt,
           outbound,
           claimUrl,
         });

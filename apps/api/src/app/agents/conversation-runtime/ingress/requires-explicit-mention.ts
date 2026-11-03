@@ -245,11 +245,55 @@ function collectSlackUserElements(value: unknown, ids: string[]): void {
   }
 }
 
-function slackMentionTexts(message: Message): string[] {
-  const texts: string[] = [];
+type SlackProse = string & { readonly __slackProse: unique symbol };
+
+function maskSlackCodeSpans(text: string): SlackProse {
+  let result = '';
+  let index = 0;
+  const end = text.length;
+
+  while (index < end) {
+    const codeEnd = findSlackCodeEnd(text, index, end);
+
+    if (codeEnd > index) {
+      result += ' ';
+      index = codeEnd;
+      continue;
+    }
+
+    result += text[index];
+    index += 1;
+  }
+
+  return result as SlackProse;
+}
+
+function findSlackCodeEnd(text: string, index: number, end: number): number {
+  if (text[index] !== '`') {
+    return index;
+  }
+
+  const fence = text.startsWith('```', index);
+  const marker = fence ? '```' : '`';
+  const start = index + marker.length;
+  const close = text.indexOf(marker, start);
+
+  if (close === -1 || close >= end) {
+    return index;
+  }
+
+  if (!fence && text.slice(start, close).includes('\n')) {
+    return index;
+  }
+
+  return close + marker.length;
+}
+
+function slackMentionTexts(message: Message): SlackProse[] {
+  const texts: SlackProse[] = [];
 
   if (typeof message.text === 'string' && message.text.length > 0) {
-    texts.push(message.text);
+    texts.push(maskSlackCodeSpans(message.text));
   }
 
   const raw = asRecord(message.raw);
@@ -257,7 +301,7 @@ function slackMentionTexts(message: Message): string[] {
   const rawText = event?.text;
 
   if (typeof rawText === 'string' && rawText.length > 0) {
-    texts.push(rawText);
+    texts.push(maskSlackCodeSpans(rawText));
   }
 
   return texts;

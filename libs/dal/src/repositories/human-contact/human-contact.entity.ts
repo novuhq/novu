@@ -73,6 +73,13 @@ export class HumanContactEntity {
   /** The account owner's own contact. A relay agent has at most one. */
   isOperator?: boolean;
 
+  /**
+   * Whether the agent listens to this contact: a message from them may start one of its hosts (`agentinbox listen`).
+   * Only the operator turns it on, on the dashboard; missing reads as off. It always listens to the operator,
+   * whatever this says.
+   */
+  listenTo?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

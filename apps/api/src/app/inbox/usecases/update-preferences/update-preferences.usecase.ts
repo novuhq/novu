@@ -16,6 +16,7 @@ import {
 import {
   BaseRepository,
   EnforceEnvOrOrgIds,
+  type FilterQuery,
   NotificationTemplateEntity,
   PreferencesDBModel,
   PreferencesRepository,
@@ -36,7 +37,6 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,

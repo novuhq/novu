@@ -143,7 +143,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
       expect((err as NotFoundException).message).to.equal(
-        'Human "alice" has no verified email address. Run `human contact invite alice --via email`.'
+        'Human "alice" has no confirmed email address. Run `human contact invite alice --via email`.'
       );
     }
   });
@@ -169,7 +169,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).to.be.instanceOf(NotFoundException);
-      expect((err as NotFoundException).message).to.include('awaiting verification');
+      expect((err as NotFoundException).message).to.include('waiting to be confirmed');
       expect((err as NotFoundException).message).to.include('a***@example.com');
     }
   });
@@ -643,6 +643,22 @@ describe('pickDefaultTarget', () => {
 
   it('puts email, which has no connect time, after chat channels', () => {
     expect(pickDefaultTarget([email, telegram])).to.equal(telegram);
+  });
+
+  it('puts email after chat channels even when it was verified first', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram])).to.equal(telegram);
+  });
+
+  it('uses email when nothing else is connected', () => {
+    expect(pickDefaultTarget([email])).to.equal(email);
+  });
+
+  it('falls back on a chat channel when the saved default is gone, whatever email’s date', () => {
+    const verifiedAtSignUp = { ...email, connectedAt: '2026-09-01T10:00:00.000Z' };
+
+    expect(pickDefaultTarget([verifiedAtSignUp, telegram], HumanChannelViaEnum.SLACK)).to.equal(telegram);
   });
 
   it('uses the saved default even when it is email', () => {

@@ -19,6 +19,7 @@ import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversa
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  FindToolCallParams,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
@@ -31,9 +32,11 @@ import type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  RecordToolResultParams,
   UpdateInboundMessageParams,
 } from './agent-conversation.types';
 // biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
@@ -43,6 +46,7 @@ import {
   type PersistRunLifecycleParams,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
+import { toolResultData } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -476,6 +480,57 @@ export class ConversationActivityLedger {
     );
   }
 
+  async persistToolCall(params: PersistToolCallParams): Promise<void> {
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...params,
+        identifier: `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: `Called ${params.toolName}`,
+        toolData: {
+          toolCallId: params.toolCallId,
+          toolName: params.toolName,
+          ...(params.input ? { input: params.input } : {}),
+          ...(params.mcpServerName ? { mcpServerName: params.mcpServerName } : {}),
+        },
+      },
+      ConversationActivityTypeEnum.TOOL_CALL,
+      'none'
+    );
+  }
+
+  /**
+   * Looks across runs: a managed tool that needed approval is called in one run and returns its result
+   * in the run Thalamus starts after the approval.
+   */
+  async findToolCallName(params: FindToolCallParams): Promise<string | undefined> {
+    const call = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        _conversationId: params.conversationId,
+        type: ConversationActivityTypeEnum.TOOL_CALL,
+        'toolData.toolCallId': params.toolCallId,
+      },
+      ['toolData']
+    );
+
+    return call?.toolData?.toolName;
+  }
+
+  async recordToolResult(params: RecordToolResultParams): Promise<void> {
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...params,
+        identifier: `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: params.modelFacing?.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+        toolData: toolResultData(params),
+      },
+      ConversationActivityTypeEnum.TOOL_RESULT,
+      'none'
+    );
+  }
+
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
     const sequence = await this.resolveEventSequence(
       params.conversationId,
@@ -803,6 +858,7 @@ export class ConversationActivityLedger {
             ...(params.status ? { status: params.status } : {}),
             ...(params.optionId ? { optionId: params.optionId } : {}),
             ...(params.text ? { text: params.text } : {}),
+            ...(params.answeredElsewhere ? { answeredElsewhere: true } : {}),
           },
         },
         sequence,
@@ -836,7 +892,9 @@ export class ConversationActivityLedger {
 
   private async persistAndEmitClientEvent(
     context: ConversationActivityContext,
-    params: PersistAgentActivityParams,
+    params: PersistAgentActivityParams & {
+      toolData?: ConversationActivityToolData;
+    },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview' | 'none'
   ): Promise<ConversationActivityEntity> {

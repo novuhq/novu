@@ -1,3 +1,4 @@
+import type { BrandChannel } from '@/components/sapien/brand-logo';
 import type { SectionAssets } from '@/data/sapien-assets';
 
 export const heroAssets = {
@@ -66,22 +67,25 @@ export const heroAssets = {
   },
 } satisfies SectionAssets;
 
+/**
+ * One sentence on two lines: "Get your AI agent on [channel]" in the sans, the channel in the original
+ * title's pill with its logo, then `accent` in orange Redaction italic.
+ */
 export const HERO_TITLE = {
-  lead: 'The',
-  highlight: 'E-mail',
-  rest: 'inbox',
-  accent: 'for AI agents',
+  lead: 'Get your AI agent on',
+  accent: 'with everyone around you',
 } as const;
 
-/** Channels the title's pill cycles through, starting with the Figma state. */
-export const HERO_TITLE_WORDS = [HERO_TITLE.highlight, 'Telegram', 'Slack'] as const;
+/** Email first, then the same cycle the title used to run (Slack, Telegram, and back). */
+export const HERO_CHANNELS = ['email', 'slack', 'telegram'] as const satisfies readonly BrandChannel[];
 
-/** Each title word stays in the pill for this long before the next one swaps in. */
-export const HERO_WORD_INTERVAL = 3000;
+/** How long each channel stays before the next one replaces it. */
+export const HERO_SWAP_INTERVAL = 5000;
 
+// Draft copy — not in Figma. The CLI's own summary: people write in, the agent works it from one inbox.
 export const HERO_DESCRIPTION = [
-  'A dedicated inbox for each agent, so it can start conversations,',
-  'handle replies, get emails, and keep context across every thread.',
+  'Your team, family and customers write to it.',
+  'It reads, asks and answers, all from one inbox.',
 ] as const;
 
 export const HERO_COMMAND_LABEL = 'Hero setup command';
@@ -89,7 +93,7 @@ export const HERO_COMMAND_LABEL = 'Hero setup command';
 export const HERO_FIGURE_LABEL = 'Example agent identity cards';
 // Draft copy — not in Figma
 export const HERO_FIGURE_DESCRIPTION =
-  'Three example cards rotate in a stack held by two robot arms: a business card for ops-agent with a verified email address, phone number, Telegram and Slack handle; an Agent ID for atlas-northwind, a personal assistant working for Maya Chen; and sales-agent on a call with a customer.';
+  'Three example cards rotate in a stack held by two robot arms: a business card for ops-agent with a verified email address, phone number, Telegram and Slack handle; an Agent ID for atlas-northwind, a personal assistant working for Maya Chen, with its email, Telegram and Slack addresses; and sales-agent on a call with a customer.';
 export const HERO_FIGURE_CAPTION = 'fig. 01';
 export const HERO_FIGURE_STATE = { playing: 'dithering', paused: 'paused' };
 
@@ -99,7 +103,7 @@ export const HERO_CARD_INTERVAL = 6000;
 export type HeroRelation = Readonly<{ verb: string; object: string }>;
 
 export const HERO_RELATIONS = [
-  { verb: 'presents', object: 'identity' },
+  { verb: 'hands out', object: 'business card' },
   { verb: 'works for', object: 'human' },
   { verb: 'calls', object: 'customer' },
 ] as const satisfies readonly HeroRelation[];
@@ -108,13 +112,14 @@ export const BUSINESS_CARD = {
   title: 'Business Card',
   status: 'Online',
   name: 'ops-agent',
-  role: 'AI agent · Ops',
+  // Two-way is the point of the card: people reach the agent, and it reaches them.
+  role: 'They reach it. It reaches them.',
   rows: [
     // Figma's trailing "\r" renders as a non-breaking space before the tick.
-    { label: 'Email', value: 'ops-agent@agentinbox.md ' },
-    { label: 'Phone', value: '+1 (415) 555-0142' },
-    { label: 'Telegram', value: '@ops_agent' },
-    { label: 'Slack', value: '@ops_agent' },
+    { label: 'Email', channel: 'email', value: 'ops-agent@agentinbox.md ' },
+    { label: 'Phone', channel: null, value: '+1 (415) 555-0142' },
+    { label: 'Telegram', channel: 'telegram', value: '@ops_agent' },
+    { label: 'Slack', channel: 'slack', value: '@ops_agent' },
   ],
   mrz: ['AGENT<<OPS<AGENT<<<<<<<<<<<<<<<<<<<<<<', 'AGENTINBOX<MD<<14155550142<<<<<<<<<<<<'],
 } as const;
@@ -127,7 +132,12 @@ export const AGENT_ID_CARD = {
     { label: 'Role', value: 'Personal assistant' },
     { label: 'Works for', value: 'Maya Chen' },
   ],
-  channels: ['email', 'imessage', 'slack'],
+  // Draft copy — not in Figma
+  channels: [
+    { channel: 'email', address: 'atlas@agentinbox.md' },
+    { channel: 'telegram', address: '@atlas_northwind_bot' },
+    { channel: 'slack', address: '@atlas' },
+  ],
   mrz: ['AGENT<<ATLAS<<<<<<<<<<<<<<<<<<<<<<<<<<<', 'AGENTINBOX<MD<<PA<<0427<<<<<<<<<<<<<'],
 } as const;
 

@@ -1,4 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import {
+  type SafeOutboundRequestOptions,
+  type SafeOutboundResponse,
+  safeOutboundJsonRequest,
+  safeOutboundRequest,
+} from '@novu/shared/utils/safe-outbound-http';
+import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import got, {
   CacheError,
   HTTPError,
@@ -14,13 +21,6 @@ import got, {
   UploadError,
 } from 'got';
 import { PinoLogger } from '../../logging';
-import {
-  type SafeOutboundRequestOptions,
-  type SafeOutboundResponse,
-  SsrfBlockedError,
-  safeOutboundJsonRequest,
-  safeOutboundRequest,
-} from '../../utils/ssrf-url-validation';
 import {
   HttpClientError,
   HttpClientErrorType,
@@ -225,6 +225,15 @@ export class HttpClientService {
       parsedBody = response.body.toString('utf8');
     } else {
       const jsonResponse = await safeOutboundJsonRequest<T>(safeOptions);
+
+      if (jsonResponse.statusCode < 400 && !jsonResponse.isJson) {
+        throw new HttpClientError({
+          type: HttpClientErrorType.PARSE_ERROR,
+          message: `Response code ${jsonResponse.statusCode}, but the body is not valid JSON`,
+          statusCode: jsonResponse.statusCode,
+        });
+      }
+
       response = {
         statusCode: jsonResponse.statusCode,
         statusMessage: jsonResponse.statusMessage,

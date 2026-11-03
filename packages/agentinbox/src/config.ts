@@ -25,18 +25,19 @@ export interface CliConfig {
    * `connect` ran in didn't say which host it was. Requests name it while the shell doesn't say either.
    */
   host?: HostId;
+  /**
+   * This computer's own random id, made the first time `listen` runs here. The API knows which computer keeps
+   * an agent listening by it, so it stays whatever writes the config anew (see `saveConfig`).
+   */
+  computerId?: string;
 }
 
 /**
- * The Agent Inbox site (`apps/human-dashboard`). It hosts the credential landing pages (`/connect#<token>`
- * for Telegram and Slack), and its `/api` forwards to Novu Cloud's API, so people only ever see this address.
- * The pages are only used with the default API: a self-hosted or local API falls back to the URL the server
- * itself returns (that deployment's own dashboard page).
+ * The API the CLI talks to unless told otherwise: the `/api` of the Agent Inbox site (`apps/human-dashboard`), which
+ * forwards to Novu Cloud's API, so people only ever see this address. Any other API URL is also a site's `/api`,
+ * local or self-hosted: the routes the CLI calls exist only there, not on Novu's API itself.
  */
-export const SETUP_PAGE_ORIGIN = 'https://www.agentinbox.md';
-
-/** The API the CLI talks to unless told otherwise: the Agent Inbox API on agentinbox.md. */
-export const DEFAULT_API_URL = `${SETUP_PAGE_ORIGIN}/api`;
+export const DEFAULT_API_URL = 'https://www.agentinbox.md/api';
 
 /** The relay agent the API sets up by default. It is an API name, not shown to people. */
 export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
@@ -68,13 +69,18 @@ export function loadConfig(): CliConfig | null {
 
 export function saveConfig(config: CliConfig): void {
   const path = configPath();
+  // `setup`, `login` and `connect` write the config anew, but the computer is still the same one, and the
+  // lease it may hold is under its id.
+  const computerId = config.computerId ?? loadConfig()?.computerId;
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  writeFileSync(path, `${JSON.stringify(computerId ? { ...config, computerId } : config, null, 2)}\n`, {
+    mode: 0o600,
+  });
 }
 
 /**
  * The API that `setup` and `login` save credentials for: `--api-url`, then INBOX_API_URL,
- * then the API the saved config already belongs to, so a later run keeps using the same region.
+ * then the API the saved config already belongs to, so a later run keeps using it.
  */
 export function resolveTargetApiUrl(apiUrlFlag: string | undefined, saved: CliConfig | null): string {
   return (apiUrlFlag || process.env.INBOX_API_URL?.trim() || saved?.apiUrl || DEFAULT_API_URL).replace(/\/$/, '');

@@ -1,4 +1,3 @@
-import * as SsrfModule from '@novu/application-generic/build/main/utils/ssrf-url-validation';
 import {
   AgentMcpServerRepository,
   IntegrationRepository,
@@ -12,6 +11,7 @@ import {
   McpConnectionScopeEnum,
   McpConnectionStatusEnum,
 } from '@novu/shared';
+import * as SsrfModule from '@novu/shared/utils/safe-outbound-http';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';

@@ -3,33 +3,31 @@ import '@/styles/home.css';
 import type { Viewport } from 'next';
 import localFont from 'next/font/local';
 import Link from 'next/link';
-import { ExitCodes, Flags } from '@/components/home/command-reference';
-import {
-  AsciiRule,
-  CommandLines,
-  DocSection,
-  FlagText,
-  InlineCode,
-  textWidth,
-  WithPackage,
-  WordFlow,
-} from '@/components/home/documentation';
+import { Fragment } from 'react';
+import { Flags } from '@/components/home/command-reference';
+import { AsciiRule, CommandLines, DocSection, FlagText, textWidth } from '@/components/home/documentation';
 import { HomeArtwork } from '@/components/home/home-artwork';
 import { HowItWorks } from '@/components/home/how-it-works';
+import { InstallTabs } from '@/components/home/install-tabs';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
+import { ProductHuntBanner } from '@/components/site/product-hunt-banner';
 import {
-  HOME_AUTH,
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
   HOME_HOSTS,
   HOME_INTRODUCTION,
-  HOME_INVITE_DESCRIPTION,
   HOME_INVITES,
   HOME_LINKS,
-  HOME_SETUP,
-  HOME_SETUP_DESCRIPTION,
-  HOME_USAGE,
-  INSTALL_COMMAND,
+  HOME_NOTES,
+  HOME_QUICKSTART,
+  HOME_QUICKSTART_AGENT_NOTE,
+  HOME_READY,
+  HOME_TITLE,
+  HOME_TRUST_AFTER,
+  HOME_TRUST_BEFORE,
+  HOME_USES,
+  HOME_WORDMARK,
+  INSTALL_OPTIONS,
 } from '@/data/home';
 import { pageMetadata } from '@/lib/seo';
 
@@ -72,6 +70,7 @@ export default function HomePage() {
       <HomeArtwork />
       <main className="home-document">
         <header className="home-introduction">
+          <ProductHuntBanner tone="paper" />
           <div className="home-human-banner">
             <AsciiRule />
             <p>
@@ -79,7 +78,7 @@ export default function HomePage() {
                 |
               </span>
               <span>
-                Human? Visit <Link href="/sapien">agentinbox.md/sapien</Link> for the human-readable version.
+                Human? Visit <Link href="/sapien">agentinbox.md/sapien</Link> for the human version.
               </span>
               <span aria-hidden="true" className="home-banner-pipe">
                 |
@@ -88,28 +87,31 @@ export default function HomePage() {
             <AsciiRule />
           </div>
           <h1>
-            agentinbox.md
+            {HOME_WORDMARK}
             <br />
-            The inbox API for agents
+            {HOME_TITLE}
           </h1>
           <p className="home-description">
-            {HOME_INTRODUCTION[0]}
-            <br />
-            <WithPackage text={HOME_INTRODUCTION[1]} />
+            {HOME_INTRODUCTION.map((line, index) => (
+              <Fragment key={line}>
+                {index > 0 ? <br /> : null}
+                {line}
+              </Fragment>
+            ))}
           </p>
           <AsciiRule />
         </header>
 
-        <DocSection anchor="install" title="INSTALL">
-          <CommandLines commands={[INSTALL_COMMAND]} />
-        </DocSection>
-        <DocSection anchor="setup" title="SETUP" subtitle="once, by you or by your agent">
+        <DocSection anchor="quickstart" title="QUICKSTART">
           <p>
-            <FlagText text={HOME_SETUP_DESCRIPTION} />
+            {HOME_QUICKSTART_AGENT_NOTE.beforeLink}
+            <Link href={HOME_QUICKSTART_AGENT_NOTE.linkHref}>{HOME_QUICKSTART_AGENT_NOTE.linkLabel}</Link>
+            {HOME_QUICKSTART_AGENT_NOTE.afterLink}
           </p>
-          <CommandLines commands={HOME_SETUP} />
+          <InstallTabs options={INSTALL_OPTIONS} />
+          <CommandLines commands={HOME_QUICKSTART} />
         </DocSection>
-        <DocSection anchor="hosts" title="HOSTS" subtitle="step by step, wherever your agent runs">
+        <DocSection anchor="hosts" title="HOSTS" subtitle={HOME_NOTES.hosts}>
           <nav aria-label="Setup for each host" className="home-links">
             {HOME_HOSTS.map((item, index) => (
               <span key={item.label}>
@@ -129,37 +131,46 @@ export default function HomePage() {
             ))}
           </nav>
         </DocSection>
-        <DocSection anchor="usage" title="USAGE" subtitle="forever after, by any agent on the machine">
-          <CommandLines commands={HOME_USAGE} />
-        </DocSection>
         <DocSection anchor="how-it-works" title="HOW IT WORKS">
           <HowItWorks />
         </DocSection>
-        <DocSection anchor="exit-codes" title="EXIT CODES" subtitle="stable contract for agents">
-          <ExitCodes />
+        <DocSection anchor="when" title="FOR">
+          <ul className="home-bullets">
+            {HOME_USES.map((item) => (
+              <li key={item.title}>
+                <span>
+                  <span className="home-use-title">{item.title}.</span> {item.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </DocSection>
+        <DocSection anchor="security" title="SECURITY">
+          <ul className="home-bullets">
+            {HOME_READY.map((item) => (
+              <li key={item.title}>
+                <span>
+                  <span className="home-use-title">{item.title}.</span> {item.text}
+                </span>
+              </li>
+            ))}
+          </ul>
         </DocSection>
         <DocSection anchor="flags" title="FLAGS">
           <Flags />
         </DocSection>
-        <DocSection anchor="invite" title="INVITE" subtitle="link another human">
-          <p>
-            <FlagText text={HOME_INVITE_DESCRIPTION} />
-          </p>
-          <CommandLines commands={HOME_INVITES} fenced />
-        </DocSection>
-        <DocSection anchor="contacts" title="CONTACTS" subtitle="who agents can reach">
+        <DocSection anchor="contacts" title="CONTACTS" subtitle={HOME_NOTES.contacts}>
           <p>
             <FlagText text={HOME_CONTACTS_DESCRIPTION} />
           </p>
           <CommandLines commands={HOME_CONTACTS} fenced />
-        </DocSection>
-        <DocSection anchor="auth" title="AUTH">
-          <WordFlow className="home-auth-description">
-            <InlineCode>{`\`${HOME_AUTH.commands[0]}\`,`}</InlineCode>{' '}
-            <InlineCode>{`\`${HOME_AUTH.commands[1]}\``}</InlineCode> and{' '}
-            <InlineCode>{`\`${HOME_AUTH.commands[2]}\``}</InlineCode> store credentials in{' '}
-            <InlineCode>{`${HOME_AUTH.file}.`}</InlineCode> {HOME_AUTH.alternative}
-          </WordFlow>
+          <div className="home-subsection">
+            <h3 className="home-subsection-title">
+              <span aria-hidden="true">* </span>
+              INVITE
+            </h3>
+            <CommandLines commands={HOME_INVITES} fenced />
+          </div>
         </DocSection>
         <DocSection anchor="links" title="LINKS">
           <nav aria-label="Documentation links" className="home-links">
@@ -185,7 +196,9 @@ export default function HomePage() {
           </nav>
         </DocSection>
         <footer className="home-comment">
-          built by <a href="https://novu.co/">novu</a>
+          {HOME_TRUST_BEFORE}
+          <a href="https://novu.co/">Novu</a>
+          {HOME_TRUST_AFTER}
         </footer>
       </main>
     </div>

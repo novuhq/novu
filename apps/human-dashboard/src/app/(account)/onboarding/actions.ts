@@ -58,7 +58,8 @@ export async function checkAddressAction(handle: string): Promise<AddressCheck |
 /**
  * Step 1: makes the agent under the name the operator gave it, at the address they chose. The same
  * call as `setup`, so running it for an agent a terminal made in the meantime only names that one
- * and leaves the mailbox it already has.
+ * and leaves the mailbox it already has. An address Clerk has verified counts as verified at once, so
+ * the agent can email the operator without a confirmation link.
  */
 export async function createInboxAction(input: { name: string; handle: string }): Promise<CreateInboxResult> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
@@ -88,7 +89,12 @@ export async function createInboxAction(input: { name: string; handle: string })
     ({ agentId } = await ensureRelay(
       account,
       { firstName: user.firstName, lastName: user.lastName },
-      { agentName: name, operatorEmail: email, inboxHandle: handle }
+      {
+        agentName: name,
+        operatorEmail: email,
+        operatorEmailVerified: user.primaryEmailAddress?.verification?.status === 'verified',
+        inboxHandle: handle,
+      }
     ));
   } catch (error) {
     console.error('Failed to create the agent from the onboarding', error);
@@ -194,6 +200,17 @@ export async function leaveTestAction(how: 'connect' | 'skip' | 'later'): Promis
   }
 
   refresh();
+}
+
+/** Leaves step 3 for the dashboard while setup is still unfinished. */
+export async function leaveConnectAction(): Promise<void> {
+  const now = new Date().toISOString();
+  await updateOnboardingState((state) => ({
+    ...state,
+    skippedAt: state.skippedAt ?? now,
+  }));
+
+  redirect(DASHBOARD_HOME);
 }
 
 /** Leaves step 4, and with it the onboarding, for a page of the dashboard. */

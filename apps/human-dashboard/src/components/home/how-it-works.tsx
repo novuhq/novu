@@ -1,28 +1,25 @@
-import { Fragment } from 'react';
 import { HOME_HOW_IT_WORKS } from '@/data/home';
 
-import { AsciiBox, AsciiRule, InlineCode } from './documentation';
+import { InlineCode } from './documentation';
 
 export function HowItWorks() {
   return (
-    <div className="home-boxes">
-      <AsciiRule box />
+    <ul className="home-bullets">
       {HOME_HOW_IT_WORKS.map((parts, index) => (
-        <Fragment key={index}>
-          <AsciiBox>
-            {parts.map((part, index) =>
+        <li key={index}>
+          <span>
+            {parts.map((part, partIndex) =>
               typeof part === 'string' ? (
                 part
               ) : (
-                <InlineCode key={index} compact={part.compact} tall={part.tall}>
+                <InlineCode key={partIndex} compact={part.compact} tall={part.tall}>
                   {part.code}
                 </InlineCode>
               )
             )}
-          </AsciiBox>
-          <AsciiRule box />
-        </Fragment>
+          </span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

@@ -8,12 +8,12 @@ import { InboxSection } from '@/components/sapien/inbox';
 import { Integrations } from '@/components/sapien/integrations';
 import { LogoCloud } from '@/components/sapien/logo-cloud';
 import { Scale } from '@/components/sapien/scale';
-import { Security } from '@/components/sapien/security';
 import { SiteFooter } from '@/components/sapien/site-footer';
 import { SiteHeader } from '@/components/sapien/site-header';
 import { UseCases } from '@/components/sapien/use-cases';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
-import { geistMono, inter, ivyPresto } from '@/lib/sapien-fonts';
+import { ProductHuntBanner } from '@/components/site/product-hunt-banner';
+import { geistMono, inter, redaction } from '@/lib/sapien-fonts';
 import { pageMetadata } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
@@ -23,13 +23,13 @@ export const viewport: Viewport = {
   themeColor: '#000000',
 };
 
-/** agentinbox.md for people (agents read `/`), in its own black, Inter, IvyPresto and Geist Mono. */
+/** agentinbox.md for people (agents read `/`), in its own black, Inter, Redaction and Geist Mono. */
 export default function SapienPage() {
   return (
     <div
       className={cn(
         inter.variable,
-        ivyPresto.variable,
+        redaction.variable,
         geistMono.variable,
         'sapien-page min-h-dvh overflow-x-clip bg-sapien-background font-sapien-sans text-sapien-foreground'
       )}
@@ -37,6 +37,7 @@ export default function SapienPage() {
       <SiteStructuredData page="sapien" />
       {/* Mobile Figma frames keep a 10px gutter (340px canvas at 360px). */}
       <div className="mx-auto w-[calc(100%-20px)] max-w-240 sm:w-[calc(100%-2rem)]">
+        <ProductHuntBanner tone="ink" />
         <SiteHeader />
         <main>
           <Hero />
@@ -46,7 +47,6 @@ export default function SapienPage() {
           <UseCases />
           <Integrations />
           <Scale />
-          <Security />
           <Faq />
           <Closing />
         </main>

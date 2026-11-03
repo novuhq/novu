@@ -189,7 +189,7 @@ describe('HumanInteractionActivityRecorder', () => {
     expect(conversationService.persistHumanInteractionRequest.calledOnce).to.equal(true);
   });
 
-  it('records the answer in the thread it came in', async () => {
+  it('records an answer given in another thread in the question’s own thread first, saying so, and there too', async () => {
     const { recorder, conversationService, interaction } = setup();
     const answeredByBob = {
       ...sentToTwo(interaction),
@@ -205,14 +205,24 @@ describe('HumanInteractionActivityRecorder', () => {
       } as any
     );
 
-    expect(conversationService.persistHumanInteractionResponse.calledOnce).to.equal(true);
-    expect(conversationService.persistHumanInteractionResponse.firstCall.args[0]).to.include({
+    const [own, given] = conversationService.persistHumanInteractionResponse.getCalls().map((call) => call.args[0]);
+    expect(conversationService.persistHumanInteractionResponse.callCount).to.equal(2);
+    expect(own).to.include({
+      conversationId: 'conv1',
+      platformMessageId: 'msg-1',
+      answeredElsewhere: true,
+      actorId: 'sub-2',
+      actorName: 'Bob',
+    });
+    expect(own).to.not.have.property('inOtherThread');
+    expect(given).to.include({
       conversationId: 'conv2',
       platformMessageId: 'msg-2',
       inOtherThread: true,
       actorId: 'sub-2',
       actorName: 'Bob',
     });
+    expect(given).to.not.have.property('answeredElsewhere');
     expect(conversationService.findByPlatformThread.called).to.equal(false);
   });
 
@@ -229,7 +239,7 @@ describe('HumanInteractionActivityRecorder', () => {
       { _id: 'conv2', _agentId: 'agent1', channels: [{ platformThreadId: 'thread-2' }] } as any
     );
 
-    expect(conversationService.persistHumanInteractionResponse.firstCall.args[0]).to.include({
+    expect(conversationService.persistHumanInteractionResponse.secondCall.args[0]).to.include({
       conversationId: 'conv2',
       inOtherThread: true,
     });
@@ -254,9 +264,11 @@ describe('HumanInteractionActivityRecorder', () => {
     await recorder.recordResponse(expired as any);
 
     expect(conversationService.findByPlatformThread.called).to.equal(false);
+    expect(conversationService.persistHumanInteractionResponse.callCount).to.equal(2);
     for (const call of conversationService.persistHumanInteractionResponse.getCalls()) {
       expect(call.args[0]).to.include({ conversationId: 'conv1' });
       expect(call.args[0]).to.not.have.property('inOtherThread');
+      expect(call.args[0]).to.not.have.property('answeredElsewhere');
     }
   });
 
@@ -265,10 +277,14 @@ describe('HumanInteractionActivityRecorder', () => {
 
     await recorder.recordResponse(sentToTwo(interaction) as any, { _id: 'conv9', _agentId: 'agent9' } as any);
 
+    expect(conversationService.persistHumanInteractionResponse.calledOnce).to.equal(true);
     expect(conversationService.persistHumanInteractionResponse.firstCall.args[0]).to.include({
       conversationId: 'conv1',
     });
     expect(conversationService.persistHumanInteractionResponse.firstCall.args[0]).to.not.have.property('inOtherThread');
+    expect(conversationService.persistHumanInteractionResponse.firstCall.args[0]).to.not.have.property(
+      'answeredElsewhere'
+    );
   });
 
   it('skips tool-approval HITL rows so they stay on the tool approval ledger', async () => {

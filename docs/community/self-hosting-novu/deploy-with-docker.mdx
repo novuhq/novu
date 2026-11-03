@@ -89,9 +89,78 @@ docker compose up -d
 To keep the setup simple, we made some choices that may not be optimal for production:
 
 - the database is in the same machine as the servers
-- the storage uses localstack instead of S3
+- the storage settings point to a LocalStack endpoint instead of a real bucket
 
-We strongly recommend that you decouple your database before deploying.
+We strongly recommend that you decouple your database and configure object storage before deploying.
+
+### Object storage
+
+The API and Worker services use object storage for files such as email attachments. When you trigger a workflow with `attachments` in the payload, the API uploads each file to the bucket before queuing the event. See [Trigger](/platform/concepts/trigger). If the bucket is unreachable, triggers that include attachments fail, while triggers without attachments still succeed.
+
+The default `.env` sets `S3_LOCAL_STACK=${HOST_NAME}:4566`, but the community `docker-compose.yml` does not start a LocalStack container. Point the storage variables at a real bucket before you send attachments.
+
+#### Amazon S3 and S3-compatible storage
+
+S3 is the default storage backend. Set these variables in your `.env` file. Both the `api` and `worker` services receive them:
+
+| Variable | Description |
+| --- | --- |
+| `S3_BUCKET_NAME` | Name of the bucket. |
+| `S3_REGION` | Region of the bucket. |
+| `AWS_ACCESS_KEY_ID` | Access key with read and write access to the bucket. |
+| `AWS_SECRET_ACCESS_KEY` | Secret for the access key. |
+| `S3_LOCAL_STACK` | Custom S3 endpoint URL. Leave it empty for Amazon S3. |
+
+Novu passes `S3_LOCAL_STACK` to the S3 client as its endpoint and uses path-style requests. To use an S3-compatible service such as DigitalOcean Spaces or MinIO, set `S3_LOCAL_STACK` to that service's endpoint and use the access keys it issues:
+
+```bash
+S3_LOCAL_STACK=https://<region>.digitaloceanspaces.com
+S3_BUCKET_NAME=<bucket-name>
+S3_REGION=<region>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+For Amazon S3, clear the endpoint:
+
+```bash
+S3_LOCAL_STACK=
+S3_BUCKET_NAME=<bucket-name>
+S3_REGION=<region>
+AWS_ACCESS_KEY_ID=<access-key>
+AWS_SECRET_ACCESS_KEY=<secret-key>
+```
+
+Restart the services after changing the variables:
+
+```bash
+docker compose up -d
+```
+
+#### Google Cloud Storage and Azure Blob Storage
+
+Set `STORAGE_SERVICE` to `GCS` or `AZURE` to use a different backend. Any other value, or no value, uses S3.
+
+- **GCS:** set `GCS_BUCKET_NAME` and `GCS_DOMAIN`. The API requires `GCS_DOMAIN` at startup. `CDN_URL` overrides the public URL for branding and profile uploads. The worker needs `GCS_BUCKET_NAME`. `GCS_DOMAIN` is optional on the worker.
+- **Azure:** set `AZURE_ACCOUNT_NAME`, `AZURE_ACCOUNT_KEY`, and `AZURE_CONTAINER_NAME`. Optionally set `AZURE_HOST_NAME` to override the default `https://<account-name>.blob.core.windows.net` host.
+
+Novu authenticates to Google Cloud Storage with [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials). On Google Cloud, the metadata server provides them. Outside Google Cloud, mount a service account key into the `api` and `worker` containers and set `GOOGLE_APPLICATION_CREDENTIALS` to that path:
+
+```yaml
+services:
+  api:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp.json
+    volumes:
+      - ./gcp.json:/secrets/gcp.json:ro
+  worker:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/gcp.json
+    volumes:
+      - ./gcp.json:/secrets/gcp.json:ro
+```
+
+The community `docker-compose.yml` only forwards the S3 variables. Add `STORAGE_SERVICE`, the backend-specific variables, and `GOOGLE_APPLICATION_CREDENTIALS` to the `environment` section of both the `api` and `worker` services. Add the key file under `volumes` on both services.
 
 ## Setting Up the Inbox Component
 
@@ -650,6 +719,46 @@ The Dashboard container is served separately on its configured port (default **4
     ```bash
     docker compose images
     ```
+  </Accordion>
+
+  <Accordion title="How do I back up my self-hosted Novu data?">
+    Novu stores workflows, subscribers, integrations, and notification history in MongoDB. In the community `docker-compose.yml`, the `mongodb` service keeps its data in the `mongodb` named volume, and the database is `novu-db`. Redis holds queue and cache data and has no volume in the compose file.
+
+    Back up the database with `mongodump`, which is included in the `mongodb` container. Use the `MONGO_INITDB_ROOT_USERNAME` and `MONGO_INITDB_ROOT_PASSWORD` values from your `.env` file:
+
+    ```bash
+    docker compose exec -T mongodb mongodump \
+      --username <mongo-root-username> \
+      --password <mongo-root-password> \
+      --authenticationDatabase admin \
+      --db novu-db \
+      --archive > novu-db.archive
+    ```
+
+    Restore the archive with `mongorestore`:
+
+    ```bash
+    docker compose exec -T mongodb mongorestore \
+      --username <mongo-root-username> \
+      --password <mongo-root-password> \
+      --authenticationDatabase admin \
+      --archive < novu-db.archive
+    ```
+
+    Also back up:
+
+    - Your `.env` file. Novu encrypts provider credentials with `STORE_ENCRYPTION_KEY`, so a restored database needs the same key.
+    - Your S3 bucket or other [object storage](#object-storage), if you store uploaded assets there.
+
+    If you use a managed MongoDB service such as MongoDB Atlas, use its built-in backup feature instead. Always back up before you [run data migrations](/community/self-hosting-novu/data-migrations) or upgrade Novu.
+  </Accordion>
+
+  <Accordion title="Can I deploy Novu on Kubernetes?">
+    Novu doesn't publish an official Helm chart or Kubernetes manifests. This guide covers Docker Compose only.
+
+    To run Novu on Kubernetes, deploy the same images that the community `docker-compose.yml` uses: `ghcr.io/novuhq/novu/api`, `ghcr.io/novuhq/novu/worker`, `ghcr.io/novuhq/novu/ws`, and `ghcr.io/novuhq/novu/dashboard`. Pin every service to the same version tag. Pass each service the same environment variables that the compose file sets, and point them at your MongoDB and Redis instances. See [Self-hosting](/community/self-hosting-novu/overview) for recommended instance counts and resources.
+
+    If your bridge application runs inside the cluster, allow its internal hostnames with `NOVU_SAFE_OUTBOUND_ALLOW`, for example `.svc.cluster.local`.
   </Accordion>
 
   <Accordion title="When is Local Tunnel Required?">

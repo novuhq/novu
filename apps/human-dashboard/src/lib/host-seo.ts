@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { type Host, hostMarkdownPath, hostPath, hostSummary } from './hosts';
-import { contentMetadata, type PageContent, SITE_PAGES } from './seo';
+import { contentMetadata, type PageContent, SITE_PAGES, siteNoindex } from './seo';
 
 /** What a host's public page says about itself: its title, the line under it, and its Markdown for agents. */
 export function hostPageContent(host: Host): PageContent {
@@ -15,6 +15,6 @@ export function hostPageContent(host: Host): PageContent {
   };
 }
 
-export function hostPageMetadata(host: Host, environment = process.env.VERCEL_ENV): Metadata {
-  return contentMetadata(hostPageContent(host), environment);
+export function hostPageMetadata(host: Host, environment = process.env.VERCEL_ENV, noindex = siteNoindex()): Metadata {
+  return contentMetadata(hostPageContent(host), environment, noindex);
 }

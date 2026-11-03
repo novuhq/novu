@@ -11,7 +11,7 @@ import { requestForAccount } from './human-api-key';
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
 
 /** The name `setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-export const DEFAULT_AGENT_NAME = 'Human';
+export const DEFAULT_AGENT_NAME = 'Agent';
 
 export type RelayAgent = {
   /** The agent's own id, which is different in every account. */
@@ -90,12 +90,17 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
 /**
  * The picture and the settings. Neither may take a page down: without them the agent is shown with the
  * mascot, and its settings as unknown rather than as defaults that may not be what is saved.
+ *
+ * A 404 is no failure: it is how every new account answers, on each check of the onboarding, until `setup` has
+ * made the agent.
  */
 async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | null> {
   try {
     return await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH);
   } catch (error) {
-    console.error('Failed to read the agent’s picture and settings', error);
+    if (!isHumanApiNotFound(error)) {
+      console.error('Failed to read the agent’s picture and settings', error);
+    }
 
     return null;
   }

@@ -1,27 +1,4 @@
-import { HOME_EXIT_CODES, HOME_FLAGS } from '@/data/home';
-
-import { InlineCode } from './documentation';
-
-export function ExitCodes() {
-  return (
-    <dl className="home-definitions home-exit-codes">
-      {HOME_EXIT_CODES.map((item) => (
-        <div key={item.code}>
-          <dt>{item.code}</dt>
-          <dd className={'resume' in item ? 'home-resume-description' : undefined}>
-            {'resume' in item ? (
-              <>
-                <span>{item.description}</span> <InlineCode>{item.resume}</InlineCode>
-              </>
-            ) : (
-              item.description
-            )}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
+import { HOME_FLAGS } from '@/data/home';
 
 export function Flags() {
   return (

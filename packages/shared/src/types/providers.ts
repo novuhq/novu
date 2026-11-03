@@ -73,6 +73,8 @@ export enum CredentialsKeyEnum {
   ServiceId = 'serviceId',
   ServicePassword = 'servicePassword',
   SpaceId = 'spaceId',
+  /** Twilio: which credentials authenticate requests. */
+  AuthMethod = 'authMethod',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

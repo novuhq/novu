@@ -61,6 +61,19 @@ export function addressOf(handle: string, domain: string = AGENT_DOMAIN): string
   return `${handle}@${domain}`;
 }
 
+/**
+ * The address on the onboarding's card, which its code to scan is made from: the one being typed until the agent
+ * exists, and then the agent's own. That one is empty when its inbox couldn't be read, and stays empty: the card
+ * says the inbox isn't ready, rather than offering a code for a mailbox nobody may have.
+ */
+export function cardAddressOf(agent: { address: string } | null, draftHandle: string, domain: string): string {
+  if (agent) {
+    return agent.address;
+  }
+
+  return draftHandle ? addressOf(draftHandle, domain) : '';
+}
+
 /** Where an agent's public card lives on the site: `/p/atlas`. */
 export function cardPathOf(handle: string): string {
   return `/p/${handle}`;

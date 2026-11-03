@@ -46,7 +46,7 @@ export class ChangeOperatorEmail {
       HumanChannelViaEnum.EMAIL
     );
     if (verified?.address === address) {
-      throw new ConflictException({ code: 'address_already_verified', message: 'This email is already verified.' });
+      throw new ConflictException({ code: 'address_already_verified', message: 'This email is already confirmed.' });
     }
 
     // Passing the agent is the invite page's path: it skips setup, which would also make email the default.

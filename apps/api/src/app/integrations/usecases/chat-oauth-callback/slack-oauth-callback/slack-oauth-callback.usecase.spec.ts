@@ -390,17 +390,14 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
   let harness: ReturnType<typeof createSlackOauthCallbackHarness>;
   let originalApiRootUrl: string | undefined;
   let originalDashboardUrl: string | undefined;
-  let originalRegion: string | undefined;
 
   beforeEach(() => {
     harness = createSlackOauthCallbackHarness();
 
     originalApiRootUrl = process.env.API_ROOT_URL;
     originalDashboardUrl = process.env.HUMAN_DASHBOARD_URL;
-    originalRegion = process.env.NOVU_REGION;
     process.env.API_ROOT_URL = MOCK_API_ROOT_URL;
     process.env.HUMAN_DASHBOARD_URL = 'https://agentinbox.md';
-    delete process.env.NOVU_REGION;
 
     harness.environmentRepository.findOne.resolves({
       _id: MOCK_ENVIRONMENT_ID,
@@ -423,11 +420,6 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
       delete process.env.HUMAN_DASHBOARD_URL;
     } else {
       process.env.HUMAN_DASHBOARD_URL = originalDashboardUrl;
-    }
-    if (originalRegion === undefined) {
-      delete process.env.NOVU_REGION;
-    } else {
-      process.env.NOVU_REGION = originalRegion;
     }
   });
 

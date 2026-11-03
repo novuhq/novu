@@ -145,6 +145,47 @@ describe('HttpClientService — SSRF-safe path retries', () => {
     expect(retries).to.have.lengthOf(0);
   });
 
+  it('rejects a 2xx body that is not JSON as a parse error, like the non-SSRF path', async () => {
+    handler = (_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<!DOCTYPE html><html><body>Welcome</body></html>');
+    };
+
+    const service = createService();
+    let caught: unknown;
+    try {
+      await service.request({
+        url: baseUrl,
+        method: 'GET',
+        enforceSsrfProtection: true,
+        retry: { limit: 3 },
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).to.be.instanceOf(HttpClientError);
+    expect((caught as HttpClientError).type).to.equal(HttpClientErrorType.PARSE_ERROR);
+    expect((caught as HttpClientError).statusCode).to.equal(200);
+    expect(hitCount).to.equal(1);
+  });
+
+  it('accepts an empty 2xx body', async () => {
+    handler = (_req, res) => {
+      res.writeHead(204);
+      res.end();
+    };
+
+    const service = createService();
+    const response = await service.request({
+      url: baseUrl,
+      method: 'GET',
+      enforceSsrfProtection: true,
+    });
+
+    expect(response.statusCode).to.equal(204);
+  });
+
   it('does not retry an SSRF policy rejection', async () => {
     const retries: RetryEvent[] = [];
     const service = createService();

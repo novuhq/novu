@@ -147,9 +147,11 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
+            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             hosts={hostStatus?.hosts}
+            listening={hostStatus?.listening ?? null}
             renderedAt={renderedAt}
             docsUrl={docsUrl}
             mcpUrl={mcpUrl}

@@ -371,10 +371,13 @@ export class SubscriberJobBound {
           active: true,
           channel: { $in: channelTypesToFetch },
         },
-        'providerId channel'
+        'providerId channel primary'
       );
 
-      for (const integration of integrations) {
+      // Natural order returns the auto-created Novu integration first. Usage
+      // traces copy this snapshot, so a later primary provider (Postmark, Twilio)
+      // must win or the chart attributes that volume to Novu.
+      for (const integration of this.rankPrimaryIntegrationsFirst(integrations)) {
         if (!integration.channel) continue;
         if (!providers[integration.channel]) {
           providers[integration.channel] = integration.providerId as ProvidersIdEnum;
@@ -383,6 +386,16 @@ export class SubscriberJobBound {
     }
 
     return providers;
+  }
+
+  private rankPrimaryIntegrationsFirst<T extends { primary?: boolean }>(integrations: T[]): T[] {
+    return [...integrations].sort((left, right) => {
+      if (Boolean(left.primary) === Boolean(right.primary)) {
+        return 0;
+      }
+
+      return left.primary ? -1 : 1;
+    });
   }
 
   private async evaluateTopicPreferences(

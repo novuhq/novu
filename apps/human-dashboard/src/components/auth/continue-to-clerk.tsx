@@ -3,7 +3,7 @@
 import { useClerk } from '@clerk/nextjs';
 import { useEffect } from 'react';
 
-import { AuthCard, AuthLoading } from './auth-form';
+import { AuthCard, AuthLoading } from './auth-card';
 
 /**
  * Back to Clerk's authorize page, where the AI tool that sent the operator to sign in finishes connecting.
@@ -20,7 +20,7 @@ export function ContinueToClerk({ authorizeUrl }: { authorizeUrl: string }) {
   }, [clerk, clerk.loaded, authorizeUrl]);
 
   return (
-    <AuthCard step="continue-to-clerk" title="Signing you in" description="One moment while we connect your AI tool.">
+    <AuthCard title="Signing you in" description="One moment while we connect your AI tool.">
       <AuthLoading />
     </AuthCard>
   );

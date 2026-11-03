@@ -13,7 +13,7 @@ import type {
 import type { CardNode } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
 import { MessageParser } from './message-parser.js';
-import { renderMessage } from './message-renderer.js';
+import { renderMessage, renderWithLayout } from './message-renderer.js';
 import { ThreadResolver } from './thread-resolver.js';
 import type { NovuEmailAdapterConfig, NovuEmailRawMessage, NovuEmailThreadId } from './types.js';
 import { generateMessageId, hashMessageId, parseEmailAddress } from './utils.js';
@@ -162,17 +162,29 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     // click handler uses the same Message-ID to locate the originating thread/message.
     const messageId = generateMessageId(agentAddress);
     const buildActionUrl = this.config.actionUrlBuilder;
-    const rendered = await renderMessage({
+    const renderInput = {
       ...normalized,
       ...(normalized.card && buildActionUrl ? { actionContext: { threadId, messageId, buildActionUrl } } : {}),
-    });
+    };
+    const rendered = this.config.layout
+      ? await renderWithLayout({
+          ...renderInput,
+          threadId,
+          layout: this.config.layout,
+          renderMarkdown: (markdown) => this.formatConverter.fromAst(this.parseMarkdownFn(markdown)),
+        })
+      : await renderMessage(renderInput);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject
       ? /^re:/i.test(storedSubject)
         ? storedSubject
         : `Re: ${storedSubject}`
-      : 'New message';
+      : (rendered.subject ?? 'New message');
+
+    if (!storedSubject && rendered.subject) {
+      await this.threadResolver.trackSubject(threadId, rendered.subject);
+    }
 
     const result = await this.config.sendEmail({
       from: agentAddress,

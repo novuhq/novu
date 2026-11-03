@@ -6,19 +6,20 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 
 | Route             | What it is                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------- |
-| `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
-| `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "sign in" link into the dashboard. |
+| `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. A person who is already signed in is sent straight to the inbox. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
+| `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "Visit Dashboard" link into the inbox. A person who is already signed in is sent straight to the inbox. |
 | `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it, to `/agents.md` and to each host's page. |
 | `/[host]`, `/[host].md` | A page for each host Agent Inbox has steps for (`/claude-code`, `/codex`, `/chatgpt`, …), and the same as Markdown for agents (`/claude-code.md`, rewritten to `/claude-code/index.md`). Each opens with what to tell the agent, then the same steps as the dashboard's host picker, with "sign in to get your code" where the dashboard has the code. Built from the host list in `src/lib/hosts.ts`; any other address at that level is not found. |
-| `/robots.txt`, `/sitemap.xml` | For search engines: the website pages (the two above and the host pages), at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`). Until launch they stay out of search results: the pages and their Markdown and `/llms.txt` say `noindex`, the sitemap is empty and robots.txt doesn't point to it. `SITE_INDEXED` in `src/lib/seo.ts` turns that off. Preview deployments always send `noindex`. |
+| `/robots.txt`, `/sitemap.xml` | For search engines. The sitemap lists the public pages (`/`, `/sapien`, and each host page) at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`), and robots.txt points to it. A new website page is added in `SITE_PAGES`. Those pages, their Markdown, and `/llms.txt` are indexed on production. `SITE_INDEXED` in `src/lib/seo.ts` is that switch. Preview and development deployments always send `noindex`. `SITE_NOINDEX=true` does the same for every route on a deployment that must stay unindexed, such as `staging.agentinbox.md`. Set that on the Vercel environment before the build. |
 | `/agents.md`      | What agents read, in Markdown: how to connect with the commands from the dashboard, how to set themselves up without a code (`setup` and `login`, which the operator approves), each host's page, then the agentinbox skill from [agentinboxhq/skills](https://github.com/agentinboxhq/skills), as `npx skills add` installs it. The home page links to it. |
 | `/.well-known/agent-skills/` | The skills from agentinboxhq/skills, for [Agent Skills discovery](https://github.com/cloudflare/agent-skills-discovery-rfc): `index.json` lists them, and each downloads from under the commit it came from, as `<commit>/<name>.tar.gz`, or `<commit>/<name>/SKILL.md` for a skill that is only that file. `npx skills add https://www.agentinbox.md` reads it. |
+| `/.well-known/ard.json` | The [Agentic Resource Discovery](https://agenticresourcediscovery.org/spec/) catalog: the hosted MCP server (its server card inline) and the Agent Skills index. Every page links it with `rel="ard"`. |
 | `/p/[handle]`     | An agent's public card: anyone with the link sees the agent and every way to reach it, without signing in. `opengraph-image` is the picture apps show where the link is shared. |
 | `/invite/[token]` | Opened from a `contact invite` link. The person picks which of the agent's channels (Email, Telegram, Slack) it may reach them on, and their default. |
 | `/verify/[token]` | Opened from the "Verify this email" button, sent before the agent emails a new address: the operator's own, or a contact's (invited by email, or picked on the invite page). Confirms it once. |
 | `/connect`        | Opened from `channel add telegram` or `channel add slack` when the operator finishes in the browser. The setup token stays in the URL fragment. |
 | `/connect/slack/result` | Where Slack sends the operator after they approve or deny the Agent Inbox app.        |
-| `/sign-up`, `/sign-in` | Agent Inbox accounts, signed in with the Agent Inbox Clerk app (not the Novu dashboard's). Their `sso-callback` pages finish a sign-in through another service. |
+| `/sign-up`, `/sign-in` | Agent Inbox accounts, signed in with the Agent Inbox Clerk app (not the Novu dashboard's), on Clerk's own forms in our design (`lib/clerk-appearance.ts`). Clerk's steps have their own paths under these two, and whatever is switched on in the Clerk app, such as consent to the legal documents, shows up with no code here. Keep the development app's settings the same as production's, or a change only shows up after it ships. Once signed in, `/sign-in/finish` holds the screen until the page someone came for is ready, which takes seconds while a new account is set up. Someone with no page to return to who still belongs in the onboarding goes straight there, without the dashboard in between. |
 | `/onboarding`     | Where a new operator lands after signing up: four steps (Address, Test, Connect, Reach) that make the agent and connect it to a host. One address; the step comes from how far the setup got. |
 | `/inbox`, `/configure`, `/contacts` | The dashboard: the agent's inbox, the agent with its channels and hosts, and the people it can ask. An operator without an agent is sent to `/onboarding`. |
 | `/configure/share-image` | The operator's agent card as an image, for the Share dialog's preview and its Download image. |
@@ -28,6 +29,8 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | `/mcp/connect`    | Where sign-in sends someone whom ChatGPT, Claude or Cursor sent to connect to the Agent Inbox MCP server. It makes sure their account exists, then goes back to Clerk to let the app in. |
 | `/api/*`          | The Agent Inbox API, which forwards to the Novu API, so people only ever see this site's address. See [Agent Inbox API](#agent-inbox-api). |
 | `/api/webhooks/clerk` | The Agent Inbox Clerk app's webhook: a sign-up (`user.created`) gets its account before the operator opens any page. Off without `CLERK_WEBHOOK_SIGNING_SECRET`; the first dashboard visit does the same then. |
+
+A request for an address that is not in this list is a 404. When it sends `Accept: text/markdown`, the body is Markdown (`Content-Type: text/markdown`) and links to `/llms.txt`, `/sitemap.xml`, and `/index.md`. A browser still gets the HTML page.
 
 Each Agent Inbox account has a backing organization, which the API creates through the private
 `/v1/human/accounts` endpoints. See
@@ -69,15 +72,21 @@ More hosts connect later from Configure, in "Connect another agent": the same ho
 
 The hosts are one list, `src/lib/hosts.ts`, which the picker and the public host pages (`/claude-code`) are built
 from. A host that runs commands (Claude Code, Codex, OpenCode, Cursor, Hermes, OpenClaw, General) gets the commands
-first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in under them: a
-plugin, or the MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
+first, with its own skills line (`npx skills add … --agent claude-code -y`), and its second way in: a plugin, or the
+MCP server in its own config. A chat app (Claude, ChatGPT, Grok Bot) only signs in to the MCP server.
 The picker ticks the hosts that connected already; today that's the apps the MCP server tells apart
 (`connectedTools`). `?connect=codex` on `/configure` opens "Connect another agent" on that host, which is where a
 host page's "sign in to get your code" leads.
 
-The connect box shows only the commands for now. It also had a prompt that asked an agent to run them, but an
-agent's own permission checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a
-pasted request, so the operator runs them.
+In the dashboard the box under the picker has a tab for each way a host has (`src/lib/host-ways.ts`), and opens
+on the first: for Claude Code and Codex their plugin (one install brings the skills and the inbox tools), and for
+Cursor and OpenCode the MCP server in their own config, then the commands; for any other host that runs commands, the
+commands (one paste, no sign-in, and the code connects it at once), then for Hermes the MCP server in its own config
+(it often runs on a server, with no browser there to sign in with); for Claude and ChatGPT, the server added in the
+app's settings, then a prompt to paste once it's there. Grok Bot adds the server itself when asked, so a prompt is all it gets. A host with one way still has
+its one tab, so every host's box looks the same. Only the chat apps get a prompt: a coding agent's own permission
+checks (Claude Code's auto mode) stop it from saving a key and installing a skill on a pasted request, so the
+operator runs the commands.
 
 ## Develop
 
@@ -118,7 +127,7 @@ the last index.
 
 ## Agent Inbox API
 
-`/api` is Agent Inbox's API: each of its paths forwards to one on the US Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
+`/api` is Agent Inbox's API: each of its paths forwards to one on the Novu API (`NEXT_PUBLIC_NOVU_API_URL`), such
 as `/api/v1/inbox` to `/v1/human/inbox`, and the API's status, headers and body come back as they are
 (`src/app/api/[...path]/route.ts`; the paths are `ROUTES` in `src/lib/api-proxy.ts`, grouped like the CLI's
 commands). The CLI goes to `https://www.agentinbox.md/api` by default, the MCP server calls it for every tool, the
@@ -134,16 +143,13 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
   `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
 - The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
   per-IP limits (keyless setups, one-time codes) count each caller, not this site.
-- It only reaches the US API: Agent Inbox has no EU region for now. The invite and verify pages show a link the EU API
-  issued (`?region=eu`) as not valid, and send its token nowhere.
 - The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
 
 | Variable                            | Default                  | Purpose                                                    |
 | ----------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | US API: where `/api` forwards to, and the server's calls for US accounts. |
-| `NEXT_PUBLIC_NOVU_API_URL_EU`       | `https://eu.api.novu.co` | The server's calls for EU accounts. The pages and `/api` don't use it. |
+| `NEXT_PUBLIC_NOVU_API_URL`          | `https://api.novu.co`    | The Novu API: where `/api` forwards to, and what this site's server calls. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                        | Agent Inbox Clerk app. Only the account pages use it.      |
 | `CLERK_SECRET_KEY`                  | —                        | Agent Inbox Clerk app, server only.                        |
 | `CLERK_WEBHOOK_SIGNING_SECRET`      | —                        | Signs the Agent Inbox Clerk app's webhook (`/api/webhooks/clerk`). Empty turns the webhook off. |
@@ -152,7 +158,7 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
 | `AGENT_INBOX_MCP_URL`               | —                        | The hosted Agent Inbox MCP server the chat apps connect to. Empty links their tiles to the docs instead. Server only. |
 | `NEXT_PUBLIC_MIXPANEL_TOKEN`        | —                        | Novu's Mixpanel project. Counts dashboard page views on the operator's profile; empty sends nothing. |
 
-`NEXT_PUBLIC_` values are inlined at build time. The API URL never comes from a link itself.
+`NEXT_PUBLIC_` values are inlined at build time.
 
 ## Analytics
 

@@ -3,6 +3,7 @@ import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanContactChannelStatus } from '@novu/shared';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
+import { HumanListenAccessService } from '../../services/human-listen-access.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { GetContactCommand } from './get-contact.command';
 
@@ -16,19 +17,23 @@ export type GetContactResult = {
   createdAt: string;
   updatedAt: string;
   channels: HumanContactChannelStatus[];
+  /** Whether the agent listens to them: always to the operator. */
+  listenTo: boolean;
 };
 
 /**
  * Single-contact lookup for the CLI (polling after invite, and richer
  * `human contact list` output). Channel status comes from HumanDeliveryService —
  * never from public subscriber APIs, and never from `Subscriber.email` alone.
+ * Whether the agent listens to them comes from HumanListenAccessService.
  */
 @Injectable()
 export class GetContact {
   constructor(
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentRepository: AgentRepository,
-    private readonly deliveryService: HumanDeliveryService
+    private readonly deliveryService: HumanDeliveryService,
+    private readonly listenAccess: HumanListenAccessService
   ) {}
 
   @InstrumentUsecase()
@@ -52,14 +57,17 @@ export class GetContact {
       ['_id']
     );
 
-    const channels: HumanContactChannelStatus[] = agent
-      ? await this.deliveryService.describeContactChannels({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          agentId: agent._id,
-          subscriberId: command.subscriberId,
-        })
-      : [];
+    const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
+    const [channels, listenTo]: [HumanContactChannelStatus[], boolean] = agent
+      ? await Promise.all([
+          this.deliveryService.describeContactChannels({
+            ...scope,
+            agentId: agent._id,
+            subscriberId: command.subscriberId,
+          }),
+          this.listenAccess.listenTo(scope, agent, command.subscriberId),
+        ])
+      : [[], false];
 
     return {
       id: subscriber.subscriberId,
@@ -71,6 +79,7 @@ export class GetContact {
       createdAt: subscriber.createdAt,
       updatedAt: subscriber.updatedAt,
       channels,
+      listenTo,
     };
   }
 }
