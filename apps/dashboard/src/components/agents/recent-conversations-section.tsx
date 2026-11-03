@@ -6,6 +6,7 @@ import type { ConversationDto } from '@/api/conversations';
 import { ConversationDetailSheet } from '@/components/conversations/conversation-detail-sheet';
 import { ConversationLastActivity } from '@/components/conversations/conversation-last-activity';
 import { ConversationStatusBadge } from '@/components/conversations/conversation-status-badge';
+import { toPlainTextPreview } from '@/components/conversations/conversation-text-preview';
 import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { SubscriberFallbackAvatar } from '@/components/conversations/subscriber-fallback-avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -123,6 +124,7 @@ function RecentConversationItem({ conversation, onSelect }: RecentConversationIt
   const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
   const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const isFailed = conversation.status === 'failed';
+  const title = toPlainTextPreview(conversation.title) || 'Untitled conversation';
 
   const handleSelect = () => onSelect(conversation.identifier);
 
@@ -140,8 +142,8 @@ function RecentConversationItem({ conversation, onSelect }: RecentConversationIt
           <RiCheckboxCircleFill
             className={cn('size-4 shrink-0', isFailed ? 'text-destructive-base' : 'text-success-base')}
           />
-          <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">
-            {conversation.title || 'Untitled conversation'}
+          <span dir="auto" title={title} className="text-text-sub text-label-xs min-w-0 truncate text-left font-medium">
+            {title}
           </span>
         </div>
         <ConversationLastActivity

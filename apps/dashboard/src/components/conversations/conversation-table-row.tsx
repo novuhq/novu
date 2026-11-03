@@ -5,6 +5,7 @@ import { TableCell, TableRow } from '@/components/primitives/table';
 import { cn } from '@/utils/ui';
 import { ConversationLastActivity } from './conversation-last-activity';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { toPlainTextPreview } from './conversation-text-preview';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationTableRowProps = {
@@ -50,6 +51,7 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
   const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
   const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const agentName = getAgentName(conversation);
+  const title = toPlainTextPreview(conversation.title) || 'Untitled conversation';
   const isFailed = conversation.status === 'failed';
 
   return (
@@ -67,8 +69,12 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
               <RiCheckboxCircleFill
                 className={cn('size-4 shrink-0', isFailed ? 'text-destructive-base' : 'text-success-base')}
               />
-              <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">
-                {conversation.title || 'Untitled conversation'}
+              <span
+                dir="auto"
+                title={title}
+                className="text-text-sub text-label-xs min-w-0 truncate text-left font-medium"
+              >
+                {title}
               </span>
             </div>
             <ConversationLastActivity
