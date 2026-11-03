@@ -176,7 +176,6 @@ overrides:
   '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
   fast-copy@>=3.0.0 <3.1.0: ^3.1.0
-  tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
   better-auth@<1.6.13: ^1.6.23
