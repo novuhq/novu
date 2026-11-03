@@ -209,6 +209,28 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     expect(command.step?.template?.content).to.equal('');
   });
 
+  it('records the selected provider on the sent trace when the job snapshot is Novu Email', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase();
+    const command = buildCommand({ bridgeBody: renderedEmailBody });
+    command.job.providerId = EmailProviderIdEnum.Novu;
+
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({
+      send: sendStub,
+    } as never);
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const sentTrace = createExecutionDetails.execute
+      .getCalls()
+      .map((call) => call.args[0])
+      .find((detail) => detail.detail === DetailEnum.MESSAGE_SENT);
+
+    expect(sentTrace?.providerId).to.equal(EmailProviderIdEnum.EmailWebhook);
+  });
+
   it('should preserve legacy payloadDetails content for v0 workflows without bridge output', async () => {
     const templateContent = 'Hello {{payload.name}}';
     const templateSubject = 'Template subject {{payload.name}}';

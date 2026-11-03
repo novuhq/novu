@@ -1,8 +1,9 @@
 import { auth, currentUser, type User } from '@clerk/nextjs/server';
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-import { REDIRECT_PARAM, SSO_ERROR_PARAM, safeRedirectPath } from '@/lib/auth-redirect';
+import { authHref, REDIRECT_PARAM, safeRedirectPath } from '@/lib/auth-redirect';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -15,25 +16,27 @@ export async function getRedirectPath(searchParams: SearchParams): Promise<strin
 }
 
 /**
- * What the sign-in and sign-up pages need before they render their form. A visitor who is signed in
- * already goes straight to where the form would have sent them.
+ * The page to return to, which the sign-in and sign-up pages need before they render their form. A visitor
+ * who is signed in already goes where the form would have sent them: `/sign-in/finish`. That also happens in
+ * the middle of a sign-in, because Clerk has the page rendered again once the session exists, before it moves
+ * on by itself, and going to the page directly would skip what `/sign-in/finish` decides.
  */
-export async function prepareAuthForm(searchParams: SearchParams) {
+export async function prepareAuthForm(searchParams: SearchParams): Promise<string> {
   const redirectPath = await getRedirectPath(searchParams);
 
   // The session alone isn't enough: right after an account was deleted, its session token still reads
   // as signed in for up to a minute, and the dashboard would have nobody to show.
   const { userId } = await auth();
   if (userId && (await findCurrentUser())) {
-    redirect(redirectPath);
+    redirect(authHref('/sign-in/finish', redirectPath));
   }
 
-  return {
-    redirectPath,
-    initialError: searchParams[SSO_ERROR_PARAM]
-      ? 'Could not finish with that provider. Try again, or use your email and password.'
-      : undefined,
-  };
+  return redirectPath;
+}
+
+/** The form's first page can be found by search engines. The steps after it only make sense mid-flow. */
+export function authStepMetadata(title: string, step: string[] | undefined): Metadata {
+  return step ? { title, robots: { index: false, follow: false } } : { title };
 }
 
 /**
