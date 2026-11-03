@@ -1,6 +1,7 @@
 import {
   FieldFilterPartDto,
   FilterPartsDto,
+  getEffectiveJobOverrides,
   OnlineInLastFilterPartDto,
   PreviousStepFilterPartDto,
   RealtimeOnlineFilterPartDto,
@@ -73,7 +74,7 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     })),
     channels: entity.channels,
     createdAt: entity.createdAt,
-    jobs: entity.jobs.map(mapJobToDto),
+    jobs: entity.jobs.map((job) => mapJobToDto(job, entity)),
     tags: entity.tags,
     transactionId: entity.transactionId,
     updatedAt: entity.updatedAt,
@@ -295,14 +296,14 @@ function mapDigest(
   return undefined;
 }
 
-function mapJobToDto(item: JobFeedItem): ActivityNotificationJobResponseDto {
+function mapJobToDto(item: JobFeedItem, notification: NotificationFeedItemEntity): ActivityNotificationJobResponseDto {
   return {
     _id: item._id,
     type: item.type as StepTypeEnum,
     digest: mapDigest(item.digest),
     executionDetails: item.executionDetails.map(convertExecutionDetail),
     step: convertStepToResponse(item.step),
-    overrides: item.overrides,
+    overrides: getEffectiveJobOverrides(item, notification),
     payload: item.payload,
     providerId: item.providerId as ProvidersIdEnum,
     status: item.status,

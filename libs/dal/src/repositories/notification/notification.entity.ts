@@ -4,6 +4,7 @@ import {
   SeverityLevelEnum,
   StatelessControls,
   StepTypeEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
@@ -53,6 +54,12 @@ export class NotificationEntity {
   to?: ISubscribersDefine | any;
 
   payload?: any;
+
+  /*
+   * Trigger overrides of the workflow run. Jobs written under overrides-dedup
+   * do not carry their own copy and resolve them from here.
+   */
+  overrides?: TriggerOverrides;
 
   createdAt?: string;
   updatedAt?: string;

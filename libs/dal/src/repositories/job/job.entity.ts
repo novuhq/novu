@@ -25,7 +25,7 @@ export class JobEntity {
   _id: string;
   identifier: string;
   payload: any;
-  overrides: TriggerOverrides;
+  overrides?: TriggerOverrides;
   /**
    * Trigger-selected agent ObjectId. Omitted inherits the workflow agent; null opts out.
    */

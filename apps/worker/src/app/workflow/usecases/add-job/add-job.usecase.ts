@@ -9,6 +9,7 @@ import {
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobOverrides,
   getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
@@ -153,6 +154,9 @@ export class AddJob {
     // when the job doesn't carry one, so delay/throttle/digest key resolution
     // below keeps working. A present job.payload is authoritative.
     job.payload = getEffectiveJobPayload(job, notification);
+    // Overrides-dedup: same rule for trigger overrides, which delay and digest
+    // durations read (`overrides.delay`).
+    job.overrides = getEffectiveJobOverrides(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0

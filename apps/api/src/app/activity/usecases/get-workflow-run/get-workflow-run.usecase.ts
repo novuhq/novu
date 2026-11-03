@@ -9,7 +9,7 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
-import { JobEntity, JobRepository } from '@novu/dal';
+import { JobEntity, JobRepository, NotificationEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
@@ -81,6 +81,7 @@ export class GetWorkflowRun {
     private stepRunRepository: StepRunRepository,
     private traceLogRepository: TraceLogRepository,
     private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -118,7 +119,7 @@ export class GetWorkflowRun {
       const workflowRun = workflowRunResult.data;
       const [stepRuns, overrides] = await Promise.all([
         this.getStepRunsForWorkflowRun(command, workflowRun),
-        this.getOverridesByTransactionId(workflowRun.transaction_id, command),
+        this.getOverrides(workflowRun.transaction_id, command),
       ]);
       const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides);
 
@@ -177,6 +178,33 @@ export class GetWorkflowRun {
     }
   }
 
+  private async getOverrides(transactionId: string, command: GetWorkflowRunCommand): Promise<Record<string, unknown>> {
+    try {
+      const notification: Pick<NotificationEntity, 'overrides'> | null = await this.notificationRepository.findOne(
+        {
+          _id: command.workflowRunId,
+          _environmentId: command.environmentId,
+        },
+        'overrides'
+      );
+
+      if (notification?.overrides && Object.keys(notification.overrides).length > 0) {
+        return notification.overrides;
+      }
+    } catch (error) {
+      this.logger.warn(
+        { error: error.message, workflowRunId: command.workflowRunId },
+        'Failed to get notification overrides data'
+      );
+    }
+
+    return this.getOverridesByTransactionId(transactionId, command);
+  }
+
+  /**
+   * BACKWARD COMPATIBILITY: runs created before overrides were stored on the
+   * notification only carry them on their jobs.
+   */
   private async getOverridesByTransactionId(
     transactionId: string,
     command: GetWorkflowRunCommand

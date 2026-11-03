@@ -268,6 +268,63 @@ describe('CreateNotificationJobs', () => {
     });
   });
 
+  describe('overrides dedup', () => {
+    const triggerOverrides = {
+      email: { toRecipient: 'override@example.com' },
+      delay: { amount: 5, unit: 'seconds' },
+    };
+
+    function setOverridesDedup(featureFlagsService: { getFlag: jest.Mock }, enabled: boolean) {
+      featureFlagsService.getFlag.mockImplementation(
+        async ({ key }: { key: FeatureFlagsKeysEnum }) =>
+          enabled && key === FeatureFlagsKeysEnum.IS_OVERRIDES_DEDUP_ENABLED
+      );
+    }
+
+    function buildCommandWithOverrides(): CreateNotificationJobsCommand {
+      return { ...buildCommand([buildEmailStep()]), overrides: triggerOverrides } as CreateNotificationJobsCommand;
+    }
+
+    it('should persist overrides on the notification and on every job when the flag is off', async () => {
+      const { usecase, notificationRepository, featureFlagsService } = buildUsecase();
+      setOverridesDedup(featureFlagsService, false);
+
+      const jobs = await usecase.execute(buildCommandWithOverrides());
+
+      expect(notificationRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ overrides: triggerOverrides })
+      );
+      expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
+      expect(jobs.every((job) => job.overrides === triggerOverrides)).toBe(true);
+    });
+
+    it('should persist overrides only on the notification when the flag is on', async () => {
+      const { usecase, notificationRepository, featureFlagsService } = buildUsecase();
+      setOverridesDedup(featureFlagsService, true);
+
+      const jobs = await usecase.execute(buildCommandWithOverrides());
+
+      expect(notificationRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ overrides: triggerOverrides })
+      );
+      expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
+      expect(jobs.every((job) => job.overrides === undefined)).toBe(true);
+    });
+
+    it.each([false, true])(
+      'should not persist empty overrides on the notification when the flag is %s',
+      async (enabled) => {
+        const { usecase, notificationRepository, featureFlagsService } = buildUsecase();
+        setOverridesDedup(featureFlagsService, enabled);
+
+        await usecase.execute(buildCommand([buildEmailStep()]));
+
+        const [notificationInput] = notificationRepository.create.mock.calls[0];
+        expect(Object.prototype.hasOwnProperty.call(notificationInput, 'overrides')).toBe(false);
+      }
+    );
+  });
+
   it.each([false, true])(
     'should carry code-first workflow metadata on channel jobs when step dedup is %s',
     async (isJobStepDedupEnabled) => {
