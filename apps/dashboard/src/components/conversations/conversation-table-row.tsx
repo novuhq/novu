@@ -3,6 +3,7 @@ import { RiCheckboxCircleFill, RiRobot2Line } from 'react-icons/ri';
 import { ConversationDto } from '@/api/conversations';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { cn } from '@/utils/ui';
+import { ConversationLastActivity } from './conversation-last-activity';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
@@ -28,25 +29,6 @@ function getAgentName(conversation: ConversationDto): string {
   const agent = (conversation.participants ?? []).find((p) => p.type === 'agent');
 
   return agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
-}
-
-function formatTimestamp(dateStr: string | undefined): string {
-  if (!dateStr?.trim()) {
-    return '-';
-  }
-
-  const d = new Date(dateStr);
-
-  if (Number.isNaN(d.getTime())) {
-    return '-';
-  }
-
-  const month = d.toLocaleDateString('en-US', { month: 'short' });
-  const day = d.getDate();
-  const year = d.getFullYear();
-  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  return `${month} ${day} ${year} ${time}`;
 }
 
 export function ConversationTableRow({ conversation, isSelected, onClick }: ConversationTableRowProps) {
@@ -89,9 +71,10 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
                 {conversation.title || 'Untitled conversation'}
               </span>
             </div>
-            <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">
-              {formatTimestamp(conversation.lastActivityAt || conversation.createdAt)}
-            </span>
+            <ConversationLastActivity
+              conversation={conversation}
+              className="text-text-soft font-code shrink-0 text-[11px] leading-normal"
+            />
           </div>
 
           <div className="flex items-center justify-between">
