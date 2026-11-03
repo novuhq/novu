@@ -18,6 +18,7 @@ import { cn } from '@/utils/ui';
 import { isHitlTimelineActivity } from './conversation-hitl';
 import { HitlTimelineRow } from './conversation-hitl-row';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { toPlainTextPreview } from './conversation-text-preview';
 import { getTimelineLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
@@ -135,21 +136,21 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
 function MessageContent({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
-  const isLong = content.length > 80;
-  const displayContent = useMemo(() => (expanded ? content : content.slice(0, 80)), [content, expanded]);
+  const isLong = content.length > 80 || content.includes('\n');
+  const isCollapsed = isLong && !expanded;
+  const preview = useMemo(() => toPlainTextPreview(content), [content]);
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
       <div
         id={contentId}
+        dir="auto"
         className={cn(
           'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
-          !expanded && 'truncate',
-          expanded && 'wrap-break-word whitespace-pre-wrap'
+          isCollapsed ? 'truncate' : 'wrap-break-word whitespace-pre-wrap'
         )}
       >
-        <MarkdownText className="text-label-xs text-[#1a1a1a]">{displayContent}</MarkdownText>
-        {isLong && !expanded && '...'}
+        {isCollapsed ? preview : <MarkdownText className="text-label-xs text-[#1a1a1a]">{content}</MarkdownText>}
       </div>
       {isLong && (
         <button
