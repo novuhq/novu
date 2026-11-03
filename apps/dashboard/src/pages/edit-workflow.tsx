@@ -1,4 +1,3 @@
-import { EnvironmentTypeEnum } from '@novu/shared';
 import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import {
@@ -7,7 +6,7 @@ import {
   CopilotWebChatProvider,
   useCopilotPendingPrompt,
   useCopilotWebChat,
-  useCopilotWebChatEnabled,
+  useCopilotWebChatActive,
 } from '@/components/copilot-web-chat';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
@@ -71,8 +70,7 @@ function CopilotWebChatMount() {
 export const EditWorkflowPage = () => {
   const { currentEnvironment } = useEnvironment();
   const { currentUser } = useAuth();
-  // useCopilotWebChatEnabled already excludes self-hosted (IS_AI_FEATURES_ENABLED === IS_CLOUD).
-  const isCopilotWebChatEnabled = useCopilotWebChatEnabled() && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+  const isCopilotWebChatEnabled = useCopilotWebChatActive();
 
   const location = useLocation();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);

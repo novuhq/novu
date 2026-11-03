@@ -4,7 +4,6 @@ import {
   AiAgentTypeEnum,
   AiResourceTypeEnum,
   DuplicateWorkflowDto,
-  EnvironmentTypeEnum,
   slugify,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
@@ -27,7 +26,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { fetchWorkflowSuggestions, WorkflowSuggestionResponse } from '@/api/ai';
-import { type CopilotPromptLocationState, useCopilotWebChatEnabled } from '@/components/copilot-web-chat';
+import { type CopilotPromptLocationState, useCopilotWebChatActive } from '@/components/copilot-web-chat';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -86,7 +85,11 @@ function useLegacyGuidedGeneration() {
       if (data.type !== 'data-workflow-created') return;
 
       const parsed = workflowCreatedEventSchema.safeParse(data.data);
-      if (!parsed.success) return;
+      if (!parsed.success) {
+        Sentry.captureException(parsed.error, { tags: { feature: 'ai-copilot', action: 'workflow-created-event' } });
+
+        return;
+      }
 
       const workflowCreatedEvent = parsed.data;
       track(TelemetryEvent.COPILOT_WORKFLOW_GENERATED, {
@@ -166,8 +169,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
-  // Same gate as the editor's Copilot popover, which takes over guided generation when it is on.
-  const isCopilotWebChatEnabled = useCopilotWebChatEnabled() && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+  const isCopilotWebChatEnabled = useCopilotWebChatActive();
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
 
@@ -358,9 +360,8 @@ const schema = z.object({
 
 const DEFAULT_GUIDED_WORKFLOW_NAME = 'Untitled workflow';
 
-/** The suffix keeps the workflow id unique when the same suggestion is generated more than once. */
 function buildGuidedWorkflowValues(name = DEFAULT_GUIDED_WORKFLOW_NAME) {
-  return { name, workflowId: `${slugify(name)}-${Math.random().toString(36).slice(2, 10)}` };
+  return { name, workflowId: slugify(name) };
 }
 
 type GuidedSubmitValues = z.infer<typeof schema> & {
@@ -369,7 +370,7 @@ type GuidedSubmitValues = z.infer<typeof schema> & {
 };
 
 type GuidedModeContentProps = {
-  onSubmit: (values: GuidedSubmitValues) => void;
+  onSubmit: (values: GuidedSubmitValues) => Promise<void>;
   isGenerating: boolean;
   error?: Error;
 };
@@ -474,7 +475,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
   function handleSubmit(values: z.infer<typeof schema>) {
     const workflowName = selectedSuggestion?.examplePrompt === values.prompt ? selectedSuggestion.title : undefined;
 
-    onSubmit({ ...values, workflowName });
+    return onSubmit({ ...values, workflowName });
   }
 
   const header = useMemo(

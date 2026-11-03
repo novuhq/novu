@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 
@@ -6,25 +6,34 @@ import { useCopilotWebChat } from './copilot-web-chat-context';
 export type CopilotPromptLocationState = { copilotPrompt: string };
 
 /**
- * Sends the prompt from the navigation state as the first Copilot message once the popover is connected to the
- * workflow, then drops it from the history entry so a reload does not send it again.
+ * Puts the prompt from the navigation state in the open popover's composer right away, so it stays visible if the
+ * Copilot never connects, and sends it as the first message once connected unless it was edited or sent meanwhile.
  */
 export function useCopilotPendingPrompt() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAvailable, chat, pageContext, open, sendMessage } = useCopilotWebChat();
-  const prompt = (location.state as Partial<CopilotPromptLocationState> | null)?.copilotPrompt;
-  const isSentRef = useRef(false);
-  const isReady = isAvailable && !!chat && !chat.isLoading && !!pageContext?.workflowId;
+  const { chat, pageContext, draft, setDraft, open, sendMessage } = useCopilotWebChat();
+  const locationPrompt = (location.state as Partial<CopilotPromptLocationState> | null)?.copilotPrompt;
+  const [pendingPrompt, setPendingPrompt] = useState<string>();
+  const isReady = !!chat && !chat.isLoading && !!pageContext?.workflowId;
 
   useEffect(() => {
-    if (!prompt || !isReady || isSentRef.current) return;
+    if (!locationPrompt) return;
 
-    isSentRef.current = true;
-    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
-    open();
-    void sendMessage(prompt).then((isSent) => {
-      if (!isSent) open({ prefill: prompt });
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null });
+    setPendingPrompt(locationPrompt);
+    open({ prefill: locationPrompt });
+  }, [locationPrompt, navigate, location.pathname, location.search, location.hash, open]);
+
+  useEffect(() => {
+    if (!pendingPrompt || !isReady) return;
+
+    setPendingPrompt(undefined);
+    if (draft !== pendingPrompt) return;
+
+    setDraft('');
+    void sendMessage(pendingPrompt).then((isSent) => {
+      if (!isSent) setDraft(pendingPrompt);
     });
-  }, [prompt, isReady, navigate, location.pathname, location.search, open, sendMessage]);
+  }, [pendingPrompt, isReady, draft, setDraft, sendMessage]);
 }
