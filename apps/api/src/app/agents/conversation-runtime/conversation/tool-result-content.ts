@@ -5,22 +5,71 @@ import type { RecordToolResultParams } from './agent-conversation.types';
 const TOOL_RESULT_CONTENT_MAX_BYTES = 65536;
 const TEXT_PART_OVERHEAD_BYTES = Buffer.byteLength(JSON.stringify({ type: 'text', text: '' }), 'utf8');
 
+/**
+ * Per-result cap for the model-facing `toolData.output`. Self-hosted bridges rebuild the whole
+ * model transcript from `output` on every turn, so an unbounded MCP result (Notion search etc.)
+ * blows the provider's context window (`prompt is too long`). Bytes ≈ chars for typical ASCII tool
+ * output; kept well under the 64KB human-facing `content` cap so many tool rows can coexist.
+ */
+export const TOOL_OUTPUT_MAX_BYTES = 16_384;
+
 export interface StoredToolResultContent {
   content: ConversationActivityToolResultPart[];
   truncated: boolean;
 }
 
+export interface CappedToolOutput {
+  output: unknown;
+  truncated: boolean;
+}
+
 export function toolResultData(params: RecordToolResultParams): ConversationActivityToolData {
   const stored = capToolResultContent(params.content);
+  const cappedOutput = params.modelFacing ? capToolOutput(params.modelFacing.output) : undefined;
+  const truncated = stored.truncated || (cappedOutput?.truncated ?? false);
 
   return {
     toolCallId: params.toolCallId,
     ...(params.toolName ? { toolName: params.toolName } : {}),
-    ...(params.modelFacing ? { output: params.modelFacing.output } : { recordOnly: true }),
+    ...(cappedOutput ? { output: cappedOutput.output } : { recordOnly: true }),
     content: stored.content,
     isError: params.isError === true,
-    ...(stored.truncated ? { truncated: true } : {}),
+    ...(truncated ? { truncated: true } : {}),
   };
+}
+
+/**
+ * Bound a model-facing tool `output` to `maxBytes`. Strings are truncated in place; other
+ * JSON-serializable values are serialized then truncated, so an over-budget value degrades to a
+ * truncated string the model can still read. The marker is appended inside the budget so the
+ * returned value never exceeds `maxBytes`. Unserializable values are left untouched.
+ */
+export function capToolOutput(output: unknown, maxBytes = TOOL_OUTPUT_MAX_BYTES): CappedToolOutput {
+  if (output === undefined || output === null) {
+    return { output, truncated: false };
+  }
+
+  const serialized = typeof output === 'string' ? output : safeSerialize(output);
+  if (serialized === undefined) {
+    return { output, truncated: false };
+  }
+
+  if (Buffer.byteLength(serialized, 'utf8') <= maxBytes) {
+    return { output, truncated: false };
+  }
+
+  const marker = `… [truncated: tool output exceeded ${maxBytes} bytes]`;
+  const kept = truncateUtf8(serialized, Math.max(0, maxBytes - Buffer.byteLength(marker, 'utf8')));
+
+  return { output: `${kept}${marker}`, truncated: true };
+}
+
+function safeSerialize(value: unknown): string | undefined {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
 }
 
 export function capToolResultContent(

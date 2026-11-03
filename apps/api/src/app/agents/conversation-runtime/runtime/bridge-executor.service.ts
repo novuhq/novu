@@ -8,7 +8,12 @@ import {
   isNovuTlsEnabled,
   PinoLogger,
 } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  type ConversationActivityToolData,
+  ConversationEntity,
+  SubscriberEntity,
+} from '@novu/dal';
 import type {
   AgentAction,
   AgentContextPayload,
@@ -36,6 +41,7 @@ import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { capToolOutput } from '../conversation/tool-result-content';
 import {
   resolveInboundReplyTo,
   type WorkflowOriginData,
@@ -111,6 +117,14 @@ function resolveAgentReplyApiOrigin(): string {
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 const ATTACHMENT_SIGNING_CONCURRENCY = 4;
+
+/**
+ * Total byte budget for the serialized bridge `history`. Self-hosted bridges rebuild the model
+ * transcript from the full ledger every turn, so an unbounded history overruns both the bridge's
+ * HTTP body limit (`PayloadTooLargeError`) and the provider context window. When exceeded, the
+ * oldest rows are dropped first (see `applyHistoryBudget`), keeping each tool cycle intact.
+ */
+export const BRIDGE_HISTORY_MAX_BYTES = 512 * 1024;
 
 interface AttachmentSigningContext {
   organizationId: string;
@@ -655,14 +669,71 @@ export class BridgeExecutorService {
         richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
         signalData: activity.signalData || undefined,
-        toolData: activity.toolData || undefined,
+        toolData: this.slimToolDataForBridge(activity.toolData),
         createdAt: activity.createdAt,
       });
     }
 
-    return mapped;
+    return this.applyHistoryBudget(mapped, BRIDGE_HISTORY_MAX_BYTES);
   }
 
+  /**
+   * Re-cap `toolData.output` on read. The write-time cap in `toolResultData` bounds new rows, but
+   * rows persisted before that change are still uncapped, and NV-8715 will add more tool rows here.
+   */
+  private slimToolDataForBridge(
+    toolData: ConversationActivityToolData | undefined
+  ): ConversationActivityToolData | undefined {
+    if (!toolData || toolData.output === undefined) {
+      return toolData || undefined;
+    }
+
+    const { output, truncated } = capToolOutput(toolData.output);
+    if (!truncated) {
+      return toolData;
+    }
+
+    return { ...toolData, output, truncated: true };
+  }
+
+  /**
+   * Keep the serialized history under `maxBytes` by dropping the oldest rows first. Rows that share
+   * a `toolCallId` or `approvalId` (a tool call and its result, an approval request and its
+   * decision) form one group and are dropped together, so a trimmed transcript never strands a
+   * tool-result or decision without its originating call/request.
+   */
+  private applyHistoryBudget(entries: AgentHistoryEntry[], maxBytes: number): AgentHistoryEntry[] {
+    const sizes = entries.map((entry) => Buffer.byteLength(JSON.stringify(entry), 'utf8'));
+    let total = sizes.reduce((sum, size) => sum + size, 0);
+    if (total <= maxBytes) {
+      return entries;
+    }
+
+    const groupIds = groupToolCycles(entries);
+    const dropped = new Array<boolean>(entries.length).fill(false);
+
+    for (let i = 0; i < entries.length && total > maxBytes; i += 1) {
+      if (dropped[i]) {
+        continue;
+      }
+
+      const group = groupIds[i];
+      for (let j = i; j < entries.length; j += 1) {
+        if (!dropped[j] && groupIds[j] === group) {
+          dropped[j] = true;
+          total -= sizes[j];
+        }
+      }
+    }
+
+    return entries.filter((_, index) => !dropped[index]);
+  }
+
+  /**
+   * `@novu/framework` reads only `richContent.attachments` from history (signed inbound files for
+   * vision/PDF turns — see `parseUserHistoryAttachments`). Everything else (approval cards, HITL
+   * bodies, rendered markdown) duplicates `content` and is dropped to keep the bridge payload slim.
+   */
   private async mapRichContentForBridge(
     richContent: Record<string, unknown> | undefined,
     activity: ConversationActivityEntity
@@ -674,7 +745,7 @@ export class BridgeExecutorService {
     const rawAttachments = richContent.attachments;
 
     if (!Array.isArray(rawAttachments)) {
-      return richContent;
+      return undefined;
     }
 
     const mapped = await mapWithConcurrency(rawAttachments, ATTACHMENT_SIGNING_CONCURRENCY, async (item) => {
@@ -710,10 +781,7 @@ export class BridgeExecutorService {
 
     const attachments = mapped.flatMap((entry) => (entry ? [entry] : []));
 
-    return {
-      ...richContent,
-      attachments,
-    };
+    return { attachments };
   }
 
   private async signAttachmentForHistory(
@@ -809,6 +877,77 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+/**
+ * Assign each entry a group id. Rows linked by a shared `toolCallId` or `approvalId` resolve to the
+ * same id (union-find over both keys, since an approval request carries both); rows with neither key
+ * get a unique id. The budget trimmer drops whole groups so a tool cycle is never split.
+ */
+function groupToolCycles(entries: AgentHistoryEntry[]): number[] {
+  const parent = new Map<string, string>();
+
+  const find = (key: string): string => {
+    let root = key;
+    while (parent.get(root) !== root) {
+      root = parent.get(root) as string;
+    }
+    let node = key;
+    while (parent.get(node) !== root) {
+      const next = parent.get(node) as string;
+      parent.set(node, root);
+      node = next;
+    }
+
+    return root;
+  };
+
+  const union = (a: string, b: string): void => {
+    parent.set(find(a), find(b));
+  };
+
+  const keysOf = (entry: AgentHistoryEntry): string[] => {
+    const keys: string[] = [];
+    if (entry.toolData?.toolCallId) {
+      keys.push(`tc:${entry.toolData.toolCallId}`);
+    }
+    if (entry.toolData?.approvalId) {
+      keys.push(`ap:${entry.toolData.approvalId}`);
+    }
+
+    return keys;
+  };
+
+  for (const entry of entries) {
+    const keys = keysOf(entry);
+    for (const key of keys) {
+      if (!parent.has(key)) {
+        parent.set(key, key);
+      }
+    }
+    for (let i = 1; i < keys.length; i += 1) {
+      union(keys[0], keys[i]);
+    }
+  }
+
+  const rootToId = new Map<string, number>();
+  let nextSingleton = 0;
+
+  return entries.map((entry) => {
+    const keys = keysOf(entry);
+    if (keys.length === 0) {
+      nextSingleton -= 1;
+
+      return nextSingleton;
+    }
+
+    const root = find(keys[0]);
+    if (!rootToId.has(root)) {
+      rootToId.set(root, rootToId.size + 1);
+    }
+
+    return rootToId.get(root) as number;
+  });
 }
 
 function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
