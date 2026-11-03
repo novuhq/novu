@@ -396,9 +396,9 @@ describe('AgentInboundHandler', () => {
   }
 
   function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
-    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
-    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
-    // simulate a spoofed `From`.
+    // Default to an SPF-verified sender so existing cases model a legitimate
+    // email. Pass `{ spf: 'failed' }` to simulate a spoofed `From`. A DKIM
+    // miss alone does not make the sender unverified.
     const { dkim = 'pass', spf = 'pass' } = auth;
 
     return {
@@ -2126,8 +2126,8 @@ describe('AgentInboundHandler', () => {
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
       const thread = makeEmailDmThread();
-      // Attacker spoofs a real subscriber's address; DKIM/SPF failed upstream.
-      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'failed' });
+      // Attacker spoofs a real subscriber's address; SPF failed upstream.
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'pass', spf: 'failed' });
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
@@ -2136,12 +2136,12 @@ describe('AgentInboundHandler', () => {
       // No identity resolved → handler gate blocks dispatch with verification copy.
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('SPF check failed');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('victim@example.com');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 
-    it('should not map a spoofed (unverified) email onto an existing subscriber for a restricted agent', async () => {
+    it('should resolve a restricted sender when SPF passes and only log a DKIM miss', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -2149,9 +2149,40 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
-      // On unpatched code this lookup returns the victim's subscriberId from the
-      // forged `From`, letting the attacker act as the victim. A single failing
-      // verdict (SPF passes, DKIM fails) must still be treated as unverified.
+      const resolveOnly = sinon.stub().resolves('known-subscriber');
+      const { handler, logger, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('member@example.com', { dkim: 'failed', spf: 'pass' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      const dkimWarn = logger.warn.getCalls().find((call) => call.args[1] === 'Inbound email DKIM verdict is not pass');
+      if (!dkimWarn) {
+        expect.fail('expected a DKIM non-pass warn');
+      }
+      expect(dkimWarn.args[0]).to.include({
+        fromAddress: 'member@example.com',
+        dkim: 'failed',
+        spf: 'pass',
+        messageId: 'email-msg-1',
+      });
+    });
+
+    it('should not map a spoofed (SPF-failed) email onto an existing subscriber for a restricted agent', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
       const resolveOnly = sinon.stub().resolves('victim-subscriber');
       const { handler, subscriberResolver, subscriberRepository, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: resolveOnly,
@@ -2159,7 +2190,7 @@ describe('AgentInboundHandler', () => {
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
       const thread = makeEmailDmThread();
-      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'pass' });
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'pass', spf: 'failed' });
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
@@ -2167,7 +2198,7 @@ describe('AgentInboundHandler', () => {
       expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('SPF check failed');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 

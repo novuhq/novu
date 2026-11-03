@@ -937,7 +937,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(platformParticipant.id).to.not.equal(mixedCaseSubscriber.subscriberId);
     });
 
-    it('should not map a spoofed (DKIM/SPF-failed) sender onto a matching subscriber', async () => {
+    it('should not map a spoofed (SPF-failed) sender onto a matching subscriber', async () => {
       const victimEmail = `victim-${Date.now()}@example.com`;
       const victim = await new SubscriberRepository().create({
         subscriberId: `sub-email-spoof-${Date.now()}`,
@@ -948,9 +948,9 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         _organizationId: ctx.session.organization._id,
       });
 
-      // Attacker forges `From: victim@…` but the message fails authentication.
+      // Attacker forges `From: victim@…` but SPF does not pass. DKIM is not required.
       const threadId = await invokeEmailInbound(victimEmail, 'Run a privileged tool', {
-        dkim: 'failed',
+        dkim: 'pass',
         spf: 'failed',
       });
 

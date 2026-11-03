@@ -223,13 +223,13 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
  * An inbound email's sender identity is taken from the `From` header, which is
  * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
  * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
- * The sender is only trusted when both verdicts are `'pass'`; anything else —
- * including a missing verdict on an older payload — is treated as unverified so
- * the resolver never maps a spoofed `From` onto a registered subscriber. Fails
- * closed by design.
+ * SPF is the required check. A missing or non-pass SPF verdict is unverified so
+ * the resolver never maps a spoofed `From` onto a registered subscriber. DKIM is
+ * logged separately and does not block: the verifier rejects legitimate Proton
+ * and Outlook signatures. Fails closed on SPF.
  */
 function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
-  return raw?.dkim === 'pass' && raw?.spf === 'pass';
+  return raw?.spf === 'pass';
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -692,6 +692,21 @@ export class AgentInboundHandler implements OnModuleInit {
       isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
     });
 
+    if (config.platform === AgentPlatformEnum.EMAIL && emailAuthRaw?.dkim !== 'pass') {
+      this.logger.warn(
+        {
+          agentId,
+          organizationId: config.organizationId,
+          environmentId: config.environmentId,
+          fromAddress: message.author.userId,
+          dkim: emailAuthRaw?.dkim,
+          spf: emailAuthRaw?.spf,
+          messageId: message.id,
+        },
+        'Inbound email DKIM verdict is not pass'
+      );
+    }
+
     try {
       if (!isVerifiedEmailSender) {
         this.logger.warn(
@@ -707,7 +722,7 @@ export class AgentInboundHandler implements OnModuleInit {
             isKeyless: config.isKeyless,
             canAutoProvision,
           },
-          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+          'Inbound email sender failed SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
 
         return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender };

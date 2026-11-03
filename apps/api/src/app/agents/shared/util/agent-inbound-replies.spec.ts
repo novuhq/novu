@@ -32,7 +32,7 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
   });
 
-  it('returns verification-failed copy for an unverified (DKIM/SPF-failed) email sender', () => {
+  it('returns verification-failed copy for an unverified (SPF-failed) email sender', () => {
     const reply = buildUnresolvedSubscriberAccessReply({
       platform: AgentPlatformEnum.EMAIL,
       senderEmail: 'victim@example.com',
@@ -41,7 +41,8 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     });
 
     expect(reply).to.include('victim@example.com');
-    expect(reply).to.include('DKIM/SPF');
+    expect(reply).to.include('SPF check failed');
+    expect(reply).to.not.include('DKIM');
     expect(reply).to.not.include('known user');
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
   });
