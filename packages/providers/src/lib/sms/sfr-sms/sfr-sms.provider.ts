@@ -13,9 +13,9 @@ export interface ISfrAddSingleCallResponse {
 
 type SfrSmsMedia = 'SMS' | 'SMSLong' | 'SMSUnicode' | 'SMSUnicodeLong';
 
-const GSM_7BIT_CHARSET =
-  '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà' +
-  '^{}\\[~]|€\f';
+const GSM_7BIT_BASIC_CHARSET =
+  '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
+const GSM_7BIT_EXTENSION_CHARSET = '^{}\\[~]|€\f';
 
 const SINGLE_SMS_MAX_LENGTH = 160;
 const SINGLE_UNICODE_SMS_MAX_LENGTH = 70;
@@ -76,14 +76,29 @@ export class SfrSmsProvider extends BaseProvider implements ISmsProvider {
   }
 
   private getMedia(content: string): SfrSmsMedia {
-    const isUnicode = [...content].some((char) => !GSM_7BIT_CHARSET.includes(char));
-    const maxLength = isUnicode ? SINGLE_UNICODE_SMS_MAX_LENGTH : SINGLE_SMS_MAX_LENGTH;
-    const isLong = content.length > maxLength;
+    const gsmUnits = this.countGsmUnits(content);
 
-    if (isUnicode) {
-      return isLong ? 'SMSUnicodeLong' : 'SMSUnicode';
+    if (gsmUnits === null) {
+      return content.length > SINGLE_UNICODE_SMS_MAX_LENGTH ? 'SMSUnicodeLong' : 'SMSUnicode';
     }
 
-    return isLong ? 'SMSLong' : 'SMS';
+    return gsmUnits > SINGLE_SMS_MAX_LENGTH ? 'SMSLong' : 'SMS';
+  }
+
+  /** Returns the GSM 7-bit length (extension characters count twice), or null if the text needs Unicode. */
+  private countGsmUnits(content: string): number | null {
+    let units = 0;
+
+    for (const char of content) {
+      if (GSM_7BIT_BASIC_CHARSET.includes(char)) {
+        units += 1;
+      } else if (GSM_7BIT_EXTENSION_CHARSET.includes(char)) {
+        units += 2;
+      } else {
+        return null;
+      }
+    }
+
+    return units;
   }
 }
