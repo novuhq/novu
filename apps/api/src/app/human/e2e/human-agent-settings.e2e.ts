@@ -29,6 +29,7 @@ const conversationRepository = new ConversationRepository();
 const CONTACT_CHAT_ID = '777301';
 const STRANGER_CHAT_ID = '888402';
 const DASHBOARD_SECRET = 'e2e-agent-settings-dashboard-secret';
+const TELEGRAM_WEBHOOK_SECRET = 'e2e-settings-telegram-secret';
 
 /**
  * The Settings block of the Configure page: who can reach the agent, acknowledging incoming messages, pausing it,
@@ -70,7 +71,7 @@ describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete)
       channel: ChannelTypeEnum.CHAT,
       credentials: encryptCredentials({
         apiToken: '12345678:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        token: 'e2e-settings-telegram-secret',
+        token: TELEGRAM_WEBHOOK_SECRET,
       }),
       active: true,
       identifier: `telegram-settings-e2e-${Date.now()}`,
@@ -278,6 +279,61 @@ describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete)
       await sendMessageToRelay('hi, who is this?', STRANGER_CHAT_ID);
 
       expect(typingCalls()).to.have.length(0);
+    });
+
+    describe('when Telegram delivers the message to the webhook', () => {
+      /** A direct message as Telegram sends it, so the Telegram adapter handles it before Novu does. */
+      async function postTelegramMessage(text: string, chatId: string) {
+        const res = await session.testAgent
+          .post(`/v1/agents/${relayAgentId}/webhook/${integrationIdentifier}`)
+          .set('x-telegram-bot-api-secret-token', TELEGRAM_WEBHOOK_SECRET)
+          .set('content-type', 'application/json')
+          .send({
+            update_id: Date.now(),
+            message: {
+              message_id: Math.floor(Math.random() * 1_000_000) + 1,
+              date: Math.floor(Date.now() / 1000),
+              chat: { id: Number(chatId), type: 'private', first_name: 'Ada' },
+              from: { id: Number(chatId), is_bot: false, first_name: 'Ada' },
+              text,
+            },
+          });
+        expect(res.status).to.equal(200, JSON.stringify(res.body));
+      }
+
+      async function waitUntil(done: () => Promise<boolean> | boolean, what: string) {
+        const deadline = Date.now() + 15_000;
+
+        while (!(await done())) {
+          if (Date.now() > deadline) {
+            throw new Error(`Timed out waiting for ${what}`);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      async function messageReachedTheInbox() {
+        return (await relayConversations()).length > 0;
+      }
+
+      it('shows no typing while it is off', async () => {
+        await postTelegramMessage('are you there?', CONTACT_CHAT_ID);
+        await waitUntil(messageReachedTheInbox, 'the message to reach the inbox');
+
+        expect(typingCalls()).to.have.length(0);
+      });
+
+      it('shows typing once when it is on', async () => {
+        await updateAgent({ acknowledgeOnReceived: true });
+
+        await postTelegramMessage('are you there?', CONTACT_CHAT_ID);
+        await waitUntil(messageReachedTheInbox, 'the message to reach the inbox');
+        await waitUntil(() => typingCalls().length > 0, 'typing');
+
+        expect(typingCalls()).to.have.length(1);
+        expect(String(typingCalls()[0].payload.chat_id)).to.equal(CONTACT_CHAT_ID);
+      });
     });
 
     it('refuses anything but true or false', async () => {
