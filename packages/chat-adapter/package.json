@@ -62,7 +62,7 @@
     "@novu/agent-event-protocol": "workspace:*",
     "@types/react": "^19.0.0",
     "rimraf": "~3.0.2",
-    "tsup": "^8.0.2",
+    "tsup": "^9.0.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.0"
   },

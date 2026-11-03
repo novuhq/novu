@@ -42,7 +42,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
-    "tsup": "^8.2.1",
+    "tsup": "^9.0.0",
     "typescript": "6.0.3"
   },
   "peerDependencies": {
