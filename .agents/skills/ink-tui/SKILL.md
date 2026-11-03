@@ -1,5 +1,5 @@
 ---
-name: ink-tui-wizard
+name: ink-tui
 description: >
   Build terminal user interfaces (TUIs) using Ink (React for CLIs) and @inkjs/ui
   with a reactive, session-driven wizard pattern. Use when creating interactive CLI

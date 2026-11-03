@@ -19,7 +19,7 @@ node docker/box/src/cli/main.ts doctor     # "ok": true when it's fit to test on
 `up` prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co` (the box's Mailpit under
 `/mail`), and the API at `https://<branch>-api.box.novu-staging.co`. After more changes, `sync` puts them on the
 box. Coding agents follow
-the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
+the `verify-in-box` skill (`.agents/skills/verify-in-box/SKILL.md`).
 
 ## Commands
 

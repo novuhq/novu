@@ -40,4 +40,4 @@ When making changes targeted to the Enterprise distribution, we need to make sur
 <!-- Dependency graph: see .cursor/rules/dependency-graph.mdc -->
 <!-- Testing: see .cursor/rules/testing.mdc -->
 <!-- PR format: see .cursor/rules/pullrequest.mdc -->
-<!-- Enterprise submodule: see .cursor/skills/enterprise-submodule/SKILL.md -->
+<!-- Enterprise submodule: see .agents/skills/enterprise-submodule/SKILL.md -->

@@ -1,3 +1,8 @@
+---
+name: enterprise-submodule
+description: Set up, update and change the enterprise submodule (`.source/`) and the enterprise packages (`enterprise/packages/*`), including the matching packages-enterprise PR. Use when touching enterprise code or when the submodule needs to be initialized or updated.
+---
+
 # Enterprise Submodule Setup
 
 Use this skill when making changes to the enterprise submodule (`.source/`) or enterprise packages (`enterprise/packages/*`), or when the enterprise submodule needs to be initialized/updated.
