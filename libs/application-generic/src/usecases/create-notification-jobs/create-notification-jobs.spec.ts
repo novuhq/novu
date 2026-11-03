@@ -274,7 +274,7 @@ describe('CreateNotificationJobs', () => {
       delay: { amount: 5, unit: 'seconds' },
     };
 
-    function setOverridesDedup(featureFlagsService: { getFlag: jest.Mock }, enabled: boolean) {
+    function setOverridesDedup(featureFlagsService: { getFlag: Mock }, enabled: boolean) {
       featureFlagsService.getFlag.mockImplementation(
         async ({ key }: { key: FeatureFlagsKeysEnum }) =>
           enabled && key === FeatureFlagsKeysEnum.IS_OVERRIDES_DEDUP_ENABLED
