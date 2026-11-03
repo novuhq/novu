@@ -1,4 +1,4 @@
-import { SubscriberSourceEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum, SubscriberSourceEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
@@ -10,8 +10,11 @@ const USER_ID = 'aaaaaaaaaaaaaaaaaaaaaaa3';
 const WORKFLOW_ID = 'aaaaaaaaaaaaaaaaaaaaaaa4';
 const SUBSCRIBER_ID = 'aaaaaaaaaaaaaaaaaaaaaaa5';
 
-describe('SubscriberJobBound - usage increment stamp', () => {
-  function buildUsecase() {
+describe('SubscriberJobBound', () => {
+  function buildUsecase(options?: {
+    steps?: Array<{ template?: { type?: string } }>;
+    integrations?: Array<{ providerId: string; channel: string; primary?: boolean }>;
+  }) {
     const createNotificationJobs = { execute: sinon.stub().resolves([]) };
     const storeSubscriberJobs = { execute: sinon.stub().resolves() };
     const createOrUpdateSubscriberUsecase = {
@@ -19,7 +22,12 @@ describe('SubscriberJobBound - usage increment stamp', () => {
     };
     const getPreferences = { safeExecute: sinon.stub().resolves({ preferences: { all: { readOnly: false } } }) };
     const inMemoryLRUCacheService = {
-      get: sinon.stub().resolves({ _id: WORKFLOW_ID, name: 'Test workflow', steps: [], triggers: [] }),
+      get: sinon.stub().resolves({
+        _id: WORKFLOW_ID,
+        name: 'Test workflow',
+        steps: options?.steps ?? [],
+        triggers: [],
+      }),
     };
     const logger = { setContext: sinon.stub(), assign: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
 
@@ -27,7 +35,7 @@ describe('SubscriberJobBound - usage increment stamp', () => {
       storeSubscriberJobs as never,
       createNotificationJobs as never,
       createOrUpdateSubscriberUsecase as never,
-      { find: sinon.stub().resolves([]) } as never,
+      { find: sinon.stub().resolves(options?.integrations ?? []) } as never,
       {} as never,
       logger as never,
       { mixpanelTrack: sinon.stub() } as never,
@@ -79,5 +87,53 @@ describe('SubscriberJobBound - usage increment stamp', () => {
 
     expect(createNotificationJobs.execute.calledOnce).to.equal(true);
     expect(createNotificationJobs.execute.firstCall.args[0].incrementUsageInWorker).to.equal(undefined);
+  });
+
+  it('attributes the email job to the primary provider when Novu Email is also active', async () => {
+    const { usecase, createNotificationJobs } = buildUsecase({
+      steps: [{ template: { type: ChannelTypeEnum.EMAIL } }],
+      integrations: [
+        { providerId: EmailProviderIdEnum.Novu, channel: ChannelTypeEnum.EMAIL, primary: false },
+        { providerId: EmailProviderIdEnum.Postmark, channel: ChannelTypeEnum.EMAIL, primary: true },
+      ],
+    });
+
+    await usecase.execute(buildCommand());
+
+    expect(createNotificationJobs.execute.firstCall.args[0].templateProviderIds[ChannelTypeEnum.EMAIL]).to.equal(
+      EmailProviderIdEnum.Postmark
+    );
+  });
+
+  it('keeps Novu Email when it is still the primary integration', async () => {
+    const { usecase, createNotificationJobs } = buildUsecase({
+      steps: [{ template: { type: ChannelTypeEnum.EMAIL } }],
+      integrations: [
+        { providerId: EmailProviderIdEnum.Postmark, channel: ChannelTypeEnum.EMAIL, primary: false },
+        { providerId: EmailProviderIdEnum.Novu, channel: ChannelTypeEnum.EMAIL, primary: true },
+      ],
+    });
+
+    await usecase.execute(buildCommand());
+
+    expect(createNotificationJobs.execute.firstCall.args[0].templateProviderIds[ChannelTypeEnum.EMAIL]).to.equal(
+      EmailProviderIdEnum.Novu
+    );
+  });
+
+  it('keeps the first active provider when the channel has no primary integration', async () => {
+    const { usecase, createNotificationJobs } = buildUsecase({
+      steps: [{ template: { type: ChannelTypeEnum.SMS } }],
+      integrations: [
+        { providerId: SmsProviderIdEnum.Novu, channel: ChannelTypeEnum.SMS, primary: false },
+        { providerId: SmsProviderIdEnum.Twilio, channel: ChannelTypeEnum.SMS, primary: false },
+      ],
+    });
+
+    await usecase.execute(buildCommand());
+
+    expect(createNotificationJobs.execute.firstCall.args[0].templateProviderIds[ChannelTypeEnum.SMS]).to.equal(
+      SmsProviderIdEnum.Novu
+    );
   });
 });
