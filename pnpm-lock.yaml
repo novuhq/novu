@@ -4006,9 +4006,6 @@ importers:
       tsup:
         specifier: ^9.0.0
         version: 9.0.0(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.25)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.9.0)
-      tsup-preset-solid:
-        specifier: ^2.2.0
-        version: 2.2.0(esbuild@0.28.1)(solid-js@1.9.6)(tsup@9.0.0(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.25)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.9.0))
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -20634,12 +20631,6 @@ packages:
   esbuild-plugin-inline-import@1.0.4:
     resolution: {integrity: sha512-ULt6a6Tsk8eIGaB6FjiJuqvQtql2WKYK3arMCDXatqKsifNDNgKrLq8WwavxEUPpZiNortaOvejzVikLQsM5iw==}
 
-  esbuild-plugin-solid@0.5.0:
-    resolution: {integrity: sha512-ITK6n+0ayGFeDVUZWNMxX+vLsasEN1ILrg4pISsNOQ+mq4ljlJJiuXotInd+HE0MzwTcA9wExT1yzDE2hsqPsg==}
-    peerDependencies:
-      esbuild: ^0.28.1
-      solid-js: '>= 1.0'
-
   esbuild-plugin-solid@0.6.0:
     resolution: {integrity: sha512-V1FvDALwLDX6K0XNYM9CMRAnMzA0+Ecu55qBUT9q/eAJh1KIDsTMFoOzMSgyHqbOfvrVfO3Mws3z7TW2GVnIZA==}
     peerDependencies:
@@ -28953,11 +28944,6 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-
-  tsup-preset-solid@2.2.0:
-    resolution: {integrity: sha512-sPAzeArmYkVAZNRN+m4tkiojdd0GzW/lCwd4+TQDKMENe8wr2uAuro1s0Z59ASmdBbkXoxLgCiNcuQMyiidMZg==}
-    peerDependencies:
-      tsup: ^8.3.5
 
   tsup@9.0.0:
     resolution: {integrity: sha512-DHgb0bfo2gFKybOa8dRFMiHSqzWWhMkfNK0f902VVquWQtDBWExNgidHszjjDKaFd12pWPgzumpWf9nGr3gzFg==}
@@ -52598,14 +52584,6 @@ snapshots:
 
   esbuild-plugin-inline-import@1.0.4: {}
 
-  esbuild-plugin-solid@0.5.0(esbuild@0.28.1)(solid-js@1.9.6):
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
-      babel-preset-solid: 1.8.17(@babel/core@7.29.7)
-      esbuild: 0.28.1
-      solid-js: 1.9.6
-
   esbuild-plugin-solid@0.6.0(esbuild@0.28.1)(solid-js@1.9.6):
     dependencies:
       '@babel/core': 7.29.7
@@ -63315,14 +63293,6 @@ snapshots:
     optional: true
 
   tslib@2.8.1: {}
-
-  tsup-preset-solid@2.2.0(esbuild@0.28.1)(solid-js@1.9.6)(tsup@9.0.0(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.25)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.9.0)):
-    dependencies:
-      esbuild-plugin-solid: 0.5.0(esbuild@0.28.1)(solid-js@1.9.6)
-      tsup: 9.0.0(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.25)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - esbuild
-      - solid-js
 
   tsup@9.0.0(@swc/core@1.7.26(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.25)(tsx@4.21.0)(typescript@6.0.3)(yaml@2.9.0):
     dependencies:

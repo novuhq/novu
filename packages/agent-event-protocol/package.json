@@ -24,7 +24,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "lint": "biome lint .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests"
