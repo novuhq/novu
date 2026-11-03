@@ -157,7 +157,6 @@
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.1.27",
     "@stoplight/spectral-cli": "^6.15.0",
-    "@swc-node/register": "1.10.10",
     "@types/async": "^3.2.1",
     "@types/bcrypt": "^3.0.0",
     "@types/bull": "^3.15.8",
