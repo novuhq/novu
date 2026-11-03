@@ -731,9 +731,6 @@ importers:
       '@stoplight/spectral-cli':
         specifier: ^6.15.0
         version: 6.15.0
-      '@swc-node/register':
-        specifier: 1.10.10
-        version: 1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.23))(@swc/types@0.1.12)(typescript@6.0.3)
       '@types/async':
         specifier: ^3.2.1
         version: 3.2.18
