@@ -47,41 +47,25 @@ To set up the repository, run the initial setup command:
 pnpm run setup:project
 ```
 
-## Generate provider
+## Create provider
 
-After the project is initialized, a new provider can be generated using the below command.
+After the project is initialized, create the provider files by hand. For this example, we will be adding an `EMAIL` provider named `example-provider`.
 
-```shell
-pnpm run generate:provider
+1. Create `packages/providers/src/lib/<channel>/<name>/<name>.provider.ts`, for example `packages/providers/src/lib/email/example-provider/example-provider.provider.ts`.
+2. Create a spec file next to it, for example `example-provider.provider.spec.ts`.
+3. Export the provider from that channel's `index.ts`, for example `packages/providers/src/lib/email/index.ts`:
+
+```ts packages/providers/src/lib/email/index.ts
+export * from './example-provider/example-provider.provider';
 ```
 
-<Note>
-  Use the above command at the root of the project.
-</Note>
+Copy the structure of an existing provider of the same channel, such as [SendGrid](https://github.com/novuhq/novu/blob/next/packages/providers/src/lib/email/sendgrid/sendgrid.provider.ts) for email.
 
-Choose the provider type.
-
-```shell
-? What type
-❯ EMAIL
-  SMS
-  PUSH
-  CHAT
-```
-
-Use `up` and `down` arrow to switch `channel` type and press `enter` to select.
-
-For this example, we will be selecting `EMAIL` as our provider type. The name for our provider will be `example-provider`.
-
-```
-? Write the provider name`kebab-cased` (e.g. proton-mail, outlook365, yahoo-mail): example-provider
-```
-
-Make sure your selected name is not conflicting with our existing provider's name. Boilerplate files for this new `example-provider` is generated in your local machine project.
+Make sure your selected name is not conflicting with our existing provider's name.
 
 > In above example, we have given our provider name as example-provider for simplicity. If provider you want to add have name as twilio, don't use twilio-provider as name, instead use twilio only. If one provider supports multiple channels like infobip supports both sms and email channels, use infobip-email or infobip-sms to differentiate these providers.
 
-Once our `example-provider` is generated we will need to begin working from `packages/providers/src/lib/email/example-provider` directory. Make sure to write the test for this new provider.
+Once our `example-provider` is created we will need to begin working from `packages/providers/src/lib/email/example-provider` directory. Make sure to write the test for this new provider.
 
 ```typescript
 import {
