@@ -492,14 +492,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         }
 
         const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+        const telegram = createTelegramAdapter({
+          botToken: credentials.apiToken,
+          secretToken: credentials.token,
+          mode: 'webhook',
+        });
 
-        return {
-          telegram: createTelegramAdapter({
-            botToken: credentials.apiToken,
-            secretToken: credentials.token,
-            mode: 'webhook',
-          }),
-        };
+        if (config.isHumanRelay) {
+          stopTypingOnArrival(telegram);
+        }
+
+        return { telegram };
       }
       case AgentPlatformEnum.SENDBLUE:
         return this.buildSendblueAdapter(config);
@@ -896,4 +899,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       attachments: [],
     });
   }
+}
+
+/**
+ * The Telegram adapter shows typing on every direct message the moment it arrives, before Novu looks at it. An Agent
+ * Inbox agent shows typing only when its operator turned on acknowledging incoming messages, and never to a stranger
+ * it keeps out, so `InboundAckService` shows it instead. The settings e2e sends a real webhook, which catches an
+ * adapter update that renames this method.
+ */
+function stopTypingOnArrival(adapter: TelegramAdapter): void {
+  Object.assign(adapter, { startTypingForPrivateMessage: () => undefined });
 }
