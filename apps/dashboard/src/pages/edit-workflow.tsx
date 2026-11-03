@@ -5,6 +5,7 @@ import {
   CopilotLauncher,
   CopilotPopover,
   CopilotWebChatProvider,
+  useCopilotPendingPrompt,
   useCopilotWebChat,
   useCopilotWebChatEnabled,
 } from '@/components/copilot-web-chat';
@@ -55,6 +56,7 @@ function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boo
 /** Shows the launcher/popover only once a page (canvas or step editor) registered a workflow context. */
 function CopilotWebChatMount() {
   const { pageContext } = useCopilotWebChat();
+  useCopilotPendingPrompt();
 
   if (!pageContext?.workflowId) return null;
 

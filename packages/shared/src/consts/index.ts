@@ -3,6 +3,7 @@ export * from './agent-inbox-analytics';
 export * from './agents-org-funnel';
 export * from './aws-claude-regions';
 export * from './connect-claim';
+export * from './copilot-events';
 export * from './data-retention';
 export * from './feature-tiers-constants';
 export * from './filters';

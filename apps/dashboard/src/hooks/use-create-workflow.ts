@@ -14,18 +14,24 @@ interface UseCreateWorkflowOptions {
   onSuccess?: () => void;
 }
 
+type SubmitOptions = {
+  source?: WorkflowCreationSourceEnum;
+  /** Navigation state for the editor the new workflow opens in. */
+  navigationState?: unknown;
+};
+
 export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
 
   const mutation = useMutation({
-    mutationFn: async (workflow: CreateWorkflowDto) => {
+    mutationFn: async ({ workflow }: { workflow: CreateWorkflowDto; navigationState?: unknown }) => {
       const environment = requireEnvironment(currentEnvironment, 'No current environment selected');
 
       return createWorkflow({ environment, workflow });
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, { navigationState }) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
@@ -40,7 +46,8 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
         buildRoute(ROUTES.EDIT_WORKFLOW, {
           environmentSlug: currentEnvironment?.slug ?? '',
           workflowSlug: result.data.slug ?? '',
-        })
+        }),
+        { state: navigationState }
       );
 
       onSuccess?.();
@@ -50,7 +57,11 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
     },
   });
 
-  const submit = async (values: z.infer<typeof workflowSchema>, template?: CreateWorkflowDto) => {
+  const submit = async (
+    values: z.infer<typeof workflowSchema>,
+    template?: CreateWorkflowDto,
+    { source, navigationState }: SubmitOptions = {}
+  ) => {
     let steps = template?.steps ?? [];
 
     const isFromTemplateStore = template?.__source === WorkflowCreationSourceEnum.TEMPLATE_STORE;
@@ -83,14 +94,17 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
     }
 
     return mutation.mutateAsync({
-      name: values.name,
-      steps,
-      __source: template?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
-      workflowId: values.workflowId,
-      description: values.description || undefined,
-      tags: values.tags || [],
-      isTranslationEnabled: values.isTranslationEnabled || false,
-      payloadSchema: template?.payloadSchema,
+      workflow: {
+        name: values.name,
+        steps,
+        __source: source ?? template?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
+        workflowId: values.workflowId,
+        description: values.description || undefined,
+        tags: values.tags || [],
+        isTranslationEnabled: values.isTranslationEnabled || false,
+        payloadSchema: template?.payloadSchema,
+      },
+      navigationState,
     });
   };
 
