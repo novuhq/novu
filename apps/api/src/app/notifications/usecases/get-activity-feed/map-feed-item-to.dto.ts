@@ -236,7 +236,7 @@ function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTime
 function mapDigest(
   digestData?:
     | (IWorkflowStepMetadata & {
-        events?: any[];
+        events?: Record<string, unknown>[];
       })
     | string
     | null
@@ -248,11 +248,9 @@ function mapDigest(
   const digestItem =
     typeof digestData === 'string'
       ? (JSON.parse(digestData) as IWorkflowStepMetadata & {
-          events?: any[];
+          events?: Record<string, unknown>[];
         })
-      : (digestData as IWorkflowStepMetadata & {
-          events?: any[];
-        });
+      : digestData;
 
   if (!digestItem) {
     return undefined;
@@ -318,7 +316,7 @@ function convertExecutionDetail(entity: ExecutionDetailFeedItem): ActivityNotifi
     detail: entity.detail,
     isRetry: entity.isRetry,
     isTest: entity.isTest,
-    providerId: entity.providerId as unknown as ProvidersIdEnum,
+    providerId: entity.providerId as ProvidersIdEnum,
     source: entity.source,
     status: entity.status,
     raw: entity.raw || undefined,

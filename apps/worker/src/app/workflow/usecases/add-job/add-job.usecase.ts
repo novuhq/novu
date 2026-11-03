@@ -741,7 +741,7 @@ export class AddJob {
     if (isDynamicOutput(outputs)) {
       metadata = {
         type: DelayTypeEnum.DYNAMIC,
-        dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
+        dynamicKey: (outputs as { dynamicKey?: string }).dynamicKey,
       } as IDelayDynamicMetadata;
 
       await this.jobRepository.updateOne(

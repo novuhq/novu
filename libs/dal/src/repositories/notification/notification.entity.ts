@@ -51,8 +51,10 @@ export class NotificationEntity {
    * This is a field that is used to define the subscriber that will receive the notification.
    * This field simplifies metric retrieval by associating external subscriber data, such as subscriberId.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, mirrors the trigger `to` as sent
   to?: ISubscribersDefine | any;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, the trigger payload is user-defined JSON
   payload?: any;
 
   /*
