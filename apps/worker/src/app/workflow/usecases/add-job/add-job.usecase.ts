@@ -215,6 +215,7 @@ export class AddJob {
     };
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing deferred-job (digest/delay) orchestration is outside this change
   private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 

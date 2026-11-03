@@ -91,6 +91,7 @@ export class RunJob {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing job execution orchestration is outside this change
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     setUser({
       id: command.userId,
@@ -605,6 +606,7 @@ export class RunJob {
    *   ends (no next job), we skip creating the status trace here and let setJobAsFailed handle it
    *   to avoid duplicate traces and ensure correct error status.
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing next-job queueing loop is outside this change
   private async tryQueueNextJobs(
     job: JobEntity,
     notification?: PartialNotificationEntity | null,
