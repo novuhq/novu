@@ -393,6 +393,21 @@ describe("workflow step tools", () => {
 			});
 		});
 
+		it("keeps a declared object open so its keys still validate", async () => {
+			const api = fakeWorkflowsApi();
+
+			await callTool(await client(), "update_workflow_payload_schema", {
+				addProperties: [{ name: "duration", type: "object" }],
+				workflowId: "welcome",
+			});
+
+			expect(api.puts[0].body!.payloadSchema.properties.duration).toEqual({
+				properties: {},
+				required: [],
+				type: "object",
+			});
+		});
+
 		it("turns payload validation off once no properties are left", async () => {
 			const api = fakeWorkflowsApi();
 
