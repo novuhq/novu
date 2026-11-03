@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "esModuleInterop": true,
     "isolatedModules": true,
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "lib": ["ES2021", "DOM"],
     "module": "nodenext",
     "moduleDetection": "force",
     "moduleResolution": "nodenext",

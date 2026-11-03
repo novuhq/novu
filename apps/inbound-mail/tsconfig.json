@@ -2,8 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "allowJs": false,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "module": "commonjs",
     "outDir": "./dist",
     "sourceMap": true,
