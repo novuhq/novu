@@ -22,10 +22,10 @@ import {
 } from './copilot-web-chat-utils';
 
 const CHANGE_STYLES: Record<ToolChange, string> = {
-  Added: 'bg-[#1fc16b]/10 text-[#1fc16b]',
-  Edited: 'bg-[#335cff]/10 text-[#335cff]',
-  Removed: 'bg-[#fb3748]/10 text-[#fb3748]',
-  Moved: 'bg-[#7d52f4]/10 text-[#7d52f4]',
+  Added: 'bg-success-base/10 text-success-base',
+  Edited: 'bg-information-base/10 text-information-base',
+  Removed: 'bg-error-base/10 text-error-base',
+  Moved: 'bg-feature-base/10 text-feature-base',
 };
 
 export function CopilotUserMessage({ message, contextLabel }: { message: AgentMessage; contextLabel?: string }) {

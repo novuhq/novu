@@ -124,6 +124,12 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
     });
   };
 
+  const onStop = () => {
+    // The Stop button locks until the run ends and then gives way to Send, so keep the focus in the composer.
+    textareaRef.current?.focus();
+    void stop();
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
@@ -174,8 +180,8 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
               title={chat?.isStopping ? 'Stopping' : 'Stop generating'}
               // Stopping takes until the agent's current step ends, so a second click has nothing to add.
               disabled={chat?.isStopping}
-              onClick={() => void stop()}
-              className="flex size-6 items-center justify-center rounded-md bg-text-strong text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-60"
+              onClick={onStop}
+              className="flex size-6 items-center justify-center rounded-md bg-bg-strong text-text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-60"
             >
               <RiStopFill className="size-3.5" />
             </button>
@@ -187,7 +193,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
               onClick={submit}
               className={cn(
                 'flex size-6 items-center justify-center rounded-md',
-                canSend ? 'bg-text-strong text-white hover:opacity-90' : 'bg-bg-soft text-text-soft'
+                canSend ? 'bg-bg-strong text-text-white hover:opacity-90' : 'bg-bg-soft text-text-soft'
               )}
             >
               <RiCornerDownLeftLine className="size-3.5" />
@@ -203,7 +209,10 @@ function Thread() {
   const { chat, retry, sentContextLabels, hasRunError, isBusy } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
-  const showThinking = (isBusy || !!chat?.typing) && hasPendingReplyGap(messages);
+  const isStopping = !!chat?.isStopping;
+  // A stop only lands once the agent's current step ends (seconds when it is saving changes), so say so meanwhile.
+  const showThinking = (isBusy || !!chat?.typing) && (isStopping || hasPendingReplyGap(messages));
+  const thinkingLabel = isStopping ? 'Stopping…' : chat?.typing?.status || undefined;
   const lastMessage = messages[messages.length - 1];
   // Snapshots are deep-cloned on every update, so scroll on what the newest message shows, not its identity.
   const tailKey = lastMessage
@@ -239,7 +248,7 @@ function Thread() {
 
           return <CopilotUserMessage key={message.id} message={message} contextLabel={contextLabel} />;
         })}
-        {showThinking && <CopilotThinkingIndicator label={chat?.typing?.status || undefined} />}
+        {showThinking && <CopilotThinkingIndicator label={thinkingLabel} />}
         {/* A failed send is surfaced by the composer strip instead. */}
         {hasRunError && !chat?.isRunning && !getFailedSend(messages) && (
           <CopilotErrorNotice onRetry={() => void retry()} />

@@ -15,7 +15,7 @@ export function useCopilotHotkey({ isOpen, isEnabled, toggle, close }: Params) {
         return;
       }
 
-      if (event.key === 'Escape' && isOpen && !event.defaultPrevented) {
+      if (event.key === 'Escape' && isOpen && !event.defaultPrevented && !event.isComposing) {
         close();
       }
     };
