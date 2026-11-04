@@ -84,7 +84,7 @@
     "@types/sinon": "^9.0.0",
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.6",
     "sinon": "^9.2.4",
     "superagent-defaults": "^0.1.14",
     "supertest": "^7.0.0",

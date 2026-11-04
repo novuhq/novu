@@ -783,8 +783,8 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.7.6
+        version: 11.8.0
       pirates:
         specifier: ^4.0.7
         version: 4.0.7
@@ -1507,8 +1507,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.7.6
+        version: 11.8.0
       sinon:
         specifier: ^18.0.0
         version: 18.0.1
@@ -1671,8 +1671,8 @@ importers:
         specifier: ^27.0.6
         version: 27.5.1(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(typescript@6.0.3))
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.7.6
+        version: 11.8.0
       sinon:
         specifier: ^9.2.4
         version: 9.2.4
@@ -1879,8 +1879,8 @@ importers:
         specifier: ^4.2.0
         version: 4.4.1
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.7.6
+        version: 11.8.0
       sinon:
         specifier: ^9.2.4
         version: 9.2.4
@@ -2058,8 +2058,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.7.6
+        version: 11.8.0
       supertest:
         specifier: ^7.0.0
         version: 7.0.0
@@ -20215,6 +20215,10 @@ packages:
     resolution: {integrity: sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A==}
     engines: {node: '>=0.3.1'}
 
+  diff@7.0.0:
+    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
+    engines: {node: '>=0.3.1'}
+
   diff@8.0.4:
     resolution: {integrity: sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw==}
     engines: {node: '>=0.3.1'}
@@ -22392,6 +22396,10 @@ packages:
     resolution: {integrity: sha512-NqCa4Sa2d+u7BWc6CukaObG3Fh+CU9bvixbpcXYhy2VvYS7vVGIdAgnIS5Ks3A/cqk4rebLJ9s8zBstT2aKnIA==}
     engines: {node: '>=4'}
 
+  is-path-inside@3.0.3:
+    resolution: {integrity: sha512-Fd4gABb+ycGAmKou8eMftCupSir5lRxqf4aD/vd0cD2qc4HL07OjCeuHMr8Ro4CoMaeCKDB0/ECBOVWjTwUvPQ==}
+    engines: {node: '>=8'}
+
   is-plain-obj@1.1.0:
     resolution: {integrity: sha512-yvkRyxmFKEOQ4pNXCmJG5AEQNlXJS5LaONXo5/cLdTZdWvsZ1ioJEonLGAosKlMWE8lwUy/bJzMjcw8az73+Fg==}
     engines: {node: '>=0.10.0'}
@@ -24562,6 +24570,11 @@ packages:
   mocha@10.2.0:
     resolution: {integrity: sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg==}
     engines: {node: '>= 14.0.0'}
+    hasBin: true
+
+  mocha@11.8.0:
+    resolution: {integrity: sha512-VyCeUdGN3A9lmCTTgG4yuvY9ixxaDk+xt2R/7/+1AP6EqNG+G9OKkzBwhVtVYoNX8YsxNSgAl8mOv3IAeOpFbw==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
 
   mocha@8.4.0:
@@ -29947,6 +29960,9 @@ packages:
 
   workerpool@6.2.1:
     resolution: {integrity: sha512-ILEIE97kDZvF9Wb9f6h5aXK4swSlKGUcOEGiIYb2OOu/IrDU9iwj0fD//SsA6E5ibwJxpEvhullJY4Sl4GcpAw==}
+
+  workerpool@9.3.4:
+    resolution: {integrity: sha512-TmPRQYYSAnnDiEB0P/Ytip7bFGvqnSU6I2BcuSw7Hx+JSg/DsUi5ebYfc8GYaSdpuvOcEs6dXxPurOYpe9QFwg==}
 
   wrangler@4.155.0:
     resolution: {integrity: sha512-gBKtAg2e0abQDvXPRQu611YMTd/cfAaJTOLAs/89tTxFxEeUyC260MRJRK+m3gLmQjDYWFwJv+ErwuJ/GuALpA==}
@@ -52103,6 +52119,8 @@ snapshots:
 
   diff@5.2.2: {}
 
+  diff@7.0.0: {}
+
   diff@8.0.4: {}
 
   diff@9.0.0: {}
@@ -54857,6 +54875,8 @@ snapshots:
   is-observable@1.1.0:
     dependencies:
       symbol-observable: 1.2.0
+
+  is-path-inside@3.0.3: {}
 
   is-plain-obj@1.1.0: {}
 
@@ -57851,6 +57871,30 @@ snapshots:
       workerpool: 6.2.1
       yargs: 16.2.0
       yargs-parser: 20.2.4
+      yargs-unparser: 2.0.0
+
+  mocha@11.8.0:
+    dependencies:
+      browser-stdout: 1.3.1
+      chokidar: 4.0.3
+      debug: 4.4.3
+      diff: 7.0.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 14.0.3
+      he: 1.2.0
+      is-path-inside: 3.0.3
+      js-yaml: 4.3.2
+      log-symbols: 4.1.0
+      minimatch: 11.0.3
+      ms: 2.1.3
+      picocolors: 1.1.1
+      serialize-javascript: 7.1.4
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      workerpool: 9.3.4
+      yargs: 17.7.2
+      yargs-parser: 21.1.1
       yargs-unparser: 2.0.0
 
   mocha@8.4.0:
@@ -64597,6 +64641,8 @@ snapshots:
   workerpool@6.1.0: {}
 
   workerpool@6.2.1: {}
+
+  workerpool@9.3.4: {}
 
   wrangler@4.155.0(@cloudflare/workers-types@5.20261029.1)(@types/node@24.19.2):
     dependencies:
