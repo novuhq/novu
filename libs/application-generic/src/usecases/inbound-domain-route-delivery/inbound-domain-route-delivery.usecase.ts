@@ -6,6 +6,7 @@ import {
   EmailWebhookPayload,
   FeatureFlagsKeysEnum,
   InboundEmailAttachment,
+  resolveInboundSenderAuth,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -77,7 +78,14 @@ function normalizeMailHeaders(
 export interface RoutableDomain
   extends Pick<
     DomainEntity,
-    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
+    | '_id'
+    | 'name'
+    | 'status'
+    | 'mxRecordConfigured'
+    | '_environmentId'
+    | '_organizationId'
+    | 'data'
+    | 'inboundSenderAuth'
   > {}
 
 export interface InboundDomainRouteMailInput {
@@ -265,6 +273,7 @@ export class InboundDomainRouteDelivery {
       references: refs.length > 0 ? refs.join(' ') : undefined,
       dkim: mail.dkim,
       spf: mail.spf,
+      senderAuth: resolveInboundSenderAuth(options?.domain?.inboundSenderAuth),
       from: { address: from.address, name: from.name },
       to: mail.to.map((t: { address: string; name?: string }) => ({
         address: t.address,

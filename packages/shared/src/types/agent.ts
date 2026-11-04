@@ -105,6 +105,32 @@ export interface NovuEmailAttachment {
   url?: string;
 }
 
+/**
+ * Which inbound sender-authentication verdicts must be `pass`.
+ * `true` fails closed unless that verdict is exactly `pass`.
+ * `false` logs a non-pass verdict and does not block.
+ */
+export interface InboundSenderAuth {
+  dkim: boolean;
+  spf: boolean;
+}
+
+/**
+ * Persisted or patched form. An absent flag is required (`true`).
+ */
+export interface InboundSenderAuthInput {
+  dkim?: boolean;
+  spf?: boolean;
+}
+
+/** Absent object or flag means that check is required. */
+export function resolveInboundSenderAuth(stored?: InboundSenderAuthInput | null): InboundSenderAuth {
+  return {
+    dkim: stored?.dkim !== false,
+    spf: stored?.spf !== false,
+  };
+}
+
 export interface EmailWebhookDomainContext {
   id: string;
   name: string;
@@ -134,12 +160,11 @@ export interface EmailWebhookPayload {
   originToken?: string;
   /**
    * Sender-authentication verdicts computed by the inbound-mail service
-   * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,
-   * consumers that resolve a sender identity from it MUST treat the address as
-   * untrusted unless both verdicts are `'pass'`. Optional for backward
-   * compatibility with payloads produced before this field existed — a missing
-   * verdict must be treated as unverified (fail closed).
+   * (`'pass'` / `'failed'`). `senderAuth` says which of them must be `pass`.
+   * A missing `senderAuth` means both checks are required. A missing verdict
+   * is not `pass`.
    */
   dkim?: string;
   spf?: string;
+  senderAuth?: InboundSenderAuth;
 }

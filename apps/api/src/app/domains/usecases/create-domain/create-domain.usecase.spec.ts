@@ -177,4 +177,38 @@ describe('CreateDomain usecase', () => {
 
     expect(domainRepositoryMock.create.called).to.equal(false);
   });
+
+  describe('inboundSenderAuth', () => {
+    it('stores a partial object and returns both effective flags', async () => {
+      const usecase = buildUsecase();
+
+      const result = await usecase.execute({ ...baseCommand, inboundSenderAuth: { dkim: false } });
+
+      expect(domainRepositoryMock.create.firstCall.args[0].inboundSenderAuth).to.deep.equal({ dkim: false });
+      expect(result.inboundSenderAuth).to.deep.equal({ dkim: false, spf: true });
+    });
+
+    it('returns both checks required when the object is omitted', async () => {
+      const usecase = buildUsecase();
+
+      const result = await usecase.execute(baseCommand);
+
+      expect(domainRepositoryMock.create.firstCall.args[0].inboundSenderAuth).to.equal(undefined);
+      expect(result.inboundSenderAuth).to.deep.equal({ dkim: true, spf: true });
+    });
+
+    it('rejects a policy that disables both DKIM and SPF', async () => {
+      const usecase = buildUsecase();
+
+      try {
+        await usecase.execute({ ...baseCommand, inboundSenderAuth: { dkim: false, spf: false } });
+        throw new Error('Expected execute to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('at least one of DKIM or SPF');
+      }
+
+      expect(domainRepositoryMock.create.called).to.equal(false);
+    });
+  });
 });

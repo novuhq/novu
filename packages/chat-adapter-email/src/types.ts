@@ -2,6 +2,7 @@ import type {
   EmailWebhookDomainContext,
   EmailWebhookRouteContext,
   IEmailAlternative,
+  InboundSenderAuth,
   NovuEmailAttachment,
 } from '@novu/shared';
 import type { Adapter } from 'chat';
@@ -124,11 +125,12 @@ export interface NovuEmailRawMessage {
   attachments?: NovuEmailAttachment[];
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) forwarded from the
-   * inbound-mail service. Downstream identity resolution must treat the
-   * spoofable `from` address as untrusted unless both are `'pass'`.
+   * inbound-mail service. `senderAuth` says which of them must be `pass`.
+   * A missing `senderAuth` means both checks are required.
    */
   dkim?: string;
   spf?: string;
+  senderAuth?: InboundSenderAuth;
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;

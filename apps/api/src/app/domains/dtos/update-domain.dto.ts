@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { IsBoundedRecord } from '../validators/bounded-record.validator';
+import { InboundSenderAuthDto } from './inbound-sender-auth.dto';
 
 export class UpdateDomainDto {
   @ApiPropertyOptional({
@@ -11,4 +13,14 @@ export class UpdateDomainDto {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    type: InboundSenderAuthDto,
+    description:
+      'Merges into the stored sender-auth flags. Omit a flag to leave it unchanged. Both flags cannot be false.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => InboundSenderAuthDto)
+  inboundSenderAuth?: InboundSenderAuthDto;
 }

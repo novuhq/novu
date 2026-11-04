@@ -12,8 +12,10 @@ export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
 export const UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY =
   "We couldn't process your message because of a temporary issue on our side. Please try again in a few minutes.";
 
+export type InboundSenderAuthCheck = 'dkim' | 'spf';
+
 /**
- * Shown when an inbound email failed SPF verification. Must not use the
+ * Shown when an inbound email failed a required sender check. Must not use the
  * generic identity-miss copy — that would misattribute a spoofed From as
  * "unknown user" rather than an unverified sender.
  */
@@ -36,6 +38,7 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   senderEmail?: string;
   resolutionOutcome?: SubscriberResolutionOutcome;
   emailSenderUnverified?: boolean;
+  failedSenderChecks?: readonly InboundSenderAuthCheck[];
 }): string {
   // On `error` the sender's identity was never actually rejected, so the
   // access-denied copy would be wrong. (`resolved` never reaches this gate —
@@ -46,7 +49,7 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   }
 
   if (params.emailSenderUnverified && params.platform === AgentPlatformEnum.EMAIL) {
-    return buildEmailVerificationFailedReply(params.senderEmail);
+    return buildEmailVerificationFailedReply(params.senderEmail, params.failedSenderChecks);
   }
 
   const sender = params.senderEmail?.trim();
@@ -61,11 +64,30 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   return UNRESOLVED_SUBSCRIBER_ACCESS_REPLY;
 }
 
-function buildEmailVerificationFailedReply(senderEmail: string | undefined): string {
+function describeFailedSenderChecks(checks: readonly InboundSenderAuthCheck[] | undefined): string {
+  const dkimFailed = checks?.includes('dkim') ?? false;
+  const spfFailed = checks?.includes('spf') ?? !dkimFailed;
+
+  if (dkimFailed && spfFailed) {
+    return 'DKIM and SPF checks failed';
+  }
+
+  if (dkimFailed) {
+    return 'DKIM check failed';
+  }
+
+  return 'SPF check failed';
+}
+
+function buildEmailVerificationFailedReply(
+  senderEmail: string | undefined,
+  checks?: readonly InboundSenderAuthCheck[]
+): string {
   const from = senderEmail?.trim() || 'the address in the From header';
+  const reason = describeFailedSenderChecks(checks);
 
   return (
-    `We couldn't verify that this email really came from ${from} (SPF check failed), ` +
+    `We couldn't verify that this email really came from ${from} (${reason}), ` +
     "so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent."
   );
 }

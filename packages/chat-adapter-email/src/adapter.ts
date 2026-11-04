@@ -136,6 +136,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       attachments: payload.attachments,
       dkim: payload.dkim,
       spf: payload.spf,
+      senderAuth: payload.senderAuth,
     };
   }
 

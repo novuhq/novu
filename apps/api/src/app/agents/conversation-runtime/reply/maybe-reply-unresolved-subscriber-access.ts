@@ -2,6 +2,7 @@ import type { PinoLogger } from '@novu/application-generic';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import type { InboundSenderAuthCheck } from '../../shared/util/agent-inbound-replies';
 import type { AgentConversationService } from '../conversation/agent-conversation.service';
 import type { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -17,8 +18,9 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
   outboundGateway: Pick<OutboundGateway, 'replyOnThread'>;
   conversationService: Pick<AgentConversationService, 'getPrimaryChannel'>;
   emailSenderUnverified: boolean;
+  failedSenderChecks?: readonly InboundSenderAuthCheck[];
 }): Promise<boolean> {
-  const { turn, logger, outboundGateway, conversationService, emailSenderUnverified } = params;
+  const { turn, logger, outboundGateway, conversationService, emailSenderUnverified, failedSenderChecks } = params;
 
   if (turn.event !== AgentEventEnum.ON_MESSAGE && turn.event !== AgentEventEnum.ON_MESSAGE_UPDATED) {
     return false;
@@ -68,6 +70,7 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
     replyOnThread: (thread, msg, opts) => outboundGateway.replyOnThread(thread, msg, opts),
     getPrimaryChannel: (conversation) => conversationService.getPrimaryChannel(conversation),
     emailSenderUnverified,
+    failedSenderChecks,
   });
 
   return true;

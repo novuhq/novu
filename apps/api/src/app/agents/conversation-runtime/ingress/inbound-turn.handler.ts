@@ -19,6 +19,7 @@ import {
   AgentReplyPolicyEnum,
   ENDPOINT_TYPES,
   isDashboardWebChatSubscriberId,
+  resolveInboundSenderAuth,
 } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEvent, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
@@ -46,7 +47,7 @@ import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id'
 import { parseApprovalReplyVerdict } from '../../shared/tool-approval/reply-based-approval';
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
-import { buildMentionRequiredNoticeReply } from '../../shared/util/agent-inbound-replies';
+import { buildMentionRequiredNoticeReply, type InboundSenderAuthCheck } from '../../shared/util/agent-inbound-replies';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
@@ -219,17 +220,42 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
   return preview;
 }
 
+const SENDER_AUTH_PASS = 'pass';
+
 /**
  * An inbound email's sender identity is taken from the `From` header, which is
- * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
- * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
- * SPF is the required check. A missing or non-pass SPF verdict is unverified so
- * the resolver never maps a spoofed `From` onto a registered subscriber. DKIM is
- * logged separately and does not block: the verifier rejects legitimate Proton
- * and Outlook signatures. Fails closed on SPF.
+ * trivially spoofable. The domain policy on `message.raw.senderAuth` says which
+ * verdicts must be `pass`. A missing object or flag requires that check.
+ * A flag set to false logs a non-pass verdict and does not block.
  */
-function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
-  return raw?.spf === 'pass';
+function readInboundSenderAuth(raw: Record<string, unknown> | undefined) {
+  const stored = raw?.senderAuth;
+
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) {
+    return resolveInboundSenderAuth(undefined);
+  }
+
+  const record = stored as Record<string, unknown>;
+
+  return resolveInboundSenderAuth({
+    dkim: typeof record.dkim === 'boolean' ? record.dkim : undefined,
+    spf: typeof record.spf === 'boolean' ? record.spf : undefined,
+  });
+}
+
+function failedRequiredSenderChecks(raw: Record<string, unknown> | undefined): InboundSenderAuthCheck[] {
+  const senderAuth = readInboundSenderAuth(raw);
+  const failed: InboundSenderAuthCheck[] = [];
+
+  if (senderAuth.dkim && raw?.dkim !== SENDER_AUTH_PASS) {
+    failed.push('dkim');
+  }
+
+  if (senderAuth.spf && raw?.spf !== SENDER_AUTH_PASS) {
+    failed.push('spf');
+  }
+
+  return failed;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -411,7 +437,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const { resolution, isVerifiedEmailSender } = inboundSubscriber;
+    const { resolution, isVerifiedEmailSender, failedSenderChecks } = inboundSubscriber;
     const subscriberId = getResolvedSubscriberId(resolution);
 
     if (await this.isKeptOutOfAgentInbox(agentId, config, subscriberId)) {
@@ -502,6 +528,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       resolution,
       isVerifiedEmailSender,
+      failedSenderChecks,
       workflowOrigin,
       mentionContext,
       mentionBotUserId,
@@ -676,10 +703,16 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     message: Message
-  ): Promise<{ resolution: SubscriberResolution; isVerifiedEmailSender: boolean } | null> {
+  ): Promise<{
+    resolution: SubscriberResolution;
+    isVerifiedEmailSender: boolean;
+    failedSenderChecks: InboundSenderAuthCheck[];
+  } | null> {
     const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
-    const isVerifiedEmailSender =
-      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
+    const failedSenderChecks =
+      config.platform === AgentPlatformEnum.EMAIL ? failedRequiredSenderChecks(emailAuthRaw) : [];
+    const isVerifiedEmailSender = failedSenderChecks.length === 0;
+    const senderAuth = config.platform === AgentPlatformEnum.EMAIL ? readInboundSenderAuth(emailAuthRaw) : undefined;
 
     // Open-access agents may lookup-or-provision; restricted stay lookup-only.
     // Keyless email demos stay lookup-only until tool approval.
@@ -692,7 +725,7 @@ export class AgentInboundHandler implements OnModuleInit {
       isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
     });
 
-    if (config.platform === AgentPlatformEnum.EMAIL && emailAuthRaw?.dkim !== 'pass') {
+    if (senderAuth && !senderAuth.dkim && emailAuthRaw?.dkim !== SENDER_AUTH_PASS) {
       this.logger.warn(
         {
           agentId,
@@ -704,6 +737,21 @@ export class AgentInboundHandler implements OnModuleInit {
           messageId: message.id,
         },
         'Inbound email DKIM verdict is not pass'
+      );
+    }
+
+    if (senderAuth && !senderAuth.spf && emailAuthRaw?.spf !== SENDER_AUTH_PASS) {
+      this.logger.warn(
+        {
+          agentId,
+          organizationId: config.organizationId,
+          environmentId: config.environmentId,
+          fromAddress: message.author.userId,
+          dkim: emailAuthRaw?.dkim,
+          spf: emailAuthRaw?.spf,
+          messageId: message.id,
+        },
+        'Inbound email SPF verdict is not pass'
       );
     }
 
@@ -721,11 +769,13 @@ export class AgentInboundHandler implements OnModuleInit {
             subscriberAccess: config.subscriberAccess,
             isKeyless: config.isKeyless,
             canAutoProvision,
+            failedSenderChecks,
+            senderAuth,
           },
-          'Inbound email sender failed SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+          'Inbound email sender failed required authentication — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
 
-        return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender };
+        return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender, failedSenderChecks };
       }
 
       if (canAutoProvision) {
@@ -745,6 +795,7 @@ export class AgentInboundHandler implements OnModuleInit {
               config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
           }),
           isVerifiedEmailSender,
+          failedSenderChecks,
         };
       }
 
@@ -756,6 +807,7 @@ export class AgentInboundHandler implements OnModuleInit {
           operation: 'resolve-subscriber',
         }),
         isVerifiedEmailSender,
+        failedSenderChecks,
       };
     } catch (err) {
       if (err instanceof ConnectOrgSubscriberCapExceededError) {
@@ -794,6 +846,7 @@ export class AgentInboundHandler implements OnModuleInit {
     subscriberId: string | null;
     resolution: SubscriberResolution;
     isVerifiedEmailSender: boolean;
+    failedSenderChecks: InboundSenderAuthCheck[];
     workflowOrigin: Awaited<ReturnType<WorkflowOriginService['resolveForTurn']>>;
     mentionContext: ExplicitMentionContext;
     /** This agent's bot user id, when the mention-flag repair already resolved it. */
@@ -815,6 +868,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       subscriberId,
       isVerifiedEmailSender,
+      failedSenderChecks,
       workflowOrigin,
       mentionContext,
       mentionBotUserId,
@@ -930,6 +984,7 @@ export class AgentInboundHandler implements OnModuleInit {
         outboundGateway: this.outboundGateway,
         conversationService: this.conversationService,
         emailSenderUnverified: !isVerifiedEmailSender,
+        failedSenderChecks,
       })
     ) {
       return;

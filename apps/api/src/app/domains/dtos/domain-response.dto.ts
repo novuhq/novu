@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DomainStatusEnum } from '@novu/shared';
 import { ExpectedDnsRecordDto } from './expected-dns-record.dto';
+import { InboundSenderAuthResponseDto } from './inbound-sender-auth.dto';
 
 export class DomainResponseDto {
   @ApiProperty()
@@ -39,4 +40,10 @@ export class DomainResponseDto {
     additionalProperties: { type: 'string' },
   })
   data?: Record<string, string>;
+
+  @ApiProperty({
+    type: InboundSenderAuthResponseDto,
+    description: 'Effective sender-auth policy. Absent stored flags are returned as required (true).',
+  })
+  inboundSenderAuth: InboundSenderAuthResponseDto;
 }

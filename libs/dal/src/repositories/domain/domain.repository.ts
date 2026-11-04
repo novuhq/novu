@@ -35,8 +35,16 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     name: string
   ): Promise<Pick<
     DomainEntity,
-    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
+    | '_id'
+    | 'name'
+    | 'status'
+    | 'mxRecordConfigured'
+    | '_environmentId'
+    | '_organizationId'
+    | 'data'
+    | 'inboundSenderAuth'
   > | null> {
+    // biome-ignore lint/plugin: the repository requires an environment id that this global name lookup does not have
     return this.findOne({ name } as unknown as FilterQuery<DomainDBModel> & EnforceEnvOrOrgIds, [
       '_id',
       'name',
@@ -45,6 +53,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
       '_environmentId',
       '_organizationId',
       'data',
+      'inboundSenderAuth',
     ]);
   }
 

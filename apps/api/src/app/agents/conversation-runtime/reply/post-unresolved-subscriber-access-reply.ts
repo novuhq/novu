@@ -1,7 +1,10 @@
 import type { PinoLogger } from '@novu/application-generic';
 import type { ConversationChannel, ConversationEntity } from '@novu/dal';
 import type { Thread } from 'chat';
-import { buildUnresolvedSubscriberAccessReply } from '../../shared/util/agent-inbound-replies';
+import {
+  buildUnresolvedSubscriberAccessReply,
+  type InboundSenderAuthCheck,
+} from '../../shared/util/agent-inbound-replies';
 import type { ThreadReplyPersistContext } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
@@ -20,8 +23,9 @@ export async function postUnresolvedSubscriberAccessReply(params: {
   ) => Promise<unknown>;
   getPrimaryChannel: (conversation: ConversationEntity) => ConversationChannel;
   emailSenderUnverified?: boolean;
+  failedSenderChecks?: readonly InboundSenderAuthCheck[];
 }): Promise<void> {
-  const { turn, logger, replyOnThread, getPrimaryChannel, emailSenderUnverified } = params;
+  const { turn, logger, replyOnThread, getPrimaryChannel, emailSenderUnverified, failedSenderChecks } = params;
   const resolution = turn.subscriberResolution;
 
   logger.warn(
@@ -37,6 +41,7 @@ export async function postUnresolvedSubscriberAccessReply(params: {
       resolvedSubscriberId: resolution?.outcome === 'resolved' ? resolution.subscriberId : undefined,
       err: resolution?.outcome === 'error' ? resolution.err : undefined,
       emailSenderUnverified: emailSenderUnverified || undefined,
+      failedSenderChecks,
     },
     'Unresolved subscriber — replying with access message instead of dispatching'
   );
@@ -46,6 +51,7 @@ export async function postUnresolvedSubscriberAccessReply(params: {
     senderEmail: turn.message?.author?.userId,
     resolutionOutcome: resolution?.outcome,
     emailSenderUnverified,
+    failedSenderChecks,
   });
 
   applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);

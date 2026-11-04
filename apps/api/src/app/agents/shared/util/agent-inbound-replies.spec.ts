@@ -57,6 +57,25 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY);
   });
 
+  it('names only the required checks that failed', () => {
+    const dkimOnly = buildUnresolvedSubscriberAccessReply({
+      platform: AgentPlatformEnum.EMAIL,
+      senderEmail: 'member@example.com',
+      emailSenderUnverified: true,
+      failedSenderChecks: ['dkim'],
+    });
+    const both = buildUnresolvedSubscriberAccessReply({
+      platform: AgentPlatformEnum.EMAIL,
+      senderEmail: 'member@example.com',
+      emailSenderUnverified: true,
+      failedSenderChecks: ['dkim', 'spf'],
+    });
+
+    expect(dkimOnly).to.include('DKIM check failed');
+    expect(dkimOnly).to.not.include('SPF');
+    expect(both).to.include('DKIM and SPF checks failed');
+  });
+
   it('returns transient copy when resolution errored — the sender address was never rejected', () => {
     const reply = buildUnresolvedSubscriberAccessReply({
       platform: AgentPlatformEnum.EMAIL,

@@ -1,4 +1,5 @@
 import { DomainEntity } from '@novu/dal';
+import { resolveInboundSenderAuth } from '@novu/shared';
 import { DomainResponseDto } from '../dtos/domain-response.dto';
 
 export function toDomainResponse(domain: DomainEntity): DomainResponseDto {
@@ -9,8 +10,9 @@ export function toDomainResponse(domain: DomainEntity): DomainResponseDto {
     mxRecordConfigured: domain.mxRecordConfigured,
     dnsProvider: domain.dnsProvider,
     data: domain.data,
-    _environmentId: domain._environmentId as unknown as string,
-    _organizationId: domain._organizationId as unknown as string,
+    inboundSenderAuth: resolveInboundSenderAuth(domain.inboundSenderAuth),
+    _environmentId: domain._environmentId,
+    _organizationId: domain._organizationId,
     createdAt: domain.createdAt,
     updatedAt: domain.updatedAt,
   };

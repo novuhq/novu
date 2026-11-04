@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsFQDN, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsFQDN, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { IsBoundedRecord } from '../validators/bounded-record.validator';
+import { InboundSenderAuthDto } from './inbound-sender-auth.dto';
 
 export class CreateDomainDto {
   @ApiProperty({ description: 'The domain name (e.g. "recent.dev")' })
@@ -23,4 +25,14 @@ export class CreateDomainDto {
   @IsOptional()
   @IsBoundedRecord()
   data?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    type: InboundSenderAuthDto,
+    description:
+      'Which sender-authentication verdicts must be pass. Omit a flag to require it. Both flags cannot be false.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => InboundSenderAuthDto)
+  inboundSenderAuth?: InboundSenderAuthDto;
 }

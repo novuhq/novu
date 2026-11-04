@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  getAgentInboxSharedDomainOrNull,
   getConfiguredSharedInboxDomains,
   InboundDomainRouteDelivery,
   isAgentSharedInboxEnabled,
@@ -17,7 +18,12 @@ import {
   type IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum, splitAgentReplyLocalPart } from '@novu/shared';
+import {
+  DomainRouteTypeEnum,
+  DomainStatusEnum,
+  resolveInboundSenderAuth,
+  splitAgentReplyLocalPart,
+} from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
   getDeliveryFailureDiagnostics,
@@ -36,6 +42,16 @@ type ResolvedDomainRouteContext = {
   transactionId: string;
   strategy: InboundParseStrategy;
 };
+
+function senderAuthForSharedInboxDomain(domainName: string) {
+  const agentInboxDomain = getAgentInboxSharedDomainOrNull();
+
+  if (agentInboxDomain && domainName.toLowerCase() === agentInboxDomain) {
+    return { dkim: false, spf: true };
+  }
+
+  return resolveInboundSenderAuth();
+}
 
 @Injectable()
 export class DomainRouteStrategy {
@@ -328,6 +344,7 @@ export class DomainRouteStrategy {
       _environmentId: agent._environmentId,
       _organizationId: agent._organizationId,
       data: {},
+      inboundSenderAuth: senderAuthForSharedInboxDomain(domainName),
     };
 
     const syntheticRoute = {

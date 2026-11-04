@@ -8,6 +8,7 @@ import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
+import { assertSenderAuthRequiresACheck, mergeInboundSenderAuth } from '../../inbound-sender-auth';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { detectDnsProvider } from '../../utils/dns-provider';
 import { buildExpectedDnsRecords } from '../../utils/dns-records';
@@ -15,6 +16,10 @@ import { CreateDomainCommand } from './create-domain.command';
 
 function isDuplicateKeyError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000;
+}
+
+function hasStoredSenderAuthFlag(stored: { dkim?: boolean; spf?: boolean }): boolean {
+  return stored.dkim !== undefined || stored.spf !== undefined;
 }
 
 @Injectable()
@@ -44,6 +49,13 @@ export class CreateDomain {
     }
 
     const dnsProvider = await detectDnsProvider(name);
+    const inboundSenderAuth = command.inboundSenderAuth
+      ? mergeInboundSenderAuth(undefined, command.inboundSenderAuth)
+      : undefined;
+
+    if (inboundSenderAuth) {
+      assertSenderAuthRequiresACheck(inboundSenderAuth);
+    }
 
     let domain: DomainEntity;
 
@@ -54,6 +66,7 @@ export class CreateDomain {
         mxRecordConfigured: false,
         dnsProvider: dnsProvider ?? undefined,
         ...(command.data !== undefined ? { data: command.data } : {}),
+        ...(inboundSenderAuth && hasStoredSenderAuthFlag(inboundSenderAuth) ? { inboundSenderAuth } : {}),
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });

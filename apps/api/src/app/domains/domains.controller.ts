@@ -145,6 +145,7 @@ export class DomainsController {
         userId: user._id,
         name: body.name,
         data: body.data,
+        inboundSenderAuth: body.inboundSenderAuth,
       })
     );
   }
@@ -469,7 +470,7 @@ export class DomainsController {
   @ApiOperation({
     summary: 'Update a domain',
     description:
-      'Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged.',
+      'Updates optional domain fields. When `data` is provided, it replaces the entire metadata object; omit `data` to leave it unchanged. `inboundSenderAuth` merges into the stored flags; omit a flag to leave it unchanged.',
   })
   @ApiResponse(DomainResponseDto, 200)
   @SdkMethodName('update')
@@ -485,6 +486,7 @@ export class DomainsController {
         userId: user._id,
         domain,
         data: body.data,
+        inboundSenderAuth: body.inboundSenderAuth,
       })
     );
   }

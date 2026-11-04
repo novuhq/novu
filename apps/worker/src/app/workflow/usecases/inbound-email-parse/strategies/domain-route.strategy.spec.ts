@@ -106,13 +106,16 @@ describe('DomainRouteStrategy', () => {
 
   it('should dispatch the agent route when the matching route is type=agent', async () => {
     const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
-    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRepository.findByName.resolves({ ...makeVerifiedDomain(), inboundSenderAuth: { dkim: false } } as any);
     domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
 
     await strategy.execute(makeCommand('support'));
 
     sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+    expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.inboundSenderAuth).to.deep.equal({
+      dkim: false,
+    });
     // The DKIM/SPF verdicts must reach the agent delivery so the API can reject
     // spoofed senders — they are dropped without the commandToMail passthrough.
     const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
@@ -439,6 +442,7 @@ describe('DomainRouteStrategy', () => {
       expect(call.args[0].route.destination).to.equal(AGENT_ID);
       expect(call.args[0].integrationId).to.equal(INTEGRATION_ID);
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
+      expect(call.args[0].domain.inboundSenderAuth).to.deep.equal({ dkim: true, spf: true });
       sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
     });
@@ -454,6 +458,10 @@ describe('DomainRouteStrategy', () => {
 
       sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
       expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.name).to.equal(AGENT_INBOX_DOMAIN);
+      expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.inboundSenderAuth).to.deep.equal({
+        dkim: false,
+        spf: true,
+      });
     });
 
     it('still delivers on agentconnect.sh when the integration is pinned there', async () => {

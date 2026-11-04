@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DomainRepository } from '@novu/dal';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
+import { assertSenderAuthRequiresACheck, mergeInboundSenderAuth } from '../../inbound-sender-auth';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { buildExpectedDnsRecords } from '../../utils/dns-records';
 import { resolveDomainName } from '../domain-route.utils';
@@ -19,7 +20,20 @@ export class UpdateDomain {
       organizationId: command.organizationId,
     });
 
-    if (command.data === undefined) {
+    const $set: { data?: UpdateDomainCommand['data']; inboundSenderAuth?: ReturnType<typeof mergeInboundSenderAuth> } =
+      {};
+
+    if (command.data !== undefined) {
+      $set.data = command.data;
+    }
+
+    if (command.inboundSenderAuth !== undefined) {
+      const inboundSenderAuth = mergeInboundSenderAuth(domain.inboundSenderAuth, command.inboundSenderAuth);
+      assertSenderAuthRequiresACheck(inboundSenderAuth);
+      $set.inboundSenderAuth = inboundSenderAuth;
+    }
+
+    if (command.data === undefined && command.inboundSenderAuth === undefined) {
       return {
         ...toDomainResponse(domain),
         expectedDnsRecords: buildExpectedDnsRecords(domain.name),
@@ -32,7 +46,7 @@ export class UpdateDomain {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      { $set: { data: command.data } },
+      { $set },
       { new: true }
     );
 

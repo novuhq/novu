@@ -25,6 +25,20 @@ const domainSchema = new Schema<DomainDBModel>(
     data: {
       type: Schema.Types.Mixed,
     },
+    /*
+     * No defaults. An absent object or flag means that check is required;
+     * the read path fills both flags in.
+     */
+    inboundSenderAuth: {
+      type: new Schema(
+        {
+          dkim: { type: Schema.Types.Boolean },
+          spf: { type: Schema.Types.Boolean },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

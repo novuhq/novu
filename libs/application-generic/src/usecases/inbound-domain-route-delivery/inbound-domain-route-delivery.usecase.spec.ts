@@ -207,6 +207,27 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
 
     expect(payload.dkim).to.equal('pass');
     expect(payload.spf).to.equal('failed');
+    expect(payload.senderAuth).to.deep.equal({ dkim: true, spf: true });
+  });
+
+  it('resolves a partial domain senderAuth onto the agent payload', () => {
+    const payload = usecase.previewAgentMailPayload(
+      { ...baseMail, dkim: 'failed', spf: 'pass' },
+      {
+        domain: {
+          _id: 'domain-1',
+          name: 'inbox.example.com',
+          status: DomainStatusEnum.VERIFIED,
+          mxRecordConfigured: true,
+          _environmentId: 'env-1',
+          _organizationId: 'org-1',
+          data: {},
+          inboundSenderAuth: { dkim: false },
+        },
+      }
+    );
+
+    expect(payload.senderAuth).to.deep.equal({ dkim: false, spf: true });
   });
 
   it('includes core mail metadata regardless of attachment shape', () => {

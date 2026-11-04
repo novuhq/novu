@@ -948,7 +948,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         _organizationId: ctx.session.organization._id,
       });
 
-      // Attacker forges `From: victim@…` but SPF does not pass. DKIM is not required.
+      // Attacker forges `From: victim@…`. No senderAuth means both checks are required, and SPF did not pass.
       const threadId = await invokeEmailInbound(victimEmail, 'Run a privileged tool', {
         dkim: 'pass',
         spf: 'failed',
