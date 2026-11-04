@@ -1,8 +1,9 @@
 /**
  * Maily TipTap JSON Schema for AI Generation.
  *
- * `get_step_schema` names a shared node after its `type` and other shared
- * schemas after their `title` meta.
+ * `get_step_schema` lists a node that repeats once, named after its `type`. A
+ * repeating union or attrs object has no `type`, so it needs a `title` meta;
+ * without one it is inlined at every position.
  *
  * Keep in sync with the Novu Maily renderer node/mark properties.
  */
@@ -40,7 +41,7 @@ const mailyLinkMarkSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		class: z.string().nullable().optional(),
 		href: z
@@ -82,7 +83,7 @@ const mailyVariableNodeSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		fallback: z.string().nullable().default(null),
 		id: z.string().describe("Variable name like subscriber.firstName or payload.companyName"),
@@ -103,7 +104,7 @@ const mailyButtonSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
 		borderRadius: z.enum(["smooth", "sharp", "round"]).nullable().default(null),
@@ -173,7 +174,7 @@ const mailyImageSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
 		alt: z.string().nullable().default(null).describe("Alt text for accessibility"),
@@ -232,7 +233,7 @@ const mailyInlineImageSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		alt: z.string().nullable().default(null),
 		externalLink: z
@@ -310,7 +311,7 @@ const mailyLogoSchema = z.object({
 			.nullable()
 			.default(null)
 			.describe(
-				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
 			),
 		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
 		alt: z.string().nullable().default(null),

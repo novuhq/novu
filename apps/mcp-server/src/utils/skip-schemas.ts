@@ -110,9 +110,9 @@ const skipConditionSchema = z
 const SKIP_CONDITION_DESCRIPTION =
 	'JSONLogic condition for conditionally RUNNING the workflow step: the step runs when the condition evaluates to true and is skipped otherwise, and a step without a condition always runs. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, false] } runs the step only when the subscriber is offline, { "!=": [{ "var": "payload.priority" }, "high"] } runs it only when the priority is not high.';
 
-/** The optional `skip` control value every step type takes. */
+/** The `skip` control value every step type takes; the dashboard saves a cleared one as null. */
 export const optionalSkipConditionSchema = skipConditionSchema
-	.optional()
+	.nullish()
 	.describe(SKIP_CONDITION_DESCRIPTION);
 
 const SKIP_CONDITION_GUIDE =

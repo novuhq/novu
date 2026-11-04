@@ -46,6 +46,21 @@ describe("workflow step tools", () => {
 			expect(result.structuredContent).toEqual({ workflow: api.workflow });
 		});
 
+		it("accepts the null skip the dashboard saves for a step without conditions", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				step: { ...smsStep, controlValues: { ...smsStep.controlValues, skip: null } },
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			expect(api.puts[0].body!.steps.at(-1).controlValues).toEqual({
+				body: "Code: {{payload.code}}",
+				skip: null,
+			});
+		});
+
 		it("returns the workflow unchanged when the stepId already exists", async () => {
 			const api = fakeWorkflowsApi();
 
@@ -130,6 +145,32 @@ describe("workflow step tools", () => {
 				editorType: "block",
 				skip,
 				subject: "Hello",
+			});
+		});
+
+		it.each([
+			["null, as the dashboard saves a cleared condition", null],
+			["one the step tools reject", { and: [{ and: [] }] }],
+		])("ignores a skip sent with the content: %s", async (_label, contentSkip) => {
+			const workflow = workflowResponseFixture();
+			const skip = { "==": [{ var: "subscriber.isOnline" }, true] };
+			Object.assign(workflow.steps[0].controlValues, { skip });
+			const api = fakeWorkflowsApi(workflow);
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: { body: "Updated", skip: contentSkip, subject: "Hi" },
+					type: "in_app",
+				},
+				stepId: "in-app-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			expect(api.puts[0].body!.steps[0].controlValues).toEqual({
+				body: "Updated",
+				skip,
+				subject: "Hi",
 			});
 		});
 

@@ -604,7 +604,7 @@ const STEP_CONTROLS_GUIDE_HEADER =
 	"controlValues for the step's type (? marks an optional key; keys not listed are dropped). Write dynamic text as {{payload.x}} or {{subscriber.x}}, never a bare {{x}}.";
 
 const STEP_CONTROLS_GUIDE_TYPES = [
-	'- in_app: { subject, body, avatar?, redirect?: { url, target?: "_self" | "_blank" }, primaryAction?: { label, redirect? }, secondaryAction?: { label, redirect? }, data?: {}, disableOutputSanitization? }',
+	"- in_app: { subject, body, avatar?, redirect?: { url, target? }, primaryAction?: { label, redirect?: { url, target? } }, secondaryAction? (same shape), data?: {}, disableOutputSanitization? }",
 	'- email: { editorType: "html", subject, body: "<p>Hi {{subscriber.firstName}}</p>" } or { editorType: "block", subject, body: { type: "doc", content: [...] } (an object, not a string) }; call get_step_schema for "email" before writing a "block" body. Both take preheader?, layoutId? (null for no layout), from?: { email?, name? }, replyTo?, useProviderDefaults?, disableOutputSanitization?',
 	"- sms: { body } (keep it under 160 characters). chat: { body }. push: { subject, body }",
 	'- delay: { type: "regular", amount: 30, unit: "minutes" } | { type: "timed", cron: "0 9 * * 1" } | { type: "dynamic", dynamicKey: "payload.sendAt" }, each with extendToSchedule?',
@@ -621,7 +621,7 @@ const STEP_CONTROLS_GUIDE = [
 	...STEP_CONTROLS_GUIDE_TYPES,
 	"- trigger, custom: any keys",
 	STEP_CONTROLS_GUIDE_UNITS,
-	'Every type also takes skip?, a JSONLogic run condition such as { "==": [{ "var": "subscriber.isOnline" }, false] } (format on update_workflow_step_conditions).',
+	'Every type also takes skip?, a JSONLogic run condition such as { "==": [{ "var": "subscriber.isOnline" }, false] } or null for none (format on update_workflow_step_conditions).',
 ].join("\n");
 
 const STEP_CONTENT_CONTROLS_GUIDE = [
@@ -630,24 +630,36 @@ const STEP_CONTENT_CONTROLS_GUIDE = [
 	STEP_CONTROLS_GUIDE_UNITS,
 ].join("\n");
 
-const CONTROL_VALUES_ERROR = "Expected controlValues as an object of the step type's keys";
+function kindOf(value: unknown): string {
+	if (value === undefined) return "nothing";
+	if (value === null) return "null";
+	if (Array.isArray(value)) return "an array";
+
+	return `a ${typeof value}`;
+}
+
+const controlValuesRecordSchema = z.record(z.string(), z.unknown(), {
+	error: (issue) =>
+		`Expected controlValues as an object of the step type's keys, received ${kindOf(issue.input)}`,
+});
 
 export const workflowStepInputSchema = z
 	.object({
 		...baseStepFields,
-		controlValues: z
-			.record(z.string(), z.unknown(), { error: CONTROL_VALUES_ERROR })
-			.describe(STEP_CONTROLS_GUIDE),
+		controlValues: controlValuesRecordSchema.describe(STEP_CONTROLS_GUIDE),
 		type: stepTypeSchema,
 	})
 	.pipe(workflowStepSchema);
 
+/** The content tool keeps the step's saved skip, so a skip sent with the content is dropped unchecked. */
 export const workflowStepContentInputSchema = z
 	.object({
-		controlValues: z
-			.record(z.string(), z.unknown(), { error: CONTROL_VALUES_ERROR })
+		controlValues: controlValuesRecordSchema
+			.transform(({ skip: _skip, ...controlValues }) => controlValues)
 			.describe(STEP_CONTENT_CONTROLS_GUIDE),
-		type: stepTypeSchema.exclude(["trigger", "custom"]),
+		type: stepTypeSchema.exclude(["trigger", "custom"], {
+			error: "Expected content.type to be in_app, email, sms, chat, push, digest, delay, throttle or http_request; edit trigger and custom steps with update_workflow",
+		}),
 	})
 	.pipe(workflowStepContentSchema);
 
@@ -672,8 +684,8 @@ function mapJsonObject(object: JsonObject, map: (value: unknown) => unknown): Js
 
 /**
  * Moves every named subschema that occurs more than once, such as a Maily
- * node or the skip condition, into `definitions`, so the inlined email schema
- * (about 180 KB) lists each node once.
+ * node or the skip condition, into `definitions`, so the email schema lists
+ * each node once instead of at every position it can appear.
  */
 function extractSharedDefinitions(schema: JsonObject): JsonObject {
 	const named = new Map<JsonObject, { label: string; text: string }>();
@@ -686,8 +698,10 @@ function extractSharedDefinitions(schema: JsonObject): JsonObject {
 			for (const value of Object.values(object)) collect(value);
 
 			const label = definitionLabel(object);
+			if (!label) return;
+
 			const text = JSON.stringify(object);
-			if (!label || text.length < MIN_SHARED_DEFINITION_CHARS) return;
+			if (text.length < MIN_SHARED_DEFINITION_CHARS) return;
 			named.set(object, { label, text });
 			occurrences.set(text, (occurrences.get(text) ?? 0) + 1);
 		}

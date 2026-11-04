@@ -1,5 +1,6 @@
 import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { stepTypeSchema, workflowStepSchema } from "../src/utils/workflow-schemas";
 import { fakeWorkflowsApi } from "./fake-api";
 import { dashboardEmailBodies } from "./fixtures/dashboard-email-bodies";
@@ -61,6 +62,38 @@ function controlKeys(schema: Json): string[] {
 	const variants: Json[] = schema.oneOf ?? schema.anyOf ?? [schema];
 
 	return [...new Set(variants.flatMap((variant) => Object.keys(variant.properties ?? {})))];
+}
+
+/** Keys a guide segment names outside any nested `{ ... }`, skipping quoted examples. */
+function guideTopLevelKeys(segment: string): string[] {
+	const keys: string[] = [];
+	let depth = 0;
+	for (const [token, key] of segment.matchAll(
+		/"(?:[^"\\]|\\.)*"|[{}]|\b([a-zA-Z_]+)\??(?=\s*([:,}(]|$))/g,
+	)) {
+		if (token === "{") depth++;
+		else if (token === "}") depth--;
+		else if (key && depth <= 1) keys.push(key);
+	}
+
+	return keys;
+}
+
+/** Replaces every `$ref` with its definition, giving the schema back as Zod inlines it. */
+function inlineDefinitions(schema: Json): Json {
+	const { definitions = {}, ...root } = schema;
+	const inline = (node: unknown): unknown => {
+		if (Array.isArray(node)) return node.map(inline);
+		if (!node || typeof node !== "object") return node;
+
+		const { $ref } = node as Json;
+		if (typeof $ref === "string")
+			return inline(definitions[$ref.replace("#/definitions/", "")]);
+
+		return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, inline(value)]));
+	};
+
+	return inline(root) as Json;
 }
 
 async function stepSchema(stepType: string): Promise<Json> {
@@ -161,17 +194,20 @@ describe("advertised tool schemas", () => {
 		const addStep = tools.find((tool) => tool.name === "add_workflow_step")!;
 		const guide: string = (addStep.inputSchema as Json).properties.step.properties.controlValues
 			.description;
-		const lines = guide.split("\n");
+		const segments = guide
+			.split("\n")
+			.flatMap((line) => line.replace(/^- /, "").split(/\. (?=[a-z_]+: )/));
 
 		expect(guide).toContain("skip?");
 		for (const stepType of stepTypeSchema.options) {
-			const line = lines.find((candidate) =>
-				new RegExp(`[-.,] ${stepType}[:,]`).test(` ${candidate}`),
+			const segment = segments.find((candidate) =>
+				new RegExp(`^([a-z_]+, )*${stepType}[:,]`).test(candidate),
 			);
-			expect(line, stepType).toBeDefined();
+			expect(segment, stepType).toBeDefined();
+			const keys = guideTopLevelKeys(segment!);
 			const { schema } = await stepSchema(stepType);
 			for (const key of controlKeys(schema).filter((key) => key !== "skip")) {
-				expect(line, `${stepType}.${key}`).toContain(key);
+				expect(keys, `${stepType}.${key}`).toContain(key);
 			}
 		}
 	});
@@ -207,16 +243,11 @@ describe("get_step_schema", () => {
 		const validate = ajv.getValidator(reference.schema);
 
 		expect(reference.notes).toContain('{ "type": "doc", "content": [blocks] }');
-		for (const node of [
-			"paragraph",
-			"button",
-			"columns",
-			"repeat",
-			"inlineImage",
-			"variable",
-			"link",
-		]) {
+		const sharedNodes = ["paragraph", "button", "columns", "repeat", "inlineImage"];
+		for (const node of sharedNodes) {
 			expect(reference.schema.definitions, node).toHaveProperty(node);
+		}
+		for (const node of [...sharedNodes, "variable", "link"]) {
 			expect(schemaText.split(`"enum":["${node}"]`).length - 1, node).toBe(1);
 		}
 		expect(schemaText).toContain("Sender for this step.");
@@ -234,6 +265,17 @@ describe("get_step_schema", () => {
 			}).valid,
 		).toBe(false);
 	});
+
+	it.each(workflowStepSchema.options)(
+		"lists the same schema as Zod's inline output for $shape.type.value",
+		async (option) => {
+			const { schema } = await stepSchema(option.shape.type.value);
+
+			expect(inlineDefinitions(schema)).toEqual(
+				z.toJSONSchema(option.shape.controlValues, { io: "input", target: "draft-7" }),
+			);
+		},
+	);
 
 	it("names every shared definition after what it describes", async () => {
 		for (const stepType of stepTypeSchema.options) {
@@ -324,7 +366,7 @@ describe("strict validation behind the advertised schemas", () => {
 		});
 
 		expect(textOf(notAnObject)).toContain(
-			"Expected controlValues as an object of the step type's keys at step.controlValues",
+			"Expected controlValues as an object of the step type's keys, received a string at step.controlValues",
 		);
 		expect(textOf(badSize)).toContain(
 			'Expected a number or a string such as "auto" at step.controlValues.body.content[0].attrs.width',
