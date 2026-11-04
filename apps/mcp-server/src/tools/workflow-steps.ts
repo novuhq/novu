@@ -100,7 +100,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	server.registerTool(
 		WORKFLOW_STEP_TOOL_NAMES.GET_STEP_SCHEMA,
 		{
-			annotations: { openWorldHint: false, readOnlyHint: true },
+			annotations: { destructiveHint: false, openWorldHint: false, readOnlyHint: true },
 			description:
 				'Get the full JSON Schema of one step type\'s controlValues, with a valid example and, for email, how to build a Maily block body. Call it before writing an email with editorType "block", or when a step tool rejects controlValues. Read-only; calls no API.',
 			inputSchema: { stepType: stepTypeSchema.describe('Step type, e.g. "email".') },

@@ -308,7 +308,11 @@ describe("get_step_schema", () => {
 		const { tools } = await (await client()).listTools();
 		const tool = tools.find((candidate) => candidate.name === "get_step_schema")!;
 
-		expect(tool.annotations).toMatchObject({ openWorldHint: false, readOnlyHint: true });
+		expect(tool.annotations).toEqual({
+			destructiveHint: false,
+			openWorldHint: false,
+			readOnlyHint: true,
+		});
 	});
 });
 
