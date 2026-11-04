@@ -217,6 +217,20 @@ describe('toLangChainMessages', () => {
       ]);
     });
 
+    it('keeps a prompt the user sends again after the stop as a plain user turn after the marker', () => {
+      const result = toLangChainMessages([
+        userMessage('Add SMS and push steps'),
+        runFinish('aborted'),
+        userMessage('Add SMS and push steps'),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        { role: 'user', content: 'Add SMS and push steps' },
+        { role: 'assistant', content: stoppedMarker },
+        { role: 'user', content: 'Add SMS and push steps' },
+      ]);
+    });
+
     it('maps a completed or paused run finish to nothing', () => {
       const result = toLangChainMessages([
         userMessage('hi'),
