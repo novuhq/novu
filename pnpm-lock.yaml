@@ -97,6 +97,7 @@ overrides:
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
+  lodash.omit@<4.18.0: ^4.18.0
   ajv@>=8.0.0 <8.18.0: ^8.18.0
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
@@ -11275,77 +11276,6 @@ packages:
   '@oxc-project/types@0.152.0':
     resolution: {integrity: sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==}
 
-  '@oxc-resolver/binding-darwin-arm64@5.3.0':
-    resolution: {integrity: sha512-hXem5ZAguS7IlSiHg/LK0tEfLj4eUo+9U6DaFwwBEGd0L0VIF9LmuiHydRyOrdnnmi9iAAFMAn/wl2cUoiuruA==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@oxc-resolver/binding-darwin-x64@5.3.0':
-    resolution: {integrity: sha512-wgSwfsZkRbuYCIBLxeg1bYrtKnirAy+IJF0lwfz4z08clgdNBDbfGECJe/cd0csIZPpRcvPFe8317yf31sWhtA==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@oxc-resolver/binding-freebsd-x64@5.3.0':
-    resolution: {integrity: sha512-kzeE2WHgcRMmWjB071RdwEV5Pwke4o0WWslCKoh8if1puvxIxfzu3o7g6P2+v77BP5qop4cri+uvLABSO0WZjg==}
-    cpu: [x64]
-    os: [freebsd]
-
-  '@oxc-resolver/binding-linux-arm-gnueabihf@5.3.0':
-    resolution: {integrity: sha512-I8np34yZP/XfIkZNDbw3rweqVgfjmHYpNX3xnJZWg+f4mgO9/UNWBwetSaqXeDZqvIch/aHak+q4HVrQhQKCqg==}
-    cpu: [arm]
-    os: [linux]
-
-  '@oxc-resolver/binding-linux-arm64-gnu@5.3.0':
-    resolution: {integrity: sha512-u2ndfeEUrW898eXM+qPxIN8TvTPjI90NDQBRgaxxkOfNw3xaotloeiZGz5+Yzlfxgvxr9DY9FdYkqhUhSnGhOw==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@oxc-resolver/binding-linux-arm64-musl@5.3.0':
-    resolution: {integrity: sha512-TzbjmFkcnESGuVItQ2diKacX8vu5G0bH3BHmIlmY4OSRLyoAlrJFwGKAHmh6C9+Amfcjo2rx8vdm7swzmsGC6Q==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@oxc-resolver/binding-linux-riscv64-gnu@5.3.0':
-    resolution: {integrity: sha512-NH3pjAqh8nuN29iRuRfTY42Vn03ctoR9VE8llfoUKUfhHUjFHYOXK5VSkhjj1usG8AeuesvqrQnLptCRQVTi/Q==}
-    cpu: [riscv64]
-    os: [linux]
-    libc: [glibc]
-
-  '@oxc-resolver/binding-linux-s390x-gnu@5.3.0':
-    resolution: {integrity: sha512-tuZtkK9sJYh2MC2uhol1M/8IMTB6ZQ5jmqP2+k5XNXnOb/im94Y5uV/u2lXwVyIuKHZZHtr+0d1HrOiNahoKpw==}
-    cpu: [s390x]
-    os: [linux]
-    libc: [glibc]
-
-  '@oxc-resolver/binding-linux-x64-gnu@5.3.0':
-    resolution: {integrity: sha512-VzhPYmZCtoES/ThcPdGSmMop7JlwgqtSvlgtKCW15ByV2JKyl8kHAHnPSBfpIooXb0ehFnRdxFtL9qtAEWy01g==}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@oxc-resolver/binding-linux-x64-musl@5.3.0':
-    resolution: {integrity: sha512-Hi39cWzul24rGljN4Vf1lxjXzQdCrdxO5oCT7KJP4ndSlqIUODJnfnMAP1YhcnIRvNvk+5E6sZtnEmFUd/4d8Q==}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@oxc-resolver/binding-wasm32-wasi@5.3.0':
-    resolution: {integrity: sha512-ddujvHhP3chmHnSXRlkPVUeYj4/B7eLZwL4yUid+df3WCbVh6DgoT9RmllZn21AhxgKtMdekDdyVJYKFd8tl4A==}
-    engines: {node: '>=14.0.0'}
-    cpu: [wasm32]
-
-  '@oxc-resolver/binding-win32-arm64-msvc@5.3.0':
-    resolution: {integrity: sha512-j1YYPLvUkMVNKmIFQZZJ7q6Do4cI3htUnyxNLwDSBVhSohvPIK2VG+IdtOAlWZGa7v+phEZsHfNbXVwB0oPYFQ==}
-    cpu: [arm64]
-    os: [win32]
-
-  '@oxc-resolver/binding-win32-x64-msvc@5.3.0':
-    resolution: {integrity: sha512-LT9eOPPUqfZscQRd5mc08RBeDWOQf+dnOrKnanMallTGPe6g7+rcAlFTA8SWoJbcD45PV8yArFtCmSQSpzHZmg==}
-    cpu: [x64]
-    os: [win32]
-
   '@paralleldrive/cuid2@2.3.1':
     resolution: {integrity: sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw==}
 
@@ -15661,22 +15591,6 @@ packages:
     peerDependencies:
       svelte: 5.55.7
       vite: ^8.0.0-beta.7 || ^8.0.0
-
-  '@swc-node/core@1.13.3':
-    resolution: {integrity: sha512-OGsvXIid2Go21kiNqeTIn79jcaX4l0G93X2rAnas4LFoDyA9wAwVK7xZdm+QsKoMn5Mus2yFLCc4OtX2dD/PWA==}
-    engines: {node: '>= 10'}
-    peerDependencies:
-      '@swc/core': 1.7.26
-      '@swc/types': '>= 0.1'
-
-  '@swc-node/register@1.10.10':
-    resolution: {integrity: sha512-jYWaI2WNEKz8KZL3sExd2KVL1JMma1/J7z+9iTpv0+fRN7LGMF8VTGGuHI2bug/ztpdZU1G44FG/Kk6ElXL9CQ==}
-    peerDependencies:
-      '@swc/core': 1.7.26
-      typescript: '>= 4.3'
-
-  '@swc-node/sourcemap-support@0.5.1':
-    resolution: {integrity: sha512-JxIvIo/Hrpv0JCHSyRpetAdQ6lB27oFYhv0PKCNf1g2gUXOjpeR1exrXccRxLMuAV5WAmGFBwRnNOJqN38+qtg==}
 
   '@swc/cli@0.3.12':
     resolution: {integrity: sha512-h7bvxT+4+UDrLWJLFHt6V+vNAcUNii2G4aGSSotKz1ECEk4MyEh5CWxmeSscwuz5K3i+4DWTgm4+4EyMCQKn+g==}
@@ -23793,9 +23707,8 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  lodash.omit@4.5.0:
-    resolution: {integrity: sha512-XeqSp49hNGmlkj2EJlfrQFIzQ6lXdNro9sddtQzcJY8QaoC2GO0DT7xaIokHeyM+mIT0mPMlPvkYzg2xCuHdZg==}
-    deprecated: This package is deprecated. Use destructuring assignment syntax instead.
+  lodash.omit@4.18.0:
+    resolution: {integrity: sha512-hZXIupXdHtocTnvIJ2aCd2vxKYtxex6gbiGuPvgBRnFQO9yu3AtmDAbVuCXcSsQx3INo/1g71OktlFFA/ES8Xg==}
 
   lodash.once@4.1.1:
     resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
@@ -25346,9 +25259,6 @@ packages:
   os-homedir@1.0.2:
     resolution: {integrity: sha512-B5JU3cabzk8c67mRRd3ECmROafjYMXbuzlwtqdM8IbS8ktlTix8aFGb2bAGKrSRIlnfKwovGUUr72JUPyOb6kQ==}
     engines: {node: '>=0.10.0'}
-
-  oxc-resolver@5.3.0:
-    resolution: {integrity: sha512-FHqtZx0idP5QRPSNcI5g2ItmADg7fhR3XIeWg5eRMGfp44xqRpfkdvo+EX4ZceqV9bxvl0Z8vaqMqY0gYaNYNA==}
 
   p-cancelable@2.1.1:
     resolution: {integrity: sha512-BZOr3nRQHOntUjTrH8+Lh54smKHoHyur8We1V8DSMVrl5A2malOOwuJRnKRDjSnkoeBh4at6BwEnb5I7Jl31wg==}
@@ -39961,47 +39871,6 @@ snapshots:
 
   '@oxc-project/types@0.152.0': {}
 
-  '@oxc-resolver/binding-darwin-arm64@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-darwin-x64@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-freebsd-x64@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-arm-gnueabihf@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-arm64-gnu@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-arm64-musl@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-riscv64-gnu@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-s390x-gnu@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-x64-gnu@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-linux-x64-musl@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-wasm32-wasi@5.3.0':
-    dependencies:
-      '@napi-rs/wasm-runtime': 0.2.12
-    optional: true
-
-  '@oxc-resolver/binding-win32-arm64-msvc@5.3.0':
-    optional: true
-
-  '@oxc-resolver/binding-win32-x64-msvc@5.3.0':
-    optional: true
-
   '@paralleldrive/cuid2@2.3.1':
     dependencies:
       '@noble/hashes': 1.8.0
@@ -46925,30 +46794,6 @@ snapshots:
       vitefu: 1.1.3(vite@6.4.4(@types/node@22.15.13)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
     optional: true
 
-  '@swc-node/core@1.13.3(@swc/core@1.7.26(@swc/helpers@0.5.23))(@swc/types@0.1.12)':
-    dependencies:
-      '@swc/core': 1.7.26(@swc/helpers@0.5.23)
-      '@swc/types': 0.1.12
-
-  '@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.23))(@swc/types@0.1.12)(typescript@6.0.3)':
-    dependencies:
-      '@swc-node/core': 1.13.3(@swc/core@1.7.26(@swc/helpers@0.5.23))(@swc/types@0.1.12)
-      '@swc-node/sourcemap-support': 0.5.1
-      '@swc/core': 1.7.26(@swc/helpers@0.5.23)
-      colorette: 2.0.20
-      debug: 4.4.3
-      oxc-resolver: 5.3.0
-      pirates: 4.0.7
-      tslib: 2.8.1
-      typescript: 6.0.3
-    transitivePeerDependencies:
-      - '@swc/types'
-
-  '@swc-node/sourcemap-support@0.5.1':
-    dependencies:
-      source-map-support: 0.5.21
-      tslib: 2.8.1
-
   '@swc/cli@0.3.12(@swc/core@1.7.26(@swc/helpers@0.5.23))(chokidar@3.6.0)':
     dependencies:
       '@mole-inc/bin-wrapper': 8.0.1
@@ -48855,7 +48700,7 @@ snapshots:
       '@vonage/auth': 1.7.0
       '@vonage/server-client': 1.9.0
       '@vonage/vetch': 1.6.0
-      lodash.omit: 4.5.0
+      lodash.omit: 4.18.0
     transitivePeerDependencies:
       - encoding
 
@@ -48930,7 +48775,7 @@ snapshots:
       '@vonage/auth': 1.7.0
       '@vonage/server-client': 1.9.0
       '@vonage/vetch': 1.6.0
-      lodash.omit: 4.5.0
+      lodash.omit: 4.18.0
     transitivePeerDependencies:
       - encoding
 
@@ -56793,7 +56638,7 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lodash.omit@4.5.0: {}
+  lodash.omit@4.18.0: {}
 
   lodash.once@4.1.1: {}
 
@@ -58819,22 +58664,6 @@ snapshots:
       arch: 2.2.0
 
   os-homedir@1.0.2: {}
-
-  oxc-resolver@5.3.0:
-    optionalDependencies:
-      '@oxc-resolver/binding-darwin-arm64': 5.3.0
-      '@oxc-resolver/binding-darwin-x64': 5.3.0
-      '@oxc-resolver/binding-freebsd-x64': 5.3.0
-      '@oxc-resolver/binding-linux-arm-gnueabihf': 5.3.0
-      '@oxc-resolver/binding-linux-arm64-gnu': 5.3.0
-      '@oxc-resolver/binding-linux-arm64-musl': 5.3.0
-      '@oxc-resolver/binding-linux-riscv64-gnu': 5.3.0
-      '@oxc-resolver/binding-linux-s390x-gnu': 5.3.0
-      '@oxc-resolver/binding-linux-x64-gnu': 5.3.0
-      '@oxc-resolver/binding-linux-x64-musl': 5.3.0
-      '@oxc-resolver/binding-wasm32-wasi': 5.3.0
-      '@oxc-resolver/binding-win32-arm64-msvc': 5.3.0
-      '@oxc-resolver/binding-win32-x64-msvc': 5.3.0
 
   p-cancelable@2.1.1: {}
 
