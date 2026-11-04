@@ -14,7 +14,7 @@ const mailyMarkSchema = z.object({
 
 const mailyTextStyleMarkSchema = z.object({
 	attrs: z.object({
-		color: z.string().nullable().describe("Text color in hex format"),
+		color: z.string().nullable().default(null).describe("Text color in hex format"),
 	}),
 	type: z.enum(["textStyle"]),
 });
@@ -24,6 +24,7 @@ const mailyLinkMarkSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
@@ -36,11 +37,12 @@ const mailyLinkMarkSchema = z.object({
 		isUrlVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "href" is a variable reference. The "href" value must then be a bare variable name without {{ }}',
 			),
-		rel: z.string().nullable(),
-		target: z.enum(["_blank", "_self"]).nullable(),
+		rel: z.string().nullable().default(null),
+		target: z.enum(["_blank", "_self"]).nullable().default(null),
 	}),
 	type: z.enum(["link"]),
 });
@@ -64,13 +66,14 @@ const mailyVariableNodeSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
-		fallback: z.string().nullable(),
+		fallback: z.string().nullable().default(null),
 		id: z.string().describe("Variable name like subscriber.firstName or payload.companyName"),
-		label: z.string().nullable(),
-		required: z.boolean().nullable(),
+		label: z.string().nullable().default(null),
+		required: z.boolean().nullable().default(null),
 	}),
 	type: z.enum(["variable"]),
 });
@@ -84,43 +87,47 @@ const mailyButtonSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
-		alignment: z.enum(["left", "center", "right"]).nullable(),
-		borderRadius: z.enum(["smooth", "sharp", "round"]).nullable(),
-		buttonColor: z.string().nullable().describe("Hex color like #000000"),
+		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
+		borderRadius: z.enum(["smooth", "sharp", "round"]).nullable().default(null),
+		buttonColor: z.string().nullable().default(null).describe("Hex color like #000000"),
 		isTextVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "text" is a variable reference. The "text" value must then be a bare variable name without {{ }}',
 			),
 		isUrlVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "url" is a variable reference. The "url" value must then be a bare variable name without {{ }}',
 			),
-		paddingBottom: z.number().nullable(),
-		paddingLeft: z.number().nullable(),
-		paddingRight: z.number().nullable(),
-		paddingTop: z.number().nullable(),
-		showIfKey: z.string().nullable(),
+		paddingBottom: z.number().nullable().default(null),
+		paddingLeft: z.number().nullable().default(null),
+		paddingRight: z.number().nullable().default(null),
+		paddingTop: z.number().nullable().default(null),
+		showIfKey: z.string().nullable().default(null),
 		text: z
 			.string()
 			.describe(
 				'Button label text. When isTextVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl"',
 			),
-		textColor: z.string().nullable().describe("Hex color like #ffffff"),
+		textColor: z.string().nullable().default(null).describe("Hex color like #ffffff"),
 		url: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				'Button link URL. When isUrlVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl" — never "{{ payload.actionUrl }}"',
 			),
-		variant: z.enum(["filled", "outline"]).nullable(),
-		width: z.string().nullable(),
+		variant: z.enum(["filled", "outline"]).nullable().default(null),
+		width: z.string().nullable().default(null),
 	}),
 	type: z.enum(["button"]),
 });
@@ -128,7 +135,7 @@ const mailyButtonSchema = z.object({
 const mailySpacerSchema = z.object({
 	attrs: z.object({
 		height: z.number().describe("Height in pixels, typically 8, 16, 24, or 32"),
-		showIfKey: z.string().nullable(),
+		showIfKey: z.string().nullable().default(null),
 	}),
 	type: z.enum(["spacer"]),
 });
@@ -136,11 +143,12 @@ const mailySpacerSchema = z.object({
 const mailyDividerSchema = z.object({
 	attrs: z
 		.object({
-			marginBottom: z.number().nullable(),
-			marginTop: z.number().nullable(),
+			marginBottom: z.number().nullable().default(null),
+			marginTop: z.number().nullable().default(null),
 			showIfKey: z.string().nullable().optional(),
 		})
-		.nullable(),
+		.nullable()
+		.default(null),
 	type: z.enum(["horizontalRule"]),
 });
 
@@ -149,44 +157,53 @@ const mailyImageSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
-		alignment: z.enum(["left", "center", "right"]).nullable(),
-		alt: z.string().nullable().describe("Alt text for accessibility"),
+		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
+		alt: z.string().nullable().default(null).describe("Alt text for accessibility"),
 		aspectRatio: z.union([z.number(), z.string()]).nullable().optional(),
-		borderRadius: z.number().nullable(),
+		borderRadius: z.number().nullable().default(null),
 		externalLink: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
 			),
 		height: z
 			.union([z.number(), z.string()])
 			.nullable()
+			.default(null)
 			.describe('Height in pixels, or "auto"'),
 		isExternalLinkVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
 			),
 		isSrcVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 			),
 		lockAspectRatio: z.boolean().nullable().optional(),
-		showIfKey: z.string().nullable(),
+		showIfKey: z.string().nullable().default(null),
 		src: z
 			.string()
 			.describe(
 				'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
 			),
-		title: z.string().nullable(),
-		width: z.union([z.number(), z.string()]).nullable().describe('Width in pixels, or "auto"'),
+		title: z.string().nullable().default(null),
+		width: z
+			.union([z.number(), z.string()])
+			.nullable()
+			.default(null)
+			.describe('Width in pixels, or "auto"'),
 	}),
 	type: z.enum(["image"]),
 });
@@ -196,26 +213,30 @@ const mailyInlineImageSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
-		alt: z.string().nullable(),
+		alt: z.string().nullable().default(null),
 		externalLink: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Optional link URL. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
 			),
-		height: z.number().nullable(),
+		height: z.number().nullable().default(null),
 		isExternalLinkVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
 			),
 		isSrcVariable: z
 			.boolean()
 			.nullable()
+			.default(null)
 			.describe(
 				'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
 			),
@@ -225,8 +246,8 @@ const mailyInlineImageSchema = z.object({
 			.describe(
 				'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
 			),
-		title: z.string().nullable(),
-		width: z.number().nullable(),
+		title: z.string().nullable().default(null),
+		width: z.number().nullable().default(null),
 	}),
 	type: z.enum(["inlineImage"]),
 });
@@ -242,10 +263,11 @@ const mailyInlineContentSchema = z.discriminatedUnion("type", [
 const mailyParagraphSchema = z.object({
 	attrs: z
 		.object({
-			showIfKey: z.string().nullable(),
-			textAlign: z.enum(["left", "center", "right"]).nullable(),
+			showIfKey: z.string().nullable().default(null),
+			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 		})
-		.nullable(),
+		.nullable()
+		.default(null),
 	content: z.array(mailyInlineContentSchema).nullable().optional(),
 	type: z.enum(["paragraph"]),
 });
@@ -253,10 +275,10 @@ const mailyParagraphSchema = z.object({
 const mailyHeadingSchema = z.object({
 	attrs: z.object({
 		level: z
-			.union([z.literal(1), z.literal(2), z.literal(3)])
+			.literal([1, 2, 3])
 			.describe("Heading level: 1 for main title, 2 for section, 3 for subsection"),
-		showIfKey: z.string().nullable(),
-		textAlign: z.enum(["left", "center", "right"]).nullable(),
+		showIfKey: z.string().nullable().default(null),
+		textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 	}),
 	content: z.array(mailyInlineContentSchema).nullable().optional(),
 	type: z.enum(["heading"]),
@@ -267,19 +289,21 @@ const mailyLogoSchema = z.object({
 		aliasFor: z
 			.string()
 			.nullable()
+			.default(null)
 			.describe(
 				"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
 			),
-		alignment: z.enum(["left", "center", "right"]).nullable(),
-		alt: z.string().nullable(),
-		isSrcVariable: z.boolean().nullable(),
-		showIfKey: z.string().nullable(),
+		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
+		alt: z.string().nullable().default(null),
+		isSrcVariable: z.boolean().nullable().default(null),
+		showIfKey: z.string().nullable().default(null),
 		size: z
 			.enum(["sm", "md", "lg"])
 			.nullable()
+			.default(null)
 			.describe("Logo size: sm=40px, md=48px, lg=64px"),
 		src: z.string().describe("Logo image URL"),
-		title: z.string().nullable(),
+		title: z.string().nullable().default(null),
 	}),
 	type: z.enum(["logo"]),
 });
@@ -289,41 +313,42 @@ const mailyFooterSchema = z.object({
 		.object({
 			"maily-component": z.string().nullable().optional(),
 			showIfKey: z.string().nullable().optional(),
-			textAlign: z.enum(["left", "center", "right"]).nullable(),
+			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 		})
-		.nullable(),
+		.nullable()
+		.default(null),
 	content: z.array(mailyInlineContentSchema).nullable().optional(),
 	type: z.enum(["footer"]),
 });
 
 const mailyBlockquoteSchema = z.object({
-	content: z.array(mailyParagraphSchema).nullable(),
+	content: z.array(mailyParagraphSchema).nullable().default(null),
 	type: z.enum(["blockquote"]),
 });
 
 const mailyListItemSchema = z.object({
-	content: z.array(mailyParagraphSchema).nullable(),
+	content: z.array(mailyParagraphSchema).nullable().default(null),
 	type: z.enum(["listItem"]),
 });
 
 const mailyOrderedListSchema = z.object({
-	content: z.array(mailyListItemSchema).nullable(),
+	content: z.array(mailyListItemSchema).nullable().default(null),
 	type: z.enum(["orderedList"]),
 });
 
 const mailyBulletListSchema = z.object({
-	content: z.array(mailyListItemSchema).nullable(),
+	content: z.array(mailyListItemSchema).nullable().default(null),
 	type: z.enum(["bulletList"]),
 });
 
 const mailyLinkCardSchema = z.object({
 	attrs: z.object({
-		badgeText: z.string().nullable().describe("Badge text overlay"),
-		description: z.string().nullable().describe("Card description"),
-		image: z.string().nullable().describe("Card image URL"),
+		badgeText: z.string().nullable().default(null).describe("Badge text overlay"),
+		description: z.string().nullable().default(null).describe("Card description"),
+		image: z.string().nullable().default(null).describe("Card image URL"),
 		link: z.string().describe("Card link URL"),
-		linkTitle: z.string().nullable().describe("Link text displayed"),
-		subTitle: z.string().nullable(),
+		linkTitle: z.string().nullable().default(null).describe("Link text displayed"),
+		subTitle: z.string().nullable().default(null),
 		title: z.string().describe("Card title"),
 	}),
 	type: z.enum(["linkCard"]),
@@ -343,53 +368,61 @@ const mailyLeafNodeSchema = z.discriminatedUnion("type", [
 
 const mailySectionAttrsSchema = z
 	.object({
-		align: z.enum(["left", "center", "right"]).nullable(),
+		align: z.enum(["left", "center", "right"]).nullable().default(null),
 		background: z.string().nullable().optional(),
-		backgroundColor: z.string().nullable(),
-		borderColor: z.string().nullable(),
-		borderRadius: z.number().nullable(),
+		backgroundColor: z.string().nullable().default(null),
+		borderColor: z.string().nullable().default(null),
+		borderRadius: z.number().nullable().default(null),
 		borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable().optional(),
-		borderWidth: z.number().nullable(),
-		marginBottom: z.number().nullable(),
-		marginLeft: z.number().nullable(),
-		marginRight: z.number().nullable(),
-		marginTop: z.number().nullable(),
-		paddingBottom: z.number().nullable(),
-		paddingLeft: z.number().nullable(),
-		paddingRight: z.number().nullable(),
-		paddingTop: z.number().nullable(),
-		showIfKey: z.string().nullable(),
+		borderWidth: z.number().nullable().default(null),
+		marginBottom: z.number().nullable().default(null),
+		marginLeft: z.number().nullable().default(null),
+		marginRight: z.number().nullable().default(null),
+		marginTop: z.number().nullable().default(null),
+		paddingBottom: z.number().nullable().default(null),
+		paddingLeft: z.number().nullable().default(null),
+		paddingRight: z.number().nullable().default(null),
+		paddingTop: z.number().nullable().default(null),
+		showIfKey: z.string().nullable().default(null),
 		textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 	})
-	.nullable();
+	.nullable()
+	.default(null);
 
 const mailyRepeatAttrsSchema = z
 	.object({
-		each: z.string().nullable().describe("Variable name for the array to iterate over"),
-		isUpdatingKey: z.boolean().nullable(),
-		iterations: z.number().nullable().describe("Number of iterations (0 = all)"),
-		showIfKey: z.string().nullable(),
+		each: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe("Variable name for the array to iterate over"),
+		isUpdatingKey: z.boolean().nullable().default(null),
+		iterations: z.number().nullable().default(null).describe("Number of iterations (0 = all)"),
+		showIfKey: z.string().nullable().default(null),
 	})
-	.nullable();
+	.nullable()
+	.default(null);
 
 const mailyRepeatSchema = z.object({
 	attrs: mailyRepeatAttrsSchema,
-	content: z.array(mailyLeafNodeSchema).nullable(),
+	content: z.array(mailyLeafNodeSchema).nullable().default(null),
 	type: z.enum(["repeat"]),
 });
 
 const mailyColumnSchema = z.object({
 	attrs: z
 		.object({
-			columnId: z.string().nullable(),
-			verticalAlign: z.enum(["top", "middle", "bottom"]).nullable(),
+			columnId: z.string().nullable().default(null),
+			verticalAlign: z.enum(["top", "middle", "bottom"]).nullable().default(null),
 			width: z
 				.union([z.number(), z.string()])
 				.nullable()
+				.default(null)
 				.describe('Width in percent of the row, or "auto" to share the row equally'),
 		})
-		.nullable(),
-	content: z.array(mailyLeafNodeSchema).nullable(),
+		.nullable()
+		.default(null),
+	content: z.array(mailyLeafNodeSchema).nullable().default(null),
 	type: z.enum(["column"]),
 });
 
@@ -397,11 +430,16 @@ const mailyColumnSchema = z.object({
 const mailyColumnsSchema = z.object({
 	attrs: z
 		.object({
-			gap: z.number().nullable().describe("Space between the columns in pixels"),
-			marginBottom: z.number().nullable(),
-			showIfKey: z.string().nullable(),
+			gap: z
+				.number()
+				.nullable()
+				.default(null)
+				.describe("Space between the columns in pixels"),
+			marginBottom: z.number().nullable().default(null),
+			showIfKey: z.string().nullable().default(null),
 		})
-		.nullable(),
+		.nullable()
+		.default(null),
 	content: z.array(mailyColumnSchema).describe("The columns, left to right"),
 	type: z.enum(["columns"]),
 });
@@ -409,7 +447,7 @@ const mailyColumnsSchema = z.object({
 /** A section inside a section, as the dashboard's card blocks nest them. */
 const mailyInnerSectionSchema = z.object({
 	attrs: mailySectionAttrsSchema,
-	content: z.array(mailyLeafNodeSchema).nullable(),
+	content: z.array(mailyLeafNodeSchema).nullable().default(null),
 	type: z.enum(["section"]),
 });
 
@@ -431,12 +469,12 @@ const mailySectionContentSchema = z.discriminatedUnion("type", [
 
 const mailySectionSchema = z.object({
 	attrs: mailySectionAttrsSchema,
-	content: z.array(mailySectionContentSchema).nullable(),
+	content: z.array(mailySectionContentSchema).nullable().default(null),
 	type: z.enum(["section"]),
 });
 
 const mailyHtmlCodeBlockSchema = z.object({
-	content: z.array(mailyTextNodeSchema).nullable(),
+	content: z.array(mailyTextNodeSchema).nullable().default(null),
 	type: z.enum(["htmlCodeBlock"]),
 });
 

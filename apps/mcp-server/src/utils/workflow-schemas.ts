@@ -181,7 +181,7 @@ function createPayloadPropertyBaseSchema() {
 	});
 }
 
-export const payloadPropertySchema = z.union([
+export const payloadPropertySchema = z.discriminatedUnion("type", [
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("string") }),
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("number") }),
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("integer") }),

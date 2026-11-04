@@ -224,6 +224,77 @@ describe("workflow step tools", () => {
 			expect(api.puts[0].body!.steps[1].controlValues.body).toBe(JSON.stringify(doc));
 		});
 
+		it("saves null for the email body attributes a node leaves out", async () => {
+			const api = fakeWorkflowsApi();
+			const button = { attrs: { text: "Open", url: "https://example.com" }, type: "button" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: [{ content: [button], type: "paragraph" }], type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			const [paragraph] = JSON.parse(api.puts[0].body!.steps[1].controlValues.body).content;
+			expect(paragraph.attrs).toBeNull();
+			expect(paragraph.content[0].attrs).toMatchObject({
+				alignment: null,
+				buttonColor: null,
+				text: "Open",
+				url: "https://example.com",
+				variant: null,
+			});
+		});
+
+		it("names the allowed heading levels", async () => {
+			const api = fakeWorkflowsApi();
+			const heading = { attrs: { level: 4 }, content: [], type: "heading" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: [heading], type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"expected one of 1|2|3 at content.controlValues.body.content[0].attrs.level",
+			);
+		});
+
+		it("explains the request body format when it is neither a string nor key-value pairs", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				step: {
+					controlValues: { body: { id: 1 }, method: "POST", url: "https://example.com" },
+					name: "Notify",
+					type: "http_request",
+				},
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"Invalid request body: expected a JSON string such as",
+			);
+			expect(textOf(result)).toContain("at step.controlValues.body");
+		});
+
 		it("rejects a raw HTTP body on a method that does not send one", async () => {
 			const api = fakeWorkflowsApi();
 
@@ -296,6 +367,25 @@ describe("workflow step tools", () => {
 				});
 
 				expect(result.isError).toBe(true);
+			}
+			expect(api.requests).toHaveLength(0);
+		});
+
+		it("explains the condition format when the condition matches none of its forms", async () => {
+			const api = fakeWorkflowsApi();
+
+			for (const skip of [
+				{ "===": [{ var: "payload.tier" }, "gold"] },
+				{ and: [{ var: "payload.x" }] },
+			]) {
+				const result = await callTool(await client(), "update_workflow_step_conditions", {
+					skip,
+					stepId: "in-app-step",
+					workflowId: "welcome",
+				});
+
+				expect(textOf(result)).toContain("Invalid skip condition: expected one comparison");
+				expect(textOf(result)).toContain("at skip");
 			}
 			expect(api.requests).toHaveLength(0);
 		});
@@ -495,6 +585,21 @@ describe("workflow step tools", () => {
 			expect(result.isError).toBe(true);
 			expect(textOf(result)).toContain("Must name a property");
 			expect(textOf(result)).toContain(`at ${path}`);
+			expect(api.requests).toHaveLength(0);
+		});
+
+		it.each([
+			["an enum without its values", { name: "tier", type: "enum" }, "enumValues"],
+			["an array without its item type", { name: "tags", type: "array" }, "arrayItemsType"],
+		])("reports %s at the missing field", async (_label, property, field) => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "update_workflow_payload_schema", {
+				addProperties: [property],
+				workflowId: "welcome",
+			});
+
+			expect(textOf(result)).toContain(`at addProperties[0].${field}`);
 			expect(api.requests).toHaveLength(0);
 		});
 

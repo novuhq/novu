@@ -364,9 +364,14 @@ const httpResponsePropertySchema = z
 	})
 	.passthrough();
 
+const HTTP_BODY_ERROR =
+	'Invalid request body: expected a JSON string such as "{\\"orderId\\":\\"{{payload.orderId}}\\"}", or an array of { key, value } string pairs';
+
 const httpRequestControlSchema = z.object({
 	body: z
-		.union([z.string().max(65536), z.array(httpKeyValuePairSchema)])
+		.union([z.string().max(65536), z.array(httpKeyValuePairSchema)], {
+			error: (issue) => (issue.code === "invalid_union" ? HTTP_BODY_ERROR : undefined),
+		})
 		.optional()
 		.describe(
 			"Request body (only for POST/PUT/PATCH): a raw JSON string, or key-value pairs for legacy workflows. Use template variables for dynamic values.",
