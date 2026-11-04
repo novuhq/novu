@@ -404,6 +404,9 @@ overrides:
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
+  # GHSA-73rr-hh4g-fpgx has no 6.x or 7.x patch. mocha 11 pins diff ^7 but only
+  # calls createPatch and diffWordsWithSpace, which 8.x keeps under require().
+  diff@>=6.0.0 <8.0.3: ^8.0.3
   formidable@>=2.1.0 <2.1.3: ^2.1.3
   formidable@>=3.1.1 <3.5.3: ^3.5.3
   ip@<1.1.9: ^1.1.9

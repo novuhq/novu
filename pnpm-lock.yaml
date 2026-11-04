@@ -120,6 +120,7 @@ overrides:
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
+  diff@>=6.0.0 <8.0.3: ^8.0.3
   formidable@>=2.1.0 <2.1.3: ^2.1.3
   formidable@>=3.1.1 <3.5.3: ^3.5.3
   ip@<1.1.9: ^1.1.9
@@ -20213,10 +20214,6 @@ packages:
 
   diff@5.2.2:
     resolution: {integrity: sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A==}
-    engines: {node: '>=0.3.1'}
-
-  diff@7.0.0:
-    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
     engines: {node: '>=0.3.1'}
 
   diff@8.0.4:
@@ -52119,8 +52116,6 @@ snapshots:
 
   diff@5.2.2: {}
 
-  diff@7.0.0: {}
-
   diff@8.0.4: {}
 
   diff@9.0.0: {}
@@ -57878,7 +57873,7 @@ snapshots:
       browser-stdout: 1.3.1
       chokidar: 4.0.3
       debug: 4.4.3
-      diff: 7.0.0
+      diff: 8.0.4
       escape-string-regexp: 4.0.0
       find-up: 5.0.0
       glob: 14.0.3
