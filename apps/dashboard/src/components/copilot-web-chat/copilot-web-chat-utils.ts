@@ -1,5 +1,5 @@
-import type { AgentMessage, AgentToolPart } from '@novu/js';
-import { AiWorkflowToolsEnum } from '@novu/shared';
+import type { AgentCardElement, AgentMessage, AgentToolPart } from '@novu/js';
+import { AiWorkflowToolsEnum, CopilotReviewActionEnum } from '@novu/shared';
 
 /** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
 const WORKFLOW_WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
@@ -23,6 +23,16 @@ function normalizeToolName(toolName: string): string {
 export function isWorkflowWriteTool(toolName: string): boolean {
   return WORKFLOW_WRITE_TOOL_NAMES.has(normalizeToolName(toolName));
 }
+
+const REVIEW_ACTION_IDS: ReadonlySet<string> = new Set(Object.values(CopilotReviewActionEnum));
+
+/** Whether a card button is one of the Keep / Revert / Try again buttons the agent posts after it changed the workflow. */
+export function isCopilotReviewActionId(actionId: string): boolean {
+  return REVIEW_ACTION_IDS.has(actionId);
+}
+
+/** A card button click, sent back to the agent's `onAction`. */
+export type CopilotCardAction = { actionId: string; sourceMessageId: string; value?: string };
 
 export type CopilotPageContext = {
   workflowId?: string;
@@ -176,7 +186,8 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
 export type AssistantBlock =
   | { kind: 'text'; key: string; text: string; streaming: boolean }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
-  | { kind: 'tools'; key: string; rows: ToolRow[] };
+  | { kind: 'tools'; key: string; rows: ToolRow[] }
+  | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
 /** Groups consecutive tool parts into one block and drops parts this UI does not render. */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
@@ -196,10 +207,39 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
 
       if (last?.kind === 'tools') last.rows.push(row);
       else blocks.push({ kind: 'tools', key, rows: [row] });
+    } else if (part.type === 'card') {
+      blocks.push({ kind: 'card', key, card: part.card, sourceMessageId: part.sourceMessageId });
     }
   });
 
   return blocks;
+}
+
+/** The `sourceMessageId` of the newest card in the thread; review buttons are only offered on that card. */
+export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
+  for (let messageIndex = messages.length - 1; messageIndex >= 0; messageIndex--) {
+    const parts = messages[messageIndex].parts;
+
+    for (let partIndex = parts.length - 1; partIndex >= 0; partIndex--) {
+      const part = parts[partIndex];
+      if (part.type === 'card') return part.sourceMessageId;
+    }
+  }
+
+  return undefined;
+}
+
+/** The prompt a Try again click resends: the text of the last user message before the message that holds the card. */
+export function getPromptBeforeCard(messages: readonly AgentMessage[], sourceMessageId: string): string | undefined {
+  const cardIndex = messages.findIndex((message) =>
+    message.parts.some((part) => part.type === 'card' && part.sourceMessageId === sourceMessageId)
+  );
+
+  for (let index = cardIndex - 1; index >= 0; index--) {
+    if (messages[index].role === 'user') return getUserMessageText(messages[index]) || undefined;
+  }
+
+  return undefined;
 }
 
 /** The last message is a user send the server never accepted (it stays in the thread and can be retried). */

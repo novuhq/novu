@@ -66,6 +66,11 @@ export interface LangChainAgentConfig {
    * on a tool approval. Return `undefined` or an empty string to add nothing.
    */
   replyFooter?: () => string | undefined;
+  /**
+   * Optional message posted on its own after the reply once the run completes (e.g. a card with
+   * buttons). Ignored when the run ends on a tool approval. Return `undefined` to post nothing.
+   */
+  replyFollowUp?: () => Awaitable<MessageContent | undefined>;
 }
 
 /**

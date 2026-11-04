@@ -166,6 +166,13 @@ async function replyAgentText(
 
   if (outcome.approval) {
     await postApprovalCard(ctx, outcome.approval, approvalConfig);
+
+    return;
+  }
+
+  const followUp = await config.replyFollowUp?.();
+  if (followUp) {
+    await ctx.reply(followUp);
   }
 }
 

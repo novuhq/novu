@@ -1,6 +1,6 @@
 import type { UseWebChatResult } from '@novu/react';
 import { createContext, useContext, useEffect, useRef } from 'react';
-import type { CopilotPageContext } from './copilot-web-chat-utils';
+import type { CopilotCardAction, CopilotPageContext } from './copilot-web-chat-utils';
 
 export type CopilotOpenOptions = { prefill?: string };
 
@@ -18,6 +18,10 @@ export type CopilotWebChatContextValue = {
   sendMessage: (text: string) => Promise<boolean>;
   /** Resends the last message with the workflow/step it was originally sent for. */
   retry: () => Promise<void>;
+  /** Clicks a card button. Keep / Revert / Try again also lock their card until the agent answers. */
+  sendCardAction: (action: CopilotCardAction) => Promise<void>;
+  /** The `sourceMessageId` of the review card whose click the agent has not answered yet. */
+  pendingReviewMessageId?: string;
   startNewConversation: () => void;
   /** Unsent composer text, kept here so minimizing the popover does not discard it. */
   /** Workflow label each user message was sent for, by the message's position among user messages. */
@@ -43,6 +47,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   toggle: noop,
   sendMessage: async () => false,
   retry: async () => {},
+  sendCardAction: async () => {},
   startNewConversation: noop,
   sentContextLabels: {},
   draft: '',

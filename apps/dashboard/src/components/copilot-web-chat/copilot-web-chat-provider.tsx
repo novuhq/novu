@@ -1,11 +1,15 @@
 import type { AgentEventEnvelope } from '@novu/js';
 import { useWebChat } from '@novu/react';
+import { COPILOT_TRY_AGAIN_READY_EVENT, CopilotReviewActionEnum } from '@novu/shared';
 import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
 import { CopilotConnectProvider } from '@/components/connect/copilot-connect-provider';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { NOVU_COPILOT_AGENT_ID } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
 import {
@@ -15,10 +19,13 @@ import {
 } from './copilot-web-chat-context';
 import {
   buildCopilotMetadata,
+  type CopilotCardAction,
   type CopilotPageContext,
   getFailedSend,
+  getPromptBeforeCard,
   getUserMessageText,
   hasPendingReplyGap,
+  isCopilotReviewActionId,
   readStoredConversationId,
   writeStoredConversationId,
 } from './copilot-web-chat-utils';
@@ -73,6 +80,8 @@ type ConnectedState = Pick<
   | 'chat'
   | 'sendMessage'
   | 'retry'
+  | 'sendCardAction'
+  | 'pendingReviewMessageId'
   | 'startNewConversation'
   | 'hasUnseenAnswer'
   | 'hasRunError'
@@ -118,6 +127,8 @@ export function CopilotWebChatProvider({
       pageContext,
       sendMessage: connected?.sendMessage ?? (async () => false),
       retry: connected?.retry ?? (async () => {}),
+      sendCardAction: connected?.sendCardAction ?? (async () => {}),
+      pendingReviewMessageId: connected?.pendingReviewMessageId,
       startNewConversation: connected?.startNewConversation ?? (() => {}),
       sentContextLabels: connected?.sentContextLabels ?? {},
       draft,
@@ -165,8 +176,20 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [runError, setRunError] = useState(false);
   const [awaitingReply, setAwaitingReply] = useState(false);
   const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
+  const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
+  // A Try again click records the prompt to resend; the agent's ready event hands it to `readyPrompt`, which is sent once the run settles.
+  const tryAgainPromptRef = useRef<string | undefined>(undefined);
+  const [readyPrompt, setReadyPrompt] = useState<string>();
+  const navigate = useNavigate();
   const isOpenRef = useRef(isOpen);
   isOpenRef.current = isOpen;
+  const pageContextRef = useRef(pageContext);
+  pageContextRef.current = pageContext;
+  const { currentEnvironment } = useEnvironment();
+  const environmentIdRef = useRef(currentEnvironment?._id);
+  environmentIdRef.current = currentEnvironment?._id;
+  const environmentSlugRef = useRef(currentEnvironment?.slug);
+  environmentSlugRef.current = currentEnvironment?.slug;
 
   useEffect(() => {
     if (isOpen) setUnseenAnswer(false);
@@ -182,18 +205,40 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         setRunError(false);
       } else if (event.type === 'run-finish') {
         setAwaitingReply(false);
+        // A Try again run that finished without the ready event reverted nothing to retry from.
+        tryAgainPromptRef.current = undefined;
+        // A failed revert answers in plain text, so the review card is still the latest card and can be clicked again.
+        setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, { outcome: event.outcome, agentId: NOVU_COPILOT_AGENT_ID });
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
         setAwaitingReply(false);
+        tryAgainPromptRef.current = undefined;
+        setReadyPrompt(undefined);
+        setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID });
         setRunError(true);
+      } else if (event.type === 'custom' && event.name === COPILOT_TRY_AGAIN_READY_EVENT) {
+        setReadyPrompt(tryAgainPromptRef.current);
+        tryAgainPromptRef.current = undefined;
       }
     },
     [track]
   );
 
-  const onEvent = useCopilotRefetch(onRefetchRef, handleRunEvent);
+  const handleWorkflowDeleted = useCallback(
+    (workflowId: string) => {
+      const environmentSlug = environmentSlugRef.current;
+      if (!environmentSlug || pageContextRef.current?.workflowId !== workflowId) return false;
+
+      void navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug }));
+
+      return true;
+    },
+    [navigate]
+  );
+
+  const onEvent = useCopilotRefetch(onRefetchRef, handleRunEvent, handleWorkflowDeleted);
   const [resumeConversationId, setResumeConversationId] = useState(() => readStoredConversationId(conversationScope));
   const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, conversationId: resumeConversationId, onEvent });
   const chatRef = useRef(chat);
@@ -209,11 +254,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   // A stored conversation that fails to load stays selected: the error notice offers Retry (reload history), and
   // New chat drops it. Abandoning it here would let a transient error replace the saved thread.
   const isResumeBroken = !!resumeConversationId && !!chat.error && !chat.isLoading && chat.messages.length === 0;
-  const pageContextRef = useRef(pageContext);
-  pageContextRef.current = pageContext;
-  const { currentEnvironment } = useEnvironment();
-  const environmentIdRef = useRef(currentEnvironment?._id);
-  environmentIdRef.current = currentEnvironment?._id;
   const lastSentRef = useRef<{ text: string; metadata: ReturnType<typeof buildCopilotMetadata> } | null>(null);
 
   const sendMessage = useCallback(
@@ -295,8 +335,29 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (error) setAwaitingReply(false);
   }, []);
 
+  const sendCardAction = useCallback(async (action: CopilotCardAction) => {
+    if (isCopilotReviewActionId(action.actionId)) {
+      setPendingReviewMessageId(action.sourceMessageId);
+      tryAgainPromptRef.current =
+        action.actionId === CopilotReviewActionEnum.TRY_AGAIN
+          ? getPromptBeforeCard(chatRef.current.messages, action.sourceMessageId)
+          : undefined;
+    }
+
+    const { error } = await chatRef.current.sendAction(action);
+    if (!error) return;
+
+    // The click never reached the agent, so the card stays the user's way to try it again.
+    setPendingReviewMessageId(undefined);
+    tryAgainPromptRef.current = undefined;
+    showErrorToast("Couldn't reach the Copilot. Try again.");
+  }, []);
+
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
+    tryAgainPromptRef.current = undefined;
+    setReadyPrompt(undefined);
+    setPendingReviewMessageId(undefined);
     setSentContextLabels({});
     setRunError(false);
     setAwaitingReply(false);
@@ -317,6 +378,14 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const isBusy = !hasRunError && (chat.isRunning || (awaitingReply && hasPendingReplyGap(chat.messages)));
   isBusyRef.current = isBusy;
 
+  // The ready event arrives while the run that reverted the turn is still open, and a send is refused until it settles.
+  useEffect(() => {
+    if (!readyPrompt || isBusy) return;
+
+    setReadyPrompt(undefined);
+    void sendMessage(readyPrompt);
+  }, [readyPrompt, isBusy, sendMessage]);
+
   useEffect(() => {
     if (!isAvailable) {
       onConnected(null);
@@ -328,6 +397,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       chat,
       sendMessage,
       retry,
+      sendCardAction,
+      pendingReviewMessageId,
       startNewConversation,
       hasUnseenAnswer: unseenAnswer,
       hasRunError,
@@ -339,6 +410,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     chat,
     sendMessage,
     retry,
+    sendCardAction,
+    pendingReviewMessageId,
     startNewConversation,
     unseenAnswer,
     hasRunError,

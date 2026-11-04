@@ -254,6 +254,27 @@ describe('handleLangChainResult', () => {
       expect(ctx.sent).toHaveBeenCalledWith('footer');
     });
 
+    it('posts the replyFollowUp as its own message after the streamed reply', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Updated it' })]);
+      const card = { type: 'card', title: 'Review', children: [] } as const;
+
+      await handleLangChainResult(config({ replyFollowUp: () => card }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('Updated it');
+      expect(ctx.reply).toHaveBeenCalledTimes(2);
+      expect(ctx.reply).toHaveBeenLastCalledWith(card);
+    });
+
+    it('posts nothing more when replyFollowUp returns undefined', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Answered' })]);
+
+      await handleLangChainResult(config({ replyFollowUp: () => undefined }), ctx, undefined);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+    });
+
     it('skips the replyFooter when formatReply is set', async () => {
       const ctx = fakeRuntimeCtx();
       streams([new AIMessage({ id: 'ai_1', content: 'Created it' })]);

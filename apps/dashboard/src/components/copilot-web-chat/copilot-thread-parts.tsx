@@ -11,6 +11,7 @@ import {
 import { MessageResponse } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { cn } from '@/utils/ui';
+import { CopilotCardBlock } from './copilot-card';
 import {
   type AssistantBlock,
   buildAssistantBlocks,
@@ -193,7 +194,8 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
   if (blocks.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2">
+    // Hidden when its only block is a review card whose buttons are no longer offered.
+    <div className="flex flex-col gap-2 empty:hidden">
       {blocks.map((block) => {
         if (block.kind === 'text') {
           return (
@@ -210,6 +212,10 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
         }
 
         if (block.kind === 'thinking') return <ThinkingBlock key={block.key} block={block} />;
+
+        if (block.kind === 'card') {
+          return <CopilotCardBlock key={block.key} card={block.card} sourceMessageId={block.sourceMessageId} />;
+        }
 
         return <ToolGroup key={block.key} block={block} />;
       })}
