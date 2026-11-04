@@ -263,7 +263,7 @@ export function serviceManager(options: ServiceOptions = {}): ServiceSetup {
   if (platform === 'win32') {
     return {
       unsupported:
-        'On Windows, listen runs inside WSL, where Claude Code runs too: open your WSL terminal and run the same command there.',
+        'On Windows, listen runs inside WSL: open your WSL terminal and run the same command there, with the host installed and signed in there too.',
     };
   }
 

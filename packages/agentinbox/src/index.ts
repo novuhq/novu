@@ -10,6 +10,7 @@ import { inviteCommand } from './commands/invite';
 import { loginCommand } from './commands/login';
 import { setupCommand } from './commands/setup';
 import { CLI_COMMAND } from './config';
+import { startableHosts } from './listen/hosts';
 
 const program = new Command();
 
@@ -241,7 +242,10 @@ program
 
 program
   .command('listen')
-  .argument('<host|status|stop>', 'the host a message starts on this computer (claude-code), or status, or stop')
+  .argument(
+    '<host|status|stop>',
+    `the host a message starts on this computer (${startableHosts().join(' or ')}), or status, or stop`
+  )
   .option('--foreground', 'listen in this terminal only, instead of in the background')
   .option(
     '--timeout <duration>',
@@ -249,6 +253,7 @@ program
   )
   .option('--runs-per-hour <n>', 'how many runs may start in an hour (default 20)')
   .option('--max-run <duration>', 'how long one run may go on (e.g. 30m, 2h; default 30m)')
+  .option('--runs-at-once <n>', 'how many runs may go on at once, each for its own conversation (default 5)')
   .option('--json', 'status: print JSON')
   .description(
     'Listen for messages: one from you, or from a contact the agent listens to, starts a host on this computer, in this folder. Asks you first'
