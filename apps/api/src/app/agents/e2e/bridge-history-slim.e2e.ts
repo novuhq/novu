@@ -137,6 +137,36 @@ describe('Bridge history slimming #novu-v2', () => {
     }
   });
 
+  it('keeps the oldest message when every tool result fits once capped', async () => {
+    const conversationId = await seedConversation(ctx);
+    const conversation = must(
+      await conversationRepository.findOne({ _id: conversationId, _environmentId: ctx.session.environment._id }, '*'),
+      'conversation'
+    );
+    const channel = conversation.channels[0];
+    await activityRepository.createAgentActivity({
+      identifier: 'history-oldest-message',
+      conversationId,
+      platform: channel.platform,
+      integrationId: channel._integrationId,
+      platformThreadId: channel.platformThreadId,
+      agentId: ctx.agentIdentifier,
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      content: 'Noted: your order number is #A1.',
+    });
+    await ingestLargeGatedCycles(conversationId);
+
+    const history = await buildBridgeHistory(conversationId);
+
+    expect(history[0]?.content).to.equal('Noted: your order number is #A1.');
+    const toolResults = history.filter((entry) => entry.type === 'tool_result');
+    expect(toolResults).to.have.length(GATED_CYCLES);
+    for (const result of toolResults) {
+      expect(byteLength(result), 'one tool result row on the wire').to.be.at.most(2 * TOOL_OUTPUT_MAX_BYTES + 1024);
+    }
+  });
+
   it('never strands a tool result without its approval request when trimming the oldest rows', async () => {
     const conversationId = await seedConversation(ctx);
     await ingestLargeGatedCycles(conversationId);

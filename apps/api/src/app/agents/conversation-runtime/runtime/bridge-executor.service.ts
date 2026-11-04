@@ -666,7 +666,10 @@ export class BridgeExecutorService {
       mapped.push({
         role: activity.senderType,
         type: activity.type,
-        content: activity.content,
+        content:
+          activity.type === ConversationActivityTypeEnum.TOOL_RESULT
+            ? String(capToolOutput(activity.content).output)
+            : activity.content,
         richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
         signalData: activity.signalData || undefined,
@@ -681,20 +684,27 @@ export class BridgeExecutorService {
   /**
    * Re-cap `toolData.output` on read. The write-time cap in `toolResultData` bounds new rows, but
    * rows persisted before that change are still uncapped, and NV-8715 will add more tool rows here.
+   * `toolData.content` is the dashboard's copy of the result (up to 64KB); the framework reads
+   * `output` instead, so it is left out.
    */
   private slimToolDataForBridge(
     toolData: ConversationActivityToolData | undefined
   ): ConversationActivityToolData | undefined {
-    if (!toolData || toolData.output === undefined) {
-      return toolData || undefined;
+    if (!toolData) {
+      return undefined;
     }
 
-    const { output, truncated } = capToolOutput(toolData.output);
+    const { content: _dashboardCopy, ...bridgeToolData } = toolData;
+    if (bridgeToolData.output === undefined) {
+      return bridgeToolData;
+    }
+
+    const { output, truncated } = capToolOutput(bridgeToolData.output);
     if (!truncated) {
-      return toolData;
+      return bridgeToolData;
     }
 
-    return { ...toolData, output, truncated: true };
+    return { ...bridgeToolData, output, truncated: true };
   }
 
   /**
