@@ -1,0 +1,205 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
+import {
+  AgentRepository,
+  type ConversationChannel,
+  type ConversationEntity,
+  ConversationParticipantTypeEnum,
+  IntegrationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import { AgentConfigResolver, type ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { resolveLifecycleChannel } from '../conversation/run-lifecycle-activity';
+import { OutboundGateway } from '../egress/outbound.gateway';
+import { InboundConnectionContextResolver } from '../ingress/inbound-connection-context.resolver';
+import { type ActiveAgentTurn, AgentTurnAbortStore } from './agent-turn-abort.store';
+import { BridgeExecutorService } from './bridge-executor.service';
+import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
+import { CancelConversationTurnCommand } from './cancel-conversation-turn.command';
+
+export type CancelConversationTurnResult = { status: 'aborted' | 'idle' };
+
+/**
+ * Stops the turn a conversation is running, on any pod and for any channel. The turn ends for readers right away:
+ * its run is finished as `aborted` (or, stopped before it started, gets an aborted finish of its own), and its late
+ * events are dropped at ingest, where the bridge learns to abort. The bridge is then sent `onAbort` as a fresh turn.
+ */
+@Injectable()
+export class CancelConversationTurn {
+  constructor(
+    private readonly turnAbortStore: AgentTurnAbortStore,
+    private readonly conversationService: AgentConversationService,
+    private readonly agentRepository: AgentRepository,
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentConfigResolver: AgentConfigResolver,
+    private readonly connectionContextResolver: InboundConnectionContextResolver,
+    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly outboundGateway: OutboundGateway,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  async execute(command: CancelConversationTurnCommand): Promise<CancelConversationTurnResult> {
+    const conversation = await this.conversationService.getConversation(
+      command.conversationId,
+      command.environmentId,
+      command.organizationId
+    );
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const conversationId = String(conversation._id);
+    const activeTurn = await this.turnAbortStore.getActiveTurn(conversationId);
+    if (!activeTurn) {
+      return { status: 'idle' };
+    }
+
+    // A repeated Stop for the same turn changes nothing.
+    if (await this.turnAbortStore.isAborted(activeTurn.turnId)) {
+      return { status: 'aborted' };
+    }
+
+    // Marked first, so every event the bridge posts from here on is dropped.
+    await this.turnAbortStore.markAborted(activeTurn.turnId);
+
+    const channel = resolveLifecycleChannel(conversation);
+    await this.finishRunAsAborted(conversation, channel, activeTurn, command);
+
+    const config = await this.resolveConfig(conversation, channel, command);
+    await this.stopTyping(conversation, channel, config);
+
+    this.logger.info({ conversationId, turnId: activeTurn.turnId }, 'Agent turn stopped');
+
+    if (config) {
+      await this.dispatchOnAbort(conversation, channel, config, activeTurn, command);
+    }
+
+    return { status: 'aborted' };
+  }
+
+  /**
+   * Ends the turn's run as `aborted` under the run's own finish identifier, so the bridge's later `completed` (when
+   * it slips past ingest) dedupes against it. A turn stopped before its `run-start` arrived gets a run of its own:
+   * its start is dropped at ingest, and readers still see the run end.
+   */
+  private async finishRunAsAborted(
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    activeTurn: ActiveAgentTurn,
+    command: CancelConversationTurnCommand
+  ): Promise<void> {
+    const conversationId = String(conversation._id);
+    const openRunId = await this.conversationService.findOpenRunId(command.environmentId, conversationId);
+
+    const agent = await this.agentRepository.findOne(
+      { _id: conversation._agentId, _environmentId: command.environmentId },
+      ['identifier']
+    );
+
+    await this.conversationService.persistRunLifecycle({
+      conversationId,
+      channel,
+      agentIdentifier: agent?.identifier ?? conversation._agentId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      runId: openRunId ?? `stopped_${activeTurn.turnId}`,
+      event: { type: 'run-finish', outcome: 'aborted' },
+    });
+  }
+
+  /** Fails soft: without a config the turn is still stopped, only the typing stop and `onAbort` are skipped. */
+  private async resolveConfig(
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    command: CancelConversationTurnCommand
+  ): Promise<ResolvedAgentConfig | undefined> {
+    try {
+      const integration = await this.integrationRepository.findOne(
+        { _id: channel._integrationId, _environmentId: command.environmentId, _organizationId: command.organizationId },
+        { identifier: 1 }
+      );
+      if (!integration?.identifier) {
+        return undefined;
+      }
+
+      return await this.agentConfigResolver.resolve(conversation._agentId, integration.identifier);
+    } catch (err) {
+      this.logger.warn({ err, conversationId: conversation._id }, 'Could not resolve the agent config of a stop');
+
+      return undefined;
+    }
+  }
+
+  private async stopTyping(
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    config: ResolvedAgentConfig | undefined
+  ): Promise<void> {
+    if (!config) {
+      return;
+    }
+
+    try {
+      await this.outboundGateway.stopTypingInConversation(
+        conversation._agentId,
+        config.integrationIdentifier,
+        channel.platformThreadId,
+        channel.workspace?.id
+      );
+    } catch (err) {
+      this.logger.warn({ err, conversationId: conversation._id }, 'Failed to stop typing for a stopped turn');
+    }
+  }
+
+  /** Sent like `onResolve`: a fresh bridge turn, so the agent can react (e.g. offer to revert what it saved). */
+  private async dispatchOnAbort(
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    config: ResolvedAgentConfig,
+    abortedTurn: ActiveAgentTurn,
+    command: CancelConversationTurnCommand
+  ): Promise<void> {
+    try {
+      const subscriberParticipant = conversation.participants.find(
+        (participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+      const subscriber = subscriberParticipant
+        ? await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberParticipant.id)
+        : null;
+      const { context, bridgeUrl } = await this.connectionContextResolver.resolve(config, {
+        contextKeys: command.contextKeys ?? [],
+      });
+
+      await this.bridgeExecutor.execute({
+        event: AgentEventEnum.ON_ABORT,
+        config,
+        conversation,
+        subscriber,
+        context,
+        bridgeUrlOverride: bridgeUrl,
+        message: null,
+        platformThreadId: channel.platformThreadId,
+        abortedTurn,
+        platformContext: buildAgentPlatformContext({
+          platformThreadId: channel.platformThreadId,
+          channelId: '',
+          isDM: false,
+          message: null,
+          email: buildEmailPlatformContext({
+            platform: config.platform,
+            message: null,
+            firstPlatformMessageId: channel.firstPlatformMessageId,
+          }),
+        }),
+      });
+    } catch (err) {
+      // Best-effort: the turn is already stopped in the timeline whether or not the bridge hears about it.
+      this.logger.warn({ err, conversationId: conversation._id }, 'Failed to send onAbort to the agent bridge');
+    }
+  }
+}

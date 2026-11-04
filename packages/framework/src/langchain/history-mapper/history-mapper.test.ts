@@ -35,6 +35,15 @@ function agentMessage(content: string): AgentHistoryEntry {
   return entry({ role: 'agent', type: 'message', content });
 }
 
+function runFinish(outcome: string): AgentHistoryEntry {
+  return entry({
+    role: 'agent',
+    type: 'run_finish',
+    content: `Run finished: ${outcome}`,
+    richContent: { lifecycle: { outcome } },
+  });
+}
+
 function approvalRequest(params: {
   approvalId: string;
   toolCallId: string;
@@ -187,6 +196,40 @@ describe('toLangChainMessages', () => {
         role: 'system',
         content: 'You are support.',
       });
+    });
+  });
+
+  describe('stopped turns', () => {
+    const stoppedMarker =
+      '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
+
+    it('maps an aborted run finish to a marker right after the stopped prompt and before the next message', () => {
+      const result = toLangChainMessages([
+        userMessage('Add an email step'),
+        runFinish('aborted'),
+        userMessage('What does this workflow do?'),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        { role: 'user', content: 'Add an email step' },
+        { role: 'assistant', content: stoppedMarker },
+        { role: 'user', content: 'What does this workflow do?' },
+      ]);
+    });
+
+    it('maps a completed or paused run finish to nothing', () => {
+      const result = toLangChainMessages([
+        userMessage('hi'),
+        agentMessage('hello!'),
+        runFinish('completed'),
+        runFinish('paused'),
+        entry({ role: 'agent', type: 'run_finish', content: 'Run finished' }),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        { role: 'user', content: 'hi' },
+        { role: 'assistant', content: 'hello!' },
+      ]);
     });
   });
 

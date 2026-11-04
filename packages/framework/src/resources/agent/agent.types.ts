@@ -12,6 +12,7 @@ export enum AgentEventEnum {
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
+  ON_ABORT = 'onAbort',
 }
 
 export type HumanInteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
@@ -286,8 +287,9 @@ export interface AgentHistoryEntry {
   /** Message role: `'user'`, `'assistant'`, or `'system'`. */
   role: string;
   /**
-   * The kind of entry: `'message'`, `'edit'`, `'signal'`, or a tool-lifecycle event
-   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`).
+   * The kind of entry: `'message'`, `'edit'`, `'signal'`, a tool-lifecycle event
+   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`), or `'run_finish'` for a turn the user
+   * stopped (`richContent.lifecycle.outcome === 'aborted'`).
    */
   type: string;
   /** Plain-text representation of the message content. */
@@ -627,6 +629,13 @@ export interface AgentHandlerContext {
   readonly platform: string;
   /** Platform-specific thread and channel identifiers. */
   readonly platformContext: AgentPlatformContext;
+  /**
+   * Aborts when the user stops this turn. Novu reports the stop on the turn's next event delivery
+   * (a reply, typing status or custom event), so long work between deliveries runs on until then.
+   * Pass it to your model calls (e.g. AI SDK `abortSignal`); `@novu/framework/langchain` wires it in for you.
+   * The turn then ends as `aborted` and `onError` is not called.
+   */
+  readonly signal: AbortSignal;
 
   /**
    * Post a message to the conversation and return a handle to it.
@@ -843,13 +852,29 @@ export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
+/** The turn the user stopped, as passed to `onAbort`. */
+export interface AgentAbortedTurn {
+  /** The stopped turn's delivery id. */
+  turnId: string;
+  /** The inbound message that started the stopped turn (its `message.platformMessageId`), when it had one. */
+  platformMessageId?: string;
+}
+
+/** Context passed to the `onAbort` handler. */
+export interface AgentAbortContext extends AgentHandlerContext {
+  readonly event: 'onAbort';
+  /** The turn the user stopped. */
+  readonly abortedTurn: AgentAbortedTurn;
+}
+
 export type AgentContext =
   | AgentMessageContext
   | AgentMessageUpdatedContext
   | AgentMessageDeletedContext
   | AgentActionContext
   | AgentReactionContext
-  | AgentResolveContext;
+  | AgentResolveContext
+  | AgentAbortContext;
 
 /** Event handlers for a conversational agent. */
 export interface AgentHandlers {
@@ -917,6 +942,15 @@ export interface AgentHandlers {
    */
   onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
+   * Fires in a new turn after the user stopped a running one. The stopped turn already ended as
+   * `aborted`; use this to follow up on what it left behind (e.g. offer to undo its changes).
+   *
+   * @param ctx - Conversation context, plus `ctx.abortedTurn` naming the stopped turn.
+   *
+   * Return a string or card to reply, or return nothing to post nothing.
+   */
+  onAbort?: (ctx: AgentAbortContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
    * Fires when the user approves or denies a tool call you previously gated with
    * `ctx.toolApproval.request()`.
    *
@@ -944,6 +978,7 @@ export interface AgentHandlers {
       | AgentActionContext
       | AgentReactionContext
       | AgentResolveContext
+      | AgentAbortContext
   ) => Awaitable<AgentErrorResult>;
   /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
@@ -1019,6 +1054,11 @@ export interface AgentBridgeRequest {
    * the wire for backward compatibility; absent → `ctx.humanResponse` is `null`.
    */
   humanResponse?: AgentHumanResponse | null;
+  /**
+   * The turn the user stopped, on an `onAbort` delivery. Optional on the wire for backward
+   * compatibility; absent on every other event.
+   */
+  abortedTurn?: AgentAbortedTurn | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;

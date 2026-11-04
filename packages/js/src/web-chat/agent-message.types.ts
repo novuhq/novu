@@ -146,6 +146,8 @@ export type AgentMessage = {
   status: AgentMessageStatus;
   /** Client-generated idempotency key for outbound user messages (`msg_*`). */
   idempotencyKey?: string;
+  /** True on the last assistant message of a run that was stopped with `stop()`. The text is the partial reply. */
+  interrupted?: boolean;
 };
 
 /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. */

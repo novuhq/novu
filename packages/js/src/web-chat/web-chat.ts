@@ -30,6 +30,8 @@ import type {
   SendActionResult,
   SendMessageArgs,
   SendMessageResult,
+  StopArgs,
+  StopResult,
   WebChatChange,
   WebChatMessagesUpdated,
   WebChatPagination,
@@ -200,6 +202,7 @@ export class WebChat extends BaseModule {
         messages: AgentMessage[];
         key: string;
         isRunning: boolean;
+        isStopping: boolean;
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
@@ -224,6 +227,7 @@ export class WebChat extends BaseModule {
       messages: entry.messages,
       key: entry.key,
       isRunning: entry.isRunning,
+      isStopping: entry.isStopping,
       typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
@@ -308,6 +312,51 @@ export class WebChat extends BaseModule {
         });
       }
     );
+  }
+
+  /**
+   * @internal Prefer {@link AgentConversationRuntime.stop}.
+   * Asks the server to stop the active agent turn of this conversation. Safe to call when nothing runs.
+   */
+  async stop(args: StopArgs): Result<StopResult, NovuError | WebChatPlanLimitError> {
+    return this.callWithSession<StopResult, NovuError | WebChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      const conversationId = entry?.conversationId;
+      if (!entry || !conversationId) {
+        return {
+          error: new NovuError('Cannot stop without a conversation id', new Error('missing conversation id')),
+        };
+      }
+
+      if (entry.isRunning) {
+        this.#store.setStopping(entry, true);
+      }
+
+      try {
+        const { status } = await this.#webChatService.cancelRun({
+          agentId: args.agentId,
+          conversationId,
+          agentHash: args.agentHash,
+        });
+
+        if (status === 'idle') {
+          this.#store.settleIdleRun(entry);
+        }
+
+        // The aborted `run-finish` can arrive before the HTTP ack, or not at all after a socket drop; catch up like resume paths.
+        this.#requestCatchUp();
+
+        return { data: { status } };
+      } catch (error) {
+        this.#store.setStopping(entry, false);
+
+        if (error instanceof WebChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to stop the agent', error) };
+      }
+    });
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.load}. */
@@ -754,6 +803,7 @@ export class WebChat extends BaseModule {
         key: entry.key,
         messages: entry.messages,
         isRunning: entry.isRunning,
+        isStopping: entry.isStopping,
         typing: entry.typing,
         status: entry.status,
         hasMore: entry.olderCursor != null,

@@ -36,13 +36,31 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'run-start':
       return { ...state, isRunning: true, error: undefined };
 
-    case 'run-finish':
-      return finalizeOpenStreamingParts({
+    case 'run-finish': {
+      const finished = finalizeOpenStreamingParts({
         ...state,
         isRunning: false,
         activeAssistantMessageId: undefined,
         error: undefined,
       });
+
+      if (event.outcome !== 'aborted') {
+        return finished;
+      }
+
+      if (state.activeAssistantMessageId) {
+        return markInterrupted(finished, state.activeAssistantMessageId);
+      }
+
+      // Stopped before it wrote anything: an empty assistant message still carries the mark, live and on replay.
+      return {
+        ...withAssistantMessage(finished, envelope, `${envelope.runId}_stopped`, (message) => ({
+          ...message,
+          interrupted: true,
+        })),
+        activeAssistantMessageId: undefined,
+      };
+    }
 
     case 'run-error':
       return finalizeOpenStreamingParts({
@@ -55,19 +73,27 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'resolve':
       return { ...state, status: 'resolved' };
 
-    case 'message-start':
-      return clearTyping(
-        withAssistantMessage(state, envelope, event.messageId, (message) => ({
-          ...message,
-          parts: [...message.parts, createStreamingTextPart('')],
-        }))
-      );
+    case 'message-start': {
+      const next = withAssistantMessage(state, envelope, event.messageId, (message) => ({
+        ...message,
+        parts: [...message.parts, createStreamingTextPart('')],
+      }));
 
-    case 'message-delta':
-      return withAssistantMessage(state, envelope, event.messageId, (message) => ({
+      return clearTyping(adoptStoppedReply(state, next, event.messageId));
+    }
+
+    case 'message-delta': {
+      if (isClosedByRunEnd(state, event.messageId)) {
+        return state;
+      }
+
+      const next = withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,
         parts: appendToStreamingTextPart(message.parts, event.delta),
       }));
+
+      return adoptStoppedReply(state, next, event.messageId);
+    }
 
     case 'message-end':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
@@ -83,7 +109,8 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
       }));
 
       if (event.role === 'assistant') {
-        return clearTyping(next);
+        // A card is never the partial reply of a stopped run.
+        return clearTyping('markdown' in event.content ? adoptStoppedReply(state, next, event.messageId) : next);
       }
 
       return next;
@@ -609,6 +636,86 @@ function clearTyping(state: AgentConversationState): AgentConversationState {
     ...state,
     typing: undefined,
   };
+}
+
+/**
+ * A stopped run's `run-finish` can reach the timeline before the tail of its partial reply: Novu ends the live reply
+ * once it notices the stop, so the preview can open after the finish, and the saved message follows it. Live
+ * envelopes of a reply carry no run id to match them with the run, so the reply is recognised by position: a text
+ * message that first appears while no run is active, right behind the message the finish flagged. The mark moves
+ * onto it, so "Stopped" reads below the text, on live and replayed timelines alike. An empty placeholder the finish
+ * added for want of a message is dropped.
+ *
+ * A reply that follows a stop is also closed to the run's active message: it must not catch the next run's events.
+ */
+function adoptStoppedReply(
+  previous: AgentConversationState,
+  next: AgentConversationState,
+  messageId: string
+): AgentConversationState {
+  const holder = findStopMarkHolder(previous);
+  let adopted = next;
+
+  if (holder && !findAssistantMessage(previous, messageId)) {
+    adopted = {
+      ...next,
+      messages: next.messages.flatMap((message) => {
+        if (message.id === messageId) {
+          return [{ ...message, interrupted: true }];
+        }
+
+        if (message.id !== holder.id) {
+          return [message];
+        }
+
+        return message.parts.length ? [{ ...message, interrupted: undefined }] : [];
+      }),
+    };
+  }
+
+  return !adopted.isRunning && findAssistantMessage(adopted, messageId)?.interrupted
+    ? { ...adopted, activeAssistantMessageId: undefined }
+    : adopted;
+}
+
+function findAssistantMessage(state: AgentConversationState, messageId: string): AgentMessage | undefined {
+  return state.messages.find((message) => message.role === 'assistant' && message.id === messageId);
+}
+
+/** The message a stop flagged, while no run is active and nothing came after it. */
+function findStopMarkHolder(state: AgentConversationState): AgentMessage | undefined {
+  const last = state.messages[state.messages.length - 1];
+
+  return !state.isRunning && last?.role === 'assistant' && last.interrupted ? last : undefined;
+}
+
+/**
+ * A live delta published after the run ended, for a message whose text it already closed. A stop does not reach
+ * the live reader at once, so the preview keeps streaming for a moment past the aborted `run-finish`. The saved
+ * message carries the whole text: a delta must not reopen the closed part, or the text shows twice.
+ */
+function isClosedByRunEnd(state: AgentConversationState, messageId: string): boolean {
+  const message = findAssistantMessage(state, messageId);
+
+  return !state.isRunning && message !== undefined && findStreamingTextPartIndex(message.parts) < 0;
+}
+
+/** Flag the run's last assistant message as stopped. A run that never reached an assistant message has none. */
+function markInterrupted(state: AgentConversationState, messageId: string | undefined): AgentConversationState {
+  if (!messageId) {
+    return state;
+  }
+
+  const index = state.messages.findIndex((message) => message.id === messageId && message.role === 'assistant');
+  const target = state.messages[index];
+  if (!target) {
+    return state;
+  }
+
+  const messages = state.messages.slice();
+  messages[index] = { ...target, interrupted: true };
+
+  return { ...state, messages };
 }
 
 function finalizeOpenStreamingParts(state: AgentConversationState): AgentConversationState {

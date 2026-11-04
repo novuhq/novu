@@ -46,6 +46,8 @@ export type ConversationEntry = AgentConversationState & {
    * apply when `fetchMore` prepends the original message.
    */
   messageMutations: Map<string, AgentEventEnvelope>;
+  /** True from a `stop()` request until the run ends. */
+  isStopping: boolean;
   /** True while reconnect recovery is in progress. */
   isRecovering: boolean;
   /** Set when reconnect recovery hits the page limit or HTTP fails. Cleared on success. */
@@ -83,6 +85,8 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
     lastSequence: next.lastSequence,
     error: next.error,
     activeAssistantMessageId: next.activeAssistantMessageId,
+    // A stop request only lives as long as the run: the run's end settles it.
+    isStopping: next.isRunning && entry.isStopping,
   });
 }
 
@@ -245,6 +249,7 @@ export class WebChatStore {
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
       messageMutations: new Map(),
+      isStopping: false,
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
@@ -430,6 +435,32 @@ export class WebChatStore {
     this.#suppressActions(entry, olderMessages);
 
     this.#publish(entry, { kind: 'history' }, olderMessages);
+
+    return entry;
+  }
+
+  /** Mark a stop request as in flight, or settle it. The run's `run-finish` or `run-error` also settles it. */
+  setStopping(entry: ConversationEntry, isStopping: boolean): ConversationEntry {
+    if (entry.isStopping === isStopping) {
+      return entry;
+    }
+
+    entry.isStopping = isStopping;
+    this.#publish(entry, { kind: 'local' }, []);
+
+    return entry;
+  }
+
+  /** The server had no active turn to stop. Drop the local running state. */
+  settleIdleRun(entry: ConversationEntry): ConversationEntry {
+    if (!entry.isRunning && !entry.isStopping && entry.typing === undefined) {
+      return entry;
+    }
+
+    entry.isRunning = false;
+    entry.isStopping = false;
+    entry.typing = undefined;
+    this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
   }

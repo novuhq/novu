@@ -41,6 +41,7 @@ import { ConversationEventSequenceService } from './conversation-event-sequence.
 import {
   describeRunLifecycleFromEvent,
   type PersistRunLifecycleParams,
+  runIdFromLifecycleIdentifier,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
 
@@ -709,6 +710,29 @@ export class ConversationActivityLedger {
       },
       ['_id', 'platformThreadId']
     );
+  }
+
+  /** The conversation's latest run, when it has neither finished nor failed. */
+  async findOpenRunId(environmentId: string, conversationId: string): Promise<string | undefined> {
+    const runStart = await this.activityRepository.findOne(
+      { _environmentId: environmentId, _conversationId: conversationId, type: ConversationActivityTypeEnum.RUN_START },
+      ['identifier'],
+      { query: { sort: { createdAt: -1 } } }
+    );
+    const runId = runStart?.identifier ? runIdFromLifecycleIdentifier(runStart.identifier) : undefined;
+    if (!runId) {
+      return undefined;
+    }
+
+    const ended = await this.activityRepository.findOne(
+      {
+        _environmentId: environmentId,
+        identifier: { $in: [runLifecycleIdentifier(runId, 'finish'), runLifecycleIdentifier(runId, 'error')] },
+      },
+      ['_id']
+    );
+
+    return ended ? undefined : runId;
   }
 
   async findToolActivitiesByPlanMessageId(

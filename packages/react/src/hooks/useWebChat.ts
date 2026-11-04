@@ -14,6 +14,7 @@ import type {
   SendActionResult,
   SendMessageInput,
   SendMessageResult,
+  StopResult,
   WebChatPagination,
   WebChatPlanLimitError,
 } from '@novu/js';
@@ -85,6 +86,8 @@ export type UseWebChatResult = {
   isLoading: boolean;
   /** True while the agent turn is in progress. Same as `run.isRunning`. */
   isRunning: boolean;
+  /** True from `stop()` until the run ends. Same as `run.isStopping`. */
+  isStopping: boolean;
   /** Typing indicator. Same as `run.typing`. Absent when the agent is not typing. */
   typing?: AgentConversationRunSnapshot['typing'];
   /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. */
@@ -137,6 +140,17 @@ export type UseWebChatResult = {
     error?: NovuError | WebChatPlanLimitError;
   }>;
   /**
+   * Stop the agent turn that is running. Does nothing when no turn runs.
+   * `isStopping` is true until the run ends, and the last assistant message then has `interrupted: true`.
+   * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
+   *
+   * @experimental Not every agent runtime can interrupt a turn mid-step yet. The agent finishes its current step first.
+   */
+  stop: () => Promise<{
+    data?: StopResult;
+    error?: NovuError | WebChatPlanLimitError;
+  }>;
+  /**
    * Start a new empty chat for the current `agentId`. The next `sendMessage` creates the server conversation.
    * No-op when `conversationId` or `conversation` is provided.
    */
@@ -146,7 +160,7 @@ export type UseWebChatResult = {
 const EMPTY_SERVER_SNAPSHOT = {
   key: 'ssr',
   status: 'loading',
-  run: { isRunning: false },
+  run: { isRunning: false, isStopping: false },
   conversationStatus: 'active',
   pagination: { hasMore: false, status: 'idle' },
   messages: [],
@@ -527,6 +541,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     (messageId: string) => callRuntime((target) => target.retryMessage(messageId)),
     [callRuntime]
   );
+  const stop = useCallback(() => callRuntime((target) => target.stop()), [callRuntime]);
   const startNewConversation = useCallback(() => {
     if (sharedRuntime || conversationIdProp) {
       return;
@@ -542,6 +557,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     error: webChatLoadError ?? (snapshot.error as UseWebChatResult['error']),
     isLoading: !webChatLoadError && (isWebChatLoading || snapshot.status === 'loading'),
     isRunning: snapshot.run.isRunning,
+    isStopping: snapshot.run.isStopping,
     typing: snapshot.run.typing,
     conversationStatus: snapshot.conversationStatus,
     run: snapshot.run,
@@ -553,6 +569,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     respondToAction,
     sendAction,
     retryMessage,
+    stop,
     startNewConversation,
   };
 };

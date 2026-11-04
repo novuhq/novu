@@ -3,6 +3,7 @@ import { type AgentMiddleware, createAgent } from 'langchain';
 import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
 import type { ReplyStream, ToolApprovalConfig } from '../../resources/agent/agent.types';
 import { isCardElement } from '../../resources/agent/guards';
+import { anySignal } from '../../utils/any-signal.utils';
 import { toLangChainMessages } from '../history-mapper';
 import { hydrateUnreachableAttachmentUrls } from '../history-mapper/hydrate-attachment-urls';
 import {
@@ -92,9 +93,28 @@ function modelChunkText(message: BaseMessage, metadata: Record<string, unknown> 
   return textFromContent(message.content);
 }
 
-/** The `replyFooter` text, paragraph-separated from the streamed reply; none when `formatReply` buffers it. */
-function replyFooterText(config: LangChainAgentConfig, wroteText: boolean): string | undefined {
-  const footer = config.formatReply ? undefined : config.replyFooter?.();
+/** Whether the user stopped the turn (`ctx.signal` aborted). */
+function isStopped(ctx: AgentRuntimeContext): boolean {
+  return ctx.signal?.aborted === true;
+}
+
+/** The run config with the turn's stop signal merged into any `signal` the caller passed. */
+function withStopSignal(invokeConfig: LangChainAgentConfig['invokeConfig'], ctx: AgentRuntimeContext) {
+  const signal = anySignal([ctx.signal, invokeConfig?.signal]);
+
+  return signal ? { ...invokeConfig, signal } : invokeConfig;
+}
+
+/**
+ * The `replyFooter` text, paragraph-separated from the streamed reply; none when `formatReply` buffers it
+ * or the user stopped the turn.
+ */
+function replyFooterText(
+  config: LangChainAgentConfig,
+  wroteText: boolean,
+  ctx: AgentRuntimeContext
+): string | undefined {
+  const footer = config.formatReply || isStopped(ctx) ? undefined : config.replyFooter?.();
   if (!footer) return undefined;
 
   return wroteText ? `\n\n${footer}` : footer;
@@ -123,7 +143,7 @@ async function replyAgentText(
     try {
       const stream = await agent.stream(
         { messages },
-        { ...config.invokeConfig, streamMode: ['messages', 'values'] as const }
+        { ...withStopSignal(config.invokeConfig, ctx), streamMode: ['messages', 'values'] as const }
       );
 
       for await (const [mode, chunk] of stream) {
@@ -150,7 +170,7 @@ async function replyAgentText(
     // Queued before the reply is sent, so the results are recorded ahead of it.
     emitExecutedToolResults(finalMessages, ctx, executed);
 
-    const footer = replyFooterText(config, wroteText);
+    const footer = replyFooterText(config, wroteText, ctx);
     if (footer) yield footer;
   }
 
@@ -169,6 +189,9 @@ async function replyAgentText(
 
     return;
   }
+
+  // A stopped turn adds nothing after the text it streamed.
+  if (isStopped(ctx)) return;
 
   const followUp = await config.replyFollowUp?.();
   if (followUp) {

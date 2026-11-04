@@ -3,6 +3,8 @@ export { AgentDeliveryError, AgentError, toAgentError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
   Agent,
+  AgentAbortContext,
+  AgentAbortedTurn,
   AgentAction,
   AgentActionContext,
   AgentAttachment,

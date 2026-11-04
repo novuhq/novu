@@ -21,15 +21,17 @@ describe('BridgeExecutorService', () => {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
     const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
+    const turnAbortStore = { setActiveTurn: sinon.stub().resolves() };
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      conversationService as any
+      conversationService as any,
+      turnAbortStore as any
     );
 
-    return { service, logger, attachmentStorage, conversationService };
+    return { service, logger, attachmentStorage, conversationService, turnAbortStore };
   }
 
   function makeExecutionParams() {
@@ -201,6 +203,27 @@ describe('BridgeExecutorService', () => {
       });
     });
 
+    it('forwards the stopped turn on onAbort and keys its delivery by that turn', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1', platformMessageId: 'msg-1' },
+      });
+
+      expect(payload.abortedTurn).to.deep.equal({ turnId: 'conv-1:msg-1', platformMessageId: 'msg-1' });
+      expect(payload.deliveryId).to.equal(`conv-1:${AgentEventEnum.ON_ABORT}:conv-1:msg-1`);
+    });
+
+    it('sends no abortedTurn on other events', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload).not.to.have.property('abortedTurn');
+    });
+
     it('should map workflowOrigin onto notification for the bridge wire', async () => {
       const { service } = makeService();
       const workflowOrigin = {
@@ -298,6 +321,59 @@ describe('BridgeExecutorService', () => {
       );
 
       expect(replyTo).to.equal(undefined);
+    });
+  });
+
+  describe('execute', () => {
+    function stubDelivery(service: BridgeExecutorService) {
+      (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
+      sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
+      sinon.stub(service as any, 'fireWithRetries').resolves({ headers: {}, body: { resume: sinon.stub() } });
+    }
+
+    it('records the turn as the conversation active turn before calling the bridge', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service);
+
+      await service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+
+      expect(
+        turnAbortStore.setActiveTurn.calledOnceWith('conv-1', {
+          turnId: 'conv-1:message-id',
+          platformMessageId: 'message-id',
+        })
+      ).to.equal(true);
+    });
+
+    it('never records onResolve or onAbort as the active turn', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service);
+
+      await service.execute({ ...makeExecutionParams(), event: AgentEventEnum.ON_RESOLVE } as any);
+      await service.execute({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1' },
+      } as any);
+
+      expect(turnAbortStore.setActiveTurn.called).to.equal(false);
+    });
+
+    it('logs a bridge that rejects onAbort as a warning, since older frameworks do not know the event', async () => {
+      const { service, logger } = makeService();
+      (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
+      sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
+      sinon.stub(service as any, 'fireWithRetries').rejects(new Error('Bridge returned 400: InvalidActionError'));
+
+      await service.execute({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1' },
+      } as any);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.error.called).to.equal(false);
     });
   });
 

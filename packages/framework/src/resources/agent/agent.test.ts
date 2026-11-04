@@ -304,6 +304,51 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
   });
 
+  it('posts run-start on its own once live text starts, so the run reads as running while it streams', async () => {
+    let releaseStream!: () => void;
+    const streamHeld = new Promise<void>((resolve) => {
+      releaseStream = resolve;
+    });
+    const testBot = agent('test-bot', {
+      onMessage: async function* () {
+        yield 'Hello ';
+        await streamHeld;
+        yield 'world';
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: (key: string) => (key === 'accept' ? 'text/event-stream, application/json' : null),
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+          transformStreamResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    const postedEventTypes = () =>
+      ingestBatchesFromFetch(fetchMock)
+        .flatMap((batch) => batch.events ?? [])
+        .map((envelope) => envelope.event.type);
+
+    await vi.waitFor(() => expect(postedEventTypes()).toEqual(['run-start']));
+
+    releaseStream();
+    await new Response(result.body).text();
+    await vi.waitFor(() => expect(postedEventTypes()).toContain('run-finish'));
+  });
+
   it('should return 404 for unknown agent', async () => {
     const handler = new NovuRequestHandler({
       frameworkName: 'test',

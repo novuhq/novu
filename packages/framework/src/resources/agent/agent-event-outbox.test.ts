@@ -182,6 +182,43 @@ describe('AgentEventOutbox', () => {
     expect(JSON.parse(fetchFn.mock.calls[1][1].body).events[0].event.type).toBe('run-finish');
   });
 
+  it('reports a stopped turn once and then sends only the run-finish', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(okResponse(JSON.stringify({ data: { abortTurn: true } })))
+      .mockResolvedValue(okResponse());
+    const onTurnAborted = vi.fn();
+    const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn, onTurnAborted });
+
+    await outbox.emit({ type: 'channel.typing', state: 'on' });
+    expect(onTurnAborted).toHaveBeenCalledTimes(1);
+    expect(outbox.isTurnAborted).toBe(true);
+
+    await outbox.emit({ type: 'custom', name: 'progress', data: {} });
+    outbox.enqueue({ type: 'message', role: 'assistant', messageId: 'msg-1', content: { markdown: 'late' } });
+    outbox.enqueue({ type: 'run-finish', outcome: 'aborted' });
+    await outbox.flush();
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    const lastBody = JSON.parse(fetchFn.mock.calls[1][1].body);
+    expect(lastBody.events.map((envelope: { event: AgentEvent }) => envelope.event)).toEqual([
+      { type: 'run-finish', outcome: 'aborted' },
+    ]);
+    expect(onTurnAborted).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores ingest bodies that are not an abort', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(okResponse('not json'));
+    const onTurnAborted = vi.fn();
+    const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn, onTurnAborted });
+
+    await outbox.emit({ type: 'channel.typing', state: 'on' });
+    await outbox.emit({ type: 'run-finish', outcome: 'completed' });
+
+    expect(onTurnAborted).not.toHaveBeenCalled();
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
   it('does not fetch when flush is called on an empty buffer', async () => {
     const fetchFn = vi.fn();
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
