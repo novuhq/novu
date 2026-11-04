@@ -364,6 +364,21 @@ describe("workflow step tools", () => {
 			expect(api.puts).toHaveLength(0);
 			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
 		});
+
+		it("points trigger and custom step content to update_workflow", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: { controlValues: {}, type: "custom" },
+				stepId: "chat-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"edit trigger and custom steps with update_workflow at content.type",
+			);
+		});
 	});
 
 	describe("update_workflow_step_conditions", () => {

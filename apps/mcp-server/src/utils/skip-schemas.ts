@@ -78,7 +78,7 @@ const skipComparisonSchema = z
 
 /** Every option of the skip union failing says only "Invalid input", which a model can't act on. */
 const SKIP_CONDITION_ERROR =
-	'Invalid skip condition: expected one comparison { "<op>": [a, b] } with op ==, !=, >, >=, <, <= or in, or { "and": [comparisons] } / { "or": [comparisons] } with at least one comparison and no nesting, where each operand is a string, number, boolean, null or { "var": "payload.x" } (for a fixed list, use an "or" of "==" comparisons)';
+	'Invalid skip condition: expected one comparison { "<op>": [a, b] } with op ==, !=, >, >=, <, <= or in, or { "and": [comparisons] } / { "or": [comparisons] } with at least one comparison and no nesting, where each operand is a string, number, boolean, null or { "var": "payload.x" } (for a fixed list, use an "or" of "==" comparisons; for no condition, pass null or leave skip out)';
 
 const skipConditionSchema = z
 	.union(
@@ -113,7 +113,8 @@ const SKIP_CONDITION_DESCRIPTION =
 /** The `skip` control value every step type takes; the dashboard saves a cleared one as null. */
 export const optionalSkipConditionSchema = skipConditionSchema
 	.nullish()
-	.describe(SKIP_CONDITION_DESCRIPTION);
+	.describe(SKIP_CONDITION_DESCRIPTION)
+	.meta({ title: "skip" });
 
 const SKIP_CONDITION_GUIDE =
 	'JSONLogic run condition: the step runs only when it is true. Use one comparison { "<op>": [a, b] } with op ==, !=, >, >=, <, <= or in (one operator per object), or { "and": [comparisons] } / { "or": [comparisons] } with at least one comparison (groups do not nest). Each operand is a string, number, boolean, null or { "var": "<path>" } with a path such as "payload.tier", "subscriber.isOnline" or "steps.<stepId>.<field>" (an in_app step\'s seen or read, a digest step\'s eventCount), never an array literal: "in" checks the first operand against a string or an array variable, e.g. { "in": ["gold", { "var": "payload.tiers" }] }; for a fixed list, use an "or" of "==" comparisons. Example: { "==": [{ "var": "subscriber.isOnline" }, false] } runs the step only for offline subscribers.';

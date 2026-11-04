@@ -651,14 +651,16 @@ export const workflowStepInputSchema = z
 	})
 	.pipe(workflowStepSchema);
 
+const contentStepTypes = stepTypeSchema.exclude(["trigger", "custom"]).options;
+
 /** The content tool keeps the step's saved skip, so a skip sent with the content is dropped unchecked. */
 export const workflowStepContentInputSchema = z
 	.object({
 		controlValues: controlValuesRecordSchema
 			.transform(({ skip: _skip, ...controlValues }) => controlValues)
 			.describe(STEP_CONTENT_CONTROLS_GUIDE),
-		type: stepTypeSchema.exclude(["trigger", "custom"], {
-			error: "Expected content.type to be in_app, email, sms, chat, push, digest, delay, throttle or http_request; edit trigger and custom steps with update_workflow",
+		type: z.enum(contentStepTypes, {
+			error: `Expected content.type to be one of ${contentStepTypes.join(", ")}; edit trigger and custom steps with update_workflow`,
 		}),
 	})
 	.pipe(workflowStepContentSchema);
