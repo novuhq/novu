@@ -70,7 +70,7 @@ const skipComparisonSchema = z.union([
 ]);
 
 /** Every option of the skip union failing says only "Invalid input", which a model can't act on. */
-export const SKIP_CONDITION_ERROR =
+const SKIP_CONDITION_ERROR =
 	'Invalid skip condition: expected one comparison { "<op>": [a, b] } with op ==, !=, >, >=, <, <= or in, or { "and": [comparisons] } / { "or": [comparisons] } with at least one comparison and no nesting, where each operand is a string, number, boolean, null or { "var": "payload.x" }';
 
 export const skipConditionSchema = z.union(
@@ -96,10 +96,20 @@ export const skipConditionSchema = z.union(
 	{ error: (issue) => (issue.code === "invalid_union" ? SKIP_CONDITION_ERROR : undefined) },
 );
 
-export const SKIP_CONDITION_DESCRIPTION =
+const SKIP_CONDITION_DESCRIPTION =
 	'JSONLogic condition for conditionally RUNNING the workflow step: the step runs when the condition evaluates to true and is skipped otherwise, and a step without a condition always runs. Use comparison operators with variable references. Examples: { "==": [{ "var": "subscriber.isOnline" }, false] } runs the step only when the subscriber is offline, { "!=": [{ "var": "payload.priority" }, "high"] } runs it only when the priority is not high.';
 
 /** The optional `skip` control value every step type takes. */
 export const optionalSkipConditionSchema = skipConditionSchema
 	.optional()
 	.describe(SKIP_CONDITION_DESCRIPTION);
+
+const SKIP_CONDITION_GUIDE =
+	'JSONLogic run condition: the step runs only when it is true. Omit skip to remove the condition. Use one comparison { "<op>": [a, b] } with op ==, !=, >, >=, <, <= or in (one operator per object), or { "and": [comparisons] } / { "or": [comparisons] } with at least one comparison (groups do not nest). Each operand is a string, number, boolean, null or { "var": "<path>" } with a path such as "payload.tier", "subscriber.isOnline" or "steps.<stepId>.<field>", never an array literal: "in" checks the first operand against a string or an array variable, e.g. { "in": ["gold", { "var": "payload.tiers" }] }. Example: { "==": [{ "var": "subscriber.isOnline" }, false] } runs the step only for offline subscribers.';
+
+/** The advertised `skip` of update_workflow_step_conditions: any object, parsed by the skip union. */
+export const skipConditionInputSchema = z
+	.record(z.string(), z.unknown(), { error: SKIP_CONDITION_ERROR })
+	.pipe(skipConditionSchema)
+	.optional()
+	.describe(SKIP_CONDITION_GUIDE);

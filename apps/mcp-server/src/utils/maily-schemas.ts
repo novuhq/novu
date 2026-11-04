@@ -8,6 +8,18 @@
  */
 import { z } from "zod";
 
+/** How to build a block email body, for models that only see it on demand. */
+export const MAILY_BODY_GUIDE = [
+	'A block email body is a Maily (TipTap) JSON object, not a string: { "type": "doc", "content": [blocks] }.',
+	"Top-level blocks: paragraph, heading, button, image, logo, linkCard, spacer, horizontalRule, htmlCodeBlock, footer, blockquote, bulletList, orderedList, section, columns and repeat.",
+	"paragraph, heading and footer hold inline nodes: text { text, marks? }, variable, hardBreak, button and inlineImage. Marks are bold, italic, underline, strike, code, textStyle { attrs: { color } } and link { attrs: { href } }.",
+	"blockquote and listItem hold paragraphs, bulletList and orderedList hold listItems, and htmlCodeBlock holds text nodes.",
+	"A section holds paragraph, heading, button, image, inlineImage, logo, linkCard, spacer, horizontalRule, footer, repeat, columns and sections. columns holds column nodes. A column, a repeat and a section inside a section hold only paragraph, heading, button, image, inlineImage, logo, linkCard, spacer and horizontalRule.",
+	'Insert a variable as a variable node: { "type": "variable", "attrs": { "id": "subscriber.firstName" } }.',
+	"Required attributes: variable attrs.id, button attrs.text, heading attrs.level (1, 2 or 3), spacer attrs.height, image, inlineImage and logo attrs.src, linkCard attrs.title and attrs.link, and link attrs.href. Leave out the other attributes you don't set; they are saved as null.",
+	'An attribute bound to a variable (with isUrlVariable, isSrcVariable, isTextVariable or isExternalLinkVariable true) takes a bare name such as "payload.url", never "{{ payload.url }}". Inside a repeat (attrs.each: "payload.items"), set aliasFor to the item path.',
+].join("\n");
+
 const mailyMarkSchema = z.object({
 	type: z.enum(["bold", "italic", "underline", "strike", "code"]),
 });

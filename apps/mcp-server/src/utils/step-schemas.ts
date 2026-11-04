@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { mailyBodySchema } from "./maily-schemas";
+import { MAILY_BODY_GUIDE, mailyBodySchema } from "./maily-schemas";
 import { optionalSkipConditionSchema } from "./skip-schemas";
 
 /**
@@ -524,3 +524,247 @@ export const workflowStepContentSchema = z.discriminatedUnion("type", [
 ]);
 
 export type WorkflowStepContent = z.infer<typeof workflowStepContentSchema>;
+
+// --- Advertised step inputs ------------------------------------------------
+
+/*
+ * The MCP SDK advertises a tool's input schema from the input side of a pipe
+ * (`pipeStrategy: "input"`) and validates calls through the whole pipe. A
+ * step input therefore advertises name, type and free-form controlValues, a
+ * few KB instead of the per-type union with the Maily body inlined (about
+ * 450 KB per tool), while every call is still parsed by the strict union.
+ */
+
+const controlValuesSchemaByStepType = {
+	chat: chatControlSchema,
+	custom: customControlSchema,
+	delay: delayControlSchema,
+	digest: digestControlSchema,
+	email: emailControlSchema,
+	http_request: httpRequestControlSchema,
+	in_app: inAppControlSchema,
+	push: pushControlSchema,
+	sms: smsControlSchema,
+	throttle: throttleControlSchema,
+	trigger: customControlSchema,
+} satisfies Record<StepType, z.ZodType>;
+
+type StepControlValuesInput = {
+	[T in StepType]: z.input<(typeof controlValuesSchemaByStepType)[T]>;
+};
+
+/** One valid controlValues object per step type, returned by `get_step_schema`. */
+export const STEP_CONTROL_EXAMPLES: StepControlValuesInput = {
+	chat: { body: "New signup: {{payload.email}}" },
+	custom: {},
+	delay: { amount: 30, type: "regular", unit: "minutes" },
+	digest: { amount: 1, digestKey: "payload.projectId", type: "regular", unit: "hours" },
+	email: {
+		body: {
+			content: [
+				{
+					attrs: { level: 2 },
+					content: [{ text: "Your order is on its way", type: "text" }],
+					type: "heading",
+				},
+				{
+					content: [
+						{ text: "Hi ", type: "text" },
+						{ attrs: { id: "subscriber.firstName" }, type: "variable" },
+						{ text: ", track your order below.", type: "text" },
+					],
+					type: "paragraph",
+				},
+				{
+					attrs: { isUrlVariable: true, text: "Track order", url: "payload.trackingUrl" },
+					type: "button",
+				},
+			],
+			type: "doc",
+		},
+		editorType: "block",
+		subject: "Order {{payload.orderId}} shipped",
+	},
+	http_request: {
+		body: '{"orderId":"{{payload.orderId}}"}',
+		headers: [{ key: "Content-Type", value: "application/json" }],
+		method: "POST",
+		url: "https://api.example.com/hooks/orders",
+	},
+	in_app: {
+		body: "{{payload.author}} commented on your post",
+		redirect: { url: "/posts/{{payload.postId}}" },
+		subject: "New comment",
+	},
+	push: { body: "Order {{payload.orderId}} is on its way", subject: "Order shipped" },
+	sms: { body: "Your code is {{payload.code}}" },
+	throttle: { amount: 1, threshold: 5, type: "fixed", unit: "hours" },
+	trigger: {},
+};
+
+const STEP_CONTROLS_GUIDE_HEADER =
+	"controlValues for the step's type (? marks an optional key). Write dynamic text as {{payload.x}} or {{subscriber.x}}, never a bare {{x}}. get_step_schema returns a type's full schema and a valid example.";
+
+const STEP_CONTROLS_GUIDE_TYPES = [
+	"- in_app: { subject, body, avatar?, redirect?: { url, target? }, primaryAction?: { label, redirect?: { url, target? } }, secondaryAction? (same shape), data?: {}, disableOutputSanitization? }",
+	'- email: { editorType: "html", subject, body: "<p>Hi {{subscriber.firstName}}</p>" } or { editorType: "block", subject, body: <Maily JSON doc object> }; call get_step_schema for "email" before writing a "block" body. Both take preheader?, layoutId? (null for no layout), from?: { email?, name? }, replyTo?, useProviderDefaults?, disableOutputSanitization?',
+	"- sms, chat: { body } (keep sms under 160 characters). push: { subject, body }",
+	'- delay: { type: "regular", amount: 30, unit: "minutes" } | { type: "timed", cron: "0 9 * * 1" } | { type: "dynamic", dynamicKey: "payload.sendAt" }, each with extendToSchedule?',
+	'- digest: { type: "regular", amount: 1, unit: "hours", digestKey?: "payload.orderId", lookBackWindow?: { amount, unit, extendToSchedule? }, extendToSchedule? } | { type: "timed", cron: "0 9 * * *", digestKey?, extendToSchedule? }',
+	'- throttle: { type: "fixed", amount: 1, unit: "hours", threshold: 5, throttleKey? } (unit is minutes, hours or days) | { type: "dynamic", dynamicKey: "payload.windowMs", threshold: 5, throttleKey? }',
+	'- http_request: { method: "POST", url, headers?: [{ key, value }], body?: "{\\"id\\":\\"{{payload.id}}\\"}" (a JSON string or [{ key, value }], for POST, PUT and PATCH only), timeout? (100-30000 ms), responseBodySchema?: { type: "object", properties: { <field>: { type } }, required? }, continueOnFailure?, enforceSchemaValidation? }',
+];
+
+const STEP_CONTROLS_GUIDE_UNITS =
+	"amount and threshold are at least 1; unit is seconds, minutes, hours, days, weeks or months.";
+
+const STEP_CONTROLS_GUIDE = [
+	STEP_CONTROLS_GUIDE_HEADER,
+	...STEP_CONTROLS_GUIDE_TYPES,
+	"- trigger, custom: any keys",
+	STEP_CONTROLS_GUIDE_UNITS,
+	'Every type also takes skip?, a JSONLogic run condition such as { "==": [{ "var": "subscriber.isOnline" }, false] } (format on update_workflow_step_conditions).',
+].join("\n");
+
+const STEP_CONTENT_CONTROLS_GUIDE = [
+	STEP_CONTROLS_GUIDE_HEADER,
+	...STEP_CONTROLS_GUIDE_TYPES,
+	STEP_CONTROLS_GUIDE_UNITS,
+	"The step's skip condition is kept; change it with update_workflow_step_conditions.",
+].join("\n");
+
+export const workflowStepInputSchema = z
+	.object({
+		...baseStepFields,
+		controlValues: z.record(z.string(), z.unknown()).describe(STEP_CONTROLS_GUIDE),
+		type: stepTypeSchema,
+	})
+	.pipe(workflowStepSchema);
+
+export const workflowStepContentInputSchema = z
+	.object({
+		controlValues: z.record(z.string(), z.unknown()).describe(STEP_CONTENT_CONTROLS_GUIDE),
+		type: stepTypeSchema.exclude(["trigger", "custom"]),
+	})
+	.pipe(workflowStepContentSchema);
+
+type JsonObject = Record<string, unknown>;
+
+const DEFINITIONS_PREFIX = "#/definitions/";
+const MAX_INLINED_DEFINITION_CHARS = 200;
+
+function definitionName(node: JsonObject): string | undefined {
+	const ref = node.$ref;
+
+	return typeof ref === "string" && ref.startsWith(DEFINITIONS_PREFIX)
+		? ref.slice(DEFINITIONS_PREFIX.length)
+		: undefined;
+}
+
+function visitJsonObjects(node: unknown, visit: (object: JsonObject) => void): void {
+	if (Array.isArray(node)) {
+		for (const item of node) visitJsonObjects(item, visit);
+	} else if (node && typeof node === "object") {
+		visit(node as JsonObject);
+		for (const child of Object.values(node)) visitJsonObjects(child, visit);
+	}
+}
+
+/** A Maily node or mark definition is named after its `type`, e.g. "paragraph". */
+function nodeTypeName(definition: JsonObject): string | undefined {
+	const type = (definition.properties as { type?: { enum?: unknown[] } } | undefined)?.type;
+
+	return type?.enum?.length === 1 && typeof type.enum[0] === "string" ? type.enum[0] : undefined;
+}
+
+/** Zod wraps a `$ref` with siblings in `allOf`; once inlined, merge it back. */
+function unwrapAllOf(node: JsonObject): JsonObject {
+	const { allOf, ...rest } = node;
+	if (!Array.isArray(allOf) || allOf.length !== 1) return node;
+
+	const [only] = allOf as JsonObject[];
+	if ("$ref" in only || Object.keys(only).some((key) => key in rest)) return node;
+
+	return { ...only, ...rest };
+}
+
+/**
+ * `reused: "ref"` also extracts schemas that end up referenced once and
+ * one-line fields two variants share. Inline those, so only the large shared
+ * schemas (Maily nodes, skip groups) stay references.
+ */
+function compactDefinitions(schema: JsonObject): JsonObject {
+	const { definitions = {}, ...root } = schema as JsonObject & {
+		definitions?: Record<string, JsonObject>;
+	};
+	const refCounts = new Map<string, number>();
+	visitJsonObjects([root, definitions], (node) => {
+		const name = definitionName(node);
+		if (name) refCounts.set(name, (refCounts.get(name) ?? 0) + 1);
+	});
+
+	const kept = Object.keys(definitions).filter(
+		(name) =>
+			(refCounts.get(name) ?? 0) > 1 &&
+			JSON.stringify(definitions[name]).length > MAX_INLINED_DEFINITION_CHARS,
+	);
+	const typeNames = kept.map((name) => nodeTypeName(definitions[name]));
+	const names = new Map(
+		kept.map((name, index) => {
+			const typeName = typeNames[index];
+			const unique =
+				typeName && typeNames.indexOf(typeName) === typeNames.lastIndexOf(typeName);
+
+			return [name, unique && !(typeName in definitions) ? typeName : name];
+		}),
+	);
+
+	const resolve = (node: unknown): unknown => {
+		if (Array.isArray(node)) return node.map(resolve);
+		if (!node || typeof node !== "object") return node;
+
+		const { $ref, ...rest } = node as JsonObject;
+		const resolved = Object.fromEntries(
+			Object.entries(rest).map(([key, value]) => [key, resolve(value)]),
+		);
+		const name = definitionName(node as JsonObject);
+		if (!name) return $ref === undefined ? unwrapAllOf(resolved) : { $ref, ...resolved };
+		if (names.has(name)) {
+			return { $ref: `${DEFINITIONS_PREFIX}${names.get(name)}`, ...resolved };
+		}
+
+		return { ...(resolve(definitions[name]) as JsonObject), ...resolved };
+	};
+
+	const compacted = resolve(root) as JsonObject;
+	if (kept.length === 0) return compacted;
+
+	return {
+		...compacted,
+		definitions: Object.fromEntries(
+			kept.map((name) => [names.get(name), resolve(definitions[name])]),
+		),
+	};
+}
+
+/**
+ * What `get_step_schema` returns for one step type. `reused: "ref"` emits a
+ * shared instance (a Maily node, the skip condition) once, which is why those
+ * schemas are module-level constants rather than factories.
+ */
+export function describeStepControlValues(stepType: StepType): string {
+	const schema = compactDefinitions(
+		z.toJSONSchema(controlValuesSchemaByStepType[stepType], {
+			io: "input",
+			reused: "ref",
+			target: "draft-7",
+		}),
+	);
+
+	return JSON.stringify({
+		example: STEP_CONTROL_EXAMPLES[stepType],
+		...(stepType === "email" && { notes: MAILY_BODY_GUIDE }),
+		schema,
+		stepType,
+	});
+}

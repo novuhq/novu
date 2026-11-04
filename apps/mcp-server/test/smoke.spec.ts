@@ -48,6 +48,7 @@ describe("the Novu MCP server tools", () => {
 			  "get_integrations",
 			  "get_notification",
 			  "get_notifications",
+			  "get_step_schema",
 			  "get_subscriber",
 			  "get_subscriber_preferences",
 			  "get_workflow",
