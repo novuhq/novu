@@ -524,7 +524,6 @@ overrides:
   # the 3.x line). Only pulled transitively via `pino-pretty > fast-copy` in
   # libs/application-generic (and other logger consumers).
   fast-copy@>=3.0.0 <3.1.0: ^3.1.0
-  tsup@<8.3.5: ^8.3.5
   # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
   # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
   # Patched in 2.17.7 (patch bump within the 2.17.x line).

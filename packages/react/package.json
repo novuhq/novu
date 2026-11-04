@@ -92,7 +92,7 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup && node scripts/bundle-graph.mjs && pnpm run check-exports",
+    "build": "tsc --noEmit && tsup && node scripts/bundle-graph.mjs && pnpm run check-exports",
     "test:bundle-graph": "node ./scripts/bundle-graph.mjs",
     "check-exports": "attw --pack .",
     "check": "biome check .",
@@ -122,7 +122,7 @@
     "@types/react-dom": "*",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
     "jsdom": "^30.0.1",
-    "tsup": "^8.2.1",
+    "tsup": "^9.0.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.0"
   },
