@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
-import { isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
+import { type CacheService, isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import {
   type CardChrome,
@@ -18,7 +18,9 @@ import {
   isHumanCardElementContent,
   isHumanChromeContent,
   mintHumanOptions,
+  VOICE_CALL_MAX_MINUTES,
 } from '@novu/shared';
+import { isUnconfirmedVoiceDial } from '../../agents/channels/voice/voice-call-failure';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
 
 const DEFAULT_PENDING_CAP = 25;
@@ -34,6 +36,12 @@ export interface PendingHumanInteractionInput {
   ttlSeconds?: number;
   requestId?: string;
   conversationId?: string;
+  /** Minutes held for a voice send that stays pending. Omitted for every other channel. */
+  voiceMinutesReserved?: number;
+  /** ISO time the Redis day and month keys were chosen. */
+  voiceMinutesReservedAt?: string;
+  /** Contacts this row will call. Set before delivery so the live-call check is per person. */
+  voiceSubscriberIds?: string[];
 }
 
 export interface HumanDeliveryRefs {
@@ -323,7 +331,90 @@ export function buildPendingHumanInteraction(input: PendingHumanInteractionInput
     expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
     _environmentId: input.environmentId,
     _organizationId: input.organizationId,
+    ...(input.voiceMinutesReserved ? { voiceMinutesReserved: input.voiceMinutesReserved } : {}),
+    ...(input.voiceMinutesReservedAt ? { voiceMinutesReservedAt: input.voiceMinutesReservedAt } : {}),
+    ...(input.voiceSubscriberIds?.length ? { voiceSubscriberIds: input.voiceSubscriberIds } : {}),
   };
+}
+
+/** Long enough to cover the check-then-insert window. The pending row is the lock after that. */
+const VOICE_LIVE_LOCK_SECONDS = 30;
+
+/**
+ * Closes the gap where two sends both count zero pending calls, then both insert.
+ * Cache down fails open and leaves the count as the only check. The returned
+ * function drops the lock; call it once the pending row exists, or on failure.
+ */
+export async function acquireVoiceLiveLocks(
+  cache: CacheService,
+  environmentId: string,
+  subscriberIds: string[]
+): Promise<() => Promise<void>> {
+  const acquired: string[] = [];
+  let released = false;
+  const release = async () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    if (acquired.length === 0) {
+      return;
+    }
+
+    await cache.del(acquired).catch(() => undefined);
+  };
+
+  for (const subscriberId of [...new Set(subscriberIds)]) {
+    const key = `human_voice_live_lock:{${environmentId}}:${subscriberId}`;
+    const result = await cache.setIfNotExist(key, '1', { ttl: VOICE_LIVE_LOCK_SECONDS, jitter: false });
+    if (result === undefined) {
+      await release();
+
+      return async () => undefined;
+    }
+
+    if (result === null) {
+      await release();
+
+      throw new HttpException(
+        {
+          code: 'voice_live_call',
+          message: `Human "${subscriberId}" is already on a call. Wait for it to finish before calling again.`,
+        },
+        429
+      );
+    }
+
+    acquired.push(key);
+  }
+
+  return release;
+}
+
+/** One live call per contact. A second voice send is rejected until the first settles. */
+export async function assertNoLiveVoiceCall(
+  repository: HumanInteractionRepository,
+  params: { environmentId: string; subscriberIds: string[] }
+): Promise<void> {
+  const counts = await Promise.all(
+    [...new Set(params.subscriberIds)].map(async (subscriberId) => ({
+      subscriberId,
+      pendingCount: await repository.countPendingVoiceForSubscriber(params.environmentId, subscriberId),
+    }))
+  );
+
+  for (const { subscriberId, pendingCount } of counts) {
+    if (pendingCount > 0) {
+      throw new HttpException(
+        {
+          code: 'voice_live_call',
+          message: `Human "${subscriberId}" is already on a call. Wait for it to finish before calling again.`,
+        },
+        429
+      );
+    }
+  }
 }
 
 export async function assertHumanPendingCap(
@@ -360,6 +451,7 @@ export async function assertHumanPendingCap(
  * the card. Partial fan-out failures stay on the row; the caller surfaces them.
  * Recipients whose DM failed are dropped from the settlement allow-list so they
  * cannot settle, appear in `human list`, or consume pending quota.
+ * An unconfirmed dial stays on the row: the phone may still be ringing.
  *
  * In-thread `ctx.*` posts one card and uses `to` only as an allow-list, so the
  * people in the thread stay listed. Named contacts outside a direct-message
@@ -376,11 +468,17 @@ export async function deliverToTargets(
     logMessage: string;
     logContext?: Record<string, unknown>;
   }
-): Promise<{ interaction: HumanInteractionEntity; failedSubscriberIds: string[] }> {
+): Promise<{
+  interaction: HumanInteractionEntity;
+  failedSubscriberIds: string[];
+  unconfirmedSubscriberIds: string[];
+}> {
   const deliveries: HumanInteractionDelivery[] = [];
   const failedSubscriberIds: string[] = [];
+  const unconfirmedSubscriberIds: string[] = [];
   const reached: string[] = [];
   let lastError: unknown;
+  let unconfirmedError: unknown;
   let conversationId: string | undefined;
 
   for (const target of targets) {
@@ -400,6 +498,10 @@ export async function deliverToTargets(
     } catch (err) {
       lastError = err;
       failedSubscriberIds.push(target.subscriberId);
+      if (isUnconfirmedVoiceDial(err)) {
+        unconfirmedSubscriberIds.push(target.subscriberId);
+        unconfirmedError ??= err;
+      }
       logger.warn(
         {
           err,
@@ -410,41 +512,41 @@ export async function deliverToTargets(
         },
         options.logMessage
       );
+      continue;
     }
+
+    // Stamp before the next recipient so a fast failure webhook can find this call.
+    await stampDeliveries(repository, interaction, deliveries, conversationId);
   }
 
   if (deliveries.length === 0) {
-    await repository
-      .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
-      .catch(() => undefined);
-
-    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
-    if (isAgentEmailInboxQuotaExceeded(lastError)) {
-      throw lastError;
-    }
-
-    throw new BadGatewayException(
-      `Failed to deliver to ${failedSubscriberIds.join(', ') || 'any recipient'}: ${
-        lastError instanceof Error ? lastError.message : 'no recipient received the interaction'
-      }`
+    await rejectWhenNobodyReceived(
+      repository,
+      interaction,
+      failedSubscriberIds,
+      unconfirmedError ?? lastError,
+      unconfirmedSubscriberIds
     );
   }
 
-  // Only who got the card nowhere is dropped: a question asked in a thread reaches the people in it through the
-  // thread's card, and someone outside it only in their own chat.
-  const unreached = failedSubscriberIds.filter((subscriberId) => !reached.includes(subscriberId));
-  const recipientPatch =
-    unreached.length > 0
-      ? {
-          subscriberIds: interaction.subscriberIds.filter((subscriberId) => !unreached.includes(subscriberId)),
-        }
-      : {};
-
-  await repository.stampDelivery(interaction._environmentId, interaction._id, {
-    deliveries,
-    ...(conversationId ? { _conversationId: conversationId } : {}),
-    ...recipientPatch,
+  // Only who got the card nowhere is dropped. A thread card reaches everyone it lists, and an
+  // unconfirmed dial stays: the phone may still be ringing. A connected call is listed first.
+  const unreached = failedSubscriberIds.filter((subscriberId) => {
+    return !reached.includes(subscriberId) && !unconfirmedSubscriberIds.includes(subscriberId);
   });
+  const retainedSubscriberIds = subscriberIdsAfterDelivery(interaction.subscriberIds, {
+    unreached,
+    unconfirmedSubscriberIds,
+    reached,
+    deliveredSubscriberIds: deliveries.map((delivery) => delivery.subscriberId),
+  });
+  const recipientPatch = unreached.length > 0 ? { subscriberIds: retainedSubscriberIds } : {};
+
+  if (unreached.length > 0) {
+    await stampDeliveries(repository, interaction, deliveries, conversationId, {
+      subscriberIds: retainedSubscriberIds,
+    });
+  }
 
   const delivered: HumanInteractionEntity = {
     ...interaction,
@@ -453,16 +555,130 @@ export async function deliverToTargets(
     ...recipientPatch,
   };
 
-  if (interaction.kind === HumanInteractionKindEnum.TELL) {
-    const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
+  if (interaction.kind === HumanInteractionKindEnum.TELL && unconfirmedSubscriberIds.length === 0) {
+    return finishTellDelivery(repository, interaction, delivered, deliveries, failedSubscriberIds);
+  }
 
+  return { interaction: delivered, failedSubscriberIds, unconfirmedSubscriberIds };
+}
+
+function subscriberIdsAfterDelivery(
+  subscriberIds: string[] | undefined,
+  params: {
+    unreached: string[];
+    unconfirmedSubscriberIds: string[];
+    reached: string[];
+    deliveredSubscriberIds: string[];
+  }
+): string[] {
+  const kept = (subscriberIds ?? []).filter((subscriberId) => !params.unreached.includes(subscriberId));
+  const stillRinging = (subscriberId: string) => {
+    return (
+      params.unconfirmedSubscriberIds.includes(subscriberId) &&
+      !params.reached.includes(subscriberId) &&
+      !params.deliveredSubscriberIds.includes(subscriberId)
+    );
+  };
+
+  return [...kept.filter((subscriberId) => !stillRinging(subscriberId)), ...kept.filter(stillRinging)];
+}
+
+function stampDeliveries(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  deliveries: HumanInteractionDelivery[],
+  conversationId: string | undefined,
+  extra?: { subscriberIds: string[] }
+): Promise<void> {
+  return repository.stampDelivery(interaction._environmentId, interaction._id, {
+    deliveries: [...deliveries],
+    ...(conversationId ? { _conversationId: conversationId } : {}),
+    ...extra,
+  });
+}
+
+async function rejectWhenNobodyReceived(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  failedSubscriberIds: string[],
+  lastError: unknown,
+  unconfirmedSubscriberIds: string[]
+): Promise<never> {
+  // An unconfirmed dial may still be ringing. Deleting the row would let the caller place another.
+  if (unconfirmedSubscriberIds.length === 0) {
+    await repository
+      .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
+      .catch(() => undefined);
+  } else if (unconfirmedSubscriberIds.length < failedSubscriberIds.length) {
+    await retainUnconfirmedCallers(repository, interaction, unconfirmedSubscriberIds);
+  }
+
+  // A coded failure (voice dial, inbox cap) must keep its code. A generic wrap drops it.
+  if (isAgentEmailInboxQuotaExceeded(lastError) || codedHttpException(lastError)) {
+    throw lastError;
+  }
+
+  throw new BadGatewayException(
+    `Failed to deliver to ${failedSubscriberIds.join(', ') || 'any recipient'}: ${
+      lastError instanceof Error ? lastError.message : 'no recipient received the interaction'
+    }`
+  );
+}
+
+async function finishTellDelivery(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  delivered: HumanInteractionEntity,
+  deliveries: HumanInteractionDelivery[],
+  failedSubscriberIds: string[]
+): Promise<{
+  interaction: HumanInteractionEntity;
+  failedSubscriberIds: string[];
+  unconfirmedSubscriberIds: string[];
+}> {
+  const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
+  if (settled) {
     return {
-      interaction: settled
-        ? { ...settled, deliveries }
-        : { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
+      interaction: { ...settled, deliveries },
       failedSubscriberIds,
+      unconfirmedSubscriberIds: [],
     };
   }
 
-  return { interaction: delivered, failedSubscriberIds };
+  const current = await repository.findByIdentifier(interaction._environmentId, interaction.identifier);
+  if (current) {
+    return { interaction: current, failedSubscriberIds, unconfirmedSubscriberIds: [] };
+  }
+
+  return {
+    interaction: { ...delivered, status: HumanInteractionStatusEnum.DELIVERED },
+    failedSubscriberIds,
+    unconfirmedSubscriberIds: [],
+  };
+}
+
+/** A known failure must not delete the lock or the minutes of a call that may still be ringing. */
+async function retainUnconfirmedCallers(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  unconfirmedSubscriberIds: string[]
+): Promise<void> {
+  const reserved = interaction.voiceMinutesReserved ?? 0;
+
+  await repository.narrowVoiceHold(interaction._environmentId, interaction._id, {
+    expectedMinutes: reserved,
+    minutes: Math.min(reserved, unconfirmedSubscriberIds.length * VOICE_CALL_MAX_MINUTES),
+    voiceSubscriberIds: unconfirmedSubscriberIds,
+    subscriberIds: unconfirmedSubscriberIds,
+  });
+}
+
+function codedHttpException(error: unknown): error is HttpException {
+  if (!(error instanceof HttpException)) {
+    return false;
+  }
+
+  const body = error.getResponse();
+
+  return typeof body === 'object' && body !== null && typeof (body as { code?: unknown }).code === 'string';
 }

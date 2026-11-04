@@ -14,6 +14,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -29,6 +30,7 @@ import {
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Response } from 'express';
 import { AgentInboxAddressService } from '../agents/email/novu-email/agent-inbox-address.service';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -47,10 +49,12 @@ import {
   UpdateHumanAgentRequestDto,
 } from './dtos/human-agent.dto';
 import {
+  ConfirmVoiceVerificationRequestDto,
   CreateHumanInviteRequestDto,
   CreateHumanInviteResponseDto,
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
+  RequestVoiceVerificationDto,
 } from './dtos/human-invite.dto';
 import {
   ChangeOperatorEmailRequestDto,
@@ -72,6 +76,7 @@ import {
   SetupHumanRelayRequestDto,
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
+import { VoiceTurnRequestDto, type VoiceTurnResponseDto } from './dtos/voice-turn.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
@@ -92,6 +97,11 @@ import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-i
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmailCommand } from './usecases/change-operator-email/change-operator-email.command';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
+import { ConfirmVoiceVerificationCommand } from './usecases/confirm-voice-verification/confirm-voice-verification.command';
+import {
+  ConfirmVoiceVerification,
+  type ConfirmVoiceVerificationResult,
+} from './usecases/confirm-voice-verification/confirm-voice-verification.usecase';
 import { CreateHumanInviteCommand } from './usecases/create-human-invite/create-human-invite.command';
 import { CreateHumanInvite } from './usecases/create-human-invite/create-human-invite.usecase';
 import { CreateInteractionCommand } from './usecases/create-interaction/create-interaction.command';
@@ -104,14 +114,23 @@ import { GetInteractionCommand } from './usecases/get-interaction/get-interactio
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimTokenCommand } from './usecases/get-keyless-claim-token/get-keyless-claim-token.command';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
+import { GetVoiceRecordingCommand } from './usecases/get-voice-recording/get-voice-recording.command';
+import { GetVoiceRecording } from './usecases/get-voice-recording/get-voice-recording.usecase';
 import { ListContactsCommand } from './usecases/list-contacts/list-contacts.command';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInteractionsCommand } from './usecases/list-interactions/list-interactions.command';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { RemoveContactCommand } from './usecases/remove-contact/remove-contact.command';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { RemoveVoiceAddressCommand } from './usecases/remove-voice-address/remove-voice-address.command';
+import { RemoveVoiceAddress } from './usecases/remove-voice-address/remove-voice-address.usecase';
 import { RequestAddressVerificationCommand } from './usecases/request-address-verification/request-address-verification.command';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { RequestVoiceVerificationCommand } from './usecases/request-voice-verification/request-voice-verification.command';
+import {
+  RequestVoiceVerification,
+  type RequestVoiceVerificationResult,
+} from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
 import { SetContactListenToCommand } from './usecases/set-contact-listen-to/set-contact-listen-to.command';
@@ -125,6 +144,8 @@ import {
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
+import { VoiceTurnCommand } from './usecases/voice-turn/voice-turn.command';
+import { VoiceTurn } from './usecases/voice-turn/voice-turn.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human')
@@ -135,14 +156,19 @@ export class HumanInteractionsController {
   constructor(
     private readonly createInteractionUsecase: CreateInteraction,
     private readonly getInteractionUsecase: GetInteraction,
+    private readonly getVoiceRecordingUsecase: GetVoiceRecording,
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
+    private readonly voiceTurnUsecase: VoiceTurn,
     private readonly setupHumanRelayUsecase: SetupHumanRelay,
     private readonly listContactsUsecase: ListContacts,
     private readonly getContactUsecase: GetContact,
     private readonly removeContactUsecase: RemoveContact,
     private readonly createHumanInviteUsecase: CreateHumanInvite,
     private readonly requestAddressVerificationUsecase: RequestAddressVerification,
+    private readonly requestVoiceVerificationUsecase: RequestVoiceVerification,
+    private readonly confirmVoiceVerificationUsecase: ConfirmVoiceVerification,
+    private readonly removeVoiceAddressUsecase: RemoveVoiceAddress,
     private readonly getKeylessClaimTokenUsecase: GetKeylessClaimToken,
     private readonly humanOperator: HumanOperatorService,
     private readonly updateHumanAgentUsecase: UpdateHumanAgent,
@@ -223,6 +249,72 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         identifier,
+      })
+    );
+  }
+
+  /**
+   * Proxies the ElevenLabs call recording behind our own authorization, so no
+   * ElevenLabs key reaches the browser.
+   */
+  @Get('/interactions/:identifier/voice/recording')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  @UseGuards(HumanAgentPausedGuard)
+  async getVoiceRecording(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Res() res: Response
+  ): Promise<void> {
+    const recording = await this.getVoiceRecordingUsecase.execute(
+      GetVoiceRecordingCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        identifier,
+      })
+    );
+
+    res
+      .status(200)
+      .set({
+        'Content-Type': recording.contentType,
+        'Cache-Control': 'private, max-age=3600',
+        'X-Content-Type-Options': 'nosniff',
+      })
+      .send(recording.body);
+  }
+
+  /**
+   * Speak and/or listen on a live voice call. Posts the next line into the
+   * bridge rendezvous, waits (bounded) for the person's utterance, and settles
+   * the interaction when the agent hears a commitment.
+   */
+  @Post('/interactions/:identifier/voice/turn')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseGuards(HumanAgentPausedGuard)
+  voiceTurn(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    body: VoiceTurnRequestDto
+  ): Promise<VoiceTurnResponseDto> {
+    return this.voiceTurnUsecase.execute(
+      VoiceTurnCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        identifier,
+        say: body.say,
+        answer: body.answer,
+        decision: body.decision,
+        optionId: body.optionId,
+        hangup: body.hangup,
+        waitSeconds: body.waitSeconds,
       })
     );
   }
@@ -311,6 +403,68 @@ export class HumanInteractionsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        subscriberId,
+        agentIdentifier,
+      })
+    );
+  }
+
+  @Post('/verifications/voice')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  requestVoiceVerification(
+    @UserSession() user: UserSessionData,
+    @Body() body: RequestVoiceVerificationDto
+  ): Promise<RequestVoiceVerificationResult> {
+    return this.requestVoiceVerificationUsecase.execute(
+      RequestVoiceVerificationCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        subscriberId: body.subscriberId,
+        address: body.address,
+        agentIdentifier: body.agentIdentifier,
+        firstName: body.firstName,
+        lastName: body.lastName,
+      })
+    );
+  }
+
+  @Post('/verifications/voice/confirm')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  confirmVoiceVerification(
+    @UserSession() user: UserSessionData,
+    @Body() body: ConfirmVoiceVerificationRequestDto
+  ): Promise<ConfirmVoiceVerificationResult> {
+    return this.confirmVoiceVerificationUsecase.execute(
+      ConfirmVoiceVerificationCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        code: body.code,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  @Delete('/contacts/:subscriberId/voice')
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  removeVoiceAddress(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Query('agentIdentifier') agentIdentifier?: string
+  ): Promise<{ removed: true }> {
+    return this.removeVoiceAddressUsecase.execute(
+      RemoveVoiceAddressCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
         subscriberId,
         agentIdentifier,
       })

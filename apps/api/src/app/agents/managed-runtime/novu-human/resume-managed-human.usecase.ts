@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { AgentRepository, primaryHumanInteractionDelivery, type HumanInteractionEntity } from '@novu/dal';
+import { AgentRepository, type HumanInteractionEntity, primaryHumanInteractionDelivery } from '@novu/dal';
 import { HumanInteractionStatusEnum, parseNovuHumanRequestId } from '@novu/shared';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
@@ -42,10 +42,7 @@ export class ResumeManagedHuman {
 
     const delivery = primaryHumanInteractionDelivery(interaction);
     if (!delivery) {
-      this.logger.warn(
-        { interactionIdentifier: interaction.identifier },
-        'Skipping managed HITL resume — no delivery'
-      );
+      this.logger.warn({ interactionIdentifier: interaction.identifier }, 'Skipping managed HITL resume — no delivery');
 
       return;
     }
@@ -90,23 +87,35 @@ export function buildManagedHumanToolResult(interaction: HumanInteractionEntity)
   const status = interaction.status;
   const approved = status === HumanInteractionStatusEnum.APPROVED;
   const expired = status === HumanInteractionStatusEnum.EXPIRED;
+  const failed = status === HumanInteractionStatusEnum.FAILED;
   const rejected =
     status === HumanInteractionStatusEnum.DENIED || status === HumanInteractionStatusEnum.CANCELED || expired;
 
   return {
-    ok: !rejected,
+    ok: !rejected && !failed,
     kind: interaction.kind,
     status,
     ...(interaction.response?.text !== undefined ? { text: interaction.response.text } : {}),
     ...(interaction.response?.optionId !== undefined ? { optionId: interaction.response.optionId } : {}),
+    ...(interaction.voiceFailure ? { voiceFailure: interaction.voiceFailure } : {}),
     ...(status === HumanInteractionStatusEnum.APPROVED || status === HumanInteractionStatusEnum.DENIED
       ? { approved }
       : {}),
     expired,
-    instruction: rejected
-      ? 'The human did not approve this action. Do not run the rejected side effect. Choose another path or stop.'
-      : 'The human answered. Continue from this verdict.',
+    instruction: instructionFor(failed, rejected, interaction.voiceFailure?.message),
   };
+}
+
+function instructionFor(failed: boolean, rejected: boolean, failureMessage?: string): string {
+  if (failed) {
+    return failureMessage ?? 'The call failed before it connected.';
+  }
+
+  if (rejected) {
+    return 'The human did not approve this action. Do not run the rejected side effect. Choose another path or stop.';
+  }
+
+  return 'The human answered. Continue from this verdict.';
 }
 
 function toAgentPlatform(platform: string): AgentPlatformEnum | null {

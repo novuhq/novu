@@ -267,6 +267,26 @@ export interface ListInboxResponseDto {
   next: string | null;
 }
 
+/**
+ * A voice call on this thread: who was dialed, how it ended, and whether the
+ * recording can be fetched. Absent on every other channel.
+ */
+export interface InboxVoiceCallDto {
+  /** Interaction that placed the call. Used to fetch the recording. */
+  interactionId: string;
+  /** Contact id that was dialed, when known. */
+  subscriberId?: string;
+  /** Seconds the connected call lasted. Absent while ringing or on dial failure. */
+  durationSeconds?: number;
+  /** Why the call ended, as operator-readable copy. */
+  endReason?: string;
+  /** Machine code behind endReason (`person_hangup`, `voice_busy`, …). */
+  endReasonCode?: string;
+  endedAt?: string;
+  /** True when ElevenLabs may still have audio for this call. */
+  hasRecording: boolean;
+}
+
 /** The "Details" block of a thread. */
 export interface InboxThreadDetailsDto {
   threadId: string;
@@ -279,6 +299,8 @@ export interface InboxThreadDetailsDto {
   /** The agent whose inbox this is: who "read by" refers to. */
   agent: { identifier: string; name: string };
   messageCount: number;
+  /** Set when the thread's channel is voice and a call was placed on it. */
+  voiceCall?: InboxVoiceCallDto;
 }
 
 export interface GetInboxThreadResponseDto {

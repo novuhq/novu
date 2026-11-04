@@ -444,6 +444,32 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return declared;
   }
 
+  /**
+   * Drops the verified and pending slots for `via`. A code still in flight can
+   * no longer promote. When this channel was the default, the default goes too,
+   * so delivery falls back to the contact's other channels immediately.
+   */
+  async clearVerifiedAddress(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    via: HumanChannelViaEnum;
+  }): Promise<void> {
+    const filter = {
+      _environmentId: params.environmentId,
+      _agentId: params.agentId,
+      subscriberId: params.subscriberId,
+    };
+
+    await this.update(filter, {
+      $unset: {
+        [`addresses.${params.via}.verified`]: '',
+        [`addresses.${params.via}.pending`]: '',
+      },
+    });
+    await this.update({ ...filter, defaultVia: params.via }, { $unset: { defaultVia: '', defaultSetBy: '' } });
+  }
+
   /** Drops a declared address this request just stored, when another contact already owns it. */
   async clearDeclaredAddress(params: {
     environmentId: string;

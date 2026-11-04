@@ -186,6 +186,7 @@ export enum ChatProviderIdEnum {
   Sendblue = 'sendblue',
   NovuWebChat = 'novu-web-chat',
   PhotonImessage = 'photon-imessage',
+  AgentVoiceCall = 'agent-voice-call',
 }
 
 export enum PushProviderIdEnum {

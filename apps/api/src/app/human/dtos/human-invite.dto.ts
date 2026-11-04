@@ -2,17 +2,20 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
 import type { HumanInviteVia } from '../services/human-delivery.service';
+import { VOICE_VERIFICATION_CODE_PATTERN } from '../services/human-voice-verification-code.service';
 
 const INVITE_VIAS: HumanInviteVia[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
   HumanChannelViaEnum.EMAIL,
+  HumanChannelViaEnum.VOICE,
 ];
 
 export const HUMAN_INVITE_APP_NAMES: Record<HumanInviteVia, string> = {
   [HumanChannelViaEnum.TELEGRAM]: 'Telegram',
   [HumanChannelViaEnum.SLACK]: 'Slack',
   [HumanChannelViaEnum.EMAIL]: 'Email',
+  [HumanChannelViaEnum.VOICE]: 'Voice',
 };
 
 export class CreateHumanInviteRequestDto {
@@ -77,17 +80,79 @@ export class HumanInviteChannelRequestDto extends HumanInviteTokenRequestDto {
   via: HumanInviteVia;
 }
 
-/** Connect action — email requires an address for double opt-in. */
+/** Connect action — email and voice require an address for double opt-in. */
 export class HumanInviteConnectRequestDto extends HumanInviteTokenRequestDto {
   @ApiProperty({ enum: INVITE_VIAS })
   @IsIn(INVITE_VIAS)
   via: HumanInviteVia;
 
-  @ApiPropertyOptional({ description: 'Required when `via` is `email`.' })
-  @ValidateIf((body: HumanInviteConnectRequestDto) => body.via === HumanChannelViaEnum.EMAIL)
-  @IsEmail()
+  @ApiPropertyOptional({ description: 'Required when `via` is `email` or `voice`. Email is validated later.' })
+  @ValidateIf(
+    (body: HumanInviteConnectRequestDto) =>
+      body.via === HumanChannelViaEnum.EMAIL || body.via === HumanChannelViaEnum.VOICE
+  )
+  @IsString()
   @IsNotEmpty()
   address?: string;
+}
+
+export class VerifyVoiceCodeRequestDto extends HumanInviteTokenRequestDto {
+  @ApiProperty({ description: 'The 4-digit code the verification call read.' })
+  @IsString()
+  @Matches(VOICE_VERIFICATION_CODE_PATTERN)
+  code: string;
+}
+
+export class ConfirmVoiceVerificationRequestDto {
+  @ApiProperty({ description: 'subscriberId of the human confirming their number.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  subscriberId: string;
+
+  @ApiProperty({ description: 'The 4-digit code the verification call read.' })
+  @IsString()
+  @Matches(VOICE_VERIFICATION_CODE_PATTERN)
+  code: string;
+
+  @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-_]+$/i)
+  @MaxLength(64)
+  agentIdentifier?: string;
+}
+
+export class RequestVoiceVerificationDto {
+  @ApiProperty({ description: 'subscriberId of the human being verified.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  subscriberId: string;
+
+  @ApiProperty({ description: 'Phone number in international format, like +14155550123.' })
+  @IsString()
+  @IsNotEmpty()
+  address: string;
+
+  @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z0-9-_]+$/i)
+  @MaxLength(64)
+  agentIdentifier?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  lastName?: string;
 }
 
 export class RequestAddressVerificationDto {

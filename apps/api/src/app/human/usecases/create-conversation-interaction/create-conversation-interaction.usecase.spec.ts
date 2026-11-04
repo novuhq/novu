@@ -287,9 +287,10 @@ describe('CreateConversationInteraction', () => {
       ],
     });
 
-    const stamped = humanInteractionRepository.stampDelivery.firstCall.args[2];
+    const stamped = humanInteractionRepository.stampDelivery.lastCall.args[2];
     // The card in sub-1's thread is addressed to Carol, never to sub-1, who may not answer and is matched by
     // who a card was addressed to. It didn't reach Carol, so with her own chat failed, nobody's reply counts.
+    // The thread post is stamped first; this last stamp is the allow-list after that outside chat fails.
     expect(stamped.deliveries.map((delivery: { subscriberId: string }) => delivery.subscriberId)).to.deep.equal([
       'carol',
     ]);

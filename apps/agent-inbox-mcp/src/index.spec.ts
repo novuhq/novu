@@ -276,6 +276,7 @@ describe('the Agent Inbox MCP server', () => {
         'inbox_setup',
         'inbox_show',
         'inbox_wait',
+        'voice_turn',
       ].sort()
     );
   });
@@ -295,6 +296,7 @@ describe('the Agent Inbox MCP server', () => {
       inbox_send: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       inbox_reply: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       inbox_wait: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+      voice_turn: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
       contact_invite: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
       contact_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       inbox_list: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },

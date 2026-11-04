@@ -3,6 +3,8 @@ import type {
   HumanInteractionKindEnum,
   HumanInteractionResponse,
   HumanInteractionStatusEnum,
+  VoiceCallEndReasonEnum,
+  VoiceCallFailure,
 } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import { EnvironmentId } from '../environment';
@@ -58,6 +60,27 @@ export class HumanInteractionEntity {
   /** Conversation the delivery/reply is threaded on, once one exists. */
   _conversationId?: string;
 
+  /**
+   * Minutes still held against the voice cap for this interaction. Set when a
+   * voice send stays pending; settlement releases them. Absent for every other channel.
+   */
+  voiceMinutesReserved?: number;
+
+  /** When those minutes were reserved. Settlement refunds that Redis day, not `createdAt`. */
+  voiceMinutesReservedAt?: string;
+
+  /**
+   * Set when an outbound call never connected. The status is `failed`.
+   * Absent for every other channel and for a call that connected.
+   */
+  voiceFailure?: VoiceCallFailure;
+
+  /**
+   * Contacts this pending row is calling. A fan-out can mix voice with other
+   * channels, so the row's `subscriberIds` alone is not "on a call".
+   */
+  voiceSubscriberIds?: string[];
+
   response?: HumanInteractionResponse;
 
   /**
@@ -77,12 +100,26 @@ export class HumanInteractionEntity {
   updatedAt: string;
 }
 
+/** A connected call ended. Absent while the call can still be answered. */
+export interface VoiceCallEnded {
+  reason: VoiceCallEndReasonEnum;
+  endedAt: string;
+  durationSeconds?: number;
+}
+
 export interface HumanInteractionDelivery {
   subscriberId: string;
   integrationIdentifier: string;
   platform: string;
   platformMessageId: string;
   platformThreadId: string;
+  /** This recipient's call never connected. Other recipients on the row can still answer. */
+  voiceFailure?: VoiceCallFailure;
+  /**
+   * This recipient's call connected and later ended without a commitment.
+   * Excluded from the live-call lock; does not make the interaction `failed`.
+   */
+  voiceCallEnded?: VoiceCallEnded;
 }
 
 export function primaryHumanInteractionDelivery(

@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  GatewayTimeoutException,
   HttpException,
   HttpStatus,
   NotFoundException,
@@ -16,9 +17,11 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { unconfirmedVoiceDialBody } from '../../../agents/channels/voice/voice-call-failure';
 import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
+import { HumanVoiceMinuteHoldService } from '../../services/human-voice-minute-hold.service';
 import { CreateInteraction } from './create-interaction.usecase';
 
 /** What a send into a thread hands `CreateConversationInteraction`: deliveries outside it, and word of its post. */
@@ -39,9 +42,14 @@ describe('CreateInteraction', () => {
     };
     const humanInteractionRepository = {
       countPendingForSubscriber: sinon.stub().resolves(0),
+      countPendingVoiceForSubscriber: sinon.stub().resolves(0),
+      findPendingVoiceForSubscribers: sinon.stub().resolves([]),
       count: sinon.stub().resolves(0),
       create: sinon.stub().resolves(created),
+      update: sinon.stub().resolves(undefined),
       stampDelivery: sinon.stub().resolves(undefined),
+      findByIdentifier: sinon.stub().resolves(null),
+      narrowVoiceHold: sinon.stub().resolves(true),
       markDeliveredIfPending: sinon.stub().resolves({ ...created, status: HumanInteractionStatusEnum.DELIVERED }),
       delete: sinon.stub().resolves(undefined),
     };
@@ -128,6 +136,26 @@ describe('CreateInteraction', () => {
       create: sinon.stub().resolves({ subscriberId: 'ada' }),
     };
     const analyticsService = { track: sinon.stub() };
+    const voiceCredits = {
+      unlimited: false,
+      reservedAt: new Date('2026-01-01T00:00:00.000Z'),
+      accept: sinon.stub(),
+      release: sinon.stub().resolves(),
+    };
+    const voiceMinuteQuota = {
+      reserveMinutes: sinon.stub().resolves(voiceCredits),
+    };
+    const settlement = {
+      expireIfOverdue: sinon.stub().callsFake(async (interaction) => interaction),
+      closeVoiceCallIfUnanswerable: sinon.stub().resolves(null),
+    };
+    const recordVoiceCallEnded = {
+      expireIfStale: sinon.stub().callsFake(async (interaction) => interaction),
+    };
+    const cacheService = {
+      setIfNotExist: sinon.stub().resolves('OK'),
+      del: sinon.stub().resolves(1),
+    };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -149,7 +177,15 @@ describe('CreateInteraction', () => {
       keylessEmailGate as any,
       humanContactRepository as any,
       subscriberRepository as any,
-      analyticsService as any
+      analyticsService as any,
+      new HumanVoiceMinuteHoldService(
+        humanInteractionRepository as any,
+        voiceMinuteQuota as any,
+        cacheService as any,
+        settlement as any,
+        recordVoiceCallEnded as any
+      ),
+      settlement as any
     );
     const command = {
       userId: 'user1',
@@ -178,8 +214,199 @@ describe('CreateInteraction', () => {
       humanContactRepository,
       subscriberRepository,
       analyticsService,
+      settlement,
+      recordVoiceCallEnded,
+      voiceCredits,
+      cacheService,
     };
   }
+
+  describe('voice', () => {
+    it('rejects a second call that arrives before either row is stored', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, cacheService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      cacheService.setIfNotExist.resolves(null);
+
+      try {
+        await usecase.execute(command as any);
+        expect.fail('expected the live-call lock');
+      } catch (err) {
+        expect(err).to.be.instanceOf(HttpException);
+        expect((err as HttpException).getResponse()).to.include({ code: 'voice_live_call' });
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('rejects a second call while one is still pending', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.countPendingVoiceForSubscriber.resolves(1);
+
+      try {
+        await usecase.execute(command as never);
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).to.be.instanceOf(HttpException);
+        expect((err as HttpException).getStatus()).to.equal(429);
+        expect((err as HttpException).getResponse()).to.include({ code: 'voice_live_call' });
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('expires an overdue voice request before treating the contact as busy', async () => {
+      const {
+        usecase,
+        command,
+        agentRepository,
+        deliveryService,
+        humanInteractionRepository,
+        settlement,
+        recordVoiceCallEnded,
+      } = setup();
+      const overdue = { _id: 'old', _environmentId: 'env1', status: HumanInteractionStatusEnum.PENDING };
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.findPendingVoiceForSubscribers.resolves([overdue]);
+      humanInteractionRepository.countPendingVoiceForSubscriber.resolves(0);
+
+      try {
+        await usecase.execute(command as never);
+      } catch {
+        // Delivery after the live-call check is outside this assertion.
+      }
+
+      expect(recordVoiceCallEnded.expireIfStale.calledOnce).to.equal(true);
+      expect(settlement.expireIfOverdue.calledOnce).to.equal(true);
+      expect(
+        recordVoiceCallEnded.expireIfStale.calledBefore(humanInteractionRepository.countPendingVoiceForSubscriber)
+      ).to.equal(true);
+      expect(
+        settlement.expireIfOverdue.calledBefore(humanInteractionRepository.countPendingVoiceForSubscriber)
+      ).to.equal(true);
+    });
+
+    it('rejects a tell over voice', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+
+      try {
+        await usecase.execute({ ...command, kind: HumanInteractionKindEnum.TELL } as never);
+        expect.fail('expected tell over voice to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/tell/i);
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('rejects voice with more than one recipient', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+
+      try {
+        await usecase.execute({
+          ...command,
+          via: HumanChannelViaEnum.VOICE,
+          to: ['sub-1', 'sub-2'],
+        } as never);
+        expect.fail('expected multi-recipient voice to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/one person/i);
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('rejects a voice contact mixed with another channel', async () => {
+      const { usecase, command, agentRepository, deliveryService, humanInteractionRepository } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.callsFake(async ({ subscriberId }: { subscriberId: string }) => {
+        if (subscriberId === 'sub-2') {
+          return {
+            integrationIdentifier: 'voice-main',
+            platform: HumanChannelViaEnum.VOICE,
+            platformUserId: '+15551212',
+          };
+        }
+
+        return {
+          integrationIdentifier: 'email-main',
+          platform: HumanChannelViaEnum.EMAIL,
+          platformUserId: 'ada@example.com',
+        };
+      });
+
+      try {
+        await usecase.execute({
+          ...command,
+          to: ['sub-1', 'sub-2'],
+        } as never);
+        expect.fail('expected a mixed voice send to be rejected');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.match(/one person/i);
+      }
+
+      expect(humanInteractionRepository.create.called).to.equal(false);
+    });
+
+    it('keeps the full voice hold when an unconfirmed dial cannot be reloaded', async () => {
+      const { usecase, command, created, agentRepository, deliveryService, humanInteractionRepository, voiceCredits } =
+        setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-main',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+15551212',
+      });
+      humanInteractionRepository.create.resolves({
+        ...created,
+        voiceMinutesReserved: 5,
+        voiceSubscriberIds: ['sub-1'],
+      });
+      deliveryService.deliver.rejects(new GatewayTimeoutException(unconfirmedVoiceDialBody()));
+      humanInteractionRepository.findByIdentifier.rejects(new Error('mongo down'));
+
+      try {
+        await usecase.execute(command as never);
+        expect.fail('expected the unconfirmed dial');
+      } catch (err) {
+        expect(err).to.be.instanceOf(GatewayTimeoutException);
+        expect((err as GatewayTimeoutException).getResponse()).to.include({ code: 'voice_dial_unconfirmed' });
+      }
+
+      expect(voiceCredits.accept.calledOnceWithExactly(undefined)).to.equal(true);
+      expect(humanInteractionRepository.update.called).to.equal(false);
+    });
+  });
 
   describe('analytics', () => {
     it('counts one message for each contact it reached, with its type, channel and the app that asked', async () => {
@@ -530,6 +757,28 @@ describe('CreateInteraction', () => {
       expect(deliveryService.deliver.called).to.equal(false);
     });
 
+    it('does not dial a contact outside the thread whose channel is voice', async () => {
+      const { usecase, command, agentRepository, deliveryService, createConversationInteraction, inbox } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay', name: 'Human' });
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'voice-1',
+        platform: HumanChannelViaEnum.VOICE,
+        platformUserId: '+14155550123',
+      });
+      inbox.outsiders.returns(['sub-9']);
+
+      try {
+        await usecase.execute({ ...command, to: ['sub-1', 'sub-9'], thread: 'conv_abc' } as any);
+        expect.fail('expected voice to be refused');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as Error).message).to.contain('via: voice');
+      }
+
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
+    });
+
     it('rejects `via` together with `thread`', async () => {
       const { usecase, command, agentRepository, createConversationInteraction } = setup();
       agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
@@ -712,7 +961,7 @@ describe('CreateInteraction', () => {
 
     expect(deliveryService.resolveChannel.calledTwice).to.equal(true);
     expect(deliveryService.deliver.calledTwice).to.equal(true);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(2);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].deliveries).to.have.length(2);
     expect(result.to).to.deep.equal(['sub-1', 'sub-2']);
   });
 
@@ -775,9 +1024,8 @@ describe('CreateInteraction', () => {
     const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
 
     expect(humanInteractionRepository.delete.called).to.equal(false);
-    expect(humanInteractionRepository.stampDelivery.calledOnce).to.equal(true);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].deliveries).to.have.length(1);
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].deliveries).to.have.length(1);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-1']);
     expect(result.to).to.deep.equal(['sub-1']);
     expect(result.failedTo).to.deep.equal(['sub-2']);
     expect(result.id).to.equal('hi_1');
@@ -801,7 +1049,7 @@ describe('CreateInteraction', () => {
 
     const result = await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any);
 
-    expect(humanInteractionRepository.stampDelivery.firstCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
+    expect(humanInteractionRepository.stampDelivery.lastCall.args[2].subscriberIds).to.deep.equal(['sub-2']);
     expect(result.to).to.deep.equal(['sub-2']);
     expect(result.failedTo).to.deep.equal(['sub-1']);
   });

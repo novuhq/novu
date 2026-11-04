@@ -1,9 +1,9 @@
 import pc from 'picocolors';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
-import { bootstrapKeylessSession } from '../api/setup';
+import { addAgentVoiceIntegration, bootstrapKeylessSession } from '../api/setup';
 import { info, success, warn } from '../cli-io';
-import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
@@ -75,7 +75,10 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
 
     warn(`Could not set up the email inbox (${err.message}). Chat setup can continue.`);
   }
-  const chat = await resolveChatChannel(channel);
+  if (channel === 'voice') {
+    await connectVoice(client, provisioned.relay.agentIdentifier);
+  }
+  const chat = channel === 'voice' ? undefined : await resolveChatChannel(channel);
   if (chat) {
     await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {
       ...options,
@@ -263,6 +266,14 @@ async function confirmLinkedChannel(
   process.stdout.write(
     `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
       examples.map((example) => `  ${pc.bold(example)}\n`).join('')
+  );
+}
+
+/** Links the shared number. A person is dialed only after they confirm their own number. */
+async function connectVoice(client: ApiClient, agentIdentifier: string): Promise<void> {
+  await addAgentVoiceIntegration(client, agentIdentifier);
+  info(
+    `Voice is linked to this agent. People confirm a number with \`${CLI_COMMAND} contact invite <id> --via voice\` before they can be called.`
   );
 }
 

@@ -22,7 +22,7 @@ export const SHARE_IMAGE_PATH = `${CONFIGURE_PATH}/share-image`;
 export const CONFIGURE_DRAWER_PARAM = 'setup';
 
 /** The Configure page with a channel's drawer already open, for links that send the operator to set it up. */
-export function configureChannelPath(via: 'email' | 'telegram' | 'slack'): string {
+export function configureChannelPath(via: 'email' | 'telegram' | 'slack' | 'voice'): string {
   return `${CONFIGURE_PATH}?${CONFIGURE_DRAWER_PARAM}=${via}`;
 }
 

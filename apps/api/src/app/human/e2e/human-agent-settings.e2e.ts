@@ -353,6 +353,7 @@ describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete)
         ['get', '/v1/human/inbox'],
         ['get', '/v1/human/inbox/counts'],
         ['get', '/v1/human/interactions'],
+        ['get', '/v1/human/interactions/not-a-call/voice/recording'],
         ['post', '/v1/human/interactions'],
       ] as const) {
         const request = asHost(method, path);
@@ -380,8 +381,10 @@ describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete)
 
       await sendMessageToRelay('are you there?', CONTACT_CHAT_ID);
 
-      // The operator still reads everything, and the host still sees that the agent is paused.
+      // The operator still reads everything, including a recording the pause keeps from hosts.
       expect((await operatorInbox({ filter: 'unread' })).data).to.have.length(1);
+      const recording = await asDashboard('get', '/v1/human/interactions/not-a-call/voice/recording');
+      expect(recording.status).to.not.equal(403, JSON.stringify(recording.body));
       const agentRes = await asHost('get', '/v1/human/agent');
       expect(agentRes.body.data).to.include({ paused: true });
 

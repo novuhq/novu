@@ -34,6 +34,7 @@ describe('AddAgentIntegration Agent Email Inbox', () => {
       findOrCreateNovuEmail as never,
       {} as never,
       { track: sinon.stub() } as never,
+      {} as never,
       {} as never
     );
 
@@ -117,6 +118,7 @@ describe('AddAgentIntegration Agent Inbox analytics', () => {
       findOrCreateNovuEmail as never,
       {} as never,
       analyticsService as never,
+      {} as never,
       {} as never
     );
 

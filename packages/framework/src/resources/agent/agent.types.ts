@@ -126,8 +126,10 @@ export type AgentHumanResponse = {
   /** Public interaction identifier (`hi_...`). */
   interactionId: string;
   kind: HumanInteractionKind;
-  /** Terminal status: `answered` | `approved` | `denied` | `expired` | `canceled` | `delivered`. */
+  /** Terminal status: `answered` | `approved` | `denied` | `expired` | `canceled` | `delivered` | `failed`. */
   status: string;
+  /** Set when a voice call never connected. */
+  voiceFailure?: { code: string; message: string };
   /** True when the TTL elapsed before a valid answer. Do not treat `text` / `optionId` as a verdict. */
   expired: boolean;
   /** Freeform reply text for `ask`. */

@@ -24,7 +24,7 @@ const SESSION_ENDED = 'Your session has ended. Sign in again to continue.';
 /** What `<input type="email">` takes, near enough; the API checks the address again. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const CHANNEL_VIAS: readonly ContactChannelVia[] = ['telegram', 'slack', 'email'];
+const CHANNEL_VIAS: readonly ContactChannelVia[] = ['telegram', 'slack', 'email', 'voice'];
 
 export type CreateInviteResult =
   | { ok: true; url: string; expiresAt: string }

@@ -4,6 +4,7 @@ import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionStatusEnum } from '@novu/shared';
 import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
 import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
+import { RecordVoiceCallEnded } from '../record-voice-call-ended/record-voice-call-ended.usecase';
 import { GetInteractionCommand } from './get-interaction.command';
 
 /** How a person settles an interaction. Expired, canceled and delivered are the system's doing. */
@@ -17,7 +18,8 @@ const SETTLED_BY_A_PERSON: readonly string[] = [
 export class GetInteraction {
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
-    private readonly settlement: HumanInteractionSettlementService
+    private readonly settlement: HumanInteractionSettlementService,
+    private readonly recordVoiceCallEnded: RecordVoiceCallEnded
   ) {}
 
   @InstrumentUsecase()
@@ -49,6 +51,8 @@ export class GetInteraction {
       throw new NotFoundException(`Interaction "${command.identifier}" was not found.`);
     }
 
-    return this.settlement.expireIfOverdue(interaction);
+    const released = await this.recordVoiceCallEnded.expireIfStale(interaction);
+
+    return this.settlement.expireIfOverdue(released);
   }
 }

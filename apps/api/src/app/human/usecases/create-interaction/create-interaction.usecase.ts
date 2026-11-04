@@ -35,6 +35,7 @@ import {
 } from '@novu/shared';
 import { AgentConversationService } from '../../../agents/conversation-runtime/conversation/agent-conversation.service';
 import { HumanInteractionActivityRecorder } from '../../../agents/human-relay/human-interaction-activity.recorder';
+import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { KeylessEmailGateService } from '../../../keyless/keyless-email-gate.service';
 import { isKeylessOrganization } from '../../../keyless/keyless-organization.helpers';
@@ -43,9 +44,13 @@ import {
   type InteractionThreadDto,
   toInteractionResponse,
 } from '../../dtos/interaction-response.dto';
-import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
+import { trackAgentInboxCallPlaced, trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
-import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
+import {
+  type HumanDeliveryResult,
+  HumanDeliveryService,
+  type ResolvedHumanTarget,
+} from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
   assertHumanCardActions,
@@ -57,6 +62,11 @@ import {
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
+import {
+  HumanVoiceMinuteHoldService,
+  NO_VOICE_HOLD,
+  type VoiceMinuteHold,
+} from '../../services/human-voice-minute-hold.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -101,7 +111,9 @@ export class CreateInteraction {
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly voiceMinuteHold: HumanVoiceMinuteHoldService,
+    private readonly settlement: HumanInteractionSettlementService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -182,9 +194,13 @@ export class CreateInteraction {
 
     const resolved = await this.resolveTargets(command, agent, recipients);
     const emailCount = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.EMAIL).length;
+    const voiceTargets = resolved.filter((item) => item.target.platform === HumanChannelViaEnum.VOICE);
+    this.assertVoiceSendAllowed(command, voiceTargets.length, resolved.length);
     let credits: AgentEmailInboxCredits | undefined;
     let messageCredits: HumanMessageCredits | undefined;
     let emailCapError: HttpException | undefined;
+    let createdInteraction: HumanInteractionEntity | undefined;
+    let voiceHold: VoiceMinuteHold = NO_VOICE_HOLD;
 
     try {
       ({ credits, emailCapError } = await this.reserveEmailCredits(
@@ -200,6 +216,10 @@ export class CreateInteraction {
         messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
       }
 
+      voiceHold = await this.voiceMinuteHold.open(
+        scope,
+        voiceTargets.map((item) => item.subscriberId)
+      );
       const interaction = await this.humanInteractionRepository.create(
         buildPendingHumanInteraction({
           kind: command.kind,
@@ -210,8 +230,11 @@ export class CreateInteraction {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           ttlSeconds: command.ttlSeconds,
+          ...voiceHold.fields(),
         })
       );
+      createdInteraction = interaction;
+      await voiceHold.releaseLocks();
 
       const threads: InteractionThreadDto[] = [];
       const targets = this.contactTargets(scope, interaction, resolved, threads, {
@@ -224,22 +247,56 @@ export class CreateInteraction {
           logMessage: 'Human interaction delivery failed for one recipient',
         });
       const delivered = credits ? await credits.run(deliver) : await deliver();
+      await this.activityRecorder.recordRequest(delivered.interaction);
+      const closed = await this.settlement.closeVoiceCallIfUnanswerable(delivered.interaction);
+      const deliveredInteraction = closed ?? delivered.interaction;
+      await voiceHold.keepReached(interaction, deliveredInteraction, delivered.unconfirmedSubscriberIds);
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
-      for (const { platform } of delivered.interaction.deliveries ?? []) {
-        this.trackMessageSent(command, agent, platform);
+      for (const { platform } of deliveredInteraction.deliveries ?? []) {
+        this.trackMessageSent(command, agent, platform, deliveredInteraction.identifier);
       }
 
-      await this.activityRecorder.recordRequest(delivered.interaction);
-
-      if (delivered.interaction.status === HumanInteractionStatusEnum.DELIVERED) {
-        await this.activityRecorder.recordResponse(delivered.interaction);
+      if (deliveredInteraction.status === HumanInteractionStatusEnum.DELIVERED) {
+        await this.activityRecorder.recordResponse(deliveredInteraction);
       }
 
-      return toInteractionResponse(delivered.interaction, delivered.failedSubscriberIds, threads);
+      return toInteractionResponse(deliveredInteraction, delivered.failedSubscriberIds, threads);
+    } catch (err) {
+      await voiceHold.releaseLocks();
+      await voiceHold.abandon(createdInteraction, err);
+
+      throw err;
     } finally {
       await credits?.release();
       await messageCredits?.release();
+      await voiceHold.release();
+    }
+  }
+
+  /**
+   * A voice call is one conversation the agent drives turn by turn. Fan-out and
+   * `tell` leave nobody to settle, so the person gets fillers and a hangup.
+   */
+  private assertVoiceSendAllowed(
+    command: CreateInteractionCommand,
+    voiceTargetCount: number,
+    totalTargetCount: number
+  ): void {
+    if (voiceTargetCount === 0) {
+      return;
+    }
+
+    if (command.kind === HumanInteractionKindEnum.TELL) {
+      throw new BadRequestException(
+        'Voice cannot deliver a `tell`: there is nothing to settle, and nobody drives the call. Use ask, approve, or choose.'
+      );
+    }
+
+    if (voiceTargetCount > 1 || totalTargetCount > 1) {
+      throw new BadRequestException(
+        'Voice reaches one person at a time. Pass a single contact in `to`, or leave `via` unset so each contact uses their own channel.'
+      );
     }
   }
 
@@ -298,10 +355,10 @@ export class CreateInteraction {
             throw capped;
           }
 
-          const send = () => this.deliveryService.deliver(interaction, target);
+          const send = () => this.deliveryService.deliver(interaction, target, subscriberId);
           const sent = credits ? await credits.run(send) : await send();
           options.onSent?.(subscriberId, target.platform);
-          const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
+          const thread = await this.landInThread(scope, interaction, subscriberId, target, sent);
 
           if (thread) {
             threads.push({ id: thread.id, unreadBefore: thread.unreadBefore });
@@ -322,8 +379,10 @@ export class CreateInteraction {
     interaction: HumanInteractionEntity,
     subscriberId: string,
     target: ResolvedHumanTarget,
-    platformThreadId: string
+    sent: HumanDeliveryResult
   ): Promise<{ id: string; conversationId: string; unreadBefore: number } | null> {
+    const { platformThreadId, platformMessageId } = sent;
+
     try {
       const conversation = await this.conversationService.createOrGetConversation({
         ...scope,
@@ -345,6 +404,16 @@ export class CreateInteraction {
         humanInteractionCardTitle({ kind: interaction.kind, content: interaction.content })
       );
 
+      if (target.platform === HumanChannelViaEnum.VOICE && sent.openingLine) {
+        await this.persistVoiceOpeningLine(
+          scope,
+          conversation,
+          interaction,
+          platformMessageId ?? platformThreadId,
+          sent.openingLine
+        );
+      }
+
       return { id: conversation.identifier, conversationId: conversation._id, unreadBefore };
     } catch (err) {
       this.logger.warn(
@@ -353,6 +422,40 @@ export class CreateInteraction {
       );
 
       return null;
+    }
+  }
+
+  /**
+   * The shell speaks the opening line before the bridge starts, so nothing else records it.
+   * Uses a platformMessageId distinct from the ElevenLabs conversation id: the interaction
+   * request row already carries that id, and withoutInteractionCardCopies would drop this
+   * MESSAGE if they matched.
+   */
+  private async persistVoiceOpeningLine(
+    scope: InboxScope,
+    conversation: ConversationEntity,
+    interaction: HumanInteractionEntity,
+    conversationId: string,
+    openingLine: string
+  ): Promise<void> {
+    const channel = this.inbox.primaryChannel(conversation);
+
+    try {
+      await this.conversationService.persistAgentMessage({
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: String(interaction._agentId),
+        environmentId: scope.environmentId,
+        organizationId: scope.organizationId,
+        content: openingLine,
+        platformMessageId: `${conversationId}:opening`,
+        identifier: `act_voice_opening_${conversationId}`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, interactionIdentifier: interaction.identifier, conversationId: conversation._id },
+        'Failed to persist the voice call opening line on the thread'
+      );
     }
   }
 
@@ -399,6 +502,7 @@ export class CreateInteraction {
       agent,
       outsiders.map((subscriberId) => ({ subscriberId }))
     );
+    this.assertThreadReplyCanDial(outside);
 
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
@@ -459,7 +563,7 @@ export class CreateInteraction {
                     staysInThread: true,
                     onSent: (subscriberId, platform) => {
                       reached.add(subscriberId);
-                      this.trackMessageSent(command, agent, platform);
+                      this.trackMessageSent(command, agent, platform, created.identifier);
                     },
                   })
               : undefined,
@@ -483,7 +587,7 @@ export class CreateInteraction {
     // Nothing landed in the thread when its post failed: it isn't marked read, and isn't reported as sent into.
     const intoThread: InteractionThreadDto[] = [];
     if (postedInThread) {
-      this.trackMessageSent(command, agent, channel.platform);
+      this.trackMessageSent(command, agent, channel.platform, interaction.identifier);
       intoThread.push({
         id: conversation.identifier,
         unreadBefore: await this.inbox.markSentInto(scope, conversation),
@@ -517,6 +621,18 @@ export class CreateInteraction {
     }
 
     return { recipients: [contact], anyoneMayAnswer: false };
+  }
+
+  /** A thread reply must not place a call. Voice starts with `via: voice` on its own send. */
+  private assertThreadReplyCanDial(outside: ResolvedRecipient[]): void {
+    const voiceTarget = outside.find((item) => item.target.platform === HumanChannelViaEnum.VOICE);
+    if (!voiceTarget) {
+      return;
+    }
+
+    throw new BadRequestException(
+      `Human "${voiceTarget.subscriberId}" is reached by phone. Start a voice call with \`via: voice\` instead of a reply in another thread.`
+    );
   }
 
   /** `to` with `thread` names who may answer: contacts only. */
@@ -651,12 +767,27 @@ export class CreateInteraction {
     return subscriberId;
   }
 
-  private trackMessageSent(command: CreateInteractionCommand, agent: AgentEntity, channel: string): void {
-    trackAgentInboxMessageSent(
-      this.analyticsService,
-      { userId: command.userId, organizationId: command.organizationId },
-      { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
-    );
+  private trackMessageSent(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    channel: string,
+    interactionId: string
+  ): void {
+    const owner = { userId: command.userId, organizationId: command.organizationId };
+    trackAgentInboxMessageSent(this.analyticsService, owner, {
+      agentId: agent._id,
+      type: command.kind,
+      channel,
+      source: command.analyticsSource,
+    });
+
+    if (channel === HumanChannelViaEnum.VOICE) {
+      trackAgentInboxCallPlaced(this.analyticsService, owner, {
+        agentId: agent._id,
+        interactionId,
+        source: command.analyticsSource,
+      });
+    }
   }
 
   /**

@@ -2,7 +2,15 @@ import { ApiClient, ApiError, unwrap } from './client';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
-export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
+export type InteractionStatus =
+  | 'pending'
+  | 'answered'
+  | 'approved'
+  | 'denied'
+  | 'expired'
+  | 'canceled'
+  | 'delivered'
+  | 'failed';
 
 export type InteractionOption = { id: string; label: string };
 
@@ -61,6 +69,8 @@ export interface Interaction {
     respondedAt: string;
   };
   failedTo?: string[];
+  /** Set when a voice call never connected. `message` is the sentence to show. */
+  voiceFailure?: { code: string; message: string };
   /**
    * On create: the conversation each message landed in, and how many messages in it were unread.
    * The API calls them threads; the CLI prints them as `conversations`.
@@ -162,6 +172,36 @@ export async function getInteraction(client: ApiClient, id: string): Promise<Int
   return unwrap(res.data);
 }
 
+export type VoiceTurnStatus = 'utterance' | 'ringing' | 'timeout' | 'ended' | 'settled';
+
+export interface VoiceTurnResult {
+  status: VoiceTurnStatus;
+  utterance?: string;
+  utterances?: string[];
+  endReason?: string;
+  interactionStatus?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+}
+
+export interface VoiceTurnInput {
+  say?: string;
+  answer?: string;
+  decision?: 'approve' | 'deny';
+  optionId?: string;
+  hangup?: boolean;
+}
+
+export async function voiceTurn(client: ApiClient, id: string, input: VoiceTurnInput): Promise<VoiceTurnResult> {
+  const res = await client.axios.post<{ data?: VoiceTurnResult } | VoiceTurnResult>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/voice/turn`,
+    input
+  );
+
+  return unwrap(res.data);
+}
+
 /** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
 export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
   const res = await client.axios.post<{ data?: Interaction } | Interaction>(
@@ -204,7 +244,7 @@ export async function setupRelay(
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
-    defaultVia?: 'telegram' | 'slack' | 'email';
+    defaultVia?: 'telegram' | 'slack' | 'email' | 'voice';
   }
 ): Promise<SetupRelayResult> {
   const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
@@ -284,7 +324,7 @@ export async function setRelayAgentPicture(
 }
 
 export interface InviteChannel {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -309,7 +349,7 @@ export async function createInvite(
 export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type ContactChannel = {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'email' | 'voice';
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
@@ -390,6 +430,35 @@ export async function requestAddressVerification(
     '/v1/contacts/verifications',
     input
   );
+
+  return unwrap(res.data);
+}
+
+export async function requestVoiceVerification(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/contacts/verifications/voice',
+    input
+  );
+
+  return unwrap(res.data);
+}
+
+export async function confirmVoiceVerification(
+  client: ApiClient,
+  input: { subscriberId: string; code: string; agentIdentifier?: string }
+): Promise<{ verified: true; via: 'voice'; address: string }> {
+  const res = await client.axios.post<
+    { data?: { verified: true; via: 'voice'; address: string } } | { verified: true; via: 'voice'; address: string }
+  >('/v1/contacts/verifications/voice/confirm', input);
 
   return unwrap(res.data);
 }

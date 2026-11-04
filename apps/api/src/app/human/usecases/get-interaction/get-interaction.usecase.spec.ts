@@ -23,7 +23,8 @@ describe('GetInteraction', () => {
       markAnswerRead: sinon.stub().resolves(undefined),
     };
     const settlement = { expireIfOverdue: sinon.stub().callsFake(async (found: unknown) => found) };
-    const usecase = new GetInteraction(repository as any, settlement as any);
+    const recordVoiceCallEnded = { expireIfStale: sinon.stub().callsFake(async (found: unknown) => found) };
+    const usecase = new GetInteraction(repository as any, settlement as any, recordVoiceCallEnded as any);
     const command = GetInteractionCommand.create({
       environmentId: 'env1',
       organizationId: 'org1',

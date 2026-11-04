@@ -8,7 +8,7 @@ export class ConnectHumanInviteChannelCommand extends BaseCommand {
   @IsNotEmpty()
   token: string;
 
-  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK, HumanChannelViaEnum.EMAIL])
+  @IsIn([HumanChannelViaEnum.TELEGRAM, HumanChannelViaEnum.SLACK, HumanChannelViaEnum.EMAIL, HumanChannelViaEnum.VOICE])
   via: HumanInviteVia;
 
   @ValidateIf((command: ConnectHumanInviteChannelCommand) => command.via === HumanChannelViaEnum.EMAIL)

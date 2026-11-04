@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { AnalyticsService, encryptSecret, FeatureFlagsService, isAgentEmailEnabled } from '@novu/application-generic';
 import {
@@ -34,9 +35,12 @@ import {
 } from '../../../../human/services/agent-inbox-analytics';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
+import { assertVoiceEnabledForConnect } from '../../../shared/assert-voice-enabled';
 import { assertWebChatEnabledForConnect } from '../../../shared/assert-web-chat-enabled';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
+import { NovuVoiceProvisioningService } from '../../voice/find-or-create-novu-voice/find-or-create-novu-voice.service';
+import { readVoiceChannelConfig } from '../../voice/voice-config';
 import { NovuWebChatProvisioningService } from '../../web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
@@ -51,7 +55,8 @@ export class AddAgentIntegration {
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
     private readonly analyticsService: AnalyticsService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly findOrCreateNovuVoice: NovuVoiceProvisioningService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -159,11 +164,55 @@ export class AddAgentIntegration {
       return response;
     }
 
+    if (command.providerId === ChatProviderIdEnum.AgentVoiceCall) {
+      return this.provisionVoice(agent, command);
+    }
+
     if (!command.integrationIdentifier) {
       throw new BadRequestException('integrationIdentifier is required when providerId is not NovuAgent.');
     }
 
     return this.linkExistingIntegration(agent, command);
+  }
+
+  private async provisionVoice(
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name' | 'runtime'>,
+    command: AddAgentIntegrationCommand
+  ): Promise<AgentIntegrationResponseDto> {
+    if (agent.runtime !== 'human_relay') {
+      throw new ForbiddenException('Voice is only available for the Human project.');
+    }
+
+    await assertVoiceEnabledForConnect(this.featureFlagsService, command.organizationId, command.environmentId);
+
+    if (!readVoiceChannelConfig()) {
+      throw new ServiceUnavailableException(
+        'Voice is not configured on this deployment. Set the shared Twilio number and ElevenLabs credentials.'
+      );
+    }
+
+    const { response, provisionedNewLink } = await this.findOrCreateNovuVoice.execute(
+      agent._id,
+      command.environmentId,
+      command.organizationId
+    );
+
+    if (provisionedNewLink) {
+      trackAgentIntegrationConnected(this.analyticsService, {
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentId: agent._id,
+        agentIdentifier: command.agentIdentifier,
+        integrationId: response.integration._id,
+        integrationIdentifier: response.integration.identifier,
+        providerId: response.integration.providerId,
+        channel: response.integration.channel,
+        connectionSource: 'agent_voice_provisioned',
+      });
+    }
+
+    return response;
   }
 
   private async linkExistingIntegration(

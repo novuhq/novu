@@ -102,6 +102,20 @@ export async function linkAgentIntegration(
   await client.axios.post('/v1/channels', { integrationIdentifier }, { params: { agentIdentifier } });
 }
 
+/** `providerId: 'agent-voice-call'` links the shared voice channel. Relay agents only. */
+export async function addAgentVoiceIntegration(
+  client: ApiClient,
+  agentIdentifier: string
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
+    '/v1/channels',
+    { providerId: 'agent-voice-call' },
+    { params: { agentIdentifier } }
+  );
+
+  return unwrap(res.data);
+}
+
 /**
  * `providerId: 'agent-email-inbox'` triggers the server's special-case branch
  * that auto-creates a per-agent Agent Email Inbox with a unique shared

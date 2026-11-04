@@ -130,6 +130,10 @@ export async function bootstrap(
 
   app.use('/v1/agents', bodyParser.json({ limit: '8mb', verify: agentRawBodyBuffer }));
 
+  // ElevenLabs signs the raw failure-webhook bytes. Voice can be enabled without
+  // enterprise mode, and the general parser below only keeps the raw body then.
+  app.use('/v1/human/voice/calls/failure', bodyParser.json({ verify: agentRawBodyBuffer }));
+
   // Add text/plain parser specifically for inbound webhooks (SNS confirmations)
   app.use(
     '/v2/inbound-webhooks/delivery-providers/:environmentId/:integrationId',

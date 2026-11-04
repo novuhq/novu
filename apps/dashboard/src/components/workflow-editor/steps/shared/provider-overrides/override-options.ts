@@ -3,6 +3,7 @@ import {
   getContentOverrideProviderIds,
   getProviderOverrideConfig,
   type IProviderConfig,
+  isHiddenIntegrationProvider,
   providers,
 } from '@novu/shared';
 import {
@@ -158,6 +159,7 @@ export function buildProviderOverrideOptions({
 
   return (
     getContentOverrideProviderIds(channel)
+      .filter((providerId) => !isHiddenIntegrationProvider(providerId))
       .filter(
         (providerId) =>
           activeIntegrationsByProvider.has(providerId) ||

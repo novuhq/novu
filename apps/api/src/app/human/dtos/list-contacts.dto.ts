@@ -51,7 +51,7 @@ export class HumanContactChannelDto {
   connectedAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Address verified for this relay. Set for email. Absent for chat channels.',
+    description: 'Address verified for this relay. Set for email and voice. Absent for chat channels.',
   })
   address?: string;
 

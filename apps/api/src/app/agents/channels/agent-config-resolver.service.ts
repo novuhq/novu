@@ -21,6 +21,7 @@ import {
   type AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
+  EmailProviderIdEnum,
   isAgentInboxProvider,
 } from '@novu/shared';
 import axios from 'axios';

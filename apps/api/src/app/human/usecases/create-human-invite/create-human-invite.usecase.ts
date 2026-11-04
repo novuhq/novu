@@ -47,7 +47,7 @@ export class CreateHumanInvite {
 
     if (channels.length === 0) {
       throw new NotFoundException(
-        'No Telegram, Slack, or Email channel is linked to the relay agent. Run `npx @agentinbox/cli setup` first.'
+        'No Telegram, Slack, Email, or Voice channel is linked to the relay agent. Run `npx @agentinbox/cli setup` first.'
       );
     }
 

@@ -4,10 +4,11 @@ import { ConnectModule } from '../connect/connect.module';
 import { SharedModule } from '../shared/shared.module';
 import { KeylessAbuseGuardService } from './keyless-abuse-guard.service';
 import { KeylessEmailGateService } from './keyless-email-gate.service';
+import { KeylessVoiceGateService } from './keyless-voice-gate.service';
 
 @Module({
   imports: [SharedModule, ConnectModule],
-  providers: [KeylessAbuseGuardService, KeylessEmailGateService, HumanContactRepository],
-  exports: [KeylessAbuseGuardService, KeylessEmailGateService],
+  providers: [KeylessAbuseGuardService, KeylessEmailGateService, KeylessVoiceGateService, HumanContactRepository],
+  exports: [KeylessAbuseGuardService, KeylessEmailGateService, KeylessVoiceGateService],
 })
 export class KeylessModule {}

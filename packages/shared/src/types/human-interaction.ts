@@ -28,6 +28,8 @@ export enum HumanInteractionStatusEnum {
   CANCELED = 'canceled',
   /** Terminal state for `tell` — nothing to wait on. */
   DELIVERED = 'delivered',
+  /** A voice call never connected. Distinct from `expired`, which is the TTL. */
+  FAILED = 'failed',
 }
 
 export const HUMAN_INTERACTION_TERMINAL_STATUSES: readonly HumanInteractionStatusEnum[] = [
@@ -37,7 +39,42 @@ export const HUMAN_INTERACTION_TERMINAL_STATUSES: readonly HumanInteractionStatu
   HumanInteractionStatusEnum.EXPIRED,
   HumanInteractionStatusEnum.CANCELED,
   HumanInteractionStatusEnum.DELIVERED,
+  HumanInteractionStatusEnum.FAILED,
 ];
+
+/**
+ * Why an outbound voice call never connected. The sentence is what the agent reads.
+ * A connected call that ends without a commitment is a later status, not one of these.
+ */
+export enum VoiceCallFailureCodeEnum {
+  BUSY = 'voice_busy',
+  NO_ANSWER = 'voice_no_answer',
+  REJECTED = 'voice_rejected',
+  INVALID_NUMBER = 'voice_invalid_number',
+  CARRIER_FAILURE = 'voice_carrier_failure',
+}
+
+export type VoiceCallFailure = {
+  code: VoiceCallFailureCodeEnum;
+  message: string;
+};
+
+/**
+ * Why a connected voice call ended. Distinct from `VoiceCallFailureCodeEnum`,
+ * which covers dials that never connected. Stored on the voice delivery.
+ */
+export enum VoiceCallEndReasonEnum {
+  /** Agent asked to hang up without settling. */
+  AGENT_HANGUP = 'agent_hangup',
+  /** The person hung up. */
+  PERSON_HANGUP = 'person_hangup',
+  /** ElevenLabs `max_duration_seconds` ended the call. */
+  MAX_DURATION = 'max_duration',
+  /** Lost webhooks / staleness check closed a wedged call. */
+  STALE = 'stale',
+  /** Unknown / other provider termination. */
+  OTHER = 'other',
+}
 
 export type HumanInteractionOption = {
   id: string;
@@ -235,7 +272,24 @@ export enum HumanChannelViaEnum {
   TELEGRAM = 'telegram',
   SLACK = 'slack',
   EMAIL = 'email',
+  VOICE = 'voice',
 }
+
+/**
+ * Minutes reserved for one outbound voice call. This is the ElevenLabs shell
+ * agent's maximum duration, so the budget held at send time and the real
+ * ceiling cannot drift. It matches the daily minute cap: one full call per day.
+ * A later ticket reconciles the unused remainder from the actual duration.
+ */
+export const VOICE_CALL_MAX_MINUTES = 5;
+
+/**
+ * Minutes held while a phone-verification dial is in flight. The verification
+ * shell's ceiling is 60 seconds. The hold is returned when the dial request
+ * finishes: a verification call has no interaction to settle, and keeping the
+ * minute would block the one conversation the daily cap allows.
+ */
+export const VOICE_VERIFICATION_CALL_MINUTES = 1;
 
 /**
  * Address-channel verification lifecycle surfaced on human contact / invite

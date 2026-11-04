@@ -677,6 +677,48 @@ describe('ConversationActivityLedger', () => {
         identifier: 'human:hi_1:conv-2:request',
       });
     });
+
+    it('replaces an expiry response when the voice answer is recorded later', async () => {
+      const existing = {
+        _id: 'existing',
+        identifier: 'human:hi_1:response',
+        richContent: { humanInteraction: { status: 'expired', interactionIdentifier: 'hi_1' } },
+      };
+      const replaced = {
+        _id: 'existing',
+        identifier: 'human:hi_1:response',
+        content: 'Approved by ada: Which region?',
+      };
+      const replaceExpiredHumanInteractionResponse = sinon.stub().resolves(replaced);
+      const activityRepository = makeActivityRepository({
+        createToolActivity: sinon.stub().rejects(Object.assign(new Error('dup'), { code: 11000 })),
+        findOne: sinon.stub().resolves(existing),
+        replaceExpiredHumanInteractionResponse,
+      });
+
+      const activity = await makeLedger(activityRepository).persistHumanInteractionResponse({
+        ...humanInteractionParams(),
+        status: 'approved',
+        text: 'yes',
+        actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        actorId: 'ada',
+        actorName: 'ada',
+      });
+
+      expect(activity).to.equal(replaced);
+      expect(replaceExpiredHumanInteractionResponse.calledOnce).to.equal(true);
+      expect(replaceExpiredHumanInteractionResponse.firstCall.args[0]).to.include({
+        environmentId: 'env-1',
+        conversationId: 'conv-1',
+        identifier: 'human:hi_1:response',
+        senderId: 'ada',
+        content: 'Approved by ada: Which region?',
+      });
+      expect(replaceExpiredHumanInteractionResponse.firstCall.args[0].humanInteraction).to.include({
+        status: 'approved',
+        text: 'yes',
+      });
+    });
   });
 
   describe('event sequencing', () => {

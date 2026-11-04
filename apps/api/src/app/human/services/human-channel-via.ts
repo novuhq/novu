@@ -5,6 +5,7 @@ export const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = 
   [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
   [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
   [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
+  [HumanChannelViaEnum.VOICE]: [ChatProviderIdEnum.AgentVoiceCall],
 };
 
 /** The channel an integration is, by its provider, or null for a provider that is none of them. */

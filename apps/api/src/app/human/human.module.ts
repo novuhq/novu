@@ -14,6 +14,8 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
+import { PlaceVerificationCall } from '../agents/channels/voice/place-verification-call';
+import { PlaceVoiceCall } from '../agents/channels/voice/place-voice-call';
 import { AuthModule } from '../auth/auth.module';
 import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
@@ -54,10 +56,14 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { HumanVoiceMinuteHoldService } from './services/human-voice-minute-hold.service';
+import { HumanVoiceMinuteQuotaService } from './services/human-voice-minute-quota.service';
+import { HumanVoiceVerificationCodeService } from './services/human-voice-verification-code.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
 import { ClaimForHumanAccount } from './usecases/claim-for-human-account/claim-for-human-account.usecase';
+import { ConfirmVoiceVerification } from './usecases/confirm-voice-verification/confirm-voice-verification.usecase';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
 import { ConnectHumanInviteChannel } from './usecases/connect-human-invite-channel/connect-human-invite-channel.usecase';
 import { CountInboxThreads } from './usecases/count-inbox-threads/count-inbox-threads.usecase';
@@ -79,14 +85,19 @@ import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.use
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
+import { GetVoiceRecording } from './usecases/get-voice-recording/get-voice-recording.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { MarkInboxRead } from './usecases/mark-inbox-read/mark-inbox-read.usecase';
+import { RecordVoiceCallEnded } from './usecases/record-voice-call-ended/record-voice-call-ended.usecase';
+import { RecordVoiceCallFailure } from './usecases/record-voice-call-failure/record-voice-call-failure.usecase';
 import { RegenerateBackingSecretKey } from './usecases/regenerate-backing-secret-key/regenerate-backing-secret-key.usecase';
 import { ReleaseListenLease } from './usecases/release-listen-lease/release-listen-lease.usecase';
 import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase';
+import { RemoveVoiceAddress } from './usecases/remove-voice-address/remove-voice-address.usecase';
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
+import { RequestVoiceVerification } from './usecases/request-voice-verification/request-voice-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
 import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
@@ -97,7 +108,11 @@ import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typi
 import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
+import { VoiceBridgeCompletions } from './usecases/voice-bridge-completions/voice-bridge-completions.usecase';
+import { VoiceTurn } from './usecases/voice-turn/voice-turn.usecase';
 import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-for-listen-messages.usecase';
+import { VoiceBridgeController } from './voice-bridge.controller';
+import { VoiceCallWebhookController } from './voice-call-failure.controller';
 
 /**
  * The human-in-the-loop interaction API. State lives here.
@@ -125,6 +140,8 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     HumanAccountsController,
     HumanHostsController,
     HumanConnectPublicController,
+    VoiceCallWebhookController,
+    VoiceBridgeController,
     HumanListenController,
   ],
   providers: [
@@ -142,10 +159,19 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     McpConnectionRepository,
     AgentInboxChannelAnalytics,
     HumanDeliveryService,
+    PlaceVoiceCall,
+    PlaceVerificationCall,
+    RecordVoiceCallFailure,
+    RecordVoiceCallEnded,
+    VoiceBridgeCompletions,
+    VoiceTurn,
     HumanKeylessCapService,
     HumanMessageQuotaService,
+    HumanVoiceMinuteQuotaService,
+    HumanVoiceMinuteHoldService,
     CreateInteraction,
     GetInteraction,
+    GetVoiceRecording,
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,
@@ -160,8 +186,12 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     HumanInviteTokenService,
     HumanVerificationTokenService,
     HumanVerificationRateLimitService,
+    HumanVoiceVerificationCodeService,
     HumanVerificationEmailSender,
     RequestAddressVerification,
+    RequestVoiceVerification,
+    ConfirmVoiceVerification,
+    RemoveVoiceAddress,
     VerifyAddress,
     HumanOperatorService,
     HumanAgentIdentityService,

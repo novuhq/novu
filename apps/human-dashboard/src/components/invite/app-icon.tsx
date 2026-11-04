@@ -1,7 +1,15 @@
-import { Mail } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 
 import type { InviteChannelVia } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
+
+/** What a channel is called wherever it is named rather than drawn. */
+export const APP_LABELS: Record<InviteChannelVia, string> = {
+  voice: 'Voice',
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+};
 
 type AppIconSize = 'small' | 'medium' | 'large';
 
@@ -31,6 +39,21 @@ export function AppIcon({ via, size = 'medium', className }: AppIconProps) {
         )}
       >
         <Mail className="size-[58%]" />
+      </span>
+    );
+  }
+
+  if (via === 'voice') {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          'flex shrink-0 items-center justify-center rounded-full bg-foreground text-background',
+          SIZES[size],
+          className
+        )}
+      >
+        <Phone className="size-[58%]" />
       </span>
     );
   }

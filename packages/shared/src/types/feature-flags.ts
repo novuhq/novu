@@ -139,6 +139,11 @@ export enum FeatureFlagsKeysEnum {
    * Flag key kept as IS_AGENT_WEB_CHAT_ENABLED (LaunchDarkly / env already deployed).
    */
   IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
+  /**
+   * Enable the Human voice channel (`via: voice`). Create the boolean in LaunchDarkly
+   * for cloud, or set `IS_AGENT_VOICE_ENABLED` when self-hosted. Default off.
+   */
+  IS_AGENT_VOICE_ENABLED = 'IS_AGENT_VOICE_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_WHATS_NEXT_ENABLED = 'IS_AGENT_WHATS_NEXT_ENABLED',
   /** Enable the MS Teams subscriber-rollout "What's next" guide (distribute the bot + connect end users) and its post-connect "Continue" CTA. When off, MS Teams shows the generic continue note and hides the rollout guide. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED` when self-hosted. */

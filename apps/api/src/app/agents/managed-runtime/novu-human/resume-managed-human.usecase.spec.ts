@@ -25,6 +25,18 @@ describe('buildManagedHumanToolResult', () => {
     expect(canceled).to.include({ ok: false, status: 'canceled', expired: false });
     expect(canceled.approved).to.equal(undefined);
   });
+
+  it('reports a failed voice call with its reason and does not treat it as expiry', () => {
+    const failed = buildManagedHumanToolResult({
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.FAILED,
+      voiceFailure: { code: 'voice_busy', message: 'The line was busy.' },
+    } as any);
+
+    expect(failed).to.include({ ok: false, expired: false, status: 'failed' });
+    expect(failed.voiceFailure).to.deep.equal({ code: 'voice_busy', message: 'The line was busy.' });
+    expect(failed.instruction).to.equal('The line was busy.');
+  });
 });
 
 describe('ResumeManagedHuman', () => {

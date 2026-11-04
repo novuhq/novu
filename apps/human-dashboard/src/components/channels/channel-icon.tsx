@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 
 import type { ChannelVia } from '@/lib/human-channels-api';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,14 @@ export function ChannelIcon({ via, className }: { via: ChannelVia; className?: s
     return (
       <span aria-hidden="true" className={cn(frame, 'bg-accent text-on-accent')}>
         <Mail className="size-4" />
+      </span>
+    );
+  }
+
+  if (via === 'voice') {
+    return (
+      <span aria-hidden="true" className={cn(frame, 'bg-foreground text-background')}>
+        <Phone className="size-4" />
       </span>
     );
   }

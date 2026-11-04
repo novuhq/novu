@@ -6,7 +6,7 @@ import { CLI_COMMAND } from './config';
 /**
  * Exit-code contract (stable — agents branch on these):
  *   0  answered / approved / chosen / delivered
- *   1  error (transport, auth, validation)
+ *   1  error (transport, auth, validation, or a voice call that never connected)
  *  10  denied
  *  11  timed out waiting — still pending; the answer shows up in the conversation (`show <id>`)
  *  12  expired or canceled
@@ -40,6 +40,8 @@ export function exitCodeFor(interaction: Interaction): number {
     case 'expired':
     case 'canceled':
       return EXIT_GONE;
+    case 'failed':
+      return EXIT_ERROR;
     default:
       return EXIT_TIMEOUT;
   }
@@ -77,6 +79,8 @@ export function describeInteraction(interaction: Interaction): string {
       return `${pc.yellow('Expired')} — nobody answered within the TTL.`;
     case 'canceled':
       return `${pc.yellow('Canceled')}.`;
+    case 'failed':
+      return `${pc.red(interaction.voiceFailure?.message ?? 'The call failed.')}`;
     default:
       return `${pc.yellow('Still pending')} — ${answerHint(interaction)}`;
   }
@@ -109,6 +113,20 @@ export function emitResult(interaction: Interaction, asJson: boolean): number {
   }
 
   return exitCodeFor(interaction);
+}
+
+/** Voice send: the dial was accepted — exit 0 and point the agent at `voice-turn`. */
+export function emitVoiceCallPlaced(interaction: Interaction, asJson: boolean): number {
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify(interactionJson(interaction), null, 2)}\n`);
+  } else {
+    process.stdout.write(
+      `${pc.green('Call placed')} (${interaction.id}). Drive it with: ${CLI_COMMAND} voice-turn ${interaction.id}\n` +
+        `Leave --say out on the first turn to hear their answer. Settle with --answer and --approve/--deny or --option.\n`
+    );
+  }
+
+  return EXIT_OK;
 }
 
 const PREVIEW_LENGTH = 60;

@@ -3,6 +3,7 @@ import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@no
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformAgentConsoleUrl,
+  EmailProviderIdEnum,
   isAgentInboxProvider,
   isClaudePlatformConsoleProvider,
 } from '@novu/shared';

@@ -126,6 +126,73 @@ export function trackAgentInboxItemRead(
   }
 }
 
+/** An outbound voice call was dialed. */
+export function trackAgentInboxCallPlaced(
+  analytics: AnalyticsService,
+  owner: AgentInboxOwner,
+  params: { agentId: string; interactionId: string; source?: AgentAnalyticsSource }
+): void {
+  track(analytics, AGENT_INBOX_EVENTS.CALL_PLACED, owner, {
+    agentId: params.agentId,
+    interactionId: params.interactionId,
+    source: params.source ?? 'api',
+  });
+}
+
+/** The person on the call spoke for the first time. */
+export function trackAgentInboxCallAnswered(
+  analytics: AnalyticsService,
+  owner: AgentInboxOwner,
+  params: { agentId: string; interactionId: string }
+): void {
+  track(analytics, AGENT_INBOX_EVENTS.CALL_ANSWERED, owner, {
+    agentId: params.agentId,
+    interactionId: params.interactionId,
+  });
+}
+
+/** The agent recorded an ask / approve / choose answer on a live call. */
+export function trackAgentInboxCallSettled(
+  analytics: AnalyticsService,
+  owner: AgentInboxOwner,
+  params: {
+    agentId: string;
+    interactionId: string;
+    status: string;
+    durationSeconds?: number;
+    turnCount?: number;
+  }
+): void {
+  track(analytics, AGENT_INBOX_EVENTS.CALL_SETTLED, owner, {
+    agentId: params.agentId,
+    interactionId: params.interactionId,
+    status: params.status,
+    ...(params.durationSeconds !== undefined ? { durationSeconds: params.durationSeconds } : {}),
+    ...(params.turnCount !== undefined ? { turnCount: params.turnCount } : {}),
+  });
+}
+
+/** A connected call ended without a settled answer (hangup, max duration, stale). */
+export function trackAgentInboxCallEndedWithoutAnswer(
+  analytics: AnalyticsService,
+  owner: AgentInboxOwner,
+  params: {
+    agentId: string;
+    interactionId: string;
+    endReason: string;
+    durationSeconds?: number;
+    turnCount?: number;
+  }
+): void {
+  track(analytics, AGENT_INBOX_EVENTS.CALL_ENDED_WITHOUT_ANSWER, owner, {
+    agentId: params.agentId,
+    interactionId: params.interactionId,
+    endReason: params.endReason,
+    ...(params.durationSeconds !== undefined ? { durationSeconds: params.durationSeconds } : {}),
+    ...(params.turnCount !== undefined ? { turnCount: params.turnCount } : {}),
+  });
+}
+
 /**
  * The dashboard reads the inbox for the operator, and checks an open thread every few seconds. That is not the
  * agent reading, and the operator's visits count as page views already, so only the other apps count here.

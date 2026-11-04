@@ -18,6 +18,12 @@
         "command": "pnpm --filter @novu/agent-evals eval"
       }
     },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node --eval \"process.exit(0)\""
+      }
+    },
     "test": {
       "executor": "nx:run-commands",
       "options": {

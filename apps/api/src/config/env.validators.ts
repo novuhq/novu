@@ -187,6 +187,30 @@ export const envValidators = {
    * Agent Inbox agents are pinned to that Connect domain instead. US only.
    */
   NOVU_AGENT_INBOX_INBOUND_DOMAIN: str({ default: undefined }),
+  /** E.164 of the one Twilio number every voice call shares. Unset disables provisioning. */
+  NOVU_VOICE_TWILIO_NUMBER: str({ default: undefined }),
+  /** ElevenLabs phone-number id for that Twilio number. Twilio credentials stay in ElevenLabs. */
+  NOVU_VOICE_ELEVENLABS_PHONE_NUMBER_ID: str({ default: undefined }),
+  /** ElevenLabs shell agent id. It speaks only the lines Novu supplies. */
+  NOVU_VOICE_ELEVENLABS_AGENT_ID: str({ default: undefined }),
+  /**
+   * ElevenLabs agent that speaks a verification code and hangs up.
+   * Separate from the conversation shell so a code call never hits the bridge.
+   */
+  NOVU_VOICE_ELEVENLABS_VERIFY_AGENT_ID: str({ default: undefined }),
+  /** ElevenLabs API key for the shared shell. Not a per-account credential. */
+  NOVU_VOICE_ELEVENLABS_API_KEY: str({ default: undefined }),
+  /** ElevenLabs API host. Defaults to the global host. Must match the number's region. */
+  NOVU_VOICE_ELEVENLABS_API_BASE: str({ default: undefined }),
+  /** HMAC secret for the ElevenLabs call-initiation-failure webhook. */
+  NOVU_VOICE_ELEVENLABS_WEBHOOK_SECRET: str({ default: undefined }),
+  /** Bearer secret ElevenLabs sends to the custom LLM bridge. Workspace secret on the shell. */
+  NOVU_VOICE_BRIDGE_SECRET: str({ default: undefined }),
+  /**
+   * How long one bridge SSE request parks waiting for the agent's next line (ms).
+   * Keep under ElevenLabs cascade_timeout_seconds (max 15s) until keepalives are proven to reset it.
+   */
+  NOVU_VOICE_BRIDGE_PARK_MS: num({ default: undefined }),
   NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
   NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
   NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),

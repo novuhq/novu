@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -6,10 +6,12 @@ import {
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
+  HumanInteractionKindEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
+import { KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-voice-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
 
 function emailGate(blocked = false) {
@@ -26,8 +28,30 @@ function emailGate(blocked = false) {
   };
 }
 
+function voiceFlag(enabled = true) {
+  return { getFlag: sinon.stub().resolves(enabled) };
+}
+
+function unusedPlaceVoiceCall() {
+  return { execute: sinon.stub() };
+}
+
+/** The relay agent a voice call introduces itself as. The default name is never spoken. */
+function agentNamed(name = 'Agent') {
+  return { findOne: sinon.stub().resolves({ name }) };
+}
+
+function voiceGate(blocked = false) {
+  return {
+    isBlocked: sinon.stub().returns(blocked),
+    assertAllowed: blocked
+      ? sinon.stub().rejects(new HttpException({ code: KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE }, 403))
+      : sinon.stub().resolves(),
+  };
+}
+
 describe('HumanDeliveryService.resolveChannel', () => {
-  function setup() {
+  function setup(options: { voiceEnabled?: boolean; voiceBlocked?: boolean } = {}) {
     const agentIntegrationRepository = { find: sinon.stub() };
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
     const integrationRepository = { find: sinon.stub() };
@@ -41,11 +65,15 @@ describe('HumanDeliveryService.resolveChannel', () => {
     const keylessEmailGate = emailGate();
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       humanContactRepository as never,
       outboundGateway as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      voiceFlag(options.voiceEnabled ?? true) as never,
+      voiceGate(options.voiceBlocked ?? false) as never,
+      unusedPlaceVoiceCall() as never
     );
 
     return {
@@ -329,6 +357,174 @@ describe('HumanDeliveryService.resolveChannel', () => {
     expect(reach.get('bob')?.targets).to.deep.equal([]);
   });
 
+  it('resolves a verified phone number when via is voice', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+
+    expect(target).to.deep.equal({
+      platform: HumanChannelViaEnum.VOICE,
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+    });
+  });
+
+  it('404s when the phone number is not verified', async () => {
+    const { service, agentIntegrationRepository, integrationRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.include('no verified phone number');
+    }
+  });
+
+  it('rejects an explicit voice send when the flag is off', async () => {
+    const { service, agentIntegrationRepository } = setup({ voiceEnabled: false });
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.equal('Voice is not enabled for this workspace.');
+    }
+
+    expect(agentIntegrationRepository.find.called).to.equal(false);
+  });
+
+  it('blocks a keyless organization from placing a call', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup({
+      voiceBlocked: true,
+    });
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.VOICE });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(HttpException);
+      expect((err as HttpException).getStatus()).to.equal(403);
+      expect((err as HttpException).getResponse()).to.include({ code: KEYLESS_VOICE_REQUIRES_ACCOUNT_CODE });
+    }
+  });
+
+  it('does not auto-pick voice when another channel is also reachable', async () => {
+    const {
+      service,
+      agentIntegrationRepository,
+      integrationRepository,
+      channelEndpointRepository,
+      humanContactRepository,
+    } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }, { _integrationId: 'tg1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+      {
+        _id: 'tg1',
+        identifier: 'telegram-main',
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    channelEndpointRepository.findOne.resolves({
+      subscriberId: 'alice',
+      integrationIdentifier: 'telegram-main',
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: { chatId: '111' },
+      createdAt: '2026-06-01T00:00:00.000Z',
+    });
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel(params);
+
+    expect(target.integrationIdentifier).to.equal('telegram-main');
+    expect(target.platform).to.not.equal(HumanChannelViaEnum.VOICE);
+  });
+
+  it('uses voice when it is the saved default and the flag is on', async () => {
+    const { service, agentIntegrationRepository, integrationRepository, humanContactRepository } = setup();
+    agentIntegrationRepository.find.resolves([{ _integrationId: 'voice1' }, { _integrationId: 'tg1' }]);
+    integrationRepository.find.resolves([
+      {
+        _id: 'voice1',
+        identifier: 'voice-main',
+        providerId: ChatProviderIdEnum.AgentVoiceCall,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+      {
+        _id: 'tg1',
+        identifier: 'telegram-main',
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        active: true,
+      },
+    ]);
+    humanContactRepository.findContact.resolves({ defaultVia: HumanChannelViaEnum.VOICE });
+    humanContactRepository.findVerifiedAddress.resolves({
+      address: '+15551212',
+      verifiedAt: '2026-01-02T00:00:00.000Z',
+    });
+
+    const target = await service.resolveChannel(params);
+
+    expect(target).to.deep.equal({
+      platform: HumanChannelViaEnum.VOICE,
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+    });
+  });
+
   describe('when the human is reachable on several channels', () => {
     function setupTelegramAndSlack() {
       const context = setup();
@@ -463,11 +659,15 @@ describe('HumanDeliveryService keyless email', () => {
     const keylessEmailGate = emailGate(true);
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       humanContactRepository as never,
       { sendDirectMessage: sinon.stub() } as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -571,11 +771,15 @@ describe('HumanDeliveryService.listInviteChannels', () => {
     };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       {} as never,
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -609,11 +813,15 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
     };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
+      agentNamed() as never,
       channelEndpointRepository as never,
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      unusedPlaceVoiceCall() as never
     );
 
     const channels = await service.listWorkingChannels({
@@ -623,6 +831,109 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
     });
 
     expect(channels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+});
+
+describe('HumanDeliveryService.deliver', () => {
+  it('stamps the ElevenLabs conversation id and keeps the Twilio call sid', async () => {
+    const placeVoiceCall = {
+      execute: sinon.stub().resolves({ conversationId: 'conv_1', callSid: 'CA1' }),
+    };
+    const service = new HumanDeliveryService(
+      {} as never,
+      agentNamed('Scout') as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+    const interaction = {
+      identifier: 'hi_1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      kind: HumanInteractionKindEnum.APPROVE,
+      content: { cardChrome: { title: 'Approve the deploy?', body: 'Now.' } },
+    };
+
+    const sent = await service.deliver(
+      interaction as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    const openingLine = "Hi, it's Scout. Approve the deploy? Now.";
+    expect(sent).to.deep.equal({ platformMessageId: 'conv_1', platformThreadId: 'CA1', openingLine });
+    expect(placeVoiceCall.execute.firstCall.args[0]).to.include({
+      interactionId: 'hi_1',
+      subscriberId: 'sub-1',
+      toNumber: '+15551212',
+      openingLine,
+    });
+  });
+
+  it('greets without a name while the relay is still unnamed', async () => {
+    const placeVoiceCall = { execute: sinon.stub().resolves({ conversationId: 'conv_1' }) };
+    const service = new HumanDeliveryService(
+      {} as never,
+      agentNamed() as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+
+    await service.deliver(
+      {
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        kind: HumanInteractionKindEnum.APPROVE,
+        content: { cardChrome: { title: 'Approve the deploy?' } },
+      } as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    expect(placeVoiceCall.execute.firstCall.args[0].openingLine).to.equal('Hi. Approve the deploy?');
+  });
+
+  it('uses the conversation id as the thread when Twilio does not return a call sid', async () => {
+    const placeVoiceCall = { execute: sinon.stub().resolves({ conversationId: 'conv_1' }) };
+    const service = new HumanDeliveryService(
+      {} as never,
+      agentNamed() as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      emailGate() as never,
+      voiceFlag() as never,
+      voiceGate() as never,
+      placeVoiceCall as never
+    );
+
+    const sent = await service.deliver(
+      {
+        identifier: 'hi_1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        kind: HumanInteractionKindEnum.ASK,
+        content: { cardChrome: { title: 'What is the code?' } },
+      } as never,
+      { platform: HumanChannelViaEnum.VOICE, platformUserId: '+15551212', integrationIdentifier: 'voice-main' },
+      'sub-1'
+    );
+
+    expect(sent.platformMessageId).to.equal('conv_1');
+    expect(sent.platformThreadId).to.equal('conv_1');
   });
 });
 
@@ -667,5 +978,18 @@ describe('pickDefaultTarget', () => {
 
   it('returns undefined when the human is not reachable', () => {
     expect(pickDefaultTarget([])).to.equal(undefined);
+  });
+
+  it('does not fall back to voice when another channel is connected', () => {
+    const voice: ReachableHumanTarget = {
+      via: HumanChannelViaEnum.VOICE,
+      platform: 'voice',
+      platformUserId: '+15551212',
+      integrationIdentifier: 'voice-main',
+      connectedAt: '2026-01-01T00:00:00.000Z',
+    };
+
+    expect(pickDefaultTarget([voice, telegram])).to.equal(telegram);
+    expect(pickDefaultTarget([voice, telegram], HumanChannelViaEnum.VOICE)).to.equal(voice);
   });
 });
