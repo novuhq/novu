@@ -13,15 +13,11 @@ import { workflowStepSchema } from "./step-schemas";
  *   `normalizeObjectSchema` silently drops top-level discriminated unions
  *   (modelcontextprotocol/typescript-sdk#1643), so callers must always
  *   register a `z.object` whose properties may contain unions.
- * - Use factory functions (`createXSchema`) when the same sub-schema is
- *   referenced from multiple union members. Reusing a single instance causes
- *   `zod-to-json-schema` to emit deeply-nested `$defs` chains that some MCP
- *   clients reject.
  * - Pack constraint hints into `.describe()` strings as well as `.min/.max`
  *   so the LLM sees them when reading the schema.
  *
  * File organisation:
- * - Skip-condition factories live in `./skip-schemas.ts`.
+ * - Skip-condition schemas live in `./skip-schemas.ts`.
  * - Step-level schemas (per-channel control values, `workflowStepSchema`)
  *   live in `./step-schemas.ts`.
  * - Maily TipTap email body lives in `./maily-schemas.ts`.
@@ -32,7 +28,7 @@ import { workflowStepSchema } from "./step-schemas";
 
 // --- Re-exports (backward compatibility) ---------------------------------
 
-export { createSkipConditionSchema } from "./skip-schemas";
+export { optionalSkipConditionSchema, skipConditionSchema } from "./skip-schemas";
 export type {
 	DelayType,
 	DigestType,

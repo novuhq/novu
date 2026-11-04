@@ -23,12 +23,12 @@ import {
 import { apiError, workflowResult } from "../utils/workflow-results";
 import {
 	createPropertyPathSchema,
-	createSkipConditionSchema,
 	createWorkflowSourceInputSchema,
 	MAX_DESCRIPTION_LENGTH,
 	MAX_NAME_LENGTH,
 	MAX_TAG_ELEMENTS,
 	MAX_TAG_LENGTH,
+	optionalSkipConditionSchema,
 	payloadPropertySchema,
 	severitySchema,
 	type WorkflowStep,
@@ -208,7 +208,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
 			addPayloadProperties: addPayloadPropertiesField,
-			skip: createSkipConditionSchema(),
+			skip: optionalSkipConditionSchema,
 			stepId: z.string().describe("stepId of the step to update."),
 			workflowId: workflowIdField,
 		}),
