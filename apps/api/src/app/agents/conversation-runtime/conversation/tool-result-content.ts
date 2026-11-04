@@ -13,29 +13,41 @@ const TEXT_PART_OVERHEAD_BYTES = Buffer.byteLength(JSON.stringify({ type: 'text'
  */
 export const TOOL_OUTPUT_MAX_BYTES = 16_384;
 
+/** The framework reads `toolData.output` for a tool result; the activity `content` is only a preview for chat text. */
+const TOOL_RESULT_PREVIEW_MAX_BYTES = 1024;
+
 export interface StoredToolResultContent {
   content: ConversationActivityToolResultPart[];
   truncated: boolean;
 }
 
-export interface CappedToolOutput {
-  output: unknown;
-  truncated: boolean;
-}
+export type CappedToolOutput = { output: unknown; truncated: false } | { output: string; truncated: true };
 
 export function toolResultData(params: RecordToolResultParams): ConversationActivityToolData {
   const stored = capToolResultContent(params.content);
-  const cappedOutput = params.modelFacing ? capToolOutput(params.modelFacing.output) : undefined;
-  const truncated = stored.truncated || (cappedOutput?.truncated ?? false);
+  const outputData = params.modelFacing ? cappedToolOutputData(params.modelFacing.output) : undefined;
+  const truncated = stored.truncated || outputData?.truncated === true;
 
   return {
     toolCallId: params.toolCallId,
     ...(params.toolName ? { toolName: params.toolName } : {}),
-    ...(cappedOutput ? { output: cappedOutput.output } : { recordOnly: true }),
+    ...(outputData ?? { recordOnly: true }),
     content: stored.content,
     isError: params.isError === true,
     ...(truncated ? { truncated: true } : {}),
   };
+}
+
+export function cappedToolOutputData(output: unknown): Pick<ConversationActivityToolData, 'output' | 'truncated'> {
+  const capped = capToolOutput(output);
+
+  return capped.truncated ? { output: capped.output, truncated: true } : { output: capped.output };
+}
+
+export function capToolResultPreview(preview: string): string {
+  const capped = capToolOutput(preview, TOOL_RESULT_PREVIEW_MAX_BYTES);
+
+  return capped.truncated ? capped.output : preview;
 }
 
 /**

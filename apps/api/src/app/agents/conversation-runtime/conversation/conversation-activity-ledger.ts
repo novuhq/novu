@@ -46,7 +46,7 @@ import {
   type PersistRunLifecycleParams,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
-import { capToolOutput, toolResultData } from './tool-result-content';
+import { cappedToolOutputData, capToolResultPreview, toolResultData } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -523,7 +523,9 @@ export class ConversationActivityLedger {
       {
         ...params,
         identifier: `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`,
-        content: params.modelFacing?.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+        content: capToolResultPreview(
+          params.modelFacing?.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`
+        ),
         toolData: toolResultData(params),
       },
       ConversationActivityTypeEnum.TOOL_RESULT,
@@ -537,8 +539,6 @@ export class ConversationActivityLedger {
       params.environmentId,
       params.organizationId
     );
-    const cappedOutput = capToolOutput(params.output);
-
     const activity = await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
@@ -547,13 +547,12 @@ export class ConversationActivityLedger {
       platformThreadId: params.channel.platformThreadId,
       senderType: ConversationActivitySenderTypeEnum.AGENT,
       senderId: params.agentIdentifier,
-      content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+      content: capToolResultPreview(params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`),
       type: ConversationActivityTypeEnum.TOOL_RESULT,
       toolData: {
         toolCallId: params.toolCallId,
         toolName: params.toolName,
-        output: cappedOutput.output,
-        ...(cappedOutput.truncated ? { truncated: true } : {}),
+        ...cappedToolOutputData(params.output),
       },
       sequence,
       environmentId: params.environmentId,

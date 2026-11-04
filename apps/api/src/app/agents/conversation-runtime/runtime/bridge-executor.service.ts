@@ -41,17 +41,13 @@ import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { capToolResultPreview } from '../conversation/tool-result-content';
 import {
   resolveInboundReplyTo,
   type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from '../ingress/workflow-origin.helpers';
-import {
-  BRIDGE_HISTORY_MAX_BYTES,
-  capToolResultPreview,
-  shapeBridgeHistory,
-  slimToolDataForBridge,
-} from './bridge-history';
+import { BRIDGE_HISTORY_MAX_BYTES, shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
 
 const MAX_RETRIES = 2;
 /** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
@@ -674,7 +670,13 @@ export class BridgeExecutorService {
       });
     }
 
-    const { history, droppedForBudget } = shapeBridgeHistory(mapped, BRIDGE_HISTORY_MAX_BYTES);
+    const { history, droppedOrphans, droppedForBudget } = shapeBridgeHistory(mapped, BRIDGE_HISTORY_MAX_BYTES);
+    if (droppedOrphans > 0) {
+      this.logger.warn(
+        { droppedOrphans, kept: history.length },
+        'Bridge history window starts mid tool cycle; dropped tool rows without their request'
+      );
+    }
     if (droppedForBudget > 0) {
       this.logger.warn(
         { droppedForBudget, kept: history.length, maxBytes: BRIDGE_HISTORY_MAX_BYTES },

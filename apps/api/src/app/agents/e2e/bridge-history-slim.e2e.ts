@@ -147,6 +147,23 @@ describe('Bridge history slimming #novu-v2', () => {
     const conversationId = await seedConversation(ctx);
     await ingestLargeGatedCycles(conversationId, FITTING_CYCLES);
 
+    const storedResults = await activityRepository.find(
+      {
+        _environmentId: ctx.session.environment._id,
+        _conversationId: conversationId,
+        type: ConversationActivityTypeEnum.TOOL_RESULT,
+      },
+      '*'
+    );
+    expect(storedResults).to.have.length(FITTING_CYCLES);
+    for (const row of storedResults) {
+      expect(Buffer.byteLength(String(row.toolData?.output), 'utf8'), 'stored output').to.be.at.most(
+        TOOL_OUTPUT_MAX_BYTES
+      );
+      expect(row.toolData?.truncated, 'stored truncated flag').to.equal(true);
+      expect(Buffer.byteLength(row.content, 'utf8'), 'stored preview').to.be.at.most(1024);
+    }
+
     const history = await buildBridgeHistory(conversationId);
 
     expect(byteLength(history)).to.be.at.most(BRIDGE_HISTORY_MAX_BYTES);

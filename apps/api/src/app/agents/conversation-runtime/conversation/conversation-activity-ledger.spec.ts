@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
+import { TOOL_OUTPUT_MAX_BYTES } from './tool-result-content';
 
 /** Only the repository surface a given test exercises; widened once at the constructor boundary. */
 type ConversationRepositoryDouble = Partial<ConversationRepository>;
@@ -747,6 +748,32 @@ describe('ConversationActivityLedger', () => {
 
       expect(conversationRepository.touchActivity.called).to.equal(false);
       expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+
+    it('caps the stored output and preview of a large tool result on both write paths', async () => {
+      const activityRepository = makeActivityRepository();
+      const ledger = makeLedger(activityRepository);
+      const large = 'x'.repeat(100_000);
+
+      await ledger.recordToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: large }],
+        isError: false,
+        modelFacing: { output: large, preview: large },
+      });
+      await ledger.persistToolResult({ ...context, toolCallId: 'toolu_2', output: large, preview: large });
+
+      const rows = [
+        activityRepository.createAgentActivity.firstCall.args[0],
+        activityRepository.createToolActivity.firstCall.args[0],
+      ];
+      for (const row of rows) {
+        expect(Buffer.byteLength(row.toolData.output, 'utf8')).to.be.at.most(TOOL_OUTPUT_MAX_BYTES);
+        expect(row.toolData.truncated).to.equal(true);
+        expect(Buffer.byteLength(row.content, 'utf8')).to.be.at.most(1024);
+      }
     });
 
     it('does not re-emit a redelivered tool result', async () => {

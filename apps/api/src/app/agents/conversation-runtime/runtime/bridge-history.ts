@@ -9,11 +9,9 @@ import { capToolOutput } from '../conversation/tool-result-content';
  */
 export const BRIDGE_HISTORY_MAX_BYTES = 512 * 1024;
 
-/** The framework reads `toolData.output` for a tool result; `content` is only a preview for chat text. */
-const TOOL_RESULT_PREVIEW_MAX_BYTES = 1024;
-
 export interface ShapedBridgeHistory {
   history: AgentHistoryEntry[];
+  droppedOrphans: number;
   droppedForBudget: number;
 }
 
@@ -42,18 +40,16 @@ export function slimToolDataForBridge(
   return { ...bridgeToolData, output, truncated: true };
 }
 
-export function capToolResultPreview(preview: string): string {
-  const { output } = capToolOutput(preview, TOOL_RESULT_PREVIEW_MAX_BYTES);
-
-  return typeof output === 'string' ? output : preview;
-}
-
 /** Drop tool rows cut off from their request, then trim the oldest rows to fit `maxBytes`. */
 export function shapeBridgeHistory(entries: AgentHistoryEntry[], maxBytes: number): ShapedBridgeHistory {
   const complete = dropOrphanedToolRows(entries);
   const history = applyHistoryBudget(complete, maxBytes);
 
-  return { history, droppedForBudget: complete.length - history.length };
+  return {
+    history,
+    droppedOrphans: entries.length - complete.length,
+    droppedForBudget: complete.length - history.length,
+  };
 }
 
 /**
@@ -130,8 +126,8 @@ function applyHistoryBudget(entries: AgentHistoryEntry[], maxBytes: number): Age
 
 /**
  * Give each row the index of the first row in its tool cycle; rows outside a cycle get their own index.
- * After orphan removal every decision has its request in the list, so the request's `toolCallId` keys
- * the whole cycle. Ids increase with first appearance, so iterating them goes oldest first.
+ * A cycle is keyed by the request's `toolCallId`, or by its `approvalId` when the request has no
+ * `toolCallId`. Ids increase with first appearance, so iterating them goes oldest first.
  */
 function groupToolCycles(entries: AgentHistoryEntry[]): number[] {
   const callIdByApprovalId = new Map<string, string>();

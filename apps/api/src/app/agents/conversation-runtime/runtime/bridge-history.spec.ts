@@ -1,7 +1,7 @@
 import type { AgentHistoryEntry } from '@novu/framework';
 import { expect } from 'chai';
-import { TOOL_OUTPUT_MAX_BYTES } from '../conversation/tool-result-content';
-import { capToolResultPreview, shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
+import { capToolResultPreview, TOOL_OUTPUT_MAX_BYTES } from '../conversation/tool-result-content';
+import { shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
 
 const BIG = 'x'.repeat(10_000);
 const CREATED_AT = '2026-01-01T00:00:00.000Z';
@@ -110,10 +110,23 @@ describe('shapeBridgeHistory', () => {
     expect(labels(history)).to.deep.equal(['tool_approval_request:appr_a', 'tool_approval_decision:appr_a']);
   });
 
+  it('drops a request without a toolCallId together with its decision', () => {
+    const entries = [
+      { ...request('a', BIG), toolData: { approvalId: 'appr_a' } },
+      message(BIG),
+      decision('a'),
+      message('newest'),
+    ];
+
+    const { history } = shapeBridgeHistory(entries, bytes(entries) - BIG.length);
+
+    expect(labels(history)).to.deep.equal(['message:', 'message:']);
+  });
+
   it('drops a decision and a result whose request is not in the history', () => {
     const entries = [decision('gone'), result('gone'), message('hi'), request('a'), decision('a'), result('a')];
 
-    const { history, droppedForBudget } = shapeBridgeHistory(entries, 1_000_000);
+    const { history, droppedOrphans, droppedForBudget } = shapeBridgeHistory(entries, 1_000_000);
 
     expect(labels(history)).to.deep.equal([
       'message:',
@@ -121,6 +134,7 @@ describe('shapeBridgeHistory', () => {
       'tool_approval_decision:appr_a',
       'tool_result:call_a',
     ]);
+    expect(droppedOrphans).to.equal(2);
     expect(droppedForBudget).to.equal(0);
   });
 });
