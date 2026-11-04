@@ -1,5 +1,5 @@
 import { getEventListeners } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1330,7 +1330,7 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     await eventually(() => expect(api.sentInto('conv_1')).toContain(`Ran ${reply} in /tmp (accept).`));
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     expect(question?.card.body).toContain(
-      'It is Agent Inbox’s own command, but it runs in /tmp, outside the project, so it may run other code than Agent Inbox’s.'
+      `It is Agent Inbox’s own command, but it runs in ${realpathSync('/tmp')}, outside the project, so it may run other code than Agent Inbox’s.`
     );
   });
 
@@ -1346,6 +1346,21 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
     expect(question?.card.body).toContain(
       'the project has its own node_modules/tmp/node_modules/@agentinbox/cli, so it may run other code than Agent Inbox’s.'
+    );
+  });
+
+  it('follows a link to where the agent’s own reply really runs before it lets it through', async () => {
+    const { api, dir } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    mkdirSync(join(dir, 'real', 'deep'), { recursive: true });
+    mkdirSync(join(dir, 'real', 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+    symlinkSync(join(dir, 'real', 'deep'), join(dir, 'link'));
+
+    api.deliver({ text: `ask-in:${join(dir, 'link')} npx @agentinbox/cli reply conv_1 "Hi"` });
+
+    await eventually(() => expect(api.interactions.some((interaction) => interaction.kind === 'approve')).toBe(true));
+    expect(api.interactions.find((interaction) => interaction.kind === 'approve')?.card.body).toContain(
+      'the project has its own real/node_modules/@agentinbox/cli'
     );
   });
 

@@ -35,7 +35,7 @@ import type {
   TurnEnded,
 } from './host-adapter';
 import { hostNameOf } from './hosts';
-import { cliSwapIn, isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
+import { cliSwapIn, isOwnReplySubject, realPathOf, repliesIn, waitsForAnswerIn } from './own-replies';
 import {
   DEFAULT_LIMITS,
   IDS_KEPT,
@@ -1202,8 +1202,9 @@ class ListenLoop {
       return undefined;
     }
 
-    const project = this.state.project;
-    const cwd = resolve(project, subject.cwd ?? '.');
+    // npx looks above the folder it really runs in, so links are followed first, for the project too.
+    const project = realPathOf(this.state.project);
+    const cwd = realPathOf(resolve(this.state.project, subject.cwd ?? '.'));
     const from = relative(project, cwd);
     if (from.startsWith('..') || isAbsolute(from)) {
       return `it runs in ${shortPath(cwd)}, outside the project`;

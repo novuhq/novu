@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import type { PermissionQuestion } from './host-adapter';
 
@@ -492,6 +492,15 @@ const SWAPS: ReadonlyArray<(folder: string) => string | undefined> = [
     return packageName(path) === '@agentinbox/cli' ? path : undefined;
   },
 ];
+
+/** The path with its links followed, or as it is when it doesn't exist. */
+export function realPathOf(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
 
 function existing(path: string): string | undefined {
   return existsSync(path) ? path : undefined;
