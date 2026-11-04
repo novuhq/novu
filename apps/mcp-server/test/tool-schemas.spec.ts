@@ -104,6 +104,34 @@ async function stepSchema(stepType: string): Promise<Json> {
 }
 
 describe("advertised tool schemas", () => {
+	it.runIf(process.env.MCP_TOOLS_REPORT)("print the size report", async () => {
+		const { tools } = await (await client()).listTools();
+		const rows = tools
+			.map((tool) => ({ input: bytes(tool.inputSchema), name: tool.name, tool: bytes(tool) }))
+			.sort((a, b) => b.tool - a.tool);
+		const stepSchemas = await Promise.all(
+			stepTypeSchema.options.map(async (stepType) => {
+				const result = await callTool(await client(), "get_step_schema", { stepType });
+
+				return `${stepType} ${textOf(result).length}`;
+			}),
+		);
+		const total = bytes({ tools });
+
+		console.log(
+			[
+				`tools/list: ${tools.length} tools, ${total} bytes (~${Math.round(total / 4)} tokens), budget ${MAX_TOOLS_LIST_BYTES}`,
+				`budgets per tool: inputSchema ${MAX_INPUT_SCHEMA_BYTES} bytes, tool ${MAX_TOOL_BYTES} bytes`,
+				"tool | tool bytes | inputSchema bytes | ~tokens",
+				...rows.map(
+					(row) =>
+						`${row.name} | ${row.tool} | ${row.input} | ${Math.round(row.tool / 4)}`,
+				),
+				`get_step_schema chars (budget ${MAX_STEP_SCHEMA_CHARS}): ${stepSchemas.join(", ")}`,
+			].join("\n"),
+		);
+	});
+
 	it("keep tools/list and every tool within the sizes MCP clients load", async () => {
 		const { tools } = await (await client()).listTools();
 
@@ -131,6 +159,19 @@ describe("advertised tool schemas", () => {
 
 		for (const tool of tools) {
 			expect(() => ajv.getValidator(tool.inputSchema), tool.name).not.toThrow();
+		}
+	});
+
+	it("give every annotated tool a title and all three hints, as OpenAI's app review requires", async () => {
+		const { tools } = await (await client()).listTools();
+		const annotated = tools.filter((tool) => tool.annotations);
+
+		expect(annotated.map((tool) => tool.name)).toContain("get_step_schema");
+		for (const tool of annotated) {
+			expect(tool.title, tool.name).toBeTruthy();
+			for (const hint of ["destructiveHint", "openWorldHint", "readOnlyHint"] as const) {
+				expect(typeof tool.annotations?.[hint], `${tool.name}.${hint}`).toBe("boolean");
+			}
 		}
 	});
 
