@@ -187,8 +187,7 @@ export class WebChatLiveActivityPublisher {
           _environmentId: context.environmentId,
           _organizationId: context.organizationId,
           subscriberId: subscriber.subscriberId,
-          // biome-ignore lint/plugin: WebSocket queue jobs carry the live event envelope as a loose JSON object
-          payload: envelope as unknown as Record<string, unknown>,
+          payload: { ...envelope },
           contextKeys: context.conversation.contextKeys ?? [],
         },
         groupId: context.organizationId,

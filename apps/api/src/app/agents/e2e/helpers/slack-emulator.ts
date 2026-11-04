@@ -233,12 +233,12 @@ export function resetEmulator(): void {
  * every resolved copy so the emulator redirect + synthetic stubs apply to the
  * WebClient instance the adapter actually constructs.
  */
-function collectSlackWebApiModules(): Array<{
-  WebClient: new (token?: string, opts?: Record<string, unknown>) => unknown;
-}> {
-  const modules: Array<{
-    WebClient: new (token?: string, opts?: Record<string, unknown>) => unknown;
-  }> = [];
+type SlackWebApiModule = {
+  WebClient: new (token?: string, opts?: Record<string, unknown>) => object;
+};
+
+function collectSlackWebApiModules(): SlackWebApiModule[] {
+  const modules: SlackWebApiModule[] = [];
   const seen = new Set<string>();
 
   function tryAdd(resolveFrom: string): void {
@@ -248,11 +248,7 @@ function collectSlackWebApiModules(): Array<{
       const resolved = req.resolve('@slack/web-api');
       if (seen.has(resolved)) return;
       seen.add(resolved);
-      modules.push(
-        req('@slack/web-api') as {
-          WebClient: new (token?: string, opts?: Record<string, unknown>) => unknown;
-        }
-      );
+      modules.push(req('@slack/web-api') as SlackWebApiModule);
     } catch {
       // not installed from this resolution context
     }
@@ -268,41 +264,92 @@ function collectSlackWebApiModules(): Array<{
   return modules;
 }
 
-function applyWebClientPatch(webApi: {
-  WebClient: new (token?: string, opts?: Record<string, unknown>) => unknown;
-}): void {
+/** The client options the emulator needs: Slack's API URL pointed at the emulator, and no retries. */
+function emulatorClientOptions(opts?: Record<string, unknown>): Record<string, unknown> {
+  const baseOpts = opts ?? {};
+  const merged: Record<string, unknown> = {
+    ...baseOpts,
+    retryConfig: {
+      ...(typeof baseOpts.retryConfig === 'object' && baseOpts.retryConfig !== null
+        ? (baseOpts.retryConfig as Record<string, unknown>)
+        : {}),
+      retries: 0,
+    },
+  };
+  const apiUrl = process.env.SLACK_API_URL;
+  if (apiUrl && merged.slackApiUrl === undefined) {
+    merged.slackApiUrl = apiUrl;
+  }
+
+  return merged;
+}
+
+type WebClientInstance = {
+  slackApiUrl?: string;
+  axios?: { defaults?: { baseURL?: string } };
+};
+
+/** Points a client constructed before the patch at the emulator too. */
+function redirectToEmulator(client: WebClientInstance): void {
+  const apiUrl = process.env.SLACK_API_URL;
+  if (!apiUrl) return;
+
+  const normalized = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
+  if (client.slackApiUrl !== normalized) {
+    client.slackApiUrl = normalized;
+  }
+  if (client.axios?.defaults && client.axios.defaults.baseURL !== normalized) {
+    client.axios.defaults.baseURL = normalized;
+  }
+}
+
+/**
+ * Short-circuit `users.info` lookups for the synthetic user ids the test
+ * fixtures inject into inbound app_mention payloads (e.g. `UBOT`).
+ * emulate.dev seeds users with auto-generated ids only, so the
+ * chat-adapter's `resolveInlineMentions` → `users.info({ user: 'UBOT' })`
+ * would otherwise hit `user_not_found` and log a noisy stack on every
+ * inbound message. Returning a synthetic ok response keeps the
+ * mention-resolution path quiet without changing the production wire
+ * contract — the recorded payload still captures the real call.
+ */
+function syntheticUserStub(method: string, options: Record<string, unknown> | undefined) {
+  if (method !== 'users.info' || typeof options?.user !== 'string') return undefined;
+
+  return SYNTHETIC_USER_STUBS[options.user];
+}
+
+/**
+ * chat-adapter@4.28.1+ posts markdown replies with the `markdown_text`
+ * payload key instead of `text`. The emulate.dev slack module only
+ * persists `body.text` for chat.postMessage / chat.update, so without
+ * this shim the stored message ends up with empty text and `text === ...`
+ * assertions on `conversations.replies` / `conversations.history` fail.
+ * Mirror `markdown_text` into `text` for the wire payload so the
+ * emulator stores something useful while leaving the recorded payload
+ * intact for fidelity assertions.
+ */
+function withMarkdownTextAsText(
+  method: string,
+  options: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (method !== 'chat.postMessage' && method !== 'chat.update') return undefined;
+  if (typeof options?.markdown_text !== 'string' || typeof options.text === 'string') return undefined;
+
+  return { ...options, text: options.markdown_text };
+}
+
+function applyWebClientPatch(webApi: SlackWebApiModule): void {
   const Original = webApi.WebClient;
   if (patchedWebClientPrototypes.has(Original.prototype)) return;
   patchedWebClientPrototypes.add(Original.prototype);
 
-  // biome-ignore lint/plugin: a constructor shim for WebClient; `this` is never read, Reflect.construct builds the instance
-  function PatchedWebClient(this: unknown, token?: string, opts?: Record<string, unknown>) {
-    const baseOpts = opts ?? {};
-    const merged: Record<string, unknown> = {
-      ...baseOpts,
-      retryConfig: {
-        ...(typeof baseOpts.retryConfig === 'object' && baseOpts.retryConfig !== null
-          ? (baseOpts.retryConfig as Record<string, unknown>)
-          : {}),
-        retries: 0,
-      },
-    };
-    const apiUrl = process.env.SLACK_API_URL;
-    if (apiUrl && merged.slackApiUrl === undefined) {
-      merged.slackApiUrl = apiUrl;
+  // A subclass, so `@slack/web-api`'s check that `new.target` extends `WebClient` passes.
+  class PatchedWebClient extends Original {
+    constructor(token?: string, opts?: Record<string, unknown>) {
+      super(token, emulatorClientOptions(opts));
     }
-
-    type ConstructorTarget = new (...args: unknown[]) => unknown;
-    const newTarget = new.target as unknown;
-    // `@slack/web-api` throws unless `new.target` is `WebClient` or a subclass of it. `PatchedWebClient` shares
-    // `WebClient.prototype` rather than extending it, so `new PatchedWebClient()` must construct as `WebClient`.
-    const target = (!newTarget || newTarget === PatchedWebClient ? Original : newTarget) as ConstructorTarget;
-
-    return Reflect.construct(Original, [token, merged], target);
   }
-
-  PatchedWebClient.prototype = Original.prototype;
-  Object.setPrototypeOf(PatchedWebClient, Original);
 
   // `@slack/web-api`'s CJS export defines `WebClient` as a getter via
   // `Object.defineProperty(exports, 'WebClient', { get: ... })` to support
@@ -310,33 +357,17 @@ function applyWebClientPatch(webApi: {
   // Redefining the descriptor as a writable data property both swaps in our
   // patched constructor and lets later code (re-)assign it if needed.
   Object.defineProperty(webApi, 'WebClient', {
-    // biome-ignore lint/plugin: the function constructor stands in for the WebClient class it constructs
-    value: PatchedWebClient as unknown as typeof Original,
+    value: PatchedWebClient,
     writable: true,
     configurable: true,
     enumerable: true,
   });
 
-  type WebClientInstance = {
-    slackApiUrl?: string;
-    axios?: { defaults?: { baseURL?: string } };
-  };
-
   const proto = Original.prototype as { apiCall?: (...args: unknown[]) => unknown };
   const origApiCall = proto.apiCall;
   if (typeof origApiCall === 'function') {
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: one patch point redirects, records and stubs every Slack API call in e2e
     proto.apiCall = function patchedApiCall(this: WebClientInstance, ...args: unknown[]) {
-      const apiUrl = process.env.SLACK_API_URL;
-      if (apiUrl) {
-        const normalized = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
-        if (this.slackApiUrl !== normalized) {
-          this.slackApiUrl = normalized;
-        }
-        if (this.axios?.defaults && this.axios.defaults.baseURL !== normalized) {
-          this.axios.defaults.baseURL = normalized;
-        }
-      }
+      redirectToEmulator(this);
 
       // Record every Slack API call for assertions on the wire payload — the
       // emulator only persists a subset of fields (e.g. `chat.postMessage`
@@ -346,42 +377,14 @@ function applyWebClientPatch(webApi: {
       const [method, options] = args as [string, Record<string, unknown> | undefined];
       recordedCalls.push({ method, options: { ...(options ?? {}) } });
 
-      // Short-circuit `users.info` lookups for the synthetic user ids the test
-      // fixtures inject into inbound app_mention payloads (e.g. `UBOT`).
-      // emulate.dev seeds users with auto-generated ids only, so the
-      // chat-adapter's `resolveInlineMentions` → `users.info({ user: 'UBOT' })`
-      // would otherwise hit `user_not_found` and log a noisy stack on every
-      // inbound message. Returning a synthetic ok response keeps the
-      // mention-resolution path quiet without changing the production wire
-      // contract — the recorded payload above still captures the real call.
-      if (method === 'users.info' && options && typeof (options as { user?: unknown }).user === 'string') {
-        const stub = SYNTHETIC_USER_STUBS[(options as { user: string }).user];
-        if (stub) {
-          return Promise.resolve(stub);
-        }
+      const stub = syntheticUserStub(method, options);
+      if (stub) {
+        return Promise.resolve(stub);
       }
 
-      // chat-adapter@4.28.1+ posts markdown replies with the `markdown_text`
-      // payload key instead of `text`. The emulate.dev slack module only
-      // persists `body.text` for chat.postMessage / chat.update, so without
-      // this shim the stored message ends up with empty text and `text === ...`
-      // assertions on `conversations.replies` / `conversations.history` fail.
-      // Mirror `markdown_text` into `text` for the wire payload so the
-      // emulator stores something useful while leaving the recorded payload
-      // (above) intact for fidelity assertions.
-      if (
-        (method === 'chat.postMessage' || method === 'chat.update') &&
-        options &&
-        typeof options === 'object' &&
-        typeof (options as { markdown_text?: unknown }).markdown_text === 'string' &&
-        typeof (options as { text?: unknown }).text !== 'string'
-      ) {
-        const shimmed = {
-          ...(options as Record<string, unknown>),
-          text: (options as { markdown_text: string }).markdown_text,
-        };
-
-        return origApiCall.apply(this, [method, shimmed, ...args.slice(2)] as unknown[]);
+      const shimmed = withMarkdownTextAsText(method, options);
+      if (shimmed) {
+        return origApiCall.apply(this, [method, shimmed, ...args.slice(2)]);
       }
 
       return origApiCall.apply(this, args);
