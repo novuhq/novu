@@ -7,6 +7,7 @@ import {
 } from '@langchain/core/messages';
 import { describe, expect, it } from 'vitest';
 import type { AgentHistoryEntry, AgentNotification } from '../../resources/agent/agent.types';
+import { HISTORY_TOOL_OUTPUT_MAX_CHARS } from '../../resources/agent/history-tool-output';
 import type { ToolResultPayload } from './approval-cycles';
 import { toLangChainMessages } from './index';
 
@@ -429,6 +430,38 @@ describe('toLangChainMessages', () => {
         aiToolCall('toolu_cancel', 'cancelSubscription', { subId: 'B' }),
         executionDenied('toolu_cancel', 'cancelSubscription'),
       ]);
+    });
+
+    it('caps an oversized tool output, including a fresh result run on resume, and keeps each paired', () => {
+      const pages = Array.from({ length: 2_000 }, (_, i) => ({ id: `page_${i}`, title: `Quarterly report ${i}` }));
+      const result = toLangChainMessages(
+        [
+          userMessage('search notion twice'),
+          approvalRequest({ approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'notionSearch', input: { q: 'q1' } }),
+          approvalDecision({ approvalId: 'a_1', approved: true }),
+          toolResult({ toolCallId: 'toolu_1', toolName: 'notionSearch', output: { results: pages } }),
+          approvalRequest({ approvalId: 'a_2', toolCallId: 'toolu_2', toolName: 'notionSearch', input: { q: 'q2' } }),
+          approvalDecision({ approvalId: 'a_2', approved: true }),
+        ],
+        undefined,
+        freshResults({ toolCallId: 'toolu_2', toolName: 'notionSearch', output: 'y'.repeat(50_000) })
+      );
+
+      const resultShapes = shapes(result);
+      expect(resultShapes.map((message) => message.role)).toEqual(['user', 'assistant', 'tool', 'assistant', 'tool']);
+      expect(resultShapes[1]).toEqual(aiToolCall('toolu_1', 'notionSearch', { q: 'q1' }));
+      expect(resultShapes[3]).toEqual(aiToolCall('toolu_2', 'notionSearch', { q: 'q2' }));
+
+      for (const [index, toolCallId] of [
+        [2, 'toolu_1'],
+        [4, 'toolu_2'],
+      ] as const) {
+        const message = resultShapes[index] as { tool_call_id: string; content: string };
+        expect(message.tool_call_id).toBe(toolCallId);
+        expect(message.content.length).toBeLessThanOrEqual(HISTORY_TOOL_OUTPUT_MAX_CHARS);
+        expect(message.content).toMatch(/\[truncated: tool output exceeded 16384 characters\]$/);
+      }
+      expect((resultShapes[2] as { content: string }).content).toMatch(/^\{"results":\[\{"id":"page_0"/);
     });
   });
 

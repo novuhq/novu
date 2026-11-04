@@ -1,5 +1,6 @@
 import type { AssistantModelMessage, ModelMessage, ToolModelMessage } from 'ai';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import { capHistoryToolOutput } from '../../resources/agent/history-tool-output';
 import type { ToolApprovalRequestPayload } from '../../resources/agent/tool-approval/action-id';
 
 /**
@@ -160,7 +161,7 @@ function executedToolResult(result: ToolResultPayload): ToolModelMessage {
         type: 'tool-result',
         toolCallId: result.toolCallId,
         toolName: result.toolName ?? 'tool',
-        output: { type: 'json', value: result.output as never },
+        output: { type: 'json', value: capHistoryToolOutput(result.output) as never },
       },
     ],
   };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentHistoryEntry, AgentNotification } from '../../resources/agent/agent.types';
+import { HISTORY_TOOL_OUTPUT_MAX_CHARS } from '../../resources/agent/history-tool-output';
 import { toModelMessages } from './index';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
@@ -428,6 +429,32 @@ describe('toModelMessages', () => {
         { role: 'assistant', content: [toolCall('toolu_cancel', 'cancelSubscription', { subId: 'B' })] },
         { role: 'tool', content: [executionDenied('toolu_cancel')] },
       ]);
+    });
+
+    it('caps an oversized tool output from an uncapped producer and keeps it paired with its call', () => {
+      const pages = Array.from({ length: 2_000 }, (_, i) => ({ id: `page_${i}`, title: `Quarterly report ${i}` }));
+      const result = toModelMessages([
+        userMessage('search notion for reports, then refund A1'),
+        approvalRequest({ approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'notionSearch', input: { q: 'report' } }),
+        approvalDecision({ approvalId: 'a_1', approved: true }),
+        toolResult({ toolCallId: 'toolu_1', toolName: 'notionSearch', output: { results: pages } }),
+        toolResult({ toolCallId: 'toolu_2', toolName: 'issueRefund', output: { ok: true } }),
+      ]);
+
+      expect(result.map((message) => message.role)).toEqual(['user', 'assistant', 'tool', 'tool']);
+      expect(result[1]).toEqual({
+        role: 'assistant',
+        content: [toolCall('toolu_1', 'notionSearch', { q: 'report' })],
+      });
+
+      const [capped] = (result[2] as { content: Array<{ toolCallId: string; output: { value: unknown } }> }).content;
+      expect(capped.toolCallId).toBe('toolu_1');
+      expect(typeof capped.output.value).toBe('string');
+      expect((capped.output.value as string).length).toBeLessThanOrEqual(HISTORY_TOOL_OUTPUT_MAX_CHARS);
+      expect(capped.output.value as string).toMatch(/^\{"results":\[\{"id":"page_0"/);
+      expect(capped.output.value as string).toMatch(/\[truncated: tool output exceeded 16384 characters\]$/);
+
+      expect(result[3]).toEqual({ role: 'tool', content: [toolResultPart('toolu_2', 'issueRefund', { ok: true })] });
     });
   });
 
