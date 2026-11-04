@@ -208,6 +208,8 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 
 The tools that write steps advertise `controlValues` as a free-form object with a short per-step-type guide, which keeps `tools/list` small enough for clients that cap schema sizes. Every call is still validated against the full per-type schema, and `get_step_schema` returns that schema (including every Maily email-body node) on demand.
 
+Before adding or changing a tool or a tool schema, read [`AGENTS.md`](./AGENTS.md) and the [`nv-mcp-server-tools`](../../.agents/skills/nv-mcp-server-tools/SKILL.md) skill. `pnpm tools:report` prints every tool's size against the budgets that `test/tool-schemas.spec.ts` enforces.
+
 ## 💻 Local Development
 
 **Prerequisites:** [Node.js](https://nodejs.org/) 20+ and [pnpm](https://pnpm.io/installation).
