@@ -97,7 +97,8 @@ export function deriveLauncherState(input: {
   return 'idle';
 }
 
-export type ToolRowStatus = 'pending' | 'active' | 'done' | 'error';
+/** `stopped`: the user stopped the run before this tool reported a result. */
+export type ToolRowStatus = 'pending' | 'active' | 'done' | 'error' | 'stopped';
 export type ToolChange = 'Added' | 'Edited' | 'Removed' | 'Moved';
 
 export type ToolRow = {
@@ -151,9 +152,12 @@ function pickTargetStepId(input: Record<string, unknown> | undefined): string | 
   return typeof stepId === 'string' && stepId ? stepId : undefined;
 }
 
-export function toolPartToRow(part: Pick<AgentToolPart, 'toolUseId' | 'toolName' | 'input' | 'state'>): ToolRow {
+export function toolPartToRow(
+  part: Pick<AgentToolPart, 'toolUseId' | 'toolName' | 'input' | 'state'>,
+  isInterrupted = false
+): ToolRow {
   const known = TOOL_LABELS[normalizeToolName(part.toolName)];
-  let status: ToolRowStatus = 'active';
+  let status: ToolRowStatus = isInterrupted ? 'stopped' : 'active';
 
   if (part.state === 'output-available') status = 'done';
   else if (part.state === 'output-error') status = 'error';
@@ -202,7 +206,7 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
-      const row = toolPartToRow(part);
+      const row = toolPartToRow(part, message.interrupted);
       const last = blocks[blocks.length - 1];
 
       if (last?.kind === 'tools') last.rows.push(row);

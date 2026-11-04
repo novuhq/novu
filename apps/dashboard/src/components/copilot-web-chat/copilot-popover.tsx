@@ -1,5 +1,12 @@
 import { type KeyboardEvent, useEffect, useRef } from 'react';
-import { RiAddLine, RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill } from 'react-icons/ri';
+import {
+  RiAddLine,
+  RiArrowRightSLine,
+  RiCloseLine,
+  RiCornerDownLeftLine,
+  RiErrorWarningFill,
+  RiStopFill,
+} from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -85,6 +92,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
     chat,
     sendMessage,
     retry,
+    stop,
     pageContext,
     draft: value,
     setDraft: setValue,
@@ -159,18 +167,32 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
           ) : (
             <span />
           )}
-          <button
-            type="button"
-            aria-label="Send message"
-            disabled={!canSend}
-            onClick={submit}
-            className={cn(
-              'flex size-6 items-center justify-center rounded-md',
-              canSend ? 'bg-text-strong text-white hover:opacity-90' : 'bg-bg-soft text-text-soft'
-            )}
-          >
-            <RiCornerDownLeftLine className="size-3.5" />
-          </button>
+          {isBusy ? (
+            <button
+              type="button"
+              aria-label={chat?.isStopping ? 'Stopping' : 'Stop generating'}
+              title={chat?.isStopping ? 'Stopping' : 'Stop generating'}
+              // Stopping takes until the agent's current step ends, so a second click has nothing to add.
+              disabled={chat?.isStopping}
+              onClick={() => void stop()}
+              className="flex size-6 items-center justify-center rounded-md bg-text-strong text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-60"
+            >
+              <RiStopFill className="size-3.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Send message"
+              disabled={!canSend}
+              onClick={submit}
+              className={cn(
+                'flex size-6 items-center justify-center rounded-md',
+                canSend ? 'bg-text-strong text-white hover:opacity-90' : 'bg-bg-soft text-text-soft'
+              )}
+            >
+              <RiCornerDownLeftLine className="size-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>

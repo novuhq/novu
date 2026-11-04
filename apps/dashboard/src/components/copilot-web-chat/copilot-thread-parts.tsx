@@ -191,7 +191,8 @@ function ToolGroup({ block }: { block: Extract<AssistantBlock, { kind: 'tools' }
 export function CopilotAssistantMessage({ message }: { message: AgentMessage }) {
   const blocks = buildAssistantBlocks(message);
 
-  if (blocks.length === 0) return null;
+  // A stopped reply with nothing to show still says it was stopped.
+  if (blocks.length === 0 && !message.interrupted) return null;
 
   return (
     // Hidden when its only block is a review card whose buttons are no longer offered.
@@ -219,6 +220,7 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
 
         return <ToolGroup key={block.key} block={block} />;
       })}
+      {message.interrupted && <span className="text-xs leading-4 text-text-soft">Stopped</span>}
     </div>
   );
 }

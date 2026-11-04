@@ -80,6 +80,7 @@ type ConnectedState = Pick<
   | 'chat'
   | 'sendMessage'
   | 'retry'
+  | 'stop'
   | 'sendCardAction'
   | 'pendingReviewMessageId'
   | 'startNewConversation'
@@ -127,6 +128,7 @@ export function CopilotWebChatProvider({
       pageContext,
       sendMessage: connected?.sendMessage ?? (async () => false),
       retry: connected?.retry ?? (async () => {}),
+      stop: connected?.stop ?? (async () => {}),
       sendCardAction: connected?.sendCardAction ?? (async () => {}),
       pendingReviewMessageId: connected?.pendingReviewMessageId,
       startNewConversation: connected?.startNewConversation ?? (() => {}),
@@ -210,6 +212,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         // A failed revert answers in plain text, so the review card is still the latest card and can be clicked again.
         setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, { outcome: event.outcome, agentId: NOVU_COPILOT_AGENT_ID });
+        // A stopped run has no answer to come back to.
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
         setAwaitingReply(false);
@@ -335,6 +338,18 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (error) setAwaitingReply(false);
   }, []);
 
+  const stop = useCallback(async () => {
+    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, { agentId: NOVU_COPILOT_AGENT_ID });
+    // Nothing is owed after a stop: drop the send → run-start bridge, a queued Try again resend and the locked review card.
+    setAwaitingReply(false);
+    tryAgainPromptRef.current = undefined;
+    setReadyPrompt(undefined);
+    setPendingReviewMessageId(undefined);
+
+    const { error } = await chatRef.current.stop();
+    if (error) showErrorToast("Couldn't stop the Copilot. Try again.");
+  }, [track]);
+
   const sendCardAction = useCallback(async (action: CopilotCardAction) => {
     if (isCopilotReviewActionId(action.actionId)) {
       setPendingReviewMessageId(action.sourceMessageId);
@@ -397,6 +412,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       chat,
       sendMessage,
       retry,
+      stop,
       sendCardAction,
       pendingReviewMessageId,
       startNewConversation,
@@ -410,6 +426,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     chat,
     sendMessage,
     retry,
+    stop,
     sendCardAction,
     pendingReviewMessageId,
     startNewConversation,

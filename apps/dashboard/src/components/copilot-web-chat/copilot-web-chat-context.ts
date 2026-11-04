@@ -18,6 +18,8 @@ export type CopilotWebChatContextValue = {
   sendMessage: (text: string) => Promise<boolean>;
   /** Resends the last message with the workflow/step it was originally sent for. */
   retry: () => Promise<void>;
+  /** Stops the running reply. The partial answer stays in the thread, marked as stopped. */
+  stop: () => Promise<void>;
   /** Clicks a card button. Keep / Revert / Try again also lock their card until the agent answers. */
   sendCardAction: (action: CopilotCardAction) => Promise<void>;
   /** The `sourceMessageId` of the review card whose click the agent has not answered yet. */
@@ -47,6 +49,7 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   toggle: noop,
   sendMessage: async () => false,
   retry: async () => {},
+  stop: async () => {},
   sendCardAction: async () => {},
   startNewConversation: noop,
   sentContextLabels: {},
