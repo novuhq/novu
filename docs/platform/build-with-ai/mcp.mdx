@@ -252,7 +252,15 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Workflows | `create_workflow` | Create a workflow, including its steps |
 | Workflows | `get_workflow` | Get a workflow's full definition |
 | Workflows | `get_workflows` | List all workflows |
-| Workflows | `update_workflow` | Update an existing workflow |
+| Workflows | `update_workflow` | Replace a workflow's full definition |
+| Workflows | `add_workflow_step` | Append a step to a workflow |
+| Workflows | `insert_workflow_step` | Insert a step after another step |
+| Workflows | `update_workflow_step_content` | Replace one step's content (control values) |
+| Workflows | `update_workflow_step_conditions` | Set or clear one step's skip condition |
+| Workflows | `remove_workflow_step` | Remove a step from a workflow |
+| Workflows | `move_workflow_step` | Move a step to a new position |
+| Workflows | `update_workflow_payload_schema` | Add or remove workflow payload schema properties |
+| Workflows | `update_workflow_metadata` | Update a workflow's name, description, tags, severity, or criticality |
 | Workflows | `delete_workflow` | Delete a workflow |
 | Workflows | `trigger_workflow` | Trigger a workflow for a subscriber |
 | Workflows | `bulk_trigger_workflow` | Trigger multiple workflows in one call |
@@ -272,7 +280,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
 
 <Note>
-  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
+  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments). Use `update_workflow` to replace a workflow's full definition, or the `*_workflow_step`, `update_workflow_payload_schema`, and `update_workflow_metadata` tools to make focused edits without resending the whole workflow. Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
 </Note>
 
 ## Use multiple MCP servers

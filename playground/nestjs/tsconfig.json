@@ -6,7 +6,6 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
     "target": "ESNext",
     "sourceMap": true,
     "outDir": "./dist",

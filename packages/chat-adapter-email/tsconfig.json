@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "esModuleInterop": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "lib": ["ES2021", "ES2022.Intl", "DOM", "DOM.Iterable"],
+    "lib": ["ES2021", "ES2022.Intl", "DOM"],
     "types": ["node"],
     "module": "nodenext",
     "moduleDetection": "force",

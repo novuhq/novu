@@ -86,7 +86,7 @@
     "@types/react": "*",
     "@types/react-dom": "*",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
-    "tsup": "^8.2.1",
+    "tsup": "^9.0.0",
     "typescript": "6.0.3"
   },
   "peerDependencies": {

@@ -112,6 +112,54 @@ describe('UpdateHumanAgent', () => {
     expect(updated).to.not.have.property('pausedAt');
   });
 
+  it('turns acknowledging incoming messages on, under the same behavior key other agents use', async () => {
+    const { usecase, agentRepository } = setup();
+
+    await usecase.execute(command({ acknowledgeOnReceived: true }));
+
+    expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({
+      $set: { 'behavior.acknowledgeOnReceived': true },
+    });
+  });
+
+  it('turns acknowledging off again', async () => {
+    const { usecase, agentRepository } = setup({ ...relay, behavior: { acknowledgeOnReceived: true } });
+
+    await usecase.execute(command({ acknowledgeOnReceived: false }));
+
+    expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({
+      $set: { 'behavior.acknowledgeOnReceived': false },
+    });
+  });
+
+  it('counts an agent that never had the setting as not acknowledging, and writes nothing to turn it off', async () => {
+    const { usecase, agentRepository } = setup();
+
+    await usecase.execute(command({ acknowledgeOnReceived: false }));
+
+    expect(agentRepository.updateOne.called).to.equal(false);
+  });
+
+  it('writes nothing when the agent already acknowledges', async () => {
+    const { usecase, agentRepository } = setup({ ...relay, behavior: { acknowledgeOnReceived: true } });
+
+    await usecase.execute(command({ acknowledgeOnReceived: true }));
+
+    expect(agentRepository.updateOne.called).to.equal(false);
+  });
+
+  it('saves who can reach the agent and acknowledging in one write, while resuming it', async () => {
+    const { usecase, agentRepository } = setup({ ...relay, pausedAt: '2026-10-15T08:00:00.000Z' });
+
+    await usecase.execute(command({ reach: 'contacts', acknowledgeOnReceived: true, paused: false }));
+
+    expect(agentRepository.updateOne.calledOnce).to.equal(true);
+    expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({
+      $set: { reach: 'contacts', 'behavior.acknowledgeOnReceived': true },
+      $unset: { pausedAt: 1 },
+    });
+  });
+
   it('renames and changes the settings in one call', async () => {
     const { usecase, humanAgentIdentity, agentRepository } = setup();
 

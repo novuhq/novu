@@ -432,8 +432,9 @@ export class HumanInteractionsController {
 
   /**
    * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
-   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
-   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
+   * page, in emails and on the agent's Telegram bot), sets who can reach it and whether it acknowledges
+   * incoming messages, and pauses or resumes it. Those settings are the operator's, on the dashboard; a host
+   * gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -444,7 +445,7 @@ export class HumanInteractionsController {
     @Body() body: UpdateHumanAgentRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
-    if (body.reach !== undefined || body.paused !== undefined) {
+    if (body.reach !== undefined || body.paused !== undefined || body.acknowledgeOnReceived !== undefined) {
       assertFromHumanDashboard(headers);
     }
 
@@ -458,6 +459,7 @@ export class HumanInteractionsController {
         description: body.description,
         reach: body.reach,
         paused: body.paused,
+        acknowledgeOnReceived: body.acknowledgeOnReceived,
       })
     );
   }

@@ -4,12 +4,10 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "types": ["node", "mocha"],
     "target": "es2017",
     "allowJs": false,
-    "esModuleInterop": true,
     "declarationMap": true
   }
 }

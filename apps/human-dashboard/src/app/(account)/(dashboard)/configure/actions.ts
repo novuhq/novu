@@ -56,11 +56,12 @@ export async function checkToolConnectedAction(tool: string): Promise<boolean> {
 }
 
 /**
- * Changes one setting of the agent: who can reach it, or whether it is paused. Answers with every setting
- * as the API has it now. The Inbox follows: its paused banner comes and goes with the pause.
+ * Changes one setting of the agent: who can reach it, whether it acknowledges incoming messages, or whether it
+ * is paused. Answers with every setting as the API has it now. The Inbox follows: its paused banner comes and
+ * goes with the pause.
  */
 export async function updateAgentSettingsAction(change: AgentSettingsChange): Promise<AgentSettingsResult> {
-  // The change comes from the browser, so only the two settings this block has get through.
+  // The change comes from the browser, so only the settings this block has get through.
   const checked = checkChange(change);
   if (!checked) {
     return { ok: false, error: 'This setting can’t be changed.' };
@@ -227,6 +228,10 @@ function checkChange(change: AgentSettingsChange): AgentSettingsChange | null {
 
   if ('paused' in change && typeof change.paused === 'boolean') {
     return { paused: change.paused };
+  }
+
+  if ('acknowledgeOnReceived' in change && typeof change.acknowledgeOnReceived === 'boolean') {
+    return { acknowledgeOnReceived: change.acknowledgeOnReceived };
   }
 
   return null;
