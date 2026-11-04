@@ -106,6 +106,7 @@ z.union([z.string().max(65536), z.array(httpKeyValuePairSchema)], {
 ## Maily (block email body)
 
 - **Defaults:** an omitted attribute gets the value the dashboard editor gives a new block (`libs/maily-core` `addAttributes`). Use `null` only where the editor has no value.
+  - An optional `attrs` object uses `.nullable().prefault({})`, so leaving it out gives the same defaults as `attrs: {}`. An explicit `null` is kept.
   - The renderer (`libs/maily-render`) uses destructuring defaults, which skip `null`. A button with a `null` color renders `color:null`, and an image with `null` sizes renders at 0px.
 - **Required:** only what the dashboard always writes; `MAILY_BODY_GUIDE` lists the full set.
   - Easy to miss: container `content` (blockquote, lists, listItem, section, column, repeat, htmlCodeBlock), the repeat's `attrs` and `each`, and the button's `url`. These must be present, though they may be `null`.
