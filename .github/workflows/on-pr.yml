@@ -272,9 +272,11 @@ jobs:
     name: Unit test backend services
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
-    if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
+    # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
+    if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] && github.event.pull_request.head.repo.fork != true }}
     timeout-minutes: 80
     strategy:
+      fail-fast: false
       # One job for each different project and node version
       matrix:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
