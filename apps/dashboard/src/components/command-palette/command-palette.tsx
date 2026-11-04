@@ -114,7 +114,7 @@ export function CommandPalette() {
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
   const openCopilot = useCopilotEntry();
-  const pendingCopilotPrefillRef = useRef<string>();
+  const pendingCopilotPrefillRef = useRef<string | undefined>(undefined);
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
