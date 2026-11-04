@@ -9,6 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
+import type { WrapperType } from '../../shared/wrapper-type';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { usesProtocolEventApprovals } from '../shared/enums/agent-platform.enum';
 import { buildLiveEnvelopeFromActivity } from './activity-to-events';
@@ -59,7 +60,7 @@ export class WebChatLiveActivityPublisher {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly conversationRepository: ConversationRepository,
     @Inject(forwardRef(() => AgentConversationService))
-    private readonly conversationService: AgentConversationService,
+    private readonly conversationService: WrapperType<AgentConversationService>,
     private readonly eventFactory: WebChatEventFactory,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly logger: PinoLogger
@@ -186,6 +187,7 @@ export class WebChatLiveActivityPublisher {
           _environmentId: context.environmentId,
           _organizationId: context.organizationId,
           subscriberId: subscriber.subscriberId,
+          // biome-ignore lint/plugin: WebSocket queue jobs carry the live event envelope as a loose JSON object
           payload: envelope as unknown as Record<string, unknown>,
           contextKeys: context.conversation.contextKeys ?? [],
         },
