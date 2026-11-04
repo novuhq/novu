@@ -290,7 +290,7 @@ describe("workflow step tools", () => {
 			const [paragraph, savedImage] = JSON.parse(
 				api.puts[0].body!.steps[1].controlValues.body,
 			).content;
-			expect(paragraph.attrs).toBeNull();
+			expect(paragraph.attrs).toEqual({ showIfKey: null, textAlign: null });
 			expect(paragraph.content[0].attrs).toMatchObject({
 				alignment: "left",
 				borderRadius: "smooth",
@@ -309,6 +309,37 @@ describe("workflow step tools", () => {
 				isSrcVariable: false,
 				width: "auto",
 			});
+		});
+
+		it("gives a section the same editor defaults whether attrs is omitted or empty, and keeps an explicit null", async () => {
+			const api = fakeWorkflowsApi();
+			const paragraph = { content: [{ text: "Hi", type: "text" }], type: "paragraph" };
+			const sections = [{}, { attrs: {} }, { attrs: null }].map((attrs) => ({
+				...attrs,
+				content: [paragraph],
+				type: "section",
+			}));
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: sections, type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			const [omitted, empty, explicitNull] = JSON.parse(
+				api.puts[0].body!.steps[1].controlValues.body,
+			).content;
+			expect(omitted.attrs).toMatchObject({ backgroundColor: "#f7f7f7", borderRadius: 6 });
+			expect(empty.attrs).toEqual(omitted.attrs);
+			expect(explicitNull.attrs).toBeNull();
 		});
 
 		it("rejects a container node without its content, as the dashboard never saves one", async () => {

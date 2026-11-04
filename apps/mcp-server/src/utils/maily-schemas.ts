@@ -162,7 +162,7 @@ const mailyDividerSchema = z.object({
 			showIfKey: z.string().nullable().optional(),
 		})
 		.nullable()
-		.default(null),
+		.prefault({}),
 	type: z.enum(["horizontalRule"]),
 });
 
@@ -286,7 +286,7 @@ const mailyParagraphSchema = z.object({
 			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 		})
 		.nullable()
-		.default(null),
+		.prefault({}),
 	content: z.array(mailyInlineContentSchema).nullable().optional(),
 	type: z.enum(["paragraph"]),
 });
@@ -335,7 +335,7 @@ const mailyFooterSchema = z.object({
 			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 		})
 		.nullable()
-		.default(null),
+		.prefault({}),
 	content: z.array(mailyInlineContentSchema).nullable().optional(),
 	type: z.enum(["footer"]),
 });
@@ -408,7 +408,7 @@ const mailySectionAttrsSchema = z
 		textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 	})
 	.nullable()
-	.default(null)
+	.prefault({})
 	.meta({ title: "sectionAttrs" });
 
 const mailyRepeatAttrsSchema = z
@@ -438,7 +438,7 @@ const mailyColumnSchema = z.object({
 				.describe('Width in percent of the row, or "auto" to share the row equally'),
 		})
 		.nullable()
-		.default(null),
+		.prefault({}),
 	content: z.array(mailyLeafNodeSchema).nullable(),
 	type: z.enum(["column"]),
 });
@@ -452,7 +452,7 @@ const mailyColumnsSchema = z.object({
 			showIfKey: z.string().nullable().default(null),
 		})
 		.nullable()
-		.default(null),
+		.prefault({}),
 	content: z.array(mailyColumnSchema).describe("The columns, left to right"),
 	type: z.enum(["columns"]),
 });
