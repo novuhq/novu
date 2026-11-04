@@ -114,34 +114,64 @@ describe("advertised tool schemas", () => {
 		}
 	});
 
-	it("still accept every input the strict schemas accept", async () => {
+	it("accept every step type's example and the dashboard's email bodies on every step tool", async () => {
 		const { tools } = await (await client()).listTools();
-		const addStep = tools.find((tool) => tool.name === "add_workflow_step")!;
-		const validate = ajv.getValidator(addStep.inputSchema);
+		const validators = new Map(
+			tools.map((tool) => [tool.name, ajv.getValidator(tool.inputSchema)]),
+		);
+		const bodies = Object.values(dashboardEmailBodies).map((body) => ({
+			controlValues: { body, editorType: "block", subject: "Hi" },
+			type: "email",
+		}));
+		const examples = await Promise.all(
+			stepTypeSchema.options.map(async (type) => ({
+				controlValues: (await stepSchema(type)).example,
+				type,
+			})),
+		);
 
-		for (const body of Object.values(dashboardEmailBodies)) {
-			const args = {
-				step: {
-					controlValues: { body, editorType: "block", subject: "Hi" },
-					name: "Email",
-					type: "email",
-				},
-				workflowId: "welcome",
-			};
-			expect(validate(args).valid).toBe(true);
+		for (const content of [...bodies, ...examples]) {
+			const step = { ...content, name: "Step" };
+			const calls: Array<[string, Json]> = [
+				["add_workflow_step", { step, workflowId: "welcome" }],
+				[
+					"insert_workflow_step",
+					{ afterStepId: "in-app-step", step, workflowId: "welcome" },
+				],
+				["create_workflow", { name: "Welcome", steps: [step] }],
+				[
+					"update_workflow",
+					{ name: "Welcome", origin: "external", steps: [step], workflowId: "welcome" },
+				],
+			];
+			if (content.type !== "trigger" && content.type !== "custom") {
+				calls.push([
+					"update_workflow_step_content",
+					{ content, stepId: "s", workflowId: "welcome" },
+				]);
+			}
+			for (const [name, args] of calls) {
+				expect(validators.get(name)!(args).valid, `${name} ${content.type}`).toBe(true);
+			}
 		}
 	});
 
-	it("list every top-level controlValues key in the step field guide", async () => {
+	it("list every top-level controlValues key on its step type's line of the field guide", async () => {
 		const { tools } = await (await client()).listTools();
 		const addStep = tools.find((tool) => tool.name === "add_workflow_step")!;
 		const guide: string = (addStep.inputSchema as Json).properties.step.properties.controlValues
 			.description;
+		const lines = guide.split("\n");
 
+		expect(guide).toContain("skip?");
 		for (const stepType of stepTypeSchema.options) {
+			const line = lines.find((candidate) =>
+				new RegExp(`[-.,] ${stepType}[:,]`).test(` ${candidate}`),
+			);
+			expect(line, stepType).toBeDefined();
 			const { schema } = await stepSchema(stepType);
-			for (const key of controlKeys(schema)) {
-				expect(guide, `${stepType}.${key}`).toContain(key);
+			for (const key of controlKeys(schema).filter((key) => key !== "skip")) {
+				expect(line, `${stepType}.${key}`).toContain(key);
 			}
 		}
 	});
@@ -174,16 +204,43 @@ describe("get_step_schema", () => {
 	it("describes every Maily node of the email body once and how to build it", async () => {
 		const reference = await stepSchema("email");
 		const schemaText = JSON.stringify(reference.schema);
+		const validate = ajv.getValidator(reference.schema);
 
 		expect(reference.notes).toContain('{ "type": "doc", "content": [blocks] }');
-		for (const node of ["paragraph", "columns", "repeat", "inlineImage", "variable", "link"]) {
-			expect(schemaText).toContain(`"${node}"`);
+		for (const node of [
+			"paragraph",
+			"button",
+			"columns",
+			"repeat",
+			"inlineImage",
+			"variable",
+			"link",
+		]) {
+			expect(reference.schema.definitions, node).toHaveProperty(node);
+			expect(schemaText.split(`"enum":["${node}"]`).length - 1, node).toBe(1);
 		}
+		expect(schemaText).toContain("Sender for this step.");
 		for (const body of Object.values(dashboardEmailBodies)) {
-			const controlValues = { body, editorType: "block", subject: "Hi" };
-			expect(ajv.getValidator(reference.schema)(controlValues)).toMatchObject({
+			expect(validate({ body, editorType: "block", subject: "Hi" })).toMatchObject({
 				valid: true,
 			});
+		}
+		const heading = { attrs: { level: 4 }, type: "heading" };
+		expect(
+			validate({
+				body: { content: [heading], type: "doc" },
+				editorType: "block",
+				subject: "Hi",
+			}).valid,
+		).toBe(false);
+	});
+
+	it("names every shared definition after what it describes", async () => {
+		for (const stepType of stepTypeSchema.options) {
+			const { schema } = await stepSchema(stepType);
+			for (const name of Object.keys(schema.definitions ?? {})) {
+				expect(name, stepType).toMatch(/^[a-zA-Z]+(_\d+)?$/);
+			}
 		}
 	});
 
@@ -220,11 +277,43 @@ describe("strict validation behind the advertised schemas", () => {
 
 	it("rejects an invalid email body node at its path before any request", async () => {
 		const api = fakeWorkflowsApi();
+		const step = {
+			controlValues: {
+				body: { content: [{ type: "notANode" }], type: "doc" },
+				editorType: "block",
+				subject: "Hi",
+			},
+			name: "Email",
+			type: "email",
+		};
 
-		const result = await callTool(await client(), "add_workflow_step", {
+		const added = await callTool(await client(), "add_workflow_step", {
+			step,
+			workflowId: "welcome",
+		});
+		const created = await callTool(await client(), "create_workflow", {
+			name: "Welcome",
+			steps: [step],
+		});
+
+		expect(added.isError).toBe(true);
+		expect(textOf(added)).toContain("at step.controlValues.body.content[0].type");
+		expect(textOf(created)).toContain("at steps[0].controlValues.body.content[0].type");
+		expect(api.requests).toHaveLength(0);
+	});
+
+	it("explains a controlValues that is not an object and an image size of the wrong type", async () => {
+		const api = fakeWorkflowsApi();
+		const image = { attrs: { src: "https://example.com/a.png", width: true }, type: "image" };
+
+		const notAnObject = await callTool(await client(), "add_workflow_step", {
+			step: { controlValues: "Hello", name: "SMS", type: "sms" },
+			workflowId: "welcome",
+		});
+		const badSize = await callTool(await client(), "add_workflow_step", {
 			step: {
 				controlValues: {
-					body: { content: [{ type: "notANode" }], type: "doc" },
+					body: { content: [image], type: "doc" },
 					editorType: "block",
 					subject: "Hi",
 				},
@@ -234,8 +323,12 @@ describe("strict validation behind the advertised schemas", () => {
 			workflowId: "welcome",
 		});
 
-		expect(result.isError).toBe(true);
-		expect(textOf(result)).toContain("at step.controlValues.body.content[0].type");
+		expect(textOf(notAnObject)).toContain(
+			"Expected controlValues as an object of the step type's keys at step.controlValues",
+		);
+		expect(textOf(badSize)).toContain(
+			'Expected a number or a string such as "auto" at step.controlValues.body.content[0].attrs.width',
+		);
 		expect(api.requests).toHaveLength(0);
 	});
 

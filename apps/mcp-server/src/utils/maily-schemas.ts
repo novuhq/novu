@@ -1,8 +1,8 @@
 /**
  * Maily TipTap JSON Schema for AI Generation.
  *
- * Nodes that appear in several places are shared instances, so
- * `get_step_schema` emits each of them once instead of once per position.
+ * `get_step_schema` names a shared node after its `type` and other shared
+ * schemas after their `title` meta.
  *
  * Keep in sync with the Novu Maily renderer node/mark properties.
  */
@@ -16,9 +16,11 @@ export const MAILY_BODY_GUIDE = [
 	"blockquote and listItem hold paragraphs, bulletList and orderedList hold listItems, and htmlCodeBlock holds text nodes.",
 	"A section holds paragraph, heading, button, image, inlineImage, logo, linkCard, spacer, horizontalRule, footer, repeat, columns and sections. columns holds column nodes. A column, a repeat and a section inside a section hold only paragraph, heading, button, image, inlineImage, logo, linkCard, spacer and horizontalRule.",
 	'Insert a variable as a variable node: { "type": "variable", "attrs": { "id": "subscriber.firstName" } }.',
-	"Required attributes: variable attrs.id, button attrs.text, heading attrs.level (1, 2 or 3), spacer attrs.height, image, inlineImage and logo attrs.src, linkCard attrs.title and attrs.link, and link attrs.href. Leave out the other attributes you don't set; they are saved as null.",
-	'An attribute bound to a variable (with isUrlVariable, isSrcVariable, isTextVariable or isExternalLinkVariable true) takes a bare name such as "payload.url", never "{{ payload.url }}". Inside a repeat (attrs.each: "payload.items"), set aliasFor to the item path.',
+	"Required attributes: variable attrs.id, button attrs.text, heading attrs.level (1, 2 or 3), spacer attrs.height, image, inlineImage and logo attrs.src, linkCard attrs.title and attrs.link, and link attrs.href. Leave out the other attributes you don't set; most are saved as null.",
+	'An attribute bound to a variable (with isUrlVariable, isSrcVariable, isTextVariable or isExternalLinkVariable true) takes a bare name such as "payload.url", never "{{ payload.url }}". Inside a repeat (attrs.each: "payload.items", or "steps.<digestStepId>.events" for digested events), refer to item fields by their full path, e.g. variable attrs.id "payload.items.name"; aliasFor is optional.',
 ].join("\n");
+
+const DIMENSION_ERROR = 'Expected a number or a string such as "auto"';
 
 const mailyMarkSchema = z.object({
 	type: z.enum(["bold", "italic", "underline", "strike", "code"]),
@@ -175,7 +177,10 @@ const mailyImageSchema = z.object({
 			),
 		alignment: z.enum(["left", "center", "right"]).nullable().default(null),
 		alt: z.string().nullable().default(null).describe("Alt text for accessibility"),
-		aspectRatio: z.union([z.number(), z.string()]).nullable().optional(),
+		aspectRatio: z
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
+			.nullable()
+			.optional(),
 		borderRadius: z.number().nullable().default(null),
 		externalLink: z
 			.string()
@@ -185,7 +190,7 @@ const mailyImageSchema = z.object({
 				"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
 			),
 		height: z
-			.union([z.number(), z.string()])
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
 			.nullable()
 			.default(null)
 			.describe('Height in pixels, or "auto"'),
@@ -212,7 +217,7 @@ const mailyImageSchema = z.object({
 			),
 		title: z.string().nullable().default(null),
 		width: z
-			.union([z.number(), z.string()])
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
 			.nullable()
 			.default(null)
 			.describe('Width in pixels, or "auto"'),
@@ -264,13 +269,15 @@ const mailyInlineImageSchema = z.object({
 	type: z.enum(["inlineImage"]),
 });
 
-const mailyInlineContentSchema = z.discriminatedUnion("type", [
-	mailyTextNodeSchema,
-	mailyVariableNodeSchema,
-	mailyHardBreakSchema,
-	mailyButtonSchema,
-	mailyInlineImageSchema,
-]);
+const mailyInlineContentSchema = z
+	.discriminatedUnion("type", [
+		mailyTextNodeSchema,
+		mailyVariableNodeSchema,
+		mailyHardBreakSchema,
+		mailyButtonSchema,
+		mailyInlineImageSchema,
+	])
+	.meta({ title: "inlineNode" });
 
 const mailyParagraphSchema = z.object({
 	attrs: z
@@ -366,17 +373,19 @@ const mailyLinkCardSchema = z.object({
 	type: z.enum(["linkCard"]),
 });
 
-const mailyLeafNodeSchema = z.discriminatedUnion("type", [
-	mailyLinkCardSchema,
-	mailyDividerSchema,
-	mailySpacerSchema,
-	mailyButtonSchema,
-	mailyImageSchema,
-	mailyInlineImageSchema,
-	mailyParagraphSchema,
-	mailyHeadingSchema,
-	mailyLogoSchema,
-]);
+const mailyLeafNodeSchema = z
+	.discriminatedUnion("type", [
+		mailyLinkCardSchema,
+		mailyDividerSchema,
+		mailySpacerSchema,
+		mailyButtonSchema,
+		mailyImageSchema,
+		mailyInlineImageSchema,
+		mailyParagraphSchema,
+		mailyHeadingSchema,
+		mailyLogoSchema,
+	])
+	.meta({ title: "leafBlock" });
 
 const mailySectionAttrsSchema = z
 	.object({
@@ -399,7 +408,8 @@ const mailySectionAttrsSchema = z
 		textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 	})
 	.nullable()
-	.default(null);
+	.default(null)
+	.meta({ title: "sectionAttrs" });
 
 const mailyRepeatAttrsSchema = z
 	.object({
@@ -427,7 +437,7 @@ const mailyColumnSchema = z.object({
 			columnId: z.string().nullable().default(null),
 			verticalAlign: z.enum(["top", "middle", "bottom"]).nullable().default(null),
 			width: z
-				.union([z.number(), z.string()])
+				.union([z.number(), z.string()], { error: DIMENSION_ERROR })
 				.nullable()
 				.default(null)
 				.describe('Width in percent of the row, or "auto" to share the row equally'),

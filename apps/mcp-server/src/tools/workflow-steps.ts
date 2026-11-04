@@ -55,7 +55,7 @@ const PAYLOAD_SCHEMA_REMINDER =
 	"The payload schema is never inferred from the step: declare the payload variables it reads that the schema lacks (orderId for {{payload.orderId}}) in addPayloadProperties to save them with the step, or call update_workflow_payload_schema afterwards.";
 
 export const STEP_SCHEMA_HINT =
-	'The controlValues field lists the keys of each step type; call get_step_schema for a type\'s full schema and a valid example, and always before writing an email with editorType "block".';
+	"The controlValues field lists each step type's keys; get_step_schema returns a type's full schema and a valid example.";
 
 const workflowIdField = z
 	.string()
@@ -163,7 +163,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Any other control value you leave out is cleared, so send the step's current values along with your change. Returns the saved workflow. ${STEP_SCHEMA_HINT} ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Replace the content (control values) of one existing step. content.type must match the step's type; edit trigger and custom steps with update_workflow. The step's name, id and skip condition are kept and a skip in content is ignored; use update_workflow_step_conditions to change it. Any other control value you leave out is cleared, so send the step's current values along with your change; get_workflow returns a block email body as a JSON string, so send it back parsed, as an object. Returns the saved workflow. ${STEP_SCHEMA_HINT} ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(request, workflow, input.stepId, { editable: true });
@@ -209,7 +209,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip to remove the condition. The step's content is kept. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip or pass null to remove the condition. The step's content is kept. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(request, workflow, input.stepId, { editable: true });

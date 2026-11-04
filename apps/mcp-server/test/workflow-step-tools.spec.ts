@@ -343,16 +343,21 @@ describe("workflow step tools", () => {
 			});
 		});
 
-		it("removes the skip condition when skip is omitted", async () => {
+		it.each([
+			["omitted", {}],
+			["null", { skip: null }],
+		])("removes the skip condition when skip is %s", async (_label, args) => {
 			const workflow = workflowResponseFixture();
 			Object.assign(workflow.steps[0].controlValues, { skip: { "==": [1, 1] } });
 			const api = fakeWorkflowsApi(workflow);
 
-			await callTool(await client(), "update_workflow_step_conditions", {
+			const result = await callTool(await client(), "update_workflow_step_conditions", {
+				...args,
 				stepId: "in-app-step",
 				workflowId: "welcome",
 			});
 
+			expect(result.isError).toBeFalsy();
 			expect(api.puts[0].body!.steps[0].controlValues).not.toHaveProperty("skip");
 		});
 

@@ -6,8 +6,8 @@ import { optionalSkipConditionSchema } from "./skip-schemas";
  * Workflow step schemas — one discriminated union member per Novu step type.
  *
  * Step-related enums live here (not in workflow-schemas.ts) so that
- * workflow-schemas.ts can import `workflowStepSchema` from this file
- * without creating a circular dependency.
+ * workflow-schemas.ts can import the step schemas from this file without
+ * creating a circular dependency.
  */
 
 // --- Step-related enums --------------------------------------------------
@@ -528,11 +528,10 @@ export type WorkflowStepContent = z.infer<typeof workflowStepContentSchema>;
 // --- Advertised step inputs ------------------------------------------------
 
 /*
- * The MCP SDK advertises a tool's input schema from the input side of a pipe
- * (`pipeStrategy: "input"`) and validates calls through the whole pipe. A
- * step input therefore advertises name, type and free-form controlValues, a
- * few KB instead of the per-type union with the Maily body inlined (about
- * 450 KB per tool), while every call is still parsed by the strict union.
+ * The MCP SDK lists a tool's input schema from the input side of a pipe
+ * (`pipeStrategy: "input"`) and validates calls through the whole pipe, so a
+ * step input advertises free-form controlValues while every call is still
+ * parsed by the strict per-type union.
  */
 
 const controlValuesSchemaByStepType = {
@@ -553,8 +552,7 @@ type StepControlValuesInput = {
 	[T in StepType]: z.input<(typeof controlValuesSchemaByStepType)[T]>;
 };
 
-/** One valid controlValues object per step type, returned by `get_step_schema`. */
-export const STEP_CONTROL_EXAMPLES: StepControlValuesInput = {
+const STEP_CONTROL_EXAMPLES: StepControlValuesInput = {
 	chat: { body: "New signup: {{payload.email}}" },
 	custom: {},
 	delay: { amount: 30, type: "regular", unit: "minutes" },
@@ -603,12 +601,12 @@ export const STEP_CONTROL_EXAMPLES: StepControlValuesInput = {
 };
 
 const STEP_CONTROLS_GUIDE_HEADER =
-	"controlValues for the step's type (? marks an optional key). Write dynamic text as {{payload.x}} or {{subscriber.x}}, never a bare {{x}}. get_step_schema returns a type's full schema and a valid example.";
+	"controlValues for the step's type (? marks an optional key; keys not listed are dropped). Write dynamic text as {{payload.x}} or {{subscriber.x}}, never a bare {{x}}.";
 
 const STEP_CONTROLS_GUIDE_TYPES = [
-	"- in_app: { subject, body, avatar?, redirect?: { url, target? }, primaryAction?: { label, redirect?: { url, target? } }, secondaryAction? (same shape), data?: {}, disableOutputSanitization? }",
-	'- email: { editorType: "html", subject, body: "<p>Hi {{subscriber.firstName}}</p>" } or { editorType: "block", subject, body: <Maily JSON doc object> }; call get_step_schema for "email" before writing a "block" body. Both take preheader?, layoutId? (null for no layout), from?: { email?, name? }, replyTo?, useProviderDefaults?, disableOutputSanitization?',
-	"- sms, chat: { body } (keep sms under 160 characters). push: { subject, body }",
+	'- in_app: { subject, body, avatar?, redirect?: { url, target?: "_self" | "_blank" }, primaryAction?: { label, redirect? }, secondaryAction?: { label, redirect? }, data?: {}, disableOutputSanitization? }',
+	'- email: { editorType: "html", subject, body: "<p>Hi {{subscriber.firstName}}</p>" } or { editorType: "block", subject, body: { type: "doc", content: [...] } (an object, not a string) }; call get_step_schema for "email" before writing a "block" body. Both take preheader?, layoutId? (null for no layout), from?: { email?, name? }, replyTo?, useProviderDefaults?, disableOutputSanitization?',
+	"- sms: { body } (keep it under 160 characters). chat: { body }. push: { subject, body }",
 	'- delay: { type: "regular", amount: 30, unit: "minutes" } | { type: "timed", cron: "0 9 * * 1" } | { type: "dynamic", dynamicKey: "payload.sendAt" }, each with extendToSchedule?',
 	'- digest: { type: "regular", amount: 1, unit: "hours", digestKey?: "payload.orderId", lookBackWindow?: { amount, unit, extendToSchedule? }, extendToSchedule? } | { type: "timed", cron: "0 9 * * *", digestKey?, extendToSchedule? }',
 	'- throttle: { type: "fixed", amount: 1, unit: "hours", threshold: 5, throttleKey? } (unit is minutes, hours or days) | { type: "dynamic", dynamicKey: "payload.windowMs", threshold: 5, throttleKey? }',
@@ -630,141 +628,121 @@ const STEP_CONTENT_CONTROLS_GUIDE = [
 	STEP_CONTROLS_GUIDE_HEADER,
 	...STEP_CONTROLS_GUIDE_TYPES,
 	STEP_CONTROLS_GUIDE_UNITS,
-	"The step's skip condition is kept; change it with update_workflow_step_conditions.",
 ].join("\n");
+
+const CONTROL_VALUES_ERROR = "Expected controlValues as an object of the step type's keys";
 
 export const workflowStepInputSchema = z
 	.object({
 		...baseStepFields,
-		controlValues: z.record(z.string(), z.unknown()).describe(STEP_CONTROLS_GUIDE),
+		controlValues: z
+			.record(z.string(), z.unknown(), { error: CONTROL_VALUES_ERROR })
+			.describe(STEP_CONTROLS_GUIDE),
 		type: stepTypeSchema,
 	})
 	.pipe(workflowStepSchema);
 
 export const workflowStepContentInputSchema = z
 	.object({
-		controlValues: z.record(z.string(), z.unknown()).describe(STEP_CONTENT_CONTROLS_GUIDE),
+		controlValues: z
+			.record(z.string(), z.unknown(), { error: CONTROL_VALUES_ERROR })
+			.describe(STEP_CONTENT_CONTROLS_GUIDE),
 		type: stepTypeSchema.exclude(["trigger", "custom"]),
 	})
 	.pipe(workflowStepContentSchema);
 
+// --- get_step_schema -----------------------------------------------------
+
 type JsonObject = Record<string, unknown>;
 
-const DEFINITIONS_PREFIX = "#/definitions/";
-const MAX_INLINED_DEFINITION_CHARS = 200;
+const MIN_SHARED_DEFINITION_CHARS = 200;
 
-function definitionName(node: JsonObject): string | undefined {
-	const ref = node.$ref;
+/** A Maily node or mark is named after its `type`; other shared schemas carry a `title` meta. */
+function definitionLabel(node: JsonObject): string | undefined {
+	if (typeof node.title === "string") return node.title;
 
-	return typeof ref === "string" && ref.startsWith(DEFINITIONS_PREFIX)
-		? ref.slice(DEFINITIONS_PREFIX.length)
-		: undefined;
-}
-
-function visitJsonObjects(node: unknown, visit: (object: JsonObject) => void): void {
-	if (Array.isArray(node)) {
-		for (const item of node) visitJsonObjects(item, visit);
-	} else if (node && typeof node === "object") {
-		visit(node as JsonObject);
-		for (const child of Object.values(node)) visitJsonObjects(child, visit);
-	}
-}
-
-/** A Maily node or mark definition is named after its `type`, e.g. "paragraph". */
-function nodeTypeName(definition: JsonObject): string | undefined {
-	const type = (definition.properties as { type?: { enum?: unknown[] } } | undefined)?.type;
+	const type = (node.properties as { type?: { enum?: unknown[] } } | undefined)?.type;
 
 	return type?.enum?.length === 1 && typeof type.enum[0] === "string" ? type.enum[0] : undefined;
 }
 
-/** Zod wraps a `$ref` with siblings in `allOf`; once inlined, merge it back. */
-function unwrapAllOf(node: JsonObject): JsonObject {
-	const { allOf, ...rest } = node;
-	if (!Array.isArray(allOf) || allOf.length !== 1) return node;
-
-	const [only] = allOf as JsonObject[];
-	if ("$ref" in only || Object.keys(only).some((key) => key in rest)) return node;
-
-	return { ...only, ...rest };
+function mapJsonObject(object: JsonObject, map: (value: unknown) => unknown): JsonObject {
+	return Object.fromEntries(Object.entries(object).map(([key, value]) => [key, map(value)]));
 }
 
 /**
- * `reused: "ref"` also extracts schemas that end up referenced once and
- * one-line fields two variants share. Inline those, so only the large shared
- * schemas (Maily nodes, skip groups) stay references.
+ * Moves every named subschema that occurs more than once, such as a Maily
+ * node or the skip condition, into `definitions`, so the inlined email schema
+ * (about 180 KB) lists each node once.
  */
-function compactDefinitions(schema: JsonObject): JsonObject {
-	const { definitions = {}, ...root } = schema as JsonObject & {
-		definitions?: Record<string, JsonObject>;
+function extractSharedDefinitions(schema: JsonObject): JsonObject {
+	const named = new Map<JsonObject, { label: string; text: string }>();
+	const occurrences = new Map<string, number>();
+	const collect = (node: unknown): void => {
+		if (Array.isArray(node)) {
+			for (const item of node) collect(item);
+		} else if (node && typeof node === "object") {
+			const object = node as JsonObject;
+			for (const value of Object.values(object)) collect(value);
+
+			const label = definitionLabel(object);
+			const text = JSON.stringify(object);
+			if (!label || text.length < MIN_SHARED_DEFINITION_CHARS) return;
+			named.set(object, { label, text });
+			occurrences.set(text, (occurrences.get(text) ?? 0) + 1);
+		}
 	};
-	const refCounts = new Map<string, number>();
-	visitJsonObjects([root, definitions], (node) => {
-		const name = definitionName(node);
-		if (name) refCounts.set(name, (refCounts.get(name) ?? 0) + 1);
-	});
+	collect(schema);
 
-	const kept = Object.keys(definitions).filter(
-		(name) =>
-			(refCounts.get(name) ?? 0) > 1 &&
-			JSON.stringify(definitions[name]).length > MAX_INLINED_DEFINITION_CHARS,
-	);
-	const typeNames = kept.map((name) => nodeTypeName(definitions[name]));
-	const names = new Map(
-		kept.map((name, index) => {
-			const typeName = typeNames[index];
-			const unique =
-				typeName && typeNames.indexOf(typeName) === typeNames.lastIndexOf(typeName);
-
-			return [name, unique && !(typeName in definitions) ? typeName : name];
-		}),
-	);
-
-	const resolve = (node: unknown): unknown => {
-		if (Array.isArray(node)) return node.map(resolve);
+	const definitions = new Map<string, unknown>();
+	const namesByText = new Map<string, string>();
+	const replace = (node: unknown): unknown => {
+		if (Array.isArray(node)) return node.map(replace);
 		if (!node || typeof node !== "object") return node;
 
-		const { $ref, ...rest } = node as JsonObject;
-		const resolved = Object.fromEntries(
-			Object.entries(rest).map(([key, value]) => [key, resolve(value)]),
-		);
-		const name = definitionName(node as JsonObject);
-		if (!name) return $ref === undefined ? unwrapAllOf(resolved) : { $ref, ...resolved };
-		if (names.has(name)) {
-			return { $ref: `${DEFINITIONS_PREFIX}${names.get(name)}`, ...resolved };
+		const object = node as JsonObject;
+		const entry = named.get(object);
+		if (!entry || (occurrences.get(entry.text) ?? 0) < 2) {
+			return mapJsonObject(object, replace);
 		}
 
-		return { ...(resolve(definitions[name]) as JsonObject), ...resolved };
+		let name = namesByText.get(entry.text);
+		if (!name) {
+			name = entry.label;
+			for (let suffix = 2; definitions.has(name); suffix++) name = `${entry.label}_${suffix}`;
+			namesByText.set(entry.text, name);
+			// Claimed before the children are replaced, so a nested node with the same label gets another name.
+			definitions.set(name, undefined);
+			definitions.set(name, mapJsonObject(object, replace));
+		}
+
+		return { $ref: `#/definitions/${name}` };
 	};
 
-	const compacted = resolve(root) as JsonObject;
-	if (kept.length === 0) return compacted;
+	const extracted = replace(schema) as JsonObject;
 
-	return {
-		...compacted,
-		definitions: Object.fromEntries(
-			kept.map((name) => [names.get(name), resolve(definitions[name])]),
-		),
-	};
+	return definitions.size > 0
+		? { ...extracted, definitions: Object.fromEntries(definitions) }
+		: extracted;
 }
 
-/**
- * What `get_step_schema` returns for one step type. `reused: "ref"` emits a
- * shared instance (a Maily node, the skip condition) once, which is why those
- * schemas are module-level constants rather than factories.
- */
-export function describeStepControlValues(stepType: StepType): string {
-	const schema = compactDefinitions(
-		z.toJSONSchema(controlValuesSchemaByStepType[stepType], {
-			io: "input",
-			reused: "ref",
-			target: "draft-7",
-		}),
-	);
+const stepControlValuesDescriptions = new Map<StepType, string>();
 
-	return JSON.stringify({
+/** What `get_step_schema` returns for one step type, built once per type. */
+export function describeStepControlValues(stepType: StepType): string {
+	const cached = stepControlValuesDescriptions.get(stepType);
+	if (cached) return cached;
+
+	const schema = extractSharedDefinitions(
+		z.toJSONSchema(controlValuesSchemaByStepType[stepType], { io: "input", target: "draft-7" }),
+	);
+	const description = JSON.stringify({
 		example: STEP_CONTROL_EXAMPLES[stepType],
 		...(stepType === "email" && { notes: MAILY_BODY_GUIDE }),
 		schema,
 		stepType,
 	});
+	stepControlValuesDescriptions.set(stepType, description);
+
+	return description;
 }

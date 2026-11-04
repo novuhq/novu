@@ -28,11 +28,7 @@ import { workflowStepInputSchema } from "./step-schemas";
 
 // --- Re-exports (backward compatibility) ---------------------------------
 
-export {
-	optionalSkipConditionSchema,
-	skipConditionInputSchema,
-	skipConditionSchema,
-} from "./skip-schemas";
+export { skipConditionInputSchema } from "./skip-schemas";
 export type {
 	DelayType,
 	DigestType,
@@ -235,7 +231,7 @@ export const payloadPropertyInputSchema = z
 			.unknown()
 			.optional()
 			.describe(
-				'For arrayItemsType "object": the properties of each item, e.g. [{ "name": "address.city", "type": "string" }] with type string, number, integer or boolean. Omit for scalar arrays.',
+				'For arrayItemsType "object": the properties of each item, each one required, e.g. [{ "name": "address.city", "type": "string" }] with type string, number, integer or boolean. Omit for scalar arrays.',
 			),
 		arrayItemsType: z
 			.unknown()
@@ -343,7 +339,7 @@ export const createWorkflowInputSchema = baseWorkflowInputSchema.extend({
 		.array(workflowStepInputSchema)
 		.optional()
 		.describe(
-			"Steps of the workflow in order. Omit to create an empty workflow and add steps later with add_workflow_step. Always use {{payload.variableName}} for dynamic content.",
+			"Steps of the workflow in order. Omit to create an empty workflow and add steps later with add_workflow_step. Each step's stepId is generated from its name; read it from the response before referring to steps.<stepId>. Always use {{payload.variableName}} for dynamic content.",
 		),
 	workflowId: z
 		.string()
