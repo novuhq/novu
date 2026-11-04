@@ -1,5 +1,6 @@
 import { buildNovuSignatureHeader } from '@novu/application-generic';
 import { agent } from '@novu/framework';
+import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import { Client, NovuHandler, type ServeHandlerOptions } from '@novu/framework/nest';
 import { expect } from 'chai';
 import type { Request, Response } from 'express';
@@ -153,6 +154,27 @@ describe('NovuInternalBridgeClient', () => {
 
     expect(res.status.firstCall.args[0]).to.equal(200);
     expect(onMessage.calledOnce).to.equal(true);
+  });
+
+  it("answers an agent turn listing onAbort, so a Stop of Novu's own agents still sends them onAbort", async () => {
+    const body = buildTurnBody();
+    const res = buildResponse();
+
+    await client.handleRequest(
+      buildRequest({
+        method: 'POST',
+        query: agentEventQuery,
+        body,
+        signature: buildNovuSignatureHeader(SECRET_KEY, body),
+      }),
+      res as unknown as Response
+    );
+    await flushBackgroundTurn();
+
+    const handledEvents = res.setHeader
+      .getCalls()
+      .find((call) => call.args[0] === HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS)?.args[1];
+    expect(String(handledEvents).split(',')).to.include(AgentEventEnum.ON_ABORT);
   });
 
   it('keeps serving workflow actions with the bridge client strictness', async () => {

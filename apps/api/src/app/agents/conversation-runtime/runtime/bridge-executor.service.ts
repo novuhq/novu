@@ -189,6 +189,15 @@ function isStoppableTurn(event: AgentEventEnum): boolean {
   return event !== AgentEventEnum.ON_RESOLVE && event !== AgentEventEnum.ON_ABORT;
 }
 
+function bridgeHandlesOnAbort(headers: SafeOutboundStreamResponse['headers']): boolean {
+  const handledEvents = headers[HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS];
+  if (typeof handledEvents !== 'string') {
+    return false;
+  }
+
+  return handledEvents.split(',').some((handledEvent) => handledEvent.trim() === AgentEventEnum.ON_ABORT);
+}
+
 export class NoBridgeUrlError extends Error {
   constructor(agentIdentifier: string) {
     super(`No bridge URL configured for agent ${agentIdentifier}`);
@@ -254,10 +263,12 @@ export class BridgeExecutorService {
 
       const payload = await this.buildPayload(params);
       const { onEventStream } = params;
+      const conversationId = String(params.conversation._id);
+      const stoppable = isStoppableTurn(event);
 
       // Recorded before the bridge is called, so a Stop clicked right after Send already finds the turn.
-      if (isStoppableTurn(event)) {
-        await this.turnAbortStore.setActiveTurn(String(params.conversation._id), {
+      if (stoppable) {
+        await this.turnAbortStore.setActiveTurn(conversationId, {
           turnId: payload.deliveryId,
           ...(params.message?.id ? { platformMessageId: params.message.id } : {}),
         });
@@ -265,6 +276,10 @@ export class BridgeExecutorService {
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier, !!onEventStream)
         .then((response) => {
+          if (stoppable && bridgeHandlesOnAbort(response.headers)) {
+            void this.turnAbortStore.markBridgeHandlesOnAbort(conversationId, payload.deliveryId);
+          }
+
           const isEventStream = String(response.headers['content-type'] ?? '').startsWith('text/event-stream');
           if (onEventStream && isEventStream) {
             onEventStream(response.body);
@@ -273,7 +288,7 @@ export class BridgeExecutorService {
           }
         })
         .catch((err) => {
-          // `onAbort` is best-effort: a bridge on an older framework rejects the unknown event.
+          // `onAbort` is best-effort: the turn it follows is already stopped whether or not the bridge takes it.
           if (event === AgentEventEnum.ON_ABORT) {
             this.logger.warn(err, `[agent:${agentIdentifier}] Bridge did not take the onAbort event`);
 
@@ -516,7 +531,16 @@ export class BridgeExecutorService {
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation, params.platformThreadId) : null,
       humanResponse: humanResponse ?? null,
-      ...(params.abortedTurn ? { abortedTurn: params.abortedTurn } : {}),
+      ...(params.abortedTurn
+        ? {
+            abortedTurn: {
+              turnId: params.abortedTurn.turnId,
+              ...(params.abortedTurn.platformMessageId
+                ? { platformMessageId: params.abortedTurn.platformMessageId }
+                : {}),
+            },
+          }
+        : {}),
     };
 
     return payload;

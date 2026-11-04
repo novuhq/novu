@@ -1,4 +1,4 @@
-import { AgentEventEnum } from '@novu/framework/internal';
+import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -21,7 +21,10 @@ describe('BridgeExecutorService', () => {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
     const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
-    const turnAbortStore = { setActiveTurn: sinon.stub().resolves() };
+    const turnAbortStore = {
+      setActiveTurn: sinon.stub().resolves(),
+      markBridgeHandlesOnAbort: sinon.stub().resolves(),
+    };
 
     const service = new BridgeExecutorService(
       {} as any,
@@ -216,6 +219,18 @@ describe('BridgeExecutorService', () => {
       expect(payload.deliveryId).to.equal(`conv-1:${AgentEventEnum.ON_ABORT}:conv-1:msg-1`);
     });
 
+    it("keeps Novu's own record of the stopped turn off the wire", async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1', bridgeHandlesOnAbort: true },
+      });
+
+      expect(payload.abortedTurn).to.deep.equal({ turnId: 'conv-1:msg-1' });
+    });
+
     it('sends no abortedTurn on other events', async () => {
       const { service } = makeService();
 
@@ -325,10 +340,20 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('execute', () => {
-    function stubDelivery(service: BridgeExecutorService) {
+    const handlesOnAbortHeaders = {
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: 'onMessage,onMessageUpdated,onAction,onResolve,onAbort',
+    };
+
+    function stubDelivery(service: BridgeExecutorService, headers: Record<string, string> = {}) {
       (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
       sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
-      sinon.stub(service as any, 'fireWithRetries').resolves({ headers: {}, body: { resume: sinon.stub() } });
+      sinon.stub(service as any, 'fireWithRetries').resolves({ headers, body: { resume: sinon.stub() } });
+    }
+
+    function flushDelivery(): Promise<void> {
+      return new Promise((resolve) => {
+        setImmediate(resolve);
+      });
     }
 
     it('records the turn as the conversation active turn before calling the bridge', async () => {
@@ -347,7 +372,7 @@ describe('BridgeExecutorService', () => {
 
     it('never records onResolve or onAbort as the active turn', async () => {
       const { service, turnAbortStore } = makeService();
-      stubDelivery(service);
+      stubDelivery(service, handlesOnAbortHeaders);
 
       await service.execute({ ...makeExecutionParams(), event: AgentEventEnum.ON_RESOLVE } as any);
       await service.execute({
@@ -355,15 +380,42 @@ describe('BridgeExecutorService', () => {
         event: AgentEventEnum.ON_ABORT,
         abortedTurn: { turnId: 'conv-1:msg-1' },
       } as any);
+      await flushDelivery();
 
       expect(turnAbortStore.setActiveTurn.called).to.equal(false);
+      expect(turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
     });
 
-    it('logs a bridge that rejects onAbort as a warning, since older frameworks do not know the event', async () => {
+    it('flags the active turn once the bridge answers listing onAbort among the events it handles', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service, handlesOnAbortHeaders);
+
+      await service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await flushDelivery();
+
+      expect(turnAbortStore.markBridgeHandlesOnAbort.calledOnceWith('conv-1', 'conv-1:message-id')).to.equal(true);
+    });
+
+    it('leaves the turn unflagged for a bridge on a framework that predates onAbort', async () => {
+      const withoutHeader = makeService();
+      stubDelivery(withoutHeader.service);
+      const withoutOnAbort = makeService();
+      stubDelivery(withoutOnAbort.service, { [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: 'onMessage,onAction' });
+
+      await withoutHeader.service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await withoutOnAbort.service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await flushDelivery();
+
+      expect(withoutHeader.turnAbortStore.setActiveTurn.calledOnce).to.equal(true);
+      expect(withoutHeader.turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
+      expect(withoutOnAbort.turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
+    });
+
+    it('logs a bridge that fails to take onAbort as a warning, since the turn it follows is already stopped', async () => {
       const { service, logger } = makeService();
       (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
       sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
-      sinon.stub(service as any, 'fireWithRetries').rejects(new Error('Bridge returned 400: InvalidActionError'));
+      sinon.stub(service as any, 'fireWithRetries').rejects(new Error('Bridge returned 503: Service Unavailable'));
 
       await service.execute({
         ...makeExecutionParams(),

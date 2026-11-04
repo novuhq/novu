@@ -1,7 +1,7 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { CacheService } from '@novu/application-generic';
 import { ConversationActivityTypeEnum, type ConversationEntity } from '@novu/dal';
-import { AgentEventEnum } from '@novu/framework/internal';
+import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
@@ -37,6 +37,7 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
   let ctx: AgentTestContext;
   let subscriberToken: string;
   let executeSpy: sinon.SinonSpy;
+  let fireStub: sinon.SinonStub;
   let sequence = 0;
 
   before(() => {
@@ -55,7 +56,10 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
     // The real dispatch runs (so the active turn is recorded); only the HTTP call to the bridge is faked.
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     sinon.stub(bridgeExecutor as any, 'resolveBridgeUrl').returns('https://bridge.e2e.test/api/novu');
-    sinon.stub(bridgeExecutor as any, 'fireWithRetries').resolves({ headers: {}, body: { resume: () => undefined } });
+    fireStub = sinon.stub(bridgeExecutor as any, 'fireWithRetries').resolves({
+      headers: { [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: 'onMessage,onAction,onResolve,onAbort' },
+      body: { resume: () => undefined },
+    });
     executeSpy = sinon.spy(bridgeExecutor, 'execute');
 
     const res = await ctx.session.testAgent.post(`/v1/agents/${ctx.agentIdentifier}/integrations`).send({
@@ -136,7 +140,11 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
   it('stops the running turn: aborted finish on replay, late events dropped, onAbort sent, repeat is idempotent', async () => {
     const { identifier, conversation } = await startConversation();
     const conversationId = String(conversation._id);
-    const activeTurn = await activeTurnOf(conversationId);
+    const activeTurn = await pollFor(async () => {
+      const turn = await turnAbortStore().getActiveTurn(conversationId);
+
+      return turn?.bridgeHandlesOnAbort ? turn : null;
+    });
     expect(activeTurn.turnId.startsWith(`${conversationId}:`)).to.equal(true);
     expect(activeTurn.platformMessageId).to.be.a('string');
 
@@ -192,6 +200,21 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
     expect(repeatRes.body.data).to.deep.equal({ status: 'aborted' });
     expect(await runFinishes(conversationId)).to.have.length(1);
     expect(executeSpy.getCalls().filter((call) => call.args[0].event === AgentEventEnum.ON_ABORT)).to.have.length(1);
+  });
+
+  it('stops the turn of a bridge on a framework that predates onAbort without sending it onAbort', async () => {
+    fireStub.resolves({ headers: {}, body: { resume: () => undefined } });
+    const { identifier, conversation } = await startConversation();
+    const conversationId = String(conversation._id);
+    const activeTurn = await activeTurnOf(conversationId);
+
+    const cancelRes = await cancel(identifier);
+
+    expect(cancelRes.body.data).to.deep.equal({ status: 'aborted' });
+    expect(activeTurn.bridgeHandlesOnAbort).to.equal(undefined);
+    expect(await turnAbortStore().isAborted(activeTurn.turnId)).to.equal(true);
+    expect(await runFinishes(conversationId)).to.have.length(1);
+    expect(executeSpy.getCalls().some((call) => call.args[0].event === AgentEventEnum.ON_ABORT)).to.equal(false);
   });
 
   it('gives a turn stopped before its run started an aborted finish, and drops its run-start', async () => {

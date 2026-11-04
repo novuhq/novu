@@ -7,6 +7,11 @@ export interface ActiveAgentTurn {
   turnId: string;
   /** The inbound message that started the turn, as the bridge reads it in `message.platformMessageId`. */
   platformMessageId?: string;
+  /**
+   * Set once the bridge answered the turn listing `onAbort` among the agent events it handles. A bridge on a
+   * framework that predates `onAbort` acks the event, then runs the agent's `onError` and posts a failed run.
+   */
+  bridgeHandlesOnAbort?: boolean;
 }
 
 const ACTIVE_TURN_TTL_SECONDS = 15 * 60;
@@ -19,6 +24,20 @@ if value and cjson.decode(value).turnId == ARGV[1] then
   return redis.call("DEL", KEYS[1])
 end
 return 0
+`;
+
+/** Flags the active turn's bridge as handling `onAbort`, for `ARGV[2]` seconds, only while it is still `ARGV[1]`. */
+const MARK_BRIDGE_HANDLES_ON_ABORT_SCRIPT = `
+local value = redis.call("GET", KEYS[1])
+if not value then
+  return 0
+end
+local turn = cjson.decode(value)
+if turn.turnId ~= ARGV[1] then
+  return 0
+end
+turn.bridgeHandlesOnAbort = true
+return redis.call("SET", KEYS[1], cjson.encode(turn), "EX", ARGV[2])
 `;
 
 /** Extends the active turn to `ARGV[2]` seconds only while it is still `ARGV[1]`. */
@@ -77,6 +96,7 @@ export class AgentTurnAbortStore {
       return {
         turnId: parsed.turnId,
         ...(typeof parsed.platformMessageId === 'string' ? { platformMessageId: parsed.platformMessageId } : {}),
+        ...(parsed.bridgeHandlesOnAbort === true ? { bridgeHandlesOnAbort: true } : {}),
       };
     } catch {
       return null;
@@ -96,6 +116,19 @@ export class AgentTurnAbortStore {
       );
     } catch (err) {
       this.logger.warn({ err, conversationId, turnId }, 'Failed to refresh the active agent turn');
+    }
+  }
+
+  /** Fails soft: a Stop of a turn left unflagged only skips `onAbort`. */
+  async markBridgeHandlesOnAbort(conversationId: string, turnId: string): Promise<void> {
+    try {
+      await this.cacheService.eval(
+        MARK_BRIDGE_HANDLES_ON_ABORT_SCRIPT,
+        [activeTurnKey(conversationId)],
+        [turnId, ACTIVE_TURN_TTL_SECONDS]
+      );
+    } catch (err) {
+      this.logger.warn({ err, conversationId, turnId }, 'Failed to record that the agent bridge handles onAbort');
     }
   }
 

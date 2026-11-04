@@ -24,7 +24,8 @@ export type CancelConversationTurnResult = { status: 'aborted' | 'idle' };
 /**
  * Stops the turn a conversation is running, on any pod and for any channel. The turn ends for readers right away:
  * its run is finished as `aborted` (or, stopped before it started, gets an aborted finish of its own), and its late
- * events are dropped at ingest, where the bridge learns to abort. The bridge is then sent `onAbort` as a fresh turn.
+ * events are dropped at ingest, where the bridge learns to abort. The bridge is then sent `onAbort` as a fresh turn,
+ * when it answered the stopped turn listing `onAbort` among the events it handles.
  */
 @Injectable()
 export class CancelConversationTurn {
@@ -82,7 +83,9 @@ export class CancelConversationTurn {
 
     this.logger.info({ conversationId, turnId, runId }, 'Agent turn stopped');
 
-    if (config) {
+    if (config && !activeTurn.bridgeHandlesOnAbort) {
+      this.logger.info({ conversationId, turnId }, 'Agent bridge does not handle onAbort; not sending it');
+    } else if (config) {
       await this.dispatchOnAbort(conversation, channel, config, activeTurn, command);
     }
 

@@ -11,7 +11,7 @@ import { CancelConversationTurn } from './cancel-conversation-turn.usecase';
 const ENV_ID = 'env-1';
 const ORG_ID = 'org-1';
 const CONVERSATION_ID = 'conv-1';
-const TURN: ActiveAgentTurn = { turnId: 'conv-1:msg-1', platformMessageId: 'msg-1' };
+const TURN: ActiveAgentTurn = { turnId: 'conv-1:msg-1', platformMessageId: 'msg-1', bridgeHandlesOnAbort: true };
 
 describe('CancelConversationTurn', () => {
   function setup({
@@ -151,6 +151,23 @@ describe('CancelConversationTurn', () => {
     expect(params.abortedTurn).to.deep.equal(TURN);
     expect(params.context).to.deep.equal({ tenant: { id: 'org-x' } });
     expect(params.message).to.equal(null);
+  });
+
+  it('stops the turn but sends no onAbort to a bridge that did not list it among the events it handles', async () => {
+    const { usecase, aborted, conversationService, bridgeExecutor, outboundGateway } = setup({
+      activeTurn: { turnId: TURN.turnId, platformMessageId: TURN.platformMessageId },
+    });
+
+    const result = await usecase.execute(command());
+
+    expect(result).to.deep.equal({ status: 'aborted' });
+    expect(aborted.has(TURN.turnId)).to.equal(true);
+    expect(conversationService.persistRunLifecycle.firstCall.args[0].event).to.deep.equal({
+      type: 'run-finish',
+      outcome: 'aborted',
+    });
+    expect(outboundGateway.stopTypingInConversation.calledOnce).to.equal(true);
+    expect(bridgeExecutor.execute.called).to.equal(false);
   });
 
   it('returns idle and touches nothing when no turn is running', async () => {
