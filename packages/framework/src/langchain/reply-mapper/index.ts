@@ -98,10 +98,8 @@ function isStopped(ctx: AgentRuntimeContext): boolean {
   return ctx.signal?.aborted === true;
 }
 
-/** The run config with the turn's stop signal merged into any `signal` the caller passed. */
-function withStopSignal(invokeConfig: LangChainAgentConfig['invokeConfig'], ctx: AgentRuntimeContext) {
-  const signal = anySignal([ctx.signal, invokeConfig?.signal]);
-
+/** The run config with `signal` (the turn's stop signal combined with the caller's own) in place of the caller's. */
+function withStopSignal(invokeConfig: LangChainAgentConfig['invokeConfig'], signal: AbortSignal | undefined) {
   return signal ? { ...invokeConfig, signal } : invokeConfig;
 }
 
@@ -139,11 +137,13 @@ async function replyAgentText(
     let finalMessages: BaseMessage[] = [];
     let lastMessageId: string | undefined;
     let wroteText = false;
+    // `invokeConfig` lives as long as the agent, so its signal must not keep a listener per turn.
+    const stopSignal = anySignal([ctx.signal, config.invokeConfig?.signal]);
 
     try {
       const stream = await agent.stream(
         { messages },
-        { ...withStopSignal(config.invokeConfig, ctx), streamMode: ['messages', 'values'] as const }
+        { ...withStopSignal(config.invokeConfig, stopSignal.signal), streamMode: ['messages', 'values'] as const }
       );
 
       for await (const [mode, chunk] of stream) {
@@ -165,6 +165,8 @@ async function replyAgentText(
       if (!outcome.approval) throw error;
 
       return;
+    } finally {
+      stopSignal.dispose();
     }
 
     // Queued before the reply is sent, so the results are recorded ahead of it.

@@ -276,30 +276,57 @@ describe('handleLangChainResult', () => {
       expect(ctx.reply).toHaveBeenCalledTimes(1);
     });
 
+    /** Streams one chunk, aborts `source` mid-run and reports whether the run's signal followed it. */
+    function abortWhileStreaming(source: AbortController) {
+      const seen: { before?: boolean; after?: boolean } = {};
+      const messages = [new AIMessage({ id: 'ai_1', content: 'hi' })];
+      streamMock.mockImplementation(async (_input, runConfig: { signal: AbortSignal }) =>
+        (async function* () {
+          seen.before = runConfig.signal.aborted;
+          yield ['messages', [messages[0], { langgraph_node: 'model_request' }]];
+          source.abort();
+          seen.after = runConfig.signal.aborted;
+          yield ['values', { messages }];
+        })()
+      );
+
+      return seen;
+    }
+
     it("passes the turn's stop signal to the run, combined with the caller's own", async () => {
       const turn = new AbortController();
       const caller = new AbortController();
       const ctx = fakeRuntimeCtx([], turn.signal);
-      streams([new AIMessage({ id: 'ai_1', content: 'hi' })]);
+      const seen = abortWhileStreaming(turn);
 
       await handleLangChainResult(config({ invokeConfig: { signal: caller.signal } }), ctx, undefined);
 
-      const passed = streamMock.mock.calls[0][1].signal as AbortSignal;
-      expect(passed.aborted).toBe(false);
-      turn.abort();
-      expect(passed.aborted).toBe(true);
+      expect(seen).toEqual({ before: false, after: true });
     });
 
     it("still honours the caller's own signal", async () => {
       const caller = new AbortController();
       const ctx = fakeRuntimeCtx();
-      streams([new AIMessage({ id: 'ai_1', content: 'hi' })]);
+      const seen = abortWhileStreaming(caller);
 
       await handleLangChainResult(config({ invokeConfig: { signal: caller.signal } }), ctx, undefined);
 
-      const passed = streamMock.mock.calls[0][1].signal as AbortSignal;
-      caller.abort();
-      expect(passed.aborted).toBe(true);
+      expect(seen).toEqual({ before: false, after: true });
+    });
+
+    it("leaves no listener on the caller's signal once the run ends", async () => {
+      const caller = new AbortController();
+      const addListener = vi.spyOn(caller.signal, 'addEventListener');
+      const removeListener = vi.spyOn(caller.signal, 'removeEventListener');
+      const agentConfig = config({ invokeConfig: { signal: caller.signal } });
+
+      for (let turn = 0; turn < 3; turn += 1) {
+        streams([new AIMessage({ id: `ai_${turn}`, content: 'hi' })]);
+        await handleLangChainResult(agentConfig, fakeRuntimeCtx(), undefined);
+      }
+
+      expect(addListener).toHaveBeenCalledTimes(3);
+      expect(removeListener.mock.calls).toEqual(addListener.mock.calls.map(([type, listener]) => [type, listener]));
     });
 
     it('adds no footer and posts no follow-up once the turn was stopped', async () => {

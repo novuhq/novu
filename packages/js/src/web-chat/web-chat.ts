@@ -321,6 +321,11 @@ export class WebChat extends BaseModule {
   async stop(args: StopArgs): Result<StopResult, NovuError | WebChatPlanLimitError> {
     return this.callWithSession<StopResult, NovuError | WebChatPlanLimitError>(async () => {
       const entry = this.#resolveFetchEntry(args);
+      // A Stop while the first message still creates the conversation is meant for the turn that message starts.
+      if (entry && !entry.conversationId) {
+        await entry.pendingCreate;
+      }
+
       const conversationId = entry?.conversationId;
       if (!entry || !conversationId) {
         return {

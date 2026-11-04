@@ -1,29 +1,37 @@
+export interface CombinedSignal {
+  /** Aborts as soon as any source signal does, with its reason. `undefined` when no signal was given. */
+  signal: AbortSignal | undefined;
+  /** Detaches from the source signals. A long-lived source otherwise keeps one listener per call. */
+  dispose: () => void;
+}
+
 /**
  * One signal that aborts as soon as any of `signals` does, with that signal's reason. A stand-in for
- * `AbortSignal.any`, which needs Node 20.3+. Returns `undefined` when no signal is given.
+ * `AbortSignal.any`, which needs Node 20.3+. Call `dispose` once the work it guards has ended.
  */
-export function anySignal(signals: Array<AbortSignal | undefined>): AbortSignal | undefined {
+export function anySignal(signals: Array<AbortSignal | undefined>): CombinedSignal {
   const present = signals.filter((signal): signal is AbortSignal => signal !== undefined);
   if (present.length <= 1) {
-    return present[0];
+    return { signal: present[0], dispose: () => undefined };
   }
 
   const controller = new AbortController();
-  const abort = (signal: AbortSignal) => {
-    if (controller.signal.aborted) return;
-    controller.abort(signal.reason);
-    for (const other of present) other.removeEventListener('abort', onAbort);
+  const dispose = () => {
+    for (const signal of present) signal.removeEventListener('abort', onAbort);
   };
-  const onAbort = (event: Event) => abort(event.target as AbortSignal);
+  const onAbort = (event: Event) => {
+    dispose();
+    controller.abort((event.target as AbortSignal).reason);
+  };
 
-  for (const signal of present) {
-    if (signal.aborted) {
-      abort(signal);
+  const alreadyAborted = present.find((signal) => signal.aborted);
+  if (alreadyAborted) {
+    controller.abort(alreadyAborted.reason);
 
-      return controller.signal;
-    }
-    signal.addEventListener('abort', onAbort, { once: true });
+    return { signal: controller.signal, dispose };
   }
 
-  return controller.signal;
+  for (const signal of present) signal.addEventListener('abort', onAbort, { once: true });
+
+  return { signal: controller.signal, dispose };
 }

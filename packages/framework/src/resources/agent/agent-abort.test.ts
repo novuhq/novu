@@ -163,7 +163,7 @@ describe('onAbort', () => {
     ]);
   });
 
-  it('acknowledges onAbort as a no-op when the agent has no handler', async () => {
+  it('posts nothing, not even an empty run, when the agent has no onAbort handler', async () => {
     const ingest = stubIngest();
     const onError = vi.fn();
     const testAgent = agent('a', { onMessage: async () => undefined, onError });
@@ -171,9 +171,22 @@ describe('onAbort', () => {
     await dispatchAgentEvent({ agent: testAgent, event: 'onAbort', bridge: abortBridge(), secretKey: 's' });
 
     expect(onError).not.toHaveBeenCalled();
-    const types = ingest.events().map((event) => event.type);
-    expect(types).not.toContain('message');
-    expect(types).not.toContain('run-error');
-    expect(types).toContain('run-finish');
+    expect(ingest.posted).toEqual([]);
+  });
+
+  it('posts nothing for an onAbort delivery that names no stopped turn', async () => {
+    const ingest = stubIngest();
+    const onAbort = vi.fn(async () => 'Stopped.');
+    const testAgent = agent('a', { onMessage: async () => undefined, onAbort });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onAbort',
+      bridge: createMockBridgeRequest({ event: 'onAbort', message: null }),
+      secretKey: 's',
+    });
+
+    expect(onAbort).not.toHaveBeenCalled();
+    expect(ingest.posted).toEqual([]);
   });
 });

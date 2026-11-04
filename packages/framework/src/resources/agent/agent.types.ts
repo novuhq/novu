@@ -631,7 +631,8 @@ export interface AgentHandlerContext {
   readonly platformContext: AgentPlatformContext;
   /**
    * Aborts when the user stops this turn. Novu reports the stop on the turn's next event delivery
-   * (a reply, typing status or custom event), so long work between deliveries runs on until then.
+   * (a reply, typing status or custom event; a streamed reply only once it ends), so long work between
+   * deliveries runs on until then.
    * Pass it to your model calls (e.g. AI SDK `abortSignal`); `@novu/framework/langchain` wires it in for you.
    * The turn then ends as `aborted` and `onError` is not called.
    */

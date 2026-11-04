@@ -2526,6 +2526,29 @@ describe('WebChat', () => {
       expect(cancelRun).not.toHaveBeenCalled();
     });
 
+    it('waits for the first message to create the conversation, then stops the turn it started', async () => {
+      let resolveCreate!: (value: { identifier: string; messageId: string }) => void;
+      sendMessage.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveCreate = resolve;
+          })
+      );
+      getEvents.mockResolvedValue({ events: [], olderCursor: null });
+      cancelRun.mockResolvedValue({ status: 'aborted' });
+
+      const sent = webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+      const stopped = webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+      await Promise.resolve();
+      expect(cancelRun).not.toHaveBeenCalled();
+
+      resolveCreate({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+      await sent;
+
+      await expect(stopped).resolves.toEqual({ data: { status: 'aborted' } });
+      expect(cancelRun).toHaveBeenCalledWith({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    });
+
     it('does not mark isStopping when no run is active locally but still asks the server', async () => {
       getEvents.mockResolvedValue({ events: [], olderCursor: null });
       await openClaimedConversation();

@@ -135,6 +135,14 @@ export interface DispatchAgentEventOptions {
 }
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
+  // Novu sends `onAbort` after every Stop. Without a handler the turn posts nothing: an empty run would flip the
+  // chat back to running, and its finish could read as the end of a turn the user started right after the Stop.
+  if (options.event === AgentEventEnum.ON_ABORT && !(options.agent.handlers.onAbort && options.bridge.abortedTurn)) {
+    options.live?.close();
+
+    return;
+  }
+
   const ctx = new AgentContextImpl(
     options.bridge,
     options.secretKey,

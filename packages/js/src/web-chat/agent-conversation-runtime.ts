@@ -364,6 +364,8 @@ export class AgentConversationRuntime {
 
   /**
    * Stop the agent turn that is running in this conversation. Does nothing when no turn runs.
+   * Called while the first message is still being sent, it waits for the conversation and stops the turn it starts.
+   * Resolves an `error` when no message was sent yet.
    *
    * Stopping is asynchronous: `run.isStopping` is true until the run ends with its `run-finish` event,
    * and the last assistant message then carries `interrupted: true`. A turn that already ended resolves

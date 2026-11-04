@@ -146,7 +146,10 @@ export type AgentMessage = {
   status: AgentMessageStatus;
   /** Client-generated idempotency key for outbound user messages (`msg_*`). */
   idempotencyKey?: string;
-  /** True on the last assistant message of a run that was stopped with `stop()`. The text is the partial reply. */
+  /**
+   * True on the last assistant message of a run that was stopped with `stop()`. The text is the partial reply.
+   * A run stopped before it wrote anything gets an assistant message with no parts that carries the flag.
+   */
   interrupted?: boolean;
 };
 
