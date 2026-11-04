@@ -3,11 +3,11 @@ import type { ListenHostId } from '../api/listen';
 /**
  * What the listener needs from a host, and all it knows of one. The core (`loop.ts`) keeps the lease, waits for
  * messages, keeps one session per conversation and round, holds the limits, gets the answers out and asks the
- * operator; an adapter only turns its host's own interface into these few calls. Claude Code drives
- * `claude -p` over stream-json (`claude-code.ts`); Codex (`codex app-server`), OpenCode (`opencode serve`) and
- * Cursor (`agent acp`) fit the same shape: each opens or goes on
- * with a session, takes messages while it works, says when a turn ends, asks before what its settings don't
- * allow and waits for the answer, and stops when told.
+ * operator; an adapter only turns its host's own interface into these few calls (ADR 0003). Claude Code drives
+ * `claude -p` over stream-json (`claude-code.ts`), Codex `codex app-server` (`codex.ts`), and OpenCode
+ * `opencode serve` (`opencode.ts`): each opens or goes on with a session,
+ * takes messages while it works, says when a turn ends, asks before what its settings don't allow and waits for the
+ * answer, and stops when told.
  */
 export interface HostAdapter {
   readonly id: ListenHostId;
@@ -17,7 +17,7 @@ export interface HostAdapter {
    * Whether the host can be started here: installed, signed in, and what about the project the operator should
    * know. Never runs a model.
    */
-  check(project: string, env?: NodeJS.ProcessEnv): HostCheck;
+  check(project: string, env?: NodeJS.ProcessEnv): Promise<HostCheck>;
   /**
    * The host's own settings among the shell's variables, which the background program keeps: which provider and
    * models it uses, and how it reaches them. Never a secret: anyone on the computer can read the service's file.
