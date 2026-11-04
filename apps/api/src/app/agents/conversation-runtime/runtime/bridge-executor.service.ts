@@ -10,7 +10,6 @@ import {
 } from '@novu/application-generic';
 import {
   ConversationActivityEntity,
-  type ConversationActivityToolData,
   ConversationActivityTypeEnum,
   ConversationEntity,
   SubscriberEntity,
@@ -48,6 +47,7 @@ import {
   type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from '../ingress/workflow-origin.helpers';
+import { BRIDGE_HISTORY_MAX_BYTES, shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
 
 const MAX_RETRIES = 2;
 /** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
@@ -118,14 +118,6 @@ function resolveAgentReplyApiOrigin(): string {
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 const ATTACHMENT_SIGNING_CONCURRENCY = 4;
-
-/**
- * Total byte budget for the serialized bridge `history`. Self-hosted bridges rebuild the model
- * transcript from the full ledger every turn, so an unbounded history overruns both the bridge's
- * HTTP body limit (`PayloadTooLargeError`) and the provider context window. When exceeded, the
- * oldest rows are dropped first (see `applyHistoryBudget`), keeping each tool cycle intact.
- */
-export const BRIDGE_HISTORY_MAX_BYTES = 512 * 1024;
 
 interface AttachmentSigningContext {
   organizationId: string;
@@ -673,71 +665,20 @@ export class BridgeExecutorService {
         richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
         signalData: activity.signalData || undefined,
-        toolData: this.slimToolDataForBridge(activity.toolData),
+        toolData: slimToolDataForBridge(activity.toolData),
         createdAt: activity.createdAt,
       });
     }
 
-    return this.applyHistoryBudget(dropOrphanedToolRows(mapped), BRIDGE_HISTORY_MAX_BYTES);
-  }
-
-  /**
-   * Re-cap `toolData.output` on read. The write-time cap in `toolResultData` bounds new rows, but
-   * rows persisted before that change are still uncapped, and NV-8715 will add more tool rows here.
-   * `toolData.content` is the dashboard's copy of the result (up to 64KB); the framework reads
-   * `output` instead, so it is left out.
-   */
-  private slimToolDataForBridge(
-    toolData: ConversationActivityToolData | undefined
-  ): ConversationActivityToolData | undefined {
-    if (!toolData) {
-      return undefined;
+    const { history, droppedForBudget } = shapeBridgeHistory(mapped, BRIDGE_HISTORY_MAX_BYTES);
+    if (droppedForBudget > 0) {
+      this.logger.warn(
+        { droppedForBudget, kept: history.length, maxBytes: BRIDGE_HISTORY_MAX_BYTES },
+        'Bridge history over byte budget; dropped the oldest rows'
+      );
     }
 
-    const { content: _dashboardCopy, ...bridgeToolData } = toolData;
-    if (bridgeToolData.output === undefined) {
-      return bridgeToolData;
-    }
-
-    const { output, truncated } = capToolOutput(bridgeToolData.output);
-    if (!truncated) {
-      return bridgeToolData;
-    }
-
-    return { ...bridgeToolData, output, truncated: true };
-  }
-
-  /**
-   * Keep the serialized history under `maxBytes` by dropping the oldest rows first. Rows that share
-   * a `toolCallId` or `approvalId` (a tool call and its result, an approval request and its
-   * decision) form one group and are dropped together, so a trimmed transcript never strands a
-   * tool-result or decision without its originating call/request.
-   */
-  private applyHistoryBudget(entries: AgentHistoryEntry[], maxBytes: number): AgentHistoryEntry[] {
-    const sizes = entries.map((entry) => Buffer.byteLength(JSON.stringify(entry), 'utf8'));
-    let total = sizes.reduce((sum, size) => sum + size, 0);
-    if (total <= maxBytes) {
-      return entries;
-    }
-
-    const groupIds = groupToolCycles(entries);
-    const dropped = new Array<boolean>(entries.length).fill(false);
-
-    for (let i = 0; i < entries.length && total > maxBytes; i += 1) {
-      if (dropped[i]) {
-        continue;
-      }
-
-      const group = groupIds[i];
-      for (let j = i; j < entries.length; j += 1) {
-        if (!dropped[j] && groupIds[j] === group) {
-          dropped[j] = true;
-          total -= sizes[j];
-        }
-      }
-    }
-
-    return entries.filter((_, index) => !dropped[index]);
+    return history;
   }
 
   /**
@@ -888,113 +829,6 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
-}
-
-/**
- * The history window is the newest rows by count, so it can start mid-cycle: a decision or result whose
- * approval request (or tool call) is older than the window. Providers reject a tool result with no
- * matching call, so those leftover rows are dropped.
- */
-function dropOrphanedToolRows(entries: AgentHistoryEntry[]): AgentHistoryEntry[] {
-  const calledToolCallIds = new Set<string>();
-  const requestedApprovalIds = new Set<string>();
-
-  for (const entry of entries) {
-    if (
-      entry.type !== ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST &&
-      entry.type !== ConversationActivityTypeEnum.TOOL_CALL
-    ) {
-      continue;
-    }
-    if (entry.toolData?.toolCallId) {
-      calledToolCallIds.add(entry.toolData.toolCallId);
-    }
-    if (entry.toolData?.approvalId) {
-      requestedApprovalIds.add(entry.toolData.approvalId);
-    }
-  }
-
-  return entries.filter((entry) => {
-    if (entry.type === ConversationActivityTypeEnum.TOOL_RESULT) {
-      return !!entry.toolData?.toolCallId && calledToolCallIds.has(entry.toolData.toolCallId);
-    }
-    if (entry.type === ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION) {
-      return !!entry.toolData?.approvalId && requestedApprovalIds.has(entry.toolData.approvalId);
-    }
-
-    return true;
-  });
-}
-
-/**
- * Assign each entry a group id. Rows linked by a shared `toolCallId` or `approvalId` resolve to the
- * same id (union-find over both keys, since an approval request carries both); rows with neither key
- * get a unique id. The budget trimmer drops whole groups so a tool cycle is never split.
- */
-function groupToolCycles(entries: AgentHistoryEntry[]): number[] {
-  const parent = new Map<string, string>();
-
-  const find = (key: string): string => {
-    let root = key;
-    while (parent.get(root) !== root) {
-      root = parent.get(root) as string;
-    }
-    let node = key;
-    while (parent.get(node) !== root) {
-      const next = parent.get(node) as string;
-      parent.set(node, root);
-      node = next;
-    }
-
-    return root;
-  };
-
-  const union = (a: string, b: string): void => {
-    parent.set(find(a), find(b));
-  };
-
-  const keysOf = (entry: AgentHistoryEntry): string[] => {
-    const keys: string[] = [];
-    if (entry.toolData?.toolCallId) {
-      keys.push(`tc:${entry.toolData.toolCallId}`);
-    }
-    if (entry.toolData?.approvalId) {
-      keys.push(`ap:${entry.toolData.approvalId}`);
-    }
-
-    return keys;
-  };
-
-  for (const entry of entries) {
-    const keys = keysOf(entry);
-    for (const key of keys) {
-      if (!parent.has(key)) {
-        parent.set(key, key);
-      }
-    }
-    for (let i = 1; i < keys.length; i += 1) {
-      union(keys[0], keys[i]);
-    }
-  }
-
-  const rootToId = new Map<string, number>();
-  let nextSingleton = 0;
-
-  return entries.map((entry) => {
-    const keys = keysOf(entry);
-    if (keys.length === 0) {
-      nextSingleton -= 1;
-
-      return nextSingleton;
-    }
-
-    const root = find(keys[0]);
-    if (!rootToId.has(root)) {
-      rootToId.set(root, rootToId.size + 1);
-    }
-
-    return rootToId.get(root) as number;
-  });
 }
 
 function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {

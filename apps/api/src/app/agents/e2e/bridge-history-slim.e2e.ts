@@ -1,3 +1,6 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { ConversationActivityTypeEnum } from '@novu/dal';
 import type { AgentHistoryEntry } from '@novu/framework';
@@ -8,10 +11,8 @@ import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { AGENT_HISTORY_LIMIT } from '../conversation-runtime/conversation/agent-conversation.helpers';
 import { TOOL_OUTPUT_MAX_BYTES } from '../conversation-runtime/conversation/tool-result-content';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
-import {
-  BRIDGE_HISTORY_MAX_BYTES,
-  BridgeExecutorService,
-} from '../conversation-runtime/runtime/bridge-executor.service';
+import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
+import { BRIDGE_HISTORY_MAX_BYTES } from '../conversation-runtime/runtime/bridge-history';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import {
   AgentTestContext,
@@ -22,9 +23,12 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 
-/** One ~100KB tool output; ten cycles far exceed the 512KB history budget and the 16KB per-output cap. */
+/** One ~100KB tool output, over the 16KB per-output cap. A capped cycle is still ~33KB on the wire. */
 const LARGE_OUTPUT = 'x'.repeat(100_000);
-const GATED_CYCLES = 10;
+/** Ten capped cycles (~330KB) fit the 512KB history budget. */
+const FITTING_CYCLES = 10;
+/** Twenty capped cycles (~660KB) do not, and still fit the newest-50 row window. */
+const OVER_BUDGET_CYCLES = 20;
 
 function byteLength(value: unknown): number {
   return Buffer.byteLength(JSON.stringify(value), 'utf8');
@@ -71,11 +75,11 @@ describe('Bridge history slimming #novu-v2', () => {
     expect(res.status).to.equal(200);
   }
 
-  /** Ingest `GATED_CYCLES` approval-gated tool cycles, each with a large result, as a bridge agent would. */
-  async function ingestLargeGatedCycles(conversationId: string): Promise<void> {
+  /** Ingest approval-gated tool cycles, each with a large result, as a bridge agent would. */
+  async function ingestLargeGatedCycles(conversationId: string, cycles: number): Promise<void> {
     let sequence = 1;
 
-    for (let i = 0; i < GATED_CYCLES; i += 1) {
+    for (let i = 0; i < cycles; i += 1) {
       await ingest([
         envelope(
           conversationId,
@@ -121,7 +125,7 @@ describe('Bridge history slimming #novu-v2', () => {
 
   it('caps each tool output and keeps the whole history under the byte budget', async () => {
     const conversationId = await seedConversation(ctx);
-    await ingestLargeGatedCycles(conversationId);
+    await ingestLargeGatedCycles(conversationId, OVER_BUDGET_CYCLES);
 
     const history = await buildBridgeHistory(conversationId);
 
@@ -155,33 +159,62 @@ describe('Bridge history slimming #novu-v2', () => {
       organizationId: ctx.session.organization._id,
       content: 'Noted: your order number is #A1.',
     });
-    await ingestLargeGatedCycles(conversationId);
+    await ingestLargeGatedCycles(conversationId, FITTING_CYCLES);
 
     const history = await buildBridgeHistory(conversationId);
 
     expect(history[0]?.content).to.equal('Noted: your order number is #A1.');
     const toolResults = history.filter((entry) => entry.type === 'tool_result');
-    expect(toolResults).to.have.length(GATED_CYCLES);
+    expect(toolResults).to.have.length(FITTING_CYCLES);
     for (const result of toolResults) {
       expect(byteLength(result), 'one tool result row on the wire').to.be.at.most(2 * TOOL_OUTPUT_MAX_BYTES + 1024);
     }
   });
 
-  it('never strands a tool result without its approval request when trimming the oldest rows', async () => {
+  it('drops the oldest tool cycles whole when the capped history is still over budget', async () => {
     const conversationId = await seedConversation(ctx);
-    await ingestLargeGatedCycles(conversationId);
+    await ingestLargeGatedCycles(conversationId, OVER_BUDGET_CYCLES);
 
     const history = await buildBridgeHistory(conversationId);
 
-    const requestedCallIds = new Set(
-      history.filter((entry) => entry.type === 'tool_approval_request').map((entry) => entry.toolData?.toolCallId)
-    );
-    const resultCallIds = new Set(
-      history.filter((entry) => entry.type === 'tool_result').map((entry) => entry.toolData?.toolCallId)
+    const requestedCallIds = history
+      .filter((entry) => entry.type === 'tool_approval_request')
+      .map((entry) => entry.toolData?.toolCallId);
+    const resultCallIds = history
+      .filter((entry) => entry.type === 'tool_result')
+      .map((entry) => entry.toolData?.toolCallId);
+    const keptCycles = requestedCallIds.length;
+
+    const artifactPath = join(tmpdir(), 'novu-e2e-artifacts', 'bridge-history-over-budget.json');
+    mkdirSync(dirname(artifactPath), { recursive: true });
+    writeFileSync(
+      artifactPath,
+      JSON.stringify(
+        {
+          budgetBytes: BRIDGE_HISTORY_MAX_BYTES,
+          historyBytes: byteLength(history),
+          ingestedCycles: OVER_BUDGET_CYCLES,
+          rows: history.map((entry) => ({
+            type: entry.type,
+            id: entry.toolData?.approvalId ?? entry.toolData?.toolCallId,
+            bytes: byteLength(entry),
+          })),
+          history,
+        },
+        null,
+        2
+      )
     );
 
-    expect(resultCallIds.size, 'some cycles survive').to.be.greaterThan(0);
-    expect([...resultCallIds].sort()).to.deep.equal([...requestedCallIds].sort());
+    expect(keptCycles, `some cycles are trimmed (artifact: ${artifactPath})`).to.be.lessThan(OVER_BUDGET_CYCLES);
+    expect(keptCycles, 'some cycles survive').to.be.greaterThan(0);
+    expect(byteLength(history)).to.be.at.most(BRIDGE_HISTORY_MAX_BYTES);
+    const newestCallIds = Array.from(
+      { length: keptCycles },
+      (_, index) => `call_${OVER_BUDGET_CYCLES - keptCycles + index}`
+    );
+    expect(requestedCallIds, 'the newest cycles are kept, oldest dropped first').to.deep.equal(newestCallIds);
+    expect(resultCallIds, 'every kept request keeps its result').to.deep.equal(newestCallIds);
   });
 
   it('drops the decision and result of a cycle whose request falls outside the history window', async () => {
