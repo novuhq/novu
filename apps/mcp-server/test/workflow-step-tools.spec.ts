@@ -265,14 +265,18 @@ describe("workflow step tools", () => {
 			expect(api.puts[0].body!.steps[1].controlValues.body).toBe(JSON.stringify(doc));
 		});
 
-		it("saves null for the email body attributes a node leaves out", async () => {
+		it("saves the dashboard editor's defaults for the email body attributes a node leaves out", async () => {
 			const api = fakeWorkflowsApi();
 			const button = { attrs: { text: "Open", url: "https://example.com" }, type: "button" };
+			const image = { attrs: { src: "https://example.com/a.png" }, type: "image" };
 
 			const result = await callTool(await client(), "update_workflow_step_content", {
 				content: {
 					controlValues: {
-						body: { content: [{ content: [button], type: "paragraph" }], type: "doc" },
+						body: {
+							content: [{ content: [button], type: "paragraph" }, image],
+							type: "doc",
+						},
 						editorType: "block",
 						subject: "Hello",
 					},
@@ -283,15 +287,49 @@ describe("workflow step tools", () => {
 			});
 
 			expect(result.isError).toBeFalsy();
-			const [paragraph] = JSON.parse(api.puts[0].body!.steps[1].controlValues.body).content;
+			const [paragraph, savedImage] = JSON.parse(
+				api.puts[0].body!.steps[1].controlValues.body,
+			).content;
 			expect(paragraph.attrs).toBeNull();
 			expect(paragraph.content[0].attrs).toMatchObject({
-				alignment: null,
-				buttonColor: null,
+				alignment: "left",
+				borderRadius: "smooth",
+				buttonColor: "#000000",
+				paddingLeft: 32,
+				paddingTop: 10,
+				showIfKey: null,
 				text: "Open",
+				textColor: "#ffffff",
 				url: "https://example.com",
-				variant: null,
+				variant: "filled",
 			});
+			expect(savedImage.attrs).toMatchObject({
+				alignment: "center",
+				height: "auto",
+				isSrcVariable: false,
+				width: "auto",
+			});
+		});
+
+		it("rejects a container node without its content, as the dashboard never saves one", async () => {
+			const api = fakeWorkflowsApi();
+			const list = { items: [{ type: "listItem" }], type: "bulletList" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: [list], type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain("at content.controlValues.body.content[0].content");
 		});
 
 		it("names the allowed heading levels", async () => {
