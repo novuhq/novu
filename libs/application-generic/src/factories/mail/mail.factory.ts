@@ -1,6 +1,7 @@
 import { IntegrationEntity } from '@novu/dal';
 import {
   AnypostHandler,
+  BirdEmailHandler,
   BrazeEmailHandler,
   EmailJsHandler,
   EmailWebhookHandler,
@@ -47,6 +48,7 @@ export class MailFactory implements IMailFactory {
     new NovuEmailHandler(),
     new BrazeEmailHandler(),
     new AnypostHandler(),
+    new BirdEmailHandler(),
   ];
 
   getHandler(
