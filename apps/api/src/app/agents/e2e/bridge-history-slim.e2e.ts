@@ -1,9 +1,11 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { ConversationActivityTypeEnum } from '@novu/dal';
 import type { AgentHistoryEntry } from '@novu/framework';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
+import { AGENT_HISTORY_LIMIT } from '../conversation-runtime/conversation/agent-conversation.helpers';
 import { TOOL_OUTPUT_MAX_BYTES } from '../conversation-runtime/conversation/tool-result-content';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import {
@@ -13,6 +15,7 @@ import {
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import {
   AgentTestContext,
+  activityRepository,
   conversationRepository,
   must,
   seedConversation,
@@ -149,5 +152,99 @@ describe('Bridge history slimming #novu-v2', () => {
 
     expect(resultCallIds.size, 'some cycles survive').to.be.greaterThan(0);
     expect([...resultCallIds].sort()).to.deep.equal([...requestedCallIds].sort());
+  });
+
+  it('drops the decision and result of a cycle whose request falls outside the history window', async () => {
+    const conversationId = await seedConversation(ctx);
+    const conversation = must(
+      await conversationRepository.findOne({ _id: conversationId, _environmentId: ctx.session.environment._id }, '*'),
+      'conversation'
+    );
+    const channel = conversation.channels[0];
+    let sequence = 1;
+    let rowIndex = 0;
+
+    const createRow = (params: { type?: ConversationActivityTypeEnum; content: string; toolData?: object }) =>
+      activityRepository.createAgentActivity({
+        identifier: `history-window-${rowIndex++}`,
+        conversationId,
+        platform: channel.platform,
+        integrationId: channel._integrationId,
+        platformThreadId: channel.platformThreadId,
+        agentId: ctx.agentIdentifier,
+        environmentId: ctx.session.environment._id,
+        organizationId: ctx.session.organization._id,
+        ...params,
+      });
+
+    const ingestApprovedCycle = async (index: number) => {
+      await ingest([
+        envelope(
+          conversationId,
+          {
+            type: 'tool-approval-request',
+            approvalId: `appr_${index}`,
+            toolUseId: `call_${index}`,
+            toolName: 'notion_search',
+            input: { query: `report ${index}` },
+          },
+          sequence++
+        ),
+      ]);
+      await createRow({
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+        content: 'Approved notion_search',
+        toolData: { approvalId: `appr_${index}`, approved: true, toolName: 'notion_search' },
+      });
+      await ingest([
+        envelope(
+          conversationId,
+          { type: 'tool-use-result', toolUseId: `call_${index}`, content: [{ type: 'text', text: `pages ${index}` }] },
+          sequence++
+        ),
+      ]);
+    };
+
+    // Oldest to newest: old cycle (3 rows), 45 replies, new cycle (3 rows) = 51 rows. The old cycle's
+    // request is the one row outside the newest-50 window; its decision and result are inside.
+    await ingestApprovedCycle(0);
+    for (let i = 0; i < AGENT_HISTORY_LIMIT - 5; i += 1) {
+      await createRow({ content: `reply ${i}` });
+    }
+    await ingestApprovedCycle(1);
+
+    const window = await activityRepository.listForView({
+      view: 'agent_handoff',
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      conversationId,
+      limit: AGENT_HISTORY_LIMIT,
+    });
+    const windowTypes = window.data.map((row) => `${row.type}:${row.toolData?.approvalId ?? row.toolData?.toolCallId}`);
+    expect(windowTypes, 'precondition: the window cuts the old cycle').to.include.members([
+      'tool_approval_decision:appr_0',
+      'tool_result:call_0',
+    ]);
+    expect(windowTypes, 'precondition: the old request is outside the window').not.to.include(
+      'tool_approval_request:appr_0'
+    );
+
+    const history = await buildBridgeHistory(conversationId);
+    const toolRows = history
+      .filter((entry) => entry.type !== ConversationActivityTypeEnum.MESSAGE)
+      .map((entry) => ({
+        type: entry.type,
+        approvalId: entry.toolData?.approvalId,
+        callId: entry.toolData?.toolCallId,
+      }));
+
+    expect(toolRows).to.deep.equal([
+      { type: 'tool_approval_request', approvalId: 'appr_1', callId: 'call_1' },
+      { type: 'tool_approval_decision', approvalId: 'appr_1', callId: undefined },
+      { type: 'tool_result', approvalId: undefined, callId: 'call_1' },
+    ]);
+    expect(history.filter((entry) => entry.type === ConversationActivityTypeEnum.MESSAGE)).to.have.length(
+      AGENT_HISTORY_LIMIT - 5
+    );
   });
 });

@@ -11,6 +11,7 @@ import {
 import {
   ConversationActivityEntity,
   type ConversationActivityToolData,
+  ConversationActivityTypeEnum,
   ConversationEntity,
   SubscriberEntity,
 } from '@novu/dal';
@@ -674,7 +675,7 @@ export class BridgeExecutorService {
       });
     }
 
-    return this.applyHistoryBudget(mapped, BRIDGE_HISTORY_MAX_BYTES);
+    return this.applyHistoryBudget(dropOrphanedToolRows(mapped), BRIDGE_HISTORY_MAX_BYTES);
   }
 
   /**
@@ -877,6 +878,42 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+/**
+ * The history window is the newest rows by count, so it can start mid-cycle: a decision or result whose
+ * approval request (or tool call) is older than the window. Providers reject a tool result with no
+ * matching call, so those leftover rows are dropped.
+ */
+function dropOrphanedToolRows(entries: AgentHistoryEntry[]): AgentHistoryEntry[] {
+  const calledToolCallIds = new Set<string>();
+  const requestedApprovalIds = new Set<string>();
+
+  for (const entry of entries) {
+    if (
+      entry.type !== ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST &&
+      entry.type !== ConversationActivityTypeEnum.TOOL_CALL
+    ) {
+      continue;
+    }
+    if (entry.toolData?.toolCallId) {
+      calledToolCallIds.add(entry.toolData.toolCallId);
+    }
+    if (entry.toolData?.approvalId) {
+      requestedApprovalIds.add(entry.toolData.approvalId);
+    }
+  }
+
+  return entries.filter((entry) => {
+    if (entry.type === ConversationActivityTypeEnum.TOOL_RESULT) {
+      return !!entry.toolData?.toolCallId && calledToolCallIds.has(entry.toolData.toolCallId);
+    }
+    if (entry.type === ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION) {
+      return !!entry.toolData?.approvalId && requestedApprovalIds.has(entry.toolData.approvalId);
+    }
+
+    return true;
+  });
 }
 
 /**
