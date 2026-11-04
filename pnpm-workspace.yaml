@@ -553,7 +553,7 @@ overrides:
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
-  # transitive 1.10.0 resolutions (via npm-run-all and cpx) pick up the fix.
+  # transitive 1.10.0 resolutions (via npm-run-all) pick up the fix.
   shell-quote@<1.11.0: ^1.11.0
   # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
   # ThreadPool.options allowing RCE via execArgv / loadBalancer / env.

@@ -12,7 +12,6 @@
     "**/fixtures/**",
     "**/migrations/**",
     "**/*.d.ts",
-    "**/webpack.config.*",
     "**/swc-register.*",
     "**/newrelic.ts",
     "**/scripts/**",
