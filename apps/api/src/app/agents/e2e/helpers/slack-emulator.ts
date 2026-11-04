@@ -275,6 +275,7 @@ function applyWebClientPatch(webApi: {
   if (patchedWebClientPrototypes.has(Original.prototype)) return;
   patchedWebClientPrototypes.add(Original.prototype);
 
+  // biome-ignore lint/plugin: a constructor shim for WebClient; `this` is never read, Reflect.construct builds the instance
   function PatchedWebClient(this: unknown, token?: string, opts?: Record<string, unknown>) {
     const baseOpts = opts ?? {};
     const merged: Record<string, unknown> = {
@@ -293,7 +294,9 @@ function applyWebClientPatch(webApi: {
 
     type ConstructorTarget = new (...args: unknown[]) => unknown;
     const newTarget = new.target as unknown;
-    const target = (newTarget ?? PatchedWebClient) as ConstructorTarget;
+    // `@slack/web-api` throws unless `new.target` is `WebClient` or a subclass of it. `PatchedWebClient` shares
+    // `WebClient.prototype` rather than extending it, so `new PatchedWebClient()` must construct as `WebClient`.
+    const target = (!newTarget || newTarget === PatchedWebClient ? Original : newTarget) as ConstructorTarget;
 
     return Reflect.construct(Original, [token, merged], target);
   }
@@ -307,6 +310,7 @@ function applyWebClientPatch(webApi: {
   // Redefining the descriptor as a writable data property both swaps in our
   // patched constructor and lets later code (re-)assign it if needed.
   Object.defineProperty(webApi, 'WebClient', {
+    // biome-ignore lint/plugin: the function constructor stands in for the WebClient class it constructs
     value: PatchedWebClient as unknown as typeof Original,
     writable: true,
     configurable: true,
@@ -321,6 +325,7 @@ function applyWebClientPatch(webApi: {
   const proto = Original.prototype as { apiCall?: (...args: unknown[]) => unknown };
   const origApiCall = proto.apiCall;
   if (typeof origApiCall === 'function') {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: one patch point redirects, records and stubs every Slack API call in e2e
     proto.apiCall = function patchedApiCall(this: WebClientInstance, ...args: unknown[]) {
       const apiUrl = process.env.SLACK_API_URL;
       if (apiUrl) {
