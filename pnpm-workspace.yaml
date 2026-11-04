@@ -678,5 +678,9 @@ allowBuilds:
   unrs-resolver: true
   workerd: true
 
+# `pnpm deploy --prod` in the app Dockerfiles leaves out dev-only patched packages (@stoplight/spectral-core),
+# and an unused patch would fail the image build.
+allowUnusedPatches: true
+
 patchedDependencies:
   '@stoplight/spectral-core@1.20.0': patches/@stoplight__spectral-core@1.20.0.patch
