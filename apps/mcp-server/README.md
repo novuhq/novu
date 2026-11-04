@@ -290,6 +290,14 @@ deployments live under named environments:
 
 - `pnpm deploy:us` → `--env us` (binds `mcp.novu.co`, `NOVU_API_URL=https://api.novu.co`)
 - `pnpm deploy:eu` → `--env eu` (binds `eu.mcp.novu.co`, `NOVU_API_URL=https://eu.api.novu.co`)
+- `pnpm deploy:staging` → `--env staging` (binds `mcp.novu-staging.co`, `NOVU_API_URL=https://api.novu-staging.co`)
+
+Use staging to test changes against the Novu staging API before deploying US or
+EU. It is a separate worker (`novu-mcp-server-staging`) with its own Durable
+Object sessions, so deploying it never touches production. For OAuth on staging,
+set its issuer once with `wrangler secret put CLERK_OAUTH_ISSUER --env staging`
+to the Clerk instance the staging dashboard signs in with; until then staging
+accepts API keys only.
 
 To deploy your own instance, fork the [Novu repo](https://github.com/novuhq/novu), and in `apps/mcp-server` add an environment under `env`
 (or edit an existing one) with your own `routes`, `NOVU_API_URL`, and
@@ -305,6 +313,7 @@ server that your Novu API trusts; leave it unset for API-key-only.
 - `pnpm dev` — Run the worker locally via Wrangler (top-level, route-free config)
 - `pnpm deploy:us` — Deploy the US worker (`mcp.novu.co`, `--env us`)
 - `pnpm deploy:eu` — Deploy the EU worker (`eu.mcp.novu.co`, `--env eu`)
+- `pnpm deploy:staging` — Deploy the staging worker (`mcp.novu-staging.co`, `--env staging`)
 - `pnpm type-check` — Run TypeScript type checking
 - `pnpm test` — Run the vitest suite
 - `pnpm lint:fix` — Fix linter issues with Biome
