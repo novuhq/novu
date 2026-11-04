@@ -46,7 +46,7 @@ import {
   type PersistRunLifecycleParams,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
-import { toolResultData } from './tool-result-content';
+import { capToolOutput, toolResultData } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -537,6 +537,7 @@ export class ConversationActivityLedger {
       params.environmentId,
       params.organizationId
     );
+    const cappedOutput = capToolOutput(params.output);
 
     const activity = await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
@@ -548,7 +549,12 @@ export class ConversationActivityLedger {
       senderId: params.agentIdentifier,
       content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
       type: ConversationActivityTypeEnum.TOOL_RESULT,
-      toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
+      toolData: {
+        toolCallId: params.toolCallId,
+        toolName: params.toolName,
+        output: cappedOutput.output,
+        ...(cappedOutput.truncated ? { truncated: true } : {}),
+      },
       sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
