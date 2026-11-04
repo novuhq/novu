@@ -104,7 +104,7 @@ How requests map to a Novu environment depends on how you authenticate:
 - **OAuth** — the token is bound to your **organization**, and the Novu API
   defaults to the **Development** environment.
 
-For OAuth sessions, every tool that calls the Novu API accepts an optional `environmentId` parameter to
+For OAuth sessions, every tool except `whoami` and `get_step_schema` accepts an optional `environmentId` parameter to
 target a specific environment (forwarded to the Novu API as the
 `Novu-Environment-Id` header). Call `get_environments` first to list your
 environments, then pass the `_id` of the one you want — for example, to inspect
