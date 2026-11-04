@@ -1,7 +1,7 @@
 import type { AgentHistoryEntry } from '@novu/framework';
 import { expect } from 'chai';
 import { TOOL_OUTPUT_MAX_BYTES } from '../conversation/tool-result-content';
-import { shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
+import { capToolResultPreview, shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
 
 const BIG = 'x'.repeat(10_000);
 const CREATED_AT = '2026-01-01T00:00:00.000Z';
@@ -41,7 +41,7 @@ function result(id: string, output = 'ok'): AgentHistoryEntry {
 }
 
 function bytes(entries: AgentHistoryEntry[]): number {
-  return entries.reduce((sum, entry) => sum + Buffer.byteLength(JSON.stringify(entry), 'utf8'), 0);
+  return Buffer.byteLength(JSON.stringify(entries), 'utf8');
 }
 
 function labels(entries: AgentHistoryEntry[]): string[] {
@@ -84,6 +84,16 @@ describe('shapeBridgeHistory', () => {
     expect(bytes(history)).to.be.at.most(budget);
   });
 
+  it('fits the serialized array, brackets and commas included, within the budget', () => {
+    const entries = Array.from({ length: 40 }, (_, index) => message(`row ${index}`));
+    const budget = bytes(entries) - 1;
+
+    const { history } = shapeBridgeHistory(entries, budget);
+
+    expect(history).to.have.length(39);
+    expect(bytes(history)).to.be.at.most(budget);
+  });
+
   it('keeps the newest row even when it alone exceeds the budget', () => {
     const entries = [message('older'), request('a'), result('a'), message(BIG)];
 
@@ -112,6 +122,16 @@ describe('shapeBridgeHistory', () => {
       'tool_result:call_a',
     ]);
     expect(droppedForBudget).to.equal(0);
+  });
+});
+
+describe('capToolResultPreview', () => {
+  it('cuts a long tool-result preview to 1KB and leaves a short one alone', () => {
+    const capped = capToolResultPreview('é'.repeat(5_000));
+
+    expect(Buffer.byteLength(capped, 'utf8')).to.be.at.most(1024);
+    expect(capped).to.match(/\[truncated: tool output exceeded 1024 bytes\]$/);
+    expect(capToolResultPreview('Tool result: notion_search')).to.equal('Tool result: notion_search');
   });
 });
 

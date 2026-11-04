@@ -41,13 +41,17 @@ import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { capToolOutput } from '../conversation/tool-result-content';
 import {
   resolveInboundReplyTo,
   type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from '../ingress/workflow-origin.helpers';
-import { BRIDGE_HISTORY_MAX_BYTES, shapeBridgeHistory, slimToolDataForBridge } from './bridge-history';
+import {
+  BRIDGE_HISTORY_MAX_BYTES,
+  capToolResultPreview,
+  shapeBridgeHistory,
+  slimToolDataForBridge,
+} from './bridge-history';
 
 const MAX_RETRIES = 2;
 /** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
@@ -660,7 +664,7 @@ export class BridgeExecutorService {
         type: activity.type,
         content:
           activity.type === ConversationActivityTypeEnum.TOOL_RESULT
-            ? String(capToolOutput(activity.content).output)
+            ? capToolResultPreview(activity.content)
             : activity.content,
         richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
@@ -684,7 +688,8 @@ export class BridgeExecutorService {
   /**
    * `@novu/framework` reads only `richContent.attachments` from history (signed inbound files for
    * vision/PDF turns — see `parseUserHistoryAttachments`). Everything else (approval cards, HITL
-   * bodies, rendered markdown) duplicates `content` and is dropped to keep the bridge payload slim.
+   * bodies, rendered markdown) is left out; `content` keeps the text or a short summary such as the
+   * request title.
    */
   private async mapRichContentForBridge(
     richContent: Record<string, unknown> | undefined,

@@ -23,12 +23,13 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 
-/** One ~100KB tool output, over the 16KB per-output cap. A capped cycle is still ~33KB on the wire. */
+/** One ~100KB tool output, over the 16KB per-output cap. A capped cycle is ~17.5KB on the wire. */
 const LARGE_OUTPUT = 'x'.repeat(100_000);
-/** Ten capped cycles (~330KB) fit the 512KB history budget. */
+/** Ten capped cycles (~175KB) fit the 512KB history budget. */
 const FITTING_CYCLES = 10;
-/** Twenty capped cycles (~660KB) do not, and still fit the newest-50 row window. */
-const OVER_BUDGET_CYCLES = 20;
+/** Twenty capped cycles (~350KB) plus two newer ~120KB messages do not, and still fit the newest-50 row window. */
+const TRIMMED_CYCLES = 20;
+const LARGE_MESSAGE = 'm'.repeat(120_000);
 
 function byteLength(value: unknown): number {
   return Buffer.byteLength(JSON.stringify(value), 'utf8');
@@ -103,6 +104,25 @@ describe('Bridge history slimming #novu-v2', () => {
     }
   }
 
+  async function createAgentMessage(conversationId: string, identifier: string, content: string): Promise<void> {
+    const conversation = must(
+      await conversationRepository.findOne({ _id: conversationId, _environmentId: ctx.session.environment._id }, '*'),
+      'conversation'
+    );
+    const channel = conversation.channels[0];
+    await activityRepository.createAgentActivity({
+      identifier,
+      conversationId,
+      platform: channel.platform,
+      integrationId: channel._integrationId,
+      platformThreadId: channel.platformThreadId,
+      agentId: ctx.agentIdentifier,
+      environmentId: ctx.session.environment._id,
+      organizationId: ctx.session.organization._id,
+      content,
+    });
+  }
+
   async function buildBridgeHistory(conversationId: string): Promise<AgentHistoryEntry[]> {
     const conversation = must(
       await conversationRepository.findOne({ _id: conversationId, _environmentId: ctx.session.environment._id }, '*'),
@@ -123,42 +143,27 @@ describe('Bridge history slimming #novu-v2', () => {
     return payload.history as AgentHistoryEntry[];
   }
 
-  it('caps each tool output and keeps the whole history under the byte budget', async () => {
+  it('caps each tool output to its byte budget, truncation marker included', async () => {
     const conversationId = await seedConversation(ctx);
-    await ingestLargeGatedCycles(conversationId, OVER_BUDGET_CYCLES);
+    await ingestLargeGatedCycles(conversationId, FITTING_CYCLES);
 
     const history = await buildBridgeHistory(conversationId);
 
     expect(byteLength(history)).to.be.at.most(BRIDGE_HISTORY_MAX_BYTES);
 
     const toolResults = history.filter((entry) => entry.type === 'tool_result');
-    expect(toolResults.length, 'at least one tool result survives trimming').to.be.greaterThan(0);
+    expect(toolResults).to.have.length(FITTING_CYCLES);
 
     for (const result of toolResults) {
-      // The per-output cap plus its truncation marker; allow a small margin for the marker overhead.
-      expect(byteLength(result.toolData?.output)).to.be.at.most(TOOL_OUTPUT_MAX_BYTES + 128);
-      expect(typeof result.toolData?.output === 'string' && result.toolData.output).to.contain('truncated');
+      const output = String(result.toolData?.output);
+      expect(Buffer.byteLength(output, 'utf8')).to.be.at.most(TOOL_OUTPUT_MAX_BYTES);
+      expect(output).to.contain('[truncated: tool output exceeded');
     }
   });
 
   it('keeps the oldest message when every tool result fits once capped', async () => {
     const conversationId = await seedConversation(ctx);
-    const conversation = must(
-      await conversationRepository.findOne({ _id: conversationId, _environmentId: ctx.session.environment._id }, '*'),
-      'conversation'
-    );
-    const channel = conversation.channels[0];
-    await activityRepository.createAgentActivity({
-      identifier: 'history-oldest-message',
-      conversationId,
-      platform: channel.platform,
-      integrationId: channel._integrationId,
-      platformThreadId: channel.platformThreadId,
-      agentId: ctx.agentIdentifier,
-      environmentId: ctx.session.environment._id,
-      organizationId: ctx.session.organization._id,
-      content: 'Noted: your order number is #A1.',
-    });
+    await createAgentMessage(conversationId, 'history-oldest-message', 'Noted: your order number is #A1.');
     await ingestLargeGatedCycles(conversationId, FITTING_CYCLES);
 
     const history = await buildBridgeHistory(conversationId);
@@ -167,13 +172,15 @@ describe('Bridge history slimming #novu-v2', () => {
     const toolResults = history.filter((entry) => entry.type === 'tool_result');
     expect(toolResults).to.have.length(FITTING_CYCLES);
     for (const result of toolResults) {
-      expect(byteLength(result), 'one tool result row on the wire').to.be.at.most(2 * TOOL_OUTPUT_MAX_BYTES + 1024);
+      expect(byteLength(result), 'one tool result row on the wire').to.be.at.most(TOOL_OUTPUT_MAX_BYTES + 2048);
     }
   });
 
   it('drops the oldest tool cycles whole when the capped history is still over budget', async () => {
     const conversationId = await seedConversation(ctx);
-    await ingestLargeGatedCycles(conversationId, OVER_BUDGET_CYCLES);
+    await ingestLargeGatedCycles(conversationId, TRIMMED_CYCLES);
+    await createAgentMessage(conversationId, 'history-large-message-1', LARGE_MESSAGE);
+    await createAgentMessage(conversationId, 'history-large-message-2', LARGE_MESSAGE);
 
     const history = await buildBridgeHistory(conversationId);
 
@@ -193,7 +200,7 @@ describe('Bridge history slimming #novu-v2', () => {
         {
           budgetBytes: BRIDGE_HISTORY_MAX_BYTES,
           historyBytes: byteLength(history),
-          ingestedCycles: OVER_BUDGET_CYCLES,
+          ingestedCycles: TRIMMED_CYCLES,
           rows: history.map((entry) => ({
             type: entry.type,
             id: entry.toolData?.approvalId ?? entry.toolData?.toolCallId,
@@ -206,15 +213,16 @@ describe('Bridge history slimming #novu-v2', () => {
       )
     );
 
-    expect(keptCycles, `some cycles are trimmed (artifact: ${artifactPath})`).to.be.lessThan(OVER_BUDGET_CYCLES);
+    expect(keptCycles, `some cycles are trimmed (artifact: ${artifactPath})`).to.be.lessThan(TRIMMED_CYCLES);
     expect(keptCycles, 'some cycles survive').to.be.greaterThan(0);
     expect(byteLength(history)).to.be.at.most(BRIDGE_HISTORY_MAX_BYTES);
     const newestCallIds = Array.from(
       { length: keptCycles },
-      (_, index) => `call_${OVER_BUDGET_CYCLES - keptCycles + index}`
+      (_, index) => `call_${TRIMMED_CYCLES - keptCycles + index}`
     );
     expect(requestedCallIds, 'the newest cycles are kept, oldest dropped first').to.deep.equal(newestCallIds);
     expect(resultCallIds, 'every kept request keeps its result').to.deep.equal(newestCallIds);
+    expect(history.slice(-2).map((entry) => entry.content)).to.deep.equal([LARGE_MESSAGE, LARGE_MESSAGE]);
   });
 
   it('drops the decision and result of a cycle whose request falls outside the history window', async () => {

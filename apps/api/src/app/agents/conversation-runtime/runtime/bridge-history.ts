@@ -9,6 +9,9 @@ import { capToolOutput } from '../conversation/tool-result-content';
  */
 export const BRIDGE_HISTORY_MAX_BYTES = 512 * 1024;
 
+/** The framework reads `toolData.output` for a tool result; `content` is only a preview for chat text. */
+const TOOL_RESULT_PREVIEW_MAX_BYTES = 1024;
+
 export interface ShapedBridgeHistory {
   history: AgentHistoryEntry[];
   droppedForBudget: number;
@@ -37,6 +40,12 @@ export function slimToolDataForBridge(
   }
 
   return { ...bridgeToolData, output, truncated: true };
+}
+
+export function capToolResultPreview(preview: string): string {
+  const { output } = capToolOutput(preview, TOOL_RESULT_PREVIEW_MAX_BYTES);
+
+  return typeof output === 'string' ? output : preview;
 }
 
 /** Drop tool rows cut off from their request, then trim the oldest rows to fit `maxBytes`. */
@@ -89,8 +98,9 @@ function dropOrphanedToolRows(entries: AgentHistoryEntry[]): AgentHistoryEntry[]
  * holds the current turn or the approval being resumed, even when it alone exceeds the budget.
  */
 function applyHistoryBudget(entries: AgentHistoryEntry[], maxBytes: number): AgentHistoryEntry[] {
-  const sizes = entries.map((entry) => Buffer.byteLength(JSON.stringify(entry), 'utf8'));
-  let total = sizes.reduce((sum, size) => sum + size, 0);
+  // One extra byte per entry for its comma or the closing bracket, plus one for the opening bracket.
+  const sizes = entries.map((entry) => Buffer.byteLength(JSON.stringify(entry), 'utf8') + 1);
+  let total = sizes.reduce((sum, size) => sum + size, 1);
   if (total <= maxBytes) {
     return entries;
   }

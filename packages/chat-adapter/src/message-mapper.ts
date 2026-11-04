@@ -96,7 +96,8 @@ export class MessageMapper {
   /**
    * Build a chat `Message` from a Novu history entry (used by `fetchMessages`).
    * Preserves `role`, `type`, `richContent`, and `signalData` on `message.raw.history`
-   * and maps signed attachments from `richContent.attachments` when present.
+   * and maps signed attachments from `richContent.attachments` when present. Novu sends only
+   * `attachments` in `richContent`.
    */
   buildHistoryMessage(
     entry: AgentHistoryEntry,
