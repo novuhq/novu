@@ -1215,10 +1215,14 @@ class SteeredTurns implements Turns {
   }
 
   private async hand(input: SessionInput): Promise<void> {
+    // A stop dropped it while it waited its turn to be handed over.
+    if (!this.sending.delete(input.id)) {
+      return;
+    }
+
     // Its id is known before OpenCode answers: it may deliver the message before the answer comes.
     const messageId = ascendingId('msg');
     this.inbox.set(messageId, input.id);
-    this.sending.delete(input.id);
     try {
       await this.host.call('POST', `/api/session/${this.host.sessionId}/prompt`, {
         id: messageId,
@@ -1296,7 +1300,13 @@ class SteeredTurns implements Turns {
   }
 
   async stop(): Promise<void> {
-    // What waits in the inbox doesn't go: OpenCode keeps it parked after an interrupt otherwise.
+    // What waits behind a message being handed over doesn't go: it would start a turn once the stop is over.
+    if (this.sending.size > 0) {
+      const dropped = [...this.sending];
+      this.sending.clear();
+      this.host.report({ inputIds: dropped, outcome: 'interrupted' });
+    }
+    // Nor does what waits in the inbox: OpenCode keeps it parked after an interrupt otherwise.
     await this.withdraw([...this.inbox.keys()]);
     if (!this.execution) {
       return;
@@ -1459,6 +1469,11 @@ class OpenCodeSession implements HostSession {
 
     try {
       const api = (await this.majorVersion()) >= 2 ? OPENCODE_2 : OPENCODE_1;
+      if (this.gone || this.closing) {
+        // Stopped or closed while OpenCode said its version: nothing would end the server it started now.
+        return false;
+      }
+
       this.api = api;
       this.base = await this.serve(api);
       await this.listen(api);

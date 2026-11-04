@@ -1,5 +1,5 @@
 import { getEventListeners } from 'node:events';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -457,6 +457,22 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     await pause(400);
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
     expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('asks the operator before the agent’s own reply once the project has a CLI of its own that npx would run', async () => {
+    const { api, dir } = await start();
+    api.decide = () => 'approved';
+    // Planted by the agent, say, which edits the project without asking.
+    mkdirSync(join(dir, 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+
+    api.deliver({ text: 'reply-myself', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.to).toBe('ada');
+    expect(question?.card.body).toContain(
+      'It is Agent Inbox’s own command, but the project has its own node_modules/@agentinbox/cli, so it may run other code than Agent Inbox’s.'
+    );
   });
 
   it('lets the agent reply and resolve in one command, joined with &&, without asking the operator', async () => {
@@ -1302,6 +1318,20 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     api.deliver({ text: 'remember' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('This thread has seen 1 messages before.'));
     expect(store.current?.sessions.conv_1?.sessionId).toBe(threadId);
+  });
+
+  it('asks the operator before the agent’s own reply when Codex runs it outside the project', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    const reply = 'npx @agentinbox/cli reply conv_1 "Hi"';
+
+    api.deliver({ text: `ask-in:/tmp ${reply}` });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(`Ran ${reply} in /tmp (accept).`));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.body).toContain(
+      'It is Agent Inbox’s own command, but it runs in /tmp, outside the project, so it may run other code than Agent Inbox’s.'
+    );
   });
 
   it('starts a fresh thread when Codex no longer has the old one', async () => {

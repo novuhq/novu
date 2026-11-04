@@ -672,6 +672,17 @@ describe.each([
     await session.close();
   });
 
+  it('starts no server once it is closed while OpenCode says its version', async () => {
+    vi.stubEnv('FAKE_OPENCODE_SLOW_VERSION', '500');
+    const { session, told } = open();
+
+    await session.close();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    expect(logged('start')).toEqual([]);
+    expect(told.lost).toEqual([]);
+  });
+
   it('goes on with a session under the rules of now, and says when that session is gone', async () => {
     const first = open();
     first.session.send(message('m1', 'hello'));
@@ -831,6 +842,23 @@ describe('a session of OpenCode 2', { timeout: 15_000 }, () => {
     await vi.waitFor(() => expect(told.turns.flatMap((each) => each.inputIds).sort()).toEqual(['m1', 'm2']));
     expect(told.turns.every((each) => each.outcome === 'interrupted')).toBe(true);
     expect(logged('withdrawn')).toHaveLength(1);
+    await session.close();
+  });
+
+  it('drops what waits to be handed over when it stops, so it starts no turn after the stop', async () => {
+    vi.stubEnv('FAKE_OPENCODE_SLOW_REPLY', '800');
+    const { session, told } = open();
+
+    session.send(message('m1', 'sleep:5000'));
+    await vi.waitFor(() => expect(logged('prompt')).toHaveLength(1));
+    // OpenCode hasn't answered the first prompt yet, so this one waits to be handed over.
+    session.send(message('m2', 'queued'));
+    await session.interrupt();
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    expect(told.turns.flatMap((each) => each.inputIds).sort()).toEqual(['m1', 'm2']);
+    expect(told.turns.every((each) => each.outcome === 'interrupted')).toBe(true);
+    expect(logged('prompt')).toHaveLength(1);
     await session.close();
   });
 

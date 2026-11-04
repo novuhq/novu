@@ -38,7 +38,8 @@
 // FAKE_OPENCODE_LOG names a file that gets a line per start, per session opened and per message; FAKE_OPENCODE_SESSIONS
 // a folder that keeps sessions. FAKE_OPENCODE_AGENT_RULES (JSON `{ name, pattern, effect }`) are its default agent's
 // rules, FAKE_OPENCODE_MCP (JSON) its MCP servers' names, FAKE_OPENCODE_SLOW_START (ms) how long its server takes to
-// start, and FAKE_OPENCODE_CRASH makes it end on its first message. FAKE_OPENCODE_MCP_LATE makes OpenCode 2 list its
+// start, FAKE_OPENCODE_SLOW_VERSION (ms) how long `--version` takes, FAKE_OPENCODE_SLOW_REPLY (ms) how long OpenCode 2
+// takes to answer a prompt it already took, and FAKE_OPENCODE_CRASH makes it end on its first message. FAKE_OPENCODE_MCP_LATE makes OpenCode 2 list its
 // MCP servers only once they start, a moment after it was first asked, as OpenCode 2 does, and say so with an event;
 // `quiet` leaves the event out.
 import { randomBytes } from 'node:crypto';
@@ -51,6 +52,7 @@ const version = process.env.FAKE_OPENCODE_VERSION ?? '1.19.5';
 const major = Number(version.split('.')[0]);
 
 if (argv[0] === '--version') {
+  await new Promise((resolve) => setTimeout(resolve, Number(process.env.FAKE_OPENCODE_SLOW_VERSION ?? 0)));
   process.stdout.write(major >= 2 ? `opencode v${version}\n` : `${version}\n`);
   process.exit(0);
 }
@@ -856,6 +858,13 @@ const ROUTES_2 = [
       session.inbox.push(item);
       const payload = { type: 'user', payload: { text: item.text }, delivery: item.delivery };
       emit('session.inbox.enqueued', { sessionID: session.id, inboxID: item.id, item: payload });
+      const slowReply = Number(process.env.FAKE_OPENCODE_SLOW_REPLY ?? 0);
+      if (slowReply > 0) {
+        // It took the message and works on it; its answer is slow to come back.
+        if (!session.execution) void execute2(session);
+        await sleep(slowReply);
+        return send(res, 200, { data: { id: item.id, sessionID: session.id, ...payload } });
+      }
       send(res, 200, { data: { id: item.id, sessionID: session.id, ...payload } });
       if (!session.execution) void execute2(session);
     },

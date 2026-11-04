@@ -1,3 +1,4 @@
+import { isAbsolute, relative, resolve } from 'node:path';
 import {
   type CreateInteractionInput,
   cancelInteraction,
@@ -23,7 +24,7 @@ import {
   takeLease,
   waitForListenMessages,
 } from '../api/listen';
-import { projectLabel } from './computer';
+import { projectLabel, shortPath } from './computer';
 import type {
   HostAdapter,
   HostAnswer,
@@ -34,7 +35,7 @@ import type {
   TurnEnded,
 } from './host-adapter';
 import { hostNameOf } from './hosts';
-import { isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
+import { cliSwapIn, isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
 import {
   DEFAULT_LIMITS,
   IDS_KEPT,
@@ -1193,9 +1194,29 @@ class ListenLoop {
   }
 
   /**
+   * Why the agent's own command could run other code than Agent Inbox's CLI, or undefined when it can't: it runs
+   * outside the project, or the project has what npx would run instead ({@link cliSwapIn}).
+   */
+  private cliSwap(subject: PermissionQuestion['subject']): string | undefined {
+    if (subject.kind !== 'command') {
+      return undefined;
+    }
+
+    const project = this.state.project;
+    const from = subject.cwd ? relative(project, resolve(project, subject.cwd)) : '';
+    if (from.startsWith('..') || isAbsolute(from)) {
+      return `it runs in ${shortPath(resolve(project, subject.cwd ?? ''))}, outside the project`;
+    }
+
+    const found = cliSwapIn(project);
+
+    return found ? `the project has its own ${found}` : undefined;
+  }
+
+  /**
    * The host wants to do what its settings don't allow. The agent's own reading and replying in its
-   * conversation goes ahead; anything else is the operator's to decide, with an `approve`, even when a contact's
-   * message started the host. No answer in time is a Deny.
+   * conversation goes ahead, unless it could run other code than Agent Inbox's; anything else is the operator's to
+   * decide, with an `approve`, even when a contact's message started the host. No answer in time is a Deny.
    */
   private async askOperator(
     active: ActiveRun,
@@ -1207,10 +1228,17 @@ class ListenLoop {
     const deny = question.options.find((option) => option.kind === 'deny') ?? { id: 'deny' };
 
     const action = oneLine(question.action);
+    const details = [...question.details];
     if (allowOnce && isOwnReplySubject(question.subject, active.conversationId)) {
-      this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
+      const swap = this.cliSwap(question.subject);
+      if (!swap) {
+        this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
 
-      return { optionId: allowOnce.id };
+        return { optionId: allowOnce.id };
+      }
+
+      this.log(`${active.conversationId}: the agent’s own ${action} asks the operator: ${swap}.`);
+      details.push(`It is Agent Inbox’s own command, but ${swap}, so it may run other code than Agent Inbox’s.`);
     }
 
     if (!allowOnce) {
@@ -1222,7 +1250,7 @@ class ListenLoop {
       hostName: this.options.host.name,
       action: question.action,
       brief: question.brief,
-      detail: question.details.join(' ') || undefined,
+      detail: details.join(' ') || undefined,
       project: this.project,
       computerName: this.options.computerName,
       startedBy: runStarter(active.startedWith),

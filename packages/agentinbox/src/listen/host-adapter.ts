@@ -119,8 +119,8 @@ export interface TurnEnded {
 
 export interface PermissionQuestion {
   /** What is asked for, in a form the core can match (the agent's own replies) as well as show. */
-  subject:
-    | { kind: 'command'; command: string }
+  subject: /** `cwd`: where it runs, when the host says. */
+    | { kind: 'command'; command: string; cwd?: string }
     | { kind: 'files'; paths: string[] }
     | { kind: 'network'; hosts: string[] }
     /** A tool of an MCP server, by the name the host gave the server, with what it is called with. */

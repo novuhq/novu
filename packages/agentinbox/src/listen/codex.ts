@@ -758,7 +758,7 @@ class CodexSession implements HostSession {
           options: offerSession ? [ALLOW_ONCE, ALLOW_SESSION, DENY] : [ALLOW_ONCE, DENY],
         }
       : {
-          subject: { kind: 'command', command },
+          subject: { kind: 'command', command, ...(request.cwd ? { cwd: request.cwd } : {}) },
           action: request.kind === 'writeStdin' ? `type into \`${command}\`` : `run \`${command}\``,
           brief: 'run a command',
           details: [

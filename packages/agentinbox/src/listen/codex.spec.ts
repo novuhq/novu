@@ -342,7 +342,7 @@ describe('a Codex session', { timeout: 15_000 }, () => {
 
     expect((await turn()).text).toBe('Ran npm publish (accept).');
     expect(told.asked[0]).toEqual({
-      subject: { kind: 'command', command: 'npm publish' },
+      subject: { kind: 'command', command: 'npm publish', cwd: dir },
       action: 'run `npm publish`',
       brief: 'run a command',
       details: ['It needs the network, which the sandbox doesn’t give.'],

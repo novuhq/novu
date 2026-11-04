@@ -8,6 +8,8 @@
 // What it does depends on the words in the person's message:
 //   ask:<command>        asks to run <command> and reports the decision
 //   ask-twice:<command>  asks for <command> twice in one turn; an allow for the session skips the second
+//   ask-in:<folder> <command>
+//                        asks to run <command> in <folder>
 //   network:<host>       asks to reach <host> (a network approval, without a command)
 //   edit:<path>          asks to edit <path>, outside what its sandbox may write
 //   permissions          asks ahead for the network, for the turn or the session
@@ -131,10 +133,10 @@ function completed(entry) {
 }
 
 /** A command it runs: started, maybe asked about, then ended. */
-async function command(script, { asks, interruptible }) {
+async function command(script, { asks, interruptible, cwd = process.cwd() }) {
   const entry = item('commandExecution', {
     command: shellCommand(script),
-    cwd: process.cwd(),
+    cwd,
     status: 'inProgress',
     commandActions: [],
   });
@@ -149,7 +151,7 @@ async function command(script, { asks, interruptible }) {
         startedAtMs: Date.now(),
         reason: 'It needs the network, which the sandbox doesn’t give.',
         command: shellCommand(script),
-        cwd: process.cwd(),
+        cwd,
         commandActions: [],
       })
     );
@@ -186,6 +188,17 @@ const BEHAVIORS = [
       if (decision === 'aborted') return {};
 
       return { answer: allowed(decision) ? `Ran ${script} (${decision}).` : `Not allowed (${decision}).` };
+    },
+  ],
+  [
+    'ask-in:',
+    async (rest, context) => {
+      const [cwd, ...words] = rest.trim().split(' ');
+      const script = words.join(' ');
+      const decision = await command(script, { asks: true, cwd, ...context });
+      if (decision === 'aborted') return {};
+
+      return { answer: allowed(decision) ? `Ran ${script} in ${cwd} (${decision}).` : `Not allowed (${decision}).` };
     },
   ],
   [
