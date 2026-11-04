@@ -40,15 +40,6 @@
     "unresolved",
     "duplicates"
   ],
-  "entry": [
-    "apps/*/src/main.{ts,tsx}",
-    "apps/*/src/**/*.module.ts",
-    "libs/*/src/index.ts",
-    "packages/*/src/index.ts"
-  ],
-  "project": [
-    "apps/*/src/**/*.{ts,tsx}",
-    "libs/*/src/**/*.ts",
-    "packages/*/src/**/*.ts"
-  ]
+  "entry": ["apps/*/src/main.{ts,tsx}", "apps/*/src/**/*.module.ts", "libs/*/src/index.ts", "packages/*/src/index.ts"],
+  "project": ["apps/*/src/**/*.{ts,tsx}", "libs/*/src/**/*.ts", "packages/*/src/**/*.ts"]
 }
