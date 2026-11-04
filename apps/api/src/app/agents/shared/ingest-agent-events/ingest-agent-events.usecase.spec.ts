@@ -22,7 +22,7 @@ function envelope(event: AgentEvent, sequence = 1) {
 
 describe('IngestAgentEvents', () => {
   function setup({ aborted = false } = {}) {
-    const agentEventSink = { ingestMany: sinon.stub().resolves() };
+    const agentEventSink = { ingestMany: sinon.stub().resolves(), ingest: sinon.stub().resolves() };
     const agentRepository = { findOne: sinon.stub().resolves({ _id: 'agent-db-1', identifier: 'copilot' }) };
     const integrationRepository = { findOne: sinon.stub().resolves({ identifier: 'web-chat-integration' }) };
     const conversationService = {
@@ -37,6 +37,7 @@ describe('IngestAgentEvents', () => {
     const turnAbortStore = {
       isAborted: sinon.stub().resolves(aborted),
       clearActiveTurn: sinon.stub().resolves(),
+      refreshActiveTurn: sinon.stub().resolves(),
     };
     const logger = { setContext: sinon.stub(), info: sinon.stub(), warn: sinon.stub() };
 
@@ -89,5 +90,43 @@ describe('IngestAgentEvents', () => {
     await usecase.execute(command([envelope({ type: 'run-error', message: 'boom' })]));
 
     expect(turnAbortStore.clearActiveTurn.calledOnceWith('conv-1', TURN_ID)).to.equal(true);
+    expect(turnAbortStore.refreshActiveTurn.called).to.equal(false);
+  });
+
+  it('keeps a running turn stoppable for as long as it posts events', async () => {
+    const { usecase, turnAbortStore } = setup();
+
+    await usecase.execute(command([envelope({ type: 'channel.typing', state: 'on' })]));
+
+    expect(turnAbortStore.refreshActiveTurn.calledOnceWith('conv-1', TURN_ID)).to.equal(true);
+  });
+
+  it('closes a run that started while its turn was being stopped, and tells the bridge to abort', async () => {
+    const { usecase, agentEventSink, turnAbortStore } = setup();
+    // The Stop lands after the batch passed the abort check and before its run start was stored.
+    turnAbortStore.isAborted.onFirstCall().resolves(false).onSecondCall().resolves(true);
+
+    const result = await usecase.execute(
+      command([envelope({ type: 'run-start' }), envelope({ type: 'channel.typing', state: 'on' }, 2)])
+    );
+
+    expect(result).to.deep.equal({ abortTurn: true });
+    expect(agentEventSink.ingestMany.calledOnce).to.equal(true);
+    const [finish, context] = agentEventSink.ingest.firstCall.args;
+    expect(finish).to.include({ runId: 'run_1', turnId: TURN_ID });
+    expect(finish.event).to.deep.equal({ type: 'run-finish', outcome: 'aborted' });
+    expect(context).to.equal(agentEventSink.ingestMany.firstCall.args[1]);
+    expect(turnAbortStore.refreshActiveTurn.called).to.equal(false);
+  });
+
+  it('checks for a Stop after storing only the batch that starts the run', async () => {
+    const { usecase, agentEventSink, turnAbortStore } = setup();
+
+    const result = await usecase.execute(command([envelope({ type: 'run-start' })]));
+    await usecase.execute(command([envelope({ type: 'channel.typing', state: 'on' }, 2)]));
+
+    expect(result).to.equal(undefined);
+    expect(turnAbortStore.isAborted.callCount).to.equal(3);
+    expect(agentEventSink.ingest.called).to.equal(false);
   });
 });

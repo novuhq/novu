@@ -25,8 +25,15 @@ describe('CancelConversationTurn', () => {
     const turnAbortStore = {
       getActiveTurn: sinon.stub().resolves(activeTurn),
       isAborted: sinon.stub().callsFake(async (turnId: string) => aborted.has(turnId)),
+      // Like Redis `SET NX`: only the first call for a turn records it.
       markAborted: sinon.stub().callsFake(async (turnId: string) => {
+        if (aborted.has(turnId)) return false;
         aborted.add(turnId);
+
+        return true;
+      }),
+      unmarkAborted: sinon.stub().callsFake(async (turnId: string) => {
+        aborted.delete(turnId);
       }),
     };
     const conversation = {
@@ -165,6 +172,42 @@ describe('CancelConversationTurn', () => {
     expect(result).to.deep.equal({ status: 'aborted' });
     expect(conversationService.persistRunLifecycle.called).to.equal(false);
     expect(bridgeExecutor.execute.called).to.equal(false);
+  });
+
+  it('ends the run and sends onAbort once for two Stops at the same time', async () => {
+    const { usecase, conversationService, bridgeExecutor } = setup();
+
+    const results = await Promise.all([usecase.execute(command()), usecase.execute(command())]);
+
+    expect(results).to.deep.equal([{ status: 'aborted' }, { status: 'aborted' }]);
+    expect(conversationService.persistRunLifecycle.callCount).to.equal(1);
+    expect(bridgeExecutor.execute.callCount).to.equal(1);
+  });
+
+  it('lets a retried Stop end the run when the first could not record the aborted finish', async () => {
+    const { usecase, conversationService, bridgeExecutor, aborted } = setup();
+    conversationService.persistRunLifecycle.onFirstCall().rejects(new Error('mongo down'));
+
+    let error: unknown;
+    try {
+      await usecase.execute(command());
+    } catch (err) {
+      error = err;
+    }
+
+    expect((error as Error)?.message).to.equal('mongo down');
+    expect(aborted.has(TURN.turnId)).to.equal(false);
+    expect(bridgeExecutor.execute.called).to.equal(false);
+
+    const retry = await usecase.execute(command());
+
+    expect(retry).to.deep.equal({ status: 'aborted' });
+    expect(conversationService.persistRunLifecycle.callCount).to.equal(2);
+    expect(conversationService.persistRunLifecycle.secondCall.args[0].event).to.deep.equal({
+      type: 'run-finish',
+      outcome: 'aborted',
+    });
+    expect(bridgeExecutor.execute.calledOnce).to.equal(true);
   });
 
   it('still stops the turn when the onAbort dispatch fails', async () => {

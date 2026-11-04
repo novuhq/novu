@@ -21,6 +21,15 @@ end
 return 0
 `;
 
+/** Extends the active turn to `ARGV[2]` seconds only while it is still `ARGV[1]`. */
+const REFRESH_ACTIVE_TURN_SCRIPT = `
+local value = redis.call("GET", KEYS[1])
+if value and cjson.decode(value).turnId == ARGV[1] then
+  return redis.call("EXPIRE", KEYS[1], ARGV[2])
+end
+return 0
+`;
+
 function activeTurnKey(conversationId: string): string {
   return `agent:active-turn:${conversationId}`;
 }
@@ -74,6 +83,22 @@ export class AgentTurnAbortStore {
     }
   }
 
+  /**
+   * No turn has a time limit, so the record lives while its turn keeps posting events rather than for a fixed
+   * time from dispatch. Fails soft: a turn that posts nothing for the whole TTL only stops being stoppable.
+   */
+  async refreshActiveTurn(conversationId: string, turnId: string): Promise<void> {
+    try {
+      await this.cacheService.eval(
+        REFRESH_ACTIVE_TURN_SCRIPT,
+        [activeTurnKey(conversationId)],
+        [turnId, ACTIVE_TURN_TTL_SECONDS]
+      );
+    } catch (err) {
+      this.logger.warn({ err, conversationId, turnId }, 'Failed to refresh the active agent turn');
+    }
+  }
+
   /** Called once a turn finished, so a later Stop finds nothing to abort. Fails soft: the key also expires. */
   async clearActiveTurn(conversationId: string, turnId: string): Promise<void> {
     try {
@@ -83,8 +108,23 @@ export class AgentTurnAbortStore {
     }
   }
 
-  async markAborted(turnId: string): Promise<void> {
-    await this.cacheService.set(abortedTurnKey(turnId), 1, { ttl: ABORTED_TURN_TTL_SECONDS });
+  /**
+   * `false` when the turn was already aborted, so of several Stops only one goes on. Throws when Redis can't answer:
+   * a Stop that could not record its abort must not end the run.
+   */
+  async markAborted(turnId: string): Promise<boolean> {
+    return (
+      (await this.cacheService.setIfNotExist(abortedTurnKey(turnId), '1', { ttl: ABORTED_TURN_TTL_SECONDS })) === 'OK'
+    );
+  }
+
+  /** Undoes `markAborted` for a Stop that failed later on, so a retried Stop runs in full. */
+  async unmarkAborted(turnId: string): Promise<void> {
+    try {
+      await this.cacheService.del(abortedTurnKey(turnId));
+    } catch (err) {
+      this.logger.warn({ err, turnId }, 'Failed to clear the agent turn abort marker');
+    }
   }
 
   /** Fails open: when Redis can't answer, the turn keeps delivering rather than dropping a live reply. */

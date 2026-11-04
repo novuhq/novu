@@ -56,24 +56,31 @@ export class CancelConversationTurn {
     const conversationId = String(conversation._id);
     const activeTurn = await this.turnAbortStore.getActiveTurn(conversationId);
     if (!activeTurn) {
+      this.logger.info({ conversationId }, 'Agent turn stop found no running turn');
+
       return { status: 'idle' };
     }
 
-    // A repeated Stop for the same turn changes nothing.
-    if (await this.turnAbortStore.isAborted(activeTurn.turnId)) {
+    const { turnId } = activeTurn;
+    // Marked first, so every event the bridge posts from here on is dropped. Only the Stop that marks the turn goes
+    // on, so a repeated or concurrent Stop changes nothing.
+    if (!(await this.turnAbortStore.markAborted(turnId))) {
+      this.logger.info({ conversationId, turnId }, 'Agent turn was already stopped');
+
       return { status: 'aborted' };
     }
 
-    // Marked first, so every event the bridge posts from here on is dropped.
-    await this.turnAbortStore.markAborted(activeTurn.turnId);
-
     const channel = resolveLifecycleChannel(conversation);
-    await this.finishRunAsAborted(conversation, channel, activeTurn, command);
+    const runId = await this.finishRunAsAborted(conversation, channel, activeTurn, command).catch(async (err) => {
+      // Otherwise a retried Stop would find the turn aborted and its run would stay open.
+      await this.turnAbortStore.unmarkAborted(turnId);
+      throw err;
+    });
 
     const config = await this.resolveConfig(conversation, channel, command);
     await this.stopTyping(conversation, channel, config);
 
-    this.logger.info({ conversationId, turnId: activeTurn.turnId }, 'Agent turn stopped');
+    this.logger.info({ conversationId, turnId, runId }, 'Agent turn stopped');
 
     if (config) {
       await this.dispatchOnAbort(conversation, channel, config, activeTurn, command);
@@ -85,16 +92,17 @@ export class CancelConversationTurn {
   /**
    * Ends the turn's run as `aborted` under the run's own finish identifier, so the bridge's later `completed` (when
    * it slips past ingest) dedupes against it. A turn stopped before its `run-start` arrived gets a run of its own:
-   * its start is dropped at ingest, and readers still see the run end.
+   * its start is dropped at ingest, and readers still see the run end. Returns the finished run's id.
    */
   private async finishRunAsAborted(
     conversation: ConversationEntity,
     channel: ConversationChannel,
     activeTurn: ActiveAgentTurn,
     command: CancelConversationTurnCommand
-  ): Promise<void> {
+  ): Promise<string> {
     const conversationId = String(conversation._id);
     const openRunId = await this.conversationService.findOpenRunId(command.environmentId, conversationId);
+    const runId = openRunId ?? `stopped_${activeTurn.turnId}`;
 
     const agent = await this.agentRepository.findOne(
       { _id: conversation._agentId, _environmentId: command.environmentId },
@@ -107,9 +115,11 @@ export class CancelConversationTurn {
       agentIdentifier: agent?.identifier ?? conversation._agentId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      runId: openRunId ?? `stopped_${activeTurn.turnId}`,
+      runId,
       event: { type: 'run-finish', outcome: 'aborted' },
     });
+
+    return runId;
   }
 
   /** Fails soft: without a config the turn is still stopped, only the typing stop and `onAbort` are skipped. */

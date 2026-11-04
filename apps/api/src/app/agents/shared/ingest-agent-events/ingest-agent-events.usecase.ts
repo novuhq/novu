@@ -9,7 +9,7 @@ import { AgentEventContext, AgentEventSink } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import { IngestAgentEventsCommand } from './ingest-agent-events.command';
 
-/** Tells the bridge a user stopped its turn: the batch was dropped and the turn should abort. */
+/** Tells the bridge a user stopped its turn, so the turn should abort. */
 export type IngestAgentEventsResult = { abortTurn: true };
 
 /**
@@ -172,7 +172,23 @@ export class IngestAgentEvents {
 
     if (envelopes.some((envelope) => isTerminalRunEvent(envelope.event))) {
       await this.turnAbortStore.clearActiveTurn(String(conversation._id), turnId);
+
+      return undefined;
     }
+
+    // A Stop that landed while this batch was stored may have missed its run start, which would leave the run open.
+    const runStart = envelopes.find((envelope) => envelope.event.type === 'run-start');
+    if (runStart && (await this.turnAbortStore.isAborted(turnId))) {
+      this.logger.info(
+        { conversationId, turnId, runId: runStart.runId },
+        'Closing agent run as aborted — the turn was stopped while it started'
+      );
+      await this.agentEventSink.ingest({ ...runStart, event: { type: 'run-finish', outcome: 'aborted' } }, context);
+
+      return { abortTurn: true };
+    }
+
+    await this.turnAbortStore.refreshActiveTurn(String(conversation._id), turnId);
 
     return undefined;
   }

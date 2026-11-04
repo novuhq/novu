@@ -1,4 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { CacheService } from '@novu/application-generic';
 import { ConversationActivityTypeEnum, type ConversationEntity } from '@novu/dal';
 import { AgentEventEnum } from '@novu/framework/internal';
 import { ChatProviderIdEnum } from '@novu/shared';
@@ -7,6 +8,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentTurnAbortStore } from '../conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
+import { AgentEventSink } from '../shared/agent-event-sink.service';
 import {
   AgentTestContext,
   activityRepository,
@@ -216,6 +218,50 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
         '*'
       )
     ).to.equal(null);
+  });
+
+  it('closes a run whose start was being stored when the Stop landed', async () => {
+    const { identifier, conversation } = await startConversation();
+    const conversationId = String(conversation._id);
+    const activeTurn = await activeTurnOf(conversationId);
+
+    // The Stop lands after the batch passed the abort check and before its run start is stored.
+    const sink = testServer.getService(AgentEventSink);
+    const ingestMany = sink.ingestMany.bind(sink);
+    let stopped = false;
+    sinon.stub(sink, 'ingestMany').callsFake(async (envelopes, context) => {
+      if (!stopped) {
+        stopped = true;
+        expect((await cancel(identifier)).body.data).to.deep.equal({ status: 'aborted' });
+      }
+
+      return ingestMany(envelopes, context);
+    });
+
+    const startRes = await ingest(conversationId, activeTurn.turnId, 'run_e2e_5', [{ type: 'run-start' }]);
+    expect(startRes.body.data).to.deep.equal({ abortTurn: true });
+
+    const eventsRes = await ctx.session.testAgent
+      .get(`/v1/web-chat/conversations/${identifier}/events`)
+      .set('Authorization', `Bearer ${subscriberToken}`);
+    const lifecycle = eventsRes.body.data.events
+      .map((envelope: AgentEventEnvelope) => envelope.event)
+      .filter((event: AgentEvent) => event.type === 'run-start' || event.type === 'run-finish');
+    expect(lifecycle.at(-2)).to.deep.include({ type: 'run-start' });
+    expect(lifecycle.at(-1)).to.deep.include({ type: 'run-finish', outcome: 'aborted' });
+  });
+
+  it('keeps a running turn stoppable while it posts events', async () => {
+    const { conversation } = await startConversation();
+    const conversationId = String(conversation._id);
+    const activeTurn = await activeTurnOf(conversationId);
+    const redis = testServer.getService(CacheService).client;
+    const key = `agent:active-turn:${conversationId}`;
+    await redis.expire(key, 5);
+
+    await ingest(conversationId, activeTurn.turnId, 'run_e2e_4', [{ type: 'run-start' }]);
+
+    expect(await redis.ttl(key)).to.be.greaterThan(60);
   });
 
   it('returns idle once the turn finished on its own', async () => {
