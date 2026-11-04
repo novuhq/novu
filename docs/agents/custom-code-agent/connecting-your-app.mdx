@@ -67,6 +67,7 @@ app.use('/api/novu', serve({ agents: [supportAgent] }));
 
 Novu keeps the history bounded:
 
+- Novu sends the newest 50 entries of the conversation. If that cuts a tool call off from its approval decision or result, Novu leaves out the leftover decision and result too.
 - Each tool result is cut to 16 KB, and the cut text ends with a `[truncated: ...]` marker the model can read.
 - The history in one request is capped at 512 KB. When a thread passes that, Novu drops the oldest entries first. A tool call and its result, or an approval request and its decision, are always dropped together.
 - History entries include only the attachments from rich content. Card bodies are left out, since `content` carries the text.
