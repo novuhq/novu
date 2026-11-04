@@ -190,11 +190,19 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     expect(store.current).toMatchObject({
       host: 'claude-code',
       project,
-      limits: { runsPerHour: 20, maxRunSeconds: 1800 },
+      limits: { runsPerHour: 20, maxRunSeconds: 1800, runsAtOnce: 5 },
     });
     expect(store.current?.allowedAt).toBeTruthy();
     // Every call is Claude Code's.
     expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
+  });
+
+  it('keeps the limits it was given', async () => {
+    const { deps: listener, store } = deps();
+
+    expect(await listenOn('claude-code', { runsPerHour: '6', maxRun: '10m', runsAtOnce: '2' }, listener)).toBe(EXIT_OK);
+
+    expect(store.current?.limits).toEqual({ runsPerHour: 6, maxRunSeconds: 600, runsAtOnce: 2 });
   });
 
   it('takes nothing when the person says no', async () => {
@@ -477,10 +485,10 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     const { deps: listener } = deps();
 
     await expect(listenOn('chatgpt', {}, listener)).rejects.toThrow(
-      'Listening starts a host on this computer: claude-code.'
+      'Listening starts a host on this computer: claude-code, codex, opencode.'
     );
-    await expect(listenOn('codex', {}, listener)).rejects.toThrow(
-      'Listening doesn’t start Codex yet, only Claude Code.'
+    await expect(listenOn('cursor', {}, listener)).rejects.toThrow(
+      'Listening doesn’t start Cursor, only Claude Code, Codex and OpenCode.'
     );
   });
 
@@ -676,7 +684,7 @@ describe('listen run', { timeout: 20_000 }, () => {
         host: 'claude-code',
         project: dir,
         program: { command: 'claude', args: [] },
-        limits: { runsPerHour: 20, maxRunSeconds: 60 },
+        limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 5 },
       }),
       allowedAt: new Date().toISOString(),
       stopped: { reason: 'key_changed', message: KEY_CHANGED_MESSAGE, at: new Date().toISOString() },

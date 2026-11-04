@@ -30,6 +30,9 @@
 //   fail                 ends the turn with an error
 //   api-error            ends the turn as a failed model call does: the reason is its answer, with no `errors`
 //   remember             says how many messages its session has seen
+//   background           starts a command in the background and ends its turn; the run that goes on with the
+//                        session next gives the notice that the command didn't finish a turn of its own first, one
+//                        that names no message and runs no model, as Claude Code 2.1.318 does (seen 2026-11-04)
 //   askuser              puts a question to "the user" (AskUserQuestion) and reports the answer
 //   control:<name>       sends a control request of another kind, and says how it was answered
 //   env                  says which parent-session variables it was started with
@@ -92,13 +95,22 @@ if (resumed && sessionsDir && !existsSync(sessionFile())) {
 }
 
 let seen = 0;
+/** A command in the background this run started, which outlives it. */
+let background = false;
+/** One the session's last run left: its notice comes first. */
+let leftover = false;
 if (sessionsDir) {
   mkdirSync(sessionsDir, { recursive: true });
-  seen = existsSync(sessionFile()) ? JSON.parse(readFileSync(sessionFile(), 'utf8')).messages : 0;
+  const kept = existsSync(sessionFile()) ? JSON.parse(readFileSync(sessionFile(), 'utf8')) : {};
+  seen = kept.messages ?? 0;
+  leftover = Boolean(resumed && kept.background);
 }
+const save = () => {
+  if (sessionsDir) writeFileSync(sessionFile(), JSON.stringify({ messages: seen, background }));
+};
 const remember = (count) => {
   seen += count;
-  if (sessionsDir) writeFileSync(sessionFile(), JSON.stringify({ messages: seen }));
+  save();
 };
 
 /** Messages waiting for the turn in progress to reach a point where it reads them. */
@@ -410,6 +422,15 @@ const BEHAVIORS = [
   ['api-error', async () => ({ apiError: 'Not logged in · Please run /login' })],
   ['remember', async () => ({ answer: `This session has seen ${seen} messages before.` })],
   [
+    'background',
+    async () => {
+      tool('sleep 300');
+      background = true;
+
+      return { answer: 'It runs in the background; I’ll tell you when it finishes.' };
+    },
+  ],
+  [
     'askuser',
     async (_rest, { interruptible }) => {
       const decision = await interruptible(
@@ -563,6 +584,16 @@ function next() {
   }
 }
 
+if (leftover) {
+  out({
+    type: 'system',
+    subtype: 'task_notification',
+    status: 'stopped',
+    summary: 'Background shell command didn’t finish before the previous session ended',
+    session_id: sessionId,
+  });
+}
+
 createInterface({ input: process.stdin })
   .on('line', (line) => {
     if (!line.trim()) return;
@@ -570,6 +601,12 @@ createInterface({ input: process.stdin })
 
     if (message.type === 'user') {
       lifecycle(message.uuid, 'queued');
+      if (leftover) {
+        // The notice's own turn, before the message's: it names no message.
+        leftover = false;
+        out({ type: 'result', subtype: 'success', is_error: false, result: '', num_turns: 0, session_id: sessionId });
+        save();
+      }
       queued.push(message);
       next();
     } else if (message.type === 'control_response') {
