@@ -73,7 +73,7 @@ describe('HumanAgentPictureService', () => {
     expect(contentType).to.equal('image/png');
     expect(agentRepository.updateOne.firstCall.args[1].$set.picture.storageKey).to.equal(key);
     expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1].picture.storageKey).to.equal(key);
-    expect(service.describe(agent).pictureUrl).to.contain(`/v1/human/agent-pictures/${ENV}/${AGENT}/`);
+    expect(service.describe(agent).pictureUrl).to.contain(`/agent-pictures/${ENV}/${AGENT}/`);
   });
 
   it('deletes the picture it replaces', async () => {

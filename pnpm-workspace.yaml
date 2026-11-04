@@ -677,3 +677,6 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
+
+patchedDependencies:
+  '@stoplight/spectral-core@1.20.0': patches/@stoplight__spectral-core@1.20.0.patch

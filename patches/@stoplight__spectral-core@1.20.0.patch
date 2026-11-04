@@ -1,0 +1,18 @@
+diff --git a/dist/ruleset/utils/minimatch.js b/dist/ruleset/utils/minimatch.js
+index f326cea09da6dcec7389d1be643cb9427f96f61b..3e01a1da2a2a36e75333f17dfe4aa9754e44c837 100644
+--- a/dist/ruleset/utils/minimatch.js
++++ b/dist/ruleset/utils/minimatch.js
+@@ -1,11 +1,10 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.minimatch = void 0;
+-const tslib_1 = require("tslib");
+-const minimatch_1 = (0, tslib_1.__importDefault)(require("minimatch"));
++const minimatch_1 = require("minimatch");
+ const DEFAULT_OPTS = { matchBase: true };
+ function minimatch(source, pattern) {
+-    return (0, minimatch_1.default)(source, pattern, DEFAULT_OPTS);
++    return (0, minimatch_1.minimatch)(source, pattern, DEFAULT_OPTS);
+ }
+ exports.minimatch = minimatch;
+ //# sourceMappingURL=minimatch.js.map

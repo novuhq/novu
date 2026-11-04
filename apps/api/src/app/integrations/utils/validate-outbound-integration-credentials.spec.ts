@@ -5,6 +5,7 @@ import { validateOutboundIntegrationCredentials } from './validate-outbound-inte
 
 const ORIGINAL_CI_EE_TEST = process.env.CI_EE_TEST;
 const ORIGINAL_SELF_HOSTED = process.env.IS_SELF_HOSTED;
+const ORIGINAL_TEST_ALLOW_IPS = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
 
 function restoreEnv(name: string, value: string | undefined): void {
   if (value === undefined) {
@@ -20,11 +21,14 @@ describe('validateOutboundIntegrationCredentials', () => {
   beforeEach(() => {
     process.env.CI_EE_TEST = 'true';
     process.env.IS_SELF_HOSTED = 'false';
+    // .env.test allows loopback for e2e fixtures; Cloud never sets this.
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
   });
 
   afterEach(() => {
     restoreEnv('CI_EE_TEST', ORIGINAL_CI_EE_TEST);
     restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+    restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_TEST_ALLOW_IPS);
   });
 
   const privateTargetCases = [
