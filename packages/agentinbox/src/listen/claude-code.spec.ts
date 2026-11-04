@@ -218,7 +218,7 @@ describe('describeAction and subjectOf', () => {
 });
 
 describe('sessionEnv', () => {
-  it('leaves out the marks of a session listen was started from, and keeps the rest', () => {
+  it('leaves out the marks of a session listen was started from, keeps the rest, and starts each command in the project', () => {
     expect(
       sessionEnv({
         PATH: '/bin',
@@ -240,13 +240,15 @@ describe('sessionEnv', () => {
       CLAUDE_CODE_USE_BEDROCK: '1',
       ANTHROPIC_MODEL: 'opus',
       INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
+      // Each command starts in the project, where the agent's own commands are looked at.
+      CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR: '1',
     });
   });
 
   it('names the account Claude Code signs in under when the environment doesn’t, as under launchd', () => {
     const account = userInfo();
 
-    expect(sessionEnv({ PATH: '/bin' })).toEqual({
+    expect(sessionEnv({ PATH: '/bin' })).toMatchObject({
       PATH: '/bin',
       USER: account.username,
       LOGNAME: account.username,

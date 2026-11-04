@@ -1334,6 +1334,21 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     );
   });
 
+  it('asks the operator before the agent’s own reply run where the project has a CLI of its own', async () => {
+    const { api, dir } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    mkdirSync(join(dir, 'node_modules', 'tmp', 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+    const reply = 'npx @agentinbox/cli reply conv_1 "Hi"';
+
+    api.deliver({ text: `ask-in:${join(dir, 'node_modules', 'tmp')} ${reply}` });
+
+    await eventually(() => expect(api.interactions.some((interaction) => interaction.kind === 'approve')).toBe(true));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.body).toContain(
+      'the project has its own node_modules/tmp/node_modules/@agentinbox/cli, so it may run other code than Agent Inbox’s.'
+    );
+  });
+
   it('starts a fresh thread when Codex no longer has the old one', async () => {
     const { api, store } = await start(
       {

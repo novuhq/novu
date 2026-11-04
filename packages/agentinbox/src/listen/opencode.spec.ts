@@ -290,6 +290,14 @@ describe('describePermission', () => {
     ).toEqual({ kind: 'command', command: 'npm publish' });
   });
 
+  it('says where a command runs when the agent named a folder for it', () => {
+    const inputs = new Map([['call_1', { command: 'npm test', workdir: 'web' }]]);
+
+    expect(
+      describePermission(asked({ patterns: ['npm test'], callId: 'call_1' }), { ...context, inputs }).subject
+    ).toEqual({ kind: 'command', command: 'npm test', cwd: 'web' });
+  });
+
   it('names what an MCP tool is called with, from its call when OpenCode 1 doesn’t say', () => {
     const inputs = new Map([['call_2', { conversation: 'conv_1', message: 'hi' }]]);
 

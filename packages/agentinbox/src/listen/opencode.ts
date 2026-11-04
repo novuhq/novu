@@ -288,8 +288,14 @@ function describeMcp(mcp: { server: string; tool: string }, input: Record<string
 
 const describeCommand: Describe = (asked, said) => {
   const command = stringOf(said.command) ?? asked.patterns.join(' && ');
+  // Where it runs, when the agent named a folder (\`workdir\`) rather than the project.
+  const cwd = stringOf(said.workdir);
 
-  return { subject: { kind: 'command', command }, action: `run \`${command}\``, brief: 'run a command' };
+  return {
+    subject: { kind: 'command', command, ...(cwd ? { cwd } : {}) },
+    action: `run \`${command}\``,
+    brief: 'run a command',
+  };
 };
 
 const describeFiles: Describe = (asked, said) => {

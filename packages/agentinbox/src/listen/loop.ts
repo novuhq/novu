@@ -1195,7 +1195,7 @@ class ListenLoop {
 
   /**
    * Why the agent's own command could run other code than Agent Inbox's CLI, or undefined when it can't: it runs
-   * outside the project, or the project has what npx would run instead ({@link cliSwapIn}).
+   * outside the project, or where it runs the project has what npx would run instead ({@link cliSwapIn}).
    */
   private cliSwap(subject: PermissionQuestion['subject']): string | undefined {
     if (subject.kind !== 'command') {
@@ -1203,12 +1203,13 @@ class ListenLoop {
     }
 
     const project = this.state.project;
-    const from = subject.cwd ? relative(project, resolve(project, subject.cwd)) : '';
+    const cwd = resolve(project, subject.cwd ?? '.');
+    const from = relative(project, cwd);
     if (from.startsWith('..') || isAbsolute(from)) {
-      return `it runs in ${shortPath(resolve(project, subject.cwd ?? ''))}, outside the project`;
+      return `it runs in ${shortPath(cwd)}, outside the project`;
     }
 
-    const found = cliSwapIn(project);
+    const found = cliSwapIn(project, cwd);
 
     return found ? `the project has its own ${found}` : undefined;
   }

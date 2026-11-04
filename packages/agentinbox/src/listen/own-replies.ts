@@ -1,5 +1,5 @@
-import { type Dirent, existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import type { PermissionQuestion } from './host-adapter';
 
 /**
@@ -456,53 +456,53 @@ const HARMLESS_NPMRC = new Set([
 ]);
 
 /**
- * What in `project` could make the agent's own `npx @agentinbox/cli …` (or `agentinbox …`) run the project's code
- * instead of Agent Inbox's: a path in it, or undefined when nothing could. npx runs a package of that name the
- * project has (in a `node_modules`, or a workspace of that name) before the published one, and reads from an
- * `.npmrc` where packages come from and how they run. The agent writes in the project without asking, so a contact
- * could have it plant one of these; then its own commands ask the operator.
+ * What could make the agent's own `npx @agentinbox/cli …` (or `agentinbox …`), run in `cwd`, run the project's code
+ * instead of Agent Inbox's: a path in the project, or undefined when nothing could. npx runs a package of that name,
+ * or a bin of its name, from the `node_modules` of the folder it runs in or of a folder above it before the published
+ * one, and reads where packages come from and how they run from an `.npmrc` there. So the folders from `cwd` up to
+ * the project are looked at, and no others: one planted in another folder of the project doesn't run (npm 10,
+ * 2026-11-04). The agent writes in the project without asking, so a contact could have it plant one of these; then
+ * its own commands ask the operator.
  */
-export function cliSwapIn(project: string): string | undefined {
-  const folders = [project];
-  for (let folder = folders.pop(); folder !== undefined; folder = folders.pop()) {
-    let entries: Dirent[];
-    try {
-      entries = readdirSync(folder, { withFileTypes: true });
-    } catch {
-      continue;
+export function cliSwapIn(project: string, cwd: string = project): string | undefined {
+  for (let folder = cwd; ; folder = dirname(folder)) {
+    const found = SWAPS.map((swaps) => swaps(folder)).find(Boolean);
+    if (found) {
+      return relative(project, found);
     }
 
-    for (const entry of entries) {
-      const path = join(folder, entry.name);
-      const found = swapAt(path, entry.name);
-      if (found) {
-        return relative(project, found);
-      }
-
-      if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.git') {
-        folders.push(path);
-      }
-    }
-  }
-
-  return undefined;
-}
-
-function swapAt(path: string, name: string): string | undefined {
-  switch (name) {
-    case 'node_modules':
-      return [join(path, '@agentinbox', 'cli'), join(path, '.bin', 'agentinbox')].find((inside) => existsSync(inside));
-    case '.npmrc':
-      return npmrcKeys(path).every((key) => HARMLESS_NPMRC.has(key)) ? undefined : path;
-    case 'package.json':
-      return packageName(path) === '@agentinbox/cli' ? path : undefined;
-    default:
+    if (folder === project || dirname(folder) === folder) {
       return undefined;
+    }
   }
 }
 
-/** The settings an `.npmrc` sets; one that can't be read counts as setting something. */
+/** What in one folder npx would take instead of the published CLI. */
+const SWAPS: ReadonlyArray<(folder: string) => string | undefined> = [
+  (folder) => existing(join(folder, 'node_modules', '@agentinbox', 'cli')),
+  (folder) => existing(join(folder, 'node_modules', '.bin', 'agentinbox')),
+  (folder) => {
+    const path = join(folder, '.npmrc');
+
+    return npmrcKeys(path).every((key) => HARMLESS_NPMRC.has(key)) ? undefined : path;
+  },
+  (folder) => {
+    const path = join(folder, 'package.json');
+
+    return packageName(path) === '@agentinbox/cli' ? path : undefined;
+  },
+];
+
+function existing(path: string): string | undefined {
+  return existsSync(path) ? path : undefined;
+}
+
+/** The settings an `.npmrc` sets, none when there is none; one that can't be read counts as setting something. */
 function npmrcKeys(path: string): string[] {
+  if (!existsSync(path)) {
+    return [];
+  }
+
   try {
     return readFileSync(path, 'utf8')
       .split(/\r?\n/)

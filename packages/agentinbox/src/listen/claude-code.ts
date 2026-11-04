@@ -237,9 +237,12 @@ function realpathOr(path: string): string {
   }
 }
 
-/** The environment a Claude Code session the listener starts runs in (`programEnv`). */
+/**
+ * The environment a Claude Code session the listener starts runs in (`programEnv`). Each command starts in the project,
+ * as Claude Code doesn't say where one runs: the listener goes by that when it lets the agent's own commands through.
+ */
 export function sessionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  return programEnv(env);
+  return { ...programEnv(env), CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR: '1' };
 }
 
 /** One line of Claude Code's stream-json output, as far as the listener reads it. */
