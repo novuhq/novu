@@ -203,6 +203,9 @@ overrides:
 
 packageExtensionsChecksum: sha256-K7efP6uJ8xzECMUv4MBhVNrJwJl/Tzb5xsaDF0KK4Xw=
 
+patchedDependencies:
+  '@stoplight/spectral-core@1.20.0': 453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b
+
 importers:
 
   .:
@@ -46677,7 +46680,7 @@ snapshots:
     dependencies:
       '@stoplight/json': 3.21.0
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-formatters': 1.5.0
       '@stoplight/spectral-parsers': 1.0.5
       '@stoplight/spectral-ref-resolver': 1.0.4
@@ -46697,7 +46700,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-core@1.20.0':
+  '@stoplight/spectral-core@1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)':
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
@@ -46726,7 +46729,7 @@ snapshots:
   '@stoplight/spectral-formats@1.6.0':
     dependencies:
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@types/json-schema': 7.0.15
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -46735,7 +46738,7 @@ snapshots:
   '@stoplight/spectral-formats@1.8.2':
     dependencies:
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@types/json-schema': 7.0.15
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -46744,7 +46747,7 @@ snapshots:
   '@stoplight/spectral-formatters@1.5.0':
     dependencies:
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       '@types/markdown-escape': 1.1.3
@@ -46763,7 +46766,7 @@ snapshots:
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-formats': 1.8.2
       '@stoplight/spectral-runtime': 1.1.2
       ajv: 8.20.0
@@ -46779,7 +46782,7 @@ snapshots:
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-formats': 1.8.2
       '@stoplight/spectral-runtime': 1.1.2
       ajv: 8.20.0
@@ -46812,7 +46815,7 @@ snapshots:
     dependencies:
       '@rollup/plugin-commonjs': 22.0.2(rollup@2.80.0)
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-formats': 1.8.2
       '@stoplight/spectral-functions': 1.7.2
       '@stoplight/spectral-parsers': 1.0.5
@@ -46853,7 +46856,7 @@ snapshots:
       '@asyncapi/specs': 4.3.1
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-core': 1.20.0(patch_hash=453cff053d7fefe63260af364bf2ccf87904a315d9e074d8cdbc5638c4385a3b)
       '@stoplight/spectral-formats': 1.6.0
       '@stoplight/spectral-functions': 1.7.2
       '@stoplight/spectral-runtime': 1.1.2
