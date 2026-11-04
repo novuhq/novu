@@ -25,9 +25,10 @@
 	 * The top-level config is for LOCAL DEVELOPMENT ONLY (`pnpm dev`). It has NO
 	 * `routes`, so `wrangler dev` serves on localhost and `request.url` resolves
 	 * to the localhost origin — which is what OAuth discovery advertises. Real
-	 * deployments live under the named `us`/`eu` environments below (deploy with
-	 * `pnpm deploy` / `pnpm deploy:eu`); the distinct dev name avoids clobbering
-	 * a production worker on an accidental route-less `wrangler deploy`.
+	 * deployments live under the named `us`/`eu`/`staging` environments below
+	 * (deploy with `pnpm deploy:us` / `pnpm deploy:eu` / `pnpm deploy:staging`);
+	 * the distinct dev name avoids clobbering a production worker on an
+	 * accidental route-less `wrangler deploy`.
 	 */
 	"name": "novu-mcp-server-dev",
 	"observability": {
@@ -108,6 +109,43 @@
 			"vars": {
 				"NOVU_API_URL": "https://eu.api.novu.co",
 				"NOVU_REGION": "eu"
+			}
+		},
+		/**
+		 * Staging, for testing against the Novu staging API before a US/EU deploy
+		 * (`pnpm deploy:staging`). OAuth needs its own `CLERK_OAUTH_ISSUER` secret
+		 * (`wrangler secret put CLERK_OAUTH_ISSUER --env staging`) set to the Clerk
+		 * instance the staging API trusts; without it, staging is API-key only.
+		 */
+		"staging": {
+			"name": "novu-mcp-server-staging",
+			"durable_objects": {
+				"bindings": [
+					{
+						"class_name": "NovuMCP",
+						"name": "MCP_OBJECT"
+					}
+				]
+			},
+			"migrations": [
+				{
+					"new_sqlite_classes": ["NovuMCP"],
+					"tag": "v1"
+				}
+			],
+			"observability": {
+				"enabled": true
+			},
+			"routes": [
+				{
+					"custom_domain": true,
+					"pattern": "mcp.novu-staging.co",
+					"zone_name": "novu-staging.co"
+				}
+			],
+			"vars": {
+				"NOVU_API_URL": "https://api.novu-staging.co",
+				"NOVU_REGION": "staging"
 			}
 		}
 	}
