@@ -34,10 +34,10 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import {
-  type CopilotMode,
   CopilotSidebarChat,
   CopilotSidebarHeaderActions,
   CopilotWebChatCanvasToast,
+  type EditorCopilotMode,
   useCopilotSidebarControl,
   useWorkflowEditorCopilot,
 } from '../copilot-web-chat';
@@ -49,7 +49,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { CopilotSidebar } from './steps/layout/copilot-sidebar';
+import { CopilotSidebar, CopilotSidebarSkeleton } from './steps/layout/copilot-sidebar';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
@@ -245,10 +245,12 @@ type NewChatSuggestions = ReturnType<typeof getNewChatSuggestions>;
 type WorkflowSteps = NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
 
 function WebChatSidebarCanvasPane({
+  isPending,
   isReadOnly,
   steps,
   suggestions,
 }: {
+  isPending: boolean;
   isReadOnly: boolean;
   steps: WorkflowSteps;
   suggestions: NewChatSuggestions;
@@ -257,14 +259,14 @@ function WebChatSidebarCanvasPane({
 
   return (
     <CopilotSidebar
-      copilotContent={<CopilotSidebarChat suggestions={suggestions} />}
-      headerActions={<CopilotSidebarHeaderActions />}
+      copilotContent={isPending ? <CopilotSidebarSkeleton /> : <CopilotSidebarChat suggestions={suggestions} />}
+      headerActions={isPending ? undefined : <CopilotSidebarHeaderActions />}
       autoSaveId="workflow-editor-copilot-layout"
       {...sidebarControl}
     >
       <div className="relative h-full min-w-0 flex-1">
         <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-        <CopilotWebChatCanvasToast />
+        {!isPending && <CopilotWebChatCanvasToast />}
       </div>
     </CopilotSidebar>
   );
@@ -276,24 +278,34 @@ function WorkflowCanvasPane({
   steps,
   suggestions,
 }: {
-  copilotMode: CopilotMode | null;
+  copilotMode: EditorCopilotMode | null;
   isReadOnly: boolean;
   steps: WorkflowSteps;
   suggestions: NewChatSuggestions;
 }) {
   switch (copilotMode) {
     case 'legacy':
+    case 'pending-legacy':
       return (
-        <WorkflowCopilotSidebar>
+        <WorkflowCopilotSidebar isPending={copilotMode === 'pending-legacy'}>
           <div className="relative h-full min-w-0 flex-1">
             <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-            <WorkflowCanvasToast />
+            {copilotMode === 'legacy' && <WorkflowCanvasToast />}
           </div>
         </WorkflowCopilotSidebar>
       );
     case 'web-chat-sidebar':
-      return <WebChatSidebarCanvasPane isReadOnly={isReadOnly} steps={steps} suggestions={suggestions} />;
+    case 'pending-web-chat-sidebar':
+      return (
+        <WebChatSidebarCanvasPane
+          isPending={copilotMode === 'pending-web-chat-sidebar'}
+          isReadOnly={isReadOnly}
+          steps={steps}
+          suggestions={suggestions}
+        />
+      );
     case 'web-chat-popover':
+    case 'pending-web-chat-popover':
     case null:
       return (
         <div className="relative flex-1">
@@ -351,8 +363,6 @@ export const WorkflowTabs = () => {
     workflowLabel: workflow?.workflowId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
-  const isLegacyCopilot = copilotMode === 'legacy';
-
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
   const subscriberData = useMemo(
@@ -649,15 +659,23 @@ export const WorkflowTabs = () => {
     </div>
   );
 
-  return isLegacyCopilot ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
+  return hasLegacyChat(copilotMode) ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
 };
 
-function WorkflowCopilotSidebar({ children }: { children: React.ReactNode }) {
+/**
+ * The legacy chat wraps the whole canvas (its toast and sidebar share it), so it is mounted while legacy is pending
+ * too; resolving to another mode than the cached flags predicted remounts the canvas once.
+ */
+function hasLegacyChat(copilotMode: EditorCopilotMode | null): boolean {
+  return copilotMode === 'legacy' || copilotMode === 'pending-legacy';
+}
+
+function WorkflowCopilotSidebar({ isPending, children }: { isPending: boolean; children: React.ReactNode }) {
   const { isGenerating } = useAiChat();
 
   return (
     <CopilotSidebar
-      copilotContent={<NovuCopilotPanel hideHeader />}
+      copilotContent={isPending ? <CopilotSidebarSkeleton /> : <NovuCopilotPanel hideHeader />}
       isGenerating={isGenerating}
       autoSaveId="workflow-editor-copilot-layout"
     >

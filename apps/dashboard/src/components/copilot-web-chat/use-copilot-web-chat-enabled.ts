@@ -2,9 +2,7 @@ import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-
-/** Rollout steps of the workflow editor Copilot: the legacy `/ai` sidebar, web chat in that sidebar, then the popover. */
-export type CopilotMode = 'legacy' | 'web-chat-sidebar' | 'web-chat-popover';
+import type { CopilotMode } from './copilot-mode';
 
 /** Feature-flag gate for the web-chat Copilot, in the sidebar or the popover (the legacy sidebar is used when false). */
 export function useCopilotWebChatEnabled(): boolean {

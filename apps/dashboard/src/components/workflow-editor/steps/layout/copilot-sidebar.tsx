@@ -2,6 +2,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { RiCodeBlock, RiSidebarFoldLine, RiSidebarUnfoldLine } from 'react-icons/ri';
 import { PanelSize, usePanelRef } from 'react-resizable-panels';
+import { ChatBodySkeleton } from '@/components/ai-sidekick/chat-body';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -232,6 +233,15 @@ function CopilotOnlyExpandedPanel({
   );
 }
 
+/** The Copilot content while the workflow visit's Copilot mode is not known yet. */
+export function CopilotSidebarSkeleton() {
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
+      <ChatBodySkeleton />
+    </div>
+  );
+}
+
 export function CopilotSidebar({
   children,
   copilotContent,
@@ -297,7 +307,7 @@ export function CopilotSidebar({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: only a new request reveals the Copilot
   useEffect(() => {
-    if (expandRequest === lastExpandRequestRef.current) return;
+    if (expandRequest === undefined || expandRequest === lastExpandRequestRef.current) return;
 
     lastExpandRequestRef.current = expandRequest;
     // Expanding resizes to the default width, which would undo the width the user dragged an open sidebar to.

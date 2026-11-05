@@ -5,11 +5,17 @@ import { useFeatureFlag, useLaunchDarklyIdentified, useLaunchDarklyReady } from 
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
-import { isWebChatMode, resolveCopilotMode } from './copilot-mode';
-import { type CopilotMode, useCopilotMode } from './use-copilot-web-chat-enabled';
+import {
+  type CopilotMode,
+  type EditorCopilotMode,
+  isPendingCopilotMode,
+  isWebChatMode,
+  resolveCopilotMode,
+} from './copilot-mode';
+import { useCopilotMode } from './use-copilot-web-chat-enabled';
 
-/** `undefined` means no `CopilotModeProvider` above; `null` means the visit's mode is not resolved yet. */
-const CopilotModeContext = createContext<CopilotMode | null | undefined>(undefined);
+/** `undefined` means no `CopilotModeProvider` above. */
+const CopilotModeContext = createContext<EditorCopilotMode | undefined>(undefined);
 
 type VisitMode = { workflowKey: string; mode: CopilotMode };
 
@@ -43,20 +49,21 @@ export function CopilotModeProvider({ workflowSlug, children }: { workflowSlug?:
   const workflowKey = getIdFromSlug({ slug: workflowSlug ?? '', divider: WORKFLOW_DIVIDER });
   const [visitMode, setVisitMode] = useState<VisitMode>();
 
-  if (resolvedMode !== null && visitMode?.workflowKey !== workflowKey) {
+  if (!isPendingCopilotMode(resolvedMode) && visitMode?.workflowKey !== workflowKey) {
     setVisitMode({ workflowKey, mode: resolvedMode });
   }
 
-  const mode = visitMode?.workflowKey === workflowKey ? visitMode.mode : null;
+  const mode = visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
 
   return <CopilotModeContext.Provider value={mode}>{children}</CopilotModeContext.Provider>;
 }
 
 /**
- * The Copilot mode fixed for this workflow visit, or the live mode outside a `CopilotModeProvider`. `null` means no
- * Copilot: the mode is not resolved yet, or AI workflow generation is off (read live, so turning it off still applies).
+ * The Copilot mode fixed for this workflow visit (a `pending-*` prediction until then), or the live mode outside a
+ * `CopilotModeProvider`. `null` means no Copilot: AI workflow generation is off (read live, so turning it off still
+ * applies).
  */
-export function useEditorCopilotMode(): CopilotMode | null {
+export function useEditorCopilotMode(): EditorCopilotMode | null {
   const visitMode = useContext(CopilotModeContext);
   const liveMode = useCopilotMode();
   const isAiWorkflowGenerationEnabled = useAiWorkflowGenerationEnabled();
@@ -65,5 +72,5 @@ export function useEditorCopilotMode(): CopilotMode | null {
     return null;
   }
 
-  return visitMode === undefined ? liveMode : visitMode;
+  return visitMode ?? liveMode;
 }
