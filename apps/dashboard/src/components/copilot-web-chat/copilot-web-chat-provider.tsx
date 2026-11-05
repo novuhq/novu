@@ -37,59 +37,43 @@ import { useCopilotRefetch } from './use-copilot-refetch';
 type ShellState = {
   isOpen: boolean;
   open: CopilotWebChatContextValue['open'];
-  setSurfaceVisible: CopilotWebChatContextValue['setSurfaceVisible'];
   close: () => void;
   toggle: () => void;
   draft: string;
   setDraft: (value: string) => void;
-  focusRequest: number;
+  isRevealPending: boolean;
+  completeReveal: () => void;
+  hasSidebar: boolean;
+  registerSidebar: () => () => void;
   pageContext?: CopilotPageContext;
   registerPageContext: ComponentProps<typeof CopilotRegisterContext.Provider>['value'];
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(surface: CopilotSurface): ShellState {
+function useShellState(surface: CopilotSurface | null): ShellState {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
-  const [focusRequest, setFocusRequest] = useState(0);
+  const [isRevealPending, setIsRevealPending] = useState(false);
+  const [sidebarCount, setSidebarCount] = useState(0);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
-  const isSurfaceVisibleRef = useRef(false);
-  const isOpenOwedRef = useRef(false);
 
   const open = useCallback<ShellState['open']>(
     (options) => {
       if (options?.prefill) setDraft(options.prefill);
-      setFocusRequest((count) => count + 1);
-
-      switch (surface) {
-        case 'popover':
-          setIsOpen(true);
-          break;
-        case 'sidebar':
-          isOpenOwedRef.current = !isSurfaceVisibleRef.current;
-          break;
-        default: {
-          const unhandled: never = surface;
-
-          return unhandled;
-        }
-      }
+      setIsRevealPending(true);
+      if (surface === 'popover') setIsOpen(true);
     },
     [surface]
   );
-  // The sidebar ignores the request it mounts with, unmounts its composer while collapsed and hides it on the Preview
-  // tab, so an open() made meanwhile is repeated on each report until the conversation is on screen.
-  const setSurfaceVisible = useCallback((visible: boolean) => {
-    isSurfaceVisibleRef.current = visible;
-    setIsOpen(visible);
-    if (!isOpenOwedRef.current) return;
-
-    if (visible) isOpenOwedRef.current = false;
-    setFocusRequest((count) => count + 1);
-  }, []);
   const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((value) => !value), []);
+  const toggle = useCallback(() => (isOpen ? close() : open()), [isOpen, open, close]);
+  const completeReveal = useCallback(() => setIsRevealPending(false), []);
+  const registerSidebar = useCallback(() => {
+    setSidebarCount((count) => count + 1);
+
+    return () => setSidebarCount((count) => count - 1);
+  }, []);
 
   const registerPageContext = useCallback((context: CopilotPageContext, onRefetch?: () => void) => {
     setPageContext(context);
@@ -104,19 +88,24 @@ function useShellState(surface: CopilotSurface): ShellState {
   return {
     isOpen,
     open,
-    setSurfaceVisible,
     close,
     toggle,
     draft,
     setDraft,
-    focusRequest,
+    isRevealPending,
+    completeReveal,
+    hasSidebar: sidebarCount > 0,
+    registerSidebar,
     pageContext,
     registerPageContext,
     onRefetchRef,
   };
 }
 
-type BridgeShell = Pick<ShellState, 'isOpen' | 'open' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
+type BridgeShell = Pick<
+  ShellState,
+  'isOpen' | 'open' | 'close' | 'toggle' | 'hasSidebar' | 'pageContext' | 'onRefetchRef'
+>;
 
 type ConnectedState = Pick<
   CopilotWebChatContextValue,
@@ -142,14 +131,12 @@ type ConnectedState = Pick<
  */
 export function CopilotWebChatProvider({
   children,
-  enabled = true,
-  surface = 'popover',
+  surface,
   conversationScope,
 }: {
   children: ReactNode;
-  enabled?: boolean;
-  /** Where the conversation is shown; picks the hotkeys and tags every Copilot telemetry event. */
-  surface?: CopilotSurface;
+  /** Where the conversation is shown, or `null` to not connect; picks the hotkeys and tags every Copilot telemetry event. */
+  surface: CopilotSurface | null;
   /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
@@ -160,12 +147,14 @@ export function CopilotWebChatProvider({
   const {
     isOpen,
     open,
-    setSurfaceVisible,
     close,
     toggle,
     draft,
     setDraft,
-    focusRequest,
+    isRevealPending,
+    completeReveal,
+    hasSidebar,
+    registerSidebar,
     pageContext,
     registerPageContext,
     onRefetchRef,
@@ -173,24 +162,23 @@ export function CopilotWebChatProvider({
   // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
   // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
   const bridgeShell = useMemo(
-    () => ({ isOpen, open, close, toggle, pageContext, onRefetchRef }),
-    [isOpen, open, close, toggle, pageContext, onRefetchRef]
+    () => ({ isOpen, open, close, toggle, hasSidebar, pageContext, onRefetchRef }),
+    [isOpen, open, close, toggle, hasSidebar, pageContext, onRefetchRef]
   );
 
   const isBusy = !!connected?.isBusy;
   const sidebarControl = useMemo(
-    () => ({ focusRequest, setSurfaceVisible, isBusy }),
-    [focusRequest, setSurfaceVisible, isBusy]
+    () => ({ isGenerating: isBusy, isRevealPending, registerSidebar }),
+    [isBusy, isRevealPending, registerSidebar]
   );
 
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
       isAvailable: !!connected,
-      isConnecting: enabled && !isBridgeMounted,
+      isConnecting: surface !== null && !isBridgeMounted,
       surface,
       isOpen,
       open,
-      setSurfaceVisible,
       close,
       toggle,
       chat: connected?.chat,
@@ -204,25 +192,25 @@ export function CopilotWebChatProvider({
       sentContextLabels: connected?.sentContextLabels ?? {},
       draft,
       setDraft,
-      focusRequest,
+      isRevealPending,
+      completeReveal,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
       isBusy,
     }),
     [
       connected,
-      enabled,
       isBridgeMounted,
       surface,
       isOpen,
       open,
-      setSurfaceVisible,
       close,
       toggle,
       pageContext,
       draft,
       setDraft,
-      focusRequest,
+      isRevealPending,
+      completeReveal,
       isBusy,
     ]
   );
@@ -232,7 +220,7 @@ export function CopilotWebChatProvider({
       <CopilotSidebarControlContext.Provider value={sidebarControl}>
         <CopilotWebChatContext.Provider value={value}>
           {children}
-          {enabled && (
+          {surface && (
             <CopilotConnectProvider>
               <CopilotWebChatBridge
                 key={conversationScope}
@@ -265,7 +253,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 }) {
   const track = useTelemetry();
   const connectContext = useCopilotConnectContext();
-  const { isOpen, open, close, toggle, pageContext, onRefetchRef } = shell;
+  const { isOpen, open, close, toggle, hasSidebar, pageContext, onRefetchRef } = shell;
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
   const [awaitingReply, setAwaitingReply] = useState(false);
@@ -482,7 +470,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   }, [conversationScope]);
 
   const isAvailable = !!connectContext;
-  const isEntryEnabled = isAvailable && !!pageContext?.workflowId;
+  // A reveal nothing can show yet would wait for the next sidebar and steal the focus then (e.g. ⌘J on the Activity tab).
+  const canReveal = surface === 'popover' || hasSidebar;
+  const isEntryEnabled = isAvailable && !!pageContext?.workflowId && canReveal;
   useCopilotHotkey({ surface, isEnabled: isEntryEnabled, isOpen, open, toggle, close });
   useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 

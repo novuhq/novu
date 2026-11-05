@@ -68,7 +68,6 @@ function EmptyState({
 function Composer({ hasMessages }: { hasMessages: boolean }) {
   const {
     isAvailable,
-    surface,
     chat,
     sendMessage,
     retry,
@@ -77,25 +76,23 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
     draft: value,
     setDraft: setValue,
     isBusy,
-    focusRequest,
+    isRevealPending,
+    completeReveal,
   } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mountFocusRequestRef = useRef(focusRequest);
-  // The popover mounts on open(); the sidebar mounts with the page and gets its focus requests once on screen.
-  const focusesOnMount = surface === 'popover';
   // The failure stays until retried or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!getFailedSend(chat?.messages ?? []);
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-focus whenever open() is called again
   useEffect(() => {
     const textarea = textareaRef.current;
-    if (!textarea || (!focusesOnMount && focusRequest === mountFocusRequestRef.current)) return;
+    if (!isRevealPending || !textarea) return;
 
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-  }, [focusRequest]);
+    completeReveal();
+  }, [isRevealPending, completeReveal]);
 
   const submit = () => {
     if (!canSend) return;

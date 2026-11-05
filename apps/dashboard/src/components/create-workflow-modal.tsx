@@ -228,7 +228,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     });
 
     if (isCopilotWebChatEnabled) {
-      // The editor's Copilot popover builds the workflow, so it needs one to open in.
+      // The editor's web-chat Copilot builds the workflow, so it needs one to open in.
       const navigationState: CopilotPromptLocationState = { copilotPrompt: clearedPrompt };
       await createWorkflowHook.submit(buildGuidedWorkflowValues(workflowName), undefined, {
         source: WorkflowCreationSourceEnum.AI,
