@@ -1,10 +1,13 @@
+export { CopilotWebChatCanvasToast } from './copilot-canvas-toast';
 export { useCopilotEntry } from './copilot-entry-store';
 export { CopilotLauncher } from './copilot-launcher';
+export { isWebChatMode } from './copilot-mode';
+export { CopilotModeProvider, useEditorCopilotMode } from './copilot-mode-context';
 export { CopilotPopover } from './copilot-popover';
 export { CopilotSidebarChat, CopilotSidebarHeaderActions, useCopilotSidebarControl } from './copilot-sidebar-chat';
-export { CopilotThreadPanel } from './copilot-thread-panel';
+export { type CopilotSuggestion, CopilotThreadPanel } from './copilot-thread-panel';
 export { type CopilotSurface, useCopilotWebChat, useRegisterCopilotContext } from './copilot-web-chat-context';
 export { CopilotWebChatProvider } from './copilot-web-chat-provider';
 export { type CopilotPromptLocationState, useCopilotPendingPrompt } from './use-copilot-pending-prompt';
-export { useCopilotWebChatActive } from './use-copilot-web-chat-enabled';
+export { type CopilotMode, useCopilotWebChatActive } from './use-copilot-web-chat-enabled';
 export { useWorkflowEditorCopilot } from './use-workflow-editor-copilot';

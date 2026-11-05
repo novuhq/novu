@@ -4,13 +4,16 @@ import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import {
   CopilotLauncher,
+  type CopilotMode,
+  CopilotModeProvider,
   CopilotPopover,
+  type CopilotSurface,
   CopilotWebChatProvider,
+  isWebChatMode,
   useCopilotPendingPrompt,
   useCopilotWebChat,
+  useEditorCopilotMode,
 } from '@/components/copilot-web-chat';
-import { isWebChatMode } from '@/components/copilot-web-chat/copilot-mode';
-import { CopilotModeProvider, useEditorCopilotMode } from '@/components/copilot-web-chat/copilot-mode-context';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
@@ -75,6 +78,24 @@ function CopilotPopoverMount() {
   );
 }
 
+/** The provider is disabled in the other modes, so they leave the surface to its default. */
+function getCopilotSurface(mode: CopilotMode | null): CopilotSurface | undefined {
+  switch (mode) {
+    case 'web-chat-sidebar':
+      return 'sidebar';
+    case 'web-chat-popover':
+      return 'popover';
+    case 'legacy':
+    case null:
+      return undefined;
+    default: {
+      const unhandled: never = mode;
+
+      return unhandled;
+    }
+  }
+}
+
 function CopilotWebChatHost({ conversationScope, children }: { conversationScope?: string; children: ReactNode }) {
   const { currentEnvironment } = useEnvironment();
   const copilotMode = useEditorCopilotMode();
@@ -84,6 +105,7 @@ function CopilotWebChatHost({ conversationScope, children }: { conversationScope
     <CopilotWebChatProvider
       enabled={isWebChat && currentEnvironment?.type === EnvironmentTypeEnum.DEV}
       conversationScope={conversationScope}
+      surface={getCopilotSurface(copilotMode)}
     >
       {children}
       {isWebChat && <CopilotPendingPrompt />}

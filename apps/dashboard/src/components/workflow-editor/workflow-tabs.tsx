@@ -33,7 +33,14 @@ import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
-import { useWorkflowEditorCopilot } from '../copilot-web-chat';
+import {
+  type CopilotMode,
+  CopilotSidebarChat,
+  CopilotSidebarHeaderActions,
+  CopilotWebChatCanvasToast,
+  useCopilotSidebarControl,
+  useWorkflowEditorCopilot,
+} from '../copilot-web-chat';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
 import { Code2 } from '../icons/code-2';
 import { Button } from '../primitives/button';
@@ -234,31 +241,71 @@ function buildTabPath(
   return buildRoute(route, { environmentSlug, ...(omitWorkflowSlug ? {} : { workflowSlug }) });
 }
 
-function WorkflowCanvasPane({
-  showCopilot,
+type NewChatSuggestions = ReturnType<typeof getNewChatSuggestions>;
+type WorkflowSteps = NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
+
+function WebChatSidebarCanvasPane({
   isReadOnly,
   steps,
+  suggestions,
 }: {
-  showCopilot: boolean;
   isReadOnly: boolean;
-  steps: NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
+  steps: WorkflowSteps;
+  suggestions: NewChatSuggestions;
 }) {
-  if (showCopilot) {
-    return (
-      <WorkflowCopilotSidebar>
-        <div className="relative h-full min-w-0 flex-1">
-          <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-          <WorkflowCanvasToast />
-        </div>
-      </WorkflowCopilotSidebar>
-    );
-  }
+  const sidebarControl = useCopilotSidebarControl();
 
   return (
-    <div className="relative flex-1">
-      <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-    </div>
+    <CopilotSidebar
+      copilotContent={<CopilotSidebarChat suggestions={suggestions} />}
+      headerActions={<CopilotSidebarHeaderActions />}
+      autoSaveId="workflow-editor-copilot-layout"
+      {...sidebarControl}
+    >
+      <div className="relative h-full min-w-0 flex-1">
+        <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
+        <CopilotWebChatCanvasToast />
+      </div>
+    </CopilotSidebar>
   );
+}
+
+function WorkflowCanvasPane({
+  copilotMode,
+  isReadOnly,
+  steps,
+  suggestions,
+}: {
+  copilotMode: CopilotMode | null;
+  isReadOnly: boolean;
+  steps: WorkflowSteps;
+  suggestions: NewChatSuggestions;
+}) {
+  switch (copilotMode) {
+    case 'legacy':
+      return (
+        <WorkflowCopilotSidebar>
+          <div className="relative h-full min-w-0 flex-1">
+            <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
+            <WorkflowCanvasToast />
+          </div>
+        </WorkflowCopilotSidebar>
+      );
+    case 'web-chat-sidebar':
+      return <WebChatSidebarCanvasPane isReadOnly={isReadOnly} steps={steps} suggestions={suggestions} />;
+    case 'web-chat-popover':
+    case null:
+      return (
+        <div className="relative flex-1">
+          <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
+        </div>
+      );
+    default: {
+      const unhandled: never = copilotMode;
+
+      return unhandled;
+    }
+  }
 }
 
 function renderTabLabel(label: string, to: string | undefined) {
@@ -304,7 +351,7 @@ export const WorkflowTabs = () => {
     workflowLabel: workflow?.workflowId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
-  const showCopilot = copilotMode === 'legacy';
+  const isLegacyCopilot = copilotMode === 'legacy';
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
@@ -579,7 +626,12 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          <WorkflowCanvasPane showCopilot={showCopilot} isReadOnly={isReadOnly} steps={workflow?.steps} />
+          <WorkflowCanvasPane
+            copilotMode={copilotMode}
+            isReadOnly={isReadOnly}
+            steps={workflow?.steps}
+            suggestions={newChatSuggestions}
+          />
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />
@@ -597,7 +649,7 @@ export const WorkflowTabs = () => {
     </div>
   );
 
-  return showCopilot ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
+  return isLegacyCopilot ? <AiChatProvider config={aiChatConfig}>{content}</AiChatProvider> : content;
 };
 
 function WorkflowCopilotSidebar({ children }: { children: React.ReactNode }) {
