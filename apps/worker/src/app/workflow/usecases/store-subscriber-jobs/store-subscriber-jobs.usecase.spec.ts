@@ -30,6 +30,7 @@ describe('StoreSubscriberJobs', () => {
   let traceLogRepository: { createStepRun: sinon.SinonStub };
   let addJob: { execute: sinon.SinonStub };
   let bulkCreateExecutionDetails: { execute: sinon.SinonStub };
+  let stepRunV2Writer: { writeMany: sinon.SinonStub };
 
   beforeEach(() => {
     jobRepository = { storeJobs: sinon.stub() };
@@ -37,13 +38,15 @@ describe('StoreSubscriberJobs', () => {
     traceLogRepository = { createStepRun: sinon.stub().resolves() };
     addJob = { execute: sinon.stub().resolves() };
     bulkCreateExecutionDetails = { execute: sinon.stub().resolves() };
+    stepRunV2Writer = { writeMany: sinon.stub() };
 
     usecase = new StoreSubscriberJobs(
       addJob as never,
       jobRepository as never,
       bulkCreateExecutionDetails as never,
       stepRunRepository as never,
-      traceLogRepository as never
+      traceLogRepository as never,
+      stepRunV2Writer as never
     );
   });
 
@@ -155,6 +158,24 @@ describe('StoreSubscriberJobs', () => {
 
     expect(callOrder[0]).to.equal('createMany');
     expect(callOrder[1]).to.equal('createStepRun');
+  });
+
+  it('writes the stored jobs to step_runs_v2 with their stored status', async () => {
+    const job1 = buildJobEntity({ _id: 'job_1', status: 'pending' });
+    const job2 = buildJobEntity({ _id: 'job_2', status: 'pending' });
+    jobRepository.storeJobs.resolves([job1, job2]);
+
+    await usecase.execute({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      jobs: [job1, job2],
+    } as never);
+
+    expect(stepRunV2Writer.writeMany.calledOnce).to.be.true;
+    const [jobs, options] = stepRunV2Writer.writeMany.getCall(0).args;
+    expect(jobs).to.deep.equal([job1, job2]);
+    expect(options).to.equal(undefined);
   });
 
   it('still calls addJob even with a single stored job', async () => {

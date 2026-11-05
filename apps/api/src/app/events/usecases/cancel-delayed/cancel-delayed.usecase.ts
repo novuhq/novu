@@ -7,6 +7,7 @@ import {
   MessageInteractionTrace,
   PinoLogger,
   StepRunRepository,
+  StepRunV2Writer,
   StepType,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
@@ -20,7 +21,8 @@ export class CancelDelayed {
     private jobRepository: JobRepository,
     private stepRunRepository: StepRunRepository,
     private messageInteractionService: MessageInteractionService,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -69,6 +71,7 @@ export class CancelDelayed {
     await this.stepRunRepository.createMany(jobs, {
       status: JobStatusEnum.CANCELED,
     });
+    this.stepRunV2Writer.writeMany(jobs, { status: JobStatusEnum.CANCELED });
 
     const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
 
@@ -104,7 +107,7 @@ export class CancelDelayed {
     });
 
     // update new main follower from Merged to Delayed
-    await this.jobRepository.update(
+    const promotedFollower = await this.jobRepository.update(
       {
         _environmentId: job._environmentId,
         status: JobStatusEnum.MERGED,
@@ -118,12 +121,17 @@ export class CancelDelayed {
       }
     );
 
+    if (promotedFollower.modified > 0) {
+      this.stepRunV2Writer.write(mainFollowerDigestJob, { status: JobStatusEnum.DELAYED });
+    }
+
     // update all main follower children jobs to pending status
-    await this.jobRepository.updateAllChildJobStatus(
+    const followerChildJobs = await this.jobRepository.updateAllChildJobStatus(
       mainFollowerDigestJob,
       JobStatusEnum.PENDING,
       mainFollowerDigestJob._id
     );
+    this.stepRunV2Writer.writeMany(followerChildJobs, { status: JobStatusEnum.PENDING });
 
     // update all jobs that were merged into the old main digest job to point to the new follower
     await this.jobRepository.update(

@@ -15,6 +15,7 @@ import {
   getEffectiveJobPayload,
   PinoLogger,
   StandardQueueService,
+  StepRunV2Writer,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -56,7 +57,8 @@ export class SnoozeNotification {
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
     private analyticsService: AnalyticsService,
-    private getSubscriber: GetSubscriber
+    private getSubscriber: GetSubscriber,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -74,6 +76,7 @@ export class SnoozeNotification {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
       });
+      this.stepRunV2Writer.write(scheduledJob, { waitUntil: command.snoozeUntil });
 
       /*
        * Enqueueing has to stay outside the transaction: it is an external call,

@@ -8,6 +8,7 @@ import {
   SqsService,
   StandardQueueService,
   StepRunRepository,
+  StepRunV2Writer,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
@@ -91,6 +92,7 @@ describe('Standard Worker', () => {
   let jobsService: JobsService;
   let runJob: RunJob;
   let stepRunRepository: StepRunRepository;
+  let stepRunV2Writer: StepRunV2Writer;
 
   before(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -161,6 +163,7 @@ describe('Standard Worker', () => {
     const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
     // Same singleton RunJob was injected with, so stubbing it here reaches the use case.
     stepRunRepository = moduleRef.get<StepRunRepository>(StepRunRepository);
+    stepRunV2Writer = moduleRef.get<StepRunV2Writer>(StepRunV2Writer);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -172,7 +175,8 @@ describe('Standard Worker', () => {
       jobRepository,
       mockSqsService,
       mockLogger,
-      featureFlagsService
+      featureFlagsService,
+      stepRunV2Writer
     );
   });
 
@@ -524,6 +528,67 @@ describe('Standard Worker', () => {
 
       const fresh = await jobRepository.findOne({ _id: failed._id, _environmentId: failed._environmentId });
       expect(fresh?.status).to.equal(JobStatusEnum.FAILED);
+    });
+
+    it('releaseRunningClaim returns the released job only when it was RUNNING', async () => {
+      const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+      const failed = await jobRepository.create(buildJob(JobStatusEnum.FAILED));
+
+      const released = await jobRepository.releaseRunningClaim(running._environmentId, running._id);
+      const notReleased = await jobRepository.releaseRunningClaim(failed._environmentId, failed._id);
+
+      expect(released?.status).to.equal(JobStatusEnum.QUEUED);
+      expect(notReleased).to.equal(null);
+    });
+
+    describe('step_runs_v2 write on completion', () => {
+      let writtenJobs: (JobEntity | null | undefined)[];
+      let originalWrite: StepRunV2Writer['write'];
+
+      beforeEach(() => {
+        writtenJobs = [];
+        originalWrite = stepRunV2Writer.write;
+        stepRunV2Writer.write = (job) => {
+          writtenJobs.push(job);
+        };
+      });
+
+      afterEach(() => {
+        stepRunV2Writer.write = originalWrite;
+      });
+
+      const completeViaWorker = async (job: JobEntity) => {
+        // biome-ignore lint/suspicious/noExplicitAny: jobHasCompleted is the private completion handler under test
+        await (standardWorker as any).jobHasCompleted({
+          data: {
+            _id: job._id,
+            _environmentId: job._environmentId,
+            _organizationId: job._organizationId,
+            _userId: job._userId,
+          },
+        });
+      };
+
+      it('writes the completed job when the RUNNING -> COMPLETED update matched', async () => {
+        const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+
+        await completeViaWorker(running);
+
+        expect(writtenJobs).to.have.length(1);
+        expect(writtenJobs[0]?._id).to.equal(running._id);
+        expect(writtenJobs[0]?.status).to.equal(JobStatusEnum.COMPLETED);
+      });
+
+      it('writes nothing when the job already left RUNNING', async () => {
+        const canceled = await jobRepository.create(buildJob(JobStatusEnum.CANCELED));
+
+        await completeViaWorker(canceled);
+
+        expect(writtenJobs).to.have.length(1);
+        expect(writtenJobs[0]).to.equal(null);
+        const fresh = await jobRepository.findOne({ _id: canceled._id, _environmentId: canceled._environmentId });
+        expect(fresh?.status).to.equal(JobStatusEnum.CANCELED);
+      });
     });
 
     it('renewRunningClaim keeps a slow-but-healthy execution fenced against redelivery', async () => {

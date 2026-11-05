@@ -126,9 +126,12 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  /** Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim. */
-  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<void> {
-    await this.updateOne(
+  /**
+   * Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim.
+   * Returns the released job, or null when the job was no longer RUNNING.
+   */
+  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
@@ -138,7 +141,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $set: {
           status: JobStatusEnum.QUEUED,
         },
-      }
+      },
+      { new: true }
     );
   }
 

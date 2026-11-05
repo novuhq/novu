@@ -7,6 +7,7 @@ import {
   InstrumentUsecase,
   RetryOnError,
   StepRunRepository,
+  StepRunV2Writer,
 } from '@novu/application-generic';
 import { IDelayOrDigestJobResult, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import {
@@ -31,7 +32,8 @@ export class MergeOrCreateDigest {
     @Inject(forwardRef(() => CreateExecutionDetails))
     private createExecutionDetails: CreateExecutionDetails,
     private notificationRepository: NotificationRepository,
-    private stepRunRepository: StepRunRepository
+    private stepRunRepository: StepRunRepository,
+    private stepRunV2Writer: StepRunV2Writer
   ) {}
 
   @InstrumentUsecase()
@@ -119,6 +121,7 @@ export class MergeOrCreateDigest {
         status: JobStatusEnum.MERGED,
       }),
     ]);
+    this.stepRunV2Writer.writeMany([job, ...childJobsUpdated], { status: JobStatusEnum.MERGED });
 
     return DigestCreationResultEnum.MERGED;
   }
@@ -139,6 +142,7 @@ export class MergeOrCreateDigest {
       ),
       this.digestSkippedExecutionDetails(job),
     ]);
+    this.stepRunV2Writer.write(job, { status: JobStatusEnum.SKIPPED });
 
     return DigestCreationResultEnum.SKIPPED;
   }

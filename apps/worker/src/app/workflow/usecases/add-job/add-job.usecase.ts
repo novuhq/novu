@@ -28,6 +28,7 @@ import {
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
+  StepRunV2Writer,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
@@ -116,7 +117,8 @@ export class AddJob {
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
     private notificationRepository: NotificationRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -386,6 +388,9 @@ export class AddJob {
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
+    this.stepRunV2Writer.write(updatedJob, {
+      waitUntil: delay > 0 ? (bridgeDelayAmountDate ?? new Date(Date.now() + delay)) : undefined,
+    });
 
     await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
@@ -436,11 +441,12 @@ export class AddJob {
     const { job } = command;
 
     this.logger.trace(`Updating status to queued for job ${job._id}`);
-    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
+    const queuedJob = await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.QUEUED,
     });
+    this.stepRunV2Writer.write(queuedJob);
 
     await this.queueJob({ job, delay: 0, untilDate: null });
 
@@ -601,6 +607,7 @@ export class AddJob {
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.FAILED,
     });
+    this.stepRunV2Writer.write(job, { status: JobStatusEnum.FAILED });
 
     return {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
@@ -1067,6 +1074,7 @@ export class AddJob {
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.SKIPPED,
     });
+    this.stepRunV2Writer.write(job, { status: JobStatusEnum.SKIPPED });
 
     const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.SKIPPED, job._id);
 
@@ -1074,6 +1082,7 @@ export class AddJob {
       await this.stepRunRepository.createMany(childJobsUpdated, {
         status: JobStatusEnum.SKIPPED,
       });
+      this.stepRunV2Writer.writeMany(childJobsUpdated, { status: JobStatusEnum.SKIPPED });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
