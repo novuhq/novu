@@ -128,11 +128,24 @@ export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'set
 }
 
 /**
- * Only the Pro trial is capped. A Team trial is uncapped and follows the Team plan's usage limits. A Pro trial the
- * subscription does not report yet, while the Stripe webhook lags, shows up as Pro that cannot configure limits.
+ * Only the Pro trial is capped, and the backend is the only source for it: it reports a capped trial as Pro with
+ * limits that cannot be configured. Stripe's `trial.isActive` is not evidence, since a paying Pro customer whose
+ * subscription is put into `trialing` stays configurable. A Team trial is uncapped and follows the Team plan's limits.
  */
-function isCappedTrial({ apiServiceLevel, trial, usageLimits }: SubscriptionUsage): boolean {
-  return apiServiceLevel === ApiServiceLevelEnum.PRO && (trial.isActive || usageLimits?.isConfigurable === false);
+export function isCappedTrial({
+  apiServiceLevel,
+  usageLimits,
+}: Pick<SubscriptionUsage, 'apiServiceLevel' | 'usageLimits'>): boolean {
+  return apiServiceLevel === ApiServiceLevelEnum.PRO && usageLimits?.isConfigurable === false;
+}
+
+/** The allowance labelled as included: the trial cap on a capped trial, otherwise the plan's included runs. */
+export function getDisplayedIncludedWorkflowRuns(subscription: SubscriptionUsage | undefined): number {
+  if (subscription && isCappedTrial(subscription)) {
+    return getWorkflowRunsMax(subscription);
+  }
+
+  return getIncludedWorkflowRuns(subscription);
 }
 
 function getPausedUsagePlan(subscription: SubscriptionUsage): PausedUsagePlan | null {
@@ -202,7 +215,7 @@ export function getUsageLimitsView(
       state: getWorkflowRunsUsageState(subscription, meter.onDemandFrom),
       current: subscription.events.current,
       included,
-      displayedIncluded: isCappedTrial(subscription) ? getWorkflowRunsMax(subscription) : included,
+      displayedIncluded: getDisplayedIncludedWorkflowRuns(subscription),
       onDemandLimit,
       max: meter.max,
       allowanceOverride: measuredOverride,

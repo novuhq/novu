@@ -24,7 +24,11 @@ import { getPlanFeatures, type PlanFeature } from './features-config';
 import { PlanActionButton } from './plan-action-button';
 import { UsageLimitsDrawer } from './usage-limits/usage-limits-drawer';
 import { UsageLimitsStatusPills } from './usage-limits/usage-limits-status-pills';
-import { getIncludedWorkflowRuns, type UsageLimitsView } from './usage-limits/usage-limits-view';
+import {
+  getDisplayedIncludedWorkflowRuns,
+  isCappedTrial,
+  type UsageLimitsView,
+} from './usage-limits/usage-limits-view';
 import { useUsageLimitsView } from './usage-limits/use-usage-limits-view';
 import { WorkflowRunsUsageRow } from './usage-limits/workflow-runs-usage-row';
 
@@ -55,9 +59,13 @@ function getEventsTooltipContent(
   const currentPlan = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
   const isFreePlan = currentPlan === ApiServiceLevelEnum.FREE;
 
-  const limitMessage = isFreePlan
-    ? "Further workflow runs won't be allowed after the free limit is exceeded."
-    : 'Pay as you grow. No hard limit.';
+  let limitMessage = 'Pay as you grow. No hard limit.';
+
+  if (isFreePlan) {
+    limitMessage = "Further workflow runs won't be allowed after the free limit is exceeded.";
+  } else if (subscription && isCappedTrial(subscription)) {
+    limitMessage = "Further workflow runs won't be allowed after the trial limit is reached. Upgrade to keep sending.";
+  }
 
   return `Includes ${formatLimit(usageData.included)} workflow runs: ${limitMessage}`;
 }
@@ -128,7 +136,7 @@ function getUsageData(
     case 'events':
       return {
         current: subscription?.events.current ?? 0,
-        included: getIncludedWorkflowRuns(subscription),
+        included: getDisplayedIncludedWorkflowRuns(subscription),
         label: 'included',
       };
     case 'conversations':
