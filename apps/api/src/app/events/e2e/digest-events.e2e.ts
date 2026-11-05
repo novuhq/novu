@@ -984,9 +984,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
 
     expect(jobs && jobs.length).to.eql(10);
 
-    const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
+    const delayedJobs = jobs!.filter((elem) => elem.status === JobStatusEnum.DELAYED);
     expect(delayedJobs && delayedJobs.length).to.eql(1);
-    const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
+    const mergedJobs = jobs!.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs && mergedJobs.length).to.eql(9);
   });
 
@@ -1038,9 +1038,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
 
     expect(jobs && jobs.length).to.eql(10);
 
-    const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
+    const delayedJobs = jobs!.filter((elem) => elem.status === JobStatusEnum.DELAYED);
     expect(delayedJobs && delayedJobs.length).to.eql(1);
-    const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
+    const mergedJobs = jobs!.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs && mergedJobs.length).to.eql(9);
   });
 });

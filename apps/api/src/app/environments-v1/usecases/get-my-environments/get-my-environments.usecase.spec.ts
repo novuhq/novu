@@ -31,7 +31,10 @@ describe('GetMyEnvironments', () => {
     ]);
 
     sinon
-      .stub(getMyEnvironments as unknown as { decryptApiKeys: () => unknown }, 'decryptApiKeys')
+      .stub(
+        getMyEnvironments as unknown as { decryptApiKeys: (apiKeys: { key: string }[]) => unknown },
+        'decryptApiKeys'
+      )
       .callsFake((apiKeys) =>
         apiKeys.map((apiKey: { key: string }) => ({
           ...apiKey,
@@ -48,6 +51,8 @@ describe('GetMyEnvironments', () => {
     const result = await getMyEnvironments.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: 'org-1',
+        environmentId: 'env-dev',
+        userId: 'user-1',
         returnApiKeys: true,
         apiKeysEnvironmentId: 'env-dev',
       })
@@ -57,7 +62,7 @@ describe('GetMyEnvironments', () => {
     const prodEnvironment = result.find((environment) => environment._id === 'env-prod');
 
     expect(devEnvironment?.apiKeys).to.have.lengthOf(1);
-    expect(devEnvironment?.apiKeys[0].key).to.equal('decrypted-encrypted-dev');
+    expect(devEnvironment?.apiKeys?.[0].key).to.equal('decrypted-encrypted-dev');
     expect(prodEnvironment?.apiKeys).to.have.lengthOf(0);
   });
 
@@ -65,13 +70,15 @@ describe('GetMyEnvironments', () => {
     const result = await getMyEnvironments.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: 'org-1',
+        environmentId: 'env-dev',
+        userId: 'user-1',
         returnApiKeys: true,
       })
     );
 
     for (const environment of result) {
       expect(environment.apiKeys).to.have.lengthOf(1);
-      expect(environment.apiKeys[0].key).to.match(/^decrypted-/);
+      expect(environment.apiKeys?.[0].key).to.match(/^decrypted-/);
     }
   });
 
@@ -79,6 +86,8 @@ describe('GetMyEnvironments', () => {
     const result = await getMyEnvironments.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: 'org-1',
+        environmentId: 'env-dev',
+        userId: 'user-1',
         returnApiKeys: false,
         apiKeysEnvironmentId: 'env-dev',
       })

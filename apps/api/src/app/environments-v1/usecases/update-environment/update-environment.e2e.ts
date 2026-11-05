@@ -45,7 +45,9 @@ describe('Update Environment - /environments (PUT)', async () => {
     it('should persist a safe public bridge.url to bridge and echo', async () => {
       const bridgeUrl = 'https://example.com/api/novu';
 
-      await updateBridgeUrl(bridgeUrl).expect(200);
+      const result = await updateBridgeUrl(bridgeUrl);
+
+      expect(result.status).to.equal(200);
 
       const environment = await environmentRepository.findOne({ _id: session.environment._id });
 

@@ -30,7 +30,11 @@ describe('KeylessAbuseGuardService', () => {
     featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
     agentRepository = sinon.createStubInstance(AgentRepository);
 
-    guard = new KeylessAbuseGuardService(cacheService, featureFlagsService, agentRepository);
+    guard = new KeylessAbuseGuardService(
+      cacheService as unknown as CacheService,
+      featureFlagsService as unknown as FeatureFlagsService,
+      agentRepository as unknown as AgentRepository
+    );
   });
 
   afterEach(() => {

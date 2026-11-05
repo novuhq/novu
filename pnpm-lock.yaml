@@ -2037,6 +2037,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
       '@types/socket.io':
         specifier: ^3.0.2
         version: 3.0.2
