@@ -6,7 +6,6 @@
     "declaration": true,
     "noImplicitAny": false,
     "removeComments": true,
-    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es6",

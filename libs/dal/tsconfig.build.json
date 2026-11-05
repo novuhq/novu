@@ -6,7 +6,6 @@
     "customConditions": ["require"],
     "target": "es6",
     "declaration": true,
-    "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["node"]

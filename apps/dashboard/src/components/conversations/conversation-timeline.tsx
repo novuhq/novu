@@ -18,6 +18,7 @@ import { cn } from '@/utils/ui';
 import { isHitlTimelineActivity } from './conversation-hitl';
 import { HitlTimelineRow } from './conversation-hitl-row';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { toPlainTextPreview } from './conversation-text-preview';
 import { getTimelineLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
@@ -74,13 +75,13 @@ function SenderHeader({ activity }: { activity: ConversationActivityDto }) {
   const name = activity.senderName ?? activity.senderId;
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="bg-bg-weak flex h-5 items-center rounded p-0.5">
+    <div className="flex min-w-0 items-center gap-1">
+      <div className="bg-bg-weak flex h-5 shrink-0 items-center rounded p-0.5">
         <RiCheckboxCircleFill className="text-success-base size-4" />
       </div>
       <div
         className={cn(
-          'flex max-w-[150px] items-center gap-1 rounded border px-1 py-0.5',
+          'flex min-w-0 max-w-[150px] items-center gap-1 rounded border px-1 py-0.5',
           isAgent ? 'border-stroke-soft bg-white' : 'border-stroke-soft bg-bg-weak'
         )}
       >
@@ -92,7 +93,7 @@ function SenderHeader({ activity }: { activity: ConversationActivityDto }) {
         <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{name}</span>
       </div>
       {isAgent && (
-        <div className="border-stroke-soft flex items-center rounded border bg-white px-1 py-0.5">
+        <div className="border-stroke-soft flex shrink-0 items-center rounded border bg-white px-1 py-0.5">
           <RiRobot2Line className="text-text-soft size-4" />
         </div>
       )}
@@ -135,21 +136,21 @@ function MessageTimestamp({ activity }: { activity: ConversationActivityDto }) {
 function MessageContent({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
-  const isLong = content.length > 80;
-  const displayContent = useMemo(() => (expanded ? content : content.slice(0, 80)), [content, expanded]);
+  const isLong = content.length > 80 || content.includes('\n');
+  const isCollapsed = isLong && !expanded;
+  const preview = useMemo(() => toPlainTextPreview(content), [content]);
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
       <div
         id={contentId}
+        dir="auto"
         className={cn(
           'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
-          !expanded && 'truncate',
-          expanded && 'wrap-break-word whitespace-pre-wrap'
+          isCollapsed ? 'truncate' : 'wrap-break-word whitespace-pre-wrap'
         )}
       >
-        <MarkdownText className="text-label-xs text-[#1a1a1a]">{displayContent}</MarkdownText>
-        {isLong && !expanded && '...'}
+        {isCollapsed ? preview : <MarkdownText className="text-label-xs text-[#1a1a1a]">{content}</MarkdownText>}
       </div>
       {isLong && (
         <button
@@ -174,7 +175,7 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   return (
     <div className={cn('border-stroke-soft flex flex-col rounded-md border', isAgent ? 'bg-bg-weak' : 'bg-white')}>
       <div className="flex flex-col py-1">
-        <div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center justify-between gap-2 px-2 py-1">
           <SenderHeader activity={activity} />
           <MessageTimestamp activity={activity} />
         </div>

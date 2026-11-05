@@ -13,7 +13,6 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { esmImport } from '../../../utils/esm-import';
 import { createProviderHttpClient } from '../../../utils/http';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
@@ -25,11 +24,6 @@ interface CreateConversationResponse {
   serviceUrl?: string;
   activityId?: string;
 }
-
-type TeamsCardsModule = {
-  cardToAdaptiveCard: (card: unknown) => Record<string, unknown>;
-  cardToFallbackText: (card: unknown) => string;
-};
 
 const ADAPTIVE_CARD_CONTENT_TYPE = 'application/vnd.microsoft.card.adaptive';
 
@@ -49,7 +43,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
    * Rich Chat: serialize a `CardElement` to a Teams Adaptive Card attachment + fallback text.
    */
   async render(card: CardElement): Promise<IChatRenderResult> {
-    const { cardToAdaptiveCard, cardToFallbackText } = await esmImport<TeamsCardsModule>('@chat-adapter/teams');
+    const { cardToAdaptiveCard, cardToFallbackText } = await import('@chat-adapter/teams');
 
     // Teams Adaptive Card TextBlocks render standard markdown for bold/italic/links, but not
     // strikethrough or inline code — strip those markers so they don't show as literal `~~`/backticks.

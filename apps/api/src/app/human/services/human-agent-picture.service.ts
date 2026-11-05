@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
+import { relayAcknowledgesMessages } from '../../agents/human-relay/relay-acknowledges-messages';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
 import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
@@ -68,6 +69,7 @@ export class HumanAgentPictureService {
       reach: agent.reach ?? 'anyone',
       paused: Boolean(agent.pausedAt),
       ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
+      acknowledgeOnReceived: relayAcknowledgesMessages(agent),
     };
   }
 

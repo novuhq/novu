@@ -58,7 +58,7 @@ type ConfigureViewProps = {
   docsUrl: string;
   mcpUrl: string | null;
   connectedTools: ToolId[];
-  /** Who can reach the agent and whether it is paused: the SETTINGS block. `null` when they couldn't be read. */
+  /** The SETTINGS block: who can reach the agent, acknowledging, the pause. `null` when they couldn't be read. */
   settings: AgentSettings | null;
 };
 

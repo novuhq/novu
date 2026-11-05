@@ -19,6 +19,7 @@ import type {
 } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
@@ -172,7 +173,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
     private readonly humanRelayEmail: HumanRelayEmailService,
     @Inject(forwardRef(() => PlanLimitGateService))
-    private readonly planLimitGate: PlanLimitGateService
+    private readonly planLimitGate: WrapperType<PlanLimitGateService>
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -492,14 +493,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         }
 
         const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+        const telegram = createTelegramAdapter({
+          botToken: credentials.apiToken,
+          secretToken: credentials.token,
+          mode: 'webhook',
+        });
 
-        return {
-          telegram: createTelegramAdapter({
-            botToken: credentials.apiToken,
-            secretToken: credentials.token,
-            mode: 'webhook',
-          }),
-        };
+        if (config.isHumanRelay) {
+          stopTypingOnArrival(telegram);
+        }
+
+        return { telegram };
       }
       case AgentPlatformEnum.SENDBLUE:
         return this.buildSendblueAdapter(config);
@@ -896,4 +900,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       attachments: [],
     });
   }
+}
+
+/**
+ * The Telegram adapter shows typing on every direct message the moment it arrives, before Novu looks at it. An Agent
+ * Inbox agent shows typing only when its operator turned on acknowledging incoming messages, and never to a stranger
+ * it keeps out, so `InboundAckService` shows it instead. The settings e2e sends a real webhook, which catches an
+ * adapter update that renames this method.
+ */
+function stopTypingOnArrival(adapter: TelegramAdapter): void {
+  Object.assign(adapter, { startTypingForPrivateMessage: () => undefined });
 }
