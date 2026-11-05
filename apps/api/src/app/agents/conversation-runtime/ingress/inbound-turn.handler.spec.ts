@@ -395,11 +395,29 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
-    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
-    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
-    // simulate a spoofed `From`.
-    const { dkim = 'pass', spf = 'pass' } = auth;
+  function makeEmailDmMessage(
+    senderEmail: string,
+    auth: {
+      dkim?: string;
+      spf?: string;
+      dkimDomains?: string[];
+      spfDomain?: string | null;
+      withoutDomains?: boolean;
+    } = {}
+  ) {
+    // Default to a DKIM/SPF-verified sender, both checks passing for the
+    // sender's own domain, so existing cases model a legitimate (non-spoofed)
+    // email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to simulate a
+    // spoofed `From`, `dkimDomains` / `spfDomain` for the domains the checks
+    // passed for, and `withoutDomains` for a payload that predates them.
+    const senderDomain = senderEmail.slice(senderEmail.lastIndexOf('@') + 1);
+    const {
+      dkim = 'pass',
+      spf = 'pass',
+      dkimDomains = [senderDomain],
+      spfDomain = senderDomain,
+      withoutDomains = false,
+    } = auth;
 
     return {
       id: 'email-msg-1',
@@ -411,7 +429,7 @@ describe('AgentInboundHandler', () => {
         userName: senderEmail,
         isBot: false,
       },
-      raw: { dkim, spf },
+      raw: withoutDomains ? { dkim, spf } : { dkim, spf, dkimDomains, spfDomain },
       attachments: [],
     };
   }
@@ -2194,6 +2212,128 @@ describe('AgentInboundHandler', () => {
       expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    describe('when DKIM and SPF passed, but for which domain', () => {
+      const restrictedEmailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+
+      function makeRestrictedEmailHandler() {
+        return makeHandler({
+          subscriberResolve: sinon.stub().resolves('known-subscriber'),
+          subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+          agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        });
+      }
+
+      it("should not map the From address's subscriber when both checks passed for another domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // The attacker signs as, and sends through, their own domain, then writes the victim's address in From.
+        const message = makeEmailDmMessage('victim@example.com', {
+          dkimDomains: ['evil.example'],
+          spfDomain: 'evil.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
+      });
+
+      it("should resolve the sender when a DKIM signature is from the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // SPF passed only for the email service's bounce domain, but DKIM aligns.
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example', 'example.com'],
+          spfDomain: 'bounces.esp.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.called).to.equal(false);
+      });
+
+      it("should resolve the sender when SPF passed for a subdomain of the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example'],
+          spfDomain: 'em123.example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('should trust the verdicts alone for a payload without the domains, and log it', async () => {
+        const { handler, logger, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        // Queued by an inbound-mail service that predates the domains, e.g. during a deploy.
+        const message = makeEmailDmMessage('member@example.com', { withoutDomains: true });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        const warnings = logger.warn.getCalls().map((call) => String(call.args[1]));
+        expect(warnings.some((text) => text.startsWith('Inbound email payload has no DKIM/SPF domains'))).to.equal(
+          true
+        );
+      });
+
+      it('should still require both checks to pass when the domains align', async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          spf: 'failed',
+          dkimDomains: ['example.com'],
+          spfDomain: 'example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+      });
     });
 
     it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {
