@@ -36,11 +36,19 @@ function contextKeysToContextPayload(contextKeys: string[] | undefined): Context
 type ActivityHeaderProps = {
   className?: string;
   activity?: IActivity;
+  /** The activity is a list row shown while the full run loads; it lacks the payload and overrides Resend sends. */
+  isPlaceholder?: boolean;
   onTransactionIdChange?: (transactionId: string, activityId: string) => void;
   onClose?: () => void;
 };
 
-export const ActivityHeader = ({ className, activity, onTransactionIdChange, onClose }: ActivityHeaderProps) => {
+export const ActivityHeader = ({
+  className,
+  activity,
+  isPlaceholder = false,
+  onTransactionIdChange,
+  onClose,
+}: ActivityHeaderProps) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
@@ -57,7 +65,7 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange, onC
 
   const { mutate: handleResend, isPending } = useMutation({
     mutationFn: async () => {
-      if (!activity) throw new Error('No activity data available');
+      if (!activity || isPlaceholder) throw new Error('No activity data available');
 
       if (!currentEnvironment) {
         throw new Error('No environment selected');
@@ -139,6 +147,7 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange, onC
             size="2xs"
             onClick={() => handleResend()}
             className="h-[20px]"
+            disabled={isPlaceholder}
             isLoading={isPending}
             type="button"
             trailingIcon={RepeatPlay}

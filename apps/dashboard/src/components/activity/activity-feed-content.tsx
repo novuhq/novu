@@ -39,7 +39,7 @@ export function ActivityFeedContent({
   onTriggerWorkflow,
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
-  const { activity, isPending, error } = usePullActivity(activityItemId);
+  const { activity, isPending, isPlaceholderData, error } = usePullActivity(activityItemId);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const onListStateChange = useCallback((hasActivities: boolean) => setShowDetailPanel(hasActivities), []);
 
@@ -192,7 +192,11 @@ export function ActivityFeedContent({
                         <ActivityError />
                       ) : (
                         <>
-                          <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
+                          <ActivityHeader
+                            activity={activity}
+                            isPlaceholder={isPlaceholderData}
+                            onTransactionIdChange={handleTransactionIdChange}
+                          />
                           <ActivityOverview activity={activity} />
                           <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
                         </>
