@@ -1,6 +1,6 @@
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { LayoutDto } from '../dtos';
 import { ChannelTypeEnum, TemplateVariableTypeEnum } from '../types';
 import { createLayout } from './helpers';
 
@@ -11,7 +11,7 @@ describe('Get a layout - /layouts/:layoutId (GET) #novu-v0', async () => {
   const layoutIdentifier = 'layout-identifier-retrieval';
   const isDefault = false;
   let session: UserSession;
-  let createdLayout: LayoutDto;
+  let createdLayout: LayoutDtoV0;
 
   before(async () => {
     session = new UserSession();

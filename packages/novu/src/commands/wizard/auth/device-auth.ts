@@ -94,10 +94,12 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     });
 
     const pollIntervalMs = resolvePollIntervalMs(session.interval);
-    const maxPollMs =
+    const maxPollMs = Math.min(
       input.name === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT
         ? CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS * 1000
-        : session.expiresIn * 1000;
+        : session.expiresIn * 1000,
+      input.timeoutMs ?? Number.POSITIVE_INFINITY
+    );
     let approved: Extract<CliDeviceSessionPollResponse, { status: 'approved' }>;
     try {
       approved = await pollUntilApproved({
