@@ -226,7 +226,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
   }
 
-  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
+  public async setError(organizationId: string, jobId: string, error: unknown): Promise<void> {
     const result = await this._model.updateOne(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
@@ -405,15 +405,15 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
   }) {
-    const job = this.MongooseModel.findOne(query, select)
+    const job = await this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
-      .lean()
+      .lean<JobEntityPopulated>()
       .exec();
 
-    return job as unknown as JobEntityPopulated;
+    return job as JobEntityPopulated;
   }
 
   public async markJobAsDigestMaster(job: JobEntity) {
