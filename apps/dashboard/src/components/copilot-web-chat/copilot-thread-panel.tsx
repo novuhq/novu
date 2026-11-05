@@ -1,4 +1,4 @@
-import { type FC, type KeyboardEvent, type SVGProps, useEffect, useRef } from 'react';
+import { type FC, type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useRef } from 'react';
 import type { IconType } from 'react-icons';
 import { RiArrowRightSLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
@@ -15,18 +15,15 @@ import {
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getFailedSend, hasPendingReplyGap } from './copilot-web-chat-utils';
 
-/** Same shape as the legacy sidebar's `newChatSuggestions`, so the canvas and step editor pass theirs as they are. */
-export type CopilotSuggestion = { label: string; icon: IconType | FC<SVGProps<SVGSVGElement>> };
+export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };
 
-type SuggestionItem = { label: string; icon?: CopilotSuggestion['icon'] };
-
-const DEFAULT_SUGGESTIONS: SuggestionItem[] = [{ label: 'Autocomplete workflow' }, { label: 'Audit this workflow' }];
+const DEFAULT_SUGGESTIONS: CopilotSuggestion[] = [{ label: 'Autocomplete workflow' }, { label: 'Audit this workflow' }];
 
 function EmptyState({
   suggestions,
   onSuggestion,
 }: {
-  suggestions: SuggestionItem[];
+  suggestions: CopilotSuggestion[];
   onSuggestion: (text: string) => void;
 }) {
   return (
@@ -68,9 +65,10 @@ function EmptyState({
   );
 }
 
-function Composer({ hasMessages, focusOnMount }: { hasMessages: boolean; focusOnMount: boolean }) {
+function Composer({ hasMessages }: { hasMessages: boolean }) {
   const {
     isAvailable,
+    surface,
     chat,
     sendMessage,
     retry,
@@ -83,6 +81,8 @@ function Composer({ hasMessages, focusOnMount }: { hasMessages: boolean; focusOn
   } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mountFocusRequestRef = useRef(focusRequest);
+  // The popover mounts on open(); the sidebar mounts with the page and gets its focus requests once on screen.
+  const focusesOnMount = surface === 'popover';
   // The failure stays until retried or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!getFailedSend(chat?.messages ?? []);
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
@@ -91,7 +91,7 @@ function Composer({ hasMessages, focusOnMount }: { hasMessages: boolean; focusOn
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-focus whenever open() is called again
   useEffect(() => {
     const textarea = textareaRef.current;
-    if (!textarea || (!focusOnMount && focusRequest === mountFocusRequestRef.current)) return;
+    if (!textarea || (!focusesOnMount && focusRequest === mountFocusRequestRef.current)) return;
 
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -242,23 +242,39 @@ function Thread() {
   );
 }
 
-function StatusPlaceholder({ label }: { label: string }) {
-  return (
-    <div className="flex flex-1 items-center justify-center">
-      <CopilotThinkingIndicator label={label} />
-    </div>
-  );
+function CenteredStatus({ children }: { children: ReactNode }) {
+  return <div className="flex flex-1 items-center justify-center">{children}</div>;
 }
 
-function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; suggestions: SuggestionItem[] }) {
-  const { isAvailable, chat, sendMessage, hasRunError, surface } = useCopilotWebChat();
+function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; suggestions: CopilotSuggestion[] }) {
+  const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface } = useCopilotWebChat();
   const track = useTelemetry();
 
   if (hasMessages || hasRunError) return <Thread />;
 
-  if (!isAvailable) return <StatusPlaceholder label="Connecting…" />;
+  if (isConnecting) {
+    return (
+      <CenteredStatus>
+        <CopilotThinkingIndicator label="Connecting…" />
+      </CenteredStatus>
+    );
+  }
 
-  if (chat?.isLoading) return <StatusPlaceholder label="Loading…" />;
+  if (!isAvailable) {
+    return (
+      <CenteredStatus>
+        <span className="text-xs leading-4 text-text-soft">Copilot is off</span>
+      </CenteredStatus>
+    );
+  }
+
+  if (chat?.isLoading) {
+    return (
+      <CenteredStatus>
+        <CopilotThinkingIndicator label="Loading…" />
+      </CenteredStatus>
+    );
+  }
 
   return (
     <EmptyState
@@ -272,21 +288,14 @@ function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; sugges
 }
 
 /** The conversation, its empty state and the composer, shared by the popover and the sidebar. */
-export function CopilotThreadPanel({
-  suggestions,
-  focusOnMount = true,
-}: {
-  suggestions?: CopilotSuggestion[];
-  /** False where the panel mounts with the page rather than on `open()`, so loading the page does not take the focus. */
-  focusOnMount?: boolean;
-}) {
+export function CopilotThreadPanel({ suggestions = DEFAULT_SUGGESTIONS }: { suggestions?: CopilotSuggestion[] }) {
   const { chat } = useCopilotWebChat();
   const hasMessages = (chat?.messages.length ?? 0) > 0;
 
   return (
     <>
-      <ThreadBody hasMessages={hasMessages} suggestions={suggestions ?? DEFAULT_SUGGESTIONS} />
-      <Composer hasMessages={hasMessages} focusOnMount={focusOnMount} />
+      <ThreadBody hasMessages={hasMessages} suggestions={suggestions} />
+      <Composer hasMessages={hasMessages} />
     </>
   );
 }

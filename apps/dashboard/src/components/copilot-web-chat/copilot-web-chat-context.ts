@@ -10,11 +10,13 @@ export type CopilotSurface = 'sidebar' | 'popover';
 export type CopilotWebChatContextValue = {
   /** False on self-hosted or while the tenant context is unavailable. */
   isAvailable: boolean;
+  /** True until the tenant context has been minted or failed to mint; false once it is known whether the Copilot is available. */
+  isConnecting: boolean;
   surface: CopilotSurface;
   isOpen: boolean;
   /** Opens the popover or expands the sidebar; `prefill` replaces the composer text without sending it. */
   open: (options?: CopilotOpenOptions) => void;
-  /** The sidebar reports whether the conversation is on screen; sets `isOpen` without taking the focus. */
+  /** The sidebar reports whether the conversation is on screen; in the sidebar only this sets `isOpen`. */
   setSurfaceVisible: (visible: boolean) => void;
   close: () => void;
   toggle: () => void;
@@ -37,8 +39,9 @@ export type CopilotWebChatContextValue = {
   draft: string;
   setDraft: (value: string) => void;
   /**
-   * Bumps on every `open()`, including while already open, so the composer can re-take focus, and once more when
-   * the sidebar that was hidden at that `open()` comes on screen.
+   * Bumps on every `open()`, including while already open, so the composer can re-take focus. An `open()` made while
+   * the sidebar was hidden or not mounted bumps it again on each of the sidebar's visibility reports until it shows
+   * the conversation, so the sidebar expands and then focuses the composer.
    */
   focusRequest: number;
   /** True when an answer finished while the conversation was not on screen and has not been seen yet. */
@@ -52,6 +55,7 @@ const noop = () => {};
 
 export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   isAvailable: false,
+  isConnecting: false,
   surface: 'popover',
   isOpen: false,
   open: noop,
@@ -79,6 +83,15 @@ type RegisterPageContext = (context: CopilotPageContext, onRefetch?: () => void)
  * workflow/step (canvas, step editor) must not re-render on every streamed message.
  */
 export const CopilotRegisterContext = createContext<RegisterPageContext>(() => noop);
+
+type CopilotSidebarControlValue = Pick<CopilotWebChatContextValue, 'focusRequest' | 'setSurfaceVisible' | 'isBusy'>;
+
+/** Kept apart from the chat context: the page that renders the sidebar reads it and must not re-render on every streamed message. */
+export const CopilotSidebarControlContext = createContext<CopilotSidebarControlValue>({
+  focusRequest: 0,
+  setSurfaceVisible: noop,
+  isBusy: false,
+});
 
 export function useCopilotWebChat(): CopilotWebChatContextValue {
   return useContext(CopilotWebChatContext);

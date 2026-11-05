@@ -14,6 +14,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
 import {
   CopilotRegisterContext,
+  CopilotSidebarControlContext,
   type CopilotSurface,
   CopilotWebChatContext,
   type CopilotWebChatContextValue,
@@ -47,29 +48,44 @@ type ShellState = {
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(): ShellState {
+function useShellState(surface: CopilotSurface): ShellState {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [focusRequest, setFocusRequest] = useState(0);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
   const isSurfaceVisibleRef = useRef(false);
-  const isFocusPendingRef = useRef(false);
+  const isOpenOwedRef = useRef(false);
 
-  const open = useCallback<ShellState['open']>((options) => {
-    if (options?.prefill) setDraft(options.prefill);
-    isFocusPendingRef.current = !isSurfaceVisibleRef.current;
-    setIsOpen(true);
-    setFocusRequest((count) => count + 1);
-  }, []);
-  // A collapsed sidebar mounts its composer only once expanded, and the Preview tab hides it, so the focus owed to
-  // an open() made meanwhile is requested again once the conversation is on screen.
+  const open = useCallback<ShellState['open']>(
+    (options) => {
+      if (options?.prefill) setDraft(options.prefill);
+      setFocusRequest((count) => count + 1);
+
+      switch (surface) {
+        case 'popover':
+          setIsOpen(true);
+          break;
+        case 'sidebar':
+          isOpenOwedRef.current = !isSurfaceVisibleRef.current;
+          break;
+        default: {
+          const unhandled: never = surface;
+
+          return unhandled;
+        }
+      }
+    },
+    [surface]
+  );
+  // The sidebar ignores the request it mounts with, unmounts its composer while collapsed and hides it on the Preview
+  // tab, so an open() made meanwhile is repeated on each report until the conversation is on screen.
   const setSurfaceVisible = useCallback((visible: boolean) => {
     isSurfaceVisibleRef.current = visible;
     setIsOpen(visible);
-    if (!visible || !isFocusPendingRef.current) return;
+    if (!isOpenOwedRef.current) return;
 
-    isFocusPendingRef.current = false;
+    if (visible) isOpenOwedRef.current = false;
     setFocusRequest((count) => count + 1);
   }, []);
   const close = useCallback(() => setIsOpen(false), []);
@@ -121,7 +137,8 @@ type ConnectedState = Pick<
  * Hosts one Copilot conversation for the whole workflow editor so it survives canvas and step
  * editor navigation. The web-chat connection lives in a sibling bridge (rendered once Novu's
  * tenant context is minted, never on self-hosted) so children are never remounted when it
- * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off").
+ * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off") and, until
+ * the bridge mounts, `isConnecting: true`.
  */
 export function CopilotWebChatProvider({
   children,
@@ -136,8 +153,10 @@ export function CopilotWebChatProvider({
   /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
-  const shell = useShellState();
+  const shell = useShellState(surface);
   const [connected, setConnected] = useState<ConnectedState | null>(null);
+  // The bridge mounts once the tenant context has been minted or failed to; failing leaves `connected` empty.
+  const [isBridgeMounted, setIsBridgeMounted] = useState(false);
   const {
     isOpen,
     open,
@@ -158,9 +177,16 @@ export function CopilotWebChatProvider({
     [isOpen, open, close, toggle, pageContext, onRefetchRef]
   );
 
+  const isBusy = !!connected?.isBusy;
+  const sidebarControl = useMemo(
+    () => ({ focusRequest, setSurfaceVisible, isBusy }),
+    [focusRequest, setSurfaceVisible, isBusy]
+  );
+
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
       isAvailable: !!connected,
+      isConnecting: enabled && !isBridgeMounted,
       surface,
       isOpen,
       open,
@@ -181,27 +207,45 @@ export function CopilotWebChatProvider({
       focusRequest,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
-      isBusy: !!connected?.isBusy,
+      isBusy,
     }),
-    [connected, surface, isOpen, open, setSurfaceVisible, close, toggle, pageContext, draft, setDraft, focusRequest]
+    [
+      connected,
+      enabled,
+      isBridgeMounted,
+      surface,
+      isOpen,
+      open,
+      setSurfaceVisible,
+      close,
+      toggle,
+      pageContext,
+      draft,
+      setDraft,
+      focusRequest,
+      isBusy,
+    ]
   );
 
   return (
     <CopilotRegisterContext.Provider value={registerPageContext}>
-      <CopilotWebChatContext.Provider value={value}>
-        {children}
-        {enabled && (
-          <CopilotConnectProvider>
-            <CopilotWebChatBridge
-              key={conversationScope}
-              shell={bridgeShell}
-              surface={surface}
-              conversationScope={conversationScope}
-              onConnected={setConnected}
-            />
-          </CopilotConnectProvider>
-        )}
-      </CopilotWebChatContext.Provider>
+      <CopilotSidebarControlContext.Provider value={sidebarControl}>
+        <CopilotWebChatContext.Provider value={value}>
+          {children}
+          {enabled && (
+            <CopilotConnectProvider>
+              <CopilotWebChatBridge
+                key={conversationScope}
+                shell={bridgeShell}
+                surface={surface}
+                conversationScope={conversationScope}
+                onConnected={setConnected}
+                onMountedChange={setIsBridgeMounted}
+              />
+            </CopilotConnectProvider>
+          )}
+        </CopilotWebChatContext.Provider>
+      </CopilotSidebarControlContext.Provider>
     </CopilotRegisterContext.Provider>
   );
 }
@@ -211,11 +255,13 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   surface,
   conversationScope,
   onConnected,
+  onMountedChange,
 }: {
   shell: BridgeShell;
   surface: CopilotSurface;
   conversationScope?: string;
   onConnected: (state: ConnectedState | null) => void;
+  onMountedChange: (isMounted: boolean) => void;
 }) {
   const track = useTelemetry();
   const connectContext = useCopilotConnectContext();
@@ -490,6 +536,12 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   ]);
 
   useEffect(() => () => onConnected(null), [onConnected]);
+
+  useEffect(() => {
+    onMountedChange(true);
+
+    return () => onMountedChange(false);
+  }, [onMountedChange]);
 
   return null;
 });

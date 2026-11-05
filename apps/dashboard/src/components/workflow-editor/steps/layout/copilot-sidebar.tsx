@@ -247,7 +247,8 @@ export function CopilotSidebar({
 }: CopilotSidebarProps) {
   const hasPreview = !!previewContent;
   const panelRef = usePanelRef();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Unknown until the panel's first resize, which is when a saved collapsed layout shows up.
+  const [isCollapsed, setIsCollapsed] = useState<boolean>();
   const [activeTab, setActiveTab] = useState<SidebarTab>(hasPreview ? 'preview' : 'copilot');
   const groupRef = useRef<HTMLDivElement>(null);
   const lastExpandRequestRef = useRef(expandRequest);
@@ -305,10 +306,10 @@ export function CopilotSidebar({
   }, [expandRequest]);
 
   useEffect(() => {
-    // `isCollapsed` starts false and learns a saved collapsed layout only from the panel's first resize.
-    const isExpanded = !isCollapsed && !panelRef.current?.isCollapsed();
-    onVisibleChangeRef.current?.(isExpanded && (!hasPreview || activeTab === 'copilot'));
-  }, [isCollapsed, hasPreview, activeTab, panelRef]);
+    if (isCollapsed === undefined) return;
+
+    onVisibleChangeRef.current?.(!isCollapsed && (!hasPreview || activeTab === 'copilot'));
+  }, [isCollapsed, hasPreview, activeTab]);
 
   useEffect(() => () => onVisibleChangeRef.current?.(false), []);
 

@@ -1,7 +1,8 @@
+import { useContext } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { type CopilotSuggestion, CopilotThreadPanel } from './copilot-thread-panel';
-import { useCopilotWebChat } from './copilot-web-chat-context';
+import { CopilotSidebarControlContext, useCopilotWebChat } from './copilot-web-chat-context';
 
 /** `CopilotSidebar` props that let `open()` expand it, keep `isOpen` in sync with it and animate its icon. */
 type CopilotSidebarControl = {
@@ -14,7 +15,7 @@ type CopilotSidebarControl = {
 export function CopilotSidebarChat({ suggestions }: { suggestions?: CopilotSuggestion[] }) {
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-bg-white">
-      <CopilotThreadPanel suggestions={suggestions} focusOnMount={false} />
+      <CopilotThreadPanel suggestions={suggestions} />
     </div>
   );
 }
@@ -39,7 +40,7 @@ export function CopilotSidebarHeaderActions() {
 }
 
 export function useCopilotSidebarControl(): CopilotSidebarControl {
-  const { focusRequest, setSurfaceVisible, isBusy } = useCopilotWebChat();
+  const { focusRequest, setSurfaceVisible, isBusy } = useContext(CopilotSidebarControlContext);
 
   return { expandRequest: focusRequest, onVisibleChange: setSurfaceVisible, isGenerating: isBusy };
 }
