@@ -131,8 +131,8 @@ function StepEditorContent() {
   const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
-  const showCopilot = useWorkflowEditorCopilot({
-    isLegacyCopilotEnabled: isAiEnabled,
+  const copilotMode = useWorkflowEditorCopilot({
+    isAiWorkflowGenerationEnabled: isAiEnabled,
     isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
@@ -140,6 +140,7 @@ function StepEditorContent() {
     stepLabel: step.stepId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
+  const showCopilot = copilotMode === 'legacy';
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =

@@ -1,3 +1,5 @@
+import { EnvironmentTypeEnum } from '@novu/shared';
+import type { ReactNode } from 'react';
 import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import {
@@ -6,8 +8,9 @@ import {
   CopilotWebChatProvider,
   useCopilotPendingPrompt,
   useCopilotWebChat,
-  useCopilotWebChatActive,
 } from '@/components/copilot-web-chat';
+import { isWebChatMode } from '@/components/copilot-web-chat/copilot-mode';
+import { CopilotModeProvider, useEditorCopilotMode } from '@/components/copilot-web-chat/copilot-mode-context';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
@@ -52,12 +55,12 @@ function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boo
   );
 }
 
-/** Shows the launcher/popover only once a page (canvas or step editor) registered a workflow context. */
-function CopilotWebChatMount() {
+/** Shows the launcher/popover only in popover mode, once a page (canvas or step editor) registered a workflow context. */
+function CopilotWebChatMount({ isPopover }: { isPopover: boolean }) {
   const { pageContext } = useCopilotWebChat();
   useCopilotPendingPrompt();
 
-  if (!pageContext?.workflowId) return null;
+  if (!isPopover || !pageContext?.workflowId) return null;
 
   return (
     <>
@@ -67,10 +70,25 @@ function CopilotWebChatMount() {
   );
 }
 
+function CopilotWebChatHost({ conversationScope, children }: { conversationScope?: string; children: ReactNode }) {
+  const { currentEnvironment } = useEnvironment();
+  const copilotMode = useEditorCopilotMode();
+  const isWebChat = isWebChatMode(copilotMode);
+
+  return (
+    <CopilotWebChatProvider
+      enabled={isWebChat && currentEnvironment?.type === EnvironmentTypeEnum.DEV}
+      conversationScope={conversationScope}
+    >
+      {children}
+      {isWebChat && <CopilotWebChatMount isPopover={copilotMode === 'web-chat-popover'} />}
+    </CopilotWebChatProvider>
+  );
+}
+
 export const EditWorkflowPage = () => {
   const { currentEnvironment } = useEnvironment();
   const { currentUser } = useAuth();
-  const isCopilotWebChatEnabled = useCopilotWebChatActive();
 
   const location = useLocation();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
@@ -99,18 +117,18 @@ export const EditWorkflowPage = () => {
   }
 
   return (
-    <CopilotWebChatProvider
-      enabled={isCopilotWebChatEnabled}
-      conversationScope={
-        currentUser?._id && currentEnvironment?._id && !isNewWorkflowSlug
-          ? `${currentUser._id}:${currentEnvironment._id}:${getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER })}`
-          : undefined
-      }
-    >
-      <WorkflowProvider>
-        <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
-      </WorkflowProvider>
-      <CopilotWebChatMount />
-    </CopilotWebChatProvider>
+    <CopilotModeProvider workflowSlug={isNewWorkflowSlug ? undefined : workflowSlug}>
+      <CopilotWebChatHost
+        conversationScope={
+          currentUser?._id && currentEnvironment?._id && !isNewWorkflowSlug
+            ? `${currentUser._id}:${currentEnvironment._id}:${getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER })}`
+            : undefined
+        }
+      >
+        <WorkflowProvider>
+          <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
+        </WorkflowProvider>
+      </CopilotWebChatHost>
+    </CopilotModeProvider>
   );
 };

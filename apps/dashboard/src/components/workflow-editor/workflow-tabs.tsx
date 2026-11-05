@@ -303,13 +303,14 @@ export const WorkflowTabs = () => {
     isExternalWorkflow ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
-  const showCopilot = useWorkflowEditorCopilot({
-    isLegacyCopilotEnabled: isAiWorkflowGenerationEnabled,
+  const copilotMode = useWorkflowEditorCopilot({
+    isAiWorkflowGenerationEnabled,
     isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
+  const showCopilot = copilotMode === 'legacy';
 
   // Memoize subscriber data and payload for integration instructions
   // Use the most recently tested subscriber for this workflow, fallback to current user
