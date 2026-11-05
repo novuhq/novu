@@ -11,11 +11,11 @@ import type {
   SendMessageInput,
 } from './conversation-runtime.types';
 import { runtimeCacheKey } from './runtime-cache-key';
-import type { WebChatPagination } from './types';
+import type { StopResult, WebChatPagination } from './types';
 import type { WebChat } from './web-chat';
 import { createLocalConversationKey } from './web-chat-store';
 
-const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
+const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false, isStopping: false });
 
 function deepFreeze<T>(value: T): T {
   if (value === null || typeof value !== 'object') {
@@ -126,6 +126,7 @@ export class AgentConversationRuntime {
         {
           messages: data.messages,
           isRunning: data.isRunning,
+          isStopping: data.isStopping,
           typing: data.typing,
           status: data.status,
           pagination: data.pagination,
@@ -226,6 +227,7 @@ export class AgentConversationRuntime {
         {
           messages: response.data.messages,
           isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
+          isStopping: store?.isStopping ?? this.#snapshot.run.isStopping,
           typing: store?.typing ?? this.#snapshot.run.typing,
           status: store?.status ?? this.#snapshot.conversationStatus,
           pagination: store?.pagination ?? storePagination(response.data.hasMore),
@@ -272,6 +274,7 @@ export class AgentConversationRuntime {
       this.#publishFromStore({
         messages: response.data.messages,
         isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
+        isStopping: store?.isStopping ?? this.#snapshot.run.isStopping,
         typing: store?.typing ?? this.#snapshot.run.typing,
         status: store?.status ?? this.#snapshot.conversationStatus,
         pagination: store?.pagination ?? storePagination(response.data.hasMore),
@@ -359,6 +362,32 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  /**
+   * Stop the agent turn that is running in this conversation. Does nothing when no turn runs.
+   * Called while the first message is still being sent, it waits for the conversation and stops the turn it starts.
+   * Resolves an `error` when no message was sent yet.
+   *
+   * Stopping is asynchronous: `run.isStopping` is true until the run ends with its `run-finish` event,
+   * and the last assistant message then carries `stopped: true`. A turn that already ended resolves
+   * `{ status: 'idle' }` and clears `run.isRunning` at once.
+   *
+   * @experimental Not every agent runtime can stop a turn mid-step yet. The agent finishes its current step first.
+   */
+  async stop(): Promise<{ data?: StopResult; error?: NovuError | WebChatPlanLimitError }> {
+    const response = await this.#webChat.stop({
+      agentId: this.agentId,
+      agentHash: this.#agentHash,
+      key: this.key,
+      conversationId: this.#conversationId,
+    });
+
+    if (response.error) {
+      this.#publishError(response.error);
+    }
+
+    return response;
+  }
+
   /** Resend a message whose `status` is `failed`. Reuses the original idempotency key. */
   async retryMessage(
     messageId: string
@@ -424,6 +453,7 @@ export class AgentConversationRuntime {
     args: {
       messages: AgentConversationSnapshot['messages'];
       isRunning: boolean;
+      isStopping: boolean;
       typing?: AgentConversationRunSnapshot['typing'];
       status: AgentConversationSnapshot['conversationStatus'];
       pagination: WebChatPagination;
@@ -442,6 +472,7 @@ export class AgentConversationRuntime {
         status: args.sessionStatus,
         run: {
           isRunning: args.isRunning,
+          isStopping: args.isStopping,
           typing: args.typing,
         },
         conversationStatus: args.status,

@@ -37,7 +37,7 @@ export enum ConversationActivityTypeEnum {
   HUMAN_INTERACTION_RESPONSE = 'human_interaction_response',
   /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
   RUN_START = 'run_start',
-  /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
+  /** Agent run ended (`richContent.lifecycle` holds outcome). Reaches model/bridge history only when `aborted`. */
   RUN_FINISH = 'run_finish',
   /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
   RUN_ERROR = 'run_error',

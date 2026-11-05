@@ -45,6 +45,7 @@ import { ConversationEventSequenceService } from './conversation-event-sequence.
 import {
   describeRunLifecycleFromEvent,
   type PersistRunLifecycleParams,
+  runIdFromLifecycleIdentifier,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
 import { toolResultData } from './tool-result-content';
@@ -765,6 +766,50 @@ export class ConversationActivityLedger {
       },
       ['_id', 'platformThreadId']
     );
+  }
+
+  /**
+   * The latest run started after the message that began the turn, when it has neither finished nor failed. A turn
+   * stopped before its run started has none, even while an earlier run (such as a previous Stop's `onAbort`) is
+   * still open. Without that message, the conversation's latest run counts.
+   */
+  async findOpenRunId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    turnMessageId?: string;
+  }): Promise<string | undefined> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const turnMessage = params.turnMessageId
+      ? await this.activityRepository.findOne(
+          { ...scope, platformMessageId: params.turnMessageId, type: ConversationActivityTypeEnum.MESSAGE },
+          ['sequence']
+        )
+      : null;
+    const afterTurnMessage = typeof turnMessage?.sequence === 'number' ? { $gt: turnMessage.sequence } : {};
+    const runStart = await this.activityRepository.findOne(
+      { ...scope, type: ConversationActivityTypeEnum.RUN_START, sequence: { $type: 'number', ...afterTurnMessage } },
+      ['identifier'],
+      { query: { sort: { sequence: -1 } } }
+    );
+    const runId = runStart?.identifier ? runIdFromLifecycleIdentifier(runStart.identifier) : undefined;
+    if (!runId) {
+      return undefined;
+    }
+
+    const ended = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        identifier: { $in: [runLifecycleIdentifier(runId, 'finish'), runLifecycleIdentifier(runId, 'error')] },
+      },
+      ['_id']
+    );
+
+    return ended ? undefined : runId;
   }
 
   async findToolActivitiesByPlanMessageId(

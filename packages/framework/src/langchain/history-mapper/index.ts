@@ -14,6 +14,10 @@ import { mapUserAttachmentParts } from './attachment-parts';
 
 const TYPE_MESSAGE = 'message';
 const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
+const TYPE_RUN_FINISH = 'run_finish';
+
+const STOPPED_TURN_MARKER =
+  '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
@@ -54,6 +58,18 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): BaseMes
   return new HumanMessage({ content });
 }
 
+/** A stopped turn leaves its user prompt with no reply; the marker tells the model it was never carried out. */
+function isAbortedRunFinish(entry: AgentHistoryEntry): boolean {
+  const lifecycle = entry.richContent?.lifecycle;
+
+  return (
+    entry.type === TYPE_RUN_FINISH &&
+    typeof lifecycle === 'object' &&
+    lifecycle !== null &&
+    (lifecycle as { outcome?: unknown }).outcome === 'aborted'
+  );
+}
+
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): BaseMessage[] {
   switch (entry.type) {
     case TYPE_MESSAGE: {
@@ -63,6 +79,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
     }
     case TYPE_TOOL_APPROVAL_REQUEST:
       return mapApprovalRequest(entry, index);
+    case TYPE_RUN_FINISH:
+      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model.
+      return isAbortedRunFinish(entry) ? [new AIMessage(STOPPED_TURN_MARKER)] : [];
     default:
       // `tool_approval_decision`, `tool_result`, `edit`, `signal`, and unknown types are
       // UI/runtime artifacts or already replayed at the request entry — not model transcript.

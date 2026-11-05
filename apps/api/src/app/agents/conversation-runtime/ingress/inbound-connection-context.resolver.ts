@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import type { AgentContextPayload, AgentContextValue } from '@novu/framework';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { WORKSPACE_ID_EXTRACTORS } from '../../shared/util/workspace-id';
@@ -35,7 +36,7 @@ const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
 
 /**
  * Resolves the connect-time context bound to an inbound chat so a Novu-hosted multi-tenant agent
- * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Two scopes are supported,
+ * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Three scopes are supported,
  * matching where the connect flow persisted the context:
  *
  *  - **Workspace scope** (Slack, Teams): one Novu-hosted app is installed across many customer
@@ -44,6 +45,8 @@ const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
  *    Additionally the *author's* own `SLACK_USER` / `MS_TEAMS_USER` endpoint is resolved and its
  *    verified per-user context takes precedence over the workspace hint on conflict — the connection
  *    is only a tenant/routing fallback for unlinked authors.
+ *
+ *  - **Session scope** (web chat): the tenant rides on the subscriber session's `contextKeys`.
  *
  *  - **Endpoint scope** (Telegram): there is no workspace — the subscriber links their chat via a
  *    `/start` deep link that binds the tenant to their per-subscriber `ChannelEndpoint`. Matched by
@@ -77,6 +80,10 @@ export class InboundConnectionContextResolver {
     rawEvent: unknown,
     platformUserId?: string | null
   ): Promise<ResolvedInboundContext> {
+    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
+      return this.resolveBySessionContextKeys(config, rawEvent);
+    }
+
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
@@ -84,6 +91,31 @@ export class InboundConnectionContextResolver {
     }
 
     return this.resolveByEndpoint(config, platformUserId ?? null);
+  }
+
+  /**
+   * Web chat has no connection or endpoint: the subscriber's session token carries the tenant as
+   * `contextKeys`, which the adapter stamps on every inbound raw payload (messages and actions).
+   */
+  private async resolveBySessionContextKeys(
+    config: ResolvedAgentConfig,
+    rawEvent: unknown
+  ): Promise<ResolvedInboundContext> {
+    const contextKeys = (rawEvent as { contextKeys?: unknown } | null | undefined)?.contextKeys;
+    if (!Array.isArray(contextKeys)) {
+      return EMPTY_RESOLVED_CONTEXT;
+    }
+
+    try {
+      return await this.buildContextFromKeys(
+        config,
+        contextKeys.filter((key): key is string => typeof key === 'string')
+      );
+    } catch (err) {
+      this.logResolveFailure(err, config, { scope: 'session' });
+
+      return EMPTY_RESOLVED_CONTEXT;
+    }
   }
 
   /**

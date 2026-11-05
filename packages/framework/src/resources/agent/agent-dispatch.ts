@@ -3,6 +3,7 @@ import { AgentContextImpl } from './agent.context';
 import { toAgentError } from './agent.errors';
 import type {
   Agent,
+  AgentAbortContext,
   AgentActionContext,
   AgentBridgeRequest,
   AgentErrorResult,
@@ -42,8 +43,13 @@ function isMessageContent(value: unknown): value is MessageContent {
 function ctxForEvent(
   ctx: AgentContextImpl,
   _event: string
-): AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext {
-  return ctx as AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+): AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext | AgentAbortContext {
+  return ctx as
+    | AgentMessageContext
+    | AgentActionContext
+    | AgentReactionContext
+    | AgentResolveContext
+    | AgentAbortContext;
 }
 
 const TOOL_APPROVAL_REQUEST_ID_PREFIX = 'tool_approval:';
@@ -129,6 +135,14 @@ export interface DispatchAgentEventOptions {
 }
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
+  // Novu sends `onAbort` after every Stop. Without a handler the turn posts nothing: an empty run would flip the
+  // chat back to running, and its finish could read as the end of a turn the user started right after the Stop.
+  if (options.event === AgentEventEnum.ON_ABORT && !(options.agent.handlers.onAbort && options.bridge.abortedTurn)) {
+    options.live?.close();
+
+    return;
+  }
+
   const ctx = new AgentContextImpl(
     options.bridge,
     options.secretKey,
@@ -141,8 +155,15 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
     ctx.queueRunStart();
     await runAgentHandler(agent, event, ctx);
     await ctx.flush();
-    await ctx.emitRunFinish({ outcome: 'completed' });
+    await ctx.emitRunFinish({ outcome: ctx.signal.aborted ? 'aborted' : 'completed' });
   } catch (err) {
+    // The user stopped the turn: the abort surfaces as a throw (e.g. the model call's AbortError), not a failure.
+    if (ctx.signal.aborted) {
+      await ctx.emitRunFinish({ outcome: 'aborted' });
+
+      return;
+    }
+
     const error = toAgentError(err);
 
     logger?.error(`[agent:${agent.id}] Turn failed (${event}): ${error.message}`, error.cause ?? error);
@@ -264,6 +285,11 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
     case AgentEventEnum.ON_RESOLVE:
       if (registeredAgent.handlers.onResolve) {
         await dispatchReplyResult(ctx, await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
+      }
+      break;
+    case AgentEventEnum.ON_ABORT:
+      if (registeredAgent.handlers.onAbort && ctx.abortedTurn) {
+        await dispatchReplyResult(ctx, await registeredAgent.handlers.onAbort(ctx as AgentAbortContext));
       }
       break;
     default:

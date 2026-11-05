@@ -3,6 +3,7 @@ import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
 import { identifyTelemetry } from '@/api/telemetry';
 import { getRegionConfig, useRegion } from '@/context/region';
+import { beginLaunchDarklyIdentify } from '@/hooks/use-feature-flag';
 import { readPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { useAuth } from './auth/hooks';
 import { useCustomerIo } from './customer-io/hooks';
@@ -74,25 +75,30 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
         const regionConfig = getRegionConfig(selectedRegion);
         const awsRegion = regionConfig?.awsRegion || '';
 
-        ldClient.identify({
-          kind: 'multi',
-          organization: {
-            key: currentOrganization._id,
-            name: currentOrganization.name,
-            createdAt: currentOrganization.createdAt,
-            tier: currentOrganization.apiServiceLevel,
-          },
-          user: {
-            key: currentUser._id,
-            firstName: currentUser.firstName,
-            lastName: currentUser.lastName,
-            email: currentUser.email,
-          },
-          region: {
-            key: awsRegion || 'unknown',
-            awsRegion: awsRegion,
-          },
-        });
+        const markIdentified = beginLaunchDarklyIdentify(currentOrganization._id);
+
+        // Settled on failure too, so a failed identify never blocks the Copilot mode from resolving.
+        ldClient
+          .identify({
+            kind: 'multi',
+            organization: {
+              key: currentOrganization._id,
+              name: currentOrganization.name,
+              createdAt: currentOrganization.createdAt,
+              tier: currentOrganization.apiServiceLevel,
+            },
+            user: {
+              key: currentUser._id,
+              firstName: currentUser.firstName,
+              lastName: currentUser.lastName,
+              email: currentUser.email,
+            },
+            region: {
+              key: awsRegion || 'unknown',
+              awsRegion: awsRegion,
+            },
+          })
+          .then(markIdentified, markIdentified);
       }
     } else {
       sentrySetUser(null);

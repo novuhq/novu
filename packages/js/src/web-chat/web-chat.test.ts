@@ -15,6 +15,7 @@ describe('WebChat', () => {
   let sendMessage: Mock;
   let respondToAction: Mock;
   let sendAction: Mock;
+  let cancelRun: Mock;
   let getEvents: Mock;
   let connect: Mock;
   let webChat: WebChat;
@@ -24,9 +25,16 @@ describe('WebChat', () => {
     sendMessage = vi.fn();
     respondToAction = vi.fn();
     sendAction = vi.fn();
+    cancelRun = vi.fn();
     getEvents = vi.fn();
     connect = vi.fn().mockResolvedValue({ data: undefined });
-    const webChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as WebChatService;
+    const webChatService = {
+      sendMessage,
+      respondToAction,
+      sendAction,
+      cancelRun,
+      getEvents,
+    } as unknown as WebChatService;
     webChat = new WebChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -2397,6 +2405,221 @@ describe('WebChat', () => {
     expect(sendAction).not.toHaveBeenCalled();
   });
 
+  describe('stop', () => {
+    const runStart = (sequence: number) => liveEnvelope({ sequence, event: { type: 'run-start' } });
+    const abortedFinish = (sequence: number) =>
+      liveEnvelope({ sequence, event: { type: 'run-finish', outcome: 'aborted' } });
+
+    async function startRunningTurn(): Promise<void> {
+      getEvents.mockResolvedValue({ events: [], olderCursor: null });
+      await openClaimedConversation();
+      emitter.emit('web_chat.agent_event', runStart(2));
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({ sequence: 3, event: { type: 'message-start', messageId: 'msg_partial0001' } })
+      );
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({
+          sequence: 4,
+          event: { type: 'message-delta', messageId: 'msg_partial0001', delta: 'Working on' },
+        })
+      );
+    }
+
+    /** Live envelopes wait in the buffer while a catch-up sync is queued, so let it settle first. */
+    const flushSyncQueue = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    function snapshotOf(key = 'local_session1') {
+      return webChat.getConversation({ agentId: 'agent_1', key });
+    }
+
+    it('POSTs the cancel route and keeps isStopping until the aborted run-finish arrives', async () => {
+      await startRunningTurn();
+      let resolveCancel!: (value: { status: 'aborted' }) => void;
+      cancelRun.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCancel = resolve;
+          })
+      );
+
+      const pending = webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+      await Promise.resolve();
+
+      expect(cancelRun).toHaveBeenCalledWith({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+      expect(snapshotOf()).toMatchObject({ isRunning: true, isStopping: true });
+
+      resolveCancel({ status: 'aborted' });
+      await expect(pending).resolves.toEqual({ data: { status: 'aborted' } });
+      await flushSyncQueue();
+      expect(snapshotOf()).toMatchObject({ isRunning: true, isStopping: true });
+
+      emitter.emit('web_chat.agent_event', abortedFinish(5));
+      await flushSyncQueue();
+
+      const settled = snapshotOf();
+      expect(settled).toMatchObject({ isRunning: false, isStopping: false });
+      expect(settled?.messages.find((message) => message.id === 'msg_partial0001')).toMatchObject({
+        stopped: true,
+        parts: [{ type: 'text', text: 'Working on', state: 'done' }],
+      });
+    });
+
+    it('settles isStopping when the aborted run-finish lands before the HTTP ack', async () => {
+      await startRunningTurn();
+      let resolveCancel!: (value: { status: 'aborted' }) => void;
+      cancelRun.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCancel = resolve;
+          })
+      );
+
+      const pending = webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+      await Promise.resolve();
+      emitter.emit('web_chat.agent_event', abortedFinish(5));
+      resolveCancel({ status: 'aborted' });
+      await pending;
+      await flushSyncQueue();
+
+      expect(snapshotOf()).toMatchObject({ isRunning: false, isStopping: false });
+    });
+
+    it('clears the local running state at once when the server reports idle', async () => {
+      await startRunningTurn();
+      cancelRun.mockResolvedValue({ status: 'idle' });
+
+      const result = await webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+
+      expect(result).toEqual({ data: { status: 'idle' } });
+      expect(snapshotOf()).toMatchObject({ isRunning: false, isStopping: false, typing: undefined });
+    });
+
+    it('passes agentHash to the cancel request', async () => {
+      await startRunningTurn();
+      cancelRun.mockResolvedValue({ status: 'aborted' });
+
+      await webChat.stop({ agentId: 'agent_1', key: 'local_session1', agentHash: 'hash_1' });
+
+      expect(cancelRun).toHaveBeenCalledWith({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        agentHash: 'hash_1',
+      });
+    });
+
+    it('returns the error and drops isStopping when the cancel request fails', async () => {
+      await startRunningTurn();
+      cancelRun.mockRejectedValue(new Error('network'));
+
+      const result = await webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+
+      expect(result.error).toBeInstanceOf(NovuError);
+      expect(snapshotOf()).toMatchObject({ isRunning: true, isStopping: false });
+    });
+
+    it('keeps the mark on the stopped reply when a card click starts a turn whose reply lands before its run-start', async () => {
+      await startRunningTurn();
+      emitter.emit('web_chat.agent_event', abortedFinish(5));
+      await flushSyncQueue();
+      sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await webChat.sendAction({
+        agentId: 'agent_1',
+        key: 'local_session1',
+        actionId: 'keep',
+        sourceMessageId: 'act_card0000001',
+      });
+      await flushSyncQueue();
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({ sequence: 6, event: { type: 'message-start', messageId: 'msg_next00000001' } })
+      );
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({ sequence: 7, event: { type: 'message-delta', messageId: 'msg_next00000001', delta: 'Kept' } })
+      );
+      await flushSyncQueue();
+
+      expect(snapshotOf()?.messages.map((message) => [message.id, message.stopped])).toEqual([
+        ['msg_user0000001', undefined],
+        ['msg_partial0001', true],
+        ['msg_next00000001', undefined],
+      ]);
+    });
+
+    it('returns an error without a request when the conversation has no id yet', async () => {
+      const result = await webChat.stop({ agentId: 'agent_1', key: 'local_unsent' });
+
+      expect(result.error).toBeInstanceOf(NovuError);
+      expect(cancelRun).not.toHaveBeenCalled();
+    });
+
+    it('waits for the first message to create the conversation, then stops the turn it started', async () => {
+      let resolveCreate!: (value: { identifier: string; messageId: string }) => void;
+      sendMessage.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveCreate = resolve;
+          })
+      );
+      getEvents.mockResolvedValue({ events: [], olderCursor: null });
+      cancelRun.mockResolvedValue({ status: 'aborted' });
+
+      const sent = webChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+      const stopped = webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+      await Promise.resolve();
+      expect(cancelRun).not.toHaveBeenCalled();
+
+      resolveCreate({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+      await sent;
+
+      await expect(stopped).resolves.toEqual({ data: { status: 'aborted' } });
+      expect(cancelRun).toHaveBeenCalledWith({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    });
+
+    it('does not mark isStopping when no run is active locally but still asks the server', async () => {
+      getEvents.mockResolvedValue({ events: [], olderCursor: null });
+      await openClaimedConversation();
+      cancelRun.mockResolvedValue({ status: 'idle' });
+
+      const result = await webChat.stop({ agentId: 'agent_1', key: 'local_session1' });
+
+      expect(result).toEqual({ data: { status: 'idle' } });
+      expect(cancelRun).toHaveBeenCalledTimes(1);
+      expect(snapshotOf()).toMatchObject({ isRunning: false, isStopping: false });
+    });
+
+    it('marks the last assistant message stopped when history replays an aborted run', async () => {
+      getEvents.mockResolvedValue(
+        historyEventPage([
+          {
+            sequence: 1,
+            event: { type: 'message', role: 'user', messageId: 'msg_user0000001', content: { markdown: 'go' } },
+          },
+          { sequence: 2, event: { type: 'run-start' } },
+          {
+            sequence: 3,
+            event: {
+              type: 'message',
+              role: 'assistant',
+              messageId: 'msg_partial0001',
+              content: { markdown: 'Working on' },
+            },
+          },
+          { sequence: 4, event: { type: 'run-finish', outcome: 'aborted' } },
+        ])
+      );
+
+      await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      const messages = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages;
+      expect(messages?.find((message) => message.id === 'msg_user0000001')?.stopped).toBeUndefined();
+      expect(messages?.find((message) => message.id === 'msg_partial0001')?.stopped).toBe(true);
+    });
+  });
+
   function recordChanges(key: string) {
     const changes: WebChatChange[] = [];
     emitter.on('web_chat.messages.updated', ({ data }) => {
@@ -2890,6 +3113,22 @@ describe('WebChat', () => {
   });
 
   describe('idempotency and concurrency', () => {
+    it('retryMessage replays the original send metadata', async () => {
+      sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+        messageId: 'msg_retry000002',
+      });
+      const metadata = { workflowId: 'wf_1' };
+
+      await webChat.sendMessage({ agentId: 'agent_1', text: 'retry me', key: 'local_meta', metadata });
+      const optimisticId = webChat.getConversation({ agentId: 'agent_1', key: 'local_meta' })?.messages[0]?.id;
+
+      sendMessage.mockClear();
+      await webChat.retryMessage({ agentId: 'agent_1', key: 'local_meta', messageId: optimisticId! });
+
+      expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ text: 'retry me', metadata }));
+    });
+
     it('retryMessage resubmits with the original idempotency key', async () => {
       sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
         identifier: 'conv_abcdefghijkl',
