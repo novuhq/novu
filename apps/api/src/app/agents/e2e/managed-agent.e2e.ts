@@ -170,7 +170,7 @@ describe('Managed Agents API #novu-v2', () => {
         ['credentials']
       );
 
-      expect(integration, 'integration should exist').to.exist;
+      if (!integration) throw new Error('integration should exist');
       const decrypted = decryptCredentials(integration.credentials);
 
       expect(decrypted.externalEnvironmentId, 'externalEnvironmentId should be stored in credentials').to.equal(

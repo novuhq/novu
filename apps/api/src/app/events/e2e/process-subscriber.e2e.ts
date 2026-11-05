@@ -1,7 +1,8 @@
 import { Novu } from '@novu/api';
+import { SubscriberPayloadDto } from '@novu/api/models/components';
 import { CacheInMemoryProviderService, CacheService } from '@novu/application-generic';
 import { MessageRepository, NotificationTemplateEntity, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
@@ -78,7 +79,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
   });
 
   it('should update a subscriber based on event', async () => {
-    const payload: ISubscribersDefine = {
+    const payload: SubscriberPayloadDto = {
       subscriberId: subscriber.subscriberId,
       firstName: 'New Test Name',
       lastName: 'New Last of name',
@@ -102,7 +103,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
   });
 
   it('should send only email trigger second time based on the subscriber preference', async () => {
-    const payload: ISubscribersDefine = {
+    const payload: SubscriberPayloadDto = {
       subscriberId: session.subscriberId,
       firstName: 'New Test Name',
       lastName: 'New Last of name',
@@ -149,7 +150,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
   });
 
   it('should ignore subscriber preference and send all triggers for system critical template', async () => {
-    const payload: ISubscribersDefine = {
+    const payload: SubscriberPayloadDto = {
       subscriberId: session.subscriberId,
       firstName: 'New Test Name',
       lastName: 'New Last of name',
@@ -198,7 +199,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST) #novu-v2'
   });
 });
 
-async function triggerEvent(session: UserSession, template: NotificationTemplateEntity, payload: ISubscribersDefine) {
+async function triggerEvent(session: UserSession, template: NotificationTemplateEntity, payload: SubscriberPayloadDto) {
   const novuClient = initNovuClassSdk(session);
   await novuClient.trigger({
     workflowId: template.triggers[0].identifier,

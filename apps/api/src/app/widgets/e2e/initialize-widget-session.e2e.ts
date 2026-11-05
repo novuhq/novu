@@ -108,7 +108,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
    */
 });
 
-async function initWidgetSession(subscriberIdentifier: string, session, hmacHash?: string) {
+async function initWidgetSession(subscriberIdentifier: string, session, hmacHash?: string | null) {
   return await session.testAgent.post('/v1/widgets/session/initialize').send({
     applicationIdentifier: session.environment.identifier,
     subscriberId: subscriberIdentifier,
