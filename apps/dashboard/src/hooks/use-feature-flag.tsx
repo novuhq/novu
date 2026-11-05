@@ -1,6 +1,7 @@
 import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useAuth } from '@/context/auth/hooks';
 import { IS_SELF_HOSTED_EE, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
 function isLaunchDarklyEnabled() {
@@ -51,13 +52,46 @@ export function useLaunchDarklyReady(): boolean {
   return isReady;
 }
 
+let identifiedOrganizationId: string | undefined;
+const identifyListeners = new Set<() => void>();
+
+/** Records that `ldClient.identify()` settled (resolved or rejected) for this organization. */
+export function markLaunchDarklyIdentified(organizationId: string) {
+  if (identifiedOrganizationId === organizationId) return;
+
+  identifiedOrganizationId = organizationId;
+
+  for (const listener of identifyListeners) listener();
+}
+
+function subscribeToIdentified(listener: () => void) {
+  identifyListeners.add(listener);
+
+  return () => identifyListeners.delete(listener);
+}
+
+/**
+ * True when LaunchDarkly is not configured, or once `identify()` has settled for the current organization, so flags
+ * targeted by organization are evaluated for it. `useLaunchDarklyReady` only covers the initial anonymous context.
+ */
+export function useLaunchDarklyIdentified(): boolean {
+  const { currentOrganization } = useAuth();
+  const identifiedId = useSyncExternalStore(subscribeToIdentified, () => identifiedOrganizationId);
+
+  if (!isLaunchDarklyEnabled()) {
+    return true;
+  }
+
+  return !!currentOrganization && identifiedId === currentOrganization._id;
+}
+
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {
   const flags = useFlags();
 
   if (!isLaunchDarklyEnabled()) {
     const envValue =
       // Check runtime env first (for self-hosted flexibility)
-      (window as unknown as { _env_?: Record<string, string> })?._env_?.[`VITE_${key}`] ??
+      (window as Window & { _env_?: Record<string, string> })._env_?.[`VITE_${key}`] ??
       // Check if the feature flag is exported as an environment variable
       import.meta.env[`VITE_${key}`] ??
       // Then check process.env if process exists

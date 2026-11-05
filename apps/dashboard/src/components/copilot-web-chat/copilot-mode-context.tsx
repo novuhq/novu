@@ -1,7 +1,7 @@
 import { AiResourceTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
-import { useFeatureFlag, useLaunchDarklyReady } from '@/hooks/use-feature-flag';
+import { useFeatureFlag, useLaunchDarklyIdentified, useLaunchDarklyReady } from '@/hooks/use-feature-flag';
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
@@ -23,7 +23,10 @@ function useAiWorkflowGenerationEnabled(): boolean {
  * user opens another workflow or reloads.
  */
 export function CopilotModeProvider({ workflowSlug, children }: { workflowSlug?: string; children: ReactNode }) {
-  const isFlagsReady = useLaunchDarklyReady();
+  // Ready only covers the initial anonymous context; organization-targeted flags need the identified one.
+  const isLaunchDarklyReady = useLaunchDarklyReady();
+  const isLaunchDarklyIdentified = useLaunchDarklyIdentified();
+  const isFlagsReady = isLaunchDarklyReady && isLaunchDarklyIdentified;
   const liveMode = useCopilotMode();
   // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off.
   const isAiWorkflowGenerationEnabled = useAiWorkflowGenerationEnabled();
