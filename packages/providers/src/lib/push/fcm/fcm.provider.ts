@@ -31,6 +31,16 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
 
   private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
 
+  /**
+   * Keys FCM reserves inside `data`. A message that contains one of them is
+   * rejected in full, so they are dropped from the trigger payload.
+   *
+   * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
+   */
+  private readonly RESERVED_DATA_KEYS = ['from', 'message_type'];
+
+  private readonly RESERVED_DATA_KEY_PREFIXES = ['google', 'gcm'];
+
   private appName: string;
   private messaging: Messaging;
   constructor(
@@ -172,7 +182,11 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
         body: options.content,
         ...notificationOverrides,
       },
-      data: { ...novuData, ...data },
+      /**
+       * A notification message carries the trigger payload in `data` as well, otherwise the
+       * payload never reaches the device. Explicit `data` overrides keep precedence over it.
+       */
+      data: { ...this.toDataPayload(payload), ...novuData, ...data },
     };
   }
 
@@ -254,6 +268,25 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
     }
 
     return rest;
+  }
+
+  /**
+   * Drops the keys FCM will not accept inside `data` from an already cleaned payload.
+   */
+  private toDataPayload(payload: Record<string, string>): Record<string, string> {
+    const dataPayload: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(payload)) {
+      const isReserved =
+        this.RESERVED_DATA_KEYS.includes(key) ||
+        this.RESERVED_DATA_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+      if (!isReserved && value !== undefined) {
+        dataPayload[key] = value;
+      }
+    }
+
+    return dataPayload;
   }
 
   private cleanPayload(payload: object): Record<string, string> {
