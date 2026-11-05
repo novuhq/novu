@@ -357,7 +357,8 @@ export class RunJob {
           status: JobStatusEnum.COMPLETED,
         });
         this.stepRunV2Writer.write(completedJob, {
-          digestEventsCount: job.type === StepTypeEnum.DIGEST ? (digestEvents?.length ?? 0) : undefined,
+          digestEventsCount:
+            completedJob?.type === StepTypeEnum.DIGEST ? (completedJob.digest?.events?.length ?? 0) : undefined,
         });
 
         // Update workflow run delivery lifecycle after successful step completion

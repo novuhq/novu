@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/api/models/components';
-import { ClickHouseService, PinoLogger, StepRunV2Repository } from '@novu/application-generic';
+import { ClickHouseService, PinoLogger, StepRunV2ReadRow, StepRunV2Repository } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, SubscriberEntity } from '@novu/dal';
 import {
   DelayTypeEnum,
@@ -88,10 +88,11 @@ describe('step_runs_v2 live writes #novu-v2', () => {
     const expected = Object.fromEntries(jobs.map((job) => [String(job._id), job.status]));
     const workflowRunIds = Array.from(new Set(jobs.map((job) => String(job._notificationId))));
     let actual: Record<string, string> = {};
+    let rows: StepRunV2ReadRow[] = [];
     const deadline = Date.now() + 10000;
 
     while (Date.now() < deadline) {
-      const rows = await stepRunV2Repository.findByWorkflowRunIds({
+      rows = await stepRunV2Repository.findByWorkflowRunIds({
         environmentId: session.environment._id,
         workflowRunIds,
         oldestRunCreatedAt: subDays(new Date(), 1),
@@ -108,7 +109,7 @@ describe('step_runs_v2 live writes #novu-v2', () => {
 
     expect(actual).to.deep.equal(expected);
 
-    return jobs;
+    return { jobs, rows };
   }
 
   function sortKeys(record: Record<string, string>) {
@@ -136,7 +137,7 @@ describe('step_runs_v2 live writes #novu-v2', () => {
     const transactionId = await trigger(template.triggers[0].identifier);
     await waitForJobs([transactionId], allTerminal);
 
-    const jobs = await expectStepRunsV2ToMatchMongo([transactionId]);
+    const { jobs } = await expectStepRunsV2ToMatchMongo([transactionId]);
     expect(jobs).to.have.length(2);
     expect(jobs.find((job) => job.type === StepTypeEnum.IN_APP)?.status).to.equal(JobStatusEnum.COMPLETED);
   });
@@ -178,9 +179,18 @@ describe('step_runs_v2 live writes #novu-v2', () => {
 
     await waitForJobs(transactionIds, allTerminal, 30000);
 
-    const jobs = await expectStepRunsV2ToMatchMongo(transactionIds);
-    const digestStatuses = jobs.filter((job) => job.type === StepTypeEnum.DIGEST).map((job) => job.status);
-    expect(digestStatuses).to.have.members([JobStatusEnum.COMPLETED, JobStatusEnum.MERGED, JobStatusEnum.MERGED]);
+    const { jobs, rows } = await expectStepRunsV2ToMatchMongo(transactionIds);
+    const digestJobs = jobs.filter((job) => job.type === StepTypeEnum.DIGEST);
+    expect(digestJobs.map((job) => job.status)).to.have.members([
+      JobStatusEnum.COMPLETED,
+      JobStatusEnum.MERGED,
+      JobStatusEnum.MERGED,
+    ]);
+
+    const masterDigest = digestJobs.find((job) => job.status === JobStatusEnum.COMPLETED);
+    const masterRow = rows.find((row) => row.step_run_id === String(masterDigest?._id));
+    expect(masterDigest?.digest?.events).to.have.length(3);
+    expect(Number(masterRow?.digest_events_count)).to.equal(3);
   });
 
   it('writes a step skipped by its condition', async () => {
@@ -263,7 +273,7 @@ describe('step_runs_v2 live writes #novu-v2', () => {
       jobs.some((job) => job.type === StepTypeEnum.DELAY && job.status === JobStatusEnum.FAILED)
     );
 
-    const jobs = await expectStepRunsV2ToMatchMongo([transactionId]);
+    const { jobs } = await expectStepRunsV2ToMatchMongo([transactionId]);
     expect(jobs.find((job) => job.type === StepTypeEnum.DELAY)?.status).to.equal(JobStatusEnum.FAILED);
   });
 });
