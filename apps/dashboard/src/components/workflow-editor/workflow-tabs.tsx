@@ -241,6 +241,7 @@ function buildTabPath(
   return buildRoute(route, { environmentSlug, ...(omitWorkflowSlug ? {} : { workflowSlug }) });
 }
 
+type NewChatSuggestions = ReturnType<typeof getNewChatSuggestions>;
 type WorkflowSteps = NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
 
 function WebChatSidebarCanvasPane({
@@ -250,7 +251,7 @@ function WebChatSidebarCanvasPane({
 }: {
   isReadOnly: boolean;
   steps: WorkflowSteps;
-  suggestions: ReturnType<typeof getNewChatSuggestions>;
+  suggestions: NewChatSuggestions;
 }) {
   const sidebarControl = useCopilotSidebarControl();
 
@@ -278,7 +279,7 @@ function WorkflowCanvasPane({
   copilotMode: CopilotMode | null;
   isReadOnly: boolean;
   steps: WorkflowSteps;
-  suggestions: ReturnType<typeof getNewChatSuggestions>;
+  suggestions: NewChatSuggestions;
 }) {
   switch (copilotMode) {
     case 'legacy':
