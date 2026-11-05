@@ -1,7 +1,9 @@
 export { useCopilotEntry } from './copilot-entry-store';
 export { CopilotLauncher } from './copilot-launcher';
 export { CopilotPopover } from './copilot-popover';
-export { useCopilotWebChat, useRegisterCopilotContext } from './copilot-web-chat-context';
+export { CopilotSidebarChat, CopilotSidebarHeaderActions, useCopilotSidebarControl } from './copilot-sidebar-chat';
+export { CopilotThreadPanel } from './copilot-thread-panel';
+export { type CopilotSurface, useCopilotWebChat, useRegisterCopilotContext } from './copilot-web-chat-context';
 export { CopilotWebChatProvider } from './copilot-web-chat-provider';
 export { type CopilotPromptLocationState, useCopilotPendingPrompt } from './use-copilot-pending-prompt';
 export { useCopilotWebChatActive } from './use-copilot-web-chat-enabled';

@@ -4,12 +4,18 @@ import type { CopilotCardAction, CopilotPageContext } from './copilot-web-chat-u
 
 export type CopilotOpenOptions = { prefill?: string };
 
+/** Where the workflow editor shows the conversation: inside its sidebar, or in the floating popover. */
+export type CopilotSurface = 'sidebar' | 'popover';
+
 export type CopilotWebChatContextValue = {
   /** False on self-hosted or while the tenant context is unavailable. */
   isAvailable: boolean;
+  surface: CopilotSurface;
   isOpen: boolean;
-  /** Opens the popover; `prefill` replaces the composer text without sending it. */
+  /** Opens the popover or expands the sidebar; `prefill` replaces the composer text without sending it. */
   open: (options?: CopilotOpenOptions) => void;
+  /** The sidebar reports whether the conversation is on screen; sets `isOpen` without taking the focus. */
+  setSurfaceVisible: (visible: boolean) => void;
   close: () => void;
   toggle: () => void;
   chat?: UseWebChatResult;
@@ -30,9 +36,12 @@ export type CopilotWebChatContextValue = {
   sentContextLabels: Record<number, string>;
   draft: string;
   setDraft: (value: string) => void;
-  /** Bumps on every `open()`, including while already open, so the composer can re-take focus. */
+  /**
+   * Bumps on every `open()`, including while already open, so the composer can re-take focus, and once more when
+   * the sidebar that was hidden at that `open()` comes on screen.
+   */
   focusRequest: number;
-  /** True when an answer finished while the popover was closed and has not been seen yet. */
+  /** True when an answer finished while the conversation was not on screen and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
   /** True from a send until the reply settles, including the gap before the server reports `run-start`. */
@@ -43,8 +52,10 @@ const noop = () => {};
 
 export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   isAvailable: false,
+  surface: 'popover',
   isOpen: false,
   open: noop,
+  setSurfaceVisible: noop,
   close: noop,
   toggle: noop,
   sendMessage: async () => false,
