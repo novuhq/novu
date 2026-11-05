@@ -23,6 +23,12 @@ describe('email sender alignment', () => {
       ['', 'gmail.com', 'an empty domain'],
       ['2.3.4', '1.2.3.4', 'IP addresses'],
       ['evil.com\u0000.gmail.com', 'gmail.com', 'a domain with a control character'],
+      // A URL parser reads each of these as gmail.com, but DNS looks them up under attacker.net.
+      ['gmail.com/.attacker.net', 'gmail.com', 'a domain hidden behind a slash'],
+      ['gmail.com?.attacker.net', 'gmail.com', 'a domain hidden behind a question mark'],
+      ['gmail.com#.attacker.net', 'gmail.com', 'a domain hidden behind a hash'],
+      ['gmail.com\\.attacker.net', 'gmail.com', 'a domain hidden behind a backslash'],
+      ['gmail.com', 'gmail.com/.attacker.net', 'a From domain hidden behind a slash'],
     ].forEach(([authenticated, from, label]) => {
       it(`should not align ${label}`, () => {
         expect(domainsAlign(authenticated, from)).to.equal(false);
@@ -49,6 +55,19 @@ describe('email sender alignment', () => {
           senderAddress: 'victim@gmail.com',
           dkimDomains: ['evil.example'],
           spfDomain: 'evil.example',
+          spfPassed: true,
+        })
+      ).to.deep.equal({ dkim: false, spf: false });
+    });
+
+    it('should not count checks that passed for a domain hidden behind a URL separator', () => {
+      // The attacker owns attacker.net: DKIM finds the key at s._domainkey.gmail.com/.attacker.net,
+      // and SPF looks up gmail.com/.attacker.net, both under attacker.net.
+      expect(
+        alignedEmailChecks({
+          senderAddress: 'victim@gmail.com',
+          dkimDomains: ['gmail.com/.attacker.net'],
+          spfDomain: 'gmail.com/.attacker.net',
           spfPassed: true,
         })
       ).to.deep.equal({ dkim: false, spf: false });

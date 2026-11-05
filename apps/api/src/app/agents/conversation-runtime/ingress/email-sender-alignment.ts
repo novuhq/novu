@@ -56,13 +56,27 @@ export function alignedEmailChecks(params: {
   };
 }
 
+/*
+ * Letters of any script, digits, hyphens and dots. `domainToASCII` parses its
+ * input as a URL host and drops whatever follows a separator, so it turns
+ * `gmail.com/.attacker.net` into `gmail.com`, while DKIM and SPF look that
+ * name up under attacker.net.
+ */
+const DOMAIN_CHARACTERS = /^[\p{L}\p{M}\p{N}.-]+$/u;
+
 /**
  * Lowercase ASCII (`xn--`) form, which is what DKIM's d= always uses, or ''
- * for anything that isn't a host name: `domainToASCII` returns '' for invalid
- * input, and an IP address has no letter in its last label.
+ * for anything that isn't a host name: other characters than the ones above,
+ * input `domainToASCII` rejects, or an IP address, which has no letter in its
+ * last label.
  */
 function normalizeDomain(domain: string): string {
-  const ascii = domainToASCII(domain.trim().replace(/\.$/, ''));
+  const name = domain.trim().replace(/\.$/, '');
+  if (!DOMAIN_CHARACTERS.test(name)) {
+    return '';
+  }
+
+  const ascii = domainToASCII(name);
   const lastLabel = ascii.slice(ascii.lastIndexOf('.') + 1);
 
   return /[a-z]/.test(lastLabel) ? ascii : '';
