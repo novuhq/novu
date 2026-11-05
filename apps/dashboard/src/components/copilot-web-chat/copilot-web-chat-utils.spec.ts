@@ -1,7 +1,7 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
 import { CopilotReviewActionEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getOpenReviewAction, getOpenReviewCard, getTryAgainPrompt } from './copilot-web-chat-utils';
+import { getOpenReviewActions, getTryAgainPrompt } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
   return {
@@ -61,105 +61,105 @@ function noteCardMessage(id: string): AgentMessage {
   return cardMessageWith(id, [{ type: 'text', content: 'Kept the changes.', style: 'muted' }]);
 }
 
-describe('getOpenReviewCard', () => {
+const KEEP = CopilotReviewActionEnum.KEEP;
+const REVERT = CopilotReviewActionEnum.REVERT;
+const TRY_AGAIN = CopilotReviewActionEnum.TRY_AGAIN;
+
+function reviewAction(sourceMessageId: string, actionId: CopilotReviewActionEnum) {
+  return { actionId, sourceMessageId, value: 'snapshot_1' };
+}
+
+describe('getOpenReviewActions', () => {
   it('finds nothing in an empty thread or one without a card', () => {
-    expect(getOpenReviewCard([])).toBeUndefined();
-    expect(getOpenReviewCard([userMessage('msg_1', 'Hi'), assistantMessage('act_1', 'Hello')])).toBeUndefined();
+    expect(getOpenReviewActions([])).toEqual({});
+    expect(getOpenReviewActions([userMessage('msg_1', 'Hi'), assistantMessage('act_1', 'Hello')])).toEqual({});
   });
 
-  it('returns the newest card when it offers the review buttons', () => {
-    expect(getOpenReviewCard([userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')])).toBe('card_review');
+  it('builds the clicks the newest card sends, with each button value', () => {
+    expect(getOpenReviewActions([userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')])).toEqual({
+      keep: reviewAction('card_review', KEEP),
+      revert: reviewAction('card_review', REVERT),
+    });
+  });
+
+  it('offers neither action on a card that only offers Try again', () => {
+    const tryAgainOnly = cardMessageWith('card_try_again', [{ type: 'actions', children: [reviewButton(TRY_AGAIN)] }]);
+
+    expect(getOpenReviewActions([userMessage('msg_1', 'Add SMS'), tryAgainOnly])).toEqual({});
+  });
+
+  it('offers only Keep on a card that only offers Keep', () => {
+    const keepOnly = cardMessageWith('card_keep', [reviewButton(KEEP)]);
+
+    expect(getOpenReviewActions([keepOnly])).toEqual({ keep: reviewAction('card_keep', KEEP) });
   });
 });
 
-describe('getOpenReviewCard (cards without review buttons)', () => {
+describe('getOpenReviewActions (cards without review buttons)', () => {
   it('returns nothing for a card that has no review buttons', () => {
-    expect(getOpenReviewCard([userMessage('msg_1', 'Add SMS'), noteCardMessage('card_note')])).toBeUndefined();
+    expect(getOpenReviewActions([userMessage('msg_1', 'Add SMS'), noteCardMessage('card_note')])).toEqual({});
   });
 });
 
-describe('getOpenReviewCard (click state)', () => {
+describe('getOpenReviewActions (click state)', () => {
   const messages = [userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')];
 
   it('returns nothing while a click on that card is waiting for the agent', () => {
-    expect(getOpenReviewCard(messages, 'card_review')).toBeUndefined();
+    expect(getOpenReviewActions(messages, 'card_review')).toEqual({});
   });
 
   it('ignores a pending click that belongs to another card', () => {
-    expect(getOpenReviewCard(messages, 'card_older')).toBe('card_review');
+    expect(getOpenReviewActions(messages, 'card_older').keep?.sourceMessageId).toBe('card_review');
   });
 
   it('returns nothing once the answer card, which has no review buttons, is the newest card', () => {
-    expect(getOpenReviewCard([...messages, noteCardMessage('card_note')])).toBeUndefined();
+    expect(getOpenReviewActions([...messages, noteCardMessage('card_note')])).toEqual({});
   });
 
   it('offers a card again after the agent only answered in plain text', () => {
-    expect(getOpenReviewCard([...messages, assistantMessage('act_failed_revert', "Couldn't revert")])).toBe(
-      'card_review'
-    );
+    expect(
+      getOpenReviewActions([...messages, assistantMessage('act_failed_revert', "Couldn't revert")]).revert
+    ).toEqual(reviewAction('card_review', REVERT));
   });
 
   it('returns the newest review card when an older one was already answered', () => {
-    expect(
-      getOpenReviewCard([
-        ...messages,
-        noteCardMessage('card_note'),
-        userMessage('msg_2', 'Add email'),
-        reviewCardMessage('card_review_2'),
-      ])
-    ).toBe('card_review_2');
+    const actions = getOpenReviewActions([
+      ...messages,
+      noteCardMessage('card_note'),
+      userMessage('msg_2', 'Add email'),
+      reviewCardMessage('card_review_2'),
+    ]);
+
+    expect(actions.keep?.sourceMessageId).toBe('card_review_2');
+    expect(actions.revert?.sourceMessageId).toBe('card_review_2');
   });
 });
 
-describe('getOpenReviewCard (button shapes)', () => {
+describe('getOpenReviewActions (button shapes)', () => {
   it('finds review buttons nested in a section or posted as bare buttons', () => {
-    const section: AgentCardChild = { type: 'section', children: [reviewButton(CopilotReviewActionEnum.KEEP)] };
+    const section: AgentCardChild = { type: 'section', children: [reviewButton(KEEP)] };
 
-    expect(getOpenReviewCard([cardMessageWith('card_section', [section])])).toBe('card_section');
-    expect(getOpenReviewCard([cardMessageWith('card_bare', [reviewButton(CopilotReviewActionEnum.REVERT)])])).toBe(
-      'card_bare'
-    );
+    expect(getOpenReviewActions([cardMessageWith('card_section', [section])])).toEqual({
+      keep: reviewAction('card_section', KEEP),
+    });
+    expect(getOpenReviewActions([cardMessageWith('card_bare', [reviewButton(REVERT)])])).toEqual({
+      revert: reviewAction('card_bare', REVERT),
+    });
   });
 
   it('returns nothing when every review button is disabled', () => {
     const disabled: AgentCardChild = {
       type: 'actions',
-      children: [reviewButton(CopilotReviewActionEnum.KEEP, true), reviewButton(CopilotReviewActionEnum.REVERT, true)],
+      children: [reviewButton(KEEP, true), reviewButton(REVERT, true)],
     };
 
-    expect(getOpenReviewCard([cardMessageWith('card_disabled', [disabled])])).toBeUndefined();
+    expect(getOpenReviewActions([cardMessageWith('card_disabled', [disabled])])).toEqual({});
   });
 
   it('ignores buttons that are not review actions', () => {
     const other: AgentCardChild = { type: 'actions', children: [{ type: 'button', id: 'open', label: 'Open' }] };
 
-    expect(getOpenReviewCard([cardMessageWith('card_other', [other])])).toBeUndefined();
-  });
-});
-
-describe('getOpenReviewAction', () => {
-  const messages = [userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')];
-
-  it('builds the click the card sends, with the button value', () => {
-    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.KEEP)).toEqual({
-      actionId: CopilotReviewActionEnum.KEEP,
-      sourceMessageId: 'card_review',
-      value: 'snapshot_1',
-    });
-    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.REVERT)?.actionId).toBe(
-      CopilotReviewActionEnum.REVERT
-    );
-  });
-
-  it('returns nothing while a click is pending, after the card was answered, or without that button', () => {
-    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.KEEP, 'card_review')).toBeUndefined();
-    expect(
-      getOpenReviewAction([...messages, noteCardMessage('card_note')], CopilotReviewActionEnum.KEEP)
-    ).toBeUndefined();
-
-    const keepOnly = cardMessageWith('card_keep', [reviewButton(CopilotReviewActionEnum.KEEP)]);
-
-    expect(getOpenReviewAction([keepOnly], CopilotReviewActionEnum.REVERT)).toBeUndefined();
+    expect(getOpenReviewActions([cardMessageWith('card_other', [other])])).toEqual({});
   });
 });
 

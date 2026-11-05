@@ -3,7 +3,7 @@ import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
 import { identifyTelemetry } from '@/api/telemetry';
 import { getRegionConfig, useRegion } from '@/context/region';
-import { markLaunchDarklyIdentified } from '@/hooks/use-feature-flag';
+import { beginLaunchDarklyIdentify } from '@/hooks/use-feature-flag';
 import { readPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { useAuth } from './auth/hooks';
 import { useCustomerIo } from './customer-io/hooks';
@@ -75,8 +75,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
         const regionConfig = getRegionConfig(selectedRegion);
         const awsRegion = regionConfig?.awsRegion || '';
 
-        const organizationId = currentOrganization._id;
-        const markIdentified = () => markLaunchDarklyIdentified(organizationId);
+        const markIdentified = beginLaunchDarklyIdentify(currentOrganization._id);
 
         // Settled on failure too, so a failed identify never blocks the Copilot mode from resolving.
         ldClient

@@ -240,73 +240,44 @@ export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): s
 type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
 type CardButtonChild = Extract<AgentCardChild, { type: 'button' }>;
 
-function isEnabledReviewButton(child: AgentCardChild | CardActionChild, actionId?: string): child is CardButtonChild {
-  return (
-    child.type === 'button' &&
-    isCopilotReviewActionId(child.id) &&
-    !child.disabled &&
-    (actionId === undefined || child.id === actionId)
-  );
+function isEnabledReviewButton(child: AgentCardChild | CardActionChild): child is CardButtonChild {
+  return child.type === 'button' && isCopilotReviewActionId(child.id) && !child.disabled;
 }
 
-/** Walks the containers the card renderer draws (`actions`, `section`, a bare `button`) for an enabled review button. */
-function findEnabledReviewButton(children: readonly AgentCardChild[], actionId?: string): CardButtonChild | undefined {
-  for (const child of children) {
-    if (child.type === 'actions') {
-      const button = child.children.find((action): action is CardButtonChild =>
-        isEnabledReviewButton(action, actionId)
-      );
-      if (button) return button;
-    } else if (child.type === 'section') {
-      const button = findEnabledReviewButton(child.children, actionId);
-      if (button) return button;
-    } else if (isEnabledReviewButton(child, actionId)) {
-      return child;
-    }
-  }
+/** Walks the containers the card renderer draws (`actions`, `section`, a bare `button`) for enabled review buttons. */
+function listEnabledReviewButtons(children: readonly AgentCardChild[]): CardButtonChild[] {
+  return children.flatMap((child) => {
+    if (child.type === 'actions') return child.children.filter(isEnabledReviewButton);
+    if (child.type === 'section') return listEnabledReviewButtons(child.children);
 
-  return undefined;
+    return isEnabledReviewButton(child) ? [child] : [];
+  });
 }
 
-/** The thread's newest card, unless a click on it is still waiting for the agent. */
-function getClickableCard(
+export type OpenReviewActions = { keep?: CopilotCardAction; revert?: CopilotCardAction };
+
+/**
+ * The clicks `CopilotCardBlock` sends for the Keep / Revert buttons the user can click now, each with its button's
+ * own `value`. Only the thread's newest card offers them (answering a click, or a stopped run's follow-up, posts a
+ * newer buttonless card that supersedes it), and not while a click on it is still waiting for the agent. Mirrors when
+ * the card renders those buttons enabled, minus its `isBusy` lock.
+ */
+export function getOpenReviewActions(
   messages: readonly AgentMessage[],
   pendingReviewMessageId?: string
-): AgentCardPart | undefined {
+): OpenReviewActions {
   const card = getLastCardPart(messages);
 
-  return card?.sourceMessageId === pendingReviewMessageId ? undefined : card;
-}
+  if (!card || card.sourceMessageId === pendingReviewMessageId) return {};
 
-/**
- * The `sourceMessageId` of the card whose Keep / Revert buttons the user can click now: the thread's newest card
- * (answering a click, or a stopped run's follow-up, posts a newer buttonless card that supersedes it) while its
- * click is not pending. Mirrors when `CopilotCardBlock` renders those buttons enabled, minus its `isBusy` lock.
- */
-export function getOpenReviewCard(
-  messages: readonly AgentMessage[],
-  pendingReviewMessageId?: string
-): string | undefined {
-  const card = getClickableCard(messages, pendingReviewMessageId);
+  const buttons = listEnabledReviewButtons(card.card.children);
+  const toAction = (actionId: CopilotReviewActionEnum): CopilotCardAction | undefined => {
+    const button = buttons.find((candidate) => candidate.id === actionId);
 
-  return card && findEnabledReviewButton(card.card.children) ? card.sourceMessageId : undefined;
-}
+    return button ? { actionId: button.id, sourceMessageId: card.sourceMessageId, value: button.value } : undefined;
+  };
 
-/**
- * The click `CopilotCardBlock` sends for the open review card's `actionId` button, with the button's own `value`, or
- * `undefined` when no card is open or it does not offer that button.
- */
-export function getOpenReviewAction(
-  messages: readonly AgentMessage[],
-  actionId: CopilotReviewActionEnum,
-  pendingReviewMessageId?: string
-): CopilotCardAction | undefined {
-  const card = getClickableCard(messages, pendingReviewMessageId);
-  const button = card && findEnabledReviewButton(card.card.children, actionId);
-
-  return card && button
-    ? { actionId: button.id, sourceMessageId: card.sourceMessageId, value: button.value }
-    : undefined;
+  return { keep: toAction(CopilotReviewActionEnum.KEEP), revert: toAction(CopilotReviewActionEnum.REVERT) };
 }
 
 /** The text of the last user message before the message that holds the card. */
