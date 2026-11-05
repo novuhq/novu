@@ -3,9 +3,10 @@ import type { payloadPropertySchema } from "./workflow-schemas";
 
 /**
  * Edits a workflow payload JSON Schema from flat property descriptors
- * (`order.total`, `type: "number"`). Mirrors the Copilot's
- * `addPropertyToSchema` / `removePropertyFromSchema` semantics. This never
- * infers properties from step content: callers declare them explicitly.
+ * (`order.total`, `type: "number"`). Parents created for a dotted path are
+ * closed. A `type: "object"` leaf stays open, matching `create_workflow`,
+ * so a declared object still accepts its keys. This never infers properties
+ * from step content: callers declare them explicitly.
  */
 
 export type PayloadProperty = z.infer<typeof payloadPropertySchema>;
@@ -45,7 +46,7 @@ function leafNode(property: PayloadProperty): SchemaNode {
 		case "enum":
 			return { enum: property.enumValues, type: "string" };
 		case "object":
-			return createEmptyPayloadSchema();
+			return { properties: {}, required: [], type: "object" };
 		case "array": {
 			if (property.arrayItemsType !== "object") {
 				return { items: { type: property.arrayItemsType }, type: "array" };

@@ -227,6 +227,19 @@ function toSideEffectEvents(
 ): AgentEvent[] {
   const events: AgentEvent[] = [];
 
+  // Novu retries a whole batch when one event fails. Tool results are idempotent writes, so they go before
+  // anything that posts to the user, like the approval card, which a retry would post again.
+  for (const result of sideEffects.toolResults) {
+    events.push({
+      type: 'tool-use-result',
+      toolUseId: result.toolCallId,
+      content: [
+        { type: 'text', text: String(result.preview ?? '') },
+        { type: 'json', value: result.output },
+      ],
+    });
+  }
+
   if (sideEffects.toolApprovalRequest) {
     const request = sideEffects.toolApprovalRequest;
     events.push({
@@ -239,17 +252,6 @@ function toSideEffectEvents(
       ...(request.to !== undefined ? { to: request.to } : {}),
       ...(request.from !== undefined ? { from: request.from } : {}),
       ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
-    });
-  }
-
-  for (const result of sideEffects.toolResults) {
-    events.push({
-      type: 'tool-use-result',
-      toolUseId: result.toolCallId,
-      content: [
-        { type: 'text', text: String(result.preview ?? '') },
-        { type: 'json', value: result.output },
-      ],
     });
   }
 

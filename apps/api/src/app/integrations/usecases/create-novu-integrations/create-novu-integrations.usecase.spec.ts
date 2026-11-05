@@ -33,7 +33,7 @@ describe('CreateNovuIntegrations - in-app HMAC defaults', () => {
     userId: 'user-id',
     name: EnvironmentEnum.PRODUCTION,
     channels: [ChannelTypeEnum.IN_APP],
-  } as const;
+  };
 
   const validIntegrationId = '507f1f77bcf86cd799439011';
 

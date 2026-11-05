@@ -2,8 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "strictNullChecks": true,
-    "types": ["node"],
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "types": ["node"]
   }
 }

@@ -4,7 +4,6 @@
     "target": "ESNext",
     "module": "commonjs",
     "moduleResolution": "bundler",
-    "sourceMap": true,
-    "esModuleInterop": true
+    "sourceMap": true
   }
 }

@@ -8,6 +8,7 @@ import {
   isNovuResolveToolName,
   isNovuToolCatalogName,
 } from '@novu/shared';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentSubscriberResolver } from '../../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -36,7 +37,7 @@ export class HandlePendingToolApprovals {
     private readonly conversationRepository: ConversationRepository,
     private readonly toolTrustService: ToolTrustService,
     @Inject(forwardRef(() => ManagedAgentService))
-    private readonly managedAgentService: ManagedAgentService,
+    private readonly managedAgentService: WrapperType<ManagedAgentService>,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly handleNovuTools: HandleNovuTools,
     private readonly handleNovuResolve: HandleNovuResolve,

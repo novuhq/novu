@@ -804,4 +804,62 @@ describe('ConversationActivityLedger', () => {
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
     });
   });
+
+  describe('tool activities', () => {
+    const context = {
+      conversationId: 'conv-1',
+      channel: {
+        platform: 'slack',
+        _integrationId: 'integration-a',
+        platformThreadId: 'thread-1',
+      },
+      agentIdentifier: 'agent-a',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    };
+
+    it("does not bump the conversation's activity or preview when recording tool rows", async () => {
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(makeActivityRepository(), undefined, publisher, conversationRepository);
+
+      await ledger.persistToolCall({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        toolName: 'search_docs',
+        input: { query: 'pricing' },
+      });
+      await ledger.recordToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+
+    it('does not re-emit a redelivered tool result', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = makeActivityRepository({
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves({ _id: 'existing', identifier: 'tool-result:conv-1:run-1:toolu_1' }),
+      });
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, undefined, publisher);
+
+      await ledger.recordToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(publisher.emitPersistedClientEvent.called).to.equal(false);
+    });
+  });
 });

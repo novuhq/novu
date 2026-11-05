@@ -1,4 +1,4 @@
-import { SmsFactory } from '@novu/application-generic';
+import { DetailEnum, SmsFactory } from '@novu/application-generic';
 import { ChannelTypeEnum, SmsProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -16,10 +16,12 @@ describe('SendMessageSms - trigger provider overrides', () => {
       update: sinon.stub().resolves(undefined),
     };
 
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+
     const usecase = new SendMessageSms(
       {} as never,
       messageRepository as never,
-      { execute: sinon.stub().resolves(undefined) } as never,
+      createExecutionDetails as never,
       { execute: sinon.stub() } as never,
       {} as never,
       {} as never,
@@ -44,7 +46,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
     const sendStub = sinon.stub().resolves({ id: 'provider_msg_1' });
     sinon.stub(SmsFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
-    return { usecase, messageRepository, sendStub };
+    return { usecase, messageRepository, sendStub, createExecutionDetails };
   }
 
   function buildCommand(overrides: Record<string, unknown>) {
@@ -163,5 +165,22 @@ describe('SendMessageSms - trigger provider overrides', () => {
     );
 
     expect(sendStub.firstCall.args[0].from).to.equal('+10000000000');
+  });
+
+  it('records the selected provider on the sent trace when the job snapshot is Novu SMS', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase();
+    const command = buildCommand({});
+    command.job.providerId = SmsProviderIdEnum.Novu;
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const sentTrace = createExecutionDetails.execute
+      .getCalls()
+      .map((call) => call.args[0])
+      .find((detail) => detail.detail === DetailEnum.MESSAGE_SENT);
+
+    expect(sentTrace?.providerId).to.equal(SmsProviderIdEnum.Twilio);
   });
 });

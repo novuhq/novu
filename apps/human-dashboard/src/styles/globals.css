@@ -1,3 +1,6 @@
+/* Clerk's forms go in their own layer (`cssLayerName` in `lib/clerk-appearance`), so our utilities win over them. */
+@layer theme, base, clerk, components, utilities;
+
 @import "tailwindcss";
 
 /* Design tokens from the Human design system (Figma: Design system › Foundations, dark). */

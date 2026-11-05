@@ -27,6 +27,13 @@ declare namespace Cloudflare {
 		MCP_OAUTH_CLIENT_ID_CURSOR?: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
 	}
+	interface StagingEnv {
+		NOVU_API_URL: string;
+		NOVU_REGION: string;
+		CLERK_OAUTH_ISSUER: string;
+		MCP_OAUTH_CLIENT_ID_CURSOR?: string;
+		MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
+	}
 	interface Env extends __BaseEnv_Env {}
 }
 interface Env extends __BaseEnv_Env {}

@@ -39,6 +39,7 @@ import {
 } from './onboarding';
 import {
   awaitsTestMail,
+  belongsInOnboarding,
   isSetupUnfinished,
   rememberTestReply,
   resolveStep,
@@ -210,9 +211,9 @@ export async function requireSetUpAgent(
   connect: HostId | null = null
 ): Promise<SetupProgress & { agent: RelayAgent }> {
   const progress = await loadSetupProgress(account);
-  const { agent } = progress;
+  const { agent, step, state } = progress;
 
-  if (!agent || (isSetupUnfinished(progress.step) && !progress.state.skippedAt)) {
+  if (!agent || belongsInOnboarding(agent, step, state)) {
     redirect(connect ? onboardingConnectPath(connect) : ONBOARDING_PATH);
   }
 

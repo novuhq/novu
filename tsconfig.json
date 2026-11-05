@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
     "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
     "experimentalDecorators": true,
-    "lib": ["es2015", "dom"],
+    "lib": ["es2024", "dom"],
     "module": "commonjs",
     "noImplicitAny": false,
     "noUncheckedSideEffectImports": false,

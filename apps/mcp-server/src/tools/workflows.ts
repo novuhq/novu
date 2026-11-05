@@ -5,7 +5,6 @@ import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
 import {
 	normalizeControlValues,
-	toUpdateWorkflowRequest,
 	type WorkflowResponse,
 	withCriticalPreferences,
 } from "../utils/workflow-request";
@@ -132,32 +131,20 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 			});
 			if (stepValidationError) return stepValidationError;
 
-			// PUT replaces the workflow, so fields the caller omitted keep their current values.
-			const endpoint = `/v2/workflows/${encodeURIComponent(input.workflowId)}`;
-			const fetched = await ToolFactory.callApi(context, { endpoint, method: "GET" });
-			if (!fetched.ok) return apiError("fetch workflow", input.workflowId, fetched);
-			const { steps: _currentSteps, ...current } = toUpdateWorkflowRequest(
-				fetched.data as WorkflowResponse,
-			);
-
 			const requestBody: Record<string, unknown> = {
-				...current,
+				active: input.active ?? false,
+				isTranslationEnabled: input.isTranslationEnabled ?? false,
 				name: input.name,
 				origin: input.origin,
+				preferences: withCriticalPreferences(input.preferences, input.critical),
 				steps: input.steps.map(toStepBody),
 			};
 
 			assignOptional(requestBody, {
 				__source: input.__source,
-				active: input.active,
 				agent: input.agent,
 				description: input.description,
-				isTranslationEnabled: input.isTranslationEnabled,
 				payloadSchema: resolvedPayloadSchema,
-				preferences: withCriticalPreferences(
-					input.preferences ?? current.preferences,
-					input.critical,
-				),
 				severity: input.severity,
 				tags: input.tags,
 				validatePayload: input.validatePayload,
@@ -167,7 +154,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				context,
 				{
 					body: requestBody,
-					endpoint,
+					endpoint: `/v2/workflows/${encodeURIComponent(input.workflowId)}`,
 					method: "PUT",
 				},
 				context.idempotencyKey,

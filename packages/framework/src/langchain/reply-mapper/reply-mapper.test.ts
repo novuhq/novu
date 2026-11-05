@@ -221,7 +221,7 @@ describe('handleLangChainResult', () => {
     it('delivers the formatReply result instead of the raw text', async () => {
       const ctx = fakeRuntimeCtx();
       streams([new AIMessage({ id: 'ai_1', content: 'created it' })]);
-      const card = { type: 'card', children: [{ type: 'text', content: 'created it' }] } as const;
+      const card: MessageContent = { type: 'card', children: [{ type: 'text', content: 'created it' }] };
 
       await handleLangChainResult(config({ formatReply: () => card }), ctx, undefined);
 

@@ -17,7 +17,7 @@ describe('BridgeExecutorService', () => {
     };
   }
 
-  function makeService(overrides: { attachmentStorage?: Record<string, unknown> } = {}) {
+  function makeService(overrides: { attachmentStorage?: { signRead: sinon.SinonStub } } = {}) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
     const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };

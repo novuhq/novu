@@ -4,10 +4,12 @@ import * as ResolveAgentRuntimeModule from '@novu/application-generic/build/main
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 import sinon from 'sinon';
 
+type MockAgentRuntimeProvider = Partial<IAgentRuntimeProvider>;
+
 interface ResolvedAgentRuntimeStub {
   apiKey: string;
   credentials: ICredentialsDto;
-  provider: IAgentRuntimeProvider;
+  provider: MockAgentRuntimeProvider;
   validateCredentialsInput: Record<string, unknown>;
 }
 
@@ -16,7 +18,7 @@ interface ResolveAgentRuntimeStubOptions {
 }
 
 function buildResolved(
-  mockProvider: IAgentRuntimeProvider,
+  mockProvider: MockAgentRuntimeProvider,
   apiKey: string,
   credentials: ICredentialsDto = {}
 ): ResolvedAgentRuntimeStub {
@@ -29,10 +31,12 @@ function buildResolved(
 }
 
 export function stubResolveAgentRuntime(
-  mockProvider: IAgentRuntimeProvider,
+  mockProvider: MockAgentRuntimeProvider,
   options: ResolveAgentRuntimeStubOptions = {}
 ): sinon.SinonStub {
-  return sinon.stub(ResolveAgentRuntimeModule, 'resolveAgentRuntime').callsFake((providerId: string, credentials?: ICredentialsDto) => {
+  const resolveAgentRuntimeStub = sinon.stub(ResolveAgentRuntimeModule, 'resolveAgentRuntime') as sinon.SinonStub;
+
+  return resolveAgentRuntimeStub.callsFake((providerId: string, credentials?: ICredentialsDto) => {
     if (options.resolve) {
       return options.resolve(providerId, credentials);
     }
@@ -56,5 +60,5 @@ export function stubResolveAgentRuntime(
     }
 
     return buildResolved(mockProvider, apiKey, decrypted);
-  }) as sinon.SinonStub;
+  });
 }
