@@ -82,6 +82,7 @@ jobs:
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
+      typecheck-spec: ${{ steps.get-projects-arrays.outputs.typecheck-spec }}
     permissions:
       contents: read
       pull-requests: read
@@ -173,6 +174,7 @@ jobs:
             echo "test-providers=$(pnpm run get-affected test --all providers | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test --all packages | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test --all libs | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "typecheck-spec=$(pnpm run get-affected typecheck:spec --all all | tail -n 1)" >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
             echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n 1)" >> $GITHUB_OUTPUT
@@ -182,6 +184,7 @@ jobs:
             echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "typecheck-spec=$(pnpm run get-affected typecheck:spec origin/${{steps.get-base-branch-name.outputs.branch}} all | tail -n 1)" >> $GITHUB_OUTPUT
           fi
 
   test_unit_providers:
@@ -317,9 +320,35 @@ jobs:
           projects: ${{matrix.projectName}}
           args: ""
 
-      # Mocha loads tests through ts-node transpile-only or SWC, which strip types without checking them.
-      - name: Type check tests
-        run: pnpm --filter "${{ matrix.projectName }}" run --if-present typecheck:spec
+  # Test runners strip types from test files without checking them. Projects opt in by defining a `typecheck:spec` script.
+  typecheck_spec:
+    name: Type check tests
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [get-affected]
+    # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
+    if: ${{ fromJson(needs.get-affected.outputs.typecheck-spec)[0] && github.event.pull_request.head.repo.fork != true }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - name: Affected projects
+        run: echo '${{ needs.get-affected.outputs.typecheck-spec }}'
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: "true"
+
+      - name: Type check
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.typecheck-spec), ',') }}
+        run: pnpm nx run-many -t typecheck:spec --projects="$AFFECTED_PROJECTS" --parallel=3
 
   validate_openapi:
     name: Validate OpenAPI
@@ -386,6 +415,7 @@ jobs:
       - test_unit_packages
       - test_unit_libs
       - test_unit_services
+      - typecheck_spec
       - validate_openapi
       - test_e2e_api
     steps:

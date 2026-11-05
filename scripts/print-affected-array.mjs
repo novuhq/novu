@@ -159,6 +159,7 @@ async function printAffectedProjectsContainingTask() {
     BASE_BRANCH_NAME === ALL_FLAG
       ? await allProjectsContainingTask(TASK_NAME)
       : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
+  const allProjects = projects;
 
   const foundProviders = projects.filter((project) => providers.includes(project));
   if (foundProviders.length) {
@@ -181,6 +182,8 @@ async function printAffectedProjectsContainingTask() {
     console.log(JSON.stringify(foundPackages));
   } else if (GROUP === 'libs') {
     console.log(JSON.stringify(foundLibs));
+  } else if (GROUP === 'all') {
+    console.log(JSON.stringify(allProjects));
   } else {
     console.log(JSON.stringify(projects));
   }
