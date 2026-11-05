@@ -14,6 +14,8 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
 import {
   CopilotRegisterContext,
+  CopilotSidebarControlContext,
+  type CopilotSurface,
   CopilotWebChatContext,
   type CopilotWebChatContextValue,
 } from './copilot-web-chat-context';
@@ -35,6 +37,7 @@ import { useCopilotRefetch } from './use-copilot-refetch';
 type ShellState = {
   isOpen: boolean;
   open: CopilotWebChatContextValue['open'];
+  setSurfaceVisible: CopilotWebChatContextValue['setSurfaceVisible'];
   close: () => void;
   toggle: () => void;
   draft: string;
@@ -45,16 +48,44 @@ type ShellState = {
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(): ShellState {
+function useShellState(surface: CopilotSurface): ShellState {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [focusRequest, setFocusRequest] = useState(0);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
+  const isSurfaceVisibleRef = useRef(false);
+  const isOpenOwedRef = useRef(false);
 
-  const open = useCallback<ShellState['open']>((options) => {
-    if (options?.prefill) setDraft(options.prefill);
-    setIsOpen(true);
+  const open = useCallback<ShellState['open']>(
+    (options) => {
+      if (options?.prefill) setDraft(options.prefill);
+      setFocusRequest((count) => count + 1);
+
+      switch (surface) {
+        case 'popover':
+          setIsOpen(true);
+          break;
+        case 'sidebar':
+          isOpenOwedRef.current = !isSurfaceVisibleRef.current;
+          break;
+        default: {
+          const unhandled: never = surface;
+
+          return unhandled;
+        }
+      }
+    },
+    [surface]
+  );
+  // The sidebar ignores the request it mounts with, unmounts its composer while collapsed and hides it on the Preview
+  // tab, so an open() made meanwhile is repeated on each report until the conversation is on screen.
+  const setSurfaceVisible = useCallback((visible: boolean) => {
+    isSurfaceVisibleRef.current = visible;
+    setIsOpen(visible);
+    if (!isOpenOwedRef.current) return;
+
+    if (visible) isOpenOwedRef.current = false;
     setFocusRequest((count) => count + 1);
   }, []);
   const close = useCallback(() => setIsOpen(false), []);
@@ -70,7 +101,19 @@ function useShellState(): ShellState {
     };
   }, []);
 
-  return { isOpen, open, close, toggle, draft, setDraft, focusRequest, pageContext, registerPageContext, onRefetchRef };
+  return {
+    isOpen,
+    open,
+    setSurfaceVisible,
+    close,
+    toggle,
+    draft,
+    setDraft,
+    focusRequest,
+    pageContext,
+    registerPageContext,
+    onRefetchRef,
+  };
 }
 
 type BridgeShell = Pick<ShellState, 'isOpen' | 'open' | 'close' | 'toggle' | 'pageContext' | 'onRefetchRef'>;
@@ -94,22 +137,39 @@ type ConnectedState = Pick<
  * Hosts one Copilot conversation for the whole workflow editor so it survives canvas and step
  * editor navigation. The web-chat connection lives in a sibling bridge (rendered once Novu's
  * tenant context is minted, never on self-hosted) so children are never remounted when it
- * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off").
+ * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off") and, until
+ * the bridge mounts, `isConnecting: true`.
  */
 export function CopilotWebChatProvider({
   children,
   enabled = true,
+  surface = 'popover',
   conversationScope,
 }: {
   children: ReactNode;
   enabled?: boolean;
+  /** Where the conversation is shown; picks the hotkeys and tags every Copilot telemetry event. */
+  surface?: CopilotSurface;
   /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
-  const shell = useShellState();
+  const shell = useShellState(surface);
   const [connected, setConnected] = useState<ConnectedState | null>(null);
-  const { isOpen, open, close, toggle, draft, setDraft, focusRequest, pageContext, registerPageContext, onRefetchRef } =
-    shell;
+  // The bridge mounts once the tenant context has been minted or failed to; failing leaves `connected` empty.
+  const [isBridgeMounted, setIsBridgeMounted] = useState(false);
+  const {
+    isOpen,
+    open,
+    setSurfaceVisible,
+    close,
+    toggle,
+    draft,
+    setDraft,
+    focusRequest,
+    pageContext,
+    registerPageContext,
+    onRefetchRef,
+  } = shell;
   // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
   // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
   const bridgeShell = useMemo(
@@ -117,11 +177,20 @@ export function CopilotWebChatProvider({
     [isOpen, open, close, toggle, pageContext, onRefetchRef]
   );
 
+  const isBusy = !!connected?.isBusy;
+  const sidebarControl = useMemo(
+    () => ({ focusRequest, setSurfaceVisible, isBusy }),
+    [focusRequest, setSurfaceVisible, isBusy]
+  );
+
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
       isAvailable: !!connected,
+      isConnecting: enabled && !isBridgeMounted,
+      surface,
       isOpen,
       open,
+      setSurfaceVisible,
       close,
       toggle,
       chat: connected?.chat,
@@ -138,38 +207,61 @@ export function CopilotWebChatProvider({
       focusRequest,
       hasUnseenAnswer: !!connected?.hasUnseenAnswer && !isOpen,
       hasRunError: !!connected?.hasRunError,
-      isBusy: !!connected?.isBusy,
+      isBusy,
     }),
-    [connected, isOpen, open, close, toggle, pageContext, draft, setDraft, focusRequest]
+    [
+      connected,
+      enabled,
+      isBridgeMounted,
+      surface,
+      isOpen,
+      open,
+      setSurfaceVisible,
+      close,
+      toggle,
+      pageContext,
+      draft,
+      setDraft,
+      focusRequest,
+      isBusy,
+    ]
   );
 
   return (
     <CopilotRegisterContext.Provider value={registerPageContext}>
-      <CopilotWebChatContext.Provider value={value}>
-        {children}
-        {enabled && (
-          <CopilotConnectProvider>
-            <CopilotWebChatBridge
-              key={conversationScope}
-              shell={bridgeShell}
-              conversationScope={conversationScope}
-              onConnected={setConnected}
-            />
-          </CopilotConnectProvider>
-        )}
-      </CopilotWebChatContext.Provider>
+      <CopilotSidebarControlContext.Provider value={sidebarControl}>
+        <CopilotWebChatContext.Provider value={value}>
+          {children}
+          {enabled && (
+            <CopilotConnectProvider>
+              <CopilotWebChatBridge
+                key={conversationScope}
+                shell={bridgeShell}
+                surface={surface}
+                conversationScope={conversationScope}
+                onConnected={setConnected}
+                onMountedChange={setIsBridgeMounted}
+              />
+            </CopilotConnectProvider>
+          )}
+        </CopilotWebChatContext.Provider>
+      </CopilotSidebarControlContext.Provider>
     </CopilotRegisterContext.Provider>
   );
 }
 
 const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   shell,
+  surface,
   conversationScope,
   onConnected,
+  onMountedChange,
 }: {
   shell: BridgeShell;
+  surface: CopilotSurface;
   conversationScope?: string;
   onConnected: (state: ConnectedState | null) => void;
+  onMountedChange: (isMounted: boolean) => void;
 }) {
   const track = useTelemetry();
   const connectContext = useCopilotConnectContext();
@@ -211,7 +303,11 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         tryAgainCardRef.current = undefined;
         // A failed revert answers in plain text, so the review card is still the latest card and can be clicked again.
         setPendingReviewMessageId(undefined);
-        track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, { outcome: event.outcome, agentId: NOVU_COPILOT_AGENT_ID });
+        track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, {
+          outcome: event.outcome,
+          agentId: NOVU_COPILOT_AGENT_ID,
+          surface,
+        });
         // A stopped run has no answer to come back to.
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
@@ -219,7 +315,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         tryAgainCardRef.current = undefined;
         setReadyPrompt(undefined);
         setPendingReviewMessageId(undefined);
-        track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID });
+        track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID, surface });
         setRunError(true);
       } else if (event.type === 'custom' && event.name === COPILOT_TRY_AGAIN_READY_EVENT) {
         const cardSourceMessageId = tryAgainCardRef.current;
@@ -229,7 +325,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         }
       }
     },
-    [track]
+    [track, surface]
   );
 
   const handleWorkflowDeleted = useCallback(
@@ -273,8 +369,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         agentId: NOVU_COPILOT_AGENT_ID,
         isNewChat,
         messageLength: trimmed.length,
+        surface,
       });
-      if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID });
+      if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID, surface });
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
@@ -296,7 +393,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
       return false;
     },
-    [track]
+    [track, surface]
   );
 
   const retry = useCallback(async () => {
@@ -342,7 +439,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   }, []);
 
   const stop = useCallback(async () => {
-    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, { agentId: NOVU_COPILOT_AGENT_ID });
+    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, { agentId: NOVU_COPILOT_AGENT_ID, surface });
     // Nothing is owed after a stop: drop the send → run-start bridge, a queued Try again resend and the locked review card.
     setAwaitingReply(false);
     tryAgainCardRef.current = undefined;
@@ -351,7 +448,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
     const { error } = await chatRef.current.stop();
     if (error) showErrorToast("Couldn't stop the Copilot. Try again.");
-  }, [track]);
+  }, [track, surface]);
 
   const sendCardAction = useCallback(async (action: CopilotCardAction) => {
     if (isCopilotReviewActionId(action.actionId)) {
@@ -386,7 +483,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
   const isAvailable = !!connectContext;
   const isEntryEnabled = isAvailable && !!pageContext?.workflowId;
-  useCopilotHotkey({ isEnabled: isEntryEnabled, isOpen, toggle, close });
+  useCopilotHotkey({ surface, isEnabled: isEntryEnabled, isOpen, open, toggle, close });
   useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 
   // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
@@ -439,6 +536,12 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   ]);
 
   useEffect(() => () => onConnected(null), [onConnected]);
+
+  useEffect(() => {
+    onMountedChange(true);
+
+    return () => onMountedChange(false);
+  }, [onMountedChange]);
 
   return null;
 });
