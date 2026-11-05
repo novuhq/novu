@@ -15,7 +15,8 @@ type StatelessChildType = StatelessCardElement['children'][number]['type'];
  * `packages/agent-event-protocol/src/card-element.types.ts`.
  *
  * `@novu/stateless` holds a second Novu copy for Slack/Teams renderers. Lock
- * Stateless → protocol, and the child `type` union except wire-only `button`.
+ * Stateless → protocol, and the child `type` union except wire-only `button`
+ * and the `chart` and `text_input` children those renderers don't draw.
  */
 describe('CardElement chat-sdk compatibility', () => {
   it('accepts every Chat SDK card on the Novu wire', () => {
@@ -26,7 +27,7 @@ describe('CardElement chat-sdk compatibility', () => {
     expectTypeOf<StatelessCardElement>().toMatchTypeOf<NovuCardElement>();
   });
 
-  it('shares @novu/stateless child variants except the wire-only top-level button', () => {
-    expectTypeOf<Exclude<ProtocolChildType, 'button'>>().toEqualTypeOf<StatelessChildType>();
+  it('shares @novu/stateless child variants except the wire-only button, chart and text_input', () => {
+    expectTypeOf<Exclude<ProtocolChildType, 'button' | 'chart' | 'text_input'>>().toEqualTypeOf<StatelessChildType>();
   });
 });
