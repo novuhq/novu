@@ -9,6 +9,7 @@
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "check": "biome check .",
     "check:fix": "biome check --write .",
+    "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json",
     "test": "echo 'skip test in the ci'",
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },

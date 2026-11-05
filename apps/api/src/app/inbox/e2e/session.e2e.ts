@@ -40,12 +40,12 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
   }: {
     applicationIdentifier: string;
     subscriberId?: string;
-    subscriberHash?: string;
+    subscriberHash?: string | null;
     subscriber?: Record<string, unknown>;
     origin?: string;
     defaultSchedule?: Record<string, unknown>;
     context?: ContextPayload;
-    contextHash?: string;
+    contextHash?: string | null;
   }) => {
     const request = session.testAgent.post('/v1/inbox/session');
 

@@ -17,7 +17,7 @@ describe('mapSubscriberEntityToDto', () => {
     const subscriber = {
       ...baseSubscriber,
       channels: null,
-    } as SubscriberEntity;
+    } as unknown as SubscriberEntity;
 
     const result = mapSubscriberEntityToDto(subscriber);
 

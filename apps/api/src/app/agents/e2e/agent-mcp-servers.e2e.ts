@@ -780,6 +780,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         statusMessage: 'Not Found',
         headers: {},
         body: { error: 'not_found' },
+        isJson: true,
       });
     });
 

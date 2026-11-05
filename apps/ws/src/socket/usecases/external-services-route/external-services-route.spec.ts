@@ -32,14 +32,14 @@ const createWsGatewayStub = (result) => {
         fetchSockets: sinon.stub().resolves(result),
       }),
     },
-  } as WSGateway;
+  } as unknown as WSGateway;
 };
 
 describe('ExternalServicesRoute', () => {
   let externalServicesRoute: ExternalServicesRoute;
   let wsGatewayStub;
-  let findOneStub: sinon.Stub;
-  let getCountStub: sinon.Stub;
+  let findOneStub: sinon.SinonStub;
+  let getCountStub: sinon.SinonStub;
   const messageRepository = new MessageRepository();
 
   beforeEach(() => {
