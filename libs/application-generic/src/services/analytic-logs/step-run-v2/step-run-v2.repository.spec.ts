@@ -90,7 +90,12 @@ describe('StepRunV2Repository', () => {
       const { repository, clickhouseService } = buildRepository();
 
       await expect(
-        repository.findByWorkflowRunIds({ environmentId: 'env-1', workflowRunIds: ['run-1'], oldestRunCreatedAt, limit })
+        repository.findByWorkflowRunIds({
+          environmentId: 'env-1',
+          workflowRunIds: ['run-1'],
+          oldestRunCreatedAt,
+          limit,
+        })
       ).rejects.toThrow('Limit must be an integer between 1 and 1000');
       expect(clickhouseService.query).not.toHaveBeenCalled();
     });

@@ -49,6 +49,7 @@ describe('mapJobToStepRunV2', () => {
       provider_id: 'novu',
       wait_amount: 0,
       wait_unit: '',
+      wait_type: '',
       wait_until: '1970-01-01T00:00:00.000',
       digest_events_count: 0,
       schedule_extensions_count: 0,
@@ -58,13 +59,13 @@ describe('mapJobToStepRunV2', () => {
     });
   });
 
-  it('returns null for trigger jobs', () => {
-    expect(
-      mapJobToStepRunV2(buildJob({ type: StepTypeEnum.TRIGGER }), {
-        status: JobStatusEnum.COMPLETED,
-        updatedAt: UPDATED_AT,
-      })
-    ).toBeNull();
+  it('maps trigger jobs like any other step', () => {
+    const row = mapJobToStepRunV2(buildJob({ type: StepTypeEnum.TRIGGER, providerId: undefined }), {
+      status: JobStatusEnum.COMPLETED,
+      updatedAt: UPDATED_AT,
+    });
+
+    expect(row).toMatchObject({ step_type: 'trigger', status: 'completed', provider_id: '' });
   });
 
   it('adds the terminal offset to the version for terminal statuses only', () => {
@@ -108,8 +109,38 @@ describe('mapJobToStepRunV2', () => {
       step_type: 'digest',
       wait_amount: 5,
       wait_unit: 'minutes',
+      wait_type: 'regular',
       wait_until: '2026-11-03T10:05:00.123',
     });
+  });
+
+  it('records the backoff digest type', () => {
+    const row = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DIGEST,
+        digest: { type: DigestTypeEnum.BACKOFF, amount: 15, unit: DigestUnitEnum.SECONDS, backoff: true },
+      }),
+      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
+    );
+
+    expect(row.wait_type).toBe('backoff');
+  });
+
+  it('falls back to the step metadata type when the job digest has none', () => {
+    const row = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DELAY,
+        step: {
+          _id: 'step-1',
+          _templateId: 'message-template-1',
+          name: 'Delay',
+          metadata: { type: DelayTypeEnum.DYNAMIC, dynamicKey: 'payload.sendAt' },
+        },
+      }),
+      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
+    );
+
+    expect(row.wait_type).toBe('dynamic');
   });
 
   it('uses the timed digest untilDate when no waitUntil is passed', () => {
@@ -121,7 +152,12 @@ describe('mapJobToStepRunV2', () => {
       { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
     );
 
-    expect(row).toMatchObject({ wait_amount: 0, wait_unit: '', wait_until: '2026-11-04T08:00:00.000' });
+    expect(row).toMatchObject({
+      wait_amount: 0,
+      wait_unit: '',
+      wait_type: 'timed',
+      wait_until: '2026-11-04T08:00:00.000',
+    });
   });
 
   it('prefers the caller-resolved waitUntil for delay steps', () => {

@@ -53,7 +53,6 @@ describe('step_runs_v2 live writes #novu-v2', () => {
     return jobRepository.find({
       _environmentId: session.environment._id,
       transactionId: { $in: transactionIds },
-      type: { $ne: StepTypeEnum.TRIGGER },
     });
   }
 
@@ -138,7 +137,8 @@ describe('step_runs_v2 live writes #novu-v2', () => {
     await waitForJobs([transactionId], allTerminal);
 
     const { jobs } = await expectStepRunsV2ToMatchMongo([transactionId]);
-    expect(jobs).to.have.length(2);
+    expect(jobs).to.have.length(3);
+    expect(jobs.find((job) => job.type === StepTypeEnum.TRIGGER)?.status).to.equal(JobStatusEnum.COMPLETED);
     expect(jobs.find((job) => job.type === StepTypeEnum.IN_APP)?.status).to.equal(JobStatusEnum.COMPLETED);
   });
 
@@ -244,7 +244,9 @@ describe('step_runs_v2 live writes #novu-v2', () => {
     await axios.delete(`${session.serverUrl}/v1/events/trigger/${transactionId}`, {
       headers: { authorization: `ApiKey ${session.apiKey}` },
     });
-    await waitForJobs([transactionId], (jobs) => jobs.every((job) => job.status === JobStatusEnum.CANCELED));
+    await waitForJobs([transactionId], (jobs) =>
+      jobs.filter((job) => job.type !== StepTypeEnum.TRIGGER).every((job) => job.status === JobStatusEnum.CANCELED)
+    );
 
     await expectStepRunsV2ToMatchMongo([transactionId]);
   });

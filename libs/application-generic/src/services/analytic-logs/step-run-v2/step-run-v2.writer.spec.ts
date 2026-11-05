@@ -92,14 +92,14 @@ describe('StepRunV2Writer', () => {
     resolveInsert();
   });
 
-  it('skips trigger jobs and missing jobs', async () => {
+  it('writes trigger jobs and skips missing jobs', async () => {
     const { writer, repository } = buildWriter();
 
     writer.writeMany([buildJob({ _id: 'trigger', type: StepTypeEnum.TRIGGER }), null, buildJob({ _id: 'job-2' })]);
 
     await vi.waitFor(() => expect(repository.insertMany).toHaveBeenCalled());
     const [rows] = repository.insertMany.mock.calls[0];
-    expect(rows.map((row: { step_run_id: string }) => row.step_run_id)).toEqual(['job-2']);
+    expect(rows.map((row: { step_run_id: string }) => row.step_run_id)).toEqual(['trigger', 'job-2']);
   });
 
   it('checks the flag and inserts separately per environment', async () => {

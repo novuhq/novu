@@ -6,7 +6,6 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { MetricsService } from '../../metrics/metrics.service';
 import { mapJobToStepRunV2 } from './step-run-v2.mapper';
 import { StepRunV2Repository } from './step-run-v2.repository';
-import { StepRunV2Row } from './step-run-v2.schema';
 
 export const STEP_RUNS_V2_INSERT_ERROR_METRIC = 'step_runs_v2.insert_error';
 
@@ -92,16 +91,14 @@ export class StepRunV2Writer {
         return;
       }
 
-      const rows = jobs
-        .map((job) =>
-          mapJobToStepRunV2(job, {
-            status: options.status ?? job.status,
-            updatedAt,
-            waitUntil: options.waitUntil,
-            digestEventsCount: options.digestEventsCount,
-          })
-        )
-        .filter((row): row is StepRunV2Row => row !== null);
+      const rows = jobs.map((job) =>
+        mapJobToStepRunV2(job, {
+          status: options.status ?? job.status,
+          updatedAt,
+          waitUntil: options.waitUntil,
+          digestEventsCount: options.digestEventsCount,
+        })
+      );
 
       await this.stepRunV2Repository.insertMany(rows);
     } catch (error) {

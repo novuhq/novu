@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS step_runs_v2
   provider_id               LowCardinality(String) DEFAULT '',
   wait_amount               UInt32 DEFAULT 0,
   wait_unit                 LowCardinality(String) DEFAULT '',
+  wait_type                 LowCardinality(String) DEFAULT '',
   wait_until                DateTime64(3, 'UTC') DEFAULT 0,
   digest_events_count       UInt32 DEFAULT 0,
   schedule_extensions_count UInt16 DEFAULT 0,
@@ -60,6 +61,8 @@ export type StepRunV2Row = {
   provider_id: string;
   wait_amount: number;
   wait_unit: string;
+  /** Digest type (regular, backoff, timed) or delay type (regular, timed, dynamic, scheduled). */
+  wait_type: string;
   wait_until: string;
   digest_events_count: number;
   schedule_extensions_count: number;

@@ -12,7 +12,7 @@ const STEP_RUNS_V2_INSERT_OPTIONS: InsertOptions = {
 
 export const FIND_BY_WORKFLOW_RUN_IDS_QUERY = `
 SELECT workflow_run_id, step_run_id, step_id, step_identifier, step_name, step_type, status,
-       provider_id, wait_amount, wait_unit, wait_until, digest_events_count,
+       provider_id, wait_amount, wait_unit, wait_type, wait_until, digest_events_count,
        schedule_extensions_count, created_at, updated_at
 FROM ${TABLE_NAME}
 WHERE environment_id = {environmentId:String}

@@ -1,5 +1,4 @@
 import { JobEntity, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
 import { mapStepTypeEnumToStepType } from '../map-step-type';
 import { StepRunStatus } from '../step-run/step-run.schema';
 import {
@@ -52,7 +51,17 @@ function mapJobStatus(status: JobStatusEnum): StepRunStatus {
   }
 }
 
-function getWaitFields(job: JobEntity, waitUntil?: Date): Pick<StepRunV2Row, 'wait_amount' | 'wait_unit' | 'wait_until'> {
+function getWaitType(job: JobEntity): string {
+  const digestType = job.digest && 'type' in job.digest ? job.digest.type : undefined;
+  const stepMetadataType = job.step?.metadata && 'type' in job.step.metadata ? job.step.metadata.type : undefined;
+
+  return String(digestType ?? stepMetadataType ?? '');
+}
+
+function getWaitFields(
+  job: JobEntity,
+  waitUntil?: Date
+): Pick<StepRunV2Row, 'wait_amount' | 'wait_unit' | 'wait_type' | 'wait_until'> {
   const digest = job.digest;
   const amount = digest && 'amount' in digest && typeof digest.amount === 'number' ? digest.amount : 0;
   const unit = digest && 'unit' in digest && digest.unit ? String(digest.unit) : '';
@@ -63,6 +72,7 @@ function getWaitFields(job: JobEntity, waitUntil?: Date): Pick<StepRunV2Row, 'wa
   return {
     wait_amount: Math.max(0, Math.trunc(amount)),
     wait_unit: unit,
+    wait_type: getWaitType(job),
     wait_until: toClickHouseDateTime64(hasValidUntil ? resolvedUntil : new Date(0)),
   };
 }
@@ -83,16 +93,8 @@ function parseJobCreatedAt(createdAt: string | number | Date): Date {
   return epochMs;
 }
 
-/**
- * Returns null for trigger jobs, which are never written to step_runs_v2.
- */
-export function mapJobToStepRunV2(job: JobEntity, options: MapJobToStepRunV2Options): StepRunV2Row | null {
+export function mapJobToStepRunV2(job: JobEntity, options: MapJobToStepRunV2Options): StepRunV2Row {
   const stepTypeEnum = job.type || job.step?.template?.type;
-
-  if (stepTypeEnum === StepTypeEnum.TRIGGER) {
-    return null;
-  }
-
   const status = mapJobStatus(options.status);
 
   return {
