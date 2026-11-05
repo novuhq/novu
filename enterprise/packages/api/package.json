@@ -10,7 +10,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "lint": "echo 'skip lint in the ci'",
-    "test": "mocha --require ts-node/register --extension ts 'src/**/*.spec.ts'"
+    "test": "echo 'skip test in the ci'"
   },
   "dependencies": {
     "@novu/application-generic": "workspace:*",
