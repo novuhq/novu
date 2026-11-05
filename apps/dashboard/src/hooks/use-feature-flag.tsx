@@ -55,13 +55,23 @@ export function useLaunchDarklyReady(): boolean {
 let identifiedOrganizationId: string | undefined;
 const identifyListeners = new Set<() => void>();
 
-/** Records that `ldClient.identify()` settled (resolved or rejected) for this organization. */
-export function markLaunchDarklyIdentified(organizationId: string) {
-  if (identifiedOrganizationId === organizationId) return;
+let latestIdentifyRequest = 0;
 
-  identifiedOrganizationId = organizationId;
+/**
+ * Call right before `ldClient.identify()` for this organization; the returned callback records that the call settled
+ * (resolved or rejected). Only the latest call may record, so a slow earlier identify cannot overwrite a newer one.
+ */
+export function beginLaunchDarklyIdentify(organizationId: string): () => void {
+  latestIdentifyRequest += 1;
+  const request = latestIdentifyRequest;
 
-  for (const listener of identifyListeners) listener();
+  return () => {
+    if (request !== latestIdentifyRequest || identifiedOrganizationId === organizationId) return;
+
+    identifiedOrganizationId = organizationId;
+
+    for (const listener of identifyListeners) listener();
+  };
 }
 
 function subscribeToIdentified(listener: () => void) {
