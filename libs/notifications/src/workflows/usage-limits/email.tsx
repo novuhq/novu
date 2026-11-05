@@ -26,7 +26,7 @@ interface IUsageFigures {
   planName: string;
   usage: number;
   limit: number;
-  /** Null on Free and trials. */
+  /** Null on Free and Pro trials. */
   includedEvents: number | null;
   remaining: number;
 }
@@ -381,23 +381,15 @@ function resolveBlockedCase({ usageLimits, isTrial }: UsageLimitsPayload): Usage
   return isTrial ? 'trial_paused' : 'free_paused';
 }
 
-function resolveAlertLevelReachedCase({ percentage, usageLimits, isTrial }: UsageLimitsPayload): UsageLimitsAlertCase {
+function resolveAlertLevelReachedCase({ percentage, usageLimits }: UsageLimitsPayload): UsageLimitsAlertCase {
   if (usageLimits.isLimitSet) {
     return resolveAlertLevelCase(percentage);
-  }
-
-  if (isTrial) {
-    if (percentage >= 100) {
-      return 'trial_paused';
-    }
-
-    return percentage >= 90 ? 'trial_90' : 'trial_75';
   }
 
   return 'usage_update';
 }
 
-// Only Free and trials pause at their limit without a set limit, and trials are told apart by `isTrial`.
+// Only Free and Pro trials pause at their limit without a set limit, and Pro trials are told apart by `isTrial`.
 function resolveAlertCase(payload: UsageLimitsPayload): UsageLimitsAlertCase {
   const { alertState, usageLimits } = payload;
 
