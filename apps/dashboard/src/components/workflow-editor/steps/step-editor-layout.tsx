@@ -4,7 +4,6 @@ import {
   AiWorkflowSuggestion,
   ContentIssueEnum,
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   PermissionsEnum,
   ResourceOriginEnum,
   StepResponseDto,
@@ -53,10 +52,8 @@ import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-ut
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { TranslationStatus } from '@/components/workflow-editor/translation-status';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
@@ -128,11 +125,9 @@ function StepEditorContent() {
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const { onBlur } = useSaveForm();
-  const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
-  const showCopilot = useWorkflowEditorCopilot({
-    isLegacyCopilotEnabled: isAiEnabled,
+  const copilotMode = useWorkflowEditorCopilot({
     isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
@@ -140,6 +135,7 @@ function StepEditorContent() {
     stepLabel: step.stepId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
+  const showCopilot = copilotMode === 'legacy';
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =
