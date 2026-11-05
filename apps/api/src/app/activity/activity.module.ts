@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WorkflowRunService } from '@novu/application-generic';
+import { MetricsModule, WorkflowRunService } from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
 import { WorkflowRunsV2Reader } from './services/workflow-runs-v2-reader.service';
@@ -44,7 +44,7 @@ const USE_CASES = [
 ];
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, MetricsModule],
   controllers: [ActivityController],
   providers: [...USE_CASES],
 })

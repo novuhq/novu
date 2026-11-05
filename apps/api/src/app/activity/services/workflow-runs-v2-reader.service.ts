@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   MetricsService,
   PinoLogger,
@@ -80,7 +80,7 @@ export class WorkflowRunsV2Reader {
     private traceLogRepository: TraceLogRepository,
     private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger,
-    @Optional() private metricsService?: MetricsService
+    private metricsService: MetricsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -169,7 +169,7 @@ export class WorkflowRunsV2Reader {
     ]);
 
     if (stepRuns.length === 0) {
-      this.metricsService?.recordMetric(WORKFLOW_RUNS_V2_MISSING_STEPS_METRIC, 1);
+      this.metricsService.recordMetric(WORKFLOW_RUNS_V2_MISSING_STEPS_METRIC, 1);
     }
 
     const runCreatedAt = notification.createdAt ? new Date(notification.createdAt) : undefined;
@@ -457,7 +457,7 @@ export class WorkflowRunsV2Reader {
     const missingCount = runs.filter((run) => !stepRunsByWorkflowRunId.has(run._id)).length;
 
     if (missingCount > 0) {
-      this.metricsService?.recordMetric(WORKFLOW_RUNS_V2_MISSING_STEPS_METRIC, missingCount);
+      this.metricsService.recordMetric(WORKFLOW_RUNS_V2_MISSING_STEPS_METRIC, missingCount);
     }
   }
 
