@@ -237,18 +237,19 @@ export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): s
   return getLastCardPart(messages)?.sourceMessageId;
 }
 
+type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
+
+function isEnabledReviewButton(child: AgentCardChild | CardActionChild): boolean {
+  return child.type === 'button' && isCopilotReviewActionId(child.id) && !child.disabled;
+}
+
 /** Walks the containers the card renderer draws (`actions`, `section`, a bare `button`) for an enabled review button. */
 function hasEnabledReviewButton(children: readonly AgentCardChild[]): boolean {
   return children.some((child) => {
-    if (child.type === 'button') return isCopilotReviewActionId(child.id) && !child.disabled;
-    if (child.type === 'actions') {
-      return child.children.some(
-        (action) => action.type === 'button' && isCopilotReviewActionId(action.id) && !action.disabled
-      );
-    }
+    if (child.type === 'actions') return child.children.some(isEnabledReviewButton);
     if (child.type === 'section') return hasEnabledReviewButton(child.children);
 
-    return false;
+    return isEnabledReviewButton(child);
   });
 }
 
