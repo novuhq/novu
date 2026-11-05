@@ -1,4 +1,4 @@
-import type { AgentCardElement, AgentMessage, AgentToolPart } from '@novu/js';
+import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
 import { AiWorkflowToolsEnum, CopilotReviewActionEnum } from '@novu/shared';
 
 /** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
@@ -219,18 +219,54 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   return blocks;
 }
 
-/** The `sourceMessageId` of the newest card in the thread; review buttons are only offered on that card. */
-export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
+function getLastCardPart(messages: readonly AgentMessage[]): AgentCardPart | undefined {
   for (let messageIndex = messages.length - 1; messageIndex >= 0; messageIndex--) {
     const parts = messages[messageIndex].parts;
 
     for (let partIndex = parts.length - 1; partIndex >= 0; partIndex--) {
       const part = parts[partIndex];
-      if (part.type === 'card') return part.sourceMessageId;
+      if (part.type === 'card') return part;
     }
   }
 
   return undefined;
+}
+
+/** The `sourceMessageId` of the newest card in the thread; review buttons are only offered on that card. */
+export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
+  return getLastCardPart(messages)?.sourceMessageId;
+}
+
+type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
+
+function isEnabledReviewButton(child: AgentCardChild | CardActionChild): boolean {
+  return child.type === 'button' && isCopilotReviewActionId(child.id) && !child.disabled;
+}
+
+/** Walks the containers the card renderer draws (`actions`, `section`, a bare `button`) for an enabled review button. */
+function hasEnabledReviewButton(children: readonly AgentCardChild[]): boolean {
+  return children.some((child) => {
+    if (child.type === 'actions') return child.children.some(isEnabledReviewButton);
+    if (child.type === 'section') return hasEnabledReviewButton(child.children);
+
+    return isEnabledReviewButton(child);
+  });
+}
+
+/**
+ * The `sourceMessageId` of the card whose Keep / Revert buttons the user can click now: the thread's newest card
+ * (answering a click, or a stopped run's follow-up, posts a newer buttonless card that supersedes it) while its
+ * click is not pending. Mirrors when `CopilotCardBlock` renders those buttons enabled, minus its `isBusy` lock.
+ */
+export function getOpenReviewCard(
+  messages: readonly AgentMessage[],
+  pendingReviewMessageId?: string
+): string | undefined {
+  const card = getLastCardPart(messages);
+  if (!card || card.sourceMessageId === pendingReviewMessageId) return undefined;
+  if (!hasEnabledReviewButton(card.card.children)) return undefined;
+
+  return card.sourceMessageId;
 }
 
 /** The text of the last user message before the message that holds the card. */
