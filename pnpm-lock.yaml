@@ -2215,9 +2215,6 @@ importers:
       '@novu/stateless':
         specifier: workspace:*
         version: link:../../../packages/stateless
-      '@novu/testing':
-        specifier: workspace:*
-        version: link:../../../libs/testing
       '@types/express':
         specifier: 4.17.17
         version: 4.17.17
@@ -2234,39 +2231,15 @@ importers:
         specifier: ^0.3.5
         version: 0.3.5
     devDependencies:
-      '@nestjs/testing':
-        specifier: 11.1.27
-        version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
-      '@types/chai':
-        specifier: ^4.2.11
-        version: 4.3.4
-      '@types/mocha':
-        specifier: ^10.0.8
-        version: 10.0.8
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
-      '@types/sinon':
-        specifier: ^9.0.0
-        version: 9.0.11
       '@types/sns-validator':
         specifier: ^0.3.3
         version: 0.3.3
-      chai:
-        specifier: ^4.2.0
-        version: 4.4.1
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
-      sinon:
-        specifier: ^9.2.4
-        version: 9.2.4
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.23))(@types/node@22.15.13)(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
