@@ -195,15 +195,14 @@ export function getUsageLimitsView(
       : Math.floor(allowanceOverride);
   const { onDemandLimit } = usageLimits.settings.workflowRuns;
   const meter = getWorkflowRunsMeter(subscription, onDemandLimit, measuredOverride);
+  const included = getIncludedWorkflowRuns(subscription);
 
   return {
     usage: {
       state: getWorkflowRunsUsageState(subscription, meter.onDemandFrom),
       current: subscription.events.current,
-      included: getIncludedWorkflowRuns(subscription),
-      displayedIncluded: isCappedTrial(subscription)
-        ? getWorkflowRunsMax(subscription)
-        : getIncludedWorkflowRuns(subscription),
+      included,
+      displayedIncluded: isCappedTrial(subscription) ? getWorkflowRunsMax(subscription) : included,
       onDemandLimit,
       max: meter.max,
       allowanceOverride: measuredOverride,
