@@ -27,10 +27,8 @@ import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
-  CopilotSidebarChat,
-  CopilotSidebarHeaderActions,
   type EditorCopilotMode,
-  useCopilotSidebarControl,
+  useCopilotWebChatSidebar,
   useWorkflowEditorCopilot,
 } from '@/components/copilot-web-chat';
 import { Code2 } from '@/components/icons/code-2';
@@ -126,7 +124,7 @@ function DisconnectResolverButton({ step }: { step: StepResponseDto }) {
 
 type SidebarCopilot = Pick<
   ComponentProps<typeof CopilotSidebar>,
-  'copilotContent' | 'headerActions' | 'isGenerating' | 'expandRequest' | 'onVisibleChange'
+  'copilotContent' | 'headerActions' | 'isGenerating' | 'isRevealPending'
 >;
 
 /** What the sidebar shows for each mode; `null` when the step editor has no Copilot sidebar. */
@@ -140,9 +138,8 @@ function getSidebarCopilot(
     case 'web-chat-sidebar':
       return webChat;
     case 'pending-legacy':
-      return { copilotContent: <CopilotSidebarSkeleton /> };
     case 'pending-web-chat-sidebar':
-      return { ...webChat, copilotContent: <CopilotSidebarSkeleton />, headerActions: undefined };
+      return { copilotContent: <CopilotSidebarSkeleton /> };
     case 'web-chat-popover':
     case 'pending-web-chat-popover':
     case null:
@@ -169,7 +166,6 @@ function StepEditorContent() {
     stepLabel: step.stepId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
-  const webChatSidebarControl = useCopilotSidebarControl();
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =
@@ -246,6 +242,10 @@ function StepEditorContent() {
 
     return suggestions;
   }, [step]);
+  const webChatSidebar = useCopilotWebChatSidebar({
+    isRendered: copilotMode === 'web-chat-sidebar',
+    suggestions: newChatSuggestions,
+  });
 
   const aiChatConfig = useMemo(
     () => ({
@@ -387,11 +387,7 @@ function StepEditorContent() {
         </AiChatProvider>
       ),
     },
-    webChat: {
-      copilotContent: <CopilotSidebarChat suggestions={newChatSuggestions} />,
-      headerActions: <CopilotSidebarHeaderActions />,
-      ...webChatSidebarControl,
-    },
+    webChat: webChatSidebar,
   });
 
   if (!sidebarCopilot) {

@@ -34,11 +34,10 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import {
-  CopilotSidebarChat,
-  CopilotSidebarHeaderActions,
+  type CopilotSuggestion,
   CopilotWebChatCanvasToast,
   type EditorCopilotMode,
-  useCopilotSidebarControl,
+  useCopilotWebChatSidebar,
   useWorkflowEditorCopilot,
 } from '../copilot-web-chat';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
@@ -241,37 +240,6 @@ function buildTabPath(
   return buildRoute(route, { environmentSlug, ...(omitWorkflowSlug ? {} : { workflowSlug }) });
 }
 
-type NewChatSuggestions = ReturnType<typeof getNewChatSuggestions>;
-type WorkflowSteps = NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
-
-function WebChatSidebarCanvasPane({
-  isPending,
-  isReadOnly,
-  steps,
-  suggestions,
-}: {
-  isPending: boolean;
-  isReadOnly: boolean;
-  steps: WorkflowSteps;
-  suggestions: NewChatSuggestions;
-}) {
-  const sidebarControl = useCopilotSidebarControl();
-
-  return (
-    <CopilotSidebar
-      copilotContent={isPending ? <CopilotSidebarSkeleton /> : <CopilotSidebarChat suggestions={suggestions} />}
-      headerActions={isPending ? undefined : <CopilotSidebarHeaderActions />}
-      autoSaveId="workflow-editor-copilot-layout"
-      {...sidebarControl}
-    >
-      <div className="relative h-full min-w-0 flex-1">
-        <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-        {!isPending && <CopilotWebChatCanvasToast />}
-      </div>
-    </CopilotSidebar>
-  );
-}
-
 function WorkflowCanvasPane({
   copilotMode,
   isReadOnly,
@@ -280,38 +248,46 @@ function WorkflowCanvasPane({
 }: {
   copilotMode: EditorCopilotMode | null;
   isReadOnly: boolean;
-  steps: WorkflowSteps;
-  suggestions: NewChatSuggestions;
+  steps: NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
+  suggestions: CopilotSuggestion[];
 }) {
+  const webChatSidebar = useCopilotWebChatSidebar({ isRendered: copilotMode === 'web-chat-sidebar', suggestions });
+  const canvas = <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />;
+
   switch (copilotMode) {
     case 'legacy':
-    case 'pending-legacy':
+    case 'pending-legacy': {
+      const isPending = copilotMode === 'pending-legacy';
+
       return (
-        <WorkflowCopilotSidebar isPending={copilotMode === 'pending-legacy'}>
+        <WorkflowCopilotSidebar isPending={isPending}>
           <div className="relative h-full min-w-0 flex-1">
-            <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-            {copilotMode === 'legacy' && <WorkflowCanvasToast />}
+            {canvas}
+            {!isPending && <WorkflowCanvasToast />}
           </div>
         </WorkflowCopilotSidebar>
       );
+    }
     case 'web-chat-sidebar':
-    case 'pending-web-chat-sidebar':
+    case 'pending-web-chat-sidebar': {
+      const isPending = copilotMode === 'pending-web-chat-sidebar';
+
       return (
-        <WebChatSidebarCanvasPane
-          isPending={copilotMode === 'pending-web-chat-sidebar'}
-          isReadOnly={isReadOnly}
-          steps={steps}
-          suggestions={suggestions}
-        />
+        <CopilotSidebar
+          {...(isPending ? { copilotContent: <CopilotSidebarSkeleton /> } : webChatSidebar)}
+          autoSaveId="workflow-editor-copilot-layout"
+        >
+          <div className="relative h-full min-w-0 flex-1">
+            {canvas}
+            {!isPending && <CopilotWebChatCanvasToast />}
+          </div>
+        </CopilotSidebar>
       );
+    }
     case 'web-chat-popover':
     case 'pending-web-chat-popover':
     case null:
-      return (
-        <div className="relative flex-1">
-          <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />
-        </div>
-      );
+      return <div className="relative flex-1">{canvas}</div>;
     default: {
       const unhandled: never = copilotMode;
 

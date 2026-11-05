@@ -12,7 +12,7 @@ function notify() {
 
 /**
  * Lets surfaces rendered above the workflow editor (the ⌘K palette) open the Copilot, which is only
- * mounted inside it. The provider registers while the popover is usable and unregisters otherwise.
+ * mounted inside it. The provider registers while the popover or a sidebar can show it and unregisters otherwise.
  */
 export function registerCopilotEntry(open: OpenCopilot): () => void {
   entry = open;
@@ -32,7 +32,7 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-/** The function that opens the Copilot popover, or undefined when it is unavailable on this page. */
+/** The function that opens the Copilot, or undefined when it is unavailable on this page. */
 export function useCopilotEntry(): OpenCopilot | undefined {
   return useSyncExternalStore(subscribe, () => entry);
 }

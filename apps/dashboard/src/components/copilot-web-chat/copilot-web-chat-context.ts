@@ -15,10 +15,8 @@ export type CopilotWebChatContextValue = {
   /** `null` while the workflow editor does not run the Copilot on web chat. */
   surface: CopilotSurface | null;
   isOpen: boolean;
-  /** Opens the popover or expands the sidebar; `prefill` replaces the composer text without sending it. */
+  /** Opens the popover or reveals the sidebar; `prefill` replaces the composer text without sending it. */
   open: (options?: CopilotOpenOptions) => void;
-  /** The sidebar reports whether the conversation is on screen; in the sidebar only this sets `isOpen`. */
-  setSurfaceVisible: (visible: boolean) => void;
   close: () => void;
   toggle: () => void;
   chat?: UseWebChatResult;
@@ -39,13 +37,10 @@ export type CopilotWebChatContextValue = {
   sentContextLabels: Record<number, string>;
   draft: string;
   setDraft: (value: string) => void;
-  /**
-   * Bumps on every `open()`, including while already open, so the composer can re-take focus. An `open()` made while
-   * the sidebar was hidden or not mounted bumps it again on each of the sidebar's visibility reports until it shows
-   * the conversation, so the sidebar expands and then focuses the composer.
-   */
-  focusRequest: number;
-  /** True when an answer finished while the conversation was not on screen and has not been seen yet. */
+  /** True from an `open()`, including while already open, until the composer has taken the focus. */
+  isRevealPending: boolean;
+  completeReveal: () => void;
+  /** True when an answer finished while the popover was closed and has not been seen yet. */
   hasUnseenAnswer: boolean;
   hasRunError: boolean;
   /** True from a send until the reply settles, including the gap before the server reports `run-start`. */
@@ -60,7 +55,6 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   surface: null,
   isOpen: false,
   open: noop,
-  setSurfaceVisible: noop,
   close: noop,
   toggle: noop,
   sendMessage: async () => false,
@@ -71,7 +65,8 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   sentContextLabels: {},
   draft: '',
   setDraft: noop,
-  focusRequest: 0,
+  isRevealPending: false,
+  completeReveal: noop,
   hasUnseenAnswer: false,
   hasRunError: false,
   isBusy: false,
@@ -85,13 +80,18 @@ type RegisterPageContext = (context: CopilotPageContext, onRefetch?: () => void)
  */
 export const CopilotRegisterContext = createContext<RegisterPageContext>(() => noop);
 
-type CopilotSidebarControlValue = Pick<CopilotWebChatContextValue, 'focusRequest' | 'setSurfaceVisible' | 'isBusy'>;
+type CopilotSidebarControlValue = {
+  isGenerating: boolean;
+  isRevealPending: boolean;
+  /** Called while a page renders the web-chat sidebar; only then can ⌘J and ⌘K "Ask Copilot" reveal it. */
+  registerSidebar: () => () => void;
+};
 
 /** Kept apart from the chat context: the page that renders the sidebar reads it and must not re-render on every streamed message. */
 export const CopilotSidebarControlContext = createContext<CopilotSidebarControlValue>({
-  focusRequest: 0,
-  setSurfaceVisible: noop,
-  isBusy: false,
+  isGenerating: false,
+  isRevealPending: false,
+  registerSidebar: () => noop,
 });
 
 export function useCopilotWebChat(): CopilotWebChatContextValue {

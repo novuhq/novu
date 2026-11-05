@@ -26,10 +26,8 @@ type CopilotSidebarProps = {
   autoSaveId?: string;
   hideCollapseButton?: boolean;
   maxSize?: string;
-  /** Every change after mount expands the sidebar on the Copilot tab; the value it mounts with does nothing. */
-  expandRequest?: number;
-  /** Called on mount, on every change and with false on unmount: whether it is expanded on the Copilot content. */
-  onVisibleChange?: (visible: boolean) => void;
+  /** While true the sidebar expands on the Copilot tab, so the Copilot's composer can take the focus. */
+  isRevealPending?: boolean;
   headerActions?: ReactNode;
 };
 
@@ -251,19 +249,19 @@ export function CopilotSidebar({
   autoSaveId,
   hideCollapseButton,
   maxSize = '60%',
-  expandRequest,
-  onVisibleChange,
+  isRevealPending,
   headerActions,
 }: CopilotSidebarProps) {
   const hasPreview = !!previewContent;
   const panelRef = usePanelRef();
-  // Unknown until the panel's first resize, which is when a saved collapsed layout shows up.
-  const [isCollapsed, setIsCollapsed] = useState<boolean>();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>(hasPreview ? 'preview' : 'copilot');
   const groupRef = useRef<HTMLDivElement>(null);
-  const lastExpandRequestRef = useRef(expandRequest);
-  const onVisibleChangeRef = useRef(onVisibleChange);
-  onVisibleChangeRef.current = onVisibleChange;
+
+  // Switched while rendering rather than in an effect, so the composer is already visible when its effect focuses it.
+  if (isRevealPending && !isCollapsed && activeTab !== 'copilot') {
+    setActiveTab('copilot');
+  }
 
   const handleExpand = (tab?: SidebarTab) => {
     if (tab) setActiveTab(tab);
@@ -305,23 +303,11 @@ export function CopilotSidebar({
     [panelRef]
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only a new request reveals the Copilot
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleExpand only touches refs and state setters
   useEffect(() => {
-    if (expandRequest === undefined || expandRequest === lastExpandRequestRef.current) return;
-
-    lastExpandRequestRef.current = expandRequest;
-    // Expanding resizes to the default width, which would undo the width the user dragged an open sidebar to.
-    if (panelRef.current?.isCollapsed()) handleExpand('copilot');
-    else setActiveTab('copilot');
-  }, [expandRequest]);
-
-  useEffect(() => {
-    if (isCollapsed === undefined) return;
-
-    onVisibleChangeRef.current?.(!isCollapsed && (!hasPreview || activeTab === 'copilot'));
-  }, [isCollapsed, hasPreview, activeTab]);
-
-  useEffect(() => () => onVisibleChangeRef.current?.(false), []);
+    // Only a collapsed sidebar is resized: expanding resets the width the user dragged an open one to.
+    if (isRevealPending && panelRef.current?.isCollapsed()) handleExpand('copilot');
+  }, [isRevealPending]);
 
   return (
     <ResizablePanelGroup
