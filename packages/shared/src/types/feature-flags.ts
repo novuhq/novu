@@ -161,8 +161,10 @@ export enum FeatureFlagsKeysEnum {
    * `NOVU_INTERNAL_AUTH_SECRET`; without it the Copilot keeps the direct path.
    */
   IS_COPILOT_MCP_TOOLS_ENABLED = 'IS_COPILOT_MCP_TOOLS_ENABLED',
-  /** Copilot in the workflow editor runs as a bottom-right popover on the agent web-chat channel instead of the legacy sidebar. */
+  /** Copilot in the workflow editor runs on the agent web-chat channel inside the existing sidebar instead of the legacy AI chat. The agent refuses web-chat turns while it is off. */
   IS_COPILOT_WEB_CHAT_ENABLED = 'IS_COPILOT_WEB_CHAT_ENABLED',
+  /** Shows the web-chat Copilot as a bottom-right launcher and popover instead of the sidebar. Only read when IS_COPILOT_WEB_CHAT_ENABLED is on. */
+  IS_COPILOT_WEB_CHAT_POPOVER_ENABLED = 'IS_COPILOT_WEB_CHAT_POPOVER_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */
