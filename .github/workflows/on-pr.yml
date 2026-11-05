@@ -308,14 +308,17 @@ jobs:
           projects: "@novu/api"
           args: ""
 
-      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
-        name: Build and test
+      - name: Build
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
-        with:
-          targets: build,test
-          projects: ${{matrix.projectName}}
-          args: ""
+          PROJECT_NAME: ${{ matrix.projectName }}
+        run: npx nx run-many -t build --projects="$PROJECT_NAME" --parallel=3
+
+      - name: Test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          PROJECT_NAME: ${{ matrix.projectName }}
+        run: npx nx run-many -t test --projects="$PROJECT_NAME" --parallel=3
 
   validate_openapi:
     name: Validate OpenAPI

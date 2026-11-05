@@ -813,36 +813,44 @@ class Mailin extends events.EventEmitter {
         connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
-        stream.pipe(fs.createWriteStream(mailPath));
+        const signalTemporaryFailure = (error) => {
+          nr.noticeError(error);
+          logger.error(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
+          );
+
+          /*
+           * Signal a transient failure (4xx) to the sending MTA so it retries
+           * delivery instead of treating the message as accepted. Without
+           * this, a queue-insert failure after an unconditional onDataCallback()
+           * would silently drop the message — sender thinks 250 OK, we have
+           * nothing persisted.
+           */
+          const smtpError: Error & { responseCode?: number } =
+            error instanceof Error ? error : new Error(String(error));
+          if (typeof smtpError.responseCode !== 'number') {
+            smtpError.responseCode = 451;
+          }
+          onDataCallback(smtpError);
+        };
+
+        const mailFile = fs.createWriteStream(mailPath);
+        stream.pipe(mailFile);
 
         stream.on('data', (chunk) => {
           _this.emit('data', connection, chunk);
         });
 
-        stream.on('end', () => {
+        // The SMTP stream ends before the temp file is flushed, so reading on 'end' can hit ENOENT.
+        mailFile.on('finish', () => {
           dataReady(connection)
             .then(() => onDataCallback())
-            .catch((error) => {
-              nr.noticeError(error);
-              logger.error(
-                { err: error, context: LOG_CONTEXT, connectionId: connection.id },
-                `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
-              );
+            .catch(signalTemporaryFailure);
+        });
 
-              /*
-               * Signal a transient failure (4xx) to the sending MTA so it retries
-               * delivery instead of treating the message as accepted. Without
-               * this, a queue-insert failure after an unconditional onDataCallback()
-               * would silently drop the message — sender thinks 250 OK, we have
-               * nothing persisted.
-               */
-              const smtpError: Error & { responseCode?: number } =
-                error instanceof Error ? error : new Error(String(error));
-              if (typeof smtpError.responseCode !== 'number') {
-                smtpError.responseCode = 451;
-              }
-              onDataCallback(smtpError);
-            });
+        mailFile.on('error', (error) => {
+          unlinkFile(connection).then(() => signalTemporaryFailure(error));
         });
 
         stream.on('close', () => {
