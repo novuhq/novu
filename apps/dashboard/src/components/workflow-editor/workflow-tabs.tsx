@@ -251,7 +251,7 @@ function WorkflowCanvasPane({
   steps: NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
   suggestions: CopilotSuggestion[];
 }) {
-  const webChatSidebar = useCopilotWebChatSidebar({ isRendered: copilotMode === 'web-chat-sidebar', suggestions });
+  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode, suggestions });
   const canvas = <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />;
 
   switch (copilotMode) {

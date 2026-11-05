@@ -242,10 +242,7 @@ function StepEditorContent() {
 
     return suggestions;
   }, [step]);
-  const webChatSidebar = useCopilotWebChatSidebar({
-    isRendered: copilotMode === 'web-chat-sidebar',
-    suggestions: newChatSuggestions,
-  });
+  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode, suggestions: newChatSuggestions });
 
   const aiChatConfig = useMemo(
     () => ({

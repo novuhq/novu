@@ -1,4 +1,5 @@
 import { type ReactNode, useContext, useEffect } from 'react';
+import type { EditorCopilotMode } from './copilot-mode';
 import { CopilotNewChatButton } from './copilot-new-chat-button';
 import { type CopilotSuggestion, CopilotThreadPanel } from './copilot-thread-panel';
 import { CopilotSidebarControlContext } from './copilot-web-chat-context';
@@ -10,15 +11,19 @@ type CopilotWebChatSidebar = {
   isRevealPending: boolean;
 };
 
-/** `CopilotSidebar` props that show the web-chat conversation; while `isRendered`, ⌘J and ⌘K "Ask Copilot" reveal it. */
+/**
+ * `CopilotSidebar` props that show the web-chat conversation, for a page that renders them in `web-chat-sidebar` mode;
+ * while it does, ⌘J and ⌘K "Ask Copilot" reveal its sidebar.
+ */
 export function useCopilotWebChatSidebar({
-  isRendered,
+  copilotMode,
   suggestions,
 }: {
-  isRendered: boolean;
+  copilotMode: EditorCopilotMode | null;
   suggestions: CopilotSuggestion[];
 }): CopilotWebChatSidebar {
   const { isGenerating, isRevealPending, registerSidebar } = useContext(CopilotSidebarControlContext);
+  const isRendered = copilotMode === 'web-chat-sidebar';
 
   useEffect(() => (isRendered ? registerSidebar() : undefined), [isRendered, registerSidebar]);
 
