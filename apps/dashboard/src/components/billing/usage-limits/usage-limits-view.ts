@@ -8,7 +8,7 @@ import {
 
 export type WorkflowRunsUsageState = 'within_included' | 'billed_on_demand' | 'paused';
 
-/** `trial` hard-stops at the included runs like `free`, but has no overages and cannot edit limits. */
+/** `trial` (the capped Pro trial) hard-stops at its trial cap like `free`, but has no overages and cannot edit limits. */
 export type PausedUsagePlan = 'free' | 'trial' | 'paid';
 
 export type WorkflowRunsUsage = {
@@ -17,6 +17,8 @@ export type WorkflowRunsUsage = {
   current: number;
   /** The plan's included runs, even under the allowance override, since pausing and billing still follow them. */
   included: number;
+  /** The allowance the footer labels as included: the trial cap on a capped trial, otherwise `included`. */
+  displayedIncluded: number;
   onDemandLimit: number | null;
   /**
    * The usage limit, or the included runs when no limit is set. Under the usage-alert allowance override, the
@@ -125,25 +127,22 @@ export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'set
   return usage.current - usage.included >= onDemandLimit * OVERAGE_WARNING_RATIO;
 }
 
-function getPausedUsagePlan({
-  apiServiceLevel,
-  events,
-  trial,
-  usageLimits,
-}: SubscriptionUsage): PausedUsagePlan | null {
+/**
+ * Only the Pro trial is capped. A Team trial is uncapped and follows the Team plan's usage limits. A Pro trial the
+ * subscription does not report yet, while the Stripe webhook lags, shows up as Pro that cannot configure limits.
+ */
+function isCappedTrial({ apiServiceLevel, trial, usageLimits }: SubscriptionUsage): boolean {
+  return apiServiceLevel === ApiServiceLevelEnum.PRO && (trial.isActive || usageLimits?.isConfigurable === false);
+}
+
+function getPausedUsagePlan(subscription: SubscriptionUsage): PausedUsagePlan | null {
+  const { apiServiceLevel, events } = subscription;
+
   if (!events.isPaused) {
     return null;
   }
 
-  if (trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE) {
-    return 'trial';
-  }
-
-  // Only trials pause a Pro or Team organization without letting it configure limits, which covers a trial the
-  // subscription does not report yet, while the Stripe webhook lags.
-  const isPaidTier = apiServiceLevel === ApiServiceLevelEnum.PRO || apiServiceLevel === ApiServiceLevelEnum.BUSINESS;
-
-  if (isPaidTier && usageLimits?.isConfigurable === false) {
+  if (isCappedTrial(subscription)) {
     return 'trial';
   }
 
@@ -196,12 +195,14 @@ export function getUsageLimitsView(
       : Math.floor(allowanceOverride);
   const { onDemandLimit } = usageLimits.settings.workflowRuns;
   const meter = getWorkflowRunsMeter(subscription, onDemandLimit, measuredOverride);
+  const included = getIncludedWorkflowRuns(subscription);
 
   return {
     usage: {
       state: getWorkflowRunsUsageState(subscription, meter.onDemandFrom),
       current: subscription.events.current,
-      included: getIncludedWorkflowRuns(subscription),
+      included,
+      displayedIncluded: isCappedTrial(subscription) ? getWorkflowRunsMax(subscription) : included,
       onDemandLimit,
       max: meter.max,
       allowanceOverride: measuredOverride,
