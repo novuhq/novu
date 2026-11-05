@@ -376,10 +376,15 @@ export class AddJob {
       throw new Error('Defer duration limit exceeded');
     }
 
-    const updatedJob = await this.jobRepository.findOne({
-      _id: job._id,
-      _environmentId: job._environmentId,
-    });
+    const jobQuery = { _id: job._id, _environmentId: job._environmentId };
+    const updatedJob =
+      delay > 0
+        ? await this.jobRepository.findOneAndUpdate(
+            jobQuery,
+            { $set: { waitUntil: (bridgeDelayAmountDate ?? new Date(Date.now() + delay)).toISOString() } },
+            { new: true }
+          )
+        : await this.jobRepository.findOne(jobQuery);
 
     if (!updatedJob) {
       throw new Error(`Job with id ${job._id} not found`);
@@ -388,9 +393,7 @@ export class AddJob {
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
-    this.stepRunV2Writer.write(updatedJob, {
-      waitUntil: delay > 0 ? (bridgeDelayAmountDate ?? new Date(Date.now() + delay)) : undefined,
-    });
+    this.stepRunV2Writer.write(updatedJob);
 
     await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
@@ -590,7 +593,7 @@ export class AddJob {
       })
     );
 
-    await this.jobRepository.updateOne(
+    const failedJob = await this.jobRepository.findOneAndUpdate(
       { _id: job._id, _environmentId: command.environmentId },
       {
         $set: {
@@ -601,13 +604,14 @@ export class AddJob {
             stack: error.stack,
           },
         },
-      }
+      },
+      { new: true }
     );
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.FAILED,
     });
-    this.stepRunV2Writer.write(job, { status: JobStatusEnum.FAILED });
+    this.stepRunV2Writer.write(failedJob);
 
     return {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
@@ -1056,7 +1060,7 @@ export class AddJob {
       `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`
     );
 
-    await this.jobRepository.updateOne(
+    const throttledJob = await this.jobRepository.findOneAndUpdate(
       { _id: job._id, _environmentId: command.environmentId },
       {
         $set: {
@@ -1068,13 +1072,14 @@ export class AddJob {
             throttledUntil: throttleResult.throttledUntil,
           },
         },
-      }
+      },
+      { new: true }
     );
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.SKIPPED,
     });
-    this.stepRunV2Writer.write(job, { status: JobStatusEnum.SKIPPED });
+    this.stepRunV2Writer.write(throttledJob);
 
     const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.SKIPPED, job._id);
 
@@ -1082,7 +1087,7 @@ export class AddJob {
       await this.stepRunRepository.createMany(childJobsUpdated, {
         status: JobStatusEnum.SKIPPED,
       });
-      this.stepRunV2Writer.writeMany(childJobsUpdated, { status: JobStatusEnum.SKIPPED });
+      this.stepRunV2Writer.writeMany(childJobsUpdated);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

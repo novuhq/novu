@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
+import { CreateExecutionDetails, getJobDigest, InstrumentUsecase, StepRunV2Writer } from '@novu/application-generic';
+import { JobRepository } from '@novu/dal';
 import { IDigestBaseMetadata } from '@novu/shared';
 import { sub } from 'date-fns';
 
@@ -8,6 +9,14 @@ import { GetDigestEvents } from './get-digest-events.usecase';
 
 @Injectable()
 export class GetDigestEventsRegular extends GetDigestEvents {
+  constructor(
+    jobRepository: JobRepository,
+    createExecutionDetails: CreateExecutionDetails,
+    private stepRunV2Writer: StepRunV2Writer
+  ) {
+    super(jobRepository, createExecutionDetails);
+  }
+
   @InstrumentUsecase()
   public async execute(command: DigestEventsCommand) {
     const { currentJob } = command;
@@ -24,7 +33,7 @@ export class GetDigestEventsRegular extends GetDigestEvents {
         : {};
     const earliest = sub(new Date(currentJob.createdAt), subtractedTime);
 
-    const jobs = await this.jobRepository.findJobsToDigest(
+    const { triggers, completedDigestJobIds } = await this.jobRepository.findJobsToDigest(
       earliest,
       currentJob._templateId,
       currentJob._environmentId,
@@ -32,8 +41,13 @@ export class GetDigestEventsRegular extends GetDigestEvents {
       digestKey,
       digestValue
     );
+    this.stepRunV2Writer.writeByIds({
+      environmentId: currentJob._environmentId,
+      organizationId: currentJob._organizationId,
+      jobIds: completedDigestJobIds,
+    });
 
-    return this.filterJobs(currentJob, currentJob.transactionId, jobs);
+    return this.filterJobs(currentJob, currentJob.transactionId, triggers);
   }
 
   private castAmount(digestMeta: IDigestBaseMetadata | undefined): number | undefined {

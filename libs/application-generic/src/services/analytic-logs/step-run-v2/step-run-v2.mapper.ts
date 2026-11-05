@@ -1,4 +1,5 @@
 import { JobEntity, JobStatusEnum } from '@novu/dal';
+import { IWorkflowStepMetadata, StepTypeEnum } from '@novu/shared';
 import { mapStepTypeEnumToStepType } from '../map-step-type';
 import { StepRunStatus } from '../step-run/step-run.schema';
 import {
@@ -7,13 +8,6 @@ import {
   TERMINAL_VERSION_OFFSET,
   toClickHouseDateTime64,
 } from './step-run-v2.schema';
-
-export type MapJobToStepRunV2Options = {
-  status: JobStatusEnum;
-  updatedAt: Date;
-  waitUntil?: Date;
-  digestEventsCount?: number;
-};
 
 export function isStepRunV2TerminalStatus(status: StepRunStatus): boolean {
   return (STEP_RUN_V2_TERMINAL_STATUSES as readonly StepRunStatus[]).includes(status);
@@ -51,51 +45,75 @@ function mapJobStatus(status: JobStatusEnum): StepRunStatus {
   }
 }
 
-function getWaitType(job: JobEntity): string {
-  const digestType = job.digest && 'type' in job.digest ? job.digest.type : undefined;
-  const stepMetadataType = job.step?.metadata && 'type' in job.step.metadata ? job.step.metadata.type : undefined;
+/**
+ * Bridge-resolved delay settings are persisted on `step.metadata`; `job.digest` keeps the settings the job was
+ * created with. Digest settings are resolved onto `job.digest`.
+ */
+function getWaitMetadata(job: JobEntity, stepType: StepTypeEnum | undefined): IWorkflowStepMetadata | undefined {
+  if (stepType === StepTypeEnum.DELAY) {
+    return job.step?.metadata ?? job.digest;
+  }
 
-  return String(digestType ?? stepMetadataType ?? '');
+  return job.digest;
 }
 
 function getWaitFields(
   job: JobEntity,
-  waitUntil?: Date
+  stepType: StepTypeEnum | undefined
 ): Pick<StepRunV2Row, 'wait_amount' | 'wait_unit' | 'wait_type' | 'wait_until'> {
-  const digest = job.digest;
-  const amount = digest && 'amount' in digest && typeof digest.amount === 'number' ? digest.amount : 0;
-  const unit = digest && 'unit' in digest && digest.unit ? String(digest.unit) : '';
-  const timedUntil = digest && 'timed' in digest ? digest.timed?.untilDate : undefined;
-  const resolvedUntil = waitUntil ?? (timedUntil ? new Date(timedUntil) : undefined);
-  const hasValidUntil = resolvedUntil !== undefined && !Number.isNaN(resolvedUntil.getTime());
+  const metadata = getWaitMetadata(job, stepType);
+  const amount = metadata && 'amount' in metadata && typeof metadata.amount === 'number' ? metadata.amount : 0;
+  const unit = metadata && 'unit' in metadata && metadata.unit ? String(metadata.unit) : '';
+  const metadataType = metadata && 'type' in metadata ? metadata.type : undefined;
+  const stepMetadataType = job.step?.metadata && 'type' in job.step.metadata ? job.step.metadata.type : undefined;
+  const timedUntil = job.digest && 'timed' in job.digest ? job.digest.timed?.untilDate : undefined;
+  const resolvedUntil = parseOptionalDate(job.waitUntil ?? timedUntil);
 
   return {
     wait_amount: Math.max(0, Math.trunc(amount)),
     wait_unit: unit,
-    wait_type: getWaitType(job),
-    wait_until: toClickHouseDateTime64(hasValidUntil ? resolvedUntil : new Date(0)),
+    wait_type: String(metadataType ?? stepMetadataType ?? ''),
+    wait_until: toClickHouseDateTime64(resolvedUntil ?? new Date(0)),
   };
 }
 
-function parseJobCreatedAt(createdAt: string | number | Date): Date {
-  const parsed = new Date(createdAt);
+function parseOptionalDate(value: string | Date | undefined): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function parseJobDate(value: string | number | Date): Date {
+  const parsed = new Date(value);
 
   if (!Number.isNaN(parsed.getTime())) {
     return parsed;
   }
 
-  const epochMs = new Date(Number(createdAt));
+  const epochMs = new Date(Number(value));
 
   if (Number.isNaN(epochMs.getTime())) {
-    throw new Error(`Invalid job createdAt: ${String(createdAt)}`);
+    throw new Error(`Invalid job date: ${String(value)}`);
   }
 
   return epochMs;
 }
 
-export function mapJobToStepRunV2(job: JobEntity, options: MapJobToStepRunV2Options): StepRunV2Row {
+/**
+ * Maps a job document as Mongo holds it after a status change. The row version comes from the document's
+ * `updatedAt`, so rows order by the Mongo writes that produced them rather than by when they were logged.
+ * Freshly inserted jobs carry no `updatedAt` in memory; Mongo sets it to `createdAt` on insert.
+ */
+export function mapJobToStepRunV2(job: JobEntity): StepRunV2Row {
   const stepTypeEnum = job.type || job.step?.template?.type;
-  const status = mapJobStatus(options.status);
+  const status = mapJobStatus(job.status);
+  const createdAt = parseJobDate(job.createdAt);
+  const updatedAt = job.updatedAt ? parseJobDate(job.updatedAt) : createdAt;
+  const isCompletedDigest = status === 'completed' && stepTypeEnum === StepTypeEnum.DIGEST;
 
   return {
     environment_id: String(job._environmentId),
@@ -107,11 +125,11 @@ export function mapJobToStepRunV2(job: JobEntity, options: MapJobToStepRunV2Opti
     step_type: mapStepTypeEnumToStepType(stepTypeEnum) ?? '',
     status,
     provider_id: job.providerId || '',
-    ...getWaitFields(job, options.waitUntil),
-    digest_events_count: status === 'completed' ? (options.digestEventsCount ?? 0) : 0,
+    ...getWaitFields(job, stepTypeEnum),
+    digest_events_count: isCompletedDigest ? (job.digest?.events?.length ?? 0) : 0,
     schedule_extensions_count: job.scheduleExtensionsCount ?? 0,
-    created_at: toClickHouseDateTime64(parseJobCreatedAt(job.createdAt)),
-    updated_at: toClickHouseDateTime64(options.updatedAt),
-    version: computeStepRunV2Version(status, options.updatedAt),
+    created_at: toClickHouseDateTime64(createdAt),
+    updated_at: toClickHouseDateTime64(updatedAt),
+    version: computeStepRunV2Version(status, updatedAt),
   };
 }

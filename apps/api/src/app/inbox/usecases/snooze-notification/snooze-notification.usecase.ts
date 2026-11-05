@@ -73,10 +73,10 @@ export class SnoozeNotification {
       let snoozedNotification = {} as InboxNotificationDto;
 
       await this.messageRepository.withTransaction(async () => {
-        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
+        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs, command.snoozeUntil);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
       });
-      this.stepRunV2Writer.write(scheduledJob, { waitUntil: command.snoozeUntil });
+      this.stepRunV2Writer.write(scheduledJob);
 
       /*
        * Enqueueing has to stay outside the transaction: it is an external call,
@@ -196,7 +196,11 @@ export class SnoozeNotification {
     return message;
   }
 
-  private async createScheduledUnsnoozeJob(notification: MessageEntity, delay: number): Promise<JobEntity> {
+  private async createScheduledUnsnoozeJob(
+    notification: MessageEntity,
+    delay: number,
+    snoozeUntil: Date
+  ): Promise<JobEntity> {
     const originalJob = await this.jobRepository.findOne({
       _id: notification._jobId,
       _environmentId: notification._environmentId,
@@ -230,6 +234,7 @@ export class SnoozeNotification {
        */
       status: JobStatusEnum.DELAYED,
       delay,
+      waitUntil: snoozeUntil.toISOString(),
       createdAt: Date.now().toString(),
       _id: JobRepository.createObjectId(),
       _parentId: null,

@@ -226,15 +226,13 @@ describe('SnoozeNotification', () => {
     expect(createExecutionDetailsMock.execute.called).to.be.true;
   });
 
-  it('writes the delayed unsnooze job to step_runs_v2 with the snooze end as wait_until', async () => {
+  it('persists the snooze end on the unsnooze job and writes the created job to step_runs_v2', async () => {
     const command = createCommand(SNOOZE_DURATION.ONE_HOUR);
 
     await snoozeNotification.execute(command);
 
-    expect(stepRunV2WriterMock.write.calledOnce).to.be.true;
-    const [job, options] = stepRunV2WriterMock.write.firstCall.args;
-    expect(job).to.equal(mockJob);
-    expect(options).to.deep.equal({ waitUntil: command.snoozeUntil });
+    expect(jobRepositoryMock.create.firstCall.args[0].waitUntil).to.equal(command.snoozeUntil.toISOString());
+    expect(stepRunV2WriterMock.write.calledOnceWithExactly(mockJob)).to.be.true;
   });
 
   it('does not write to step_runs_v2 when the snooze transaction fails', async () => {

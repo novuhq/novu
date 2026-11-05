@@ -92,8 +92,8 @@ export class MergeOrCreateDigest {
       activeDigestId
     );
 
-    await Promise.all([
-      this.jobRepository.update(
+    const [mergedJob] = await Promise.all([
+      this.jobRepository.findOneAndUpdate(
         {
           _environmentId: job._environmentId,
           _id: job._id,
@@ -103,7 +103,8 @@ export class MergeOrCreateDigest {
             status: JobStatusEnum.MERGED,
             _mergedDigestId: activeDigestId,
           },
-        }
+        },
+        { new: true }
       ),
       this.digestMergedExecutionDetails(job),
       this.notificationRepository.update(
@@ -121,15 +122,15 @@ export class MergeOrCreateDigest {
         status: JobStatusEnum.MERGED,
       }),
     ]);
-    this.stepRunV2Writer.writeMany([job, ...childJobsUpdated], { status: JobStatusEnum.MERGED });
+    this.stepRunV2Writer.writeMany([mergedJob, ...childJobsUpdated]);
 
     return DigestCreationResultEnum.MERGED;
   }
 
   @Instrument()
   private async processSkippedDigest(job: JobEntity): Promise<DigestCreationResultEnum> {
-    await Promise.all([
-      this.jobRepository.update(
+    const [skippedJob] = await Promise.all([
+      this.jobRepository.findOneAndUpdate(
         {
           _environmentId: job._environmentId,
           _id: job._id,
@@ -138,11 +139,12 @@ export class MergeOrCreateDigest {
           $set: {
             status: JobStatusEnum.SKIPPED,
           },
-        }
+        },
+        { new: true }
       ),
       this.digestSkippedExecutionDetails(job),
     ]);
-    this.stepRunV2Writer.write(job, { status: JobStatusEnum.SKIPPED });
+    this.stepRunV2Writer.write(skippedJob);
 
     return DigestCreationResultEnum.SKIPPED;
   }

@@ -11,8 +11,8 @@ export {
   StepRunV2ReadRow,
   StepRunV2Repository,
   StepRunV2Row,
-  StepRunV2WriteOptions,
   StepRunV2Writer,
+  WriteStepRunsV2ByIdsParams,
 } from './step-run-v2';
 export {
   BuildStepRunTraceFromJobParams,

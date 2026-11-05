@@ -22,7 +22,7 @@ function buildJob(overrides: Partial<JobEntity> = {}): JobEntity {
     type: StepTypeEnum.IN_APP,
     providerId: 'novu',
     createdAt: '2026-11-03T09:59:00.000Z',
-    updatedAt: '2026-11-03T09:59:00.000Z',
+    updatedAt: UPDATED_AT.toISOString(),
     step: {
       _id: 'step-1',
       _templateId: 'message-template-1',
@@ -34,8 +34,8 @@ function buildJob(overrides: Partial<JobEntity> = {}): JobEntity {
 }
 
 describe('mapJobToStepRunV2', () => {
-  it('maps job identity, step fields and timestamps', () => {
-    const row = mapJobToStepRunV2(buildJob(), { status: JobStatusEnum.QUEUED, updatedAt: UPDATED_AT });
+  it('maps job identity, step fields, status and timestamps from the document', () => {
+    const row = mapJobToStepRunV2(buildJob({ status: JobStatusEnum.QUEUED }));
 
     expect(row).toEqual({
       environment_id: 'env-1',
@@ -59,11 +59,24 @@ describe('mapJobToStepRunV2', () => {
     });
   });
 
+  it('accepts Date timestamps, as returned by non-lean Mongoose documents', () => {
+    const row = mapJobToStepRunV2(buildJob({ updatedAt: UPDATED_AT as unknown as string }));
+
+    expect(row.updated_at).toBe('2026-11-03T10:00:00.123');
+    expect(row.version).toBe(UPDATED_AT.getTime());
+  });
+
+  it('uses createdAt as updatedAt for a freshly inserted job', () => {
+    const row = mapJobToStepRunV2(buildJob({ updatedAt: undefined }));
+
+    expect(row.updated_at).toBe('2026-11-03T09:59:00.000');
+    expect(row.version).toBe(new Date('2026-11-03T09:59:00.000Z').getTime());
+  });
+
   it('maps trigger jobs like any other step', () => {
-    const row = mapJobToStepRunV2(buildJob({ type: StepTypeEnum.TRIGGER, providerId: undefined }), {
-      status: JobStatusEnum.COMPLETED,
-      updatedAt: UPDATED_AT,
-    });
+    const row = mapJobToStepRunV2(
+      buildJob({ type: StepTypeEnum.TRIGGER, providerId: undefined, status: JobStatusEnum.COMPLETED })
+    );
 
     expect(row).toMatchObject({ step_type: 'trigger', status: 'completed', provider_id: '' });
   });
@@ -73,19 +86,29 @@ describe('mapJobToStepRunV2', () => {
       JobStatusEnum.COMPLETED,
       JobStatusEnum.FAILED,
       JobStatusEnum.CANCELED,
-      JobStatusEnum.MERGED,
       JobStatusEnum.SKIPPED,
     ]) {
-      const row = mapJobToStepRunV2(buildJob(), { status, updatedAt: UPDATED_AT });
-
-      expect(row?.version).toBe(UPDATED_AT.getTime() + TERMINAL_VERSION_OFFSET);
+      expect(mapJobToStepRunV2(buildJob({ status })).version).toBe(UPDATED_AT.getTime() + TERMINAL_VERSION_OFFSET);
     }
 
-    for (const status of [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING, JobStatusEnum.DELAYED]) {
-      const row = mapJobToStepRunV2(buildJob(), { status, updatedAt: UPDATED_AT });
-
-      expect(row?.version).toBe(UPDATED_AT.getTime());
+    for (const status of [
+      JobStatusEnum.PENDING,
+      JobStatusEnum.QUEUED,
+      JobStatusEnum.RUNNING,
+      JobStatusEnum.DELAYED,
+      JobStatusEnum.MERGED,
+    ]) {
+      expect(mapJobToStepRunV2(buildJob({ status })).version).toBe(UPDATED_AT.getTime());
     }
+  });
+
+  it('lets a promoted digest replace its earlier merged row', () => {
+    const merged = mapJobToStepRunV2(buildJob({ status: JobStatusEnum.MERGED, updatedAt: '2026-11-03T10:00:00.000Z' }));
+    const promoted = mapJobToStepRunV2(
+      buildJob({ status: JobStatusEnum.DELAYED, updatedAt: '2026-11-03T10:00:05.000Z' })
+    );
+
+    expect(promoted.version).toBeGreaterThan(merged.version);
   });
 
   it('lets a terminal row beat an in-flight row whose clock runs ahead', () => {
@@ -96,13 +119,14 @@ describe('mapJobToStepRunV2', () => {
     expect(Number.isSafeInteger(terminalVersion)).toBe(true);
   });
 
-  it('maps wait fields for a regular digest', () => {
+  it('maps wait fields for a regular digest from job.digest and the persisted waitUntil', () => {
     const row = mapJobToStepRunV2(
       buildJob({
         type: StepTypeEnum.DIGEST,
+        status: JobStatusEnum.DELAYED,
         digest: { type: DigestTypeEnum.REGULAR, amount: 5, unit: DigestUnitEnum.MINUTES },
-      }),
-      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT, waitUntil: new Date('2026-11-03T10:05:00.123Z') }
+        waitUntil: '2026-11-03T10:05:00.123Z',
+      })
     );
 
     expect(row).toMatchObject({
@@ -114,13 +138,28 @@ describe('mapJobToStepRunV2', () => {
     });
   });
 
+  it('keeps the persisted waitUntil on rows written after the wait', () => {
+    const job = buildJob({
+      type: StepTypeEnum.DELAY,
+      step: {
+        _id: 'step-1',
+        _templateId: 'message-template-1',
+        metadata: { type: DelayTypeEnum.REGULAR, amount: 2, unit: DigestUnitEnum.HOURS },
+      },
+      waitUntil: '2026-11-03T12:00:00.000Z',
+    });
+
+    for (const status of [JobStatusEnum.RUNNING, JobStatusEnum.COMPLETED]) {
+      expect(mapJobToStepRunV2({ ...job, status }).wait_until).toBe('2026-11-03T12:00:00.000');
+    }
+  });
+
   it('records the backoff digest type', () => {
     const row = mapJobToStepRunV2(
       buildJob({
         type: StepTypeEnum.DIGEST,
         digest: { type: DigestTypeEnum.BACKOFF, amount: 15, unit: DigestUnitEnum.SECONDS, backoff: true },
-      }),
-      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
+      })
     );
 
     expect(row.wait_type).toBe('backoff');
@@ -129,27 +168,71 @@ describe('mapJobToStepRunV2', () => {
   it('falls back to the step metadata type when the job digest has none', () => {
     const row = mapJobToStepRunV2(
       buildJob({
+        type: StepTypeEnum.DIGEST,
+        digest: { amount: 5, unit: DigestUnitEnum.MINUTES } as JobEntity['digest'],
+        step: {
+          _id: 'step-1',
+          _templateId: 'message-template-1',
+          name: 'Digest',
+          metadata: { type: DigestTypeEnum.REGULAR, amount: 1, unit: DigestUnitEnum.HOURS },
+        },
+      })
+    );
+
+    expect(row).toMatchObject({ wait_type: 'regular', wait_amount: 5, wait_unit: 'minutes' });
+  });
+
+  it('reads bridge-resolved delay settings from step.metadata over the initial job.digest', () => {
+    const row = mapJobToStepRunV2(
+      buildJob({
         type: StepTypeEnum.DELAY,
+        digest: { type: DelayTypeEnum.REGULAR, amount: 1, unit: DigestUnitEnum.MINUTES },
+        step: {
+          _id: 'step-1',
+          _templateId: 'message-template-1',
+          name: 'Delay',
+          metadata: { type: DelayTypeEnum.REGULAR, amount: 3, unit: DigestUnitEnum.HOURS },
+        },
+      })
+    );
+
+    expect(row).toMatchObject({ step_type: 'delay', wait_type: 'regular', wait_amount: 3, wait_unit: 'hours' });
+  });
+
+  it('reads the dynamic delay type from step.metadata', () => {
+    const row = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DELAY,
+        digest: { type: DelayTypeEnum.REGULAR, amount: 1, unit: DigestUnitEnum.MINUTES },
         step: {
           _id: 'step-1',
           _templateId: 'message-template-1',
           name: 'Delay',
           metadata: { type: DelayTypeEnum.DYNAMIC, dynamicKey: 'payload.sendAt' },
         },
-      }),
-      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
+      })
     );
 
-    expect(row.wait_type).toBe('dynamic');
+    expect(row).toMatchObject({ wait_type: 'dynamic', wait_amount: 0, wait_unit: '' });
   });
 
-  it('uses the timed digest untilDate when no waitUntil is passed', () => {
+  it('falls back to job.digest for a delay without step metadata', () => {
+    const row = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DELAY,
+        digest: { type: DelayTypeEnum.REGULAR, amount: 2, unit: DigestUnitEnum.HOURS },
+      })
+    );
+
+    expect(row).toMatchObject({ wait_type: 'regular', wait_amount: 2, wait_unit: 'hours' });
+  });
+
+  it('uses the timed digest untilDate when no waitUntil is persisted', () => {
     const row = mapJobToStepRunV2(
       buildJob({
         type: StepTypeEnum.DIGEST,
         digest: { type: DigestTypeEnum.TIMED, timed: { untilDate: '2026-11-04T08:00:00.000Z' } },
-      }),
-      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT }
+      })
     );
 
     expect(row).toMatchObject({
@@ -160,51 +243,32 @@ describe('mapJobToStepRunV2', () => {
     });
   });
 
-  it('prefers the caller-resolved waitUntil for delay steps', () => {
-    const row = mapJobToStepRunV2(
-      buildJob({
-        type: StepTypeEnum.DELAY,
-        digest: { type: DelayTypeEnum.REGULAR, amount: 2, unit: DigestUnitEnum.HOURS },
-      }),
-      { status: JobStatusEnum.DELAYED, updatedAt: UPDATED_AT, waitUntil: new Date('2026-11-03T12:00:00.000Z') }
-    );
-
-    expect(row).toMatchObject({
-      step_type: 'delay',
-      wait_amount: 2,
-      wait_unit: 'hours',
-      wait_until: '2026-11-03T12:00:00.000',
-    });
-  });
-
-  it('sets digest_events_count only when the step completes', () => {
-    const job = buildJob({ type: StepTypeEnum.DIGEST });
+  it('counts digest events only when a digest step completes', () => {
+    const digest = { type: DigestTypeEnum.REGULAR, events: [{}, {}, {}] } as JobEntity['digest'];
 
     expect(
-      mapJobToStepRunV2(job, { status: JobStatusEnum.RUNNING, updatedAt: UPDATED_AT, digestEventsCount: 3 })
-        ?.digest_events_count
+      mapJobToStepRunV2(buildJob({ type: StepTypeEnum.DIGEST, status: JobStatusEnum.RUNNING, digest }))
+        .digest_events_count
     ).toBe(0);
     expect(
-      mapJobToStepRunV2(job, { status: JobStatusEnum.COMPLETED, updatedAt: UPDATED_AT, digestEventsCount: 3 })
-        ?.digest_events_count
+      mapJobToStepRunV2(buildJob({ type: StepTypeEnum.DIGEST, status: JobStatusEnum.COMPLETED, digest }))
+        .digest_events_count
     ).toBe(3);
+    expect(
+      mapJobToStepRunV2(buildJob({ type: StepTypeEnum.DELAY, status: JobStatusEnum.COMPLETED, digest }))
+        .digest_events_count
+    ).toBe(0);
   });
 
   it('accepts an epoch-milliseconds string createdAt, as written by the snooze job', () => {
-    const row = mapJobToStepRunV2(buildJob({ createdAt: String(Date.parse('2026-11-03T09:00:00.000Z')) }), {
-      status: JobStatusEnum.DELAYED,
-      updatedAt: UPDATED_AT,
-    });
+    const row = mapJobToStepRunV2(buildJob({ createdAt: String(Date.parse('2026-11-03T09:00:00.000Z')) }));
 
-    expect(row?.created_at).toBe('2026-11-03T09:00:00.000');
+    expect(row.created_at).toBe('2026-11-03T09:00:00.000');
   });
 
   it('carries the schedule extensions count from the job', () => {
-    const row = mapJobToStepRunV2(buildJob({ scheduleExtensionsCount: 4 }), {
-      status: JobStatusEnum.DELAYED,
-      updatedAt: UPDATED_AT,
-    });
+    const row = mapJobToStepRunV2(buildJob({ scheduleExtensionsCount: 4 }));
 
-    expect(row?.schedule_extensions_count).toBe(4);
+    expect(row.schedule_extensions_count).toBe(4);
   });
 });

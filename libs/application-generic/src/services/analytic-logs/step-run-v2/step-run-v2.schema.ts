@@ -38,11 +38,14 @@ SETTINGS ttl_only_drop_parts = 1;
 
 export const TERMINAL_VERSION_OFFSET = 10_000_000_000_000;
 
+/**
+ * Statuses no later status can replace, so their rows get TERMINAL_VERSION_OFFSET.
+ * `merged` is excluded: CancelDelayed promotes a merged digest back to `delayed` and its children to `pending`.
+ */
 export const STEP_RUN_V2_TERMINAL_STATUSES: readonly StepRunFinalStatus[] = [
   'completed',
   'failed',
   'canceled',
-  'merged',
   'skipped',
 ];
 

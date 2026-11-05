@@ -66,12 +66,17 @@ export class CancelDelayed {
       }
     );
 
+    this.stepRunV2Writer.writeByIds({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      jobIds: jobs.map((job) => job._id),
+    });
+
     await this.recordCancellationTraces(jobs);
 
     await this.stepRunRepository.createMany(jobs, {
       status: JobStatusEnum.CANCELED,
     });
-    this.stepRunV2Writer.writeMany(jobs, { status: JobStatusEnum.CANCELED });
 
     const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
 
@@ -107,7 +112,7 @@ export class CancelDelayed {
     });
 
     // update new main follower from Merged to Delayed
-    const promotedFollower = await this.jobRepository.update(
+    const promotedFollower = await this.jobRepository.findOneAndUpdate(
       {
         _environmentId: job._environmentId,
         status: JobStatusEnum.MERGED,
@@ -118,12 +123,10 @@ export class CancelDelayed {
           status: JobStatusEnum.DELAYED,
           _mergedDigestId: null,
         },
-      }
+      },
+      { new: true }
     );
-
-    if (promotedFollower.modified > 0) {
-      this.stepRunV2Writer.write(mainFollowerDigestJob, { status: JobStatusEnum.DELAYED });
-    }
+    this.stepRunV2Writer.write(promotedFollower);
 
     // update all main follower children jobs to pending status
     const followerChildJobs = await this.jobRepository.updateAllChildJobStatus(
@@ -131,7 +134,7 @@ export class CancelDelayed {
       JobStatusEnum.PENDING,
       mainFollowerDigestJob._id
     );
-    this.stepRunV2Writer.writeMany(followerChildJobs, { status: JobStatusEnum.PENDING });
+    this.stepRunV2Writer.writeMany(followerChildJobs);
 
     // update all jobs that were merged into the old main digest job to point to the new follower
     await this.jobRepository.update(

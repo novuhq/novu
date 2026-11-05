@@ -361,12 +361,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     const transactionIdsTriggers = result.map((job) => job.transactionId);
 
+    if (transactionIdsTriggers.length === 0) {
+      return { triggers: result, completedDigestJobIds: [] };
+    }
+
     /**
      * Update events that have been digested (events that have been sent) to be of status completed.
      * To avoid cases of same events being sent multiple times.
      * Happens in cases of delay followed by digest
      */
-    await this.update(
+    const digestJobsToComplete = await this.find(
       {
         updatedAt: {
           $gte: from,
@@ -380,14 +384,26 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           $in: transactionIdsTriggers,
         },
       },
-      {
-        $set: {
-          status: JobStatusEnum.COMPLETED,
-        },
-      }
+      '_id'
     );
+    const completedDigestJobIds = digestJobsToComplete.map((job) => String(job._id));
 
-    return result;
+    if (completedDigestJobIds.length > 0) {
+      await this.update(
+        {
+          _environmentId: environmentId,
+          _id: { $in: completedDigestJobIds },
+          status: JobStatusEnum.PENDING,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.COMPLETED,
+          },
+        }
+      );
+    }
+
+    return { triggers: result, completedDigestJobIds };
   }
 
   public async findOnePopulate({
@@ -490,6 +506,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     };
   }
 
+  /** Returns the child jobs as they are after the update. */
   async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum, activeDigestId: string): Promise<JobEntity[]> {
     const updatedJobs: JobEntity[] = [];
 
@@ -503,7 +520,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           status,
           _mergedDigestId: activeDigestId,
         },
-      }
+      },
+      { new: true }
     );
 
     if (childJob) {
@@ -521,7 +539,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
             status,
             _mergedDigestId: activeDigestId,
           },
-        }
+        },
+        { new: true }
       );
 
       if (childJob) {
