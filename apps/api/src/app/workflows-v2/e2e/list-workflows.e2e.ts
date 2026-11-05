@@ -114,15 +114,28 @@ describe('List Workflows - /workflows (GET) #novu-v2', () => {
       expect(returnedWorkflow.createdAt).to.be.a('string');
       expect(returnedWorkflow.updatedAt).to.be.a('string');
     });
+
+    it('should include the workflow description in the list response', async () => {
+      const workflowDescription = 'A workflow that notifies on important events';
+      await createWorkflow('Workflow With Description', workflowDescription);
+
+      // Read the raw response: the description is part of the list payload, so a
+      // client can render it without an extra per-workflow detail request.
+      const { body } = await session.testAgent.get('/v2/workflows');
+      const returnedWorkflow = body.data.workflows[0];
+
+      expect(returnedWorkflow.description).to.equal(workflowDescription);
+    });
   });
 
-  async function createWorkflow(name: string): Promise<WorkflowResponseDto> {
+  async function createWorkflow(name: string, description?: string): Promise<WorkflowResponseDto> {
     const createWorkflowDto: CreateWorkflowDto = {
       name,
       workflowId: name.toLowerCase().replace(/\s+/g, '-'),
       source: WorkflowCreationSourceEnum.Editor,
       active: true,
       steps: [],
+      ...(description ? { description } : {}),
     };
 
     const { result } = await novuClient.workflows.create(createWorkflowDto);
