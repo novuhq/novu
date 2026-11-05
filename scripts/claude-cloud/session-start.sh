@@ -35,12 +35,43 @@ status=()
 # ---------------------------------------------------------------------------
 is_enterprise_repo() { [ -d "$1/api" ] && [ -d "$1/auth" ]; }
 
-setup_enterprise() {
-  if is_enterprise_repo "$REPO_ROOT/.source"; then
+recorded_enterprise_sha() { git ls-tree HEAD .source 2>/dev/null | awk '{print $3}'; }
+
+# Bring an existing (non-symlinked) .source to the commit recorded in HEAD, so a
+# checkout/pull that bumps the submodule doesn't build against stale private code.
+sync_enterprise() {
+  local sha
+  sha="$(recorded_enterprise_sha)"
+  [ -n "$sha" ] || return 0
+  [ "$(git -C .source rev-parse HEAD 2>/dev/null)" = "$sha" ] && return 0
+
+  log "Updating .source to recorded commit $sha"
+  if git submodule update --init --depth 1 .source >>"$LOG" 2>&1; then
     return 0
   fi
 
+  if [ -n "${NOVU_ENTERPRISE_GITHUB_TOKEN:-}" ] \
+    && git -C .source fetch -q --depth 1 \
+      "https://x-access-token:${NOVU_ENTERPRISE_GITHUB_TOKEN}@github.com/novuhq/packages-enterprise.git" "$sha" >>"$LOG" 2>&1 \
+    && git -C .source checkout -q "$sha" >>"$LOG" 2>&1; then
+    return 0
+  fi
+
+  return 1
+}
+
+setup_enterprise() {
   git config --global url."https://github.com/".insteadOf "git@github.com:" >/dev/null 2>&1 || true
+
+  # Attached packages-enterprise repo: the session manages its checkout, leave it as is
+  if [ -L .source ] && is_enterprise_repo .source; then
+    return 0
+  fi
+
+  if is_enterprise_repo .source; then
+    sync_enterprise || status+=("enterprise: WARNING .source is not at the commit recorded in HEAD — see $LOG")
+    return 0
+  fi
 
   # Session with packages-enterprise attached as a second repository
   local candidate
@@ -53,6 +84,7 @@ setup_enterprise() {
   done
 
   # Through the GitHub proxy (works when your GitHub connection can read the repo)
+  [ -L .source ] && rm -f .source
   if git submodule update --init --depth 1 .source >>"$LOG" 2>&1 && is_enterprise_repo .source; then
     log "Initialized .source via GitHub proxy"
     return 0
@@ -154,12 +186,14 @@ fi
 # ---------------------------------------------------------------------------
 # 5. Background: build, ClickHouse migrations, seed
 # ---------------------------------------------------------------------------
+# The build is cached per commit + dependency state. Migrations and the seed are
+# idempotent and always rerun, because the service containers keep no persistent
+# volumes and may come back empty after a VM restore or container recreation.
 PIDFILE="$STATE_DIR/background.pid"
-head_sha="$(git rev-parse HEAD)"
+BUILT="$STATE_DIR/built"
+build_key="$(git rev-parse HEAD)-$current_hash"
 
-if [ -f "$READY" ] && [ "$(cat "$READY")" = "$head_sha" ]; then
-  status+=("build+seed: done for ${head_sha:0:10}")
-elif [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   status+=("build+seed: still running in background — tail $LOG")
 else
   rm -f "$READY" "$FAILED"
@@ -168,20 +202,26 @@ else
 set -euo pipefail
 cd "$REPO_ROOT"
 trap 'touch "$FAILED"; echo "[novu-cloud] background setup FAILED"' ERR
-echo "[novu-cloud] pnpm build:agents"
-pnpm build:agents
+if [ -f "$BUILT" ] && [ "\$(cat "$BUILT")" = "$build_key" ]; then
+  echo "[novu-cloud] build up to date, skipping pnpm build:agents"
+else
+  echo "[novu-cloud] pnpm build:agents"
+  rm -f "$BUILT"
+  pnpm build:agents
+  echo "$build_key" >"$BUILT"
+fi
 echo "[novu-cloud] waiting for ClickHouse"
 for _ in \$(seq 1 60); do curl -sf http://localhost:8123/ping >/dev/null && break; sleep 1; done
 echo "[novu-cloud] ClickHouse migrations"
 pnpm --filter @novu/api-service clickhouse:migrate:local
 echo "[novu-cloud] seeding agent user/org"
 pnpm seed:agent
-echo "$head_sha" >"$READY"
+date -u +%FT%TZ >"$READY"
 echo "[novu-cloud] background setup done"
 EOF
   nohup setsid bash "$STATE_DIR/background.sh" >>"$LOG" 2>&1 </dev/null &
   echo $! >"$PIDFILE"
-  status+=("build+seed: started in background — wait for $READY (or $FAILED) before running apps/tests; log: $LOG")
+  status+=("build+migrations+seed: started in background — wait for $READY (or $FAILED) before running apps/tests; log: $LOG")
 fi
 
 # Hook stdout is added to Claude's context
