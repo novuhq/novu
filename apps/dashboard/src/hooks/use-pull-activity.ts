@@ -9,8 +9,14 @@ import { QueryKeys } from '@/utils/query-keys';
 export const usePullActivity = (activityId?: string | null) => {
   const queryClient = useQueryClient();
   const [shouldRefetch, setShouldRefetch] = useState(true);
+  const [polledActivityId, setPolledActivityId] = useState(activityId);
   const { currentEnvironment } = useEnvironment();
-  const { activity, isPending, error } = useFetchActivity(
+
+  if (polledActivityId !== activityId) {
+    setPolledActivityId(activityId);
+    setShouldRefetch(true);
+  }
+  const { activity, isPending, isPlaceholderData, error } = useFetchActivity(
     { activityId },
     {
       refetchInterval: shouldRefetch ? 1000 : false,
@@ -18,9 +24,9 @@ export const usePullActivity = (activityId?: string | null) => {
   );
 
   useEffect(() => {
-    if (!activity) return;
+    if (!activity || isPlaceholderData) return;
 
-    const isPending = activity.jobs?.some(
+    const hasPendingJobs = activity.jobs?.some(
       (job) =>
         job.status === JobStatusEnum.PENDING ||
         job.status === JobStatusEnum.QUEUED ||
@@ -28,38 +34,37 @@ export const usePullActivity = (activityId?: string | null) => {
         job.status === JobStatusEnum.DELAYED
     );
 
-    // Only stop refetching if we have an activity and it's not pending
-    const newShouldRefetch = isPending || !activity?.jobs?.length;
+    if (hasPendingJobs || !activity.jobs?.length) return;
 
-    if (newShouldRefetch) {
-      /**
-       * Due to async inserts on the activity list, we want to provide 5 more seconds to refetch the activity
-       * For any non-inserted traces.
-       */
-      setTimeout(() => {
-        setShouldRefetch(newShouldRefetch);
+    /**
+     * Due to async inserts on the activity list, we want to provide 5 more seconds to refetch the activity
+     * For any non-inserted traces.
+     */
+    const timeout = setTimeout(() => {
+      setShouldRefetch(false);
 
-        // invalidate that single activity in the activities list cache
-        queryClient.setQueriesData(
-          { queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id] },
-          (activityResponse: ActivityResponse | undefined) => {
-            if (!activityResponse) return activityResponse;
+      // invalidate that single activity in the activities list cache
+      queryClient.setQueriesData(
+        { queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id] },
+        (activityResponse: ActivityResponse | undefined) => {
+          if (!activityResponse) return activityResponse;
 
-            return {
-              ...activityResponse,
-              data: activityResponse.data.map((el) => {
-                if (el._id === activity._id) {
-                  return { ...activity };
-                }
+          return {
+            ...activityResponse,
+            data: activityResponse.data.map((el) => {
+              if (el._id === activity._id) {
+                return { ...activity };
+              }
 
-                return el;
-              }),
-            };
-          }
-        );
-      }, 5000);
-    }
-  }, [activity, queryClient, currentEnvironment, activityId]);
+              return el;
+            }),
+          };
+        }
+      );
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [activity, isPlaceholderData, queryClient, currentEnvironment]);
 
   return {
     activity,

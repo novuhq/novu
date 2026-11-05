@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  FeatureFlagsService,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -10,9 +11,10 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, NotificationEntity, NotificationRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
+import { WorkflowRunsV2Reader } from '../../services/workflow-runs-v2-reader.service';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
@@ -82,12 +84,26 @@ export class GetWorkflowRun {
     private traceLogRepository: TraceLogRepository,
     private jobRepository: JobRepository,
     private notificationRepository: NotificationRepository,
+    private featureFlagsService: FeatureFlagsService,
+    private workflowRunsV2Reader: WorkflowRunsV2Reader,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
+    const isStepRunsV2ReadEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+    });
+
+    if (isStepRunsV2ReadEnabled) {
+      return this.workflowRunsV2Reader.get(command);
+    }
+
     this.logger.debug(
       {
         organizationId: command.organizationId,
@@ -395,6 +411,7 @@ export class GetWorkflowRun {
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
       topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : [],
+      digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
       overrides,
     };
   }
