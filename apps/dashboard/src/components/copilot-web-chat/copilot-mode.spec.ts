@@ -4,7 +4,7 @@ import { resolveCopilotMode } from './copilot-mode';
 const settledWithoutReview = { isPending: false, isError: false, hasPendingChanges: false };
 
 describe('resolveCopilotMode', () => {
-  it('waits while LaunchDarkly may still serve the flags cached from the previous visit', () => {
+  it('waits until the feature flags are ready', () => {
     expect(resolveCopilotMode({ isFlagsReady: false, liveMode: 'legacy', legacyChat: settledWithoutReview })).toBe(
       null
     );

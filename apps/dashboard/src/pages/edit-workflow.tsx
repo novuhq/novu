@@ -55,12 +55,17 @@ function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boo
   );
 }
 
-/** Shows the launcher/popover only in popover mode, once a page (canvas or step editor) registered a workflow context. */
-function CopilotWebChatMount({ isPopover }: { isPopover: boolean }) {
-  const { pageContext } = useCopilotWebChat();
+function CopilotPendingPrompt() {
   useCopilotPendingPrompt();
 
-  if (!isPopover || !pageContext?.workflowId) return null;
+  return null;
+}
+
+/** Shows the launcher/popover only once a page (canvas or step editor) registered a workflow context. */
+function CopilotPopoverMount() {
+  const { pageContext } = useCopilotWebChat();
+
+  if (!pageContext?.workflowId) return null;
 
   return (
     <>
@@ -81,7 +86,8 @@ function CopilotWebChatHost({ conversationScope, children }: { conversationScope
       conversationScope={conversationScope}
     >
       {children}
-      {isWebChat && <CopilotWebChatMount isPopover={copilotMode === 'web-chat-popover'} />}
+      {isWebChat && <CopilotPendingPrompt />}
+      {copilotMode === 'web-chat-popover' && <CopilotPopoverMount />}
     </CopilotWebChatProvider>
   );
 }

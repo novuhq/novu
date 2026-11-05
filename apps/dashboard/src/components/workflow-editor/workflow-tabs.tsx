@@ -3,7 +3,6 @@ import {
   AiResourceTypeEnum,
   AiWorkflowSuggestion,
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   PermissionsEnum,
   ResourceOriginEnum,
   StepTypeEnum,
@@ -21,11 +20,9 @@ import {
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -274,8 +271,6 @@ export const WorkflowTabs = () => {
   const { isLocalRoute, editWorkflowRoute, activityRoute } = useWorkflowEditorRoutes();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const isAiWorkflowGenerationEnabled =
-    useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
   const [isTriggerDrawerOpen, setIsTriggerDrawerOpen] = useState(false);
@@ -304,7 +299,6 @@ export const WorkflowTabs = () => {
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
   const copilotMode = useWorkflowEditorCopilot({
-    isAiWorkflowGenerationEnabled,
     isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,

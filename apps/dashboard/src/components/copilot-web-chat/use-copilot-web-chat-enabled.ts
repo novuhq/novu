@@ -26,8 +26,8 @@ export function useCopilotMode(): CopilotMode {
 }
 
 /**
- * Whether the workflow editor runs the Copilot on web chat (sidebar or popover). The create-workflow modal hands
- * guided generation to web chat on the same gate, so the two must not drift apart.
+ * Whether the create-workflow modal hands guided generation to web chat (sidebar or popover). It reads the live flags;
+ * the editor fixes its mode per visit, which agrees on a just-created workflow since it has no legacy chat to review.
  */
 export function useCopilotWebChatActive(): boolean {
   const { currentEnvironment } = useEnvironment();
