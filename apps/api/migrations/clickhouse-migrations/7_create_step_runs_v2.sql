@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS step_runs_v2
   step_type                 LowCardinality(String),
   status                    LowCardinality(String),
   provider_id               LowCardinality(String) DEFAULT '',
-  wait_amount               UInt32 DEFAULT 0,
+  wait_amount               Float64 DEFAULT 0,
   wait_unit                 LowCardinality(String) DEFAULT '',
   wait_type                 LowCardinality(String) DEFAULT '',
   wait_until                DateTime64(3, 'UTC') DEFAULT 0,

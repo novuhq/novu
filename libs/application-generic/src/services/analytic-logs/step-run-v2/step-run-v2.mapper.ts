@@ -70,7 +70,7 @@ function getWaitFields(
   const resolvedUntil = parseOptionalDate(job.waitUntil ?? timedUntil);
 
   return {
-    wait_amount: Math.max(0, Math.trunc(amount)),
+    wait_amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
     wait_unit: unit,
     wait_type: String(metadataType ?? stepMetadataType ?? ''),
     wait_until: toClickHouseDateTime64(resolvedUntil ?? new Date(0)),

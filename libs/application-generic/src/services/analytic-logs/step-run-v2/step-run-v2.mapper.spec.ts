@@ -199,6 +199,37 @@ describe('mapJobToStepRunV2', () => {
     expect(row).toMatchObject({ step_type: 'delay', wait_type: 'regular', wait_amount: 3, wait_unit: 'hours' });
   });
 
+  it('keeps fractional wait amounts with their unit', () => {
+    const delayRow = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DELAY,
+        digest: { type: DelayTypeEnum.REGULAR, amount: 1.5, unit: DigestUnitEnum.HOURS },
+      })
+    );
+    const digestRow = mapJobToStepRunV2(
+      buildJob({
+        type: StepTypeEnum.DIGEST,
+        digest: { type: DigestTypeEnum.REGULAR, amount: 0.5, unit: DigestUnitEnum.MINUTES },
+      })
+    );
+
+    expect(delayRow).toMatchObject({ wait_amount: 1.5, wait_unit: 'hours' });
+    expect(digestRow).toMatchObject({ wait_amount: 0.5, wait_unit: 'minutes' });
+  });
+
+  it('stores zero for negative or non-finite wait amounts', () => {
+    for (const amount of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const row = mapJobToStepRunV2(
+        buildJob({
+          type: StepTypeEnum.DELAY,
+          digest: { type: DelayTypeEnum.REGULAR, amount, unit: DigestUnitEnum.HOURS },
+        })
+      );
+
+      expect(row.wait_amount).toBe(0);
+    }
+  });
+
   it('reads the dynamic delay type from step.metadata', () => {
     const row = mapJobToStepRunV2(
       buildJob({
