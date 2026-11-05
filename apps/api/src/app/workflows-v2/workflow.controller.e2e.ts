@@ -8,6 +8,7 @@ import {
   InAppStepResponseDto,
   InAppStepUpsertDto,
   ListWorkflowResponse,
+  PushStepResponseDto,
   ResourceOriginEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
@@ -16,7 +17,6 @@ import {
   WorkflowStatusEnum,
 } from '@novu/api/models/components';
 import { ErrorDto } from '@novu/api/models/errors';
-import { WorkflowResponseDto } from '@novu/api/src/models/components';
 import { buildSlug, JSONSchemaDto } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import {
@@ -32,9 +32,11 @@ import { UserSession } from '@novu/testing';
 import chai, { expect } from 'chai';
 import chaiSubset from 'chai-subset';
 import {
+  expectKnownSteps,
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
   initNovuClassSdkInternalAuth,
+  KnownStepsWorkflowResponseDto,
 } from '../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 chai.use(chaiSubset);
@@ -162,7 +164,7 @@ async function createWorkflowAndExpectValidationError(
   return res.error!;
 }
 async function createWorkflow(apiClient: Novu, createWorkflowDto: CreateWorkflowDto) {
-  return (await apiClient.workflows.create(createWorkflowDto)).result;
+  return expectKnownSteps((await apiClient.workflows.create(createWorkflowDto)).result);
 }
 
 describe('Workflow Controller E2E API Testing #novu-v2', () => {
@@ -363,7 +365,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   describe('Update workflow', () => {
     it('should update control values', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      const workflowCreated: KnownStepsWorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
@@ -378,7 +380,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         ],
         workflowId: workflowCreated.workflowId,
       } as UpdateWorkflowDto;
-      const updatedWorkflow: WorkflowResponseDto = await updateWorkflow(
+      const updatedWorkflow: KnownStepsWorkflowResponseDto = await updateWorkflow(
         workflowCreated.id,
         updateRequest as UpdateWorkflowDto
       );
@@ -389,7 +391,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
 
     it('should not change origin when a different origin is sent on update', async () => {
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(`Origin Immutable ${Date.now()}`);
+      const workflowCreated: KnownStepsWorkflowResponseDto = await createWorkflowAndValidate(
+        `Origin Immutable ${Date.now()}`
+      );
       expect(workflowCreated.origin).to.equal(ResourceOriginEnum.NovuCloud);
 
       const updatedWorkflow = await updateWorkflow(workflowCreated.id, {
@@ -403,7 +407,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      const workflowCreated: KnownStepsWorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updatedWorkflow = await updateWorkflow(workflowCreated.id, mapResponseToUpdateDto(workflowCreated));
       const updatedStep = updatedWorkflow.steps[0];
       const originalStep = workflowCreated.steps[0];
@@ -413,7 +417,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      const workflowCreated: KnownStepsWorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       expect(workflowCreated.steps.length).to.be.equal(2);
 
       // Verify that all step ids are unique
@@ -434,7 +438,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should update user preferences', async () => {
       const nameSuffix = `Test Workflow${new Date().toISOString()}`;
-      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      const workflowCreated: KnownStepsWorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updatedWorkflow = await updateWorkflow(workflowCreated.id, {
         ...mapResponseToUpdateDto(workflowCreated),
         preferences: {
@@ -750,7 +754,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         },
         devWorkflow.id
       );
-      const prodWorkflowCreated = resPromoteCreate.result;
+      const prodWorkflowCreated = expectKnownSteps(resPromoteCreate.result);
 
       // Update the workflow in the development environment
       const updateDto: UpdateWorkflowDto = {
@@ -787,7 +791,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         devWorkflow.id
       );
 
-      const prodWorkflowUpdated = resPromoteUpdate.result;
+      const prodWorkflowUpdated = expectKnownSteps(resPromoteUpdate.result);
 
       // Verify that IDs remain unchanged
       expect(prodWorkflowUpdated.id).to.equal(prodWorkflowCreated.id);
@@ -854,7 +858,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       await session.switchToDevEnvironment();
 
       const prodWorkflow = await syncWorkflow(devWorkflow, prodEnvironmentId);
-      const prodPushStep = prodWorkflow.steps[1];
+      const prodPushStep = prodWorkflow.steps[1] as PushStepResponseDto;
 
       expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.Active);
       expect(prodPushStep.controls.values.skip).to.deep.equal(skipCondition);
@@ -931,14 +935,16 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   describe('Duplicate workflow', () => {
     it('should duplicate a workflow', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
-      const duplicatedWorkflow = (
-        await apiClient.workflows.duplicate(
-          {
-            name: 'Duplicated Workflow',
-          },
-          workflowCreated.id
-        )
-      ).result;
+      const duplicatedWorkflow = expectKnownSteps(
+        (
+          await apiClient.workflows.duplicate(
+            {
+              name: 'Duplicated Workflow',
+            },
+            workflowCreated.id
+          )
+        ).result
+      );
 
       expect(duplicatedWorkflow?.id).to.not.equal(workflowCreated.id);
       expect(duplicatedWorkflow?.active).to.be.false;
@@ -1191,26 +1197,28 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
               },
             },
           ],
-        } as CreateWorkflowDto)
+        } as Partial<CreateWorkflowDto>)
       );
 
       expect(createdWorkflow.status).to.equal(WorkflowStatusEnum.Error);
 
-      const patchedWorkflow = (
-        await apiClient.workflows.patch(
-          {
-            payloadSchema: {
-              type: 'object',
-              properties: {
-                firstName: { type: 'string' },
+      const patchedWorkflow = expectKnownSteps(
+        (
+          await apiClient.workflows.patch(
+            {
+              payloadSchema: {
+                type: 'object',
+                properties: {
+                  firstName: { type: 'string' },
+                },
+                required: [],
+                additionalProperties: false,
               },
-              required: [],
-              additionalProperties: false,
             },
-          },
-          createdWorkflow.id
-        )
-      ).result;
+            createdWorkflow.id
+          )
+        ).result
+      );
 
       expect(patchedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
       expect(patchedWorkflow.steps[0].issues?.controls).to.not.exist;
@@ -1424,10 +1432,10 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     });
   });
 
-  async function getWorkflow(id: string): Promise<WorkflowResponseDto> {
+  async function getWorkflow(id: string): Promise<KnownStepsWorkflowResponseDto> {
     const res = await apiClient.workflows.get(id);
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
   async function patchWorkflow(workflowId: string, active: boolean) {
@@ -1438,16 +1446,16 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       workflowId
     );
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
-  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<KnownStepsWorkflowResponseDto> {
     const res = await apiClient.workflows.update(workflow, id);
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
-  async function syncWorkflow(devWorkflow: WorkflowResponseDto, prodEnvironmentId: string) {
+  async function syncWorkflow(devWorkflow: KnownStepsWorkflowResponseDto, prodEnvironmentId: string) {
     const res = await apiClient.workflows.sync(
       {
         targetEnvironmentId: prodEnvironmentId,
@@ -1455,7 +1463,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       devWorkflow.id
     );
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
   async function getStepData(workflowId: string, stepId: string, envId?: string) {
@@ -1471,7 +1479,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     expectedPastUpdatedAt: string,
     updateRequest: UpdateWorkflowDto
   ): Promise<void> {
-    const updatedWorkflow: WorkflowResponseDto = await updateWorkflow(workflowRequestId, updateRequest);
+    const updatedWorkflow: KnownStepsWorkflowResponseDto = await updateWorkflow(workflowRequestId, updateRequest);
     const slug = buildSlug(updateRequest.name, ShortIsPrefixEnum.WORKFLOW, updatedWorkflow.id);
 
     expect(updatedWorkflow.slug).to.equal(slug);
@@ -1500,7 +1508,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     }
   }
 
-  async function createWorkflowAndValidate(name: string = 'Test Workflow'): Promise<WorkflowResponseDto> {
+  async function createWorkflowAndValidate(name: string = 'Test Workflow'): Promise<KnownStepsWorkflowResponseDto> {
     const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name });
     const res = await createWorkflow(apiClient, createWorkflowDto);
     validateCreateWorkflowResponse(res, createWorkflowDto);
@@ -1508,7 +1516,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     return res;
   }
 
-  async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
+  async function getWorkflowAndValidate(workflowCreated: KnownStepsWorkflowResponseDto) {
     const workflowRetrieved = await getWorkflow(workflowCreated.id);
     expect(workflowRetrieved).to.deep.equal(workflowCreated);
   }
@@ -1543,7 +1551,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     return JSON.stringify(obj, null, 2);
   }
 
-  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+  function mapResponseToUpdateDto(workflowResponse: KnownStepsWorkflowResponseDto): UpdateWorkflowDto {
     return {
       ...workflowResponse,
       steps: workflowResponse.steps.map(
@@ -1558,7 +1566,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     };
   }
 
-  function assertWorkflowResponseBodyData(workflowResponseDto: WorkflowResponseDto) {
+  function assertWorkflowResponseBodyData(workflowResponseDto: KnownStepsWorkflowResponseDto) {
     expect(workflowResponseDto, stringify(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.id, stringify(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.updatedAt, stringify(workflowResponseDto)).to.be.ok;
@@ -1569,7 +1577,10 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     expect(Object.keys(workflowResponseDto.issues || {}).length, stringify(workflowResponseDto)).to.be.equal(0);
   }
 
-  function assertStepResponse(workflowResponseDto: WorkflowResponseDto, createWorkflowDto: CreateWorkflowDto) {
+  function assertStepResponse(
+    workflowResponseDto: KnownStepsWorkflowResponseDto,
+    createWorkflowDto: CreateWorkflowDto
+  ) {
     for (let i = 0; i < workflowResponseDto.steps.length; i++) {
       const stepInRequest = createWorkflowDto.steps[i];
       const step = workflowResponseDto.steps[i];
@@ -1581,7 +1592,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   function validateCreateWorkflowResponse(
-    workflowResponseDto: WorkflowResponseDto,
+    workflowResponseDto: KnownStepsWorkflowResponseDto,
     createWorkflowDto: CreateWorkflowDto
   ) {
     assertWorkflowResponseBodyData(workflowResponseDto);

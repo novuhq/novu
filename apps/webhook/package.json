@@ -15,6 +15,7 @@
     "start:test": "cross-env NODE_ENV=test nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "typecheck:spec": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'test'",
     "check": "biome check .",
     "check:fix": "biome check --write .",

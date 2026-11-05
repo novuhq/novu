@@ -9,8 +9,8 @@ import {
   LayoutResponseDto,
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
-  WorkflowResponseDto,
 } from '@novu/api/models/components';
+import { JSONSchemaDto } from '@novu/application-generic';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
   CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE,
@@ -26,8 +26,11 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import {
+  expectKnownSteps,
+  initNovuClassSdkInternalAuth,
+  KnownStepsWorkflowResponseDto,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 interface ITestStepConfig {
   type: StepTypeEnum;
@@ -41,6 +44,11 @@ interface IRawStepResponse {
   type: StepTypeEnum;
   controls: { values: Record<string, unknown> };
   issues?: { controls?: Record<string, unknown> };
+}
+
+interface IRawWorkflowResponse {
+  _id: string;
+  steps: IRawStepResponse[];
 }
 
 describe('Upsert Workflow #novu-v2', () => {
@@ -59,7 +67,7 @@ describe('Upsert Workflow #novu-v2', () => {
     name: string;
     workflowId: string;
     includeEmail?: boolean;
-  }): Promise<WorkflowResponseDto> {
+  }): Promise<IRawWorkflowResponse> {
     const steps: Array<Record<string, unknown>> = [
       {
         name: 'Tool Step',
@@ -1936,19 +1944,22 @@ describe('Upsert Workflow #novu-v2', () => {
     return createLayoutBody;
   }
 
-  async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {
+  async function createWorkflow(workflow: CreateWorkflowDto): Promise<KnownStepsWorkflowResponseDto> {
     const { result: createWorkflowBody } = await novuClient.workflows.create(workflow);
 
-    return createWorkflowBody;
+    return expectKnownSteps(createWorkflowBody);
   }
 
-  async function updateWorkflow(workflowSlug: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+  async function updateWorkflow(
+    workflowSlug: string,
+    workflow: UpdateWorkflowDto
+  ): Promise<KnownStepsWorkflowResponseDto> {
     const { result: updateWorkflowBody } = await novuClient.workflows.update(workflow, workflowSlug);
 
-    return updateWorkflowBody;
+    return expectKnownSteps(updateWorkflowBody);
   }
 
-  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+  function mapResponseToUpdateDto(workflowResponse: KnownStepsWorkflowResponseDto): UpdateWorkflowDto {
     return {
       ...workflowResponse,
       steps: workflowResponse.steps.map((step) => ({
