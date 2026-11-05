@@ -10,10 +10,6 @@
     "test": {
       "cache": true
     },
-    "typecheck:spec": {
-      "dependsOn": ["^build"],
-      "cache": false
-    },
     "lint": {
       "cache": true
     },

@@ -344,6 +344,12 @@ jobs:
         with:
           slim: "true"
 
+      - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.typecheck-spec), ',') }}
+        run: pnpm nx run-many -t build --projects="$AFFECTED_PROJECTS" --parallel=3
+
       - name: Type check
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
