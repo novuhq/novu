@@ -358,7 +358,6 @@ export const WorkflowTabs = () => {
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
   const copilotMode = useWorkflowEditorCopilot({
-    isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),

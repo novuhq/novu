@@ -48,7 +48,7 @@ type ShellState = {
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
 };
 
-function useShellState(surface: CopilotSurface): ShellState {
+function useShellState(surface: CopilotSurface | null): ShellState {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [focusRequest, setFocusRequest] = useState(0);
@@ -68,6 +68,8 @@ function useShellState(surface: CopilotSurface): ShellState {
           break;
         case 'sidebar':
           isOpenOwedRef.current = !isSurfaceVisibleRef.current;
+          break;
+        case null:
           break;
         default: {
           const unhandled: never = surface;
@@ -142,14 +144,12 @@ type ConnectedState = Pick<
  */
 export function CopilotWebChatProvider({
   children,
-  enabled = true,
-  surface = 'popover',
+  surface,
   conversationScope,
 }: {
   children: ReactNode;
-  enabled?: boolean;
-  /** Where the conversation is shown; picks the hotkeys and tags every Copilot telemetry event. */
-  surface?: CopilotSurface;
+  /** Where the conversation is shown, or `null` to not connect; picks the hotkeys and tags every Copilot telemetry event. */
+  surface: CopilotSurface | null;
   /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
@@ -186,7 +186,7 @@ export function CopilotWebChatProvider({
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
       isAvailable: !!connected,
-      isConnecting: enabled && !isBridgeMounted,
+      isConnecting: surface !== null && !isBridgeMounted,
       surface,
       isOpen,
       open,
@@ -211,7 +211,6 @@ export function CopilotWebChatProvider({
     }),
     [
       connected,
-      enabled,
       isBridgeMounted,
       surface,
       isOpen,
@@ -232,7 +231,7 @@ export function CopilotWebChatProvider({
       <CopilotSidebarControlContext.Provider value={sidebarControl}>
         <CopilotWebChatContext.Provider value={value}>
           {children}
-          {enabled && (
+          {surface && (
             <CopilotConnectProvider>
               <CopilotWebChatBridge
                 key={conversationScope}

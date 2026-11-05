@@ -160,12 +160,9 @@ function StepEditorContent() {
     useStepEditor();
   const stepResolverHint = useStepResolverHint();
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
-  const { currentEnvironment } = useEnvironment();
   const { onBlur } = useSaveForm();
-  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
   const copilotMode = useWorkflowEditorCopilot({
-    isAvailable: isDevEnvironment && !isExternalWorkflow,
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
     stepId: step.stepId,

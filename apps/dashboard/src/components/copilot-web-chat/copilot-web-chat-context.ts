@@ -12,7 +12,8 @@ export type CopilotWebChatContextValue = {
   isAvailable: boolean;
   /** True until the tenant context has been minted or failed to mint; false once it is known whether the Copilot is available. */
   isConnecting: boolean;
-  surface: CopilotSurface;
+  /** `null` while the workflow editor does not run the Copilot on web chat. */
+  surface: CopilotSurface | null;
   isOpen: boolean;
   /** Opens the popover or expands the sidebar; `prefill` replaces the composer text without sending it. */
   open: (options?: CopilotOpenOptions) => void;
@@ -56,7 +57,7 @@ const noop = () => {};
 export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   isAvailable: false,
   isConnecting: false,
-  surface: 'popover',
+  surface: null,
   isOpen: false,
   open: noop,
   setSurfaceVisible: noop,
