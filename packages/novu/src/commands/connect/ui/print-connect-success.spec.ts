@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONNECT_HELP_TEXT } from '../help-text';
 import type { ConnectSuccessResult } from './format-web-chat-success';
@@ -85,7 +86,8 @@ describe('Web Chat success help contract', () => {
 
     printConnectSuccess(result);
 
-    expect(log).toHaveBeenCalledWith(successLine);
+    const lines = log.mock.calls.map(([line]) => stripVTControlCharacters(String(line)));
+    expect(lines).toContain(successLine);
     expect(CONNECT_HELP_TEXT).toContain(successLine);
   });
 });
