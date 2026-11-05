@@ -1,5 +1,5 @@
 import type { HumanInteractionEntity } from '@novu/dal';
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import { HumanInteractionKindEnum, type HumanInteractionPostedContent, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import type { CardElement } from 'chat';
 import {
@@ -364,7 +364,7 @@ describe('human-card.builder email cards', () => {
   });
 
   it('marks a posted card with the kind of its interaction', () => {
-    const posted: CardElement = { type: 'card', title: 'Custom', children: [] };
+    const posted: HumanInteractionPostedContent['card'] = { type: 'card', title: 'Custom', children: [] };
     const card = layoutCardOf(buildPendingDeliveryContent(interaction({ content: { card: posted } })));
 
     expect(card).to.include({ title: 'Custom', humanKind: HumanInteractionKindEnum.APPROVE });

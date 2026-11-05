@@ -317,6 +317,10 @@ jobs:
           projects: ${{matrix.projectName}}
           args: ""
 
+      # Mocha loads tests through ts-node transpile-only or SWC, which strip types without checking them.
+      - name: Type check tests
+        run: pnpm --filter "${{ matrix.projectName }}" run --if-present typecheck:spec
+
   validate_openapi:
     name: Validate OpenAPI
     runs-on: blacksmith-4vcpu-ubuntu-2404

@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { GroupPreferenceFilterDto } from '../../shared/dtos/subscriptions/create-subscriptions.dto';
 import { convertPreferencesToGroupFilters } from './subscriptions';
 
 describe('convertPreferencesToGroupFilters', () => {
@@ -15,7 +16,7 @@ describe('convertPreferencesToGroupFilters', () => {
   });
 
   it('should pass through group filter preferences unchanged', () => {
-    const preference = {
+    const preference: GroupPreferenceFilterDto = {
       filter: { workflowIds: ['workflow-1'] },
       enabled: false,
       condition: { '==': [{ var: 'status' }, 'active'] },

@@ -238,10 +238,10 @@ describe('Managed agent HITL novu_human #novu-v2', () => {
       })
     );
 
-    const interaction = await humanInteractionRepository.findOne({
-      _environmentId: session.environment._id,
-      requestId: `novu_human:${sessionId}:${toolUseId}`,
-    });
+    const interaction = await humanInteractionRepository.findByRequestId(
+      session.environment._id,
+      `novu_human:${sessionId}:${toolUseId}`
+    );
 
     return { conversation, platformThreadId, toolUseId, sessionId, interaction: requireInteraction(interaction) };
   }
