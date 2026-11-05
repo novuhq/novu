@@ -1,7 +1,8 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { AgentRepository, primaryHumanInteractionDelivery, type HumanInteractionEntity } from '@novu/dal';
+import { AgentRepository, type HumanInteractionEntity, primaryHumanInteractionDelivery } from '@novu/dal';
 import { HumanInteractionStatusEnum, parseNovuHumanRequestId } from '@novu/shared';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
 
@@ -10,7 +11,7 @@ export class ResumeManagedHuman {
   constructor(
     private readonly agentRepository: AgentRepository,
     @Inject(forwardRef(() => ManagedAgentService))
-    private readonly managedAgentService: ManagedAgentService,
+    private readonly managedAgentService: WrapperType<ManagedAgentService>,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -42,10 +43,7 @@ export class ResumeManagedHuman {
 
     const delivery = primaryHumanInteractionDelivery(interaction);
     if (!delivery) {
-      this.logger.warn(
-        { interactionIdentifier: interaction.identifier },
-        'Skipping managed HITL resume — no delivery'
-      );
+      this.logger.warn({ interactionIdentifier: interaction.identifier }, 'Skipping managed HITL resume — no delivery');
 
       return;
     }

@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -28,7 +29,7 @@ export class HandleNovuTools {
     private readonly agentConversationService: AgentConversationService,
     private readonly handleAgentReply: HandleAgentReply,
     @Inject(forwardRef(() => ManagedAgentService))
-    private readonly managedAgentService: ManagedAgentService,
+    private readonly managedAgentService: WrapperType<ManagedAgentService>,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);

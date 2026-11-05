@@ -404,6 +404,9 @@ overrides:
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
+  # GHSA-73rr-hh4g-fpgx has no 6.x or 7.x patch. mocha 11 pins diff ^7 but only
+  # calls createPatch and diffWordsWithSpace, which 8.x keeps under require().
+  diff@>=6.0.0 <8.0.3: ^8.0.3
   formidable@>=2.1.0 <2.1.3: ^2.1.3
   formidable@>=3.1.1 <3.5.3: ^3.5.3
   ip@<1.1.9: ^1.1.9
@@ -553,7 +556,7 @@ overrides:
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
-  # transitive 1.10.0 resolutions (via npm-run-all and cpx) pick up the fix.
+  # transitive 1.10.0 resolutions (via npm-run-all) pick up the fix.
   shell-quote@<1.11.0: ^1.11.0
   # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
   # ThreadPool.options allowing RCE via execArgv / loadBalancer / env.
@@ -674,3 +677,10 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
+
+# `pnpm deploy --prod` in the app Dockerfiles leaves out dev-only patched packages (@stoplight/spectral-core),
+# and an unused patch would fail the image build.
+allowUnusedPatches: true
+
+patchedDependencies:
+  '@stoplight/spectral-core@1.20.0': patches/@stoplight__spectral-core@1.20.0.patch

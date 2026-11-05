@@ -19,6 +19,7 @@ import type {
 } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
@@ -172,7 +173,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
     private readonly humanRelayEmail: HumanRelayEmailService,
     @Inject(forwardRef(() => PlanLimitGateService))
-    private readonly planLimitGate: PlanLimitGateService
+    private readonly planLimitGate: WrapperType<PlanLimitGateService>
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
