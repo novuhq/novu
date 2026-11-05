@@ -349,6 +349,44 @@ describe('BridgeExecutorService', () => {
       expect(logger.warn.calledWithMatch({ expectedPrefix: 'org/env/agents/conv/' })).to.equal(true);
     });
 
+    it('should drop non-attachment richContent (approval cards, HITL bodies) the framework never reads', async () => {
+      const { service, attachmentStorage } = makeService();
+
+      const result = await (service as any).mapRichContentForBridge(
+        { humanInteraction: { title: 'Approve?', body: 'x'.repeat(10_000) }, markdown: '**hi**' },
+        makeActivity()
+      );
+
+      expect(result).to.equal(undefined);
+      expect(attachmentStorage.signRead.called).to.equal(false);
+    });
+
+    it('should keep only the signed attachments when richContent also carries a card', async () => {
+      const { service } = makeService();
+
+      const result = await (service as any).mapRichContentForBridge(
+        {
+          humanInteraction: { title: 'Approve?' },
+          attachments: [
+            {
+              type: 'image',
+              storageKey: 'org/env/agents/conv/message/0-image.png',
+              name: 'image.png',
+              mimeType: 'image/png',
+              size: 123,
+            },
+          ],
+        },
+        makeActivity()
+      );
+
+      expect(result).to.deep.equal({
+        attachments: [
+          { type: 'image', url: 'https://signed/read', name: 'image.png', mimeType: 'image/png', size: 123 },
+        ],
+      });
+    });
+
     it('should omit malformed attachment entries without throwing', async () => {
       const { service, logger, attachmentStorage } = makeService();
 

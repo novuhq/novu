@@ -35,7 +35,7 @@ This package provides all the necessary tools to build and manage your notificat
          ## Add a Novu API Endpoint
         ```typescript app/server/api/novu.ts
 
-        app.use(express.json()); // Required for Novu POST requests
+        app.use(express.json({ limit: '10mb' })); // Required for Novu POST requests; the 100kb default is too small for large payloads
         app.use( "/api/novu", serve({ workflows: [testWorkflow] }) );
         ```
     </Step>

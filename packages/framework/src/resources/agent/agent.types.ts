@@ -287,6 +287,7 @@ export interface AgentHistoryEntry {
   type: string;
   /** Plain-text representation of the message content. */
   content: string;
+  /** Only `attachments` (signed inbound files). Card, approval and human-interaction bodies are not sent. */
   richContent?: Record<string, unknown>;
   senderName?: string;
   /** Structured data for `signal` entries (e.g. metadata updates). */

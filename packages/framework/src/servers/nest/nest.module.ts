@@ -30,7 +30,8 @@ import { applyDecorators } from './nest.utils';
  * const app = await NestFactory.create(AppModule);
  *
  * // Important:  ensure you add JSON middleware to process incoming JSON POST payloads.
- * app.use(express.json());
+ * // Agent requests carry conversation history, which outgrows the 100kb default limit.
+ * app.use(express.json({ limit: '10mb' }));
  * ```
  */
 @Module({})

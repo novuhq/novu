@@ -1,5 +1,6 @@
 import { AIMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import { capHistoryToolOutput } from '../../resources/agent/history-tool-output';
 import type { ToolApprovalRequestPayload } from '../../resources/agent/tool-approval/action-id';
 
 /**
@@ -149,7 +150,7 @@ function toContent(output: unknown): string {
 
 function executedToolResult(result: ToolResultPayload): ToolMessage {
   return new ToolMessage({
-    content: toContent(result.output),
+    content: toContent(capHistoryToolOutput(result.output)),
     tool_call_id: result.toolCallId,
     name: result.toolName ?? 'tool',
   });

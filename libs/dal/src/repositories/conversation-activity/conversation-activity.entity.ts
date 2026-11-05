@@ -92,7 +92,10 @@ export interface ConversationActivityToolData {
   content?: ConversationActivityToolResultPart[];
   /** Whether the tool failed (result). */
   isError?: boolean;
-  /** `content` lost data: parts were cut or dropped for the size cap, or media `data` was removed (result). */
+  /**
+   * The result lost data: `content` parts were cut or dropped for the size cap, media `data` was removed,
+   * or `output` was cut to the model-facing cap (result).
+   */
   truncated?: boolean;
   /** The result was never shown to the model, so it stays out of the handoff and web chat (result). */
   recordOnly?: boolean;

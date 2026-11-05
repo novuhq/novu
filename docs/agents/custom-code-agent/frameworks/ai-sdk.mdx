@@ -116,6 +116,27 @@ onMessage: async (message, ctx) => {
 
 Do not call `toModelMessages(ctx)` after a custom unshift — you would inject the origin twice.
 
+### Keep long conversations within the model's context
+
+`ctx.history` holds the newest 50 entries of the conversation, and Novu cuts each tool result to 16 KB. See [Request size and conversation history](/agents/custom-code-agent/connecting-your-app#request-size-and-conversation-history). On tool-heavy threads, drop old tool calls with the AI SDK's `pruneMessages`. It removes each call together with its result and keeps the conversation text:
+
+```typescript
+import { toModelMessages } from '@novu/framework/ai-sdk';
+import { generateText, pruneMessages } from 'ai';
+
+onMessage: async (message, ctx) =>
+  generateText({
+    model: openai('gpt-4o'),
+    messages: pruneMessages({
+      messages: toModelMessages(ctx),
+      toolCalls: 'before-last-6-messages',
+      emptyMessages: 'remove',
+    }),
+  }),
+```
+
+Keep enough recent messages that a pending approval stays in the transcript, or the tool loop can't resume. To remember details from older turns, write a short summary with your model, store it with `ctx.metadata.set()` (see [Signals](/agents/custom-code-agent/building-blocks/signals)), then add it to the prompt on later turns.
+
 ## Automatic tool approval
 
 Set `needsApproval: true` on an AI SDK `tool()`. When the model calls it, Novu posts the Approve / Deny card and pauses the turn. After the user decides, Novu re-runs `onMessage` - `toModelMessages(ctx)` now includes the decision, so the tool loop continues with no extra code from you.

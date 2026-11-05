@@ -35,7 +35,8 @@ export const frameworkName: SupportedFrameworkName = 'express';
  * import { myWorkflow } from "./src/novu/workflows"; // Your workflows
  *
  * // Important:  ensure you add JSON middleware to process incoming JSON POST payloads.
- * app.use(express.json());
+ * // Agent requests carry conversation history, which outgrows the 100kb default limit.
+ * app.use(express.json({ limit: '10mb' }));
  * app.use(
  *   // Expose the middleware on our recommended path at `/api/novu`.
  *   "/api/novu",
