@@ -12,7 +12,7 @@
     "lint": "echo 'skip lint in the ci'",
     "typecheck:spec": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'skip test in the ci'",
-    "test-ee": "cross-env TS_NODE_TRANSPILE_ONLY=true NEW_RELIC_ENABLED=false NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit 'src/**/*.spec.ts'"
+    "test-ee": "cross-env NEW_RELIC_ENABLED=false NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.10",
@@ -54,7 +54,6 @@
     "mocha": "^10.2.0",
     "rxjs": "7.8.2",
     "sinon": "^9.2.4",
-    "ts-node": "~10.9.1",
     "typescript": "6.0.3"
   },
   "peerDependencies": {
