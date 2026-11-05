@@ -226,7 +226,7 @@ describe('applyEnvelope', () => {
       envelope(3, { type: 'message-delta', messageId: 'm1', delta: 'Working on' }),
     ];
 
-    it('flags the live assistant message as interrupted and closes its streaming text', () => {
+    it('flags the live assistant message as stopped and closes its streaming text', () => {
       const live = applyEnvelopes(createInitialAgentConversationState(), [
         ...partialRun,
         envelope(4, { type: 'run-finish', outcome: 'aborted' }),
@@ -236,7 +236,7 @@ describe('applyEnvelope', () => {
       expect(live.activeAssistantMessageId).toBeUndefined();
       expect(live.messages[0]).toMatchObject({
         id: 'm1',
-        interrupted: true,
+        stopped: true,
         parts: [{ type: 'text', text: 'Working on', state: 'done' }],
       });
     });
@@ -256,7 +256,7 @@ describe('applyEnvelope', () => {
       expect(assistantMessages(replay.messages)).toHaveLength(1);
       expect(replay.messages[0]).toMatchObject({
         id: 'm1',
-        interrupted: true,
+        stopped: true,
         parts: [{ type: 'text', text: 'Working on', state: 'done' }],
       });
     });
@@ -273,7 +273,7 @@ describe('applyEnvelope', () => {
         envelope(8, { type: 'run-finish', outcome: 'aborted' }, { runId: 'run-2' }),
       ]);
 
-      expect(state.messages.map((message) => [message.id, message.interrupted])).toEqual([
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
         ['u1', undefined],
         ['a1', undefined],
         ['u2', undefined],
@@ -281,7 +281,7 @@ describe('applyEnvelope', () => {
       ]);
     });
 
-    it('adds an empty interrupted message when the stopped run never produced one, without flagging earlier ones', () => {
+    it('adds an empty stopped message when the stopped run never produced one, without flagging earlier ones', () => {
       const state = applyEnvelopes(createInitialAgentConversationState(), [
         envelope(1, { type: 'message', role: 'assistant', messageId: 'a1', content: { markdown: 'earlier' } }),
         envelope(2, { type: 'run-finish', outcome: 'completed' }),
@@ -291,7 +291,7 @@ describe('applyEnvelope', () => {
 
       expect(state.isRunning).toBe(false);
       expect(state.activeAssistantMessageId).toBeUndefined();
-      expect(state.messages.map((message) => [message.id, message.role, message.interrupted])).toEqual([
+      expect(state.messages.map((message) => [message.id, message.role, message.stopped])).toEqual([
         ['a1', 'assistant', undefined],
         ['run-2_stopped', 'assistant', true],
       ]);
@@ -305,7 +305,7 @@ describe('applyEnvelope', () => {
           envelope(4, { type: 'run-finish', outcome }),
         ]);
 
-        expect(state.messages[0]?.interrupted).toBeUndefined();
+        expect(state.messages[0]?.stopped).toBeUndefined();
       }
     });
   });
@@ -329,7 +329,7 @@ describe('applyEnvelope', () => {
       expect(assistantMessages(state.messages)).toHaveLength(1);
       expect(state.messages[0]).toMatchObject({
         id: 'act_1',
-        interrupted: true,
+        stopped: true,
         status: 'sent',
         parts: [{ type: 'text', text: 'Below is a comprehensive guide', state: 'done' }],
       });
@@ -347,7 +347,7 @@ describe('applyEnvelope', () => {
       ]);
 
       expect(state.messages[0]).toMatchObject({
-        interrupted: true,
+        stopped: true,
         parts: [{ type: 'text', text: 'Half a reply', state: 'done' }],
       });
     });
@@ -362,7 +362,7 @@ describe('applyEnvelope', () => {
         envelope(6, assistantText('act_2', 'Done — I added six steps')),
       ]);
 
-      expect(state.messages.map((message) => [message.id, message.interrupted])).toEqual([
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
         ['act_1', undefined],
         ['act_2', true],
       ]);
@@ -382,7 +382,7 @@ describe('applyEnvelope', () => {
 
       expect(state.messages[1]).toMatchObject({
         id: 'act_2',
-        interrupted: true,
+        stopped: true,
         parts: [{ type: 'text', text: 'Done — I added', state: 'streaming' }],
       });
     });
@@ -395,7 +395,7 @@ describe('applyEnvelope', () => {
         envelope(4, assistantText('act_2', 'Done — I added six steps')),
       ]);
 
-      expect(state.messages.map((message) => [message.id, message.interrupted])).toEqual([
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
         ['act_1', undefined],
         ['act_2', true],
       ]);
@@ -408,7 +408,7 @@ describe('applyEnvelope', () => {
         envelope(3, assistantText('act_1', 'Partial reply')),
       ]);
 
-      expect(state.messages.map((message) => [message.id, message.interrupted])).toEqual([['act_1', true]]);
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([['act_1', true]]);
     });
 
     it('does not hand the mark to a message of the next run', () => {
@@ -421,7 +421,7 @@ describe('applyEnvelope', () => {
         envelope(6, { type: 'run-finish', outcome: 'completed' }, { runId: 'run-2' }),
       ]);
 
-      expect(state.messages.map((message) => [message.id, message.interrupted])).toEqual([
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
         ['act_1', true],
         ['act_2', undefined],
       ]);
@@ -448,11 +448,46 @@ describe('applyEnvelope', () => {
       );
       const withReply = applyEnvelope(withUser, envelope(6, assistantText('act_2', 'Sure')));
 
-      expect(withReply.messages.map((message) => [message.id, message.interrupted])).toEqual([
+      expect(withReply.messages.map((message) => [message.id, message.stopped])).toEqual([
         ['act_1', true],
         ['card_1', undefined],
         ['u2', undefined],
         ['act_2', undefined],
+      ]);
+    });
+
+    it('does not hand the mark to the reply of a turn the client started after the stop', () => {
+      const afterStop = applyEnvelopes(createInitialAgentConversationState(), [
+        envelope(1, { type: 'run-start' }),
+        envelope(2, assistantText('act_1', 'Partial reply')),
+        envelope(3, { type: 'run-finish', outcome: 'aborted' }),
+      ]);
+      // A card click starts a turn without a user message, and its live reply can land before its run-start.
+      const state = applyEnvelopes({ ...afterStop, hasActedSinceStop: true }, [
+        envelope(4, { type: 'message-start', messageId: 'act_2' }),
+        envelope(5, { type: 'message-delta', messageId: 'act_2', delta: 'Kept your changes' }),
+        envelope(6, { type: 'run-start' }, { runId: 'run-2' }),
+      ]);
+
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
+        ['act_1', true],
+        ['act_2', undefined],
+      ]);
+      expect(state.messages[1]?.parts).toEqual([{ type: 'text', text: 'Kept your changes', state: 'streaming' }]);
+    });
+
+    it('lets the late reply of a later stop take the mark after the client acted', () => {
+      const state = applyEnvelopes({ ...createInitialAgentConversationState(), hasActedSinceStop: true }, [
+        envelope(1, { type: 'run-start' }, { runId: 'run-2' }),
+        envelope(2, assistantText('act_1', "I'll add the steps"), { runId: 'run-2' }),
+        envelope(3, { type: 'run-finish', outcome: 'aborted' }, { runId: 'run-2' }),
+        envelope(4, assistantText('act_2', 'Done — I added six steps')),
+      ]);
+
+      expect(state.hasActedSinceStop).toBe(false);
+      expect(state.messages.map((message) => [message.id, message.stopped])).toEqual([
+        ['act_1', undefined],
+        ['act_2', true],
       ]);
     });
 
@@ -468,6 +503,59 @@ describe('applyEnvelope', () => {
 
       expect(state.messages.map((message) => message.id)).toEqual(['act_1', 'act_2', 'run-2']);
       expect(state.messages[1]?.parts).toEqual([{ type: 'text', text: 'Partial reply', state: 'done' }]);
+    });
+  });
+
+  describe('overlapping runs', () => {
+    // `onAbort`'s run can still be posting its card when the turn after the stop starts.
+    const overlapping = [
+      envelope(1, { type: 'run-start' }, { runId: 'run-abort' }),
+      envelope(2, { type: 'run-start' }, { runId: 'run-next' }),
+      envelope(3, { type: 'message-start', messageId: 'act_next' }),
+      envelope(4, { type: 'message-delta', messageId: 'act_next', delta: 'Adding ' }),
+      envelope(5, { type: 'run-finish', outcome: 'completed' }, { runId: 'run-abort' }),
+      envelope(6, { type: 'message-delta', messageId: 'act_next', delta: 'the step' }),
+    ];
+
+    it('keeps running while a later run is still open, and its reply keeps streaming', () => {
+      const state = applyEnvelopes(createInitialAgentConversationState(), overlapping);
+
+      expect(state.isRunning).toBe(true);
+      expect(state.activeAssistantMessageId).toBe('act_next');
+      expect(state.messages[0]?.parts).toEqual([{ type: 'text', text: 'Adding the step', state: 'streaming' }]);
+    });
+
+    it('settles once the last open run ends', () => {
+      const state = applyEnvelopes(createInitialAgentConversationState(), [
+        ...overlapping,
+        envelope(7, { type: 'run-finish', outcome: 'completed' }, { runId: 'run-next' }),
+      ]);
+
+      expect(state.isRunning).toBe(false);
+      expect(state.activeAssistantMessageId).toBeUndefined();
+      expect(state.messages[0]?.parts).toEqual([{ type: 'text', text: 'Adding the step', state: 'done' }]);
+    });
+
+    it('keeps running when an earlier run errors while a later one is open', () => {
+      const state = applyEnvelopes(createInitialAgentConversationState(), [
+        envelope(1, { type: 'run-start' }, { runId: 'run-abort' }),
+        envelope(2, { type: 'run-start' }, { runId: 'run-next' }),
+        envelope(3, { type: 'run-error', message: 'boom', code: 'E' }, { runId: 'run-abort' }),
+      ]);
+
+      expect(state.isRunning).toBe(true);
+      expect(state.error).toEqual({ message: 'boom', code: 'E' });
+    });
+
+    it('closes a run that never reported its end once a later run ends', () => {
+      const state = applyEnvelopes(createInitialAgentConversationState(), [
+        envelope(1, { type: 'run-start' }, { runId: 'run-lost' }),
+        envelope(2, { type: 'run-start' }, { runId: 'run-2' }),
+        envelope(3, { type: 'run-finish', outcome: 'completed' }, { runId: 'run-2' }),
+      ]);
+
+      expect(state.isRunning).toBe(false);
+      expect(state.openRunIds).toEqual([]);
     });
   });
 

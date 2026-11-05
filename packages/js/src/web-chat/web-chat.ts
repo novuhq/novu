@@ -664,6 +664,9 @@ export class WebChat extends BaseModule {
         };
       }
 
+      // Before the request: the turn it starts can stream its reply before the HTTP ack.
+      this.#store.markActed(entry);
+
       try {
         const result = await run(entry, conversationId);
         if ('error' in result) {

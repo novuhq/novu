@@ -141,10 +141,10 @@ export type UseWebChatResult = {
   }>;
   /**
    * Stop the agent turn that is running. Does nothing when no turn runs. Resolves an `error` when no message was
-   * sent yet. `isStopping` is true until the run ends, and the last assistant message then has `interrupted: true`.
+   * sent yet. `isStopping` is true until the run ends, and the last assistant message then has `stopped: true`.
    * Does not throw. Resolves `{ data, error }`. Inspect `error` on the result, or show hook `error`.
    *
-   * @experimental Not every agent runtime can interrupt a turn mid-step yet. The agent finishes its current step first.
+   * @experimental Not every agent runtime can stop a turn mid-step yet. The agent finishes its current step first.
    */
   stop: () => Promise<{
     data?: StopResult;

@@ -22,7 +22,7 @@ import {
   type CopilotCardAction,
   type CopilotPageContext,
   getFailedSend,
-  getPromptBeforeCard,
+  getTryAgainPrompt,
   getUserMessageText,
   hasPendingReplyGap,
   isCopilotReviewActionId,
@@ -179,8 +179,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [awaitingReply, setAwaitingReply] = useState(false);
   const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
-  // A Try again click records the prompt to resend; the agent's ready event hands it to `readyPrompt`, which is sent once the run settles.
-  const tryAgainPromptRef = useRef<string | undefined>(undefined);
+  // A Try again click records its card; the agent's ready event names the prompt to resend in `readyPrompt`, which is sent once the run settles.
+  const tryAgainCardRef = useRef<string | undefined>(undefined);
   const [readyPrompt, setReadyPrompt] = useState<string>();
   const navigate = useNavigate();
   const isOpenRef = useRef(isOpen);
@@ -208,7 +208,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       } else if (event.type === 'run-finish') {
         setAwaitingReply(false);
         // A Try again run that finished without the ready event reverted nothing to retry from.
-        tryAgainPromptRef.current = undefined;
+        tryAgainCardRef.current = undefined;
         // A failed revert answers in plain text, so the review card is still the latest card and can be clicked again.
         setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, { outcome: event.outcome, agentId: NOVU_COPILOT_AGENT_ID });
@@ -216,14 +216,17 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
         setAwaitingReply(false);
-        tryAgainPromptRef.current = undefined;
+        tryAgainCardRef.current = undefined;
         setReadyPrompt(undefined);
         setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID });
         setRunError(true);
       } else if (event.type === 'custom' && event.name === COPILOT_TRY_AGAIN_READY_EVENT) {
-        setReadyPrompt(tryAgainPromptRef.current);
-        tryAgainPromptRef.current = undefined;
+        const cardSourceMessageId = tryAgainCardRef.current;
+        tryAgainCardRef.current = undefined;
+        if (cardSourceMessageId) {
+          setReadyPrompt(getTryAgainPrompt(chatRef.current.messages, event.data, cardSourceMessageId));
+        }
       }
     },
     [track]
@@ -342,7 +345,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     track(TelemetryEvent.COPILOT_GENERATION_STOPPED, { agentId: NOVU_COPILOT_AGENT_ID });
     // Nothing is owed after a stop: drop the send → run-start bridge, a queued Try again resend and the locked review card.
     setAwaitingReply(false);
-    tryAgainPromptRef.current = undefined;
+    tryAgainCardRef.current = undefined;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
 
@@ -353,10 +356,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const sendCardAction = useCallback(async (action: CopilotCardAction) => {
     if (isCopilotReviewActionId(action.actionId)) {
       setPendingReviewMessageId(action.sourceMessageId);
-      tryAgainPromptRef.current =
-        action.actionId === CopilotReviewActionEnum.TRY_AGAIN
-          ? getPromptBeforeCard(chatRef.current.messages, action.sourceMessageId)
-          : undefined;
+      tryAgainCardRef.current =
+        action.actionId === CopilotReviewActionEnum.TRY_AGAIN ? action.sourceMessageId : undefined;
     }
 
     const { error } = await chatRef.current.sendAction(action);
@@ -364,13 +365,13 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
     // The click never reached the agent, so the card stays the user's way to try it again.
     setPendingReviewMessageId(undefined);
-    tryAgainPromptRef.current = undefined;
+    tryAgainCardRef.current = undefined;
     showErrorToast("Couldn't reach the Copilot. Try again.");
   }, []);
 
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
-    tryAgainPromptRef.current = undefined;
+    tryAgainCardRef.current = undefined;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
     setSentContextLabels({});

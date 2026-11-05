@@ -248,7 +248,7 @@ describe('AgentConversationRuntime', () => {
 
       const snapshot = runtime.getSnapshot();
       expect(snapshot.run).toMatchObject({ isRunning: false, isStopping: false });
-      expect(snapshot.messages.find((message) => message.id === 'msg_partial0001')?.interrupted).toBe(true);
+      expect(snapshot.messages.find((message) => message.id === 'msg_partial0001')?.stopped).toBe(true);
 
       runtime.dispose();
     });

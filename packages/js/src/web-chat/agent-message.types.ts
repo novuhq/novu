@@ -150,7 +150,7 @@ export type AgentMessage = {
    * True on the last assistant message of a run that was stopped with `stop()`. The text is the partial reply.
    * A run stopped before it wrote anything gets an assistant message with no parts that carries the flag.
    */
-  interrupted?: boolean;
+  stopped?: boolean;
 };
 
 /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. */
@@ -169,7 +169,15 @@ export type AgentConversationTyping = {
 /** Timeline produced by applying event envelopes. */
 export type AgentConversationState = {
   messages: AgentMessage[];
+  /** True while any run in `openRunIds` is open: `onAbort`'s run can overlap the turn that follows a stop. */
   isRunning: boolean;
+  /** Runs that started and have not ended yet, oldest first. */
+  openRunIds: string[];
+  /**
+   * The client answered a card or an approval after the last stop. The turn it starts can show its reply before its
+   * `run-start`, so a reply that appears from then on is not the stopped run's late reply.
+   */
+  hasActedSinceStop?: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   lastSequence: number;
@@ -182,6 +190,7 @@ export function createInitialAgentConversationState(): AgentConversationState {
   return {
     messages: [],
     isRunning: false,
+    openRunIds: [],
     status: 'active',
     lastSequence: 0,
   };

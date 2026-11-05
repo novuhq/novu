@@ -368,10 +368,10 @@ export class AgentConversationRuntime {
    * Resolves an `error` when no message was sent yet.
    *
    * Stopping is asynchronous: `run.isStopping` is true until the run ends with its `run-finish` event,
-   * and the last assistant message then carries `interrupted: true`. A turn that already ended resolves
+   * and the last assistant message then carries `stopped: true`. A turn that already ended resolves
    * `{ status: 'idle' }` and clears `run.isRunning` at once.
    *
-   * @experimental Not every agent runtime can interrupt a turn mid-step yet. The agent finishes its current step first.
+   * @experimental Not every agent runtime can stop a turn mid-step yet. The agent finishes its current step first.
    */
   async stop(): Promise<{ data?: StopResult; error?: NovuError | WebChatPlanLimitError }> {
     const response = await this.#webChat.stop({

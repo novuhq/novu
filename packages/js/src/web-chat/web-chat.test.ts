@@ -2461,7 +2461,7 @@ describe('WebChat', () => {
       const settled = snapshotOf();
       expect(settled).toMatchObject({ isRunning: false, isStopping: false });
       expect(settled?.messages.find((message) => message.id === 'msg_partial0001')).toMatchObject({
-        interrupted: true,
+        stopped: true,
         parts: [{ type: 'text', text: 'Working on', state: 'done' }],
       });
     });
@@ -2519,6 +2519,36 @@ describe('WebChat', () => {
       expect(snapshotOf()).toMatchObject({ isRunning: true, isStopping: false });
     });
 
+    it('keeps the mark on the stopped reply when a card click starts a turn whose reply lands before its run-start', async () => {
+      await startRunningTurn();
+      emitter.emit('web_chat.agent_event', abortedFinish(5));
+      await flushSyncQueue();
+      sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await webChat.sendAction({
+        agentId: 'agent_1',
+        key: 'local_session1',
+        actionId: 'keep',
+        sourceMessageId: 'act_card0000001',
+      });
+      await flushSyncQueue();
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({ sequence: 6, event: { type: 'message-start', messageId: 'msg_next00000001' } })
+      );
+      emitter.emit(
+        'web_chat.agent_event',
+        liveEnvelope({ sequence: 7, event: { type: 'message-delta', messageId: 'msg_next00000001', delta: 'Kept' } })
+      );
+      await flushSyncQueue();
+
+      expect(snapshotOf()?.messages.map((message) => [message.id, message.stopped])).toEqual([
+        ['msg_user0000001', undefined],
+        ['msg_partial0001', true],
+        ['msg_next00000001', undefined],
+      ]);
+    });
+
     it('returns an error without a request when the conversation has no id yet', async () => {
       const result = await webChat.stop({ agentId: 'agent_1', key: 'local_unsent' });
 
@@ -2561,7 +2591,7 @@ describe('WebChat', () => {
       expect(snapshotOf()).toMatchObject({ isRunning: false, isStopping: false });
     });
 
-    it('marks the last assistant message interrupted when history replays an aborted run', async () => {
+    it('marks the last assistant message stopped when history replays an aborted run', async () => {
       getEvents.mockResolvedValue(
         historyEventPage([
           {
@@ -2585,8 +2615,8 @@ describe('WebChat', () => {
       await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
       const messages = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages;
-      expect(messages?.find((message) => message.id === 'msg_user0000001')?.interrupted).toBeUndefined();
-      expect(messages?.find((message) => message.id === 'msg_partial0001')?.interrupted).toBe(true);
+      expect(messages?.find((message) => message.id === 'msg_user0000001')?.stopped).toBeUndefined();
+      expect(messages?.find((message) => message.id === 'msg_partial0001')?.stopped).toBe(true);
     });
   });
 

@@ -80,6 +80,8 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
   Object.assign(entry, {
     messages: next.messages,
     isRunning: next.isRunning,
+    openRunIds: next.openRunIds,
+    hasActedSinceStop: next.hasActedSinceStop,
     typing: next.typing,
     status: next.status,
     lastSequence: next.lastSequence,
@@ -458,11 +460,17 @@ export class WebChatStore {
     }
 
     entry.isRunning = false;
+    entry.openRunIds = [];
     entry.isStopping = false;
     entry.typing = undefined;
     this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
+  }
+
+  /** The client answered a card or an approval. A stop's mark stays where it is from now on. */
+  markActed(entry: ConversationEntry): void {
+    entry.hasActedSinceStop = true;
   }
 
   /** Update reconnect recovery flags and notify listeners. */

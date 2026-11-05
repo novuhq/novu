@@ -6,7 +6,8 @@ export const COPILOT_WORKFLOW_UPDATED_EVENT = 'copilot.workflow-updated';
 
 /**
  * Custom agent event the Copilot emits on web chat once a Try again click reverted the turn, so the dashboard
- * resends that turn's prompt.
+ * resends that turn's prompt. Its data names the card (`sourceMessageId`) and the user message the turn answered
+ * (`promptMessageId`).
  */
 export const COPILOT_TRY_AGAIN_READY_EVENT = 'copilot.try-again-ready';
 

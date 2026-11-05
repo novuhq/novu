@@ -154,10 +154,10 @@ function pickTargetStepId(input: Record<string, unknown> | undefined): string | 
 
 export function toolPartToRow(
   part: Pick<AgentToolPart, 'toolUseId' | 'toolName' | 'input' | 'state'>,
-  isInterrupted = false
+  isStopped = false
 ): ToolRow {
   const known = TOOL_LABELS[normalizeToolName(part.toolName)];
-  let status: ToolRowStatus = isInterrupted ? 'stopped' : 'active';
+  let status: ToolRowStatus = isStopped ? 'stopped' : 'active';
 
   if (part.state === 'output-available') status = 'done';
   else if (part.state === 'output-error') status = 'error';
@@ -206,7 +206,7 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
-      const row = toolPartToRow(part, message.interrupted);
+      const row = toolPartToRow(part, message.stopped);
       const last = blocks[blocks.length - 1];
 
       if (last?.kind === 'tools') last.rows.push(row);
@@ -233,8 +233,8 @@ export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): s
   return undefined;
 }
 
-/** The prompt a Try again click resends: the text of the last user message before the message that holds the card. */
-export function getPromptBeforeCard(messages: readonly AgentMessage[], sourceMessageId: string): string | undefined {
+/** The text of the last user message before the message that holds the card. */
+function getPromptBeforeCard(messages: readonly AgentMessage[], sourceMessageId: string): string | undefined {
   const cardIndex = messages.findIndex((message) =>
     message.parts.some((part) => part.type === 'card' && part.sourceMessageId === sourceMessageId)
   );
@@ -244,6 +244,29 @@ export function getPromptBeforeCard(messages: readonly AgentMessage[], sourceMes
   }
 
   return undefined;
+}
+
+function readPromptMessageId(data: unknown): string | undefined {
+  if (typeof data !== 'object' || data === null) return undefined;
+
+  const { promptMessageId } = data as { promptMessageId?: unknown };
+
+  return typeof promptMessageId === 'string' ? promptMessageId : undefined;
+}
+
+/**
+ * The prompt a Try again click resends: the user message the Copilot's ready event names. The user may have sent
+ * another one before a stopped turn's card arrived, so the last user message before the card is only the fallback.
+ */
+export function getTryAgainPrompt(
+  messages: readonly AgentMessage[],
+  readyEventData: unknown,
+  cardSourceMessageId: string
+): string | undefined {
+  const promptMessageId = readPromptMessageId(readyEventData);
+  const prompt = messages.find((message) => message.role === 'user' && message.id === promptMessageId);
+
+  return (prompt && getUserMessageText(prompt)) || getPromptBeforeCard(messages, cardSourceMessageId);
 }
 
 /** The last message is a user send the server never accepted (it stays in the thread and can be retried). */
