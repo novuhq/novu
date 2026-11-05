@@ -712,12 +712,33 @@ export class ConversationActivityLedger {
     );
   }
 
-  /** The conversation's latest run, when it has neither finished nor failed. */
-  async findOpenRunId(environmentId: string, conversationId: string): Promise<string | undefined> {
+  /**
+   * The latest run started after the message that began the turn, when it has neither finished nor failed. A turn
+   * stopped before its run started has none, even while an earlier run (such as a previous Stop's `onAbort`) is
+   * still open. Without that message, the conversation's latest run counts.
+   */
+  async findOpenRunId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    turnMessageId?: string;
+  }): Promise<string | undefined> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const turnMessage = params.turnMessageId
+      ? await this.activityRepository.findOne(
+          { ...scope, platformMessageId: params.turnMessageId, type: ConversationActivityTypeEnum.MESSAGE },
+          ['sequence']
+        )
+      : null;
+    const afterTurnMessage = typeof turnMessage?.sequence === 'number' ? { $gt: turnMessage.sequence } : {};
     const runStart = await this.activityRepository.findOne(
-      { _environmentId: environmentId, _conversationId: conversationId, type: ConversationActivityTypeEnum.RUN_START },
+      { ...scope, type: ConversationActivityTypeEnum.RUN_START, sequence: { $type: 'number', ...afterTurnMessage } },
       ['identifier'],
-      { query: { sort: { createdAt: -1 } } }
+      { query: { sort: { sequence: -1 } } }
     );
     const runId = runStart?.identifier ? runIdFromLifecycleIdentifier(runStart.identifier) : undefined;
     if (!runId) {
@@ -726,7 +747,7 @@ export class ConversationActivityLedger {
 
     const ended = await this.activityRepository.findOne(
       {
-        _environmentId: environmentId,
+        _environmentId: params.environmentId,
         identifier: { $in: [runLifecycleIdentifier(runId, 'finish'), runLifecycleIdentifier(runId, 'error')] },
       },
       ['_id']

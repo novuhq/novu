@@ -141,6 +141,99 @@ describe('ConversationActivityLedger', () => {
     });
   });
 
+  describe('findOpenRunId', () => {
+    interface StoredRow {
+      identifier: string;
+      type: ConversationActivityTypeEnum;
+      sequence: number;
+      platformMessageId?: string;
+    }
+
+    interface LookupQuery {
+      type?: ConversationActivityTypeEnum;
+      platformMessageId?: string;
+      identifier?: { $in: string[] };
+      sequence?: { $gt?: number };
+    }
+
+    /** `findOne` over stored rows, honouring the filters and the newest-sequence-first sort the lookup uses. */
+    function findOneOver(rows: StoredRow[]) {
+      return sinon.stub().callsFake(async (query: LookupQuery) => {
+        const matches = rows.filter(
+          (row) =>
+            (query.type === undefined || row.type === query.type) &&
+            (query.platformMessageId === undefined || row.platformMessageId === query.platformMessageId) &&
+            (query.identifier?.$in === undefined || query.identifier.$in.includes(row.identifier)) &&
+            (query.sequence?.$gt === undefined || row.sequence > query.sequence.$gt)
+        );
+
+        return matches.sort((a, b) => b.sequence - a.sequence)[0] ?? null;
+      });
+    }
+
+    const scope = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
+    const stoppedPrompt: StoredRow = {
+      identifier: 'msg-2',
+      type: ConversationActivityTypeEnum.MESSAGE,
+      platformMessageId: 'msg-2',
+      sequence: 20,
+    };
+    const earlierOpenRunStart: StoredRow = {
+      identifier: 'run_run-on-abort_start',
+      type: ConversationActivityTypeEnum.RUN_START,
+      sequence: 15,
+    };
+
+    it('finds the run the stopped turn started', async () => {
+      const findOne = findOneOver([
+        earlierOpenRunStart,
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal('run-turn');
+    });
+
+    it('does not end an earlier run still open for a turn stopped before its own run started', async () => {
+      const findOne = findOneOver([earlierOpenRunStart, stoppedPrompt]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+
+    it('takes the latest open run when the turn has no message to start from', async () => {
+      const findOne = findOneOver([earlierOpenRunStart, stoppedPrompt]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId(scope);
+
+      expect(runId).to.equal('run-on-abort');
+    });
+
+    it('finds no open run once the turn run finished', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+        { identifier: 'run_run-turn_finish', type: ConversationActivityTypeEnum.RUN_FINISH, sequence: 25 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+  });
+
   describe('importInboundMessages', () => {
     it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
       const importUserActivities = sinon.stub().resolves(2);

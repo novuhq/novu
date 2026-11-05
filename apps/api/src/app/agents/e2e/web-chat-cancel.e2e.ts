@@ -243,6 +243,30 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
     ).to.equal(null);
   });
 
+  it('leaves an earlier run still open alone when a later turn is stopped before its run started', async () => {
+    const { identifier, conversation } = await startConversation();
+    const conversationId = String(conversation._id);
+    const firstTurn = await activeTurnOf(conversationId);
+    await ingest(conversationId, firstTurn.turnId, 'run_e2e_6', [{ type: 'run-start' }]);
+
+    const resumed = await ctx.session.testAgent
+      .post('/v1/web-chat/conversations')
+      .set('Authorization', `Bearer ${subscriberToken}`)
+      .send({ agentId: ctx.agentIdentifier, text: 'Add an SMS step', conversationIdentifier: identifier });
+    expect(resumed.status).to.equal(201);
+    const secondTurn = await pollFor(async () => {
+      const turn = await turnAbortStore().getActiveTurn(conversationId);
+
+      return turn && turn.turnId !== firstTurn.turnId ? turn : null;
+    });
+
+    const cancelRes = await cancel(identifier);
+    expect(cancelRes.body.data).to.deep.equal({ status: 'aborted' });
+
+    const finishes = await runFinishes(conversationId);
+    expect(finishes.map((finish) => finish.identifier)).to.deep.equal([`run_stopped_${secondTurn.turnId}_finish`]);
+  });
+
   it('closes a run whose start was being stored when the Stop landed', async () => {
     const { identifier, conversation } = await startConversation();
     const conversationId = String(conversation._id);

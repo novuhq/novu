@@ -104,7 +104,12 @@ export class CancelConversationTurn {
     command: CancelConversationTurnCommand
   ): Promise<string> {
     const conversationId = String(conversation._id);
-    const openRunId = await this.conversationService.findOpenRunId(command.environmentId, conversationId);
+    const openRunId = await this.conversationService.findOpenRunId({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      conversationId,
+      turnMessageId: activeTurn.platformMessageId,
+    });
     const runId = openRunId ?? `stopped_${activeTurn.turnId}`;
 
     const agent = await this.agentRepository.findOne(

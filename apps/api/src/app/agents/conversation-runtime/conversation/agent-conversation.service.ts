@@ -496,8 +496,13 @@ export class AgentConversationService {
     return this.ledger.persistRunLifecycle(params);
   }
 
-  async findOpenRunId(environmentId: string, conversationId: string): Promise<string | undefined> {
-    return this.ledger.findOpenRunId(environmentId, conversationId);
+  async findOpenRunId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    turnMessageId?: string;
+  }): Promise<string | undefined> {
+    return this.ledger.findOpenRunId(params);
   }
 
   // --- Lookups ---

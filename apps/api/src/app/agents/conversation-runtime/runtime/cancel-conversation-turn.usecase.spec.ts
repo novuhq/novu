@@ -121,6 +121,19 @@ describe('CancelConversationTurn', () => {
     expect(persisted.event).to.deep.equal({ type: 'run-finish', outcome: 'aborted' });
   });
 
+  it('looks for the open run among the runs the stopped turn started after its message', async () => {
+    const { usecase, conversationService } = setup();
+
+    await usecase.execute(command());
+
+    expect(conversationService.findOpenRunId.firstCall.args[0]).to.deep.equal({
+      environmentId: ENV_ID,
+      organizationId: ORG_ID,
+      conversationId: CONVERSATION_ID,
+      turnMessageId: TURN.platformMessageId,
+    });
+  });
+
   it('gives a turn stopped before its run started an aborted run of its own', async () => {
     const { usecase, conversationService } = setup({ endedIdentifiers: ['run_run_abc_finish'] });
 
