@@ -66,6 +66,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
+import { alignedEmailChecks } from './email-sender-alignment';
 import { parseEmailThreadAddress } from './email-thread-id';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
@@ -219,17 +220,44 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
   return preview;
 }
 
+type InboundEmailSenderCheck = 'verified' | 'verified-without-domains' | 'unauthenticated' | 'unaligned';
+
 /**
  * An inbound email's sender identity is taken from the `From` header, which is
  * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
- * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
- * The sender is only trusted when both verdicts are `'pass'`; anything else —
- * including a missing verdict on an older payload — is treated as unverified so
- * the resolver never maps a spoofed `From` onto a registered subscriber. Fails
- * closed by design.
+ * and forwards the verdicts on the webhook payload (surfaced on `message.raw`),
+ * with the domains they vouch for. The sender is only trusted when both
+ * verdicts are `'pass'` and one of those domains is the sender's own: anyone
+ * can pass both checks for a domain they own while writing someone else's
+ * address in `From`. Anything else — including a missing verdict on an older
+ * payload — is treated as unverified so the resolver never maps a spoofed
+ * `From` onto a registered subscriber. Fails closed by design.
+ *
+ * A payload without the domains predates them (queued by an older inbound-mail
+ * service, e.g. during a deploy) and keeps the check it had before. The sender
+ * can't drop them: only our own services set them. The caller logs each such
+ * payload, since a service that stopped forwarding them would land here too.
  */
-function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
-  return raw?.dkim === 'pass' && raw?.spf === 'pass';
+function checkInboundEmailSender(
+  raw: Record<string, unknown> | undefined,
+  senderAddress: string
+): InboundEmailSenderCheck {
+  if (raw?.dkim !== 'pass' || raw?.spf !== 'pass') {
+    return 'unauthenticated';
+  }
+
+  if (!Array.isArray(raw.dkimDomains)) {
+    return 'verified-without-domains';
+  }
+
+  const aligned = alignedEmailChecks({
+    senderAddress,
+    dkimDomains: raw.dkimDomains,
+    spfDomain: raw.spfDomain,
+    spfPassed: true,
+  });
+
+  return aligned.dkim || aligned.spf ? 'verified' : 'unaligned';
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -678,8 +706,18 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message
   ): Promise<{ resolution: SubscriberResolution; isVerifiedEmailSender: boolean } | null> {
     const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
-    const isVerifiedEmailSender =
-      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
+    const emailSenderCheck: InboundEmailSenderCheck =
+      config.platform === AgentPlatformEnum.EMAIL
+        ? checkInboundEmailSender(emailAuthRaw, message.author.userId)
+        : 'verified';
+    const isVerifiedEmailSender = emailSenderCheck === 'verified' || emailSenderCheck === 'verified-without-domains';
+
+    if (emailSenderCheck === 'verified-without-domains') {
+      this.logger.warn(
+        { agentId, organizationId: config.organizationId, messageId: message.id },
+        'Inbound email payload has no DKIM/SPF domains — trusted on its verdicts alone, without checking them against From. Expected only for emails queued before inbound-mail sent the domains.'
+      );
+    }
 
     // Open-access agents may lookup-or-provision; restricted stay lookup-only.
     // Keyless email demos stay lookup-only until tool approval.
@@ -702,12 +740,16 @@ export class AgentInboundHandler implements OnModuleInit {
             fromAddress: message.author.userId,
             dkim: emailAuthRaw?.dkim,
             spf: emailAuthRaw?.spf,
+            dkimDomains: emailAuthRaw?.dkimDomains,
+            spfDomain: emailAuthRaw?.spfDomain,
             messageId: message.id,
             subscriberAccess: config.subscriberAccess,
             isKeyless: config.isKeyless,
             canAutoProvision,
           },
-          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+          emailSenderCheck === 'unaligned'
+            ? "Inbound email passed DKIM/SPF only for domains that aren't its From domain — skipping subscriber resolution so a spoofed From cannot assume an existing identity."
+            : 'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
 
         return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender };

@@ -125,10 +125,13 @@ export interface NovuEmailRawMessage {
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) forwarded from the
    * inbound-mail service. Downstream identity resolution must treat the
-   * spoofable `from` address as untrusted unless both are `'pass'`.
+   * spoofable `from` address as untrusted unless both are `'pass'` and one of
+   * the domains they vouch for (below) is its domain.
    */
   dkim?: string;
   spf?: string;
+  dkimDomains?: string[];
+  spfDomain?: string | null;
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;
