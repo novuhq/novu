@@ -13,6 +13,7 @@ import {
   resolveCurrentMessage as foldCurrentMessage,
   isDuplicateKeyError,
 } from '@novu/dal';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
@@ -79,7 +80,7 @@ export class ConversationActivityLedger {
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
     @Inject(forwardRef(() => WebChatLiveActivityPublisher))
-    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly webChatLiveActivityPublisher: WrapperType<WebChatLiveActivityPublisher>,
     private readonly conversationRepository: ConversationRepository,
     private readonly logger: PinoLogger
   ) {

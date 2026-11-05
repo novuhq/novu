@@ -4,6 +4,7 @@ import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, RawMessage, Thread } from 'chat';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -113,7 +114,7 @@ export interface ThreadReplyPersistContext {
 export class OutboundGateway {
   constructor(
     @Inject(forwardRef(() => ChatInstanceRegistry))
-    private readonly registry: ChatInstanceRegistry,
+    private readonly registry: WrapperType<ChatInstanceRegistry>,
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
