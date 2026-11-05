@@ -1,7 +1,7 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
 import { CopilotReviewActionEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getOpenReviewCard, getTryAgainPrompt } from './copilot-web-chat-utils';
+import { getOpenReviewAction, getOpenReviewCard, getTryAgainPrompt } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
   return {
@@ -134,6 +134,32 @@ describe('getOpenReviewCard (button shapes)', () => {
     const other: AgentCardChild = { type: 'actions', children: [{ type: 'button', id: 'open', label: 'Open' }] };
 
     expect(getOpenReviewCard([cardMessageWith('card_other', [other])])).toBeUndefined();
+  });
+});
+
+describe('getOpenReviewAction', () => {
+  const messages = [userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')];
+
+  it('builds the click the card sends, with the button value', () => {
+    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.KEEP)).toEqual({
+      actionId: CopilotReviewActionEnum.KEEP,
+      sourceMessageId: 'card_review',
+      value: 'snapshot_1',
+    });
+    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.REVERT)?.actionId).toBe(
+      CopilotReviewActionEnum.REVERT
+    );
+  });
+
+  it('returns nothing while a click is pending, after the card was answered, or without that button', () => {
+    expect(getOpenReviewAction(messages, CopilotReviewActionEnum.KEEP, 'card_review')).toBeUndefined();
+    expect(
+      getOpenReviewAction([...messages, noteCardMessage('card_note')], CopilotReviewActionEnum.KEEP)
+    ).toBeUndefined();
+
+    const keepOnly = cardMessageWith('card_keep', [reviewButton(CopilotReviewActionEnum.KEEP)]);
+
+    expect(getOpenReviewAction([keepOnly], CopilotReviewActionEnum.REVERT)).toBeUndefined();
   });
 });
 

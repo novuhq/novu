@@ -10,7 +10,7 @@ import {
   StepTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { FC, SVGProps, useMemo, useState } from 'react';
+import { FC, ReactNode, SVGProps, useMemo, useState } from 'react';
 import { IconType } from 'react-icons';
 import {
   RiCodeBlock,
@@ -26,7 +26,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { useWorkflowEditorCopilot } from '@/components/copilot-web-chat';
+import {
+  CopilotSidebarChat,
+  CopilotSidebarHeaderActions,
+  type CopilotSuggestion,
+  useCopilotSidebarControl,
+  useWorkflowEditorCopilot,
+} from '@/components/copilot-web-chat';
 import { Code2 } from '@/components/icons/code-2';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
@@ -118,6 +124,37 @@ function DisconnectResolverButton({ step }: { step: StepResponseDto }) {
   );
 }
 
+type WebChatStepEditorSidebarProps = {
+  suggestions: CopilotSuggestion[];
+  previewContent: ReactNode;
+  testWorkflowButton: ReactNode;
+  children: ReactNode;
+};
+
+function WebChatStepEditorSidebar({
+  suggestions,
+  previewContent,
+  testWorkflowButton,
+  children,
+}: WebChatStepEditorSidebarProps) {
+  const sidebarControl = useCopilotSidebarControl();
+
+  return (
+    <CopilotSidebar
+      copilotContent={<CopilotSidebarChat suggestions={suggestions} />}
+      headerActions={<CopilotSidebarHeaderActions />}
+      previewContent={previewContent}
+      testWorkflowButton={testWorkflowButton}
+      autoSaveId="step-editor-copilot-layout"
+      hideCollapseButton
+      maxSize="40%"
+      {...sidebarControl}
+    >
+      {children}
+    </CopilotSidebar>
+  );
+}
+
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
     useStepEditor();
@@ -135,7 +172,6 @@ function StepEditorContent() {
     stepLabel: step.stepId,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
-  const showCopilot = copilotMode === 'legacy';
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =
@@ -336,54 +372,73 @@ function StepEditorContent() {
     </>
   );
 
-  if (showCopilot) {
-    return (
-      <>
-        <CopilotSidebar
-          copilotContent={
-            <AiChatProvider config={aiChatConfig}>
-              <NovuCopilotPanel hideHeader />
-            </AiChatProvider>
-          }
-          previewContent={previewContent}
-          testWorkflowButton={testWorkflowButton}
-          autoSaveId="step-editor-copilot-layout"
-          hideCollapseButton
-          maxSize="40%"
-        >
-          <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
-        </CopilotSidebar>
-        <TestWorkflowDrawer
-          isOpen={isTestDrawerOpen}
-          onOpenChange={setIsTestDrawerOpen}
-          testData={testData}
-          initialPayload={currentPayload}
-        />
-      </>
-    );
-  }
-
-  return (
-    <ResizableLayout autoSaveId="step-editor-main-layout">
-      <ResizableLayout.ContextPanel defaultSize="27%" minSize="27%" maxSize="80%">
-        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
-          {testWorkflowButton}
-        </PanelHeader>
-        {previewContent}
-      </ResizableLayout.ContextPanel>
-
-      <ResizableLayout.Handle />
-
-      <ResizableLayout.MainContentPanel>{mainContent}</ResizableLayout.MainContentPanel>
-
-      <TestWorkflowDrawer
-        isOpen={isTestDrawerOpen}
-        onOpenChange={setIsTestDrawerOpen}
-        testData={testData}
-        initialPayload={currentPayload}
-      />
-    </ResizableLayout>
+  const testWorkflowDrawer = (
+    <TestWorkflowDrawer
+      isOpen={isTestDrawerOpen}
+      onOpenChange={setIsTestDrawerOpen}
+      testData={testData}
+      initialPayload={currentPayload}
+    />
   );
+
+  switch (copilotMode) {
+    case 'legacy':
+      return (
+        <>
+          <CopilotSidebar
+            copilotContent={
+              <AiChatProvider config={aiChatConfig}>
+                <NovuCopilotPanel hideHeader />
+              </AiChatProvider>
+            }
+            previewContent={previewContent}
+            testWorkflowButton={testWorkflowButton}
+            autoSaveId="step-editor-copilot-layout"
+            hideCollapseButton
+            maxSize="40%"
+          >
+            <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
+          </CopilotSidebar>
+          {testWorkflowDrawer}
+        </>
+      );
+    case 'web-chat-sidebar':
+      return (
+        <>
+          <WebChatStepEditorSidebar
+            suggestions={newChatSuggestions}
+            previewContent={previewContent}
+            testWorkflowButton={testWorkflowButton}
+          >
+            <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
+          </WebChatStepEditorSidebar>
+          {testWorkflowDrawer}
+        </>
+      );
+    case 'web-chat-popover':
+    case null:
+      return (
+        <ResizableLayout autoSaveId="step-editor-main-layout">
+          <ResizableLayout.ContextPanel defaultSize="27%" minSize="27%" maxSize="80%">
+            <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
+              {testWorkflowButton}
+            </PanelHeader>
+            {previewContent}
+          </ResizableLayout.ContextPanel>
+
+          <ResizableLayout.Handle />
+
+          <ResizableLayout.MainContentPanel>{mainContent}</ResizableLayout.MainContentPanel>
+
+          {testWorkflowDrawer}
+        </ResizableLayout>
+      );
+    default: {
+      const unhandled: never = copilotMode;
+
+      return unhandled;
+    }
+  }
 }
 
 export function StepEditorLayout({ workflow, step, isReadOnly, className }: StepEditorLayoutProps) {
