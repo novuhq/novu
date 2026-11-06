@@ -12,7 +12,7 @@
     "test": "echo 'skip test in the ci'",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit --file tests/setup.ts src/**/**/*.spec.ts",
+    "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'",
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
@@ -39,7 +39,7 @@
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
-    "mocha": "^8.1.1",
+    "mocha": "^11.7.6",
     "sinon": "^9.2.4",
     "typescript": "6.0.3"
   },

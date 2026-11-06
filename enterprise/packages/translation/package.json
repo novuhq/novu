@@ -11,8 +11,7 @@
     "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json",
     "test": "echo 'skip test in the ci'",
     "check": "biome check .",
-    "check:fix": "biome check --write .",
-    "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit --file tests/setup.ts src/**/**/*.spec.ts"
+    "check:fix": "biome check --write ."
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
@@ -29,7 +28,6 @@
     "shortid": "^2.2.17"
   },
   "devDependencies": {
-    "@novu/testing": "workspace:*",
     "@types/chai": "^4.2.11",
     "@types/lodash": "^4.17.7",
     "@types/mocha": "^8.0.1",
@@ -38,7 +36,6 @@
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
-    "mocha": "^8.1.1",
     "sinon": "^9.2.4",
     "typescript": "6.0.3",
     "liquidjs": "^10.27.1"
