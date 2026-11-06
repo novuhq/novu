@@ -9,7 +9,6 @@
     "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json",
-    "test": "echo 'skip test in the ci'",
     "check": "biome check .",
     "check:fix": "biome check --write ."
   },

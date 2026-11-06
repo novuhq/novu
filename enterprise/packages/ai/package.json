@@ -11,7 +11,7 @@
     "check:fix": "biome check --write .",
     "lint": "echo 'skip lint in the ci'",
     "typecheck:spec": "tsc --noEmit -p tsconfig.json",
-    "test": "echo 'skip test in the ci'",
+    "test": "if [ -e src ]; then pnpm test-ee; else echo 'skip test: the enterprise source (.source) is not checked out'; fi",
     "test-ee": "cross-env NEW_RELIC_ENABLED=false NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'"
   },
   "dependencies": {
