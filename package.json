@@ -93,7 +93,7 @@
     "@pnpm/filter-workspace-packages": "^7.0.6",
     "@pnpm/logger": "^5.0.0",
     "@swc/cli": "0.3.12",
-    "@swc/core": "1.7.26",
+    "@swc/core": "1.16.21",
     "@types/inquirer": "8.2.10",
     "@types/jest": "30.0.0",
     "@types/node": "^22.0.0",
