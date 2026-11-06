@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test": "echo \"no tests yet\"",
+    "test": "node --test swc-register.test.mjs",
     "test:watch": ""
   },
   "author": "",

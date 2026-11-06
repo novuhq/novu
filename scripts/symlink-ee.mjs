@@ -32,6 +32,6 @@ if (fs.lstatSync(sourceNodeModules, { throwIfNoEntry: false })?.isSymbolicLink()
 }
 
 if (!fs.existsSync(sourceNodeModules)) {
-  fs.symlinkSync(path.relative(sourceDir, path.join(currentDir, 'node_modules')), sourceNodeModules);
+  fs.symlinkSync(path.relative(fs.realpathSync(sourceDir), path.join(currentDir, 'node_modules')), sourceNodeModules);
   console.log(`Linked node_modules for ${process.env.PNPM_PACKAGE_NAME} into .source/${relativePath}`);
 }
