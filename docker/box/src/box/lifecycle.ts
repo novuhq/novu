@@ -35,6 +35,7 @@ import { SOCKET } from './supervisor.ts';
 
 export async function bake(ref: string, token: string | undefined, thenStart: boolean): Promise<number | undefined> {
   if (fs.existsSync(BAKED)) throw new Error(`${BAKED} exists; bake into an empty /data`);
+  ownRoot();
   await withLock('bake', () => bakeLocked(ref, token));
 
   return thenStart ? start() : undefined;
@@ -194,8 +195,15 @@ async function addHosts(): Promise<void> {
   }
 }
 
+// The container starts with `/` owned by another uid, not root as in the image. @swc/core 1.16 won't load its native
+// binding under a directory another user can replace, so `nest build` and the Mocha loader fail until root owns `/`.
+function ownRoot(): void {
+  if (fs.statSync('/').uid !== 0) fs.chownSync('/', 0, 0);
+}
+
 export async function start(): Promise<number> {
   if (!fs.existsSync(BAKED)) throw new Error('No golden data in /data. Run `box bake` first.');
+  ownRoot();
   const started = Date.now();
   await prepareRuntime();
   const supervisor = startSupervisor();
