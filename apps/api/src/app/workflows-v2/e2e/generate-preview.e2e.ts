@@ -11,7 +11,6 @@ import {
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
-  WorkflowResponseDto,
 } from '@novu/api/models/components';
 import {
   buildActorSchema,
@@ -33,7 +32,11 @@ import {
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
-import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import {
+  expectKnownSteps,
+  initNovuClassSdkInternalAuth,
+  KnownStepsWorkflowResponseDto,
+} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
 import { buildWorkflow } from '../workflow.controller.e2e';
 
@@ -720,7 +723,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       ],
     };
-    const { result: workflow } = await novuClient.workflows.create(createWorkflowDto);
+    const workflow = expectKnownSteps((await novuClient.workflows.create(createWorkflowDto)).result);
     const stepId = workflow.steps[0].id;
     const controlValues = {
       subject: 'Test Email Subject',
@@ -1935,7 +1938,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           additionalProperties: false,
         },
       });
-      const novuRestResult = await novuClient.workflows.create(createDto);
+      const createdWorkflow = expectKnownSteps((await novuClient.workflows.create(createDto)).result);
       const controlValues = {
         subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
         body: `Hello, World! {{payload.placeholder.body}}`,
@@ -1952,15 +1955,15 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           url: '   ',
         },
       };
-      const workflowSlug = novuRestResult.result?.slug;
-      const stepSlug = novuRestResult.result?.steps[0].slug;
+      const workflowSlug = createdWorkflow.slug;
+      const stepSlug = createdWorkflow.steps[0].slug;
       const stepDataDto = await updateWorkflow(workflowSlug, {
-        ...mapResponseToUpdateDto(novuRestResult.result),
+        ...mapResponseToUpdateDto(createdWorkflow),
         steps: [
           {
-            type: novuRestResult.result.steps[0].type as any,
-            name: novuRestResult.result.steps[0].name,
-            id: novuRestResult.result.steps[0].id,
+            type: createdWorkflow.steps[0].type as any,
+            name: createdWorkflow.steps[0].name,
+            id: createdWorkflow.steps[0].id,
             ...buildInAppControlValueWithAPlaceholderInTheUrl(),
           },
         ],
@@ -2065,13 +2068,13 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
   });
 
-  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+  async function updateWorkflow(id: string, workflow: UpdateWorkflowDto): Promise<KnownStepsWorkflowResponseDto> {
     const res = await novuClient.workflows.update(workflow, id);
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
-  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+  function mapResponseToUpdateDto(workflowResponse: KnownStepsWorkflowResponseDto): UpdateWorkflowDto {
     return {
       ...workflowResponse,
       steps: workflowResponse.steps.map(
@@ -2264,12 +2267,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       ],
     };
-    const workflowResult = await novuClient.workflows.create(createWorkflowDto);
+    const workflow = expectKnownSteps((await novuClient.workflows.create(createWorkflowDto)).result);
 
     return {
-      workflowId: workflowResult.result.id,
-      emailStepDatabaseId: workflowResult.result.steps[1].id,
-      digestStepId: workflowResult.result.steps[0].stepId,
+      workflowId: workflow.id,
+      emailStepDatabaseId: workflow.steps[1].id,
+      digestStepId: workflow.steps[0].stepId,
     };
   }
 
@@ -2299,19 +2302,19 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       ],
     };
-    const workflowResult = await novuClient.workflows.create(createWorkflowDto);
+    const workflow = expectKnownSteps((await novuClient.workflows.create(createWorkflowDto)).result);
 
     return {
-      workflowId: workflowResult.result.id,
-      smsDatabaseStepId: workflowResult.result.steps[1].id,
-      inAppStepId: workflowResult.result.steps[0].stepId,
+      workflowId: workflow.id,
+      smsDatabaseStepId: workflow.steps[1].id,
+      inAppStepId: workflow.steps[0].stepId,
     };
   }
 
   async function createWorkflow(
     overrides: Partial<NotificationTemplateEntity> = {},
     payloadSchema?: any
-  ): Promise<WorkflowResponseDto> {
+  ): Promise<KnownStepsWorkflowResponseDto> {
     const createWorkflowDto: CreateWorkflowDto = {
       source: WorkflowCreationSourceEnum.Editor,
       name: TEST_WORKFLOW_NAME,
@@ -2352,7 +2355,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       }
     );
 
-    return res.result;
+    return expectKnownSteps(res.result);
   }
 
   /**
@@ -2567,12 +2570,12 @@ export async function createWorkflowAndReturnId(workflowsClient: Novu, type: Ste
     },
   });
   createWorkflowDto.steps[0].type = type as any;
-  const workflowResult = await workflowsClient.workflows.create(createWorkflowDto);
+  const workflow = expectKnownSteps((await workflowsClient.workflows.create(createWorkflowDto)).result);
 
   return {
-    workflowId: workflowResult.result.id,
-    stepDatabaseId: workflowResult.result.steps[0].id,
-    stepId: workflowResult.result.steps[0].stepId,
+    workflowId: workflow.id,
+    stepDatabaseId: workflow.steps[0].id,
+    stepId: workflow.steps[0].stepId,
   };
 }
 

@@ -59,8 +59,8 @@ describe('inbound-mail env validators', () => {
         REDIS_CLUSTER_SERVICE_PORTS: '[6379]',
       });
 
-      expect(env.REDIS_CLUSTER_SERVICE_HOST).to.equal('redis.internal');
-      expect(env.REDIS_CLUSTER_SERVICE_PORTS).to.equal('[6379]');
+      expect(env).to.have.property('REDIS_CLUSTER_SERVICE_HOST', 'redis.internal');
+      expect(env).to.have.property('REDIS_CLUSTER_SERVICE_PORTS', '[6379]');
     });
   });
 
@@ -70,8 +70,8 @@ describe('inbound-mail env validators', () => {
         IS_IN_MEMORY_CLUSTER_MODE_ENABLED: 'true',
       });
 
-      expect(env.REDIS_CLUSTER_SERVICE_HOST).to.equal('');
-      expect(env.REDIS_CLUSTER_SERVICE_PORTS).to.equal('');
+      expect(env).to.have.property('REDIS_CLUSTER_SERVICE_HOST', '');
+      expect(env).to.have.property('REDIS_CLUSTER_SERVICE_PORTS', '');
     });
   });
 

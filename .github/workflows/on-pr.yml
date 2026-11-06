@@ -82,6 +82,7 @@ jobs:
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
+      typecheck-spec: ${{ steps.get-projects-arrays.outputs.typecheck-spec }}
     permissions:
       contents: read
       pull-requests: read
@@ -166,22 +167,24 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
-            echo "test-unit=$(pnpm run get-affected test:unit --all | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-unit=$(pnpm run get-affected test:unit --all | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test --all providers | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test --all packages | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test --all libs | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "typecheck-spec=$(pnpm run get-affected typecheck:spec --all all | tail -n 1)" >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
-            echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n 1)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n 1)" >> $GITHUB_OUTPUT
+            echo "typecheck-spec=$(pnpm run get-affected typecheck:spec origin/${{steps.get-base-branch-name.outputs.branch}} all | tail -n 1)" >> $GITHUB_OUTPUT
           fi
 
   test_unit_providers:
@@ -272,9 +275,11 @@ jobs:
     name: Unit test backend services
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
-    if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
+    # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
+    if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] && github.event.pull_request.head.repo.fork != true }}
     timeout-minutes: 80
     strategy:
+      fail-fast: false
       # One job for each different project and node version
       matrix:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
@@ -306,14 +311,53 @@ jobs:
           projects: "@novu/api"
           args: ""
 
-      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
-        name: Build and test
+      - name: Build
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          PROJECT_NAME: ${{ matrix.projectName }}
+        run: npx nx run-many -t build --projects="$PROJECT_NAME" --parallel=3
+
+      - name: Test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          PROJECT_NAME: ${{ matrix.projectName }}
+        run: npx nx run-many -t test --projects="$PROJECT_NAME" --parallel=3
+
+  # Test runners strip types from test files without checking them. Projects opt in by defining a `typecheck:spec` script.
+  typecheck_spec:
+    name: Type check tests
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [get-affected]
+    # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
+    if: ${{ fromJson(needs.get-affected.outputs.typecheck-spec)[0] && github.event.pull_request.head.repo.fork != true }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - name: Affected projects
+        run: echo '${{ needs.get-affected.outputs.typecheck-spec }}'
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        name: Checkout with submodules
         with:
-          targets: build,test
-          projects: ${{matrix.projectName}}
-          args: ""
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: "true"
+
+      - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.typecheck-spec), ',') }}
+        run: pnpm nx run-many -t build --projects="$AFFECTED_PROJECTS" --parallel=3
+
+      - name: Type check
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.typecheck-spec), ',') }}
+        run: pnpm nx run-many -t typecheck:spec --projects="$AFFECTED_PROJECTS" --parallel=3
 
   validate_openapi:
     name: Validate OpenAPI
@@ -380,6 +424,7 @@ jobs:
       - test_unit_packages
       - test_unit_libs
       - test_unit_services
+      - typecheck_spec
       - validate_openapi
       - test_e2e_api
     steps:

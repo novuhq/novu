@@ -15,7 +15,12 @@ export type UserSessionData = {
   organizationId: string;
   roles: MemberRoleEnum[];
   permissions: PermissionsEnum[];
-  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS | ApiAuthSchemeEnum.OAUTH2;
+  scheme:
+    | ApiAuthSchemeEnum.BEARER
+    | ApiAuthSchemeEnum.API_KEY
+    | ApiAuthSchemeEnum.KEYLESS
+    | ApiAuthSchemeEnum.OAUTH2
+    | ApiAuthSchemeEnum.INTERNAL;
   environmentId: string;
 };
 
@@ -24,7 +29,18 @@ export enum ApiAuthSchemeEnum {
   API_KEY = 'ApiKey',
   KEYLESS = 'Keyless',
   OAUTH2 = 'OAuth2',
+  /**
+   * Short-lived service-to-service token (`Authorization: Internal <jwt>`) minted by Novu's own
+   * backend (e.g. the Copilot) to call the API as an acting user. Enterprise only.
+   */
+  INTERNAL = 'Internal',
 }
+
+/** `aud` claim every `Internal` scheme token must carry. */
+export const INTERNAL_AUTH_AUDIENCE = 'novu-internal';
+
+/** Maximum lifetime (`exp - iat`) of an `Internal` scheme token. */
+export const INTERNAL_AUTH_TOKEN_TTL_SECONDS = 60;
 
 export enum PassportStrategyEnum {
   JWT = 'jwt',
@@ -33,6 +49,7 @@ export enum PassportStrategyEnum {
   HEADER_API_KEY = 'headerapikey',
   KEYLESS = 'keyless',
   OAUTH2_CLERK = 'oauth2-clerk',
+  INTERNAL_JWT = 'internal-jwt',
 }
 
 export const NONE_AUTH_SCHEME = 'None';

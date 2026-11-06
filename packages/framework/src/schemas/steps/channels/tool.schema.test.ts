@@ -3,16 +3,25 @@ import { chatChannelSchemas } from './chat.schema';
 import { toolChannelSchemas } from './tool.schema';
 
 describe('chat and tool channel output schemas', () => {
-  it.each([
-    ['chat', chatChannelSchemas],
-    ['tool', toolChannelSchemas],
-  ] as const)('%s output is required body only', (_name, schemas) => {
-    expect(schemas.output).toEqual({
+  it('tool output is required body only', () => {
+    expect(toolChannelSchemas.output).toEqual({
       type: 'object',
       properties: {
         body: { type: 'string' },
       },
       required: ['body'],
+      additionalProperties: false,
+    });
+  });
+
+  it('chat output requires a body or a card', () => {
+    expect(chatChannelSchemas.output).toMatchObject({
+      type: 'object',
+      properties: {
+        body: { type: 'string' },
+        card: { properties: { type: { const: 'card' } } },
+      },
+      anyOf: [{ required: ['body'] }, { required: ['card'] }],
       additionalProperties: false,
     });
   });

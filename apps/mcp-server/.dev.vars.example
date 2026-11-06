@@ -1,0 +1,15 @@
+# Local development configuration for `pnpm dev`.
+# Copy this file to `.dev.vars` (gitignored) and adjust the values.
+
+# Novu API base URL this deployment proxies to. Point it at your local
+# self-hosted Novu API for local development, or a cloud region to test
+# against Novu Cloud.
+NOVU_API_URL="http://localhost:3000"
+
+# Display label surfaced by the `whoami` tool (e.g. "us", "eu", "local").
+NOVU_REGION="local"
+
+# Clerk OAuth issuer for this deployment. Leave empty to disable OAuth entirely
+# (API-key-only mode — the self-hosted story). Set it to a Clerk authorization
+# server your Novu API trusts to exercise the OAuth flow locally.
+CLERK_OAUTH_ISSUER=""

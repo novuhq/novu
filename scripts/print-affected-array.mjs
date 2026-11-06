@@ -1,8 +1,9 @@
-import { getPackageFolders } from './get-packages-folder.mjs';
-import spawn from 'cross-spawn';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import spawn from 'cross-spawn';
+import { getPackageFolders } from './get-packages-folder.mjs';
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
@@ -92,7 +93,7 @@ function getAffectedCommandResult(str) {
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
-  const cachePath = taskName + baseBranch.replace('/', '').replace('/', '') + '-contain-task-cache.json';
+  const cachePath = `${taskName + baseBranch.replace('/', '').replace('/', '')}-contain-task-cache.json`;
 
   const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
@@ -123,7 +124,7 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
 }
 
 async function allProjectsContainingTask(taskName) {
-  const cachePath = taskName + '-all-contain-task-cache.json';
+  const cachePath = `${taskName}-all-contain-task-cache.json`;
 
   const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
@@ -159,6 +160,7 @@ async function printAffectedProjectsContainingTask() {
     BASE_BRANCH_NAME === ALL_FLAG
       ? await allProjectsContainingTask(TASK_NAME)
       : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
+  const allProjects = projects;
 
   const foundProviders = projects.filter((project) => providers.includes(project));
   if (foundProviders.length) {
@@ -181,6 +183,8 @@ async function printAffectedProjectsContainingTask() {
     console.log(JSON.stringify(foundPackages));
   } else if (GROUP === 'libs') {
     console.log(JSON.stringify(foundLibs));
+  } else if (GROUP === 'all') {
+    console.log(JSON.stringify(allProjects));
   } else {
     console.log(JSON.stringify(projects));
   }

@@ -55,7 +55,11 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
-import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import {
+  assertEnvironmentScopedAccess,
+  isEnvironmentScopedAuthScheme,
+  isInternalAuthScheme,
+} from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -1184,7 +1188,7 @@ export class IntegrationsController {
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
-     * API-key, keyless, and OAuth auth must never receive decrypted provider credentials,
+     * API-key, keyless, OAuth, and internal (service) auth must never receive decrypted provider credentials,
      * regardless of RBAC state. API keys grant ALL_PERMISSIONS in `community.auth.service.ts`,
      * which would otherwise allow the RBAC path below to succeed and leak every stored
      * provider secret to any caller holding an environment API key or OAuth token.
@@ -1192,7 +1196,8 @@ export class IntegrationsController {
     if (
       user.scheme === ApiAuthSchemeEnum.API_KEY ||
       user.scheme === ApiAuthSchemeEnum.KEYLESS ||
-      user.scheme === ApiAuthSchemeEnum.OAUTH2
+      user.scheme === ApiAuthSchemeEnum.OAUTH2 ||
+      isInternalAuthScheme(user.scheme)
     ) {
       return false;
     }

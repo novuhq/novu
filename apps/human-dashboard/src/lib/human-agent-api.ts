@@ -25,7 +25,7 @@ export type RelayAgent = {
   pictureUrl?: string;
   /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
-  /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
+  /** Who can reach it, whether it acknowledges messages and is paused. `null` when they couldn't be read just now. */
   settings: AgentSettings | null;
   /**
    * Who runs it, as its public card names them: "Ada L.". Empty without the operator's first name, or when it
@@ -46,6 +46,7 @@ type HumanApiAgent = {
   reach?: string;
   paused?: boolean;
   pausedAt?: string;
+  acknowledgeOnReceived?: boolean;
   /** Only `GET` names the operator, as the public card does. */
   operatorName?: string;
   operatorFirstName?: string;
@@ -106,7 +107,7 @@ async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | 
   }
 }
 
-/** Changes who can reach the agent, or pauses or resumes it, and returns the settings it has now. */
+/** Changes one setting of the Settings block, and returns the settings the agent has now. */
 export async function updateAgentSettings(account: HumanAccount, change: AgentSettingsChange): Promise<AgentSettings> {
   const agent = await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH, { method: 'PATCH', body: change });
 
@@ -136,6 +137,7 @@ function toSettings(agent: HumanApiAgent): AgentSettings {
   return {
     reach: AGENT_REACHES.find((value) => value === agent.reach) ?? DEFAULT_AGENT_SETTINGS.reach,
     paused: agent.paused && agent.pausedAt ? { at: agent.pausedAt } : null,
+    acknowledgeOnReceived: agent.acknowledgeOnReceived === true,
   };
 }
 

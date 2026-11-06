@@ -1,62 +1,29 @@
 /** biome-ignore-all lint/style/noCommonJs: <explanation> */
-const { transformFileSync } = require('@swc/core');
+const { transformSync } = require('@swc/core');
 const { addHook } = require('pirates');
 
-require('ts-node').register({
-  transpileOnly: true,
-  compilerOptions: {
-    module: 'commonjs',
-    target: 'es5',
-    esModuleInterop: false,
-    // TypeScript 6 deprecates both options above; keep them so this test loader compiles exactly as before.
-    ignoreDeprecations: '6.0',
-  },
-});
-
+// The options `nest build` compiles the API with (Nest's SWC defaults), so e2e runs the same JavaScript as production.
 addHook(
-  (code, filename) => {
-    try {
-      const result = transformFileSync(filename, {
-        jsc: {
-          target: 'es5',
-          parser: {
-            syntax: 'typescript',
-            tsx: true,
-            decorators: true,
-            dynamicImport: true,
-          },
-          transform: {
-            decoratorMetadata: true,
-            useDefineForClassFields: false,
-          },
-          keepClassNames: true,
-          preserveAllComments: true,
+  (code, filename) =>
+    transformSync(code, {
+      filename,
+      jsc: {
+        target: 'es2021',
+        parser: {
+          syntax: 'typescript',
+          decorators: true,
+          dynamicImport: true,
         },
-        module: {
-          type: 'commonjs',
-          strictMode: false,
-          noInterop: false,
+        transform: {
+          legacyDecorator: true,
+          decoratorMetadata: true,
+          useDefineForClassFields: false,
         },
-        sourceMaps: true,
-        inlineSourcesContent: true,
-        minify: false,
-      });
-
-      return result.code;
-    } catch (error) {
-      console.error(`Error transforming file ${filename}:`, error);
-
-      return code;
-    }
-  },
-  {
-    exts: ['.ts', '.tsx'],
-    matcher: (filename) => {
-      if (filename.includes('.source')) {
-        return false;
-      }
-
-      return filename.endsWith('.ts') || filename.endsWith('.tsx');
-    },
-  }
+        keepClassNames: true,
+      },
+      module: {
+        type: 'commonjs',
+      },
+    }).code,
+  { exts: ['.ts'] }
 );

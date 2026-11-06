@@ -3,6 +3,9 @@ import { jsx, jsxs } from 'chat/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { resolveCardContent } from './resolve-card-content';
 
+// chat's jsx() types accept only built-in card components; resolveCardContent also takes custom ones.
+const asCardComponent = (component: () => unknown) => component as unknown as typeof Card;
+
 describe('resolveCardContent', () => {
   it('resolves a direct Card JSX element', async () => {
     const element = jsxs(Card, {
@@ -33,7 +36,7 @@ describe('resolveCardContent', () => {
       });
     }
 
-    const card = await resolveCardContent(jsx(AnglesCard, {}));
+    const card = await resolveCardContent(jsx(asCardComponent(AnglesCard), {}));
 
     expect(card).toMatchObject({
       type: 'card',
@@ -54,11 +57,14 @@ describe('resolveCardContent', () => {
     function AnglesCard() {
       return jsxs(Card, {
         title: 'Nested',
-        children: [jsx(InnerCopy, {}), jsx(Actions, { children: jsx(Button, { id: 'ok', label: 'OK' }) })],
+        children: [
+          jsx(asCardComponent(InnerCopy), {}),
+          jsx(Actions, { children: jsx(Button, { id: 'ok', label: 'OK' }) }),
+        ],
       });
     }
 
-    const card = await resolveCardContent(jsx(AnglesCard, {}));
+    const card = await resolveCardContent(jsx(asCardComponent(AnglesCard), {}));
 
     expect(card?.title).toBe('Nested');
     expect(card?.children[0]).toMatchObject({ type: 'text', content: 'Nested copy' });
@@ -84,7 +90,7 @@ describe('resolveCardContent', () => {
     }
 
     // Without resolveUserComponents, toCardElement(<EmptyTrap />) yields { type: 'card', children: [] }.
-    const card = await resolveCardContent(jsx(EmptyTrap, {}));
+    const card = await resolveCardContent(jsx(asCardComponent(EmptyTrap), {}));
 
     expect(card?.title).toBe('Should appear');
     expect(card?.children?.[0]).toMatchObject({ type: 'text', content: 'Body' });

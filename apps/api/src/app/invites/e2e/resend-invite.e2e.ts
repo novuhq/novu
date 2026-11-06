@@ -44,7 +44,7 @@ describe('Resend invite - /invites/resend (POST) #novu-v0-os', async () => {
     it('should change the inviter id', async () => {
       const member = await memberRepository.findMemberById(session.organization._id, invitee._id);
 
-      expect(member.invite._inviterId).to.equal(session.user._id);
+      expect(member?.invite?._inviterId).to.equal(session.user._id);
     });
   });
 

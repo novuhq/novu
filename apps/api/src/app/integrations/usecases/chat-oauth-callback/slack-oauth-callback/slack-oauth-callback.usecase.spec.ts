@@ -7,7 +7,7 @@ import {
   EnvironmentRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointByType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import { createHmac } from 'crypto';
@@ -19,6 +19,8 @@ import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.
 import { ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 import { SlackOauthCallback } from './slack-oauth-callback.usecase';
+
+type SlackUserEndpoint = ChannelEndpointByType[typeof ENDPOINT_TYPES.SLACK_USER];
 
 const MOCK_ENVIRONMENT_ID = 'env-id-123';
 const MOCK_ORGANIZATION_ID = 'org-id-456';
@@ -166,7 +168,7 @@ describe('SlackOauthCallback — autoLinkUser', () => {
     const endpointArg = harness.createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.SLACK_USER);
-    expect(endpointArg.endpoint.userId).to.equal(MOCK_SLACK_USER_ID);
+    expect((endpointArg.endpoint as SlackUserEndpoint).userId).to.equal(MOCK_SLACK_USER_ID);
   });
 
   it('should create connection but skip endpoint when autoLinkUser=true and subscriberId present but authed_user.id is missing', async () => {
@@ -354,7 +356,7 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
     const endpointArg = harness.createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.connectionIdentifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
-    expect(endpointArg.endpoint.userId).to.equal(MOCK_SLACK_USER_ID);
+    expect((endpointArg.endpoint as SlackUserEndpoint).userId).to.equal(MOCK_SLACK_USER_ID);
   });
 
   it('should update the existing connection token when reconnecting with the same integration, subscriber, and context', async () => {

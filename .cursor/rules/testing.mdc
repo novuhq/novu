@@ -18,7 +18,7 @@ alwaysApply: false
 - Unit tests: `cd apps/api && pnpm test` (Mocha + ts-node, matches `src/**/*.spec.ts`)
 - Lint: `cd apps/api && pnpm check`
 - OpenAPI validation: `npm run lint:openapi` (requires API running)
-- E2E tests: see `.cursor/skills/run-api-e2e-tests/SKILL.md`
+- E2E tests: see `.agents/skills/run-api-e2e-tests/SKILL.md`
 - Bootstrap a NestJS testing module for integration-style unit tests rather than mocking the entire DI container.
 
 **Dashboard (`apps/dashboard`)**

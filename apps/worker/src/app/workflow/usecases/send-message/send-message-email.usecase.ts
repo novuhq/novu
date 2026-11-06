@@ -173,6 +173,10 @@ export class SendMessageEmail extends SendMessageBase {
       this.sendSelectedIntegrationExecution(command.job, selection),
     ]);
 
+    // Conditions or an integration override can send through a different provider
+    // than the one snapshotted onto the job. message_sent traces read job.providerId.
+    command.job.providerId = integration.providerId;
+
     if (template) {
       step.template = template;
     }

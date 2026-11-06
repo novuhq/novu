@@ -57,6 +57,8 @@ function makeCommand(localPart: string): InboundEmailParseCommand {
     priority: 'normal',
     dkim: 'pass',
     spf: 'pass',
+    dkimDomains: ['other.com'],
+    spfDomain: 'other.com',
     spamScore: 0,
     language: 'english',
     connection: {} as any,
@@ -113,11 +115,14 @@ describe('DomainRouteStrategy', () => {
 
     sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
-    // The DKIM/SPF verdicts must reach the agent delivery so the API can reject
-    // spoofed senders — they are dropped without the commandToMail passthrough.
+    // The DKIM/SPF verdicts, and the domains they vouch for, must reach the
+    // agent delivery so the API can reject spoofed senders — they are dropped
+    // without the commandToMail passthrough.
     const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
     expect(agentCall.args[0].mail.dkim).to.equal('pass');
     expect(agentCall.args[0].mail.spf).to.equal('pass');
+    expect(agentCall.args[0].mail.dkimDomains).to.deep.equal(['other.com']);
+    expect(agentCall.args[0].mail.spfDomain).to.equal('other.com');
   });
 
   it('should match the domain using the selected envelope recipient', async () => {

@@ -199,11 +199,17 @@ describe('the steps', () => {
 });
 
 describe('listening for messages', () => {
-  it('is the optional last step for Claude Code only, for now', () => {
+  it('is the optional last step for Claude Code, Codex and OpenCode', () => {
     const commandHosts = HOSTS.filter((host): host is CommandHost => host.group === 'commands');
 
-    expect(commandHosts.filter((host) => listenCommand(host)).map((host) => host.id)).toEqual(['claude-code']);
+    expect(commandHosts.filter((host) => listenCommand(host)).map((host) => host.id)).toEqual([
+      'claude-code',
+      'codex',
+      'opencode',
+    ]);
     expect(listenCommand(hostOf('claude-code') as CommandHost)).toBe('npx @agentinbox/cli listen claude-code');
+    expect(listenCommand(hostOf('codex') as CommandHost)).toBe('npx @agentinbox/cli listen codex');
+    expect(listenCommand(hostOf('opencode') as CommandHost)).toBe('npx @agentinbox/cli listen opencode');
   });
 
   it('says what it does, for the agent when it’s known', () => {
@@ -215,13 +221,15 @@ describe('listening for messages', () => {
     expect(listenLead(claudeCode)).toContain('a message to your agent starts Claude Code');
   });
 
-  it('is in Claude Code’s Markdown for agents, and in no other host’s', () => {
+  it('is in the Markdown for agents of the hosts it starts, and in no other host’s', () => {
     const markdown = hostMarkdown(hostOf('claude-code'));
 
     expect(markdown).toContain('## Optional: listen for messages');
     expect(markdown).toContain('`npx @agentinbox/cli listen claude-code`');
     expect(markdown).toContain('nothing starts until they allow it');
-    expect(hostMarkdown(hostOf('codex'))).not.toContain('listen for messages');
+    expect(hostMarkdown(hostOf('codex'))).toContain('`npx @agentinbox/cli listen codex`');
+    expect(hostMarkdown(hostOf('opencode'))).toContain('`npx @agentinbox/cli listen opencode`');
+    expect(hostMarkdown(hostOf('cursor'))).not.toContain('listen for messages');
   });
 });
 
