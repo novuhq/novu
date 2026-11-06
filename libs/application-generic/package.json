@@ -140,7 +140,6 @@
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "sinon": "^9.2.4",
-    "ts-node": "~10.9.1",
     "typescript": "6.0.3",
     "unplugin-swc": "^1.5.1",
     "vitest": "^4.1.0"

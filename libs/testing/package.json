@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test": "echo \"no tests yet\"",
+    "test": "node --test swc-register.test.mjs",
     "test:watch": ""
   },
   "author": "",
@@ -26,6 +26,7 @@
     "@faker-js/faker": "^10.5.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
+    "@swc/core": "1.7.26",
     "JSONStream": "^1.3.5",
     "async": "^3.2.0",
     "axios": "^1.18.1",
@@ -49,7 +50,6 @@
     "@types/node": "^22.0.0",
     "@types/supertest": "^6.0.2",
     "apollo-boost": "0.4.9",
-    "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "6.0.3"
   }

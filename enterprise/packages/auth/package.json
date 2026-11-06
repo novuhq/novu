@@ -11,7 +11,7 @@
     "check:fix": "biome check --write .",
     "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json",
     "test": "echo 'skip test in the ci'",
-    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
+    "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'"
   },
   "dependencies": {
     "@better-auth/sso": "^1.6.23",
@@ -32,6 +32,7 @@
     "svix": "^1.96.1"
   },
   "devDependencies": {
+    "@novu/testing": "workspace:*",
     "@clerk/shared": "^4.12.2",
     "@clerk/types": "^4.48.0",
     "@types/mocha": "^8.0.1",
@@ -40,9 +41,8 @@
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
-    "mocha": "^8.1.1",
+    "mocha": "^11.7.6",
     "sinon": "^9.2.4",
-    "ts-node": "~10.9.1",
     "typescript": "6.0.3"
   },
   "peerDependencies": {
