@@ -625,6 +625,22 @@ overrides:
   # `moment` in libs/application-generic. moment-timezone@0.5.48 declares a
   # `moment@^2.29.4` peer, which 2.31.0 satisfies.
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  # GHSA-mrhx-c7xc-m3w5 (high): zod `$ZodArray.handleArrayResult` accumulates
+  # every validation issue for each failing element with no cap, enabling
+  # memory exhaustion / OOM when a large array is parsed through an array
+  # schema without a length constraint. The vulnerable code only exists in
+  # the zod 4.x core (`$ZodArray` was introduced in v4). Patched in 4.6.6
+  # (patch bump within the 4.6.x line). Scope the override to the 4.x range
+  # so the many direct zod@^3.x consumers (@team-plain/typescript-sdk,
+  # @novu/ntfr-client, @ai-sdk/*, @anthropic-ai/*, @langchain/*,
+  # @modelcontextprotocol/sdk, @novu/api, @novu/framework, novu, etc.) keep
+  # resolving their declared 3.x floor; forcing v3 -> v4 would break those
+  # direct deps. Transitive 4.3.x / 4.4.x / 4.5.x resolutions (via knip,
+  # pkg-pr-new > query-registry, @ai-sdk/gateway, @ai-sdk/mcp,
+  # @better-auth/sso > better-auth) pick up 4.6.x. `pnpm audit` still reports
+  # the advisory against zod@3.x because its `<4.6.6` range matches semver,
+  # but zod 3's bundled `zod/v4` preview subpath is unused in this tree.
+  zod@>=4.0.0 <4.6.6: ^4.6.6
   # GHSA-834v-8h66-3h79 (high): happy-dom 17.x-21.0.3 has an incomplete fix
   # for CVE-2026-33943 — an unsanitized import alias in the module registry
   # still allows host code execution when test code evaluates attacker-
