@@ -4,13 +4,21 @@ import { installMintlifyTriggerHider } from '@/utils/mintlify-trigger-hider';
 
 const MINTLIFY_WIDGET_ID = 'mint_widget_9890b2a3-6a4f-4516-8331-24a3b12e6162';
 /**
- * Pin an immutable Mintlify widget build (not floating /v1/embed.js).
- * Bump by reading https://widget.mintlify.com/v1/manifest.json, then refresh
- * MINTLIFY_EMBED_INTEGRITY with: openssl dgst -sha384 -binary embed.js | openssl base64 -A
+ * Floating CDN loader. It fetches /v1/manifest.json and dynamically imports whatever
+ * versioned runtime that names, so new runtimes (and the v2/message endpoint) ship
+ * without a code change here. Pinned /versions/.../embed.js builds call the legacy
+ * /message route, which shuts down on 2026-11-09, so do not revert to one.
+ *
+ * SRI only covers this loader, not the runtime it imports - browsers don't support
+ * integrity checks on dynamic `import()`. The loader is a small, deliberately stable
+ * shim (unchanged for weeks at a time per its Last-Modified header) that only
+ * validates and imports the manifest's same-origin entrypoint, so pinning it still
+ * rejects a tampered/compromised loader without reintroducing the staleness that the
+ * pinned-version approach had. Bump MINTLIFY_EMBED_INTEGRITY only if this loader's
+ * bytes legitimately change: openssl dgst -sha384 -binary embed.js | openssl base64 -A
  */
-const MINTLIFY_EMBED_VERSION = '0.0.61';
-const MINTLIFY_EMBED_URL = `https://widget.mintlify.com/versions/${MINTLIFY_EMBED_VERSION}/embed.js`;
-const MINTLIFY_EMBED_INTEGRITY = 'sha384-bSqvMIpnn7junQOtOOcmXzbErlvtTW6+lG3TXYc5L/aEISuuwVTmW0kH+3Tw7urd';
+const MINTLIFY_EMBED_URL = 'https://widget.mintlify.com/v1/embed.js';
+const MINTLIFY_EMBED_INTEGRITY = 'sha384-D4vONFcR7SaJqFe6JHyWR6gre3U7DtZ5NaSLtR4HrfDIVG2QZY7X6jNKtKDIrD6k';
 const MINTLIFY_SCRIPT_ID = 'mintlify-assistant-embed';
 
 const APPEARANCE = {
