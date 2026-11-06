@@ -60,6 +60,7 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.MsTeams,
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,
+        ChatProviderIdEnum.WeChat,
       ],
       [ChannelTypeEnum.TOOL]: [
         ToolProviderIdEnum.PagerDuty,
