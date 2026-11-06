@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 
-import { HEADER_NAVIGATION } from '@/data/sapien';
+import { HEADER_NAVIGATION, type NavigationItem } from '@/data/sapien';
 import { cn } from '@/lib/utils';
 
 import { SiteNavigation } from './site-navigation';
@@ -12,7 +12,15 @@ import { SiteNavigation } from './site-navigation';
  * shows the header links in a panel under the header. The open panel isn't
  * designed in Figma; it reuses the header's tokens and link styles.
  */
-export function SiteMenu({ label, className }: { label: string; className?: string }) {
+export function SiteMenu({
+  label,
+  className,
+  items = HEADER_NAVIGATION,
+}: {
+  label: string;
+  className?: string;
+  items?: readonly NavigationItem[];
+}) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -58,7 +66,7 @@ export function SiteMenu({ label, className }: { label: string; className?: stri
         className="absolute inset-x-px top-[calc(100%+1px)] z-[15] border-b border-sapien-border bg-black px-2.5 py-3 transition-[opacity,translate] duration-150 motion-reduce:transition-none starting:-translate-y-1 starting:opacity-0"
       >
         <SiteNavigation
-          items={HEADER_NAVIGATION}
+          items={items}
           label={label}
           onNavigate={() => setOpen(false)}
           className="flex-col flex-nowrap items-stretch [&>a]:h-10"

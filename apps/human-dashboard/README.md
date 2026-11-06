@@ -183,3 +183,31 @@ The website's browser tests (`tests/`, Playwright) build the app and serve it on
 pnpm --filter @novu/human-dashboard exec playwright install chromium
 pnpm --filter @novu/human-dashboard test:e2e
 ```
+
+## Channel and agent landing templates
+
+The channel template serves `/email`, `/telegram`, and `/slack`. Agent pages use
+`/<channel>/<agent>` for the eight pairs in `src/data/channel-pages.ts`; unsupported
+pairs are 404s. The existing `src/app/[host]` route also serves host setup pages,
+which retain their prior behavior. New landing routes are included in the sitemap.
+
+Page composition stays in the two route files. Reusable sections live under
+`src/components/pages/channels/`; typed content, supported pairs, setup commands,
+FAQs, and related links live in `src/data/channel-pages.ts`. The templates reuse
+Sapien's fonts, shell, rails, Radix tabs, copy controls, carousel, and FAQ rows.
+
+Figma's reference pages are Telegram and Telegram/OpenClaw. Other channel copy is
+marked as draft where no separate design was supplied. Source artwork is under
+`public/images/landing/`: vectors are SVG, opaque hero interiors are 2× JPG, and transparent CTA/prompt previews are 2× PNG. Rounded shells and shadows are CSS.
+The screenshots are illustrative examples; the displayed message controls do not
+send messages. Setup and message tabs, copy buttons, FAQs and carousel controls
+are interactive.
+
+Local environment comes from Vercel project `novuhq/agent-inbox-dashboard`,
+Development target, in ignored `.env.local`. Keep values private. Existing pinned
+app dependencies were installed with pnpm 11.28.2 and the root frozen lockfile.
+Sparse checkout also includes existing `patches/` required by that lockfile;
+root manifests and the lockfile remain unchanged.
+
+See [channel page implementation notes](docs/channel-pages.md) for the route matrix,
+setup, content review requirements and visual-audit limitations.

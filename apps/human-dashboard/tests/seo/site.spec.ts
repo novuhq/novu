@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 
+import { agentPagePairs, CHANNEL_IDS } from '../../src/data/channel-pages';
 import { HOST_IDS } from '../../src/lib/host-ids';
 import { SITE_INDEXED, SITE_PAGES } from '../../src/lib/seo';
 
@@ -80,7 +81,13 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
   const body = await sitemap.text();
   const locations = [...body.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   expect(locations.sort()).toEqual(
-    [`${origin}/`, `${origin}/sapien`, ...HOST_IDS.map((id) => `${origin}/${id}`)].sort()
+    [
+      `${origin}/`,
+      `${origin}/sapien`,
+      ...HOST_IDS.map((id) => `${origin}/${id}`),
+      ...CHANNEL_IDS.map((id) => `${origin}/${id}`),
+      ...agentPagePairs().map(({ channel, agent }) => `${origin}/${channel}/${agent}`),
+    ].sort()
   );
   expect(body).toContain(`<loc>${origin}/sapien</loc>`);
   expect(body).toContain('<changefreq>weekly</changefreq>');
@@ -161,7 +168,12 @@ test('every host has a page and its Markdown, linked from llms.txt', async ({ pa
   );
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agent Inbox for Codex');
   await expect(page.getByText('Set up Agent Inbox from https://www.agentinbox.md/agents.md')).toBeVisible();
-  await expect(page.getByText('sign in to get your code')).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Plugin', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel', { name: 'Plugin' })).toContainText('codex mcp login AgentInbox');
+  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toHaveAttribute(
+    'href',
+    '/configure?connect=codex'
+  );
 
   for (const path of ['/not-a-host', '/not-a-host.md']) {
     expect((await request.get(path)).status()).toBe(404);

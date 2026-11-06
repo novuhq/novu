@@ -12,3 +12,11 @@ next-env.d.ts
 # Playwright
 /test-results/
 /playwright-report/
+.primeui/temp
+.primeui/project.json
+.env*
+
+# Local Prime agent setup
+.agents/
+.codex/
+skills-lock.json

@@ -1,4 +1,5 @@
 import { faqAssets as assets, FAQ_HEADING, FAQ_ITEMS, type FaqItem } from '@/data/sapien-faq';
+import { cn } from '@/lib/utils';
 
 import { Artwork } from './artwork';
 import { DisplayAccent, SectionEyebrow } from './section-eyebrow';
@@ -27,14 +28,22 @@ export function Faq({ items = FAQ_ITEMS }: { items?: readonly FaqItem[] }) {
   );
 }
 
-function FaqRow({ item }: { item: FaqItem }) {
+export function FaqRow({ item, variant = 'default' }: { item: FaqItem; variant?: 'default' | 'landing' }) {
   return (
     <details
       open={item.defaultOpen}
-      className="group border-t border-sapien-border [interpolate-size:allow-keywords] details-content:h-0 details-content:overflow-clip details-content:transition-[height,content-visibility] details-content:transition-discrete details-content:duration-200 details-content:ease-out first:border-t-0 open:details-content:h-auto motion-reduce:details-content:transition-none"
+      className={cn(
+        'group border-t border-sapien-border [interpolate-size:allow-keywords] details-content:h-0 details-content:overflow-clip details-content:transition-[height,content-visibility] details-content:transition-discrete details-content:duration-200 details-content:ease-out first:border-t-0 open:details-content:h-auto motion-reduce:details-content:transition-none',
+        variant === 'landing' && 'border-t-0 border-b'
+      )}
     >
       {/* Figma lays lines out on whole pixels (24.66 → 25, 18.75 → 19: its five-line answer is a 95px box), hence px line heights. */}
-      <summary className="relative flex min-h-[71px] cursor-pointer list-none items-start justify-between gap-3 py-[23px] pr-4 pl-5 text-base leading-[22px] tracking-tight text-sapien-foreground/70 transition-[color] duration-150 group-open:text-sapien-foreground group-not-open:hover:text-sapien-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none md:gap-4 md:pr-[23px] md:pl-[23px] md:text-lg md:leading-[25px] [&::-webkit-details-marker]:hidden">
+      <summary
+        className={cn(
+          'relative flex min-h-[71px] cursor-pointer list-none items-start justify-between gap-3 py-[23px] pr-4 pl-5 text-base leading-[22px] tracking-tight text-sapien-foreground/70 transition-[color] duration-150 group-open:text-sapien-foreground group-not-open:hover:text-sapien-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none md:gap-4 md:pr-[23px] md:pl-[23px] md:text-lg md:leading-[25px] [&::-webkit-details-marker]:hidden',
+          variant === 'landing' && 'min-h-18 group-open:text-accent'
+        )}
+      >
         <span
           aria-hidden="true"
           className="absolute top-[23px] left-0 h-6 w-1 rounded-[1px] bg-sapien-foreground transition-colors duration-150 group-open:bg-accent motion-reduce:transition-none"
@@ -46,7 +55,12 @@ function FaqRow({ item }: { item: FaqItem }) {
           className="block size-6 shrink-0 transition-[clip-path] duration-200 [clip-path:inset(0)] group-open:[clip-path:inset(11px_0)] motion-reduce:transition-none"
         />
       </summary>
-      <p className="border-t border-sapien-border pt-[23px] pr-4 pb-6 pl-5 text-[15px] leading-[19px] tracking-tight text-sapien-foreground md:pr-[47px] md:pb-6 md:pl-[23px]">
+      <p
+        className={cn(
+          'border-t border-sapien-border pt-[23px] pr-4 pb-6 pl-5 text-[15px] leading-[19px] tracking-tight text-sapien-foreground md:pr-[47px] md:pb-6 md:pl-[23px]',
+          variant === 'landing' && 'pt-5 pr-14 pb-7 pl-5 leading-[21px] md:pr-14 md:pb-7 md:pl-5'
+        )}
+      >
         {item.answer}
       </p>
     </details>

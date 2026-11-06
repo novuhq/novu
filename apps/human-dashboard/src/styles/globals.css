@@ -219,7 +219,7 @@
   &::before {
     content: "";
     position: absolute;
-    inset: 0 -0.5px;
+    inset: 0 calc(-0.5px - var(--section-rail-border, 0px));
     border-inline: 1px solid var(--color-border);
     pointer-events: none;
     z-index: 30;
