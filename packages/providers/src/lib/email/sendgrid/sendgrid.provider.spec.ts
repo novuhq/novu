@@ -1,8 +1,12 @@
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { SendgridEmailProvider } from './sendgrid.provider';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const mockConfig = {
   apiKey: 'SG.1234',

@@ -1,9 +1,0 @@
-{
-  "generators": {
-    "provider": {
-      "factory": "./src/generators/provider/generator",
-      "schema": "./src/generators/provider/schema.json",
-      "description": "provider generator"
-    }
-  }
-}

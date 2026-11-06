@@ -114,6 +114,8 @@ export const envValidators = {
   NOVU_TLS_CA_BASE64: str({ default: undefined }),
   NOVU_TLS_CA_FILE: str({ default: undefined }),
   JWT_SECRET: str(),
+  // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.
+  NOVU_INTERNAL_AUTH_SECRET: str({ default: '' }),
   SENDGRID_API_KEY: str({ default: '' }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
@@ -224,6 +226,10 @@ export const envValidators = {
       AI_LLM_MAX_RETRIES: num({ default: 3 }),
       AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
+      AI_LLM_REASONING_EFFORT: str({
+        choices: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+        default: undefined,
+      }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
     }),

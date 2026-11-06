@@ -3,7 +3,9 @@ import { RiCheckboxCircleFill, RiRobot2Line } from 'react-icons/ri';
 import { ConversationDto } from '@/api/conversations';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { cn } from '@/utils/ui';
+import { ConversationLastActivity } from './conversation-last-activity';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { toPlainTextPreview } from './conversation-text-preview';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationTableRowProps = {
@@ -30,25 +32,6 @@ function getAgentName(conversation: ConversationDto): string {
   return agent?.agent?.name ?? agent?.id ?? conversation._agentId ?? 'agent';
 }
 
-function formatTimestamp(dateStr: string | undefined): string {
-  if (!dateStr?.trim()) {
-    return '-';
-  }
-
-  const d = new Date(dateStr);
-
-  if (Number.isNaN(d.getTime())) {
-    return '-';
-  }
-
-  const month = d.toLocaleDateString('en-US', { month: 'short' });
-  const day = d.getDate();
-  const year = d.getFullYear();
-  const time = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  return `${month} ${day} ${year} ${time}`;
-}
-
 export function ConversationTableRow({ conversation, isSelected, onClick }: ConversationTableRowProps) {
   const handleClick = () => {
     onClick?.(conversation.identifier);
@@ -68,6 +51,7 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
   const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
   const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const agentName = getAgentName(conversation);
+  const title = toPlainTextPreview(conversation.title) || 'Untitled conversation';
   const isFailed = conversation.status === 'failed';
 
   return (
@@ -85,13 +69,18 @@ export function ConversationTableRow({ conversation, isSelected, onClick }: Conv
               <RiCheckboxCircleFill
                 className={cn('size-4 shrink-0', isFailed ? 'text-destructive-base' : 'text-success-base')}
               />
-              <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">
-                {conversation.title || 'Untitled conversation'}
+              <span
+                dir="auto"
+                title={title}
+                className="text-text-sub text-label-xs min-w-0 truncate text-left font-medium"
+              >
+                {title}
               </span>
             </div>
-            <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">
-              {formatTimestamp(conversation.lastActivityAt || conversation.createdAt)}
-            </span>
+            <ConversationLastActivity
+              conversation={conversation}
+              className="text-text-soft font-code shrink-0 text-[11px] leading-normal"
+            />
           </div>
 
           <div className="flex items-center justify-between">

@@ -348,7 +348,9 @@ describe('event mode (AgentEvent protocol)', () => {
     });
   });
 
-  function flattenEventTypes(eventBatches: Array<{ sequence: number; event: { type: string } }[]>) {
+  function flattenEventTypes(
+    eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]>
+  ) {
     return eventBatches.flat().map((envelope) => envelope.event);
   }
 

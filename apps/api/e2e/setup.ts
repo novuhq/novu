@@ -32,7 +32,7 @@ process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
 
 async function getDatabaseConnection(): Promise<Connection> {
   if (!databaseConnection) {
-    databaseConnection = await dalService.connect(process.env.MONGO_URL);
+    databaseConnection = await dalService.connect(process.env.MONGO_URL as string);
   }
 
   return databaseConnection;

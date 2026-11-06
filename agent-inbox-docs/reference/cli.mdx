@@ -197,12 +197,12 @@ Sets the channel used when a message goes to you on this computer. Other people 
 ## listen
 
 ```bash
-npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen <claude-code|codex|opencode>
 npx @agentinbox/cli listen status
 npx @agentinbox/cli listen stop
 ```
 
-Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host (Claude Code, Codex or OpenCode) in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
 
 | Flag | What it does |
 | --- | --- |
@@ -210,6 +210,7 @@ Listens for messages on this computer: one from the operator, or from a contact 
 | `--timeout <duration>` | When an agent runs it: how long to wait for the operator's Allow. Exits `11` when it runs out |
 | `--runs-per-hour <n>` | How many runs may start in an hour. Default 20 |
 | `--max-run <duration>` | How long one run may go on. Default 30 minutes |
+| `--runs-at-once <n>` | How many runs may go on at once, each for its own conversation. Default 5 |
 | `--json` | `listen status` only: print JSON |
 
 Exit codes as for `approve`: `0` allowed, `10` denied, `11` still waiting, `12` the question expired, `1` an error.

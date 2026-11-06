@@ -1,30 +1,32 @@
 ---
 title: "Listen for messages"
-description: "A message to your agent starts Claude Code on your computer, in your project. It asks you before anything its settings don't allow."
+description: "A message to your agent starts Claude Code, Codex or OpenCode on your computer, in your project. It asks you before anything its settings don't allow."
 sidebarTitle: "Listen"
 ---
 
-A host only reads the inbox while someone runs it. `listen` starts it instead: you write to the agent on Telegram, Slack, or email, and Claude Code starts on your computer, in your project, and answers in the conversation.
+A host only reads the inbox while someone runs it. `listen` starts it instead: you write to the agent on Telegram, Slack, or email, and your host starts on your computer, in your project, and answers in the conversation.
 
-Run it in the project folder, on the computer you connected:
+Run it in the project folder, on the computer you connected, with the host it starts:
 
 ```bash
 npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen codex
+npx @agentinbox/cli listen opencode
 ```
 
-Claude Code is the first host it starts. Codex, OpenCode, and Cursor come next.
+It starts Claude Code, Codex and OpenCode.
 
 ## Turning it on
 
 `listen` asks before it starts listening. At a terminal, it asks there. When an agent runs it, you get an Allow and Deny message on your channel:
 
 ```text
-Listen for messages on MacBook, and start Claude Code in ~/projects/app?
+Listen for messages on MacBook, and start Codex in ~/projects/app?
 ```
 
 Nothing starts until you allow it. Without an answer, the command waits until the question expires in an hour. `--timeout 10m` stops waiting sooner and exits `11`. Run the same command again to keep waiting for the same answer. Deny exits `10`.
 
-It needs Claude Code installed and signed in on that computer, and it uses your own Claude Code plan. If Claude Code is missing, `listen` says how to install it.
+It needs the host installed and signed in on that computer, and it uses your own plan with it. If the host is missing, `listen` says how to install it.
 
 It also needs an Agent Inbox account. A keyless setup can't listen, because its runs would use up its free messages fast. Run `npx @agentinbox/cli login` first to claim it.
 
@@ -38,38 +40,63 @@ It uses the connection saved on this computer by `setup`, `login` or `connect`, 
 
 ## Sessions
 
-Each conversation gets one Claude Code session. The next message in it goes on with the same session, so Claude Code remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`.
+Each conversation gets one session of the host. The next message in it goes on with the same session, so the host remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`.
 
-A message that comes while Claude Code works joins the same run, and so does the answer to a question it asked without waiting (`--async`). An answer comes back to the conversation the question was asked in, also when Claude Code asked someone outside it (`--to`), and whatever their "Listen to" switch says. Once the run is over, it goes on with that conversation's session. Send `/stop` to stop the run in that conversation.
+Conversations don't wait for each other: each one's session runs at the same time as the others', up to 5 at once (`--runs-at-once`). They all work in the same project folder, and each host is told that the others may change files there while it works. A conversation over the most at once waits until a run ends.
 
-Claude Code replies in the conversation itself. When a turn ends without a reply, its last words are sent as the reply. Reading and answering in its own conversation never asks you, whether Claude Code uses the CLI or the Agent Inbox MCP tools, as long as it stays in that conversation with the same people: writing to someone else, or letting anyone answer, asks you.
+A message that comes while the host works joins the same run, and so does the answer to a question it asked without waiting (`--async`). An answer comes back to the conversation the question was asked in, also when the host asked someone outside it (`--to`), and whatever their "Listen to" switch says. Once the run is over, it goes on with that conversation's session. Send `/stop` to stop the run in that conversation.
 
-While Claude Code works on a message, the chat shows it typing, until its reply goes out. It doesn't while you're asked to allow something. Email has no typing.
+The host replies in the conversation itself. When a turn ends without a reply, its last words are sent as the reply. Reading and answering in its own conversation never asks you, whether the host uses the CLI or the Agent Inbox MCP tools, as long as it stays in that conversation with the same people: writing to someone else, or letting anyone answer, asks you. A CLI command asks you too when it could run other code than Agent Inbox's: when the folder it runs in, or one above it in the project, has its own `@agentinbox/cli`, an `agentinbox` bin, or an `.npmrc` that changes where npm gets packages or how it runs them, or when the command runs outside the project.
+
+While the host works on a message, the chat shows it typing, until its reply goes out. It doesn't while you're asked to allow something. Email has no typing.
 
 When the computer restarts, or the listener is stopped, in the middle of a run, that run isn't started again. Its conversation is told it stopped before it could finish, so the message can be sent again.
 
-When Agent Inbox can't be reached as a reply goes out, the listener tries again for up to 10 minutes, waiting longer each time. A short outage loses no reply, and Claude Code doesn't do the work again.
+When Agent Inbox can't be reached as a reply goes out, the listener tries again for up to 10 minutes, waiting longer each time. A short outage loses no reply, and the host doesn't do the work again.
 
 ## Permissions
 
-Claude Code follows its own settings for the project, from your user settings and the project's, and may edit files inside the project. Anything else waits for you:
+The host follows its own settings for the project and may edit files inside it. Anything else waits for you:
 
 - a command its settings don't allow
 - the network
 - files outside the project
 - writing to anyone else
 
-Each of these is an Allow and Deny message to you, even when a contact's message started the run, and it shows the whole command. One too long to show whole isn't asked at all: Claude Code is told to do it in shorter steps. **Allow for this session** lets the same request through until the session ends, and writes nothing to your settings. No answer in 10 minutes counts as Deny.
+Each of these is an Allow and Deny message to you, and it shows the whole command. It comes to you even when a contact's message started the run, and then it says first whose message it was, where they wrote, and how it began. One too long to show whole isn't asked at all: the host is told to do it in shorter steps. **Allow for this session** lets the same request through until the session ends, and writes nothing to your settings. No answer in 10 minutes counts as Deny.
+
+When the host asks a question that isn't a permission, such as which of two options to take, it goes to the person who wrote, in the conversation.
+
+### Claude Code
+
+Claude Code follows your user settings and the project's, and edits files inside the project without asking. A command its allow list doesn't have asks you.
 
 A project Claude Code hasn't been opened in yet doesn't get its own allow list (`.claude/settings.json`). Open Claude Code there once and trust the folder. `listen` says so when it applies.
 
-When Claude Code asks a question that isn't a permission, such as which of two options to take, it goes to the person who wrote, in the conversation.
+### Codex
+
+Codex runs its commands in its sandbox, which lets them write inside the project only, without the network. Anything the sandbox doesn't allow, such as the network or another folder, asks you first, whatever approval policy your own Codex config sets. The rest of your config still applies, such as its model and its MCP servers.
+
+An MCP tool asks you before Codex calls it, unless the tool says it only reads, or your Codex config lets it run without asking. Agent Inbox's own commands need the network, so they run outside the sandbox, and in the conversation the run is for, they don't ask you.
+
+### OpenCode
+
+OpenCode allows everything by default, so a run asks you before its shell commands, the web (`webfetch`, `websearch`), every MCP server's tools and files outside the project. Reading and editing files in the project go ahead. Your own permission rules in your OpenCode config still decide what they name: a command they allow runs without asking, and one they deny stays denied. The rest of your config still applies, such as its model and its MCP servers.
+
+A run has no Code Mode (OpenCode's `execute` tool), whatever your config says: its scripts reach the web without asking anyone. The agent calls its tools one by one instead, MCP tools among them, and those ask.
+
+It works with OpenCode 1.19 or later, and OpenCode 2.2 or later. They differ in a few ways:
+
+- On OpenCode 1, a run doesn't start subagents, whatever your config says: there they would run commands without asking. OpenCode 2's subagents ask the same way the run does.
+- OpenCode 2 has no **Allow for this session**: its own "always" keeps the rule for the project for good, which `listen` never does. On OpenCode 1 it lasts for the run, and lets through what OpenCode's own "always" would, which can be more than the one request, such as every `npm test` command. The question says what.
+- A message that comes while OpenCode 1 works goes in once its turn ends. OpenCode 2 takes it into the turn it's working on.
 
 ## Limits
 
 | Limit | Default | Flag |
 | --- | --- | --- |
 | Runs an hour | 20 | `--runs-per-hour <n>` |
+| Runs at once | 5 | `--runs-at-once <n>` |
 | One run | 30 minutes | `--max-run <duration>` |
 
 Messages over the hourly limit wait, and you hear about it once an hour. A run that goes on too long stops and says so in the conversation.
@@ -86,9 +113,13 @@ It runs in the background and starts again after a restart:
 
 `--foreground` listens in that terminal only, until Ctrl-C.
 
-In the background, Claude Code keeps the settings from your shell that pick its provider and models, such as `CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE` or `ANTHROPIC_MODEL`, but no secret: anyone on the computer can read the service's file. If Claude Code signs in only with a key from your shell, such as `ANTHROPIC_API_KEY`, `listen` says so before it asks anything: sign Claude Code in another way, or use `--foreground`, which keeps your shell's variables. The same goes for keys it reaches Amazon Bedrock or another cloud provider with, such as `AWS_ACCESS_KEY_ID`: whether it can sign in there without them shows only once it runs, so `listen` stops there too. Unset them when Claude Code can sign in another way, such as with an AWS profile, or use `--foreground`.
+In the background, the host keeps the settings from your shell that pick its provider and models, but no secret: anyone on the computer can read the service's file. `--foreground` keeps all of your shell's variables.
 
-One computer keeps an agent listening at a time. Running `listen` on another computer asks to move it there. Running it again on the same computer, for another project or in a terminal, replaces the one running.
+- **Claude Code** keeps settings such as `CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE` or `ANTHROPIC_MODEL`. If it signs in only with a key from your shell, such as `ANTHROPIC_API_KEY`, `listen` says so before it asks anything: sign Claude Code in another way, or use `--foreground`. The same goes for keys it reaches Amazon Bedrock or another cloud provider with, such as `AWS_ACCESS_KEY_ID`: whether it can sign in there without them shows only once it runs, so `listen` stops there too. Unset them when Claude Code can sign in another way, such as with an AWS profile, or use `--foreground`.
+- **Codex** keeps `CODEX_HOME`, `CODEX_SQLITE_HOME` and `OPENAI_BASE_URL`. Its own sign-in, from `codex login`, works in the background. When your Codex config picks a provider that signs in with a key from your shell (its `env_key`), `listen` stops before it asks anything: use `--foreground`.
+- **OpenCode** keeps settings such as `OPENCODE_CONFIG`, `OPENCODE_CONFIG_DIR`, `AWS_PROFILE` and the XDG folders it keeps its data in. Its sign-ins from `opencode auth login` work in the background. When it signs in to a provider with a key from your shell, such as `ANTHROPIC_API_KEY`, `listen` says so before it asks anything: in the background, OpenCode goes without it. To keep it, use `--foreground`.
+
+One computer keeps an agent listening at a time. Running `listen` on another computer asks to move it there. Running it again on the same computer, for another host or project or in a terminal, replaces the one running.
 
 ## See it and stop it
 
@@ -99,7 +130,7 @@ npx @agentinbox/cli listen stop
 
 `listen status` says where the agent is listening, what this computer does, and where its log is. `listen stop` stops it on this computer, in the background or in a terminal. It leaves another computer alone. Both work while the agent is paused.
 
-The dashboard shows where the agent is listening, such as "Listening on MacBook (Claude Code)".
+The dashboard shows where the agent is listening, such as "Listening on MacBook (Codex)".
 
 ## When it stops by itself
 

@@ -32,12 +32,12 @@ describe('InboundAckService working signal', () => {
     } as ResolvedAgentConfig;
   }
 
-  it('does not type on an Agent Inbox channel', async () => {
+  it('does not type on an Agent Inbox channel until its operator turns acknowledging on', async () => {
     const { service, outboundGateway } = makeService();
 
     await service.showWorkingSignal({
       agentId,
-      config: config({ isHumanRelay: true }),
+      config: config({ isHumanRelay: true, acknowledgeOnReceived: false }),
       platformThreadId,
       platformMessageId: 'msg-1',
       isFirstMessage: true,
@@ -45,6 +45,36 @@ describe('InboundAckService working signal', () => {
 
     expect(outboundGateway.startTypingInConversation.called).to.equal(false);
     expect(outboundGateway.reactToMessage.called).to.equal(false);
+  });
+
+  it('types on an Agent Inbox channel once its operator turned acknowledging on', async () => {
+    const { service, outboundGateway } = makeService();
+
+    await service.showWorkingSignal({
+      agentId,
+      config: config({ isHumanRelay: true, acknowledgeOnReceived: true }),
+      platformThreadId,
+      platformMessageId: 'msg-1',
+      isFirstMessage: true,
+    });
+
+    expect(outboundGateway.startTypingInConversation.calledOnce).to.equal(true);
+  });
+
+  it('reacts to the first email of an Agent Inbox agent that acknowledges, which has no typing', async () => {
+    const { service, outboundGateway } = makeService();
+
+    await service.showWorkingSignal({
+      agentId,
+      config: config({ platform: AgentPlatformEnum.EMAIL, isHumanRelay: true, acknowledgeOnReceived: true }),
+      platformThreadId,
+      platformMessageId: 'msg-1',
+      isFirstMessage: true,
+    });
+
+    expect(outboundGateway.startTypingInConversation.called).to.equal(false);
+    expect(outboundGateway.reactToMessage.calledOnce).to.equal(true);
+    expect(outboundGateway.reactToMessage.firstCall.args[4]).to.equal('eyes');
   });
 
   it('still types when a bridge agent receives a message', async () => {

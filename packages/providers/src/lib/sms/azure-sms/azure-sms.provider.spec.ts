@@ -15,7 +15,7 @@ test('should trigger AzureSmsProvider library correctly', async () => {
     },
   ]);
 
-  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(() => {
+  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(function () {
     return {
       send: mockSend,
     } as unknown as SmsClient;
@@ -50,7 +50,7 @@ test('should trigger AzureSmsProvider library correctly with _passthrough', asyn
     },
   ]);
 
-  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(() => {
+  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(function () {
     return {
       send: mockSend,
     } as unknown as SmsClient;

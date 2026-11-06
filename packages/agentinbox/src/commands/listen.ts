@@ -20,7 +20,7 @@ import { type AllowIo, type AllowOutcome, type AskedStore, askToAllow, fileAsked
 import { computerName, ensureComputerId, projectLabel } from '../listen/computer';
 import { type ForegroundStore, fileForeground, stopForeground } from '../listen/foreground';
 import type { HostAdapter, HostProgram } from '../listen/host-adapter';
-import { hostNameOf, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
+import { hostNameOf, hostNames, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
 import { type ListenTiming, type LoopEnd, runListenLoop } from '../listen/loop';
 import {
   type BackgroundCommand,
@@ -61,6 +61,7 @@ export interface ListenOptions {
   timeout?: string;
   runsPerHour?: string;
   maxRun?: string;
+  runsAtOnce?: string;
   json?: boolean;
 }
 
@@ -252,6 +253,7 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
   const limits = {
     runsPerHour: positive(options.runsPerHour, '--runs-per-hour') ?? DEFAULT_LIMITS.runsPerHour,
     maxRunSeconds: options.maxRun ? parseDuration(options.maxRun) : DEFAULT_LIMITS.maxRunSeconds,
+    runsAtOnce: positive(options.runsAtOnce, '--runs-at-once') ?? DEFAULT_LIMITS.runsAtOnce,
   };
   const config = savedConfig(deps.env);
   if (config.auth.mode === 'keyless') {
@@ -264,7 +266,7 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
   }
 
   const project = deps.cwd;
-  const checked = host.check(project, deps.env);
+  const checked = await host.check(project, deps.env);
   if (!checked.ok) {
     throw new Error(checked.message);
   }
@@ -277,7 +279,7 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
   const background = options.foreground ? undefined : backgroundFor(host, project, deps);
   const warnings = [
     ...checked.warnings,
-    ...(background ? checkBackground(host, project, checked.secrets, background) : []),
+    ...(background ? await checkBackground(host, project, checked.secrets, background) : []),
   ];
 
   const computerId = ensureComputerId(config);
@@ -320,13 +322,13 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
  * here: the host has to work with those alone. Stops when it doesn't, or may not; else says what the operator should
  * know before they allow it.
  */
-function checkBackground(
+async function checkBackground(
   host: HostAdapter,
   project: string,
   secrets: string[],
   background: BackgroundCommand
-): string[] {
-  const there = host.check(project, background.env);
+): Promise<string[]> {
+  const there = await host.check(project, background.env);
   if (!there.ok) {
     throw new Error(backgroundSignInMessage({ hostName: host.name, hostId: host.id, secrets, why: there.message }));
   }
@@ -363,9 +365,7 @@ async function hostFor(hostInput: string, deps: ListenDeps): Promise<HostAdapter
 
   const host = await deps.loadHost(hostInput);
   if (!host) {
-    throw new Error(
-      `Listening doesn’t start ${hostNameOf(hostInput)} yet, only ${supported.map(hostNameOf).join(', ')}.`
-    );
+    throw new Error(`Listening doesn’t start ${hostNameOf(hostInput)}, only ${hostNames(supported)}.`);
   }
 
   return host;
@@ -588,7 +588,7 @@ function loopFor(
 export async function listenRun(deps: ListenDeps): Promise<number> {
   const state = deps.store.load();
   if (!state?.allowedAt) {
-    deps.out(`Listening isn’t turned on here. Turn it on with: ${CLI_COMMAND} listen claude-code`);
+    deps.out(`Listening isn’t turned on here. Turn it on with: ${startCommand(deps.env)}`);
 
     return EXIT_OK;
   }
@@ -617,7 +617,7 @@ export async function listenRun(deps: ListenDeps): Promise<number> {
   }
 
   // The host may have moved, gone or signed out since it was turned on.
-  const checked = host.check(state.project, deps.env);
+  const checked = await host.check(state.project, deps.env);
   if (!checked.ok) {
     deps.store.save({
       ...state,
@@ -696,8 +696,21 @@ function statusJson(facts: StatusFacts): Record<string, unknown> {
   };
 }
 
+/**
+ * The `listen` command that turns listening on: for the host that runs this command, or the one this computer was
+ * connected for, when listen starts it; else for the first host it starts.
+ */
+function startCommand(env: NodeJS.ProcessEnv): string {
+  const startable = startableHosts();
+  const host = [detectHost(env), loadConfig()?.host].find(
+    (id): id is ListenHostId => isListenHostId(id) && startable.includes(id)
+  );
+
+  return `${CLI_COMMAND} listen ${host ?? startable[0]}`;
+}
+
 /** What this computer does about it, in a line. */
-function thisComputerLine(facts: StatusFacts): string | undefined {
+function thisComputerLine(facts: StatusFacts, env: NodeJS.ProcessEnv): string | undefined {
   const { state, service } = facts;
   if (state?.stopped) {
     return `This computer stopped ${formatRelativeTime(state.stopped.at)}: ${state.stopped.message}`;
@@ -708,7 +721,7 @@ function thisComputerLine(facts: StatusFacts): string | undefined {
     return `This computer listens for ${hostNameOf(state.host)} in ${projectLabel(state.project)}, in the background (${service.kind})${notRunning}.`;
   }
 
-  return facts.here ? undefined : `This computer isn’t listening. To start: ${CLI_COMMAND} listen claude-code`;
+  return facts.here ? undefined : `This computer isn’t listening. To start: ${startCommand(env)}`;
 }
 
 /** `listen status`: where the agent is listening, and what this computer does about it. */
@@ -727,7 +740,7 @@ export async function listenStatus(options: Pick<ListenOptions, 'json'>, deps: L
   if (facts.listening || !facts.paused) {
     deps.out(describeListening(facts.listening, facts.here));
   }
-  const here = thisComputerLine(facts);
+  const here = thisComputerLine(facts, deps.env);
   if (here) {
     deps.out(here);
   }

@@ -5,8 +5,6 @@
     "moduleResolution": "Bundler",
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
     "noImplicitAny": true,

@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { ManagedAgentService } from '../managed-agent.service';
@@ -9,7 +10,7 @@ export class HandleNovuResolve {
   constructor(
     private readonly handleAgentReply: HandleAgentReply,
     @Inject(forwardRef(() => ManagedAgentService))
-    private readonly managedAgentService: ManagedAgentService
+    private readonly managedAgentService: WrapperType<ManagedAgentService>
   ) {}
 
   async execute(command: HandleNovuResolveCommand): Promise<void> {

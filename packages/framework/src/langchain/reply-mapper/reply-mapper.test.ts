@@ -2,7 +2,7 @@ import { AIMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from '../../resources/agent/agent.runtime';
-import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AgentHistoryEntry, MessageContent } from '../../resources/agent/agent.types';
 import { fakeReply } from '../../resources/agent/reply.fixture';
 import { NovuToolApprovalRequired } from '../tool-approval';
 import type { LangChainAgentConfig } from '../types';
@@ -220,7 +220,7 @@ describe('handleLangChainResult', () => {
     it('delivers the formatReply result instead of the raw text', async () => {
       const ctx = fakeRuntimeCtx();
       streams([new AIMessage({ id: 'ai_1', content: 'created it' })]);
-      const card = { type: 'card', children: [{ type: 'text', content: 'created it' }] } as const;
+      const card: MessageContent = { type: 'card', children: [{ type: 'text', content: 'created it' }] };
 
       await handleLangChainResult(config({ formatReply: () => card }), ctx, undefined);
 

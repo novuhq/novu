@@ -153,6 +153,10 @@ export class SendMessageSms extends SendMessageBase {
 
     const { integration } = selection;
 
+    // Conditions or an integration override can send through a different provider
+    // than the one snapshotted onto the job. message_sent traces read job.providerId.
+    command.job.providerId = integration.providerId;
+
     await this.sendSelectedIntegrationExecution(command.job, selection);
 
     const overrides = mergeTriggerProviderOverrides(

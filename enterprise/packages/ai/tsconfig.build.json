@@ -3,7 +3,6 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "module": "commonjs",
-    "target": "es6",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
