@@ -9,7 +9,7 @@
     "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json",
-    "test": "echo 'skip test in the ci'",
+    "test": "if [ -e src ]; then pnpm test-ee; else echo 'skip test: the enterprise source (.source) is not checked out'; fi",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'",
