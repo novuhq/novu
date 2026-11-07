@@ -6,12 +6,12 @@
 
 ## Build
 
-Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes to `apps/` do not require a rebuild.
+Run `pnpm build` after changes to `packages/` or `enterprise/`, and in `apps/mcp-server` after changing `src/tools` or `src/utils` (the enterprise Copilot imports its `dist`). Other direct changes to `apps/` do not require a rebuild.
 
 ## AI Boundaries
 
 ### Always
-- Work within: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`
+- Work within: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`, `apps/mcp-server` (read `apps/mcp-server/AGENTS.md` first)
 - Use shared packages: `packages/shared`, `packages/framework`, `packages/js`, `packages/react`
 - Follow `libs/dal` for data access, `libs/application-generic` for business logic
 
@@ -41,3 +41,4 @@ When making changes targeted to the Enterprise distribution, we need to make sur
 <!-- Testing: see .cursor/rules/testing.mdc -->
 <!-- PR format: see .cursor/rules/pullrequest.mdc -->
 <!-- Enterprise submodule: see .agents/skills/enterprise-submodule/SKILL.md -->
+<!-- MCP server tools and schemas (apps/mcp-server): see apps/mcp-server/AGENTS.md and .agents/skills/nv-mcp-server-tools/SKILL.md -->

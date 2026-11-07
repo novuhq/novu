@@ -31,6 +31,7 @@
 		"lint:fix": "biome lint --fix",
 		"start": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
 		"test": "vitest run",
+		"tools:report": "cross-env MCP_TOOLS_REPORT=1 vitest run test/tool-schemas.spec.ts -t \"print the size report\" --silent=false --reporter=verbose",
 		"type-check": "tsc --noEmit"
 	},
 	"typesVersions": {
