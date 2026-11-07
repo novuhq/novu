@@ -421,6 +421,7 @@
               "platform/account/roles-and-permissions",
               "platform/account/manage-members",
               "platform/account/billing",
+              "platform/account/usage-alerts",
               "platform/account/sso",
               {
                 "group": "SSO providers",
