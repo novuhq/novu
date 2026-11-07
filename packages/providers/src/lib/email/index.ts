@@ -4,6 +4,7 @@ export * from './brevo/brevo.provider';
 export * from './email-webhook/email-webhook.provider';
 export * from './emailjs/emailjs.config';
 export * from './emailjs/emailjs.provider';
+export * from './groundmail/groundmail.provider';
 export * from './infobip/infobip.provider';
 export * from './mailersend/mailersend.provider';
 export * from './mailgun/mailgun.provider';
