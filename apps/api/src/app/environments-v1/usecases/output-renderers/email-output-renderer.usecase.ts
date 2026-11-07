@@ -6,6 +6,7 @@ import {
   EmailControlType,
   GetLayoutCommand,
   GetLayoutUseCase,
+  getEffectiveJobOverrides,
   InstrumentUsecase,
   LayoutControlType,
   PinoLogger,
@@ -21,6 +22,7 @@ import {
   JobEntity,
   JobRepository,
   LocalizationResourceEnum,
+  NotificationRepository,
   NotificationTemplateEntity,
   OrganizationEntity,
 } from '@novu/dal';
@@ -33,6 +35,7 @@ import {
   ExecutionDetailsStatusEnum,
   LAYOUT_CONTENT_VARIABLE,
   LAYOUT_PREVIEW_EMAIL_STEP,
+  TriggerOverrides,
 } from '@novu/shared';
 import { decodeHTML } from 'entities';
 import { Liquid } from 'liquidjs';
@@ -87,7 +90,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private controlValuesRepository: ControlValuesRepository,
     private getLayoutUseCase: GetLayoutUseCase,
     private jobRepository: JobRepository,
-    private createExecutionDetails: CreateExecutionDetails
+    private createExecutionDetails: CreateExecutionDetails,
+    private notificationRepository: NotificationRepository
   ) {
     super(logger, controlsTranslationService);
     /**
@@ -247,6 +251,41 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     };
   }
 
+  private async findJobWithOverrides(jobId: string | undefined, environmentId: string): Promise<JobEntity | null> {
+    if (!jobId) {
+      return null;
+    }
+
+    const job = await this.jobRepository.findOne({
+      _id: jobId,
+      _environmentId: environmentId,
+    });
+    if (!job) {
+      return null;
+    }
+
+    job.overrides = await this.resolveJobOverrides(job, environmentId);
+
+    return job;
+  }
+
+  /**
+   * Jobs written with overrides dedup on omit `overrides`, and the worker only hydrates them
+   * in memory, so this separate job read must resolve them from the parent notification.
+   */
+  private async resolveJobOverrides(job: JobEntity, environmentId: string): Promise<TriggerOverrides> {
+    if (job.overrides) {
+      return job.overrides;
+    }
+
+    const notification = await this.notificationRepository.findOne(
+      { _id: job._notificationId, _environmentId: environmentId },
+      'overrides'
+    );
+
+    return getEffectiveJobOverrides(job, notification);
+  }
+
   private async getOverrideLayoutId({
     job,
     stepId,
@@ -314,17 +353,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     layoutIdForPreview?: string;
     workflowTranslationContext?: TranslationContext | null;
   }): Promise<string> {
-    let job: JobEntity | null = null;
-    let overrideLayoutId: string | null | undefined;
-    if (jobId) {
-      job = await this.jobRepository.findOne({
-        _id: jobId,
-        _environmentId: environmentId,
-      });
-      if (job) {
-        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
-      }
-    }
+    const job = await this.findJobWithOverrides(jobId, environmentId);
+    const overrideLayoutId = job ? await this.getOverrideLayoutId({ job, stepId }) : undefined;
 
     const overriddenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
 
@@ -610,7 +640,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       }
     }
 
-    const lastIndex = matches[matches.length - 1].index!;
+    const lastIndex = matches[matches.length - 1].index ?? html.length;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
   }

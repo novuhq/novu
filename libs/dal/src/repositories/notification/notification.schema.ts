@@ -52,6 +52,9 @@ const notificationSchema = new Schema<NotificationDBModel>(
     payload: {
       type: Schema.Types.Mixed,
     },
+    overrides: {
+      type: Schema.Types.Mixed,
+    },
     controls: {
       type: Schema.Types.Mixed,
     },

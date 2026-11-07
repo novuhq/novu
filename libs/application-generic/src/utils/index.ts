@@ -52,5 +52,6 @@ export * from './subscribers.utils';
 export * from './subscription';
 export * from './template-parser';
 export * from './timestamp-hex';
+export * from './trigger-overrides';
 export * from './variants';
 export * from './webhook-filter-errors';

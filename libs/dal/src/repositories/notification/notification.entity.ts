@@ -4,6 +4,7 @@ import {
   SeverityLevelEnum,
   StatelessControls,
   StepTypeEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
@@ -50,9 +51,17 @@ export class NotificationEntity {
    * This is a field that is used to define the subscriber that will receive the notification.
    * This field simplifies metric retrieval by associating external subscriber data, such as subscriberId.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, mirrors the trigger `to` as sent
   to?: ISubscribersDefine | any;
 
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, the trigger payload is user-defined JSON
   payload?: any;
+
+  /*
+   * Trigger overrides of the workflow run. Jobs written under overrides-dedup
+   * do not carry their own copy and resolve them from here.
+   */
+  overrides?: TriggerOverrides;
 
   createdAt?: string;
   updatedAt?: string;
