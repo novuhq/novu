@@ -30,7 +30,7 @@ export class AfroSmsProvider extends BaseProvider implements ISmsProvider {
     const url = `${this.BASE_URL}${this.ENDPOINT}`;
 
     const queryParams = {
-      from: this.config.from || options.from,
+      from: options.from || this.config.from,
       sender: this.config.senderName,
       to: options.to,
       message: options.content,

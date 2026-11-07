@@ -24,13 +24,13 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const from = options.from || this.config.from;
+    const from = this.createFormField(options.from || this.config.from);
 
     const payload = this.transform(bridgeProviderData, {
       to: options.to,
       body: options.content,
-      ...(this.createFormField(from) && { from: this.createFormField(from) }),
-      // this userSuppliedId helps bulk-sms to identify the message source as Novuand helps in debugging
+      ...(from && { from }),
+      // this userSuppliedId helps bulk-sms to identify the message source as Novu and helps in debugging
       userSuppliedId: 'BLKTM.NOVU.01.00.00',
     });
 
@@ -57,19 +57,22 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
       return null;
     }
 
+    // BulkSMS expects international numbers without the leading '+' (E.164 digits only)
+    const normalized = senderId.trim().replace(/^\+/, '');
+
     // check if senderId string contains only numbers
-    if (/^\d+$/.test(senderId)) {
+    if (/^\d+$/.test(normalized)) {
       return {
         type: 'INTERNATIONAL',
-        address: senderId,
+        address: normalized,
       };
     }
 
     // check if senderId string contains alphanumeric characters
-    if (/^[a-zA-Z0-9]+$/.test(senderId)) {
+    if (/^[a-zA-Z0-9]+$/.test(normalized)) {
       return {
         type: 'ALPHANUMERIC',
-        address: senderId,
+        address: normalized,
       };
     }
 

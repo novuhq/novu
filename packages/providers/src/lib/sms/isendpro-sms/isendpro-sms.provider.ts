@@ -55,7 +55,7 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
     params.append('keyid', this.config.apiKey);
     params.append('sms', payload.body.message.text);
     params.append('num', payload.body.message.to.replace(/^\+|^00/, ''));
-    params.append('emetteur', this.config.from || 'NOVU');
+    params.append('emetteur', options.from || this.config.from || 'NOVU');
 
     // Send the SMS via iSendPro API
     const response = await this.httpClient.post(`${this.DEFAULT_BASE_URL}/sms`, params, {
@@ -67,7 +67,7 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
 
     // Return standardized response for Novu
     return {
-      id: response.data?.id || 'id_returned_by_provider',
+      id: response.data?.id || options.id,
       date: new Date().toISOString(),
     };
   }

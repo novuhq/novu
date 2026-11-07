@@ -55,3 +55,22 @@ test('should trigger isend-sms library correctly', async () => {
     '{"sender_id":"55483533","recipient":"2348055372961","type":"unicode","message":"sms content"}'
   );
 });
+
+test('should fall back to the configured sender when the step from override is empty', async () => {
+  const { mockPost: spy } = axiosSpy({
+    data: {
+      status: 'success',
+      data: {
+        uid: '67890-90q8',
+      },
+    },
+  });
+  const smsProvider = new ISendSmsProvider({ ...mockConfig, from: 'ConfiguredSender' });
+
+  await smsProvider.sendMessage({ ...mockBulkSMSMessage, from: '' });
+
+  expect(spy).toHaveBeenCalledWith(
+    '/api/v3/sms/send',
+    '{"sender_id":"ConfiguredSender","recipient":"2348055372961","type":"unicode","message":"sms content"}'
+  );
+});

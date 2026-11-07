@@ -24,7 +24,9 @@ describe('CmTelecomSmsProvider', () => {
     it('should send an SMS message successfully', async () => {
       const mockResponse = {
         data: {
-          details: [{ reference: 'msg-123' }],
+          details: 'Created 1 message(s)',
+          errorCode: 0,
+          messages: [{ to: '0032470123456', status: 'Accepted', reference: 'msg-123', messageErrorCode: 0 }],
         },
       };
 
@@ -71,7 +73,9 @@ describe('CmTelecomSmsProvider', () => {
     it('should use custom from if provided in options', async () => {
       const mockResponse = {
         data: {
-          details: [{ reference: 'msg-456' }],
+          details: 'Created 1 message(s)',
+          errorCode: 0,
+          messages: [{ to: '0032470123456', status: 'Accepted', reference: 'msg-456', messageErrorCode: 0 }],
         },
       };
 
@@ -99,7 +103,7 @@ describe('CmTelecomSmsProvider', () => {
     });
 
     it('should format phone number with + prefix correctly', async () => {
-      const mockResponse = { data: { details: [] } };
+      const mockResponse = { data: { details: 'Created 1 message(s)', errorCode: 0, messages: [] } };
       vi.mocked(axios.post).mockResolvedValue(mockResponse);
 
       await provider.sendMessage({
@@ -123,7 +127,7 @@ describe('CmTelecomSmsProvider', () => {
     });
 
     it('should format phone number without prefix correctly', async () => {
-      const mockResponse = { data: { details: [] } };
+      const mockResponse = { data: { details: 'Created 1 message(s)', errorCode: 0, messages: [] } };
       vi.mocked(axios.post).mockResolvedValue(mockResponse);
 
       await provider.sendMessage({
@@ -147,7 +151,7 @@ describe('CmTelecomSmsProvider', () => {
     });
 
     it('should handle phone number already with 00 prefix', async () => {
-      const mockResponse = { data: { details: [] } };
+      const mockResponse = { data: { details: 'Created 1 message(s)', errorCode: 0, messages: [] } };
       vi.mocked(axios.post).mockResolvedValue(mockResponse);
 
       await provider.sendMessage({
@@ -168,6 +172,57 @@ describe('CmTelecomSmsProvider', () => {
         }),
         expect.any(Object)
       );
+    });
+    it('should fall back to the Novu message id when CM.com returns no message results', async () => {
+      vi.mocked(axios.post).mockResolvedValue({
+        data: { details: 'Created 1 message(s)', errorCode: 0, messages: [] },
+      });
+
+      const result = await provider.sendMessage({
+        to: '+32470123456',
+        content: 'Test',
+        id: 'novu-ref-789',
+      });
+
+      expect(result.id).toBe('novu-ref-789');
+    });
+
+    it('should throw when CM.com rejects the message', async () => {
+      vi.mocked(axios.post).mockResolvedValue({
+        data: {
+          details: 'Created 0 message(s)',
+          errorCode: 201,
+          messages: [
+            {
+              to: '0032470123456',
+              status: 'Rejected',
+              reference: null,
+              messageErrorCode: 304,
+              messageDetails: 'Invalid recipient',
+            },
+          ],
+        },
+      });
+
+      await expect(
+        provider.sendMessage({
+          to: '+32470123456',
+          content: 'Test',
+        })
+      ).rejects.toThrow('CM.com rejected the message: Invalid recipient');
+    });
+
+    it('should throw when CM.com rejects the request without message results', async () => {
+      vi.mocked(axios.post).mockResolvedValue({
+        data: { details: 'Unknown error', errorCode: 999, messages: [] },
+      });
+
+      await expect(
+        provider.sendMessage({
+          to: '+32470123456',
+          content: 'Test',
+        })
+      ).rejects.toThrow('CM.com rejected the message: Unknown error');
     });
   });
 });

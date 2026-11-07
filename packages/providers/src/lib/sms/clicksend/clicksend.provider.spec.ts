@@ -84,3 +84,35 @@ test('should trigger ClicksendSmsProvider library correctly with _passthrough', 
     }
   );
 });
+
+test('should send the from field when provided', async () => {
+  const { mockPost: spy } = axiosSpy({
+    data: {
+      data: {
+        messages: [
+          {
+            message_id: '12345-67a8',
+            date: new Date().toISOString(),
+          },
+        ],
+      },
+    },
+  });
+
+  const provider = new ClicksendSmsProvider({
+    username: '<your-clicksend-username>',
+    apiKey: '<your-clicksend-API>',
+  });
+
+  await provider.sendMessage({
+    to: '+0451111111',
+    content: 'test message',
+    from: 'NovuSender',
+  });
+
+  expect(spy).toHaveBeenCalledWith(
+    'https://rest.clicksend.com/v3/sms/send',
+    { messages: [{ body: 'test message', to: '+0451111111', from: 'NovuSender' }] },
+    expect.any(Object)
+  );
+});
