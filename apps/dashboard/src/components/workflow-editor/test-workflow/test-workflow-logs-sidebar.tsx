@@ -44,8 +44,14 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
   );
 
   const activityId: string | undefined = parentActivityId ?? activities?.[0]?._id;
-  const { activity: latestActivity, isPending: isActivityPending, error: activityError } = usePullActivity(activityId);
+  const {
+    activity: latestActivity,
+    isPending: isActivityPending,
+    isPlaceholderData,
+    error: activityError,
+  } = usePullActivity(activityId);
   const activity = latestActivity ?? activities?.[0];
+  const isActivityPlaceholder = isPlaceholderData || !latestActivity;
   const isPending = areActivitiesPending || isActivityPending;
   const error = activitiesError || activityError;
 
@@ -83,6 +89,7 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
                 <ActivityHeader
                   className="h-[49px] border-t-0"
                   activity={activity}
+                  isPlaceholder={isActivityPlaceholder}
                   onTransactionIdChange={handleTransactionIdChange}
                 />
                 <ActivityOverview activity={activity} />
@@ -126,8 +133,8 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
         workflow={props.workflow}
-        to={(to ?? {}) as unknown as Record<string, string>}
-        payload={(payload ?? '') as unknown as string | Record<string, unknown>}
+        to={(to ?? {}) as Record<string, string>}
+        payload={(payload ?? '') as string | Record<string, unknown>}
       />
     </aside>
   );

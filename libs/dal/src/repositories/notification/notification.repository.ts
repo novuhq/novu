@@ -28,6 +28,85 @@ const TERMINAL_EVENTS: DeliveryLifecycleEventType[] = [
   'workflow_run_delivery_interacted',
 ];
 
+export interface NotificationFeedFilters {
+  channels?: ChannelTypeEnum[] | null;
+  templates?: string[] | null;
+  subscriberIds?: string[];
+  transactionId?: string[];
+  topicKey?: string;
+  subscriptionId?: string;
+  severity?: SeverityLevelEnum[] | null;
+  after?: string;
+  before?: string;
+  contextKeys?: string[];
+}
+
+export type WorkflowRunStatusFilter = 'processing' | 'completed' | 'error';
+
+export interface WorkflowRunsPageFilters extends NotificationFeedFilters {
+  statuses?: WorkflowRunStatusFilter[];
+}
+
+export interface WorkflowRunsPageCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface FindWorkflowRunsPageParams {
+  environmentId: string;
+  filters: WorkflowRunsPageFilters;
+  cursor?: WorkflowRunsPageCursor;
+  limit: number;
+  direction: 'ASC' | 'DESC';
+}
+
+export type NotificationWorkflowRunItem = Pick<
+  NotificationEntity,
+  | '_id'
+  | '_templateId'
+  | '_environmentId'
+  | '_organizationId'
+  | '_subscriberId'
+  | 'transactionId'
+  | 'to'
+  | 'topics'
+  | 'channels'
+  | 'severity'
+  | 'critical'
+  | 'contextKeys'
+  | 'lastEmittedDeliveryEvent'
+  | 'lastEmittedWorkflowStatusEvent'
+  | '_digestedNotificationId'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
+const WORKFLOW_RUNS_PAGE_PROJECTION: Record<keyof NotificationWorkflowRunItem, 1> = {
+  _id: 1,
+  _templateId: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+  _subscriberId: 1,
+  transactionId: 1,
+  to: 1,
+  topics: 1,
+  channels: 1,
+  severity: 1,
+  critical: 1,
+  contextKeys: 1,
+  lastEmittedDeliveryEvent: 1,
+  lastEmittedWorkflowStatusEvent: 1,
+  _digestedNotificationId: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
+
+const WORKFLOW_STATUS_EVENT_BY_FILTER: Record<WorkflowRunStatusFilter, TerminalWorkflowStatusEvent | null> = {
+  processing: null,
+  completed: 'workflow_run_status_completed',
+  error: 'workflow_run_status_error',
+};
+
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
   NotificationEntity,
@@ -46,21 +125,75 @@ export class NotificationRepository extends BaseRepository<
 
   async getFeed(
     environmentId: string,
-    query: {
-      channels?: ChannelTypeEnum[] | null;
-      templates?: string[] | null;
-      subscriberIds?: string[];
-      transactionId?: string[];
-      topicKey?: string;
-      subscriptionId?: string;
-      severity?: SeverityLevelEnum[] | null;
-      after?: string;
-      before?: string;
-      contextKeys?: string[];
-    } = {},
+    query: NotificationFeedFilters = {},
     skip = 0,
     limit = 10
   ): Promise<NotificationFeedItemEntity[]> {
+    const requestQuery = this.buildFeedQuery(environmentId, query);
+
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
+      .read('secondaryPreferred')
+      .skip(skip)
+      .limit(limit)
+      .sort('-createdAt');
+
+    return this.toFeedItems(response);
+  }
+
+  /**
+   * Keyset page of workflow runs ordered by (createdAt, _id), without populating jobs.
+   * DESC returns runs older than the cursor, ASC returns runs newer than it.
+   */
+  async findWorkflowRunsPage(params: FindWorkflowRunsPageParams): Promise<NotificationWorkflowRunItem[]> {
+    const sortOrder = params.direction === 'DESC' ? -1 : 1;
+    const response = await this.MongooseModel.find(
+      this.buildWorkflowRunsPageQuery(params),
+      WORKFLOW_RUNS_PAGE_PROJECTION
+    )
+      .sort({ createdAt: sortOrder, _id: sortOrder })
+      .limit(params.limit)
+      .read('secondaryPreferred')
+      .lean();
+
+    return this.mapEntities(response);
+  }
+
+  buildWorkflowRunsPageQuery({
+    environmentId,
+    filters,
+    cursor,
+    direction,
+  }: Omit<FindWorkflowRunsPageParams, 'limit'>): FilterQuery<NotificationDBModel> {
+    const requestQuery = this.buildFeedQuery(environmentId, filters);
+    const andConditions: Array<FilterQuery<NotificationDBModel>> = [];
+
+    if (filters.statuses?.length) {
+      andConditions.push({
+        lastEmittedWorkflowStatusEvent: {
+          $in: filters.statuses.map((status) => WORKFLOW_STATUS_EVENT_BY_FILTER[status]),
+        },
+      });
+    }
+
+    if (cursor) {
+      const operator = direction === 'DESC' ? '$lt' : '$gt';
+      const cursorCreatedAt = new Date(cursor.createdAt);
+      andConditions.push({
+        $or: [
+          { createdAt: { [operator]: cursorCreatedAt } },
+          { createdAt: cursorCreatedAt, _id: { [operator]: cursor.id } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      requestQuery.$and = [...(requestQuery.$and ?? []), ...andConditions];
+    }
+
+    return requestQuery;
+  }
+
+  private buildFeedQuery(environmentId: string, query: NotificationFeedFilters): FilterQuery<NotificationDBModel> {
     const requestQuery: FilterQuery<NotificationDBModel> = {
       _environmentId: environmentId,
     };
@@ -79,27 +212,14 @@ export class NotificationRepository extends BaseRepository<
       requestQuery['topics.preferenceEvaluation.subscriptionIdentifier'] = query.subscriptionId;
     }
 
-    const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
-    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
-
-    if (query.severity && query.severity?.length > 0) {
-      if (query.severity.includes(SeverityLevelEnum.NONE)) {
-        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
-      } else {
-        requestQuery.severity = { $in: query.severity };
-      }
+    const includesNoSeverity = Boolean(query.severity?.includes(SeverityLevelEnum.NONE));
+    if (query.severity?.length && !includesNoSeverity) {
+      requestQuery.severity = { $in: query.severity };
     }
 
-    if (query.after || query.before) {
-      requestQuery.createdAt = {};
-
-      if (query.after) {
-        requestQuery.createdAt.$gte = query.after;
-      }
-
-      if (query.before) {
-        requestQuery.createdAt.$lte = query.before;
-      }
+    const createdAtRange = this.buildCreatedAtRange(query.after, query.before);
+    if (createdAtRange) {
+      requestQuery.createdAt = createdAtRange;
     }
 
     if (query?.templates) {
@@ -125,21 +245,34 @@ export class NotificationRepository extends BaseRepository<
       requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
     }
 
-    // combine all $or conditions properly
-    if (severityCondition.length > 0) {
-      orConditions.push({ $or: severityCondition });
-    }
-    if (orConditions.length > 0) {
-      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
+    if (query.severity?.length && includesNoSeverity) {
+      requestQuery.$and = [
+        ...(requestQuery.$and ?? []),
+        { $or: [{ severity: { $exists: false } }, { severity: { $in: query.severity } }] },
+      ];
     }
 
-    const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
-      .read('secondaryPreferred')
-      .skip(skip)
-      .limit(limit)
-      .sort('-createdAt');
+    return requestQuery;
+  }
 
-    return this.mapEntities(response) as unknown as NotificationFeedItemEntity[];
+  private buildCreatedAtRange(after?: string, before?: string): { $gte?: string; $lte?: string } | undefined {
+    if (!after && !before) {
+      return undefined;
+    }
+
+    return {
+      ...(after && { $gte: after }),
+      ...(before && { $lte: before }),
+    };
+  }
+
+  /** NotificationEntity has no class-transformer metadata, so a JSON copy is what mapEntity would return. */
+  private toFeedItem(populatedNotification: unknown): NotificationFeedItemEntity {
+    return JSON.parse(JSON.stringify(populatedNotification));
+  }
+
+  private toFeedItems(populatedNotifications: unknown): NotificationFeedItemEntity[] {
+    return JSON.parse(JSON.stringify(populatedNotifications));
   }
 
   public async getFeedItem(
@@ -153,9 +286,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
-      await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId)
-    ) as unknown as NotificationFeedItemEntity;
+    return this.toFeedItem(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId));
   }
 
   public async findMetadataForTraces(
@@ -169,9 +300,9 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
+    return this.toFeedItem(
       await this.populateFeedWithoutExecutionDetails(this.MongooseModel.findOne(requestQuery), _environmentId)
-    ) as unknown as NotificationFeedItemEntity;
+    );
   }
 
   public async findNotificationMetadataOnly(
@@ -185,9 +316,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
-      await this.populateNotificationMetadataOnly(this.MongooseModel.findOne(requestQuery))
-    ) as unknown as NotificationFeedItemEntity;
+    return this.toFeedItem(await this.populateNotificationMetadataOnly(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {

@@ -176,6 +176,18 @@ notificationSchema.index({
   createdAt: -1,
 });
 
+/*
+ * Path: libs/dal/src/repositories/notification/notification.repository.ts
+ *    Context: findWorkflowRunsPage()
+ *        Query: find({ _environmentId, ...filters, $or: [{ createdAt: { $lt: c } }, { createdAt: c, _id: { $lt: id } }] })
+ *               .sort({ createdAt: -1, _id: -1 })
+ */
+notificationSchema.index({
+  _environmentId: 1,
+  createdAt: -1,
+  _id: -1,
+});
+
 notificationSchema.index({
   _environmentId: 1,
   _templateId: 1,
