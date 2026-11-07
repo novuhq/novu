@@ -158,6 +158,9 @@ const jobSchema = new Schema<JobDBModel>(
     scheduleExtensionsCount: {
       type: Schema.Types.Number,
     },
+    waitUntil: {
+      type: Schema.Types.Date,
+    },
   },
   schemaOptions
 );
