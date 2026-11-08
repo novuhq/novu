@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
@@ -11,10 +12,16 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
-import { IntegrationEntity, OrganizationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions, ResourceOriginEnum } from '@novu/shared';
+import { IntegrationEntity, MessageRepository, OrganizationRepository } from '@novu/dal';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials, IEmailOptions, ResourceOriginEnum } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { SendTestEmailCommand } from './send-test-email.command';
+
+interface CompiledTestEmail {
+  html: string;
+  subject: string;
+  bridgeProviderData: Record<string, unknown>;
+}
 
 @Injectable()
 export class SendTestEmail {
@@ -24,7 +31,8 @@ export class SendTestEmail {
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    private previewStep: PreviewStep
+    private previewStep: PreviewStep,
+    private messageRepository: MessageRepository
   ) {}
 
   @InstrumentUsecase()
@@ -32,8 +40,6 @@ export class SendTestEmail {
     const mailFactory = new MailFactory();
     const organization = await this.organizationRepository.findById(command.organizationId);
     if (!organization) throw new NotFoundException('Organization not found');
-
-    const email = command.to;
 
     addBreadcrumb({
       message: 'Sending Email',
@@ -50,24 +56,42 @@ export class SendTestEmail {
     );
 
     if (!selection) {
-      throw new BadRequestException(`Missing an active email integration`);
+      throw new BadRequestException('Missing an active email integration');
     }
+
     const { integration } = selection;
+    const isSharedProvider = integration.providerId === EmailProviderIdEnum.Novu;
+    const compiled = await this.compileContent(command, integration);
+    const recipients = normalizeRecipients(command.to);
 
-    if (integration.providerId === EmailProviderIdEnum.Novu) {
-      integration.credentials = await this.getNovuProviderCredentials.execute({
-        channelType: ChannelTypeEnum.EMAIL,
-        providerId: integration.providerId,
-        environmentId: integration._environmentId,
-        organizationId: integration._organizationId,
-        userId: command.userId,
-      });
+    if (recipients.length === 0) {
+      return;
     }
 
-    let html = '';
-    let subject = '';
-    let bridgeProviderData: Record<string, unknown> = {};
+    if (isSharedProvider) {
+      integration.credentials = await this.reserveSharedProviderSend(
+        command,
+        integration,
+        recipients,
+        compiled.subject
+      );
+    }
 
+    const mailData: IEmailOptions = {
+      to: recipients,
+      subject: compiled.subject,
+      html: compiled.html,
+      from: resolveFromAddress(command, integration, isSharedProvider),
+    };
+    const bridgeProviderData = isSharedProvider ? {} : compiled.bridgeProviderData;
+
+    await this.sendMessage(integration, mailData, mailFactory, command, bridgeProviderData);
+  }
+
+  private async compileContent(
+    command: SendTestEmailCommand,
+    integration: IntegrationEntity
+  ): Promise<CompiledTestEmail> {
     if (!command.bridge) {
       const template = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
@@ -84,49 +108,122 @@ export class SendTestEmail {
           },
         })
       );
-      html = template.html;
-      subject = template.subject;
+
+      return {
+        html: template.html,
+        subject: template.subject,
+        bridgeProviderData: {},
+      };
     }
 
-    if (command.bridge) {
-      if (!command.workflowId || !command.stepId) {
-        throw new BadRequestException('Workflow ID and step ID are required');
+    if (!command.workflowId || !command.stepId) {
+      throw new BadRequestException('Workflow ID and step ID are required');
+    }
+
+    const data = await this.previewStep.execute(
+      PreviewStepCommand.create({
+        workflowId: command.workflowId,
+        stepId: command.stepId,
+        controls: command.controls,
+        payload: command.payload,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
+      })
+    );
+
+    if (!data.outputs) {
+      throw new BadRequestException('Could not retrieve content from edge');
+    }
+
+    const bridgeProviderData =
+      data.providers && typeof data.providers === 'object' ? data.providers[integration.providerId] || {} : {};
+
+    return {
+      html: data.outputs.body as string,
+      subject: data.outputs.subject as string,
+      bridgeProviderData,
+    };
+  }
+
+  /**
+   * Each accepted recipient is written before the next credential lookup so the
+   * shared-provider monthly cap sees this request before the provider is called.
+   * A later rejection removes those rows and does not send.
+   */
+  private async reserveSharedProviderSend(
+    command: SendTestEmailCommand,
+    integration: IntegrationEntity,
+    recipients: string[],
+    subject: string
+  ): Promise<ICredentials> {
+    const reservedMessageIds: string[] = [];
+
+    try {
+      let credentials: ICredentials | undefined;
+
+      for (const recipient of recipients) {
+        credentials = await this.getNovuProviderCredentials.execute({
+          channelType: ChannelTypeEnum.EMAIL,
+          providerId: integration.providerId,
+          environmentId: integration._environmentId,
+          organizationId: integration._organizationId,
+          userId: command.userId,
+          recipientEmail: recipient,
+          requireRecipientMatch: true,
+        });
+
+        const message = await this.messageRepository.create({
+          _organizationId: integration._organizationId,
+          _environmentId: integration._environmentId,
+          channel: ChannelTypeEnum.EMAIL,
+          providerId: EmailProviderIdEnum.Novu,
+          email: recipient,
+          subject,
+          transactionId: randomUUID(),
+          tags: ['test-email'],
+        });
+        reservedMessageIds.push(message._id);
       }
 
-      const data = await this.previewStep.execute(
-        PreviewStepCommand.create({
-          workflowId: command.workflowId,
-          stepId: command.stepId,
-          controls: command.controls,
-          payload: command.payload,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        })
+      if (!credentials) {
+        throw new BadRequestException('Missing an active email integration');
+      }
+
+      return credentials;
+    } catch (error) {
+      await this.releaseSharedProviderReservation(
+        integration._organizationId,
+        integration._environmentId,
+        reservedMessageIds
       );
 
-      if (!data.outputs) {
-        throw new BadRequestException('Could not retrieve content from edge');
-      }
+      throw error;
+    }
+  }
 
-      html = data.outputs.body as string;
-      subject = data.outputs.subject as string;
-
-      if (data.providers && typeof data.providers === 'object') {
-        bridgeProviderData = data.providers[integration.providerId] || {};
-      }
+  private async releaseSharedProviderReservation(organizationId: string, environmentId: string, messageIds: string[]) {
+    if (messageIds.length === 0) {
+      return;
     }
 
-    if (email && integration) {
-      const mailData: IEmailOptions = {
-        to: Array.isArray(email) ? email : [email],
-        subject,
-        html: html as string,
-        from: (command.payload.$sender_email as string) || integration?.credentials.from || 'no-reply@novu.co',
-      };
-
-      await this.sendMessage(integration, mailData, mailFactory, command, bridgeProviderData);
+    try {
+      await this.messageRepository.delete({
+        _id: { $in: messageIds },
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+      });
+    } catch (cleanupError) {
+      addBreadcrumb({
+        message: 'Failed to release shared provider test-email reservation',
+        data: {
+          organizationId,
+          environmentId,
+          messageIds,
+          cleanupError,
+        },
+      });
     }
   }
 
@@ -149,7 +246,7 @@ export class SendTestEmail {
         providerId,
       });
     } catch (_error) {
-      throw new BadRequestException(`Unexpected provider error`);
+      throw new BadRequestException('Unexpected provider error');
     }
   }
 
@@ -164,4 +261,30 @@ export class SendTestEmail {
 
     return variables;
   }
+}
+
+function normalizeRecipients(to: string | string[]): string[] {
+  const recipients = Array.isArray(to) ? to : [to];
+
+  return recipients
+    .filter((recipient): recipient is string => typeof recipient === 'string')
+    .map((recipient) => recipient.trim())
+    .filter((recipient) => recipient.length > 0);
+}
+
+function resolveFromAddress(
+  command: SendTestEmailCommand,
+  integration: IntegrationEntity,
+  isSharedProvider: boolean
+): string {
+  if (isSharedProvider) {
+    return integration.credentials?.from || 'no-reply@novu.co';
+  }
+
+  const senderEmail = command.payload?.$sender_email;
+  if (typeof senderEmail === 'string' && senderEmail.length > 0) {
+    return senderEmail;
+  }
+
+  return integration.credentials?.from || 'no-reply@novu.co';
 }
