@@ -144,7 +144,7 @@ export class InboundConnectionContextResolver {
         providerId: InAppProviderIdEnum.Novu,
         active: true,
       },
-      { credentials: 1 }
+      'credentials'
     );
 
     return (
