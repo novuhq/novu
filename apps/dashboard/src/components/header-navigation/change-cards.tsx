@@ -12,6 +12,7 @@ import { Kbd } from '../primitives/kbd';
 import { BreakingBadge, ChangeNote, DiffStat, ResourceStatusBadge } from './change-badges';
 import { AGENT_INACTIVE_NOTE, dependentNames, removalNote } from './change-notes';
 import { buildChangeCardModel, type ChangeSection, changeNodeKey, GROUP_ICONS, SECTION_ICONS } from './change-sections';
+import { LayoutContentCompare } from './layout-change-preview';
 import {
   EnvironmentHeader,
   type EnvironmentNames,
@@ -329,6 +330,22 @@ function ChangeCardMeta({
   );
 }
 
+function sectionStartsOpen(section: ChangeSection, stepCount: number): boolean {
+  if (section.schemaPreview) {
+    return true;
+  }
+
+  if (stepCount > 0) {
+    return true;
+  }
+
+  if (section.layoutPreview) {
+    return true;
+  }
+
+  return false;
+}
+
 function ChangeSectionRow({
   ref,
   nodeKey,
@@ -354,7 +371,7 @@ function ChangeSectionRow({
 }) {
   const Icon = SECTION_ICONS[section.key];
   const stepItems = section.key === 'steps' ? (section.items ?? []) : [];
-  const expandedByDefault = Boolean(section.schemaPreview) || stepItems.length > 0;
+  const expandedByDefault = sectionStartsOpen(section, stepItems.length);
   const canExpand = expandedByDefault || Boolean(section.fieldsDiff);
   const [expanded, setExpanded] = useState(expandedByDefault && selected);
   const focusPath = scrollRequest?.key.startsWith(`${nodeKey}:`) ? scrollRequest.key.slice(nodeKey.length + 1) : null;
@@ -413,7 +430,16 @@ function ChangeSectionRow({
         />
       )}
 
-      {expanded && section.fieldsDiff && (
+      {expanded && section.layoutPreview && section.fieldsDiff && (
+        <LayoutContentCompare
+          layoutId={workflowId}
+          preview={section.layoutPreview}
+          environments={environments}
+          environmentNames={environmentNames}
+        />
+      )}
+
+      {expanded && section.fieldsDiff && !section.layoutPreview && (
         <div className="mt-1 flex min-w-0 flex-col gap-1 rounded-lg border border-stroke-soft bg-bg-white p-1.5">
           <div className="flex gap-1.5">
             <EnvironmentHeader name={environmentNames.target} tone="feature" />

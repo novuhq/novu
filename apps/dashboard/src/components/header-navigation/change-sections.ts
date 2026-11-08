@@ -148,6 +148,8 @@ export type ChangeSection = {
   schemaPreview?: PayloadSchemaPreview;
   /** Production vs. development JSON for sections that have no richer view. */
   fieldsDiff?: FieldsDiff;
+  /** Layout email controls for the side-by-side preview. */
+  layoutPreview?: LayoutContentPreview;
   diffStat: ChangeDiffStat;
 };
 
@@ -155,6 +157,12 @@ export type FieldsDiff = {
   lineDiff: JsonLineDiff;
   hasPrevious: boolean;
   hasNext: boolean;
+};
+
+/** Control values for each side of a layout, rendered the same way a step preview is. */
+export type LayoutContentPreview = {
+  previous: Record<string, unknown> | null;
+  next: Record<string, unknown> | null;
 };
 
 export type ChangeCardModel = {
@@ -779,11 +787,18 @@ function buildAgentSection(row: ChangeRow): ChangeSection | null {
   return { key: 'details', label: 'Details', status: fieldsDiffStatus(fieldsDiff), fieldsDiff, diffStat };
 }
 
-function emailControl(value: WorkflowFields): Record<string, unknown> | null {
+function layoutControlValues(value: WorkflowFields): Record<string, unknown> | null {
   if (!isContainer(value) || !isContainer(value.controls)) return null;
 
   const values = value.controls.values;
-  if (!isContainer(values) || !isContainer(values.email)) return null;
+  if (!isContainer(values)) return null;
+
+  return values;
+}
+
+function emailControl(value: WorkflowFields): Record<string, unknown> | null {
+  const values = layoutControlValues(value);
+  if (!values || !isContainer(values.email)) return null;
 
   return values.email;
 }
@@ -839,6 +854,10 @@ function buildLayoutSections(row: ChangeRow): ChangeSection[] {
       label: 'Content',
       status: fieldsDiffStatus(contentDiff),
       fieldsDiff: contentDiff,
+      layoutPreview: {
+        previous: layoutControlValues(previous),
+        next: layoutControlValues(next),
+      },
       diffStat: contentStat,
     });
   }
