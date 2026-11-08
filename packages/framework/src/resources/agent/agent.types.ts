@@ -227,9 +227,10 @@ export type AgentContextValue = string | { id: string; data?: Record<string, unk
  * turn.
  *
  * Populated by Novu from the context an integrator passes to the Connect button (e.g. the Slack
- * connect flow persists it on the `ChannelConnection`). It lets a single hosted agent serve many
- * tenants: the agent reads its own tenant/org out of the context to scope writes. Keys are
- * integrator-defined context types (e.g. `tenant`), mirroring Novu's `ContextPayload`.
+ * connect flow persists it on the `ChannelConnection`) or, on Web Chat, to `NovuProvider` with a
+ * `contextHash`. It lets a single hosted agent serve many tenants: the agent reads its own
+ * tenant/org out of the context to scope writes. Keys are integrator-defined context types (e.g.
+ * `tenant`), mirroring Novu's `ContextPayload`.
  */
 export type AgentContextPayload = Record<string, AgentContextValue>;
 
@@ -603,9 +604,14 @@ export interface AgentHandlerContext {
    */
   readonly subscriber: AgentSubscriber | null;
   /**
-   * Connect-time context resolved for this turn from the channel connection, or `null` when none
-   * was bound. Populated server-side (trusted) — safe to use for authorizing and scoping writes
-   * (e.g. reading the customer's tenant/organization out of it).
+   * Context resolved server-side for this turn, or `null` when none was bound: from the channel
+   * connection or endpoint (Slack, Teams, Telegram), or from the subscriber session on Web Chat,
+   * where it is only forwarded when every active Novu In-App integration of the environment
+   * enforces HMAC (session start then requires a matching `contextHash`).
+   *
+   * Before using it to authorize or scope writes (e.g. by the customer's tenant), check that
+   * `subscriber` belongs to that tenant, since a `contextHash` is not tied to a subscriber, and trust
+   * the context `id` rather than its stored `data`.
    */
   readonly context: AgentContextPayload | null;
   /**
