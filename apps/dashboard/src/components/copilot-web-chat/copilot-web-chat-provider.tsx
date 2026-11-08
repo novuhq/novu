@@ -365,6 +365,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       // The client rejects sends during a run, so refuse up front and let the composer keep the text.
       if (!trimmed || chatRef.current.isLoading || isBusyRef.current) return false;
 
+      // A newer request replaces a Try again prompt still being looked up, so it is not resent after this one.
+      readyPromptLookupRef.current++;
+      setReadyPrompt(undefined);
+
       const isNewChat = chatRef.current.messages.length === 0;
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
         agentId: NOVU_COPILOT_AGENT_ID,
@@ -457,12 +461,15 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       setPendingReviewMessageId(action.sourceMessageId);
       tryAgainCardRef.current =
         action.actionId === CopilotReviewActionEnum.TRY_AGAIN ? action.sourceMessageId : undefined;
+      // The run the click starts writes the workflow, so the composer waits for it like for a sent message.
+      setAwaitingReply(true);
     }
 
     const { error } = await chatRef.current.sendAction(action);
     if (!error) return;
 
     // The click never reached the agent, so the card stays the user's way to try it again.
+    setAwaitingReply(false);
     setPendingReviewMessageId(undefined);
     tryAgainCardRef.current = undefined;
     showErrorToast("Couldn't reach the Copilot. Try again.");
@@ -493,7 +500,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
   // `chat.error` stays set while a failed send is retried, so failures are read from the run and the message instead.
   const hasRunError = runError || isResumeBroken || !!chat.catchUpError || !!getFailedSend(chat.messages);
-  const isBusy = !hasRunError && (chat.isRunning || (awaitingReply && hasPendingReplyGap(chat.messages)));
+  const isBusy =
+    !hasRunError &&
+    (chat.isRunning || (awaitingReply && (!!pendingReviewMessageId || hasPendingReplyGap(chat.messages))));
   isBusyRef.current = isBusy;
 
   // The ready event arrives while the run that reverted the turn is still open, and a send is refused until it settles.
