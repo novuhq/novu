@@ -1,7 +1,14 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
 import { CopilotReviewActionEnum } from '@novu/shared';
 import { describe, expect, it, vi } from 'vitest';
-import { getOpenReviewActions, getTryAgainPrompt, loadTryAgainPrompt } from './copilot-web-chat-utils';
+import {
+  buildAssistantBlocks,
+  getCopilotTypingLabel,
+  getOpenReviewActions,
+  getTryAgainPrompt,
+  loadTryAgainPrompt,
+  orderStoppedTurns,
+} from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
   return {
@@ -255,5 +262,215 @@ describe('loadTryAgainPrompt', () => {
 
     expect(prompt).toBe('Make it high severity');
     expect(fetchMore).toHaveBeenCalledOnce();
+  });
+});
+
+const POWERED_BY_FOOTER =
+  '_Powered by [Novu](https://go.novu.co/agent-powered?utm_source=agent-powered&utm_medium=web-chat)_';
+
+describe('buildAssistantBlocks (Powered by footer)', () => {
+  it('strips the footer the API appends to a reply', () => {
+    const blocks = buildAssistantBlocks(assistantMessage('act_1', `Added an SMS step.\n\n${POWERED_BY_FOOTER}`));
+
+    expect(blocks).toEqual([{ kind: 'text', key: 'act_1:0', text: 'Added an SMS step.', streaming: false }]);
+  });
+
+  it('strips the linkless footer', () => {
+    const blocks = buildAssistantBlocks(assistantMessage('act_1', 'Added an SMS step.\n\nPowered by Novu​'));
+
+    expect(blocks).toEqual([{ kind: 'text', key: 'act_1:0', text: 'Added an SMS step.', streaming: false }]);
+  });
+
+  it('drops a text part that is only the footer', () => {
+    expect(buildAssistantBlocks(assistantMessage('act_1', POWERED_BY_FOOTER))).toEqual([]);
+  });
+
+  it('keeps a reply that only mentions Novu mid-text', () => {
+    const text = 'Powered by Novu workflows, this step sends an SMS.';
+
+    expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
+      { kind: 'text', key: 'act_1:0', text, streaming: false },
+    ]);
+  });
+});
+
+/** The empty message `@novu/js` adds to carry the mark of a run stopped before its reply reached the timeline. */
+function stoppedPlaceholder(runId: string): AgentMessage {
+  return { ...assistantMessage(`${runId}_stopped`, ''), parts: [], stopped: true };
+}
+
+function stoppedReply(id: string, text: string): AgentMessage {
+  return { ...assistantMessage(id, text), stopped: true };
+}
+
+function stoppedToolMessage(id: string): AgentMessage {
+  return {
+    ...assistantMessage(id, ''),
+    parts: [
+      {
+        type: 'tool',
+        toolUseId: 'tool_1',
+        toolName: 'addStep',
+        input: { step: { stepId: 'sms-step', type: 'sms' } },
+        state: 'output-available',
+      },
+    ],
+    stopped: true,
+  };
+}
+
+function summarize(messages: readonly AgentMessage[]) {
+  return messages.map((message) => [message.id, !!message.stopped]);
+}
+
+describe('orderStoppedTurns', () => {
+  it('leaves a thread without a stopped turn as it is', () => {
+    const messages = [
+      userMessage('msg_1', 'Add SMS'),
+      assistantMessage('act_1', 'Added an SMS step.'),
+      reviewCardMessage('card_review'),
+    ];
+
+    expect(orderStoppedTurns(messages)).toEqual(messages);
+  });
+
+  it('puts the late reply, then "Stopped", above the card a stopped run saved first', () => {
+    const late = assistantMessage('act_1', `I'm adding the SMS st\n\n${POWERED_BY_FOOTER}`);
+    const ordered = orderStoppedTurns([
+      userMessage('msg_1', 'Add SMS'),
+      stoppedPlaceholder('run_1'),
+      reviewCardMessage('card_review'),
+      late,
+    ]);
+
+    expect(summarize(ordered)).toEqual([
+      ['msg_1', false],
+      ['act_1', true],
+      ['card_review', false],
+    ]);
+    expect(ordered[1].parts).toEqual(late.parts);
+  });
+
+  it('moves the mark off a partial reply onto the reply that continued it after the card', () => {
+    const ordered = orderStoppedTurns([
+      userMessage('msg_1', 'Add SMS'),
+      stoppedReply('act_1', "I'll add the steps"),
+      reviewCardMessage('card_review'),
+      assistantMessage('act_2', 'Done, I added'),
+    ]);
+
+    expect(summarize(ordered)).toEqual([
+      ['msg_1', false],
+      ['act_1', false],
+      ['act_2', true],
+      ['card_review', false],
+    ]);
+  });
+
+  it('keeps the tools of the stopped run above the late reply', () => {
+    const ordered = orderStoppedTurns([
+      userMessage('msg_1', 'Add SMS'),
+      stoppedToolMessage('run_1'),
+      reviewCardMessage('card_review'),
+      assistantMessage('act_1', 'Added the SMS step'),
+    ]);
+
+    expect(summarize(ordered)).toEqual([
+      ['msg_1', false],
+      ['run_1', false],
+      ['act_1', true],
+      ['card_review', false],
+    ]);
+  });
+
+  it('moves the late reply above every card saved before it', () => {
+    const ordered = orderStoppedTurns([
+      stoppedPlaceholder('run_1'),
+      reviewCardMessage('card_review'),
+      noteCardMessage('card_note'),
+      assistantMessage('act_1', 'Partial reply'),
+    ]);
+
+    expect(summarize(ordered)).toEqual([
+      ['act_1', true],
+      ['card_review', false],
+      ['card_note', false],
+    ]);
+  });
+
+  it('leaves a turn whose late reply took the mark before the card arrived', () => {
+    const messages = [
+      userMessage('msg_1', 'Add SMS'),
+      stoppedReply('act_1', 'Partial reply'),
+      reviewCardMessage('card_review'),
+    ];
+
+    expect(orderStoppedTurns(messages)).toEqual(messages);
+  });
+
+  it('does not pull a reply up from the next turn', () => {
+    const messages = [
+      userMessage('msg_1', 'Add SMS'),
+      stoppedPlaceholder('run_1'),
+      reviewCardMessage('card_review'),
+      userMessage('msg_2', 'Make it high severity'),
+      assistantMessage('act_2', 'Done'),
+    ];
+
+    expect(orderStoppedTurns(messages)).toEqual(messages);
+  });
+
+  it('does not move a reply that shows nothing but the footer', () => {
+    const messages = [
+      stoppedPlaceholder('run_1'),
+      reviewCardMessage('card_review'),
+      assistantMessage('act_1', POWERED_BY_FOOTER),
+    ];
+
+    expect(orderStoppedTurns(messages)).toEqual(messages);
+  });
+
+  it('reorders only the stopped turn of a longer thread', () => {
+    const ordered = orderStoppedTurns([
+      userMessage('msg_1', 'Add SMS'),
+      assistantMessage('act_1', 'Added an SMS step.'),
+      reviewCardMessage('card_review_1'),
+      noteCardMessage('card_note'),
+      userMessage('msg_2', 'Add email'),
+      stoppedPlaceholder('run_2'),
+      reviewCardMessage('card_review_2'),
+      assistantMessage('act_2', 'Adding the em'),
+      userMessage('msg_3', 'Never mind'),
+      assistantMessage('act_3', 'Okay.'),
+    ]);
+
+    expect(summarize(ordered)).toEqual([
+      ['msg_1', false],
+      ['act_1', false],
+      ['card_review_1', false],
+      ['card_note', false],
+      ['msg_2', false],
+      ['act_2', true],
+      ['card_review_2', false],
+      ['msg_3', false],
+      ['act_3', false],
+    ]);
+  });
+});
+
+describe('getCopilotTypingLabel', () => {
+  it.each([[undefined], [''], ['  '], ['Thinking...'], ['Thinking…'], ['thinking...']])(
+    'falls back to the Copilot label for the platform default %j',
+    (status) => {
+      expect(getCopilotTypingLabel(status)).toBeUndefined();
+    }
+  );
+
+  it.each([
+    ['Adding In-App Step…', 'Adding In-App Step…'],
+    ['Writing step content…', 'Writing step content…'],
+    ['Thinking about the email step…', 'Thinking about the email step…'],
+  ])('keeps the agent status %j', (status, expected) => {
+    expect(getCopilotTypingLabel(status)).toBe(expected);
   });
 });

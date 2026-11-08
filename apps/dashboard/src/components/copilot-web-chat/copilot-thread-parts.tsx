@@ -70,7 +70,7 @@ export function DotGrid({ columns, stepMs, className }: { columns: number; stepM
 }
 
 /** Shown from a send until the agent produces content, and while its reasoning streams. */
-export function CopilotThinkingIndicator({ label = 'Thinking…' }: { label?: string }) {
+export function CopilotThinkingIndicator({ label = 'Working…' }: { label?: string }) {
   return (
     <output className="flex items-center gap-2 text-xs leading-4 text-text-soft">
       <DotGrid columns={4} stepMs={150} className="size-3" />

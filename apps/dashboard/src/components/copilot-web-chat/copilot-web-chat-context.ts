@@ -33,8 +33,6 @@ export type CopilotWebChatContextValue = {
   pendingReviewMessageId?: string;
   startNewConversation: () => void;
   /** Unsent composer text, kept here so minimizing the popover does not discard it. */
-  /** Workflow label each user message was sent for, by the message's position among user messages. */
-  sentContextLabels: Record<number, string>;
   draft: string;
   setDraft: (value: string) => void;
   /** True from an `open()`, including while already open, until the composer has taken the focus. */
@@ -62,7 +60,6 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   stop: async () => {},
   sendCardAction: async () => {},
   startNewConversation: noop,
-  sentContextLabels: {},
   draft: '',
   setDraft: noop,
   isRevealPending: false,

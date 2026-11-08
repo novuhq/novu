@@ -1,6 +1,15 @@
 import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
 import { AiWorkflowToolsEnum, CopilotReviewActionEnum } from '@novu/shared';
 
+// The plan branding the API appends to delivered replies (stored history has none), in the shapes it can take.
+// Same pattern as the agents web-chat panel (`agent-message-to-thread-message.ts`), which strips it the same way.
+const POWERED_BY =
+  /(?:\n+)?(?:_*Powered by\s*\[[^\]]+\]\([^)]+\)_*|_*\[Powered by Novu\]\([^)]+\)_*|Powered by\s*<https?:\/\/[^|>]+\|[^>]+>|Powered by\s*<a\b[^>]*>[\s\S]*?<\/a>|Powered by Novu​?)\s*$/i;
+
+function stripPoweredBy(text: string): string {
+  return text.replace(POWERED_BY, '').trimEnd();
+}
+
 /** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
 const WORKFLOW_WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   AiWorkflowToolsEnum.SET_WORKFLOW_METADATA,
@@ -193,7 +202,10 @@ export type AssistantBlock =
   | { kind: 'tools'; key: string; rows: ToolRow[] }
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
-/** Groups consecutive tool parts into one block and drops parts this UI does not render. */
+/**
+ * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
+ * Novu" footer the API appends to replies (it is in the saved text, so restored threads carry it too).
+ */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   const blocks: AssistantBlock[] = [];
 
@@ -201,8 +213,9 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     const key = `${message.id}:${index}`;
 
     if (part.type === 'text') {
-      if (!part.text.trim()) return;
-      blocks.push({ kind: 'text', key, text: part.text, streaming: part.state === 'streaming' });
+      const text = stripPoweredBy(part.text);
+      if (!text.trim()) return;
+      blocks.push({ kind: 'text', key, text, streaming: part.state === 'streaming' });
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
@@ -370,6 +383,17 @@ export function getFailedSend(messages: readonly AgentMessage[]): AgentMessage |
   return last?.role === 'user' && last.status === 'failed' ? last : undefined;
 }
 
+// The API sends this default typing status for every agent; the Copilot shows its own label instead.
+const PLATFORM_DEFAULT_TYPING_STATUS = /^thinking(\.\.\.|…)$/i;
+
+/** The agent's typing status to show, or `undefined` for the Copilot's default label. */
+export function getCopilotTypingLabel(status: string | undefined): string | undefined {
+  const trimmed = status?.trim();
+  if (!trimmed || PLATFORM_DEFAULT_TYPING_STATUS.test(trimmed)) return undefined;
+
+  return trimmed;
+}
+
 /** Whether the thread still needs a placeholder: nothing from the agent is visible after the last user message. */
 export function hasPendingReplyGap(messages: readonly AgentMessage[]): boolean {
   const last = messages[messages.length - 1];
@@ -377,6 +401,53 @@ export function hasPendingReplyGap(messages: readonly AgentMessage[]): boolean {
   if (last.role === 'user') return last.status !== 'failed';
 
   return buildAssistantBlocks(last).length === 0;
+}
+
+function isCardMessage(message: AgentMessage): boolean {
+  return message.role === 'assistant' && message.parts.some((part) => part.type === 'card');
+}
+
+/** An assistant reply that shows text (a "Powered by" footer alone does not count) and holds no card. */
+function isTextReply(message: AgentMessage): boolean {
+  return (
+    message.role === 'assistant' &&
+    !message.stopped &&
+    !isCardMessage(message) &&
+    buildAssistantBlocks(message).some((block) => block.kind === 'text')
+  );
+}
+
+/**
+ * A stopped run can save its review card before the tail of its partial reply lands, and `@novu/js` then keeps the
+ * stop mark where it was, so the turn reads "Stopped", the card, then the text. This moves the reply that lands right
+ * after the card(s) in front of them and hands it the mark, as `@novu/js` does when no card is in between: text,
+ * "Stopped", then the card(s). History replays in the same order, so live and restored threads match.
+ */
+export function orderStoppedTurns(messages: readonly AgentMessage[]): AgentMessage[] {
+  const ordered: AgentMessage[] = [];
+  let index = 0;
+
+  while (index < messages.length) {
+    const message = messages[index];
+    let cardsEnd = index + 1;
+    if (message.role === 'assistant' && message.stopped) {
+      while (cardsEnd < messages.length && isCardMessage(messages[cardsEnd])) cardsEnd++;
+    }
+    const lateReply = messages[cardsEnd];
+
+    if (cardsEnd === index + 1 || !lateReply || !isTextReply(lateReply)) {
+      ordered.push(message);
+      index++;
+      continue;
+    }
+
+    // A message with no parts was only the placeholder that carried the mark.
+    if (message.parts.length > 0) ordered.push({ ...message, stopped: undefined });
+    ordered.push({ ...lateReply, stopped: true }, ...messages.slice(index + 1, cardsEnd));
+    index = cardsEnd + 1;
+  }
+
+  return ordered;
 }
 
 export function getUserMessageText(message: AgentMessage): string {

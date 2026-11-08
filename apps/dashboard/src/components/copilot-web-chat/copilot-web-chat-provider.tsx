@@ -118,7 +118,6 @@ type ConnectedState = Pick<
   | 'startNewConversation'
   | 'hasUnseenAnswer'
   | 'hasRunError'
-  | 'sentContextLabels'
   | 'isBusy'
 >;
 
@@ -189,7 +188,6 @@ export function CopilotWebChatProvider({
       sendCardAction: connected?.sendCardAction ?? (async () => {}),
       pendingReviewMessageId: connected?.pendingReviewMessageId,
       startNewConversation: connected?.startNewConversation ?? (() => {}),
-      sentContextLabels: connected?.sentContextLabels ?? {},
       draft,
       setDraft,
       isRevealPending,
@@ -257,7 +255,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [unseenAnswer, setUnseenAnswer] = useState(false);
   const [runError, setRunError] = useState(false);
   const [awaitingReply, setAwaitingReply] = useState(false);
-  const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
   const [isStopPending, setIsStopPending] = useState(false);
   // A Try again click records its card; the agent's ready event names the prompt to resend in `readyPrompt`, which is sent once the run settles.
@@ -382,9 +379,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
-      const label = pageContextRef.current?.workflowLabel;
       const userMessageIndex = chatRef.current.messages.filter((message) => message.role === 'user').length;
-      if (label) setSentContextLabels((labels) => ({ ...labels, [userMessageIndex]: label }));
       lastSentRef.current = { text: trimmed, metadata };
       setAwaitingReply(true);
       const { error } = await chatRef.current.sendMessage({ text: trimmed, metadata });
@@ -495,7 +490,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     readyPromptLookupRef.current++;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
-    setSentContextLabels({});
     setRunError(false);
     setAwaitingReply(false);
     writeStoredConversationId(conversationScope, undefined);
@@ -546,7 +540,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       startNewConversation,
       hasUnseenAnswer: unseenAnswer,
       hasRunError,
-      sentContextLabels,
       isBusy,
     });
   }, [
@@ -560,7 +553,6 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     startNewConversation,
     unseenAnswer,
     hasRunError,
-    sentContextLabels,
     isBusy,
     onConnected,
   ]);

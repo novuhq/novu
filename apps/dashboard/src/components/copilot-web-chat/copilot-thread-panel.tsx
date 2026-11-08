@@ -1,6 +1,6 @@
-import { type FC, type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useRef } from 'react';
+import { type FC, type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useRef, useState } from 'react';
 import type { IconType } from 'react-icons';
-import { RiArrowRightSLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -13,7 +13,7 @@ import {
   CopilotUserMessage,
 } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getFailedSend, hasPendingReplyGap } from './copilot-web-chat-utils';
+import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
 
 export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };
 
@@ -65,6 +65,45 @@ function EmptyState({
   );
 }
 
+/** Sits above the input like the Slack connect strip. */
+function SendFailureStrip({
+  disabled,
+  onRetry,
+  onDismiss,
+}: {
+  disabled: boolean;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      className="mx-2 -mb-px flex items-center gap-1 rounded-t-lg border-l border-r border-t border-stroke-soft bg-bg-weak p-2 shadow-xs"
+    >
+      <RiErrorWarningFill className="size-3.5 shrink-0 text-error-base" aria-hidden />
+      <span className="min-w-0 flex-1 text-label-xs font-medium leading-4 text-error-base">
+        Couldn’t send. Your message is saved.
+      </span>
+      <button
+        type="button"
+        onClick={onRetry}
+        disabled={disabled}
+        className="cursor-pointer text-label-xs font-medium leading-4 text-text-strong transition-opacity hover:opacity-80 disabled:opacity-50"
+      >
+        Retry
+      </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="flex size-4 shrink-0 items-center justify-center text-text-soft transition-colors hover:text-text-sub"
+      >
+        <RiCloseLine className="size-4" aria-hidden />
+      </button>
+    </div>
+  );
+}
+
 function Composer({ hasMessages }: { hasMessages: boolean }) {
   const {
     isAvailable,
@@ -80,8 +119,10 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
     completeReveal,
   } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // The failure stays until retried or a new chat starts: the strip is the only place it can be retried.
-  const showFailureStrip = !!getFailedSend(chat?.messages ?? []);
+  const failedSend = getFailedSend(chat?.messages ?? []);
+  const [dismissedFailureId, setDismissedFailureId] = useState<string>();
+  // The failure stays until retried, dismissed or a new chat starts: the strip is the only place it can be retried.
+  const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
   const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
 
@@ -118,23 +159,18 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 pt-0">
-      {!showFailureStrip && <CopilotSlackConnectBanner />}
+    // No gap: the strip above the input sits flush on it, like in the legacy composer.
+    <div className="flex flex-col p-3 pt-0">
+      {showFailureStrip ? (
+        <SendFailureStrip
+          disabled={isBusy}
+          onRetry={() => void retry()}
+          onDismiss={() => setDismissedFailureId(failedSend?.id)}
+        />
+      ) : (
+        <CopilotSlackConnectBanner />
+      )}
       <div className="flex flex-col gap-2 rounded-md bg-bg-white p-2 shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
-        {showFailureStrip && (
-          <div role="alert" className="flex items-center gap-1.5 border-b border-stroke-soft pb-2 text-xs leading-4">
-            <RiErrorWarningFill className="size-3.5 shrink-0 text-error-base" />
-            <span className="min-w-0 flex-1 text-text-sub">Couldn't send. Your message is saved.</span>
-            <button
-              type="button"
-              onClick={() => void retry()}
-              disabled={isBusy}
-              className="font-medium text-text-strong hover:underline disabled:opacity-40"
-            >
-              Retry
-            </button>
-          </div>
-        )}
         <textarea
           ref={textareaRef}
           value={value}
@@ -142,7 +178,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
           aria-label="Message Copilot"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask for changes… eg: Make the workflow high severity'}
+          placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask anything about this page…'}
           className="min-h-8 w-full resize-none bg-transparent text-xs leading-4 text-text-strong outline-none placeholder:text-text-soft"
         />
         <div className="flex items-center justify-between gap-2">
@@ -186,20 +222,19 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, retry, sentContextLabels, hasRunError, isBusy } = useCopilotWebChat();
+  const { chat, retry, pageContext, hasRunError, isBusy } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
   const isStopping = !!chat?.isStopping;
   // A stop only lands once the agent's current step ends (seconds when it is saving changes), so say so meanwhile.
   const showThinking = (isBusy || !!chat?.typing) && (isStopping || hasPendingReplyGap(messages));
-  const thinkingLabel = isStopping ? 'Stopping…' : chat?.typing?.status || undefined;
+  const thinkingLabel = isStopping ? 'Stopping…' : getCopilotTypingLabel(chat?.typing?.status);
   const lastMessage = messages[messages.length - 1];
   // Snapshots are deep-cloned on every update, so scroll on what the newest message shows, not its identity.
   const tailKey = lastMessage
     ? `${lastMessage.id}:${lastMessage.status}:${JSON.stringify(lastMessage.parts).length}`
     : '';
   const pagination = chat?.pagination;
-  let userIndex = 0;
 
   // Keyed on the newest message's content, so loading older pages keeps the reader's place.
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the newest message changes while streaming
@@ -207,6 +242,22 @@ function Thread() {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
   }, [tailKey, hasRunError, showThinking]);
+
+  // The step editor keeps this tab mounted but hidden (0px tall, scroll reset), so it would reopen at the top.
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+
+    let wasHidden = element.clientHeight === 0;
+    const observer = new ResizeObserver(() => {
+      const isHidden = element.clientHeight === 0;
+      if (wasHidden && !isHidden) element.scrollTop = element.scrollHeight;
+      wasHidden = isHidden;
+    });
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -221,13 +272,14 @@ function Thread() {
             {pagination.status === 'loading' ? 'Loading…' : 'Load earlier messages'}
           </button>
         )}
-        {messages.map((message) => {
-          if (message.role !== 'user') return <CopilotAssistantMessage key={message.id} message={message} />;
-
-          const contextLabel = sentContextLabels[userIndex++];
-
-          return <CopilotUserMessage key={message.id} message={message} contextLabel={contextLabel} />;
-        })}
+        {orderStoppedTurns(messages).map((message) =>
+          message.role === 'user' ? (
+            // The conversation is scoped to one workflow, so every message was sent for the one on the page.
+            <CopilotUserMessage key={message.id} message={message} contextLabel={pageContext?.workflowLabel} />
+          ) : (
+            <CopilotAssistantMessage key={message.id} message={message} />
+          )
+        )}
         {showThinking && <CopilotThinkingIndicator label={thinkingLabel} />}
         {/* A failed send is surfaced by the composer strip instead. */}
         {hasRunError && !chat?.isRunning && !getFailedSend(messages) && (
