@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -57,6 +57,7 @@ export class CancelConversationTurn {
     const conversationId = String(conversation._id);
     const activeTurn = await this.turnAbortStore.getActiveTurn(conversationId);
     if (!activeTurn) {
+      await this.assertNoUnstoppableRun(conversation, command);
       this.logger.info({ conversationId }, 'Agent turn stop found no running turn');
 
       return { status: 'idle' };
@@ -90,6 +91,32 @@ export class CancelConversationTurn {
     }
 
     return { status: 'aborted' };
+  }
+
+  /**
+   * Managed agents run their turns outside the bridge, so the abort store never records them. Reporting `idle` while
+   * such a run is open would make clients treat the reply as finished while the agent keeps going.
+   */
+  private async assertNoUnstoppableRun(
+    conversation: ConversationEntity,
+    command: CancelConversationTurnCommand
+  ): Promise<void> {
+    const agent = await this.agentRepository.findOne(
+      { _id: conversation._agentId, _environmentId: command.environmentId },
+      ['runtime']
+    );
+    if (agent?.runtime !== 'managed') {
+      return;
+    }
+
+    const openRunId = await this.conversationService.findOpenRunId({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      conversationId: String(conversation._id),
+    });
+    if (openRunId) {
+      throw new UnprocessableEntityException('Stopping a managed agent turn is not supported');
+    }
   }
 
   /**

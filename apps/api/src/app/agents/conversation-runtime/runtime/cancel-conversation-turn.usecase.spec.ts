@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ConversationParticipantTypeEnum } from '@novu/dal';
 import { AgentEventEnum } from '@novu/framework/internal';
 import { expect } from 'chai';
@@ -20,6 +20,7 @@ describe('CancelConversationTurn', () => {
     runStartIdentifier = 'run_run_abc_start' as string | null,
     endedIdentifiers = [] as string[],
     conversationFound = true,
+    agentRuntime = 'self-hosted' as string,
   } = {}) {
     const aborted = new Set(abortedTurns);
     const turnAbortStore = {
@@ -59,7 +60,7 @@ describe('CancelConversationTurn', () => {
         return endedIdentifiers.includes(`run_${runId}_finish`) ? undefined : runId;
       }),
     };
-    const agentRepository = { findOne: sinon.stub().resolves({ identifier: 'copilot' }) };
+    const agentRepository = { findOne: sinon.stub().resolves({ identifier: 'copilot', runtime: agentRuntime }) };
     const integrationRepository = { findOne: sinon.stub().resolves({ identifier: 'web-chat-integration' }) };
     const subscriberRepository = { findBySubscriberId: sinon.stub().resolves({ subscriberId: 'sub-1' }) };
     const config = {
@@ -192,6 +193,33 @@ describe('CancelConversationTurn', () => {
     expect(turnAbortStore.markAborted.called).to.equal(false);
     expect(conversationService.persistRunLifecycle.called).to.equal(false);
     expect(bridgeExecutor.execute.called).to.equal(false);
+  });
+
+  it('refuses to report idle while a managed agent run, which it cannot stop, is open', async () => {
+    const { usecase, conversationService } = setup({ activeTurn: null, agentRuntime: 'managed' });
+
+    let error: unknown;
+    try {
+      await usecase.execute(command());
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(UnprocessableEntityException);
+    expect(conversationService.findOpenRunId.firstCall.args[0]).to.deep.equal({
+      environmentId: ENV_ID,
+      organizationId: ORG_ID,
+      conversationId: CONVERSATION_ID,
+    });
+    expect(conversationService.persistRunLifecycle.called).to.equal(false);
+  });
+
+  it('returns idle for a managed agent with no open run', async () => {
+    const { usecase } = setup({ activeTurn: null, agentRuntime: 'managed', runStartIdentifier: null });
+
+    const result = await usecase.execute(command());
+
+    expect(result).to.deep.equal({ status: 'idle' });
   });
 
   it('is idempotent: a repeated Stop of an aborted turn persists and dispatches nothing more', async () => {
