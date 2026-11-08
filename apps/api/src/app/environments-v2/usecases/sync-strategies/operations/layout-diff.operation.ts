@@ -31,9 +31,10 @@ export class LayoutDiffOperation extends BaseDiffOperation<LayoutEntity> {
 
     return {
       _id: resource.updatedBy._id,
-      firstName: resource.updatedBy.firstName,
+      firstName: resource.updatedBy.firstName ?? '',
       lastName: resource.updatedBy.lastName,
       externalId: resource.updatedBy.externalId,
+      email: resource.updatedBy.email,
     };
   }
 

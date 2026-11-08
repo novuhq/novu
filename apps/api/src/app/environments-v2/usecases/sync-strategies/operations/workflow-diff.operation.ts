@@ -2,7 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { GetWorkflowCommand, GetWorkflowUseCase, PinoLogger, WorkflowDataContainer } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../types/sync.types';
+import {
+  DiffActionEnum,
+  IDiffResult,
+  IResourceDiff,
+  IResourceInfo,
+  IUserInfo,
+  ResourceTypeEnum,
+} from '../../../types/sync.types';
 import { WorkflowComparatorAdapter, WorkflowRepositoryAdapter } from '../adapters';
 import { BaseDiffOperation } from '../base/operations/base-diff.operation';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
@@ -49,6 +56,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       await this.processWorkflowResourceDiffs(
         sourceResources,
         targetResources,
+        targetEnvId,
         resultBuilder,
         userContext,
         workflowDataContainer
@@ -75,6 +83,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
   private async processWorkflowResourceDiffs(
     sourceResources: NotificationTemplateEntity[],
     targetResources: NotificationTemplateEntity[],
+    targetEnvId: string,
     resultBuilder: DiffResultBuilder,
     userContext: UserSessionData,
     workflowDataContainer: WorkflowDataContainer
@@ -90,13 +99,21 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       const batch = batches[i];
       this.logger.debug(`Processing batch ${i + 1}/${batches.length} with ${batch.length} resources`);
 
-      await this.processWorkflowBatch(batch, targetResourceMap, resultBuilder, userContext, workflowDataContainer);
+      await this.processWorkflowBatch(
+        batch,
+        targetResourceMap,
+        targetEnvId,
+        resultBuilder,
+        userContext,
+        workflowDataContainer
+      );
     }
   }
 
   private async processWorkflowBatch(
     sourceResources: NotificationTemplateEntity[],
     targetResourceMap: Map<string, NotificationTemplateEntity>,
+    targetEnvId: string,
     resultBuilder: DiffResultBuilder,
     userContext: UserSessionData,
     workflowDataContainer: WorkflowDataContainer
@@ -106,7 +123,13 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       const targetResource = targetResourceMap.get(sourceIdentifier);
 
       if (!targetResource) {
-        await this.handleNewWorkflowResource(sourceResource, resultBuilder, userContext, workflowDataContainer);
+        await this.handleNewWorkflowResource(
+          sourceResource,
+          targetEnvId,
+          resultBuilder,
+          userContext,
+          workflowDataContainer
+        );
 
         return;
       }
@@ -128,18 +151,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
 
         if (allDiffs.length > 0) {
           resultBuilder.addResourceDiff(
-            {
-              id: this.repositoryService.getResourceIdentifier(sourceResource),
-              name: this.getResourceName(sourceResource),
-              updatedBy: this.extractUpdatedByInfo(sourceResource),
-              updatedAt: this.extractUpdatedAtInfo(sourceResource),
-            },
-            {
-              id: this.repositoryService.getResourceIdentifier(targetResource),
-              name: this.getResourceName(targetResource),
-              updatedBy: this.extractUpdatedByInfo(targetResource),
-              updatedAt: this.extractUpdatedAtInfo(targetResource),
-            },
+            this.toResourceInfo(sourceResource),
+            this.toResourceInfo(targetResource),
             allDiffs
           );
         }
@@ -164,19 +177,18 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
 
   private async handleNewWorkflowResource(
     sourceResource: NotificationTemplateEntity,
+    targetEnvId: string,
     resultBuilder: DiffResultBuilder,
     userContext: UserSessionData,
     workflowDataContainer: WorkflowDataContainer
   ): Promise<void> {
-    const resourceInfo = {
-      id: this.repositoryService.getResourceIdentifier(sourceResource),
-      name: this.getResourceName(sourceResource),
-      updatedBy: this.extractUpdatedByInfo(sourceResource),
-      updatedAt: this.extractUpdatedAtInfo(sourceResource),
-    };
+    const resourceInfo = this.toResourceInfo(sourceResource);
 
     // For new workflows, we need to extract steps to analyze dependencies
-    const stepDiffs = await this.extractStepsFromNewWorkflow(sourceResource, userContext, workflowDataContainer);
+    const [{ workflowFields, stepDiffs }, translationDiffs] = await Promise.all([
+      this.extractStepsFromNewWorkflow(sourceResource, userContext, workflowDataContainer),
+      this.comparatorAdapter.compareNewResourceTranslations(sourceResource, targetEnvId, userContext),
+    ]);
 
     const allDiffs: IResourceDiff[] = [
       {
@@ -184,6 +196,9 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         targetResource: null,
         resourceType: this.getResourceType(),
         action: DiffActionEnum.ADDED,
+        // Workflow fields (payload schema, preferences, ...) have no target to compare against,
+        // but the publish UI lists them the same way it lists changes on a modified workflow.
+        diffs: workflowFields ? { previous: null, new: workflowFields } : undefined,
       },
     ];
 
@@ -192,6 +207,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       allDiffs.push(...stepDiffs);
     }
 
+    allDiffs.push(...translationDiffs);
+
     resultBuilder.addResourceDiff(resourceInfo, null, allDiffs);
   }
 
@@ -199,7 +216,11 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     sourceResource: NotificationTemplateEntity,
     targetResource: NotificationTemplateEntity,
     resourceChanges: {
+      // biome-ignore lint/suspicious/noExplicitAny: a field snapshot is arbitrary workflow JSON
+      // biome-ignore lint/plugin: a field snapshot is arbitrary workflow JSON
       previous: Record<string, any> | null;
+      // biome-ignore lint/suspicious/noExplicitAny: a field snapshot is arbitrary workflow JSON
+      // biome-ignore lint/plugin: a field snapshot is arbitrary workflow JSON
       new: Record<string, any> | null;
     } | null,
     otherDiffs: IResourceDiff[]
@@ -208,18 +229,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
 
     if (resourceChanges) {
       allDiffs.push({
-        sourceResource: {
-          id: this.repositoryService.getResourceIdentifier(sourceResource),
-          name: this.getResourceName(sourceResource),
-          updatedBy: this.extractUpdatedByInfo(sourceResource),
-          updatedAt: this.extractUpdatedAtInfo(sourceResource),
-        },
-        targetResource: {
-          id: this.repositoryService.getResourceIdentifier(targetResource),
-          name: this.getResourceName(targetResource),
-          updatedBy: this.extractUpdatedByInfo(targetResource),
-          updatedAt: this.extractUpdatedAtInfo(targetResource),
-        },
+        sourceResource: this.toResourceInfo(sourceResource),
+        targetResource: this.toResourceInfo(targetResource),
         resourceType: this.getResourceType(),
         action: DiffActionEnum.MODIFIED,
         diffs: resourceChanges,
@@ -259,12 +270,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     for (const targetResource of targetResources) {
       const targetIdentifier = this.repositoryService.getResourceIdentifier(targetResource);
       if (!sourceResourceMap.has(targetIdentifier)) {
-        resultBuilder.addResourceDeleted({
-          id: this.repositoryService.getResourceIdentifier(targetResource),
-          name: this.getResourceName(targetResource),
-          updatedBy: this.extractUpdatedByInfo(targetResource),
-          updatedAt: this.extractUpdatedAtInfo(targetResource),
-        });
+        resultBuilder.addResourceDeleted(this.toResourceInfo(targetResource));
       }
     }
   }
@@ -280,9 +286,10 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
 
     return {
       _id: resource.updatedBy._id,
-      firstName: resource.updatedBy.firstName,
+      firstName: resource.updatedBy.firstName ?? '',
       lastName: resource.updatedBy.lastName,
       externalId: resource.updatedBy.externalId,
+      email: resource.updatedBy.email,
     };
   }
 
@@ -294,18 +301,57 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     return resource.updatedAt;
   }
 
+  private toResourceInfo(resource: NotificationTemplateEntity): IResourceInfo {
+    return {
+      id: this.repositoryService.getResourceIdentifier(resource),
+      name: this.getResourceName(resource),
+      updatedBy: this.extractUpdatedByInfo(resource),
+      updatedAt: this.extractUpdatedAtInfo(resource),
+      lastPublishedBy: this.extractLastPublishedByInfo(resource),
+      lastPublishedAt: this.extractLastPublishedAtInfo(resource),
+    };
+  }
+
+  private extractLastPublishedByInfo(resource: NotificationTemplateEntity): IUserInfo | null {
+    if (!resource.lastPublishedBy) {
+      return null;
+    }
+
+    return {
+      _id: resource.lastPublishedBy._id,
+      firstName: resource.lastPublishedBy.firstName ?? '',
+      lastName: resource.lastPublishedBy.lastName,
+      externalId: resource.lastPublishedBy.externalId,
+      email: resource.lastPublishedBy.email,
+    };
+  }
+
+  private extractLastPublishedAtInfo(resource: NotificationTemplateEntity): string | null {
+    if (!resource.lastPublishedAt) {
+      return null;
+    }
+
+    const publishedAt = new Date(resource.lastPublishedAt);
+
+    if (Number.isNaN(publishedAt.getTime())) {
+      return null;
+    }
+
+    return publishedAt.toISOString();
+  }
+
   private async extractStepsFromNewWorkflow(
     workflow: NotificationTemplateEntity,
     userContext: UserSessionData,
     workflowDataContainer: WorkflowDataContainer
-  ): Promise<IResourceDiff[]> {
+  ): Promise<{ workflowFields: Record<string, unknown> | null; stepDiffs: IResourceDiff[] }> {
     try {
       const workflowIdentifier = workflow.triggers?.[0]?.identifier;
 
       if (!workflowIdentifier) {
         this.logger.warn(`Workflow ${workflow._id} has no trigger identifier, skipping step extraction`);
 
-        return [];
+        return { workflowFields: null, stepDiffs: [] };
       }
 
       this.logger.debug(`Generating workflow DTO for step extraction: ${workflowIdentifier}`);
@@ -322,29 +368,33 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       );
 
       const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);
+      const { steps, ...workflowFields } = normalizedWorkflow;
 
       // Create step diffs for each step as "added"
-      return normalizedWorkflow.steps.map((step, index) => ({
-        sourceResource: {
-          id: step.stepId,
-          name: step.name,
-          updatedBy: null,
-          updatedAt: null,
-        },
-        targetResource: null,
-        resourceType: ResourceTypeEnum.STEP,
-        stepType: step.type,
-        action: DiffActionEnum.ADDED,
-        newIndex: index,
-        diffs: {
-          previous: null,
-          new: step,
-        },
-      }));
+      return {
+        workflowFields,
+        stepDiffs: steps.map((step, index) => ({
+          sourceResource: {
+            id: step.stepId,
+            name: step.name,
+            updatedBy: null,
+            updatedAt: null,
+          },
+          targetResource: null,
+          resourceType: ResourceTypeEnum.STEP,
+          stepType: step.type,
+          action: DiffActionEnum.ADDED,
+          newIndex: index,
+          diffs: {
+            previous: null,
+            new: step,
+          },
+        })),
+      };
     } catch (error) {
       this.logger.error({ error }, `Failed to extract steps from new workflow: ${error.message}`);
 
-      return [];
+      return { workflowFields: null, stepDiffs: [] };
     }
   }
 }

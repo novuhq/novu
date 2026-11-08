@@ -10,9 +10,10 @@ export interface IDiffSummary {
 
 export interface IUserInfo {
   _id: string;
-  firstName: string;
+  firstName?: string | null;
   lastName?: string | null;
   externalId?: string;
+  email?: string | null;
 }
 
 export interface IResourceInfo {
@@ -20,6 +21,8 @@ export interface IResourceInfo {
   name: string | null;
   updatedBy?: IUserInfo | null;
   updatedAt?: string | null;
+  lastPublishedBy?: IUserInfo | null;
+  lastPublishedAt?: string | null;
 }
 
 export interface IResourceDependency {

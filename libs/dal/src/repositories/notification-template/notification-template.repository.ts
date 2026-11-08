@@ -36,10 +36,12 @@ export class NotificationTemplateRepository extends BaseRepository<
         'triggers.identifier': 1,
         updatedAt: 1,
         _updatedBy: 1,
+        lastPublishedAt: 1,
+        _lastPublishedBy: 1,
         _environmentId: 1,
         isTranslationEnabled: 1,
       })
-      .populate('updatedBy', '_id firstName lastName externalId')
+      .populate('updatedBy', '_id firstName lastName externalId email')
       .populate('lastPublishedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);
@@ -516,7 +518,8 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(query)
       .populate('steps.template')
       .populate('steps.variants.template')
-      .populate('updatedBy')
+      .populate('updatedBy', '_id firstName lastName externalId email')
+      .populate('lastPublishedBy', '_id firstName lastName externalId email')
       .lean();
 
     return this.mapEntities(items);
