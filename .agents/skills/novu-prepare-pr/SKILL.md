@@ -89,7 +89,7 @@ Report failures; fix before push when deterministic.
 Read `.cursor/rules/pullrequest.mdc` before creating.
 
 - Base branch: `**next`**
-- Title: `type(scope): Description fixes NV-XXX` (or `NOV-XXX` per template)
+- Title: `type(scope): Description fixes NV-XXX`
 - Ready for review — not draft
 - Body: template sections, what/why, test plan, Mermaid for non-trivial architecture
 - Link Linear ticket; create ticket first if missing
