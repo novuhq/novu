@@ -259,6 +259,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [awaitingReply, setAwaitingReply] = useState(false);
   const [sentContextLabels, setSentContextLabels] = useState<Record<number, string>>({});
   const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
+  const [isStopPending, setIsStopPending] = useState(false);
   // A Try again click records its card; the agent's ready event names the prompt to resend in `readyPrompt`, which is sent once the run settles.
   const tryAgainCardRef = useRef<string | undefined>(undefined);
   const readyPromptLookupRef = useRef(0);
@@ -454,9 +455,16 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     setPendingReviewMessageId(undefined);
 
     // Cancel only finds the turn a review click starts once the click is accepted; an earlier Stop would answer idle.
-    await pendingActionRef.current;
-    const { error } = await chatRef.current.stop();
-    if (error) showErrorToast("Couldn't stop the Copilot. Try again.");
+    // Bound to this chat, so a New chat meanwhile can't redirect the cancel; the composer stays locked so no new send is hit.
+    const stopTurn = chatRef.current.stop;
+    setIsStopPending(true);
+    try {
+      await pendingActionRef.current;
+      const { error } = await stopTurn();
+      if (error) showErrorToast("Couldn't stop the Copilot. Try again.");
+    } finally {
+      setIsStopPending(false);
+    }
   }, [track, surface]);
 
   const sendCardAction = useCallback(async (action: CopilotCardAction) => {
@@ -508,7 +516,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const hasRunError = runError || isResumeBroken || !!chat.catchUpError || !!getFailedSend(chat.messages);
   const isBusy =
     !hasRunError &&
-    (chat.isRunning || (awaitingReply && (!!pendingReviewMessageId || hasPendingReplyGap(chat.messages))));
+    (isStopPending ||
+      chat.isRunning ||
+      (awaitingReply && (!!pendingReviewMessageId || hasPendingReplyGap(chat.messages))));
   isBusyRef.current = isBusy;
 
   // The ready event arrives while the run that reverted the turn is still open, and a send is refused until it settles.
