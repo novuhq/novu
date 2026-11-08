@@ -157,7 +157,7 @@ function EmailStepPreview({
         {sender && <span className="truncate text-label-xs text-text-soft">{sender}</span>}
         <span className="text-label-sm text-text-strong">{preview.subject}</span>
       </div>
-      <EmailPreviewBody body={preview.body} resourceOrigin={ResourceOriginEnum.NOVU_CLOUD} />
+      <EmailPreviewBody body={preview.body} resourceOrigin={ResourceOriginEnum.NOVU_CLOUD} readOnlyBranding />
     </div>
   );
 }

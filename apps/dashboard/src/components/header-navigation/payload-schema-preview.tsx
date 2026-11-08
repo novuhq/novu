@@ -47,7 +47,7 @@ export function PayloadSchemaPreview({
   const rootRef = useRef<HTMLDivElement>(null);
   const diffRef = useRef<HTMLDivElement>(null);
   const [expandedGaps, setExpandedGaps] = useState<Set<string>>(() => new Set());
-  const { lineDiff, note, hasPrevious } = preview;
+  const { lineDiff, note, hasPrevious, validation } = preview;
   const hasLineChanges = lineDiff.added + lineDiff.removed > 0;
   const focus = useMemo(() => (focusPath ? schemaFocus(lineDiff, focusPath) : EMPTY_FOCUS), [focusPath, lineDiff]);
 
@@ -93,6 +93,13 @@ export function PayloadSchemaPreview({
         </div>
       )}
 
+      {validation && (
+        <div className="flex min-w-0 gap-1.5">
+          <ValidationValue name={environmentNames.target} enabled={validation.previous} />
+          <ValidationValue name={environmentNames.source} enabled={validation.next} />
+        </div>
+      )}
+
       {hasLineChanges && (
         <div className="flex min-w-0 flex-col gap-1 rounded-lg border border-stroke-weak bg-bg-weak p-1.5">
           <div className="flex gap-1.5">
@@ -123,6 +130,15 @@ export function PayloadSchemaPreview({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ValidationValue({ name, enabled }: { name: string; enabled: boolean }) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md bg-bg-muted px-2.5 py-1.5">
+      <span className="truncate text-label-xs text-text-soft">{name}</span>
+      <span className="shrink-0 text-label-xs text-text-strong">{enabled ? 'Validation on' : 'Validation off'}</span>
     </div>
   );
 }

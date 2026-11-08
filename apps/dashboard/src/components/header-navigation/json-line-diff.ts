@@ -252,9 +252,7 @@ export function schemaFocusLineNumbers(lines: string[], variablePath: string): n
   return hits;
 }
 
-export function diffJsonLines(previous: unknown, next: unknown): JsonLineDiff {
-  const left = toJsonLines(previous);
-  const right = toJsonLines(next);
+function diffLineLists(left: string[], right: string[]): JsonLineDiff {
   const ops = diffLineOps(left, right);
   const rows = alignRows(ops, left, right);
 
@@ -263,4 +261,13 @@ export function diffJsonLines(previous: unknown, next: unknown): JsonLineDiff {
     added: ops.filter((op) => op.type === 'added').length,
     removed: ops.filter((op) => op.type === 'removed').length,
   };
+}
+
+export function diffJsonLines(previous: unknown, next: unknown): JsonLineDiff {
+  return diffLineLists(toJsonLines(previous), toJsonLines(next));
+}
+
+/** Side-by-side diff of plain text, used for layout HTML that is not JSON. */
+export function diffTextLines(previous: string | null, next: string | null): JsonLineDiff {
+  return diffLineLists(previous ? previous.split('\n') : [], next ? next.split('\n') : []);
 }

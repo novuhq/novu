@@ -20,15 +20,16 @@ import {
   RiToolsLine,
   RiTranslate2,
 } from 'react-icons/ri';
-import type {
-  ChangeDiffStat,
-  ChangeGroupType,
-  ChangeRow,
-  ChangeStatus,
-  INestedResourceChange,
+import {
+  type ChangeDiffStat,
+  type ChangeGroupType,
+  type ChangeRow,
+  type ChangeStatus,
+  type INestedResourceChange,
+  schemaChangeRejectsPreviousValues,
 } from '@/hooks/use-changes-tree';
 import { StepTypeEnum } from '@/utils/enums';
-import { diffJsonLines, type JsonLineDiff } from './json-line-diff';
+import { diffJsonLines, diffTextLines, type JsonLineDiff } from './json-line-diff';
 
 export const GROUP_ICONS: Record<ChangeGroupType, IconType> = {
   workflow: RiRouteFill,
@@ -36,7 +37,7 @@ export const GROUP_ICONS: Record<ChangeGroupType, IconType> = {
   agent: RiRobot2Line,
 };
 
-export type ChangeSectionKey = 'payloadSchema' | 'steps' | 'preferences' | 'translations' | 'details';
+export type ChangeSectionKey = 'payloadSchema' | 'steps' | 'preferences' | 'translations' | 'details' | 'content';
 
 export const SECTION_ICONS: Record<ChangeSectionKey, IconType> = {
   payloadSchema: RiDatabase2Line,
@@ -44,6 +45,7 @@ export const SECTION_ICONS: Record<ChangeSectionKey, IconType> = {
   preferences: RiSettingsLine,
   translations: RiTranslate2,
   details: RiInformationLine,
+  content: RiCodeBlock,
 };
 
 const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
@@ -105,6 +107,8 @@ export type StepChange = {
   next: Record<string, unknown> | null;
   lineDiff: JsonLineDiff;
   diffStat: ChangeDiffStat;
+  previousIndex?: number;
+  newIndex?: number;
 };
 
 export type SchemaRuleChange = {
@@ -130,6 +134,8 @@ export type PayloadSchemaPreview = {
   /** Plain-language summary of the breaking change(s); absent when nothing breaks. */
   note?: string;
   hasPrevious: boolean;
+  /** Set when payload validation is switched on or off, including when the schema itself is unchanged. */
+  validation?: { previous: boolean; next: boolean };
 };
 
 export type ChangeSection = {
@@ -255,7 +261,16 @@ function toStepChange(change: INestedResourceChange, stepId: string): StepChange
   const diffStat =
     change.action === 'moved' ? changeDiffStat(change) : { added: lineDiff.added, deleted: lineDiff.removed };
 
-  return { stepId, action: change.action ?? 'modified', previous, next, lineDiff, diffStat };
+  return {
+    stepId,
+    action: change.action ?? 'modified',
+    previous,
+    next,
+    lineDiff,
+    diffStat,
+    previousIndex: change.previousIndex,
+    newIndex: change.newIndex,
+  };
 }
 
 function toStepItem(change: INestedResourceChange, index: number): ChangeSectionItem {
@@ -380,9 +395,6 @@ const SCHEMA_KEYWORDS = [
   'additionalProperties',
 ] as const;
 
-const MIN_BOUND_KEYWORDS = new Set(['minimum', 'exclusiveMinimum', 'minLength', 'minItems', 'minProperties']);
-const MAX_BOUND_KEYWORDS = new Set(['maximum', 'exclusiveMaximum', 'maxLength', 'maxItems']);
-
 type JsonSchema = Record<string, unknown>;
 
 function isSchema(value: unknown): value is JsonSchema {
@@ -412,30 +424,9 @@ function keywordLabel(keyword: string, value: unknown): string {
   return formatted ? `${keyword}: ${formatted}` : keyword;
 }
 
-function boundTightened(keyword: string, previous: unknown, next: unknown): boolean | null {
-  if (typeof previous !== 'number' || typeof next !== 'number') return null;
-  if (MIN_BOUND_KEYWORDS.has(keyword)) return next > previous;
-  if (MAX_BOUND_KEYWORDS.has(keyword)) return next < previous;
-
-  return null;
-}
-
-function enumNarrowed(previous: unknown, next: unknown): boolean {
-  if (!Array.isArray(previous) || !Array.isArray(next)) return true;
-
-  return previous.some((value) => !next.some((allowed) => JSON.stringify(allowed) === JSON.stringify(value)));
-}
-
-/**
- * Keyword-level +/- rules for one schema node, plus whether any of them can reject
- * a payload that was valid before.
- */
-function diffSchemaKeywords(
-  previous: JsonSchema | null,
-  next: JsonSchema | null
-): { rules: SchemaRuleChange[]; breaking: boolean } {
+/** Keyword-level +/- rules for one schema node. Breaking is decided separately, with the tree. */
+function diffSchemaKeywords(previous: JsonSchema | null, next: JsonSchema | null): SchemaRuleChange[] {
   const rules: SchemaRuleChange[] = [];
-  let breaking = false;
 
   for (const keyword of SCHEMA_KEYWORDS) {
     const previousValue = previous?.[keyword];
@@ -444,19 +435,9 @@ function diffSchemaKeywords(
 
     if (previousValue !== undefined) rules.push({ action: 'removed', label: keywordLabel(keyword, previousValue) });
     if (nextValue !== undefined) rules.push({ action: 'added', label: keywordLabel(keyword, nextValue) });
-
-    const tightened = boundTightened(keyword, previousValue, nextValue);
-    if (tightened === true) breaking = true;
-    if (
-      tightened === null &&
-      nextValue !== undefined &&
-      (keyword !== 'enum' || enumNarrowed(previousValue, nextValue))
-    ) {
-      breaking = true;
-    }
   }
 
-  return { rules, breaking };
+  return rules;
 }
 
 function diffRequiredFlag(wasRequired: boolean, isRequired: boolean): SchemaRuleChange | null {
@@ -489,7 +470,8 @@ function joinSchemaPath(parts: string[]): string {
 function nestedVariableChanges(
   previousProperty: JsonSchema | null,
   nextProperty: JsonSchema | null,
-  propertyPath: string[]
+  propertyPath: string[],
+  validationOn: boolean
 ): SchemaVariableChange[] {
   if (!hasNestedSchema(previousProperty) && !hasNestedSchema(nextProperty)) return [];
 
@@ -500,7 +482,8 @@ function nestedVariableChanges(
   return collectVariableChanges(
     isSchema(nestedPrevious) ? nestedPrevious : null,
     isSchema(nestedNext) ? nestedNext : null,
-    itemSchema ? [...propertyPath, '[]'] : propertyPath
+    itemSchema ? [...propertyPath, '[]'] : propertyPath,
+    validationOn
   );
 }
 
@@ -514,22 +497,37 @@ function variablePresence(
   return 'modified';
 }
 
+function addedPropertyIsBreaking(owner: JsonSchema | null, nextProperty: JsonSchema | null): boolean {
+  if (!owner || owner.additionalProperties === false || !nextProperty) return false;
+  if (isSchema(owner.additionalProperties)) {
+    return schemaChangeRejectsPreviousValues(owner.additionalProperties, nextProperty);
+  }
+
+  return Object.keys(nextProperty).length > 0;
+}
+
 function toVariableChange(
   key: string,
   propertyPath: string[],
   previousProperty: JsonSchema | null,
   nextProperty: JsonSchema | null,
-  requiredRule: SchemaRuleChange | null
+  requiredRule: SchemaRuleChange | null,
+  validationOn: boolean,
+  owner: JsonSchema | null
 ): SchemaVariableChange | null {
-  const { rules, breaking } = diffSchemaKeywords(previousProperty, nextProperty);
+  const rules = diffSchemaKeywords(previousProperty, nextProperty);
   if (requiredRule) rules.push(requiredRule);
   if (rules.length === 0) return null;
 
   const presence = variablePresence(previousProperty, nextProperty);
   const requiredAdded = requiredRule?.action === 'added';
-  // A brand-new optional variable doesn't reject payloads that already work; tightening an existing one does.
-  const rejectsPreviousValues =
-    presence === 'modified' ? breaking || requiredAdded : presence === 'added' && requiredAdded;
+  const narrowed =
+    previousProperty !== null && nextProperty !== null
+      ? schemaChangeRejectsPreviousValues(previousProperty, nextProperty)
+      : false;
+  const addedConstraint = presence === 'added' && (requiredAdded || addedPropertyIsBreaking(owner, nextProperty));
+  // Schema rules only stop triggers while validation is on.
+  const rejectsPreviousValues = validationOn && (presence === 'modified' ? narrowed || requiredAdded : addedConstraint);
   const variablePath = joinSchemaPath(propertyPath);
 
   return {
@@ -566,7 +564,8 @@ function renamedVariableChange(
   previousKey: string,
   key: string,
   propertyPath: string[],
-  requiredNow: boolean
+  requiredNow: boolean,
+  validationOn: boolean
 ): SchemaVariableChange {
   const variablePath = joinSchemaPath(propertyPath);
 
@@ -576,7 +575,7 @@ function renamedVariableChange(
     path: variablePath,
     presence: 'modified',
     // Clients still sending the old name stop matching, but only a newly required name rejects payloads.
-    severity: requiredNow ? 'breaking' : 'warning',
+    severity: validationOn && requiredNow ? 'breaking' : 'warning',
     rules: [],
     renamedFrom: previousKey,
   };
@@ -585,7 +584,8 @@ function renamedVariableChange(
 function collectVariableChanges(
   previous: JsonSchema | null,
   next: JsonSchema | null,
-  path: string[]
+  path: string[],
+  validationOn: boolean
 ): SchemaVariableChange[] {
   const previousProperties = schemaProperties(previous);
   const nextProperties = schemaProperties(next);
@@ -601,7 +601,7 @@ function collectVariableChanges(
 
     const previousKey = renames.get(key);
     if (previousKey !== undefined) {
-      changes.push(renamedVariableChange(previousKey, key, [...path, key], nextRequired.has(key)));
+      changes.push(renamedVariableChange(previousKey, key, [...path, key], nextRequired.has(key), validationOn));
       continue;
     }
 
@@ -609,14 +609,16 @@ function collectVariableChanges(
     const nextProperty = isSchema(nextProperties[key]) ? nextProperties[key] : null;
     const propertyPath = [...path, key];
 
-    changes.push(...nestedVariableChanges(previousProperty, nextProperty, propertyPath));
+    changes.push(...nestedVariableChanges(previousProperty, nextProperty, propertyPath, validationOn));
 
     const change = toVariableChange(
       key,
       propertyPath,
       previousProperty,
       nextProperty,
-      diffRequiredFlag(previousRequired.has(key), nextRequired.has(key))
+      diffRequiredFlag(previousRequired.has(key), nextRequired.has(key)),
+      validationOn,
+      previous
     );
     if (change) changes.push(change);
   }
@@ -626,10 +628,17 @@ function collectVariableChanges(
 
 function rootSchemaChange(
   previousSchema: JsonSchema | null,
-  nextSchema: JsonSchema | null
+  nextSchema: JsonSchema | null,
+  validationOn: boolean
 ): SchemaVariableChange | null {
-  const { rules, breaking } = diffSchemaKeywords(previousSchema, nextSchema);
+  const rules = diffSchemaKeywords(previousSchema, nextSchema);
   if (rules.length === 0) return null;
+
+  const breaking =
+    validationOn &&
+    previousSchema !== null &&
+    nextSchema !== null &&
+    schemaChangeRejectsPreviousValues(previousSchema, nextSchema);
 
   return {
     id: ROOT_SCHEMA_CHANGE_ID,
@@ -652,7 +661,10 @@ function validationChange(previous: JsonSchema | null, next: JsonSchema | null):
     path: 'validatePayload',
     presence: 'modified',
     severity: turnedOn ? 'breaking' : 'warning',
-    rules: [{ action: turnedOn ? 'added' : 'removed', label: 'validatePayload' }],
+    rules: [
+      { action: 'removed', label: previous?.validatePayload === true ? 'on' : 'off' },
+      { action: 'added', label: next?.validatePayload === true ? 'on' : 'off' },
+    ],
   };
 }
 
@@ -704,21 +716,31 @@ function buildPayloadSchemaSection(
   const diffStat = sumStats([{ added: lineDiff.added, deleted: lineDiff.removed }, validationStat]);
   if (!hasChanges(diffStat)) return null;
 
-  const schemaChanges = collectVariableChanges(previousSchema, nextSchema, []);
+  const validationOn = next?.validatePayload === true;
+  const schemaChanges = collectVariableChanges(previousSchema, nextSchema, [], validationOn);
 
-  // Root-level constraints (additionalProperties, etc.) aren't attached to a variable.
-  const rootChange = schemaChanges.length === 0 ? rootSchemaChange(previousSchema, nextSchema) : null;
+  // Root rules stay visible alongside variable changes. They are not properties.
+  const rootChange = rootSchemaChange(previousSchema, nextSchema, validationOn);
   if (rootChange) schemaChanges.push(rootChange);
 
   const validation = validationChange(previous, next);
   if (validation) schemaChanges.unshift(validation);
+
+  const previousValidation = previous?.validatePayload === true;
+  const nextValidation = next?.validatePayload === true;
 
   return {
     key: 'payloadSchema',
     label: 'Payload schema',
     status: hasBreakingDescendant ? 'breaking' : 'modified',
     schemaChanges,
-    schemaPreview: { lineDiff, note: payloadChangeNote(schemaChanges), hasPrevious: Boolean(previousSchema) },
+    schemaPreview: {
+      lineDiff,
+      note: payloadChangeNote(schemaChanges),
+      hasPrevious: Boolean(previousSchema),
+      validation:
+        previousValidation === nextValidation ? undefined : { previous: previousValidation, next: nextValidation },
+    },
     items: schemaChanges.map((change) => ({ id: change.id, name: change.name, status: variableStatus(change) })),
     diffStat,
   };
@@ -757,6 +779,85 @@ function buildAgentSection(row: ChangeRow): ChangeSection | null {
   return { key: 'details', label: 'Details', status: fieldsDiffStatus(fieldsDiff), fieldsDiff, diffStat };
 }
 
+function emailControl(value: WorkflowFields): Record<string, unknown> | null {
+  if (!isContainer(value) || !isContainer(value.controls)) return null;
+
+  const values = value.controls.values;
+  if (!isContainer(values) || !isContainer(values.email)) return null;
+
+  return values.email;
+}
+
+function emailBody(value: WorkflowFields): string | null {
+  const email = emailControl(value);
+  if (!email || typeof email.body !== 'string') return null;
+
+  return email.body;
+}
+
+function layoutDetails(value: WorkflowFields): WorkflowFields {
+  if (!isContainer(value) || !isContainer(value.controls)) return value;
+
+  const email = emailControl(value);
+  if (!email) return value;
+
+  const controls = value.controls;
+  const values = isContainer(controls.values) ? controls.values : {};
+
+  return {
+    ...value,
+    controls: {
+      ...controls,
+      values: {
+        ...values,
+        email: { editorType: email.editorType },
+      },
+    },
+  };
+}
+
+function textFieldsDiff(previous: string | null, next: string | null): FieldsDiff {
+  return {
+    lineDiff: diffTextLines(previous, next),
+    hasPrevious: previous !== null,
+    hasNext: next !== null,
+  };
+}
+
+function buildLayoutSections(row: ChangeRow): ChangeSection[] {
+  const layoutChange = getNestedChanges(row).find((change) => change.diffs);
+  if (!layoutChange?.diffs) return [];
+
+  const previous = layoutChange.diffs.previous ?? null;
+  const next = layoutChange.diffs.new ?? null;
+  const sections: ChangeSection[] = [];
+  const contentDiff = textFieldsDiff(emailBody(previous), emailBody(next));
+  const contentStat = fieldsDiffStat(contentDiff);
+  if (hasChanges(contentStat)) {
+    sections.push({
+      key: 'content',
+      label: 'Content',
+      status: fieldsDiffStatus(contentDiff),
+      fieldsDiff: contentDiff,
+      diffStat: contentStat,
+    });
+  }
+
+  const detailsDiff = toFieldsDiff(layoutDetails(previous), layoutDetails(next));
+  const detailsStat = fieldsDiffStat(detailsDiff);
+  if (hasChanges(detailsStat)) {
+    sections.push({
+      key: 'details',
+      label: 'Details',
+      status: fieldsDiffStatus(detailsDiff),
+      fieldsDiff: detailsDiff,
+      diffStat: detailsStat,
+    });
+  }
+
+  return sections;
+}
+
 export function buildChangeCardModel(row: ChangeRow): ChangeCardModel {
   if (row.resource.resourceType === 'workflow') {
     const sections = buildWorkflowSections(row);
@@ -769,6 +870,13 @@ export function buildChangeCardModel(row: ChangeRow): ChangeCardModel {
     const sections = section ? [section] : [];
 
     return { sections, diffStat: sumStats(sections.map((item) => item.diffStat)) };
+  }
+
+  if (row.resource.resourceType === 'layout') {
+    const sections = buildLayoutSections(row);
+    if (sections.length > 0) {
+      return { sections, diffStat: sumStats(sections.map((section) => section.diffStat)) };
+    }
   }
 
   return { sections: [], diffStat: sumStats(getNestedChanges(row).map(changeDiffStat)) };

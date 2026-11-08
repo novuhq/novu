@@ -18,6 +18,12 @@ export type PublishEnvironments = {
   target: IEnvironment | undefined;
 };
 
+function movedStepLabel(step: StepChange): string {
+  if (step.previousIndex === undefined || step.newIndex === undefined) return 'Moved';
+
+  return `Moved ${step.previousIndex + 1} → ${step.newIndex + 1}`;
+}
+
 type StepView = 'preview' | 'json';
 
 type RegisterNode = (key: string) => (node: HTMLDivElement | null) => void;
@@ -150,7 +156,9 @@ function StepChangeRow({
         )}
 
         {(item.status === 'added' || item.status === 'deleted') && <ResourceStatusBadge status={item.status} />}
-        {step?.action === 'moved' && <span className="shrink-0 text-paragraph-xs text-text-soft">Moved</span>}
+        {step?.action === 'moved' && (
+          <span className="shrink-0 text-paragraph-xs text-text-soft">{movedStepLabel(step)}</span>
+        )}
         {step && step.action !== 'moved' && <DiffStat stat={step.diffStat} showBars={false} />}
 
         <button

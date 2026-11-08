@@ -57,6 +57,8 @@ export interface INestedResourceChange {
   resourceType: string;
   stepType?: string;
   action?: 'added' | 'modified' | 'deleted' | 'unchanged' | 'moved';
+  previousIndex?: number;
+  newIndex?: number;
   sourceResource?: { id: string | null; name: string | null } | null;
   targetResource?: { id: string | null; name: string | null } | null;
   diffs?: {
@@ -239,10 +241,33 @@ function propertyRejectsPreviousValues(
 function propertiesRejectPreviousValues(previous: JsonSchema, next: JsonSchema): boolean {
   const previousProperties = previous.properties ?? {};
   const nextProperties = next.properties ?? {};
+  const keys = new Set([...Object.keys(previousProperties), ...Object.keys(nextProperties)]);
 
-  return Object.keys(previousProperties).some((key) =>
-    propertyRejectsPreviousValues(previousProperties[key], nextProperties[key])
-  );
+  return [...keys].some((key) => {
+    const previousProperty = previousProperties[key];
+    if (previousProperty === undefined) {
+      return addedPropertyRejectsPreviousValues(previous, nextProperties[key]);
+    }
+
+    return propertyRejectsPreviousValues(previousProperty, nextProperties[key]);
+  });
+}
+
+/** A new property replaces values that additionalProperties used to accept. */
+function addedPropertyRejectsPreviousValues(
+  previous: JsonSchema,
+  nextProperty: JsonSchema | boolean | undefined
+): boolean {
+  if (previous.additionalProperties === false) return false;
+  if (nextProperty === undefined || nextProperty === true) return false;
+  if (nextProperty === false) return true;
+  if (!isJsonSchema(nextProperty)) return false;
+
+  if (isJsonSchema(previous.additionalProperties)) {
+    return schemaRejectsPreviousValues(previous.additionalProperties, nextProperty);
+  }
+
+  return Object.keys(nextProperty).length > 0;
 }
 
 function itemsRejectPreviousValues(previous: JsonSchema, next: JsonSchema): boolean {
@@ -271,6 +296,13 @@ function schemaRejectsPreviousValues(previous: JsonSchema, next: JsonSchema): bo
   return SCHEMA_NARROWING_CHECKS.some((check) => check(previous, next));
 }
 
+/** True when `next` rejects a payload `previous` accepted. Both values must be schema objects. */
+export function schemaChangeRejectsPreviousValues(previous: unknown, next: unknown): boolean {
+  if (!isJsonSchema(previous) || !isJsonSchema(next)) return false;
+
+  return schemaRejectsPreviousValues(previous, next);
+}
+
 function isBreakingPayloadSchemaChange(previous: unknown, next: unknown): boolean {
   if (sameValue(previous, next)) return false;
   if (!isJsonSchema(next)) return false;
@@ -297,9 +329,10 @@ function hasBreakingDescendant(resource: IResourceDiffResult): boolean {
     const next = change.diffs?.new ?? null;
     if (!next) return false;
 
-    if (isBreakingPayloadSchemaChange(previous?.payloadSchema, next.payloadSchema)) return true;
+    const validationOn = next.validatePayload === true;
+    if (validationOn && isBreakingPayloadSchemaChange(previous?.payloadSchema, next.payloadSchema)) return true;
 
-    const turnedValidationOn = previous?.validatePayload !== true && next.validatePayload === true;
+    const turnedValidationOn = previous?.validatePayload !== true && validationOn;
 
     return turnedValidationOn && schemaRejectsSomePayload(next.payloadSchema);
   });

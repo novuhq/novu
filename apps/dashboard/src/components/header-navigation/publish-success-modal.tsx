@@ -106,7 +106,7 @@ export function PublishSuccessModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         hideCloseButton
-        className="flex w-[min(440px,calc(100vw-2rem))] max-w-[440px] flex-col gap-4 border-0 p-4 shadow-[0_16px_32px_-12px_rgba(14,18,27,0.1)] sm:rounded-2xl"
+        className="flex max-h-[min(640px,calc(100vh-2rem))] w-[min(440px,calc(100vw-2rem))] max-w-[440px] flex-col gap-4 overflow-hidden border-0 p-4 shadow-[0_16px_32px_-12px_rgba(14,18,27,0.1)] sm:rounded-2xl"
       >
         <div className="flex items-start justify-between">
           <div className="rounded-[10px] bg-success-lighter p-2">
@@ -131,7 +131,7 @@ export function PublishSuccessModal({
         </div>
 
         {items.length > 0 && (
-          <div className="flex flex-col gap-1 rounded-[10px] border border-stroke-weak bg-bg-muted p-1">
+          <div className="flex max-h-60 flex-col gap-1 overflow-y-auto rounded-[10px] border border-stroke-weak bg-bg-muted p-1">
             {items.map((item) => {
               const Icon = publishedResourceIcon(item.resourceType);
 
@@ -219,7 +219,7 @@ export function PublishSuccessModal({
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex shrink-0 justify-end">
           <Button
             variant="secondary"
             mode="gradient"
