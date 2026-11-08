@@ -147,28 +147,38 @@ describe('ConversationActivityLedger', () => {
       type: ConversationActivityTypeEnum;
       sequence: number;
       platformMessageId?: string;
+      senderType?: ConversationActivitySenderTypeEnum;
     }
 
     interface LookupQuery {
       type?: ConversationActivityTypeEnum;
       platformMessageId?: string;
       identifier?: { $in: string[] };
-      sequence?: { $gt?: number };
+      senderType?: { $in: ConversationActivitySenderTypeEnum[] };
+      sequence?: { $gt?: number; $lt?: number };
     }
 
-    /** `findOne` over stored rows, honouring the filters and the newest-sequence-first sort the lookup uses. */
+    /** `findOne` over stored rows, honouring the filters and the sort the lookup asks for (newest first by default). */
     function findOneOver(rows: StoredRow[]) {
-      return sinon.stub().callsFake(async (query: LookupQuery) => {
-        const matches = rows.filter(
-          (row) =>
-            (query.type === undefined || row.type === query.type) &&
-            (query.platformMessageId === undefined || row.platformMessageId === query.platformMessageId) &&
-            (query.identifier?.$in === undefined || query.identifier.$in.includes(row.identifier)) &&
-            (query.sequence?.$gt === undefined || row.sequence > query.sequence.$gt)
-        );
+      return sinon
+        .stub()
+        .callsFake(
+          async (query: LookupQuery, _select: unknown, options?: { query?: { sort?: { sequence?: 1 | -1 } } }) => {
+            const matches = rows.filter(
+              (row) =>
+                (query.type === undefined || row.type === query.type) &&
+                (query.platformMessageId === undefined || row.platformMessageId === query.platformMessageId) &&
+                (query.identifier?.$in === undefined || query.identifier.$in.includes(row.identifier)) &&
+                (query.senderType?.$in === undefined ||
+                  (row.senderType !== undefined && query.senderType.$in.includes(row.senderType))) &&
+                (query.sequence?.$gt === undefined || row.sequence > query.sequence.$gt) &&
+                (query.sequence?.$lt === undefined || row.sequence < query.sequence.$lt)
+            );
+            const direction = options?.query?.sort?.sequence ?? -1;
 
-        return matches.sort((a, b) => b.sequence - a.sequence)[0] ?? null;
-      });
+            return matches.sort((a, b) => direction * (a.sequence - b.sequence))[0] ?? null;
+          }
+        );
     }
 
     const scope = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
@@ -176,6 +186,7 @@ describe('ConversationActivityLedger', () => {
       identifier: 'msg-2',
       type: ConversationActivityTypeEnum.MESSAGE,
       platformMessageId: 'msg-2',
+      senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
       sequence: 20,
     };
     const earlierOpenRunStart: StoredRow = {
@@ -208,6 +219,49 @@ describe('ConversationActivityLedger', () => {
       });
 
       expect(runId).to.equal(undefined);
+    });
+
+    it('does not take a run a later turn started for the stopped turn', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+        { identifier: 'run_run-turn_finish', type: ConversationActivityTypeEnum.RUN_FINISH, sequence: 25 },
+        {
+          identifier: 'msg-3',
+          type: ConversationActivityTypeEnum.MESSAGE,
+          platformMessageId: 'msg-3',
+          senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+          sequence: 30,
+        },
+        { identifier: 'run_run-next-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 32 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+
+    it('still finds the turn run after an agent reply', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        {
+          identifier: 'msg-agent',
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: ConversationActivitySenderTypeEnum.AGENT,
+          sequence: 21,
+        },
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal('run-turn');
     });
 
     it('takes the latest open run when the turn has no message to start from', async () => {
