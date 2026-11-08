@@ -5,7 +5,7 @@ description: Remove AI-generated code slop and clean up code style
 
 # Remove AI code slop
 
-Check the diff against main and remove AI-generated slop introduced in the branch.
+Check the diff against the PR's base branch from its merge base (`git diff origin/next...HEAD` for most PRs here) and remove AI-generated slop introduced in the branch.
 
 ## Focus Areas
 
