@@ -24,6 +24,7 @@
 		"build": "tsc -p tsconfig.tools.json",
 		"cf-typegen": "wrangler types",
 		"deploy:eu": "wrangler deploy --env eu",
+		"deploy:staging": "wrangler deploy --env staging",
 		"deploy:us": "wrangler deploy --env us",
 		"dev": "cross-env WRANGLER_REGISTRY_PATH=.wrangler/registry wrangler dev",
 		"format": "biome format --write",

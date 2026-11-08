@@ -127,7 +127,7 @@ overrides:
   joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
-  '@swc/core@>=1.0.0 <2.0.0': 1.7.26
+  '@swc/core@>=1.0.0 <2.0.0': 1.16.21
   '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
   '@babel/core@>7.0.0 <8.0.0': 7.29.7
   prismjs@<=1.29.0: 1.30.0
@@ -149,10 +149,13 @@ overrides:
   # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: the bundled
   # launch-editor has a Windows existence-check bypass, missing `%` escaping,
   # and editor CLI flag injection. All patched in 6.4.4 (patch bump within the
-  # 6.4.x line). Widen the previous `<6.4.3` floor so transitive 6.4.3
-  # resolutions (via vitest, @vitest/mocker, @sveltejs/kit, maily-core/render)
-  # pick up the fix; the dashboard's vite 8.x is unaffected.
-  vite@>=5.0.0 <6.4.4: ^6.4.4
+  # 6.4.x line). GHSA-8g5g-mxqh-grgj (moderate): `server.fs.deny` bypass via
+  # URL queries in dev-server static file handling, affecting exactly 6.4.4.
+  # Patched in 6.4.5 (patch bump within the 6.4.x line). Widen the previous
+  # `<6.4.4` floor so transitive 6.4.4 resolutions (via vitest, @vitest/mocker,
+  # @sveltejs/kit, maily-core/render) pick up the fix; the dashboard's vite
+  # 8.x is unaffected.
+  vite@>=5.0.0 <6.4.5: ^6.4.5
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
   # sensitiveHeaders regex escaping can expose credential headers. Both are
@@ -404,6 +407,9 @@ overrides:
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
+  # GHSA-73rr-hh4g-fpgx has no 6.x or 7.x patch. mocha 11 pins diff ^7 but only
+  # calls createPatch and diffWordsWithSpace, which 8.x keeps under require().
+  diff@>=6.0.0 <8.0.3: ^8.0.3
   formidable@>=2.1.0 <2.1.3: ^2.1.3
   formidable@>=3.1.1 <3.5.3: ^3.5.3
   ip@<1.1.9: ^1.1.9
@@ -524,7 +530,6 @@ overrides:
   # the 3.x line). Only pulled transitively via `pino-pretty > fast-copy` in
   # libs/application-generic (and other logger consumers).
   fast-copy@>=3.0.0 <3.1.0: ^3.1.0
-  tsup@<8.3.5: ^8.3.5
   # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
   # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
   # Patched in 2.17.7 (patch bump within the 2.17.x line).
@@ -554,7 +559,7 @@ overrides:
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
-  # transitive 1.10.0 resolutions (via npm-run-all and cpx) pick up the fix.
+  # transitive 1.10.0 resolutions (via npm-run-all) pick up the fix.
   shell-quote@<1.11.0: ^1.11.0
   # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
   # ThreadPool.options allowing RCE via execArgv / loadBalancer / env.
@@ -623,6 +628,22 @@ overrides:
   # `moment` in libs/application-generic. moment-timezone@0.5.48 declares a
   # `moment@^2.29.4` peer, which 2.31.0 satisfies.
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  # GHSA-mrhx-c7xc-m3w5 (high): zod `$ZodArray.handleArrayResult` accumulates
+  # every validation issue for each failing element with no cap, enabling
+  # memory exhaustion / OOM when a large array is parsed through an array
+  # schema without a length constraint. The vulnerable code only exists in
+  # the zod 4.x core (`$ZodArray` was introduced in v4). Patched in 4.6.6
+  # (patch bump within the 4.6.x line). Scope the override to the 4.x range
+  # so the many direct zod@^3.x consumers (@team-plain/typescript-sdk,
+  # @novu/ntfr-client, @ai-sdk/*, @anthropic-ai/*, @langchain/*,
+  # @modelcontextprotocol/sdk, @novu/api, @novu/framework, novu, etc.) keep
+  # resolving their declared 3.x floor; forcing v3 -> v4 would break those
+  # direct deps. Transitive 4.3.x / 4.4.x / 4.5.x resolutions (via knip,
+  # pkg-pr-new > query-registry, @ai-sdk/gateway, @ai-sdk/mcp,
+  # @better-auth/sso > better-auth) pick up 4.6.x. `pnpm audit` still reports
+  # the advisory against zod@3.x because its `<4.6.6` range matches semver,
+  # but zod 3's bundled `zod/v4` preview subpath is unused in this tree.
+  zod@>=4.0.0 <4.6.6: ^4.6.6
   # GHSA-834v-8h66-3h79 (high): happy-dom 17.x-21.0.3 has an incomplete fix
   # for CVE-2026-33943 — an unsanitized import alias in the module registry
   # still allows host code execution when test code evaluates attacker-
@@ -675,3 +696,10 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
+
+# `pnpm deploy --prod` in the app Dockerfiles leaves out dev-only patched packages (@stoplight/spectral-core),
+# and an unused patch would fail the image build.
+allowUnusedPatches: true
+
+patchedDependencies:
+  '@stoplight/spectral-core@1.20.0': patches/@stoplight__spectral-core@1.20.0.patch

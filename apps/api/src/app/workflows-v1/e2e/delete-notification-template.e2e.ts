@@ -236,7 +236,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
       enabled: false,
     });
 
-    const prodEvn = await getProductionEnvironment(session.environment._id);
+    const prodEvn = (await getProductionEnvironment(session.environment._id))!;
 
     const isNotificationTemplatePromoted = await notificationTemplateRepository.findOne({
       _environmentId: prodEvn._id,

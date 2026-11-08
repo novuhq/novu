@@ -312,6 +312,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.controls).to.deep.equal({
       body: 'default chat body',
+      editorType: 'text',
       providerOverrides: {
         [ChatProviderIdEnum.Slack]: {
           blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],

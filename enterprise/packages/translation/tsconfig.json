@@ -5,7 +5,6 @@
     "outDir": "dist",
     "module": "commonjs",
     "customConditions": ["require"],
-    "target": "es6",
     "esModuleInterop": true,
     "rootDir": "src",
     "strict": true,

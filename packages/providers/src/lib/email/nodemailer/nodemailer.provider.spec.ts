@@ -2,22 +2,34 @@ import { fail } from 'assert';
 
 import nodemailer from 'nodemailer';
 import { ConnectionOptions } from 'tls';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { NodemailerProvider } from './nodemailer.provider';
 
-const sendMailMock = vi.fn().mockReturnValue(() => {
-  return {} as any;
-});
+const sendMailMock = vi.fn().mockResolvedValue({ messageId: 'test-id' });
 
 vi.mock(import('nodemailer'), async (importOriginal) => {
+  const actual = await importOriginal();
+  const createTransport = vi.fn().mockImplementation(() => {
+    return {
+      sendMail: sendMailMock,
+      close: vi.fn(),
+    };
+  });
+
+  return {
+    ...actual,
+    default: { ...actual.default, createTransport },
+    createTransport,
+  };
+});
+
+vi.mock(import('@novu/shared/utils/validate-smtp-outbound-target'), async (importOriginal) => {
   const actual = await importOriginal();
 
   return {
     ...actual,
-    createTransport: vi.fn().mockImplementation(() => {
-      return {
-        sendMail: sendMailMock,
-      };
+    resolveSafeSmtpPinnedTarget: vi.fn().mockImplementation(async (host: string, port: number) => {
+      return { hostname: host, address: '203.0.113.10', port };
     }),
   };
 });
@@ -216,9 +228,12 @@ describe('NodemailerProvider header forwarding', () => {
     password: 'test123',
   };
 
+  beforeEach(() => {
+    sendMailMock.mockClear();
+  });
+
   test('should forward custom headers to sendMail', async () => {
     const provider = new NodemailerProvider(mockConfig);
-    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
 
     await provider.sendMessage({
       ...mockNovuMessage,
@@ -228,7 +243,7 @@ describe('NodemailerProvider header forwarding', () => {
       },
     });
 
-    expect(spy).toHaveBeenCalledWith(
+    expect(sendMailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         headers: {
           'In-Reply-To': '<original-message-id@example.com>',
@@ -240,7 +255,6 @@ describe('NodemailerProvider header forwarding', () => {
 
   test('should forward custom MIME alternatives to sendMail', async () => {
     const provider = new NodemailerProvider(mockConfig);
-    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
     const reactionAlternative = {
       contentType: 'text/vnd.google.email-reaction+json',
       content: JSON.stringify({ version: 1, emoji: '👀' }),
@@ -251,7 +265,7 @@ describe('NodemailerProvider header forwarding', () => {
       alternatives: [reactionAlternative],
     });
 
-    expect(spy).toHaveBeenCalledWith(
+    expect(sendMailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         alternatives: [reactionAlternative],
       })
@@ -260,7 +274,6 @@ describe('NodemailerProvider header forwarding', () => {
 
   test('should use undisclosed recipients when to is empty and cc is provided', async () => {
     const provider = new NodemailerProvider(mockConfig);
-    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
 
     await provider.sendMessage({
       ...mockNovuMessage,
@@ -268,7 +281,7 @@ describe('NodemailerProvider header forwarding', () => {
       cc: ['cc@example.com'],
     });
 
-    expect(spy).toHaveBeenCalledWith(
+    expect(sendMailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'undisclosed-recipients:;',
         cc: ['cc@example.com'],
@@ -278,11 +291,10 @@ describe('NodemailerProvider header forwarding', () => {
 
   test('should not include headers field when no custom headers provided', async () => {
     const provider = new NodemailerProvider(mockConfig);
-    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
 
     await provider.sendMessage(mockNovuMessage);
 
-    const payload = spy.mock.calls[0][0] as Record<string, unknown>;
+    const payload = sendMailMock.mock.calls[0][0] as Record<string, unknown>;
 
     expect(payload).not.toHaveProperty('headers');
   });

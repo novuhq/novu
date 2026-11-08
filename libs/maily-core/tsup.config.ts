@@ -5,8 +5,7 @@ const packageOptions: Options = {
   sourcemap: true,
   clean: true,
   treeshake: false,
-  // tsup 8 injects the deprecated `baseUrl` option into the dts build
-  dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
+  dts: true,
   format: ['esm', 'cjs'],
   outExtension: ({ format }) => {
     return {

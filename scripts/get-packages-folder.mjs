@@ -1,5 +1,5 @@
-import { readProjects } from '@pnpm/filter-workspace-packages';
 import fs from 'node:fs';
+import { readProjects } from '@pnpm/filter-workspace-packages';
 
 export async function getPackageFolders(folders) {
   const cachePath = folders.join('_') + '-changes-cache.json';
@@ -16,13 +16,14 @@ export async function getPackageFolders(folders) {
     engineStrict: false,
   });
 
-  let result = {};
+  const result = {};
   for (const folder of folders) {
     const filteredItems = content.allProjects
       .filter((project) => {
         const contains = project.dir.includes(folder + '/');
 
-        return contains;
+        // enterprise/packages/* need the private .source submodule, which only the backend services job checks out.
+        return contains && !project.manifest.name.startsWith('@novu/ee-');
       })
       .map((project) => project.manifest.name);
 

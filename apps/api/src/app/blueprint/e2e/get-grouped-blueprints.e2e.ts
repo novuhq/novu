@@ -17,11 +17,9 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import sinon from 'sinon';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
 import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
-import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET) #novu-v0', async () => {
   let session: UserSession;
@@ -30,7 +28,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   let invalidateCache: InvalidateCacheService;
   let getGroupedBlueprints: GetGroupedBlueprints;
-  let indexModuleStub: sinon.SinonStub;
+  const [originalFirstPopularId] = POPULAR_TEMPLATES_ID_LIST;
 
   before(async () => {
     const cacheInMemoryProviderService = new CacheInMemoryProviderService();
@@ -42,11 +40,10 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     await session.initialize();
 
     getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository(), new PinoLogger({}));
-    indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_ID_LIST');
   });
 
   afterEach(() => {
-    indexModuleStub.restore();
+    POPULAR_TEMPLATES_ID_LIST[0] = originalFirstPopularId;
   });
 
   it('should get the grouped blueprints', async () => {
@@ -122,11 +119,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     const blueprintFromDb = groupedPopularBlueprints.general[0].blueprints[0];
 
     // switch id from db store - to mock blueprint id
-    const storeBlueprintTemplateId = blueprintFromDb._id?.toString();
-    const mockedValue = POPULAR_TEMPLATES_ID_LIST;
-    mockedValue[0] = storeBlueprintTemplateId || '';
-
-    indexModuleStub.value(mockedValue);
+    POPULAR_TEMPLATES_ID_LIST[0] = blueprintFromDb._id?.toString() || '';
 
     await invalidateCache.invalidateByKey({
       key: buildGroupedBlueprintsKey(prodEnv._id),

@@ -9,7 +9,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strictNullChecks": true,
-    "target": "es6",
     "sourceMap": true,
     "outDir": "./dist",
     "types": ["node", "mocha"]

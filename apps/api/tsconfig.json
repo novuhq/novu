@@ -8,7 +8,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strictNullChecks": true,
-    "target": "es6",
     "types": ["node", "mocha"]
   },
   "exclude": ["node_modules"]
