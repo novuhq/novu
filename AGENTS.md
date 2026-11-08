@@ -6,7 +6,7 @@
 
 ## Build
 
-Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes to `apps/` do not require a rebuild.
+Run `pnpm build` after changes to `packages/` or `enterprise/`, and in `apps/mcp-server` after changing `src/tools` or `src/utils` (the enterprise Copilot imports its `dist`). Other direct changes to `apps/` do not require a rebuild.
 
 ## Hot path
 
@@ -24,7 +24,7 @@ When writing or reviewing a change, check these and call them out in the PR desc
 ## AI Boundaries
 
 ### Always
-- Work within: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`
+- Work within: `apps/api`, `apps/dashboard`, `apps/worker`, `apps/ws`, `apps/mcp-server` (read `apps/mcp-server/AGENTS.md` first)
 - Use shared packages: `packages/shared`, `packages/framework`, `packages/js`, `packages/react`
 - Follow `libs/dal` for data access, `libs/application-generic` for business logic
 
@@ -58,4 +58,5 @@ Read these when the task touches the area:
 - PR format: `.cursor/rules/pullrequest.mdc`
 - Per-app conventions: `.cursor/rules/<api|worker|ws|dashboard|dal-repository|clickhouse>.mdc`
 - `enterprise/` is the `novuhq/packages-enterprise` repo, mounted as the `.source` submodule; changes need a paired PR there (see `.agents/skills/enterprise-submodule/SKILL.md`)
+- MCP server tools and schemas (`apps/mcp-server`): `apps/mcp-server/AGENTS.md` and `.agents/skills/nv-mcp-server-tools/SKILL.md`
 - `@novu/thalamus` comes from the separate `novuhq/thalamus` repo; its source isn't in this monorepo

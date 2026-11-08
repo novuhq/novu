@@ -169,8 +169,8 @@ export function normalizeControlValues(
  * `update_workflow_step_content` save for new content of a step type: as the
  * step schema parses them (unknown keys dropped, keys in schema order), email
  * bodies as strings. `update_workflow_step_content` then puts the step's
- * current skip condition back. Undefined when the tools would reject the
- * content.
+ * current skip condition back. Undefined when the content fails the step
+ * schema.
  */
 export function toSavedControlValues(content: {
 	type: string;
