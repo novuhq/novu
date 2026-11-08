@@ -6,3 +6,4 @@ export { CopilotModeProvider } from './copilot-mode-provider';
 export type { CopilotSuggestion } from './copilot-thread-panel';
 export type { CopilotPromptLocationState } from './use-copilot-pending-prompt';
 export { useCopilotWebChatSidebar } from './use-copilot-web-chat-sidebar';
+export { useCopilotWorkflowFormSync } from './use-copilot-workflow-form-sync';

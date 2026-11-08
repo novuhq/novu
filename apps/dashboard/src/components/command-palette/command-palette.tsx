@@ -27,6 +27,7 @@ import { Button } from '../primitives/button';
 import { IconCmd, Kbd } from '../primitives/kbd';
 import * as CommandMenu from './command-menu';
 import { CommandCategory, Command as CommandType } from './command-types';
+import { stripAskCopilotPrefix } from './copilot-prefill';
 import { useCommandPalette } from './hooks/use-command-palette';
 import { useCommandRegistry } from './hooks/use-command-registry';
 
@@ -115,6 +116,7 @@ export function CommandPalette() {
   const commandGroups = useCommandRegistry(search);
   const openCopilot = useCopilotEntry();
   const pendingCopilotPrefillRef = useRef<string | undefined>(undefined);
+  const copilotPrompt = stripAskCopilotPrefix(search);
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
@@ -148,9 +150,9 @@ export function CommandPalette() {
       commandCategory: 'help',
     });
 
-    pendingCopilotPrefillRef.current = search.trim();
+    pendingCopilotPrefillRef.current = copilotPrompt;
     closeCommandPalette();
-  }, [openCopilot, search, closeCommandPalette, track]);
+  }, [openCopilot, copilotPrompt, closeCommandPalette, track]);
 
   // Opens the Copilot once the dialog has released focus, so the composer is not stolen back.
   const handleCloseAutoFocus = useCallback(
@@ -209,6 +211,30 @@ export function CommandPalette() {
       </div>
 
       <CommandMenu.List className="py-0 min-h-[400px]">
+        {/* First, so it is the default pick on the pages where the Copilot is available. */}
+        {openCopilot && (
+          <CommandMenu.Group heading="Copilot" className="px-2.5">
+            <CommandMenu.Item
+              value={`Ask Copilot ${search} copilot ai assistant workflow`}
+              onSelect={openCopilotWithQuery}
+              className="px-1.5 rounded-8"
+            >
+              <div className="flex items-center gap-1.5 flex-1">
+                <CategoryIconWrapper>
+                  <RiSparklingLine />
+                </CategoryIconWrapper>
+                <span className="text-text-sub text-label-sm flex-1 truncate">
+                  {copilotPrompt ? `Ask Copilot "${copilotPrompt}"` : 'Ask Copilot'}
+                </span>
+              </div>
+              <Kbd className="gap-0.5 px-1.5">
+                <IconCmd className="size-2.5" />
+                <span>J</span>
+              </Kbd>
+            </CommandMenu.Item>
+          </CommandMenu.Group>
+        )}
+
         {commandGroups.map((group) => (
           <CommandMenu.Group key={group.category} heading={group.label} className="px-2.5">
             {group.commands.map((command) => {
@@ -239,29 +265,6 @@ export function CommandPalette() {
             })}
           </CommandMenu.Group>
         ))}
-
-        {openCopilot && (
-          <CommandMenu.Group heading="Copilot" className="px-2.5">
-            <CommandMenu.Item
-              value={`Ask Copilot ${search} copilot ai assistant workflow`}
-              onSelect={openCopilotWithQuery}
-              className="px-1.5 rounded-8"
-            >
-              <div className="flex items-center gap-1.5 flex-1">
-                <CategoryIconWrapper>
-                  <RiSparklingLine />
-                </CategoryIconWrapper>
-                <span className="text-text-sub text-label-sm flex-1 truncate">
-                  {search.trim() ? `Ask Copilot "${search.trim()}"` : 'Ask Copilot'}
-                </span>
-              </div>
-              <Kbd className="gap-0.5 px-1.5">
-                <IconCmd className="size-2.5" />
-                <span>J</span>
-              </Kbd>
-            </CommandMenu.Item>
-          </CommandMenu.Group>
-        )}
 
         {showDocsAssistant && search.trim() && (
           <CommandMenu.Group heading="AI Assistant" className="px-2.5">

@@ -1,8 +1,8 @@
 import { RiAddLine, RiCloseLine } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
+import { useCopilotPopoverTitle } from './copilot-popover-title';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getUserMessageText } from './copilot-web-chat-utils';
 
 function HeaderButton({
   label,
@@ -31,11 +31,9 @@ function HeaderButton({
 
 export function CopilotPopover() {
   const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
+  const title = useCopilotPopoverTitle(chat);
 
   if (!isOpen || !isAvailable) return null;
-
-  const firstUser = chat?.messages.find((message) => message.role === 'user');
-  const title = (firstUser && getUserMessageText(firstUser)) || 'Novu Copilot';
 
   return (
     <div
