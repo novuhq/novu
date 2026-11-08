@@ -2,6 +2,7 @@ import type { AgentCardChild, AgentCardElement } from '@novu/js';
 import { Button, type ButtonProps } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
+import { getCardButtonLabel } from './copilot-review-labels';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getLastCardSourceMessageId, isCopilotReviewActionId } from './copilot-web-chat-utils';
 
@@ -66,7 +67,7 @@ function CardActions({ actions, context }: { actions: CardActionChild[]; context
               disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
               onClick={() => context.onButtonClick(action)}
             >
-              {action.label}
+              {getCardButtonLabel(action)}
             </Button>
           );
         }

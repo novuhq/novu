@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SidekickToast } from '@/components/ai-sidekick/sidekick-toast';
+import { CopilotCanvasToastBar } from './copilot-canvas-toast-bar';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getOpenReviewActions } from './copilot-web-chat-utils';
 
@@ -12,12 +12,15 @@ export function CopilotWebChatCanvasToast() {
     [messages, pendingReviewMessageId]
   );
   const isReviewing = !isBusy && !!(keep || revert);
+  const isActionPending = !!pendingReviewMessageId;
 
   return (
-    <SidekickToast
+    <CopilotCanvasToastBar
       isVisible={isBusy || isReviewing}
-      variant={isBusy ? 'generating' : 'reviewing'}
-      isActionPending={!!pendingReviewMessageId}
+      variant={isBusy ? 'running' : 'reviewing'}
+      // Stopping lasts until the agent's current step ends, so a second Cancel has nothing to add.
+      isCancelDisabled={!!chat?.isStopping || isActionPending}
+      isActionPending={isActionPending}
       onCancel={stop}
       onKeepAll={keep ? () => void sendCardAction(keep) : undefined}
       onDiscard={revert ? () => void sendCardAction(revert) : undefined}
