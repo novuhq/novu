@@ -187,4 +187,37 @@ describe('NovuInternalBridgeClient', () => {
 
     expect(res.status.firstCall.args[0]).to.equal(200);
   });
+
+  it('lists the agents in discovery, so novu sync points their bridge URL at this bridge', async () => {
+    const res = buildResponse();
+
+    await client.handleRequest(
+      buildRequest({ method: 'GET', query: { action: 'discover' } }),
+      res as unknown as Response
+    );
+
+    expect(res.status.firstCall.args[0]).to.equal(200);
+    const sent = res.send.firstCall.args[0];
+    const discovered = typeof sent === 'string' ? JSON.parse(sent) : sent;
+    expect(discovered.agents).to.deep.equal([{ agentId: 'novu-copilot' }]);
+  });
+
+  it('refuses an unsigned discovery when the workflows require signatures', async () => {
+    const strictClient = new NovuInternalBridgeClient(
+      {
+        client: new Client({ secretKey: SECRET_KEY, strictAuthentication: true, verbose: false }),
+        workflows: [],
+      } as unknown as ServeHandlerOptions,
+      new NovuHandler(),
+      { getAgents: () => [agent('novu-copilot', { onMessage })] } as unknown as NovuAgentsBridgeService
+    );
+    const res = buildResponse();
+
+    await strictClient.handleRequest(
+      buildRequest({ method: 'GET', query: { action: 'discover' } }),
+      res as unknown as Response
+    );
+
+    expect(res.status.firstCall.args[0]).to.equal(401);
+  });
 });
