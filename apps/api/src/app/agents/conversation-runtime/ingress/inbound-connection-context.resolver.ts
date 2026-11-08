@@ -6,8 +6,10 @@ import {
   ChannelEndpointRepository,
   type ContextEntity,
   ContextRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import type { AgentContextPayload, AgentContextValue } from '@novu/framework';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -65,6 +67,7 @@ export class InboundConnectionContextResolver {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly contextRepository: ContextRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -96,17 +99,30 @@ export class InboundConnectionContextResolver {
   /**
    * Web chat has no connection or endpoint: the subscriber's session token carries the tenant as
    * `contextKeys`, which the adapter stamps on every inbound raw payload (messages and actions).
+   *
+   * Session init only verifies the context signature when the environment's in-app integration
+   * enforces HMAC; otherwise any caller can mint a session naming any context of the environment.
+   * The keys are only trusted as the agent's tenant (and bridge URL) when HMAC is enforced.
    */
   private async resolveBySessionContextKeys(
     config: ResolvedAgentConfig,
     rawEvent: unknown
   ): Promise<ResolvedInboundContext> {
     const contextKeys = (rawEvent as { contextKeys?: unknown } | null | undefined)?.contextKeys;
-    if (!Array.isArray(contextKeys)) {
+    if (!Array.isArray(contextKeys) || contextKeys.length === 0) {
       return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
+      if (!(await this.isSessionContextSigned(config))) {
+        this.logger.warn(
+          { integrationIdentifier: config.integrationIdentifier, environmentId: config.environmentId },
+          'Ignoring web chat session context: the in-app integration does not enforce HMAC'
+        );
+
+        return EMPTY_RESOLVED_CONTEXT;
+      }
+
       return await this.buildContextFromKeys(
         config,
         contextKeys.filter((key): key is string => typeof key === 'string')
@@ -116,6 +132,24 @@ export class InboundConnectionContextResolver {
 
       return EMPTY_RESOLVED_CONTEXT;
     }
+  }
+
+  /** Every active Novu in-app integration of the environment enforces HMAC, so session init verified the context. */
+  private async isSessionContextSigned(config: ResolvedAgentConfig): Promise<boolean> {
+    const inAppIntegrations = await this.integrationRepository.find(
+      {
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+        active: true,
+      },
+      { credentials: 1 }
+    );
+
+    return (
+      inAppIntegrations.length > 0 && inAppIntegrations.every((integration) => integration.credentials?.hmac === true)
+    );
   }
 
   /**
