@@ -56,5 +56,5 @@ pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTION
 - Always run commands from `apps/api` directory
 - For specific tests, use the full mocha command (not pnpm script) to target the exact test file
 - If loading fails with `Cannot find module ... from src/metadata.ts`, run `pnpm build:metadata` in `apps/api`. The file is generated and gitignored; CI builds it before tests.
-- Specs that trigger a workflow and wait for job completion time out unless a worker is consuming the test queue. Start one with `cd apps/worker && pnpm start:test` (CI does the same with `NODE_ENV=test`). Specs that seed messages directly don't need it.
+- Specs that trigger a workflow and wait for job completion time out unless a worker is consuming the test queue. Start one in another terminal with `pnpm --filter @novu/worker start:test` (CI does the same with `NODE_ENV=test`). Specs that seed messages directly don't need it.
 - Report test results clearly to the user

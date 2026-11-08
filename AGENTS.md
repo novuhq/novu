@@ -15,9 +15,9 @@ The trigger → worker → provider path runs once per subscriber per step. Don'
 ## Sensitive spots
 
 When writing or reviewing a change, check these and call them out in the PR description if touched:
-- Tenant isolation: every MongoDB and ClickHouse query filters by `_environmentId` or `_organizationId`.
+- Tenant isolation: every MongoDB query filters by `_environmentId` or `_organizationId`; every ClickHouse query filters by `environment_id` or `organization_id` (`LogRepository` adds `environment_id` from `enforced.environmentId`).
 - Secrets: API keys, integration credentials and connection auth stay encrypted at rest (`libs/application-generic/src/encryption/`) and never reach logs, API responses or the client.
-- Endpoints: new or changed routes are covered by `@RequireAuthentication()` and the right `@RequirePermissions(...)`.
+- Endpoints: new or changed routes that need a user session use `@RequireAuthentication()` and the right `@RequirePermissions(...)`; intentionally public routes stay public and subscriber routes keep their subscriber guard (`AuthGuard('subscriberJwt')`).
 - Hot path: see above.
 - Edition gating: see Novu Distribution below.
 
