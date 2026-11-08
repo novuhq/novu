@@ -347,6 +347,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const chatRef = useRef(chat);
   chatRef.current = chat;
   const isBusyRef = useRef(false);
+  const pendingActionRef = useRef<Promise<unknown> | undefined>(undefined);
   const resumeConversationIdRef = useRef(resumeConversationId);
   resumeConversationIdRef.current = resumeConversationId;
 
@@ -452,6 +453,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
 
+    // Cancel only finds the turn a review click starts once the click is accepted; an earlier Stop would answer idle.
+    await pendingActionRef.current;
     const { error } = await chatRef.current.stop();
     if (error) showErrorToast("Couldn't stop the Copilot. Try again.");
   }, [track, surface]);
@@ -465,7 +468,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       setAwaitingReply(true);
     }
 
-    const { error } = await chatRef.current.sendAction(action);
+    const request = chatRef.current.sendAction(action);
+    pendingActionRef.current = request;
+    const { error } = await request;
+    if (pendingActionRef.current === request) pendingActionRef.current = undefined;
     if (!error) return;
 
     // The click never reached the agent, so the card stays the user's way to try it again.
