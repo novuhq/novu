@@ -52,29 +52,32 @@ Skip or shorten for tiny hotfixes the user explicitly scoped.
 
 **Required** when the PR touches API or Worker related code and DAL.
 
-Checklist:
+Check the diff against "Sensitive spots" and "Hot path" in the root `AGENTS.md`, plus these Novu-specific items:
 
-- Mongo/API queries scoped by `_organizationId` / `_environmentId`
 - Shared upstream keys never returned to clients
 - No adopt/link paths that bind foreign upstream IDs under a shared master key
 - Destructive upstream ops (delete/archive) guarded or skipped for demo/shared providers
 - Quota and usage counters scoped per tenant/environment
 
+Name each sensitive spot the diff touches in the PR body (step 6).
+
 If P0 cross-tenant risk is found: fix + add e2e coverage before opening/updating PR.
 
 ### 4. Local validation
 
-Pick the smallest check that proves the change:
+If the Linear ticket or its spec says how to validate the change, run those checks first. Then pick the smallest check that proves the change:
 
 
-| Change type            | Command                                                                           |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| API / libs type errors | `pnpm --filter @novu/api-service build`                                           |
-| Shared libs            | `pnpm build` (only if `packages/` or `enterprise/` touched)                       |
-| New/changed e2e        | Load [run-api-e2e-tests](../run-api-e2e-tests/SKILL.md) and run the specific file |
+| Change type                                       | Check                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| API / libs type errors                            | `pnpm --filter @novu/api-service build`                                                                |
+| Shared libs                                       | `pnpm build` (only if `packages/` or `enterprise/` touched)                                            |
+| New/changed e2e                                   | Load [run-api-e2e-tests](../run-api-e2e-tests/SKILL.md) and run the specific file                      |
+| Dashboard UI                                      | Open the changed page in a browser, compare it with the design linked in the ticket, take a screenshot |
+| Crosses services (API → worker → provider, email) | Load [verify-in-box](../verify-in-box/SKILL.md) and drive the change on the box                        |
 
 
-Report failures; fix before push when deterministic.
+Report failures; fix before push when deterministic. Keep each check and what it showed for step 6.
 
 ### 5. Commit hygiene
 
@@ -91,7 +94,8 @@ Read `.cursor/rules/pullrequest.mdc` before creating.
 - Base branch: `**next`**
 - Title: `type(scope): Description fixes NV-XXX`
 - Ready for review — not draft
-- Body: template sections, what/why, test plan, Mermaid for non-trivial architecture
+- Body: template sections, what/why, Mermaid for non-trivial architecture, and the sensitive spots touched (step 3)
+- "How was this verified?": each check from step 4 and what it showed (command, spec file, screenshot, or box address and applied commit)
 - Link Linear ticket; create ticket first if missing
 - Use `gh pr create` / update existing PR — do not push unless user asked
 - Enterprise submodule changed → open both PRs and cross-link the bodies (see [enterprise-submodule](../enterprise-submodule/SKILL.md))
@@ -138,6 +142,7 @@ Optional: load **babysit** skill when user asks to keep iterating until merge-re
 ## Related skills
 
 - [run-api-e2e-tests](../run-api-e2e-tests/SKILL.md) — focused API e2e runs
+- [verify-in-box](../verify-in-box/SKILL.md) — end-to-end proof on the Novu Box
 - `thermo-nuclear-code-quality-review` — pre-PR quality audit
 - `deslop` — remove AI slop from branch diff
 - `get-pr-comments` — triage review feedback
