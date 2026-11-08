@@ -110,6 +110,28 @@ describe('readBridgeLiveReplies', () => {
 
     expect(await replies[0].final).to.equal(undefined);
   });
+
+  it('ends the stream once a reply streams more text than a reply may hold, even while it is read', async () => {
+    const body = new PassThrough();
+    const { replies, done } = read(body, async () => false);
+    const failure = done.then(
+      () => undefined,
+      (err: Error) => err
+    );
+    const chunk = 'x'.repeat(512 * 1024);
+
+    body.write(start);
+    for (let i = 0; i < 5; i += 1) {
+      body.write(delta(chunk));
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    body.end();
+
+    const error = await failure;
+
+    expect(error?.message).to.equal('Bridge live reply is too long');
+    expect(await replies[0].final).to.equal(undefined);
+  });
 });
 
 /**

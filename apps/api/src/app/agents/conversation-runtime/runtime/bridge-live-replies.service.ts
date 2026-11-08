@@ -14,6 +14,8 @@ import type { ConversationTurn } from './conversation-turn';
 const MAX_FRAME_CHARS = 1024 * 1024;
 const MAX_OPEN_REPLIES = 8;
 const MAX_QUEUED_CHARS = 1024 * 1024;
+/** A stopped reply keeps everything it streamed, so its total is capped even while the reader keeps up. */
+const MAX_REPLY_CHARS = 2 * 1024 * 1024;
 /** How often an open reply checks whether its turn was stopped. */
 const ABORT_CHECK_INTERVAL_MS = 500;
 
@@ -100,6 +102,7 @@ class BridgeLiveReply implements LiveReply {
 
   push(delta: string): void {
     if (this.ended) return;
+    if (this.streamedText.length + delta.length > MAX_REPLY_CHARS) throw new Error('Bridge live reply is too long');
     this.streamedText += delta;
     this.queuedChars += delta.length;
     if (this.queuedChars > MAX_QUEUED_CHARS) throw new Error('Bridge live reply is not being read');
