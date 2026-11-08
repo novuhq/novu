@@ -4,6 +4,7 @@ import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resou
 import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import { type ApprovalIndex, buildApprovalIndex, mapApprovalRequest, type ToolResultPayload } from './approval-cycles';
 import { mapUserAttachmentParts } from './attachment-parts';
+import { isAbortedRunFinish } from './run-lifecycle';
 
 /**
  * Maps Novu conversation ledger entries to LangChain `BaseMessage[]`.
@@ -58,18 +59,6 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): BaseMes
   return new HumanMessage({ content });
 }
 
-/** A stopped turn leaves its user prompt with no reply; the marker tells the model it was never carried out. */
-function isAbortedRunFinish(entry: AgentHistoryEntry): boolean {
-  const lifecycle = entry.richContent?.lifecycle;
-
-  return (
-    entry.type === TYPE_RUN_FINISH &&
-    typeof lifecycle === 'object' &&
-    lifecycle !== null &&
-    (lifecycle as { outcome?: unknown }).outcome === 'aborted'
-  );
-}
-
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): BaseMessage[] {
   switch (entry.type) {
     case TYPE_MESSAGE: {
@@ -80,7 +69,8 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
     case TYPE_TOOL_APPROVAL_REQUEST:
       return mapApprovalRequest(entry, index);
     case TYPE_RUN_FINISH:
-      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model.
+      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model. A stopped
+      // turn leaves its user prompt with no reply; the marker tells the model it was never carried out.
       return isAbortedRunFinish(entry) ? [new AIMessage(STOPPED_TURN_MARKER)] : [];
     default:
       // `tool_approval_decision`, `tool_result`, `edit`, `signal`, and unknown types are
