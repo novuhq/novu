@@ -6,7 +6,6 @@
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "types": ["node", "mocha"],
-    "target": "es2017",
     "allowJs": false,
     "declarationMap": true
   }

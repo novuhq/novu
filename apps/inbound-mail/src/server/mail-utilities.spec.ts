@@ -1,8 +1,120 @@
 import child_process from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import logger from './logger';
 
 const mailUtilities = require('./mailUtilities');
+
+/**
+ * verifydkim.py prints one JSON line with a result per signature and exits 11
+ * when none verifies. These tests pin how the Node side reads that: only exit
+ * 0 yields dkim=pass, and a failure logs each signature's reason.
+ */
+describe('mailUtilities.validateDkim', () => {
+  let spawnStub: sinon.SinonStub;
+  let warnStub: sinon.SinonStub;
+
+  beforeEach(() => {
+    spawnStub = sinon.stub(child_process, 'spawn');
+    warnStub = sinon.stub(logger, 'warn');
+  });
+
+  afterEach(() => {
+    spawnStub.restore();
+    warnStub.restore();
+  });
+
+  function stubDkimRun(code: number, stdout: string, stderr = '') {
+    const child = Object.assign(new EventEmitter(), {
+      stdout: new EventEmitter(),
+      stderr: new EventEmitter(),
+      stdin: { write: sinon.stub(), end: sinon.stub() },
+    });
+    child.stdin.end.callsFake(() =>
+      setImmediate(() => {
+        if (stdout) child.stdout.emit('data', Buffer.from(stdout));
+        if (stderr) child.stderr.emit('data', Buffer.from(stderr));
+        child.emit('close', code);
+      })
+    );
+    spawnStub.returns(child);
+
+    return child;
+  }
+
+  type DkimVerdict = { isValid: boolean; domains: string[] };
+
+  function validateDkim(rawEmail: Buffer | string): Promise<DkimVerdict> {
+    return new Promise((resolve, reject) => {
+      mailUtilities.validateDkim(rawEmail, (err: Error | null, verdict: DkimVerdict) =>
+        err ? reject(err) : resolve(verdict)
+      );
+    });
+  }
+
+  it('should resolve dkim=pass with the signing domain for exit code 0', async () => {
+    stubDkimRun(0, '{"signatures": [{"domain": "proton.me", "selector": "protonmail", "result": "pass"}]}\n');
+
+    expect(await validateDkim(Buffer.from('raw email'))).to.deep.equal({ isValid: true, domains: ['proton.me'] });
+    expect(warnStub.called).to.equal(false);
+  });
+
+  it('should list only the domains whose signatures verified', async () => {
+    const signatures = [
+      { domain: 'sendgrid.info', selector: 'smtpapi', result: 'fail', reason: 'KeyFormatError: missing public key' },
+      { domain: 'novu.co', selector: 's1', result: 'pass' },
+    ];
+    stubDkimRun(0, `${JSON.stringify({ signatures })}\n`);
+
+    expect(await validateDkim(Buffer.from('raw email'))).to.deep.equal({ isValid: true, domains: ['novu.co'] });
+  });
+
+  it('should write the raw email bytes to the verifier unchanged', async () => {
+    const child = stubDkimRun(0, '{"signatures": []}\n');
+    const rawEmail = Buffer.from('Subject: Gr\xfc\xdfe\r\n\r\n', 'latin1');
+
+    await validateDkim(rawEmail);
+
+    expect(child.stdin.write.firstCall.args[0]).to.equal(rawEmail);
+  });
+
+  it("should resolve dkim=failed for exit code 11 and log each signature's reason", async () => {
+    const signatures = [
+      { domain: 'sendgrid.info', selector: 'smtpapi', result: 'fail', reason: 'KeyFormatError: missing public key' },
+      { domain: 'novu.co', selector: 's1', result: 'fail', reason: 'ValidationError: body hash mismatch' },
+    ];
+    stubDkimRun(11, `${JSON.stringify({ signatures })}\n`);
+
+    expect(await validateDkim(Buffer.from('raw email'))).to.deep.equal({ isValid: false, domains: [] });
+
+    const [payload, message] = warnStub.firstCall.args;
+    expect(message).to.equal('DKIM verification failed: no signature verified.');
+    expect(payload).to.include({ exitCode: 11 });
+    expect(payload.signatures).to.deep.equal(signatures);
+  });
+
+  it('should say when the email has no DKIM signature at all', async () => {
+    stubDkimRun(11, '{"signatures": []}\n');
+
+    expect(await validateDkim(Buffer.from('raw email'))).to.deep.equal({ isValid: false, domains: [] });
+    expect(warnStub.firstCall.args[1]).to.equal('DKIM verification failed: the email has no DKIM signature.');
+  });
+
+  [1, 11].forEach((exitCode) => {
+    it(`should log exit code ${exitCode} without a report as a broken verifier, not a sender failure`, async () => {
+      stubDkimRun(exitCode, '', 'Traceback (most recent call last): ...');
+
+      expect(await validateDkim(Buffer.from('raw email'))).to.deep.equal({ isValid: false, domains: [] });
+
+      const [payload, message] = warnStub.firstCall.args;
+      expect(message).to.equal(
+        'DKIM verification errored: verifier script did not run cleanly — treating dkim as failed.'
+      );
+      expect(payload).to.include({ exitCode, stderr: 'Traceback (most recent call last): ...' });
+    });
+  });
+});
 
 /**
  * verifyspf.py communicates its verdict through exit codes

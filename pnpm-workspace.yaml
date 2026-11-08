@@ -127,7 +127,7 @@ overrides:
   joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
-  '@swc/core@>=1.0.0 <2.0.0': 1.7.26
+  '@swc/core@>=1.0.0 <2.0.0': 1.16.21
   '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
   '@babel/core@>7.0.0 <8.0.0': 7.29.7
   prismjs@<=1.29.0: 1.30.0
@@ -149,10 +149,13 @@ overrides:
   # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: the bundled
   # launch-editor has a Windows existence-check bypass, missing `%` escaping,
   # and editor CLI flag injection. All patched in 6.4.4 (patch bump within the
-  # 6.4.x line). Widen the previous `<6.4.3` floor so transitive 6.4.3
-  # resolutions (via vitest, @vitest/mocker, @sveltejs/kit, maily-core/render)
-  # pick up the fix; the dashboard's vite 8.x is unaffected.
-  vite@>=5.0.0 <6.4.4: ^6.4.4
+  # 6.4.x line). GHSA-8g5g-mxqh-grgj (moderate): `server.fs.deny` bypass via
+  # URL queries in dev-server static file handling, affecting exactly 6.4.4.
+  # Patched in 6.4.5 (patch bump within the 6.4.x line). Widen the previous
+  # `<6.4.4` floor so transitive 6.4.4 resolutions (via vitest, @vitest/mocker,
+  # @sveltejs/kit, maily-core/render) pick up the fix; the dashboard's vite
+  # 8.x is unaffected.
+  vite@>=5.0.0 <6.4.5: ^6.4.5
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
   # sensitiveHeaders regex escaping can expose credential headers. Both are
@@ -625,6 +628,22 @@ overrides:
   # `moment` in libs/application-generic. moment-timezone@0.5.48 declares a
   # `moment@^2.29.4` peer, which 2.31.0 satisfies.
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  # GHSA-mrhx-c7xc-m3w5 (high): zod `$ZodArray.handleArrayResult` accumulates
+  # every validation issue for each failing element with no cap, enabling
+  # memory exhaustion / OOM when a large array is parsed through an array
+  # schema without a length constraint. The vulnerable code only exists in
+  # the zod 4.x core (`$ZodArray` was introduced in v4). Patched in 4.6.6
+  # (patch bump within the 4.6.x line). Scope the override to the 4.x range
+  # so the many direct zod@^3.x consumers (@team-plain/typescript-sdk,
+  # @novu/ntfr-client, @ai-sdk/*, @anthropic-ai/*, @langchain/*,
+  # @modelcontextprotocol/sdk, @novu/api, @novu/framework, novu, etc.) keep
+  # resolving their declared 3.x floor; forcing v3 -> v4 would break those
+  # direct deps. Transitive 4.3.x / 4.4.x / 4.5.x resolutions (via knip,
+  # pkg-pr-new > query-registry, @ai-sdk/gateway, @ai-sdk/mcp,
+  # @better-auth/sso > better-auth) pick up 4.6.x. `pnpm audit` still reports
+  # the advisory against zod@3.x because its `<4.6.6` range matches semver,
+  # but zod 3's bundled `zod/v4` preview subpath is unused in this tree.
+  zod@>=4.0.0 <4.6.6: ^4.6.6
   # GHSA-834v-8h66-3h79 (high): happy-dom 17.x-21.0.3 has an incomplete fix
   # for CVE-2026-33943 — an unsanitized import alias in the module registry
   # still allows host code execution when test code evaluates attacker-

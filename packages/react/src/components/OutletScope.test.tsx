@@ -11,7 +11,10 @@ import { OutletScope } from './OutletScope';
 
 type BellMountParams = { element: HTMLElement; props?: { renderBell?: BellRenderer } };
 
-const unreadCount: Parameters<BellRenderer>[1] = { total: 1, severity: {} };
+const unreadCount: Parameters<BellRenderer>[1] = {
+  total: 1,
+  severity: { high: 0, medium: 0, low: 0, none: 1 },
+};
 
 /** Mounts the bell the way the engine does: an outlet inside the mount point, rendered through the host's renderer. */
 const createFakeEngine = () => {

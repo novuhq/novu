@@ -447,10 +447,13 @@ export class DomainRouteStrategy {
       date: command.date,
       cc: command.cc,
       bcc: getBccRecipients(command, recipientAddress),
-      // Forward the inbound-mail DKIM/SPF verdicts so the agent runtime can
-      // reject identity resolution for spoofed (unverified) senders.
+      // Forward the inbound-mail DKIM/SPF verdicts, and the domains they vouch
+      // for, so the agent runtime can reject identity resolution for spoofed
+      // (unverified, or verified for another domain) senders.
       dkim: command.dkim,
       spf: command.spf,
+      dkimDomains: command.dkimDomains,
+      spfDomain: command.spfDomain,
     };
   }
 

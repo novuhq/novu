@@ -98,14 +98,12 @@ Run the full relevant suite once (e.g. all `src/app/agents/**/*.spec.ts`). Repor
 ## Commands (Novu)
 
 ```bash
-# API typecheck (catches what TS_NODE_TRANSPILE_ONLY hides)
+# API typecheck (the SWC test loader does not type-check)
 cd apps/api && pnpm exec nest build
 
 # Single spec file(s) — mocha, from apps/api
-TS_NODE_PROJECT=tsconfig.spec.json TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test \
-NOVU_ENTERPRISE=true CLERK_ENABLED=true NEW_RELIC_ENABLED=false \
-NODE_OPTIONS=--no-experimental-strip-types \
-npx mocha --timeout 15000 --require ts-node/register --exit --no-config 'src/path/to/file.spec.ts'
+NODE_ENV=test NOVU_ENTERPRISE=true CLERK_ENABLED=true NEW_RELIC_ENABLED=false \
+npx mocha --timeout 15000 --require @novu/testing/swc-register --exit --no-config 'src/path/to/file.spec.ts'
 ```
 
 Dashboard has no unit harness for most components — verify via `ReadLints`; do not invent a test harness.

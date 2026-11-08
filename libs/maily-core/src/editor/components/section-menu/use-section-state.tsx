@@ -15,19 +15,10 @@ import {
   DEFAULT_SECTION_PADDING_TOP,
 } from '@/editor/nodes/section/section';
 
-export const useSectionState = (editor: Editor | null) => {
+export const useSectionState = (editor: Editor) => {
   const states = useEditorState({
     editor,
     selector: (ctx) => {
-      if (!ctx.editor) {
-        return {
-          currentAlignment: 'left',
-          currentBorderRadius: DEFAULT_SECTION_BORDER_RADIUS,
-          currentBackgroundColor: DEFAULT_SECTION_BACKGROUND_COLOR,
-          currentBorderColor: DEFAULT_SECTION_BORDER_COLOR,
-        };
-      }
-
       return {
         currentAlignment: ctx.editor.getAttributes('section')?.align || 'left',
 

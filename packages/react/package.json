@@ -99,7 +99,8 @@
     "check:fix": "biome check --write .",
     "publish:rc": "pnpm publish --tag rc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json"
   },
   "browserslist": {
     "production": [
