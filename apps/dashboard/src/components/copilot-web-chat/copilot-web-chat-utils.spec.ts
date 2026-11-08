@@ -1,7 +1,7 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
 import { CopilotReviewActionEnum } from '@novu/shared';
-import { describe, expect, it } from 'vitest';
-import { getOpenReviewActions, getTryAgainPrompt } from './copilot-web-chat-utils';
+import { describe, expect, it, vi } from 'vitest';
+import { getOpenReviewActions, getTryAgainPrompt, loadTryAgainPrompt } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
   return {
@@ -40,7 +40,10 @@ function cardMessageWith(id: string, children: AgentCardChild[]): AgentMessage {
   };
 }
 
-function reviewButton(actionId: CopilotReviewActionEnum, disabled?: boolean): AgentCardChild {
+function reviewButton(
+  actionId: CopilotReviewActionEnum,
+  disabled?: boolean
+): Extract<AgentCardChild, { type: 'button' }> {
   return { type: 'button', id: actionId, label: actionId, value: 'snapshot_1', disabled };
 }
 
@@ -195,5 +198,62 @@ describe('getTryAgainPrompt', () => {
     expect(getTryAgainPrompt(messages, { promptMessageId: 'act_partial' }, 'card_review')).toBe(
       'Make it high severity'
     );
+  });
+});
+
+describe('loadTryAgainPrompt', () => {
+  const newestPage = [userMessage('msg_second', 'Make it high severity'), cardMessage('card_review')];
+  const fullHistory = [userMessage('msg_first', 'Add an SMS step'), ...newestPage];
+
+  it('loads older history until the named prompt is in it', async () => {
+    const fetchMore = vi.fn().mockResolvedValue({ data: { messages: fullHistory, hasMore: false } });
+
+    const prompt = await loadTryAgainPrompt({
+      messages: newestPage,
+      hasMore: true,
+      fetchMore,
+      readyEventData: { promptMessageId: 'msg_first' },
+      cardSourceMessageId: 'card_review',
+    });
+
+    expect(prompt).toBe('Add an SMS step');
+    expect(fetchMore).toHaveBeenCalledOnce();
+  });
+
+  it('loads nothing when the named prompt is already loaded or none is named', async () => {
+    const fetchMore = vi.fn();
+
+    await loadTryAgainPrompt({
+      messages: fullHistory,
+      hasMore: true,
+      fetchMore,
+      readyEventData: { promptMessageId: 'msg_first' },
+      cardSourceMessageId: 'card_review',
+    });
+    const fallback = await loadTryAgainPrompt({
+      messages: newestPage,
+      hasMore: true,
+      fetchMore,
+      readyEventData: undefined,
+      cardSourceMessageId: 'card_review',
+    });
+
+    expect(fallback).toBe('Make it high severity');
+    expect(fetchMore).not.toHaveBeenCalled();
+  });
+
+  it('stops loading when older history fails to load', async () => {
+    const fetchMore = vi.fn().mockResolvedValue({ error: new Error('offline') });
+
+    const prompt = await loadTryAgainPrompt({
+      messages: newestPage,
+      hasMore: true,
+      fetchMore,
+      readyEventData: { promptMessageId: 'msg_first' },
+      cardSourceMessageId: 'card_review',
+    });
+
+    expect(prompt).toBe('Make it high severity');
+    expect(fetchMore).toHaveBeenCalledOnce();
   });
 });

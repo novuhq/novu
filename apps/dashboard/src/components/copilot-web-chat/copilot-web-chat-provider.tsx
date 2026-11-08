@@ -24,10 +24,10 @@ import {
   type CopilotCardAction,
   type CopilotPageContext,
   getFailedSend,
-  getTryAgainPrompt,
   getUserMessageText,
   hasPendingReplyGap,
   isCopilotReviewActionId,
+  loadTryAgainPrompt,
   readStoredConversationId,
   writeStoredConversationId,
 } from './copilot-web-chat-utils';
@@ -261,6 +261,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
   // A Try again click records its card; the agent's ready event names the prompt to resend in `readyPrompt`, which is sent once the run settles.
   const tryAgainCardRef = useRef<string | undefined>(undefined);
+  const readyPromptLookupRef = useRef(0);
   const [readyPrompt, setReadyPrompt] = useState<string>();
   const navigate = useNavigate();
   const isOpenRef = useRef(isOpen);
@@ -301,6 +302,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       } else if (event.type === 'run-error') {
         setAwaitingReply(false);
         tryAgainCardRef.current = undefined;
+        readyPromptLookupRef.current++;
         setReadyPrompt(undefined);
         setPendingReviewMessageId(undefined);
         track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID, surface });
@@ -309,7 +311,18 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         const cardSourceMessageId = tryAgainCardRef.current;
         tryAgainCardRef.current = undefined;
         if (cardSourceMessageId) {
-          setReadyPrompt(getTryAgainPrompt(chatRef.current.messages, event.data, cardSourceMessageId));
+          const lookup = ++readyPromptLookupRef.current;
+          const { messages, pagination } = chatRef.current;
+          void loadTryAgainPrompt({
+            messages,
+            hasMore: pagination.hasMore,
+            fetchMore: pagination.fetchMore,
+            readyEventData: event.data,
+            cardSourceMessageId,
+          }).then((prompt) => {
+            // A Stop or New chat while older history loaded owes no resend.
+            if (lookup === readyPromptLookupRef.current) setReadyPrompt(prompt);
+          });
         }
       }
     },
@@ -431,6 +444,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     // Nothing is owed after a stop: drop the send → run-start bridge, a queued Try again resend and the locked review card.
     setAwaitingReply(false);
     tryAgainCardRef.current = undefined;
+    readyPromptLookupRef.current++;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
 
@@ -457,6 +471,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
     tryAgainCardRef.current = undefined;
+    readyPromptLookupRef.current++;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
     setSentContextLabels({});

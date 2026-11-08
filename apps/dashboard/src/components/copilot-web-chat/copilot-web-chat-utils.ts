@@ -301,6 +301,12 @@ function readPromptMessageId(data: unknown): string | undefined {
   return typeof promptMessageId === 'string' ? promptMessageId : undefined;
 }
 
+function findNamedPrompt(messages: readonly AgentMessage[], readyEventData: unknown): AgentMessage | undefined {
+  const promptMessageId = readPromptMessageId(readyEventData);
+
+  return messages.find((message) => message.role === 'user' && message.id === promptMessageId);
+}
+
 /**
  * The prompt a Try again click resends: the user message the Copilot's ready event names. The user may have sent
  * another one before a stopped turn's card arrived, so the last user message before the card is only the fallback.
@@ -310,10 +316,51 @@ export function getTryAgainPrompt(
   readyEventData: unknown,
   cardSourceMessageId: string
 ): string | undefined {
-  const promptMessageId = readPromptMessageId(readyEventData);
-  const prompt = messages.find((message) => message.role === 'user' && message.id === promptMessageId);
+  const prompt = findNamedPrompt(messages, readyEventData);
 
   return (prompt && getUserMessageText(prompt)) || getPromptBeforeCard(messages, cardSourceMessageId);
+}
+
+const MAX_TRY_AGAIN_HISTORY_PAGES = 20;
+
+type OlderHistoryPage = { data?: { messages: AgentMessage[]; hasMore: boolean }; error?: unknown };
+
+/**
+ * {@link getTryAgainPrompt}, after loading older history until the named prompt is in it: a resumed chat holds only
+ * the newest page, and resending a nearby message instead would rebuild something the user did not ask for.
+ */
+export async function loadTryAgainPrompt({
+  messages,
+  hasMore,
+  fetchMore,
+  readyEventData,
+  cardSourceMessageId,
+}: {
+  messages: readonly AgentMessage[];
+  hasMore: boolean;
+  fetchMore: () => Promise<OlderHistoryPage>;
+  readyEventData: unknown;
+  cardSourceMessageId: string;
+}): Promise<string | undefined> {
+  let loaded = messages;
+  let canLoadMore = hasMore;
+
+  for (
+    let page = 0;
+    readPromptMessageId(readyEventData) &&
+    !findNamedPrompt(loaded, readyEventData) &&
+    canLoadMore &&
+    page < MAX_TRY_AGAIN_HISTORY_PAGES;
+    page++
+  ) {
+    const { data, error } = await fetchMore();
+    if (error || !data) break;
+
+    loaded = data.messages;
+    canLoadMore = data.hasMore;
+  }
+
+  return getTryAgainPrompt(loaded, readyEventData, cardSourceMessageId);
 }
 
 /** The last message is a user send the server never accepted (it stays in the thread and can be retried). */
