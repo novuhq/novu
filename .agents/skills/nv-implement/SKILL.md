@@ -27,6 +27,8 @@ Split the plan into slices that touch **disjoint files** — each slice independ
 
 For each seam decide upfront: is it TDD-able (public function, use case, resolver → yes) or verify-by-lint (dashboard UI with no unit harness → no)? Tell the subagent which.
 
+Keep every `enterprise/` edit in one seam; it runs in the main checkout (see step 2).
+
 **Done when:** every plan item is owned by exactly one seam, and no two seams edit the same file. If two seams must touch the same file, merge them into one slice — do not parallelize a conflict.
 
 ### 2. Resolve feature branch + one worktree per seam
@@ -51,7 +53,9 @@ Symlink dependencies into each worktree (no install needed):
 ln -s <main-checkout>/node_modules ../wt-<seam>/node_modules
 ```
 
-**Done when:** `<feature-branch>` is set (existing or newly created), and `git worktree list` shows one worktree per seam, all at that feature branch HEAD.
+**Enterprise seam:** a new worktree has no `.source` submodule, so its `enterprise/packages/*/src` links point at nothing. Run the seam that edits `enterprise/` in the main checkout on `<feature-branch>`, and follow [enterprise-submodule](../enterprise-submodule/SKILL.md) for the commit inside `.source` and the paired `packages-enterprise` PR.
+
+**Done when:** `<feature-branch>` is set (existing or newly created), and `git worktree list` shows one worktree per seam (none for the enterprise seam), all at that feature branch HEAD.
 
 ### 3. Fan out subagents
 
@@ -111,7 +115,7 @@ Dashboard has no unit harness for most components — verify via `ReadLints`; do
 ## Guardrails
 
 - If the checkout is already on a feature branch, reuse it — do not branch from `origin/next` or merge slices into `next`.
-- One slice, one worktree, one branch — a subagent that edits outside its worktree corrupts a sibling slice.
+- One slice, one worktree, one branch — a subagent that edits outside its worktree corrupts a sibling slice. The enterprise seam is the exception: it owns the main checkout until it commits.
 - Slice commits and review refactor commits stay separate (per `/nv-park-and-review`); never amend or squash them during merge.
 - E2E suites that need a running API/DB are out of scope for slices — flag them for CI instead.
 - If a Linear ticket is required for the eventual PR, create it early; hand off to `/novu-prepare-pr` when implementation is done.
