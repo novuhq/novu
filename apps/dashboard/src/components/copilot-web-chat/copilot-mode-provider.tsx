@@ -44,7 +44,7 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
     currentEnvironment?.type === EnvironmentTypeEnum.DEV &&
     !!workflow &&
     workflow.origin !== ResourceOriginEnum.EXTERNAL;
-  const { latestChat, isPending, error } = useFetchLatestAiChat({
+  const { latestChat, isPending, isFetching, error } = useFetchLatestAiChat({
     resourceType: AiResourceTypeEnum.WORKFLOW,
     // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off.
     resourceId: hasCopilot && isWebChatMode(liveMode) ? workflow._id : undefined,
@@ -52,7 +52,12 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
   const resolvedMode = resolveCopilotMode({
     isFlagsReady: isLaunchDarklyReady && isLaunchDarklyIdentified,
     liveMode,
-    legacyChat: { isPending, isError: !!error, hasPendingChanges: !!latestChat?.hasPendingChanges },
+    // A cached chat from an earlier visit can be stale while its refresh runs; the visit's mode waits for it.
+    legacyChat: {
+      isPending: isPending || isFetching,
+      isError: !!error,
+      hasPendingChanges: !!latestChat?.hasPendingChanges,
+    },
   });
   const [visitMode, setVisitMode] = useState<VisitMode>();
 
