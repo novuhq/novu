@@ -547,6 +547,22 @@ describe('applyEnvelope', () => {
       expect(state.error).toEqual({ message: 'boom', code: 'E' });
     });
 
+    it('marks a turn stopped before its run started while an earlier run stays open', () => {
+      const state = applyEnvelopes(createInitialAgentConversationState(), [
+        envelope(1, { type: 'run-start' }, { runId: 'run-abort' }),
+        envelope(2, { type: 'message-start', messageId: 'act_card' }, { runId: 'run-abort' }),
+        envelope(3, { type: 'run-finish', outcome: 'aborted' }, { runId: 'stopped_turn-2' }),
+      ]);
+
+      expect(state.isRunning).toBe(true);
+      expect(state.openRunIds).toEqual(['run-abort']);
+      expect(state.activeAssistantMessageId).toBe('act_card');
+      expect(state.messages.map((message) => [message.id, message.stopped ?? false])).toEqual([
+        ['act_card', false],
+        ['stopped_turn-2_stopped', true],
+      ]);
+    });
+
     it('closes a run that never reported its end once a later run ends', () => {
       const state = applyEnvelopes(createInitialAgentConversationState(), [
         envelope(1, { type: 'run-start' }, { runId: 'run-lost' }),

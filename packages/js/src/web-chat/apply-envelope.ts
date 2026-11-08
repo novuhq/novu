@@ -243,9 +243,24 @@ function applyRunEnd(state: AgentConversationState, envelope: AgentEventEnvelope
   const { event } = envelope;
   const openRunIds = closeRun(state, envelope.runId);
   const error = event.type === 'run-error' ? { message: event.message, code: event.code } : undefined;
+  const isAborted = event.type === 'run-finish' && event.outcome === 'aborted';
   // A later run is still going (the turn after a stop can overlap `onAbort`'s run), and its reply still streams.
   if (openRunIds.length) {
-    return { ...state, openRunIds, error };
+    const stillRunning = { ...state, openRunIds, error };
+    // A turn stopped before its run started still gets its mark, without taking over the open run's message.
+    if (isAborted && !state.openRunIds.includes(envelope.runId)) {
+      const messageId = `${envelope.runId}_stopped`;
+
+      return {
+        ...markStopped(
+          withAssistantMessage(stillRunning, envelope, messageId, (message) => message),
+          messageId
+        ),
+        activeAssistantMessageId: state.activeAssistantMessageId,
+      };
+    }
+
+    return stillRunning;
   }
 
   const finished = finalizeOpenStreamingParts({
@@ -256,7 +271,7 @@ function applyRunEnd(state: AgentConversationState, envelope: AgentEventEnvelope
     error,
   });
 
-  if (event.type !== 'run-finish' || event.outcome !== 'aborted') {
+  if (!isAborted) {
     return finished;
   }
 
