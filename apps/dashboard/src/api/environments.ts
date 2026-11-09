@@ -21,8 +21,6 @@ export interface IResourceInfo {
   name: string | null;
   updatedBy?: IUserInfo | null;
   updatedAt?: string | null;
-  lastPublishedBy?: IUserInfo | null;
-  lastPublishedAt?: string | null;
 }
 
 export interface IResourceDependency {

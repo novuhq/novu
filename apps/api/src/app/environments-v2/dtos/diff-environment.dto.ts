@@ -78,26 +78,6 @@ export class ResourceInfoDto {
   @IsOptional()
   @IsDateString()
   updatedAt?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'User who last published the resource',
-    type: () => UserInfoDto,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserInfoDto)
-  lastPublishedBy?: UserInfoDto | null;
-
-  @ApiPropertyOptional({
-    description: 'When the resource was last published',
-    type: 'string',
-    format: 'date-time',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsDateString()
-  lastPublishedAt?: string | null;
 }
 
 export class ResourceDiffDto {

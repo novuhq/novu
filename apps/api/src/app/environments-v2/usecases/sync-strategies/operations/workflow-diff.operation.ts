@@ -307,37 +307,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       name: this.getResourceName(resource),
       updatedBy: this.extractUpdatedByInfo(resource),
       updatedAt: this.extractUpdatedAtInfo(resource),
-      lastPublishedBy: this.extractLastPublishedByInfo(resource),
-      lastPublishedAt: this.extractLastPublishedAtInfo(resource),
     };
-  }
-
-  private extractLastPublishedByInfo(resource: NotificationTemplateEntity): IUserInfo | null {
-    if (!resource.lastPublishedBy) {
-      return null;
-    }
-
-    return {
-      _id: resource.lastPublishedBy._id,
-      firstName: resource.lastPublishedBy.firstName ?? '',
-      lastName: resource.lastPublishedBy.lastName,
-      externalId: resource.lastPublishedBy.externalId,
-      email: resource.lastPublishedBy.email,
-    };
-  }
-
-  private extractLastPublishedAtInfo(resource: NotificationTemplateEntity): string | null {
-    if (!resource.lastPublishedAt) {
-      return null;
-    }
-
-    const publishedAt = new Date(resource.lastPublishedAt);
-
-    if (Number.isNaN(publishedAt.getTime())) {
-      return null;
-    }
-
-    return publishedAt.toISOString();
   }
 
   private async extractStepsFromNewWorkflow(

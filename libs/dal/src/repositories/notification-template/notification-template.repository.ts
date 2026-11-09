@@ -36,8 +36,6 @@ export class NotificationTemplateRepository extends BaseRepository<
         'triggers.identifier': 1,
         updatedAt: 1,
         _updatedBy: 1,
-        lastPublishedAt: 1,
-        _lastPublishedBy: 1,
         _environmentId: 1,
         isTranslationEnabled: 1,
       })
@@ -519,7 +517,6 @@ export class NotificationTemplateRepository extends BaseRepository<
       .populate('steps.template')
       .populate('steps.variants.template')
       .populate('updatedBy', '_id firstName lastName externalId email')
-      .populate('lastPublishedBy', '_id firstName lastName externalId email')
       .lean();
 
     return this.mapEntities(items);
