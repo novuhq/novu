@@ -54,6 +54,8 @@ export type ConversationEntry = AgentConversationState & {
   catchUpError?: NovuError;
   /** One create at a time on this session until a conversation id exists. */
   pendingCreate?: Promise<void>;
+  /** Posts to an existing conversation that have not been accepted yet, so `stop()` can wait for them. */
+  pendingSends?: Set<Promise<void>>;
   /** History pagination state for `fetchMore`. */
   paginationStatus: WebChatPaginationStatus;
   /** Invalidates in-flight `fetchMore` status updates after history reload. */
@@ -521,7 +523,17 @@ export class WebChatStore {
   ): Promise<T> {
     const known = explicitConversationId ?? entry.conversationId;
     if (known) {
-      return post(known);
+      const send = post(known);
+      const settled = send.then(
+        () => undefined,
+        () => undefined
+      );
+      const pendingSends = entry.pendingSends ?? new Set<Promise<void>>();
+      entry.pendingSends = pendingSends;
+      pendingSends.add(settled);
+      void settled.then(() => pendingSends.delete(settled));
+
+      return send;
     }
 
     const run = async (): Promise<T> => {

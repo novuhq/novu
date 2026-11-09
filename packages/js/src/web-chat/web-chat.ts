@@ -325,6 +325,10 @@ export class WebChat extends BaseModule {
       if (entry && !entry.conversationId) {
         await entry.pendingCreate;
       }
+      // Same for a message sent to an existing conversation: cancelling before it reaches the server finds nothing to stop.
+      if (entry?.pendingSends?.size) {
+        await Promise.all(entry.pendingSends);
+      }
 
       const conversationId = entry?.conversationId;
       if (!entry || !conversationId) {
