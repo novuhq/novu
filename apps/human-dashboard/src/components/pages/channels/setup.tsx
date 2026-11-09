@@ -15,9 +15,21 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
   const [active, setActive] = useState('0');
   const [paused, setPaused] = useState(false);
   useEffect(() => {
-    if (paused || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = setTimeout(() => setActive(String((Number(active) + 1) % steps.length)), 10000);
-    return () => clearTimeout(timer);
+    if (paused) return;
+    const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      clearTimeout(timer);
+      if (!motionPreference.matches) {
+        timer = setTimeout(() => setActive(String((Number(active) + 1) % steps.length)), 10000);
+      }
+    };
+    schedule();
+    motionPreference.addEventListener('change', schedule);
+    return () => {
+      clearTimeout(timer);
+      motionPreference.removeEventListener('change', schedule);
+    };
   }, [active, paused, steps.length]);
   return (
     <SectionFrame
@@ -85,7 +97,7 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
               type="button"
               onClick={() => setPaused(!paused)}
               aria-label={paused ? 'Play setup walkthrough' : 'Pause setup walkthrough'}
-              className="rounded px-2 py-1 font-sapien-mono text-[11px] text-sapien-foreground/50 hover:text-sapien-foreground focus-visible:outline-2 focus-visible:outline-accent"
+              className="rounded px-2 py-1 font-sapien-mono text-[11px] text-sapien-foreground/50 hover:text-sapien-foreground focus-visible:outline-2 focus-visible:outline-accent motion-reduce:hidden"
             >
               {paused ? 'Play' : 'Pause'}
             </button>
@@ -94,6 +106,8 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
             <TabsContent
               key={step.title}
               value={String(index)}
+              onFocusCapture={() => setPaused(true)}
+              onPointerDownCapture={() => setPaused(true)}
               className="flex min-h-48.75 flex-col justify-between p-4 pt-2 md:p-6 md:pt-2"
             >
               <div className="flex items-start justify-between gap-3">

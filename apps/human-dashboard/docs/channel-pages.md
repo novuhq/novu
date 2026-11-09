@@ -43,7 +43,9 @@ controls, carousel and FAQ rows. The FAQ and section frame gained opt-in landing
 variants; Sapien's default presentation is preserved. Setup tabs advance every ten
 seconds, can be paused, stop when selected or focused, and respect reduced motion.
 Setup descriptions remain mounted and expand/collapse over 200ms, with motion
-disabled for reduced-motion preferences. Inactive descriptions are hidden from
+disabled for reduced-motion preferences. Focusing or interacting with the command
+panel pauses playback, including Copy. Playback stops when reduced motion is
+enabled, and its control is hidden while that preference blocks playback. Inactive descriptions are hidden from
 assistive technology. Message tabs, clipboard actions, carousel buttons and arrow keys, native FAQ
 summaries, breadcrumbs and related links are functional. Preview conversations
 are illustrations.
@@ -83,17 +85,18 @@ agent scaffolding and temporary exports. No dependencies were added to the app.
 
 ## Verification and visual audit
 
-Scoped Biome, typecheck, 161 unit tests and the production build pass. All 148
+Scoped Biome, typecheck, 167 unit tests and the production build pass. All 153
 production Chromium browser tests pass, including existing home, Sapien, SEO and
 host routing checks. Template checks cover all eleven routes, unsupported pairs,
 metadata, loaded images, tabs, clipboard values, FAQ, carousel navigation, related
 links, narrow layouts, no-JavaScript content and the mobile header menu.
 
-The latest Prime visual audit **passes for both supplied reference pages** at a
+The recorded Prime visual audit from 2026-11-06 **passed for both supplied reference pages** at a
 1920×1080 browser viewport. Production confirmation was pass three, score 0 and
 zero violations for each page, with no masks and unchanged default thresholds.
 Raster differences are 0.8887% for the channel page and 0.7820% for the agent page,
 both below the 1% limit. Full-page dimensions match Figma: 1920×6726 and 1920×5107.
+These measurements predate the CLI accuracy fixes described below.
 Other responsive widths are usability checks; no corresponding Figma frames were
 supplied for those widths or the other channel/agent variants.
 
@@ -135,3 +138,26 @@ the collector fixture and source exports; blocked results remain as history.
 Prime source exports remain the implementation references from initial setup.
 No new Prime provider access was needed for this refinement. No Prime pages or
 variants, deployment or unrelated application sources changed.
+
+## PR review corrections (2026-11-09)
+
+All eleven landing routes are registered with the Markdown 404 guard; clients
+that prefer Markdown receive the HTML landing page instead of a false 404.
+Unsupported channel/agent pairs and unimplemented `.md` routes remain 404s.
+
+Copied prompts point to `/agents.md`, ask for required setup values, and name the
+`--email` and `--agent-name` flags needed without an interactive terminal. Telegram
+setup and FAQ describe the required BotFather token. Test messages select the
+page's channel with `--via`. Examples use the supported plain-message syntax,
+shell-safe refund quoting, and unique option IDs with full time labels.
+
+Regression tests parse the command strings through a shell with `printf` in place
+of the CLI; no messages are sent. Browser checks cover all routes with a mixed
+Markdown/HTML Accept header, Copy while autoplay is running, pause/resume, and
+changes to the reduced-motion preference. The committed screenshots show the
+corrected copy. The earlier exact Figma audit remains historical evidence for the
+original design copy; no new pixel-parity result is claimed for these corrections.
+
+In the sparse checkout, use `CI=true` for pnpm checks and install only with
+`--frozen-lockfile`, so automatic dependency synchronization cannot prune the
+monorepo lockfile. Root manifests and lockfile remain unchanged by this PR.

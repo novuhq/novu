@@ -51,6 +51,7 @@ for (const route of ['/email/codex', '/telegram/cursor', '/slack/hermes', '/unkn
 }
 
 test('setup and message tabs work with keyboard and update the active content', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/telegram');
   const setup = page.locator('#setup');
   await setup.getByRole('tab').first().focus();

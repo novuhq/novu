@@ -1,3 +1,5 @@
+import { agentPagePairs, CHANNEL_IDS } from '@/data/channel-pages';
+
 import { isHostId } from './host-ids';
 import { SITE_ORIGIN } from './seo';
 
@@ -36,6 +38,8 @@ const EXACT_PATHS = new Set([
   '/sign-in',
   '/sign-up',
   '/sitemap.xml',
+  ...CHANNEL_IDS.map((channel) => `/${channel}`),
+  ...agentPagePairs().map(({ channel, agent }) => `/${channel}/${agent}`),
 ]);
 
 /**

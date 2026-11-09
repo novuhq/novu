@@ -5,44 +5,9 @@ import Image from 'next/image';
 import { PillTab, PillTabsList } from '@/components/sapien/pill-tabs';
 import { SectionFrame } from '@/components/sapien/section-frame';
 import { Tabs, TabsContent } from '@/components/sapien/tabs';
-import { CHANNELS, type ChannelId } from '@/data/channel-pages';
+import { CHANNELS, type ChannelId, MESSAGE_EXAMPLES } from '@/data/channel-pages';
 
 import { LandingHeading } from './shared';
-
-const EXAMPLES = [
-  {
-    id: 'ask',
-    label: 'Ask',
-    command: 'agentinbox send ask "Where should I send the receipt?" --to maya',
-    output: '{ "reply": "billing@acme.com" }',
-    image: 'hero-telegram.jpg',
-    alt: 'An agent asks where to send a receipt and receives an email address.',
-  },
-  {
-    id: 'approve',
-    label: 'Approve',
-    command: 'agentinbox send \\\n    approve "Refund $240 to Acme Corp?" \\\n    --to maya --ttl 2h',
-    output: '{ "status": "approved", "by": "maya", "via": "telegram" }',
-    image: 'approve-text.svg',
-    alt: 'An approval request with Approve and Deny options.',
-  },
-  {
-    id: 'choose',
-    label: 'Choose',
-    command: 'agentinbox send choose "Which table?" --option 19:00 --option 19:30 --option 20:15',
-    output: '{ "choice": "19:30" }',
-    image: 'prompt-choose.png',
-    alt: 'A choice of three restaurant reservation times.',
-  },
-  {
-    id: 'tell',
-    label: 'Tell',
-    command: 'agentinbox send tell "Nightly scrape done: 1,240 pages, 0 errors."',
-    output: '{ "status": "sent" }',
-    image: 'prompt-tell.png',
-    alt: 'An agent reports a completed nightly scrape.',
-  },
-] as const;
 
 export function MessageTypes({ channel }: { channel: ChannelId }) {
   return (
@@ -59,13 +24,13 @@ export function MessageTypes({ channel }: { channel: ChannelId }) {
       />
       <Tabs defaultValue="approve" className="mt-8 gap-6 md:mt-0">
         <PillTabsList aria-label="Message types" className="[&_[role=tablist]]:px-1 [&_[role=tablist]]:py-1">
-          {EXAMPLES.map((example) => (
+          {MESSAGE_EXAMPLES.map((example) => (
             <PillTab key={example.id} value={example.id} className="data-[state=active]:bg-white">
               {example.label}
             </PillTab>
           ))}
         </PillTabsList>
-        {EXAMPLES.map((example) => (
+        {MESSAGE_EXAMPLES.map((example) => (
           <TabsContent
             key={example.id}
             value={example.id}

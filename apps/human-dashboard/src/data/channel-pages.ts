@@ -1,5 +1,6 @@
 import type { FaqItem } from '@/data/sapien-faq';
 import { hostOf, skillsCommand } from '@/lib/hosts';
+import { SITE_ORIGIN } from '@/lib/seo';
 
 export const CHANNEL_IDS = ['email', 'telegram', 'slack'] as const;
 export type ChannelId = (typeof CHANNEL_IDS)[number];
@@ -62,7 +63,7 @@ export function setupCommand(channel: ChannelId) {
   return `npx @agentinbox/cli setup ${channel}`;
 }
 export function setupPrompt(channel: ChannelId, agent?: AgentId) {
-  return `Set up Agent Inbox${agent ? ` for ${AGENTS[agent].name}` : ''} ${CHANNELS[channel].location}. Run ${setupCommand(channel)}, follow the setup link, and use Agent Inbox to ask questions, request approvals, offer choices, and send updates.`;
+  return `Set up Agent Inbox${agent ? ` for ${AGENTS[agent].name}` : ''} ${CHANNELS[channel].location}. Read ${SITE_ORIGIN}/agents.md for setup instructions. Before running ${setupCommand(channel)} in a non-interactive terminal, ask me for any required operator email address and agent name, and pass them with --email and --agent-name. Show me the setup link to complete, then use Agent Inbox to ask questions, request approvals, offer choices, and send updates.`;
 }
 export function otherAgentChannels(channel: ChannelId, agent: AgentId) {
   return CHANNEL_IDS.filter((id) => id !== channel && hasAgentPage(id, agent));
@@ -128,7 +129,7 @@ export function setupSteps(channel: ChannelId, agent?: AgentId): SetupStep[] {
       title: `Connect ${name}`,
       description:
         channel === 'telegram'
-          ? 'Prints a link to your new bot. Open it, tap Start, and the chat is linked to your inbox.'
+          ? 'Create a bot with BotFather and enter its token during setup. Open the printed link and tap Start.'
           : `Follow the setup link to connect ${name} to your Agent Inbox.`,
       command: setupCommand(channel),
       output: `Open the setup link to finish connecting ${name}.`,
@@ -139,7 +140,7 @@ export function setupSteps(channel: ChannelId, agent?: AgentId): SetupStep[] {
     if (host.group !== 'commands') throw new Error('Landing setup requires an agent that runs commands');
     steps.push({
       title: `Add the skill to ${AGENTS[agent].name}`,
-      description: `Gives ${AGENTS[agent].name} the ask, approve, choose and tell commands.`,
+      description: `Lets ${AGENTS[agent].name} ask for input, request approvals, offer choices and send updates.`,
       command: skillsCommand(host),
       output: `Follow the installer instructions for ${AGENTS[agent].name}.`,
     });
@@ -149,18 +150,53 @@ export function setupSteps(channel: ChannelId, agent?: AgentId): SetupStep[] {
     description: agent
       ? `Ask ${AGENTS[agent].name} to check with you, then watch for the reply.`
       : `Your agent can now ask, approve, choose and tell ${CHANNELS[channel].location}.`,
-    command: 'agentinbox send tell "Hello from your agent"',
+    command: `agentinbox send "Hello from your agent" --via ${channel}`,
     output: 'Your message is ready for delivery through the connected channel.',
   });
   return steps;
 }
+
+export const MESSAGE_EXAMPLES = [
+  {
+    id: 'ask',
+    label: 'Ask',
+    command: 'agentinbox send ask "Where should I send the receipt?" --to maya',
+    output: '{ "reply": "billing@acme.com" }',
+    image: 'hero-telegram.jpg',
+    alt: 'An agent asks where to send a receipt and receives an email address.',
+  },
+  {
+    id: 'approve',
+    label: 'Approve',
+    command: `agentinbox send \\\n    approve 'Refund $240 to Acme Corp?' \\\n    --to maya --ttl 2h`,
+    output: '{ "status": "approved", "by": "maya", "via": "telegram" }',
+    image: 'approve-text.svg',
+    alt: 'An approval request with Approve and Deny options.',
+  },
+  {
+    id: 'choose',
+    label: 'Choose',
+    command: 'agentinbox send choose "Which table?" --option slot1:19:00 --option slot2:19:30 --option slot3:20:15',
+    output: '{ "choice": "slot2" }',
+    image: 'prompt-choose.png',
+    alt: 'A choice of three restaurant reservation times.',
+  },
+  {
+    id: 'tell',
+    label: 'Tell',
+    command: 'agentinbox send "Nightly scrape done: 1,240 pages, 0 errors."',
+    output: '{ "status": "sent" }',
+    image: 'prompt-tell.png',
+    alt: 'An agent reports a completed nightly scrape.',
+  },
+] as const;
 
 export const USE_CASES = [
   {
     label: 'support',
     title: 'Approve refunds from your phone',
     description: 'A support agent drafts the refund and waits for one tap before it touches Stripe.',
-    command: 'agentinbox send approve "Refund $240?" --to maya',
+    command: "agentinbox send approve 'Refund $240?' --to maya",
   },
   {
     label: 'devops',
@@ -190,7 +226,7 @@ export function channelFaq(channel: ChannelId): FaqItem[] {
       question: channel === 'telegram' ? 'Do I need to create a Telegram bot myself?' : `How do I connect ${name}?`,
       answer:
         channel === 'telegram'
-          ? 'No. Setup provisions the bot for you. Run one command, open the link it prints, and tap Start in Telegram.'
+          ? 'Yes. Create a bot with BotFather and paste its token into the setup prompt or linked setup page, then open the bot link and tap Start.'
           : `Run ${setupCommand(channel)} and follow the setup link to connect your account.`,
       defaultOpen: true,
     },
