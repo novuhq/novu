@@ -132,7 +132,9 @@ function schemaTypes(type: JsonSchema['type']): Set<string> | undefined {
 function typesRejectPreviousValues(previous: JsonSchema['type'], next: JsonSchema['type']): boolean {
   const previousTypes = schemaTypes(previous);
   const nextTypes = schemaTypes(next);
-  if (!previousTypes || !nextTypes) return false;
+  if (!nextTypes) return false;
+  // A missing type accepts every JSON value, so adding one rejects values that used to pass.
+  if (!previousTypes) return true;
 
   for (const type of previousTypes) {
     if (nextTypes.has(type)) continue;
@@ -267,7 +269,8 @@ function addedPropertyRejectsPreviousValues(
     return schemaRejectsPreviousValues(previous.additionalProperties, nextProperty);
   }
 
-  return Object.keys(nextProperty).length > 0;
+  // Unconstrained additional properties accept any value. Annotations such as description do not reject any.
+  return schemaRejectsPreviousValues({}, nextProperty);
 }
 
 function itemsRejectPreviousValues(previous: JsonSchema, next: JsonSchema): boolean {

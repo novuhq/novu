@@ -8,7 +8,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import { SegmentedControl, SegmentedControlList, SegmentedControlTrigger } from '../primitives/segmented-control';
 import { Skeleton } from '../primitives/skeleton';
 import { EmailPreviewBody } from '../workflow-editor/steps/email/email-preview';
-import type { LayoutContentPreview } from './change-sections';
+import type { FieldsDiff, LayoutContentPreview } from './change-sections';
 import { diffTextLines, type JsonLineDiff } from './json-line-diff';
 import { EnvironmentHeader, type EnvironmentNames, JsonDiffCompare } from './payload-schema-preview';
 import type { PublishEnvironments } from './step-change-list';
@@ -18,11 +18,13 @@ type LayoutView = 'preview' | 'html';
 export function LayoutContentCompare({
   layoutId,
   preview,
+  savedBodyDiff,
   environments,
   environmentNames,
 }: {
   layoutId: string;
   preview: LayoutContentPreview;
+  savedBodyDiff: FieldsDiff;
   environments: PublishEnvironments;
   environmentNames: EnvironmentNames;
 }) {
@@ -68,15 +70,69 @@ export function LayoutContentCompare({
           />
         </div>
       ) : (
-        <HtmlSourceCompare
+        <LayoutHtmlDiff
           layoutId={layoutId}
           preview={preview}
+          savedBodyDiff={savedBodyDiff}
           environments={environments}
           environmentNames={environmentNames}
         />
       )}
     </div>
   );
+}
+
+function LayoutHtmlDiff({
+  layoutId,
+  preview,
+  savedBodyDiff,
+  environments,
+  environmentNames,
+}: {
+  layoutId: string;
+  preview: LayoutContentPreview;
+  savedBodyDiff: FieldsDiff;
+  environments: PublishEnvironments;
+  environmentNames: EnvironmentNames;
+}) {
+  if (comparesSavedHtml(preview)) {
+    return (
+      <JsonDiffCompare
+        lineDiff={savedBodyDiff.lineDiff}
+        hasPrevious={savedBodyDiff.hasPrevious}
+        hasNext={savedBodyDiff.hasNext}
+        environmentNames={environmentNames}
+      />
+    );
+  }
+
+  return (
+    <HtmlSourceCompare
+      layoutId={layoutId}
+      preview={preview}
+      environments={environments}
+      environmentNames={environmentNames}
+    />
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function emailEditorType(controlValues: Record<string, unknown> | null): string | null {
+  if (!controlValues || !isRecord(controlValues.email)) return null;
+
+  const editorType = controlValues.email.editorType;
+
+  return typeof editorType === 'string' ? editorType : null;
+}
+
+/** HTML layouts store Liquid. An empty sample payload skips branches, so the HTML tab diffs the saved template. */
+function comparesSavedHtml(preview: LayoutContentPreview): boolean {
+  const sides = [preview.previous, preview.next].filter((side) => side !== null);
+
+  return sides.length > 0 && sides.every((side) => emailEditorType(side) === 'html');
 }
 
 /** Pretty-print the rendered email. A block layout stores a Maily document, which is JSON, not HTML. */
@@ -210,7 +266,7 @@ function LayoutPreviewPane({
   const { data, isPending, isError } = useLayoutPreviewQuery(environment, layoutId, controlValues);
 
   if (!controlValues) {
-    return <PaneMessage>Not in {environmentName}</PaneMessage>;
+    return <PaneMessage>{`Not in ${environmentName}`}</PaneMessage>;
   }
 
   if (isError) {

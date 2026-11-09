@@ -434,6 +434,7 @@ function ChangeSectionRow({
         <LayoutContentCompare
           layoutId={workflowId}
           preview={section.layoutPreview}
+          savedBodyDiff={section.fieldsDiff}
           environments={environments}
           environmentNames={environmentNames}
         />

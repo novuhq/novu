@@ -511,7 +511,7 @@ function addedPropertyIsBreaking(owner: JsonSchema | null, nextProperty: JsonSch
     return schemaChangeRejectsPreviousValues(owner.additionalProperties, nextProperty);
   }
 
-  return Object.keys(nextProperty).length > 0;
+  return schemaChangeRejectsPreviousValues({}, nextProperty);
 }
 
 function toVariableChange(
