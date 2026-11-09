@@ -2,7 +2,9 @@ import { Novu } from '@novu/api';
 import { NovuCore } from '@novu/api/core';
 import { SDKOptions } from '@novu/api/lib/config';
 import { HTTPClient, HTTPClientOptions } from '@novu/api/lib/http';
+import { WorkflowResponseDto, WorkflowResponseDtoSteps } from '@novu/api/models/components';
 import { ErrorDto, SDKValidationError, ValidationErrorDto } from '@novu/api/models/errors';
+import { isUnknown, Unknown } from '@novu/api/types/discriminatedUnion';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -80,6 +82,17 @@ export function handleValidationErrorDto(error: unknown): ValidationErrorDto {
   expect(error.ctx).to.be.ok;
 
   return error;
+}
+
+export type KnownWorkflowStep = Exclude<WorkflowResponseDtoSteps, Unknown<'type'>>;
+
+export type KnownStepsWorkflowResponseDto = Omit<WorkflowResponseDto, 'steps'> & { steps: KnownWorkflowStep[] };
+
+export function expectKnownSteps(workflow: WorkflowResponseDto): KnownStepsWorkflowResponseDto {
+  const unknownSteps = workflow.steps.filter((step) => isUnknown(step));
+  expect(unknownSteps, 'the SDK could not parse these workflow steps').to.be.empty;
+
+  return workflow as KnownStepsWorkflowResponseDto;
 }
 
 type AsyncAction<U> = () => Promise<U>;

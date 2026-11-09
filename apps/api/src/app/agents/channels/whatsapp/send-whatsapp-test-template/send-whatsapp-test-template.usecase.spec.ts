@@ -1,9 +1,9 @@
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ChatProviderIdEnum } from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
-import * as whatsappGraphApi from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 import { SendWhatsAppTestTemplate } from './send-whatsapp-test-template.usecase';
 
@@ -31,7 +31,9 @@ describe('SendWhatsAppTestTemplate usecase', () => {
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let subscriberRepository: { findBySubscriberId: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
-  let sendWhatsAppTemplateStub: sinon.SinonStub;
+  let graphApiRequestStub: sinon.SinonStub;
+
+  const sentMessage = () => graphApiRequestStub.firstCall.args[0].body;
 
   function buildUsecase() {
     return new SendWhatsAppTestTemplate(
@@ -67,10 +69,10 @@ describe('SendWhatsAppTestTemplate usecase', () => {
       setContext: stub(),
       warn: stub(),
     };
-    sendWhatsAppTemplateStub = stub(whatsappGraphApi, 'sendWhatsAppTemplate').resolves({
+    graphApiRequestStub = stub(safeOutboundHttp, 'safeOutboundJsonRequest').resolves({
       statusCode: 200,
       body: { messages: [{ id: 'wamid.test' }] },
-    });
+    } as any);
   });
 
   afterEach(() => {
@@ -98,7 +100,7 @@ describe('SendWhatsAppTestTemplate usecase', () => {
       expect(error).to.be.instanceOf(UnprocessableEntityException);
     }
 
-    expect(sendWhatsAppTemplateStub.called).to.equal(false);
+    expect(graphApiRequestStub.called).to.equal(false);
   });
 
   it('sends using the subscriber phone number', async () => {
@@ -107,10 +109,11 @@ describe('SendWhatsAppTestTemplate usecase', () => {
     expect(result.success).to.equal(true);
     expect(result.messageId).to.equal('wamid.test');
     expect(subscriberRepository.findBySubscriberId.calledOnceWithExactly(ENV_ID, SUBSCRIBER_ID)).to.equal(true);
-    expect(sendWhatsAppTemplateStub.calledOnce).to.equal(true);
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].to).to.equal('14155551234');
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('hello_world');
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].bodyParameters).to.equal(undefined);
+    expect(graphApiRequestStub.calledOnce).to.equal(true);
+    expect(graphApiRequestStub.firstCall.args[0].url.pathname).to.match(/\/phone-number-id\/messages$/);
+    expect(sentMessage().to).to.equal('14155551234');
+    expect(sentMessage().template.name).to.equal('hello_world');
+    expect(sentMessage().template.components).to.equal(undefined);
   });
 
   it('sends the embedded signup sample template for Novu-managed credentials', async () => {
@@ -133,7 +136,15 @@ describe('SendWhatsAppTestTemplate usecase', () => {
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(true);
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('sample_order_confirmation');
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].bodyParameters).to.deep.equal(['Alice', 'TEST-001']);
+    expect(sentMessage().template.name).to.equal('sample_order_confirmation');
+    expect(sentMessage().template.components).to.deep.equal([
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: 'Alice' },
+          { type: 'text', text: 'TEST-001' },
+        ],
+      },
+    ]);
   });
 });

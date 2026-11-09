@@ -8,6 +8,7 @@ import {
   layoutScreen,
   paintMascot,
   type ScreenView,
+  typedAnswer,
 } from './layout';
 import { stripEscapes, textWidth } from './terminal';
 
@@ -198,5 +199,53 @@ describe('fitScreen', () => {
 
     expect(fit(20, 80, 1, tall)?.hiddenRows).toBeGreaterThan(0);
     expect(fit(5, 80, 1, tall)).toBeNull();
+  });
+});
+
+describe('typedAnswer', () => {
+  const INVERSE = '\x1b[7m';
+  const typed = (
+    answer: string,
+    cursor: number,
+    options: { secret?: boolean; suffix?: string; caret?: boolean } = {}
+  ) => typedAnswer(answer, cursor, { secret: false, caret: true, look: DARK, ...options });
+  /** The character the caret is on. */
+  const atCaret = (text: string) => /\x1b\[7m(.)\x1b\[27m/u.exec(text)?.[1];
+
+  it('puts the caret on the character it is at, or in an empty cell after the last', () => {
+    expect(atCaret(typed('Ada', 1))).toBe('d');
+    expect(stripEscapes(typed('Ada', 1))).toBe('Ada');
+    expect(atCaret(typed('Ada', 3))).toBe('\u00a0');
+    expect(textWidth(typed('Ada', 3))).toBe(4);
+  });
+
+  it('sits on the first character of what follows the answer, which keeps the address whole', () => {
+    const text = typed('atlas', 5, { suffix: '@agentinbox.md' });
+
+    expect(atCaret(text)).toBe('@');
+    expect(stripEscapes(text)).toBe('atlas@agentinbox.md');
+  });
+
+  it('takes the same room with the caret off, so the line stays still as it blinks', () => {
+    for (const [answer, cursor] of [
+      ['atlas', 2],
+      ['atlas', 5],
+    ] as const) {
+      const on = typed(answer, cursor, { suffix: '@agentinbox.md' });
+      const off = typed(answer, cursor, { suffix: '@agentinbox.md', caret: false });
+
+      expect(off).not.toContain(INVERSE);
+      expect(stripEscapes(off)).toBe(stripEscapes(on));
+    }
+  });
+
+  it('shows a secret as dots, no more than fit a line however long it is, and never the secret', () => {
+    expect(stripEscapes(typed('123456:ABC', 10, { secret: true })).trimEnd()).toBe('••••••••••\u00a0'.trimEnd());
+    expect(stripEscapes(typed('x'.repeat(300), 300, { secret: true })).length).toBeLessThan(30);
+    expect(typed('123456:ABC', 10, { secret: true })).not.toContain('123456');
+  });
+
+  it('keeps a tab or anything else that would move the cursor from reaching the terminal', () => {
+    expect(stripEscapes(typed('a\tb\x7f', 4))).toBe('a b \u00a0');
   });
 });

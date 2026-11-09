@@ -141,6 +141,153 @@ describe('ConversationActivityLedger', () => {
     });
   });
 
+  describe('findOpenRunId', () => {
+    interface StoredRow {
+      identifier: string;
+      type: ConversationActivityTypeEnum;
+      sequence: number;
+      platformMessageId?: string;
+      senderType?: ConversationActivitySenderTypeEnum;
+    }
+
+    interface LookupQuery {
+      type?: ConversationActivityTypeEnum;
+      platformMessageId?: string;
+      identifier?: { $in: string[] };
+      senderType?: { $in: ConversationActivitySenderTypeEnum[] };
+      sequence?: { $gt?: number; $lt?: number };
+    }
+
+    /** `findOne` over stored rows, honouring the filters and the sort the lookup asks for (newest first by default). */
+    function findOneOver(rows: StoredRow[]) {
+      return sinon
+        .stub()
+        .callsFake(
+          async (query: LookupQuery, _select: unknown, options?: { query?: { sort?: { sequence?: 1 | -1 } } }) => {
+            const matches = rows.filter(
+              (row) =>
+                (query.type === undefined || row.type === query.type) &&
+                (query.platformMessageId === undefined || row.platformMessageId === query.platformMessageId) &&
+                (query.identifier?.$in === undefined || query.identifier.$in.includes(row.identifier)) &&
+                (query.senderType?.$in === undefined ||
+                  (row.senderType !== undefined && query.senderType.$in.includes(row.senderType))) &&
+                (query.sequence?.$gt === undefined || row.sequence > query.sequence.$gt) &&
+                (query.sequence?.$lt === undefined || row.sequence < query.sequence.$lt)
+            );
+            const direction = options?.query?.sort?.sequence ?? -1;
+
+            return matches.sort((a, b) => direction * (a.sequence - b.sequence))[0] ?? null;
+          }
+        );
+    }
+
+    const scope = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
+    const stoppedPrompt: StoredRow = {
+      identifier: 'msg-2',
+      type: ConversationActivityTypeEnum.MESSAGE,
+      platformMessageId: 'msg-2',
+      senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+      sequence: 20,
+    };
+    const earlierOpenRunStart: StoredRow = {
+      identifier: 'run_run-on-abort_start',
+      type: ConversationActivityTypeEnum.RUN_START,
+      sequence: 15,
+    };
+
+    it('finds the run the stopped turn started', async () => {
+      const findOne = findOneOver([
+        earlierOpenRunStart,
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal('run-turn');
+    });
+
+    it('does not end an earlier run still open for a turn stopped before its own run started', async () => {
+      const findOne = findOneOver([earlierOpenRunStart, stoppedPrompt]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+
+    it('does not take a run a later turn started for the stopped turn', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+        { identifier: 'run_run-turn_finish', type: ConversationActivityTypeEnum.RUN_FINISH, sequence: 25 },
+        {
+          identifier: 'msg-3',
+          type: ConversationActivityTypeEnum.MESSAGE,
+          platformMessageId: 'msg-3',
+          senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+          sequence: 30,
+        },
+        { identifier: 'run_run-next-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 32 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+
+    it('still finds the turn run after an agent reply', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        {
+          identifier: 'msg-agent',
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: ConversationActivitySenderTypeEnum.AGENT,
+          sequence: 21,
+        },
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal('run-turn');
+    });
+
+    it('takes the latest open run when the turn has no message to start from', async () => {
+      const findOne = findOneOver([earlierOpenRunStart, stoppedPrompt]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId(scope);
+
+      expect(runId).to.equal('run-on-abort');
+    });
+
+    it('finds no open run once the turn run finished', async () => {
+      const findOne = findOneOver([
+        stoppedPrompt,
+        { identifier: 'run_run-turn_start', type: ConversationActivityTypeEnum.RUN_START, sequence: 22 },
+        { identifier: 'run_run-turn_finish', type: ConversationActivityTypeEnum.RUN_FINISH, sequence: 25 },
+      ]);
+
+      const runId = await makeLedger(makeActivityRepository({ findOne })).findOpenRunId({
+        ...scope,
+        turnMessageId: 'msg-2',
+      });
+
+      expect(runId).to.equal(undefined);
+    });
+  });
+
   describe('importInboundMessages', () => {
     it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
       const importUserActivities = sinon.stub().resolves(2);
@@ -709,6 +856,64 @@ describe('ConversationActivityLedger', () => {
         })
       ).to.equal(true);
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('tool activities', () => {
+    const context = {
+      conversationId: 'conv-1',
+      channel: {
+        platform: 'slack',
+        _integrationId: 'integration-a',
+        platformThreadId: 'thread-1',
+      },
+      agentIdentifier: 'agent-a',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    };
+
+    it("does not bump the conversation's activity or preview when recording tool rows", async () => {
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(makeActivityRepository(), undefined, publisher, conversationRepository);
+
+      await ledger.persistToolCall({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        toolName: 'search_docs',
+        input: { query: 'pricing' },
+      });
+      await ledger.recordToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
+    });
+
+    it('does not re-emit a redelivered tool result', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = makeActivityRepository({
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves({ _id: 'existing', identifier: 'tool-result:conv-1:run-1:toolu_1' }),
+      });
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, undefined, publisher);
+
+      await ledger.recordToolResult({
+        ...context,
+        runId: 'run-1',
+        toolCallId: 'toolu_1',
+        content: [{ type: 'text', text: 'ok' }],
+        isError: false,
+      });
+
+      expect(publisher.emitPersistedClientEvent.called).to.equal(false);
     });
   });
 });

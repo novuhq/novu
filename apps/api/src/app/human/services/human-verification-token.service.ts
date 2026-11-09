@@ -45,7 +45,7 @@ export class HumanVerificationCacheUnavailableError extends Error {
 }
 
 /**
- * Redis-backed opaque tokens behind the "Verify this email" button. Single-use:
+ * Redis-backed opaque tokens behind the "Confirm email" button. Single-use:
  * claiming burns the link so the same click can't re-promote a pending address.
  */
 @Injectable()
@@ -131,23 +131,23 @@ export function toVerificationHttpError(err: unknown): Error {
       case 'used':
         return new ConflictException({
           code: 'verification_used',
-          message: 'This verification link was already used.',
+          message: 'This confirmation link was already used.',
         });
       case 'expired':
         return new UnauthorizedException({
           code: 'token_expired',
-          message: 'This verification link has expired. Ask whoever invited you to resend it.',
+          message: 'This confirmation link has expired. Ask for a new one.',
         });
       default:
         return new UnauthorizedException({
           code: 'token_invalid',
-          message: 'This verification link is invalid.',
+          message: 'This confirmation link is invalid.',
         });
     }
   }
 
   if (err instanceof HumanVerificationCacheUnavailableError) {
-    return new ServiceUnavailableException('Verification links are temporarily unavailable. Try again shortly.');
+    return new ServiceUnavailableException('Confirmation links are temporarily unavailable. Try again shortly.');
   }
 
   return err instanceof Error ? err : new Error(String(err));

@@ -1,5 +1,6 @@
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum, FeatureFlagsKeysEnum, ResourceEnum, StepTypeEnum } from '@novu/shared';
+import type { Mock } from 'vitest';
 import { buildUsageKey } from '../../services/cache';
 import { DigestFilterSteps } from '../digest-filter-steps';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
@@ -7,8 +8,8 @@ import { CreateNotificationJobs } from './create-notification-jobs.usecase';
 
 // ESM-only dependencies pulled in transitively (analytic-logs → p-queue, feature-flags → LaunchDarkly);
 // jest 27 cannot parse them, and the spec injects its own mocks anyway.
-jest.mock('p-queue', () => ({ __esModule: true, default: class PQueueMock {} }));
-jest.mock('@launchdarkly/node-server-sdk', () => ({ init: jest.fn() }));
+vi.mock('p-queue', () => ({ __esModule: true, default: class PQueueMock {} }));
+vi.mock('@launchdarkly/node-server-sdk', () => ({ init: vi.fn() }));
 
 const ENVIRONMENT_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
 const ORGANIZATION_ID = 'aaaaaaaaaaaaaaaaaaaaaaa2';
@@ -22,12 +23,12 @@ const DIGEST_TEMPLATE_ID = 'aaaaaaaaaaaaaaaaaaaaaaa9';
 
 describe('CreateNotificationJobs', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   function buildUsecase() {
     const notificationRepository = {
-      create: jest.fn().mockResolvedValue({
+      create: vi.fn().mockResolvedValue({
         _id: NOTIFICATION_ID,
         _templateId: WORKFLOW_ID,
         _subscriberId: SUBSCRIBER_ID,
@@ -35,11 +36,11 @@ describe('CreateNotificationJobs', () => {
         channels: [],
       }),
     };
-    const workflowRunRepository = { create: jest.fn() };
-    const traceLogRepository = { createWorkflowRun: jest.fn() };
-    const featureFlagsService = { getFlag: jest.fn().mockResolvedValue(false) };
-    const cacheService = { incrIfExistsAtomic: jest.fn() };
-    const logger = { error: jest.fn(), setContext: jest.fn() };
+    const workflowRunRepository = { create: vi.fn() };
+    const traceLogRepository = { createWorkflowRun: vi.fn() };
+    const featureFlagsService = { getFlag: vi.fn().mockResolvedValue(false) };
+    const cacheService = { incrIfExistsAtomic: vi.fn() };
+    const logger = { error: vi.fn(), setContext: vi.fn() };
     const digestFilterSteps = new DigestFilterSteps();
 
     const usecase = new CreateNotificationJobs(
@@ -131,7 +132,7 @@ describe('CreateNotificationJobs', () => {
 
   it('should never reintroduce steps with missing templates through the digest path', async () => {
     const { usecase, digestFilterSteps } = buildUsecase();
-    const digestFilterStepsSpy = jest.spyOn(digestFilterSteps, 'execute');
+    const digestFilterStepsSpy = vi.spyOn(digestFilterSteps, 'execute');
     const command = buildCommand([buildDigestStep(), buildBrokenStep()]);
 
     const jobs = await usecase.execute(command);
@@ -194,7 +195,7 @@ describe('CreateNotificationJobs', () => {
       return { ...buildCommand([buildEmailStep()]), incrementUsageInWorker: true };
     }
 
-    function enableTracesWrite(featureFlagsService: { getFlag: jest.Mock }) {
+    function enableTracesWrite(featureFlagsService: { getFlag: Mock }) {
       featureFlagsService.getFlag.mockImplementation(
         async ({ key }: { key: FeatureFlagsKeysEnum }) =>
           key === FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED

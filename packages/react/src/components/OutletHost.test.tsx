@@ -1,3 +1,4 @@
+import type { OutletHandle } from '@novu/js/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -36,7 +37,7 @@ describe('OutletHost', () => {
     render(<OutletHost store={store} />);
     const el = createOutletElement('a');
 
-    let handle: ReturnType<OutletStore['mount']> | undefined;
+    let handle: OutletHandle<[item: Item]> | undefined;
     act(() => {
       handle = store.mount(el, (item: Item) => <Counter label={item.label} />, [{ id: '1', label: 'first' }]);
     });
@@ -54,7 +55,7 @@ describe('OutletHost', () => {
   it('keeps the state of the other outlets when one in the middle unmounts', () => {
     const store = new OutletStore();
     render(<OutletHost store={store} />);
-    const handles: Array<ReturnType<OutletStore['mount']>> = [];
+    const handles: Array<OutletHandle<[item: Item]>> = [];
     act(() => {
       for (const id of ['a', 'b', 'c']) {
         handles.push(

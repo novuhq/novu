@@ -15,7 +15,8 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "biome check --write .",
-    "test": "cross-env NODE_ENV=test mocha --require tsx/cjs --trace-warnings --timeout 10000 --exit --file e2e/setup.ts src/**/**/*.spec.ts"
+    "test": "cross-env NODE_ENV=test mocha --node-option import=tsx --trace-warnings --timeout 10000 --exit --file e2e/setup.ts src/**/**/*.spec.ts",
+    "typecheck:spec": "tsc --noEmit -p tsconfig.spec.json"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.996.0",
@@ -54,7 +55,7 @@
     "@types/sinon": "^17.0.0",
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.6",
     "sinon": "^18.0.0",
     "tsx": "^4.21.0",
     "typescript": "6.0.3"

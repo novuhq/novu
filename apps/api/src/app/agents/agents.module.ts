@@ -31,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { HumanOperatorService } from '../human/services/human-operator.service';
 import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
@@ -63,6 +64,7 @@ import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-a
 import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { AgentTurnAbortStore } from './conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
@@ -78,10 +80,12 @@ import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-
 import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
 import { ContactHandleService } from './human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanEmailActionsController } from './human-relay/human-email-actions.controller';
 import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
 import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
+import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
@@ -139,6 +143,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ManagedRuntimeController,
     AgentEventsIngestController,
     AgentEmailActionsController,
+    HumanEmailActionsController,
     AgentsMcpOAuthController,
     WebChatController,
   ],
@@ -178,11 +183,14 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
+    AgentTurnAbortStore,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     BridgeLiveReplies,
     ManagedRuntime,
     HumanRelayRuntime,
+    HumanRelayEmailService,
+    HumanOperatorService,
     ContactHandleService,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
@@ -241,6 +249,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ChatInstanceRegistry,
     InboundDispatcher,
     OutboundGateway,
+    HumanRelayEmailService,
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
     HumanInteractionSettlementService,

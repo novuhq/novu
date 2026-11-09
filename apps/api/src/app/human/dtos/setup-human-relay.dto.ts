@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AGENT_NAME_MAX_LENGTH, HumanChannelViaEnum } from '@novu/shared';
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
@@ -50,7 +50,7 @@ export class SetupHumanRelayRequestDto {
   @ApiPropertyOptional({
     description:
       'What the relay agent is called, as people see it on the invite page, in emails and on its chat bots. ' +
-      'Missing leaves the name it has; a new agent is called "Human".',
+      'Missing leaves the name it has; a new agent is called "Agent".',
     maxLength: AGENT_NAME_MAX_LENGTH,
   })
   @IsOptional()
@@ -86,6 +86,15 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  /**
+   * Sign-in has proved `email` is the operator's, so it needs no confirmation link. Only the dashboard's server
+   * can say so: hosts hold the same key, so the API ignores this from anyone without the dashboard's secret.
+   */
+  @ApiHideProperty()
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
 
   @ApiPropertyOptional({
     description: 'The human’s first name (display name shown to agents and in reply attribution).',

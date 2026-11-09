@@ -1,7 +1,9 @@
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import type { PermissionQuestion } from './host-adapter';
 
 /**
- * The started agent answers people with the CLI (`inbox reply <conversation> …`), or with our MCP server's tools
+ * The started agent answers people with the CLI (`reply <conversation> …`), or with our MCP server's tools
  * when its host has them, and its host asks before running either. Those questions aren't for the operator:
  * the listener allows them by itself, but only the agent's reading and replying in the very conversation it was started for,
  * as plain commands (one, or several joined with `&&`) or one tool call, and only with what keeps them there:
@@ -112,9 +114,9 @@ export function isOwnReplySubject(subject: PermissionQuestion['subject'], conver
 }
 
 /**
- * Our MCP server, by the names hosts give it: `inbox` (`claude mcp add … inbox`, the name our docs use), the
- * agentinbox plugin's `plugin_agentinbox_inbox`, and a claude.ai connector named after Agent Inbox
- * (`claude_ai_Agent_Inbox`).
+ * Our MCP server, by the names hosts give it: `AgentInbox` (`codex mcp add AgentInbox …`, the name our docs use),
+ * the agentinbox plugin's `plugin_agentinbox_AgentInbox`, a claude.ai connector named after Agent Inbox
+ * (`claude_ai_Agent_Inbox`), and `inbox`, the name the docs used before.
  */
 export function isOurMcpServer(server: string): boolean {
   const name = server
@@ -152,7 +154,7 @@ export function isOwnReply(command: string, conversationId: string): boolean {
 }
 
 /**
- * Whether the host is about to answer in `conversationId`: `inbox reply` there, as a command or our MCP server's
+ * Whether the host is about to answer in `conversationId`: `reply` there, as a command or our MCP server's
  * tool. The chat gets the answer then, not "typing…" after it.
  */
 export function repliesIn(subject: PermissionQuestion['subject'], conversationId: string): boolean {
@@ -178,7 +180,7 @@ export function repliesIn(subject: PermissionQuestion['subject'], conversationId
 const ASKING = new Set(['ask', 'approve', 'choose']);
 
 /**
- * Whether the host is about to ask someone in `conversationId` and wait for the answer: `inbox reply` there with
+ * Whether the host is about to ask someone in `conversationId` and wait for the answer: `reply` there with
  * `ask`, `approve` or `choose` and without `--async`, or our MCP server's `inbox_reply` with such a kind, which
  * waits unless `wait_seconds` is 0. Whoever else it asks, the answer comes back to the conversation, and goes to
  * that command while it waits.
@@ -257,14 +259,14 @@ function ownCommand(
     return undefined;
   }
 
-  const start = cliLength(words);
-  const action = words[start + 1] ?? '';
+  const at = cliLength(words);
+  const action = words[at] ?? '';
   const allowed = actions.get(action);
-  if (start === 0 || words[start] !== 'inbox' || !allowed || words[start + 2] !== conversationId) {
+  if (at === 0 || !allowed || words[at + 1] !== conversationId) {
     return undefined;
   }
 
-  const rest = readRest(words.slice(start + 3), allowed);
+  const rest = readRest(words.slice(at + 2), allowed);
 
   return rest ? { action, ...rest } : undefined;
 }
@@ -420,4 +422,114 @@ export function simpleCommandWords(command: string): string[] | null {
   }
 
   return words.length > 0 ? words : null;
+}
+
+/**
+ * `.npmrc` settings that change neither which package npx runs nor how it runs it, so a project may keep them and
+ * the agent's own commands still go without asking: npm's own for installs, and pnpm's, which npm doesn't read.
+ */
+const HARMLESS_NPMRC = new Set([
+  'audit',
+  'auto-install-peers',
+  'dedupe-peer-dependents',
+  'engine-strict',
+  'fund',
+  'git-checks',
+  'hoist',
+  'hoist-pattern',
+  'legacy-peer-deps',
+  'link-workspace-packages',
+  'loglevel',
+  'minimum-release-age',
+  'node-linker',
+  'package-lock',
+  'prefer-workspace-packages',
+  'progress',
+  'public-hoist-pattern',
+  'resolution-mode',
+  'save-exact',
+  'save-prefix',
+  'shamefully-hoist',
+  'shared-workspace-lockfile',
+  'strict-peer-dependencies',
+  'update-notifier',
+]);
+
+/**
+ * What could make the agent's own `npx @agentinbox/cli …` (or `agentinbox …`), run in `cwd`, run the project's code
+ * instead of Agent Inbox's: a path in the project, or undefined when nothing could. npx runs a package of that name,
+ * or a bin of its name, from the `node_modules` of the folder it runs in or of a folder above it before the published
+ * one, and reads where packages come from and how they run from an `.npmrc` there. So the folders from `cwd` up to
+ * the project are looked at, and no others: one planted in another folder of the project doesn't run (npm 10,
+ * 2026-11-04). The agent writes in the project without asking, so a contact could have it plant one of these; then
+ * its own commands ask the operator.
+ */
+export function cliSwapIn(project: string, cwd: string = project): string | undefined {
+  for (let folder = cwd; ; folder = dirname(folder)) {
+    const found = SWAPS.map((swaps) => swaps(folder)).find(Boolean);
+    if (found) {
+      return relative(project, found);
+    }
+
+    if (folder === project || dirname(folder) === folder) {
+      return undefined;
+    }
+  }
+}
+
+/** What in one folder npx would take instead of the published CLI. */
+const SWAPS: ReadonlyArray<(folder: string) => string | undefined> = [
+  (folder) => existing(join(folder, 'node_modules', '@agentinbox', 'cli')),
+  (folder) => existing(join(folder, 'node_modules', '.bin', 'agentinbox')),
+  (folder) => {
+    const path = join(folder, '.npmrc');
+
+    return npmrcKeys(path).every((key) => HARMLESS_NPMRC.has(key)) ? undefined : path;
+  },
+  (folder) => {
+    const path = join(folder, 'package.json');
+
+    return packageName(path) === '@agentinbox/cli' ? path : undefined;
+  },
+];
+
+/** The path with its links followed, or as it is when it doesn't exist. */
+export function realPathOf(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
+function existing(path: string): string | undefined {
+  return existsSync(path) ? path : undefined;
+}
+
+/** The settings an `.npmrc` sets, none when there is none; one that can't be read counts as setting something. */
+function npmrcKeys(path: string): string[] {
+  if (!existsSync(path)) {
+    return [];
+  }
+
+  try {
+    return readFileSync(path, 'utf8')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#') && !line.startsWith(';'))
+      .map((line) => line.split('=')[0]?.trim().toLowerCase() ?? '');
+  } catch {
+    return ['?'];
+  }
+}
+
+/** The name a `package.json` gives its package, if it reads as one. */
+function packageName(path: string): string | undefined {
+  try {
+    const { name } = JSON.parse(readFileSync(path, 'utf8')) as { name?: unknown };
+
+    return typeof name === 'string' ? name : undefined;
+  } catch {
+    return undefined;
+  }
 }

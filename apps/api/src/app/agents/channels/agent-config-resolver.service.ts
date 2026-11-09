@@ -26,6 +26,7 @@ import {
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
+import { relayAcknowledgesMessages } from '../human-relay/relay-acknowledges-messages';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
@@ -88,6 +89,11 @@ export interface ResolvedAgentConfig {
    * delivery path.
    */
   removeNovuBranding: boolean;
+  /**
+   * Whether a message gets a signal as it arrives: typing, or an `eyes` reaction where the platform has no typing.
+   * On unless the agent turned it off. A Human relay is the other way around: off until its operator turns it on,
+   * and off while it is paused, when it sends nothing at all.
+   */
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   /**
@@ -362,7 +368,9 @@ export class AgentConfigResolver {
       // Human-relay messages are utility traffic between a person and their own
       // agents — never consumer-facing web chat — so they always ship unbranded.
       removeNovuBranding: isHumanRelay ? true : await this.resolveRemoveNovuBranding(organizationId),
-      acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
+      acknowledgeOnReceived: isHumanRelay
+        ? relayAcknowledgesMessages(agent) && !agent.pausedAt
+        : agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,
         DEFAULT_REACTION_ON_RESOLVED,

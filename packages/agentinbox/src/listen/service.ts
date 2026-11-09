@@ -22,8 +22,8 @@ export const SYSTEMD_UNIT = 'agentinbox-listen.service';
 const RESTART_SECONDS = 30;
 
 /**
- * Variables the background program needs from the shell `listen` was turned on in. Never a secret, nor
- * INBOX_API_URL: the program sends the key only to the API it was saved for.
+ * Variables the background program needs from the shell `listen` was turned on in, besides the host's own
+ * settings. Never a secret, nor INBOX_API_URL: the program sends the key only to the API it was saved for.
  */
 const KEPT_VARIABLES = [
   'PATH',
@@ -32,8 +32,6 @@ const KEPT_VARIABLES = [
   'HTTP_PROXY',
   'NO_PROXY',
   'NODE_EXTRA_CA_CERTS',
-  // Where Claude Code keeps its settings and sign-in, when it isn't its default folder.
-  'CLAUDE_CONFIG_DIR',
 ] as const;
 
 /** How the background program starts: the CLI's own program, absolute, run as `listen run`. */
@@ -55,6 +53,8 @@ export function backgroundCommand(input: {
   nodePath: string;
   version: string;
   env: NodeJS.ProcessEnv;
+  /** The host's own settings among `env` (`HostAdapter.settingsIn`): which provider and models it uses. */
+  hostSettings?: Record<string, string>;
   project: string;
   logFile: string;
   description: string;
@@ -64,9 +64,12 @@ export function backgroundCommand(input: {
   const argv = fromNpxCache
     ? [join(dirname(input.nodePath), 'npx'), '--yes', `@agentinbox/cli@${input.version}`, 'listen', 'run']
     : [input.nodePath, script, 'listen', 'run'];
-  const env = Object.fromEntries(
-    KEPT_VARIABLES.flatMap((name) => (input.env[name] ? [[name, String(input.env[name])]] : []))
-  );
+  const kept = {
+    ...Object.fromEntries(KEPT_VARIABLES.flatMap((name) => (input.env[name] ? [[name, String(input.env[name])]] : []))),
+    ...input.hostSettings,
+  };
+  // A line break would end a line of the systemd unit, and start one of its own: no setting has one.
+  const env = Object.fromEntries(Object.entries(kept).filter(([, value]) => !/[\r\n]/.test(value)));
 
   return { argv, workingDirectory: input.project, env, logFile: input.logFile, description: input.description };
 }
@@ -260,7 +263,7 @@ export function serviceManager(options: ServiceOptions = {}): ServiceSetup {
   if (platform === 'win32') {
     return {
       unsupported:
-        'On Windows, listen runs inside WSL, where Claude Code runs too: open your WSL terminal and run the same command there.',
+        'On Windows, listen runs inside WSL: open your WSL terminal and run the same command there, with the host installed and signed in there too.',
     };
   }
 

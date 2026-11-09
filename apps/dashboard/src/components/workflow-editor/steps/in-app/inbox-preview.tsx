@@ -16,11 +16,19 @@ import {
 
 import { cn } from '../../../../utils/ui';
 
-const InboxPreviewContainer = ({ children, className }: { children: ReactNode; className?: string }) => {
+const InboxPreviewContainer = ({
+  children,
+  className,
+  showBell,
+}: {
+  children: ReactNode;
+  className?: string;
+  showBell: boolean;
+}) => {
   return (
     <div className={cn('relative my-2', className)}>
       <div className="relative mx-auto max-w-sm">
-        <InAppPreviewBell />
+        {showBell && <InAppPreviewBell />}
         <InAppPreview className="min-h-64 bg-bg-white">
           <InAppPreviewHeader />
           {children}
@@ -34,15 +42,18 @@ const InboxPreviewContainer = ({ children, className }: { children: ReactNode; c
 export const InboxPreview = ({
   isPreviewPending,
   previewData,
+  showBell = true,
 }: {
   isPreviewPending: boolean;
   previewData?: GeneratePreviewResponseDto;
+  /** The bell is decorative; compact surfaces such as the publish diff hide it to save height. */
+  showBell?: boolean;
 }) => {
   const previewResult = previewData?.result;
 
   if (isPreviewPending || previewData === undefined) {
     return (
-      <InboxPreviewContainer>
+      <InboxPreviewContainer showBell={showBell}>
         <InAppPreviewNotification>
           <InAppPreviewAvatar isPending />
           <InAppPreviewNotificationContent>
@@ -60,7 +71,7 @@ export const InboxPreview = ({
 
   if (previewResult?.type === undefined || previewResult?.type !== ChannelTypeEnum.IN_APP) {
     return (
-      <InboxPreviewContainer>
+      <InboxPreviewContainer showBell={showBell}>
         <InAppPreviewNotification className="flex-1 items-center">
           <InAppPreviewNotificationContent className="my-auto">
             <InAppPreviewBody className="mb-4 text-center">No preview available</InAppPreviewBody>
@@ -73,7 +84,7 @@ export const InboxPreview = ({
   const preview = previewResult.preview;
 
   return (
-    <InboxPreviewContainer>
+    <InboxPreviewContainer showBell={showBell}>
       <InAppPreviewNotification>
         <InAppPreviewAvatar src={preview?.avatar} />
         <InAppPreviewNotificationContent>

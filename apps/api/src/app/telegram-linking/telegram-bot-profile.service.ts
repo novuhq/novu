@@ -2,9 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import Axios from 'axios';
 
+import { resolveHumanDashboardBaseUrl } from '../shared/helpers/resolve-human-dashboard-base-url';
 import { buildTelegramBotApiUrl } from './telegram-webhook.utils';
 
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
+
+/** A small file on the Agent Inbox dashboard: a setup doesn't wait long for something this optional. */
+const DEFAULT_PICTURE_TIMEOUT_MS = 5_000;
 
 /** Telegram's own limits for a bot's name, its description and the short one on its profile. */
 const BOT_NAME_MAX_LENGTH = 64;
@@ -14,12 +18,17 @@ const BOT_SHORT_DESCRIPTION_MAX_LENGTH = 120;
 export type TelegramBotProfileFields = {
   name?: string;
   description?: string;
-  /** A picture kept in file storage. `null` takes the bot's picture away. */
-  picture?: { storageKey: string; contentType: string } | null;
+  /**
+   * A picture kept in file storage. `null` is for an agent whose own picture was taken away: it leaves the bot
+   * and the default one goes there instead. `'default-if-none'` is for an agent with no picture: the default one
+   * goes only on a bot with no photo at all, so a photo set in BotFather stays.
+   */
+  picture?: { storageKey: string; contentType: string } | null | 'default-if-none';
 };
 
-interface TelegramApiResponse {
+interface TelegramApiResponse<Result = true> {
   ok: boolean;
+  result?: Result;
   description?: string;
 }
 
@@ -63,15 +72,20 @@ export class TelegramBotProfile {
       return;
     }
 
+    if (picture === 'default-if-none' && !(await this.hasNoPhoto(botToken))) {
+      return;
+    }
+
     if (picture === null) {
-      return this.call(botToken, 'removeMyProfilePhoto', {});
+      // First, so the picture its operator took away goes even if the default one can't be set.
+      await this.call(botToken, 'removeMyProfilePhoto', {});
     }
 
     try {
-      const file = await this.storageService.getFile(picture.storageKey);
+      const { file, contentType } = await this.readPicture(picture);
       const form = new FormData();
       form.append('photo', JSON.stringify({ type: 'static', photo: 'attach://picture' }));
-      form.append('picture', new Blob([new Uint8Array(file)], { type: picture.contentType }), 'picture');
+      form.append('picture', new Blob([new Uint8Array(file)], { type: contentType }), 'picture');
 
       const response = await fetch(buildTelegramBotApiUrl(botToken, 'setMyProfilePhoto'), {
         method: 'POST',
@@ -90,15 +104,59 @@ export class TelegramBotProfile {
     } catch (err) {
       // The request URL carries the bot token, so only the message is logged, never the error itself.
       this.logger.warn(
-        { method: 'setMyProfilePhoto', reason: err instanceof Error ? err.message : String(err) },
+        { method: 'setMyProfilePhoto', reason: failureReason(err, botToken) },
         'Could not set the picture of a Telegram bot.'
       );
     }
   }
 
-  private async call(botToken: string, method: string, body: Record<string, string>): Promise<void> {
+  /**
+   * Whether Telegram says plainly that the bot has no photo. Anything less counts as having one, so a failed
+   * check never costs a bot the photo it was given in BotFather.
+   */
+  private async hasNoPhoto(botToken: string): Promise<boolean> {
+    const bot = await this.call<{ id?: number }>(botToken, 'getMe', {});
+    const photos = bot?.id
+      ? await this.call<{ total_count?: number }>(botToken, 'getUserProfilePhotos', { user_id: bot.id, limit: 1 })
+      : undefined;
+
+    if (typeof photos?.total_count !== 'number') {
+      this.logger.warn('Could not tell whether a Telegram bot has a photo, so it was left alone.');
+
+      return false;
+    }
+
+    return photos.total_count === 0;
+  }
+
+  /** The agent's own picture, or the default one from the Agent Inbox dashboard. */
+  private async readPicture(
+    picture: Exclude<TelegramBotProfileFields['picture'], undefined>
+  ): Promise<{ file: Buffer; contentType: string }> {
+    if (picture && picture !== 'default-if-none') {
+      return { file: await this.storageService.getFile(picture.storageKey), contentType: picture.contentType };
+    }
+
+    // Unlike the calls to Telegram this one follows redirects: with no address set it asks agentinbox.md,
+    // which sends everyone to www, and it carries no token.
+    const response = await fetch(`${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.jpg`, {
+      signal: AbortSignal.timeout(DEFAULT_PICTURE_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      throw new Error(`The default picture answered with status ${response.status}.`);
+    }
+
+    return { file: Buffer.from(await response.arrayBuffer()), contentType: 'image/jpeg' };
+  }
+
+  private async call<Result = true>(
+    botToken: string,
+    method: string,
+    body: Record<string, string | number>
+  ): Promise<Result | undefined> {
     try {
-      const { data } = await Axios.post<TelegramApiResponse>(buildTelegramBotApiUrl(botToken, method), body, {
+      const { data } = await Axios.post<TelegramApiResponse<Result>>(buildTelegramBotApiUrl(botToken, method), body, {
         timeout: TELEGRAM_API_TIMEOUT_MS,
         maxRedirects: 0,
         validateStatus: () => true,
@@ -106,13 +164,24 @@ export class TelegramBotProfile {
 
       if (!data?.ok) {
         this.logger.warn({ method, reason: data?.description }, 'Telegram refused a bot profile update.');
+
+        return undefined;
       }
+
+      return data.result;
     } catch (err) {
       // The request URL carries the bot token, so only the message is logged, never the error itself.
       this.logger.warn(
-        { method, reason: err instanceof Error ? err.message : String(err) },
+        { method, reason: failureReason(err, botToken) },
         'Could not reach Telegram to update a bot profile.'
       );
+
+      return undefined;
     }
   }
+}
+
+/** What went wrong, fit for a log: an error's message can hold the request's URL, and with it the token. */
+function failureReason(err: unknown, botToken: string): string {
+  return (err instanceof Error ? err.message : String(err)).split(botToken).join('<bot token>');
 }

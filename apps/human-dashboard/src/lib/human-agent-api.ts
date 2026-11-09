@@ -11,7 +11,7 @@ import { requestForAccount } from './human-api-key';
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
 
 /** The name `setup` and the dashboard give a relay agent until the operator picks one (NV-8914). */
-export const DEFAULT_AGENT_NAME = 'Human';
+export const DEFAULT_AGENT_NAME = 'Agent';
 
 export type RelayAgent = {
   /** The agent's own id, which is different in every account. */
@@ -25,7 +25,7 @@ export type RelayAgent = {
   pictureUrl?: string;
   /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
-  /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
+  /** Who can reach it, whether it acknowledges messages and is paused. `null` when they couldn't be read just now. */
   settings: AgentSettings | null;
   /**
    * Who runs it, as its public card names them: "Ada L.". Empty without the operator's first name, or when it
@@ -46,6 +46,7 @@ type HumanApiAgent = {
   reach?: string;
   paused?: boolean;
   pausedAt?: string;
+  acknowledgeOnReceived?: boolean;
   /** Only `GET` names the operator, as the public card does. */
   operatorName?: string;
   operatorFirstName?: string;
@@ -90,18 +91,23 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
 /**
  * The picture and the settings. Neither may take a page down: without them the agent is shown with the
  * mascot, and its settings as unknown rather than as defaults that may not be what is saved.
+ *
+ * A 404 is no failure: it is how every new account answers, on each check of the onboarding, until `setup` has
+ * made the agent.
  */
 async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | null> {
   try {
     return await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH);
   } catch (error) {
-    console.error('Failed to read the agent’s picture and settings', error);
+    if (!isHumanApiNotFound(error)) {
+      console.error('Failed to read the agent’s picture and settings', error);
+    }
 
     return null;
   }
 }
 
-/** Changes who can reach the agent, or pauses or resumes it, and returns the settings it has now. */
+/** Changes one setting of the Settings block, and returns the settings the agent has now. */
 export async function updateAgentSettings(account: HumanAccount, change: AgentSettingsChange): Promise<AgentSettings> {
   const agent = await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH, { method: 'PATCH', body: change });
 
@@ -131,6 +137,7 @@ function toSettings(agent: HumanApiAgent): AgentSettings {
   return {
     reach: AGENT_REACHES.find((value) => value === agent.reach) ?? DEFAULT_AGENT_SETTINGS.reach,
     paused: agent.paused && agent.pausedAt ? { at: agent.pausedAt } : null,
+    acknowledgeOnReceived: agent.acknowledgeOnReceived === true,
   };
 }
 

@@ -4,6 +4,7 @@ import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resou
 import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import { type ApprovalIndex, buildApprovalIndex, mapApprovalRequest, type ToolResultPayload } from './approval-cycles';
 import { mapUserAttachmentParts } from './attachment-parts';
+import { isAbortedRunFinish } from './run-lifecycle';
 
 /**
  * Maps Novu conversation ledger entries to LangChain `BaseMessage[]`.
@@ -14,6 +15,10 @@ import { mapUserAttachmentParts } from './attachment-parts';
 
 const TYPE_MESSAGE = 'message';
 const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
+const TYPE_RUN_FINISH = 'run_finish';
+
+const STOPPED_TURN_MARKER =
+  '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
@@ -63,6 +68,10 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
     }
     case TYPE_TOOL_APPROVAL_REQUEST:
       return mapApprovalRequest(entry, index);
+    case TYPE_RUN_FINISH:
+      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model. A stopped
+      // turn leaves its user prompt with no reply; the marker tells the model it was never carried out.
+      return isAbortedRunFinish(entry) ? [new AIMessage(STOPPED_TURN_MARKER)] : [];
     default:
       // `tool_approval_decision`, `tool_result`, `edit`, `signal`, and unknown types are
       // UI/runtime artifacts or already replayed at the request entry — not model transcript.

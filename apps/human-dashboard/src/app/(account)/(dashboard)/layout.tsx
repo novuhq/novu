@@ -15,6 +15,7 @@ import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { countUnreadThreads } from '@/lib/human-inbox-api';
 import { describeProgress, isSetupUnfinished, loadSetupProgress } from '@/lib/human-onboarding';
+import { belongsInOnboarding } from '@/lib/onboarding-progress';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
 
@@ -79,9 +80,10 @@ async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: s
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const progress = await loadSetupProgress(account);
-    const { agent, step } = progress;
+    const { agent, step, state } = progress;
+    const onboardingDue = belongsInOnboarding(agent, step, state);
     if (!agent) {
-      return { agent: AGENT_NOT_SET_UP, setupStatus: null };
+      return { agent: { ...AGENT_NOT_SET_UP, onboardingDue }, setupStatus: null };
     }
 
     const setupUnfinished = isSetupUnfinished(step);
@@ -93,6 +95,7 @@ async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: s
         setUp: true,
         pictureUrl: agent.pictureUrl,
         setupUnfinished,
+        onboardingDue,
         unreadThreads: await countUnreadThreads(account),
       },
       setupStatus: setupUnfinished ? describeProgress(progress) : null,

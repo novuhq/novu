@@ -15,30 +15,20 @@ import { buildApprovalActionId } from './tool-approval/action-id';
 
 const EVENTS_URL = 'https://api.novu.co/v1/agents/events/ingest';
 
-type WireEvent = { type: string; [key: string]: unknown };
+type WireEvent = { type: string; [key: string]: any };
 type IngestBatch = { events?: Array<{ conversationId?: string; event: WireEvent }> };
 
 type ProjectedIngestBody = {
   conversationId?: string;
-  reply?: {
-    markdown?: string;
-    card?: unknown;
-    files?: unknown;
-    toolApprovalCard?: { type: 'tool-approval-card' };
-  };
-  toolApprovalRequest?: {
-    approvalId?: unknown;
-    toolCallId?: unknown;
-    name?: unknown;
-    input?: unknown;
-  };
-  signals?: unknown[];
-  edit?: { messageId?: unknown; content?: unknown };
-  deleteMessages?: Array<{ messageId: string }>;
-  addReactions?: Array<{ messageId: string; emojiName?: unknown }>;
+  reply?: any;
+  toolApprovalRequest?: any;
+  signals?: any;
+  edit?: any;
+  deleteMessages?: any;
+  addReactions?: any;
   typing?: 'stop' | { status?: unknown } | Record<string, never>;
   error?: boolean;
-  resolve?: { summary?: unknown };
+  resolve?: any;
 };
 
 function ingestBatchesFromFetch(fetchMock: { mock: { calls: unknown[] } }): IngestBatch[] {
@@ -277,6 +267,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     const result = await handler.createHandler()();
 
     expect(result.headers['content-type']).toBe('text/event-stream');
+    expect(result.headers['cache-control']).toBe('no-cache, no-transform');
     expect(result.headers['access-control-allow-origin']).toBeUndefined();
     const live = (await new Response(result.body).text())
       .split('\n\n')
@@ -301,6 +292,51 @@ describe('agent dispatch via NovuRequestHandler', () => {
       streamed: true,
       content: { markdown: 'Hello world' },
     });
+  });
+
+  it('posts run-start on its own once live text starts, so the run reads as running while it streams', async () => {
+    let releaseStream!: () => void;
+    const streamHeld = new Promise<void>((resolve) => {
+      releaseStream = resolve;
+    });
+    const testBot = agent('test-bot', {
+      onMessage: async function* () {
+        yield 'Hello ';
+        await streamHeld;
+        yield 'world';
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: (key: string) => (key === 'accept' ? 'text/event-stream, application/json' : null),
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+          transformStreamResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    const postedEventTypes = () =>
+      ingestBatchesFromFetch(fetchMock)
+        .flatMap((batch) => batch.events ?? [])
+        .map((envelope) => envelope.event.type);
+
+    await vi.waitFor(() => expect(postedEventTypes()).toEqual(['run-start']));
+
+    releaseStream();
+    await new Response(result.body).text();
+    await vi.waitFor(() => expect(postedEventTypes()).toContain('run-finish'));
   });
 
   it('should return 404 for unknown agent', async () => {
@@ -399,8 +435,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
     const parsedBodies = asReplyBodiesFromFetch(fetchMock);
-    const initialReply = parsedBodies.find((body: any) => body.reply);
-    const editBody = parsedBodies.find((body: any) => body.edit);
+    const initialReply = parsedBodies.find((body: any) => body.reply)!;
+    const editBody = parsedBodies.find((body: any) => body.edit)!;
 
     expect(initialReply).toBeDefined();
     expect(initialReply.reply.markdown).toBe('Thinking...');
@@ -444,8 +480,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     const bodies = asReplyBodiesFromFetch(fetchMock);
 
-    const firstReply = bodies.find((b: any) => b.reply);
-    const edit = bodies.find((b: any) => b.edit);
+    const firstReply = bodies.find((b: any) => b.reply)!;
+    const edit = bodies.find((b: any) => b.edit)!;
 
     expect(firstReply.signals).toHaveLength(1);
     expect(edit.signals).toBeUndefined();
@@ -675,8 +711,8 @@ describe('agent dispatch via NovuRequestHandler', () => {
   it('should reject object-form HITL helpers without card.title', () => {
     const ctx = new AgentContextImpl(createMockBridgeRequest(), 'test-secret-key');
 
-    expect(() => ctx.approve({ card: { subtitle: 'no title' } as { title: string } })).toThrow('card.title');
-    expect(() => ctx.ask({ card: { body: 'no title' } as { title: string } })).toThrow('card.title');
+    expect(() => ctx.approve({ card: { subtitle: 'no title' } as unknown as { title: string } })).toThrow('card.title');
+    expect(() => ctx.ask({ card: { body: 'no title' } as unknown as { title: string } })).toThrow('card.title');
   });
 
   it('should queue renderApprove chrome with requestId action identifiers', async () => {
@@ -1635,13 +1671,13 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     const parsedBodies = asReplyBodiesFromFetch(fetchMock);
 
-    const editBody = parsedBodies.find((body: any) => body.edit);
+    const editBody = parsedBodies.find((body: any) => body.edit)!;
     expect(editBody.edit.content.card).toBeDefined();
     expect(editBody.edit.content.card.type).toBe('card');
     expect(editBody.edit.content.card.title).toBe('Loaded');
     expect(editBody.edit.messageId).toEqual(expect.any(String));
 
-    const initialReply = parsedBodies.find((body: any) => body.reply);
+    const initialReply = parsedBodies.find((body: any) => body.reply)!;
     expect(initialReply.reply.markdown).toBe('Loading...');
   });
 
@@ -1790,7 +1826,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
   it('should track local state across get, set, delete, and current', async () => {
     let getResult: unknown;
-    let currentSnapshot: Record<string, unknown>;
+    let currentSnapshot: Record<string, unknown> | undefined;
 
     const testBot = agent('test-bot', {
       onMessage: async (_message, ctx) => {
@@ -2030,6 +2066,47 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedEvent).toBe('onMessageUpdated');
     expect(capturedText).toBe('where is order 4321?');
     expect(capturedPrevious).toBe('where is order 1234?');
+  });
+
+  it('should expose per-message metadata on ctx.message', async () => {
+    let capturedMetadata: Record<string, unknown> | undefined;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (message) => {
+        capturedMetadata = message.metadata;
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platform: 'web_chat',
+          message: {
+            text: 'help me',
+            platformMessageId: 'msg-789',
+            author: { userId: 'u1', fullName: 'Alice', userName: 'alice', isBot: false },
+            timestamp: new Date().toISOString(),
+            metadata: { workflowId: 'wf_1', stepId: 'step_1' },
+          },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    const result = await handler.createHandler()();
+    expect(result.status).toBe(200);
+    expect(capturedMetadata).toEqual({ workflowId: 'wf_1', stepId: 'step_1' });
   });
 
   it('should dispatch onMessageDeleted with the removed message', async () => {
@@ -2320,7 +2397,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
 
     const parsedBodies = asReplyBodiesFromFetch(fetchMock);
-    const deleteBody = parsedBodies.find((body: any) => body.deleteMessages);
+    const deleteBody = parsedBodies.find((body: any) => body.deleteMessages)!;
 
     expect(deleteBody).toBeDefined();
     expect(deleteBody.deleteMessages).toEqual([{ messageId: expect.any(String) }]);
@@ -2390,7 +2467,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    const replyBody = asReplyBodiesFromFetch(fetchMock).find((body) => body.reply);
+    const replyBody = asReplyBodiesFromFetch(fetchMock).find((body) => body.reply)!;
 
     expect(replyBody.reply.markdown).toBe('Got it');
     expect(replyBody.deleteMessages).toEqual([{ messageId: 'msg-stale' }]);

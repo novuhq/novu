@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 import { HOST_IDS } from './src/lib/host-ids';
 import { noindexPaths, SITE_ORIGIN } from './src/lib/seo';
 
-const usApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co').replace(/\/$/, '');
+const novuApiUrl = (process.env.NEXT_PUBLIC_NOVU_API_URL || 'https://api.novu.co').replace(/\/$/, '');
 
 /** Where language models find what this site has for them (`/llms.txt`). */
 const LLMS_LINK = `<${SITE_ORIGIN}/llms.txt>; rel="describedby"`;
@@ -84,12 +84,14 @@ const nextConfig: NextConfig = {
       { source: HOST_MARKDOWN, destination: '/:host/index.md' },
       {
         source: '/v1/agents/email/actions/preview',
-        destination: `${usApiUrl}/v1/agents/email/actions/preview`,
+        destination: `${novuApiUrl}/v1/agents/email/actions/preview`,
       },
       {
         source: '/v1/agents/email/actions/execute',
-        destination: `${usApiUrl}/v1/agents/email/actions/execute`,
+        destination: `${novuApiUrl}/v1/agents/email/actions/execute`,
       },
+      // The confirmation page of an agent's email, and the answer it posts back to the same address.
+      { source: '/email-action', destination: `${novuApiUrl}/v1/human/email-actions` },
     ];
   },
   // The routes that draw a share image read these files, which the build can't tell from their code.

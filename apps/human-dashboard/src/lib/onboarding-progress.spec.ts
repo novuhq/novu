@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { awaitsTestMail, rememberTestReply, resolveStep, wasMadeInTheSteps } from './onboarding-progress';
+import {
+  awaitsTestMail,
+  belongsInOnboarding,
+  rememberTestReply,
+  resolveStep,
+  signedInSince,
+  wasMadeInTheSteps,
+} from './onboarding-progress';
 import type { OnboardingState } from './onboarding-state';
 
 describe('wasMadeInTheSteps', () => {
@@ -111,5 +118,52 @@ describe('resolveStep', () => {
         }
       )
     ).toBe('done');
+  });
+
+  it('moves on to step 4 once a host signed in through the MCP server, before the API sees it check', () => {
+    const agent = { id: 'agent_1', createdAt: '2026-10-28T15:20:00.000Z' };
+    const state = { startedAt: '2026-10-28T15:00:00.000Z', agentId: 'agent_1', testLeftAt: '2026-10-28T15:30:00.000Z' };
+    const noHost = {
+      connected: false,
+      hosts: [],
+      lastCheckedAt: null,
+      lastCheckedVia: null,
+      firstCheckedAt: null,
+      waitingMessage: null,
+    };
+
+    expect(resolveStep(agent, state, noHost)).toBe('connect');
+    expect(resolveStep(agent, state, noHost, true)).toBe('reach');
+  });
+});
+
+describe('signedInSince', () => {
+  it('counts a sign-in since the agent was made, not one an app made before it and never used since', () => {
+    const agent = { id: 'agent_1', createdAt: '2026-10-28T15:20:00.000Z' };
+
+    expect(signedInSince('2026-10-28T15:39:57.471Z', agent)).toBe(true);
+    expect(signedInSince('2026-10-28T10:23:26.136Z', agent)).toBe(false);
+    expect(signedInSince('2026-10-28T10:23:26.136Z', { id: 'agent_1' })).toBe(true);
+  });
+});
+
+describe('belongsInOnboarding', () => {
+  const agent = { id: 'agent_1' };
+
+  it('keeps an operator without an agent in the steps, whatever else was noted', () => {
+    expect(belongsInOnboarding(null, 'address', {})).toBe(true);
+    expect(belongsInOnboarding(null, 'address', { skippedAt: '2026-11-02T10:00:00.000Z' })).toBe(true);
+  });
+
+  it.each(['test', 'connect'] as const)('keeps an operator on the %s step there', (step) => {
+    expect(belongsInOnboarding(agent, step, {})).toBe(true);
+  });
+
+  it.each(['test', 'connect'] as const)('lets go of an operator who skipped the %s step', (step) => {
+    expect(belongsInOnboarding(agent, step, { skippedAt: '2026-11-02T10:00:00.000Z' })).toBe(false);
+  });
+
+  it.each(['reach', 'done'] as const)('lets go of an operator who reached the %s step', (step) => {
+    expect(belongsInOnboarding(agent, step, {})).toBe(false);
   });
 });

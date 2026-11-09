@@ -73,7 +73,7 @@ import {
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
-import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
@@ -391,6 +391,7 @@ export class HumanInteractionsController {
   async setup(
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
+    @Headers() headers: Record<string, unknown>,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
     @Headers(AGENT_INBOX_HOST_HEADER) host?: string
@@ -407,6 +408,8 @@ export class HumanInteractionsController {
         agentDescription: body.agentDescription,
         inboxHandle: body.inboxHandle,
         email: body.email,
+        // Hosts hold the same key, so only the dashboard's server, which read it from Clerk, can vouch for an address.
+        emailVerified: body.emailVerified === true && carriesHumanDashboardSecret(headers),
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
@@ -429,8 +432,9 @@ export class HumanInteractionsController {
 
   /**
    * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
-   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
-   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
+   * page, in emails and on the agent's Telegram bot), sets who can reach it and whether it acknowledges
+   * incoming messages, and pauses or resumes it. Those settings are the operator's, on the dashboard; a host
+   * gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -441,7 +445,7 @@ export class HumanInteractionsController {
     @Body() body: UpdateHumanAgentRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
-    if (body.reach !== undefined || body.paused !== undefined) {
+    if (body.reach !== undefined || body.paused !== undefined || body.acknowledgeOnReceived !== undefined) {
       assertFromHumanDashboard(headers);
     }
 
@@ -455,6 +459,7 @@ export class HumanInteractionsController {
         description: body.description,
         reach: body.reach,
         paused: body.paused,
+        acknowledgeOnReceived: body.acknowledgeOnReceived,
       })
     );
   }

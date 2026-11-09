@@ -508,8 +508,9 @@ function toMessage(row: ConversationActivityEntity, context: LookContext): Liste
 
 /**
  * An answer, from whoever gave it, in the conversation its question was asked in: a pressed button, or words given
- * in another conversation. Words given in the question's own conversation are the person's message already, and
- * the copies of an answer in other conversations add nothing. One the agent already read counts for nothing.
+ * in another conversation. Words given in the question's own conversation are the person's message already, when
+ * the agent listens to them; from someone it doesn't, their message isn't read, so the answer is. The copies of an
+ * answer in other conversations add nothing. One the agent already read counts for nothing.
  */
 function toCardAnswer(row: ConversationActivityEntity, context: LookContext): ListenMessageDto | null {
   const answer = readCardAnswer(row);
@@ -517,7 +518,9 @@ function toCardAnswer(row: ConversationActivityEntity, context: LookContext): Li
 
   if (
     !answer ||
-    (answer.kind === HumanInteractionKindEnum.ASK && !answer.answeredElsewhere) ||
+    (answer.kind === HumanInteractionKindEnum.ASK &&
+      !answer.answeredElsewhere &&
+      context.listenedTo.has(row.senderId)) ||
     !SETTLED_BY_A_PERSON.includes(answer.status ?? '') ||
     (question && (question.answerReadAt || !askedIn(question, row)))
   ) {

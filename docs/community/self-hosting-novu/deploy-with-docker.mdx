@@ -721,6 +721,46 @@ The Dashboard container is served separately on its configured port (default **4
     ```
   </Accordion>
 
+  <Accordion title="How do I back up my self-hosted Novu data?">
+    Novu stores workflows, subscribers, integrations, and notification history in MongoDB. In the community `docker-compose.yml`, the `mongodb` service keeps its data in the `mongodb` named volume, and the database is `novu-db`. Redis holds queue and cache data and has no volume in the compose file.
+
+    Back up the database with `mongodump`, which is included in the `mongodb` container. Use the `MONGO_INITDB_ROOT_USERNAME` and `MONGO_INITDB_ROOT_PASSWORD` values from your `.env` file:
+
+    ```bash
+    docker compose exec -T mongodb mongodump \
+      --username <mongo-root-username> \
+      --password <mongo-root-password> \
+      --authenticationDatabase admin \
+      --db novu-db \
+      --archive > novu-db.archive
+    ```
+
+    Restore the archive with `mongorestore`:
+
+    ```bash
+    docker compose exec -T mongodb mongorestore \
+      --username <mongo-root-username> \
+      --password <mongo-root-password> \
+      --authenticationDatabase admin \
+      --archive < novu-db.archive
+    ```
+
+    Also back up:
+
+    - Your `.env` file. Novu encrypts provider credentials with `STORE_ENCRYPTION_KEY`, so a restored database needs the same key.
+    - Your S3 bucket or other [object storage](#object-storage), if you store uploaded assets there.
+
+    If you use a managed MongoDB service such as MongoDB Atlas, use its built-in backup feature instead. Always back up before you [run data migrations](/community/self-hosting-novu/data-migrations) or upgrade Novu.
+  </Accordion>
+
+  <Accordion title="Can I deploy Novu on Kubernetes?">
+    Novu doesn't publish an official Helm chart or Kubernetes manifests. This guide covers Docker Compose only.
+
+    To run Novu on Kubernetes, deploy the same images that the community `docker-compose.yml` uses: `ghcr.io/novuhq/novu/api`, `ghcr.io/novuhq/novu/worker`, `ghcr.io/novuhq/novu/ws`, and `ghcr.io/novuhq/novu/dashboard`. Pin every service to the same version tag. Pass each service the same environment variables that the compose file sets, and point them at your MongoDB and Redis instances. See [Self-hosting](/community/self-hosting-novu/overview) for recommended instance counts and resources.
+
+    If your bridge application runs inside the cluster, allow its internal hostnames with `NOVU_SAFE_OUTBOUND_ALLOW`, for example `.svc.cluster.local`.
+  </Accordion>
+
   <Accordion title="When is Local Tunnel Required?">
     If the application and Novu deployment reside on different networks, you can still interact with your self-hosted Novu instance using the Novu CLI. The CLI allows you to specify the Dashboard URL and Bridge Endpoint Origin to enable communication across networks via the Novu Cloud Local Tunnel.
 

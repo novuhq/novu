@@ -49,7 +49,7 @@ export async function deleteAccountAction(): Promise<DeleteAccountResult> {
 
   try {
     const stored = readStoredBackingAccount(user);
-    await deleteBackingAccount(stored?.region ?? 'us', user.id);
+    await deleteBackingAccount(user.id);
 
     if (stored) {
       await forgetStoredBackingAccount(user.id);

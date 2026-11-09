@@ -1,6 +1,7 @@
 import { AIMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
 import type { ToolApprovalRequestPayload } from '../../resources/agent/tool-approval/action-id';
+import { isAbortedRunFinish } from './run-lifecycle';
 
 /**
  * Reconstructs tool-approval cycles from the Novu ledger into LangChain messages.
@@ -208,9 +209,13 @@ export interface ApprovedToolCall {
 /**
  * Gated tool calls that were approved but have not executed yet (no `tool_result` row).
  * The adapter runs these on resume, records the outcome, and continues the graph.
+ *
+ * An approval whose run the user stopped is closed: the tool may already have run (its result is dropped with the
+ * stopped turn), so running it again on a later turn could repeat a write.
  */
 export function findApprovedUnexecuted(history: AgentHistoryEntry[]): ApprovedToolCall[] {
   const approvedApprovalIds = new Set<string>();
+  const stoppedApprovalIds = new Set<string>();
   const executedToolCallIds = new Set<string>();
   const requests: Array<{ approvalId: string; toolCallId: string; toolName: string; input?: Record<string, unknown> }> =
     [];
@@ -236,10 +241,17 @@ export function findApprovedUnexecuted(history: AgentHistoryEntry[]): ApprovedTo
       if (result) {
         executedToolCallIds.add(result.toolCallId);
       }
+    } else if (isAbortedRunFinish(entry)) {
+      approvedApprovalIds.forEach((approvalId) => stoppedApprovalIds.add(approvalId));
     }
   }
 
   return requests
-    .filter((request) => approvedApprovalIds.has(request.approvalId) && !executedToolCallIds.has(request.toolCallId))
+    .filter(
+      (request) =>
+        approvedApprovalIds.has(request.approvalId) &&
+        !stoppedApprovalIds.has(request.approvalId) &&
+        !executedToolCallIds.has(request.toolCallId)
+    )
     .map(({ toolCallId, toolName, input }) => ({ toolCallId, toolName, input }));
 }

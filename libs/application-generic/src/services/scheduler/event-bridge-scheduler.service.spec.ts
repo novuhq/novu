@@ -5,14 +5,16 @@ import { SqsService } from '../sqs';
 import { deriveQueueArnFromUrl, EventBridgeSchedulerService } from './event-bridge-scheduler.service';
 import { DeferReasonEnum, SCHEDULER_MAX_INPUT_BYTES } from './types';
 
-const mockSend = jest.fn();
+const mockSend = vi.fn();
 
-jest.mock('@aws-sdk/client-scheduler', () => {
-  const actual = jest.requireActual('@aws-sdk/client-scheduler');
+vi.mock('@aws-sdk/client-scheduler', async () => {
+  const actual = await vi.importActual('@aws-sdk/client-scheduler');
 
   return {
     ...actual,
-    SchedulerClient: jest.fn(() => ({ send: mockSend })),
+    SchedulerClient: vi.fn(function () {
+      return { send: mockSend };
+    }),
   };
 });
 
@@ -25,7 +27,7 @@ const JOB_ID = '65f1a2b3c4d5e6f708192a3c';
 
 /** Pass `null` to model a topic that has no SQS queue URL configured. */
 function buildSqsService(queueUrl: string | null = QUEUE_URL): SqsService {
-  return { getQueueUrl: jest.fn(() => queueUrl ?? undefined) } as unknown as SqsService;
+  return { getQueueUrl: vi.fn(() => queueUrl ?? undefined) } as unknown as SqsService;
 }
 
 function configureEnv(): void {
@@ -55,7 +57,7 @@ function createParams(overrides: Record<string, unknown> = {}) {
 
 describe('EventBridgeSchedulerService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     clearEnv();
     configureEnv();
   });

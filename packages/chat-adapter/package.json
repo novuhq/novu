@@ -38,7 +38,7 @@
   "scripts": {
     "prepublishOnly": "pnpm build",
     "prebuild": "rimraf dist",
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "watch:build": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -46,7 +46,7 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "@chat-adapter/shared": "4.40.0"
+    "@chat-adapter/shared": "4.43.0"
   },
   "peerDependencies": {
     "chat": "^4.40.0",
@@ -58,11 +58,11 @@
     }
   },
   "devDependencies": {
-    "@chat-adapter/state-memory": "4.40.0",
+    "@chat-adapter/state-memory": "4.43.0",
     "@novu/agent-event-protocol": "workspace:*",
     "@types/react": "^19.0.0",
     "rimraf": "~3.0.2",
-    "tsup": "^8.0.2",
+    "tsup": "^9.0.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.0"
   },

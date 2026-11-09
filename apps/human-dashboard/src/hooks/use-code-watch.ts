@@ -8,8 +8,8 @@ import type { ConnectApi } from '@/lib/host-status';
 /** A code is asked about until it got an answer this long after it ran out: for the clocks, and a request on its way. */
 const AFTER_DEADLINE_MS = 20_000;
 
-/** What `check` found: a host used one of the codes, or the one on screen has to be swapped for a new one. */
-export type CodeWatch = 'used' | 'renew' | null;
+/** What `check` found: the code a host used, or that the one on screen has to be swapped for a new one. */
+export type CodeWatch = { used: HeldCode } | 'renew' | null;
 
 /** A code this opening showed, and whether the API answered about it once it had run out: then it's done. */
 type Watched = { held: HeldCode; settled: boolean };
@@ -22,7 +22,7 @@ type Watched = { held: HeldCode; settled: boolean };
  * Every code the drawer shows is watched from the moment it shows, so one swapped out before any check
  * still counts. Each is asked about until it got an answer after it ran out: a host may have copied it just
  * before the swap, or used it while the drawer asked nothing (its tab out of sight, or a chat app's drawer
- * over it), so the first check after that still sees it. `check` answers `used` once any of them was used;
+ * over it), so the first check after that still sees it. `check` answers with the code once any was used;
  * `renew` when the one on screen ran out, or the API doesn't know it, so the drawer gets a fresh one; and
  * `null` otherwise, a request that failed included.
  *
@@ -80,8 +80,9 @@ export function useCodeWatch(readCodeStatus: ConnectApi['readCodeStatus'], shown
       }
     });
 
-    if (statuses.includes('used')) {
-      return 'used';
+    const used = asked.find((_, index) => statuses[index] === 'used');
+    if (used) {
+      return { used: used.held };
     }
 
     // Only while it is still the one on screen: a new one may have taken its place in the meantime.

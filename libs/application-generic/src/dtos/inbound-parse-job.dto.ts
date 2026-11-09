@@ -51,6 +51,14 @@ export interface IInboundParseDataDto {
   date: Date;
   dkim: string;
   spf: string;
+  /**
+   * The domains the verdicts vouch for: the d= domains whose DKIM signatures
+   * verified, and the MAIL FROM domain SPF checked (null without one). A pass
+   * alone doesn't prove the From address; one of these must be its domain.
+   * Optional for jobs queued before the inbound-mail service sent them.
+   */
+  dkimDomains?: string[];
+  spfDomain?: string | null;
   spamScore: number;
   language: string;
   cc: ITo[];

@@ -762,10 +762,11 @@ export class SendMessagePush extends SendMessageBase {
       payload: this.payloadToPersist(command, command.payload) as never,
       overrides: overrides as never,
       providerId: integration.providerId,
+      templateIdentifier: command.identifier,
+      stepId: command.step?.stepId,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,
-      stepId: command.step?.stepId,
       contextKeys: command.contextKeys,
     });
 

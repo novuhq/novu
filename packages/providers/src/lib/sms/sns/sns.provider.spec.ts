@@ -1,7 +1,11 @@
 import { SNSClient } from '@aws-sdk/client-sns';
-import { expect, test, vi } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 
 import { SNSSmsProvider } from './sns.provider';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 test('should trigger sns library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };

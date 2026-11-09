@@ -22,12 +22,15 @@ import {
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
 import type { Agent } from './resources/agent';
-import type { AgentBridgeRequest } from './resources/agent/agent.types';
+import { type AgentBridgeRequest, AgentEventEnum } from './resources/agent/agent.types';
 import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import { AgentLiveStream } from './resources/agent/agent-live-stream';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
 import { parseSignatureHeader } from './utils/bridge-signature';
+
+/** Novu sends `onAbort` only to a bridge that lists it here: older frameworks fail the turn on an unknown event. */
+const HANDLED_AGENT_EVENTS = Object.values(AgentEventEnum).join(',');
 
 export interface ServeHandlerOptions {
   client?: Client;
@@ -132,7 +135,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const headers: Record<string, string> = {
           ...actionResponse.headers,
           [HttpHeaderKeysEnum.CONTENT_TYPE]: 'text/event-stream',
-          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache',
+          // no-transform: compression (e.g. Next.js Pages Router, `compression` middleware) would buffer the stream.
+          [HttpHeaderKeysEnum.CACHE_CONTROL]: 'no-cache, no-transform',
         };
         // Only Novu reads live replies, server to server; no browser origin may read them.
         delete headers[HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN];
@@ -157,6 +161,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SERVER]: this.frameworkName,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: HANDLED_AGENT_EVENTS,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
     };
   }

@@ -1,7 +1,7 @@
 import { RetryOnError, RetryOptions } from './retry-on-error-decorator';
 
 // Mock console.warn to verify logging
-const mockConsoleWarn = jest.spyOn(console, 'warn');
+const mockConsoleWarn = vi.spyOn(console, 'warn');
 class CustomError extends Error {}
 class TestService {
   private attempts = 0;

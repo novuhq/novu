@@ -127,7 +127,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
         expect(mail.from).to.equal(addressOf(chosen));
         expect(mail.senderName).to.equal('Atlas');
         expect(mail.subject).to.equal('Hi, I’m Atlas');
-        expect(mail.text).to.include('Reply to this email. Your reply lands in my inbox.');
+        expect(mail.text).to.include('Just hit reply. Even “hi” counts.');
       }
     } finally {
       restoreMail();

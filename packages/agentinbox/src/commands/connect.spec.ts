@@ -317,7 +317,11 @@ describe('listenHint', () => {
       'Optional: keep Claude Code listening, so a message to atlas starts it'
     );
     expect(listenHint('claude-code', 'atlas')).toContain('npx @agentinbox/cli listen claude-code');
-    expect(listenHint('codex', 'atlas')).toBeUndefined();
+    expect(listenHint('codex', 'atlas')).toContain('Optional: keep Codex listening, so a message to atlas starts it');
+    expect(listenHint('codex', 'atlas')).toContain('npx @agentinbox/cli listen codex');
+    expect(listenHint('opencode', 'atlas')).toContain('npx @agentinbox/cli listen opencode');
+    expect(listenHint('cursor', 'atlas')).toBeUndefined();
+    expect(listenHint('chatgpt', 'atlas')).toBeUndefined();
     expect(listenHint(undefined, 'atlas')).toBeUndefined();
   });
 });

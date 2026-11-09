@@ -78,18 +78,6 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
   return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
 }
 
-/**
- * An invite link this site can't open: one the EU API issued, as Agent Inbox's API only reaches the US region.
- * It shows as not valid, and its token is sent nowhere.
- */
-export function UnsupportedInvite() {
-  return (
-    <InviteCard step="inactive">
-      <InactiveInvite reason="invalid" />
-    </InviteCard>
-  );
-}
-
 function followConnectResult(
   result: ConnectInviteResult,
   via: InviteChannelVia,
@@ -834,7 +822,7 @@ function EmailAddressForm({
 
 function verificationButtonLabel(pending: boolean, cooldownSeconds: number): string {
   if (!pending) {
-    return 'Send verification';
+    return 'Send confirmation';
   }
 
   if (cooldownSeconds > 0) {
@@ -888,7 +876,7 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       return 'Message it in Slack';
     case 'email':
       if (channel.status === 'pending') {
-        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a verification link';
+        return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a confirmation link';
       }
 
       if (channel.connected && channel.address) {

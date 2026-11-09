@@ -1,3 +1,4 @@
+import type { AgentEvent } from '@novu/agent-event-protocol';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { WebChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
@@ -8,6 +9,7 @@ describe('AgentConversationRuntime', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
   let sendMessage: Mock;
+  let cancelRun: Mock;
   let getEvents: Mock;
   let connect: Mock;
   let webChat: WebChat;
@@ -15,12 +17,14 @@ describe('AgentConversationRuntime', () => {
   beforeEach(() => {
     emitter = new NovuEventEmitter();
     sendMessage = vi.fn();
+    cancelRun = vi.fn();
     getEvents = vi.fn();
     connect = vi.fn().mockResolvedValue({ data: undefined });
     const webChatService = {
       sendMessage,
       respondToAction: vi.fn(),
       sendAction: vi.fn(),
+      cancelRun,
       getEvents,
     } as unknown as WebChatService;
     webChat = new WebChat({
@@ -190,6 +194,127 @@ describe('AgentConversationRuntime', () => {
     expect(runtime.getSnapshot().error).toMatchObject({ message: 'agent handler failed' });
 
     runtime.dispose();
+  });
+
+  describe('stop', () => {
+    function emitRunEvent(sequence: number, event: AgentEvent) {
+      emitter.emit('web_chat.agent_event', {
+        result: {
+          version: 1,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event,
+        },
+      });
+    }
+
+    /** Live envelopes wait in the buffer while a catch-up sync is queued, so let it settle first. */
+    const flushSyncQueue = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    async function startRunningRuntime() {
+      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+      getEvents.mockResolvedValue({ events: [], olderCursor: null });
+
+      const runtime = webChat.conversation({ agentId: 'agent_1' });
+      await runtime.sendMessage('hello');
+      emitRunEvent(1, { type: 'run-start' });
+      emitRunEvent(2, { type: 'message-start', messageId: 'msg_partial0001' });
+      emitRunEvent(3, { type: 'message-delta', messageId: 'msg_partial0001', delta: 'Working on' });
+      await flushSyncQueue();
+
+      return runtime;
+    }
+
+    it('calls the cancel route and keeps run.isStopping until run-finish arrives', async () => {
+      const runtime = await startRunningRuntime();
+      cancelRun.mockResolvedValue({ status: 'aborted' });
+      expect(runtime.getSnapshot().run).toMatchObject({ isRunning: true, isStopping: false });
+
+      const result = await runtime.stop();
+
+      expect(result).toEqual({ data: { status: 'aborted' } });
+      expect(cancelRun).toHaveBeenCalledWith(
+        expect.objectContaining({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+      );
+      expect(runtime.getSnapshot().run).toMatchObject({ isRunning: true, isStopping: true });
+
+      emitRunEvent(4, { type: 'run-finish', outcome: 'aborted' });
+      await flushSyncQueue();
+
+      const snapshot = runtime.getSnapshot();
+      expect(snapshot.run).toMatchObject({ isRunning: false, isStopping: false });
+      expect(snapshot.messages.find((message) => message.id === 'msg_partial0001')?.stopped).toBe(true);
+
+      runtime.dispose();
+    });
+
+    it('publishes isStopping to subscribers before the cancel request resolves', async () => {
+      const runtime = await startRunningRuntime();
+      let resolveCancel!: (value: { status: 'aborted' }) => void;
+      cancelRun.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveCancel = resolve;
+          })
+      );
+      const seen: boolean[] = [];
+      const unsubscribe = runtime.subscribe((snapshot) => {
+        seen.push(snapshot.run.isStopping);
+      });
+
+      const pending = runtime.stop();
+      await Promise.resolve();
+
+      expect(seen.at(-1)).toBe(true);
+
+      resolveCancel({ status: 'aborted' });
+      await pending;
+
+      unsubscribe();
+      runtime.dispose();
+    });
+
+    it('clears run.isRunning at once when the server reports idle', async () => {
+      const runtime = await startRunningRuntime();
+      cancelRun.mockResolvedValue({ status: 'idle' });
+
+      const result = await runtime.stop();
+
+      expect(result).toEqual({ data: { status: 'idle' } });
+      expect(runtime.getSnapshot().run).toMatchObject({ isRunning: false, isStopping: false });
+      expect(runtime.getSnapshot().run.typing).toBeUndefined();
+
+      runtime.dispose();
+    });
+
+    it('publishes the error and drops isStopping when the cancel request fails', async () => {
+      const runtime = await startRunningRuntime();
+      cancelRun.mockRejectedValue(new Error('network'));
+
+      const result = await runtime.stop();
+
+      expect(result.error).toBeDefined();
+      expect(runtime.getSnapshot().error).toBe(result.error);
+      expect(runtime.getSnapshot().run).toMatchObject({ isRunning: true, isStopping: false });
+
+      runtime.dispose();
+    });
+
+    it('returns an error without a request before a conversation exists', async () => {
+      const runtime = webChat.conversation({ agentId: 'agent_1' });
+
+      const result = await runtime.stop();
+
+      expect(result.error).toBeDefined();
+      expect(cancelRun).not.toHaveBeenCalled();
+
+      runtime.dispose();
+    });
   });
 
   it('replaces a stale resume runtime when the create-flow runtime registers', async () => {

@@ -838,7 +838,8 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
 
       return {
         workflows: workflows.map((item) => [item.triggers[0].identifier, item.updatedAt]),
-        templates: templates.map((item) => [item._id, item.updatedAt]),
+        // Mongoose `timestamps` sets updatedAt, but MessageTemplateEntity does not declare it.
+        templates: templates.map((item) => [item._id, (item as typeof item & { updatedAt?: string }).updatedAt]),
       };
     };
 

@@ -1,16 +1,29 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { getEventListeners } from 'node:events';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../api/client';
+import type { ListenMessage } from '../api/listen';
 import { claudeCode } from './claude-code';
+import { codex } from './codex';
 import { FakeApi } from './fake-api.fixture';
-import { type ListenTiming, type LoopEnd, runListenLoop } from './loop';
-import { type ListenState, memoryState, newState } from './state';
-import { KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
+import { anyOf, type ListenLoopOptions, type ListenTiming, type LoopEnd, runListenLoop } from './loop';
+import { opencode } from './opencode';
+import { type ListenConnection, type ListenState, memoryState, newState } from './state';
+import { connectionChangedMessage, KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
 
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
+const FAKE_CODEX = fileURLToPath(new URL('./fake-codex.fixture.mjs', import.meta.url));
+const FAKE_OPENCODE = fileURLToPath(new URL('./fake-opencode.fixture.mjs', import.meta.url));
+
+/** The hosts the loop is tried with: each adapter, with the fake of its host. */
+const HOSTS = {
+  'claude-code': { adapter: claudeCode, fake: FAKE_CLAUDE, env: 'FAKE_CLAUDE' },
+  codex: { adapter: codex, fake: FAKE_CODEX, env: 'FAKE_CODEX' },
+  opencode: { adapter: opencode, fake: FAKE_OPENCODE, env: 'FAKE_OPENCODE' },
+} as const;
 const COMPUTER_ID = 'cmp_this_computer_0001';
 
 /** Fast enough for a test, with the same shape as the real timing. */
@@ -43,6 +56,31 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** The id of the question the host asked with this title, once it has. */
+async function asked(api: FakeApi, title: string): Promise<string> {
+  let id: string | undefined;
+  await eventually(() => {
+    id = api.interactions.find((interaction) => interaction.card.title === title)?.id;
+    expect(id).toBeDefined();
+  });
+
+  return id as string;
+}
+
+/** A message from the operator, waiting in the queue as a start finds it. */
+function queued(id: string, conversationId: string, text: string): ListenMessage {
+  return {
+    id,
+    conversationId,
+    channel: 'telegram',
+    from: { id: 'ada', name: 'Ada', isOperator: true },
+    text,
+    at: new Date().toISOString(),
+    round: 0,
+    isDirectMessage: true,
+  };
+}
+
 interface Harness {
   api: FakeApi;
   dir: string;
@@ -50,7 +88,9 @@ interface Harness {
   logs: string[];
   loop: Promise<LoopEnd>;
   stop: () => Promise<LoopEnd>;
-  /** Each start of the fake `claude`: its arguments and folder. */
+  /** Listens again with what it saved, as after a restart, once it was stopped. */
+  restart: () => Promise<LoopEnd>;
+  /** Each start of the fake host: its arguments and folder. */
   starts: () => Array<{ argv: string[]; cwd: string }>;
 }
 
@@ -60,18 +100,21 @@ async function start(
   overrides: Partial<ListenState> = {},
   timing: Partial<ListenTiming> = {},
   /** Sets the API up before the loop's first call. */
-  prepare: (api: FakeApi) => void = () => undefined
+  prepare: (api: FakeApi) => void = () => undefined,
+  more: Pick<ListenLoopOptions, 'savedConnection'> & { host?: keyof typeof HOSTS } = {}
 ): Promise<Harness> {
+  const { host: hostId = 'claude-code', ...loopOptions } = more;
+  const host = HOSTS[hostId];
   const api = await new FakeApi().start();
   const dir = mkdtempSync(join(tmpdir(), 'listen-loop-'));
-  vi.stubEnv('FAKE_CLAUDE_LOG', join(dir, 'claude.log'));
-  vi.stubEnv('FAKE_CLAUDE_SESSIONS', join(dir, 'sessions'));
+  vi.stubEnv(`${host.env}_LOG`, join(dir, 'host.log'));
+  vi.stubEnv(`${host.env}_SESSIONS`, join(dir, 'sessions'));
   vi.stubEnv('FAKE_API_URL', api.url);
   // The command took the lease before the loop began.
   api.lease = {
     computerId: COMPUTER_ID,
     computerName: 'MacBook',
-    host: 'claude-code',
+    host: hostId,
     since: new Date().toISOString(),
     renewedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 180_000).toISOString(),
@@ -80,34 +123,41 @@ async function start(
 
   const store = memoryState({
     ...newState({
-      host: 'claude-code',
+      host: hostId,
       project: dir,
-      program: { command: process.execPath, args: [FAKE_CLAUDE] },
-      limits: { runsPerHour: 20, maxRunSeconds: 60 },
+      program: { command: process.execPath, args: [host.fake] },
+      limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 5 },
     }),
     allowedAt: new Date().toISOString(),
     ...overrides,
   });
   const logs: string[] = [];
-  const controller = new AbortController();
-  const loop = runListenLoop({
-    client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: 'claude-code' }),
-    agentIdentifier: 'human-relay',
-    operatorId: 'ada',
-    computerId: COMPUTER_ID,
-    computerName: 'MacBook',
-    host: claudeCode,
-    store,
-    timing: { ...FAST, ...timing },
-    log: (line) => logs.push(line),
-    signal: controller.signal,
-  });
+  let controller = new AbortController();
+  const listen = () => {
+    controller = new AbortController();
+
+    return runListenLoop({
+      client: createApiClient({ apiUrl: api.url, secretKey: 'sk_test', asHost: hostId }),
+      agentIdentifier: 'human-relay',
+      operatorId: 'ada',
+      computerId: COMPUTER_ID,
+      computerName: 'MacBook',
+      host: host.adapter,
+      store,
+      timing: { ...FAST, ...timing },
+      log: (line) => logs.push(line),
+      signal: controller.signal,
+      ...loopOptions,
+    });
+  };
+  let loop = listen();
   const starts = () => {
     try {
-      return readFileSync(join(dir, 'claude.log'), 'utf8')
+      return readFileSync(join(dir, 'host.log'), 'utf8')
         .trim()
         .split('\n')
-        .map((line) => JSON.parse(line) as { argv: string[]; cwd: string });
+        .map((line) => JSON.parse(line) as { event: string; argv: string[]; cwd: string })
+        .filter((entry) => entry.event === 'start');
     } catch {
       return [];
     }
@@ -121,6 +171,11 @@ async function start(
     starts,
     stop: async () => {
       controller.abort();
+
+      return loop;
+    },
+    restart: () => {
+      loop = listen();
 
       return loop;
     },
@@ -165,7 +220,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
             host: 'claude-code',
             project: dir,
             program: { command: process.execPath, args: [FAKE_CLAUDE] },
-            limits: { runsPerHour: 20, maxRunSeconds: 60 },
+            limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 5 },
           }),
           allowedAt: new Date().toISOString(),
         }),
@@ -207,6 +262,9 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     expect(first.argv).not.toContain('--resume');
     const sessionId = first.argv[first.argv.indexOf('--session-id') + 1];
     expect(first.argv[first.argv.indexOf('--append-system-prompt') + 1]).toContain('conv_1');
+    expect(first.argv[first.argv.indexOf('--append-system-prompt') + 1]).toContain(
+      'Other sessions may work in this folder at the same time'
+    );
     expect(store.current?.sessions.conv_1).toMatchObject({ sessionId, round: 0 });
     // Every call is the started host's check.
     expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
@@ -237,6 +295,96 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       expect(api.sentInto('conv_2')).toContain('Echo: in two');
     });
     expect(store.current?.sessions.conv_1?.sessionId).not.toBe(store.current?.sessions.conv_2?.sessionId);
+  });
+
+  it('runs the host for another conversation while the first one’s run goes on', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'sleep:4000', conversationId: 'conv_1' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: 'hello', conversationId: 'conv_2' });
+
+    await eventually(() => expect(api.sentInto('conv_2')).toContain('Echo: hello'));
+    expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+    expect(logs).not.toContain('conv_1: done.');
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping.'));
+    expect(starts()).toHaveLength(2);
+  });
+
+  it('holds a conversation back while the most runs at once go on, and starts it once one ends', async () => {
+    const { api, starts, logs } = await start({ limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 1 } });
+
+    api.deliver({ text: 'sleep:800', conversationId: 'conv_1' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: 'hello', conversationId: 'conv_2' });
+
+    await eventually(() => expect(logs).toContain('conv_2: waits for a run to end: the most at once here is 1.'));
+    expect(starts()).toHaveLength(1);
+    await eventually(() => expect(api.sentInto('conv_2')).toContain('Echo: hello'));
+    expect(api.sentInto('conv_1')).toContain('Done sleeping.');
+    expect(logs.filter((line) => line.startsWith('conv_2: waits'))).toHaveLength(1);
+  });
+
+  it('tells the host of no other sessions when one run at a time is the most', async () => {
+    const { api, starts } = await start({ limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 1 } });
+
+    api.deliver({ text: 'hello' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello'));
+    const [only] = starts();
+    expect(only.argv[only.argv.indexOf('--append-system-prompt') + 1]).not.toContain('Other sessions');
+  });
+
+  it('counts the runs that start together toward the hourly limit', async () => {
+    const { api, starts, store } = await start({
+      limits: { runsPerHour: 1, maxRunSeconds: 60, runsAtOnce: 5 },
+      queue: [queued('msg_a', 'conv_1', 'one'), queued('msg_b', 'conv_2', 'two')],
+    });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: one'));
+    await eventually(() =>
+      expect(api.sentInto('conv_operator').some((text) => text.includes('the last hour'))).toBe(true)
+    );
+    expect(starts()).toHaveLength(1);
+    expect(store.current?.runs).toHaveLength(1);
+    expect(store.current?.queue.map((message) => message.id)).toEqual(['msg_b']);
+  });
+
+  it('stops only the run of the conversation a /stop is sent in', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'sleep:20000', conversationId: 'conv_1' });
+    api.deliver({ text: 'sleep:2500', conversationId: 'conv_2' });
+    await eventually(() => expect(starts()).toHaveLength(2));
+    api.deliver({ text: '/stop', conversationId: 'conv_1' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(STOPPED_REPLY));
+    await eventually(() => expect(logs).toContain('conv_2: done.'));
+    expect(api.sentInto('conv_2')).toContain('Done sleeping.');
+    expect(logs).not.toContain('conv_2: stopped (stop).');
+  });
+
+  it('stops every run when it stops, and tells each of their conversations once it starts again', async () => {
+    const { api, starts, store, stop, restart, logs } = await start();
+
+    api.deliver({ text: 'sleep:20000', conversationId: 'conv_1' });
+    api.deliver({ text: 'sleep:20000', conversationId: 'conv_2' });
+    await eventually(() => expect(starts()).toHaveLength(2));
+    await stop();
+
+    expect(logs).toEqual(expect.arrayContaining(['conv_1: stopped (shutdown).', 'conv_2: stopped (shutdown).']));
+    expect(store.current?.inProgress?.map((run) => run.conversationId).sort()).toEqual(['conv_1', 'conv_2']);
+    void restart();
+
+    await eventually(() => {
+      for (const conversationId of ['conv_1', 'conv_2']) {
+        expect(
+          api.sentInto(conversationId).some((text) => text.startsWith('Claude Code stopped before it could finish'))
+        ).toBe(true);
+      }
+    });
+    expect(starts()).toHaveLength(2);
+    expect(store.current?.inProgress).toEqual([]);
   });
 
   it('lets a message that comes while it works join the same run', async () => {
@@ -311,9 +459,25 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
   });
 
+  it('asks the operator before the agent’s own reply once the project has a CLI of its own that npx would run', async () => {
+    const { api, dir } = await start();
+    api.decide = () => 'approved';
+    // Planted by the agent, say, which edits the project without asking.
+    mkdirSync(join(dir, 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+
+    api.deliver({ text: 'reply-myself', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.to).toBe('ada');
+    expect(question?.card.body).toContain(
+      'It is Agent Inbox’s own command, but the project has its own node_modules/@agentinbox/cli, so it may run other code than Agent Inbox’s.'
+    );
+  });
+
   it('lets the agent reply and resolve in one command, joined with &&, without asking the operator', async () => {
     const { api } = await start();
-    const command = 'npx @agentinbox/cli inbox reply conv_1 "Done." && npx @agentinbox/cli inbox resolve conv_1';
+    const command = 'npx @agentinbox/cli reply conv_1 "Done." && npx @agentinbox/cli resolve conv_1';
 
     api.deliver({ text: `ask:${command}` });
 
@@ -411,7 +575,9 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     // To the operator, even though a contact's message started it.
     expect(question?.to).toBe('ada');
     expect(question?.card.title).toBe('Claude Code wants to run `npm publish`');
-    expect(question?.card.body).toContain('for Ben’s message');
+    // Whose run it is, where they wrote, and how their message began, before anything else.
+    expect(question?.card.body).toMatch(/^For Ben’s message on Telegram: “ask:npm publish”\n\nRun npm publish\. In /);
+    expect(question?.card.body).not.toContain('for your message');
     expect(question?.card.body).toContain('No answer in 2 seconds counts as Deny.');
     expect(question?.card).toMatchObject({
       approveLabel: 'Allow',
@@ -425,7 +591,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     const { api } = await start();
     api.decide = () => 'denied';
 
-    api.deliver({ text: 'ask:npx @agentinbox/cli inbox reply conv_9 "hi"' });
+    api.deliver({ text: 'ask:npx @agentinbox/cli reply conv_9 "hi"' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(1);
@@ -434,12 +600,12 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   it('lets the agent reply with our MCP server’s tool in its own conversation without asking anyone', async () => {
     const { api } = await start();
 
-    api.deliver({ text: 'mcp:mcp__plugin_agentinbox_inbox__inbox_reply' });
+    api.deliver({ text: 'mcp:mcp__plugin_agentinbox_AgentInbox__inbox_reply' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied through MCP.'));
     await pause(400);
     expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
-    expect(api.sentInto('conv_1')).not.toContain('Used mcp__plugin_agentinbox_inbox__inbox_reply.');
+    expect(api.sentInto('conv_1')).not.toContain('Used mcp__plugin_agentinbox_AgentInbox__inbox_reply.');
   });
 
   it('asks the operator before an MCP reply into another conversation, or through another server', async () => {
@@ -447,7 +613,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     api.decide = () => 'denied';
     const approves = () => api.interactions.filter((interaction) => interaction.kind === 'approve');
 
-    api.deliver({ text: 'mcp:mcp__inbox__inbox_reply conv_9' });
+    api.deliver({ text: 'mcp:mcp__AgentInbox__inbox_reply conv_9' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Your operator said no.'));
     expect(approves()).toHaveLength(1);
 
@@ -586,7 +752,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('keeps a message of the next round out of the run of the round before', async () => {
-    const { api, starts } = await start();
+    const { api, starts, logs } = await start();
 
     api.deliver({ text: 'sleep:800' });
     await eventually(() => expect(starts()).toHaveLength(1));
@@ -597,6 +763,9 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     expect(api.sentInto('conv_1')).toContain('Done sleeping.');
     expect(starts()).toHaveLength(2);
     expect(starts()[1].argv).not.toContain('--resume');
+    // Never two runs for one conversation: the next round's starts once the round before is done.
+    const started = logs.flatMap((line, at) => (line.startsWith('Started Claude Code for conv_1') ? [at] : []));
+    expect(started[1]).toBeGreaterThan(logs.indexOf('conv_1: done.'));
   });
 
   it('starts a fresh session when the host no longer has the old one', async () => {
@@ -675,7 +844,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('holds messages back past the hourly limit, and tells the operator once', async () => {
-    const { api, store, starts } = await start({ limits: { runsPerHour: 1, maxRunSeconds: 60 } });
+    const { api, store, starts } = await start({ limits: { runsPerHour: 1, maxRunSeconds: 60, runsAtOnce: 5 } });
 
     api.deliver({ text: 'one', conversationId: 'conv_1' });
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: one'));
@@ -694,7 +863,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('stops a run that goes on too long', async () => {
-    const { api } = await start({ limits: { runsPerHour: 20, maxRunSeconds: 1 } });
+    const { api } = await start({ limits: { runsPerHour: 20, maxRunSeconds: 1, runsAtOnce: 5 } });
 
     api.deliver({ text: 'sleep:20000' });
 
@@ -723,6 +892,10 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     const { api, logs } = await start({ cursor: 'from-another-deployment' });
 
     await eventually(() => expect(logs.some((line) => line.includes('going on from now'))).toBe(true));
+    // "From now" is from the wait it asks for next: a message sent before that wait would be before now.
+    await eventually(() =>
+      expect(api.callsTo('GET', '/v1/listen/messages').some((call) => !call.query.after)).toBe(true)
+    );
     api.deliver({ text: 'still listening?' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still listening?'));
@@ -824,7 +997,11 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       round: 0,
       isDirectMessage: true,
     };
-    const { api, logs } = await start({ limits: { runsPerHour: 1, maxRunSeconds: 60 }, runs: [now], queue: [waiting] });
+    const { api, logs } = await start({
+      limits: { runsPerHour: 1, maxRunSeconds: 60, runsAtOnce: 5 },
+      runs: [now],
+      queue: [waiting],
+    });
 
     // The first wait is under way: the hourly limit's notice goes once it ends, while Agent Inbox can't be reached.
     api.down = true;
@@ -839,7 +1016,9 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('tells a conversation whose run a restart cut off, instead of running it again', async () => {
-    const { api, starts, store } = await start({ running: { conversationId: 'conv_1', at: new Date().toISOString() } });
+    const { api, starts, store } = await start({
+      inProgress: [{ conversationId: 'conv_1', at: new Date().toISOString() }],
+    });
 
     await eventually(() =>
       expect(api.sentInto('conv_1').some((text) => text.startsWith('Claude Code stopped before it could finish'))).toBe(
@@ -847,7 +1026,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       )
     );
     expect(starts()).toHaveLength(0);
-    expect(store.current?.running).toBeUndefined();
+    expect(store.current?.inProgress).toEqual([]);
   });
 
   it('keeps the run it was stopped in, to tell its conversation when it starts again', async () => {
@@ -857,7 +1036,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     await eventually(() => expect(starts()).toHaveLength(1));
     await stop();
 
-    expect(store.current?.running?.conversationId).toBe('conv_1');
+    expect(store.current?.inProgress?.map((run) => run.conversationId)).toEqual(['conv_1']);
   });
 
   it('passes the answer to the agent’s own question into the run when no command waits for it', async () => {
@@ -875,18 +1054,134 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('leaves the answer to the agent’s command that still waits for it', async () => {
-    const { api, starts } = await start();
+    const { api, starts, logs } = await start();
 
-    api.deliver({ text: 'wait-for:1200' });
-    await eventually(() => expect(starts()).toHaveLength(1));
-    await pause(200);
-    api.deliver({
-      text: 'prod',
-      answersMessageId: 'int_asked_and_waiting',
-      answer: { status: 'answered', text: 'prod' },
+    api.deliver({ text: 'ask-and-wait:4000' });
+    api.answer(await asked(api, 'Staging or prod?'), { status: 'answered', text: 'prod' });
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    // The command got it: the session wasn't given it again, and no run started for it.
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 1 messages before.'));
+    expect(starts()).toHaveLength(2);
+  });
+
+  it('passes on the answer to a question asked with --async that comes while another command waits', async () => {
+    const { api, starts, logs } = await start();
+
+    api.deliver({ text: 'ask-async-and-wait:4000' });
+    const region = await asked(api, 'Which region?');
+    const stage = await asked(api, 'Staging or prod?');
+    // The first answer comes while the command that asked the second question waits for its own.
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+    await pause(300);
+    api.answer(stage, { status: 'answered', text: 'prod' });
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    // The first answer joined the run once the command ended; the second went to the command alone.
+    expect(logs.filter((line) => line === 'conv_1: a new message joined the run.')).toHaveLength(1);
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 2 messages before.'));
+    expect(starts()).toHaveLength(2);
+  });
+
+  it('passes on an answer it looked up while the run ended, without looking again', async () => {
+    const { api, logs } = await start();
+
+    api.deliver({ text: 'ask-async-and-sleep:800' });
+    const region = await asked(api, 'Which region?');
+    // The look reads the answer at once, but what it found comes back only after the run ended.
+    api.showDelayMs = 2000;
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: eu-west'));
+    expect(logs).not.toContain('conv_1: a new message joined the run.');
+    expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1);
+  });
+
+  it('passes on an answer it looked up when it was stopped meanwhile, once it starts again', async () => {
+    const { api, logs, store, stop, restart } = await start();
+    api.deliver({ text: 'ask-async-and-sleep:0' });
+    const region = await asked(api, 'Which region?');
+    await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+    api.showDelayMs = 1000;
+    api.answer(region, { status: 'answered', text: 'eu-west' });
+    await eventually(() => expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1));
+    await stop();
+
+    expect(store.current?.queue.map((message) => message.answersMessageId)).toEqual([region]);
+    expect(store.current?.lookedUp).toEqual(store.current?.queue.map((message) => message.id));
+    api.showDelayMs = 0;
+    void restart();
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: eu-west'));
+    expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1);
+    expect(store.current?.lookedUp).toEqual([]);
+  });
+
+  describe('once this computer is connected anew', () => {
+    const CONNECTION: ListenConnection = {
+      apiUrl: 'https://api.agentinbox.md',
+      agentIdentifier: 'human-relay',
+      key: '0123456789abcdef',
+    };
+
+    it('starts nothing more and stops for good: what it starts would answer with the new connection', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      const { api, starts, store, loop } = await start({ connection: CONNECTION }, {}, undefined, {
+        savedConnection: () => saved,
+      });
+
+      saved = { ...CONNECTION, agentIdentifier: 'other-agent' };
+      api.deliver({ text: 'hello' });
+
+      const message = connectionChangedMessage('claude-code');
+      expect(await loop).toEqual({ reason: 'connection_changed', message });
+      expect(store.current?.stopped).toMatchObject({ reason: 'connection_changed', message });
+      expect(starts()).toHaveLength(0);
     });
 
-    await eventually(() => expect(api.sentInto('conv_1')).toContain('Asked and got the answer.'));
+    it('stops the run going on too', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      const { api, starts, logs, loop } = await start({ connection: CONNECTION }, {}, undefined, {
+        savedConnection: () => saved,
+      });
+      api.deliver({ text: 'sleep:5000' });
+      await eventually(() => expect(starts()).toHaveLength(1));
+
+      saved = { ...CONNECTION, key: 'fedcba9876543210' };
+
+      expect(await loop).toMatchObject({ reason: 'connection_changed' });
+      expect(logs).toContain('conv_1: stopped (shutdown).');
+    });
+
+    it('doesn’t start the host for a run that was getting ready meanwhile', async () => {
+      let saved: ListenConnection | null = CONNECTION;
+      // The wait for messages lasts longer than the lookup: nothing else notices the new connection first.
+      const { api, starts, logs, loop } = await start({ connection: CONNECTION }, { waitSeconds: 5 }, undefined, {
+        savedConnection: () => saved,
+      });
+      api.deliver({ text: 'ask-async-and-sleep:0' });
+      const region = await asked(api, 'Which region?');
+      await eventually(() => expect(logs).toContain('conv_1: done.'));
+
+      api.showDelayMs = 1000;
+      api.answer(region, { status: 'answered', text: 'eu-west' });
+      await eventually(() => expect(api.callsTo('GET', `/v1/inbox/messages/${region}`)).toHaveLength(1));
+      saved = { ...CONNECTION, key: 'fedcba9876543210' };
+
+      expect(await loop).toMatchObject({ reason: 'connection_changed' });
+      expect(starts()).toHaveLength(1);
+    });
+
+    it('goes on while the saved connection can’t be read, as while it is being written', async () => {
+      const { api } = await start({ connection: CONNECTION }, {}, undefined, { savedConnection: () => null });
+
+      api.deliver({ text: 'hello' });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello'));
+    });
   });
 
   describe('a question the agent puts to someone outside its conversation too', () => {
@@ -960,6 +1255,27 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     });
   });
 
+  it('keeps nothing of a finished wait for the operator on what lasts as long as the listener', () => {
+    const lasting = new AbortController();
+
+    // As many looks as a ten-minute wait takes, each one on the signal of the whole wait.
+    for (let wait = 0; wait < 120; wait++) {
+      anyOf(lasting.signal, new AbortController().signal).dispose();
+    }
+
+    expect(getEventListeners(lasting.signal, 'abort')).toHaveLength(0);
+  });
+
+  it('wakes a wait as soon as any of its signals ends it', () => {
+    const question = new AbortController();
+    const woken = anyOf(new AbortController().signal, question.signal);
+
+    question.abort();
+
+    expect(woken.signal.aborted).toBe(true);
+    woken.dispose();
+  });
+
   it('handles each message once, even when it comes back', async () => {
     const { api, starts } = await start();
 
@@ -971,5 +1287,334 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: next'));
     expect(starts()).toHaveLength(2);
     expect(api.sentInto('conv_1').filter((text) => text === 'Echo: only once')).toHaveLength(1);
+  });
+});
+
+/**
+ * The same loop with Codex: what differs from Claude Code is only how the adapter drives it, so these go over what
+ * each run does once, with the fake `codex app-server`.
+ */
+describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
+  const codexOnly = { host: 'codex' } as const;
+
+  it('starts Codex for a message in the project and posts its last words when it didn’t reply itself', async () => {
+    const { api, starts, store, dir } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'hello there' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello there'));
+    expect(starts()).toEqual([{ event: 'start', argv: ['app-server'], cwd: dir }]);
+    expect(store.current?.sessions.conv_1?.sessionId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(api.calls.every((call) => call.host === 'codex')).toBe(true);
+  });
+
+  it('goes on with the same thread for the next message in the conversation', async () => {
+    const { api, store } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'first' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: first'));
+    const threadId = store.current?.sessions.conv_1?.sessionId;
+
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This thread has seen 1 messages before.'));
+    expect(store.current?.sessions.conv_1?.sessionId).toBe(threadId);
+  });
+
+  it('asks the operator before the agent’s own reply when Codex runs it outside the project', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    const reply = 'npx @agentinbox/cli reply conv_1 "Hi"';
+
+    api.deliver({ text: `ask-in:/tmp ${reply}` });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(`Ran ${reply} in /tmp (accept).`));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.body).toContain(
+      `It is Agent Inbox’s own command, but it runs in ${realpathSync('/tmp')}, outside the project, so it may run other code than Agent Inbox’s.`
+    );
+  });
+
+  it('asks the operator before the agent’s own reply run where the project has a CLI of its own', async () => {
+    const { api, dir } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    mkdirSync(join(dir, 'node_modules', 'tmp', 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+    const reply = 'npx @agentinbox/cli reply conv_1 "Hi"';
+
+    api.deliver({ text: `ask-in:${join(dir, 'node_modules', 'tmp')} ${reply}` });
+
+    await eventually(() => expect(api.interactions.some((interaction) => interaction.kind === 'approve')).toBe(true));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.card.body).toContain(
+      'the project has its own node_modules/tmp/node_modules/@agentinbox/cli, so it may run other code than Agent Inbox’s.'
+    );
+  });
+
+  it('follows a link to where the agent’s own reply really runs before it lets it through', async () => {
+    const { api, dir } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+    mkdirSync(join(dir, 'real', 'deep'), { recursive: true });
+    mkdirSync(join(dir, 'real', 'node_modules', '@agentinbox', 'cli'), { recursive: true });
+    symlinkSync(join(dir, 'real', 'deep'), join(dir, 'link'));
+
+    api.deliver({ text: `ask-in:${join(dir, 'link')} npx @agentinbox/cli reply conv_1 "Hi"` });
+
+    await eventually(() => expect(api.interactions.some((interaction) => interaction.kind === 'approve')).toBe(true));
+    expect(api.interactions.find((interaction) => interaction.kind === 'approve')?.card.body).toContain(
+      'the project has its own real/node_modules/@agentinbox/cli'
+    );
+  });
+
+  it('starts a fresh thread when Codex no longer has the old one', async () => {
+    const { api, store } = await start(
+      {
+        sessions: {
+          conv_1: { sessionId: '019a0000-0000-7000-8000-000000000000', round: 0, lastRunAt: new Date().toISOString() },
+        },
+      },
+      {},
+      undefined,
+      codexOnly
+    );
+
+    api.deliver({ text: 'still there?' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still there?'));
+    expect(store.current?.sessions.conv_1?.sessionId).not.toBe('019a0000-0000-7000-8000-000000000000');
+  });
+
+  it('lets the agent reply in its own conversation without asking anyone, and doesn’t reply twice', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'reply-myself' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('lets the agent reply with our MCP server’s tool in its own conversation without asking anyone', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'mcp:inbox_reply' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied through MCP.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+  });
+
+  it('asks the operator before a command its sandbox doesn’t allow, and passes the Allow back', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+    api.decide = () => 'approved';
+
+    api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (accept).'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.to).toBe('ada');
+    expect(question?.card.title).toBe('Codex wants to run `npm publish`');
+    expect(question?.card).toMatchObject({ extraActions: [{ id: 'allow_session', label: 'Allow for this session' }] });
+  });
+
+  it('passes the operator’s words on to Codex when they answer a permission question in words', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+    api.decide = (interaction) =>
+      interaction.kind === 'approve' ? { status: 'answered', text: 'not now, run the tests first' } : undefined;
+
+    api.deliver({ text: 'ask:npm publish' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain(
+        'Not allowed (decline). Told: Your operator answered in words instead of allowing it: “not now, run the tests first”. It isn’t allowed; follow what they wrote if it says what to do instead.'
+      )
+    );
+  });
+
+  it('lets a message that comes while it works join the same run', async () => {
+    const { api, starts } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'sleep:800' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: 'and this too' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping. Also: and this too'));
+    expect(starts()).toHaveLength(1);
+  });
+
+  it('stops the run on /stop and says so', async () => {
+    const { api, starts, logs } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'sleep:20000' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: '/stop' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(STOPPED_REPLY));
+    expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+    expect(logs.some((line) => line.includes('stopped (stop)'))).toBe(true);
+  });
+
+  it('tells the operator when a run fails, with Codex’s reason', async () => {
+    const { api } = await start({}, {}, undefined, codexOnly);
+
+    api.deliver({ text: 'fail' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_operator')).toContain('Codex couldn’t answer in conv_1: You have hit your usage limit.')
+    );
+  });
+});
+
+/**
+ * The same loop with OpenCode, both its lines: OpenCode 1 takes a message that comes while it works in the next turn,
+ * OpenCode 2 steers it into the turn running; the rest is the same, with the fake `opencode serve`.
+ */
+describe.each([
+  ['OpenCode 1', '1.19.5'],
+  ['OpenCode 2', '2.2.0'],
+])('runListenLoop with %s', { timeout: 20_000 }, (_name, version) => {
+  const opencodeOnly = { host: 'opencode' } as const;
+  const major = Number(version[0]);
+
+  beforeEach(() => {
+    vi.stubEnv('FAKE_OPENCODE_VERSION', version);
+  });
+
+  it('starts OpenCode for a message in the project and posts its last words when it didn’t reply itself', async () => {
+    const { api, starts, store, dir } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'hello there' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello there'));
+    expect(starts()).toEqual([
+      {
+        event: 'start',
+        argv:
+          major === 1
+            ? ['serve', '--hostname', '127.0.0.1', '--port', '0']
+            : ['serve', '--stdio', '--hostname', '127.0.0.1'],
+        cwd: dir,
+      },
+    ]);
+    expect(store.current?.sessions.conv_1?.sessionId).toMatch(/^ses_/);
+    expect(api.calls.every((call) => call.host === 'opencode')).toBe(true);
+  });
+
+  it('goes on with the same session for the next message in the conversation', async () => {
+    const { api, store } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'first' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: first'));
+    const sessionId = store.current?.sessions.conv_1?.sessionId;
+
+    api.deliver({ text: 'remember' });
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('This session has seen 1 messages before.'));
+    expect(store.current?.sessions.conv_1?.sessionId).toBe(sessionId);
+  });
+
+  it('starts a fresh session when OpenCode no longer has the old one', async () => {
+    const { api, store } = await start(
+      { sessions: { conv_1: { sessionId: 'ses_gone', round: 0, lastRunAt: new Date().toISOString() } } },
+      {},
+      undefined,
+      opencodeOnly
+    );
+
+    api.deliver({ text: 'still there?' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: still there?'));
+    expect(store.current?.sessions.conv_1?.sessionId).not.toBe('ses_gone');
+  });
+
+  it('lets the agent reply in its own conversation without asking anyone, and doesn’t reply twice', async () => {
+    const { api } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'reply-myself' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    expect(api.sentInto('conv_1')).not.toContain('Replied in the conversation.');
+  });
+
+  it('lets the agent reply with our MCP server’s tool in its own conversation without asking anyone', async () => {
+    const { api } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'mcp:inbox_reply' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied through MCP.'));
+    await pause(400);
+    expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+  });
+
+  it('asks the operator before a shell command, and passes the Allow back', async () => {
+    const { api } = await start({}, {}, undefined, opencodeOnly);
+    api.decide = () => 'approved';
+
+    api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (once).'));
+    const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+    expect(question?.to).toBe('ada');
+    expect(question?.card.title).toBe('OpenCode wants to run `npm publish`');
+    // OpenCode 2's "always" would keep the rule for good, so only OpenCode 1 offers one for the session.
+    expect(question?.card.extraActions).toEqual(
+      major === 1 ? [{ id: 'allow_session', label: 'Allow for this session' }] : undefined
+    );
+  });
+
+  it('passes the operator’s words on to OpenCode when they answer a permission question in words', async () => {
+    const { api } = await start({}, {}, undefined, opencodeOnly);
+    api.decide = (interaction) =>
+      interaction.kind === 'approve' ? { status: 'answered', text: 'not now, run the tests first' } : undefined;
+
+    api.deliver({ text: 'ask:npm publish' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_1')).toContain(
+        'Not allowed (reject). Told: Your operator answered in words instead of allowing it: “not now, run the tests first”. It isn’t allowed; follow what they wrote if it says what to do instead.'
+      )
+    );
+  });
+
+  it('answers a message that comes while it works in the same run', async () => {
+    const { api, starts } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'sleep:800' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    api.deliver({ text: 'and this too' });
+
+    if (major === 1) {
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toEqual(expect.arrayContaining(['Done sleeping.', 'Echo: and this too']))
+      );
+    } else {
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Done sleeping. Also: and this too'));
+    }
+    expect(starts()).toHaveLength(1);
+  });
+
+  it('stops the run on /stop and says so', async () => {
+    const { api, starts, logs } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'sleep:20000' });
+    await eventually(() => expect(starts()).toHaveLength(1));
+    await pause(300);
+    api.deliver({ text: '/stop' });
+
+    await eventually(() => expect(api.sentInto('conv_1')).toContain(STOPPED_REPLY));
+    expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+    expect(logs.some((line) => line.includes('stopped (stop)'))).toBe(true);
+  });
+
+  it('tells the operator when a run fails, with OpenCode’s reason', async () => {
+    const { api } = await start({}, {}, undefined, opencodeOnly);
+
+    api.deliver({ text: 'fail' });
+
+    await eventually(() =>
+      expect(api.sentInto('conv_operator')).toContain(
+        'OpenCode couldn’t answer in conv_1: You have hit your usage limit.'
+      )
+    );
   });
 });

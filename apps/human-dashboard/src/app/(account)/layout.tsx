@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { ForgetSignedOutOperator } from '@/components/analytics/analytics';
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
-import { humanClerkAppearance } from '@/lib/clerk-appearance';
+import { humanClerkAppearance, humanClerkLocalization } from '@/lib/clerk-appearance';
 
 /**
  * Human accounts (the Human Clerk app) only exist on these pages: sign-in, sign-up, the claim page,
@@ -18,6 +18,7 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
       signUpFallbackRedirectUrl={DASHBOARD_HOME}
       afterSignOutUrl="/"
       appearance={humanClerkAppearance}
+      localization={humanClerkLocalization}
     >
       <ForgetSignedOutOperator />
       {children}
