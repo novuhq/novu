@@ -28,16 +28,11 @@ const CHANGE_STYLES: Record<ToolChange, string> = {
   Moved: 'bg-feature-base/10 text-feature-base',
 };
 
-export function CopilotUserMessage({ message, contextLabel }: { message: AgentMessage; contextLabel?: string }) {
+export function CopilotUserMessage({ message }: { message: AgentMessage }) {
   const text = getUserMessageText(message);
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      {contextLabel && (
-        <span className="rounded-md bg-bg-weak px-1.5 py-0.5 font-mono text-[10px] leading-4 text-text-sub">
-          {contextLabel}
-        </span>
-      )}
+    <div className="flex flex-col items-end">
       <div
         className={cn(
           'max-w-[352px] whitespace-pre-wrap break-words rounded-2xl rounded-tr-[4px] bg-[#f4f4f5] px-3 py-2 text-xs leading-4 text-text-strong',

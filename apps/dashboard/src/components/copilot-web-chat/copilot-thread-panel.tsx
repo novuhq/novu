@@ -222,7 +222,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
 }
 
 function Thread() {
-  const { chat, retry, pageContext, hasRunError, isBusy } = useCopilotWebChat();
+  const { chat, retry, hasRunError, isBusy } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
   const isStopping = !!chat?.isStopping;
@@ -274,8 +274,7 @@ function Thread() {
         )}
         {orderStoppedTurns(messages).map((message) =>
           message.role === 'user' ? (
-            // The conversation is scoped to one workflow, so every message was sent for the one on the page.
-            <CopilotUserMessage key={message.id} message={message} contextLabel={pageContext?.workflowLabel} />
+            <CopilotUserMessage key={message.id} message={message} />
           ) : (
             <CopilotAssistantMessage key={message.id} message={message} />
           )
