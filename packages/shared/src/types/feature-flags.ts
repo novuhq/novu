@@ -259,8 +259,7 @@ export enum FeatureFlagsKeysEnum {
   /**
    * When true (default), free-tier organizations are capped at `FREE_TIER_MAX_WORKFLOWS` workflows
    * per environment. Set to false in LaunchDarkly to fall back to `FREE_TIER_LEGACY_MAX_WORKFLOWS`
-   * for an organization or segment. Self-hosted: set `IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED=false`
-   * to use the legacy cap.
+   * for an organization or segment. Self-hosted deployments ignore this flag and use the system ceiling.
    */
   IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED = 'IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED',
 
