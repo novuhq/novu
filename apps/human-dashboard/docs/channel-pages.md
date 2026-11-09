@@ -93,7 +93,7 @@ links, narrow layouts, no-JavaScript content and the mobile header menu.
 
 The refreshed Prime visual audit from 2026-11-09 **passes for both supplied reference
 pages** at a 1920×1080 browser viewport, including the CLI review corrections.
-After the illustration polish, pass two has score 0 and zero violations for each
+After the illustration polish, pass three has score 0 and zero violations for each
 page, with no masks and unchanged default thresholds. Raster differences are
 0.9006% for the channel page and 0.7736% for the agent page, below the 1% limit.
 Full-page dimensions match Figma: 1920×6726 and 1920×5107. Fresh read-only Figma
@@ -186,14 +186,17 @@ unavailable Galaxy A16. Full-page capture uses native Chromium/Firefox protocols
 and measured scroll stitching for Safari/mobile. Native mobile originals and
 viewport calibration are retained with the run artifacts.
 
-Safari Automate clicks on iOS do not grant user activation, so successful
-clipboard writes cannot be signed off there. The visible manual-copy fallback
-passes; macOS Safari and Android copy checks pass. This is a recorded automation
-limitation, not an asserted product failure. Vercel's preview toolbar is also
-recorded separately from application UI. No account, project or production
-settings were changed for QA.
+Standard Safari Automate clicks on iOS do not grant user activation. Native
+Appium context taps, after web-tap calibration, verified trusted input and actual
+clipboard writes on iPhone 17 and iPhone 13 for both templates, including command
+and setup-prompt contents. The manual-copy fallback also passes. All ten
+functional/visual matrix rows pass: 132 core assertions and four additional
+setup-prompt copy checks. Vercel's preview toolbar is recorded separately from
+application UI; no account, project or production settings changed for QA.
 
-[BrowserStack sessions and recordings](https://automate.browserstack.com/builds/f612653947f8ed99d85ed32fdca1c7331ca61936)
-provide the remote evidence. Local run reports, native screenshots, readable
+[Desktop matrix sessions](https://automate.browserstack.com/builds/f5783cd392511ad56a8f4c151a638f6516d9882d)
+and [final mobile/trusted-copy sessions](https://automate.browserstack.com/builds/870594f4e9feacb44180169573a6169b05615339)
+provide remote evidence.
+Local run reports, native screenshots, readable
 review slices and the credential-free temporary harness are retained outside
 product source under the dated QA run directory.
