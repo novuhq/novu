@@ -1,4 +1,5 @@
 import { ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import { EnvironmentEntity, OrganizationEntity } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -8,6 +9,8 @@ import {
   UNLIMITED_VALUE,
 } from '@novu/shared';
 import { FeatureFlagsService } from './feature-flags';
+
+type PartialWithId<T> = Partial<T> & { _id: string };
 
 export interface ResolvedTierLimit {
   /** The effective limit for the organization. */
@@ -36,6 +39,11 @@ export interface ResolvedTierLimit {
  *
  * Self-hosted short-circuits are intentionally left to callers — they differ
  * per resource and must never reach the feature-flag service.
+ *
+ * Callers that need environment-scoped LaunchDarkly targeting pass `environment`
+ * and `organization`. Otherwise the flag is evaluated against the organization ID
+ * and service level only. `tierLimitOverride` replaces the tier value from the
+ * feature table, for callers that resolve a different cap for the same tier.
  */
 export async function resolveTierLimit(params: {
   featureFlagsService: FeatureFlagsService;
@@ -44,13 +52,27 @@ export async function resolveTierLimit(params: {
   featureName: FeatureNameEnum;
   organizationId: string;
   apiServiceLevel: ApiServiceLevelEnum;
+  environment?: PartialWithId<EnvironmentEntity>;
+  organization?: PartialWithId<OrganizationEntity>;
+  tierLimitOverride?: number;
 }): Promise<ResolvedTierLimit> {
-  const { featureFlagsService, flagKey, systemDefault, featureName, organizationId, apiServiceLevel } = params;
+  const {
+    featureFlagsService,
+    flagKey,
+    systemDefault,
+    featureName,
+    organizationId,
+    apiServiceLevel,
+    environment,
+    organization,
+    tierLimitOverride,
+  } = params;
 
   const systemLimit = await featureFlagsService.getFlag({
     key: flagKey,
     defaultValue: systemDefault,
-    organization: { _id: organizationId, apiServiceLevel },
+    environment,
+    organization: organization ?? { _id: organizationId, apiServiceLevel },
   });
 
   const isSpecialLimit = systemLimit !== systemDefault;
@@ -58,7 +80,7 @@ export async function resolveTierLimit(params: {
     return { limit: systemLimit, systemLimit, limitSource: 'system' };
   }
 
-  const tierLimit = getFeatureForTierAsNumber(featureName, apiServiceLevel);
+  const tierLimit = tierLimitOverride ?? getFeatureForTierAsNumber(featureName, apiServiceLevel);
 
   if (tierLimit >= UNLIMITED_VALUE) {
     return { limit: systemLimit, systemLimit, limitSource: 'system' };

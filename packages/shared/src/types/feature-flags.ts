@@ -256,6 +256,13 @@ export enum FeatureFlagsKeysEnum {
    * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
+  /**
+   * When true (default), free-tier organizations are capped at `FREE_TIER_MAX_WORKFLOWS` workflows
+   * per environment. Set to false in LaunchDarkly to fall back to `FREE_TIER_LEGACY_MAX_WORKFLOWS`
+   * for an organization or segment. Self-hosted: set `IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED=false`
+   * to use the legacy cap.
+   */
+  IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED = 'IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',

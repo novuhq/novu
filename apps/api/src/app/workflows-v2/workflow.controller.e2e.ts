@@ -22,8 +22,7 @@ import { PreferencesRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureNameEnum,
-  getFeatureForTierAsNumber,
+  FREE_TIER_MAX_WORKFLOWS,
   ShortIsPrefixEnum,
   StepTypeEnum,
   slugify,
@@ -224,17 +223,17 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(payloadProperties.properties?.name).to.be.ok;
     });
 
-    it('should not allow to create more than 20 workflows for a free organization', async () => {
+    it('should limit a free organization to 5 workflows and reject the 6th with 402', async () => {
       await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
-      getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, ApiServiceLevelEnum.FREE, false);
-      for (let i = 0; i < 20; i += 1) {
-        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: new Date().toISOString() + i });
+
+      for (let i = 0; i < FREE_TIER_MAX_WORKFLOWS; i += 1) {
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: `free-tier-${Date.now()}-${i}` });
         await createWorkflow(apiClient, createWorkflowDto);
       }
 
-      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: new Date().toISOString() });
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: `free-tier-over-${Date.now()}` });
       const error = await createWorkflowAndExpectError(apiClient, createWorkflowDto);
-      expect(error?.statusCode).eq(400);
+      expect(error?.statusCode).eq(402);
     });
 
     it('should create workflow with payloadSchema and validatePayload fields', async () => {
@@ -1503,6 +1502,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   async function create10Workflows(prefix: string = 'Test Workflow') {
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
     for (let i = 0; i < 10; i++) {
       await createWorkflowAndValidate(`${prefix}-${i}`);
     }
