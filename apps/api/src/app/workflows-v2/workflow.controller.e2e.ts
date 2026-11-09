@@ -232,8 +232,17 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       }
 
       const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ name: `free-tier-over-${Date.now()}` });
-      const error = await createWorkflowAndExpectError(apiClient, createWorkflowDto);
-      expect(error?.statusCode).eq(402);
+      let rejected = false;
+
+      try {
+        await apiClient.workflows.create(createWorkflowDto);
+      } catch (error) {
+        rejected = true;
+        // 402 is not a declared workflow response, so the SDK throws SDKError instead of ErrorDto.
+        expect(error).to.include({ name: 'SDKError', statusCode: 402 });
+      }
+
+      expect(rejected, 'expected the 6th workflow create to be rejected').to.equal(true);
     });
 
     it('should create workflow with payloadSchema and validatePayload fields', async () => {
