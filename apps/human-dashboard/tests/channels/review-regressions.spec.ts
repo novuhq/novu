@@ -52,11 +52,20 @@ for (const route of ['/telegram', '/telegram/openclaw']) {
     await expect(playback).toBeHidden();
     await page.clock.runFor(20_100);
     await expect(setup.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
+    // Media styles update before the asynchronous matchMedia change event starts the timer.
+    await page.evaluate(() => {
+      const preference = matchMedia('(prefers-reduced-motion: reduce)');
+      preference.addEventListener('change', () => {
+        document.documentElement.dataset.testMotionPreference = preference.matches ? 'reduce' : 'no-preference';
+      });
+    });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.locator('html')).toHaveAttribute('data-test-motion-preference', 'no-preference');
     await expect(playback).toBeVisible();
     await page.clock.runFor(10_100);
     await expect(setup.getByRole('tab').nth(1)).toHaveAttribute('aria-selected', 'true');
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.locator('html')).toHaveAttribute('data-test-motion-preference', 'reduce');
     await expect(playback).toBeHidden();
     await page.clock.runFor(20_100);
     await expect(setup.getByRole('tab').nth(1)).toHaveAttribute('aria-selected', 'true');

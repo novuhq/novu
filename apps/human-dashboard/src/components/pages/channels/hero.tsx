@@ -69,6 +69,10 @@ export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: Ag
           aria-hidden="true"
           className="pointer-events-none absolute top-30 left-1/2 h-[794px] w-[785px] -translate-x-1/2 rounded-full bg-accent opacity-10 blur-[66px]"
         />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-b from-transparent to-black md:hidden"
+        />
         {agent && (
           <div
             aria-hidden="true"

@@ -174,8 +174,10 @@ truncated illustration exports were found.
 
 The close-up review corrected stretched reach-icon boxes, the agent hero's tile
 borders, both CTA corner glows, the capability links' pixel-style arrow SVG and
-the landing FAQ's active rail color. Outer illustration shells remain CSS; the
-new arrow is an isolated vector export.
+the landing FAQ's active rail color. The mobile hero glow fades to black before
+its clipped media boundary, preventing a visible orange rectangle beneath the
+conversation. Outer illustration shells remain CSS; the new arrow is an isolated
+vector export.
 
 The BrowserStack core matrix covers Windows Chrome/Edge/Firefox, macOS
 Chrome/Safari, iPhone 17/iOS 26 and iPhone 13/iOS 18 Safari, OnePlus 13R/Android 15
