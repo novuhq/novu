@@ -395,7 +395,7 @@ function ChangeSectionRow({
             <Icon className="size-3.5 text-text-sub" />
           </span>
           <span className="truncate text-label-xs text-text-strong">{section.label}</span>
-          {section.meta && <span className="shrink-0 text-paragraph-xs text-text-soft">{section.meta}</span>}
+          {section.meta && <span className="min-w-0 truncate text-paragraph-xs text-text-soft">{section.meta}</span>}
           {section.status === 'breaking' && <BreakingBadge />}
           {section.status === 'deleted' && stepItems.length === 0 && <ResourceStatusBadge status="deleted" />}
         </div>

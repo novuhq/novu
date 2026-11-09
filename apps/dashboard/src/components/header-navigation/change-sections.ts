@@ -37,13 +37,21 @@ export const GROUP_ICONS: Record<ChangeGroupType, IconType> = {
   agent: RiRobot2Line,
 };
 
-export type ChangeSectionKey = 'payloadSchema' | 'steps' | 'preferences' | 'translations' | 'details' | 'content';
+export type ChangeSectionKey =
+  | 'payloadSchema'
+  | 'steps'
+  | 'preferences'
+  | 'translations'
+  | 'agent'
+  | 'details'
+  | 'content';
 
 export const SECTION_ICONS: Record<ChangeSectionKey, IconType> = {
   payloadSchema: RiDatabase2Line,
   steps: RiRouteFill,
   preferences: RiSettingsLine,
   translations: RiTranslate2,
+  agent: RiRobot2Line,
   details: RiInformationLine,
   content: RiCodeBlock,
 };
@@ -174,9 +182,15 @@ const PAYLOAD_FIELDS = ['payloadSchema', 'validatePayload'];
 // Severity is edited on the channel preferences page, next to the channel toggles.
 const PREFERENCE_FIELDS = ['preferences', 'severity'];
 const TRANSLATION_FIELDS = ['isTranslationEnabled'];
+const AGENT_FIELD = 'agent';
 const VALIDATION_CHANGE_ID = 'validate-payload';
 const ROOT_SCHEMA_CHANGE_ID = 'schema';
-const SECTIONED_WORKFLOW_FIELDS = new Set([...PAYLOAD_FIELDS, ...PREFERENCE_FIELDS, ...TRANSLATION_FIELDS]);
+const SECTIONED_WORKFLOW_FIELDS = new Set([
+  ...PAYLOAD_FIELDS,
+  ...PREFERENCE_FIELDS,
+  ...TRANSLATION_FIELDS,
+  AGENT_FIELD,
+]);
 
 const EMPTY_DIFF_STAT: ChangeDiffStat = { added: 0, deleted: 0 };
 
@@ -327,6 +341,14 @@ function fieldsDiffStatus({ hasPrevious, hasNext }: FieldsDiff): ChangeStatus {
   return 'modified';
 }
 
+function payloadSectionStatus(hasPrevious: boolean, hasNext: boolean, breaking: boolean): ChangeStatus {
+  if (breaking) return 'breaking';
+  if (!hasPrevious) return 'added';
+  if (!hasNext) return 'deleted';
+
+  return 'modified';
+}
+
 function buildWorkflowFieldSection(
   workflowChange: INestedResourceChange | undefined,
   section: Pick<ChangeSection, 'key' | 'label'>,
@@ -339,6 +361,51 @@ function buildWorkflowFieldSection(
   if (!hasChanges(diffStat)) return null;
 
   return { ...section, status: fieldsDiffStatus(fieldsDiff), fieldsDiff, diffStat };
+}
+
+function workflowAgent(value: WorkflowFields): Record<string, unknown> | null {
+  if (!isContainer(value) || !isContainer(value.agent)) return null;
+
+  return value.agent;
+}
+
+function agentIdentifier(agent: Record<string, unknown> | null): string | null {
+  if (!agent || typeof agent.identifier !== 'string' || agent.identifier.length === 0) return null;
+
+  return agent.identifier;
+}
+
+/** The agent field is its own row, so assigning one reads as an assignment instead of a workflow-details edit. */
+function buildAgentAssignmentSection(workflowChange: INestedResourceChange | undefined): ChangeSection | null {
+  if (!workflowChange?.diffs) return null;
+
+  const previous = workflowAgent(workflowChange.diffs.previous);
+  const next = workflowAgent(workflowChange.diffs.new);
+  const fieldsDiff = toFieldsDiff(previous, next);
+  const diffStat = fieldsDiffStat(fieldsDiff);
+  if (!hasChanges(diffStat)) return null;
+
+  const previousId = agentIdentifier(previous);
+  const nextId = agentIdentifier(next);
+  const { label, meta } = agentAssignmentCopy(previousId, nextId);
+
+  return { key: 'agent', label, meta, status: fieldsDiffStatus(fieldsDiff), fieldsDiff, diffStat };
+}
+
+function agentAssignmentCopy(previousId: string | null, nextId: string | null): { label: string; meta?: string } {
+  if (!previousId && nextId) {
+    return { label: 'Assigned an agent', meta: nextId };
+  }
+
+  if (previousId && !nextId) {
+    return { label: 'Unassigned the agent', meta: previousId };
+  }
+
+  if (previousId && nextId && previousId !== nextId) {
+    return { label: 'Reassigned the agent', meta: `${previousId} → ${nextId}` };
+  }
+
+  return { label: 'Updated the agent', meta: nextId ?? undefined };
 }
 
 /** One side of the Translations section: the workflow's translation toggle plus its translation group(s). */
@@ -652,13 +719,27 @@ function rootSchemaChange(
     id: ROOT_SCHEMA_CHANGE_ID,
     name: 'Schema',
     path: 'schema',
-    presence: 'modified',
+    presence: schemaPresence(previousSchema, nextSchema),
     severity: breaking ? 'breaking' : 'warning',
     rules,
   };
 }
 
-function validationChange(previous: JsonSchema | null, next: JsonSchema | null): SchemaVariableChange | null {
+function schemaPresence(
+  previousSchema: JsonSchema | null,
+  nextSchema: JsonSchema | null
+): SchemaVariableChange['presence'] {
+  if (!previousSchema) return 'added';
+  if (!nextSchema) return 'removed';
+
+  return 'modified';
+}
+
+function validationChange(
+  previous: JsonSchema | null,
+  next: JsonSchema | null,
+  existsInProduction: boolean
+): SchemaVariableChange | null {
   const turnedOn = previous?.validatePayload !== true && next?.validatePayload === true;
   const turnedOff = previous?.validatePayload === true && next?.validatePayload !== true;
   if (!turnedOn && !turnedOff) return null;
@@ -667,8 +748,8 @@ function validationChange(previous: JsonSchema | null, next: JsonSchema | null):
     id: VALIDATION_CHANGE_ID,
     name: 'Validation',
     path: 'validatePayload',
-    presence: 'modified',
-    severity: turnedOn ? 'breaking' : 'warning',
+    presence: previous ? 'modified' : 'added',
+    severity: turnedOn && existsInProduction ? 'breaking' : 'warning',
     rules: [
       { action: 'removed', label: previous?.validatePayload === true ? 'on' : 'off' },
       { action: 'added', label: next?.validatePayload === true ? 'on' : 'off' },
@@ -709,9 +790,14 @@ function payloadChangeNote(changes: SchemaVariableChange[]): string | undefined 
   return `${sentence} Plus ${rest.length} more breaking ${rest.length === 1 ? 'change' : 'changes'}.`;
 }
 
+/**
+ * `existsInProduction` is false for a workflow that is only in Development. Nothing there is live yet,
+ * so no payload change can stop a trigger that works today.
+ */
 function buildPayloadSchemaSection(
   workflowChange: INestedResourceChange | undefined,
-  hasBreakingDescendant: boolean
+  hasBreakingDescendant: boolean,
+  existsInProduction: boolean
 ): ChangeSection | null {
   if (!workflowChange?.diffs) return null;
 
@@ -724,14 +810,14 @@ function buildPayloadSchemaSection(
   const diffStat = sumStats([{ added: lineDiff.added, deleted: lineDiff.removed }, validationStat]);
   if (!hasChanges(diffStat)) return null;
 
-  const validationOn = next?.validatePayload === true;
+  const validationOn = existsInProduction && next?.validatePayload === true;
   const schemaChanges = collectVariableChanges(previousSchema, nextSchema, [], validationOn);
 
   // Root rules stay visible alongside variable changes. They are not properties.
   const rootChange = rootSchemaChange(previousSchema, nextSchema, validationOn);
   if (rootChange) schemaChanges.push(rootChange);
 
-  const validation = validationChange(previous, next);
+  const validation = validationChange(previous, next, existsInProduction);
   if (validation) schemaChanges.unshift(validation);
 
   const previousValidation = previous?.validatePayload === true;
@@ -740,7 +826,7 @@ function buildPayloadSchemaSection(
   return {
     key: 'payloadSchema',
     label: 'Payload schema',
-    status: hasBreakingDescendant ? 'breaking' : 'modified',
+    status: payloadSectionStatus(Boolean(previousSchema), Boolean(nextSchema), hasBreakingDescendant),
     schemaChanges,
     schemaPreview: {
       lineDiff,
@@ -762,12 +848,13 @@ function buildWorkflowSections(row: ChangeRow): ChangeSection[] {
 
   const sections = [
     // Breaking is only ever derived from payload schema / validation changes, so it lives on this section.
-    buildPayloadSchemaSection(workflowChange, row.hasBreakingDescendant),
+    buildPayloadSchemaSection(workflowChange, row.hasBreakingDescendant, row.status !== 'added'),
     buildStepsSection(stepChanges),
     buildWorkflowFieldSection(workflowChange, { key: 'preferences', label: 'Channel preferences' }, (source) =>
       pickFields(source, PREFERENCE_FIELDS)
     ),
     buildTranslationsSection(workflowChange, translationChanges),
+    buildAgentAssignmentSection(workflowChange),
     buildWorkflowFieldSection(workflowChange, { key: 'details', label: 'Workflow details' }, (source) =>
       omitFields(source, SECTIONED_WORKFLOW_FIELDS)
     ),
