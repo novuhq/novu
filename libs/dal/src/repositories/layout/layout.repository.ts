@@ -49,7 +49,7 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       _organizationId: organizationId,
       type: ResourceTypeEnum.BRIDGE,
       origin: ResourceOriginEnum.NOVU_CLOUD,
-    }).populate('updatedBy', '_id firstName lastName externalId');
+    }).populate('updatedBy', '_id firstName lastName externalId email');
 
     return this.mapEntities(items);
   }

@@ -15,9 +15,17 @@ import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 type NovuBrandingProps = HTMLAttributes<HTMLDivElement> & {
   resourceOrigin: ResourceOriginEnum;
   isStepResolver?: boolean;
+  /** Review surfaces show the mark without the control that saves organization settings. */
+  readOnly?: boolean;
 };
 
-export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...rest }: NovuBrandingProps) => {
+export const NovuBranding = ({
+  className,
+  resourceOrigin,
+  isStepResolver,
+  readOnly = false,
+  ...rest
+}: NovuBrandingProps) => {
   const { subscription } = useFetchSubscription();
   const navigate = useNavigate();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
@@ -34,19 +42,6 @@ export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...res
   const showBranding =
     resourceOrigin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings && !isStepResolver;
 
-  if (!showBranding) return null;
-
-  const handleRemoveBrandingChange = (value: boolean) => {
-    updateOrganizationSettings.mutate({
-      removeNovuBranding: value,
-    });
-  };
-
-  const handleOrganizationSettingsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(ROUTES.SETTINGS_ORGANIZATION);
-  };
-
   /**
    * Same branding is appended to the actual email
    * @see apps/api/src/app/environments-v1/usecases/output-renderers/novu-branding-html.ts
@@ -60,6 +55,27 @@ export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...res
       />
     </div>
   );
+
+  if (!showBranding) return null;
+
+  if (readOnly) {
+    return (
+      <div className={cn('flex items-center justify-center pb-6 pt-4', className)} {...rest}>
+        {brandingContent}
+      </div>
+    );
+  }
+
+  const handleRemoveBrandingChange = (value: boolean) => {
+    updateOrganizationSettings.mutate({
+      removeNovuBranding: value,
+    });
+  };
+
+  const handleOrganizationSettingsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(ROUTES.SETTINGS_ORGANIZATION);
+  };
 
   const settingsTooltipContent = (
     <>

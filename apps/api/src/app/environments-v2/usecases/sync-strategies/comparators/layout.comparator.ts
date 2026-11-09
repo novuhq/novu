@@ -15,6 +15,25 @@ export class LayoutComparator {
     this.logger.setContext(this.constructor.name);
   }
 
+  /** Normalized fields of a layout that has no counterpart to compare against, so the publish UI can still list them. */
+  async snapshotLayout(layout: LayoutEntity): Promise<INormalizedLayout | null> {
+    try {
+      const layoutDto = await this.getLayoutUseCase.execute(
+        GetLayoutCommand.create({
+          layoutIdOrInternalId: layout._id,
+          environmentId: layout._environmentId,
+          organizationId: layout._organizationId,
+        })
+      );
+
+      return this.layoutNormalizer.normalizeLayout(layoutDto);
+    } catch (error) {
+      this.logger.error({ err: error }, `Failed to snapshot layout ${error.message}`);
+
+      return null;
+    }
+  }
+
   async compareLayouts(sourceLayout: LayoutEntity, targetLayout: LayoutEntity): Promise<ILayoutComparison> {
     try {
       if (!sourceLayout || !targetLayout) {
