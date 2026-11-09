@@ -4,14 +4,19 @@ import { PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { resolveLifecycleChannel } from '../../conversation-runtime/conversation/run-lifecycle-activity';
+import { AgentTurnAbortStore } from '../../conversation-runtime/runtime/agent-turn-abort.store';
 import { AgentEventContext, AgentEventSink } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import { IngestAgentEventsCommand } from './ingest-agent-events.command';
 
+/** Tells the bridge a user stopped its turn, so the turn should abort. */
+export type IngestAgentEventsResult = { abortTurn: true };
+
 /**
  * SDK-native AgentEvent ingest. Success is HTTP 200 with an empty/minimal body
- * (status-only ack). Soft skips are hard failures: 404 for missing conversation,
- * 400 for bad client ids / agent mismatch / mixed batch identity.
+ * (status-only ack), or `{ abortTurn: true }` when the batch's turn was stopped.
+ * Soft skips are hard failures: 404 for missing conversation, 400 for bad client
+ * ids / agent mismatch / mixed batch identity.
  */
 @Injectable()
 export class IngestAgentEvents {
@@ -20,12 +25,13 @@ export class IngestAgentEvents {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationService: AgentConversationService,
+    private readonly turnAbortStore: AgentTurnAbortStore,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: IngestAgentEventsCommand): Promise<void> {
+  async execute(command: IngestAgentEventsCommand): Promise<IngestAgentEventsResult | undefined> {
     const envelopes: AgentEventEnvelope[] = [];
     const invalidIndexes: number[] = [];
 
@@ -54,12 +60,15 @@ export class IngestAgentEvents {
       throw new BadRequestException('All events in a batch must belong to the same agent');
     }
 
-    await this.ingestBatch(envelopes, command);
+    return this.ingestBatch(envelopes, command);
   }
 
-  private async ingestBatch(envelopes: AgentEventEnvelope[], command: IngestAgentEventsCommand): Promise<void> {
+  private async ingestBatch(
+    envelopes: AgentEventEnvelope[],
+    command: IngestAgentEventsCommand
+  ): Promise<IngestAgentEventsResult | undefined> {
     if (envelopes.length === 0) {
-      return;
+      return undefined;
     }
 
     const conversationId = envelopes[0].conversationId;
@@ -79,6 +88,14 @@ export class IngestAgentEvents {
       );
 
       throw new NotFoundException('Conversation not found');
+    }
+
+    // A stopped turn's late events are dropped: the cancel already ended its run in the timeline.
+    const turnId = envelopes[0].turnId;
+    if (await this.turnAbortStore.isAborted(turnId)) {
+      this.logger.info({ conversationId, turnId }, 'Dropping agent event batch — the turn was stopped');
+
+      return { abortTurn: true };
     }
 
     // 400: client sent a conversation that cannot accept events (bad/incomplete setup ids).
@@ -152,7 +169,33 @@ export class IngestAgentEvents {
     };
 
     await this.agentEventSink.ingestMany(envelopes, context);
+
+    if (envelopes.some((envelope) => isTerminalRunEvent(envelope.event))) {
+      await this.turnAbortStore.clearActiveTurn(String(conversation._id), turnId);
+
+      return undefined;
+    }
+
+    // A Stop that landed while this batch was stored may have missed its run start, which would leave the run open.
+    const runStart = envelopes.find((envelope) => envelope.event.type === 'run-start');
+    if (runStart && (await this.turnAbortStore.isAborted(turnId))) {
+      this.logger.info(
+        { conversationId, turnId, runId: runStart.runId },
+        'Closing agent run as aborted — the turn was stopped while it started'
+      );
+      await this.agentEventSink.ingest({ ...runStart, event: { type: 'run-finish', outcome: 'aborted' } }, context);
+
+      return { abortTurn: true };
+    }
+
+    await this.turnAbortStore.refreshActiveTurn(String(conversation._id), turnId);
+
+    return undefined;
   }
+}
+
+function isTerminalRunEvent(event: AgentEventEnvelope['event']): boolean {
+  return event.type === 'run-finish' || event.type === 'run-error';
 }
 
 function parsePlatform(value: string): AgentPlatformEnum | undefined {

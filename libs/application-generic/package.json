@@ -13,7 +13,7 @@
     "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
-    "build:copy-template": "node ./scripts/copy-handlebars.cjs",
+    "build:copy-template": "node scripts/copy-templates.mjs",
     "fix": "run-s fix:*",
     "check": "biome check .",
     "check:fix": "biome check --write .",

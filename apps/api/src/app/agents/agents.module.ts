@@ -64,6 +64,7 @@ import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-a
 import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { AgentTurnAbortStore } from './conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
@@ -182,6 +183,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
+    AgentTurnAbortStore,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     BridgeLiveReplies,

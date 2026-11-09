@@ -3,6 +3,7 @@ import { type AgentMiddleware, createAgent } from 'langchain';
 import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
 import type { ReplyStream, ToolApprovalConfig } from '../../resources/agent/agent.types';
 import { isCardElement } from '../../resources/agent/guards';
+import { anySignal } from '../../utils/any-signal.utils';
 import { toLangChainMessages } from '../history-mapper';
 import { hydrateUnreachableAttachmentUrls } from '../history-mapper/hydrate-attachment-urls';
 import {
@@ -92,6 +93,31 @@ function modelChunkText(message: BaseMessage, metadata: Record<string, unknown> 
   return textFromContent(message.content);
 }
 
+/** Whether the user stopped the turn (`ctx.signal` aborted). */
+function isStopped(ctx: AgentRuntimeContext): boolean {
+  return ctx.signal?.aborted === true;
+}
+
+/** The run config with `signal` (the turn's stop signal combined with the caller's own) in place of the caller's. */
+function withStopSignal(invokeConfig: LangChainAgentConfig['invokeConfig'], signal: AbortSignal | undefined) {
+  return signal ? { ...invokeConfig, signal } : invokeConfig;
+}
+
+/**
+ * The `replyFooter` text, paragraph-separated from the streamed reply; none when `formatReply` buffers it
+ * or the user stopped the turn.
+ */
+function replyFooterText(
+  config: LangChainAgentConfig,
+  wroteText: boolean,
+  ctx: AgentRuntimeContext
+): string | undefined {
+  const footer = config.formatReply || isStopped(ctx) ? undefined : config.replyFooter?.();
+  if (!footer) return undefined;
+
+  return wroteText ? `\n\n${footer}` : footer;
+}
+
 /**
  * Replies with the model's text, model calls separated as paragraphs: as it streams, or whole once
  * `formatReply` formatted it. A gated tool ends the run: the text before it is kept, then the
@@ -111,11 +137,13 @@ async function replyAgentText(
     let finalMessages: BaseMessage[] = [];
     let lastMessageId: string | undefined;
     let wroteText = false;
+    // `invokeConfig` lives as long as the agent, so its signal must not keep a listener per turn.
+    const stopSignal = anySignal([ctx.signal, config.invokeConfig?.signal]);
 
     try {
       const stream = await agent.stream(
         { messages },
-        { ...config.invokeConfig, streamMode: ['messages', 'values'] as const }
+        { ...withStopSignal(config.invokeConfig, stopSignal.signal), streamMode: ['messages', 'values'] as const }
       );
 
       for await (const [mode, chunk] of stream) {
@@ -137,10 +165,15 @@ async function replyAgentText(
       if (!outcome.approval) throw error;
 
       return;
+    } finally {
+      stopSignal.dispose();
     }
 
     // Queued before the reply is sent, so the results are recorded ahead of it.
     emitExecutedToolResults(finalMessages, ctx, executed);
+
+    const footer = replyFooterText(config, wroteText, ctx);
+    if (footer) yield footer;
   }
 
   if (config.formatReply) {
@@ -155,6 +188,16 @@ async function replyAgentText(
 
   if (outcome.approval) {
     await postApprovalCard(ctx, outcome.approval, approvalConfig);
+
+    return;
+  }
+
+  // A stopped turn adds nothing after the text it streamed.
+  if (isStopped(ctx)) return;
+
+  const followUp = await config.replyFollowUp?.();
+  if (followUp) {
+    await ctx.reply(followUp);
   }
 }
 

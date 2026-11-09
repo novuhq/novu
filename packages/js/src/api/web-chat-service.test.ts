@@ -236,6 +236,51 @@ describe('WebChatService', () => {
     );
   });
 
+  it('POSTs the cancel route for a conversation and unwraps the status', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { status: 'aborted' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    httpClient.setAuthorizationToken('test-token');
+    const service = new WebChatService({ httpClient });
+
+    const result = await service.cancelRun({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      agentHash: 'hash_1',
+    });
+
+    expect(result).toEqual({ status: 'aborted' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/cancel',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ agentId: 'agent_1', agentHash: 'hash_1' }),
+      })
+    );
+  });
+
+  it('sends an empty cancel body when no agent fields are given', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { status: 'idle' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const service = new WebChatService({ httpClient: new HttpClient({ apiUrl: 'https://test.novu.co' }) });
+
+    await expect(service.cancelRun({ conversationId: 'conv_abcdefghijkl' })).resolves.toEqual({ status: 'idle' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/cancel',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({}) })
+    );
+  });
+
   it('GETs older conversation events with before cursor', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

@@ -1,5 +1,6 @@
 import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
+import { CopilotModeProvider } from '@/components/copilot-web-chat';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
@@ -69,8 +70,10 @@ export const EditWorkflowPage = () => {
   }
 
   return (
-    <WorkflowProvider>
-      <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
-    </WorkflowProvider>
+    <CopilotModeProvider workflowSlug={isNewWorkflowSlug ? undefined : workflowSlug}>
+      <WorkflowProvider>
+        <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
+      </WorkflowProvider>
+    </CopilotModeProvider>
   );
 };

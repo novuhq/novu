@@ -1,6 +1,12 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
+import {
+  AiAgentTypeEnum,
+  AiResourceTypeEnum,
+  DuplicateWorkflowDto,
+  slugify,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { useQuery } from '@tanstack/react-query';
 import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
@@ -20,6 +26,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { fetchWorkflowSuggestions, WorkflowSuggestionResponse } from '@/api/ai';
+import { type CopilotPromptLocationState, useCopilotWebChatActive } from '@/components/copilot-web-chat';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -59,73 +66,44 @@ import { Badge } from './primitives/badge';
 import { Form, FormControl, FormField, FormItem, FormMessage, FormRoot } from './primitives/form/form';
 import { showErrorToast } from './primitives/sonner-helpers';
 
-export type WorkflowCreatedEvent = {
-  type: 'workflow-created';
-  workflowId: string;
-  workflowSlug: string;
-  chatId: string;
-};
+const workflowCreatedEventSchema = z.object({
+  workflowId: z.string(),
+  workflowSlug: z.string(),
+  chatId: z.string().optional(),
+});
 
-type CreateWorkflowTab = 'guided' | 'manual';
-
-export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'duplicate'; workflowId?: string }) {
+/** Streams the prompt to the AI chat and opens the editor once the workflow exists, where the Copilot sidebar resumes the stream. */
+function useLegacyGuidedGeneration() {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
-  const [open, setOpen] = useState(true);
-  const createdWorkflowSlugRef = useRef<string | null>(null);
   const chatId = useMemo(() => generateId(), []);
   const persistedChatIdRef = useRef<string | null>(null);
-  const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
-
-  const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
-    workflowSlug: mode === 'duplicate' ? workflowId : undefined,
-  });
-
-  const handleClose = (isOpen: boolean) => {
-    if (isLoading) return;
-
-    setOpen(isOpen);
-
-    if (!isOpen) {
-      setTimeout(() => {
-        navigate(
-          buildRoute(ROUTES.WORKFLOWS, {
-            environmentSlug: currentEnvironment?.slug ?? '',
-          })
-        );
-      }, 300);
-    }
-  };
-
-  const { ref, protectedOnValueChange, ProtectionAlert } = useFormProtection({
-    onValueChange: handleClose,
-  });
 
   const handleData = useCallback<ChatOnDataCallback<UIMessage>>(
     (data) => {
-      if (
-        data &&
-        typeof data === 'object' &&
-        'type' in data &&
-        (data as { type: string }).type === 'data-workflow-created'
-      ) {
-        const workflowCreatedEvent = data.data as unknown as WorkflowCreatedEvent;
-        createdWorkflowSlugRef.current = workflowCreatedEvent.workflowSlug;
+      if (data.type !== 'data-workflow-created') return;
 
-        track(TelemetryEvent.COPILOT_WORKFLOW_GENERATED, {
-          workflowId: workflowCreatedEvent.workflowId,
-          chatId: workflowCreatedEvent.chatId,
-        });
+      const parsed = workflowCreatedEventSchema.safeParse(data.data);
+      if (!parsed.success) {
+        Sentry.captureException(parsed.error, { tags: { feature: 'ai-copilot', action: 'workflow-created-event' } });
 
-        navigate(
-          buildRoute(ROUTES.EDIT_WORKFLOW, {
-            environmentSlug: currentEnvironment?.slug ?? '',
-            workflowSlug: createdWorkflowSlugRef.current ?? '',
-          }),
-          { state: { chatId: workflowCreatedEvent.chatId } }
-        );
+        return;
       }
+
+      const workflowCreatedEvent = parsed.data;
+      track(TelemetryEvent.COPILOT_WORKFLOW_GENERATED, {
+        workflowId: workflowCreatedEvent.workflowId,
+        chatId: workflowCreatedEvent.chatId,
+      });
+
+      navigate(
+        buildRoute(ROUTES.EDIT_WORKFLOW, {
+          environmentSlug: currentEnvironment?.slug ?? '',
+          workflowSlug: workflowCreatedEvent.workflowSlug,
+        }),
+        { state: { chatId: workflowCreatedEvent.chatId } }
+      );
     },
     [currentEnvironment?.slug, navigate, track]
   );
@@ -156,37 +134,12 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
     };
   }, [stop]);
 
-  const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
-  const createWorkflowHook = useCreateWorkflow();
-  const { submit: submitWorkflow, isLoading: isSubmitting } =
-    mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
-  const { createAiChat, isPending: isCreatingAiChat } = useCreateAiChat();
+  const { createAiChat, isPending: isCreatingChat } = useCreateAiChat();
 
-  const isLoading = isSubmitting || isGenerating || isCreatingAiChat;
-  const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
-
-  const template: DuplicateWorkflowDto | undefined =
-    mode === 'duplicate' && workflow
-      ? {
-          name: `${workflow.name} (Copy)`,
-          description: workflow.description,
-          tags: workflow.tags,
-          isTranslationEnabled: workflow.isTranslationEnabled,
-        }
-      : undefined;
-
-  async function handleGuidedSubmit({ prompt }: { prompt: string }) {
-    const clearedPrompt = prompt.trim();
-    if (!clearedPrompt) {
-      return;
-    }
-
-    track(TelemetryEvent.COPILOT_GUIDED_SUBMIT, {
-      promptLength: clearedPrompt.length,
-    });
-
+  async function generate(prompt: string) {
     if (persistedChatIdRef.current) {
-      sendPrompt({ chatId: persistedChatIdRef.current, prompt: clearedPrompt });
+      sendPrompt({ chatId: persistedChatIdRef.current, prompt });
+
       return;
     }
 
@@ -201,10 +154,91 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
         },
         onSuccess: async (chat) => {
           persistedChatIdRef.current = chat._id;
-          sendPrompt({ chatId: chat._id, prompt: clearedPrompt });
+          sendPrompt({ chatId: chat._id, prompt });
         },
       }
     );
+  }
+
+  return { generate, isGenerating, isCreatingChat, error };
+}
+
+type CreateWorkflowTab = 'guided' | 'manual';
+
+export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'duplicate'; workflowId?: string }) {
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const track = useTelemetry();
+  const isCopilotWebChatEnabled = useCopilotWebChatActive();
+  const [open, setOpen] = useState(true);
+  const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
+
+  const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
+    workflowSlug: mode === 'duplicate' ? workflowId : undefined,
+  });
+
+  const handleClose = (isOpen: boolean) => {
+    if (isLoading) return;
+
+    setOpen(isOpen);
+
+    if (!isOpen) {
+      setTimeout(() => {
+        navigate(
+          buildRoute(ROUTES.WORKFLOWS, {
+            environmentSlug: currentEnvironment?.slug ?? '',
+          })
+        );
+      }, 300);
+    }
+  };
+
+  const { ref, protectedOnValueChange, ProtectionAlert } = useFormProtection({
+    onValueChange: handleClose,
+  });
+
+  const { generate: generateWithLegacyChat, isGenerating, isCreatingChat, error } = useLegacyGuidedGeneration();
+
+  const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
+  const createWorkflowHook = useCreateWorkflow();
+  const { submit: submitWorkflow, isLoading: isSubmitting } =
+    mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
+
+  const isLoading = isSubmitting || isGenerating || isCreatingChat;
+  const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
+
+  const template: DuplicateWorkflowDto | undefined =
+    mode === 'duplicate' && workflow
+      ? {
+          name: `${workflow.name} (Copy)`,
+          description: workflow.description,
+          tags: workflow.tags,
+          isTranslationEnabled: workflow.isTranslationEnabled,
+        }
+      : undefined;
+
+  async function handleGuidedSubmit({ prompt, workflowName }: GuidedSubmitValues) {
+    const clearedPrompt = prompt.trim();
+    if (!clearedPrompt) {
+      return;
+    }
+
+    track(TelemetryEvent.COPILOT_GUIDED_SUBMIT, {
+      promptLength: clearedPrompt.length,
+    });
+
+    if (isCopilotWebChatEnabled) {
+      // The editor's web-chat Copilot builds the workflow, so it needs one to open in.
+      const navigationState: CopilotPromptLocationState = { copilotPrompt: clearedPrompt };
+      await createWorkflowHook.submit(buildGuidedWorkflowValues(workflowName), undefined, {
+        source: WorkflowCreationSourceEnum.AI,
+        navigationState,
+      });
+
+      return;
+    }
+
+    await generateWithLegacyChat(clearedPrompt);
   }
 
   const handleTabChange = (value: string) => {
@@ -219,11 +253,6 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const showManualContent = isDuplicateMode || tab === 'manual';
 
   const title = isDuplicateMode ? 'Duplicate workflow' : 'Create workflow';
-  const buttonText = showGuidedContent
-    ? 'Generate workflow'
-    : isDuplicateMode
-      ? 'Duplicate workflow'
-      : 'Create workflow';
 
   return (
     <>
@@ -300,7 +329,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
                 disabled={isLoading}
                 isLoading={isLoading}
               >
-                {buttonText}
+                Generate workflow
               </Button>
             ) : (
               <Button
@@ -314,7 +343,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
                 disabled={isLoading || isLoadingTemplate}
                 isLoading={isLoading}
               >
-                {buttonText}
+                {title}
               </Button>
             )}
           </div>
@@ -329,8 +358,19 @@ const schema = z.object({
   prompt: z.string().min(1, 'Prompt is required').max(2000),
 });
 
+const DEFAULT_GUIDED_WORKFLOW_NAME = 'Untitled workflow';
+
+function buildGuidedWorkflowValues(name = DEFAULT_GUIDED_WORKFLOW_NAME) {
+  return { name, workflowId: slugify(name) };
+}
+
+type GuidedSubmitValues = z.infer<typeof schema> & {
+  /** Title of the suggestion the prompt came from, while the prompt is still unedited. */
+  workflowName?: string;
+};
+
 type GuidedModeContentProps = {
-  onSubmit: (values: z.infer<typeof schema>) => void;
+  onSubmit: (values: GuidedSubmitValues) => Promise<void>;
   isGenerating: boolean;
   error?: Error;
 };
@@ -401,6 +441,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
   }
 
   const [animatedStepIndex, setAnimatedStepIndex] = useState(-1);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<WorkflowSuggestionResponse>();
 
   useEffect(() => {
     if (!isGenerating) return;
@@ -428,6 +469,13 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
   function handleSuggestionClick(suggestion: WorkflowSuggestionResponse) {
     track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: suggestion.title });
     form.setValue('prompt', suggestion.examplePrompt);
+    setSelectedSuggestion(suggestion);
+  }
+
+  function handleSubmit(values: z.infer<typeof schema>) {
+    const workflowName = selectedSuggestion?.examplePrompt === values.prompt ? selectedSuggestion.title : undefined;
+
+    return onSubmit({ ...values, workflowName });
   }
 
   const header = useMemo(
@@ -548,7 +596,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
           id="generate-workflow"
           autoComplete="off"
           noValidate
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-col"
         >
           <FormField
