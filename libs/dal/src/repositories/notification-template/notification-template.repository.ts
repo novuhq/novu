@@ -39,8 +39,7 @@ export class NotificationTemplateRepository extends BaseRepository<
         _environmentId: 1,
         isTranslationEnabled: 1,
       })
-      .populate('updatedBy', '_id firstName lastName externalId email')
-      .populate('lastPublishedBy', '_id firstName lastName externalId');
+      .populate('updatedBy', '_id firstName lastName externalId email');
 
     return this.mapEntities(items);
   }
