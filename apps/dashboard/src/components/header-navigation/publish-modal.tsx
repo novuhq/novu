@@ -1,17 +1,15 @@
-import { useUser } from '@clerk/react';
 import type { IEnvironment } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiCloseFill, RiTerminalFill } from 'react-icons/ri';
-import type { IResourceDiffResult, IUserInfo, ResourceToPublish } from '@/api/environments';
+import type { IResourceDiffResult, ResourceToPublish } from '@/api/environments';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { type ResourceSelectionState, useChangesTree } from '@/hooks/use-changes-tree';
 import { useDiffEnvironments } from '@/hooks/use-environments';
 import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
-import { Avatar, AvatarFallback } from '../primitives/avatar';
 import { Button } from '../primitives/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
-import { ChangeCards, ChangesSummaryBar, editorDisplayName, isCurrentEditor, type ScrollRequest } from './change-cards';
+import { ChangeCards, ChangesSummaryBar, type ScrollRequest } from './change-cards';
 import { dependencyWarningsByWorkflow } from './change-notes';
 import { summarizeChangeRows } from './change-sections';
 import { ChangesSidebar } from './changes-sidebar';
@@ -204,7 +202,6 @@ export function PublishModal({
         <PublishModalActions
           environment={environment}
           totalSelected={getTotalSelectedCount()}
-          lastPublished={getLatestPublish(diffData?.resources)}
           isPublishing={isPublishing}
           onClose={onClose}
           onConfirm={handleConfirm}
@@ -249,102 +246,21 @@ function PublishModalHeader({ environment }: { environment: IEnvironment }) {
   );
 }
 
-type LatestResourceUpdate = {
-  user: IUserInfo | null;
-  updatedAt: string;
-};
-
-function readPublish(info: IResourceDiffResult['sourceResource']): (LatestResourceUpdate & { time: number }) | null {
-  const publishedAt = info?.lastPublishedAt;
-  if (!publishedAt) return null;
-
-  const time = new Date(publishedAt).getTime();
-  if (Number.isNaN(time)) return null;
-
-  return { user: info?.lastPublishedBy ?? null, updatedAt: publishedAt, time };
-}
-
-function getLatestPublish(resources: IResourceDiffResult[] | undefined): LatestResourceUpdate | null {
-  if (!resources?.length) return null;
-
-  let latest: (LatestResourceUpdate & { time: number }) | null = null;
-
-  for (const resource of resources) {
-    for (const info of [resource.sourceResource, resource.targetResource]) {
-      const publish = readPublish(info);
-      if (!publish) continue;
-      if (latest && publish.time <= latest.time) continue;
-
-      latest = publish;
-    }
-  }
-
-  if (!latest) return null;
-
-  return { user: latest.user, updatedAt: latest.updatedAt };
-}
-
-function formatCompactAgo(iso: string): string {
-  const deltaMs = Date.now() - new Date(iso).getTime();
-  if (Number.isNaN(deltaMs) || deltaMs < 0) return '';
-
-  const minutes = Math.round(deltaMs / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.round(hours / 24);
-  if (days < 30) return `${days}d ago`;
-
-  const months = Math.round(days / 30);
-  if (months < 12) return `${months}mo ago`;
-
-  return `${Math.round(months / 12)}y ago`;
-}
-
 function PublishModalActions({
   environment,
   totalSelected,
-  lastPublished,
   isPublishing,
   onClose,
   onConfirm,
 }: {
   environment: IEnvironment;
   totalSelected: number;
-  lastPublished: LatestResourceUpdate | null;
   isPublishing: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }) {
-  const { user } = useUser();
-  const publishedAgo = lastPublished ? formatCompactAgo(lastPublished.updatedAt) : '';
-  const publisher = lastPublished?.user ?? null;
-  const isCurrentUser = publisher ? isCurrentEditor(user, publisher) : false;
-  const publisherName = publisher ? editorDisplayName(publisher, user, isCurrentUser) : '';
-
   return (
     <div className="flex items-center gap-2 border-t border-stroke-soft bg-bg-white py-2.5 pl-5 pr-3">
-      {lastPublished && (publisherName || publishedAgo) && (
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 text-label-xs text-text-soft">Last updated by</span>
-          {publisherName && (
-            <span className="flex min-w-0 items-center gap-1">
-              <Avatar className="size-5">
-                <AvatarFallback className="bg-primary-base text-[10px] font-medium text-static-white">
-                  {publisherName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate text-label-xs text-text-sub">{publisherName}</span>
-            </span>
-          )}
-          {publisherName && publishedAgo && <span className="size-0.5 shrink-0 rounded-full bg-text-soft" />}
-          {publishedAgo && <span className="shrink-0 text-label-xs text-text-sub">{publishedAgo}</span>}
-        </div>
-      )}
-
       <div className="flex flex-1 items-center justify-end gap-2">
         <Button variant="secondary" mode="outline" size="2xs" onClick={onClose} disabled={isPublishing}>
           Cancel
