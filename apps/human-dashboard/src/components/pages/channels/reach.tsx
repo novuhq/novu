@@ -45,7 +45,10 @@ export function ReachSection({ channel }: { channel: ChannelId }) {
       </div>
       <div className="overflow-hidden rounded-[14px] border border-sapien-border">
         {items.map((item) => (
-          <article key={item.title} className="flex gap-5 border-t border-sapien-border p-6 first:border-t-0">
+          <article
+            key={item.title}
+            className="flex items-start gap-5 border-t border-sapien-border p-6 first:border-t-0"
+          >
             <LandingMark name={item.icon} />
             <div className="flex min-w-0 flex-col items-start">
               <h3 className="text-lg leading-none tracking-tight">{item.title}</h3>
@@ -103,9 +106,7 @@ export function MoreCapabilities({ channel, agent }: { channel: ChannelId; agent
           >
             <span className="w-14 shrink-0 font-sapien-mono text-[11px] text-sapien-foreground/50">{key}</span>
             <span className="flex-1">{label}</span>
-            <span aria-hidden="true" className="text-xl leading-5 text-accent">
-              ↗
-            </span>
+            <LandingMark name="arrow-up-right" size={20} />
           </Link>
         ))}
         <Link

@@ -36,13 +36,21 @@ export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?:
             <LandingActions channel={channel} agent={agent} stacked />
           </div>
         </div>
-        <div className="relative mx-auto flex h-65.5 w-full max-w-90 items-center overflow-hidden rounded-[14px] border border-sapien-surface bg-[radial-gradient(ellipse_at_top_left,rgba(255,92,48,0.12),black_75%)]">
+        <div className="relative mx-auto flex h-65.5 w-full max-w-90 items-center overflow-hidden rounded-[14px] border border-sapien-surface bg-black">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-[83px] -left-[33px] h-[282px] w-[278px] rounded-full bg-accent opacity-10 blur-[66px]"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-[159px] -bottom-[173px] h-[282px] w-[278px] rounded-full bg-accent opacity-10 blur-[66px]"
+          />
           <Image
             src="/images/landing/cta-chat.png"
             alt="An agent completes customer conversations and receives a reply."
             width={719}
             height={309}
-            className="h-auto w-full"
+            className="relative h-auto w-full"
             unoptimized
           />
         </div>

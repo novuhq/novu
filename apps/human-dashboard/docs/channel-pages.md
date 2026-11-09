@@ -91,12 +91,13 @@ host routing checks. Template checks cover all eleven routes, unsupported pairs,
 metadata, loaded images, tabs, clipboard values, FAQ, carousel navigation, related
 links, narrow layouts, no-JavaScript content and the mobile header menu.
 
-The recorded Prime visual audit from 2026-11-06 **passed for both supplied reference pages** at a
-1920×1080 browser viewport. Production confirmation was pass three, score 0 and
-zero violations for each page, with no masks and unchanged default thresholds.
-Raster differences are 0.8887% for the channel page and 0.7820% for the agent page,
-both below the 1% limit. Full-page dimensions match Figma: 1920×6726 and 1920×5107.
-These measurements predate the CLI accuracy fixes described below.
+The refreshed Prime visual audit from 2026-11-09 **passes for both supplied reference
+pages** at a 1920×1080 browser viewport, including the CLI review corrections.
+After the illustration polish, pass two has score 0 and zero violations for each
+page, with no masks and unchanged default thresholds. Raster differences are
+0.9006% for the channel page and 0.7736% for the agent page, below the 1% limit.
+Full-page dimensions match Figma: 1920×6726 and 1920×5107. Fresh read-only Figma
+measurements confirmed the source geometry, typography and line counts.
 Other responsive widths are usability checks; no corresponding Figma frames were
 supplied for those widths or the other channel/agent variants.
 
@@ -129,7 +130,7 @@ Production screenshots of the two reference templates are committed in
 `docs/screenshots/` for PR review.
 
 Latest evidence is in the ignored directory
-`.primeui/temp/figma-to-prime/channel-agent-pin-followup-20261106/`. It contains
+`.primeui/temp/figma-to-prime/channel-agent-final-20261109/`. It contains
 machine results, the retained exact Figma baseline, fresh production browser
 measurements, reference/rendered PNGs, raw canonical captures, overlays, diffs,
 a magnified painted-center comparison and verification notes. Earlier runs retain
@@ -155,9 +156,42 @@ Regression tests parse the command strings through a shell with `printf` in plac
 of the CLI; no messages are sent. Browser checks cover all routes with a mixed
 Markdown/HTML Accept header, Copy while autoplay is running, pause/resume, and
 changes to the reduced-motion preference. The committed screenshots show the
-corrected copy. The earlier exact Figma audit remains historical evidence for the
-original design copy; no new pixel-parity result is claimed for these corrections.
+corrected copy. The refreshed 2026-11-09 audit includes these intentional copy corrections;
+Figma remains the geometry and artwork reference.
 
 In the sparse checkout, use `CI=true` for pnpm checks and install only with
 `--frozen-lockfile`, so automatic dependency synchronization cannot prune the
 monorepo lockfile. Root manifests and lockfile remain unchanged by this PR.
+
+## Final design and illustration QA (2026-11-09)
+
+Readable comparisons cover both reference pages from header to footer, all four
+message states and all three prompt slides. Hero JPEGs, transparent CTA/prompt
+PNGs, particle texture and outlined SVG logos/icons were checked for missing
+media, clipping, unwanted corners/shadows, seams and scaling defects. Raster
+conversation text retains the expected softness of a 2× bitmap; no broken or
+truncated illustration exports were found.
+
+The close-up review corrected stretched reach-icon boxes, the agent hero's tile
+borders, both CTA corner glows, the capability links' pixel-style arrow SVG and
+the landing FAQ's active rail color. Outer illustration shells remain CSS; the
+new arrow is an isolated vector export.
+
+The BrowserStack core matrix covers Windows Chrome/Edge/Firefox, macOS
+Chrome/Safari, iPhone 17/iOS 26 and iPhone 13/iOS 18 Safari, OnePlus 13R/Android 15
+Chrome, and Galaxy S25/Android 15 Samsung Internet. OnePlus substitutes for the
+unavailable Galaxy A16. Full-page capture uses native Chromium/Firefox protocols
+and measured scroll stitching for Safari/mobile. Native mobile originals and
+viewport calibration are retained with the run artifacts.
+
+Safari Automate clicks on iOS do not grant user activation, so successful
+clipboard writes cannot be signed off there. The visible manual-copy fallback
+passes; macOS Safari and Android copy checks pass. This is a recorded automation
+limitation, not an asserted product failure. Vercel's preview toolbar is also
+recorded separately from application UI. No account, project or production
+settings were changed for QA.
+
+[BrowserStack sessions and recordings](https://automate.browserstack.com/builds/f612653947f8ed99d85ed32fdca1c7331ca61936)
+provide the remote evidence. Local run reports, native screenshots, readable
+review slices and the credential-free temporary harness are retained outside
+product source under the dated QA run directory.

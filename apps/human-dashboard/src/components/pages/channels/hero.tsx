@@ -74,14 +74,14 @@ export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: Ag
             aria-hidden="true"
             className="absolute top-1 left-1/2 flex h-20 w-65 -translate-x-1/2 items-center justify-between"
           >
-            <div className="flex size-20 items-center justify-center rounded-2xl bg-sapien-border">
-              <LandingMark name={agent} size={48} />
+            <div className="flex size-20 items-center justify-center rounded-[17px] border-[0.833px] border-[#383633] bg-sapien-border">
+              <LandingMark name={agent} size={47} />
             </div>
             <span className="relative h-px w-25 bg-sapien-surface">
               <span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-[1px] bg-accent" />
             </span>
-            <div className="flex size-20 items-center justify-center rounded-2xl bg-sapien-border">
-              <LandingMark name={channel} size={48} />
+            <div className="flex size-20 items-center justify-center rounded-[17px] border-[0.833px] border-[#383633] bg-sapien-border">
+              <LandingMark name={channel} size={47} />
             </div>
           </div>
         )}
