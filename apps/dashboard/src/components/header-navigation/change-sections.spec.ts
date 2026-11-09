@@ -51,6 +51,17 @@ describe('payload schema breaking changes', () => {
     expect(section?.schemaPreview?.note).toBeUndefined();
   });
 
+  it('keeps a validation-only edit modified when the workflow has no schema', () => {
+    const section = payloadSection(
+      workflowResource(
+        { added: 0, modified: 1, deleted: 0, unchanged: 0 },
+        { previous: { validatePayload: false }, new: { validatePayload: true } }
+      )
+    );
+
+    expect(section?.status).toBe('modified');
+  });
+
   it('still marks a payload change as breaking when an existing workflow turns validation on', () => {
     const section = payloadSection(
       workflowResource(

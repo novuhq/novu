@@ -343,8 +343,9 @@ function fieldsDiffStatus({ hasPrevious, hasNext }: FieldsDiff): ChangeStatus {
 
 function payloadSectionStatus(hasPrevious: boolean, hasNext: boolean, breaking: boolean): ChangeStatus {
   if (breaking) return 'breaking';
-  if (!hasPrevious) return 'added';
-  if (!hasNext) return 'deleted';
+  // A validation-only edit has no schema on either side. That is a change, not a new schema.
+  if (!hasPrevious && hasNext) return 'added';
+  if (hasPrevious && !hasNext) return 'deleted';
 
   return 'modified';
 }
