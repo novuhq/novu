@@ -13,7 +13,7 @@ function message(id: string, role: AgentMessage['role'], text: string): AgentMes
 }
 
 function chatWith(messages: AgentMessage[], { hasMore = false, isLoading = false } = {}) {
-  return { messages, isLoading, pagination: { status: 'idle' as const, hasMore } };
+  return { messages, isLoading, pagination: { status: 'idle' as const, hasMore, fetchMore: async () => ({}) } };
 }
 
 function memoryStorage() {
