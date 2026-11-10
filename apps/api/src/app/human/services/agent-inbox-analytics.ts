@@ -1,5 +1,5 @@
 import type { AnalyticsService } from '@novu/application-generic';
-import type { EnvironmentRepository } from '@novu/dal';
+import type { AgentHostId, AgentLook, EnvironmentRepository } from '@novu/dal';
 import { AGENT_INBOX_EVENTS, type AgentAnalyticsSource, isAgentAnalyticsSource } from '@novu/shared';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 
@@ -42,15 +42,36 @@ export function trackAgentInboxSignedUp(analytics: AnalyticsService, owner: Agen
   track(analytics, AGENT_INBOX_EVENTS.SIGNED_UP, owner);
 }
 
-/** The agent got its inbox and address. A setup claimed into an account was made in the CLI. */
+/**
+ * The agent got its inbox and address. A setup claimed into an account was made in the CLI. Its look is the one
+ * the operator picked on the dashboard, else the original one.
+ */
 export function trackAgentInboxCreated(
   analytics: AnalyticsService,
   owner: AgentInboxOwner,
-  params: { agentId: string; source?: AgentAnalyticsSource }
+  params: { agentId: string; source?: AgentAnalyticsSource; look?: AgentLook }
 ): void {
   track(analytics, AGENT_INBOX_EVENTS.INBOX_CREATED, owner, {
     agentId: params.agentId,
     source: params.source ?? 'api',
+    ...(params.look ? { shape: params.look.shape, color: params.look.color, art: params.look.art.kind } : {}),
+  });
+}
+
+/**
+ * A host showed the agent's card: `agent_card` over MCP, or `agentinbox card` in the CLI. `first` is the first
+ * time any host did, which ends the onboarding's wait for the agent to say hi.
+ */
+export function trackAgentInboxCardShown(
+  analytics: AnalyticsService,
+  owner: AgentInboxOwner,
+  params: { agentId: string; source?: AgentAnalyticsSource; host?: AgentHostId; first: boolean }
+): void {
+  track(analytics, AGENT_INBOX_EVENTS.CARD_SHOWN, owner, {
+    agentId: params.agentId,
+    source: params.source ?? 'api',
+    ...(params.host ? { host: params.host } : {}),
+    first: params.first,
   });
 }
 

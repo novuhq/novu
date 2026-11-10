@@ -262,6 +262,14 @@ export enum FeatureFlagsKeysEnum {
    * for an organization or segment. Self-hosted deployments ignore this flag and use the system ceiling.
    */
   IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED = 'IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED',
+  /**
+   * Organization-scoped, for Agent Inbox accounts (their backing organization): the onboarding where the operator
+   * names their agent and picks its look, connects a host, and the agent then says hi with its card; and that new
+   * card on the agent's public page, on Configure and in its link preview. Off keeps today's onboarding and card.
+   * Create the boolean in LaunchDarkly for cloud, or set `IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED=true` for the API
+   * when self-hosted or local.
+   */
+  IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',

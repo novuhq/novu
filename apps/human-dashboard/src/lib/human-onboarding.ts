@@ -7,10 +7,17 @@ import type { AgentReach } from './agent-settings';
 import { buildChannelPrompt } from './agent-setup-prompt';
 import { isToolId, type ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
+import { type AgentInboxFeatures, loadFeatures } from './feature-flags';
 import type { HostStatus } from './host-status';
 import type { HostId } from './hosts';
 import type { HumanAccount } from './human-account';
-import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
+import {
+  agentDisplayName,
+  type CardShown,
+  DEFAULT_AGENT_NAME,
+  getRelayAgent,
+  type RelayAgent,
+} from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
 import { loadChannelsOverview } from './human-channels-overview';
@@ -29,6 +36,7 @@ import {
   preferNewerInbound,
 } from './inbound-email';
 import type { InboxThread } from './inbox';
+import type { AgentLook } from './look';
 import {
   AGENT_DOMAIN,
   cardLinkOf,
@@ -48,12 +56,17 @@ import {
   wasMadeInTheSteps,
 } from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
+import { legacyStepOf, resolveSayHiStep, type SayHiStep } from './say-hi-progress';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
 export { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps };
 
 export type SetupProgress = {
+  /** The earlier onboarding's step, which the dashboard's banners and redirects read in either onboarding. */
   step: SetupStep;
+  /** The step of the onboarding where the agent says hi with its card, or `null` where the account hasn't got it. */
+  sayHiStep: SayHiStep | null;
+  features: AgentInboxFeatures;
   state: OnboardingState;
   agent: RelayAgent | null;
   hostStatus: HostStatus | null;
@@ -76,11 +89,13 @@ export type SetupProgress = {
  * lets it catch up with what happened since: see `catchUp`.
  */
 export const loadSetupProgress = cache(async (account: HumanAccount): Promise<SetupProgress> => {
-  const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
+  const [user, agent, features] = await Promise.all([findCurrentUser(), getRelayAgent(account), loadFeatures(account)]);
   const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
     return {
       step: resolveStep(agent, {}, hostStatus),
+      sayHiStep: features.newOnboarding ? resolveSayHiStep(agent, {}, hostStatus) : null,
+      features,
       state: {},
       agent,
       hostStatus,
@@ -88,6 +103,10 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
       user,
       testMail: null,
     };
+  }
+
+  if (features.newOnboarding) {
+    return loadSayHiProgress(account, user, agent, hostStatus, features);
   }
 
   const { state, testMail } = await catchUp(user, account, agent, readOnboardingState(user));
@@ -98,6 +117,8 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
 
   return {
     step: signIns.length > 0 ? resolveStep(agent, state, hostStatus, true) : step,
+    sayHiStep: null,
+    features,
     state,
     agent,
     hostStatus,
@@ -106,6 +127,39 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
     testMail,
   };
 });
+
+/**
+ * The progress of the onboarding where the agent says hi with its card. It has no test email to look out for:
+ * the agent says hi in its host instead. Until a host connects, an app that signed in through the MCP server
+ * since the agent was made is a host that came in, before the API sees it check.
+ */
+async function loadSayHiProgress(
+  account: HumanAccount,
+  user: User,
+  agent: RelayAgent | null,
+  hostStatus: HostStatus | null,
+  features: AgentInboxFeatures
+): Promise<SetupProgress> {
+  const state = readOnboardingState(user);
+  const waiting = resolveSayHiStep(agent, state, hostStatus);
+  const signIns =
+    agent && (waiting === 'host' || waiting === 'connect')
+      ? (await listSignIns(account)).filter((signIn) => signedInSince(signIn.at, agent))
+      : [];
+  const sayHiStep = signIns.length > 0 ? resolveSayHiStep(agent, state, hostStatus, true) : waiting;
+
+  return {
+    step: legacyStepOf(sayHiStep),
+    sayHiStep,
+    features,
+    state,
+    agent,
+    hostStatus,
+    signIns,
+    user,
+    testMail: null,
+  };
+}
 
 /**
  * Brings the stored state up to date with mail that landed after the agent was created. Only the time is
@@ -221,10 +275,14 @@ export async function requireSetUpAgent(
 }
 
 /** What the onboarding page keeps asking for, to notice a change it has to show. Cheap to work out. */
-export function describeProgress({ step, state, agent, hostStatus }: SetupProgress): string {
+export function describeProgress({ step, sayHiStep, state, agent, hostStatus }: SetupProgress): string {
   return [
     step,
+    sayHiStep,
     agent?.id,
+    agent?.cardShown?.at,
+    hostStatus?.cardShown?.at,
+    state.hostPickedAt,
     state.testSentAt,
     state.testReplyAt,
     agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
@@ -434,6 +492,77 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
             },
           }
         : null,
+    reach: agent?.settings?.reach ?? null,
+    origin,
+    mailDomain,
+  };
+}
+
+/**
+ * What the onboarding where the agent says hi shows (`A.1` to `A.4`). `null` once it has nothing left to show:
+ * the operator opened the inbox, or the agent came from a terminal.
+ */
+export type SayHiView = {
+  step: Exclude<SayHiStep, 'done'>;
+  /** `describeProgress` of what this view shows, which the page polls for a change. */
+  status: string;
+  operator: { email: string | null; firstName: string | null };
+  /** Missing on A.1, where the agent is still being named. */
+  agent: (AgentIdentity & { look: AgentLook }) | null;
+  /** The host picked on A.2, which A.3 opens on. `null` before one was picked. */
+  pickedHost: HostId | null;
+  /** The host that came in first, and the way it came: what A.4a asks to say hi. `null` before one did. */
+  connected: { via: 'cli' | 'mcp'; host: HostId | null } | null;
+  /** The first time a host showed the card, and which: what A.4 shows happening. `null` before. */
+  cardShown: CardShown | null;
+  /** Messages already in the inbox, waiting for a host to read them. `null` when they couldn't be counted. */
+  waiting: number | null;
+  apiUrl: string;
+  mcpUrl: string | null;
+  /** The apps that signed in through the MCP server since the agent was made. */
+  connectedTools: ToolId[];
+  /** Who can reach the agent, for the Share dialog of A.4. `null` when it couldn't be read. */
+  reach: AgentReach | null;
+  origin: string;
+  mailDomain: string;
+};
+
+export async function loadSayHiView(account: HumanAccount): Promise<SayHiView | null> {
+  const progress = await loadSetupProgress(account);
+  const { sayHiStep, state, agent, hostStatus, signIns, user } = progress;
+  if (!sayHiStep || sayHiStep === 'done' || !user) {
+    return null;
+  }
+
+  const [channels, waiting, origin, mailDomain, apiUrl] = await Promise.all([
+    agent ? loadChannelFacts(account) : { telegram: false, slack: false, emailAddress: undefined },
+    agent ? countWaitingMessages(account) : 0,
+    readSiteOrigin(),
+    readInboxMailDomain(account),
+    readApiUrl(),
+  ]);
+  const first = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
+    (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
+  const signedIn = signIns.reduce<SignIn | null>(
+    (earliest, signIn) => (!earliest || signIn.at < earliest.at ? signIn : earliest),
+    null
+  );
+  const identity = agent ? describeAgentIdentity(agent, state, origin, channels.emailAddress) : null;
+
+  return {
+    step: sayHiStep,
+    status: describeProgress(progress),
+    operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
+    agent: identity && agent ? { ...identity, look: agent.look } : null,
+    pickedHost: state.pickedHost ?? null,
+    connected: first ? { via: first.via, host: first.id ?? null } : signedIn ? { via: 'mcp', host: signedIn.id } : null,
+    cardShown: agent?.cardShown ?? hostStatus?.cardShown ?? null,
+    waiting,
+    apiUrl,
+    mcpUrl: readMcpUrl(),
+    connectedTools: signIns.map((signIn) => signIn.id).filter(isToolId),
     reach: agent?.settings?.reach ?? null,
     origin,
     mailDomain,

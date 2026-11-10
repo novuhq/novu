@@ -32,6 +32,10 @@ There are no exit codes. The result says what happened.
 
 A plain message returns `Delivered` as soon as delivery is confirmed.
 
+## agent_card
+
+Introduces the agent with its card: its name, its email address, and the link where anyone can email or message it. Call it when the user asks the agent to introduce itself, to share its card, or who it is on Agent Inbox. It takes no arguments. ChatGPT and Claude show the card itself in the chat; every app gets the greeting and the card as text.
+
 ## inbox_setup
 
 Creates the agent and its email inbox, sends the owner a confirmation link, or says how far setup got. With no arguments, it reports the status and may suggest the email you signed in with.

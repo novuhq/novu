@@ -5,8 +5,11 @@ import { cn } from '@/lib/utils';
 
 type HostLogoProps = {
   host: Host;
-  /** 16px in a public page's chip, 22px on a picker tile, 24px in a row or a pill, 40px next to a title. */
-  size: 'small' | 'tile' | 'medium' | 'large';
+  /**
+   * 16px in a public page's chip, 22px on a picker tile, 24px in a row or a pill, 36px in the onboarding's dock of
+   * hosts, 40px next to a title.
+   */
+  size: 'small' | 'tile' | 'medium' | 'dock' | 'large';
   className?: string;
 };
 
@@ -15,6 +18,7 @@ const SIZES: Record<HostLogoProps['size'], { tile: string; edge: string; mark: s
   small: { tile: 'size-4 rounded-[3.5px]', edge: 'ring-1', mark: 'text-[9px] leading-none', icon: 'size-2.5' },
   tile: { tile: 'size-5.5 rounded-[5.5px]', edge: 'ring-[0.688px]', mark: 'text-[10px] leading-none', icon: 'size-3' },
   medium: { tile: 'size-6 rounded-md', edge: 'ring-[0.75px]', mark: 'text-[11px] leading-none', icon: 'size-3.5' },
+  dock: { tile: 'size-9 rounded-[7.875px]', edge: 'ring-[1.125px]', mark: 'text-sm leading-none', icon: 'size-4.5' },
   large: { tile: 'size-10 rounded-[8.75px]', edge: 'ring-1', mark: 'text-base leading-none', icon: 'size-5' },
 };
 
@@ -31,6 +35,21 @@ export function HostLogo({ host, size, className }: HostLogoProps) {
       <span className={cn('relative block shrink-0 overflow-hidden', tile, className)}>
         <img src={host.icon} alt="" className="size-full" />
         <span aria-hidden="true" className={cn('absolute inset-0 rounded-[inherit] ring-white/8 ring-inset', edge)} />
+      </span>
+    );
+  }
+
+  if (host.id === 'general' && size === 'dock') {
+    // `Other (MCP)` in the dock: the dashed square around a "+", a little rounder than the logos beside it.
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          'flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-dashed border-border-strong font-mono text-base leading-5 font-medium text-secondary',
+          className
+        )}
+      >
+        +
       </span>
     );
   }

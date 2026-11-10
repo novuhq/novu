@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils';
 type OnboardingShellProps = {
   /** The right end of the top bar: who is signed in, and the way to sign out. */
   aside: ReactNode;
+  /**
+   * The screens lay themselves out over the whole space between the bars, the design's `Canvas`, edge to edge:
+   * no card in the middle, and no margins of the shell's own.
+   */
+  canvas?: boolean;
   children: ReactNode;
 };
 
@@ -16,7 +21,7 @@ type OnboardingShellProps = {
  * The onboarding's own full screen, outside the dashboard: the logo, one card in the middle, and the
  * credit, Docs and Help at the bottom. No sidebar and no top bar, so nothing changes under a refresh.
  */
-export function OnboardingShell({ aside, children }: OnboardingShellProps) {
+export function OnboardingShell({ aside, canvas = false, children }: OnboardingShellProps) {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-x-clip">
       <Pattern />
@@ -25,7 +30,11 @@ export function OnboardingShell({ aside, children }: OnboardingShellProps) {
         <Brand />
         <div className="ml-auto flex min-w-0 items-center gap-4">{aside}</div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-10 md:px-10">{children}</main>
+      <main
+        className={cn('flex flex-1 flex-col', canvas ? 'relative' : 'items-center justify-center px-4 pb-10 md:px-10')}
+      >
+        {children}
+      </main>
       <footer className="flex items-center gap-4 px-4 py-4.5 text-xs leading-4 text-muted md:px-10">
         <a
           href="https://novu.co/"

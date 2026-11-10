@@ -1,5 +1,5 @@
 import { askLine, askOffering, askSecret, type ReadOptions, readAnswer } from '../cli-io';
-import { drawMascot, SHIMMER, type Theme, toCells } from '../mascot/drawing';
+import { drawMascot, formOf, ORIGINAL_FORM, SHIMMER, type Theme, toCells } from '../mascot/drawing';
 import { createMascotLife, type Emotion, type MascotMoment, restingFace } from '../mascot/life';
 import {
   fitScreen,
@@ -143,9 +143,13 @@ export function processHost(colors: ColorMode, { aspect, theme }: { aspect: numb
  * Nothing else may write over it while it is drawn: anything the command writes to stdout or stderr behind
  * its back joins the list instead. A question is part of it too, so the screen keeps moving while it waits.
  */
-export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, host: ScreenHost): Screen {
+export function startLiveScreen(
+  { command, handle = 'agent', look: agentLook }: ScreenOptions,
+  host: ScreenHost
+): Screen {
   const { out, err, colors, aspect, theme } = host;
   const look: Look = { colors, theme };
+  const form = agentLook ? formOf(agentLook.shape, agentLook.color) : ORIGINAL_FORM;
   const life = createMascotLife({ random: host.random });
   // Bound now, before stray writes are kept off the terminal: the screen's own writes go through as they are.
   const writeOut: (text: string) => boolean = out.write.bind(out);
@@ -155,6 +159,7 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
   let rows: ScreenRow[] = [];
   let activity: string | undefined;
   let waits: ScreenWait[] = [];
+  let figure: readonly string[] | undefined;
   // The lines on the terminal, the screen's own rows above the cursor.
   let painted: string[] = [];
   let live = (out.rows ?? 0) > 0;
@@ -205,7 +210,7 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
         ...printed,
         ...(question ? askedRows(question) : []),
       ],
-      figure: latest.find((wait) => wait.figure)?.figure,
+      figure: latest.find((wait) => wait.figure)?.figure ?? figure,
       status,
     };
   };
@@ -214,10 +219,17 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     const mascot = fit.mascotWidth
       ? paintMascot(
           toCells(
-            drawMascot(fit.mascotWidth, moment.face, { aspect, theme, time: now, shimmer: moment.still ? 0 : SHIMMER })
+            drawMascot(fit.mascotWidth, moment.face, {
+              aspect,
+              theme,
+              time: now,
+              shimmer: moment.still ? 0 : SHIMMER,
+              form,
+            })
           ),
           look,
-          columns()
+          columns(),
+          form
         )
       : undefined;
     const spinner =
@@ -525,6 +537,10 @@ export function startLiveScreen({ command, handle = 'agent' }: ScreenOptions, ho
     },
     subtitle: (text) => {
       subtitle = text;
+      changed();
+    },
+    figure: (lines) => {
+      figure = lines;
       changed();
     },
     rows: (list) => {
