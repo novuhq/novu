@@ -243,6 +243,49 @@ describe('SendMessageSms - trigger provider overrides', () => {
     expect(sendStub.firstCall.args[0].to).to.equal('+15555555555');
   });
 
+  it('drops a blank provider to so the provider keeps the subscriber phone', async () => {
+    const { usecase, sendStub } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand({
+        providers: {
+          [PROVIDER_ID]: { to: '   ', statusCallback: 'https://example.com/sms' },
+        },
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    const sendArgs = sendStub.firstCall.args[0];
+    expect(sendArgs.to).to.equal('+15555555555');
+    expect(sendArgs.bridgeProviderData).to.not.have.property('to');
+    expect(sendArgs.bridgeProviderData.statusCallback).to.equal('https://example.com/sms');
+  });
+
+  it('drops a blank step-scoped provider to and a blank passthrough to', async () => {
+    const { usecase, sendStub } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand({
+        steps: {
+          [STEP_ID]: {
+            providers: {
+              [PROVIDER_ID]: {
+                to: '   ',
+                _passthrough: { body: { to: '  ', messagingServiceSid: 'MG123' } },
+              },
+            },
+          },
+        },
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    const sendArgs = sendStub.firstCall.args[0];
+    expect(sendArgs.to).to.equal('+15555555555');
+    expect(sendArgs.bridgeProviderData).to.not.have.property('to');
+    expect(sendArgs.bridgeProviderData._passthrough.body).to.deep.equal({ messagingServiceSid: 'MG123' });
+  });
+
   it('records the selected provider on the sent trace when the job snapshot is Novu SMS', async () => {
     const { usecase, createExecutionDetails } = buildUsecase();
     const command = buildCommand({});
