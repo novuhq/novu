@@ -73,7 +73,12 @@ describe('BindWhatsAppNumber', () => {
     });
     expect(command.endpoint).to.deep.equal({ phoneNumber: NUMBER });
     const [where, change] = channelEndpointRepository.update.firstCall.args;
-    expect(where).to.deep.equal({ _environmentId: 'env1', _organizationId: 'org1', _id: 'endpoint1' });
+    expect(where).to.deep.equal({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      _id: 'endpoint1',
+      'endpoint.phoneNumber': NUMBER,
+    });
     expect(change.$set['endpoint.provedAt']).to.be.a('string');
   });
 
@@ -120,7 +125,12 @@ describe('BindWhatsAppNumber', () => {
     expect(await usecase.execute(PAYLOAD, NUMBER)).to.deep.equal({ created: true, subscriberId: 'ada' });
 
     const [where, change] = channelEndpointRepository.update.firstCall.args;
-    expect(where).to.deep.equal({ _environmentId: 'env1', _organizationId: 'org1', _id: 'endpoint0' });
+    expect(where).to.deep.equal({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      _id: 'endpoint0',
+      'endpoint.phoneNumber': NUMBER,
+    });
     expect(change.$set.subscriberId).to.equal('ada');
     expect(change.$unset).to.deep.equal({
       'endpoint.username': '',
@@ -129,6 +139,15 @@ describe('BindWhatsAppNumber', () => {
     });
     expect(channelEndpointRepository.delete.called).to.equal(false);
     expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('keeps the proof off a number that changed while it was being bound', async () => {
+    const { usecase, channelEndpointRepository } = setup();
+    channelEndpointRepository.update.resolves({ matched: 0, modified: 0 });
+
+    const error = await usecase.execute(PAYLOAD, NUMBER).catch((err: unknown) => err);
+
+    expect(error).to.be.instanceOf(NotFoundException);
   });
 
   for (const [name, options] of [

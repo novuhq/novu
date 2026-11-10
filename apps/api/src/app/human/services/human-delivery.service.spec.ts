@@ -31,6 +31,17 @@ function emailGate(blocked = false) {
   };
 }
 
+/** The service lists a person's endpoints; these specs stub the one lookup, so the list is that one, or none. */
+function withFind<Repository extends { findOne: sinon.SinonStub }>(repository: Repository) {
+  return Object.assign(repository, {
+    find: async (query: unknown) => {
+      const endpoint = await repository.findOne(query);
+
+      return endpoint ? [endpoint] : [];
+    },
+  });
+}
+
 describe('HumanDeliveryService.resolveChannel', () => {
   function setup() {
     const agentIntegrationRepository = { find: sinon.stub() };
@@ -46,7 +57,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
     const keylessEmailGate = emailGate();
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
-      channelEndpointRepository as never,
+      withFind(channelEndpointRepository) as never,
       integrationRepository as never,
       humanContactRepository as never,
       outboundGateway as never,
@@ -469,7 +480,7 @@ describe('HumanDeliveryService keyless email', () => {
     const keylessEmailGate = emailGate(true);
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
-      channelEndpointRepository as never,
+      withFind(channelEndpointRepository) as never,
       integrationRepository as never,
       humanContactRepository as never,
       { sendDirectMessage: sinon.stub() } as never,
@@ -617,7 +628,7 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
     };
     const service = new HumanDeliveryService(
       agentIntegrationRepository as never,
-      channelEndpointRepository as never,
+      withFind(channelEndpointRepository) as never,
       integrationRepository as never,
       {} as never,
       {} as never,
@@ -701,7 +712,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
     const service = new HumanDeliveryService(
       { find: sinon.stub().resolves(integrations.map((_, n) => ({ _integrationId: `int${n}` }))) } as never,
-      channelEndpointRepository as never,
+      withFind(channelEndpointRepository) as never,
       { find: sinon.stub().resolves(integrations) } as never,
       { findContact: sinon.stub().resolves(null) } as never,
       {} as never,
@@ -732,6 +743,54 @@ describe('HumanDeliveryService on WhatsApp', () => {
       platformUserId: '+15551234567',
       integrationIdentifier: 'whatsapp-main',
     });
+  });
+
+  it('reaches the proved number behind an older one without proof, connected when it was proved', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    Object.assign(channelEndpointRepository, {
+      find: async (query: { integrationIdentifier: string }) =>
+        query.integrationIdentifier === 'whatsapp-main'
+          ? [
+              {
+                type: ENDPOINT_TYPES.PHONE,
+                providerId: ChatProviderIdEnum.WhatsAppBusiness,
+                endpoint: { phoneNumber: '+15550000000' },
+                createdAt: '2026-10-01T10:00:00.000Z',
+              },
+              {
+                type: ENDPOINT_TYPES.PHONE,
+                providerId: ChatProviderIdEnum.WhatsAppBusiness,
+                endpoint: { phoneNumber: '+15551234567', provedAt: '2026-11-05T10:00:00.000Z' },
+                createdAt: '2026-10-02T10:00:00.000Z',
+              },
+            ]
+          : [],
+    });
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(target).to.include({ platformUserId: '+15551234567' });
+    const [described] = await service.describeInviteChannels(params);
+    expect(described).to.include({ via: HumanChannelViaEnum.WHATSAPP, connected: true });
+  });
+
+  it('counts a moved number as connected when its new owner proved it, not when the endpoint was made', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            type: ENDPOINT_TYPES.PHONE,
+            providerId: ChatProviderIdEnum.WhatsAppBusiness,
+            endpoint: { phoneNumber: '+15551234567', provedAt: '2026-11-05T10:00:00.000Z' },
+            createdAt: '2026-10-01T10:00:00.000Z',
+          }
+        : { type: ENDPOINT_TYPES.TELEGRAM_CHAT, endpoint: { chatId: '42' }, createdAt: '2026-11-01T10:00:00.000Z' }
+    );
+
+    // No default saved: the app connected first wins, and Telegram came before the WhatsApp proof.
+    const target = await service.resolveChannel(params);
+
+    expect(target).to.include({ platform: HumanChannelViaEnum.TELEGRAM, platformUserId: '42' });
   });
 
   it('does not reach a number written on the WhatsApp integration without a code', async () => {

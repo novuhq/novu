@@ -84,13 +84,10 @@ export class BindWhatsAppNumber {
       }
 
       // One write, so a move that fails leaves the number with whoever had it. Someone else's name goes with them.
-      await this.channelEndpointRepository.update(
-        { ...scope, _id: existing._id },
-        {
-          $set: { subscriberId: subscriber.subscriberId, ...proof },
-          ...(ownedAlready ? {} : { $unset: HANDLE_UNSET }),
-        }
-      );
+      await this.saveProof(scope, existing._id, phoneNumber, {
+        $set: { subscriberId: subscriber.subscriberId, ...proof },
+        ...(ownedAlready ? {} : { $unset: HANDLE_UNSET }),
+      });
 
       return { created: true, subscriberId: subscriber.subscriberId };
     }
@@ -108,8 +105,27 @@ export class BindWhatsAppNumber {
         platformIdentityVerified: true,
       })
     );
-    await this.channelEndpointRepository.update({ ...scope, _id: created._id }, { $set: proof });
+    await this.saveProof(scope, created._id, phoneNumber, { $set: proof });
 
     return { created: true, subscriberId: subscriber.subscriberId };
+  }
+
+  /**
+   * Writes the proof only while the endpoint still holds the number that sent the code: the channel-endpoints API
+   * can change the number in between, and the proof must never land on one that didn't send it.
+   */
+  private async saveProof(
+    scope: { _environmentId: string; _organizationId: string },
+    endpointId: string,
+    phoneNumber: string,
+    change: Parameters<ChannelEndpointRepository['update']>[1]
+  ): Promise<void> {
+    const { matched } = await this.channelEndpointRepository.update(
+      { ...scope, _id: endpointId, 'endpoint.phoneNumber': phoneNumber },
+      change
+    );
+    if (matched === 0) {
+      throw new NotFoundException('The number changed before it could be bound.');
+    }
   }
 }

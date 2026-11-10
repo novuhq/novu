@@ -8,6 +8,13 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
  */
 export const WHATSAPP_NUMBER_PROVED_AT_FIELD = 'provedAt';
 
+/** When the number on a `phone` endpoint proved itself, which is when its owner connected WhatsApp. */
+export function whatsAppNumberProvedAtOf(endpoint: Pick<ChannelEndpointEntity, 'endpoint'>): string | undefined {
+  const provedAt = (endpoint.endpoint as Record<string, unknown>)[WHATSAPP_NUMBER_PROVED_AT_FIELD];
+
+  return typeof provedAt === 'string' ? provedAt : undefined;
+}
+
 /**
  * The number on a `phone` endpoint that proved itself on a WhatsApp Business integration, or `undefined`. Only
  * these reach a person on WhatsApp; any other `phone` endpoint, on WhatsApp or SMS, is no proof.

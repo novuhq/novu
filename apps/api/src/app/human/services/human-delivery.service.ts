@@ -20,7 +20,7 @@ import {
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
-import { provedWhatsAppNumberOf } from '../../agents/human-relay/whatsapp-number-proof';
+import { provedWhatsAppNumberOf, whatsAppNumberProvedAtOf } from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
@@ -513,11 +513,15 @@ export class HumanDeliveryService {
         continue;
       }
 
-      const endpoint = endpoints.find(
-        (candidate) =>
-          candidate.subscriberId === subscriberId && candidate.integrationIdentifier === integration.identifier
+      // The first of their endpoints that reaches them: an older one without proof never hides a proved number.
+      const target = this.firstTarget(
+        endpoints.filter(
+          (candidate) =>
+            candidate.subscriberId === subscriberId && candidate.integrationIdentifier === integration.identifier
+        ),
+        via,
+        integration.identifier
       );
-      const target = endpoint ? this.toTarget(endpoint, via, integration.identifier) : null;
 
       if (target) {
         targets.push(target);
@@ -652,18 +656,34 @@ export class HumanDeliveryService {
       };
     }
 
-    const endpoint = await this.channelEndpointRepository.findOne({
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      subscriberId: params.subscriberId,
-      integrationIdentifier: integration.identifier,
-    });
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        subscriberId: params.subscriberId,
+        integrationIdentifier: integration.identifier,
+      },
+      '',
+      { sort: { _id: 1 } }
+    );
 
-    if (!endpoint) {
-      return null;
+    return this.firstTarget(endpoints, via, integration.identifier);
+  }
+
+  /** The oldest endpoint that reaches the person, skipping any that can't (a WhatsApp number without proof). */
+  private firstTarget(
+    endpoints: ChannelEndpointEntity[],
+    via: HumanChannelViaEnum,
+    integrationIdentifier: string
+  ): ReachableHumanTarget | null {
+    for (const endpoint of endpoints) {
+      const target = this.toTarget(endpoint, via, integrationIdentifier);
+      if (target) {
+        return target;
+      }
     }
 
-    return this.toTarget(endpoint, via, integration.identifier);
+    return null;
   }
 
   private toTarget(
@@ -684,7 +704,8 @@ export class HumanDeliveryService {
       platform: via,
       platformUserId,
       integrationIdentifier,
-      connectedAt: endpoint.createdAt,
+      // A WhatsApp number connected when it was proved, which can be later than the endpoint when it moved owners.
+      connectedAt: (endpoint.type === ENDPOINT_TYPES.PHONE && whatsAppNumberProvedAtOf(endpoint)) || endpoint.createdAt,
       ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }
