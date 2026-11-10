@@ -1,6 +1,6 @@
 import type { SlackAdapter } from '@chat-adapter/slack';
 import type { TeamsAdapter } from '@chat-adapter/teams';
-import type { TelegramAdapter } from '@chat-adapter/telegram';
+import type { TelegramAdapter, TelegramFormatConverter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
@@ -159,6 +159,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<ChatWithAdapters>>();
   private inboundCallbacks: InboundCallbacks | null = null;
+  private telegramConverter: TelegramFormatConverter | null = null;
 
   constructor(
     private readonly logger: PinoLogger,
@@ -886,14 +887,23 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     }
 
-    const { Message: MessageCtor, parseMarkdown } = await esmImport('chat');
+    const [{ Message: MessageCtor }, telegramModule] = await Promise.all([
+      esmImport('chat'),
+      esmImport('@chat-adapter/telegram'),
+    ]);
+    const TelegramFormatConverterCtor: new () => TelegramFormatConverter = telegramModule.TelegramFormatConverter;
+    let telegramConverter = this.telegramConverter;
+    if (!telegramConverter) {
+      telegramConverter = new TelegramFormatConverterCtor();
+      this.telegramConverter = telegramConverter;
+    }
     const text = event.text ? `${event.command} ${event.text}` : event.command;
 
     return new MessageCtor({
       id: messageId,
       threadId,
       text,
-      formatted: parseMarkdown(text),
+      formatted: telegramConverter.parseIncoming(text).formatted,
       raw: event.raw,
       author: event.user,
       metadata: { dateSent: raw?.date !== undefined ? new Date(raw.date * 1000) : new Date() },

@@ -7,6 +7,7 @@ import type {
   MessageData,
   Root,
 } from 'chat';
+import type { InboundMarkdownParser } from './inbound-markdown.js';
 import { mapReplyFiles } from './reply-files.js';
 import type {
   AgentAttachment,
@@ -25,7 +26,7 @@ type PostableObjectMessage = Exclude<AdapterPostableMessage, string | CardElemen
 /** Chat-module functions the mapper needs, injected after the dynamic `import('chat')`. */
 export interface ChatModuleParts {
   Message: new <T = unknown>(data: MessageData<T>) => ChatMessage<T>;
-  parseMarkdown: (md: string) => Root;
+  parseInbound: InboundMarkdownParser;
   stringifyMarkdown: (ast: Root) => string;
   toCardElement: (element: unknown) => CardElement;
   isCardElement: (value: unknown) => value is CardElement;
@@ -84,7 +85,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: raw.text,
-      formatted: this.parts.parseMarkdown(raw.markdown ?? raw.text ?? ''),
+      formatted: this.parts.parseInbound(raw.markdown ?? raw.text ?? ''),
       raw,
       author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },
@@ -133,7 +134,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: entry.content,
-      formatted: this.parts.parseMarkdown(entry.content ?? ''),
+      formatted: this.parts.parseInbound(entry.content ?? ''),
       raw,
       author: this.toAuthor(raw.author, isAssistant),
       metadata: { dateSent: parseDate(entry.createdAt), edited: false },

@@ -1,9 +1,9 @@
 import type { Message, MessageData } from 'chat';
+import type { InboundMarkdownParser } from './inbound-markdown.js';
 import type { NovuEmailRawMessage } from './types.js';
 import { extractDisplayName, parseEmailAddress, stripHtml } from './utils.js';
 
 type MessageConstructor = new (data: MessageData<NovuEmailRawMessage>) => Message<NovuEmailRawMessage>;
-type ParseMarkdownFn = (text: string) => import('chat').Root;
 
 /**
  * Converts raw email data into a Chat SDK Message.
@@ -11,15 +11,15 @@ type ParseMarkdownFn = (text: string) => import('chat').Root;
  */
 export class MessageParser {
   private MessageClass: MessageConstructor | null = null;
-  private parseMarkdownFn: ParseMarkdownFn | null = null;
+  private inboundParser: InboundMarkdownParser | null = null;
 
-  setChatModule(MessageClass: MessageConstructor, parseMarkdownFn: ParseMarkdownFn): void {
+  setChatModule(MessageClass: MessageConstructor, inboundParser: InboundMarkdownParser): void {
     this.MessageClass = MessageClass;
-    this.parseMarkdownFn = parseMarkdownFn;
+    this.inboundParser = inboundParser;
   }
 
   parse(raw: NovuEmailRawMessage, fromAddress: string, threadId: string): Message<NovuEmailRawMessage> {
-    if (!this.MessageClass || !this.parseMarkdownFn) {
+    if (!this.MessageClass || !this.inboundParser) {
       throw new Error('MessageParser not initialized — call setChatModule() first');
     }
 
@@ -71,7 +71,7 @@ export class MessageParser {
       id: raw.id,
       threadId,
       text,
-      formatted: this.parseMarkdownFn(text),
+      formatted: this.inboundParser(text),
       raw,
       author: mappedAuthor,
       metadata: mappedMetadata,

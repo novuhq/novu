@@ -407,6 +407,69 @@ describe('Novu adapter end-to-end', () => {
     ]);
   });
 
+  it('keeps oversized inbound markdown as one text paragraph without blocking the handler', async () => {
+    const { adapter, chat } = buildChat();
+    const brackets = ']'.repeat(15000);
+    const historyText = 'a'.repeat(20000);
+    const plain = 'short plain';
+    let received: { text: string; formatted: unknown } | undefined;
+    let elapsedMs = Number.POSITIVE_INFINITY;
+    let startedAt = 0;
+    chat.onSubscribedMessage(async (_thread, message) => {
+      elapsedMs = performance.now() - startedAt;
+      received = { text: message.text, formatted: message.formatted };
+    });
+    await chat.initialize();
+
+    startedAt = performance.now();
+    await deliver(
+      adapter,
+      bridgeRequest({
+        message: {
+          ...bridgeRequest().message!,
+          text: plain,
+          markdown: brackets,
+        },
+        history: [
+          {
+            role: 'user',
+            type: 'text',
+            content: historyText,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(received?.text).toBe(plain);
+    expect(received?.formatted).toEqual({
+      type: 'root',
+      children: [{ type: 'paragraph', children: [{ type: 'text', value: brackets }] }],
+    });
+    expect(elapsedMs).toBeLessThan(100);
+
+    const threadId = encodeThreadId({
+      platform: 'slack',
+      integrationIdentifier: 'slack-prod',
+      conversationId: 'conv-1',
+      isDM: false,
+    });
+    const historyStartedAt = performance.now();
+    const { messages } = await adapter.fetchMessages(threadId);
+    const historyElapsedMs = performance.now() - historyStartedAt;
+    const historyMsg = messages[0];
+    if (historyMsg === undefined) {
+      throw new Error('expected a history message');
+    }
+
+    expect(historyMsg.text).toBe(historyText);
+    expect(historyMsg.formatted).toEqual({
+      type: 'root',
+      children: [{ type: 'paragraph', children: [{ type: 'text', value: historyText }] }],
+    });
+    expect(historyElapsedMs).toBeLessThan(100);
+  });
+
   it('exposes platform email and the system flag on the author for unlinked and linked senders', async () => {
     const { adapter, chat } = buildChat();
     const authors: Array<{ userId: string; email?: string; isSystem?: boolean }> = [];
