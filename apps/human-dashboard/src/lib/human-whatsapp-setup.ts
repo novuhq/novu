@@ -14,11 +14,16 @@ export type WhatsAppSetupState =
   | { step: 'unavailable' }
   | { step: 'connect'; appId: string; configId: string }
   /**
+   * The business number is linked, but the operator hasn't proved their own WhatsApp number with a code yet.
    * `reconnect` carries the Meta ids while the flow can run: the number is saved before Meta's webhook is set
-   * up, so a setup that failed halfway reads as connected and is fixed by connecting again.
+   * up, so a setup that failed halfway is fixed by connecting again.
    */
-  | { step: 'connected'; displayPhoneNumber?: string; reconnect?: { appId: string; configId: string } }
+  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds }
+  /** The business number is linked and the operator's own number is bound to it. */
+  | { step: 'connected'; displayPhoneNumber?: string; operatorPhoneNumber?: string; reconnect?: MetaIds }
   | { step: 'unknown' };
+
+type MetaIds = { appId: string; configId: string };
 
 type WhatsAppSetupResponse = {
   enabled: boolean;
@@ -27,7 +32,10 @@ type WhatsAppSetupResponse = {
   appId?: string;
   configId?: string;
   connected: boolean;
+  businessConnected?: boolean;
   displayPhoneNumber?: string;
+  operatorNumberBound?: boolean;
+  operatorPhoneNumber?: string;
 };
 
 /** How far the WhatsApp setup got. Nothing is created here, and a failed read never fails the page. */
@@ -53,12 +61,21 @@ export function toWhatsAppSetupState(setup: WhatsAppSetupResponse): WhatsAppSetu
   const ids =
     setup.available && setup.appId && setup.configId ? { appId: setup.appId, configId: setup.configId } : null;
 
+  const business = {
+    ...(setup.displayPhoneNumber ? { displayPhoneNumber: setup.displayPhoneNumber } : {}),
+    ...(ids ? { reconnect: ids } : {}),
+  };
+
   if (setup.connected) {
     return {
       step: 'connected',
-      ...(setup.displayPhoneNumber ? { displayPhoneNumber: setup.displayPhoneNumber } : {}),
-      ...(ids ? { reconnect: ids } : {}),
+      ...business,
+      ...(setup.operatorPhoneNumber ? { operatorPhoneNumber: setup.operatorPhoneNumber } : {}),
     };
+  }
+
+  if (setup.businessConnected) {
+    return { step: 'verify', ...business };
   }
 
   return ids ? { step: 'connect', ...ids } : { step: 'unavailable' };

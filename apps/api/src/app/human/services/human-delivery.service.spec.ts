@@ -712,12 +712,35 @@ describe('HumanDeliveryService on WhatsApp', () => {
     return { service, channelEndpointRepository, getFlag };
   }
 
+  it('reaches a number bound with a wa.me code on the WhatsApp Business integration', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            type: ENDPOINT_TYPES.PHONE,
+            providerId: ChatProviderIdEnum.WhatsAppBusiness,
+            endpoint: { phoneNumber: '+15551234567', displayName: 'Alice' },
+            createdAt: '2026-11-01T10:00:00.000Z',
+          }
+        : null
+    );
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(target).to.include({
+      platform: HumanChannelViaEnum.WHATSAPP,
+      platformUserId: '+15551234567',
+      integrationIdentifier: 'whatsapp-main',
+    });
+  });
+
   it('does not treat a notification phone endpoint as a WhatsApp binding', async () => {
     const { service, channelEndpointRepository } = setup(true);
     channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
       query.integrationIdentifier === 'whatsapp-main'
         ? {
             type: ENDPOINT_TYPES.PHONE,
+            providerId: 'twilio',
             endpoint: { phoneNumber: '+15551234567' },
             createdAt: '2026-11-01T10:00:00.000Z',
           }

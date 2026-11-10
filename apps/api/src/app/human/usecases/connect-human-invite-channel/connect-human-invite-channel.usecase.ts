@@ -1,6 +1,6 @@
 import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
@@ -11,6 +11,7 @@ import { findAgentInboxOwner, trackAgentInboxInviteAccepted } from '../../servic
 import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { type HumanInviteTokenPayload, HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { IssueHumanWhatsAppLink } from '../human-whatsapp/issue-human-whatsapp-link.usecase';
 import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
 import {
   RequestAddressVerification,
@@ -38,7 +39,9 @@ export class ConnectHumanInviteChannel {
     private readonly requestAddressVerification: RequestAddressVerification,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
-    private readonly channelGate: HumanChannelGate
+    private readonly channelGate: HumanChannelGate,
+    private readonly issueHumanWhatsAppLink: IssueHumanWhatsAppLink,
+    private readonly agentRepository: AgentRepository
   ) {}
 
   async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
@@ -111,12 +114,8 @@ export class ConnectHumanInviteChannel {
       }
     }
 
-    // Binding a WhatsApp number by a wa.me code comes in NV-9402. Until then it must not fall through to Slack OAuth.
     if (command.via === HumanChannelViaEnum.WHATSAPP) {
-      throw new BadRequestException({
-        code: 'channel_unavailable',
-        message: `${appName} isn't available on invites yet.`,
-      });
+      return this.whatsAppLink(payload, channel.integrationIdentifier, appName);
     }
 
     if (command.via === HumanChannelViaEnum.TELEGRAM) {
@@ -144,6 +143,34 @@ export class ConnectHumanInviteChannel {
     );
 
     return { url };
+  }
+
+  /** A wa.me link with a code: sending it from WhatsApp binds the contact's number, as `/start` does on Telegram. */
+  private async whatsAppLink(
+    payload: HumanInviteTokenPayload,
+    integrationIdentifier: string,
+    appName: string
+  ): Promise<{ url: string }> {
+    const agent = await this.agentRepository.findOne(
+      { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
+      ['identifier']
+    );
+    if (!agent) {
+      throw new BadRequestException({
+        code: 'channel_unavailable',
+        message: `${appName} isn't offered on this invite.`,
+      });
+    }
+
+    const link = await this.issueHumanWhatsAppLink.execute({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentIdentifier: agent.identifier,
+      subscriberId: payload.subscriberId,
+      integrationIdentifier,
+    });
+
+    return { url: link.url };
   }
 
   /**

@@ -41,6 +41,7 @@ describe('GetHumanWhatsAppSetup', () => {
     whatsAppEnabled: boolean;
     available?: { available: boolean; reason?: 'feature_disabled' | 'missing_platform_config' };
     credentials?: Record<string, unknown>;
+    operatorEndpoint?: Record<string, unknown> | null;
   }) {
     const availability = { execute: sinon.stub().resolves(options.available ?? { available: true }) };
     const agentRepository = {
@@ -61,15 +62,19 @@ describe('GetHumanWhatsAppSetup', () => {
           : []
       ),
     };
+    const channelEndpointRepository = { findOne: sinon.stub().resolves(options.operatorEndpoint ?? null) };
+    const humanOperator = { find: sinon.stub().resolves('ada') };
     const usecase = new GetHumanWhatsAppSetup(
       new HumanChannelGate({ getFlag: sinon.stub().resolves(options.whatsAppEnabled) } as never),
       availability as never,
       agentRepository as never,
       agentIntegrationRepository as never,
-      integrationRepository as never
+      integrationRepository as never,
+      channelEndpointRepository as never,
+      humanOperator as never
     );
 
-    return { usecase, availability, integrationRepository };
+    return { usecase, availability, integrationRepository, channelEndpointRepository };
   }
 
   it('hides WhatsApp entirely while the flag is off, without asking anything else', async () => {
@@ -91,6 +96,8 @@ describe('GetHumanWhatsAppSetup', () => {
       available: false,
       reason: 'missing_platform_config',
       connected: false,
+      businessConnected: false,
+      operatorNumberBound: false,
     });
   });
 
@@ -103,26 +110,54 @@ describe('GetHumanWhatsAppSetup', () => {
       appId: 'app-1',
       configId: 'config-1',
       connected: false,
+      businessConnected: false,
+      operatorNumberBound: false,
     });
   });
 
-  it('reads a linked number as connected and returns only the number, never a credential', async () => {
-    const { usecase } = setup({
-      whatsAppEnabled: true,
-      credentials: {
-        apiToken: 'EAAG-secret-token',
-        phoneNumberIdentification: '1234',
-        businessAccountId: 'waba-1',
-        from: '+1 555-123-4567',
-        isNovuManaged: true,
-      },
-    });
+  const CREDENTIALS = {
+    apiToken: 'EAAG-secret-token',
+    phoneNumberIdentification: '1234',
+    businessAccountId: 'waba-1',
+    from: '+1 555-123-4567',
+    isNovuManaged: true,
+  };
+
+  it('reads a linked business number as one step short until the operator proves their own number', async () => {
+    const { usecase } = setup({ whatsAppEnabled: true, credentials: CREDENTIALS });
 
     const result = await usecase.execute(command);
 
-    expect(result).to.include({ connected: true, displayPhoneNumber: '+1 555-123-4567' });
+    expect(result).to.include({
+      connected: false,
+      businessConnected: true,
+      operatorNumberBound: false,
+      displayPhoneNumber: '+1 555-123-4567',
+    });
     expect(JSON.stringify(result)).to.not.contain('EAAG-secret-token');
     expect(JSON.stringify(result)).to.not.contain('app-secret');
+  });
+
+  it('reads WhatsApp as connected once the operator’s own number is bound on the business number', async () => {
+    const { usecase, channelEndpointRepository } = setup({
+      whatsAppEnabled: true,
+      credentials: CREDENTIALS,
+      operatorEndpoint: { endpoint: { phoneNumber: '+15550100199' } },
+    });
+
+    expect(await usecase.execute(command)).to.include({
+      connected: true,
+      businessConnected: true,
+      operatorNumberBound: true,
+      operatorPhoneNumber: '+15550100199',
+    });
+    expect(channelEndpointRepository.findOne.firstCall.args[0]).to.deep.equal({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      integrationIdentifier: 'whatsapp-main',
+      subscriberId: 'ada',
+      type: 'phone',
+    });
   });
 
   it('does not read a WhatsApp integration without a token as connected', async () => {

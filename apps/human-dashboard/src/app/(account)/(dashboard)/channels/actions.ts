@@ -17,11 +17,13 @@ import {
   hasLinkedChannel,
   issueSlackInstallUrl,
   issueTelegramStartLink,
+  issueWhatsAppLink,
   listChannels,
   renameChannel,
   type SlackWorkspace,
   saveTelegramBotToken,
   sendTestMessage,
+  type WhatsAppLink,
   type WhatsAppSignup,
 } from '@/lib/human-channels-api';
 import { ensureOperatorContact, ensureRelay, findOperatorContactId } from '@/lib/human-operator';
@@ -214,6 +216,35 @@ export async function loadWhatsAppSetupAction(): Promise<WhatsAppSetupState> {
   return readWhatsAppSetup(account);
 }
 
+export type IssueWhatsAppLinkResult = ({ ok: true } & WhatsAppLink) | { ok: false; error: string };
+
+/** A new wa.me link with a code for the operator's own number, made each time the drawer waits for it. */
+export async function issueWhatsAppLinkAction(): Promise<IssueWhatsAppLinkResult> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    return { ok: true, ...(await issueWhatsAppLink(account)) };
+  } catch (error) {
+    console.error('Failed to make a WhatsApp code', error);
+
+    return { ok: false, error: describeWhatsAppLinkError(error) };
+  }
+}
+
+/** Whether the operator's own number got bound, for the drawer waiting on their message. */
+export async function checkWhatsAppConnectedAction(): Promise<WhatsAppSetupState | null> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const setup = await readWhatsAppSetup(account);
+
+  if (setup.step !== 'connected') {
+    return null;
+  }
+
+  revalidatePath(CHANNELS_PATH);
+
+  return setup;
+}
+
 /**
  * Connects the operator's own WhatsApp Business account with what the Facebook button handed back. The
  * relay gets its WhatsApp channel first, the way Telegram and Slack do, then the API finishes Meta's
@@ -399,6 +430,24 @@ function describeWhatsAppFailure(code: string | undefined): string {
     default:
       return 'Something went wrong while connecting WhatsApp. Please try again.';
   }
+}
+
+function describeWhatsAppLinkError(error: unknown): string {
+  if (error instanceof HumanApiError) {
+    if (error.code === 'whatsapp_number_unknown') {
+      return 'WhatsApp didn’t say which number is connected. Connect WhatsApp again.';
+    }
+
+    if (error.status === 403 || error.status === 422) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    if (error.status === 404) {
+      return 'Connect your WhatsApp Business number first.';
+    }
+  }
+
+  return 'We couldn’t make a code just now. Please try again.';
 }
 
 function describeWhatsAppError(error: unknown): string {

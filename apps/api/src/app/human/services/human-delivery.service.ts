@@ -13,6 +13,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
@@ -773,8 +774,13 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
       return (endpoint.endpoint as { userId: string }).userId;
     case ENDPOINT_TYPES.SLACK_CHANNEL:
       return (endpoint.endpoint as { channelId: string }).channelId;
-    // A `phone` endpoint is not proof of WhatsApp: the channel-endpoints API writes them for notification
-    // routing too. WhatsApp becomes reachable only from the binding the wa.me code creates (NV-9402).
+    // A number someone proved with a wa.me code is a `phone` endpoint on the relay's WhatsApp Business
+    // integration. The channel-endpoints API writes `phone` endpoints for SMS routing too; those are on SMS
+    // providers and never count as WhatsApp.
+    case ENDPOINT_TYPES.PHONE:
+      return endpoint.providerId === ChatProviderIdEnum.WhatsAppBusiness
+        ? (endpoint.endpoint as { phoneNumber: string }).phoneNumber
+        : undefined;
     default:
       return undefined;
   }

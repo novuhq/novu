@@ -20,11 +20,34 @@ export class HumanWhatsAppSetupResponseDto {
   @ApiPropertyOptional({ description: 'Embedded Signup configuration id for FB.login. Public.' })
   configId?: string;
 
-  @ApiProperty({ description: 'A WhatsApp Business number is linked to the relay agent and can send.' })
+  @ApiProperty({
+    description: 'WhatsApp works for the operator: the business number is linked and their own number is bound.',
+  })
   connected: boolean;
+
+  @ApiPropertyOptional({ description: 'A WhatsApp Business number is linked to the relay agent and can send.' })
+  businessConnected?: boolean;
 
   @ApiPropertyOptional({ description: 'The linked business number as WhatsApp shows it.' })
   displayPhoneNumber?: string;
+
+  @ApiPropertyOptional({ description: 'The operator proved their own WhatsApp number with a code.' })
+  operatorNumberBound?: boolean;
+
+  @ApiPropertyOptional({ description: 'The operator’s own WhatsApp number, in E.164.' })
+  operatorPhoneNumber?: string;
+}
+
+/** A wa.me link with a one-time code that binds the sender's WhatsApp number. */
+export class HumanWhatsAppLinkResponseDto {
+  @ApiProperty({ description: 'Opens WhatsApp at the business number with the code ready to send.' })
+  url: string;
+
+  @ApiProperty({ description: 'The code, `BCDF-GHJK`, for typing by hand.' })
+  code: string;
+
+  @ApiProperty({ description: 'When the code stops working.' })
+  expiresAt: string;
 }
 
 export class ConnectHumanWhatsAppRequestDto extends HumanAgentQueryDto {

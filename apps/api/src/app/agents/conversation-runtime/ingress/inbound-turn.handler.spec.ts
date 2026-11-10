@@ -290,6 +290,7 @@ describe('AgentInboundHandler', () => {
       resolveOperatorClaimCard: sinon.stub().resolves(undefined),
     };
     const contactHandles = { refresh: sinon.stub().resolves() };
+    const whatsAppBindInbound = { tryConsume: sinon.stub().resolves(false) };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -315,7 +316,8 @@ describe('AgentInboundHandler', () => {
       humanConversationInbound,
       agentConfigResolver as any,
       keylessEmailGate as any,
-      contactHandles as any
+      contactHandles as any,
+      whatsAppBindInbound as any
     );
 
     return {
@@ -344,6 +346,7 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService,
       keylessEmailGate,
       contactHandles,
+      whatsAppBindInbound,
     };
   }
 
@@ -2596,6 +2599,33 @@ describe('AgentInboundHandler', () => {
       });
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('WhatsApp code binding', () => {
+    const whatsAppConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.WHATSAPP,
+      integrationIdentifier: 'whatsapp-main',
+      integrationId: 'integration1',
+      agentIdentifier: 'human-relay',
+      isHumanRelay: true,
+      acknowledgeOnReceived: false,
+      subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+    };
+
+    it('stops a message that carried a code before the sender is resolved', async () => {
+      const { handler, whatsAppBindInbound, subscriberResolver, conversationService } = makeHandler();
+      whatsAppBindInbound.tryConsume.resolves(true);
+      const message = { id: 'wamid-1', text: 'Connect me to ada: BCDF-GHJK', author: { userId: '15550100199' } };
+
+      await handler.handle('agent1', whatsAppConfig as any, {} as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(whatsAppBindInbound.tryConsume.calledOnce).to.equal(true);
+      expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
     });
   });
 
