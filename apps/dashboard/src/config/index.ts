@@ -32,7 +32,7 @@ export const NOVU_COPILOT_AGENT_ID = getEnvVar('VITE_NOVU_COPILOT_AGENT_ID') || 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
 /** Publicly reachable API host for agent webhooks/OAuth (e.g. ngrok). Falls back to `API_HOSTNAME`. */
-export const AGENT_API_HOSTNAME = window._env_?.VITE_AGENT_API_HOSTNAME || import.meta.env.VITE_AGENT_API_HOSTNAME;
+const AGENT_API_HOSTNAME = window._env_?.VITE_AGENT_API_HOSTNAME || import.meta.env.VITE_AGENT_API_HOSTNAME;
 
 /** Base URL for agent webhook/OAuth URLs shown to external providers (Slack, Teams, Meta, etc.). */
 export function getAgentApiBaseUrl(): string {
@@ -96,7 +96,7 @@ export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
  */
 export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED === 'true';
 
-export const IS_ENTERPRISE = import.meta.env.VITE_NOVU_ENTERPRISE === 'true';
+const IS_ENTERPRISE = import.meta.env.VITE_NOVU_ENTERPRISE === 'true';
 
 export const IS_CLOUD = !IS_SELF_HOSTED;
 
