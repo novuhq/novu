@@ -49,6 +49,7 @@ import { Tag } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { WorkflowLimitUpgradeDialog } from '@/components/workflow-editor/workflow-limit-upgrade-dialog';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
@@ -349,6 +350,10 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
           </div>
         </DialogContent>
       </Dialog>
+      <WorkflowLimitUpgradeDialog
+        error={createWorkflowHook.workflowLimitError}
+        onClose={createWorkflowHook.clearWorkflowLimitError}
+      />
       {ProtectionAlert}
     </>
   );
