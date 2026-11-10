@@ -1,13 +1,14 @@
 import { useUser } from '@clerk/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { SquareMinus, TriangleAlert } from 'lucide-react';
-import { Fragment, type ReactNode, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IconType } from 'react-icons';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import type { IUserInfo } from '@/api/environments';
 import type { ChangeDiffStat, ChangeGroup, ChangeRow, ResourceSelectionState } from '@/hooks/use-changes-tree';
 import { cn } from '@/utils/ui';
 import { Avatar, AvatarFallback } from '../primitives/avatar';
+import { HoverCard, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '../primitives/hover-card';
 import { Kbd } from '../primitives/kbd';
 import { BreakingBadge, ChangeNote, DiffStat, ResourceStatusBadge } from './change-badges';
 import { AGENT_INACTIVE_NOTE, dependentNames, removalNote } from './change-notes';
@@ -261,6 +262,15 @@ export function editorDisplayName(
   return 'Someone';
 }
 
+function UpdatedAgoLabel({ relativeTime }: { relativeTime: string }) {
+  return (
+    <span className="text-label-xs whitespace-nowrap">
+      <span className="text-text-soft">Updated </span>
+      <span className="text-text-sub transition-colors group-hover:text-text-strong">{relativeTime}</span>
+    </span>
+  );
+}
+
 function ChangeCardMeta({
   updatedBy,
   updatedAt,
@@ -271,62 +281,75 @@ function ChangeCardMeta({
   diffStat: ChangeDiffStat;
 }) {
   const { user } = useUser();
-  const parts: Array<{ key: string; node: ReactNode }> = [];
-
-  if (updatedBy) {
-    const isCurrentUser = isCurrentEditor(user, updatedBy);
-    const authorName = editorDisplayName(updatedBy, user, isCurrentUser);
-
-    parts.push({
-      key: 'author',
-      node: (
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="shrink-0 text-label-xs text-text-soft">Last updated by</span>
-          <span className="flex min-w-0 items-center gap-1.5">
-            <Avatar className="size-5">
-              <AvatarFallback className="bg-primary-base text-[10px] font-medium text-static-white">
-                {authorName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-label-xs text-text-sub">{authorName}</span>
-            {isCurrentUser && (
-              <Kbd variant="flat" className="h-4 rounded bg-bg-weak">
-                You
-              </Kbd>
-            )}
-          </span>
-        </span>
-      ),
-    });
-  }
-
   const updatedAtDate = updatedAt ? new Date(updatedAt) : null;
-  if (updatedAtDate && !Number.isNaN(updatedAtDate.getTime())) {
-    parts.push({
-      key: 'updated-at',
-      node: (
-        <span className="shrink-0 text-label-xs text-text-sub">
-          {formatDistanceToNowStrict(updatedAtDate, { addSuffix: true })}
-        </span>
-      ),
-    });
-  }
+  const hasUpdatedAt = Boolean(updatedAtDate && !Number.isNaN(updatedAtDate.getTime()));
 
-  if (diffStat.added > 0 || diffStat.deleted > 0) {
-    parts.push({ key: 'diff', node: <DiffStat stat={diffStat} /> });
-  }
+  if (!hasUpdatedAt || !updatedAtDate) return null;
 
-  if (parts.length === 0) return null;
+  const relativeTime = formatDistanceToNowStrict(updatedAtDate, { addSuffix: true });
+  const hasDiff = diffStat.added > 0 || diffStat.deleted > 0;
+  const isCurrentUser = updatedBy ? isCurrentEditor(user, updatedBy) : false;
+  const authorName = updatedBy ? editorDisplayName(updatedBy, user, isCurrentUser) : null;
+
+  if (!authorName && !hasDiff) {
+    return <UpdatedAgoLabel relativeTime={relativeTime} />;
+  }
 
   return (
-    <div className="flex min-w-0 items-center gap-2">
-      {parts.map((part, index) => (
-        <Fragment key={part.key}>
-          {index > 0 && <span className="size-0.5 shrink-0 rounded-full bg-text-soft" />}
-          {part.node}
-        </Fragment>
-      ))}
-    </div>
+    <HoverCard openDelay={200} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Updated ${relativeTime}`}
+          className="group shrink-0 cursor-default rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-stroke-strong"
+        >
+          <UpdatedAgoLabel relativeTime={relativeTime} />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardPortal>
+        <HoverCardContent
+          align="end"
+          sideOffset={6}
+          collisionPadding={12}
+          className="z-[80] w-auto rounded-lg border-stroke-soft bg-bg-white p-0 shadow-popover"
+        >
+          <div className="flex min-w-[200px] flex-col">
+            {authorName && (
+              <div className="flex items-center gap-2 px-2.5 py-2">
+                <Avatar className="size-6">
+                  <AvatarFallback className="bg-primary-base text-[11px] font-medium text-static-white">
+                    {authorName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-label-2xs leading-4 text-text-soft">Last updated by</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="max-w-40 truncate text-label-xs text-text-strong">{authorName}</span>
+                    {isCurrentUser && (
+                      <Kbd variant="flat" className="h-4 rounded bg-bg-weak">
+                        You
+                      </Kbd>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {hasDiff && (
+              <div
+                className={cn(
+                  'flex items-center justify-between gap-6 px-2.5 py-2',
+                  authorName && 'border-t border-stroke-weak'
+                )}
+              >
+                <span className="text-label-xs text-text-soft">Lines changed</span>
+                <DiffStat stat={diffStat} />
+              </div>
+            )}
+          </div>
+        </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
   );
 }
 
