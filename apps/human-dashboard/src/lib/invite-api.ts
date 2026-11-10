@@ -6,7 +6,7 @@ import {
   unwrapData,
 } from './api-response';
 
-export type InviteChannelVia = 'telegram' | 'slack' | 'email';
+export type InviteChannelVia = 'telegram' | 'slack' | 'whatsapp' | 'email';
 
 export type InviteChannelStatus = 'unverified' | 'pending' | 'verified';
 

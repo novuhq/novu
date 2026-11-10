@@ -24,6 +24,7 @@ import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from '../../services/agent-inbox-analytics';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { syncSubscriberEmail } from '../../services/sync-subscriber-email';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -52,13 +53,15 @@ export class SetupHumanRelay {
     private readonly humanAgentIdentity: HumanAgentIdentityService,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly logger: PinoLogger,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: SetupHumanRelayCommand): Promise<SetupHumanRelayResponseDto> {
+    await this.channelGate.assertViaEnabled(command.defaultVia, command);
     const identifier = command.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER;
 
     const agent = await this.ensureRelayAgent(command, identifier);

@@ -17,6 +17,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { contactIdFromEmail } from '../../services/explicit-email-recipient';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
 import { CreateInteraction } from './create-interaction.usecase';
@@ -149,7 +150,8 @@ describe('CreateInteraction', () => {
       keylessEmailGate as any,
       humanContactRepository as any,
       subscriberRepository as any,
-      analyticsService as any
+      analyticsService as any,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
     const command = {
       userId: 'user1',

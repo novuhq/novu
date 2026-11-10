@@ -23,6 +23,7 @@ import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
+import { HumanChannelGate } from './human-channel-gate.service';
 import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
 
@@ -42,11 +43,16 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
 }
 
 /** Apps a human can connect themselves from the invite page. */
-export type HumanInviteVia = HumanChannelViaEnum.TELEGRAM | HumanChannelViaEnum.SLACK | HumanChannelViaEnum.EMAIL;
+export type HumanInviteVia =
+  | HumanChannelViaEnum.TELEGRAM
+  | HumanChannelViaEnum.SLACK
+  | HumanChannelViaEnum.WHATSAPP
+  | HumanChannelViaEnum.EMAIL;
 
 const INVITE_VIAS: readonly HumanChannelViaEnum[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
+  HumanChannelViaEnum.WHATSAPP,
   HumanChannelViaEnum.EMAIL,
 ];
 
@@ -145,7 +151,8 @@ export class HumanDeliveryService {
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly outboundGateway: OutboundGateway,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   async resolveChannel(params: {
@@ -584,11 +591,14 @@ export class HumanDeliveryService {
       return [];
     }
 
-    return this.integrationRepository.find({
+    const integrations = await this.integrationRepository.find({
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
       _id: { $in: links.map((link) => link._integrationId) },
     });
+
+    // Every list, invite page and resolution reads through here, so a gated channel is absent everywhere at once.
+    return this.channelGate.filterIntegrations(integrations, params);
   }
 
   private async findReachableTargets(
@@ -763,6 +773,8 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
       return (endpoint.endpoint as { userId: string }).userId;
     case ENDPOINT_TYPES.SLACK_CHANNEL:
       return (endpoint.endpoint as { channelId: string }).channelId;
+    // A `phone` endpoint is not proof of WhatsApp: the channel-endpoints API writes them for notification
+    // routing too. WhatsApp becomes reachable only from the binding the wa.me code creates (NV-9402).
     default:
       return undefined;
   }

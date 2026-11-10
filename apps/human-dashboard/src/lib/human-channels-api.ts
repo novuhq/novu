@@ -8,7 +8,7 @@ import { requestForAccount, requestPageForAccount } from './human-api-key';
 /** The most links the API returns at once; a relay has a handful. */
 const CHANNELS_LIMIT = 100;
 
-export type ChannelVia = 'telegram' | 'slack' | 'email';
+export type ChannelVia = 'telegram' | 'slack' | 'whatsapp' | 'email';
 
 export type Channel = {
   identifier: string;
@@ -63,7 +63,12 @@ const RETRY_MS = 1000;
 const TEST_MESSAGE =
   'You’re connected. Agents can now reach you here. Try `npx @agentinbox/cli send approve "Deploy to production?"` in your terminal.';
 
-const CHANNEL_LABELS: Record<ChannelVia, string> = { telegram: 'Telegram', slack: 'Slack', email: 'Email' };
+const CHANNEL_LABELS: Record<ChannelVia, string> = {
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+};
 
 /** The channels connected to the operator's relay agent. */
 export async function listChannels(account: HumanAccount): Promise<Channel[]> {
@@ -334,6 +339,7 @@ export async function issueTelegramStartLink(
 function channelVia(providerId: string, channel?: string): ChannelVia | undefined {
   if (providerId.includes('telegram')) return 'telegram';
   if (providerId.includes('slack')) return 'slack';
+  if (providerId === 'whatsapp-business') return 'whatsapp';
   if (channel === 'email') return 'email';
 
   return undefined;
