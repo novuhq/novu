@@ -8,6 +8,7 @@ import { ChannelIcon } from '@/components/channels/channel-icon';
 import { SWAP_LAYER } from '@/components/channels/setup-parts';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
+import { WhatsAppSetup } from '@/components/channels/whatsapp-setup';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { Eyebrow, StepTitle } from '@/components/onboarding/onboarding-shell';
 import { ClockTime } from '@/components/onboarding/parts';
@@ -27,8 +28,8 @@ type ReachStepProps = {
   host: { via: HostVia; connectedAt: string };
   /** The unread message the first host check found, when there was one. */
   waitingMessage: HostStatus['waitingMessage'];
-  channels: { telegram: boolean; slack: boolean };
-  /** What the Telegram and Slack drawers open with. Without it, "Set up" leaves for Configure instead. */
+  channels: { telegram: boolean; slack: boolean; whatsapp: boolean };
+  /** What the Telegram, Slack and WhatsApp drawers open with. Without it, "Set up" leaves for Configure instead. */
   channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog. */
   reach: AgentReach | null;
@@ -37,7 +38,7 @@ type ReachStepProps = {
 type Destination = Parameters<typeof finishOnboardingAction>[0];
 
 /** The channels whose setup opens in a drawer over this step, the one the Configure page has. */
-type DrawerChannel = 'telegram' | 'slack';
+type DrawerChannel = 'telegram' | 'slack' | 'whatsapp';
 
 /** How long after one line of the trace the next one comes in. */
 const TRACE_BEAT_MS = 140;
@@ -62,6 +63,10 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, ch
           setDrawer(via);
         }
       : leaveFor('configure');
+  // WhatsApp is behind a flag: its row shows only when the page read that it's offered here.
+  const whatsappSetup = channelSetup?.whatsapp;
+  const offersWhatsApp =
+    whatsappSetup !== undefined && whatsappSetup.step !== 'hidden' && whatsappSetup.step !== 'unknown';
   const drawerProps = (via: DrawerChannel) => ({
     open: drawer === via,
     onOpenChange: (open: boolean) => setDrawer(open ? via : null),
@@ -134,6 +139,16 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, ch
           action="Set up"
           onAction={setUp('slack')}
         />
+        {offersWhatsApp && (
+          <ReachRow
+            icon={<ChannelIcon via="whatsapp" className="size-5" />}
+            title="WhatsApp"
+            description="Your own WhatsApp Business number."
+            connected={channels.whatsapp}
+            action="Set up"
+            onAction={setUp('whatsapp')}
+          />
+        )}
         <ReachRow
           icon={
             <span className="flex size-5 items-center justify-center rounded-[5px] border border-border-strong bg-raised">
@@ -174,6 +189,9 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, ch
             prompt={setupAtOpen.prompts.slack}
             {...drawerProps('slack')}
           />
+          {setupAtOpen.whatsapp.step !== 'hidden' && (
+            <WhatsAppSetup setup={setupAtOpen.whatsapp} handle={handle} {...drawerProps('whatsapp')} />
+          )}
         </TooltipProvider>
       )}
     </>

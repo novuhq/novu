@@ -53,6 +53,7 @@ export type TelegramStartLink = { botUsername: string; url: string };
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const SLACK_PROVIDER_ID = 'slack';
+const WHATSAPP_PROVIDER_ID = 'whatsapp-business';
 
 /** The name a channel gets when the operator doesn't pick one, same as `setup`. */
 const DEFAULT_CHANNEL_NAME = 'Agent';
@@ -164,6 +165,36 @@ export async function ensureTelegramChannel(account: HumanAccount): Promise<stri
  */
 export function ensureSlackChannel(account: HumanAccount, name: string): Promise<LinkedChannel> {
   return ensureChatChannel(account, 'slack', SLACK_PROVIDER_ID, name);
+}
+
+/**
+ * The relay's WhatsApp channel, made and linked to the relay when it has none. It has no credentials until
+ * the operator finishes the Facebook flow, which fills them in through `connectWhatsApp`.
+ */
+export async function ensureWhatsAppChannel(account: HumanAccount): Promise<string> {
+  return (await ensureChatChannel(account, 'whatsapp', WHATSAPP_PROVIDER_ID)).identifier;
+}
+
+/** What Meta's Embedded Signup handed the Facebook button: the code and the account and number it is for. */
+export type WhatsAppSignup = { code: string; wabaId: string; phoneNumberId: string };
+
+export type WhatsAppSignupResult = {
+  success: boolean;
+  displayPhoneNumber?: string;
+  phoneRegistrationWarning?: string;
+  error?: { code: string; message: string };
+};
+
+/**
+ * Finishes Embedded Signup on the relay's WhatsApp channel: the API trades the code with Meta, checks the
+ * number belongs to the account, saves it and points Meta's webhook at the agent. The code never reaches
+ * the browser twice; it goes from the button to here to the API.
+ */
+export function connectWhatsApp(account: HumanAccount, signup: WhatsAppSignup): Promise<WhatsAppSignupResult> {
+  return requestForAccount<WhatsAppSignupResult>(account, '/v1/human/agent/whatsapp/embedded-signup', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, ...signup },
+  });
 }
 
 type LinkedChannel = { identifier: string; id: string; name?: string };
@@ -339,7 +370,7 @@ export async function issueTelegramStartLink(
 function channelVia(providerId: string, channel?: string): ChannelVia | undefined {
   if (providerId.includes('telegram')) return 'telegram';
   if (providerId.includes('slack')) return 'slack';
-  if (providerId === 'whatsapp-business') return 'whatsapp';
+  if (providerId === WHATSAPP_PROVIDER_ID) return 'whatsapp';
   if (channel === 'email') return 'email';
 
   return undefined;

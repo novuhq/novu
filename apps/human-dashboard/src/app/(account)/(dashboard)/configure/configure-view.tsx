@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
+import { WhatsAppSetup } from '@/components/channels/whatsapp-setup';
 import { CONFIGURE_DRAWER_PARAM } from '@/components/dashboard/nav';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { useNow } from '@/hooks/use-now';
@@ -15,6 +16,7 @@ import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
+import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 
 import { AgentSettingsCard } from './agent-settings';
 import { AgentSetup } from './agent-setup';
@@ -45,6 +47,7 @@ type ConfigureViewProps = {
   channels: ChannelRow[];
   telegramSetup: TelegramSetupState;
   slackSetup: SlackSetupState;
+  whatsappSetup: WhatsAppSetupState;
   /** What the Slack app is called until the operator names it. */
   slackAppName: string;
   /** What the operator hands their own agent in each chat app's drawer. */
@@ -74,6 +77,7 @@ export function ConfigureView({
   channels,
   telegramSetup,
   slackSetup,
+  whatsappSetup,
   slackAppName,
   channelPrompts,
   hostStatus,
@@ -102,6 +106,7 @@ export function ConfigureView({
   const email = channels.find((channel) => channel.via === 'email' && channel.connected)?.handles[0]?.value ?? null;
   const telegramBot = connected('telegram') && 'botUsername' in telegramSetup ? telegramSetup.botUsername : '';
   const slack = connected('slack') ? describeSlack(slackSetup) : null;
+  const whatsappNumber = connected('whatsapp') ? linkedNumber(whatsappSetup) : undefined;
   // A host reads its mail while one checked the inbox within the last day.
   const now = useNow(renderedAt);
   const lastCheckedAt = useLastHostCheck(hostStatus?.lastCheckedAt ?? null, now);
@@ -138,11 +143,7 @@ export function ConfigureView({
           <ChannelList
             handle={agent.handle}
             channels={channels}
-            details={{
-              ...(email ? { email } : {}),
-              ...(telegramBot ? { telegram: `@${telegramBot}` } : {}),
-              ...(slack ? { slack: joinDefined([slack.appName, slack.workspace], ' in ') || 'Connected' } : {}),
-            }}
+            details={channelDetails({ email, telegramBot, slack, whatsappNumber })}
             onOpen={setOpenDrawer}
           />
           <AgentSetup
@@ -176,6 +177,9 @@ export function ConfigureView({
         prompt={channelPrompts.slack}
         {...drawerProps('slack')}
       />
+      {whatsappSetup.step !== 'hidden' && (
+        <WhatsAppSetup setup={whatsappSetup} handle={agent.handle} {...drawerProps('whatsapp')} />
+      )}
       <ShareDialog
         open={sharing}
         onOpenChange={setSharing}
@@ -186,6 +190,31 @@ export function ConfigureView({
       />
     </>
   );
+}
+
+/** What each connected channel's row says under its name: the address, the bot, the app, the number. */
+function channelDetails({
+  email,
+  telegramBot,
+  slack,
+  whatsappNumber,
+}: {
+  email: string | null;
+  telegramBot: string;
+  slack: { appName?: string; workspace?: string } | null;
+  whatsappNumber?: string;
+}): Partial<Record<ChannelVia, string>> {
+  return {
+    ...(email ? { email } : {}),
+    ...(telegramBot ? { telegram: `@${telegramBot}` } : {}),
+    ...(slack ? { slack: joinDefined([slack.appName, slack.workspace], ' in ') || 'Connected' } : {}),
+    ...(whatsappNumber ? { whatsapp: whatsappNumber } : {}),
+  };
+}
+
+/** The business number linked for WhatsApp, when the setup knows it. */
+function linkedNumber(setup: WhatsAppSetupState): string | undefined {
+  return setup.step === 'connected' ? setup.displayPhoneNumber : undefined;
 }
 
 /** The Slack app's name and the workspace it's in. Either can be missing when Slack couldn't be read just now. */

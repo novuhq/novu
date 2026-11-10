@@ -43,6 +43,9 @@ type ChannelListProps = {
 
 /** CHANNELS: every way people reach the agent, each opening its drawer, and the ones still to come. */
 export function ChannelList({ handle, channels, details, onOpen }: ChannelListProps) {
+  // A channel that is offered has a row of its own, so it's no longer "coming soon".
+  const comingSoon = COMING_SOON.filter(({ via }) => !channels.some((channel) => channel.via === via));
+
   return (
     <section className="overflow-hidden rounded-[10px] border border-border">
       <header className="flex items-center gap-2 border-b border-border bg-subtle px-4 py-3">
@@ -62,7 +65,7 @@ export function ChannelList({ handle, channels, details, onOpen }: ChannelListPr
         {/* On a narrow screen the chips wrap, and "Request access" goes under them, still on the right. */}
         <li className="flex flex-wrap items-center gap-2.5 px-4 py-2.75">
           <p className="shrink-0 text-xs leading-4 text-muted">Coming soon</p>
-          {COMING_SOON.map(({ via, name }) => (
+          {comingSoon.map(({ via, name }) => (
             <span
               key={via}
               className="flex shrink-0 items-center gap-1.5 rounded border border-border-strong px-2 py-0.75 text-xs leading-4 text-default"
@@ -79,7 +82,7 @@ export function ChannelList({ handle, channels, details, onOpen }: ChannelListPr
               toast(
                 'Access requested',
                 'success',
-                `We’ll email you when ${COMING_SOON.map(({ name }) => name).join(' and ')} are available.`
+                `We’ll email you when ${comingSoon.map(({ name }) => name).join(' and ')} ${comingSoon.length === 1 ? 'is' : 'are'} available.`
               )
             }
           >
