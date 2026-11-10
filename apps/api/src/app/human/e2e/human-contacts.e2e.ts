@@ -756,9 +756,18 @@ describe('Human contacts (setup names → list → remove) #novu-v2', () => {
     it('refuses a channel that does not exist', async () => {
       await setup({ subscriberId: 'dima', operator: true });
 
+      const res = await setDefault('carrier-pigeon');
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+    });
+
+    it('refuses WhatsApp like an unknown channel while it is turned off', async () => {
+      await setup({ subscriberId: 'dima', operator: true });
+
       const res = await setDefault('whatsapp');
 
       expect(res.status).to.equal(422, JSON.stringify(res.body));
+      expect(res.body.message).to.equal('Unknown channel "whatsapp". Use one of: telegram, slack, email.');
     });
 
     it('needs an agent and an operator', async () => {

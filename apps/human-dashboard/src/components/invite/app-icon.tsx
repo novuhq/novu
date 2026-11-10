@@ -1,5 +1,6 @@
 import { Mail } from 'lucide-react';
 
+import { ComingSoonLogo } from '@/components/channels/coming-soon-logo';
 import type { InviteChannelVia } from '@/lib/invite-api';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +19,7 @@ type AppIconProps = {
   className?: string;
 };
 
-/** The mark of a channel an invite can offer: email, Telegram's blue disc, Slack's four-color logo. */
+/** The mark of a channel an invite can offer: email, Telegram's blue disc, WhatsApp's green one, Slack's four-color logo. */
 export function AppIcon({ via, size = 'medium', className }: AppIconProps) {
   if (via === 'email') {
     return (
@@ -33,6 +34,10 @@ export function AppIcon({ via, size = 'medium', className }: AppIconProps) {
         <Mail className="size-[58%]" />
       </span>
     );
+  }
+
+  if (via === 'whatsapp') {
+    return <ComingSoonLogo via="whatsapp" size={16} className={cn(SIZES[size], className)} />;
   }
 
   if (via === 'telegram') {

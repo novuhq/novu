@@ -1,4 +1,9 @@
-import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -94,8 +99,8 @@ describe('ConnectHumanInviteChannel', () => {
       );
       expect.fail('should have thrown');
     } catch (err) {
-      expect(err).to.be.instanceOf(BadRequestException);
-      expect((err as BadRequestException).message).to.contain('Unknown channel "whatsapp"');
+      expect(err).to.be.instanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).message).to.contain('Unknown channel "whatsapp"');
     }
   });
 

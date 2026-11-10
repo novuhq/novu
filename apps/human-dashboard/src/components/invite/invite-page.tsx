@@ -29,6 +29,7 @@ const APP_LABELS: Record<InviteChannelVia, string> = {
   email: 'Email',
   telegram: 'Telegram',
   slack: 'Slack',
+  whatsapp: 'WhatsApp',
 };
 
 type InactiveReason = 'expired' | 'declined' | 'invalid';
@@ -325,9 +326,10 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
                 }
 
                 // Telegram needs its link before there is anything to show; Slack mints its
-                // link on the next card, inside the click that opens the tab.
-                if (channel.via === 'telegram') {
-                  void handleConnect('telegram');
+                // link on the next card, inside the click that opens the tab. WhatsApp has no
+                // steps card until numbers can be bound (NV-9402), so its answer shows here.
+                if (channel.via === 'telegram' || channel.via === 'whatsapp') {
+                  void handleConnect(channel.via);
                 } else {
                   setErrorMessage(null);
                   setView(channel.via);
@@ -874,6 +876,8 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       return telegramBot ? `Chat with @${telegramBot}` : 'Chat in Telegram';
     case 'slack':
       return 'Message it in Slack';
+    case 'whatsapp':
+      return 'Message it on WhatsApp';
     case 'email':
       if (channel.status === 'pending') {
         return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a confirmation link';

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { ChatProviderIdEnum, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -25,8 +25,8 @@ describe('HumanChannelGate', () => {
       await gate(false).gate.assertViaEnabled(HumanChannelViaEnum.WHATSAPP, scope);
       expect.fail('should have thrown');
     } catch (err) {
-      expect(err).to.be.instanceOf(BadRequestException);
-      expect((err as BadRequestException).message).to.equal(
+      expect(err).to.be.instanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).message).to.equal(
         'Unknown channel "whatsapp". Use one of: telegram, slack, email.'
       );
     }

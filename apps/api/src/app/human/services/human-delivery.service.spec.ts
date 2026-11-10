@@ -712,7 +712,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
     return { service, channelEndpointRepository, getFlag };
   }
 
-  it('resolves a bound number from its phone endpoint when the flag is on', async () => {
+  it('does not treat a notification phone endpoint as a WhatsApp binding', async () => {
     const { service, channelEndpointRepository } = setup(true);
     channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
       query.integrationIdentifier === 'whatsapp-main'
@@ -724,13 +724,13 @@ describe('HumanDeliveryService on WhatsApp', () => {
         : null
     );
 
-    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
-
-    expect(target).to.deep.equal({
-      platform: HumanChannelViaEnum.WHATSAPP,
-      platformUserId: '+15551234567',
-      integrationIdentifier: 'whatsapp-main',
-    });
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.contain('has no linked whatsapp endpoint');
+    }
   });
 
   it('offers WhatsApp on the invite page when the flag is on', async () => {

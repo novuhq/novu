@@ -768,14 +768,13 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
   switch (endpoint.type) {
     case ENDPOINT_TYPES.TELEGRAM_CHAT:
       return (endpoint.endpoint as { chatId: string }).chatId;
-    // WhatsApp: bound by the wa.me code, never read from Subscriber.phone.
-    case ENDPOINT_TYPES.PHONE:
-      return (endpoint.endpoint as { phoneNumber: string }).phoneNumber;
     case ENDPOINT_TYPES.SLACK_USER:
     case ENDPOINT_TYPES.MS_TEAMS_USER:
       return (endpoint.endpoint as { userId: string }).userId;
     case ENDPOINT_TYPES.SLACK_CHANNEL:
       return (endpoint.endpoint as { channelId: string }).channelId;
+    // A `phone` endpoint is not proof of WhatsApp: the channel-endpoints API writes them for notification
+    // routing too. WhatsApp becomes reachable only from the binding the wa.me code creates (NV-9402).
     default:
       return undefined;
   }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, HumanChannelViaEnum } from '@novu/shared';
 
@@ -29,7 +29,7 @@ export class HumanChannelGate {
     return Object.values(HumanChannelViaEnum).filter((via) => whatsApp || via !== HumanChannelViaEnum.WHATSAPP);
   }
 
-  /** Rejects a caller-supplied via the organization may not use, worded like an unknown value. */
+  /** Rejects a caller-supplied via the organization may not use, the same 422 an unknown value gets. */
   async assertViaEnabled(via: HumanChannelViaEnum | undefined, scope: GateScope): Promise<void> {
     if (via !== HumanChannelViaEnum.WHATSAPP || (await this.isWhatsAppEnabled(scope))) {
       return;
@@ -37,7 +37,7 @@ export class HumanChannelGate {
 
     const allowed = Object.values(HumanChannelViaEnum).filter((value) => value !== HumanChannelViaEnum.WHATSAPP);
 
-    throw new BadRequestException(`Unknown channel "${via}". Use one of: ${allowed.join(', ')}.`);
+    throw new UnprocessableEntityException(`Unknown channel "${via}". Use one of: ${allowed.join(', ')}.`);
   }
 
   /** Drops WhatsApp integrations while the flag is off. Reads the flag only when one is present. */

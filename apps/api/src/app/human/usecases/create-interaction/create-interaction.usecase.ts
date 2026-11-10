@@ -382,6 +382,8 @@ export class CreateInteraction {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const relay = await this.inbox.resolveRelayAgent(scope, agent.identifier);
     const conversation = await this.inbox.findThread(scope, relay, command.thread as string);
+    // A thread can outlive its channel's flag: turning WhatsApp off stops sends into its threads too.
+    await this.channelGate.assertViaEnabled(conversation.channels?.[0]?.platform as HumanChannelViaEnum, scope);
     const audience =
       to.length > 0
         ? { recipients: to, anyoneMayAnswer: command.anyoneMayAnswer === true }

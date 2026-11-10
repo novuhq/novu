@@ -377,7 +377,8 @@ export class HumanInboxService {
     const tabs: Record<InboxTab, number> = { all: 0, unread: 0, waiting: 0, resolved: 0 };
     const channels: InboxCountsResponseDto['channels'] = { all: 0 };
     // The channels the inbox page always offers, also while no thread is on them.
-    for (const channel of await this.channelGate.enabledVias(scope)) {
+    const enabledVias: string[] = await this.channelGate.enabledVias(scope);
+    for (const channel of enabledVias) {
       channels[channel] = 0;
     }
 
@@ -406,7 +407,10 @@ export class HumanInboxService {
 
       if (isInTab(state, filters.tab ?? 'all')) {
         channels.all += 1;
-        channels[channel] = (channels[channel] ?? 0) + 1;
+        // A thread left on a channel that was turned off still counts, but never brings the channel back.
+        if (channel !== HumanChannelViaEnum.WHATSAPP || enabledVias.includes(channel)) {
+          channels[channel] = (channels[channel] ?? 0) + 1;
+        }
       }
     }
 
