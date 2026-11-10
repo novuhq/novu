@@ -207,6 +207,16 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
+   * Stop duplicating the trigger overrides onto every job. Overrides are always
+   * persisted once on the parent notification; when enabled, new jobs no longer
+   * persist `overrides` and readers resolve them from the notification via
+   * `_notificationId`. Read paths handle both shapes regardless of this flag, so
+   * it can be toggled off at any time (forward-only, no data migration). Create
+   * the boolean in LaunchDarkly for cloud, or set `IS_OVERRIDES_DEDUP_ENABLED`
+   * when self-hosted.
+   */
+  IS_OVERRIDES_DEDUP_ENABLED = 'IS_OVERRIDES_DEDUP_ENABLED',
+  /**
    * Trace step condition evaluation in the activity feed regardless of outcome:
    * a "step conditions matched" detail when conditions pass, and a "step was
    * skipped based on steps conditions" detail when they do not (v2 skip

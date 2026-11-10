@@ -9,6 +9,7 @@ import {
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobOverrides,
   getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
@@ -153,6 +154,9 @@ export class AddJob {
     // when the job doesn't carry one, so delay/throttle/digest key resolution
     // below keeps working. A present job.payload is authoritative.
     job.payload = getEffectiveJobPayload(job, notification);
+    // Overrides-dedup: same rule for trigger overrides, which delay and digest
+    // durations read (`overrides.delay`).
+    job.overrides = getEffectiveJobOverrides(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
@@ -211,6 +215,7 @@ export class AddJob {
     };
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing deferred-job (digest/delay) orchestration is outside this change
   private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
@@ -737,7 +742,7 @@ export class AddJob {
     if (isDynamicOutput(outputs)) {
       metadata = {
         type: DelayTypeEnum.DYNAMIC,
-        dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
+        dynamicKey: (outputs as { dynamicKey?: string }).dynamicKey,
       } as IDelayDynamicMetadata;
 
       await this.jobRepository.updateOne(
