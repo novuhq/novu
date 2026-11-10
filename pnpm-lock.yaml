@@ -509,7 +509,7 @@ importers:
         version: link:../../libs/testing
       '@novu/thalamus':
         specifier: 0.1.0-alpha.21
-        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
+        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6(debug@4.4.3)
@@ -2669,7 +2669,7 @@ importers:
     dependencies:
       '@novu/thalamus':
         specifier: 0.1.0-alpha.21
-        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7))(@anthropic-ai/sdk@1.3.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
+        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7))(@anthropic-ai/sdk@1.6.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
       agents:
         specifier: ^0.21.0
         version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.6.7)
@@ -2721,11 +2721,11 @@ importers:
   libs/application-generic:
     dependencies:
       '@anthropic-ai/aws-sdk':
-        specifier: 1.1.1
-        version: 1.1.1(zod@3.25.20)
+        specifier: 1.1.2
+        version: 1.1.2(zod@3.25.20)
       '@anthropic-ai/sdk':
-        specifier: 1.3.0
-        version: 1.3.0(zod@3.25.20)
+        specifier: 1.6.0
+        version: 1.6.0(zod@3.25.20)
       '@aws-sdk/client-s3':
         specifier: ^3.996.0
         version: 3.996.0
@@ -5150,8 +5150,8 @@ packages:
   '@antfu/utils@0.7.10':
     resolution: {integrity: sha512-+562v9k4aI80m1+VuMHehNJWLOFjBnXn3tdOitzD0il5b7smkSBal4+a3oKiQTbrwMmN/TBUMDvbdoWDehgOww==}
 
-  '@anthropic-ai/aws-sdk@1.1.1':
-    resolution: {integrity: sha512-JXAcCNZEad43i6Zmypi/WfyjQNL/4eGKHVwwh9LwHE/PaPFOzZ2oCXzdRDjW3RME8pO1hhEbk8b8nPfJEImdEg==}
+  '@anthropic-ai/aws-sdk@1.1.2':
+    resolution: {integrity: sha512-rCK/qDCLz/F6NLK5bujpPWgsOskqw1OKKMh6H5A29+/o2aw0+yuaXP3nDxRNMlNDuFWNDtxk3Ydlc+8FLpVjlg==}
 
   '@anthropic-ai/claude-agent-sdk-darwin-arm64@0.2.141':
     resolution: {integrity: sha512-9HZ0ot6+FwOfQ1aeMqQLH4IJGMm/DcP08SysDxscVjBm6l2JjqleHohxi3zid0DurfGweqT+4x9GScJffwg55g==}
@@ -5221,8 +5221,8 @@ packages:
       zod:
         optional: true
 
-  '@anthropic-ai/sdk@1.3.0':
-    resolution: {integrity: sha512-k7z9BlLLPxfZH+ov7dS6EnaN/wiZeV8YNT1LZfrpAHIy7oY7pHr4UzirF9f2OlHtFEnRBOX+AZQ91Y5fK+TPTw==}
+  '@anthropic-ai/sdk@1.6.0':
+    resolution: {integrity: sha512-XqiO/46n8S6So8jQ/6/uNCkHntyW6QHHs1gZ+hlwTx1fWDr929g4VmwIXfdMVk7SuBWNdQvAlwyi1G3t6SEIuQ==}
     hasBin: true
     peerDependencies:
       zod: ^4.6.6
@@ -30511,9 +30511,9 @@ snapshots:
 
   '@antfu/utils@0.7.10': {}
 
-  '@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20)':
+  '@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20)':
     dependencies:
-      '@anthropic-ai/sdk': 1.3.0(zod@3.25.20)
+      '@anthropic-ai/sdk': 1.6.0(zod@3.25.20)
       '@aws-crypto/sha256-js': 4.0.0
       '@aws-sdk/credential-providers': 3.1052.0
       '@opentelemetry/api': 1.9.0
@@ -30526,9 +30526,9 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7)':
+  '@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7)':
     dependencies:
-      '@anthropic-ai/sdk': 1.3.0(zod@4.6.7)
+      '@anthropic-ai/sdk': 1.6.0(zod@4.6.7)
       '@aws-crypto/sha256-js': 4.0.0
       '@aws-sdk/credential-providers': 3.1052.0
       '@opentelemetry/api': 1.9.0
@@ -30595,7 +30595,7 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@1.3.0(zod@3.25.20)':
+  '@anthropic-ai/sdk@1.6.0(zod@3.25.20)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       json-schema-to-ts: 3.1.1
@@ -30603,7 +30603,7 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@1.3.0(zod@4.6.7)':
+  '@anthropic-ai/sdk@1.6.0(zod@4.6.7)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       json-schema-to-ts: 3.1.1
@@ -38424,16 +38424,16 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
+  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
     optionalDependencies:
-      '@anthropic-ai/aws-sdk': 1.1.1(zod@3.25.20)
+      '@anthropic-ai/aws-sdk': 1.1.2(zod@3.25.20)
       '@aws-sdk/credential-provider-node': 3.972.78
       '@smithy/signature-v4': 5.6.12
 
-  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7))(@anthropic-ai/sdk@1.3.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
+  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7))(@anthropic-ai/sdk@1.6.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
     optionalDependencies:
-      '@anthropic-ai/aws-sdk': 1.1.1(zod@4.6.7)
-      '@anthropic-ai/sdk': 1.3.0(zod@4.6.7)
+      '@anthropic-ai/aws-sdk': 1.1.2(zod@4.6.7)
+      '@anthropic-ai/sdk': 1.6.0(zod@4.6.7)
       '@aws-sdk/credential-provider-node': 3.972.78
       '@smithy/signature-v4': 5.6.12
 
