@@ -9,7 +9,7 @@ describe('activity-views', () => {
     }
   });
 
-  it('shows run lifecycle to clients only, since it is bookkeeping rather than conversation content', () => {
+  it('shows run lifecycle to clients only, since it is bookkeeping rather than conversation content, bar a stopped run', () => {
     const lifecycle = ['run_start', 'run_finish', 'run_error'];
 
     expect(getKindsForView('client_events')).to.include.members(lifecycle);
@@ -18,6 +18,25 @@ describe('activity-views', () => {
       expect(getKindsForView('llm_transcript')).to.not.include(kind);
       expect(getKindsForView('operator_timeline')).to.not.include(kind);
     }
+  });
+
+  it('hands a stopped run to the bridge so the model learns the turn was never completed', () => {
+    expect(getKindsForView('agent_handoff')).to.include('run_finish.aborted');
+    expect(getKindsForView('client_events')).to.include('run_finish');
+    expect(getKindsForView('client_events')).to.not.include('run_finish.aborted');
+    expect(getKindsForView('llm_transcript')).to.not.include('run_finish.aborted');
+    expect(getKindsForView('operator_timeline')).to.not.include('run_finish.aborted');
+
+    const handoff = compileActivityViewMatch('agent_handoff').$or ?? [];
+
+    expect(handoff).to.deep.include({
+      type: ConversationActivityTypeEnum.RUN_FINISH,
+      'richContent.lifecycle.outcome': 'aborted',
+    });
+    expect(handoff).to.not.deep.include({ type: ConversationActivityTypeEnum.RUN_FINISH });
+    expect(compileActivityViewMatch('client_events').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.RUN_FINISH,
+    });
   });
 
   it('keeps every kind the dashboard timeline renders, so scoping to a view is not a regression', () => {

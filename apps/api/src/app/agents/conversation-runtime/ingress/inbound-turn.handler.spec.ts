@@ -44,6 +44,8 @@ describe('AgentInboundHandler', () => {
 
   afterEach(() => {
     delete (conversation as { _notificationId?: string })._notificationId;
+    // The handler records the first platform message id on the shared fixture's primary channel.
+    delete (conversation.channels[0] as { firstPlatformMessageId?: string }).firstPlatformMessageId;
   });
 
   function makeLogger() {
@@ -319,6 +321,7 @@ describe('AgentInboundHandler', () => {
     return {
       handler,
       logger,
+      connectionContextResolver,
       replyApprovalInterceptor,
       humanInteractionInbound,
       humanRelayRuntime,
@@ -501,6 +504,32 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('should forward the resolved context and its bridge URL override to the bridge', async () => {
+      const { handler, bridgeExecutor, connectionContextResolver } = makeHandler();
+      const context = { tenant: { id: 'org-1', data: { environmentId: 'env-1' } } };
+      connectionContextResolver.resolve.resolves({ context, bridgeUrl: 'https://org-1.example.com/api/novu' });
+
+      const message = { ...makeSlackDmMessage(), id: '1777837499.000001' };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      // The resolver reads the workspace id from the raw payload and the sender from the author.
+      expect(connectionContextResolver.resolve.firstCall.args).to.deep.equal([
+        config,
+        message.raw,
+        message.author.userId,
+      ]);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.context).to.deep.equal(context);
+      expect(params.bridgeUrlOverride).to.equal('https://org-1.example.com/api/novu');
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();

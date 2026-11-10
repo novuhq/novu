@@ -4,13 +4,15 @@ import { Type } from '@nestjs/common/interfaces/type.interface';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { cacheService, TracingModule } from '@novu/application-generic';
-import { Client, NovuModule } from '@novu/framework/nest';
+import { Client, NovuClient, NovuModule } from '@novu/framework/nest';
 import { usageLimitsWorkflow, usageReportWorkflow } from '@novu/notifications';
 import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
 import { AgentsModule } from './app/agents/agents.module';
+import { NovuAgentsBridgeModule } from './app/agents/novu-agents-bridge/novu-agents-bridge.module';
+import { NovuInternalBridgeClient } from './app/agents/novu-agents-bridge/novu-internal-bridge.client';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -87,6 +89,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
     if (require('@novu/ee-ai')?.AiModule) {
       modules.push(require('@novu/ee-ai')?.AiModule);
+    }
+
+    if (require('@novu/ee-agents')?.NovuAgentsModule) {
+      modules.push(require('@novu/ee-agents')?.NovuAgentsModule);
     }
 
     // LLM Gateway controllers parked for this PR — keeping the code so we
@@ -221,8 +227,8 @@ if (process.env.NODE_ENV === 'test') {
   modules.push(TestingModule);
 }
 
-modules.push(
-  NovuModule.register({
+const novuBridgeModule = NovuModule.register(
+  {
     apiPath: '/bridge/novu',
     client: new Client({
       secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
@@ -233,8 +239,13 @@ modules.push(
     }),
     controllerDecorators: [ApiExcludeController()],
     workflows: [usageLimitsWorkflow, usageReportWorkflow],
-  })
+  },
+  // Also serves Novu's own agents (enterprise only), which are resolved from DI on request.
+  [{ provide: NovuClient, useClass: NovuInternalBridgeClient }]
 );
+novuBridgeModule.imports = [...(novuBridgeModule.imports ?? []), NovuAgentsBridgeModule];
+
+modules.push(novuBridgeModule);
 
 @Module({
   imports: modules,

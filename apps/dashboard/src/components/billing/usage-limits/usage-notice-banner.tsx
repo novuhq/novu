@@ -112,6 +112,28 @@ function FreeUsagePausedBanner({ resetsAt }: { resetsAt: string | null }) {
   );
 }
 
+function TrialUsagePausedBanner() {
+  const planUpgradeClick = usePlanUpgradeClick('trial-workflow-runs-paused-banner', 'trial_workflow_runs_paused');
+
+  return (
+    <UsageNoticeStrip
+      tone="paused"
+      message="You've used all workflow runs included in your trial. New workflow runs are paused. Upgrade to keep sending."
+      primaryAction={
+        <LinkButton
+          variant="modifiable"
+          size="sm"
+          className={getNoticeActionClassName('paused')}
+          trailingIcon={RiArrowRightSLine}
+          onClick={planUpgradeClick}
+        >
+          {UPGRADE_CTA_LABEL}
+        </LinkButton>
+      }
+    />
+  );
+}
+
 /**
  * Org-wide, non-dismissible notice shown to every member while new workflow runs are paused, or while a plan that
  * pauses at its limit is nearing it.
@@ -128,6 +150,8 @@ export function UsageNoticeBanner() {
   switch (pausedPlan) {
     case 'free':
       return <FreeUsagePausedBanner resetsAt={view.usage.resetsAt} />;
+    case 'trial':
+      return <TrialUsagePausedBanner />;
     case 'paid':
       return <PaidUsagePausedBanner canEdit={view.canEdit} />;
     case null:

@@ -1,5 +1,11 @@
 import { PushFactory } from '@novu/application-generic';
-import { ChannelTypeEnum, INTEGRATION_OVERRIDES_OUTPUT_KEY, PushProviderIdEnum, TriggerOverrides } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  PushProviderIdEnum,
+  TriggerOverrides,
+  WebhookEventEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -93,7 +99,8 @@ describe('SendMessagePush - provider content overrides', () => {
 
   function buildUsecase(
     messageRepository = buildMessageRepository(),
-    selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration })
+    selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration }),
+    sendWebhookExecute = sinon.stub().resolves(undefined)
   ) {
     const usecase = new SendMessagePush(
       {} as never, // subscriberRepository
@@ -108,7 +115,7 @@ describe('SendMessagePush - provider content overrides', () => {
           getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
         }),
       } as never,
-      { execute: sinon.stub().resolves(undefined) } as never, // sendWebhookMessage
+      { execute: sendWebhookExecute } as never, // sendWebhookMessage
       {} as never, // invalidateCache
       { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
     );
@@ -980,6 +987,60 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledOnce(sendStub);
       expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
+    });
+  });
+
+  describe('workflow identifiers on push webhooks', () => {
+    function buildPersistedMessageRepository() {
+      return {
+        create: sinon.stub().callsFake(async (doc: Record<string, unknown>) => ({ _id: 'message_1', ...doc })),
+        update: sinon.stub().resolves(undefined),
+        updateMessageStatus: sinon.stub().resolves(undefined),
+      };
+    }
+
+    it('includes workflowId and templateIdentifier on message.sent', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const messageRepository = buildPersistedMessageRepository();
+      const sendWebhookExecute = sinon.stub().resolves(undefined);
+      const result = await buildUsecase(
+        messageRepository,
+        sinon.stub().resolves({ integration: fcmIntegration }),
+        sendWebhookExecute
+      ).execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
+
+      const sentEvent = sendWebhookExecute.firstCall.args[0];
+      expect(sentEvent.eventType).to.equal(WebhookEventEnum.MESSAGE_SENT);
+      expect(sentEvent.payload.object.channel).to.equal(ChannelTypeEnum.PUSH);
+      expect(sentEvent.payload.object.templateIdentifier).to.equal('wf-identifier');
+      expect(sentEvent.payload.object.workflowId).to.equal('wf-identifier');
+    });
+
+    it('includes workflowId and templateIdentifier on message.failed', async () => {
+      const sendStub = sinon.stub().rejects(new Error('provider down'));
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const messageRepository = buildPersistedMessageRepository();
+      const sendWebhookExecute = sinon.stub().resolves(undefined);
+      const result = await buildUsecase(
+        messageRepository,
+        sinon.stub().resolves({ integration: fcmIntegration }),
+        sendWebhookExecute
+      ).execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.FAILED);
+      expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
+
+      const failedEvent = sendWebhookExecute.firstCall.args[0];
+      expect(failedEvent.eventType).to.equal(WebhookEventEnum.MESSAGE_FAILED);
+      expect(failedEvent.payload.object.channel).to.equal(ChannelTypeEnum.PUSH);
+      expect(failedEvent.payload.object.templateIdentifier).to.equal('wf-identifier');
+      expect(failedEvent.payload.object.workflowId).to.equal('wf-identifier');
     });
   });
 });

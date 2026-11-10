@@ -301,6 +301,12 @@ jobs:
           # Don't run redis and etc... for other unit tests
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
 
+      # Without .source/<package>/node_modules, sources resolved through .source load pnpm's hoisted packages,
+      # e.g. a second copy of @langchain/core for @novu/ee-ai.
+      - name: Link enterprise packages into .source
+        if: ${{ startsWith(matrix.projectName, '@novu/ee-') }}
+        run: pnpm symlink:submodules
+
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Lint and build and test
