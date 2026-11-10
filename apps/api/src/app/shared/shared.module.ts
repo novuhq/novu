@@ -20,11 +20,14 @@ import {
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
+  MetricsModule,
   NotificationPayloadService,
   QueuesModule,
   RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
+  StepRunV2Repository,
+  StepRunV2Writer,
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
@@ -139,6 +142,7 @@ const ANALYTICS_PROVIDERS = [
   RequestLogRepository,
   TraceLogRepository,
   StepRunRepository,
+  StepRunV2Repository,
   WorkflowRunRepository,
   WorkflowRunCountRepository,
   TraceRollupRepository,
@@ -146,6 +150,7 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   clickHouseService,
+  StepRunV2Writer,
 ];
 
 const PROVIDERS = [
@@ -174,6 +179,7 @@ const PROVIDERS = [
 ];
 
 const IMPORTS = [
+  MetricsModule,
   QueuesModule.forRoot([
     JobTopicNameEnum.WEB_SOCKETS,
     JobTopicNameEnum.WORKFLOW,

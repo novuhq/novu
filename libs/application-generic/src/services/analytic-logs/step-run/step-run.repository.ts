@@ -1,12 +1,12 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
-import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { StepType } from '..';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { LogRepository, SchemaKeys } from '../log.repository';
+import { mapStepTypeEnumToStepType } from '../map-step-type';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, StepRun, stepRunSchema, TABLE_NAME } from './step-run.schema';
 
@@ -39,44 +39,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
   ) {
     super(clickhouseService, logger, stepRunSchema, ORDER_BY, featureFlagsService, batchService);
     this.logger.setContext(this.constructor.name);
-  }
-
-  private mapStepTypeEnumToStepType(stepType: StepTypeEnum | undefined): StepType | null {
-    if (stepType === undefined) {
-      return null;
-    }
-
-    switch (stepType) {
-      case StepTypeEnum.EMAIL:
-        return 'email';
-      case StepTypeEnum.SMS:
-        return 'sms';
-      case StepTypeEnum.IN_APP:
-        return 'in_app';
-      case StepTypeEnum.PUSH:
-        return 'push';
-      case StepTypeEnum.CHAT:
-        return 'chat';
-      case StepTypeEnum.TOOL:
-        return 'tool';
-      case StepTypeEnum.DIGEST:
-        return 'digest';
-      case StepTypeEnum.THROTTLE:
-        return 'throttle';
-      case StepTypeEnum.TRIGGER:
-        return 'trigger';
-      case StepTypeEnum.DELAY:
-        return 'delay';
-      case StepTypeEnum.CUSTOM:
-        return 'custom';
-      case StepTypeEnum.HTTP_REQUEST:
-        return 'http_request';
-      default: {
-        const _exhaustiveCheck: never = stepType;
-
-        return _exhaustiveCheck;
-      }
-    }
   }
 
   async create(job: JobEntity, options: StepOptions = {}): Promise<void> {
@@ -177,7 +139,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
-    const stepType = this.mapStepTypeEnumToStepType(job.type || job.step.template?.type);
+    const stepType = mapStepTypeEnumToStepType(job.type || job.step.template?.type);
 
     return {
       created_at: LogRepository.formatDateTime64(new Date(job.createdAt)),

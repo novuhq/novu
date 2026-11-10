@@ -126,9 +126,12 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  /** Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim. */
-  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<void> {
-    await this.updateOne(
+  /**
+   * Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim.
+   * Returns the released job, or null when the job was no longer RUNNING.
+   */
+  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
@@ -138,7 +141,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $set: {
           status: JobStatusEnum.QUEUED,
         },
-      }
+      },
+      { new: true }
     );
   }
 
@@ -222,7 +226,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
   }
 
-  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
+  public async setError(organizationId: string, jobId: string, error: unknown): Promise<void> {
     const result = await this._model.updateOne(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
@@ -357,12 +361,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     const transactionIdsTriggers = result.map((job) => job.transactionId);
 
+    if (transactionIdsTriggers.length === 0) {
+      return { triggers: result, completedDigestJobIds: [] };
+    }
+
     /**
      * Update events that have been digested (events that have been sent) to be of status completed.
      * To avoid cases of same events being sent multiple times.
      * Happens in cases of delay followed by digest
      */
-    await this.update(
+    const digestJobsToComplete = await this.find(
       {
         updatedAt: {
           $gte: from,
@@ -376,14 +384,26 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           $in: transactionIdsTriggers,
         },
       },
-      {
-        $set: {
-          status: JobStatusEnum.COMPLETED,
-        },
-      }
+      '_id'
     );
+    const completedDigestJobIds = digestJobsToComplete.map((job) => String(job._id));
 
-    return result;
+    if (completedDigestJobIds.length > 0) {
+      await this.update(
+        {
+          _environmentId: environmentId,
+          _id: { $in: completedDigestJobIds },
+          status: JobStatusEnum.PENDING,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.COMPLETED,
+          },
+        }
+      );
+    }
+
+    return { triggers: result, completedDigestJobIds };
   }
 
   public async findOnePopulate({
@@ -401,15 +421,15 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
   }) {
-    const job = this.MongooseModel.findOne(query, select)
+    const job = await this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
-      .lean()
+      .lean<JobEntityPopulated>()
       .exec();
 
-    return job as unknown as JobEntityPopulated;
+    return job as JobEntityPopulated;
   }
 
   public async markJobAsDigestMaster(job: JobEntity) {
@@ -486,6 +506,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     };
   }
 
+  /** Returns the child jobs as they are after the update. */
   async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum, activeDigestId: string): Promise<JobEntity[]> {
     const updatedJobs: JobEntity[] = [];
 
@@ -499,7 +520,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           status,
           _mergedDigestId: activeDigestId,
         },
-      }
+      },
+      { new: true }
     );
 
     if (childJob) {
@@ -517,7 +539,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
             status,
             _mergedDigestId: activeDigestId,
           },
-        }
+        },
+        { new: true }
       );
 
       if (childJob) {
