@@ -45,6 +45,7 @@ import type {
   InboxThreadState,
 } from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
+import { HumanChannelGate } from './human-channel-gate.service';
 import { HumanDeliveryService } from './human-delivery.service';
 import { readHumanContentActions } from './human-interaction-lifecycle';
 
@@ -101,9 +102,6 @@ type InboxPage = { data: ConversationEntity[]; next: string | null };
 
 const PREVIEW_MAX_LENGTH = 200;
 
-/** The channels the inbox page always offers, also while no thread is on them. */
-const INBOX_CHANNELS: readonly string[] = Object.values(HumanChannelViaEnum);
-
 /**
  * The Human inbox: the conversations of a `human_relay` agent, read as threads an agent pulls,
  * answers and closes. Read state is a per-conversation cursor (`lastReadAt`).
@@ -117,7 +115,8 @@ export class HumanInboxService {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanInteractionRepository: HumanInteractionRepository,
-    private readonly deliveryService: HumanDeliveryService
+    private readonly deliveryService: HumanDeliveryService,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   async resolveRelayAgent(scope: InboxScope, agentIdentifier?: string): Promise<InboxRelayAgent> {
@@ -377,7 +376,8 @@ export class HumanInboxService {
   ): Promise<InboxCountsResponseDto> {
     const tabs: Record<InboxTab, number> = { all: 0, unread: 0, waiting: 0, resolved: 0 };
     const channels: InboxCountsResponseDto['channels'] = { all: 0 };
-    for (const channel of INBOX_CHANNELS) {
+    // The channels the inbox page always offers, also while no thread is on them.
+    for (const channel of await this.channelGate.enabledVias(scope)) {
       channels[channel] = 0;
     }
 

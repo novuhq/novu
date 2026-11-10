@@ -40,6 +40,7 @@ import { HumanAccountAgentService } from './services/human-account-agent.service
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
+import { HumanChannelGate } from './services/human-channel-gate.service';
 import { HumanConnectCodeService } from './services/human-connect-code.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanHostStatusService } from './services/human-host-status.service';
@@ -141,6 +142,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     AgentMcpServerRepository,
     McpConnectionRepository,
     AgentInboxChannelAnalytics,
+    HumanChannelGate,
     HumanDeliveryService,
     HumanKeylessCapService,
     HumanMessageQuotaService,

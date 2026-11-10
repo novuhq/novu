@@ -176,7 +176,12 @@ describe('DeleteHumanAgent', () => {
     expect(repositories.humanContact.update.firstCall.args).to.deep.equal([
       { ...scope, _agentId: 'relay1', isOperator: true },
       {
-        $unset: { 'addresses.telegram.pending': 1, 'addresses.slack.pending': 1, 'addresses.email.pending': 1 },
+        $unset: {
+          'addresses.telegram.pending': 1,
+          'addresses.slack.pending': 1,
+          'addresses.whatsapp.pending': 1,
+          'addresses.email.pending': 1,
+        },
       },
       { session: 'session' },
     ]);

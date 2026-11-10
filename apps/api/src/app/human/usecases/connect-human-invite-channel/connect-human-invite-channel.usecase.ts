@@ -8,6 +8,7 @@ import { IssueTelegramSubscriberLinkCommand } from '../../../telegram-linking/is
 import { IssueTelegramSubscriberLink } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
 import { findAgentInboxOwner, trackAgentInboxInviteAccepted } from '../../services/agent-inbox-analytics';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { type HumanInviteTokenPayload, HumanInviteTokenService } from '../../services/human-invite-token.service';
 import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
@@ -36,11 +37,13 @@ export class ConnectHumanInviteChannel {
     private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
     private readonly requestAddressVerification: RequestAddressVerification,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
     const { payload } = await this.inviteTokens.requireActive(command.token);
+    await this.channelGate.assertViaEnabled(command.via, { organizationId: payload.org, environmentId: payload.env });
     const result = await this.connect(command, payload);
     this.trackAccepted(payload, command.via);
 
@@ -106,6 +109,14 @@ export class ConnectHumanInviteChannel {
 
         throw err;
       }
+    }
+
+    // Binding a WhatsApp number by a wa.me code comes in NV-9402. Until then it must not fall through to Slack OAuth.
+    if (command.via === HumanChannelViaEnum.WHATSAPP) {
+      throw new BadRequestException({
+        code: 'channel_unavailable',
+        message: `${appName} isn't available on invites yet.`,
+      });
     }
 
     if (command.via === HumanChannelViaEnum.TELEGRAM) {

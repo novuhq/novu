@@ -2,11 +2,15 @@ import { BadGatewayException, BadRequestException, ConflictException } from '@ne
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
 import { ConnectHumanInviteChannel } from './connect-human-invite-channel.usecase';
 
 describe('ConnectHumanInviteChannel', () => {
-  function setup(channels: Array<{ via: HumanChannelViaEnum; integrationIdentifier: string; connected: boolean }>) {
+  function setup(
+    channels: Array<{ via: HumanChannelViaEnum; integrationIdentifier: string; connected: boolean }>,
+    whatsAppEnabled = false
+  ) {
     const inviteTokens = {
       requireActive: sinon.stub().resolves({
         payload: { env: 'env1', org: 'org1', agentId: 'relay1', subscriberId: 'alice' },
@@ -40,7 +44,8 @@ describe('ConnectHumanInviteChannel', () => {
       generateConnectOauthUrl as never,
       requestAddressVerification as never,
       environmentRepository as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never)
     );
 
     return {
@@ -60,6 +65,39 @@ describe('ConnectHumanInviteChannel', () => {
     { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
     { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: false },
   ];
+
+  it('refuses WhatsApp until numbers can be bound, instead of minting a Slack link', async () => {
+    const { usecase, generateConnectOauthUrl } = setup(
+      [{ via: HumanChannelViaEnum.WHATSAPP, integrationIdentifier: 'wa', connected: false }],
+      true
+    );
+
+    try {
+      await usecase.execute(
+        ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
+      );
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as BadRequestException).getResponse()).to.include({ code: 'channel_unavailable' });
+    }
+
+    expect(generateConnectOauthUrl.execute.called).to.equal(false);
+  });
+
+  it('rejects WhatsApp as an unknown channel while the flag is off', async () => {
+    const { usecase } = setup([{ via: HumanChannelViaEnum.WHATSAPP, integrationIdentifier: 'wa', connected: false }]);
+
+    try {
+      await usecase.execute(
+        ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
+      );
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+      expect((err as BadRequestException).message).to.contain('Unknown channel "whatsapp"');
+    }
+  });
 
   it('mints a fresh Telegram deep link for the invited subscriber', async () => {
     const { usecase, issueTelegramSubscriberLink } = setup(both);

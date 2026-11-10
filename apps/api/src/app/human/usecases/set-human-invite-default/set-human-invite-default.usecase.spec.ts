@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { SetHumanInviteDefaultCommand } from './set-human-invite-default.command';
 import { SetHumanInviteDefault } from './set-human-invite-default.usecase';
 
@@ -23,7 +24,8 @@ describe('SetHumanInviteDefault', () => {
     const usecase = new SetHumanInviteDefault(
       inviteTokens as never,
       deliveryService as never,
-      humanContactRepository as never
+      humanContactRepository as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, humanContactRepository };

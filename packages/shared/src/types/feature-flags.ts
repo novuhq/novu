@@ -133,6 +133,12 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
   /**
+   * Offer WhatsApp as an Agent Inbox channel (the `whatsapp` human via). Off means absent from
+   * channel lists, invite pages and via validation. Create the boolean in LaunchDarkly for cloud,
+   * or set `IS_AGENT_INBOX_WHATSAPP_ENABLED` when self-hosted.
+   */
+  IS_AGENT_INBOX_WHATSAPP_ENABLED = 'IS_AGENT_INBOX_WHATSAPP_ENABLED',
+  /**
    * Enable the Web Chat channel (subscriber `/v1/web-chat/*`, useWebChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
    * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).

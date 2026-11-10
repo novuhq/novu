@@ -45,6 +45,7 @@ import {
 } from '../../dtos/interaction-response.dto';
 import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
@@ -101,7 +102,8 @@ export class CreateInteraction {
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -114,6 +116,7 @@ export class CreateInteraction {
     }
 
     assertHumanCardActions(command.kind, command.card);
+    await this.channelGate.assertViaEnabled(command.via, command);
 
     // Once claimed, the relay agent and channels live in the user's own
     // environment; a stale keyless credential must not read as "run setup".

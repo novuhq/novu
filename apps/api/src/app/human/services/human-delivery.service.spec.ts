@@ -10,7 +10,12 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
+import { HumanChannelGate } from './human-channel-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
+
+function channelGate(whatsAppEnabled = false) {
+  return new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never);
+}
 
 function emailGate(blocked = false) {
   return {
@@ -45,7 +50,8 @@ describe('HumanDeliveryService.resolveChannel', () => {
       integrationRepository as never,
       humanContactRepository as never,
       outboundGateway as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      channelGate() as never
     );
 
     return {
@@ -467,7 +473,8 @@ describe('HumanDeliveryService keyless email', () => {
       integrationRepository as never,
       humanContactRepository as never,
       { sendDirectMessage: sinon.stub() } as never,
-      keylessEmailGate as never
+      keylessEmailGate as never,
+      channelGate() as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -575,7 +582,8 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      channelGate() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -613,7 +621,8 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       integrationRepository as never,
       {} as never,
       {} as never,
-      emailGate() as never
+      emailGate() as never,
+      channelGate() as never
     );
 
     const channels = await service.listWorkingChannels({
@@ -667,5 +676,131 @@ describe('pickDefaultTarget', () => {
 
   it('returns undefined when the human is not reachable', () => {
     expect(pickDefaultTarget([])).to.equal(undefined);
+  });
+});
+
+describe('HumanDeliveryService on WhatsApp', () => {
+  const params = { environmentId: 'env1', organizationId: 'org1', agentId: 'agent1', subscriberId: 'alice' };
+  const whatsApp = {
+    _id: 'int-wa',
+    identifier: 'whatsapp-main',
+    providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    channel: ChannelTypeEnum.CHAT,
+    active: true,
+  };
+  const telegram = {
+    _id: 'int-tg',
+    identifier: 'tg-main',
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    active: true,
+  };
+
+  function setup(whatsAppEnabled: boolean, integrations: unknown[] = [whatsApp, telegram]) {
+    const getFlag = sinon.stub().resolves(whatsAppEnabled);
+    const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
+    const service = new HumanDeliveryService(
+      { find: sinon.stub().resolves(integrations.map((_, n) => ({ _integrationId: `int${n}` }))) } as never,
+      channelEndpointRepository as never,
+      { find: sinon.stub().resolves(integrations) } as never,
+      { findContact: sinon.stub().resolves(null) } as never,
+      {} as never,
+      emailGate() as never,
+      new HumanChannelGate({ getFlag } as never)
+    );
+
+    return { service, channelEndpointRepository, getFlag };
+  }
+
+  it('resolves a bound number from its phone endpoint when the flag is on', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            type: ENDPOINT_TYPES.PHONE,
+            endpoint: { phoneNumber: '+15551234567' },
+            createdAt: '2026-11-01T10:00:00.000Z',
+          }
+        : null
+    );
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(target).to.deep.equal({
+      platform: HumanChannelViaEnum.WHATSAPP,
+      platformUserId: '+15551234567',
+      integrationIdentifier: 'whatsapp-main',
+    });
+  });
+
+  it('offers WhatsApp on the invite page when the flag is on', async () => {
+    const { service } = setup(true);
+
+    const channels = await service.listInviteChannels(params);
+
+    expect(channels.map(({ via }) => via)).to.deep.equal([HumanChannelViaEnum.WHATSAPP, HumanChannelViaEnum.TELEGRAM]);
+  });
+
+  it('leaves WhatsApp out of the invite page when the flag is off', async () => {
+    const { service } = setup(false);
+
+    const channels = await service.listInviteChannels(params);
+
+    expect(channels.map(({ via }) => via)).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+
+  it('cannot resolve WhatsApp when the flag is off, as if it were never linked', async () => {
+    const { service } = setup(false);
+
+    try {
+      await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(NotFoundException);
+      expect((err as NotFoundException).message).to.contain('No whatsapp channel is linked to this agent');
+    }
+  });
+
+  it('does not read the flag when no WhatsApp integration is linked', async () => {
+    const { service, getFlag } = setup(false, [telegram]);
+
+    await service.listInviteChannels(params);
+
+    expect(getFlag.called).to.equal(false);
+  });
+});
+
+describe('pickDefaultTarget with WhatsApp', () => {
+  const telegram: ReachableHumanTarget = {
+    via: HumanChannelViaEnum.TELEGRAM,
+    platform: 'telegram',
+    platformUserId: '111',
+    integrationIdentifier: 'telegram-main',
+    connectedAt: '2026-09-02T10:00:00.000Z',
+  };
+  const whatsApp: ReachableHumanTarget = {
+    via: HumanChannelViaEnum.WHATSAPP,
+    platform: 'whatsapp',
+    platformUserId: '+15551234567',
+    integrationIdentifier: 'whatsapp-main',
+    connectedAt: '2026-09-01T10:00:00.000Z',
+  };
+  const email: ReachableHumanTarget = {
+    via: HumanChannelViaEnum.EMAIL,
+    platform: 'email',
+    platformUserId: 'alice@example.com',
+    integrationIdentifier: 'email-main',
+    connectedAt: '2026-08-01T10:00:00.000Z',
+  };
+
+  it('treats WhatsApp as an ordinary chat app: connected first wins', () => {
+    expect(pickDefaultTarget([telegram, whatsApp])).to.equal(whatsApp);
+    expect(pickDefaultTarget([telegram, { ...whatsApp, connectedAt: '2026-09-03T10:00:00.000Z' }])?.via).to.equal(
+      HumanChannelViaEnum.TELEGRAM
+    );
+  });
+
+  it('keeps email after WhatsApp even when email was verified first', () => {
+    expect(pickDefaultTarget([email, whatsApp])).to.equal(whatsApp);
   });
 });

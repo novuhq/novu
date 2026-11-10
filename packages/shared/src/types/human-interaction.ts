@@ -234,6 +234,8 @@ export const HUMAN_INTERACTION_MAX_CHOOSE_OPTIONS = 10;
 export enum HumanChannelViaEnum {
   TELEGRAM = 'telegram',
   SLACK = 'slack',
+  /** Reached through a ChannelEndpoint bound by a wa.me code, never `Subscriber.phone`. Behind `IS_AGENT_INBOX_WHATSAPP_ENABLED`. */
+  WHATSAPP = 'whatsapp',
   EMAIL = 'email',
 }
 

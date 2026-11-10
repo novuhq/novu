@@ -2,6 +2,7 @@ import type { HumanContactChannelAddresses } from '@novu/dal';
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 import { SetupHumanRelay } from './setup-human-relay.usecase';
 
@@ -42,7 +43,8 @@ describe('SetupHumanRelay', () => {
       humanAgentIdentity as never,
       findOrCreateNovuEmail as never,
       logger as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return {
@@ -293,7 +295,8 @@ describe('SetupHumanRelay sign-in email', () => {
       { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
       { execute: sinon.stub().resolves({ provisionedNewLink: false }) } as never,
       logger as never,
-      { track: sinon.stub() } as never
+      { track: sinon.stub() } as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, email, humanContactRepository, subscriberRepository, logger };
@@ -596,7 +599,8 @@ describe('SetupHumanRelay analytics', () => {
       { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
       { execute: sinon.stub().resolves(provisioned) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, analyticsService };

@@ -3,6 +3,8 @@ import { Mail } from 'lucide-react';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import { cn } from '@/lib/utils';
 
+import { ComingSoonLogo } from './coming-soon-logo';
+
 /** The round brand mark of a channel, as in the Channels table and the setup drawers. */
 export function ChannelIcon({ via, className }: { via: ChannelVia; className?: string }) {
   const frame = cn('flex size-8 shrink-0 items-center justify-center rounded-full', className);
@@ -13,6 +15,10 @@ export function ChannelIcon({ via, className }: { via: ChannelVia; className?: s
         <Mail className="size-4" />
       </span>
     );
+  }
+
+  if (via === 'whatsapp') {
+    return <ComingSoonLogo via="whatsapp" size={32} className={className} />;
   }
 
   if (via === 'telegram') {
