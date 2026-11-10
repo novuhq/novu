@@ -46,13 +46,21 @@ type AgentIntegrationLink = {
   hasChannelEndpoints?: boolean;
 };
 
-type Integration = { _id: string; identifier: string; name?: string; providerId: string; channel?: string };
+type Integration = {
+  _id: string;
+  identifier: string;
+  name?: string;
+  providerId: string;
+  channel?: string;
+  active?: boolean;
+};
 
 /** The bot of a Telegram channel, and the link that opens it and presses Start for one contact. */
 export type TelegramStartLink = { botUsername: string; url: string };
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const SLACK_PROVIDER_ID = 'slack';
+const WHATSAPP_PROVIDER_ID = 'whatsapp-business';
 
 /** The name a channel gets when the operator doesn't pick one, same as `setup`. */
 const DEFAULT_CHANNEL_NAME = 'Agent';
@@ -166,13 +174,52 @@ export function ensureSlackChannel(account: HumanAccount, name: string): Promise
   return ensureChatChannel(account, 'slack', SLACK_PROVIDER_ID, name);
 }
 
+/**
+ * The relay's WhatsApp channel, made and linked to the relay when it has none. It has no credentials until
+ * the operator finishes the Facebook flow, which fills them in through `connectWhatsApp`.
+ */
+export async function ensureWhatsAppChannel(account: HumanAccount): Promise<string> {
+  // Only an active integration is reused: the signup only lands on active ones, and one that was turned off is
+  // left as it is rather than switched back on.
+  return (
+    await ensureChatChannel(account, 'whatsapp', WHATSAPP_PROVIDER_ID, DEFAULT_CHANNEL_NAME, { onlyActive: true })
+  ).identifier;
+}
+
+/** What Meta's Embedded Signup handed the Facebook button: the code and the account and number it is for. */
+export type WhatsAppSignup = { code: string; wabaId: string; phoneNumberId: string };
+
+export type WhatsAppSignupResult = {
+  success: boolean;
+  displayPhoneNumber?: string;
+  phoneRegistrationWarning?: string;
+  error?: { code: string; message: string };
+};
+
+/**
+ * Finishes Embedded Signup on the relay's WhatsApp channel: the API trades the code with Meta, checks the
+ * number belongs to the account, saves it and points Meta's webhook at the agent. The code never reaches
+ * the browser twice; it goes from the button to here to the API.
+ */
+export function connectWhatsApp(
+  account: HumanAccount,
+  integrationIdentifier: string,
+  signup: WhatsAppSignup
+): Promise<WhatsAppSignupResult> {
+  return requestForAccount<WhatsAppSignupResult>(account, '/v1/human/agent/whatsapp/embedded-signup', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, integrationIdentifier, ...signup },
+  });
+}
+
 type LinkedChannel = { identifier: string; id: string; name?: string };
 
 async function ensureChatChannel(
   account: HumanAccount,
   via: ChannelVia,
   providerId: string,
-  name = DEFAULT_CHANNEL_NAME
+  name = DEFAULT_CHANNEL_NAME,
+  { onlyActive = false }: { onlyActive?: boolean } = {}
 ): Promise<LinkedChannel> {
   const linked = (await listChannels(account)).find((channel) => channel.via === via && channel.active);
   if (linked) {
@@ -181,7 +228,10 @@ async function ensureChatChannel(
 
   const integrations = await requestForAccount<Integration[]>(account, '/v1/integrations');
   const existing = (Array.isArray(integrations) ? integrations : []).find(
-    (integration) => integration.providerId === providerId && integration.channel === 'chat'
+    (integration) =>
+      integration.providerId === providerId &&
+      integration.channel === 'chat' &&
+      (!onlyActive || integration.active !== false)
   );
   const integration =
     existing ??
@@ -339,7 +389,7 @@ export async function issueTelegramStartLink(
 function channelVia(providerId: string, channel?: string): ChannelVia | undefined {
   if (providerId.includes('telegram')) return 'telegram';
   if (providerId.includes('slack')) return 'slack';
-  if (providerId === 'whatsapp-business') return 'whatsapp';
+  if (providerId === WHATSAPP_PROVIDER_ID) return 'whatsapp';
   if (channel === 'email') return 'email';
 
   return undefined;

@@ -35,6 +35,7 @@ import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
 import { HumanListenController } from './human-listen.controller';
+import { HumanWhatsAppController } from './human-whatsapp.controller';
 import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
@@ -80,6 +81,8 @@ import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.use
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
+import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
+import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
@@ -118,6 +121,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
   ],
   controllers: [
     HumanInteractionsController,
+    HumanWhatsAppController,
     HumanInboxController,
     HumanInvitesPublicController,
     HumanVerifyPublicController,
@@ -143,6 +147,8 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     McpConnectionRepository,
     AgentInboxChannelAnalytics,
     HumanChannelGate,
+    GetHumanWhatsAppSetup,
+    ConnectHumanWhatsApp,
     HumanDeliveryService,
     HumanKeylessCapService,
     HumanMessageQuotaService,

@@ -8,9 +8,11 @@ import { AGENT_NOT_SET_UP_MESSAGE, getRelayAgent } from '@/lib/human-agent-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import {
   type ChannelVia,
+  connectWhatsApp,
   createSlackApp,
   ensureSlackChannel,
   ensureTelegramChannel,
+  ensureWhatsAppChannel,
   findSlackWorkspace,
   hasLinkedChannel,
   issueSlackInstallUrl,
@@ -20,10 +22,12 @@ import {
   type SlackWorkspace,
   saveTelegramBotToken,
   sendTestMessage,
+  type WhatsAppSignup,
 } from '@/lib/human-channels-api';
 import { ensureOperatorContact, ensureRelay, findOperatorContactId } from '@/lib/human-operator';
 import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
+import { readWhatsAppSetup, type WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 import { validateSlackAppName, validateSlackConfigToken } from '@/lib/slack-app';
 
 const CHANNELS_PATH = '/configure';
@@ -199,6 +203,60 @@ export async function createSlackAppAction(appName: string, configToken: string)
   }
 }
 
+export type ConnectWhatsAppResult =
+  | { ok: true; displayPhoneNumber?: string; warning?: string }
+  | { ok: false; error: string };
+
+/** Reads the WhatsApp setup again, for a drawer that opened on a page where it couldn't be read. */
+export async function loadWhatsAppSetupAction(): Promise<WhatsAppSetupState> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  return readWhatsAppSetup(account);
+}
+
+/**
+ * Connects the operator's own WhatsApp Business account with what the Facebook button handed back. The
+ * relay gets its WhatsApp channel first, the way Telegram and Slack do, then the API finishes Meta's
+ * Embedded Signup on it.
+ */
+export async function connectWhatsAppAction(signup: WhatsAppSignup): Promise<ConnectWhatsAppResult> {
+  if (!signup.code?.trim() || !signup.wabaId?.trim() || !signup.phoneNumberId?.trim()) {
+    return { ok: false, error: 'Facebook didn’t finish the setup. Please try again.' };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    await ensureRelayWithOperator(account);
+    // The signup lands on exactly the channel made or found here, never an older one left linked.
+    const integrationIdentifier = await ensureWhatsAppChannel(account);
+    const result = await connectWhatsApp(account, integrationIdentifier, {
+      code: signup.code.trim(),
+      wabaId: signup.wabaId.trim(),
+      phoneNumberId: signup.phoneNumberId.trim(),
+    });
+    revalidatePath(CHANNELS_PATH);
+
+    if (!result.success) {
+      return { ok: false, error: describeWhatsAppFailure(result.error?.code) };
+    }
+
+    return {
+      ok: true,
+      ...(result.displayPhoneNumber ? { displayPhoneNumber: result.displayPhoneNumber } : {}),
+      ...(result.phoneRegistrationWarning ? { warning: result.phoneRegistrationWarning } : {}),
+    };
+  } catch (error) {
+    console.error('Failed to connect WhatsApp', error);
+
+    return { ok: false, error: describeWhatsAppError(error) };
+  }
+}
+
 /**
  * The Slack page where the operator installs the app. A link works for five minutes, so the drawer asks
  * for a new one on every click. `null` when there's no app to install yet, or no link could be made.
@@ -325,6 +383,36 @@ function describeSlackAppError(error: unknown): string {
   }
 
   return 'Something went wrong while creating the app. Please try again.';
+}
+
+/** What went wrong on Meta's side, as the API names it, in words the operator can act on. */
+function describeWhatsAppFailure(code: string | undefined): string {
+  switch (code) {
+    case 'token_exchange_failed':
+      return 'Facebook didn’t accept the sign-in. Please connect again.';
+    case 'meta_validation_failed':
+      return 'That number isn’t part of the WhatsApp Business account you picked. Please connect again and choose it there.';
+    case 'webhook_configuration_failed':
+      return 'Your number is saved, but WhatsApp couldn’t be told to send messages to your agent yet. Please connect again.';
+    case 'missing_platform_config':
+      return 'WhatsApp can’t be connected here yet.';
+    default:
+      return 'Something went wrong while connecting WhatsApp. Please try again.';
+  }
+}
+
+function describeWhatsAppError(error: unknown): string {
+  if (error instanceof HumanApiError && error.status >= 400 && error.status < 500) {
+    if (error.status === 403 || error.status === 422) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    if (error.status !== 401) {
+      return error.message;
+    }
+  }
+
+  return 'Something went wrong while connecting WhatsApp. Please try again.';
 }
 
 function describeSaveError(error: unknown): string {
