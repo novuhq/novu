@@ -4,6 +4,7 @@ import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
 import { relayAcknowledgesMessages } from '../../agents/human-relay/relay-acknowledges-messages';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
+import { agentLookOf, cardShownOf } from './agent-look';
 import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
 import { HumanOperatorService } from './human-operator.service';
@@ -57,6 +58,7 @@ export class HumanAgentPictureService {
   /** The agent as the Human endpoints report it. */
   describe(agent: AgentEntity): HumanAgentResponseDto {
     const pictureUrl = agentPictureUrl(agent);
+    const cardShown = cardShownOf(agent);
 
     return {
       agentId: agent._id,
@@ -64,6 +66,8 @@ export class HumanAgentPictureService {
       name: agent.name,
       ...(agent.description ? { description: agent.description } : {}),
       ...(pictureUrl ? { pictureUrl } : {}),
+      look: agentLookOf(agent),
+      ...(cardShown ? { cardShown } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
       reach: agent.reach ?? 'anyone',

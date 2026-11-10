@@ -1,17 +1,20 @@
 import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AGENT_NAME_MAX_LENGTH, HumanChannelViaEnum } from '@novu/shared';
-import { Transform, type TransformFnParams } from 'class-transformer';
+import { Transform, type TransformFnParams, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { AgentLookDto } from './human-agent-look.dto';
 
 /** As long as a Telegram bot's description may be, the longest of the places it is shown. */
 export const AGENT_DESCRIPTION_MAX_LENGTH = 512;
@@ -118,6 +121,17 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /**
+   * The look the operator picked while setting the agent up: its mascot's shape and colour, and its card's art.
+   * Only a new agent takes it, and only from the dashboard's server: the API ignores it from anyone else.
+   */
+  @ApiHideProperty()
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => AgentLookDto)
+  look?: AgentLookDto;
 }
 
 export class SetupHumanRelayResponseDto {

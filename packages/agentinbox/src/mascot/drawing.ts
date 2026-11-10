@@ -19,6 +19,16 @@
  * Nothing here writes anywhere: it only works out dots and characters.
  */
 
+import {
+  BODY_OUTLINES,
+  type BodyOutline,
+  type LookColor,
+  type MascotBody,
+  outlineRadius,
+  type TerminalPalette,
+  terminalPalette,
+} from './look';
+
 /** How the eyes look: `blink` from 0 (open) to 1 (shut), `joy` from 0 (open) to 1 (the happy arcs). */
 export interface MascotFace {
   blink: number;
@@ -78,18 +88,36 @@ export const MASCOT_PALETTE_LIGHT: readonly Rgb[] = [
 
 export const MASCOT_EYE_COLOR: Rgb = [0xee, 0xe5, 0xd8];
 
+/** The eyes on the pale colours (peach, bone): the design's near-black. */
+export const MASCOT_DARK_EYE_COLOR: Rgb = [0x17, 0x12, 0x0f];
+
+/**
+ * What the mascot is made of: its body's outline and its colour's tones (see `look.ts`). The orb in ember is the
+ * mascot as it always was.
+ */
+export interface MascotForm {
+  outline: BodyOutline;
+  palette: TerminalPalette;
+}
+
+export const ORIGINAL_FORM: MascotForm = formOf('orb', 'ember');
+
+export function formOf(body: MascotBody, color: LookColor): MascotForm {
+  return { outline: BODY_OUTLINES[body], palette: terminalPalette(color) };
+}
+
 /** The widths the mascot is drawn at, in dots, from the largest: 40, 32 and 24 columns. */
 export const MASCOT_WIDTHS = [80, 64, 48] as const;
 
 /** How much the lit dots shift about while the mascot is alive, as a share of their shade. */
 export const SHIMMER = 0.08;
 
-export function dotColor(level: number, theme: Theme = 'dark'): Rgb {
+export function dotColor(level: number, theme: Theme = 'dark', form: MascotForm = ORIGINAL_FORM): Rgb {
   if (level === EYE) {
-    return MASCOT_EYE_COLOR;
+    return form.palette.eyes === 'dark' ? MASCOT_DARK_EYE_COLOR : MASCOT_EYE_COLOR;
   }
 
-  return (theme === 'light' ? MASCOT_PALETTE_LIGHT : MASCOT_PALETTE)[level - 1];
+  return (theme === 'light' ? form.palette.light : form.palette.dark)[level - 1];
 }
 
 /**
@@ -182,6 +210,11 @@ export interface DrawOptions {
   shimmer?: number;
   /** On a `light` background the eyes are left out, for the background to show through. `dark` by default. */
   theme?: Theme;
+  /**
+   * Its body and colour, the orb in ember by default. Dark eyes are left out on a dark background instead, where
+   * the background is the colour they need.
+   */
+  form?: MascotForm;
 }
 
 /**
@@ -189,18 +222,26 @@ export interface DrawOptions {
  * rounded up to whole braille cells.
  */
 export function drawMascot(width: number, face: MascotFace, options: DrawOptions = {}): MascotDots {
-  const { aspect = 1, time = 0, shimmer = SHIMMER, theme = 'dark' } = options;
+  const { aspect = 1, time = 0, shimmer = SHIMMER, theme = 'dark', form = ORIGINAL_FORM } = options;
+  const { outline } = form;
   const height = mascotLines(width, aspect) * 4;
   const radius = width * RADIUS_SHARE;
   const centerX = width / 2;
   const centerY = (height * aspect) / 2 + width * CENTER_DROP;
-  const shifts = shiftToCells(width, aspect, radius, centerX, centerY);
+  const shifts = shiftToCells(width, aspect, radius, centerX, centerY, outline.face);
   const eyes = [-EYE_SPREAD, EYE_SPREAD].map((side, index) => {
     const eye = placeCenteredEye(side, face, radius);
     const shift = shifts[index];
 
-    return { ...eye, x: eye.x + shift.dx, y: eye.y + shift.dy, halfWidth: eye.halfWidth * shift.scale };
+    return {
+      ...eye,
+      x: eye.x + outline.face.x + shift.dx,
+      y: eye.y + outline.face.y + shift.dy,
+      halfWidth: eye.halfWidth * shift.scale,
+    };
   });
+  // Eyes are drawn where they differ from the background behind the mascot, and left out where they don't.
+  const eyesShow = (theme === 'light') === (form.palette.eyes === 'dark');
   // The shimmer is two slow waves across the dots, as on the landing page.
   const across = time * 0.00012 * 9;
   const down = time * 0.00009 * 7;
@@ -210,20 +251,21 @@ export function drawMascot(width: number, face: MascotFace, options: DrawOptions
     for (let column = 0; column < width; column += 1) {
       const x = (column + 0.5 - centerX) / radius;
       const y = ((row + 0.5) * aspect - centerY) / radius;
-      const distanceSquared = x * x + y * y;
+      const [bodyX, bodyY] = onBodyOf(outline, x, y);
+      const distanceSquared = bodyX * bodyX + bodyY * bodyY;
       const onSphere = distanceSquared <= 1;
       const index = row * width + column;
 
       if (onSphere && eyes.some((eye) => isInEye(eye, x, y))) {
-        levels[index] = theme === 'light' ? 0 : EYE;
+        levels[index] = eyesShow ? EYE : 0;
         continue;
       }
 
       // The sphere's shadow side is lifted to a clear orange-red (level 3 and up), so the whole disc stays
       // round and warm; the highlight, level 6, stays a small spot.
       const shade = onSphere
-        ? 3 + (shadeOfSphere(x, y, Math.sqrt(1 - distanceSquared)) - 1.25) * 0.62
-        : shadeOfHalo(x, y, Math.sqrt(distanceSquared));
+        ? 3 + (shadeOfSphere(bodyX, bodyY, Math.sqrt(1 - distanceSquared)) - 1.25) * 0.62
+        : shadeOfHalo(bodyX, bodyY, Math.sqrt(distanceSquared));
       // The shimmer only changes which dots are lit, never their colour, so no band of colour slides about.
       const breathing = shade + shade * shimmer * Math.sin(column * 0.18 + across + Math.sin(row * 0.15 + down));
       const density = onSphere ? 0.78 + 0.22 * Math.min(1, breathing / 6) : (breathing / 6) * 0.75;
@@ -307,6 +349,19 @@ export function eyeBoxes({ levels, width }: MascotDots): EyeBox[] {
   return boxes.filter((box) => box.right >= 0);
 }
 
+/**
+ * Where a point falls on the sphere the body is stretched from: the body is lit as that sphere, a point some share
+ * of the way from the body's middle to its edge as the point that share of the way across the sphere. A round
+ * body needs no direction, so the orb stays exactly the sphere it was.
+ */
+function onBodyOf(outline: BodyOutline, x: number, y: number): [number, number] {
+  const fromX = x - outline.dx;
+  const fromY = y - outline.dy;
+  const reach = outline.a.length === 1 ? outline.a[0] : outlineRadius(outline, Math.atan2(fromY, fromX));
+
+  return [fromX / reach, fromY / reach];
+}
+
 /** Lit from one side, with a faint rim on the dark side so the sphere doesn't melt into its halo. */
 function shadeOfSphere(x: number, y: number, z: number): number {
   const lit = Math.max(0, x * LIGHT.x + y * LIGHT.y + z * LIGHT.z);
@@ -360,8 +415,15 @@ const cellShifts = new Map<string, CellShift[]>();
  * shift and scale serve every frame, so a blink or a smile never makes the eyes hop from one cell row to the
  * next. Each eye is moved across on its own; both take the left eye's move down, so they always sit level.
  */
-function shiftToCells(width: number, aspect: number, radius: number, centerX: number, centerY: number): CellShift[] {
-  const key = `${width}:${aspect.toFixed(3)}`;
+function shiftToCells(
+  width: number,
+  aspect: number,
+  radius: number,
+  centerX: number,
+  centerY: number,
+  face: { x: number; y: number } = { x: 0, y: 0 }
+): CellShift[] {
+  const key = `${width}:${aspect.toFixed(3)}:${face.x}:${face.y}`;
   const known = cellShifts.get(key);
   if (known) {
     return known;
@@ -372,9 +434,9 @@ function shiftToCells(width: number, aspect: number, radius: number, centerX: nu
     const eyeWidth = open.halfWidth * 2 * radius;
     // The open eye is widened or narrowed to whole cells; every other shape of it scales the same way.
     const scale = Math.max(2, Math.round(eyeWidth / 2) * 2) / eyeWidth;
-    const left = centerX + (open.x - open.halfWidth * scale) * radius;
+    const left = centerX + (open.x + face.x - open.halfWidth * scale) * radius;
     // Rows are `aspect` dot widths tall, so the lower edge is lined up in rows.
-    const bottom = (centerY + (open.y + open.halfHeight) * radius) / aspect;
+    const bottom = (centerY + (open.y + face.y + open.halfHeight) * radius) / aspect;
 
     return {
       scale,

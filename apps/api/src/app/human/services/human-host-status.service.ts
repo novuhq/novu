@@ -11,6 +11,7 @@ import {
 } from '@novu/dal';
 import type { HumanHostDto, HumanHostStatusResponseDto } from '../dtos/human-host.dto';
 import type { InboxThreadDto } from '../dtos/human-inbox.dto';
+import { cardShownOf } from './agent-look';
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
 import { liveListening } from './human-listen-lease.service';
 
@@ -155,9 +156,17 @@ export class HumanHostStatusService {
    * where the agent is listening.
    */
   async describe(scope: InboxScope, agent: InboxRelayAgent): Promise<HumanHostStatusResponseDto> {
-    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['hosts', 'listening']);
+    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), [
+      'hosts',
+      'listening',
+      'cardShown',
+    ]);
 
-    return { ...describeHosts(stored?.hosts), listening: liveListening(stored?.listening, new Date()) };
+    return {
+      ...describeHosts(stored?.hosts),
+      listening: liveListening(stored?.listening, new Date()),
+      cardShown: stored ? cardShownOf(stored) : null,
+    };
   }
 }
 
@@ -167,7 +176,9 @@ export class HumanHostStatusService {
  * host with a name has checked the inbox. Their times still count for the agent as a whole until then. A CLI
  * from before says no name and checks as `general`, which keeps them: they fold into its entry.
  */
-export function describeHosts(hosts: AgentHosts | undefined): Omit<HumanHostStatusResponseDto, 'listening'> {
+export function describeHosts(
+  hosts: AgentHosts | undefined
+): Omit<HumanHostStatusResponseDto, 'listening' | 'cardShown'> {
   const named = AGENT_HOST_IDS.flatMap((id) => toHosts(id, hosts?.byId?.[id]));
   const fromBefore = named.some((host) => host.id !== GENERAL_HOST && host.lastCheckedAt)
     ? []

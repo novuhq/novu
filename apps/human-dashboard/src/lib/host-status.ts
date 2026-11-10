@@ -73,6 +73,11 @@ export type HostStatus = {
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
   /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
   listening?: Listening | null;
+  /**
+   * The first time a host showed the agent's card (`agent_card`, `agentinbox card`), and which: how the onboarding
+   * sees the agent say hi. `null` until one did; missing from an older API.
+   */
+  cardShown?: { at: string; via?: HostVia; host?: HostId } | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */

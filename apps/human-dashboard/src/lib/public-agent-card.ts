@@ -5,6 +5,7 @@ import { cache } from 'react';
 import { unwrapData } from './api-response';
 import { requestPublic } from './human-api';
 import { HumanApiError } from './human-api-error';
+import { type AgentLook, lookOf } from './look';
 import { cardLinkOf, HANDLE_MAX_LENGTH } from './onboarding';
 import { readSiteOrigin } from './site-origin';
 
@@ -39,6 +40,10 @@ export type PublicAgentCard = {
   approvesNewPeople: boolean;
   /** The card's own link, `https://agentinbox.md/p/atlas` (`cardLinkOf`). */
   cardLink: string;
+  /** Its mascot's body and colour and its card's art: the original look for an agent made before looks. */
+  look: AgentLook;
+  /** The card is drawn as the new agent card, for the accounts that have it (the onboarding's flag). */
+  newCard: boolean;
 };
 
 /** The card, or that there is none to show at this link. Which of the reasons it was is never told. */
@@ -56,6 +61,8 @@ type AgentCardResponse = {
   address: string;
   /** Without the `@`. */
   telegramBotUsername?: string;
+  look?: unknown;
+  newCard?: boolean;
 };
 
 const NOT_AVAILABLE: PublicAgentCardResult = { available: false };
@@ -107,6 +114,8 @@ export const getPublicAgentCard = cache(async (handle: string): Promise<PublicAg
       telegramBot: found.telegramBotUsername ? `@${found.telegramBotUsername}` : null,
       approvesNewPeople: false,
       cardLink: cardLinkOf(await readSiteOrigin(), found.handle),
+      look: lookOf(found.look),
+      newCard: found.newCard === true,
     },
   };
 });

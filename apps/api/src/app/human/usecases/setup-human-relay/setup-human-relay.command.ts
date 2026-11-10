@@ -1,5 +1,6 @@
+import type { AgentLook } from '@novu/dal';
 import { AGENT_ANALYTICS_SOURCES, type AgentAnalyticsSource, HumanChannelViaEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
@@ -59,4 +60,9 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsIn(AGENT_ANALYTICS_SOURCES)
   analyticsSource?: AgentAnalyticsSource;
+
+  /** The look the operator picked. Only a new agent takes it. The controller only sets this for the dashboard's server. */
+  @IsOptional()
+  @IsObject()
+  look?: AgentLook;
 }

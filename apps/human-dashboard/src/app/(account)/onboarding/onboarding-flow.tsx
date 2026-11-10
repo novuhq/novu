@@ -208,7 +208,7 @@ function describeFigure(step: OnboardingStep): string {
 }
 
 /** The right end of the top bar, the same on every step: who is signed in, and the way to sign out. */
-function Aside({ email }: { email: string | null }) {
+export function Aside({ email }: { email: string | null }) {
   return (
     <>
       {email && <p className="min-w-0 truncate font-mono text-xs leading-4 text-muted">{email}</p>}

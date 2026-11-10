@@ -424,6 +424,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         firstCheckedAt: null,
         waitingMessage: null,
         listening: null,
+        cardShown: null,
       });
 
       const { code } = await issueCode();

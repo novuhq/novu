@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { HumanAccount } from './human-account';
 import { requestForAccount } from './human-api-key';
+import type { AgentLook } from './look';
 
 type OperatorName = { firstName?: string | null; lastName?: string | null };
 
@@ -35,6 +36,8 @@ type RelayDetails = {
   operatorEmailVerified?: boolean;
   /** The mailbox local-part they chose. Left out, the API derives one from the name. */
   inboxHandle?: string;
+  /** The look they picked in the onboarding. Only a new agent takes it; left out, it has the original look. */
+  look?: AgentLook;
 };
 
 /**
@@ -44,7 +47,7 @@ type RelayDetails = {
 export async function ensureRelay(
   account: HumanAccount,
   name: OperatorName = {},
-  { agentName, operatorEmail, operatorEmailVerified, inboxHandle }: RelayDetails = {}
+  { agentName, operatorEmail, operatorEmailVerified, inboxHandle, look }: RelayDetails = {}
 ): Promise<{ agentId: string; contactId: string }> {
   const setup = await requestForAccount<{ agentId: string; subscriberId: string }>(account, '/v1/human/setup', {
     method: 'POST',
@@ -56,6 +59,7 @@ export async function ensureRelay(
       ...(operatorEmail ? { email: operatorEmail } : {}),
       ...(operatorEmail && operatorEmailVerified ? { emailVerified: true } : {}),
       ...(inboxHandle ? { inboxHandle } : {}),
+      ...(look ? { look } : {}),
     },
   });
 

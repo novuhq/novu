@@ -16,6 +16,7 @@ import { createConnectCode } from '@/lib/human-hosts-api';
 import { describeProgress, loadSetupProgress, updateOnboardingState } from '@/lib/human-onboarding';
 import { ensureRelay } from '@/lib/human-operator';
 import { listConnectedTools } from '@/lib/human-tools-api';
+import { isAgentLook } from '@/lib/look';
 import { AGENT_NAME_MAX_LENGTH, ONBOARDING_PATH, toHandle } from '@/lib/onboarding';
 
 const DESTINATIONS = { inbox: DASHBOARD_HOME, configure: CONFIGURE_PATH, contacts: '/contacts' };
@@ -61,7 +62,12 @@ export async function checkAddressAction(handle: string): Promise<AddressCheck |
  * and leaves the mailbox it already has. An address Clerk has verified counts as verified at once, so
  * the agent can email the operator without a confirmation link.
  */
-export async function createInboxAction(input: { name: string; handle: string }): Promise<CreateInboxResult> {
+export async function createInboxAction(input: {
+  name: string;
+  handle: string;
+  /** The look picked in the onboarding where the agent says hi. Only a new agent takes it. */
+  look?: unknown;
+}): Promise<CreateInboxResult> {
   const account = await requireHumanAccount({ returnTo: ONBOARDING_PATH });
   const user = await findCurrentUser();
   const name = String(input.name ?? '').trim();
@@ -94,6 +100,7 @@ export async function createInboxAction(input: { name: string; handle: string })
         operatorEmail: email,
         operatorEmailVerified: user.primaryEmailAddress?.verification?.status === 'verified',
         inboxHandle: handle,
+        ...(isAgentLook(input.look) ? { look: input.look } : {}),
       }
     ));
   } catch (error) {
@@ -209,6 +216,31 @@ export async function leaveConnectAction(): Promise<void> {
     ...state,
     skippedAt: state.skippedAt ?? now,
   }));
+
+  redirect(DASHBOARD_HOME);
+}
+
+/**
+ * A.2 of the onboarding where the agent says hi: where the agent lives. The host leads to its own steps on A.3,
+ * and is the one A.4a asks to say hi until another host connects.
+ */
+export async function pickHostAction(host: string): Promise<void> {
+  if (!isHostId(host)) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  await updateOnboardingState((state) => ({ ...state, hostPickedAt: now, pickedHost: host }));
+  refresh();
+}
+
+/**
+ * "Do it later" on A.3: the dashboard opens with its banners, and "Continue setup" asks where the agent lives
+ * again. Every time counts, so the latest is kept.
+ */
+export async function leaveSayHiConnectAction(): Promise<void> {
+  const now = new Date().toISOString();
+  await updateOnboardingState((state) => ({ ...state, skippedAt: now }));
 
   redirect(DASHBOARD_HOME);
 }

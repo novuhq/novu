@@ -1,7 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
+import { cardText, showCard } from './card';
+import { cardViewData, cardViewToolMeta, showsCardView } from './card-view';
 import { ADDABLE_CHANNELS, channelAdd } from './channels';
+import type { HostId } from './connections';
 import { contactListText, DEFAULT_CONTACTS_LIMIT, MAX_CONTACTS_LIMIT } from './contacts';
 import {
   getInboxThread,
@@ -27,7 +30,12 @@ import {
 import { resolveEmailRecipients } from './recipients';
 import { AGENT_NAME_MAX_LENGTH, inboxSetup } from './setup';
 
-type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
+type ToolResult = {
+  content: Array<{ type: 'text'; text: string }>;
+  /** What a host's view of the result draws, for the hosts that draw one (`agent_card` in ChatGPT and Claude). */
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+};
 
 /** Points an AI at `inbox_setup` when the account has no relay agent yet. */
 const NOT_SET_UP_HINT =
@@ -225,8 +233,38 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
   );
 }
 
-/** The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. */
-export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEmail?: string): void {
+/**
+ * The tools an AI tool gets: ways to reach a person, read the inbox, and wait for what they say. `host` is the app
+ * calling: ChatGPT and Claude also get `agent_card`'s view (`registerCardView`), the card drawn in the chat.
+ */
+export function registerTools(
+  server: McpServer,
+  api: AgentInboxApi,
+  suggestedEmail?: string,
+  host: HostId | null = null
+): void {
+  const drawsCard = showsCardView(host);
+
+  server.registerTool(
+    'agent_card',
+    {
+      title: 'Show the agent card',
+      description:
+        'Introduce yourself with your Agent Inbox card: your name, your email address, and the link where anyone can email or message you. Call it when the user asks you to introduce yourself, to show or share your card, or who you are on Agent Inbox. Say the greeting it returns in your reply, then show the card with its link.',
+      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+      ...(drawsCard ? { _meta: cardViewToolMeta() } : {}),
+    },
+    () =>
+      runResult(async () => {
+        const card = await showCard(api);
+
+        return {
+          content: [{ type: 'text', text: cardText(card) }],
+          ...(drawsCard ? { structuredContent: cardViewData(card) } : {}),
+        };
+      })
+  );
+
   server.registerTool(
     'inbox_setup',
     {
@@ -510,9 +548,14 @@ export function registerTools(server: McpServer, api: AgentInboxApi, suggestedEm
 }
 
 /** Runs a tool and turns what went wrong into a result the AI tool can read, not a protocol error. */
-async function run(work: () => Promise<string>): Promise<ToolResult> {
+function run(work: () => Promise<string>): Promise<ToolResult> {
+  return runResult(async () => ({ content: [{ type: 'text', text: await work() }] }));
+}
+
+/** `run` for a tool that answers with more than its text. */
+async function runResult(work: () => Promise<ToolResult>): Promise<ToolResult> {
   try {
-    return { content: [{ type: 'text', text: await work() }] };
+    return await work();
   } catch (error) {
     const text =
       error instanceof AgentInboxApiError

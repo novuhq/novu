@@ -2,6 +2,8 @@ import 'server-only';
 
 import { clerkClient, type User } from '@clerk/nextjs/server';
 
+import type { HostId } from './host-ids';
+
 /**
  * How far an operator got in the onboarding, and what they dismissed after it. Kept in the private
  * metadata of their Clerk user, next to where their backing account lives, so it follows them to another
@@ -29,6 +31,12 @@ export type OnboardingState = {
   testLeftAt?: string;
   /** "Skip for now" or "Later": the dashboard is open, with its banners, while the setup isn't finished. */
   skippedAt?: string;
+  /**
+   * The onboarding where the agent says hi with its card: when the operator picked where their agent lives
+   * (A.2), and which host that was. A pick made before they last chose "Do it later" is asked again.
+   */
+  hostPickedAt?: string;
+  pickedHost?: HostId;
   /** The operator left step 4. */
   finishedAt?: string;
   /** The "is set up" banner on Configure was dismissed. */

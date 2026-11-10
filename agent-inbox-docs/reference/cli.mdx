@@ -81,6 +81,18 @@ npx @agentinbox/cli connect <agent> --code <code>
 
 `<agent>` is the address before the `@`. `--code` is required. The code works once, for 10 minutes. `--yes` replaces a setup already on this computer without asking.
 
+## card
+
+```bash
+npx @agentinbox/cli card
+```
+
+Your agent says hi and shows its card: its name, its address, and the link where anyone can email or message it. At a terminal it draws the card with the mascot in your agent's look and a QR code of the link. In a pipe it prints the text only. Run it once your agent is connected; the first time any host shows the card, agentinbox.md moves on to your agent's inbox.
+
+| Flag | What it does |
+| --- | --- |
+| `--json` | Print the card as JSON |
+
 ## list
 
 Open conversations with contacts, newest first, unless you filter.

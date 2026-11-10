@@ -1,4 +1,12 @@
-import { dotColor, MASCOT_WIDTHS, type MascotCell, mascotLines, type Rgb, type Theme } from '../mascot/drawing';
+import {
+  dotColor,
+  MASCOT_WIDTHS,
+  type MascotCell,
+  type MascotForm,
+  mascotLines,
+  type Rgb,
+  type Theme,
+} from '../mascot/drawing';
 import type { Emotion } from '../mascot/life';
 import { type ColorMode, CSI, foreground, rowsOf, textWidth } from './terminal';
 import { wrapStyled } from './wrap';
@@ -182,7 +190,8 @@ function printable(text: string): string[] {
 export function paintMascot(
   cells: ReadonlyArray<ReadonlyArray<MascotCell | null>>,
   { colors, theme }: Look,
-  columns: number
+  columns: number,
+  form?: MascotForm
 ): string[] {
   const indent = ' '.repeat(Math.max(0, Math.floor((columns - (cells[0]?.length ?? 0)) / 2)));
 
@@ -197,7 +206,7 @@ export function paintMascot(
         continue;
       }
       if (cell.level !== level) {
-        text += foreground(dotColor(cell.level, theme), colors);
+        text += foreground(dotColor(cell.level, theme, form), colors);
         level = cell.level;
       }
       text += cell.char;

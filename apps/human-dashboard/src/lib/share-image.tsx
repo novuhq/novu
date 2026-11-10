@@ -5,8 +5,10 @@ import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 import type { ReactNode } from 'react';
 
-import { type AgentState, formatIssuedDate } from './agent-card';
-import { drawMascot, MASCOT_AT_REST } from './mascot-sphere';
+import { type AgentState, cardSerialOf, formatIssuedDate } from './agent-card';
+import { ART_COLUMNS, ART_DIM_OPACITY, ART_ROWS, artPathsOf, drawCardArt } from './card-art';
+import { type AgentLook, artColorOf, ORIGINAL_LOOK } from './look';
+import { AVATAR_RADIUS, drawMascot, formOf, MASCOT_AT_REST, ORIGINAL_FORM } from './mascot-sphere';
 import { writtenLink } from './onboarding';
 
 /** What Open Graph and X expect of a shared link's image. */
@@ -38,6 +40,10 @@ export type ShareImageCard = {
    */
   host?: { connected: boolean };
   slack?: string | null;
+  /** The agent's look, which the new agent card is drawn in. */
+  look?: AgentLook;
+  /** Draws the new agent card in place of the ID card, for the accounts that have it (the onboarding's flag). */
+  newCard?: boolean;
 };
 
 /** The design's tokens, as `globals.css` names them. */
@@ -84,6 +90,27 @@ export async function renderShareImage(card: ShareImageCard, headers: Record<str
     fonts: assets.fonts,
     headers,
   });
+}
+
+/**
+ * The new agent card alone, on a clear background (`CARD_IMAGE_SIZE`): what ChatGPT and Claude show in the chat when
+ * the agent shows its card (`agent_card`), whichever card its account draws on the dashboard.
+ */
+export async function renderCardImage(card: ShareImageCard, headers: Record<string, string>): Promise<ImageResponse> {
+  const [assets, picture] = await Promise.all([loadAssets(), card.pictureUrl ? loadPicture(card.pictureUrl) : null]);
+
+  return new ImageResponse(
+    <div style={{ display: 'flex', width: '100%', height: '100%', fontFamily: 'Geist' }}>
+      <NewCard
+        card={card}
+        look={card.look ?? ORIGINAL_LOOK}
+        picture={picture}
+        width={CARD_IMAGE_SIZE.width}
+        placement={{ position: 'absolute', left: 0, top: 0 }}
+      />
+    </div>,
+    { ...CARD_IMAGE_SIZE, fonts: assets.fonts, headers }
+  );
 }
 
 type ShareImageProps = { card: ShareImageCard; assets: ShareImageAssets; picture: string | null };
@@ -166,8 +193,265 @@ function ShareImage({ card, assets, picture }: ShareImageProps) {
         <div style={{ display: 'flex', ...oneLine }}>{writtenLink(card.cardLink)}</div>
       </div>
 
-      <MiniCard card={card} assets={assets} picture={picture} />
+      {card.newCard && card.look ? (
+        <NewMiniCard card={card} look={card.look} picture={picture} />
+      ) : (
+        <MiniCard card={card} assets={assets} picture={picture} />
+      )}
     </div>
+  );
+}
+
+/** The new card's width in the share image: a little narrower than the ID card, so that its link stays in it. */
+const NEW_CARD_WIDTH = 400;
+
+/** The card alone as an image (`renderCardImage`): the design's 300 × 460 card at twice its size. */
+export const CARD_IMAGE_SIZE = { width: 600, height: 920 };
+
+/** Takes the new card's sizes, in the design's measures for a card 300px wide, to a card `width` wide. */
+type Scale = (units: number) => number;
+
+function scaleFor(width: number): Scale {
+  return (units) => units * (width / 300);
+}
+
+/** The new card's ink: its label, number and name. */
+const CARD_INK = '#d8e7ea';
+
+/**
+ * The new agent card (`Agent card · Vertical`) in place of the ID card, for the accounts that have it: its art in
+ * the agent's colour, its number, its mascot in its look (or its picture), its name, who runs it, how to reach it and
+ * its link, tilted 4° as the ID card is, around the same middle.
+ */
+function NewMiniCard({ card, look, picture }: { card: ShareImageCard; look: AgentLook; picture: string | null }) {
+  const middle = p(230.4) + c(340) / 2;
+
+  return (
+    <NewCard
+      card={card}
+      look={look}
+      picture={picture}
+      width={NEW_CARD_WIDTH}
+      placement={{
+        position: 'absolute',
+        left: middle - NEW_CARD_WIDTH / 2,
+        top: p(12),
+        transform: 'rotate(4deg)',
+        transformOrigin: '50% 50%',
+        boxShadow: `0 ${p(16)}px ${p(32)}px 0 rgba(0, 0, 0, 0.5)`,
+      }}
+    />
+  );
+}
+
+type NewCardProps = {
+  card: ShareImageCard;
+  look: AgentLook;
+  picture: string | null;
+  width: number;
+  /** Where the card sits in the image, and how it is turned. */
+  placement: Record<string, string | number>;
+};
+
+/** The new agent card, drawn `width` wide for the image renderer, to the design's measures. */
+function NewCard({ card, look, picture, width, placement }: NewCardProps) {
+  const k = scaleFor(width);
+  const accent = hexOfRgb(artColorOf(look.color));
+  const status =
+    card.state === 'paused'
+      ? 'Paused for now'
+      : card.operatorName
+        ? `Run by ${card.operatorName}`
+        : card.host
+          ? 'Your agent'
+          : 'An agent';
+  const lines = [
+    card.telegram ? { mark: telegramMark(), label: card.telegram.bot ?? 'Connected' } : null,
+    card.slack ? { mark: svgImage(SLACK_MARK), label: card.slack } : null,
+  ].filter((line) => line !== null);
+  const oneLine = { overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } as const;
+  const at = (left: number, top: number) => ({ position: 'absolute', left: k(left), top: k(top) }) as const;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        width,
+        height: k(460),
+        borderRadius: k(18),
+        backgroundColor: '#110f0e',
+        ...placement,
+      }}
+    >
+      <img src={artImage(look, accent)} alt="" width={width} height={k(252)} style={at(0, 0)} />
+      <div style={{ ...at(1, 1), width: k(298), height: k(1), backgroundColor: 'rgba(255, 255, 255, 0.07)' }} />
+      <div
+        style={{
+          ...at(20, 20),
+          display: 'flex',
+          fontFamily: 'Geist Mono',
+          fontWeight: 500,
+          fontSize: k(9),
+          lineHeight: 12 / 9,
+          letterSpacing: k(0.72),
+          color: CARD_INK,
+        }}
+      >
+        AGENT CARD
+      </div>
+      <div
+        style={{
+          ...at(236, 20),
+          display: 'flex',
+          fontFamily: 'Geist Mono',
+          fontSize: k(9),
+          lineHeight: 12 / 9,
+          color: CARD_INK,
+        }}
+      >
+        {`No. ${cardSerialOf(card.handle)}`}
+      </div>
+      {picture ? (
+        <div
+          style={{
+            ...at(20, 196),
+            display: 'flex',
+            width: k(64),
+            height: k(64),
+            padding: k(5),
+            borderRadius: '50%',
+            border: `${k(1)}px solid ${COLOR.borderStrong}`,
+            backgroundColor: '#110f0e',
+          }}
+        >
+          <img src={picture} alt="" width={k(52)} height={k(52)} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+        </div>
+      ) : (
+        <img src={mascotImage(false, look)} alt="" width={k(109.69)} height={k(109.69)} style={at(6, 168.73)} />
+      )}
+      <div
+        style={{
+          ...at(20, 268),
+          display: 'flex',
+          width: k(260),
+          fontFamily: 'Instrument Serif',
+          fontStyle: 'italic',
+          fontSize: k(38),
+          lineHeight: 42 / 38,
+          color: CARD_INK,
+          ...oneLine,
+        }}
+      >
+        {card.name}
+      </div>
+      <div
+        style={{
+          ...at(20, 314),
+          display: 'flex',
+          width: k(260),
+          fontSize: k(11),
+          lineHeight: 14 / 11,
+          color: COLOR.secondary,
+          ...oneLine,
+        }}
+      >
+        {status}
+      </div>
+      <img src={DASHED_RULE} alt="" width={k(260)} height={k(1)} style={at(20, 337.5)} />
+      <NewCardLine k={k} top={352} mark={EMAIL_MARK} live={Boolean(card.address)}>
+        {card.address ?? 'No address yet'}
+      </NewCardLine>
+      {lines.map((line, index) => (
+        <NewCardLine key={line.label} k={k} top={374 + 22 * index} mark={line.mark} live>
+          {line.label}
+        </NewCardLine>
+      ))}
+      <div
+        style={{
+          ...at(20, 432),
+          display: 'flex',
+          width: k(260),
+          fontFamily: 'Geist Mono',
+          fontWeight: 500,
+          fontSize: k(10),
+          lineHeight: 12 / 10,
+          color: accent,
+          ...oneLine,
+        }}
+      >
+        {writtenLink(card.cardLink)}
+      </div>
+      {/* The edge, over the art as the design draws it. */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width,
+          height: k(460),
+          borderRadius: k(18),
+          border: `${k(1)}px solid ${COLOR.borderStrong}`,
+        }}
+      />
+    </div>
+  );
+}
+
+/** One way to reach the agent on the new card: its channel's 12px logo and where the agent is found there. */
+type NewCardLineProps = { k: Scale; top: number; mark: string; live: boolean; children: string };
+
+function NewCardLine({ k, top, mark, live, children }: NewCardLineProps) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: k(20),
+        top: k(top),
+        display: 'flex',
+        alignItems: 'center',
+        width: k(260),
+        height: k(14),
+        fontFamily: 'Geist Mono',
+        fontSize: k(11),
+        lineHeight: 14 / 11,
+        color: live ? COLOR.default : COLOR.muted,
+      }}
+    >
+      <img src={mark} alt="" width={k(12)} height={k(12)} style={{ flexShrink: 0, marginRight: k(8) }} />
+      <div style={{ display: 'flex', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** The card's art as an image: its dim cells under its lit ones, in the look's colour. */
+function artImage(look: AgentLook, color: string): string {
+  const { lit, dim } = artPathsOf(drawCardArt(look.art.kind, look.art.seed));
+
+  return svgImage(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ART_COLUMNS} ${ART_ROWS}" width="${ART_COLUMNS * 8}" height="${ART_ROWS * 8}"><path fill="${color}" opacity="${ART_DIM_OPACITY}" d="${dim}"/><path fill="${color}" d="${lit}"/></svg>`
+  );
+}
+
+function hexOfRgb([red, green, blue]: readonly [number, number, number]): string {
+  return `#${[red, green, blue].map((part) => part.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** The new card's rule: dashes of 2 with gaps of 3, on its 260-wide line. */
+const DASHED_RULE = svgImage(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="260" height="1" viewBox="0 0 260 1"><line x1="0" y1="0.5" x2="260" y2="0.5" stroke="#2e2b27" stroke-dasharray="2 3"/></svg>'
+);
+
+/** The new card's email logo (`Channel logo`, Email): the orange disc with a cream envelope and its blue flap. */
+const EMAIL_MARK = svgImage(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="13.5652" height="13.5652" viewBox="0 0 13.5652 13.5652" fill="none"><defs><linearGradient id="d" x1="6.783" y1="0" x2="6.783" y2="13.565" gradientUnits="userSpaceOnUse"><stop stop-color="#ff7e52"/><stop offset="1" stop-color="#e5401a"/></linearGradient><linearGradient id="b" x1="6.782" y1="4.24" x2="6.782" y2="9.327" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#fbede3"/></linearGradient></defs><circle cx="6.7826" cy="6.7826" r="6.7826" fill="url(#d)"/><rect x="3.3906" y="4.3457" width="6.7826" height="4.875" rx="1.0174" fill="url(#b)"/><path d="m3.773 4.875 3.01 2.289 3.01-2.289" stroke="#29bfd6" stroke-width="0.7207" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+);
+
+/** Telegram's round logo for the new card's lines, its plane the share of the circle `ChannelIcon` gives it. */
+function telegramMark(): string {
+  return svgImage(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="${COLOR.telegram}"/><g transform="translate(4.1 4.5) scale(0.625)" fill="${COLOR.onAccent}"><path d="M20.7 3.3 2.9 10.2c-1.2.5-1.2 1.2-.2 1.5l4.6 1.4 1.8 5.4c.2.6.1.9.8.9.5 0 .7-.2 1-.5l2.2-2.1 4.6 3.4c.8.5 1.4.2 1.6-.8l3-14.1c.3-1.2-.5-1.8-1.6-1.3Z"/></g></svg>`
   );
 }
 
@@ -611,14 +895,21 @@ function svgImage(svg: string): string {
 /**
  * The mascot as the card draws it on its canvas (`MascotFace`, 120px grid), happy or asleep, turned into
  * an SVG of its pixels. That stays crisp at any size, so the image draws it as large as the design's 132px
- * `Human/Mascot`, where the page keeps it at the 120px of its grid.
+ * `Human/Mascot`, where the page keeps it at the 120px of its grid. With an agent's look, it is that look as
+ * the new card draws it (`MascotFace`'s `avatar` art); without one, the mascot as it always was.
  */
-function mascotImage(asleep: boolean): string {
+function mascotImage(asleep: boolean, look?: Pick<AgentLook, 'shape' | 'color'>): string {
   const grid = 120;
   const pixels = new Uint8ClampedArray(grid * grid * 4);
-  drawMascot(pixels, grid, { ...MASCOT_AT_REST, joy: asleep ? 0 : 1 }, 0.308, asleep ? 'asleep' : 'awake', {
-    ahead: true,
-  });
+  drawMascot(
+    pixels,
+    grid,
+    { ...MASCOT_AT_REST, joy: asleep ? 0 : 1 },
+    look ? AVATAR_RADIUS : 0.308,
+    asleep ? 'asleep' : 'awake',
+    { ahead: true, avatar: Boolean(look) },
+    look ? formOf(look.shape, look.color) : ORIGINAL_FORM
+  );
 
   // One path per colour, made of the runs of that colour along each row.
   const runs = new Map<string, string[]>();

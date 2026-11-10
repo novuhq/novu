@@ -1,4 +1,5 @@
 import type { Emotion } from '../mascot/life';
+import type { LookColor, MascotBody } from '../mascot/look';
 import { askTerminal } from './ask-terminal';
 import type { ScreenRow, ScreenStatus, Tone } from './layout';
 import { processHost, startLiveScreen } from './live-screen';
@@ -72,6 +73,8 @@ export interface Screen {
   wait(wait: ScreenWait): () => void;
   /** Shows text with the next question, such as a menu or how to get a token. It goes once that one is answered. */
   print(text: string): void;
+  /** Lines drawn as they are under the list, such as a QR code, until `undefined` takes them away. */
+  figure(lines: readonly string[] | undefined): void;
   /**
    * Asks at the end of the list, with the very words a plain terminal shows. The answer is drawn there as it
    * is typed and stays in the list, and everything else keeps moving meanwhile.
@@ -88,6 +91,8 @@ export interface ScreenOptions {
   command: string;
   /** The agent's handle, where it is known. */
   handle?: string;
+  /** The mascot's body and colour, as the agent's look has them: the orb in ember where it isn't known. */
+  look?: { shape: MascotBody; color: LookColor };
 }
 
 /**

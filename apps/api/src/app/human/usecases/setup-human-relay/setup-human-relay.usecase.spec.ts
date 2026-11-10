@@ -584,11 +584,13 @@ describe('SetupHumanRelay analytics', () => {
     }
   });
 
-  function setup(provisioned: { provisionedNewLink: boolean; response?: unknown }) {
+  function setup(provisioned: { provisionedNewLink: boolean; response?: unknown }, look?: Record<string, unknown>) {
     const analyticsService = { track: sinon.stub() };
     const usecase = new SetupHumanRelay(
       {
-        findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+        findOne: sinon
+          .stub()
+          .resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay', ...(look ? { look } : {}) }),
       } as never,
       { findOne: sinon.stub().resolves({ subscriberId: 'alice' }), update: sinon.stub() } as never,
       { setDefaultVia: sinon.stub(), setDeclaredAddress: sinon.stub() } as never,
@@ -613,9 +615,26 @@ describe('SetupHumanRelay analytics', () => {
     await usecase.execute(SetupHumanRelayCommand.create({ ...base, analyticsSource: 'cli' }));
 
     expect(analyticsService.track.args).to.deep.equal([
-      [AGENT_INBOX_EVENTS.INBOX_CREATED, 'user1', { _organization: 'org1', agentId: 'relay1', source: 'cli' }],
+      [
+        AGENT_INBOX_EVENTS.INBOX_CREATED,
+        'user1',
+        // Nobody picked a look: the agent has the original one.
+        { _organization: 'org1', agentId: 'relay1', source: 'cli', shape: 'orb', color: 'ember', art: 'rays' },
+      ],
       [AGENT_INBOX_EVENTS.CHANNEL_CONNECTED, 'user1', { _organization: 'org1', agentId: 'relay1', channel: 'email' }],
     ]);
+  });
+
+  it('counts the look the operator picked with the new inbox', async () => {
+    const { usecase, analyticsService } = setup(newInbox, {
+      shape: 'mochi',
+      color: 'coral',
+      art: { kind: 'sparkles', seed: 9 },
+    });
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, analyticsSource: 'dashboard' }));
+
+    expect(analyticsService.track.firstCall.args[2]).to.include({ shape: 'mochi', color: 'coral', art: 'sparkles' });
   });
 
   it('says a request without a source came from the API', async () => {
