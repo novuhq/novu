@@ -124,8 +124,6 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    const phone = command.payload.phone || subscriber.phone;
-
     if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -165,6 +163,7 @@ export class SendMessageSms extends SendMessageBase {
       integration?.providerId,
       command.step.stepId
     ) as SmsMessageOverrides;
+    const phone = resolveSmsDestination(overrides.to, command.payload.phone, subscriber.phone);
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -324,7 +323,7 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: overrides.to || phone,
+        to: phone,
         from: overrides.from || integration.credentials.from,
         content: bridgeBody || overrides.content || content,
         id: message._id,
@@ -430,4 +429,14 @@ export class SendMessageSms extends SendMessageBase {
       providerId: integration.providerId,
     };
   }
+}
+
+function resolveSmsDestination(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate;
+    }
+  }
+
+  return undefined;
 }
