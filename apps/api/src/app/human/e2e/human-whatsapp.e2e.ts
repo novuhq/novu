@@ -166,6 +166,17 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
       expect(res.body.code).to.equal('channel_not_found');
     });
 
+    it('takes any integration identifier, as integrations are created with', async () => {
+      const res = await asDashboard('post', '/v1/human/agent/whatsapp/embedded-signup').send({
+        ...SIGNUP,
+        integrationIdentifier: 'whatsapp.main',
+      });
+
+      // Past validation: it is only missing from the relay.
+      expect(res.status).to.equal(404, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('channel_not_found');
+    });
+
     it('refuses a signup missing the code or the ids', async () => {
       const res = await asDashboard('post', '/v1/human/agent/whatsapp/embedded-signup').send({ code: 'meta-code' });
 

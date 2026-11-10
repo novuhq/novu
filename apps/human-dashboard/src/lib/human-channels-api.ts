@@ -46,7 +46,14 @@ type AgentIntegrationLink = {
   hasChannelEndpoints?: boolean;
 };
 
-type Integration = { _id: string; identifier: string; name?: string; providerId: string; channel?: string };
+type Integration = {
+  _id: string;
+  identifier: string;
+  name?: string;
+  providerId: string;
+  channel?: string;
+  active?: boolean;
+};
 
 /** The bot of a Telegram channel, and the link that opens it and presses Start for one contact. */
 export type TelegramStartLink = { botUsername: string; url: string };
@@ -172,7 +179,11 @@ export function ensureSlackChannel(account: HumanAccount, name: string): Promise
  * the operator finishes the Facebook flow, which fills them in through `connectWhatsApp`.
  */
 export async function ensureWhatsAppChannel(account: HumanAccount): Promise<string> {
-  return (await ensureChatChannel(account, 'whatsapp', WHATSAPP_PROVIDER_ID)).identifier;
+  // Only an active integration is reused: the signup only lands on active ones, and one that was turned off is
+  // left as it is rather than switched back on.
+  return (
+    await ensureChatChannel(account, 'whatsapp', WHATSAPP_PROVIDER_ID, DEFAULT_CHANNEL_NAME, { onlyActive: true })
+  ).identifier;
 }
 
 /** What Meta's Embedded Signup handed the Facebook button: the code and the account and number it is for. */
@@ -207,7 +218,8 @@ async function ensureChatChannel(
   account: HumanAccount,
   via: ChannelVia,
   providerId: string,
-  name = DEFAULT_CHANNEL_NAME
+  name = DEFAULT_CHANNEL_NAME,
+  { onlyActive = false }: { onlyActive?: boolean } = {}
 ): Promise<LinkedChannel> {
   const linked = (await listChannels(account)).find((channel) => channel.via === via && channel.active);
   if (linked) {
@@ -216,7 +228,10 @@ async function ensureChatChannel(
 
   const integrations = await requestForAccount<Integration[]>(account, '/v1/integrations');
   const existing = (Array.isArray(integrations) ? integrations : []).find(
-    (integration) => integration.providerId === providerId && integration.channel === 'chat'
+    (integration) =>
+      integration.providerId === providerId &&
+      integration.channel === 'chat' &&
+      (!onlyActive || integration.active !== false)
   );
   const integration =
     existing ??

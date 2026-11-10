@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import type { WhatsAppEmbeddedSignupFailure } from '../../integrations/dtos/whatsapp-embedded-signup.dto';
 import { HumanAgentQueryDto } from './human-agent.dto';
 
@@ -46,11 +46,11 @@ export class ConnectHumanWhatsAppRequestDto extends HumanAgentQueryDto {
   @MaxLength(64)
   phoneNumberId: string;
 
+  // Any string, as integration identifiers are when they're created.
   @ApiPropertyOptional({ description: 'The relay’s WhatsApp channel to connect. Defaults to its active one.' })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z0-9-_]+$/i)
-  @MaxLength(128)
+  @IsNotEmpty()
   integrationIdentifier?: string;
 }
 
