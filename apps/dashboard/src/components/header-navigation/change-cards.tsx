@@ -330,20 +330,12 @@ function ChangeCardMeta({
   );
 }
 
-function sectionStartsOpen(section: ChangeSection, stepCount: number): boolean {
-  if (section.schemaPreview) {
+function sectionCanExpand(section: ChangeSection, stepCount: number): boolean {
+  if (section.schemaPreview || section.layoutPreview || section.fieldsDiff) {
     return true;
   }
 
-  if (stepCount > 0) {
-    return true;
-  }
-
-  if (section.layoutPreview) {
-    return true;
-  }
-
-  return false;
+  return stepCount > 0;
 }
 
 function ChangeSectionRow({
@@ -371,9 +363,8 @@ function ChangeSectionRow({
 }) {
   const Icon = SECTION_ICONS[section.key];
   const stepItems = section.key === 'steps' ? (section.items ?? []) : [];
-  const expandedByDefault = sectionStartsOpen(section, stepItems.length);
-  const canExpand = expandedByDefault || Boolean(section.fieldsDiff);
-  const [expanded, setExpanded] = useState(expandedByDefault && selected);
+  const canExpand = sectionCanExpand(section, stepItems.length);
+  const [expanded, setExpanded] = useState(false);
   const focusPath = scrollRequest?.key.startsWith(`${nodeKey}:`) ? scrollRequest.key.slice(nodeKey.length + 1) : null;
 
   const isTargeted = scrollRequest !== null && (scrollRequest.key === nodeKey || focusPath !== null);

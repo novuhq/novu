@@ -64,7 +64,6 @@ export function StepChangeList({
             workflowId={workflowId}
             environments={environments}
             environmentNames={environmentNames}
-            defaultExpanded={index === 0}
             focusNonce={scrollRequest?.key === itemKey ? scrollRequest.nonce : 0}
             className={cn(index > 0 && 'border-t border-stroke-weak')}
           />
@@ -80,7 +79,6 @@ function StepChangeRow({
   workflowId,
   environments,
   environmentNames,
-  defaultExpanded,
   focusNonce,
   className,
 }: {
@@ -89,7 +87,6 @@ function StepChangeRow({
   workflowId: string;
   environments: PublishEnvironments;
   environmentNames: EnvironmentNames;
-  defaultExpanded: boolean;
   /** Bumps when the sidebar selects this step, so it opens and stays open. */
   focusNonce: number;
   className?: string;
@@ -98,7 +95,7 @@ function StepChangeRow({
   const stepType = toStepType(item.stepType);
   const canExpand = step !== undefined && step.action !== 'moved';
   const canPreview = isStepPreviewable(item.stepType);
-  const [expanded, setExpanded] = useState(defaultExpanded && canExpand);
+  const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState<StepView>(canPreview ? 'preview' : 'json');
 
   useEffect(() => {
