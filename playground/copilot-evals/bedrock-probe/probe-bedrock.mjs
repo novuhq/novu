@@ -154,7 +154,7 @@ add('G6 mixed strict (proposed fix)', 'create 1st call with addStep strict:false
   add('H1 first compile', 'fresh schema, first use: records the compile delay (doc: up to ~90 s)', [fresh], { toolChoice: force(fresh.name) });
   add('H2 cached', 'same schema again: should be near normal latency', [structuredClone(fresh)], { toolChoice: force(fresh.name), expectCache: true });
   const reordered = [tool(M), tool(R), tool(`${E}[sms]`)];
-  add('H3 reordered tools', 'G2 tools in another order: is the grammar cache keyed on tool order? (router reorders tools)', reordered, { prompt: PROMPTS['editStepContent[sms]'] });
+  add('H3 reordered tools', 'G2 tools and prompt, tools in another order: is the grammar cache keyed on tool order? (router reorders tools)', reordered, { prompt: SMS_ADD });
 }
 
 // I. Streaming variants of the decisive cases
@@ -256,7 +256,11 @@ async function run(t) {
           if (event.type === 'response.output_item.added' && event.item?.type === 'function_call') name = event.item.name;
           if (event.type === 'response.function_call_arguments.delta' && !record.firstArgDeltaMs) record.firstArgDeltaMs = Math.round(performance.now() - started);
           if (event.type === 'response.function_call_arguments.done') args = event.arguments;
-          if (event.type === 'response.completed') usage = event.response?.usage;
+          if (['response.completed', 'response.incomplete', 'response.failed'].includes(event.type)) {
+            usage = event.response?.usage;
+            record.responseStatus = event.response?.status;
+            record.incompleteReason = event.response?.incomplete_details?.reason;
+          }
           if (event.type === 'error' || event.type === 'response.failed') errorBody = JSON.stringify(event).slice(0, 2000);
         }
       }
@@ -267,6 +271,7 @@ async function run(t) {
       const call = (json.output ?? []).find((item) => item.type === 'function_call');
       if (call) functionCall = { name: call.name, arguments: call.arguments };
       record.responseStatus = json.status;
+      record.incompleteReason = json.incomplete_details?.reason;
     }
   } catch (error) {
     errorBody = `${error.name}: ${error.message}`;
@@ -280,19 +285,33 @@ async function run(t) {
   };
 }
 
-const plan = T.filter((t) => !ONLY || ONLY.has(t.id) || ONLY.has(t.id.split(' ')[0]));
+// --only takes exact ids (A1, E:addStep, G1) or group letters (A, B); either also selects the [stream] twin
+const plan = T.filter((t) => {
+  const shortId = t.id.split(' ')[0];
+  return !ONLY || ONLY.has(t.id) || ONLY.has(shortId) || ONLY.has(shortId[0]);
+});
+if (ONLY && plan.length === 0) {
+  console.error(`--only ${[...ONLY].join(',')} matched no request. Nothing was sent.`);
+  process.exit(1);
+}
 if (SEND && !KEY) {
   console.error('Set AWS_BEARER_TOKEN_BEDROCK (Bedrock API key) to send. Nothing was sent.');
   process.exit(1);
 }
 console.log(`${SEND ? 'SENDING' : 'DRY RUN (add --send to call Bedrock)'}: ${plan.length} requests -> ${BASE_URL}/responses model=${MODEL}`);
 const outFile = path.join(here, `probe-results-${new Date().toISOString().replace(/[:.]/g, '-')}.jsonl`);
+const verdictOf = (result) => {
+  if (result.status !== 200 || result.errorBody) return `FAIL ${result.status ?? ''} ${String(result.errorBody ?? '').slice(0, 160)}`;
+  // e.g. max_output_tokens reached: the args are cut off, so they say nothing about the schema
+  if (result.responseStatus !== 'completed') return `UNFINISHED ${result.responseStatus ?? 'no final status'}${result.incompleteReason ? ` (${result.incompleteReason})` : ''}`;
+  return result.functionCall?.schemaValid ? 'OK valid-args' : `OK ${result.functionCall ? 'INVALID-args' : 'no-call'}`;
+};
 const rows = [];
 for (const t of plan) {
   const result = await run(t); // sequential on purpose: compile/caching timings must not overlap
   rows.push(result);
   if (SEND) fs.appendFileSync(outFile, `${JSON.stringify(result)}\n`);
-  const verdict = !SEND ? '' : result.status === 200 && !result.errorBody ? (result.functionCall?.schemaValid ? 'OK valid-args' : `OK ${result.functionCall ? 'INVALID-args' : 'no-call'}`) : `FAIL ${result.status ?? ''} ${String(result.errorBody ?? '').slice(0, 160)}`;
+  const verdict = SEND ? verdictOf(result) : '';
   console.log(`${t.id.padEnd(44)} ${String(result.requestBytes).padStart(7)} B ${SEND ? `${String(result.totalMs).padStart(6)} ms ttfb ${result.ttfbMs} ` : ''}${verdict}`);
 }
 if (SEND) console.log(`\nWrote ${outFile}`);
@@ -306,5 +325,6 @@ How to read it:
 - D1 400 => limits count the whole request (sum across tools); D1 OK + B2 400 => per tool.
 - E:* per-tool verdicts on the real Copilot tools; F:* shows the non-strict fallback is accepted and how often args are invalid.
 - G1..G5 are the real per-call tool sets; G6 is the proposed fix (heavy tools non-strict, others strict).
-- H1 totalMs - H2 totalMs ~ compile cost; H3 slow => cache keyed on tool order (sort tools before sending).
+- H1 totalMs - H2 totalMs ~ compile cost; H3 much slower than G2 (same prompt, tools reordered) => cache keyed on tool order (sort tools before sending).
+- UNFINISHED => the response stopped early (reason in brackets, e.g. max_output_tokens); its args are not a schema verdict.
 - "[stream]" rows: same as their non-stream twin => streaming does not change the verdict; firstEventMs shows the compile delay.`);
