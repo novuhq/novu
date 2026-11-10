@@ -113,7 +113,9 @@ export function whatsAppRows(setup: WhatsAppSetupState): ChannelRow[] {
  * Reading a setup can hang (Telegram's asks Telegram who the bot is); the page settles for `unknown`
  * instead.
  */
-function withinTime<State extends { step: string }>(setup: Promise<State>): Promise<State | { step: 'unknown' }> {
+export function withinTime<State extends { step: string }>(
+  setup: Promise<State>
+): Promise<State | { step: 'unknown' }> {
   return Promise.race([
     setup,
     new Promise<{ step: 'unknown' }>((resolve) => {

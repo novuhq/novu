@@ -1,11 +1,18 @@
 import type { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
-type RelayScope = { environmentId: string; organizationId: string; agentIdentifier: string };
+type RelayScope = {
+  environmentId: string;
+  organizationId: string;
+  agentIdentifier: string;
+  /** The channel the caller picked. Without it, the relay's active WhatsApp channel. */
+  integrationIdentifier?: string;
+};
 
 /**
- * The relay agent and the WhatsApp Business integration linked to it, if any. `agent` is null before
- * `human setup` has made the relay; `integration` is null while no WhatsApp integration is linked.
+ * The relay agent and the active WhatsApp Business integration linked to it, if any. `agent` is null before
+ * `human setup` has made the relay; `integration` is null while no active WhatsApp integration is linked (or
+ * the one named isn't). An older inactive one left linked is never picked, so a signup can't land on it.
  */
 export async function findRelayWhatsAppIntegration(
   repositories: {
@@ -43,6 +50,8 @@ export async function findRelayWhatsAppIntegration(
     _organizationId: scope.organizationId,
     _id: { $in: links.map((link) => link._integrationId) },
     providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    active: true,
+    ...(scope.integrationIdentifier ? { identifier: scope.integrationIdentifier } : {}),
   });
 
   return { agent, integration: integration ?? null };

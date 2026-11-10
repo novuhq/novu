@@ -87,6 +87,7 @@ export class HumanWhatsAppController {
         code: body.code,
         wabaId: body.wabaId,
         phoneNumberId: body.phoneNumberId,
+        integrationIdentifier: body.integrationIdentifier,
       })
     );
   }

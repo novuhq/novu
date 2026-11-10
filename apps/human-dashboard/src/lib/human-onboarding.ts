@@ -13,7 +13,7 @@ import type { HumanAccount } from './human-account';
 import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { type Channel, listChannels } from './human-channels-api';
-import { loadChannelsOverview } from './human-channels-overview';
+import { loadChannelsOverview, withinTime } from './human-channels-overview';
 import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
@@ -506,7 +506,8 @@ async function isWhatsAppConnected(account: HumanAccount, channels: Channel[]): 
     return false;
   }
 
-  return (await readWhatsAppSetup(account)).step === 'connected';
+  // A detail of these pages: capped like the other setup reads, so a slow answer never holds the page up.
+  return (await withinTime(readWhatsAppSetup(account))).step === 'connected';
 }
 
 /** How many messages wait for a host: the unread threads of the inbox. */

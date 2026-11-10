@@ -190,10 +190,14 @@ export type WhatsAppSignupResult = {
  * number belongs to the account, saves it and points Meta's webhook at the agent. The code never reaches
  * the browser twice; it goes from the button to here to the API.
  */
-export function connectWhatsApp(account: HumanAccount, signup: WhatsAppSignup): Promise<WhatsAppSignupResult> {
+export function connectWhatsApp(
+  account: HumanAccount,
+  integrationIdentifier: string,
+  signup: WhatsAppSignup
+): Promise<WhatsAppSignupResult> {
   return requestForAccount<WhatsAppSignupResult>(account, '/v1/human/agent/whatsapp/embedded-signup', {
     method: 'POST',
-    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, ...signup },
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, integrationIdentifier, ...signup },
   });
 }
 

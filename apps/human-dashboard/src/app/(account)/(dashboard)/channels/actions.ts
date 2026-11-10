@@ -232,8 +232,9 @@ export async function connectWhatsAppAction(signup: WhatsAppSignup): Promise<Con
     }
 
     await ensureRelayWithOperator(account);
-    await ensureWhatsAppChannel(account);
-    const result = await connectWhatsApp(account, {
+    // The signup lands on exactly the channel made or found here, never an older one left linked.
+    const integrationIdentifier = await ensureWhatsAppChannel(account);
+    const result = await connectWhatsApp(account, integrationIdentifier, {
       code: signup.code.trim(),
       wabaId: signup.wabaId.trim(),
       phoneNumberId: signup.phoneNumberId.trim(),

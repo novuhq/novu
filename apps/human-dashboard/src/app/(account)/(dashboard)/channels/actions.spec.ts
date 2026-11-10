@@ -52,7 +52,8 @@ describe('connectWhatsAppAction', () => {
     expect(mocks.ensureWhatsAppChannel.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.connectWhatsApp.mock.invocationCallOrder[0]
     );
-    expect(mocks.connectWhatsApp.mock.calls[0][1]).toEqual({
+    expect(mocks.connectWhatsApp.mock.calls[0][1]).toBe('whatsapp-main');
+    expect(mocks.connectWhatsApp.mock.calls[0][2]).toEqual({
       code: 'meta-code',
       wabaId: 'waba-1',
       phoneNumberId: 'phone-1',

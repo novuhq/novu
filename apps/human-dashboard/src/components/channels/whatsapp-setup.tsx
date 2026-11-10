@@ -18,7 +18,9 @@ type DrawerState =
   | { step: 'unreadable' }
   | { step: 'not-offered' }
   | { step: 'connect'; appId: string; configId: string }
-  | { step: 'connected'; displayPhoneNumber?: string };
+  | { step: 'connected'; displayPhoneNumber?: string; reconnect?: MetaIds };
+
+type MetaIds = { appId: string; configId: string };
 
 type WhatsAppSetupProps = {
   /** How far the setup got when the page loaded, so the drawer has something to show the moment it opens. */
@@ -61,6 +63,23 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
   }, [open, setup, check]);
 
   const number = state.step === 'connected' ? state.displayPhoneNumber : undefined;
+  const signupButton = (ids: MetaIds, mode: 'first' | 'again') => (
+    <WhatsAppSignupButton
+      appId={ids.appId}
+      configId={ids.configId}
+      mode={mode}
+      connect={connectWhatsAppAction}
+      onConnected={(result) => {
+        setError(undefined);
+        setState({ step: 'connected', displayPhoneNumber: result.displayPhoneNumber, reconnect: ids });
+        if (result.warning) {
+          toast(result.warning, 'error');
+        }
+        router.refresh();
+      }}
+      onError={setError}
+    />
+  );
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -101,27 +120,8 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
                 Sign in with Facebook and pick your Meta business, then the number {handle} should use. You need a Meta
                 business and a phone number that isn’t on WhatsApp yet; Facebook walks you through adding one.
               </p>
-              {state.step === 'connect' && (
-                <WhatsAppSignupButton
-                  appId={state.appId}
-                  configId={state.configId}
-                  connect={connectWhatsAppAction}
-                  onConnected={(result) => {
-                    setError(undefined);
-                    setState({ step: 'connected', displayPhoneNumber: result.displayPhoneNumber });
-                    if (result.warning) {
-                      toast(result.warning, 'error');
-                    }
-                    router.refresh();
-                  }}
-                  onError={setError}
-                />
-              )}
-              {error && (
-                <p role="alert" className="text-xs leading-4 text-danger">
-                  <FieldError>{error}</FieldError>
-                </p>
-              )}
+              {state.step === 'connect' && signupButton(state, 'first')}
+              {state.step === 'connect' && error && <SignupError message={error} />}
             </Step>
 
             {state.step === 'connected' && (
@@ -129,10 +129,28 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
                 {number ? `${handle} can now send from ${number}.` : `${handle} has its WhatsApp Business number.`}
               </ConnectedCard>
             )}
+            {/* The number is saved before Meta's webhook is set up, so a half-finished setup is fixed from here. */}
+            {state.step === 'connected' && state.reconnect && (
+              <li className="flex flex-col gap-2">
+                <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
+                  Messages not reaching {handle}, or a different number?
+                  {signupButton(state.reconnect, 'again')}
+                </p>
+                {error && <SignupError message={error} />}
+              </li>
+            )}
           </Stepper>
         )}
       </DrawerContent>
     </Drawer>
+  );
+}
+
+function SignupError({ message }: { message: string }) {
+  return (
+    <p role="alert" className="text-xs leading-4 text-danger">
+      <FieldError>{message}</FieldError>
+    </p>
   );
 }
 

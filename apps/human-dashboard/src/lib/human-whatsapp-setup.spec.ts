@@ -31,6 +31,23 @@ describe('toWhatsAppSetupState', () => {
       toWhatsAppSetupState({ enabled: true, available: false, connected: true, displayPhoneNumber: '+1 555' })
     ).toEqual({ step: 'connected', displayPhoneNumber: '+1 555' });
   });
+
+  it('keeps connecting again possible for a saved number, since Meta’s webhook can have failed after the save', () => {
+    expect(
+      toWhatsAppSetupState({
+        enabled: true,
+        available: true,
+        appId: 'app-1',
+        configId: 'config-1',
+        connected: true,
+        displayPhoneNumber: '+1 555',
+      })
+    ).toEqual({
+      step: 'connected',
+      displayPhoneNumber: '+1 555',
+      reconnect: { appId: 'app-1', configId: 'config-1' },
+    });
+  });
 });
 
 describe('whatsAppRows', () => {

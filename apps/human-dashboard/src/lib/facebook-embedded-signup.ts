@@ -7,6 +7,8 @@
 const META_GRAPH_API_VERSION = 'v22.0';
 const FACEBOOK_SDK_URL = 'https://connect.facebook.net/en_US/sdk.js';
 const FACEBOOK_SDK_INIT_TIMEOUT_MS = 15_000;
+/** How long one of Meta's two answers waits for the other before the attempt is given up. */
+export const SIGNUP_PAIRING_TIMEOUT_MS = 30_000;
 
 export type EmbeddedSignupSession = { wabaId: string; phoneNumberId: string };
 
@@ -61,6 +63,8 @@ export function loadFacebookSdk(appId: string): Promise<FacebookSdk> {
     script.onerror = () => {
       clearTimeout(timeout);
       sdkLoading = undefined;
+      // Without this the next click finds the tag, skips the download and waits out the timeout.
+      script.remove();
       reject(new Error('Facebook didn’t load. Check that nothing blocks facebook.com and try again.'));
     };
     document.body.appendChild(script);
@@ -108,6 +112,66 @@ export function parseEmbeddedSignupEvent(event: Pick<MessageEvent, 'origin' | 'd
   const phoneNumberId = message.data?.phone_number_id?.trim();
 
   return message.event === 'FINISH' && wabaId && phoneNumberId ? { wabaId, phoneNumberId } : null;
+}
+
+export type PairedSignup = EmbeddedSignupSession & { code: string };
+
+/**
+ * Meta answers a signup twice, in either order: `FB.login` with a code, and the `WA_EMBEDDED_SIGNUP` message
+ * with the account and number. `onReady` runs once both are in; when one never follows the other within
+ * `timeoutMs`, `onTimeout` runs instead, so the button never waits forever.
+ */
+export function createSignupPairing({
+  onReady,
+  onTimeout,
+  timeoutMs = SIGNUP_PAIRING_TIMEOUT_MS,
+}: {
+  onReady: (signup: PairedSignup) => void;
+  onTimeout: () => void;
+  timeoutMs?: number;
+}) {
+  let code: string | undefined;
+  let session: EmbeddedSignupSession | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let settled = false;
+
+  const settle = () => {
+    settled = true;
+    clearTimeout(timer);
+  };
+
+  const arrived = () => {
+    if (settled) {
+      return;
+    }
+
+    if (code && session) {
+      settle();
+      onReady({ code, ...session });
+
+      return;
+    }
+
+    timer ??= setTimeout(() => {
+      if (!settled) {
+        settle();
+        onTimeout();
+      }
+    }, timeoutMs);
+  };
+
+  return {
+    code(value: string) {
+      code = value;
+      arrived();
+    },
+    session(value: EmbeddedSignupSession) {
+      session = value;
+      arrived();
+    },
+    /** Stops waiting without either callback, for a cancelled or failed attempt. */
+    cancel: settle,
+  };
 }
 
 /** What `FB.login` is called with for Embedded Signup: a code to trade on the server, and the session event. */

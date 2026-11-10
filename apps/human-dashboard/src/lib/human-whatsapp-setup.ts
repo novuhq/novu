@@ -13,7 +13,11 @@ export type WhatsAppSetupState =
   | { step: 'hidden' }
   | { step: 'unavailable' }
   | { step: 'connect'; appId: string; configId: string }
-  | { step: 'connected'; displayPhoneNumber?: string }
+  /**
+   * `reconnect` carries the Meta ids while the flow can run: the number is saved before Meta's webhook is set
+   * up, so a setup that failed halfway reads as connected and is fixed by connecting again.
+   */
+  | { step: 'connected'; displayPhoneNumber?: string; reconnect?: { appId: string; configId: string } }
   | { step: 'unknown' };
 
 type WhatsAppSetupResponse = {
@@ -46,15 +50,16 @@ export function toWhatsAppSetupState(setup: WhatsAppSetupResponse): WhatsAppSetu
     return { step: 'hidden' };
   }
 
+  const ids =
+    setup.available && setup.appId && setup.configId ? { appId: setup.appId, configId: setup.configId } : null;
+
   if (setup.connected) {
-    return setup.displayPhoneNumber
-      ? { step: 'connected', displayPhoneNumber: setup.displayPhoneNumber }
-      : { step: 'connected' };
+    return {
+      step: 'connected',
+      ...(setup.displayPhoneNumber ? { displayPhoneNumber: setup.displayPhoneNumber } : {}),
+      ...(ids ? { reconnect: ids } : {}),
+    };
   }
 
-  if (!setup.available || !setup.appId || !setup.configId) {
-    return { step: 'unavailable' };
-  }
-
-  return { step: 'connect', appId: setup.appId, configId: setup.configId };
+  return ids ? { step: 'connect', ...ids } : { step: 'unavailable' };
 }

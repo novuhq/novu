@@ -19,6 +19,15 @@ describe('ConnectHumanWhatsApp', () => {
 
   function setup(options: { whatsAppEnabled?: boolean; relay?: boolean; linked?: boolean } = {}) {
     const { whatsAppEnabled = true, relay = true, linked = true } = options;
+    const integrationRepository = {
+      find: sinon
+        .stub()
+        .resolves(
+          linked
+            ? [{ _id: 'int-wa', identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]
+            : []
+        ),
+    };
     const embeddedSignup = {
       execute: sinon.stub().resolves({
         success: true,
@@ -37,18 +46,10 @@ describe('ConnectHumanWhatsApp', () => {
           .resolves(relay ? { _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' } : null),
       } as never,
       { find: sinon.stub().resolves(linked ? [{ _integrationId: 'int-wa' }] : []) } as never,
-      {
-        find: sinon
-          .stub()
-          .resolves(
-            linked
-              ? [{ _id: 'int-wa', identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]
-              : []
-          ),
-      } as never
+      integrationRepository as never
     );
 
-    return { usecase, embeddedSignup };
+    return { usecase, embeddedSignup, integrationRepository };
   }
 
   it('refuses while WhatsApp is turned off, before touching Meta', async () => {
@@ -104,6 +105,22 @@ describe('ConnectHumanWhatsApp', () => {
       integrationIdentifier: 'whatsapp-main',
     });
     expect(result).to.deep.equal({ success: true, displayPhoneNumber: '+1 555-123-4567' });
+  });
+
+  it('only ever picks an active WhatsApp channel, and the one the dashboard named', async () => {
+    const { usecase, integrationRepository } = setup();
+
+    await usecase.execute(
+      ConnectHumanWhatsAppCommand.create({ ...command, integrationIdentifier: 'whatsapp-main' } as never)
+    );
+
+    expect(integrationRepository.find.firstCall.args[0]).to.include({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      active: true,
+      identifier: 'whatsapp-main',
+    });
   });
 
   it('passes a Meta failure through with its code', async () => {

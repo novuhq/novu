@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ConnectWhatsAppResult } from '@/app/(account)/(dashboard)/channels/actions';
-import { Button } from '@/components/ui/button';
+import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import {
-  type EmbeddedSignupSession,
+  createSignupPairing,
   embeddedSignupLoginOptions,
   loadFacebookSdk,
+  type PairedSignup,
   parseEmbeddedSignupEvent,
 } from '@/lib/facebook-embedded-signup';
 import type { WhatsAppSignup } from '@/lib/human-channels-api';
@@ -19,69 +20,71 @@ type WhatsAppSignupButtonProps = {
   connect: (signup: WhatsAppSignup) => Promise<ConnectWhatsAppResult>;
   onConnected: (result: Extract<ConnectWhatsAppResult, { ok: true }>) => void;
   onError: (message: string) => void;
+  /** `again` is the quieter button under a connected number, for when messages don't arrive. */
+  mode?: 'first' | 'again';
 };
 
 /**
  * Opens Meta's Embedded Signup in a Facebook popup. Meta answers twice: `FB.login` with a code, and a
  * `WA_EMBEDDED_SIGNUP` message with the business account and number picked. The signup goes to the server
- * once both are in, in whichever order they arrive.
+ * once both are in, in whichever order they arrive, and the attempt is given up when one never comes.
  */
-export function WhatsAppSignupButton({ appId, configId, connect, onConnected, onError }: WhatsAppSignupButtonProps) {
+export function WhatsAppSignupButton({
+  appId,
+  configId,
+  connect,
+  onConnected,
+  onError,
+  mode = 'first',
+}: WhatsAppSignupButtonProps) {
   const [pending, setPending] = useState(false);
-  const session = useRef<EmbeddedSignupSession | null>(null);
-  const code = useRef<string | null>(null);
-  const listener = useRef<((event: MessageEvent) => void) | null>(null);
+  const attempt = useRef<{ pairing: ReturnType<typeof createSignupPairing>; listener: (event: MessageEvent) => void }>(
+    null
+  );
 
-  const stopListening = useCallback(() => {
-    if (listener.current) {
-      window.removeEventListener('message', listener.current);
-      listener.current = null;
+  /** Ends the current attempt: stops listening to Meta and waiting for its other answer. */
+  const endAttempt = useCallback(() => {
+    if (attempt.current) {
+      attempt.current.pairing.cancel();
+      window.removeEventListener('message', attempt.current.listener);
+      attempt.current = null;
     }
   }, []);
 
-  useEffect(() => stopListening, [stopListening]);
+  useEffect(() => endAttempt, [endAttempt]);
 
   const fail = useCallback(
     (message: string) => {
-      stopListening();
-      session.current = null;
-      code.current = null;
+      endAttempt();
       setPending(false);
       onError(message);
     },
-    [onError, stopListening]
+    [endAttempt, onError]
   );
 
-  const finishIfReady = useCallback(async () => {
-    const picked = session.current;
-    const signupCode = code.current;
-    if (!picked || !signupCode) {
-      return;
-    }
+  const finish = useCallback(
+    async (signup: PairedSignup) => {
+      endAttempt();
 
-    session.current = null;
-    code.current = null;
-    stopListening();
-
-    try {
-      const result = await connect({ code: signupCode, ...picked });
-      if (result.ok) {
-        onConnected(result);
-      } else {
-        onError(result.error);
+      try {
+        const result = await connect(signup);
+        if (result.ok) {
+          onConnected(result);
+        } else {
+          onError(result.error);
+        }
+      } catch {
+        onError('Something went wrong while connecting WhatsApp. Please try again.');
+      } finally {
+        setPending(false);
       }
-    } catch {
-      onError('Something went wrong while connecting WhatsApp. Please try again.');
-    } finally {
-      setPending(false);
-    }
-  }, [connect, onConnected, onError, stopListening]);
+    },
+    [connect, endAttempt, onConnected, onError]
+  );
 
   const start = useCallback(async () => {
+    endAttempt();
     setPending(true);
-    session.current = null;
-    code.current = null;
-    stopListening();
 
     let sdk: Awaited<ReturnType<typeof loadFacebookSdk>>;
     try {
@@ -92,43 +95,47 @@ export function WhatsAppSignupButton({ appId, configId, connect, onConnected, on
       return;
     }
 
-    listener.current = (event: MessageEvent) => {
+    const pairing = createSignupPairing({
+      onReady: (signup) => void finish(signup),
+      onTimeout: () => fail('Facebook didn’t say which number you picked. Please connect again.'),
+    });
+    const listener = (event: MessageEvent) => {
       const picked = parseEmbeddedSignupEvent(event);
       if (picked === 'waba_only') {
         fail('Facebook finished without a phone number. Add one to your WhatsApp Business account and connect again.');
-
-        return;
-      }
-
-      if (picked) {
-        session.current = picked;
-        void finishIfReady();
+      } else if (picked) {
+        pairing.session(picked);
       }
     };
-    window.addEventListener('message', listener.current);
+    attempt.current = { pairing, listener };
+    window.addEventListener('message', listener);
 
     sdk.login((response) => {
       if (response.authResponse?.code) {
-        code.current = response.authResponse.code;
-        void finishIfReady();
+        pairing.code(response.authResponse.code);
 
         return;
       }
 
       // Closing the popup reads as `unknown`: the operator changed their mind, which needs no message.
       if (response.status === 'unknown') {
-        stopListening();
+        endAttempt();
         setPending(false);
       } else {
         fail('Facebook didn’t finish the setup. Please connect again.');
       }
     }, embeddedSignupLoginOptions(configId));
-  }, [appId, configId, fail, finishIfReady, stopListening]);
+  }, [appId, configId, endAttempt, fail, finish]);
 
   return (
-    <Button className="self-start" pending={pending} onClick={() => void start()}>
+    <Button
+      variant={mode === 'again' ? 'secondary' : 'primary'}
+      className={mode === 'again' ? `${SMALL_BUTTON} self-start` : 'self-start'}
+      pending={pending}
+      onClick={() => void start()}
+    >
       <FacebookMark />
-      Continue with Facebook
+      {mode === 'again' ? 'Connect again' : 'Continue with Facebook'}
     </Button>
   );
 }
