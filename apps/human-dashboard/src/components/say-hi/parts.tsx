@@ -95,7 +95,8 @@ function Kbd({ name }: { name: HintKey }) {
 
 /**
  * Runs `action` when `key` is pressed on the page: never while someone types in a field (unless `inFields`),
- * and never with Cmd, Ctrl or Alt held, so the browser's own shortcuts keep working.
+ * never with Cmd, Ctrl or Alt held, so the browser's own shortcuts keep working, and never for a key that presses
+ * the button or link that has the focus, so the control a keyboard user picked is the one that runs.
  */
 export function useShortcut(key: string, action: () => void, { enabled = true, inFields = false } = {}) {
   const latest = useRef(action);
@@ -116,6 +117,9 @@ export function useShortcut(key: string, action: () => void, { enabled = true, i
       if (!inFields && isTyping(event.target)) {
         return;
       }
+      if (PRESSING_KEYS.has(event.key) && isControl(event.target)) {
+        return;
+      }
 
       event.preventDefault();
       latest.current();
@@ -125,6 +129,16 @@ export function useShortcut(key: string, action: () => void, { enabled = true, i
 
     return () => window.removeEventListener('keydown', onKey);
   }, [key, enabled, inFields]);
+}
+
+/** The keys that press a focused button or follow a focused link. */
+const PRESSING_KEYS = new Set(['Enter', ' ']);
+
+function isControl(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest('button, a[href], summary, [role="button"], [role="link"], [role="menuitem"]') !== null
+  );
 }
 
 function isTyping(target: EventTarget | null): boolean {

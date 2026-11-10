@@ -3,7 +3,8 @@
  * tell apart from Novu's own events. Every event belongs to the person who owns the agent, even when the agent
  * did the action: the hidden Novu user behind their Agent Inbox account, whom the dashboard identifies too.
  *
- * Sign-up: Signed Up → Inbox Created → Card Shown → Channel Connected
+ * Sign-up: Signed Up → Inbox Created → Card Shown. The inbox's email counts as its first Channel Connected,
+ *   sent together with Inbox Created; Telegram and Slack send theirs when added, before or after Card Shown.
  * Invites: Contact Invited → Invite Accepted
  * Activity: Message Sent, Inbox Listed, Inbox Item Read
  */

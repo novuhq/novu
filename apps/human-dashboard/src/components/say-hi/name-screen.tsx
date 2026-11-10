@@ -155,6 +155,7 @@ export function NameScreen({ mailDomain, origin, operatorEmail, look, onLookChan
     }
 
     setError(undefined);
+    const askedNow = asked;
     startCreating(async () => {
       const result = await createInboxAction({ name: trimmed, handle, look });
       if (result.ok) {
@@ -162,7 +163,10 @@ export function NameScreen({ mailDomain, origin, operatorEmail, look, onLookChan
       }
 
       if (result.check) {
-        setAvailability(result.check);
+        // The answer is about the address sent, which may be the free one offered in place of the one asked for,
+        // taken since. It is kept as the answer for the one asked for, so the page offers the next free one
+        // instead of waiting for a check that never comes.
+        setAvailability({ ...result.check, handle: askedNow });
       } else {
         setError(result.message);
       }
