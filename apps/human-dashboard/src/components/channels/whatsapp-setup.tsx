@@ -60,28 +60,40 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
   const [link, setLink] = useState<WhatsAppLink>();
   const [linkError, setLinkError] = useState<string>();
 
-  // The code on screen, so a page refresh while it still works doesn't swap it for another.
-  const liveLink = useRef<WhatsAppLink>(undefined);
+  const expired = useExpired(link?.expiresAt);
+
+  // The code on screen and the business number it opens, so a page refresh while it still works doesn't swap it
+  // for another, while a different business number gets a link of its own.
+  const liveLink = useRef<{ link: WhatsAppLink; businessNumber?: string }>(undefined);
 
   // A code stops working after ten minutes, so a new one is made whenever the wait starts over.
-  const refreshLink = useCallback(async () => {
+  const refreshLink = useCallback(async (businessNumber?: string) => {
     setLinkError(undefined);
     const result = await issueWhatsAppLinkAction().catch(() => null);
     if (result?.ok) {
-      liveLink.current = { url: result.url, code: result.code, expiresAt: result.expiresAt };
+      liveLink.current = {
+        link: { url: result.url, code: result.code, expiresAt: result.expiresAt },
+        businessNumber,
+      };
     } else {
       liveLink.current = undefined;
       setLinkError(result?.error ?? 'We couldn’t make a code just now. Please try again.');
     }
-    setLink(liveLink.current);
+    setLink(liveLink.current?.link);
   }, []);
 
   const show = useCallback(
     (next: WhatsAppSetupState) => {
       setState(drawerStateOf(next));
-      const live = liveLink.current && Date.parse(liveLink.current.expiresAt) > Date.now();
-      if (next.step === 'verify' && !live) {
-        void refreshLink();
+      if (next.step !== 'verify') {
+        return;
+      }
+
+      const live = liveLink.current;
+      const reusable =
+        live && Date.parse(live.link.expiresAt) > Date.now() && live.businessNumber === next.displayPhoneNumber;
+      if (!reusable) {
+        void refreshLink(next.displayPhoneNumber);
       }
     },
     [refreshLink]
@@ -127,6 +139,8 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
       connect={connectWhatsAppAction}
       onConnected={(result) => {
         setError(undefined);
+        // A signup can pick a different business number: the code is made again, for the number just connected.
+        liveLink.current = undefined;
         show({ step: 'verify', displayPhoneNumber: result.displayPhoneNumber, reconnect: ids });
         if (result.warning) {
           toast(result.warning, 'error');
@@ -192,10 +206,10 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
                   businessNumber={businessNumber}
                   link={link}
                   linkError={linkError}
-                  waitedTooLong={waitedTooLong}
+                  waitedTooLong={waitedTooLong || expired}
                   onNewCode={() => {
                     keepWaiting();
-                    void refreshLink();
+                    void refreshLink(businessNumber);
                   }}
                 />
               }
@@ -326,7 +340,7 @@ function SendCode({
       )}
       {waitedTooLong || linkError ? (
         <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
-          {waitedTooLong ? 'No code yet, and this one has expired.' : null}
+          {waitedTooLong ? 'This code has expired.' : null}
           <Button variant="secondary" className={SMALL_BUTTON} onClick={onNewCode}>
             Get a new code
           </Button>
@@ -336,6 +350,31 @@ function SendCode({
       )}
     </>
   );
+}
+
+/** Whether a deadline has passed, turning true the moment it does. */
+function useExpired(deadline: string | undefined): boolean {
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    if (!deadline) {
+      setExpired(false);
+
+      return;
+    }
+
+    const left = Date.parse(deadline) - Date.now();
+    setExpired(left <= 0);
+    if (left <= 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => setExpired(true), left);
+
+    return () => clearTimeout(timer);
+  }, [deadline]);
+
+  return expired;
 }
 
 function SignupError({ message }: { message: string }) {

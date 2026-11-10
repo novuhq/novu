@@ -41,7 +41,7 @@ describe('GetHumanWhatsAppSetup', () => {
     whatsAppEnabled: boolean;
     available?: { available: boolean; reason?: 'feature_disabled' | 'missing_platform_config' };
     credentials?: Record<string, unknown>;
-    operatorEndpoint?: Record<string, unknown> | null;
+    operatorEndpoints?: Array<Record<string, unknown>>;
   }) {
     const availability = { execute: sinon.stub().resolves(options.available ?? { available: true }) };
     const agentRepository = {
@@ -62,7 +62,7 @@ describe('GetHumanWhatsAppSetup', () => {
           : []
       ),
     };
-    const channelEndpointRepository = { findOne: sinon.stub().resolves(options.operatorEndpoint ?? null) };
+    const channelEndpointRepository = { find: sinon.stub().resolves(options.operatorEndpoints ?? []) };
     const humanOperator = { find: sinon.stub().resolves('ada') };
     const usecase = new GetHumanWhatsAppSetup(
       new HumanChannelGate({ getFlag: sinon.stub().resolves(options.whatsAppEnabled) } as never),
@@ -142,7 +142,15 @@ describe('GetHumanWhatsAppSetup', () => {
     const { usecase, channelEndpointRepository } = setup({
       whatsAppEnabled: true,
       credentials: CREDENTIALS,
-      operatorEndpoint: { endpoint: { phoneNumber: '+15550100199' } },
+      operatorEndpoints: [
+        // Written through the channel-endpoints API: no proof, so it doesn't count.
+        { type: 'phone', providerId: ChatProviderIdEnum.WhatsAppBusiness, endpoint: { phoneNumber: '+15550100100' } },
+        {
+          type: 'phone',
+          providerId: ChatProviderIdEnum.WhatsAppBusiness,
+          endpoint: { phoneNumber: '+15550100199', provedAt: '2026-11-01T10:00:00.000Z' },
+        },
+      ],
     });
 
     expect(await usecase.execute(command)).to.include({
@@ -151,13 +159,25 @@ describe('GetHumanWhatsAppSetup', () => {
       operatorNumberBound: true,
       operatorPhoneNumber: '+15550100199',
     });
-    expect(channelEndpointRepository.findOne.firstCall.args[0]).to.deep.equal({
+    expect(channelEndpointRepository.find.firstCall.args[0]).to.deep.equal({
       _environmentId: 'env1',
       _organizationId: 'org1',
       integrationIdentifier: 'whatsapp-main',
       subscriberId: 'ada',
       type: 'phone',
     });
+  });
+
+  it('does not read a number written without a code as the operator’s', async () => {
+    const { usecase } = setup({
+      whatsAppEnabled: true,
+      credentials: CREDENTIALS,
+      operatorEndpoints: [
+        { type: 'phone', providerId: ChatProviderIdEnum.WhatsAppBusiness, endpoint: { phoneNumber: '+15550100100' } },
+      ],
+    });
+
+    expect(await usecase.execute(command)).to.include({ connected: false, operatorNumberBound: false });
   });
 
   it('does not read a WhatsApp integration without a token as connected', async () => {

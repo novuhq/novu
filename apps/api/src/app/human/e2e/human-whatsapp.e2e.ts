@@ -112,7 +112,12 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
   }
 
   /** Stands in for the person sending the code from WhatsApp, which binds their number on the business number. */
-  async function bindNumber(integrationIdentifier: string, subscriberId: string, phoneNumber: string) {
+  async function bindNumber(
+    integrationIdentifier: string,
+    subscriberId: string,
+    phoneNumber: string,
+    { proved = true } = {}
+  ) {
     await channelEndpointRepository.create({
       identifier: `ce-whatsapp-e2e-${Date.now()}`,
       _environmentId: session.environment._id,
@@ -123,7 +128,7 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
       subscriberId,
       contextKeys: [],
       type: ENDPOINT_TYPES.PHONE,
-      endpoint: { phoneNumber },
+      endpoint: proved ? { phoneNumber, provedAt: new Date().toISOString() } : { phoneNumber },
     });
   }
 
@@ -230,6 +235,23 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
         operatorNumberBound: true,
         operatorPhoneNumber: '+15550100200',
       });
+    });
+
+    it('does not count a number written through the channel-endpoints API, without a code', async () => {
+      const identifier = await linkWhatsApp(SENDING_CREDENTIALS);
+      const created = await asHost('post', '/v1/channel-endpoints').send({
+        integrationIdentifier: identifier,
+        subscriberId: operatorId,
+        type: 'phone',
+        endpoint: { phoneNumber: '+15550100300', provedAt: '2026-11-01T10:00:00.000Z' },
+      });
+      // The API takes a phone endpoint as exactly `{ phoneNumber }`, so the proof can't be written through it.
+      expect(created.status).to.be.oneOf([400, 422], JSON.stringify(created.body));
+      await bindNumber(identifier, operatorId, '+15550100300', { proved: false });
+
+      const res = await asDashboard('get', '/v1/human/agent/whatsapp');
+
+      expect(res.body.data).to.include({ connected: false, operatorNumberBound: false });
     });
 
     it('gives an invited contact a wa.me link, and reads them as connected once their number is bound', async () => {

@@ -97,7 +97,8 @@ export class WhatsAppBindCodeService {
       const stored = await this.cacheService.setIfNotExist(
         codeKey(payload.integrationId, code),
         JSON.stringify(payload),
-        { ttl: WHATSAPP_BIND_CODE_TTL_SECONDS }
+        // No jitter: the code must live exactly as long as the `expiresAt` handed out with it.
+        { ttl: WHATSAPP_BIND_CODE_TTL_SECONDS, jitter: false }
       );
 
       if (stored) {

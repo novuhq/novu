@@ -95,7 +95,15 @@ describe('WhatsAppBindInbound', () => {
     await send(expired.service, 'BCDF-GHJK');
     expect(replied(expired.outboundGateway)).to.equal(WHATSAPP_BIND_EXPIRED_REPLY);
 
-    const already = setup({ consumed: { status: 'missing' }, bound: { _id: 'endpoint1' } });
+    const already = setup({
+      consumed: { status: 'missing' },
+      bound: {
+        _id: 'endpoint1',
+        type: 'phone',
+        providerId: 'whatsapp-business',
+        endpoint: { phoneNumber: '+15550100199', provedAt: '2026-11-01T10:00:00.000Z' },
+      },
+    });
     await send(already.service, 'BCDF-GHJK');
     expect(replied(already.outboundGateway)).to.equal(WHATSAPP_BIND_DUPLICATE_REPLY);
   });
@@ -115,5 +123,24 @@ describe('WhatsAppBindInbound', () => {
 
     expect(await send(service, 'BCDF-GHJK')).to.equal(true);
     expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_INVALID_REPLY);
+  });
+
+  it('uses a code held back in a burst, and lets the ordinary message after it through without the code', async () => {
+    const { service, codes, outboundGateway } = setup();
+    const codeMessage = message('Connect my WhatsApp: BCDF-GHJK');
+    const context = { skipped: [codeMessage, message('first question')], totalSinceLastHandler: 3 };
+
+    const stopped = await service.tryConsume(
+      'agent1',
+      CONFIG as never,
+      {} as never,
+      message('and another thing') as never,
+      context as never
+    );
+
+    expect(stopped).to.equal(false);
+    expect(codes.consume.calledOnce).to.equal(true);
+    expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
+    expect(context.skipped.map((item) => item.text)).to.deep.equal(['first question']);
   });
 });

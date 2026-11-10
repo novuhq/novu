@@ -13,7 +13,6 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ChatProviderIdEnum,
   ENDPOINT_TYPES,
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
@@ -21,6 +20,7 @@ import {
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
+import { provedWhatsAppNumberOf } from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
@@ -774,13 +774,11 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
       return (endpoint.endpoint as { userId: string }).userId;
     case ENDPOINT_TYPES.SLACK_CHANNEL:
       return (endpoint.endpoint as { channelId: string }).channelId;
-    // A number someone proved with a wa.me code is a `phone` endpoint on the relay's WhatsApp Business
-    // integration. The channel-endpoints API writes `phone` endpoints for SMS routing too; those are on SMS
-    // providers and never count as WhatsApp.
+    // Only a number someone proved with a wa.me code: a `phone` endpoint on WhatsApp Business that carries the
+    // proof. The channel-endpoints API writes `phone` endpoints too, for SMS and on any integration, and those
+    // can't carry it, so they never count as WhatsApp.
     case ENDPOINT_TYPES.PHONE:
-      return endpoint.providerId === ChatProviderIdEnum.WhatsAppBusiness
-        ? (endpoint.endpoint as { phoneNumber: string }).phoneNumber
-        : undefined;
+      return provedWhatsAppNumberOf(endpoint);
     default:
       return undefined;
   }

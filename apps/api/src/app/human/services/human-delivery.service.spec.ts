@@ -719,7 +719,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
         ? {
             type: ENDPOINT_TYPES.PHONE,
             providerId: ChatProviderIdEnum.WhatsAppBusiness,
-            endpoint: { phoneNumber: '+15551234567', displayName: 'Alice' },
+            endpoint: { phoneNumber: '+15551234567', displayName: 'Alice', provedAt: '2026-11-01T10:00:00.000Z' },
             createdAt: '2026-11-01T10:00:00.000Z',
           }
         : null
@@ -732,6 +732,26 @@ describe('HumanDeliveryService on WhatsApp', () => {
       platformUserId: '+15551234567',
       integrationIdentifier: 'whatsapp-main',
     });
+  });
+
+  it('does not reach a number written on the WhatsApp integration without a code', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            type: ENDPOINT_TYPES.PHONE,
+            providerId: ChatProviderIdEnum.WhatsAppBusiness,
+            endpoint: { phoneNumber: '+15551234567' },
+            createdAt: '2026-11-01T10:00:00.000Z',
+          }
+        : null
+    );
+
+    const error = await service
+      .resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP })
+      .catch((err: unknown) => err);
+
+    expect(error).to.be.instanceOf(NotFoundException);
   });
 
   it('does not treat a notification phone endpoint as a WhatsApp binding', async () => {

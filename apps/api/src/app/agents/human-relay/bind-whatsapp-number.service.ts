@@ -9,7 +9,11 @@ import {
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { CONTACT_HANDLE_FIELDS } from '../../human/services/contact-handle';
 import type { WhatsAppBindCodePayload } from './whatsapp-bind-code.service';
+import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_PROVED_AT_FIELD } from './whatsapp-number-proof';
+
+const HANDLE_UNSET = Object.fromEntries(CONTACT_HANDLE_FIELDS.map((field) => [`endpoint.${field}`, '']));
 
 export type BindWhatsAppNumberResult = {
   /** False when the number was already this person's. */
@@ -20,8 +24,9 @@ export type BindWhatsAppNumberResult = {
 /**
  * Binds the WhatsApp number that sent a live code to the person the code was made for: a `phone` endpoint on the
  * relay's WhatsApp Business integration. Delivery counts a `phone` endpoint as WhatsApp only on that provider, so
- * the numbers the channel-endpoints API keeps for SMS never count. A number belongs to one person: proving it again
- * for someone else moves it, like a Telegram chat.
+ * the numbers the channel-endpoints API keeps for SMS never count, and it also needs the proof kept next to the
+ * number, which that API can't write. A number belongs to one person: proving it again for someone else moves it,
+ * like a Telegram chat.
  */
 @Injectable()
 export class BindWhatsAppNumber {
@@ -70,15 +75,28 @@ export class BindWhatsAppNumber {
       endpointValue: phoneNumber,
     });
 
+    const proof = { [`endpoint.${WHATSAPP_NUMBER_PROVED_AT_FIELD}`]: new Date().toISOString() };
+
     if (existing) {
-      if (existing.subscriberId === subscriber.subscriberId) {
+      const ownedAlready = existing.subscriberId === subscriber.subscriberId;
+      if (ownedAlready && provedWhatsAppNumberOf(existing)) {
         return { created: false, subscriberId: subscriber.subscriberId };
       }
 
-      await this.channelEndpointRepository.delete({ ...scope, _id: existing._id });
+      // One write, so a move that fails leaves the number with whoever had it. Someone else's name goes with them.
+      await this.channelEndpointRepository.update(
+        { ...scope, _id: existing._id },
+        {
+          $set: { subscriberId: subscriber.subscriberId, ...proof },
+          ...(ownedAlready ? {} : { $unset: HANDLE_UNSET }),
+        }
+      );
+
+      return { created: true, subscriberId: subscriber.subscriberId };
     }
 
-    await this.createChannelEndpoint.execute(
+    // The channel-endpoints API takes a `phone` endpoint as exactly `{ phoneNumber }`, so the proof is added after.
+    const created = await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         environmentId: payload.environmentId,
         organizationId: payload.organizationId,
@@ -90,6 +108,7 @@ export class BindWhatsAppNumber {
         platformIdentityVerified: true,
       })
     );
+    await this.channelEndpointRepository.update({ ...scope, _id: created._id }, { $set: proof });
 
     return { created: true, subscriberId: subscriber.subscriberId };
   }

@@ -8,6 +8,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
+import { provedWhatsAppNumberOf } from '../../../agents/human-relay/whatsapp-number-proof';
 import {
   getNovuWhatsAppPlatformConfig,
   hasWhatsAppSendCredentials,
@@ -94,7 +95,7 @@ export class GetHumanWhatsAppSetup {
       return undefined;
     }
 
-    const endpoint = await this.channelEndpointRepository.findOne(
+    const endpoints = await this.channelEndpointRepository.find(
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -102,10 +103,10 @@ export class GetHumanWhatsAppSetup {
         subscriberId,
         type: ENDPOINT_TYPES.PHONE,
       },
-      'endpoint'
+      'type providerId endpoint'
     );
-    const phoneNumber = (endpoint?.endpoint as { phoneNumber?: unknown } | undefined)?.phoneNumber;
 
-    return typeof phoneNumber === 'string' ? phoneNumber : undefined;
+    // A number written through the channel-endpoints API carries no proof, so it never counts as bound.
+    return endpoints.map(provedWhatsAppNumberOf).find(Boolean);
   }
 }

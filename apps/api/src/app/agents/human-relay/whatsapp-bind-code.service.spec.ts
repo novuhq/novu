@@ -84,7 +84,7 @@ describe('WhatsAppBindCodeService', () => {
     expect(new Date(expiresAt).getTime()).to.be.greaterThan(Date.now());
     const [key, , options] = cacheService.setIfNotExist.firstCall.args;
     expect(key).to.equal(`agent-inbox-whatsapp-code:integration1:${code.replace('-', '')}`);
-    expect(options).to.deep.equal({ ttl: WHATSAPP_BIND_CODE_TTL_SECONDS });
+    expect(options).to.deep.equal({ ttl: WHATSAPP_BIND_CODE_TTL_SECONDS, jitter: false });
 
     const bare = code.replace('-', '');
     expect(await service.consume('integration2', bare, '+15550100199')).to.deep.equal({ status: 'missing' });

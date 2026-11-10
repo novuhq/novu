@@ -11,6 +11,7 @@ import { toCanonicalE164Phone } from '../shared/util/phone-normalization';
 import { BindWhatsAppNumber } from './bind-whatsapp-number.service';
 import { ContactHandleService } from './contact-handle.service';
 import { extractWhatsAppBindCode, WhatsAppBindCodeService } from './whatsapp-bind-code.service';
+import { provedWhatsAppNumberOf } from './whatsapp-number-proof';
 
 export const WHATSAPP_BIND_SUCCESS_REPLY = "You're connected. This agent will reach you here on WhatsApp.";
 export const WHATSAPP_BIND_DUPLICATE_REPLY = 'This number is already connected. No changes needed.';
@@ -40,7 +41,11 @@ export class WhatsAppBindInbound {
     this.logger.setContext(this.constructor.name);
   }
 
-  /** True when the message carried a code and was answered here; false lets it go on as an ordinary message. */
+  /**
+   * True when the latest message carried a code and was answered here. A code in a message WhatsApp held back
+   * with it (a burst) is used and taken out of the burst, and false lets the ordinary messages around it go on,
+   * without the code.
+   */
   async tryConsume(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -52,13 +57,22 @@ export class WhatsAppBindInbound {
       return false;
     }
 
-    for (const inbound of [...(messageContext?.skipped ?? []), message]) {
-      const code = extractWhatsAppBindCode(inbound.text);
-      if (code) {
-        await this.reply(thread, await this.bind(agentId, config, inbound, code), agentId);
+    const skipped = messageContext?.skipped ?? [];
+    const withCode = [...skipped, message].find((inbound) => extractWhatsAppBindCode(inbound.text));
+    if (!withCode) {
+      return false;
+    }
 
-        return true;
-      }
+    const code = extractWhatsAppBindCode(withCode.text) as string;
+    await this.reply(thread, await this.bind(agentId, config, withCode, code), agentId);
+
+    if (extractWhatsAppBindCode(message.text)) {
+      return true;
+    }
+
+    // Codes never reach the inbox: the burst goes on without them.
+    if (messageContext) {
+      messageContext.skipped = skipped.filter((inbound) => !extractWhatsAppBindCode(inbound.text));
     }
 
     return false;
@@ -111,7 +125,7 @@ export class WhatsAppBindInbound {
       endpointValue: phoneNumber,
     });
 
-    return Boolean(existing);
+    return Boolean(provedWhatsAppNumberOf(existing));
   }
 
   /** The answer is a reply to their own message, so it is always inside WhatsApp's 24-hour window. */

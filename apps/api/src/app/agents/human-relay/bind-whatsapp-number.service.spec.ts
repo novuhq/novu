@@ -31,6 +31,7 @@ describe('BindWhatsAppNumber', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: sinon.stub().resolves(existing),
       delete: sinon.stub().resolves(),
+      update: sinon.stub().resolves({ matched: 1, modified: 1 }),
     };
     const createChannelEndpoint = { execute: sinon.stub().resolves({ _id: 'endpoint1' }) };
     const usecase = new BindWhatsAppNumber(
@@ -51,8 +52,8 @@ describe('BindWhatsAppNumber', () => {
     };
   }
 
-  it('binds the number as a verified phone endpoint on the relay’s WhatsApp integration', async () => {
-    const { usecase, createChannelEndpoint, integrationRepository } = setup();
+  it('binds the number as a verified phone endpoint on the relay’s WhatsApp integration, with its proof', async () => {
+    const { usecase, createChannelEndpoint, integrationRepository, channelEndpointRepository } = setup();
 
     expect(await usecase.execute(PAYLOAD, NUMBER)).to.deep.equal({ created: true, subscriberId: 'ada' });
 
@@ -71,31 +72,63 @@ describe('BindWhatsAppNumber', () => {
       platformIdentityVerified: true,
     });
     expect(command.endpoint).to.deep.equal({ phoneNumber: NUMBER });
+    const [where, change] = channelEndpointRepository.update.firstCall.args;
+    expect(where).to.deep.equal({ _environmentId: 'env1', _organizationId: 'org1', _id: 'endpoint1' });
+    expect(change.$set['endpoint.provedAt']).to.be.a('string');
   });
 
-  it('changes nothing when the number is already theirs', async () => {
+  const PROVED = {
+    type: ENDPOINT_TYPES.PHONE,
+    providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    endpoint: { phoneNumber: NUMBER, provedAt: '2026-11-01T10:00:00.000Z' },
+  };
+
+  it('changes nothing when the number is already theirs and proved', async () => {
     const { usecase, createChannelEndpoint, channelEndpointRepository } = setup({
-      existing: { _id: 'endpoint0', subscriberId: 'ada' },
+      existing: { _id: 'endpoint0', subscriberId: 'ada', ...PROVED },
     });
 
     expect(await usecase.execute(PAYLOAD, NUMBER)).to.deep.equal({ created: false, subscriberId: 'ada' });
-    expect(channelEndpointRepository.delete.called).to.equal(false);
+    expect(channelEndpointRepository.update.called).to.equal(false);
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
-  it('moves a number from whoever had it to whoever proved it last', async () => {
+  it('proves a number of theirs written without a code, rather than reading it as already connected', async () => {
     const { usecase, createChannelEndpoint, channelEndpointRepository } = setup({
-      existing: { _id: 'endpoint0', subscriberId: 'grace' },
+      existing: {
+        _id: 'endpoint0',
+        subscriberId: 'ada',
+        type: ENDPOINT_TYPES.PHONE,
+        providerId: ChatProviderIdEnum.WhatsAppBusiness,
+        endpoint: { phoneNumber: NUMBER },
+      },
     });
 
-    await usecase.execute(PAYLOAD, NUMBER);
+    expect(await usecase.execute(PAYLOAD, NUMBER)).to.deep.equal({ created: true, subscriberId: 'ada' });
+    const change = channelEndpointRepository.update.firstCall.args[1];
+    expect(change.$set.subscriberId).to.equal('ada');
+    expect(change.$set['endpoint.provedAt']).to.be.a('string');
+    expect(change.$unset).to.equal(undefined);
+    expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
 
-    expect(channelEndpointRepository.delete.firstCall.args[0]).to.deep.equal({
-      _environmentId: 'env1',
-      _organizationId: 'org1',
-      _id: 'endpoint0',
+  it('moves a number to whoever proved it last in one write, without the old owner’s name', async () => {
+    const { usecase, createChannelEndpoint, channelEndpointRepository } = setup({
+      existing: { _id: 'endpoint0', subscriberId: 'grace', ...PROVED },
     });
-    expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
+
+    expect(await usecase.execute(PAYLOAD, NUMBER)).to.deep.equal({ created: true, subscriberId: 'ada' });
+
+    const [where, change] = channelEndpointRepository.update.firstCall.args;
+    expect(where).to.deep.equal({ _environmentId: 'env1', _organizationId: 'org1', _id: 'endpoint0' });
+    expect(change.$set.subscriberId).to.equal('ada');
+    expect(change.$unset).to.deep.equal({
+      'endpoint.username': '',
+      'endpoint.displayName': '',
+      'endpoint.workspaceDomain': '',
+    });
+    expect(channelEndpointRepository.delete.called).to.equal(false);
+    expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
   for (const [name, options] of [
