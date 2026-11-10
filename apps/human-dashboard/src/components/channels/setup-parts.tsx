@@ -47,7 +47,7 @@ type ConnectionPoll<Connection> = {
 
 /**
  * Asks every few seconds whether a channel got connected, while a drawer waits for it. It gives up after
- * ten minutes (`giveUpAfterMs`) and says so with `waitedTooLong`; `keepWaiting` starts it over. Leaving the
+ * ten minutes (`giveUpAfterMs`) and says so with `waitedTooLong`; `keepWaiting` starts it over, timer included. Leaving the
  * waiting step starts it over as well.
  */
 export function useConnectionPoll<Connection>({
@@ -58,6 +58,8 @@ export function useConnectionPoll<Connection>({
   everyMs = POLL_INTERVAL_MS,
 }: ConnectionPoll<Connection>) {
   const [waitedTooLong, setWaitedTooLong] = useState(false);
+  // Bumped by `keepWaiting`, so asking again always starts a fresh wait, even before the old one ran out.
+  const [round, setRound] = useState(0);
   // The callbacks are new on every render; the timer below always calls the latest ones without restarting.
   const latest = useRef({ check, onConnected });
 
@@ -98,9 +100,15 @@ export function useConnectionPoll<Connection>({
       stale = true;
       clearInterval(timer);
     };
-  }, [waiting, waitedTooLong, giveUpAfterMs, everyMs]);
+  }, [waiting, waitedTooLong, giveUpAfterMs, everyMs, round]);
 
-  return { waitedTooLong, keepWaiting: () => setWaitedTooLong(false) };
+  return {
+    waitedTooLong,
+    keepWaiting: () => {
+      setWaitedTooLong(false);
+      setRound((current) => current + 1);
+    },
+  };
 }
 
 type SetupCheckProps = {

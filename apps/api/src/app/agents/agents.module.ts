@@ -78,6 +78,7 @@ import { AgentInboxAddressService } from './email/novu-email/agent-inbox-address
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
+import { BindWhatsAppNumber } from './human-relay/bind-whatsapp-number.service';
 import { ContactHandleService } from './human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
 import { HumanEmailActionsController } from './human-relay/human-email-actions.controller';
@@ -86,6 +87,8 @@ import { HumanInteractionInboundService } from './human-relay/human-interaction-
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
+import { WhatsAppBindCodeService } from './human-relay/whatsapp-bind-code.service';
+import { WhatsAppBindInbound } from './human-relay/whatsapp-bind-inbound.service';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
@@ -192,6 +195,9 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanRelayEmailService,
     HumanOperatorService,
     ContactHandleService,
+    WhatsAppBindCodeService,
+    BindWhatsAppNumber,
+    WhatsAppBindInbound,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
@@ -259,6 +265,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     NovuEmailProvisioningService,
     AgentConversationService,
     CreateConversationInteraction,
+    WhatsAppBindCodeService,
   ],
 })
 export class AgentsModule {}

@@ -498,8 +498,8 @@ async function loadChannelFacts(account: HumanAccount) {
 }
 
 /**
- * WhatsApp counts as connected once a business number is linked, as its Configure row shows it, which the
- * channel list can't tell. Only asked when the relay has a WhatsApp channel at all.
+ * WhatsApp counts as connected once the operator's own number is bound to the business number, as its
+ * Configure row shows it, which the channel list can't tell. Only asked when the relay has a WhatsApp channel at all.
  */
 async function isWhatsAppConnected(account: HumanAccount, channels: Channel[]): Promise<boolean> {
   if (!channels.some((channel) => channel.via === 'whatsapp' && channel.active)) {

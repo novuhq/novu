@@ -33,6 +33,7 @@ import { TelegramStartCodeService } from '../../../telegram-linking/telegram-sta
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
+import { WhatsAppBindInbound } from '../../human-relay/whatsapp-bind-inbound.service';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -356,7 +357,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly keylessEmailGate: KeylessEmailGateService,
-    private readonly contactHandles: ContactHandleService
+    private readonly contactHandles: ContactHandleService,
+    private readonly whatsAppBindInbound: WhatsAppBindInbound
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -383,6 +385,11 @@ export class AgentInboundHandler implements OnModuleInit {
     messageContext?: MessageContext
   ): Promise<void> {
     if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
+      return;
+    }
+
+    // A code from a wa.me link binds the sender's WhatsApp number to an Agent Inbox contact, like `/start` above.
+    if (await this.whatsAppBindInbound.tryConsume(agentId, config, thread, message, messageContext)) {
       return;
     }
 

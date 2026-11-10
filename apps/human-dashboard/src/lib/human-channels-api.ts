@@ -212,6 +212,20 @@ export function connectWhatsApp(
   });
 }
 
+/** A wa.me link to the business number with a one-time code typed in, and the code for typing by hand. */
+export type WhatsAppLink = { url: string; code: string; expiresAt: string };
+
+/**
+ * A new wa.me link with a code for the operator's own WhatsApp number. Sending it from WhatsApp binds that
+ * number to the business number, the way pressing Start does on Telegram. A code works for ten minutes.
+ */
+export function issueWhatsAppLink(account: HumanAccount): Promise<WhatsAppLink> {
+  return requestForAccount<WhatsAppLink>(account, '/v1/human/agent/whatsapp/link', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER },
+  });
+}
+
 type LinkedChannel = { identifier: string; id: string; name?: string };
 
 async function ensureChatChannel(

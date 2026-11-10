@@ -91,14 +91,15 @@ export async function loadChannelsOverview(account: HumanAccount): Promise<Chann
 
 /**
  * No row while WhatsApp isn't offered, or while that couldn't be read: the channel is behind a flag, so it
- * stays out unless the API says it's there. Otherwise connected once a business number is linked.
+ * stays out unless the API says it's there. Otherwise connected once the operator's own number is bound to
+ * the business number, as Telegram is once they said hi to the bot.
  */
 export function whatsAppRows(setup: WhatsAppSetupState): ChannelRow[] {
   if (setup.step === 'hidden' || setup.step === 'unknown') {
     return [];
   }
 
-  const number = setup.step === 'connected' ? setup.displayPhoneNumber : undefined;
+  const number = setup.step === 'connected' || setup.step === 'verify' ? setup.displayPhoneNumber : undefined;
 
   return [
     {

@@ -4,6 +4,8 @@ const mocks = vi.hoisted(() => ({
   getRelayAgent: vi.fn(),
   ensureWhatsAppChannel: vi.fn(),
   connectWhatsApp: vi.fn(),
+  issueWhatsAppLink: vi.fn(),
+  readWhatsAppSetup: vi.fn(),
   findOperatorContactId: vi.fn(),
   ensureRelay: vi.fn(),
   revalidatePath: vi.fn(),
@@ -20,6 +22,7 @@ vi.mock('@/lib/human-agent-api', () => ({
 vi.mock('@/lib/human-channels-api', () => ({
   ensureWhatsAppChannel: mocks.ensureWhatsAppChannel,
   connectWhatsApp: mocks.connectWhatsApp,
+  issueWhatsAppLink: mocks.issueWhatsAppLink,
 }));
 vi.mock('@/lib/human-operator', () => ({
   ensureOperatorContact: vi.fn(),
@@ -28,10 +31,10 @@ vi.mock('@/lib/human-operator', () => ({
 }));
 vi.mock('@/lib/human-slack-setup', () => ({ readSlackSetup: vi.fn() }));
 vi.mock('@/lib/human-telegram-setup', () => ({ readTelegramSetup: vi.fn() }));
-vi.mock('@/lib/human-whatsapp-setup', () => ({ readWhatsAppSetup: vi.fn() }));
+vi.mock('@/lib/human-whatsapp-setup', () => ({ readWhatsAppSetup: mocks.readWhatsAppSetup }));
 
 const { HumanApiError } = await import('@/lib/human-api-error');
-const { connectWhatsAppAction } = await import('./actions');
+const { checkWhatsAppConnectedAction, connectWhatsAppAction, issueWhatsAppLinkAction } = await import('./actions');
 
 const SIGNUP = { code: ' meta-code ', wabaId: 'waba-1', phoneNumberId: 'phone-1' };
 
@@ -110,5 +113,59 @@ describe('connectWhatsAppAction', () => {
       ok: false,
       error: 'WhatsApp isn’t available for your account yet.',
     });
+  });
+});
+
+describe('issueWhatsAppLinkAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('hands the drawer a wa.me link with the operator’s code', async () => {
+    const link = { url: 'https://wa.me/15550100199?text=x', code: 'BCDF-GHJK', expiresAt: '2026-11-10T15:00:00.000Z' };
+    mocks.issueWhatsAppLink.mockResolvedValue(link);
+
+    expect(await issueWhatsAppLinkAction()).toEqual({ ok: true, ...link });
+  });
+
+  it('asks to connect again when WhatsApp never said which number is linked', async () => {
+    mocks.issueWhatsAppLink.mockRejectedValue(
+      new HumanApiError(409, 'whatsapp_number_unknown', 'WhatsApp didn’t say which number is connected.')
+    );
+
+    expect(await issueWhatsAppLinkAction()).toEqual({
+      ok: false,
+      error: 'WhatsApp didn’t say which number is connected. Connect WhatsApp again.',
+    });
+  });
+
+  it('says WhatsApp is not offered when the API refuses it', async () => {
+    mocks.issueWhatsAppLink.mockRejectedValue(new HumanApiError(422, 'unprocessable', 'Unknown channel'));
+
+    expect(await issueWhatsAppLinkAction()).toEqual({
+      ok: false,
+      error: 'WhatsApp isn’t available for your account yet.',
+    });
+  });
+});
+
+describe('checkWhatsAppConnectedAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('keeps waiting until the operator’s own number is bound', async () => {
+    mocks.readWhatsAppSetup.mockResolvedValue({ step: 'verify', displayPhoneNumber: '+1 555' });
+
+    expect(await checkWhatsAppConnectedAction()).toBeNull();
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('hands back the connected setup and refreshes the page once it is', async () => {
+    const connected = { step: 'connected', displayPhoneNumber: '+1 555', operatorPhoneNumber: '+15550100199' };
+    mocks.readWhatsAppSetup.mockResolvedValue(connected);
+
+    expect(await checkWhatsAppConnectedAction()).toEqual(connected);
+    expect(mocks.revalidatePath).toHaveBeenCalled();
   });
 });

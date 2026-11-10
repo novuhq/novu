@@ -42,6 +42,14 @@ describe('ConnectHumanInviteChannel', () => {
     };
     const environmentRepository = { findOne: sinon.stub().resolves({ apiKeys: [{ _userId: 'owner1' }] }) };
     const analyticsService = { track: sinon.stub() };
+    const issueHumanWhatsAppLink = {
+      execute: sinon.stub().resolves({
+        url: 'https://wa.me/15550100199?text=Connect%20my%20WhatsApp%3A%20BCDF-GHJK',
+        code: 'BCDF-GHJK',
+        expiresAt: '',
+      }),
+    };
+    const agentRepository = { findOne: sinon.stub().resolves({ identifier: 'human-relay' }) };
     const usecase = new ConnectHumanInviteChannel(
       inviteTokens as never,
       deliveryService as never,
@@ -50,11 +58,15 @@ describe('ConnectHumanInviteChannel', () => {
       requestAddressVerification as never,
       environmentRepository as never,
       analyticsService as never,
-      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never)
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never),
+      issueHumanWhatsAppLink as never,
+      agentRepository as never
     );
 
     return {
       usecase,
+      issueHumanWhatsAppLink,
+      agentRepository,
       issueTelegramSubscriberLink,
       generateConnectOauthUrl,
       requestAddressVerification,
@@ -71,22 +83,29 @@ describe('ConnectHumanInviteChannel', () => {
     { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: false },
   ];
 
-  it('refuses WhatsApp until numbers can be bound, instead of minting a Slack link', async () => {
-    const { usecase, generateConnectOauthUrl } = setup(
+  it('hands out a wa.me link with a code for the invited contact, instead of a Slack link', async () => {
+    const { usecase, generateConnectOauthUrl, issueHumanWhatsAppLink, agentRepository } = setup(
       [{ via: HumanChannelViaEnum.WHATSAPP, integrationIdentifier: 'wa', connected: false }],
       true
     );
 
-    try {
-      await usecase.execute(
-        ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
-      );
-      expect.fail('should have thrown');
-    } catch (err) {
-      expect(err).to.be.instanceOf(BadRequestException);
-      expect((err as BadRequestException).getResponse()).to.include({ code: 'channel_unavailable' });
-    }
+    const result = await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
+    );
 
+    expect(result).to.deep.equal({ url: 'https://wa.me/15550100199?text=Connect%20my%20WhatsApp%3A%20BCDF-GHJK' });
+    expect(agentRepository.findOne.firstCall.args[0]).to.deep.equal({
+      _id: 'relay1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+    });
+    expect(issueHumanWhatsAppLink.execute.firstCall.args[0]).to.deep.equal({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentIdentifier: 'human-relay',
+      subscriberId: 'alice',
+      integrationIdentifier: 'wa',
+    });
     expect(generateConnectOauthUrl.execute.called).to.equal(false);
   });
 

@@ -2,14 +2,14 @@ import { HumanChannelViaEnum } from '@novu/shared';
 
 /**
  * How a contact shows on a chat app, so the contact card can say "@dima" or "dima · acme.slack.com" instead of
- * just "Telegram" or "Slack". Agent Inbox keeps it on the contact's channel endpoint, next to `chatId` (Telegram)
- * or `userId` (Slack). The endpoint's `endpoint` field takes any shape, so this needs no schema change; senders
+ * just "Telegram" or "Slack". Agent Inbox keeps it on the contact's channel endpoint, next to `chatId` (Telegram),
+ * `userId` (Slack) or `phoneNumber` (WhatsApp). The endpoint's `endpoint` field takes any shape, so this needs no schema change; senders
  * only read `chatId` / `userId`, and lookups match those by path, so the extra fields change nothing for them.
  */
 export type ContactHandle = {
   /** Telegram username, without the @. Not everyone on Telegram has one. */
   username?: string;
-  /** Telegram: first and last name. Slack: display name, else real name. */
+  /** Telegram: first and last name. Slack: display name, else real name. WhatsApp: the profile name. */
   displayName?: string;
   /** Slack: the workspace's domain, such as `acme.slack.com`. */
   workspaceDomain?: string;
@@ -52,6 +52,25 @@ export function telegramHandleOf(from: unknown): ContactHandle | undefined {
     ...(username ? { username } : {}),
     ...(displayName ? { displayName } : {}),
   };
+}
+
+/**
+ * The name a WhatsApp user gave their profile, which WhatsApp sends with every message. When it has none the chat SDK
+ * falls back to the number, which is no name at all.
+ */
+export function whatsAppHandleOf(
+  author: { userId?: string; userName?: string; fullName?: string } | null | undefined,
+  phoneNumber: string
+): ContactHandle | undefined {
+  const digits = phoneNumber.replace(/\D/g, '');
+  for (const candidate of [author?.fullName, author?.userName]) {
+    const name = clean(candidate);
+    if (name && name.replace(/\D/g, '') !== digits && name !== author?.userId && name !== 'unknown') {
+      return { displayName: name };
+    }
+  }
+
+  return undefined;
 }
 
 /**

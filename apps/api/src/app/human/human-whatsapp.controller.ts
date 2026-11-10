@@ -21,13 +21,16 @@ import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
   ConnectHumanWhatsAppRequestDto,
   type ConnectHumanWhatsAppResponseDto,
+  type HumanWhatsAppLinkResponseDto,
   type HumanWhatsAppSetupResponseDto,
 } from './dtos/human-whatsapp.dto';
 import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { HumanOperatorService } from './services/human-operator.service';
 import { ConnectHumanWhatsAppCommand } from './usecases/human-whatsapp/connect-human-whatsapp.command';
 import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
 import { GetHumanWhatsAppSetupCommand } from './usecases/human-whatsapp/get-human-whatsapp-setup.command';
 import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
+import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 /**
@@ -42,7 +45,9 @@ import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from './usecases/setup-human-relay/set
 export class HumanWhatsAppController {
   constructor(
     private readonly getHumanWhatsAppSetupUsecase: GetHumanWhatsAppSetup,
-    private readonly connectHumanWhatsAppUsecase: ConnectHumanWhatsApp
+    private readonly connectHumanWhatsAppUsecase: ConnectHumanWhatsApp,
+    private readonly issueHumanWhatsAppLinkUsecase: IssueHumanWhatsAppLink,
+    private readonly humanOperator: HumanOperatorService
   ) {}
 
   /** Whether WhatsApp is offered, the public Meta ids for the Facebook button, and the linked number. */
@@ -90,5 +95,30 @@ export class HumanWhatsAppController {
         integrationIdentifier: body.integrationIdentifier,
       })
     );
+  }
+
+  /**
+   * A wa.me link with a one-time code for the operator's own number: sending it from WhatsApp binds that number.
+   * Always for the operator; a contact gets theirs from their invite page.
+   */
+  @Post('/link')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async issueOperatorLink(
+    @UserSession() user: UserSessionData,
+    @Body() body: HumanAgentQueryDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<HumanWhatsAppLinkResponseDto> {
+    assertFromHumanDashboard(headers);
+
+    const scope = {
+      environmentId: user.environmentId,
+      organizationId: user.organizationId,
+      agentIdentifier: body.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER,
+    };
+    const { subscriberId } = await this.humanOperator.require(scope);
+
+    return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId });
   }
 }
