@@ -3652,7 +3652,7 @@ importers:
         specifier: 4.44.0
         version: 4.44.0(zod@4.6.7)
       chat:
-        specifier: ^4.40.0
+        specifier: ^4.44.0
         version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
