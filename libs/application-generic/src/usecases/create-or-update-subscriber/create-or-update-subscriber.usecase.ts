@@ -28,34 +28,46 @@ export class CreateOrUpdateSubscriberUseCase {
       throw new ConflictException(`Subscriber with id "${command.subscriberId}" already exists`);
     }
 
+    let updatedSubscriber: SubscriberEntity | undefined;
+
     if (persistedSubscriber) {
       if (command.allowUpdate) {
-        await this.updateSubscriber(command, persistedSubscriber);
+        updatedSubscriber = await this.updateSubscriber(command, persistedSubscriber);
       }
     } else {
       await this.createSubscriber(command);
     }
 
-    if (command.channels?.length && command.allowUpdate) {
+    const hasChannels = !!command.channels?.length;
+
+    if (hasChannels && command.allowUpdate) {
       await this.updateCredentials(command);
     }
 
-    return persistedSubscriber && !command.allowUpdate
-      ? persistedSubscriber
-      : await this.fetchSubscriber({
-          _environmentId: command.environmentId,
-          subscriberId: command.subscriberId,
-        });
+    if (persistedSubscriber && !command.allowUpdate) {
+      return persistedSubscriber;
+    }
+
+    /*
+     * UpdateSubscriber already returns the merged entity, so re-reading it is only needed
+     * when channel credentials changed or a new subscriber was created.
+     */
+    if (updatedSubscriber && !hasChannels) {
+      return updatedSubscriber;
+    }
+
+    return await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
   }
 
+  /*
+   * UpdateSubscriber invalidates the subscriber cache itself, and only when a field actually
+   * changes. Invalidating here too would bust the cache on every no-op upsert (e.g. each Inbox
+   * session), forcing the next subscriber JWT requests back to the database.
+   */
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
-    await this.invalidateCache.invalidateByKey({
-      key: buildSubscriberKey({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
     return await this.updateSubscriberUseCase.execute(
       UpdateSubscriberCommand.create({
         environmentId: command.environmentId,
