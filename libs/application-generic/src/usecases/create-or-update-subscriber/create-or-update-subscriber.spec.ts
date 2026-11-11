@@ -154,5 +154,6 @@ describe('Create Subscriber', () => {
 
     const persisted = await subscriberRepository.findBySubscriberId(environmentId, subscriberId);
     expect(persisted?.firstName).toEqual('After');
+    expect(new Date(result.updatedAt).getTime()).toEqual(new Date(persisted?.updatedAt as string).getTime());
   });
 });
