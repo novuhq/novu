@@ -5,6 +5,7 @@ import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web-chat';
+import { AgentIntegrationRepository, ChannelConnectionRepository, ChannelEndpointRepository } from '@novu/dal';
 import { stripAgentReplyToken } from '@novu/shared';
 import { retryPolicies } from '@slack/web-api';
 import type {
@@ -39,6 +40,7 @@ import { parseEmailThreadAddress } from './email-thread-id';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
 import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
+import { attachSlackUninstallHandler } from './slack-app-uninstalled';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -172,6 +174,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
     private readonly humanRelayEmail: HumanRelayEmailService,
+    private readonly channelConnectionRepository: ChannelConnectionRepository,
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: WrapperType<PlanLimitGateService>
   ) {
@@ -805,6 +810,27 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
+    });
+
+    attachSlackUninstallHandler({
+      platform: cached.config.platform,
+      chat,
+      cached,
+      deps: {
+        channelConnectionRepository: this.channelConnectionRepository,
+        channelEndpointRepository: this.channelEndpointRepository,
+        agentIntegrationRepository: this.agentIntegrationRepository,
+        logger: this.logger,
+      },
+      onError: (err, workspaceId) => {
+        this.logger.error(err, `[agent:${agentId}] Error handling Slack app uninstall`);
+        captureAgentException(err, {
+          component: 'chat-instance-registry',
+          operation: 'on-uninstalled',
+          agentId,
+          extra: { workspaceId },
+        });
+      },
     });
   }
 
