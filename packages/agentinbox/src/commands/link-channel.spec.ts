@@ -3,15 +3,19 @@ import { type ApiClient, ApiError } from '../api/client';
 import type { AgentIntegrationLink } from '../api/setup';
 import { DEFAULT_API_URL } from '../config';
 
-const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint } = vi.hoisted(() => ({
-  getSlackSetupLinkStatus: vi.fn(),
-  getTelegramMobileLinkStatus: vi.fn(),
-  hasChannelEndpoint: vi.fn(),
-}));
+const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, getWhatsAppSetup, hasChannelEndpoint } = vi.hoisted(
+  () => ({
+    getSlackSetupLinkStatus: vi.fn(),
+    getWhatsAppSetup: vi.fn(),
+    getTelegramMobileLinkStatus: vi.fn(),
+    hasChannelEndpoint: vi.fn(),
+  })
+);
 
 vi.mock('../api/setup', () => ({
   getSlackSetupLinkStatus,
   getTelegramMobileLinkStatus,
+  getWhatsAppSetup,
   hasChannelEndpoint,
   generateConnectOauthUrl: vi.fn(),
   issueTelegramSubscriberLink: vi.fn(),
@@ -19,16 +23,20 @@ vi.mock('../api/setup', () => ({
 
 import {
   buildSetupPageUrl,
+  buildWhatsAppSetupPageUrl,
   CHANNEL_POLL_INTERVAL_MS,
   CHANNEL_POLL_TIMEOUT_MS,
+  channelLabel,
   findLinkedIntegration,
   isEmailVerified,
   isMissingBotTokenError,
   parseEmailAddress,
+  providerIdsForVia,
   viaForProviderId,
   waitForAnyEndpoint,
   waitForSlackSetupPage,
   waitForTelegramSetupPage,
+  waitForWhatsAppSetup,
 } from './link-channel';
 
 const mockedStatus = getTelegramMobileLinkStatus;
@@ -46,7 +54,7 @@ describe('viaForProviderId', () => {
     expect(viaForProviderId('novu-slack')).toBe('slack');
     expect(viaForProviderId('agent-email-inbox')).toBe('email');
     expect(viaForProviderId('novu-email-agent')).toBe(null);
-    expect(viaForProviderId('whatsapp-business')).toBeNull();
+    expect(viaForProviderId('whatsapp-business')).toBe('whatsapp');
   });
 });
 
@@ -247,5 +255,35 @@ describe('waitForAnyEndpoint', () => {
     await vi.advanceTimersByTimeAsync(CHANNEL_POLL_TIMEOUT_MS + CHANNEL_POLL_INTERVAL_MS);
 
     await assertion;
+  });
+});
+
+describe('WhatsApp', () => {
+  it('maps WhatsApp Business onto the whatsapp channel, both ways, and names it properly', () => {
+    expect(providerIdsForVia('whatsapp')).toEqual(['whatsapp-business']);
+    expect(channelLabel('whatsapp')).toBe('WhatsApp');
+  });
+
+  it('sends the operator to the WhatsApp drawer on the site the CLI talks to', () => {
+    expect(buildWhatsAppSetupPageUrl('https://www.agentinbox.md/api/')).toBe(
+      'https://www.agentinbox.md/configure?setup=whatsapp'
+    );
+  });
+
+  it('waits until the business number and the operator’s own number are both connected', async () => {
+    getWhatsAppSetup
+      .mockResolvedValueOnce({ enabled: true, available: true, connected: false, businessConnected: true })
+      .mockResolvedValueOnce({ enabled: true, available: true, connected: true });
+
+    await expect(waitForWhatsAppSetup(client, 'human-relay', { intervalMs: 1, timeoutMs: 1000 })).resolves.toBe(
+      'saved'
+    );
+    expect(getWhatsAppSetup).toHaveBeenCalledWith(client, 'human-relay');
+  });
+
+  it('gives up when it isn’t connected in time', async () => {
+    getWhatsAppSetup.mockResolvedValue({ enabled: true, available: true, connected: false });
+
+    await expect(waitForWhatsAppSetup(client, 'human-relay', { intervalMs: 1, timeoutMs: 5 })).resolves.toBe('timeout');
   });
 });

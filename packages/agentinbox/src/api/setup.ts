@@ -277,3 +277,26 @@ export async function hasChannelEndpoint(
 
   return Array.isArray(body) && body.length > 0;
 }
+
+/** Where the operator's WhatsApp stands, read while they connect it on agentinbox.md. */
+export interface WhatsAppSetup {
+  /** Off when WhatsApp isn't turned on for this account yet. */
+  enabled: boolean;
+  /** Whether agentinbox.md can connect a WhatsApp Business number here at all. */
+  available: boolean;
+  reason?: 'feature_disabled' | 'missing_platform_config';
+  /** The business number and the operator's own number are both connected. */
+  connected: boolean;
+  businessConnected?: boolean;
+  displayPhoneNumber?: string;
+  operatorNumberBound?: boolean;
+  operatorPhoneNumber?: string;
+}
+
+export async function getWhatsAppSetup(client: ApiClient, agentIdentifier: string): Promise<WhatsAppSetup> {
+  const res = await client.axios.get<{ data?: WhatsAppSetup } | WhatsAppSetup>('/v1/channels/whatsapp', {
+    params: { agentIdentifier },
+  });
+
+  return unwrap(res.data);
+}

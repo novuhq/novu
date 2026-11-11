@@ -133,17 +133,25 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
   }
 
   describe('only from the dashboard', () => {
-    it('refuses a host that reads or connects WhatsApp', async () => {
+    it('refuses a host that connects WhatsApp or binds the operator’s number', async () => {
       turnWhatsAppOn();
 
       for (const res of [
-        await asHost('get', '/v1/human/agent/whatsapp'),
         await asHost('post', '/v1/human/agent/whatsapp/embedded-signup').send(SIGNUP),
         await asHost('post', '/v1/human/agent/whatsapp/link').send({}),
       ]) {
         expect(res.status).to.equal(403, JSON.stringify(res.body));
         expect(res.body.code).to.equal(DASHBOARD_ONLY);
       }
+    });
+
+    it('lets a host read where setup stands, as the CLI waits on it', async () => {
+      turnWhatsAppOn();
+
+      const res = await asHost('get', '/v1/human/agent/whatsapp');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.include({ enabled: true, connected: false });
     });
   });
 

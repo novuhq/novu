@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { ApiError } from '../api/client';
 import type { CliConfig } from '../config';
 
 const listAgentIntegrations = vi.fn();
@@ -7,6 +8,7 @@ const generateConnectOauthUrl = vi.fn();
 const issueTelegramSubscriberLink = vi.fn();
 const setupRelay = vi.fn();
 const createInvite = vi.fn();
+const connectInviteChannel = vi.fn();
 const getContact = vi.fn();
 const listContacts = vi.fn();
 const requestAddressVerification = vi.fn();
@@ -20,7 +22,9 @@ vi.mock('../api/setup', () => ({
   issueTelegramSubscriberLink: (...args: unknown[]) => issueTelegramSubscriberLink(...args),
 }));
 
-vi.mock('../api/agent-inbox', () => ({
+vi.mock('../api/agent-inbox', async (importOriginal) => ({
+  inviteTokenOf: (await importOriginal<typeof import('../api/agent-inbox')>()).inviteTokenOf,
+  connectInviteChannel: (...args: unknown[]) => connectInviteChannel(...args),
   setupRelay: (...args: unknown[]) => setupRelay(...args),
   createInvite: (...args: unknown[]) => createInvite(...args),
   getContact: (...args: unknown[]) => getContact(...args),
@@ -68,6 +72,12 @@ function telegramLink() {
   return { integration: { identifier: 'tg-1', providerId: 'telegram', active: true } };
 }
 
+function whatsAppLink() {
+  return { integration: { identifier: 'wa-1', providerId: 'whatsapp-business', active: true } };
+}
+
+const WA_ME_URL = 'https://wa.me/15550100199?text=Connect%20my%20WhatsApp%3A%20BCDF-GHJK';
+
 function emailLink() {
   return { integration: { identifier: 'email-1', providerId: 'agent-email-inbox', active: true } };
 }
@@ -98,6 +108,7 @@ function resetMocks() {
   issueTelegramSubscriberLink.mockReset();
   setupRelay.mockReset();
   createInvite.mockReset();
+  connectInviteChannel.mockReset();
   getContact.mockReset();
   listContacts.mockReset();
   requestAddressVerification.mockReset();
@@ -152,8 +163,9 @@ describe('resolveInviteVia', () => {
     expect(resolveInviteVia('')).toBeUndefined();
   });
 
-  it('rejects unknown channels', () => {
-    expect(() => resolveInviteVia('whatsapp')).toThrow('Unknown channel "whatsapp"');
+  it('takes WhatsApp, and rejects unknown channels', () => {
+    expect(resolveInviteVia('WhatsApp')).toBe('whatsapp');
+    expect(() => resolveInviteVia('signal')).toThrow('Unknown channel "signal"');
   });
 });
 
@@ -402,6 +414,71 @@ describe('runInvite with --via', () => {
   });
 });
 
+describe('runInvite --via whatsapp', () => {
+  beforeEach(resetMocks);
+
+  function inviteResolves() {
+    listAgentIntegrations.mockResolvedValue([whatsAppLink()]);
+    createInvite.mockResolvedValue({ ...pageInvite(), channels: [] });
+    connectInviteChannel.mockResolvedValue({ url: WA_ME_URL });
+  }
+
+  it('prints the wa.me link with the code, waits for the number to be proved, and makes WhatsApp their default', async () => {
+    inviteResolves();
+    getContact
+      .mockResolvedValueOnce({ id: 'alice', channels: [{ via: 'whatsapp', status: 'unverified' }] })
+      .mockResolvedValue({ id: 'alice', channels: [{ via: 'whatsapp', status: 'verified' }] });
+
+    const result = await runInvite('alice', { via: 'whatsapp', name: 'Alice Chen' });
+
+    expect(setupRelay).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ subscriberId: 'alice', defaultVia: 'whatsapp', firstName: 'Alice' })
+    );
+    expect(connectInviteChannel).toHaveBeenCalledWith(expect.anything(), { token: 'tok_123', via: 'whatsapp' });
+    expect(stdoutText()).toContain(WA_ME_URL);
+    expect(stdoutText()).toContain('send the prefilled message in WhatsApp');
+    expect(result).toEqual({ contactId: 'alice', linkedOn: ['whatsapp'], alreadyLinked: false, url: WA_ME_URL });
+  });
+
+  it('returns the link right away with --async', async () => {
+    inviteResolves();
+
+    const result = await runInvite('alice', { via: 'whatsapp', async: true });
+
+    expect(result).toEqual({ contactId: 'alice', linkedOn: [], alreadyLinked: false, url: WA_ME_URL });
+  });
+
+  it('mints no code for a number that is already proved', async () => {
+    inviteResolves();
+    getContact.mockResolvedValue({ id: 'alice', channels: [{ via: 'whatsapp', status: 'verified' }] });
+
+    const result = await runInvite('alice', { via: 'whatsapp' });
+
+    expect(connectInviteChannel).not.toHaveBeenCalled();
+    expect(result).toEqual({ contactId: 'alice', linkedOn: ['whatsapp'], alreadyLinked: true });
+  });
+
+  it('reads the API saying they are already connected as linked', async () => {
+    inviteResolves();
+    connectInviteChannel.mockRejectedValue(
+      new ApiError('Already connected', 409, '/v1/invites/connect', { code: 'channel_already_connected' })
+    );
+
+    const result = await runInvite('alice', { via: 'whatsapp' });
+
+    expect(result).toEqual({ contactId: 'alice', linkedOn: ['whatsapp'], alreadyLinked: true });
+  });
+
+  it('asks for channel add whatsapp when the relay has no WhatsApp', async () => {
+    listAgentIntegrations.mockResolvedValue([telegramLink()]);
+
+    await expect(runInvite('alice', { via: 'whatsapp' })).rejects.toThrow(
+      'No whatsapp channel is connected yet. Run `npx @agentinbox/cli channel add whatsapp` first.'
+    );
+  });
+});
+
 describe('runInvite without --via (invite page)', () => {
   beforeEach(resetMocks);
 
@@ -530,11 +607,27 @@ describe('runInvite without --via (invite page)', () => {
     expect(stdoutText()).toContain('email');
   });
 
+  it('also waits for them to connect WhatsApp from the page', async () => {
+    listAgentIntegrations.mockResolvedValue([whatsAppLink()]);
+    createInvite.mockResolvedValue({
+      ...pageInvite(),
+      channels: [{ via: 'whatsapp', integrationIdentifier: 'wa-1', connected: false }],
+    });
+    getContact
+      .mockResolvedValueOnce({ id: 'alice', channels: [{ via: 'whatsapp', status: 'unverified' }] })
+      .mockResolvedValue({ id: 'alice', channels: [{ via: 'whatsapp', status: 'verified' }] });
+
+    const result = await runInvite('alice', {});
+
+    expect(hasChannelEndpoint).not.toHaveBeenCalled();
+    expect(result.linkedOn).toEqual(['whatsapp']);
+  });
+
   it('asks for channel setup when the relay has none linked', async () => {
     listAgentIntegrations.mockResolvedValue([]);
 
     await expect(runInvite('alice', {})).rejects.toThrow(
-      'No Telegram, Slack, or Email channel is connected yet. Run `npx @agentinbox/cli setup` first.'
+      'No Telegram, Slack, WhatsApp, or Email channel is connected yet. Run `npx @agentinbox/cli setup` first.'
     );
     expect(createInvite).not.toHaveBeenCalled();
   });

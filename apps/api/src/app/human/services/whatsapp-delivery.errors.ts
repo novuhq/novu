@@ -19,7 +19,7 @@ export class WhatsAppUndeliverableException extends UnprocessableEntityException
   constructor(subscriberId: string, unfit: WhatsAppUnfit, availableChannels: HumanChannelViaEnum[]) {
     const instead = availableChannels.length
       ? ` Send with --via ${availableChannels[0]} instead.`
-      : ` ${subscriberId} has no other channel; run \`human contact invite ${subscriberId}\` to add one.`;
+      : ` ${subscriberId} has no other channel; run \`npx @agentinbox/cli contact invite ${subscriberId}\` to add one.`;
 
     if (unfit.reason === WHATSAPP_WINDOW_CLOSED) {
       const when = unfit.windowClosedAt ? `: their window closed at ${unfit.windowClosedAt}` : '';

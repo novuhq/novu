@@ -35,7 +35,8 @@ import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from './usecases/setup-human-relay/set
 
 /**
  * The operator's own WhatsApp Business account on the relay agent, connected with the Facebook button on
- * agentinbox.md. Only the operator's dashboard may call these: a host holding the same key gets 403.
+ * agentinbox.md. Connecting it and binding the operator's own number happen only on the operator's dashboard: a
+ * host holding the same key gets 403. Reading where setup stands is open to the key, so the CLI can wait for it.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller('/human/agent/whatsapp')
@@ -50,17 +51,17 @@ export class HumanWhatsAppController {
     private readonly humanOperator: HumanOperatorService
   ) {}
 
-  /** Whether WhatsApp is offered, the public Meta ids for the Facebook button, and the linked number. */
+  /**
+   * Whether WhatsApp is offered, the public Meta ids for the Facebook button, and the linked numbers. Read-only and
+   * free of credentials, so `channel add whatsapp` can wait here while the operator connects on agentinbox.md.
+   */
   @Get('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   getSetup(
     @UserSession() user: UserSessionData,
-    @Query() query: HumanAgentQueryDto,
-    @Headers() headers: Record<string, unknown>
+    @Query() query: HumanAgentQueryDto
   ): Promise<HumanWhatsAppSetupResponseDto> {
-    assertFromHumanDashboard(headers);
-
     return this.getHumanWhatsAppSetupUsecase.execute(
       GetHumanWhatsAppSetupCommand.create({
         environmentId: user.environmentId,
