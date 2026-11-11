@@ -500,6 +500,27 @@ describe('HumanInteractionInboundService', () => {
     });
   });
 
+  it('lets a Slack thread reply under an approve card answer the question asked later in that thread', async () => {
+    const { service, humanInteractionRepository, settlement, pendingAsk } = setup();
+    humanInteractionRepository.findPendingByPlatformMessageId.resolves({
+      ...pendingAsk,
+      identifier: 'hi_root_approve',
+      kind: HumanInteractionKindEnum.APPROVE,
+    });
+    humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
+    settlement.settle.resolves({ ...pendingAsk, status: HumanInteractionStatusEnum.ANSWERED });
+
+    const result = await service.tryHandleMessage(
+      makeTurn({
+        message: { text: 'eu-west', raw: { event: { ts: '2.0', thread_ts: '1.0', channel: 'C1' } } },
+      }) as any,
+      'relay'
+    );
+
+    expect(result.outcome).to.equal('settled');
+    expect(settlement.settle.firstCall.args[0]).to.include({ identifier: 'hi_1' });
+  });
+
   it('does not claim a bare conversation message when nothing is pending', async () => {
     const { service, outboundGateway } = setup();
     const result = await service.tryHandleMessage(makeTurn() as any, 'conversation');

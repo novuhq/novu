@@ -344,16 +344,18 @@ export class HumanInteractionInboundService {
     const repliedTo = this.extractRepliedToMessageIds(turn);
     if (repliedTo.length > 0) {
       const exact = await this.humanInteractionRepository.findPendingByPlatformMessageId(environmentId, repliedTo);
-      if (exact) {
-        // Only an ask takes words for an answer. A reply quoting an approve or a choice is a message about that card,
-        // not a decision, and not an answer to some other question either: it stays in the inbox as it is.
-        if (exact.kind !== HumanInteractionKindEnum.ASK) {
-          return { outcome: 'ignored' };
-        }
-
+      // Only an ask takes words for an answer: a reply on an approve or a choice is never a decision.
+      if (exact?.kind === HumanInteractionKindEnum.ASK) {
         const settled = await this.settleAskWithText(exact, text, turn, mode);
 
         return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
+      }
+
+      // Telegram and WhatsApp quote the one message replied to, so quoting a card is a message about that card, not
+      // an answer to some other question: it stays in the inbox as it is. A Slack reply only names its thread's root,
+      // so it goes on to the questions waiting in that thread.
+      if (exact && turn.config.platform !== AgentPlatformEnum.SLACK) {
+        return { outcome: 'ignored' };
       }
     }
 
