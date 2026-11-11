@@ -11,7 +11,7 @@ import { toCanonicalE164Phone } from '../shared/util/phone-normalization';
 import { BindWhatsAppNumber } from './bind-whatsapp-number.service';
 import { ContactHandleService } from './contact-handle.service';
 import { extractWhatsAppBindCode, WhatsAppBindCodeService } from './whatsapp-bind-code.service';
-import { provedWhatsAppNumberOf } from './whatsapp-number-proof';
+import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_LAST_CODE_AT_FIELD } from './whatsapp-number-proof';
 
 export const WHATSAPP_BIND_SUCCESS_REPLY = "You're connected. This agent will reach you here on WhatsApp.";
 export const WHATSAPP_BIND_DUPLICATE_REPLY = 'This number is already connected. No changes needed.';
@@ -84,6 +84,8 @@ export class WhatsAppBindInbound {
       return WHATSAPP_BIND_INVALID_REPLY;
     }
 
+    await this.noteCodeMessage(config, phoneNumber);
+
     const result = await this.codes.consume(config.integrationId, code, phoneNumber);
     if (result.status === 'too_many_tries') {
       return WHATSAPP_BIND_TOO_MANY_TRIES_REPLY;
@@ -112,6 +114,28 @@ export class WhatsAppBindInbound {
       }
 
       return WHATSAPP_BIND_INVALID_REPLY;
+    }
+  }
+
+  /**
+   * A code message is never stored, but it opened WhatsApp's 24-hour window all the same: kept on the number's
+   * endpoint, so a person already connected who sends their old link again can be written to. Nothing to keep for
+   * a number that isn't bound yet; binding it records the proof instead.
+   */
+  private async noteCodeMessage(config: ResolvedAgentConfig, phoneNumber: string): Promise<void> {
+    try {
+      await this.channelEndpointRepository.update(
+        {
+          _environmentId: config.environmentId,
+          _organizationId: config.organizationId,
+          integrationIdentifier: config.integrationIdentifier,
+          type: ENDPOINT_TYPES.PHONE,
+          'endpoint.phoneNumber': phoneNumber,
+        },
+        { $max: { [`endpoint.${WHATSAPP_NUMBER_LAST_CODE_AT_FIELD}`]: new Date().toISOString() } }
+      );
+    } catch (err) {
+      this.logger.warn(err, 'Could not keep when a WhatsApp number last wrote a code');
     }
   }
 

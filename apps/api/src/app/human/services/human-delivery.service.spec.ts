@@ -12,6 +12,7 @@ import sinon from 'sinon';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
 import { HumanChannelGate } from './human-channel-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
+import { WhatsAppUndeliverableException } from './whatsapp-delivery.errors';
 
 function channelGate(whatsAppEnabled = false) {
   return new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never);
@@ -29,6 +30,11 @@ function emailGate(blocked = false) {
         )
       : sinon.stub().resolves(),
   };
+}
+
+/** WhatsApp's window, open unless a test says otherwise. */
+function whatsAppWindow(window: { open: boolean; closesAt?: string } = { open: true }) {
+  return { describe: sinon.stub().resolves(window) };
 }
 
 /** The service lists a person's endpoints; these specs stub the one lookup, so the list is that one, or none. */
@@ -62,7 +68,8 @@ describe('HumanDeliveryService.resolveChannel', () => {
       humanContactRepository as never,
       outboundGateway as never,
       keylessEmailGate as never,
-      channelGate() as never
+      channelGate() as never,
+      whatsAppWindow() as never
     );
 
     return {
@@ -485,7 +492,8 @@ describe('HumanDeliveryService keyless email', () => {
       humanContactRepository as never,
       { sendDirectMessage: sinon.stub() } as never,
       keylessEmailGate as never,
-      channelGate() as never
+      channelGate() as never,
+      whatsAppWindow() as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -594,7 +602,8 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       {} as never,
       {} as never,
       emailGate() as never,
-      channelGate() as never
+      channelGate() as never,
+      whatsAppWindow() as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -633,7 +642,8 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       {} as never,
       {} as never,
       emailGate() as never,
-      channelGate() as never
+      channelGate() as never,
+      whatsAppWindow() as never
     );
 
     const channels = await service.listWorkingChannels({
@@ -707,21 +717,195 @@ describe('HumanDeliveryService on WhatsApp', () => {
     active: true,
   };
 
-  function setup(whatsAppEnabled: boolean, integrations: unknown[] = [whatsApp, telegram]) {
+  function setup(
+    whatsAppEnabled: boolean,
+    integrations: unknown[] = [whatsApp, telegram],
+    window: { open: boolean; closesAt?: string } = { open: true }
+  ) {
     const getFlag = sinon.stub().resolves(whatsAppEnabled);
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
+    const windows = whatsAppWindow(window);
     const service = new HumanDeliveryService(
       { find: sinon.stub().resolves(integrations.map((_, n) => ({ _integrationId: `int${n}` }))) } as never,
       withFind(channelEndpointRepository) as never,
       { find: sinon.stub().resolves(integrations) } as never,
-      { findContact: sinon.stub().resolves(null) } as never,
+      { findContact: sinon.stub().resolves(null), find: sinon.stub().resolves([]) } as never,
       {} as never,
       emailGate() as never,
-      new HumanChannelGate({ getFlag } as never)
+      new HumanChannelGate({ getFlag } as never),
+      windows as never
     );
 
-    return { service, channelEndpointRepository, getFlag };
+    return { service, channelEndpointRepository, getFlag, windows };
   }
+
+  const PROVED_WHATSAPP = {
+    type: ENDPOINT_TYPES.PHONE,
+    providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    endpoint: { phoneNumber: '+15551234567', provedAt: '2026-11-01T10:00:00.000Z' },
+    createdAt: '2026-11-01T10:00:00.000Z',
+  };
+  const TELEGRAM_CHAT = {
+    type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+    endpoint: { chatId: '42' },
+    createdAt: '2026-11-02T10:00:00.000Z',
+  };
+
+  /** Alice on both apps: WhatsApp proved first, so it is her default when nothing else says. */
+  function onBoth(channelEndpointRepository: { findOne: sinon.SinonStub }, { telegramToo = true } = {}) {
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) => {
+      if (query.integrationIdentifier === 'whatsapp-main') {
+        return PROVED_WHATSAPP;
+      }
+
+      return telegramToo ? TELEGRAM_CHAT : null;
+    });
+  }
+
+  async function refusal(promise: Promise<unknown>) {
+    const error = await promise.catch((err: unknown) => err);
+    expect(error).to.be.instanceOf(WhatsAppUndeliverableException);
+
+    return (error as WhatsAppUndeliverableException).getResponse() as Record<string, unknown>;
+  }
+
+  it('sends on WhatsApp inside the window, with the number’s proof as the window’s start', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true);
+    onBoth(channelEndpointRepository);
+
+    const target = await service.resolveChannel({ ...params, buttons: 2 });
+
+    expect(target).to.include({ platform: HumanChannelViaEnum.WHATSAPP, platformUserId: '15551234567' });
+    expect(windows.describe.firstCall.args[2]).to.deep.equal({
+      waId: '15551234567',
+      provedAt: '2026-11-01T10:00:00.000Z',
+    });
+  });
+
+  it('falls back to their next channel when the window is shut and no channel was asked for', async () => {
+    const { service, channelEndpointRepository } = setup(true, [whatsApp, telegram], {
+      open: false,
+      closesAt: '2026-11-02T10:00:00.000Z',
+    });
+    onBoth(channelEndpointRepository);
+
+    const target = await service.resolveChannel(params);
+
+    expect(target).to.include({ platform: HumanChannelViaEnum.TELEGRAM, platformUserId: '42' });
+  });
+
+  it('refuses WhatsApp when it was asked for and the window is shut, naming the channels that still work', async () => {
+    const { service, channelEndpointRepository } = setup(true, [whatsApp, telegram], {
+      open: false,
+      closesAt: '2026-11-02T10:00:00.000Z',
+    });
+    onBoth(channelEndpointRepository);
+
+    const body = await refusal(service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP }));
+
+    expect(body).to.include({
+      code: 'whatsapp_window_closed',
+      subscriberId: 'alice',
+      windowClosedAt: '2026-11-02T10:00:00.000Z',
+    });
+    expect(body.availableChannels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+    expect(String(body.message)).to.contain('--via telegram');
+  });
+
+  it('refuses even without a channel asked for when WhatsApp is all they have', async () => {
+    const { service, channelEndpointRepository } = setup(true, [whatsApp, telegram], { open: false });
+    onBoth(channelEndpointRepository, { telegramToo: false });
+
+    const body = await refusal(service.resolveChannel(params));
+
+    expect(body).to.include({ code: 'whatsapp_window_closed' });
+    expect(body.availableChannels).to.deep.equal([]);
+  });
+
+  it('refuses a card with more buttons than WhatsApp shows, instead of losing some', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    onBoth(channelEndpointRepository);
+
+    const body = await refusal(service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP, buttons: 4 }));
+
+    expect(body).to.include({ code: 'whatsapp_too_many_buttons', maxButtons: 3, buttons: 4 });
+    expect(body.availableChannels).to.deep.equal([HumanChannelViaEnum.TELEGRAM]);
+  });
+
+  it('sends a card with three buttons on WhatsApp, and moves a bigger one to their next channel', async () => {
+    const { service, channelEndpointRepository } = setup(true);
+    onBoth(channelEndpointRepository);
+
+    expect(await service.resolveChannel({ ...params, buttons: 3 })).to.include({ platform: 'whatsapp' });
+    expect(await service.resolveChannel({ ...params, buttons: 4 })).to.include({ platform: 'telegram' });
+  });
+
+  it('counts an old code sent again as a message, since it opened the window too', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            ...PROVED_WHATSAPP,
+            endpoint: { ...PROVED_WHATSAPP.endpoint, lastCodeAt: '2026-11-10T09:00:00.000Z' },
+          }
+        : null
+    );
+
+    await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(windows.describe.firstCall.args[2]).to.deep.equal({
+      waId: '15551234567',
+      provedAt: '2026-11-10T09:00:00.000Z',
+    });
+  });
+
+  it('checks a WhatsApp thread for the person it is with, counting their proof and code messages', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true, [whatsApp, telegram], {
+      open: false,
+      closesAt: '2026-11-10T10:00:00.000Z',
+    });
+    Object.assign(channelEndpointRepository, {
+      find: async () => [
+        { ...PROVED_WHATSAPP, endpoint: { phoneNumber: '+15550000000', provedAt: '2026-11-09T09:00:00.000Z' } },
+        PROVED_WHATSAPP,
+      ],
+    });
+
+    const unfit = await service.whatsAppThreadUnfit({
+      ...params,
+      integrationId: 'int-wa',
+      platformThreadId: 'whatsapp:1234:15551234567',
+      buttons: 2,
+    });
+
+    expect(unfit).to.deep.equal({ reason: 'whatsapp_window_closed', windowClosedAt: '2026-11-10T10:00:00.000Z' });
+    expect(windows.describe.firstCall.args[2]).to.deep.equal({
+      waId: '15551234567',
+      provedAt: '2026-11-01T10:00:00.000Z',
+    });
+    expect(
+      await service.whatsAppThreadUnfit({
+        ...params,
+        integrationId: 'int-wa',
+        platformThreadId: 'whatsapp:1234:15551234567',
+        buttons: 4,
+      })
+    ).to.deep.equal({ reason: 'whatsapp_too_many_buttons', buttons: 4 });
+  });
+
+  it('tells the contact list whether WhatsApp can be written to right now', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true);
+    Object.assign(channelEndpointRepository, {
+      find: async () => [{ ...PROVED_WHATSAPP, subscriberId: 'alice', integrationIdentifier: 'whatsapp-main' }],
+    });
+    const window = { open: false, lastMessageAt: '2026-11-01T10:00:00.000Z', closesAt: '2026-11-02T10:00:00.000Z' };
+    Object.assign(windows, { describeMany: sinon.stub().resolves(new Map([['15551234567', window]])) });
+
+    const reach = await service.describeReachabilityForMany({ ...params, subscribers: [{ subscriberId: 'alice' }] });
+
+    const whatsAppTarget = reach.get('alice')?.targets.find((target) => target.via === HumanChannelViaEnum.WHATSAPP);
+    expect(whatsAppTarget?.window).to.deep.equal(window);
+  });
 
   it('reaches a number bound with a wa.me code on the WhatsApp Business integration', async () => {
     const { service, channelEndpointRepository } = setup(true);
@@ -740,7 +924,8 @@ describe('HumanDeliveryService on WhatsApp', () => {
 
     expect(target).to.include({
       platform: HumanChannelViaEnum.WHATSAPP,
-      platformUserId: '+15551234567',
+      // Addressed by wa_id, as WhatsApp names the person and keys their threads.
+      platformUserId: '15551234567',
       integrationIdentifier: 'whatsapp-main',
     });
   });
@@ -769,7 +954,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
 
     const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
 
-    expect(target).to.include({ platformUserId: '+15551234567' });
+    expect(target).to.include({ platformUserId: '15551234567' });
     const [described] = await service.describeInviteChannels(params);
     expect(described).to.include({ via: HumanChannelViaEnum.WHATSAPP, connected: true });
   });

@@ -1,7 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { HumanInteractionKindEnum } from '@novu/shared';
+import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { assertHumanCardActions } from './human-interaction-lifecycle';
+import sinon from 'sinon';
+import { assertHumanCardActions, countHumanCardButtons, deliverToTargets } from './human-interaction-lifecycle';
+import { WhatsAppUndeliverableException } from './whatsapp-delivery.errors';
 
 describe('assertHumanCardActions', () => {
   function cardElement(buttons: Array<Record<string, unknown>>, extra: Record<string, unknown> = {}) {
@@ -45,5 +47,69 @@ describe('assertHumanCardActions', () => {
     const chrome = { title: 'Approve this?', extraActions: [{ id: 'approve', label: 'Yes' }] };
 
     expect(() => assertHumanCardActions(HumanInteractionKindEnum.APPROVE, chrome)).to.throw(BadRequestException);
+  });
+});
+
+describe('countHumanCardButtons', () => {
+  it('counts the buttons each kind of card shows', () => {
+    expect(countHumanCardButtons(HumanInteractionKindEnum.APPROVE, { title: 'Deploy?' })).to.equal(2);
+    expect(
+      countHumanCardButtons(HumanInteractionKindEnum.APPROVE, {
+        title: 'Deploy?',
+        extraActions: [{ id: 'later', label: 'Later' }],
+      })
+    ).to.equal(3);
+    expect(
+      countHumanCardButtons(HumanInteractionKindEnum.CHOOSE, { title: 'Which?', options: ['a', 'b', 'c', 'd'] })
+    ).to.equal(4);
+    expect(countHumanCardButtons(HumanInteractionKindEnum.ASK, { title: 'Why?' })).to.equal(0);
+    expect(countHumanCardButtons(HumanInteractionKindEnum.TELL, { title: 'Done' })).to.equal(0);
+  });
+
+  it('counts every button of a posted card', () => {
+    const card = {
+      type: 'card' as const,
+      children: [
+        {
+          type: 'actions',
+          children: [
+            { type: 'button', id: 'human:hi_1:approve', label: 'Yes' },
+            { type: 'button', id: 'human:hi_1:deny', label: 'No' },
+            { type: 'button', id: 'snooze', label: 'Snooze' },
+            { type: 'button', id: 'escalate', label: 'Escalate' },
+          ],
+        },
+      ],
+    };
+
+    expect(countHumanCardButtons(HumanInteractionKindEnum.APPROVE, card)).to.equal(4);
+  });
+});
+
+describe('deliverToTargets', () => {
+  it('passes a WhatsApp refusal through as it is, never as a delivery failure', async () => {
+    const refusal = new WhatsAppUndeliverableException('ada', { reason: 'whatsapp_window_closed' }, [
+      HumanChannelViaEnum.TELEGRAM,
+    ]);
+    const repository = { delete: sinon.stub().resolves() };
+    const logger = { warn: sinon.stub() };
+
+    const error = await deliverToTargets(
+      repository as never,
+      logger as never,
+      { _id: 'hi1', _environmentId: 'env1', identifier: 'hi_1' } as never,
+      [
+        {
+          subscriberId: 'ada',
+          integrationIdentifier: 'wa',
+          platform: 'whatsapp',
+          deliver: () => Promise.reject(refusal),
+        },
+      ],
+      { logMessage: 'failed' }
+    ).catch((err: unknown) => err);
+
+    expect(error).to.equal(refusal);
+    expect(repository.delete.calledOnce).to.equal(true);
   });
 });

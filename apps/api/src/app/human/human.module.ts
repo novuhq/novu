@@ -56,6 +56,7 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { WhatsAppWindowService } from './services/whatsapp-window.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
@@ -152,6 +153,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     ConnectHumanWhatsApp,
     IssueHumanWhatsAppLink,
     HumanDeliveryService,
+    WhatsAppWindowService,
     HumanKeylessCapService,
     HumanMessageQuotaService,
     CreateInteraction,

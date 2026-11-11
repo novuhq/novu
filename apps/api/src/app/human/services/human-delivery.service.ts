@@ -20,13 +20,26 @@ import {
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
-import { provedWhatsAppNumberOf, whatsAppNumberProvedAtOf } from '../../agents/human-relay/whatsapp-number-proof';
+import {
+  provedWhatsAppNumberOf,
+  whatsAppNumberLastCodeAtOf,
+  whatsAppNumberProvedAtOf,
+} from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
+import { normalizePhoneForMeta } from '../../agents/shared/util/phone-normalization';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
 import { HumanChannelGate } from './human-channel-gate.service';
 import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
+import {
+  WHATSAPP_MAX_REPLY_BUTTONS,
+  WHATSAPP_TOO_MANY_BUTTONS,
+  WHATSAPP_WINDOW_CLOSED,
+  WhatsAppUndeliverableException,
+  type WhatsAppUnfit,
+} from './whatsapp-delivery.errors';
+import { type WhatsAppWindow, WhatsAppWindowService } from './whatsapp-window.service';
 
 export interface ResolvedHumanTarget {
   platform: string;
@@ -41,6 +54,10 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   connectedAt?: string;
   /** How they show on that chat app, as far as it is known. Absent for email. */
   handle?: ContactHandle;
+  /** WhatsApp only, where it was read: whether its 24-hour window lets a message through right now. */
+  window?: WhatsAppWindow;
+  /** WhatsApp only: when the number last sent a code message, which is never stored but opened a window. */
+  lastCodeAt?: string;
 }
 
 /** Apps a human can connect themselves from the invite page. */
@@ -153,7 +170,8 @@ export class HumanDeliveryService {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly outboundGateway: OutboundGateway,
     private readonly keylessEmailGate: KeylessEmailGateService,
-    private readonly channelGate: HumanChannelGate
+    private readonly channelGate: HumanChannelGate,
+    private readonly whatsAppWindow: WhatsAppWindowService
   ) {}
 
   async resolveChannel(params: {
@@ -167,6 +185,11 @@ export class HumanDeliveryService {
      * here. Contact-id sends omit it. Not a reachability signal.
      */
     explicitEmail?: string;
+    /**
+     * Buttons on the card being sent. WhatsApp shows at most three, so above that a WhatsApp target is skipped,
+     * or refused when it was asked for or is all that is left.
+     */
+    buttons?: number;
   }): Promise<ResolvedHumanTarget> {
     const explicitEmail = params.explicitEmail;
     if (explicitEmail) {
@@ -212,8 +235,10 @@ export class HumanDeliveryService {
       );
     }
 
-    if (params.via || deliverable.length === 1) {
-      return toResolvedTarget(deliverable[0]);
+    const usable = await this.withoutUnfitWhatsApp(params, deliverable, integrations);
+
+    if (params.via || usable.length === 1) {
+      return toResolvedTarget(usable[0]);
     }
 
     const contact = await this.humanContactRepository.findContact(
@@ -222,7 +247,131 @@ export class HumanDeliveryService {
       params.subscriberId
     );
 
-    return toResolvedTarget(pickDefaultTarget(deliverable, contact?.defaultVia) ?? deliverable[0]);
+    return toResolvedTarget(pickDefaultTarget(usable, contact?.defaultVia) ?? usable[0]);
+  }
+
+  /**
+   * Drops a WhatsApp target that can't carry this send: its 24-hour window is shut, or the card has more buttons
+   * than WhatsApp shows. When WhatsApp was asked for, or nothing else is left, the send is refused instead, with the
+   * person's other channels that still work. Never empty when it returns.
+   */
+  private async withoutUnfitWhatsApp(
+    params: { environmentId: string; organizationId: string; agentId: string; subscriberId: string; buttons?: number },
+    targets: ReachableHumanTarget[],
+    integrations: IntegrationEntity[]
+  ): Promise<ReachableHumanTarget[]> {
+    const fits: ReachableHumanTarget[] = [];
+    let refused: WhatsAppUnfit | undefined;
+
+    for (const target of targets) {
+      const unfit = await this.whatsAppUnfit(params, target, integrations);
+      if (unfit) {
+        refused ??= unfit;
+      } else {
+        fits.push(target);
+      }
+    }
+
+    if (!refused || fits.length > 0) {
+      return fits;
+    }
+
+    throw new WhatsAppUndeliverableException(
+      params.subscriberId,
+      refused,
+      await this.otherReachableVias(params, integrations)
+    );
+  }
+
+  /**
+   * Why an existing WhatsApp thread can't take this send, or `null` when it can: the same window and button checks
+   * as a new send, for the person the thread is with. Their code messages count toward the window like any other.
+   */
+  async whatsAppThreadUnfit(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    /** The contact the thread is with, when known. */
+    subscriberId?: string;
+    integrationId: string;
+    platformThreadId: string;
+    buttons?: number;
+  }): Promise<WhatsAppUnfit | null> {
+    const integration = (await this.findLinkedIntegrations(params)).find(
+      (candidate) => String(candidate._id) === String(params.integrationId)
+    );
+    const waId = params.platformThreadId.split(':').pop() ?? '';
+    const endpoint =
+      integration && params.subscriberId
+        ? (
+            await this.channelEndpointRepository.find(
+              {
+                _environmentId: params.environmentId,
+                _organizationId: params.organizationId,
+                subscriberId: params.subscriberId,
+                integrationIdentifier: integration.identifier,
+                type: ENDPOINT_TYPES.PHONE,
+              },
+              ''
+            )
+          ).find((candidate) => platformUserIdOf(candidate) === waId)
+        : undefined;
+
+    return this.whatsAppUnfit(
+      params,
+      {
+        via: HumanChannelViaEnum.WHATSAPP,
+        platformUserId: waId,
+        integrationIdentifier: integration?.identifier ?? '',
+        ...(endpoint ? { lastCodeAt: whatsAppNumberLastCodeAtOf(endpoint) } : {}),
+      },
+      integration ? [integration] : []
+    );
+  }
+
+  /** Why WhatsApp can't carry this send to the target, or `null` when it can (or the target isn't WhatsApp). */
+  async whatsAppUnfit(
+    params: { environmentId: string; organizationId: string; buttons?: number },
+    target: Pick<
+      ReachableHumanTarget,
+      'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt' | 'lastCodeAt'
+    >,
+    integrations: IntegrationEntity[]
+  ): Promise<WhatsAppUnfit | null> {
+    if (target.via !== HumanChannelViaEnum.WHATSAPP) {
+      return null;
+    }
+
+    if ((params.buttons ?? 0) > WHATSAPP_MAX_REPLY_BUTTONS) {
+      return { reason: WHATSAPP_TOO_MANY_BUTTONS, buttons: params.buttons ?? 0 };
+    }
+
+    const integration = integrations.find((candidate) => candidate.identifier === target.integrationIdentifier);
+    if (!integration) {
+      return { reason: WHATSAPP_WINDOW_CLOSED };
+    }
+
+    // A WhatsApp target is connected when its number was proved, and that code message opened a window too.
+    const window = await this.whatsAppWindow.describe(params, integration, {
+      waId: target.platformUserId,
+      provedAt: target.lastCodeAt ?? target.connectedAt,
+    });
+
+    return window.open ? null : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
+  }
+
+  /** The person's channels other than WhatsApp that reach them right now, for a refused WhatsApp send to name. */
+  async otherReachableVias(
+    params: { environmentId: string; organizationId: string; agentId: string; subscriberId: string },
+    integrations?: IntegrationEntity[]
+  ): Promise<HumanChannelViaEnum[]> {
+    const linked = integrations ?? (await this.findLinkedIntegrations(params));
+    const others = linked.filter(
+      (integration) => viaForProviderId(integration.providerId) !== HumanChannelViaEnum.WHATSAPP
+    );
+    const reachable = await this.findReachableTargets(params, others);
+
+    return [...new Set([...reachable].sort(byConnection).map((target) => target.via))];
   }
 
   /**
@@ -487,7 +636,52 @@ export class HumanDeliveryService {
       });
     }
 
+    await this.attachWhatsAppWindows(
+      params,
+      integrations,
+      [...result.values()].flatMap(({ targets }) => targets)
+    );
+
     return result;
+  }
+
+  /**
+   * Fills in each WhatsApp target's 24-hour window, so a list can say before a send whether WhatsApp can be
+   * written to right now. One read per business number, however many people are on it.
+   */
+  private async attachWhatsAppWindows(
+    scope: { environmentId: string; organizationId: string },
+    integrations: IntegrationEntity[],
+    targets: ReachableHumanTarget[]
+  ): Promise<void> {
+    const byIntegration = new Map<string, ReachableHumanTarget[]>();
+    for (const target of targets) {
+      if (target.via === HumanChannelViaEnum.WHATSAPP) {
+        byIntegration.set(target.integrationIdentifier, [
+          ...(byIntegration.get(target.integrationIdentifier) ?? []),
+          target,
+        ]);
+      }
+    }
+
+    for (const [identifier, onIntegration] of byIntegration) {
+      const integration = integrations.find((candidate) => candidate.identifier === identifier);
+      if (!integration) {
+        continue;
+      }
+
+      const windows = await this.whatsAppWindow.describeMany(
+        scope,
+        integration,
+        onIntegration.map((target) => ({
+          waId: target.platformUserId,
+          provedAt: target.lastCodeAt ?? target.connectedAt,
+        }))
+      );
+      for (const target of onIntegration) {
+        target.window = windows.get(target.platformUserId);
+      }
+    }
   }
 
   /** Same rules as {@link tryResolveTarget}, over rows that were loaded up front. */
@@ -698,6 +892,7 @@ export class HumanDeliveryService {
     }
 
     const handle = readContactHandle(endpoint.endpoint);
+    const lastCodeAt = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberLastCodeAtOf(endpoint) : undefined;
 
     return {
       via,
@@ -706,6 +901,7 @@ export class HumanDeliveryService {
       integrationIdentifier,
       // A WhatsApp number connected when it was proved, which can be later than the endpoint when it moved owners.
       connectedAt: (endpoint.type === ENDPOINT_TYPES.PHONE && whatsAppNumberProvedAtOf(endpoint)) || endpoint.createdAt,
+      ...(lastCodeAt ? { lastCodeAt } : {}),
       ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }
@@ -798,8 +994,13 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
     // Only a number someone proved with a wa.me code: a `phone` endpoint on WhatsApp Business that carries the
     // proof. The channel-endpoints API writes `phone` endpoints too, for SMS and on any integration, and those
     // can't carry it, so they never count as WhatsApp.
-    case ENDPOINT_TYPES.PHONE:
-      return provedWhatsAppNumberOf(endpoint);
+    // Addressed by wa_id, the number's digits: that is how WhatsApp names the person, and how the threads of
+    // their own messages are keyed, so a DM and their reply land in the same conversation.
+    case ENDPOINT_TYPES.PHONE: {
+      const phoneNumber = provedWhatsAppNumberOf(endpoint);
+
+      return phoneNumber ? normalizePhoneForMeta(phoneNumber) : undefined;
+    }
     default:
       return undefined;
   }

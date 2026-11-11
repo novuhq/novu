@@ -8,6 +8,22 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
  */
 export const WHATSAPP_NUMBER_PROVED_AT_FIELD = 'provedAt';
 
+/**
+ * When the number last sent a code message, whatever became of the code: an old wa.me link sent again, or a code
+ * that had run out. Those messages are answered and never stored, but each one opened WhatsApp's 24-hour window.
+ */
+export const WHATSAPP_NUMBER_LAST_CODE_AT_FIELD = 'lastCodeAt';
+
+/** The last time the number wrote a code message, proving it or not: a start of WhatsApp's 24-hour window. */
+export function whatsAppNumberLastCodeAtOf(endpoint: Pick<ChannelEndpointEntity, 'endpoint'>): string | undefined {
+  const data = endpoint.endpoint as Record<string, unknown>;
+  const times = [data[WHATSAPP_NUMBER_PROVED_AT_FIELD], data[WHATSAPP_NUMBER_LAST_CODE_AT_FIELD]].filter(
+    (time): time is string => typeof time === 'string' && Number.isFinite(Date.parse(time))
+  );
+
+  return times.sort((a, b) => Date.parse(b) - Date.parse(a))[0];
+}
+
 /** When the number on a `phone` endpoint proved itself, which is when its owner connected WhatsApp. */
 export function whatsAppNumberProvedAtOf(endpoint: Pick<ChannelEndpointEntity, 'endpoint'>): string | undefined {
   const provedAt = (endpoint.endpoint as Record<string, unknown>)[WHATSAPP_NUMBER_PROVED_AT_FIELD];

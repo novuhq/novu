@@ -169,6 +169,11 @@ export function describeContactHandle(
     };
   }
 
+  // WhatsApp: the name they gave their profile, never their number.
+  if (via === HumanChannelViaEnum.WHATSAPP) {
+    return handle?.displayName ? { handle: handle.displayName } : {};
+  }
+
   return {};
 }
 
