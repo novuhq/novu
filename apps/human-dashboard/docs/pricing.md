@@ -34,4 +34,37 @@ The final production build, typecheck, 176 unit tests and all 187 Chromium brows
 
 Manual browser checks follow Hobby and Pro into the existing sign-in flow, open the Enterprise meeting page, exercise the comparison link and FAQ, and open/close the mobile menu. No account or booking was created. The production preview must use `localhost` to match the configured development auth origin.
 
-`/pricing` is registered in page metadata, the sitemap and the Markdown-request route allowlist. The shared landing footer links to pricing; its existing header/footer navigation arrays are unchanged. All existing browser consumers pass their regressions. [Production overview](screenshots/pricing.png) is retained for PR review. Pricing verification uses local Chromium; the older channel/agent BrowserStack and exact Figma audits do not cover this new page.
+`/pricing` is registered in page metadata, the sitemap and the Markdown-request route allowlist. The shared landing footer links to pricing; its existing header/footer navigation arrays are unchanged. All existing browser consumers pass their regressions. [Production overview](screenshots/pricing.png) is retained for PR review. The older channel/agent exact Figma audits do not cover this new page.
+
+## Final desktop and mobile QA (November 11, 2026)
+
+Pricing source `808654bc8` passes the BrowserStack core matrix: six desktop rows
+across Windows Chrome, Edge and Firefox and macOS Chrome and Safari; real iPhone
+17/iOS 26 and iPhone 13/iOS 18 Safari; OnePlus 13R/Android 15 Chrome; and Galaxy
+S25/Android 15 Samsung Internet. OnePlus replaces the unavailable Galaxy A16 5G.
+All 150 assertions pass, covering the confirmed prices and comparison values,
+responsive layout, fonts/graphics, menu and keyboard focus, all four FAQs,
+comparison navigation and account/demo destinations. No account or booking was
+created. No product defect was reproduced and no application change was needed.
+
+Every row has a verified complete full-page baseline. Thirty-four readable
+composites cover 50 overlapping source ranges through the footer. Chrome/Edge
+use native CDP captures and Firefox its native full-page command. Safari/mobile
+use measured native scroll stitching; the iPhone 17 content origin was corrected
+against the original SVG logo before reconstruction and final review.
+
+Pricing has no large raster illustrations. Both brand marks, the Novu gradient
+mark, comparison icons, menu/close icons, FAQ plus/minus states and corner
+squares/rails were inspected. No missing, stretched, clipped or unexpectedly
+blurry graphics were found. Vercel's floating preview badge is recorded
+separately from application artwork.
+
+The [BrowserStack build](https://automate.browserstack.com/builds/f3bcc30c7070d784bc37a4242876de7ceb5a89ed)
+also retains earlier harness-only attempts. Representative final passing sessions:
+[Windows Chrome](https://automate.browserstack.com/builds/f3bcc30c7070d784bc37a4242876de7ceb5a89ed/sessions/af1ea7bde556d8a09e72be21bc58cde95da68942),
+[iPhone Safari](https://automate.browserstack.com/builds/f3bcc30c7070d784bc37a4242876de7ceb5a89ed/sessions/b5242b4cc37fba67779473598e765adb37fce490),
+and [Samsung Internet](https://automate.browserstack.com/builds/f3bcc30c7070d784bc37a4242876de7ceb5a89ed/sessions/47936e00f37c6b4184511fe4bfd468500ee4ef50).
+This is template-consistency QA, not exact pricing Figma parity, a formal WCAG
+audit or an authenticated billing test. Native captures, the review manifest,
+calibration, diagnostic summaries and the credential-free harness are retained
+in the local project QA archive under `docs/qa/pricing-final-20261111/`.
