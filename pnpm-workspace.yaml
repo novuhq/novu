@@ -482,7 +482,17 @@ overrides:
   # apps/agent-inbox-mcp > @modelcontextprotocol/sdk > express-rate-limit)
   # pick up the fix.
   ip-address@<10.7.4: ^10.7.4
-  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  # GHSA-pcrw-h46h-c93h (critical): mongoose Model.$where search-injection
+  # that can be abused when user input reaches `$where`. Patched in 8.24.3.
+  # GHSA-gg4r-jv3p-qx3c (high) / GHSA-8332-j7wj-wjw4 (high) /
+  # GHSA-wr5m-5jph-8m96 (moderate) / GHSA-6972-9mcm-vhwj (moderate): additional
+  # search / prototype-pollution / NoSQL-injection advisories in mongoose
+  # Model and Query APIs. All patched in 8.24.7 (patch bump within the 8.24.x
+  # line). Widen the previous `<8.24.1` floor so transitive consumers
+  # (@nestjs/terminus across apps/api, apps/worker, apps/webhook, apps/ws)
+  # and the enterprise auth package pick up the fix. enterprise/packages/auth
+  # declares `mongoose: ^8.22.1`, which semver-allows 8.24.x.
+  mongoose@>=8.0.0 <8.24.8: ^8.24.8
   newrelic: 13.19.2
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
