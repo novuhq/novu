@@ -1,14 +1,15 @@
 import Link from 'next/link';
 
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { AGENTS, CHANNEL_AGENTS, CHANNELS, type ChannelId } from '@/data/channel-pages';
+import { AGENTS, type AgentId, type ChannelId, relatedAgents } from '@/data/channel-pages';
 
 import { LandingHeading, LandingMark } from './shared';
 
-export function AgentCards({ channel }: { channel: ChannelId }) {
+/** Every agent's card; on an agent page, every agent but that one. */
+export function AgentCards({ channel, exclude }: { channel: ChannelId; exclude?: AgentId }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {CHANNEL_AGENTS[channel].map((agent) => (
+      {relatedAgents(exclude).map((agent) => (
         <Link
           key={agent}
           href={`/${channel}/${agent}`}
@@ -34,12 +35,12 @@ export function AgentsSection({ channel }: { channel: ChannelId }) {
         descriptionClassName="max-w-95"
         lead="Works with"
         accent="your agent"
-        description={`Any agent that can run a shell command can use Agent Inbox. These have step-by-step ${CHANNELS[channel].name} guides.`}
+        description="Pick your agent for setup steps and prompts written for it."
       />
       <div>
         <AgentCards channel={channel} />
         <p className="mt-7 flex flex-wrap gap-3 font-sapien-mono text-[13px] leading-none tracking-tight text-sapien-foreground/50">
-          Don’t see yours?
+          Using another agent?
           <Link href="/agents.md" className="text-accent hover:underline">
             Read the CLI docs →
           </Link>

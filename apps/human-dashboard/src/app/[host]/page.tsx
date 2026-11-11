@@ -14,7 +14,7 @@ import { LandingShell } from '@/components/pages/channels/shared';
 import { ChannelUseCases } from '@/components/pages/channels/use-cases';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
 import { CHANNEL_IDS, isChannelId } from '@/data/channel-pages';
-import { channelLandingContent, channelLandingMetadata } from '@/lib/channel-landing';
+import { channelLandingContent, channelLandingMetadata, channelLandingNodes } from '@/lib/channel-landing';
 import { hostPageContent, hostPageMetadata } from '@/lib/host-seo';
 import { HOST_IDS, hostOf, isHostId } from '@/lib/hosts';
 
@@ -41,7 +41,7 @@ export default async function Page(props: PageProps<'/[host]'>) {
   if (isChannelId(host)) {
     return (
       <LandingShell>
-        <SiteStructuredData content={channelLandingContent(host)} />
+        <SiteStructuredData content={channelLandingContent(host)} nodes={channelLandingNodes(host)} />
         <ChannelHero channel={host} />
         <ChannelFeatures channel={host} />
         <ChannelSetup channel={host} />

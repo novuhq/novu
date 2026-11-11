@@ -98,7 +98,7 @@ describe('markdown 404', () => {
       expect(servesAppResource(`${route}/`), route).toBe(true);
       expect(servesAppResource(`${route}.md`), route).toBe(false);
     }
-    for (const route of ['/email/codex', '/telegram/cursor', '/unknown/openclaw', '/telegram/openclaw/missing']) {
+    for (const route of ['/email/general', '/telegram/unknown', '/unknown/openclaw', '/telegram/openclaw/missing']) {
       expect(servesAppResource(route), route).toBe(false);
     }
   });

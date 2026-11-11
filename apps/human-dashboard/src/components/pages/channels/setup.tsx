@@ -5,13 +5,23 @@ import { useEffect, useState } from 'react';
 import { CopyButton } from '@/components/sapien/copy-button';
 import { SectionFrame } from '@/components/sapien/section-frame';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/sapien/tabs';
-import { AGENTS, type AgentId, CHANNELS, type ChannelId, setupSteps } from '@/data/channel-pages';
+import {
+  type AgentId,
+  agentPage,
+  type ChannelId,
+  channelHub,
+  codeLines,
+  copyText,
+  plain,
+  setupSubject,
+} from '@/data/channel-pages';
 import { cn } from '@/lib/utils';
 
 import { LandingHeading } from './shared';
 
 export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: AgentId }) {
-  const steps = setupSteps(channel, agent);
+  const page = agent ? agentPage(channel, agent) : undefined;
+  const steps = page ? page.steps : channelHub(channel).steps;
   const [active, setActive] = useState('0');
   const [paused, setPaused] = useState(false);
   useEffect(() => {
@@ -38,13 +48,9 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
       className={cn('flex flex-col gap-12 px-4 py-20 md:gap-20 md:px-8 md:py-30', agent && 'mb-0')}
     >
       <LandingHeading
-        lead={agent ? `Connect ${AGENTS[agent].name}` : 'Set up in'}
+        lead={agent ? `Connect ${setupSubject(agent)}` : 'Set up in'}
         accent={agent ? 'in four steps' : 'three steps'}
-        description={
-          agent
-            ? `The steps change per agent. These are for ${AGENTS[agent].name}; the ${CHANNELS[channel].name} part is the same everywhere.`
-            : `From zero to a ${CHANNELS[channel].noun} your agent can talk through, in about a minute.`
-        }
+        description={page ? plain(page.setupIntro) : undefined}
       />
       <Tabs
         value={active}
@@ -79,7 +85,7 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
               >
                 <span className="min-h-0 overflow-hidden">
                   <span className="block pt-2.5 pl-8 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
-                    {step.description}
+                    {plain(step.description)}
                   </span>
                 </span>
               </span>
@@ -112,15 +118,23 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
             >
               <div className="flex items-start justify-between gap-3">
                 <pre className="min-w-0 whitespace-pre-wrap break-words font-sapien-mono text-[13px] leading-5 tracking-tight text-sapien-foreground/70">
-                  <span className="text-accent">$ </span>
-                  {step.command}
+                  {step.code
+                    ? codeLines(step.code).map((line, lineIndex) => (
+                        <span key={lineIndex} className="block">
+                          {line.prompt && <span className="text-accent">$ </span>}
+                          {line.text}
+                        </span>
+                      ))
+                    : plain(step.description)}
                 </pre>
-                <CopyButton
-                  text={step.command}
-                  className="shrink-0 rounded bg-sapien-surface px-2 py-1 font-sapien-mono text-[11px]"
-                >
-                  Copy
-                </CopyButton>
+                {step.code && (
+                  <CopyButton
+                    text={copyText(step.code)}
+                    className="shrink-0 rounded bg-sapien-surface px-2 py-1 font-sapien-mono text-[11px]"
+                  >
+                    Copy
+                  </CopyButton>
+                )}
               </div>
               <pre className="mt-12 whitespace-pre-wrap font-sapien-mono text-xs leading-5 text-sapien-foreground/50">
                 {step.output}

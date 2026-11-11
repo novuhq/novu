@@ -1,5 +1,5 @@
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { CHANNELS, type ChannelId, USE_CASES } from '@/data/channel-pages';
+import { type ChannelId, channelHub } from '@/data/channel-pages';
 import { landingAudit } from './audit-attributes';
 
 import { LandingHeading } from './shared';
@@ -8,18 +8,10 @@ export function ChannelUseCases({ channel }: { channel: ChannelId }) {
   return (
     <SectionFrame anchor="use-cases" auditId="use-cases" className="pt-20 md:pt-30">
       <div className="px-4 pb-14 md:px-8">
-        <LandingHeading
-          lead="What people"
-          accent="build with it"
-          description={
-            channel === 'telegram'
-              ? 'A few patterns teams run on Telegram today. Each one is a single command away.'
-              : `A few patterns for your agent ${CHANNELS[channel].location}. Each one is a single command away.`
-          }
-        />
+        <LandingHeading lead="What people" accent="build with it" />
       </div>
       <div className="grid md:grid-cols-2">
-        {USE_CASES.map((item, index) => (
+        {channelHub(channel).useCases.map((item, index) => (
           <article
             key={item.label}
             className="flex min-h-53.25 min-w-0 flex-col items-start border-t border-r border-sapien-border p-7 md:even:border-r-0 md:[&:nth-child(n+3)]:-mt-px md:[&:nth-child(n+3)]:min-h-56.25"

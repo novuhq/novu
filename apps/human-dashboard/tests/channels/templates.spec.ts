@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { agentPagePairs, CHANNEL_IDS } from '../../src/data/channel-pages';
+import {
+  agentPage,
+  agentPagePairs,
+  CHANNEL_IDS,
+  channelHub,
+  isAgentId,
+  isChannelId,
+} from '../../src/data/channel-pages';
 
 const routes = [
   ...CHANNEL_IDS.map((channel) => `/${channel}`),
@@ -20,7 +27,16 @@ for (const route of routes) {
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page.locator('main > section')).toHaveCount(route.split('/').length === 3 ? 7 : 10);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://www.agentinbox.md${route}`);
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Agent Inbox|agent/);
+    const [, channel, agent] = route.split('/');
+    if (!isChannelId(channel)) throw new Error(`Unexpected route ${route}`);
+    const copy = agent && isAgentId(agent) ? agentPage(channel, agent) : channelHub(channel);
+    await expect(page).toHaveTitle(copy.metaTitle);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', copy.metaDescription);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', copy.metaTitle);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', copy.metaDescription);
+    const jsonLd = await page.locator('script[type="application/ld+json"]').first().textContent();
+    expect(jsonLd).toContain('"FAQPage"');
+    if (agent) expect(jsonLd).toContain('"BreadcrumbList"');
     await page.evaluate(async () => {
       await document.fonts.ready;
       for (const image of document.images) image.loading = 'eager';
@@ -44,7 +60,7 @@ for (const route of routes) {
   });
 }
 
-for (const route of ['/email/codex', '/telegram/cursor', '/slack/hermes', '/unknown/openclaw']) {
+for (const route of ['/email/general', '/telegram/unknown', '/slack/claude-code/extra', '/unknown/openclaw']) {
   test(`rejects unsupported pair ${route}`, async ({ page }) => {
     expect((await page.goto(route))?.status()).toBe(404);
   });
@@ -56,15 +72,15 @@ test('setup and message tabs work with keyboard and update the active content', 
   const setup = page.locator('#setup');
   await setup.getByRole('tab').first().focus();
   await page.keyboard.press('ArrowDown');
-  await expect(setup.getByRole('tabpanel')).toContainText('npx @agentinbox/cli setup telegram');
+  await expect(setup.getByRole('tabpanel')).toContainText('agentinbox setup telegram');
   await expect(setup.getByRole('button', { name: 'Play setup walkthrough' })).toBeVisible();
   const messages = page.locator('#message-types');
   await expect(messages.getByRole('tab', { name: 'Approve', exact: true })).toHaveAttribute('aria-selected', 'true');
   await messages.getByRole('tab', { name: 'Choose', exact: true }).click();
-  await expect(messages.getByRole('tabpanel')).toContainText('Which table?');
+  await expect(messages.getByRole('tabpanel')).toContainText('Where should we eat?');
   await page.keyboard.press('ArrowRight');
   await expect(messages.getByRole('tab', { name: 'Tell', exact: true })).toHaveAttribute('aria-selected', 'true');
-  await expect(messages.getByRole('tabpanel')).toContainText('Nightly scrape done');
+  await expect(messages.getByRole('tabpanel')).toContainText('Scrape finished');
 });
 
 test('copies the selected channel command and agent prompt', async ({ page, context }) => {
@@ -72,7 +88,9 @@ test('copies the selected channel command and agent prompt', async ({ page, cont
   await page.goto('/slack/codex');
   const hero = page.locator('#overview');
   await hero.getByRole('button', { name: 'Copy command', exact: true }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npx @agentinbox/cli setup slack');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    'codex plugin marketplace add agentinboxhq/skills'
+  );
   await hero.getByRole('button', { name: 'Copy Prompt', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Set up Agent Inbox for Codex in Slack');
 });
@@ -91,7 +109,7 @@ test('FAQ and carousel respond to keyboard and buttons', async ({ page }) => {
   await track.focus();
   await page.keyboard.press('ArrowLeft');
   await expect.poll(() => track.evaluate((node) => node.scrollLeft)).toBeLessThanOrEqual(1);
-  await expect(page.locator('#get-started').getByRole('link', { name: 'Email →', exact: true })).toHaveAttribute(
+  await expect(page.locator('#get-started').getByRole('link', { name: 'Email', exact: true })).toHaveAttribute(
     'href',
     '/email/openclaw'
   );

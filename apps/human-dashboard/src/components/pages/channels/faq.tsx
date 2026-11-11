@@ -1,11 +1,11 @@
 import { FaqRow } from '@/components/sapien/faq';
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { type AgentId, agentFaq, type ChannelId, channelFaq } from '@/data/channel-pages';
+import { type AgentId, type ChannelId, pageFaq } from '@/data/channel-pages';
 import { cn } from '@/lib/utils';
 import { landingAudit } from './audit-attributes';
 
 export function ChannelFaq({ channel, agent }: { channel: ChannelId; agent?: AgentId }) {
-  const items = agent ? agentFaq(channel, agent) : channelFaq(channel);
+  const items = pageFaq(channel, agent);
   return (
     <SectionFrame
       anchor="faq"

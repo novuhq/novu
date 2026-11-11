@@ -1,9 +1,19 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Fragment } from 'react';
 
 import { DisplayAccent } from '@/components/sapien/section-eyebrow';
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { AGENTS, type AgentId, CHANNELS, type ChannelId, otherAgentChannels } from '@/data/channel-pages';
+import {
+  AGENTS,
+  type AgentId,
+  agentPage,
+  CHANNELS,
+  type ChannelId,
+  channelResources,
+  otherAgentChannels,
+  setupCommand,
+} from '@/data/channel-pages';
 
 import { cn } from '@/lib/utils';
 
@@ -23,7 +33,7 @@ export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?:
           <h2 className="flex flex-col gap-2 text-[34px] leading-[1.125] tracking-[-0.04em] md:text-[40px]">
             <span>Give your agent</span>
             <span className="flex flex-wrap items-baseline gap-x-3 md:h-[47px] lg:flex-nowrap">
-              <span className="whitespace-nowrap">a {CHANNELS[channel].noun}.</span>
+              <span className="whitespace-nowrap">{CHANNELS[channel].ctaNoun}.</span>
               <DisplayAccent className="text-[44px] leading-none [text-box-edge:cap_alphabetic] [text-box-trim:trim-both] md:text-[56px]">
                 Today
               </DisplayAccent>
@@ -33,7 +43,12 @@ export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?:
             Free for 100 conversations a month. No credit card required.
           </p>
           <div className="mt-8">
-            <LandingActions channel={channel} agent={agent} stacked />
+            <LandingActions
+              channel={channel}
+              agent={agent}
+              command={agent ? agentPage(channel, agent).cta : setupCommand(channel)}
+              stacked
+            />
           </div>
         </div>
         <div className="relative mx-auto flex h-65.5 w-full max-w-90 items-center overflow-hidden rounded-[14px] border border-sapien-surface bg-black">
@@ -57,16 +72,21 @@ export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?:
       </div>
       {agent ? (
         <div className="min-w-0">
-          <AgentCards channel={channel} />
+          <AgentCards channel={channel} exclude={agent} />
           <p className="mt-7 flex flex-wrap gap-4 font-sapien-mono text-[13px] leading-none tracking-tight text-sapien-foreground/50">
             {related.length > 0 ? (
               <>
                 <span>{AGENTS[agent].name} on other channels:</span>
-                {related.map((id) => (
-                  <Link key={id} href={`/${id}/${agent}`} className="text-accent hover:underline">
-                    {CHANNELS[id].name} →
-                  </Link>
-                ))}
+                <span>
+                  {related.map((id, index) => (
+                    <Fragment key={id}>
+                      {index > 0 && ' · '}
+                      <Link href={`/${id}/${agent}`} className="text-accent hover:underline">
+                        {CHANNELS[id].name}
+                      </Link>
+                    </Fragment>
+                  ))}
+                </span>
               </>
             ) : (
               <Link href={`/${channel}`} className="text-accent hover:underline">
@@ -81,36 +101,7 @@ export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?:
 }
 
 export function ChannelResources({ channel }: { channel: ChannelId }) {
-  const items = [
-    {
-      label: 'docs',
-      title: `${CHANNELS[channel].name} channel docs`,
-      description: `Bots, invites, buttons and limits ${CHANNELS[channel].location}.`,
-      readingTime: '8 min read',
-      href: `/${channel}#setup`,
-    },
-    {
-      label: 'docs',
-      title: 'CLI reference',
-      description: 'Every command for ask, approve, choose and tell.',
-      readingTime: '8 min read',
-      href: '/agents.md',
-    },
-    {
-      label: 'blog',
-      title: 'How to build a human-in-the-loop AI agent',
-      description: 'A step-by-step guide with approvals over chat.',
-      readingTime: '8 min read',
-      href: '/sapien#building-blocks',
-    },
-    {
-      label: 'blog',
-      title: 'Agent Inbox vs AgentMail',
-      description: 'How the two inboxes for agents compare.',
-      readingTime: '5 min read',
-      href: `/${channel}#agents`,
-    },
-  ];
+  const items = channelResources(channel);
   return (
     <SectionFrame anchor="resources" auditId="resources" className="pb-20">
       <div className="grid sm:grid-cols-2 md:grid-cols-4">
@@ -127,12 +118,6 @@ export function ChannelResources({ channel }: { channel: ChannelId }) {
             <p className="mt-2 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
               {item.description}
             </p>
-            <span
-              aria-hidden="true"
-              className="mt-auto pt-5 font-sapien-mono text-[11px] leading-none tracking-tight text-sapien-foreground/50"
-            >
-              {item.readingTime}
-            </span>
           </Link>
         ))}
       </div>

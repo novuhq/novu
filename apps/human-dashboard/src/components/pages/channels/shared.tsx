@@ -7,7 +7,15 @@ import { CopyCommand } from '@/components/sapien/copy-command';
 import { DisplayAccent } from '@/components/sapien/section-eyebrow';
 import { SiteFooter } from '@/components/sapien/site-footer';
 import { SiteHeader } from '@/components/sapien/site-header';
-import { AGENTS, type AgentId, CHANNELS, type ChannelId, setupCommand, setupPrompt } from '@/data/channel-pages';
+import {
+  AGENTS,
+  type AgentId,
+  CHANNELS,
+  type ChannelId,
+  isAgentId,
+  isShellCommand,
+  setupPrompt,
+} from '@/data/channel-pages';
 import { NAVIGATION } from '@/data/sapien';
 import { geistMono, inter, redaction } from '@/lib/sapien-fonts';
 import { cn } from '@/lib/utils';
@@ -92,10 +100,13 @@ export function LandingHeading({
 export function LandingActions({
   channel,
   agent,
+  command,
   stacked = false,
 }: {
   channel: ChannelId;
   agent?: AgentId;
+  /** The page's hero or CTA code: a CLI command, a plugin command, an MCP address or a prompt. */
+  command: string;
   stacked?: boolean;
 }) {
   return (
@@ -106,7 +117,8 @@ export function LandingActions({
       )}
     >
       <CopyCommand
-        command={setupCommand(channel)}
+        command={command}
+        prompt={isShellCommand(command)}
         label={`Copy ${CHANNELS[channel].name} setup command`}
         variant="icon"
         className={cn('min-w-0 w-full sm:w-94', stacked && 'sm:w-full')}
@@ -125,13 +137,14 @@ export function LandingActions({
 }
 
 export function LandingMark({ name, size = 24 }: { name: ChannelId | AgentId | string; size?: number }) {
+  const icon = isAgentId(name) ? AGENTS[name].icon : undefined;
   return (
     <Image
-      src={`/images/landing/${name}.svg`}
+      src={icon?.src ?? `/images/landing/${name}.svg`}
       width={size}
       height={size}
       alt=""
-      className="shrink-0 object-contain"
+      className={cn('shrink-0 object-contain', icon?.invert && 'invert')}
       unoptimized
     />
   );

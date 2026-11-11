@@ -1,7 +1,16 @@
 import Image from 'next/image';
 import { DisplayAccent } from '@/components/sapien/section-eyebrow';
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { AGENTS, type AgentId, CHANNELS, type ChannelId } from '@/data/channel-pages';
+import {
+  type AgentId,
+  agentHeading,
+  agentPage,
+  CHANNELS,
+  type ChannelId,
+  channelHub,
+  plain,
+  setupCommand,
+} from '@/data/channel-pages';
 import { cn } from '@/lib/utils';
 import { landingAudit } from './audit-attributes';
 
@@ -9,7 +18,11 @@ import { Breadcrumbs, LandingActions, LandingMark } from './shared';
 
 export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: AgentId }) {
   const details = CHANNELS[channel];
-  const name = agent ? AGENTS[agent].name : undefined;
+  const page = agent ? agentPage(channel, agent) : undefined;
+  const hub = channelHub(channel);
+  const heading = agent
+    ? agentHeading(channel, agent)
+    : { lead: 'Give your AI agent', accent: `its own ${details.noun}` };
   return (
     <SectionFrame
       anchor="overview"
@@ -37,10 +50,10 @@ export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: Ag
           data-prime-audit-role="heading"
         >
           <span {...landingAudit('hero-lead', 'overview', 'text', 'heading')} className="text-sapien-foreground/70">
-            {name ? `Connect ${name}` : 'Give your AI agent'}
+            {heading.lead}
           </span>
           <DisplayAccent className="block text-[42px] leading-none [text-box-edge:cap_alphabetic] [text-box-trim:trim-both] md:h-[39px] md:text-[56px]">
-            {name ? `to ${details.name}` : `its own ${details.noun}`}
+            {heading.accent}
           </DisplayAccent>
         </h1>
         <p
@@ -50,12 +63,10 @@ export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: Ag
             agent && 'max-w-140'
           )}
         >
-          {name
-            ? `${name} runs your errands. With Agent Inbox, it checks with you ${details.location} and gets your answer in one tap.`
-            : details.description}
+          {plain(page ? page.intro : hub.subhead)}
         </p>
         <div className="w-full max-w-134.75">
-          <LandingActions channel={channel} agent={agent} />
+          <LandingActions channel={channel} agent={agent} command={page ? page.hero : setupCommand(channel)} />
         </div>
       </div>
       <div
@@ -99,11 +110,7 @@ export function ChannelHero({ channel, agent }: { channel: ChannelId; agent?: Ag
             src={`/images/landing/hero-${agent ? 'openclaw' : 'telegram'}.jpg`}
             width={agent ? 876 : 906}
             height={agent ? 808 : 924}
-            alt={
-              agent
-                ? 'An agent offers flight options, receives a choice, and confirms the booking.'
-                : 'An agent requests refund approval, receives an answer, and sends a receipt.'
-            }
+            alt={page ? page.heroAlt : hub.heroAlt}
             className="block h-auto w-full"
             preload
             unoptimized

@@ -2,19 +2,19 @@ import { expect, test } from '@playwright/test';
 
 import { agentPagePairs, CHANNEL_IDS } from '../../src/data/channel-pages';
 
-test('Markdown-preferring agents can open all eleven landing routes', async ({ request }) => {
+test('Markdown-preferring agents can open all thirty-three landing routes', async ({ request }) => {
   const routes = [
     ...CHANNEL_IDS.map((channel) => `/${channel}`),
     ...agentPagePairs().map(({ channel, agent }) => `/${channel}/${agent}`),
   ];
-  expect(routes).toHaveLength(11);
+  expect(routes).toHaveLength(33);
   for (const route of routes) {
     const response = await request.get(route, { headers: { accept: 'text/markdown, text/html;q=0.9' } });
     expect(response.status(), route).toBe(200);
     expect(response.headers()['content-type'], route).toContain('text/html');
     expect(await response.text(), route).toContain('Agent Inbox');
   }
-  for (const route of ['/email/codex', '/telegram/cursor', '/unknown/openclaw', '/telegram.md']) {
+  for (const route of ['/email/general', '/telegram/unknown', '/unknown/openclaw', '/telegram.md']) {
     const response = await request.get(route, { headers: { accept: 'text/markdown, text/html;q=0.9' } });
     expect(response.status(), route).toBe(404);
     expect(response.headers()['content-type'], route).toContain('text/markdown');
@@ -35,7 +35,7 @@ for (const route of ['/telegram', '/telegram/openclaw']) {
     const panel = setup.getByRole('tabpanel');
     await panel.getByRole('button', { name: 'Copy', exact: true }).click();
     await expect(setup.getByRole('button', { name: 'Play setup walkthrough' })).toBeVisible();
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npx @agentinbox/cli setup telegram');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('agentinbox setup telegram');
     await page.clock.runFor(30_000);
     await expect(setup.getByRole('tab').nth(1)).toHaveAttribute('aria-selected', 'true');
     await setup.getByRole('button', { name: 'Play setup walkthrough' }).click();

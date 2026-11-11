@@ -1,35 +1,13 @@
 import Link from 'next/link';
 
 import { SectionFrame } from '@/components/sapien/section-frame';
-import { AGENTS, type AgentId, CHANNELS, type ChannelId } from '@/data/channel-pages';
+import { CAPABILITIES, CHANNELS, type ChannelId, channelHub } from '@/data/channel-pages';
 
 import { LandingHeading, LandingMark } from './shared';
 
 export function ReachSection({ channel }: { channel: ChannelId }) {
-  const items = [
-    {
-      title: 'Contacts',
-      description: 'Everyone your agent can message, in one directory.',
-      command: 'agentinbox contact list',
-      icon: 'reach-3',
-    },
-    {
-      title: 'Invites',
-      description: `Link a teammate’s ${CHANNELS[channel].name} with a one-time link.`,
-      command: `agentinbox contact invite maya --via ${channel}`,
-      icon: 'reach-2',
-    },
-    {
-      title: 'Screening',
-      description: 'Messages from strangers wait for your OK before the agent sees them.',
-      icon: 'reach-1',
-    },
-    {
-      title: 'Pause',
-      description: 'Mute the bot for one person or for everyone, and resume any time.',
-      icon: 'reach-0',
-    },
-  ];
+  const icons = ['reach-3', 'reach-2', 'reach-1', 'reach-0'];
+  const items = channelHub(channel).reach.map((item, index) => ({ ...item, icon: icons[index] }));
   return (
     <SectionFrame
       anchor="who-can-reach"
@@ -38,10 +16,6 @@ export function ReachSection({ channel }: { channel: ChannelId }) {
     >
       <div>
         <LandingHeading lead="Who can" accent="reach your agent" />
-        <p className="mt-6 max-w-95 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
-          You decide who gets through. People you add can message your agent; everyone else waits in screening until you
-          let them in.
-        </p>
       </div>
       <div className="overflow-hidden rounded-[14px] border border-sapien-border">
         {items.map((item) => (
@@ -65,7 +39,7 @@ export function ReachSection({ channel }: { channel: ChannelId }) {
                   href="/configure"
                   className="mt-3 block rounded bg-sapien-border px-2.5 py-1.5 font-sapien-mono text-xs leading-3 text-sapien-foreground/50 hover:text-accent"
                 >
-                  set on agentinbox.md
+                  Configure on agentinbox.md →
                 </Link>
               )}
             </div>
@@ -76,15 +50,7 @@ export function ReachSection({ channel }: { channel: ChannelId }) {
   );
 }
 
-const CAPABILITIES = [
-  ['ask', 'Ask a question and get a typed reply'],
-  ['choose', 'Offer options as tap-to-answer buttons'],
-  ['tell', 'Send status updates without waiting'],
-  ['invite', 'Bring teammates into the same bot'],
-  ['screen', 'Keep strangers out with screening'],
-] as const;
-
-export function MoreCapabilities({ channel, agent }: { channel: ChannelId; agent: AgentId }) {
+export function MoreCapabilities({ channel }: { channel: ChannelId }) {
   return (
     <SectionFrame
       anchor="more-features"
@@ -94,14 +60,14 @@ export function MoreCapabilities({ channel, agent }: { channel: ChannelId; agent
       <div>
         <LandingHeading lead="What else" accent="it can do" />
         <p className="mt-6 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
-          Everything Agent Inbox does {CHANNELS[channel].location} works with {AGENTS[agent].name}.
+          Everything your agent gets on {CHANNELS[channel].name}.
         </p>
       </div>
       <div className="flex min-w-0 flex-col border-t border-sapien-border">
-        {CAPABILITIES.map(([key, label]) => (
+        {CAPABILITIES.map(({ label: key, description: label, anchor }) => (
           <Link
             key={key}
-            href={`/${channel}#${key === 'invite' || key === 'screen' ? 'who-can-reach' : 'message-types'}`}
+            href={`/${channel}#${anchor}`}
             className="group flex min-h-14 items-center gap-4 border-b border-sapien-border py-4.5 text-lg leading-none tracking-tight hover:text-accent"
           >
             <span className="w-14 shrink-0 font-sapien-mono text-[11px] text-sapien-foreground/50">{key}</span>
