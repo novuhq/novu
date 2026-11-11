@@ -13,8 +13,9 @@ import { Fold } from '@/components/ui/stepper';
 import { Table, TableBody, TableHead, TableHeaderCell } from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
-import type { Contact, ContactChannelVia } from '@/lib/human-contacts-api';
+import type { Contact, ContactChannel, ContactChannelVia } from '@/lib/human-contacts-api';
 import { cn } from '@/lib/utils';
+import { describeWhatsAppWindow } from '@/lib/whatsapp-window';
 import { Switch } from '../configure/agent-settings';
 import { ChannelLogo } from '../configure/channel-logo';
 import { removeContactAction, setListenToAction } from './actions';
@@ -31,8 +32,16 @@ const FOLD_MS = 300;
 export const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
   telegram: 'Telegram',
   slack: 'Slack',
+  whatsapp: 'WhatsApp',
   email: 'Email',
 };
+
+/** A channel's logo label: its name, and for WhatsApp whether its 24-hour window lets a message through now. */
+function channelLabel(channel: ContactChannel): string {
+  return channel.window
+    ? `${CHANNEL_NAMES[channel.via]} · ${describeWhatsAppWindow(channel.window).label}`
+    : CHANNEL_NAMES[channel.via];
+}
 
 /**
  * The design's columns: Person 276, Email 200, Channels 240, Status 140, Added 100 and the actions 130,
@@ -322,7 +331,14 @@ function ContactRow({ contact, agentHandle, appearing, leaving, onOpenCard, onRe
       {cell(
         COLUMNS.channels,
         contact.channels.map((channel) => (
-          <span key={channel.via} role="img" aria-label={CHANNEL_NAMES[channel.via]} title={CHANNEL_NAMES[channel.via]}>
+          <span
+            key={channel.via}
+            role="img"
+            aria-label={channelLabel(channel)}
+            title={channelLabel(channel)}
+            // WhatsApp fades while its window is shut: it can't be written to until they write again.
+            className={cn(channel.window && !describeWhatsAppWindow(channel.window).open && 'opacity-50')}
+          >
             <ChannelLogo via={channel.via} size={16} />
           </span>
         )),

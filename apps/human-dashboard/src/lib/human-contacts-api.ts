@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { HumanAccount } from './human-account';
 import { requestForAccount, requestPageForAccount } from './human-api-key';
+import type { WhatsAppWindow } from './whatsapp-window';
 
 const DEFAULT_PAGE_SIZE = 50;
 /** `MAX_CONTACTS_LIMIT` of the API. */
@@ -37,7 +38,7 @@ export type Contact = {
   updatedAt: string;
 };
 
-export type ContactChannelVia = 'telegram' | 'slack' | 'email';
+export type ContactChannelVia = 'telegram' | 'slack' | 'whatsapp' | 'email';
 
 export type ContactChannel = {
   via: ContactChannelVia;
@@ -50,6 +51,8 @@ export type ContactChannel = {
   handle?: string;
   /** The Slack workspace they're in, such as `acme.slack.com`. */
   workspace?: string;
+  /** WhatsApp only: whether its 24-hour window lets a message through right now. */
+  window?: WhatsAppWindow;
   isDefault: boolean;
 };
 

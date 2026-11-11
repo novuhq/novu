@@ -20,6 +20,7 @@ import {
   mintHumanOptions,
 } from '@novu/shared';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
+import { isWhatsAppUndeliverable } from './whatsapp-delivery.errors';
 
 const DEFAULT_PENDING_CAP = 25;
 
@@ -227,6 +228,30 @@ export function assertHumanCardActions(
   assertHumanApproveExtraActions(kind, extraActions);
 }
 
+/**
+ * How many buttons the delivered card shows, as the card builder lays them out: Deny and Approve plus any extra
+ * actions, one button per choice, none for ask and tell, and every action button of a posted card. WhatsApp shows
+ * at most three, so a send there is refused above that rather than losing the rest.
+ */
+export function countHumanCardButtons(
+  kind: HumanInteractionKindEnum,
+  card: HumanInteractionChromeInput | HumanPostedCardInput
+): number {
+  if (isHumanCardElement(card)) {
+    return collectCardActionButtons(card.children as CardTreeNode[] | undefined).length;
+  }
+
+  const { options, extraActions } = readHumanCardActions(card);
+  switch (kind) {
+    case HumanInteractionKindEnum.APPROVE:
+      return 2 + (extraActions?.length ?? 0);
+    case HumanInteractionKindEnum.CHOOSE:
+      return options?.length ?? 0;
+    default:
+      return 0;
+  }
+}
+
 function humanOptionId(option: HumanOptionInput): string {
   return typeof option === 'string' ? option : option.id;
 }
@@ -355,6 +380,14 @@ export async function assertHumanPendingCap(
 }
 
 /**
+ * Failures that already tell the caller what to do, kept as they are rather than wrapped as a delivery failure:
+ * the inbox cap is a 429 with a reset time, and a WhatsApp refusal says why and names the channels that still work.
+ */
+function passesThrough(error: unknown): boolean {
+  return isAgentEmailInboxQuotaExceeded(error) || isWhatsAppUndeliverable(error);
+}
+
+/**
  * Deliver to every target, stamp `deliveries[]` (and denormalized top-level
  * ids from the first success), and roll the row back only when nobody received
  * the card. Partial fan-out failures stay on the row; the caller surfaces them.
@@ -418,8 +451,7 @@ export async function deliverToTargets(
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
 
-    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
-    if (isAgentEmailInboxQuotaExceeded(lastError)) {
+    if (passesThrough(lastError)) {
       throw lastError;
     }
 

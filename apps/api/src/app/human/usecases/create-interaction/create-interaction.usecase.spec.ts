@@ -20,13 +20,14 @@ import { contactIdFromEmail } from '../../services/explicit-email-recipient';
 import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
+import { WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateInteraction } from './create-interaction.usecase';
 
 /** What a send into a thread hands `CreateConversationInteraction`: deliveries outside it, and word of its post. */
 type Outside = { alsoTo?: (row: unknown) => any[]; onPosted?: () => void };
 
 describe('CreateInteraction', () => {
-  function setup() {
+  function setup({ whatsAppEnabled = false } = {}) {
     const created = {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
@@ -57,6 +58,7 @@ describe('CreateInteraction', () => {
       }),
       deliver: sinon.stub().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' }),
       deliverContent: sinon.stub().resolves({ platformMessageId: 'cta-1', platformThreadId: 'thread-1' }),
+      otherReachableVias: sinon.stub().resolves(['telegram']),
     };
     const connectClaimTokenService = {
       isEnvironmentClaimed: sinon.stub().resolves(false),
@@ -151,7 +153,7 @@ describe('CreateInteraction', () => {
       humanContactRepository as any,
       subscriberRepository as any,
       analyticsService as any,
-      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never)
     );
     const command = {
       userId: 'user1',
@@ -310,6 +312,86 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    describe('into a WhatsApp thread', () => {
+      const whatsAppThread = (lastHumanMessageAt: string) => ({
+        _id: 'conv1',
+        identifier: 'conv_abc',
+        status: 'active',
+        participants: [{ type: 'subscriber', id: 'sub-1' }],
+        channels: [{ platform: 'whatsapp', _integrationId: 'int1', platformThreadId: 'whatsapp:1234:15551234567' }],
+        lastHumanMessageAt,
+      });
+
+      function inWhatsAppThread(lastHumanMessageAt: string) {
+        const context = setup({ whatsAppEnabled: true });
+        const thread = whatsAppThread(lastHumanMessageAt);
+        context.agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+        context.inbox.findThread.resolves(thread);
+        context.inbox.primaryChannel.returns(thread.channels[0]);
+        context.inbox.resolveIntegrationIdentifier.resolves('whatsapp-main');
+
+        return context;
+      }
+
+      async function refused(promise: Promise<unknown>) {
+        const error = await promise.catch((err: unknown) => err);
+        expect(error).to.be.instanceOf(WhatsAppUndeliverableException);
+
+        return (error as WhatsAppUndeliverableException).getResponse() as Record<string, unknown>;
+      }
+
+      it('refuses a reply once the person’s 24-hour window has shut, naming their other channels', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService } = inWhatsAppThread(
+          new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
+        );
+
+        const body = await refused(usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any));
+
+        expect(body).to.include({ code: 'whatsapp_window_closed', subscriberId: 'sub-1' });
+        expect(body.availableChannels).to.deep.equal(['telegram']);
+        expect(deliveryService.otherReachableVias.firstCall.args[0]).to.include({ subscriberId: 'sub-1' });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('refuses a choice with more options than WhatsApp has buttons', async () => {
+        const { usecase, command, createConversationInteraction } = inWhatsAppThread(new Date().toISOString());
+
+        const body = await refused(
+          usecase.execute({
+            ...command,
+            kind: HumanInteractionKindEnum.CHOOSE,
+            card: { title: 'Which?', options: ['a', 'b', 'c', 'd'] },
+            to: undefined,
+            thread: 'conv_abc',
+          } as any)
+        );
+
+        expect(body).to.include({ code: 'whatsapp_too_many_buttons', buttons: 4 });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('sends inside the window', async () => {
+        const { usecase, command, createConversationInteraction } = inWhatsAppThread(new Date().toISOString());
+
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+        expect(createConversationInteraction.execute.calledOnce).to.equal(true);
+      });
+    });
+
+    it('passes the card’s button count to resolveChannel, so WhatsApp can refuse what it can’t show', async () => {
+      const { usecase, command, agentRepository, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.CHOOSE,
+        card: { title: 'Which?', options: ['a', 'b', 'c', 'd'] },
+      } as any);
+
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({ buttons: 4 });
     });
 
     it('refuses a keyless reply into an email thread before it is sent', async () => {

@@ -52,12 +52,21 @@ import {
   assertHumanCardActions,
   assertHumanPendingCap,
   buildPendingHumanInteraction,
+  countHumanCardButtons,
   deliverToTargets,
   type HumanDeliveryTarget,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
+import {
+  WHATSAPP_MAX_REPLY_BUTTONS,
+  WHATSAPP_TOO_MANY_BUTTONS,
+  WHATSAPP_WINDOW_CLOSED,
+  WhatsAppUndeliverableException,
+  type WhatsAppUnfit,
+} from '../../services/whatsapp-delivery.errors';
+import { windowFrom } from '../../services/whatsapp-window.service';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -408,6 +417,7 @@ export class CreateInteraction {
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
     const channel = this.inbox.primaryChannel(conversation);
+    await this.assertWhatsAppThreadFits(command, agent, conversation, channel, audience.recipients);
 
     // A new thread is refused in resolveChannel. An existing email thread skips that, so check here.
     // The claim reply does not come through this path.
@@ -815,6 +825,46 @@ export class CreateInteraction {
     return true;
   }
 
+  /**
+   * A WhatsApp thread takes a card only inside the person's 24-hour window, and only with as many buttons as
+   * WhatsApp shows. Refused before anything is sent, naming the person's channels that still work.
+   */
+  private async assertWhatsAppThreadFits(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    conversation: Pick<ConversationEntity, 'lastHumanMessageAt'>,
+    channel: { platform: string },
+    recipients: string[]
+  ): Promise<void> {
+    if (channel.platform !== HumanChannelViaEnum.WHATSAPP) {
+      return;
+    }
+
+    const buttons = countHumanCardButtons(command.kind, command.card);
+    const window = windowFrom(conversation.lastHumanMessageAt);
+    const unfit: WhatsAppUnfit | null =
+      buttons > WHATSAPP_MAX_REPLY_BUTTONS
+        ? { reason: WHATSAPP_TOO_MANY_BUTTONS, buttons }
+        : window.open
+          ? null
+          : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
+    if (!unfit) {
+      return;
+    }
+
+    const subscriberId = recipients[0] ?? 'this person';
+    const availableChannels = recipients[0]
+      ? await this.deliveryService.otherReachableVias({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentId: agent._id,
+          subscriberId,
+        })
+      : [];
+
+    throw new WhatsAppUndeliverableException(subscriberId, unfit, availableChannels);
+  }
+
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, recipients: ExplicitRecipient[]) {
     return Promise.all(
       recipients.map(async (recipient) => ({
@@ -827,6 +877,7 @@ export class CreateInteraction {
           ...(recipient.explicitEmail
             ? { via: HumanChannelViaEnum.EMAIL, explicitEmail: recipient.explicitEmail }
             : { via: command.via }),
+          buttons: countHumanCardButtons(command.kind, command.card),
         }),
       }))
     );

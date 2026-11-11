@@ -23,6 +23,7 @@ import type { Contact, ContactChannel, ContactChannelVia } from '@/lib/human-con
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
+import { describeWhatsAppWindow, type WhatsAppWindow } from '@/lib/whatsapp-window';
 import { ChannelLogo } from '../configure/channel-logo';
 import { CrossFade } from '../inbox/cross-fade';
 import { sendEmailLinkAction, setDefaultChannelAction } from './actions';
@@ -30,12 +31,29 @@ import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
 
 /** The order the card lists the channels in, as the design does. */
-const CHANNEL_ORDER: ContactChannelVia[] = ['email', 'telegram', 'slack'];
+const CHANNEL_ORDER: ContactChannelVia[] = ['email', 'telegram', 'slack', 'whatsapp'];
 
-const CHANNEL_NAMES: Record<ContactChannelVia, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
+const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+};
 
 /** How the card's sentence names a channel: "Telegram first, then email." */
-const SENTENCE_NAMES: Record<ContactChannelVia, string> = { email: 'email', telegram: 'Telegram', slack: 'Slack' };
+const SENTENCE_NAMES: Record<ContactChannelVia, string> = {
+  email: 'email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+};
+
+/** Channels the card can add. WhatsApp is set up from Configure, and a contact gets it from their invite. */
+type AddableVia = Exclude<ContactChannelVia, 'whatsapp'>;
+
+function isAddable(via: ContactChannelVia): via is AddableVia {
+  return via !== 'whatsapp';
+}
 
 /** The setup drawers read where they stand themselves when they open; the Contacts page doesn't ask ahead. */
 const UNREAD_TELEGRAM: TelegramSetupState = { step: 'unknown' };
@@ -189,7 +207,9 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
   const [emailFormKey, setEmailFormKey] = useState(0);
   const email = contact.emailVerification;
   const connected = CHANNEL_ORDER.filter((via) => contact.channels.some((channel) => channel.via === via));
-  const missing = CHANNEL_ORDER.filter((via) => (via === 'email' ? !email : !connected.includes(via)));
+  const missing = CHANNEL_ORDER.filter(isAddable).filter((via) =>
+    via === 'email' ? !email : !connected.includes(via)
+  );
   // The pick being saved shows at once; the page brings the saved one when the server is done.
   const defaultVia = savingDefault ?? contact.defaultVia;
 
@@ -238,7 +258,7 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
     setEmailFormOpen(show);
   }
 
-  function addChannel(via: ContactChannelVia) {
+  function addChannel(via: AddableVia) {
     if (via === 'email') {
       showEmailForm(true);
     } else {
@@ -381,6 +401,7 @@ function IdCard({ contact, agentHandle, connected, defaultVia }: IdCardProps) {
                 copyLabel={via === 'email' ? `Copy ${contact.name}'s email` : undefined}
                 isDefault={via === defaultVia}
                 status={via === 'email' ? email?.status : undefined}
+                window={contact.channels.find((channel) => channel.via === via)?.window}
               />
             </Fold>
           </li>
@@ -408,13 +429,15 @@ type ChannelLineProps = {
   isDefault: boolean;
   /** How far the email's confirmation got. */
   status?: 'verified' | 'pending' | 'unverified';
+  /** WhatsApp: whether its 24-hour window lets a message through right now. */
+  window?: WhatsAppWindow;
 };
 
 /**
  * One way to reach the person. The default one is lit and says so; moving the default moves the light
  * and the label with it, each fading.
  */
-function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLineProps) {
+function ChannelLine({ via, value, copyLabel, isDefault, status, window }: ChannelLineProps) {
   const layer =
     'col-start-1 row-start-1 justify-self-end transition-opacity duration-200 ease-out motion-reduce:transition-none';
 
@@ -437,6 +460,8 @@ function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLinePr
           <CopyButton value={value} label={copyLabel} className={CARD_COPY_CLASS_NAME} iconClassName="size-3" />
         )}
       </span>
+      {/* Beside "default", not in its place: a default WhatsApp needs to say most whether it can be written to. */}
+      {window && <WhatsAppWindowStatus window={window} />}
       <span className="inline-grid shrink-0">
         <span aria-hidden={!isDefault} className={cn(layer, META, 'text-accent', !isDefault && 'opacity-0')}>
           default
@@ -456,13 +481,32 @@ function ChannelLine({ via, value, copyLabel, isDefault, status }: ChannelLinePr
  * What a chat line says: how the person shows on the app (`@dima`, `dima · acme.slack.com`), or the app's name
  * until the agent has learned it.
  */
-function chatValue(via: 'telegram' | 'slack', channels: ContactChannel[]): string {
+function chatValue(via: Exclude<ContactChannelVia, 'email'>, channels: ContactChannel[]): string {
   const channel = channels.find((candidate) => candidate.via === via);
   if (!channel?.handle) {
     return CHANNEL_NAMES[via];
   }
 
   return channel.workspace ? `${channel.handle} · ${channel.workspace}` : channel.handle;
+}
+
+function WhatsAppWindowStatus({ window }: { window: WhatsAppWindow }) {
+  const { open, label, detail } = describeWhatsAppWindow(window);
+
+  return (
+    <span
+      title={detail}
+      className={cn(
+        'flex shrink-0 animate-overlay-in items-center gap-1.25 motion-reduce:animate-none',
+        META,
+        open ? 'text-secondary' : 'text-muted'
+      )}
+    >
+      <span aria-hidden="true" className={cn('size-1.5 rounded-full', open ? 'bg-success' : 'bg-muted')} />
+      {label}
+      <span className="sr-only">. {detail}</span>
+    </span>
+  );
 }
 
 function EmailStatus({ status }: { status: 'verified' | 'pending' | 'unverified' }) {

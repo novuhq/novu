@@ -206,6 +206,7 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
       ...(target.connectedAt ? { connectedAt: target.connectedAt } : {}),
       ...(target.via === HumanChannelViaEnum.EMAIL ? { address: target.platformUserId } : {}),
       ...describeContactHandle(target.via, target.handle),
+      ...(target.window ? { window: target.window } : {}),
       isDefault: target.via === defaultVia,
     });
   }
