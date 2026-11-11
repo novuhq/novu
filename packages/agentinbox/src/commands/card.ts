@@ -1,6 +1,7 @@
 import pc from 'picocolors';
 import { type ShownCard, showCard } from '../api/card';
 import { isLookColor, isMascotBody, type LookColor, type MascotBody } from '../mascot/look';
+import { stripTerminalControls } from '../output';
 import { renderQR } from '../qr';
 import { openScreen, type ScreenRow } from '../screen/screen';
 import { failOnScreen } from './failure';
@@ -39,7 +40,7 @@ export async function cardCommand(options: CardOptions): Promise<never> {
     }
 
     try {
-      screen.subtitle(card.greeting);
+      screen.subtitle(stripTerminalControls(card.greeting));
       screen.rows(cardRows(card));
       if (card.url) {
         screen.figure(renderQR(card.url).split('\n'));
@@ -57,7 +58,9 @@ export async function cardCommand(options: CardOptions): Promise<never> {
 }
 
 /** The card's lines on the screen: its name, address and link, the link kept whole to be clicked or copied. */
-export function cardRows(card: ShownCard): ScreenRow[] {
+export function cardRows(shown: ShownCard): ScreenRow[] {
+  const card = terminalSafe(shown);
+
   return [
     { mark: 'done', label: 'Name', value: pc.bold(card.name) },
     ...(card.address ? [{ mark: 'done' as const, label: 'Email', value: card.address }] : []),
@@ -69,7 +72,8 @@ export function cardRows(card: ShownCard): ScreenRow[] {
  * The card as plain text, where there is no screen: a pipe, CI, or an agent running the command. A QR code is
  * only printed for a person at a terminal; an agent passes the link on instead.
  */
-export function printCard(card: ShownCard, io: CardIo): void {
+export function printCard(shown: ShownCard, io: CardIo): void {
+  const card = terminalSafe(shown);
   const lines = [
     card.greeting,
     '',
@@ -80,6 +84,17 @@ export function printCard(card: ShownCard, io: CardIo): void {
   const qr = card.url && io.isTTY ? `\n${renderQR(card.url)}\n` : '';
 
   io.write(`${lines.join('\n')}\n${qr}`);
+}
+
+/** The card's shown fields come from the API, so they must not be able to drive the operator's terminal. */
+function terminalSafe(card: ShownCard): ShownCard {
+  return {
+    ...card,
+    greeting: stripTerminalControls(card.greeting),
+    name: stripTerminalControls(card.name),
+    address: card.address === undefined ? undefined : stripTerminalControls(card.address),
+    url: card.url === undefined ? undefined : stripTerminalControls(card.url),
+  };
 }
 
 /** The mascot's body and colour from the card, or none for a look this CLI doesn't know yet: the orb in ember. */
