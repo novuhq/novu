@@ -262,6 +262,18 @@ export function editorDisplayName(
   return 'Someone';
 }
 
+const DATE_TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+};
+
+const LOCAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('default', DATE_TIME_FORMAT_OPTIONS);
+const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('default', { ...DATE_TIME_FORMAT_OPTIONS, timeZone: 'UTC' });
+
 function UpdatedAgoLabel({ relativeTime }: { relativeTime: string }) {
   return (
     <span className="text-label-xs whitespace-nowrap">
@@ -290,10 +302,6 @@ function ChangeCardMeta({
   const hasDiff = diffStat.added > 0 || diffStat.deleted > 0;
   const isCurrentUser = updatedBy ? isCurrentEditor(user, updatedBy) : false;
   const authorName = updatedBy ? editorDisplayName(updatedBy, user, isCurrentUser) : null;
-
-  if (!authorName && !hasDiff) {
-    return <UpdatedAgoLabel relativeTime={relativeTime} />;
-  }
 
   return (
     <HoverCard openDelay={200} closeDelay={80}>
@@ -335,13 +343,23 @@ function ChangeCardMeta({
               </div>
             )}
 
+            <div className={cn('flex flex-col gap-1 px-2.5 py-2', authorName && 'border-t border-stroke-weak')}>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-label-xs text-text-soft">Local</span>
+                <span className="text-label-xs text-text-sub tabular-nums">
+                  {LOCAL_DATE_TIME_FORMATTER.format(updatedAtDate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-6">
+                <span className="text-label-xs text-text-soft">UTC</span>
+                <span className="text-label-xs text-text-sub tabular-nums">
+                  {UTC_DATE_TIME_FORMATTER.format(updatedAtDate)}
+                </span>
+              </div>
+            </div>
+
             {hasDiff && (
-              <div
-                className={cn(
-                  'flex items-center justify-between gap-6 px-2.5 py-2',
-                  authorName && 'border-t border-stroke-weak'
-                )}
-              >
+              <div className="flex items-center justify-between gap-6 border-t border-stroke-weak px-2.5 py-2">
                 <span className="text-label-xs text-text-soft">Lines changed</span>
                 <DiffStat stat={diffStat} />
               </div>
