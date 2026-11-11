@@ -59,14 +59,7 @@ import {
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
-import {
-  WHATSAPP_MAX_REPLY_BUTTONS,
-  WHATSAPP_TOO_MANY_BUTTONS,
-  WHATSAPP_WINDOW_CLOSED,
-  WhatsAppUndeliverableException,
-  type WhatsAppUnfit,
-} from '../../services/whatsapp-delivery.errors';
-import { windowFrom } from '../../services/whatsapp-window.service';
+import { WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -417,7 +410,7 @@ export class CreateInteraction {
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
     const channel = this.inbox.primaryChannel(conversation);
-    await this.assertWhatsAppThreadFits(command, agent, conversation, channel, audience.recipients);
+    await this.assertWhatsAppThreadFits(command, agent, conversation, channel);
 
     // A new thread is refused in resolveChannel. An existing email thread skips that, so check here.
     // The claim reply does not come through this path.
@@ -832,37 +825,32 @@ export class CreateInteraction {
   private async assertWhatsAppThreadFits(
     command: CreateInteractionCommand,
     agent: AgentEntity,
-    conversation: Pick<ConversationEntity, 'lastHumanMessageAt'>,
-    channel: { platform: string },
-    recipients: string[]
+    conversation: ConversationEntity,
+    channel: { platform: string; platformThreadId: string; _integrationId: string }
   ): Promise<void> {
     if (channel.platform !== HumanChannelViaEnum.WHATSAPP) {
       return;
     }
 
-    const buttons = countHumanCardButtons(command.kind, command.card);
-    const window = windowFrom(conversation.lastHumanMessageAt);
-    const unfit: WhatsAppUnfit | null =
-      buttons > WHATSAPP_MAX_REPLY_BUTTONS
-        ? { reason: WHATSAPP_TOO_MANY_BUTTONS, buttons }
-        : window.open
-          ? null
-          : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
+    const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
+    // The person the thread is with, whoever else `to` names: theirs is the window this send needs.
+    const person = await this.inbox.firstContactId(scope, conversation);
+    const params = { ...scope, agentId: agent._id, ...(person ? { subscriberId: person } : {}) };
+    const unfit = await this.deliveryService.whatsAppThreadUnfit({
+      ...params,
+      integrationId: String(channel._integrationId),
+      platformThreadId: channel.platformThreadId,
+      buttons: countHumanCardButtons(command.kind, command.card),
+    });
     if (!unfit) {
       return;
     }
 
-    const subscriberId = recipients[0] ?? 'this person';
-    const availableChannels = recipients[0]
-      ? await this.deliveryService.otherReachableVias({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          agentId: agent._id,
-          subscriberId,
-        })
+    const availableChannels = person
+      ? await this.deliveryService.otherReachableVias({ ...params, subscriberId: person })
       : [];
 
-    throw new WhatsAppUndeliverableException(subscriberId, unfit, availableChannels);
+    throw new WhatsAppUndeliverableException(person ?? 'this person', unfit, availableChannels);
   }
 
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, recipients: ExplicitRecipient[]) {

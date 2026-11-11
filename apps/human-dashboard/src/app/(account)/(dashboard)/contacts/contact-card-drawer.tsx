@@ -23,12 +23,13 @@ import type { Contact, ContactChannel, ContactChannelVia } from '@/lib/human-con
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
-import { describeWhatsAppWindow, type WhatsAppWindow } from '@/lib/whatsapp-window';
+import type { WhatsAppWindow } from '@/lib/whatsapp-window';
 import { ChannelLogo } from '../configure/channel-logo';
 import { CrossFade } from '../inbox/cross-fade';
 import { sendEmailLinkAction, setDefaultChannelAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
+import { useWhatsAppWindow } from './use-whatsapp-window';
 
 /** The order the card lists the channels in, as the design does. */
 const CHANNEL_ORDER: ContactChannelVia[] = ['email', 'telegram', 'slack', 'whatsapp'];
@@ -491,7 +492,11 @@ function chatValue(via: Exclude<ContactChannelVia, 'email'>, channels: ContactCh
 }
 
 function WhatsAppWindowStatus({ window }: { window: WhatsAppWindow }) {
-  const { open, label, detail } = describeWhatsAppWindow(window);
+  const described = useWhatsAppWindow(window);
+  if (!described) {
+    return null;
+  }
+  const { open, label, detail } = described;
 
   return (
     <span

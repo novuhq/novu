@@ -315,24 +315,23 @@ describe('CreateInteraction', () => {
     });
 
     describe('into a WhatsApp thread', () => {
-      const whatsAppThread = (lastHumanMessageAt: string) => ({
+      const thread = {
         _id: 'conv1',
         identifier: 'conv_abc',
         status: 'active',
         participants: [{ type: 'subscriber', id: 'sub-1' }],
         channels: [{ platform: 'whatsapp', _integrationId: 'int1', platformThreadId: 'whatsapp:1234:15551234567' }],
-        lastHumanMessageAt,
-      });
+      };
 
-      function inWhatsAppThread(lastHumanMessageAt: string) {
+      function inWhatsAppThread(unfit: Record<string, unknown> | null) {
         const context = setup({ whatsAppEnabled: true });
-        const thread = whatsAppThread(lastHumanMessageAt);
         context.agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
         context.inbox.findThread.resolves(thread);
         context.inbox.primaryChannel.returns(thread.channels[0]);
         context.inbox.resolveIntegrationIdentifier.resolves('whatsapp-main');
+        Object.assign(context.deliveryService, { whatsAppThreadUnfit: sinon.stub().resolves(unfit) });
 
-        return context;
+        return context as typeof context & { deliveryService: { whatsAppThreadUnfit: sinon.SinonStub } };
       }
 
       async function refused(promise: Promise<unknown>) {
@@ -342,13 +341,21 @@ describe('CreateInteraction', () => {
         return (error as WhatsAppUndeliverableException).getResponse() as Record<string, unknown>;
       }
 
-      it('refuses a reply once the person’s 24-hour window has shut, naming their other channels', async () => {
-        const { usecase, command, createConversationInteraction, deliveryService } = inWhatsAppThread(
-          new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
-        );
+      it('checks the window of the person the thread is with, not of someone else `to` names', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+          windowClosedAt: '2026-11-10T10:00:00.000Z',
+        });
+        inbox.firstContactId.returns('sub-1');
 
         const body = await refused(usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any));
 
+        expect(deliveryService.whatsAppThreadUnfit.firstCall.args[0]).to.include({
+          subscriberId: 'sub-1',
+          integrationId: 'int1',
+          platformThreadId: 'whatsapp:1234:15551234567',
+          buttons: 2,
+        });
         expect(body).to.include({ code: 'whatsapp_window_closed', subscriberId: 'sub-1' });
         expect(body.availableChannels).to.deep.equal(['telegram']);
         expect(deliveryService.otherReachableVias.firstCall.args[0]).to.include({ subscriberId: 'sub-1' });
@@ -356,7 +363,10 @@ describe('CreateInteraction', () => {
       });
 
       it('refuses a choice with more options than WhatsApp has buttons', async () => {
-        const { usecase, command, createConversationInteraction } = inWhatsAppThread(new Date().toISOString());
+        const { usecase, command, createConversationInteraction, deliveryService } = inWhatsAppThread({
+          reason: 'whatsapp_too_many_buttons',
+          buttons: 4,
+        });
 
         const body = await refused(
           usecase.execute({
@@ -368,12 +378,13 @@ describe('CreateInteraction', () => {
           } as any)
         );
 
+        expect(deliveryService.whatsAppThreadUnfit.firstCall.args[0]).to.include({ buttons: 4 });
         expect(body).to.include({ code: 'whatsapp_too_many_buttons', buttons: 4 });
         expect(createConversationInteraction.execute.called).to.equal(false);
       });
 
-      it('sends inside the window', async () => {
-        const { usecase, command, createConversationInteraction } = inWhatsAppThread(new Date().toISOString());
+      it('sends while WhatsApp can carry it', async () => {
+        const { usecase, command, createConversationInteraction } = inWhatsAppThread(null);
 
         await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
 

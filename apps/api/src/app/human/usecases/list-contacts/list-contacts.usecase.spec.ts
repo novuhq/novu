@@ -198,4 +198,34 @@ describe('ListContacts', () => {
     expect(humanOperator.findForAgent.called).to.equal(false);
     expect(humanContactRepository.find.called).to.equal(false);
   });
+
+  it('says WhatsApp is open when one of two business numbers can still reach them, as a send would go there', async () => {
+    const whatsAppOn = (integrationIdentifier: string, window: Record<string, unknown>) => ({
+      via: HumanChannelViaEnum.WHATSAPP,
+      platform: HumanChannelViaEnum.WHATSAPP,
+      platformUserId: '15551234567',
+      integrationIdentifier,
+      connectedAt: '2026-11-01T10:00:00.000Z',
+      window,
+    });
+    const { usecase } = setup({
+      subscribers: [{ subscriberId: 'alice' }],
+      targets: new Map([
+        [
+          'alice',
+          {
+            targets: [
+              whatsAppOn('whatsapp-a', { open: false, closesAt: '2026-11-10T10:00:00.000Z' }),
+              whatsAppOn('whatsapp-b', { open: true, closesAt: '2026-11-11T20:00:00.000Z' }),
+            ],
+          },
+        ],
+      ]),
+    });
+
+    const alice = (await list(usecase)).get('alice');
+
+    expect(alice?.channels).to.have.length(1);
+    expect(alice?.channels[0].window).to.deep.equal({ open: true, closesAt: '2026-11-11T20:00:00.000Z' });
+  });
 });

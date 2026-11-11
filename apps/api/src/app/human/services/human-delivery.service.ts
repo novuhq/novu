@@ -20,7 +20,11 @@ import {
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
-import { provedWhatsAppNumberOf, whatsAppNumberProvedAtOf } from '../../agents/human-relay/whatsapp-number-proof';
+import {
+  provedWhatsAppNumberOf,
+  whatsAppNumberLastCodeAtOf,
+  whatsAppNumberProvedAtOf,
+} from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { normalizePhoneForMeta } from '../../agents/shared/util/phone-normalization';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
@@ -52,6 +56,8 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   handle?: ContactHandle;
   /** WhatsApp only, where it was read: whether its 24-hour window lets a message through right now. */
   window?: WhatsAppWindow;
+  /** WhatsApp only: when the number last sent a code message, which is never stored but opened a window. */
+  lastCodeAt?: string;
 }
 
 /** Apps a human can connect themselves from the invite page. */
@@ -277,10 +283,59 @@ export class HumanDeliveryService {
     );
   }
 
+  /**
+   * Why an existing WhatsApp thread can't take this send, or `null` when it can: the same window and button checks
+   * as a new send, for the person the thread is with. Their code messages count toward the window like any other.
+   */
+  async whatsAppThreadUnfit(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    /** The contact the thread is with, when known. */
+    subscriberId?: string;
+    integrationId: string;
+    platformThreadId: string;
+    buttons?: number;
+  }): Promise<WhatsAppUnfit | null> {
+    const integration = (await this.findLinkedIntegrations(params)).find(
+      (candidate) => String(candidate._id) === String(params.integrationId)
+    );
+    const waId = params.platformThreadId.split(':').pop() ?? '';
+    const endpoint =
+      integration && params.subscriberId
+        ? (
+            await this.channelEndpointRepository.find(
+              {
+                _environmentId: params.environmentId,
+                _organizationId: params.organizationId,
+                subscriberId: params.subscriberId,
+                integrationIdentifier: integration.identifier,
+                type: ENDPOINT_TYPES.PHONE,
+              },
+              ''
+            )
+          ).find((candidate) => platformUserIdOf(candidate) === waId)
+        : undefined;
+
+    return this.whatsAppUnfit(
+      params,
+      {
+        via: HumanChannelViaEnum.WHATSAPP,
+        platformUserId: waId,
+        integrationIdentifier: integration?.identifier ?? '',
+        ...(endpoint ? { lastCodeAt: whatsAppNumberLastCodeAtOf(endpoint) } : {}),
+      },
+      integration ? [integration] : []
+    );
+  }
+
   /** Why WhatsApp can't carry this send to the target, or `null` when it can (or the target isn't WhatsApp). */
   async whatsAppUnfit(
     params: { environmentId: string; organizationId: string; buttons?: number },
-    target: Pick<ReachableHumanTarget, 'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt'>,
+    target: Pick<
+      ReachableHumanTarget,
+      'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt' | 'lastCodeAt'
+    >,
     integrations: IntegrationEntity[]
   ): Promise<WhatsAppUnfit | null> {
     if (target.via !== HumanChannelViaEnum.WHATSAPP) {
@@ -299,7 +354,7 @@ export class HumanDeliveryService {
     // A WhatsApp target is connected when its number was proved, and that code message opened a window too.
     const window = await this.whatsAppWindow.describe(params, integration, {
       waId: target.platformUserId,
-      provedAt: target.connectedAt,
+      provedAt: target.lastCodeAt ?? target.connectedAt,
     });
 
     return window.open ? null : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
@@ -618,7 +673,10 @@ export class HumanDeliveryService {
       const windows = await this.whatsAppWindow.describeMany(
         scope,
         integration,
-        onIntegration.map((target) => ({ waId: target.platformUserId, provedAt: target.connectedAt }))
+        onIntegration.map((target) => ({
+          waId: target.platformUserId,
+          provedAt: target.lastCodeAt ?? target.connectedAt,
+        }))
       );
       for (const target of onIntegration) {
         target.window = windows.get(target.platformUserId);
@@ -834,6 +892,7 @@ export class HumanDeliveryService {
     }
 
     const handle = readContactHandle(endpoint.endpoint);
+    const lastCodeAt = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberLastCodeAtOf(endpoint) : undefined;
 
     return {
       via,
@@ -842,6 +901,7 @@ export class HumanDeliveryService {
       integrationIdentifier,
       // A WhatsApp number connected when it was proved, which can be later than the endpoint when it moved owners.
       connectedAt: (endpoint.type === ENDPOINT_TYPES.PHONE && whatsAppNumberProvedAtOf(endpoint)) || endpoint.createdAt,
+      ...(lastCodeAt ? { lastCodeAt } : {}),
       ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }

@@ -840,6 +840,59 @@ describe('HumanDeliveryService on WhatsApp', () => {
     expect(await service.resolveChannel({ ...params, buttons: 4 })).to.include({ platform: 'telegram' });
   });
 
+  it('counts an old code sent again as a message, since it opened the window too', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true);
+    channelEndpointRepository.findOne.callsFake(async (query: { integrationIdentifier: string }) =>
+      query.integrationIdentifier === 'whatsapp-main'
+        ? {
+            ...PROVED_WHATSAPP,
+            endpoint: { ...PROVED_WHATSAPP.endpoint, lastCodeAt: '2026-11-10T09:00:00.000Z' },
+          }
+        : null
+    );
+
+    await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(windows.describe.firstCall.args[2]).to.deep.equal({
+      waId: '15551234567',
+      provedAt: '2026-11-10T09:00:00.000Z',
+    });
+  });
+
+  it('checks a WhatsApp thread for the person it is with, counting their proof and code messages', async () => {
+    const { service, channelEndpointRepository, windows } = setup(true, [whatsApp, telegram], {
+      open: false,
+      closesAt: '2026-11-10T10:00:00.000Z',
+    });
+    Object.assign(channelEndpointRepository, {
+      find: async () => [
+        { ...PROVED_WHATSAPP, endpoint: { phoneNumber: '+15550000000', provedAt: '2026-11-09T09:00:00.000Z' } },
+        PROVED_WHATSAPP,
+      ],
+    });
+
+    const unfit = await service.whatsAppThreadUnfit({
+      ...params,
+      integrationId: 'int-wa',
+      platformThreadId: 'whatsapp:1234:15551234567',
+      buttons: 2,
+    });
+
+    expect(unfit).to.deep.equal({ reason: 'whatsapp_window_closed', windowClosedAt: '2026-11-10T10:00:00.000Z' });
+    expect(windows.describe.firstCall.args[2]).to.deep.equal({
+      waId: '15551234567',
+      provedAt: '2026-11-01T10:00:00.000Z',
+    });
+    expect(
+      await service.whatsAppThreadUnfit({
+        ...params,
+        integrationId: 'int-wa',
+        platformThreadId: 'whatsapp:1234:15551234567',
+        buttons: 4,
+      })
+    ).to.deep.equal({ reason: 'whatsapp_too_many_buttons', buttons: 4 });
+  });
+
   it('tells the contact list whether WhatsApp can be written to right now', async () => {
     const { service, channelEndpointRepository, windows } = setup(true);
     Object.assign(channelEndpointRepository, {

@@ -15,7 +15,6 @@ import { toast } from '@/components/ui/toast';
 import { Tooltip } from '@/components/ui/tooltip';
 import type { Contact, ContactChannel, ContactChannelVia } from '@/lib/human-contacts-api';
 import { cn } from '@/lib/utils';
-import { describeWhatsAppWindow } from '@/lib/whatsapp-window';
 import { Switch } from '../configure/agent-settings';
 import { ChannelLogo } from '../configure/channel-logo';
 import { removeContactAction, setListenToAction } from './actions';
@@ -23,6 +22,7 @@ import { ContactAvatar } from './contact-avatar';
 import { ContactCardDrawer, type ContactCardSetup, type ContactCardStart } from './contact-card-drawer';
 import { DialogMark } from './dialog-mark';
 import { ShortDate } from './short-date';
+import { useWhatsAppWindow } from './use-whatsapp-window';
 
 const COLUMN_COUNT = 7;
 
@@ -36,11 +36,19 @@ export const CHANNEL_NAMES: Record<ContactChannelVia, string> = {
   email: 'Email',
 };
 
-/** A channel's logo label: its name, and for WhatsApp whether its 24-hour window lets a message through now. */
-function channelLabel(channel: ContactChannel): string {
-  return channel.window
-    ? `${CHANNEL_NAMES[channel.via]} · ${describeWhatsAppWindow(channel.window).label}`
-    : CHANNEL_NAMES[channel.via];
+/**
+ * A channel's logo, labelled with its name, and for WhatsApp whether its 24-hour window lets a message through now.
+ * WhatsApp fades while its window is shut: it can't be written to until they write again.
+ */
+function ChannelLogoCell({ channel }: { channel: ContactChannel }) {
+  const window = useWhatsAppWindow(channel.window);
+  const label = window ? `${CHANNEL_NAMES[channel.via]} · ${window.label}` : CHANNEL_NAMES[channel.via];
+
+  return (
+    <span role="img" aria-label={label} title={label} className={cn(window && !window.open && 'opacity-50')}>
+      <ChannelLogo via={channel.via} size={16} />
+    </span>
+  );
 }
 
 /**
@@ -116,6 +124,23 @@ export function ContactsTable({
   // The first page shows up with the page; any other one fades in when the pager brings it.
   const [firstPageKey] = useState(pageKey);
   const operator = contacts.find((contact) => contact.isOperator) ?? null;
+  const showsWhatsApp = contacts.some((contact) => contact.channels.some((channel) => channel.window));
+
+  // A message on WhatsApp opens someone's window while the page sits in another tab: read it again on the way back.
+  useEffect(() => {
+    if (!showsWhatsApp) {
+      return;
+    }
+
+    const refresh = () => {
+      if (document.visibilityState === 'visible') {
+        router.refresh();
+      }
+    };
+    document.addEventListener('visibilitychange', refresh);
+
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, [showsWhatsApp, router]);
   const cardContact = cardContactId ? (contacts.find((contact) => contact.id === cardContactId) ?? null) : operator;
 
   function openCard(contact: Contact) {
@@ -330,18 +355,7 @@ function ContactRow({ contact, agentHandle, appearing, leaving, onOpenCard, onRe
       {cell(COLUMNS.email, <EmailCell contact={contact} />)}
       {cell(
         COLUMNS.channels,
-        contact.channels.map((channel) => (
-          <span
-            key={channel.via}
-            role="img"
-            aria-label={channelLabel(channel)}
-            title={channelLabel(channel)}
-            // WhatsApp fades while its window is shut: it can't be written to until they write again.
-            className={cn(channel.window && !describeWhatsAppWindow(channel.window).open && 'opacity-50')}
-          >
-            <ChannelLogo via={channel.via} size={16} />
-          </span>
-        )),
+        contact.channels.map((channel) => <ChannelLogoCell key={channel.via} channel={channel} />),
         'gap-2'
       )}
       {cell(

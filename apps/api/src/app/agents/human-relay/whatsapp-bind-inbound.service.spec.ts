@@ -32,7 +32,10 @@ describe('WhatsAppBindInbound', () => {
   function setup({ consumed = { status: 'consumed', payload: PAYLOAD } as unknown, bound = null as unknown } = {}) {
     const codes = { consume: sinon.stub().resolves(consumed) };
     const bindWhatsAppNumber = { execute: sinon.stub().resolves({ created: true, subscriberId: 'ada' }) };
-    const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(bound) };
+    const channelEndpointRepository = {
+      findByPlatformIdentity: sinon.stub().resolves(bound),
+      update: sinon.stub().resolves({ matched: 1, modified: 1 }),
+    };
     const contactHandles = { refresh: sinon.stub().resolves() };
     const outboundGateway = { replyOnThread: sinon.stub().resolves() };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub() };
@@ -45,7 +48,7 @@ describe('WhatsAppBindInbound', () => {
       logger as never
     );
 
-    return { service, codes, bindWhatsAppNumber, contactHandles, outboundGateway };
+    return { service, codes, bindWhatsAppNumber, contactHandles, outboundGateway, channelEndpointRepository };
   }
 
   function message(text: string, userId = '15550100199') {
@@ -142,5 +145,21 @@ describe('WhatsAppBindInbound', () => {
     expect(codes.consume.calledOnce).to.equal(true);
     expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
     expect(context.skipped.map((item) => item.text)).to.deep.equal(['first question']);
+  });
+
+  it('keeps when the number wrote a code, whatever became of it, as that opened WhatsApp’s window', async () => {
+    const { service, channelEndpointRepository } = setup({ consumed: { status: 'missing' } });
+
+    await send(service, 'Connect my WhatsApp: BCDF-GHJK');
+
+    const [where, change] = channelEndpointRepository.update.firstCall.args;
+    expect(where).to.deep.equal({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      integrationIdentifier: 'whatsapp-main',
+      type: 'phone',
+      'endpoint.phoneNumber': '+15550100199',
+    });
+    expect(change.$max['endpoint.lastCodeAt']).to.be.a('string');
   });
 });

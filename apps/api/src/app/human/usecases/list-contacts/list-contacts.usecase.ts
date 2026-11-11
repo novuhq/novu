@@ -197,7 +197,10 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
   const channels: HumanContactChannelDto[] = [];
 
   for (const target of targets) {
-    if (channels.some((channel) => channel.via === target.via)) {
+    const listed = channels.find((channel) => channel.via === target.via);
+    if (listed) {
+      // Two WhatsApp business numbers: a send goes through the one whose window is open, so the row says that one.
+      listed.window = widerWindow(listed.window, target.window);
       continue;
     }
 
@@ -212,6 +215,22 @@ function toChannels(targets: ReachableHumanTarget[], defaultVia?: HumanChannelVi
   }
 
   return channels;
+}
+
+/** The window that lets a message through longest: an open one over a shut one, then the later close. */
+function widerWindow(
+  a: ReachableHumanTarget['window'],
+  b: ReachableHumanTarget['window']
+): ReachableHumanTarget['window'] {
+  if (!a || !b) {
+    return a ?? b;
+  }
+
+  if (a.open !== b.open) {
+    return a.open ? a : b;
+  }
+
+  return Date.parse(b.closesAt ?? '') > Date.parse(a.closesAt ?? '') ? b : a;
 }
 
 /**
