@@ -771,7 +771,7 @@ function peopleOf(conversation: ConversationEntity, people: InboxPeople): InboxP
     ...subscriberIdsOf(conversation).map(
       (subscriberId): InboxPersonDto => people.get(subscriberId) ?? { id: subscriberId, kind: 'stranger' }
     ),
-    ...platformUserIdsOf(conversation).map((id): InboxPersonDto => ({ id, kind: 'stranger' })),
+    ...platformUserIdsOf(conversation).map((id): InboxPersonDto => ({ id, kind: 'stranger', ...strangerNameOf(id) })),
   ];
 }
 
@@ -985,7 +985,7 @@ function presentationOf(
     text: 'message',
   };
 
-  return { channel, style, label: `${capitalize(channel)} ${words[style]}` };
+  return { channel, style, label: `${channelName(channel)} ${words[style]}` };
 }
 
 function presentationStyleOf(kind: HumanInteractionKindEnum, hasCardContent: boolean): InboxCardPresentationStyle {
@@ -1021,7 +1021,7 @@ function cardStateOf(interaction: HumanInteractionEntity, channel: string, peopl
 
   return {
     status,
-    label: settledLabel(status, { name, optionLabel, channel: capitalize(channel) }),
+    label: settledLabel(status, { name, optionLabel, channel: channelName(channel) }),
     ...(name ? { respondedBy: { ...(responderId ? { id: responderId } : {}), name } } : {}),
     ...(response?.respondedAt ? { respondedAt: response.respondedAt } : {}),
     ...(response?.optionId ? { optionId: response.optionId } : {}),
@@ -1065,6 +1065,28 @@ function optionLabelOf(interaction: HumanInteractionEntity, optionId: string): s
   ];
 
   return choices.find((choice) => choice.id === optionId)?.label;
+}
+
+/** How a channel is named in a sentence or a label: "WhatsApp", not "Whatsapp". */
+const CHANNEL_NAMES: Record<string, string> = {
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+};
+
+function channelName(channel: string): string {
+  return CHANNEL_NAMES[channel] ?? capitalize(channel);
+}
+
+/**
+ * Someone who wrote without being a contact is known only by the app's id for them. On WhatsApp that is their
+ * number, `whatsapp:15551234567`, shown as `+15551234567`; elsewhere the id stays as it is.
+ */
+function strangerNameOf(id: string): { name?: string } {
+  const digits = id.startsWith('whatsapp:') ? id.slice('whatsapp:'.length) : undefined;
+
+  return digits && /^\d{6,15}$/.test(digits) ? { name: `+${digits}` } : {};
 }
 
 function capitalize(text: string): string {

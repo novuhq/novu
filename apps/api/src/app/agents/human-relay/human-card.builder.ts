@@ -3,12 +3,15 @@ import {
   HumanInteractionKindEnum,
   type HumanInteractionOption,
   HumanInteractionStatusEnum,
+  type HumanOptionInput,
   humanInteractionCardTitle,
   humanInteractionChooseOptions,
   isHumanCardElementContent,
+  mintHumanOptions,
   resolveHumanInteractionCard,
 } from '@novu/shared';
 import type { ActionsElement, ButtonElement, CardElement, TextElement } from 'chat';
+import { readHumanContentActions } from '../../human/services/human-interaction-lifecycle';
 import type { ReplyContentDto } from '../shared/dtos/agent-reply-payload.dto';
 import {
   buildHumanApproveActionId,
@@ -309,6 +312,42 @@ export function buildResolvedContent(interaction: HumanInteractionEntity): Reply
   return { card } as ReplyContentDto;
 }
 
+/**
+ * What a person who answered on a channel that can't edit a sent card (WhatsApp) is told instead: the outcome of
+ * their tap, in a line of its own. `null` for what they didn't answer themselves (expired, canceled) and for an ask,
+ * whose text answer is acknowledged where it is taken.
+ */
+export function buildOutcomeReply(interaction: HumanInteractionEntity): string | null {
+  if (interaction.kind !== HumanInteractionKindEnum.APPROVE && interaction.kind !== HumanInteractionKindEnum.CHOOSE) {
+    return null;
+  }
+
+  const optionId = interaction.response?.optionId;
+  // Labels from either stored shape: chrome options and extras, or a posted card's buttons.
+  const { options, extraActions } = readHumanContentActions(interaction.content);
+  // Plain-string choices get their ids as they were minted when the card was built (`opt_1`, …).
+  const labelOf = (choices: HumanOptionInput[], id: string) =>
+    mintHumanOptions(choices).find((choice) => choice.id === id)?.label ?? id;
+
+  switch (interaction.status) {
+    case HumanInteractionStatusEnum.APPROVED: {
+      // An extra action ("Snooze") answers the approve too: it says which one was picked.
+      const extra = optionId && optionId !== 'approve' ? labelOf(extraActions, optionId) : undefined;
+
+      return extra ? `✅ ${extra} — passed along.` : '✅ Approved — passed along.';
+    }
+    case HumanInteractionStatusEnum.DENIED:
+      return '⛔ Denied — passed along.';
+    case HumanInteractionStatusEnum.ANSWERED: {
+      const label = optionId ? labelOf(options, optionId) : undefined;
+
+      return label ? `✅ Picked ${label} — passed along.` : '✅ Got it — passed along.';
+    }
+    default:
+      return null;
+  }
+}
+
 function resolveStatusLine(interaction: HumanInteractionEntity): string {
   const by = interaction.response?.respondedBy ? ` by ${interaction.response.respondedBy}` : '';
   const resolved = resolveHumanInteractionCard(interaction);
@@ -372,6 +411,41 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], a
   );
 
   return withLayoutCard(card, buildEmailCard(HumanInteractionKindEnum.CHOOSE, { title }, subtitle, fullLabels));
+}
+
+/**
+ * The same question as {@link buildDisambiguationCard}, as text, for WhatsApp with more questions waiting than it
+ * has buttons: they answer by swiping to reply on the question they mean, which matches by the quoted message.
+ */
+export function buildSwipeReplyPrompt(
+  inThisChat: HumanInteractionEntity[],
+  elsewhere: HumanInteractionEntity[] = []
+): string {
+  const titles = (asks: HumanInteractionEntity[]) =>
+    asks.map((ask, index) => `${optionLetter(index)}. ${humanInteractionCardTitle(ask)}`);
+  const lines = ['*Which question does this answer?*'];
+
+  if (inThisChat.length > 0) {
+    lines.push(
+      `You have ${inThisChat.length} questions waiting here:`,
+      ...titles(inThisChat),
+      'Swipe right on the question you mean and reply to it there.'
+    );
+  }
+
+  if (elsewhere.length > 0) {
+    const where = [...new Set(elsewhere.flatMap((ask) => (ask.deliveries ?? []).map((d) => channelLabel(d.platform))))];
+    lines.push(
+      `${inThisChat.length > 0 ? 'Others were' : 'They were'} sent on ${where.join(' or ') || 'another app'}: answer them there.`,
+      ...elsewhere.map((ask) => `• ${humanInteractionCardTitle(ask)}`)
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function channelLabel(platform: string): string {
+  return { telegram: 'Telegram', slack: 'Slack', email: 'email', whatsapp: 'WhatsApp' }[platform] ?? platform;
 }
 
 function truncate(text: string, max: number): string {

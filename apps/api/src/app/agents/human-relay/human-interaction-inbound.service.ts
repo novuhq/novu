@@ -19,6 +19,7 @@ import {
   humanInteractionRecipientIds,
 } from '@novu/shared';
 import { isKnownHumanContentOption } from '../../human/services/human-interaction-lifecycle';
+import { WHATSAPP_MAX_REPLY_BUTTONS } from '../../human/services/whatsapp-delivery.errors';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
@@ -27,7 +28,7 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
 import { PLATFORM_ENDPOINT_CONFIG } from '../shared/util/platform-endpoint-config';
 import { type HumanActionParsed, parseHumanActionId } from './human-action-id';
-import { buildDisambiguationCard } from './human-card.builder';
+import { buildDisambiguationCard, buildSwipeReplyPrompt } from './human-card.builder';
 import { HumanInteractionSettlementService } from './human-interaction-settlement.service';
 
 const DISAMBIGUATION_CACHE_TTL_SECONDS = 10 * 60;
@@ -343,10 +344,18 @@ export class HumanInteractionInboundService {
     const repliedTo = this.extractRepliedToMessageIds(turn);
     if (repliedTo.length > 0) {
       const exact = await this.humanInteractionRepository.findPendingByPlatformMessageId(environmentId, repliedTo);
-      if (exact) {
+      // Only an ask takes words for an answer: a reply on an approve or a choice is never a decision.
+      if (exact?.kind === HumanInteractionKindEnum.ASK) {
         const settled = await this.settleAskWithText(exact, text, turn, mode);
 
         return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
+      }
+
+      // Telegram and WhatsApp quote the one message replied to, so quoting a card is a message about that card, not
+      // an answer to some other question: it stays in the inbox as it is. A Slack reply only names its thread's root,
+      // so it goes on to the questions waiting in that thread.
+      if (exact && turn.config.platform !== AgentPlatformEnum.SLACK) {
+        return { outcome: 'ignored' };
       }
     }
 
@@ -372,6 +381,19 @@ export class HumanInteractionInboundService {
     const responderId = this.responderIdOf(turn);
     if (!responderId) {
       return { outcome: 'ignored' };
+    }
+
+    // WhatsApp shows three buttons at most: with more questions waiting, ask them to swipe-reply to the one they mean.
+    // Only questions sent into this chat can be swiped; the rest are answered where they were sent.
+    if (turn.config.platform === AgentPlatformEnum.WHATSAPP && addressedAsks.length > WHATSAPP_MAX_REPLY_BUTTONS) {
+      const inThisChat = addressedAsks.filter((ask) =>
+        (ask.deliveries ?? []).some((delivery) => delivery.platformThreadId === turn.platformThreadId)
+      );
+      const elsewhere = addressedAsks.filter((ask) => !inThisChat.includes(ask));
+      applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
+      await this.replyOnThread(turn, buildSwipeReplyPrompt(inThisChat, elsewhere));
+
+      return { outcome: 'consumed' };
     }
 
     const answerId = this.resolveDisambiguationAnswerId(turn);
@@ -698,6 +720,13 @@ export class HumanInteractionInboundService {
       const channel = event.channel as string | undefined;
 
       return channel ? [threadTs, `${channel}:${threadTs}`] : [threadTs];
+    }
+
+    // WhatsApp: a swipe-reply carries the quoted message's id (its wamid), which is what a delivery stores.
+    if (turn.config.platform === AgentPlatformEnum.WHATSAPP) {
+      const quoted = (raw.message as { context?: { id?: unknown } } | undefined)?.context?.id;
+
+      return typeof quoted === 'string' && quoted ? [quoted] : [];
     }
 
     return [];

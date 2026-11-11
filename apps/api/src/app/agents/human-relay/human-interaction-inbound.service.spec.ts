@@ -396,6 +396,131 @@ describe('HumanInteractionInboundService', () => {
     expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
   });
 
+  describe('on WhatsApp', () => {
+    const whatsAppConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.WHATSAPP,
+      integrationIdentifier: 'whatsapp-main',
+    };
+
+    it('settles the question a swipe-reply quotes, by the quoted message’s id', async () => {
+      const { service, humanInteractionRepository, settlement, pendingAsk } = setup();
+      humanInteractionRepository.findPendingByPlatformMessageId.resolves(pendingAsk);
+      settlement.settle.resolves({ ...pendingAsk, status: HumanInteractionStatusEnum.ANSWERED });
+
+      const result = await service.tryHandleMessage(
+        makeTurn({
+          config: whatsAppConfig,
+          message: { text: 'staging', raw: { message: { id: 'wamid.reply', context: { id: 'wamid.question' } } } },
+        }) as any,
+        'relay'
+      );
+
+      expect(humanInteractionRepository.findPendingByPlatformMessageId.firstCall.args).to.deep.equal([
+        'env1',
+        ['wamid.question'],
+      ]);
+      expect(result.outcome).to.equal('settled');
+    });
+
+    it('keeps a reply quoting an approve card as a message, never a decision or an answer to another question', async () => {
+      const { service, humanInteractionRepository, settlement, pendingAsk } = setup();
+      humanInteractionRepository.findPendingByPlatformMessageId.resolves({
+        ...pendingAsk,
+        identifier: 'hi_approve',
+        kind: HumanInteractionKindEnum.APPROVE,
+      });
+      // An unrelated ask is waiting too: the quoted reply must not settle it.
+      humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
+
+      const result = await service.tryHandleMessage(
+        makeTurn({
+          config: whatsAppConfig,
+          message: { text: 'what does this deploy?', raw: { message: { context: { id: 'wamid.approve' } } } },
+        }) as any,
+        'relay'
+      );
+
+      expect(settlement.settle.called).to.equal(false);
+      expect(result).to.deep.equal({ outcome: 'ignored' });
+    });
+
+    const THIS_CHAT = 'whatsapp:1234:15551234567';
+
+    function pendingAsks(count: number, platformThreadId = THIS_CHAT, platform = 'whatsapp') {
+      return Array.from({ length: count }, (_, index) => ({
+        deliveries: [{ platform, platformThreadId, platformMessageId: `m${index}` }],
+        _id: `hi${index}`,
+        identifier: `hi_${index}`,
+        requestId: `hr_${index}`,
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.PENDING,
+        content: { cardChrome: { title: `Question ${index + 1}?` } },
+        subscriberIds: ['sub-1'],
+        _environmentId: 'env1',
+      }));
+    }
+
+    it('asks them to swipe-reply when more questions wait than WhatsApp has buttons', async () => {
+      const { service, humanInteractionRepository, outboundGateway } = setup();
+      humanInteractionRepository.findPendingAsks.resolves(pendingAsks(4));
+
+      const result = await service.tryHandleMessage(
+        makeTurn({ config: whatsAppConfig, platformThreadId: THIS_CHAT }) as any,
+        'relay'
+      );
+
+      expect(result).to.deep.equal({ outcome: 'consumed' });
+      expect(outboundGateway.replyOnThreadWithCard.called).to.equal(false);
+      const text = outboundGateway.replyOnThread.firstCall.args[1].markdown as string;
+      expect(text).to.contain('D. Question 4?');
+      expect(text).to.contain('Swipe right on the question you mean');
+    });
+
+    it('points questions sent on another app back there, instead of asking to swipe on what isn’t here', async () => {
+      const { service, humanInteractionRepository, outboundGateway } = setup();
+      humanInteractionRepository.findPendingAsks.resolves(pendingAsks(4, 'telegram:42', 'telegram'));
+
+      await service.tryHandleMessage(makeTurn({ config: whatsAppConfig, platformThreadId: THIS_CHAT }) as any, 'relay');
+
+      const text = outboundGateway.replyOnThread.firstCall.args[1].markdown as string;
+      expect(text).to.not.contain('Swipe right');
+      expect(text).to.contain('They were sent on Telegram: answer them there.');
+      expect(text).to.contain('• Question 4?');
+    });
+
+    it('still offers the button card while the questions fit in WhatsApp’s three buttons', async () => {
+      const { service, humanInteractionRepository, outboundGateway } = setup();
+      humanInteractionRepository.findPendingAsks.resolves(pendingAsks(3));
+
+      await service.tryHandleMessage(makeTurn({ config: whatsAppConfig }) as any, 'relay');
+
+      expect(outboundGateway.replyOnThreadWithCard.calledOnce).to.equal(true);
+    });
+  });
+
+  it('lets a Slack thread reply under an approve card answer the question asked later in that thread', async () => {
+    const { service, humanInteractionRepository, settlement, pendingAsk } = setup();
+    humanInteractionRepository.findPendingByPlatformMessageId.resolves({
+      ...pendingAsk,
+      identifier: 'hi_root_approve',
+      kind: HumanInteractionKindEnum.APPROVE,
+    });
+    humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
+    settlement.settle.resolves({ ...pendingAsk, status: HumanInteractionStatusEnum.ANSWERED });
+
+    const result = await service.tryHandleMessage(
+      makeTurn({
+        message: { text: 'eu-west', raw: { event: { ts: '2.0', thread_ts: '1.0', channel: 'C1' } } },
+      }) as any,
+      'relay'
+    );
+
+    expect(result.outcome).to.equal('settled');
+    expect(settlement.settle.firstCall.args[0]).to.include({ identifier: 'hi_1' });
+  });
+
   it('does not claim a bare conversation message when nothing is pending', async () => {
     const { service, outboundGateway } = setup();
     const result = await service.tryHandleMessage(makeTurn() as any, 'conversation');
