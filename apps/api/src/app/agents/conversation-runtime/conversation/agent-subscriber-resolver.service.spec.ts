@@ -24,6 +24,7 @@ describe('AgentSubscriberResolver', () => {
   function makeResolver(
     overrides: {
       findByPlatformIdentity?: sinon.SinonStub;
+      findEndpoints?: sinon.SinonStub;
       findByPhone?: sinon.SinonStub;
       findByEmail?: sinon.SinonStub;
       find?: sinon.SinonStub;
@@ -38,6 +39,7 @@ describe('AgentSubscriberResolver', () => {
   ) {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findByPlatformIdentity ?? sinon.stub().resolves(null),
+      find: overrides.findEndpoints ?? sinon.stub().resolves([]),
     };
     const subscriberRepository = {
       findByPhone: overrides.findByPhone ?? sinon.stub().resolves([]),
@@ -116,33 +118,45 @@ describe('AgentSubscriberResolver', () => {
 
     it('resolves the sender to whoever proved their number on this business number', async () => {
       const { resolver, channelEndpointRepository, subscriberRepository } = makeResolver({
-        findByPlatformIdentity: sinon.stub().resolves(PROVED),
+        findEndpoints: sinon.stub().resolves([PROVED]),
       });
 
       expect(await resolver.resolveSubscriber(relayLookup())).to.deep.equal({
         outcome: 'resolved',
         subscriberId: 'ada',
       });
-      expect(channelEndpointRepository.findByPlatformIdentity.firstCall.args[0]).to.deep.equal({
+      expect(channelEndpointRepository.find.firstCall.args[0]).to.deep.equal({
         _environmentId: 'env-1',
         _organizationId: 'org-1',
         integrationIdentifier: 'integration-main',
         type: 'phone',
-        endpointField: 'phoneNumber',
-        endpointValue: '+15551234567',
+        'endpoint.phoneNumber': '+15551234567',
       });
       expect(subscriberRepository.findByPhone.called).to.equal(false);
     });
 
     it('reads a number without proof, or only on a profile, as a stranger', async () => {
       const unproved = makeResolver({
-        findByPlatformIdentity: sinon.stub().resolves({ ...PROVED, endpoint: { phoneNumber: '+15551234567' } }),
+        findEndpoints: sinon.stub().resolves([{ ...PROVED, endpoint: { phoneNumber: '+15551234567' } }]),
       });
       expect(await unproved.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
 
       const profileOnly = makeResolver({ findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]) });
       expect(await profileOnly.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
       expect(profileOnly.subscriberRepository.findByPhone.called).to.equal(false);
+    });
+
+    it('finds the proved contact even when an unproved endpoint shares the number', async () => {
+      const { resolver } = makeResolver({
+        findEndpoints: sinon
+          .stub()
+          .resolves([{ ...PROVED, subscriberId: 'planted', endpoint: { phoneNumber: '+15551234567' } }, PROVED]),
+      });
+
+      expect(await resolver.resolveSubscriber(relayLookup())).to.deep.equal({
+        outcome: 'resolved',
+        subscriberId: 'ada',
+      });
     });
 
     it('cannot read a sender without a usable number', async () => {
@@ -161,7 +175,7 @@ describe('AgentSubscriberResolver', () => {
       const result = await resolver.resolveSubscriber({ ...relayLookup(), isHumanRelay: false });
 
       expect(result).to.include({ subscriberId: 'sub-1' });
-      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+      expect(channelEndpointRepository.find.called).to.equal(false);
     });
   });
 

@@ -125,6 +125,45 @@ describe('buildOutcomeReply', () => {
     ).to.equal('✅ Picked staging — passed along.');
   });
 
+  it('names a plain-string choice by its label, as its id was minted', () => {
+    expect(
+      buildOutcomeReply(
+        interaction({
+          kind: HumanInteractionKindEnum.CHOOSE,
+          status: HumanInteractionStatusEnum.ANSWERED,
+          content: { cardChrome: { title: 'Where?', options: ['staging', 'prod'] } },
+          response: { optionId: 'opt_2' },
+        }) as never
+      )
+    ).to.equal('✅ Picked prod — passed along.');
+  });
+
+  it('names a posted card’s button by its label, never its id', () => {
+    const posted = (buttons: Array<{ id: string; label: string }>) => ({
+      card: {
+        type: 'card',
+        title: 'Where?',
+        children: [{ type: 'actions', children: buttons.map((button) => ({ type: 'button', ...button })) }],
+      },
+    });
+
+    expect(
+      buildOutcomeReply(
+        interaction({
+          kind: HumanInteractionKindEnum.CHOOSE,
+          status: HumanInteractionStatusEnum.ANSWERED,
+          content: posted([{ id: 'stg', label: 'staging' }]),
+          response: { optionId: 'stg' },
+        }) as never
+      )
+    ).to.equal('✅ Picked staging — passed along.');
+    expect(
+      buildOutcomeReply(
+        interaction({ content: posted([{ id: 'later', label: 'Later' }]), response: { optionId: 'later' } }) as never
+      )
+    ).to.equal('✅ Later — passed along.');
+  });
+
   it('leaves an ask to the reply its text answer already gets', () => {
     expect(
       buildOutcomeReply(

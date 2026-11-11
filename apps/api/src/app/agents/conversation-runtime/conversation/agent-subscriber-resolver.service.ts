@@ -218,18 +218,21 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
-    const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      integrationIdentifier: params.integrationIdentifier,
-      type: ENDPOINT_TYPES.PHONE,
-      endpointField: 'phoneNumber',
-      endpointValue: phoneNumber,
-    });
+    // Every endpoint on the number, not just the first: one written through the channel-endpoints API can share it,
+    // and must not hide the one that proved it.
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        integrationIdentifier: params.integrationIdentifier,
+        type: ENDPOINT_TYPES.PHONE,
+        'endpoint.phoneNumber': phoneNumber,
+      },
+      'subscriberId type providerId endpoint'
+    );
+    const proved = endpoints.find((endpoint) => provedWhatsAppNumberOf(endpoint));
 
-    return endpoint && provedWhatsAppNumberOf(endpoint)
-      ? { outcome: 'resolved', subscriberId: endpoint.subscriberId }
-      : { outcome: 'not_found' };
+    return proved ? { outcome: 'resolved', subscriberId: proved.subscriberId } : { outcome: 'not_found' };
   }
 
   /**

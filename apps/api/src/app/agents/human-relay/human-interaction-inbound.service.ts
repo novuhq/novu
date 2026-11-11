@@ -344,7 +344,8 @@ export class HumanInteractionInboundService {
     const repliedTo = this.extractRepliedToMessageIds(turn);
     if (repliedTo.length > 0) {
       const exact = await this.humanInteractionRepository.findPendingByPlatformMessageId(environmentId, repliedTo);
-      if (exact) {
+      // Only an ask takes words for an answer: a reply quoting an approve or a choice is a message, not a decision.
+      if (exact?.kind === HumanInteractionKindEnum.ASK) {
         const settled = await this.settleAskWithText(exact, text, turn, mode);
 
         return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
@@ -376,9 +377,14 @@ export class HumanInteractionInboundService {
     }
 
     // WhatsApp shows three buttons at most: with more questions waiting, ask them to swipe-reply to the one they mean.
+    // Only questions sent into this chat can be swiped; the rest are answered where they were sent.
     if (turn.config.platform === AgentPlatformEnum.WHATSAPP && addressedAsks.length > WHATSAPP_MAX_REPLY_BUTTONS) {
+      const inThisChat = addressedAsks.filter((ask) =>
+        (ask.deliveries ?? []).some((delivery) => delivery.platformThreadId === turn.platformThreadId)
+      );
+      const elsewhere = addressedAsks.filter((ask) => !inThisChat.includes(ask));
       applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-      await this.replyOnThread(turn, buildSwipeReplyPrompt(addressedAsks));
+      await this.replyOnThread(turn, buildSwipeReplyPrompt(inThisChat, elsewhere));
 
       return { outcome: 'consumed' };
     }
