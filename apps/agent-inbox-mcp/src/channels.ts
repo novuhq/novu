@@ -2,9 +2,12 @@ import { type AgentInboxApi, AgentInboxApiError } from './agent-inbox-api';
 import { type AgentInfo, readIfMissing } from './setup';
 
 /** The channels a person adds through a link. Email is not one: `inbox_setup` handles the owner's. */
-export const ADDABLE_CHANNELS = ['telegram', 'slack'] as const;
+export const ADDABLE_CHANNELS = ['telegram', 'slack', 'whatsapp'] as const;
 
 type AddableChannel = (typeof ADDABLE_CHANNELS)[number];
+
+/** The channels this server links an integration for. WhatsApp's comes from Meta's signup on agentinbox.md. */
+type LinkChannel = Exclude<AddableChannel, 'whatsapp'>;
 
 export type ChannelAddInput = { channel: AddableChannel };
 
@@ -30,7 +33,7 @@ const SLACK_INSTALL_LINK_MINUTES = 5;
  * How the API says the person's part isn't done yet. Slack has two wordings: no credentials at all, and
  * some credentials without a client id.
  */
-const MISSING_CREDENTIALS: Record<AddableChannel, { status: number; message: RegExp }> = {
+const MISSING_CREDENTIALS: Record<LinkChannel, { status: number; message: RegExp }> = {
   telegram: { status: 422, message: /bot token is missing/i },
   slack: { status: 404, message: /missing (?:required oauth )?credentials/i },
 };
@@ -44,9 +47,9 @@ const RECHECK_EVERY_MS = 2_000;
  * request is running, when the link already reads as used: a few database calls for Telegram, and for Slack
  * also the time Slack takes to create the app, which the API gives up on after 5 seconds. This covers both.
  */
-const RECHECKS: Record<AddableChannel, number> = { telegram: 1, slack: 3 };
+const RECHECKS: Record<LinkChannel, number> = { telegram: 1, slack: 3 };
 
-const LABELS: Record<AddableChannel, string> = { telegram: 'Telegram', slack: 'Slack' };
+const LABELS: Record<AddableChannel, string> = { telegram: 'Telegram', slack: 'Slack', whatsapp: 'WhatsApp' };
 
 /**
  * Whoever opens one of these links becomes the owner on that channel, and a message in the inbox can ask the
@@ -68,6 +71,10 @@ export async function channelAdd(
   sleep: Sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 ): Promise<string> {
   const { agent, subscriberId } = await readOwner(api);
+  if (channel === 'whatsapp') {
+    return nextWhatsAppStep(api, agent.agentIdentifier);
+  }
+
   const linked = await findLinkedIntegrations(api, agent.agentIdentifier, channel);
   const integrations = linked.length > 0 ? linked : [await linkIntegration(api, agent, channel)];
 
@@ -104,7 +111,7 @@ async function readOwner(api: AgentInboxApi): Promise<{ agent: AgentInfo; subscr
 async function findLinkedIntegrations(
   api: AgentInboxApi,
   agentIdentifier: string,
-  channel: AddableChannel
+  channel: LinkChannel
 ): Promise<Integration[]> {
   const links = await api.get<Array<{ integration: Integration }>>('/v1/channels', { agentIdentifier, limit: 100 });
 
@@ -114,7 +121,7 @@ async function findLinkedIntegrations(
 }
 
 /** Links one the account already has, or else a new one named after the agent. A 409 means it's linked already. */
-async function linkIntegration(api: AgentInboxApi, agent: AgentInfo, channel: AddableChannel): Promise<Integration> {
+async function linkIntegration(api: AgentInboxApi, agent: AgentInfo, channel: LinkChannel): Promise<Integration> {
   const integrations = await api.get<Integration[]>('/v1/channels/apps');
   const integration =
     integrations.find(({ providerId, channel: kind }) => providerId === channel && kind === 'chat') ??
@@ -152,7 +159,7 @@ async function hasEndpoint(api: AgentInboxApi, integrations: Integration[], subs
 /** The result of a step, or `null` while the person's credentials aren't saved. */
 async function runWhenSaved<T>(
   step: () => Promise<T>,
-  channel: AddableChannel,
+  channel: LinkChannel,
   rechecks: number,
   sleep: Sleep
 ): Promise<T | null> {
@@ -173,7 +180,7 @@ async function runWhenSaved<T>(
   return null;
 }
 
-function isMissingCredentials(error: unknown, channel: AddableChannel): boolean {
+function isMissingCredentials(error: unknown, channel: LinkChannel): boolean {
   const { status, message } = MISSING_CREDENTIALS[channel];
 
   return error instanceof AgentInboxApiError && error.status === status && message.test(error.message);
@@ -256,10 +263,65 @@ async function nextSlackStep(
  * token. The API's own `url` is no use here: it points at the Novu dashboard. The token stays in the fragment,
  * which browsers don't send to the server, so it stays out of access logs and Referer headers.
  */
-function setupPageUrl(api: AgentInboxApi, channel: AddableChannel, token: string): string {
+function setupPageUrl(api: AgentInboxApi, channel: LinkChannel, token: string): string {
   const query = channel === 'telegram' ? '' : `?channel=${channel}`;
 
   return `${api.siteUrl}/connect${query}#${token}`;
+}
+
+/** What `GET /v1/channels/whatsapp` says about the agent's WhatsApp, as the CLI reads it too. */
+type WhatsAppSetup = {
+  enabled: boolean;
+  available: boolean;
+  connected: boolean;
+  businessConnected?: boolean;
+  displayPhoneNumber?: string;
+  operatorNumberBound?: boolean;
+  operatorPhoneNumber?: string;
+};
+
+const WHATSAPP_UNAVAILABLE = "WhatsApp isn't available for this account yet. Use Telegram or Slack instead.";
+
+/**
+ * WhatsApp has no link this server can make: Meta's signup runs in the browser, on agentinbox.md's own page,
+ * and so does the code that proves the user's number. So the next step is always that page, signed in as the
+ * owner, and this call only says how far they got.
+ */
+async function nextWhatsAppStep(api: AgentInboxApi, agentIdentifier: string): Promise<string> {
+  const setup = await readWhatsAppSetup(api, agentIdentifier);
+  if (!setup?.enabled || !setup.available) {
+    return WHATSAPP_UNAVAILABLE;
+  }
+
+  if (setup.connected) {
+    const numbers = [
+      setup.displayPhoneNumber ? `on ${setup.displayPhoneNumber}` : '',
+      setup.operatorPhoneNumber ? `the user's number ${setup.operatorPhoneNumber}` : '',
+    ].filter(Boolean);
+    const where = numbers.length ? ` (${numbers.join(', ')})` : '';
+
+    return `WhatsApp is connected${where}. inbox_send can reach the user there with via: "whatsapp".`;
+  }
+
+  const page = `${api.siteUrl}/configure?setup=whatsapp`;
+  const step = setup.businessConnected
+    ? `WhatsApp Business is connected${setup.displayPhoneNumber ? ` on ${setup.displayPhoneNumber}` : ''}. Give the user this link to connect their own number by sending the agent a code: ${page}`
+    : `WhatsApp needs the user's WhatsApp Business number first. Give them this link to connect it on agentinbox.md, where they sign in as the owner: ${page}`;
+
+  return `${step}\nAfter they finish, call channel_add again.\nShow the link to the user in this chat and nowhere else, never through inbox_send or inbox_reply.`;
+}
+
+/** `null` when this server's API doesn't let a key read it yet (an older one), which reads as not available. */
+async function readWhatsAppSetup(api: AgentInboxApi, agentIdentifier: string): Promise<WhatsAppSetup | null> {
+  try {
+    return await api.get<WhatsAppSetup>('/v1/channels/whatsapp', { agentIdentifier });
+  } catch (error) {
+    if (error instanceof AgentInboxApiError && (error.status === 403 || error.status === 404)) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 function nextStep(step: string, expiry: string): string {
