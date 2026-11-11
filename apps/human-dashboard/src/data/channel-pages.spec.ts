@@ -126,6 +126,24 @@ function shellArguments(command: string): string[] {
 }
 
 describe('landing CLI instructions', () => {
+  it('claims fresh CLI email setups before the first outbound example', () => {
+    for (const page of [channelHub('email'), agentPage('email', 'openclaw'), agentPage('email', 'any-agent')]) {
+      const commands = page.steps.flatMap((step) => (step.code ? copyText(step.code).split('\n') : []));
+      const setup = commands.indexOf('agentinbox setup email');
+      const login = commands.indexOf('agentinbox login');
+      const send = commands.findIndex((command) => command.startsWith('agentinbox send '));
+      expect(setup).toBeGreaterThanOrEqual(0);
+      expect(login).toBeGreaterThan(setup);
+      if (send !== -1) expect(login).toBeLessThan(send);
+    }
+  });
+
+  it('finds verification mail from strangers and explains how to open its conversation', () => {
+    const signup = channelHub('email').useCases.find((item) => item.label === 'Sign-ups');
+    expect(signup?.command).toBe('agentinbox list --senders all');
+    expect(signup?.description).toContain('agentinbox show <conversation-id>');
+  });
+
   it('prepares fresh non-interactive setup instead of assuming terminal prompts', () => {
     for (const channel of CHANNEL_IDS) {
       const prompt = setupPrompt(channel, 'openclaw');
@@ -151,7 +169,9 @@ describe('landing CLI instructions', () => {
       ...agentPagePairs().flatMap(({ channel, agent }) =>
         agentPage(channel, agent).steps.flatMap((step) => (step.code ? [copyText(step.code)] : []))
       ),
-    ].filter((command) => command.startsWith('agentinbox '));
+    ]
+      .flatMap((command) => command.split('\n'))
+      .filter((command) => command.startsWith('agentinbox '));
     for (const command of commands) expect(() => shellArguments(command), command).not.toThrow();
   });
 

@@ -10,9 +10,12 @@ PDF and these Figma frames:
 
 | Channel | Agent pages |
 | --- | --- |
-| `/email` | `/email/openclaw` |
-| `/telegram` | `/telegram/openclaw`, `/telegram/claude-code`, `/telegram/hermes` |
-| `/slack` | `/slack/claude-code`, `/slack/openclaw`, `/slack/codex`, `/slack/cursor` |
+| `/email` | `/email/<agent>` for all ten registered agents |
+| `/telegram` | `/telegram/<agent>` for all ten registered agents |
+| `/slack` | `/slack/<agent>` for all ten registered agents |
+
+Agent slugs: `claude-code`, `codex`, `opencode`, `cursor`, `hermes`, `openclaw`,
+`claude`, `chatgpt`, `grok-bot`, and `any-agent`. These make 33 public landing routes.
 
 Unsupported pairs return 404. Channel slugs share the existing `[host]` route;
 existing host setup pages continue to use `HostPage`. Each new route has canonical,
@@ -23,13 +26,28 @@ Composition is in `src/app/[host]/page.tsx` and
 `src/components/pages/channels/`. The typed content and supported route matrix
 live in `src/data/channel-pages.ts`.
 
-Telegram and Telegram/OpenClaw are the supplied visual references. Other variants
-use draft copy and shared illustrative Telegram screenshots. Review channel-specific
-copy, channel setup syntax, pricing claims and documentation destinations before
-publication. The existing host catalog supplies agent skill installation commands,
-including the global OpenClaw install and Hermes's `hermes-agent` identifier.
+Telegram and Telegram/OpenClaw are the supplied visual references. Commit
+`1f488da9d` fills the channel and agent copy, commands, prompts and metadata from
+the page specification. Prompt scenes now reflect their channel and agent; hero
+JPEGs remain shared illustrative Telegram artwork. Separate channel artwork has
+not been approved against its own Figma reference. Archived exact-reference
+audits below predate these copy/scene changes. Review external documentation
+destinations and execute CLI setup separately before release.
 The sample message commands and terminal output are examples; browser verification
 does not execute the CLI or send any messages.
+
+Review of the CLI at that commit identified two email-instruction corrections.
+Fresh CLI email setup now runs `agentinbox login` after creating the address and
+before outbound examples, including the hub, OpenClaw and any-agent guides.
+The sign-up example uses `agentinbox list --senders all` to include verification
+mail from new senders, then explains `agentinbox show <conversation-id>` to read
+the thread. Two unit regressions cover these cases. The command-quoting test
+stubs each line separately, including multiline setup snippets.
+
+The November 11 follow-up passes the production build, typecheck, scoped Biome,
+176 unit tests and all 187 Chromium browser tests, covering all 33 landing routes
+and the new pricing page. Historical counts and Figma measurements below refer
+to their dated runs.
 
 ## Shared sections and interactions
 

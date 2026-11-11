@@ -266,9 +266,9 @@ const HUBS: Record<ChannelId, ChannelHub> = {
         output: INSTALL_OUTPUT,
       },
       {
-        title: 'Create the address',
-        description: 'Name your agent, pick its address, then confirm your own email.',
-        code: '$ agentinbox setup email',
+        title: 'Create and claim the address',
+        description: 'Create the address, then run login and approve it in the browser to enable outbound email.',
+        code: '$ agentinbox setup email\n$ agentinbox login',
       },
       {
         title: 'Send the first message',
@@ -339,8 +339,9 @@ const HUBS: Record<ChannelId, ChannelHub> = {
       {
         label: 'Sign-ups',
         title: 'Let your agent handle its own accounts',
-        description: "Verification codes go to your agent's address, not yours.",
-        command: 'agentinbox list',
+        description:
+          'List all senders to find verification emails, then run agentinbox show <conversation-id> to read the returned thread.',
+        command: 'agentinbox list --senders all',
       },
       {
         label: 'Monitoring',
@@ -1040,9 +1041,9 @@ const EMAIL_AGENTS: Record<AgentId, AgentPage> = {
         output: INSTALL_OUTPUT,
       },
       {
-        title: 'Create the address',
-        description: 'Name your agent, pick its address, then confirm your email.',
-        code: '$ agentinbox setup email',
+        title: 'Create and claim the address',
+        description: 'Create the address, then run login and approve it in the browser to enable outbound email.',
+        code: '$ agentinbox setup email\n$ agentinbox login',
       },
       {
         title: 'Add the skill to OpenClaw',
@@ -1314,9 +1315,9 @@ const EMAIL_AGENTS: Record<AgentId, AgentPage> = {
         code: '$ npm i -g @agentinbox/cli',
       },
       {
-        title: 'Create the address',
-        description: 'Name your agent, pick its address, then confirm your email.',
-        code: '$ agentinbox setup email',
+        title: 'Create and claim the address',
+        description: 'Create the address, then run login and approve it in the browser to enable outbound email.',
+        code: '$ agentinbox setup email\n$ agentinbox login',
       },
       {
         title: 'Ask from your code',
