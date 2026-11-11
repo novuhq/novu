@@ -651,7 +651,7 @@ describe('inbox_send on WhatsApp', () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe(
-      `WhatsApp can't reach alice until they write to you again (their window closed at 2026-11-10T09:00:00.000Z). WhatsApp only lets an agent write within 24 hours of the person's last message. Send it again with via: "telegram" (they're also on email).`
+      `WhatsApp can't reach alice until they write to you again (their window closed at 2026-11-10T09:00:00.000Z). WhatsApp only lets an agent write within 24 hours of the person's last message. Send it again with inbox_send, to: "alice", via: "telegram" (they're also on email).`
     );
   });
 
@@ -694,7 +694,7 @@ describe('inbox_send on WhatsApp', () => {
     });
 
     expect(result.content[0].text).toBe(
-      'WhatsApp shows at most 3 buttons and this has 4. Offer at most 3 options. Or send it as it is with via: "slack".'
+      'WhatsApp shows at most 3 buttons and this has 4. Offer at most 3 options. Or send it as it is with inbox_send, to: "alice", via: "slack".'
     );
   });
 

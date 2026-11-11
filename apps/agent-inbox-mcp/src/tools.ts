@@ -572,7 +572,7 @@ function describeWhatsAppRefusal(error: AgentInboxApiError): string | null {
     : [];
   const [first, ...rest] = others;
   const instead = first
-    ? ` Send it again with via: "${first}"${rest.length ? ` (they're also on ${rest.join(', ')})` : ''}.`
+    ? ` Send it again with inbox_send, to: "${subscriberId}", via: "${first}"${rest.length ? ` (they're also on ${rest.join(', ')})` : ''}.`
     : ` ${subscriberId} has no other channel. Call contact_invite for ${subscriberId} and give the user the link to pass on.`;
 
   if (error.code === WHATSAPP_WINDOW_CLOSED) {
@@ -585,7 +585,7 @@ function describeWhatsAppRefusal(error: AgentInboxApiError): string | null {
   const maxButtons = typeof details.maxButtons === 'number' ? details.maxButtons : 3;
   const buttons = typeof details.buttons === 'number' ? ` and this has ${details.buttons}` : '';
 
-  const elsewhere = first ? ` Or send it as it is with via: "${first}".` : '';
+  const elsewhere = first ? ` Or send it as it is with inbox_send, to: "${subscriberId}", via: "${first}".` : '';
 
   return `WhatsApp shows at most ${maxButtons} buttons${buttons}. Offer at most ${maxButtons} options.${elsewhere}`;
 }
