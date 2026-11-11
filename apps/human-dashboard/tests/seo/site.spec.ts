@@ -84,6 +84,7 @@ test('SEO crawler files contain only production canonical pages', async ({ reque
     [
       `${origin}/`,
       `${origin}/sapien`,
+      `${origin}/pricing`,
       ...HOST_IDS.map((id) => `${origin}/${id}`),
       ...CHANNEL_IDS.map((id) => `${origin}/${id}`),
       ...agentPagePairs().map(({ channel, agent }) => `${origin}/${channel}/${agent}`),

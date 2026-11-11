@@ -31,6 +31,7 @@ const EXACT_PATHS = new Set([
   '/llms.txt',
   '/mcp/connect',
   '/onboarding',
+  '/pricing',
   '/robots.txt',
   '/sapien',
   '/settings',
