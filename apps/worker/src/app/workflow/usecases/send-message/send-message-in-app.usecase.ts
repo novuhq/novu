@@ -17,7 +17,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
-import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { InAppOutput } from '@novu/framework/internal';
 import {
   ActorTypeEnum,
@@ -134,13 +134,7 @@ export class SendMessageInApp extends SendMessageBase {
         );
         content = compiled.content;
 
-        if (step.template.cta?.data?.url) {
-          step.template.cta.data.url = compiled.url;
-        }
-
-        if (step.template.cta?.action?.buttons) {
-          step.template.cta.action.buttons = compiled.ctaButtons;
-        }
+        step.template = withCompiledCta(step.template, compiled);
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -334,4 +328,28 @@ export class SendMessageInApp extends SendMessageBase {
       status: SendMessageStatus.SUCCESS,
     };
   }
+}
+
+/**
+ * Copy-on-write: `step.template` can be the cached workflow's template object (in-memory LRU), so
+ * the subscriber's compiled CTA must never be written into it in place — it would leak to the next
+ * subscriber of that workflow.
+ */
+function withCompiledCta(
+  template: MessageTemplateEntity,
+  compiled: Pick<Awaited<ReturnType<CompileInAppTemplate['execute']>>, 'url' | 'ctaButtons'>
+): MessageTemplateEntity {
+  const { cta } = template;
+  if (!cta?.data?.url && !cta?.action?.buttons) {
+    return template;
+  }
+
+  return {
+    ...template,
+    cta: {
+      ...cta,
+      ...(cta.data?.url ? { data: { ...cta.data, url: compiled.url } } : {}),
+      ...(cta.action?.buttons ? { action: { ...cta.action, buttons: compiled.ctaButtons } } : {}),
+    },
+  };
 }

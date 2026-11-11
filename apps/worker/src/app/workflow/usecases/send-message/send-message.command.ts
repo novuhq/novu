@@ -4,11 +4,19 @@ import type { SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@
 import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
+  /**
+   * Created per subscriber per step with the job, step and cached workflow; deep-copying them
+   * dominated create() cost. Consumers (send-message/*, incl. SendMessageChannelCommand) must not
+   * mutate nested fields in place — `step.template` comes from the shared workflow cache.
+   */
+  protected static readonly skipDeepTransform = true;
+
   @IsDefined()
   @IsString()
   identifier: string;
 
   @IsDefined()
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing untyped trigger payload, outside this change
   payload: any;
 
   @IsDefined()
@@ -37,6 +45,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   jobId: string;
 
   @IsOptional()
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing untyped digest events, outside this change
   events?: any[];
 
   @IsDefined()
