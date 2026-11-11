@@ -1,7 +1,9 @@
+import type { isBotMention as SlackIsBotMention } from '@chat-adapter/slack';
 import { type ConversationEntity, type ConversationParticipant, ConversationParticipantTypeEnum } from '@novu/dal';
 import { AGENT_REPLY_METADATA_KEYS, AgentReplyPolicyEnum } from '@novu/shared';
 import type { Message, Thread } from 'chat';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { esmImport } from '../../shared/util/esm-import';
 import { asRecord } from '../../shared/util/raw-record';
 import { isNestedSharedThread } from './platform-thread-id';
 
@@ -137,17 +139,59 @@ export function messageContainsUserMention(message: Message, platform: AgentPlat
   return collectMentionedUserIds(message, platform).length > 0;
 }
 
-/** Whether the raw payload @-mentions this agent's own bot user. */
-export function messageMentionsAgent(
+export type AgentMentionCheck =
+  | { readonly mentioned: true }
+  | { readonly mentioned: false; readonly rejected?: TypeError };
+
+export async function checkAgentMention(
   message: Message,
   platform: AgentPlatformEnum,
   botUserId: string | undefined
-): boolean {
-  if (!botUserId) {
-    return false;
-  }
+): Promise<AgentMentionCheck> {
+  switch (platform) {
+    case AgentPlatformEnum.SLACK: {
+      if (botUserId === undefined) {
+        return { mentioned: false };
+      }
 
-  return collectMentionedUserIds(message, platform).some((id) => isBotUserId(id, botUserId));
+      const { isBotMention } = (await esmImport('@chat-adapter/slack/webhook')) as {
+        isBotMention: typeof SlackIsBotMention;
+      };
+
+      try {
+        if (isBotMention(slackEventOf(message), botUserId)) {
+          return { mentioned: true };
+        }
+
+        return { mentioned: false };
+      } catch (error) {
+        if (isRejectedSlackBotId(error)) {
+          return { mentioned: false, rejected: error };
+        }
+
+        throw error;
+      }
+    }
+    case AgentPlatformEnum.TEAMS: {
+      if (collectTeamsMentionedUserIds(message).some((id) => isBotUserId(id, botUserId))) {
+        return { mentioned: true };
+      }
+
+      return { mentioned: false };
+    }
+    case AgentPlatformEnum.WHATSAPP:
+    case AgentPlatformEnum.EMAIL:
+    case AgentPlatformEnum.TELEGRAM:
+    case AgentPlatformEnum.SENDBLUE:
+    case AgentPlatformEnum.PHOTON_IMESSAGE:
+    case AgentPlatformEnum.WEB_CHAT:
+      return { mentioned: false };
+    default: {
+      const exhaustiveCheck: never = platform;
+
+      return exhaustiveCheck;
+    }
+  }
 }
 
 export function messageMentionsOtherHuman(
@@ -207,10 +251,28 @@ function collectSlackMentionedUserIds(message: Message): string[] {
   return ids;
 }
 
-function collectSlackBlockMentionedUserIds(message: Message): string[] {
+function isRejectedSlackBotId(error: unknown): error is TypeError {
+  return error instanceof TypeError && error.message.startsWith('isBotMention:');
+}
+
+function slackEventOf(message: Message): Record<string, unknown> {
   const raw = asRecord(message.raw);
   const event = asRecord(raw?.event) ?? raw;
-  const blocks = Array.isArray(event?.blocks) ? event.blocks : [];
+
+  if (!event) {
+    return {};
+  }
+
+  if (event.subtype === 'message_changed') {
+    return asRecord(event.message) ?? {};
+  }
+
+  return event;
+}
+
+function collectSlackBlockMentionedUserIds(message: Message): string[] {
+  const event = slackEventOf(message);
+  const blocks = Array.isArray(event.blocks) ? event.blocks : [];
   const ids: string[] = [];
 
   for (const block of blocks) {
@@ -296,9 +358,7 @@ function slackMentionTexts(message: Message): SlackProse[] {
     texts.push(maskSlackCodeSpans(message.text));
   }
 
-  const raw = asRecord(message.raw);
-  const event = asRecord(raw?.event) ?? raw;
-  const rawText = event?.text;
+  const rawText = slackEventOf(message).text;
 
   if (typeof rawText === 'string' && rawText.length > 0) {
     texts.push(maskSlackCodeSpans(rawText));

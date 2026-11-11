@@ -3,11 +3,11 @@ import { AgentReplyPolicyEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import {
+  checkAgentMention,
   countHumanParticipants,
   countOtherAgentParticipants,
   detectSmartExclusiveThreadEnded,
   followsNestedThreadWithoutMention,
-  messageMentionsAgent,
   messageMentionsOtherHuman,
   requiresExplicitMention,
 } from './requires-explicit-mention';
@@ -391,6 +391,66 @@ describe('messageMentionsOtherHuman', () => {
     ).to.equal(true);
   });
 
+  it('ignores a Slack teammate id written only in the raw event text', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, raw: { event: { text: '`<@U99>`' } } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('still detects a Slack teammate mention in the raw event when formatted text only has it in code', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '`<@U99>`', raw: { event: { text: '<@U99> help' } } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('ignores a Slack teammate id after an unclosed fence that is followed by inline code', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '```x`<@U99>`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('does not join a Slack teammate id across an inline code span', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '<@U99`x`>', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(false);
+  });
+
+  it('still detects a Slack teammate id after an unclosed fence', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '``` <@U99> help', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
+  it('still detects a Slack teammate id in an inline span that crosses a line', () => {
+    expect(
+      messageMentionsOtherHuman(
+        { isMention: false, text: '`<@U99>\nhelp`', author: { userId: 'U1' } } as any,
+        AgentPlatformEnum.SLACK,
+        'UBOT'
+      )
+    ).to.equal(true);
+  });
+
   it('detects a Teams teammate mention', () => {
     expect(
       messageMentionsOtherHuman(
@@ -406,75 +466,174 @@ describe('messageMentionsOtherHuman', () => {
   });
 });
 
-describe('messageMentionsAgent', () => {
-  it('does not treat a Slack bot id written only in inline code as a mention', () => {
-    expect(
-      messageMentionsAgent(
-        { isMention: false, text: 'try `<@UBOT>` in a snippet' } as any,
+describe('checkAgentMention', () => {
+  function slackMessage(event: Record<string, unknown>) {
+    return { raw: { event } } as any;
+  }
+
+  it('treats a prose mention of the bot as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: '<@UBOT> hello' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: true });
+  });
+
+  it('does not treat a bot id written only in inline code as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: 'try `<@UBOT>` in a snippet' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
+  });
+
+  it('does not treat a bot id written only in a fenced code block as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: 'see\n```\n<@UBOT> help\n```\nthanks' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
+  });
+
+  it('does not treat a mention of another user as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: '<@U99> hello' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
+  });
+
+  it('does not mention the bot and does not reject when the bot user id is missing', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: '<@UBOT> hello' }),
+      AgentPlatformEnum.SLACK,
+      undefined
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
+    expect(result).to.not.have.property('rejected');
+  });
+
+  it('rejects a bot user id that is not a Slack id without throwing', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: '<@UBOT> hello' }),
+      AgentPlatformEnum.SLACK,
+      'not a slack id!'
+    );
+
+    expect(result.mentioned).to.equal(false);
+
+    if (!result.mentioned) {
+      expect(result.rejected).to.be.instanceOf(TypeError);
+    }
+  });
+
+  it('does not treat a payload the classifier cannot read as an unmentioned message', async () => {
+    try {
+      await checkAgentMention(
+        slackMessage({ type: 'message', text: 'hi', blocks: {} }),
         AgentPlatformEnum.SLACK,
         'UBOT'
-      )
-    ).to.equal(false);
+      );
+      expect.fail('expected a payload TypeError to propagate');
+    } catch (error) {
+      expect(error).to.be.instanceOf(TypeError);
+      expect((error as TypeError).message.startsWith('isBotMention:')).to.equal(false);
+    }
   });
 
-  it('does not treat a Slack bot id written only in a fenced code block as a mention', () => {
-    expect(
-      messageMentionsAgent(
-        { isMention: false, text: 'see\n```\n<@UBOT> help\n```\nthanks' } as any,
-        AgentPlatformEnum.SLACK,
-        'UBOT'
-      )
-    ).to.equal(false);
+  it('rejects an empty bot user id without throwing', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: '<@UBOT> hello' }),
+      AgentPlatformEnum.SLACK,
+      ''
+    );
+
+    expect(result.mentioned).to.equal(false);
+
+    if (!result.mentioned) {
+      expect(result.rejected).to.be.instanceOf(TypeError);
+    }
   });
 
-  it('does not treat a bot id that exists only inside code in the raw event text as a mention', () => {
-    expect(
-      messageMentionsAgent(
-        { isMention: false, raw: { event: { text: '`<@UBOT>`' } } } as any,
-        AgentPlatformEnum.SLACK,
-        'UBOT'
-      )
-    ).to.equal(false);
+  it('treats a message_changed edit that mentions the bot as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({
+        type: 'message',
+        subtype: 'message_changed',
+        message: { type: 'message', text: '<@UBOT> updated' },
+      }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: true });
   });
 
-  it('still treats a real Slack mention as a mention when the same id also appears in code', () => {
-    expect(
-      messageMentionsAgent({ isMention: false, text: '<@UBOT> see `<@UBOT>`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
-    ).to.equal(true);
+  it('does not treat a message_changed event with no message object as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', subtype: 'message_changed' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
   });
 
-  it('still treats a real mention in the raw event as a mention when formatted text only has it in code', () => {
-    expect(
-      messageMentionsAgent(
-        { isMention: false, text: '`<@UBOT>`', raw: { event: { text: '<@UBOT> help' } } } as any,
-        AgentPlatformEnum.SLACK,
-        'UBOT'
-      )
-    ).to.equal(true);
+  it('treats an app_mention of another user outside code as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'app_mention', text: 'cc <@U99>' }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: true });
   });
 
-  it('does not treat a bot id after an unclosed fence that is followed by inline code as a mention', () => {
-    expect(
-      messageMentionsAgent({ isMention: false, text: '```x`<@UBOT>`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
-    ).to.equal(false);
+  it('does not treat a bot id that exists only in a linked attachment as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({
+        type: 'message',
+        text: 'see the link',
+        attachments: [{ text: '<@UBOT>', from_url: 'https://example.com/post' }],
+      }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: false });
   });
 
-  it('does not join a bot id across an inline code span', () => {
-    expect(
-      messageMentionsAgent({ isMention: false, text: '<@UBOT`x`>' } as any, AgentPlatformEnum.SLACK, 'UBOT')
-    ).to.equal(false);
+  it('treats a bot id in an author attachment as a mention', async () => {
+    const result = await checkAgentMention(
+      slackMessage({
+        type: 'message',
+        text: 'see the note',
+        attachments: [{ text: '<@UBOT>' }],
+      }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result).to.deep.equal({ mentioned: true });
   });
 
-  it('still treats a bot id after an unclosed fence as a mention', () => {
-    expect(
-      messageMentionsAgent({ isMention: false, text: '``` <@UBOT> help' } as any, AgentPlatformEnum.SLACK, 'UBOT')
-    ).to.equal(true);
-  });
+  it('treats a Teams mention of the bot client id as a mention', async () => {
+    const result = await checkAgentMention(
+      { raw: { entities: [{ type: 'mention', mentioned: { id: '28:bot-client' } }] } } as any,
+      AgentPlatformEnum.TEAMS,
+      'bot-client'
+    );
 
-  it('still treats a bot id in an inline span that crosses a line as a mention', () => {
-    expect(
-      messageMentionsAgent({ isMention: false, text: '`<@UBOT>\nhelp`' } as any, AgentPlatformEnum.SLACK, 'UBOT')
-    ).to.equal(true);
+    expect(result).to.deep.equal({ mentioned: true });
   });
 });
 
