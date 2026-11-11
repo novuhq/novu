@@ -147,4 +147,22 @@ describe('GetNotifications', () => {
       },
     ]);
   });
+
+  it('should use the provided subscriber without looking it up', async () => {
+    const command: GetNotificationsCommand = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: mockSubscriber.subscriberId,
+      subscriber: mockSubscriber,
+      limit: 10,
+      offset: 0,
+    };
+
+    messageRepositoryMock.paginate.resolves({ data: [], hasMore: false });
+
+    await getNotifications.execute(command);
+
+    expect(getSubscriberMock.execute.called).to.be.false;
+    expect(messageRepositoryMock.paginate.firstCall.args[0].subscriberId).to.equal(mockSubscriber._id);
+  });
 });

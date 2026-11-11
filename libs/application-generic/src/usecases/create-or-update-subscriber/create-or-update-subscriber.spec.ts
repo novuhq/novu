@@ -18,6 +18,8 @@ describe('Create Subscriber', () => {
   let useCase: CreateOrUpdateSubscriberUseCase;
   let organizationId: string;
   let environmentId: string;
+  let subscriberRepository: SubscriberRepository;
+  let invalidateCacheService: InvalidateCacheService;
 
   beforeAll(async () => {
     await dalService.connect(process.env.MONGO_URL as string);
@@ -50,6 +52,8 @@ describe('Create Subscriber', () => {
     }).compile();
 
     useCase = moduleRef.get<CreateOrUpdateSubscriberUseCase>(CreateOrUpdateSubscriberUseCase);
+    subscriberRepository = moduleRef.get<SubscriberRepository>(SubscriberRepository);
+    invalidateCacheService = moduleRef.get<InvalidateCacheService>(InvalidateCacheService);
     organizationId = SubscriberRepository.createObjectId();
     environmentId = SubscriberRepository.createObjectId();
   });
@@ -99,5 +103,56 @@ describe('Create Subscriber', () => {
 
     expect(result.firstName).toEqual('Second Name');
     expect(result.locale).toEqual(noLocale);
+  });
+
+  it('should not invalidate the subscriber cache when an upsert changes nothing', async () => {
+    const command = CreateOrUpdateSubscriberCommand.create({
+      organizationId,
+      environmentId,
+      subscriberId: 'no-op-subscriber',
+      email: 'no-op@example.com',
+      firstName: 'Same',
+    });
+
+    await useCase.execute(command);
+
+    const invalidateSpy = vi.spyOn(invalidateCacheService, 'invalidateByKey');
+    const updateSpy = vi.spyOn(subscriberRepository, 'update');
+
+    const result = await useCase.execute(command);
+
+    expect(result.firstName).toEqual('Same');
+    expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should return the updated subscriber without re-reading it', async () => {
+    const subscriberId = 'update-no-refetch';
+
+    await useCase.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        organizationId,
+        environmentId,
+        subscriberId,
+        firstName: 'Before',
+      })
+    );
+
+    const findSpy = vi.spyOn(subscriberRepository, 'findBySubscriberId');
+
+    const result = await useCase.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        organizationId,
+        environmentId,
+        subscriberId,
+        firstName: 'After',
+      })
+    );
+
+    expect(result.firstName).toEqual('After');
+    expect(findSpy).toHaveBeenCalledTimes(1);
+
+    const persisted = await subscriberRepository.findBySubscriberId(environmentId, subscriberId);
+    expect(persisted?.firstName).toEqual('After');
   });
 });
