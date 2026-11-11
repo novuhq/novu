@@ -1,48 +1,48 @@
 import type { BaseFormatConverter, Root } from 'chat';
 
-declare const inboundMarkdownParserBrand: unique symbol;
-
-export type InboundMarkdownParser = ((text: string) => Root) & {
-  readonly [inboundMarkdownParserBrand]: true;
-};
+/**
+ * Parses untrusted inbound markdown into a `Message.formatted` tree. Text over the
+ * Chat SDK's inbound budget becomes one paragraph of `fallbackText` (default: the
+ * markdown itself), so a hostile message can't stall the event loop in the parser.
+ *
+ * `@novu/chat-adapter-web-chat` and `@novu/chat-adapter-email` keep their own
+ * smaller copy, because those packages can't depend on this one.
+ */
+export type InboundMarkdownParser = (markdown: string, fallbackText?: string) => Root;
 
 type ChatMarkdownModule = {
+  BaseFormatConverter: typeof BaseFormatConverter;
   parseMarkdown: (markdown: string) => Root;
-  stringifyMarkdown?: (ast: Root) => string;
-  BaseFormatConverter?: typeof BaseFormatConverter;
+  stringifyMarkdown: (ast: Root) => string;
 };
 
-function asInboundParser(parse: (text: string) => Root): InboundMarkdownParser {
-  return parse as InboundMarkdownParser;
-}
-
 export function createInboundMarkdownParser(chat: ChatMarkdownModule): InboundMarkdownParser {
-  const Base = chat.BaseFormatConverter;
-  const parseIncoming = typeof Base === 'function' ? Base.prototype?.parseIncoming : undefined;
-
-  if (typeof Base !== 'function' || typeof parseIncoming !== 'function') {
-    return asInboundParser(chat.parseMarkdown);
+  // `parseIncoming` arrived in chat 4.44.0. The peer range still allows older
+  // releases, which only have the unbounded parse.
+  if (typeof chat.BaseFormatConverter.prototype.parseIncoming !== 'function') {
+    return (markdown) => chat.parseMarkdown(markdown);
   }
 
-  const stringifyMarkdown = chat.stringifyMarkdown;
-  if (typeof stringifyMarkdown !== 'function') {
-    return asInboundParser(chat.parseMarkdown);
-  }
+  class InboundMarkdownConverter extends chat.BaseFormatConverter {
+    private readonly fallbackText: string | undefined;
 
-  const parseMarkdown = chat.parseMarkdown;
-  const stringify = stringifyMarkdown;
+    constructor(fallbackText: string | undefined) {
+      super();
+      this.fallbackText = fallbackText;
+    }
 
-  class InboundMarkdownConverter extends Base {
-    override toAst(text: string): Root {
-      return parseMarkdown(text);
+    override toAst(markdown: string): Root {
+      return chat.parseMarkdown(markdown);
     }
 
     override fromAst(ast: Root): string {
-      return stringify(ast);
+      return chat.stringifyMarkdown(ast);
+    }
+
+    protected override incomingFallbackText(markdown: string): string {
+      return this.fallbackText ?? markdown;
     }
   }
 
-  const converter = new InboundMarkdownConverter();
-
-  return asInboundParser((text: string) => converter.parseIncoming(text).formatted);
+  return (markdown, fallbackText) => new InboundMarkdownConverter(fallbackText).parseIncoming(markdown).formatted;
 }

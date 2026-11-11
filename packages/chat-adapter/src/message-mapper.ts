@@ -72,7 +72,8 @@ export class MessageMapper {
    * resolves). The platform-native author is preserved on `message.raw.author`.
    *
    * `formatted` is parsed from the bridge's GFM `markdown` when present, so platform
-   * structure (e.g. Slack table blocks) survives as mdast nodes; plain `text` is the fallback.
+   * structure (e.g. Slack table blocks) survives as mdast nodes; plain `text` is the fallback,
+   * and also stands in for `markdown` when the markdown is over the inbound parse budget.
    */
   buildMessage(
     raw: NovuRawMessage,
@@ -85,7 +86,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: raw.text,
-      formatted: this.parts.parseInbound(raw.markdown ?? raw.text ?? ''),
+      formatted: this.parts.parseInbound(raw.markdown ?? raw.text ?? '', raw.text),
       raw,
       author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },

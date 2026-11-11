@@ -586,10 +586,6 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   renderFormatted(content: FormattedContent): string {
-    if (!this.MessageClass) {
-      return '';
-    }
-
     // Formatted content is already markdown-derived; callers that need a string
     // use the markdown they passed to postMessage. Keep a minimal escape hatch.
     return typeof content === 'object' ? '' : String(content);

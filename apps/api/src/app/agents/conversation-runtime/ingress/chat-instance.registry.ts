@@ -1,6 +1,6 @@
 import type { SlackAdapter } from '@chat-adapter/slack';
 import type { TeamsAdapter } from '@chat-adapter/teams';
-import type { TelegramAdapter, TelegramFormatConverter } from '@chat-adapter/telegram';
+import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
@@ -39,6 +39,7 @@ import { parseEmailThreadAddress } from './email-thread-id';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
 import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
+import { resolveTelegramCommandMessage } from './telegram-command-message';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -159,7 +160,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<ChatWithAdapters>>();
   private inboundCallbacks: InboundCallbacks | null = null;
-  private telegramConverter: TelegramFormatConverter | null = null;
 
   constructor(
     private readonly logger: PinoLogger,
@@ -860,55 +860,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     }
 
     const threadId = event.channel.id;
-    const message = await this.resolveTelegramCommandMessage(event, threadId);
+    const message = await resolveTelegramCommandMessage(event, threadId);
 
     await cached.chat.processMessage(event.adapter, threadId, message);
-  }
-
-  /**
-   * The Telegram adapter parses and caches the inbound message before emitting
-   * the slash-command event, so the cached copy (with formatting, author flags,
-   * and attachments intact) is preferred. Falls back to rebuilding the message
-   * from the event payload when the in-process cache no longer holds it.
-   */
-  private async resolveTelegramCommandMessage(event: SlashCommandEvent, threadId: string): Promise<Message> {
-    const raw = event.raw as { message_id?: number; chat?: { id?: number | string }; date?: number } | undefined;
-    const chatId = raw?.chat?.id;
-    const rawMessageId = raw?.message_id;
-    const hasPlatformIds = chatId !== undefined && rawMessageId !== undefined;
-    // Mirrors the Telegram adapter's `encodeMessageId` composite format so the
-    // chat SDK dedupe key matches the one a regular-message delivery would use.
-    const messageId = hasPlatformIds ? `${chatId}:${rawMessageId}` : `telegram-command:${threadId}:${Date.now()}`;
-
-    if (hasPlatformIds && event.adapter.fetchMessage) {
-      const cachedMessage = await event.adapter.fetchMessage(threadId, messageId);
-      if (cachedMessage) {
-        return cachedMessage;
-      }
-    }
-
-    const [{ Message: MessageCtor }, telegramModule] = await Promise.all([
-      esmImport('chat'),
-      esmImport('@chat-adapter/telegram'),
-    ]);
-    const TelegramFormatConverterCtor: new () => TelegramFormatConverter = telegramModule.TelegramFormatConverter;
-    let telegramConverter = this.telegramConverter;
-    if (!telegramConverter) {
-      telegramConverter = new TelegramFormatConverterCtor();
-      this.telegramConverter = telegramConverter;
-    }
-    const text = event.text ? `${event.command} ${event.text}` : event.command;
-
-    return new MessageCtor({
-      id: messageId,
-      threadId,
-      text,
-      formatted: telegramConverter.parseIncoming(text).formatted,
-      raw: event.raw,
-      author: event.user,
-      metadata: { dateSent: raw?.date !== undefined ? new Date(raw.date * 1000) : new Date() },
-      attachments: [],
-    });
   }
 }
 

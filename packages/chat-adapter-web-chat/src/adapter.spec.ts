@@ -20,7 +20,15 @@ vi.mock('chat', () => {
   return {
     Message,
     parseMarkdown: (md: string) => ({ type: 'root', children: [{ type: 'text', value: md }] }),
-    BaseFormatConverter: class BaseFormatConverter {},
+    BaseFormatConverter: class BaseFormatConverter {
+      toAst(_text: string): unknown {
+        throw new Error('implemented by subclass');
+      }
+
+      parseIncoming(text: string) {
+        return { text, formatted: this.toAst(text) };
+      }
+    },
   };
 });
 

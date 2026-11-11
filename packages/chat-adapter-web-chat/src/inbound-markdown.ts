@@ -1,48 +1,33 @@
 import type { BaseFormatConverter, Root } from 'chat';
 
-declare const inboundMarkdownParserBrand: unique symbol;
-
-export type InboundMarkdownParser = ((text: string) => Root) & {
-  readonly [inboundMarkdownParserBrand]: true;
-};
+/**
+ * Parses untrusted inbound markdown into a `Message.formatted` tree. Text over the
+ * Chat SDK's inbound budget becomes one paragraph of the original text, so a hostile
+ * message can't stall the event loop in the parser.
+ *
+ * Same file in `@novu/chat-adapter-web-chat` and `@novu/chat-adapter-email`; keep
+ * them identical. `@novu/chat-sdk-adapter` has its own variant.
+ */
+export type InboundMarkdownParser = (markdown: string) => Root;
 
 type ChatMarkdownModule = {
+  BaseFormatConverter: typeof BaseFormatConverter;
   parseMarkdown: (markdown: string) => Root;
-  stringifyMarkdown?: (ast: Root) => string;
-  BaseFormatConverter?: typeof BaseFormatConverter;
+  stringifyMarkdown: (ast: Root) => string;
 };
 
-function asInboundParser(parse: (text: string) => Root): InboundMarkdownParser {
-  return parse as InboundMarkdownParser;
-}
-
 export function createInboundMarkdownParser(chat: ChatMarkdownModule): InboundMarkdownParser {
-  const Base = chat.BaseFormatConverter;
-  const parseIncoming = typeof Base === 'function' ? Base.prototype?.parseIncoming : undefined;
-
-  if (typeof Base !== 'function' || typeof parseIncoming !== 'function') {
-    return asInboundParser(chat.parseMarkdown);
-  }
-
-  const stringifyMarkdown = chat.stringifyMarkdown;
-  if (typeof stringifyMarkdown !== 'function') {
-    return asInboundParser(chat.parseMarkdown);
-  }
-
-  const parseMarkdown = chat.parseMarkdown;
-  const stringify = stringifyMarkdown;
-
-  class InboundMarkdownConverter extends Base {
-    override toAst(text: string): Root {
-      return parseMarkdown(text);
+  class InboundMarkdownConverter extends chat.BaseFormatConverter {
+    override toAst(markdown: string): Root {
+      return chat.parseMarkdown(markdown);
     }
 
     override fromAst(ast: Root): string {
-      return stringify(ast);
+      return chat.stringifyMarkdown(ast);
     }
   }
 
   const converter = new InboundMarkdownConverter();
 
-  return asInboundParser((text: string) => converter.parseIncoming(text).formatted);
+  return (markdown) => converter.parseIncoming(markdown).formatted;
 }

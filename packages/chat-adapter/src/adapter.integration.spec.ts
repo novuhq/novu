@@ -407,7 +407,7 @@ describe('Novu adapter end-to-end', () => {
     ]);
   });
 
-  it('keeps oversized inbound markdown as one text paragraph without blocking the handler', async () => {
+  it('falls back to the plain text when inbound markdown is over the parse budget, without blocking the handler', async () => {
     const { adapter, chat } = buildChat();
     const brackets = ']'.repeat(15000);
     const historyText = 'a'.repeat(20000);
@@ -444,7 +444,7 @@ describe('Novu adapter end-to-end', () => {
     expect(received?.text).toBe(plain);
     expect(received?.formatted).toEqual({
       type: 'root',
-      children: [{ type: 'paragraph', children: [{ type: 'text', value: brackets }] }],
+      children: [{ type: 'paragraph', children: [{ type: 'text', value: plain }] }],
     });
     expect(elapsedMs).toBeLessThan(100);
 

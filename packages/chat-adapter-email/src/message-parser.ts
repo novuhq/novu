@@ -11,15 +11,15 @@ type MessageConstructor = new (data: MessageData<NovuEmailRawMessage>) => Messag
  */
 export class MessageParser {
   private MessageClass: MessageConstructor | null = null;
-  private inboundParser: InboundMarkdownParser | null = null;
+  private parseInbound: InboundMarkdownParser | null = null;
 
-  setChatModule(MessageClass: MessageConstructor, inboundParser: InboundMarkdownParser): void {
+  setChatModule(MessageClass: MessageConstructor, parseInbound: InboundMarkdownParser): void {
     this.MessageClass = MessageClass;
-    this.inboundParser = inboundParser;
+    this.parseInbound = parseInbound;
   }
 
   parse(raw: NovuEmailRawMessage, fromAddress: string, threadId: string): Message<NovuEmailRawMessage> {
-    if (!this.MessageClass || !this.inboundParser) {
+    if (!this.MessageClass || !this.parseInbound) {
       throw new Error('MessageParser not initialized — call setChatModule() first');
     }
 
@@ -71,7 +71,7 @@ export class MessageParser {
       id: raw.id,
       threadId,
       text,
-      formatted: this.inboundParser(text),
+      formatted: this.parseInbound(text),
       raw,
       author: mappedAuthor,
       metadata: mappedMetadata,
