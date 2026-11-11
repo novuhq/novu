@@ -38,6 +38,25 @@ export function buildSlackAppMention(opts: {
   };
 }
 
+/** Slack's `app_uninstalled` event_callback, as delivered after the app is removed from one workspace. */
+export function buildSlackAppUninstalled(opts: { teamId: string }) {
+  const eventTs = `${Date.now() / 1000}`;
+
+  return {
+    token: 'deprecated-token',
+    team_id: opts.teamId,
+    api_app_id: 'A_E2E',
+    event: { type: 'app_uninstalled', event_ts: eventTs },
+    type: 'event_callback',
+    event_id: `Ev_uninstall_${eventTs}`,
+    event_time: Math.floor(Date.now() / 1000),
+    authorizations: [
+      { enterprise_id: null, team_id: opts.teamId, user_id: 'UBOT', is_bot: true, is_enterprise_install: false },
+    ],
+    is_ext_shared_channel: false,
+  };
+}
+
 export function buildSlackSubscribedMessage(opts: {
   userId: string;
   channel: string;
