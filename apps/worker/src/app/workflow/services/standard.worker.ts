@@ -339,7 +339,7 @@ export class StandardWorker extends StandardWorkerService {
 
   private async organizationExist(data: IStandardDataDto): Promise<boolean> {
     const { _organizationId } = data;
-    const organization = await this.organizationRepository.findOne({ _id: _organizationId });
+    const organization = await this.organizationRepository.findOne({ _id: _organizationId }, '_id');
 
     return !!organization;
   }

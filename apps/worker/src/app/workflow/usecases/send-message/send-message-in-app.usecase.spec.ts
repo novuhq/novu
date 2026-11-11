@@ -120,3 +120,101 @@ describe('SendMessageInApp - webhook environment reuse', () => {
     expect(deliveredCall.args[0].environment).to.equal(command.environment);
   });
 });
+
+/**
+ * SendMessageChannelCommand skips the deep copy, so `command.step.template` can be the very object
+ * held by the in-memory workflow cache. Compiling one subscriber's CTA must not write into it.
+ */
+describe('SendMessageInApp - compiled CTA copy-on-write', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('keeps the shared step template untouched and sends the compiled CTA', async () => {
+    const cachedTemplate = {
+      _id: 'mt_1',
+      type: ChannelTypeEnum.IN_APP,
+      content: 'Hello {{subscriber.subscriberId}}',
+      cta: {
+        type: 'redirect',
+        data: { url: 'https://app.test/{{subscriber.subscriberId}}' },
+        action: { buttons: [{ type: 'primary', content: 'Open {{subscriber.subscriberId}}' }] },
+      },
+    };
+    const compiled = {
+      content: 'Hello sub_1',
+      url: 'https://app.test/sub_1',
+      ctaButtons: [{ type: 'primary', content: 'Open sub_1' }],
+    };
+
+    const messageRepository = {
+      findOne: sinon.stub().resolves(null),
+      create: sinon.stub().resolves({ _id: 'msg_1' }),
+      findOneAndUpdate: sinon.stub().resolves({ _id: 'msg_1' }),
+    };
+    const usecase = new SendMessageInApp(
+      { invalidateQuery: sinon.stub().resolves(undefined) } as never,
+      messageRepository as never,
+      { add: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { execute: sinon.stub().resolves(compiled) } as never,
+      { execute: sinon.stub().resolves({ eventId: 'evt_1' }) } as never
+    );
+    sinon.stub(usecase as never, 'getIntegration').resolves({ integration: { providerId: 'novu', _id: 'int_1' } });
+    sinon.stub(usecase as never, 'processVariants').resolves(undefined);
+    sinon.stub(usecase as never, 'storeContent').returns(false);
+    sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
+
+    const step = { stepId: 'step_1', template: cachedTemplate };
+    const command = SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: {},
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: { subscriber: { subscriberId: 'sub_1', locale: 'en' } } as never,
+      environment: { _id: 'env_1', identifier: 'env-identifier' } as never,
+      step: step as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.IN_APP,
+        providerId: 'novu',
+        step,
+      } as never,
+    });
+    expect(command.step.template).to.equal(cachedTemplate);
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal('success');
+    expect(cachedTemplate.cta.data.url).to.equal('https://app.test/{{subscriber.subscriberId}}');
+    expect(cachedTemplate.cta.action.buttons).to.deep.equal([
+      { type: 'primary', content: 'Open {{subscriber.subscriberId}}' },
+    ]);
+    const createdMessage = messageRepository.create.firstCall.args[0];
+    expect(createdMessage.cta.data.url).to.equal(compiled.url);
+    expect(createdMessage.cta.action.buttons).to.deep.equal(compiled.ctaButtons);
+  });
+});
