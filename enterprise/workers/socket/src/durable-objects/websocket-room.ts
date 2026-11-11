@@ -153,6 +153,13 @@ export class WebSocketRoom extends DurableObject<IEnv> {
       const reported = await this.ctx.storage.get<ReportedPresence>(WebSocketRoom.REPORTED_PRESENCE_KEY);
 
       if (reported !== 'offline') {
+        /*
+         * The API may apply the offline write even when the call fails (lost response, timeout),
+         * so the stored state is unknown until it succeeds. Clearing it makes the next connect
+         * report online instead of trusting a stale 'online', and a retry still reports offline.
+         */
+        await this.ctx.storage.delete(WebSocketRoom.REPORTED_PRESENCE_KEY);
+
         const result = await this.notifySubscriberOnlineState(
           pending.userId,
           pending.environmentId,
