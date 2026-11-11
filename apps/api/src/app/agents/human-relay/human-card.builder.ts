@@ -309,6 +309,44 @@ export function buildResolvedContent(interaction: HumanInteractionEntity): Reply
   return { card } as ReplyContentDto;
 }
 
+/**
+ * What a person who answered on a channel that can't edit a sent card (WhatsApp) is told instead: the outcome of
+ * their tap, in a line of its own. `null` for what they didn't answer themselves (expired, canceled) and for an ask,
+ * whose text answer is acknowledged where it is taken.
+ */
+export function buildOutcomeReply(interaction: HumanInteractionEntity): string | null {
+  if (interaction.kind !== HumanInteractionKindEnum.APPROVE && interaction.kind !== HumanInteractionKindEnum.CHOOSE) {
+    return null;
+  }
+
+  const resolved = resolveHumanInteractionCard(interaction);
+  const optionId = interaction.response?.optionId;
+
+  switch (interaction.status) {
+    case HumanInteractionStatusEnum.APPROVED: {
+      const extras = 'extraActions' in resolved ? (resolved.extraActions ?? []) : [];
+      // An extra action ("Snooze") answers the approve too: it says which one was picked.
+      const extra =
+        optionId && optionId !== 'approve'
+          ? (extras.find((action) => action.id === optionId)?.label ?? optionId)
+          : undefined;
+
+      return extra ? `✅ ${extra} — passed along.` : '✅ Approved — passed along.';
+    }
+    case HumanInteractionStatusEnum.DENIED:
+      return '⛔ Denied — passed along.';
+    case HumanInteractionStatusEnum.ANSWERED: {
+      const label = optionId
+        ? (humanInteractionChooseOptions(interaction).find((option) => option.id === optionId)?.label ?? optionId)
+        : undefined;
+
+      return label ? `✅ Picked ${label} — passed along.` : '✅ Got it — passed along.';
+    }
+    default:
+      return null;
+  }
+}
+
 function resolveStatusLine(interaction: HumanInteractionEntity): string {
   const by = interaction.response?.respondedBy ? ` by ${interaction.response.respondedBy}` : '';
   const resolved = resolveHumanInteractionCard(interaction);
@@ -372,6 +410,21 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[], a
   );
 
   return withLayoutCard(card, buildEmailCard(HumanInteractionKindEnum.CHOOSE, { title }, subtitle, fullLabels));
+}
+
+/**
+ * The same question as {@link buildDisambiguationCard}, as text, for WhatsApp with more questions waiting than it
+ * has buttons: they answer by swiping to reply on the question they mean, which matches by the quoted message.
+ */
+export function buildSwipeReplyPrompt(pendingAsks: HumanInteractionEntity[]): string {
+  const titles = pendingAsks.map((ask, index) => `${optionLetter(index)}. ${humanInteractionCardTitle(ask)}`);
+
+  return [
+    '*Which question does this answer?*',
+    `You have ${pendingAsks.length} questions waiting:`,
+    ...titles,
+    'Swipe right on the question you mean and reply to it there.',
+  ].join('\n');
 }
 
 function truncate(text: string, max: number): string {

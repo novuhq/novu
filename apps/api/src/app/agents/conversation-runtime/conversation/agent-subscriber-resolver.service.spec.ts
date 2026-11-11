@@ -97,6 +97,74 @@ describe('AgentSubscriberResolver', () => {
     };
   }
 
+  describe('resolveSubscriber — an Agent Inbox relay on WhatsApp', () => {
+    const PROVED = {
+      subscriberId: 'ada',
+      type: 'phone',
+      providerId: 'whatsapp-business',
+      endpoint: { phoneNumber: '+15551234567', provedAt: '2026-11-01T10:00:00.000Z' },
+    };
+
+    function relayLookup(platformUserId = '15551234567') {
+      return {
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId,
+        isHumanRelay: true,
+      };
+    }
+
+    it('resolves the sender to whoever proved their number on this business number', async () => {
+      const { resolver, channelEndpointRepository, subscriberRepository } = makeResolver({
+        findByPlatformIdentity: sinon.stub().resolves(PROVED),
+      });
+
+      expect(await resolver.resolveSubscriber(relayLookup())).to.deep.equal({
+        outcome: 'resolved',
+        subscriberId: 'ada',
+      });
+      expect(channelEndpointRepository.findByPlatformIdentity.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        integrationIdentifier: 'integration-main',
+        type: 'phone',
+        endpointField: 'phoneNumber',
+        endpointValue: '+15551234567',
+      });
+      expect(subscriberRepository.findByPhone.called).to.equal(false);
+    });
+
+    it('reads a number without proof, or only on a profile, as a stranger', async () => {
+      const unproved = makeResolver({
+        findByPlatformIdentity: sinon.stub().resolves({ ...PROVED, endpoint: { phoneNumber: '+15551234567' } }),
+      });
+      expect(await unproved.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
+
+      const profileOnly = makeResolver({ findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]) });
+      expect(await profileOnly.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
+      expect(profileOnly.subscriberRepository.findByPhone.called).to.equal(false);
+    });
+
+    it('cannot read a sender without a usable number', async () => {
+      const { resolver } = makeResolver();
+
+      expect(await resolver.resolveSubscriber(relayLookup('not-a-number'))).to.deep.equal({
+        outcome: 'invalid_identity',
+      });
+    });
+
+    it('still resolves other agents’ WhatsApp senders by their profile phone', async () => {
+      const { resolver, channelEndpointRepository } = makeResolver({
+        findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]),
+      });
+
+      const result = await resolver.resolveSubscriber({ ...relayLookup(), isHumanRelay: false });
+
+      expect(result).to.include({ subscriberId: 'sub-1' });
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+    });
+  });
+
   describe('resolveSubscriber — WhatsApp phone resolution', () => {
     it('resolves when inbound phone has no + and subscriber has +', async () => {
       const { resolver, subscriberRepository, channelEndpointRepository } = makeResolver({

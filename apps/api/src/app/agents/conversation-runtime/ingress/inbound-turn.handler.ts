@@ -1305,6 +1305,8 @@ export class AgentInboundHandler implements OnModuleInit {
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
         agentIdentifier: config.agentIdentifier,
+        // A relay's WhatsApp senders are its contacts only by a number they proved, never by a profile phone.
+        isHumanRelay: config.isHumanRelay,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);

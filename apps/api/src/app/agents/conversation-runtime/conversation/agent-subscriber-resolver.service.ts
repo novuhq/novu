@@ -22,6 +22,7 @@ import {
 } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { provedWhatsAppNumberOf } from '../../human-relay/whatsapp-number-proof';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
@@ -49,6 +50,11 @@ export interface ResolveSubscriberParams {
   integrationIdentifier: string;
   /** Set on inbound turns so a typed, still-unverified address resolves to its contact. */
   agentIdentifier?: string;
+  /**
+   * An Agent Inbox relay: its WhatsApp senders resolve only by a number they proved with a wa.me code, never by
+   * `Subscriber.phone`. Anyone else on WhatsApp is a stranger.
+   */
+  isHumanRelay?: boolean;
 }
 
 export interface ResolveOrProvisionParams extends ResolveSubscriberParams {
@@ -129,6 +135,15 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
+    if (platform === AgentPlatformEnum.WHATSAPP && params.isHumanRelay) {
+      return this.resolveProvedWhatsAppSubscriber({
+        environmentId,
+        organizationId,
+        platformUserId,
+        integrationIdentifier,
+      });
+    }
+
     // Phone-based platforms (WhatsApp, Sendblue, Photon) identify users by their phone number.
     if (
       platform === AgentPlatformEnum.WHATSAPP ||
@@ -186,6 +201,35 @@ export class AgentSubscriberResolver {
     );
 
     return { outcome: 'not_found' };
+  }
+
+  /**
+   * An Agent Inbox contact on WhatsApp: whoever proved this number with a wa.me code on this business number. A
+   * number on a `phone` endpoint without that proof, or on a subscriber's profile, is no one's here.
+   */
+  private async resolveProvedWhatsAppSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    platformUserId: string;
+    integrationIdentifier: string;
+  }): Promise<SubscriberResolution> {
+    const phoneNumber = toCanonicalE164Phone(params.platformUserId);
+    if (!phoneNumber) {
+      return { outcome: 'invalid_identity' };
+    }
+
+    const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      type: ENDPOINT_TYPES.PHONE,
+      endpointField: 'phoneNumber',
+      endpointValue: phoneNumber,
+    });
+
+    return endpoint && provedWhatsAppNumberOf(endpoint)
+      ? { outcome: 'resolved', subscriberId: endpoint.subscriberId }
+      : { outcome: 'not_found' };
   }
 
   /**
