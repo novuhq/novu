@@ -35,7 +35,7 @@ async function callChannelAdd(channel: string, env = setup()) {
 }
 
 /** The tool's work without the server around it, and without really waiting. Says how long it asked to wait. */
-async function addChannel(channel: 'telegram' | 'slack') {
+async function addChannel(channel: 'telegram' | 'slack' | 'whatsapp') {
   const waits: number[] = [];
   const api = createAgentInboxApi({ agentInboxUserId: 'user_1', apiUrl: AGENT_INBOX_API, secretKey: 'account-key' });
   const text = await channelAdd(api, { channel }, async (ms) => {
@@ -485,6 +485,97 @@ describe('channel_add', () => {
       ).toEqual(['channel']);
     });
   });
+
+  describe('on WhatsApp', () => {
+    const PAGE = 'https://agentinbox.example.test/configure?setup=whatsapp';
+    const ON = { enabled: true, available: true, connected: false };
+
+    it('sends the user to the signed-in page to connect a business number', async () => {
+      const calls = stubBackends({ whatsAppSetup: ON });
+
+      const result = await callChannelAdd('whatsapp');
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content[0].text).toBe(
+        `WhatsApp needs the user's WhatsApp Business number first. Give them this link to connect it on agentinbox.md, where they sign in as the owner: ${PAGE}\nAfter they finish, call channel_add again.\nShow the link to the user in this chat and nowhere else, never through inbox_send or inbox_reply.`
+      );
+      expect(calls.find((call) => call.url.includes('/v1/channels/whatsapp'))?.url).toBe(
+        `${AGENT_INBOX_API}/v1/channels/whatsapp?agentIdentifier=human-relay`
+      );
+      expect(calls.some((call) => call.url.includes('/v1/channels/apps'))).toBe(false);
+    });
+
+    it('asks for the user’s own number once the business number is connected', async () => {
+      stubBackends({ whatsAppSetup: { ...ON, businessConnected: true, displayPhoneNumber: '+1 555 0100' } });
+
+      const { text } = await addChannel('whatsapp');
+
+      expect(text).toContain(
+        `WhatsApp Business is connected on +1 555 0100. Give the user this link to connect their own number by sending the agent a code: ${PAGE}`
+      );
+    });
+
+    it('says it is connected, with both numbers', async () => {
+      stubBackends({
+        whatsAppSetup: {
+          ...ON,
+          connected: true,
+          businessConnected: true,
+          displayPhoneNumber: '+1 555 0100',
+          operatorNumberBound: true,
+          operatorPhoneNumber: '+44 7700 900123',
+        },
+      });
+
+      const { text } = await addChannel('whatsapp');
+
+      expect(text).toBe(
+        `WhatsApp is connected (on +1 555 0100, the user's number +44 7700 900123). inbox_send can reach the user there with via: "whatsapp".`
+      );
+    });
+
+    it('says WhatsApp is not available when the account has it off', async () => {
+      stubBackends({ whatsAppSetup: { enabled: false, available: false, connected: false } });
+
+      const { text } = await addChannel('whatsapp');
+
+      expect(text).toBe("WhatsApp isn't available for this account yet. Use Telegram or Slack instead.");
+    });
+
+    it('says the same when Agent Inbox cannot connect WhatsApp anywhere', async () => {
+      stubBackends({ whatsAppSetup: { enabled: true, available: false, connected: false } });
+
+      const { text } = await addChannel('whatsapp');
+
+      expect(text).toContain("WhatsApp isn't available for this account yet.");
+    });
+
+    it('reads an older API that keeps the status to the dashboard as not available', async () => {
+      stubBackends({ channelFailures: { 'GET /v1/channels/whatsapp': { status: 403, message: 'dashboard_only' } } });
+
+      const { text } = await addChannel('whatsapp');
+
+      expect(text).toContain("WhatsApp isn't available for this account yet.");
+    });
+
+    it('passes on other failures', async () => {
+      stubBackends({ channelFailures: { 'GET /v1/channels/whatsapp': { status: 500, message: 'Upstream down' } } });
+
+      const result = await callChannelAdd('whatsapp');
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toBe('Upstream down');
+    });
+
+    it('asks for setup first when there is no agent', async () => {
+      stubBackends({ agent: null, whatsAppSetup: ON });
+
+      const result = await callChannelAdd('whatsapp');
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Agent Inbox is not set up yet.');
+    });
+  });
 });
 
 describe('mapSetupHint for a missing channel', () => {
@@ -499,10 +590,133 @@ describe('mapSetupHint for a missing channel', () => {
     );
   });
 
+  it('points at channel_add for WhatsApp too', () => {
+    const error = new AgentInboxApiError(
+      404,
+      'No whatsapp channel is linked to this agent. Connect whatsapp or run `npx @agentinbox/cli channel add whatsapp`.'
+    );
+
+    expect(mapSetupHint(error)).toBe(
+      'No whatsapp channel is linked to this agent. Call channel_add with channel "whatsapp" to connect it.'
+    );
+  });
+
   it('leaves email in the API’s words, since channel_add does not add it', () => {
     const message =
       'No email channel is linked to this agent. Connect email or run `npx @agentinbox/cli channel add email`.';
 
     expect(mapSetupHint(new AgentInboxApiError(404, message))).toBe(message);
+  });
+});
+
+describe('inbox_send on WhatsApp', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function send(args: Record<string, unknown>) {
+    const { env, ctx } = setup();
+    const response = await worker.fetch(rpc('tools/call', { name: 'inbox_send', arguments: args }), env, ctx);
+    const { result } = (await response.json()) as {
+      result: { content: Array<{ text: string }>; isError?: boolean };
+    };
+
+    return result;
+  }
+
+  const refused = (body: Record<string, unknown>) => ({ sendError: { status: 422, body } });
+
+  it('sends with via: "whatsapp"', async () => {
+    const calls = stubBackends({ createdInteraction: {} });
+
+    const result = await send({ message: 'Build is green', to: 'alice', via: 'whatsapp' });
+
+    expect(result.isError).toBeFalsy();
+    const created = calls.find((call) => call.url.endsWith('/v1/inbox/messages') && call.method === 'POST');
+    expect(created?.body).toMatchObject({ kind: 'tell', to: ['alice'], via: 'whatsapp' });
+  });
+
+  it('names another channel when the window is closed', async () => {
+    stubBackends(
+      refused({
+        code: 'whatsapp_window_closed',
+        message: "WhatsApp can't reach alice until they write to you again. Send with --via telegram instead.",
+        subscriberId: 'alice',
+        windowClosedAt: '2026-11-10T09:00:00.000Z',
+        availableChannels: ['telegram', 'email'],
+      })
+    );
+
+    const result = await send({ message: 'Ping', to: 'alice', via: 'whatsapp' });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe(
+      `WhatsApp can't reach alice until they write to you again (their window closed at 2026-11-10T09:00:00.000Z). WhatsApp only lets an agent write within 24 hours of the person's last message. Send it again with via: "telegram" (they're also on email).`
+    );
+  });
+
+  it('points at contact_invite when the person has no other channel', async () => {
+    stubBackends(
+      refused({
+        code: 'whatsapp_window_closed',
+        message: 'closed',
+        subscriberId: 'alice',
+        availableChannels: [],
+      })
+    );
+
+    const result = await send({ message: 'Ping', to: 'alice' });
+
+    expect(result.content[0].text).toBe(
+      `WhatsApp can't reach alice until they write to you again. WhatsApp only lets an agent write within 24 hours of the person's last message. alice has no other channel. Call contact_invite for alice and give the user the link to pass on.`
+    );
+  });
+
+  it('asks for fewer options when there are too many buttons', async () => {
+    stubBackends(
+      refused({
+        code: 'whatsapp_too_many_buttons',
+        message: 'too many',
+        subscriberId: 'alice',
+        maxButtons: 3,
+        buttons: 4,
+        availableChannels: ['slack'],
+      })
+    );
+
+    const result = await send({
+      kind: 'choose',
+      message: 'Which?',
+      to: 'alice',
+      via: 'whatsapp',
+      options: ['a', 'b', 'c', 'd'],
+      wait_seconds: 0,
+    });
+
+    expect(result.content[0].text).toBe(
+      'WhatsApp shows at most 3 buttons and this has 4. Offer at most 3 options. Or send it as it is with via: "slack".'
+    );
+  });
+
+  it('keeps the API’s words when the refusal lacks its fields', async () => {
+    stubBackends(refused({ code: 'whatsapp_window_closed', message: 'WhatsApp window closed.' }));
+
+    const result = await send({ message: 'Ping', to: 'alice', via: 'whatsapp' });
+
+    expect(result.content[0].text).toBe('WhatsApp window closed.');
+  });
+
+  it('lists whatsapp in channel_add and inbox_send', async () => {
+    stubBackends();
+    const { env, ctx } = setup();
+
+    const list = await worker.fetch(rpc('tools/list', {}), env, ctx);
+    const { result } = (await list.json()) as {
+      result: { tools: Array<{ name: string; inputSchema: { properties: Record<string, { enum?: string[] }> } }> };
+    };
+    const schemaOf = (name: string) => result.tools.find((tool) => tool.name === name)?.inputSchema.properties;
+
+    expect(schemaOf('channel_add')?.channel.enum).toContain('whatsapp');
+    expect(schemaOf('inbox_send')?.via.enum).toContain('whatsapp');
   });
 });

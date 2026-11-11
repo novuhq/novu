@@ -105,6 +105,10 @@ export type StubBackendsOptions = {
   checksBeforeSaved?: number;
   /** Channel calls that fail, keyed like `POST /v1/channels`. */
   channelFailures?: Record<string, StubFailure>;
+  /** What GET /v1/channels/whatsapp answers. Without it, WhatsApp is off for the account. */
+  whatsAppSetup?: Record<string, unknown>;
+  /** POST /v1/inbox/messages fails with this status and body instead of creating the message. */
+  sendError?: { status: number; body: Record<string, unknown> };
 };
 
 export type StubFailure = { status: number; message: string };
@@ -191,6 +195,8 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'userEmail' in options ||
     'setupError' in options ||
     'channelsError' in options ||
+    'whatsAppSetup' in options ||
+    'sendError' in options ||
     'replacesVerifiedAddress' in options ||
     'accountCreateStatus' in options ||
     'channelApps' in options ||
@@ -448,6 +454,7 @@ type ChannelStubState = {
   appsWithCredentials: string[];
   checksBeforeSaved: number;
   failures: Record<string, StubFailure>;
+  whatsAppSetup: Record<string, unknown>;
 };
 
 /** Everything `channel_add` calls beside the agent, the operator and the list of what's linked. */
@@ -482,6 +489,10 @@ function answerChannels(
 function answerChannelReads(url: string, path: string, state: ChannelStubState): Response | null {
   if (path === '/v1/channels/apps') {
     return reply({ data: state.apps });
+  }
+
+  if (path === '/v1/channels/whatsapp') {
+    return reply({ data: state.whatsAppSetup });
   }
 
   if (path === '/v1/channels/links') {
@@ -784,6 +795,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
     appsWithCredentials: opts.appsWithCredentials ?? [],
     checksBeforeSaved: opts.checksBeforeSaved ?? 0,
     failures: opts.channelFailures ?? {},
+    whatsAppSetup: opts.whatsAppSetup ?? { enabled: false, available: false, connected: false },
   };
 
   if (opts.agent !== null && !contactsById.operator_1 && setupState.operator?.subscriberId) {
@@ -811,6 +823,9 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
         answerChannels(url, method, body, setupState, channelState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
+        (opts.sendError && url === `${AGENT_INBOX_API}/v1/inbox/messages` && method === 'POST'
+          ? reply(opts.sendError.body, opts.sendError.status)
+          : null) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
         reply({ message: 'not stubbed' }, 500)
       );
