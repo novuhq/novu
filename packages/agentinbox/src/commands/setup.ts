@@ -1,9 +1,17 @@
 import pc from 'picocolors';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
+import { errorCode } from '../api/listen';
 import { bootstrapKeylessSession, getWhatsAppSetup } from '../api/setup';
 import { info, success, warn } from '../cli-io';
-import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
+import {
+  type CliConfig,
+  configPath,
+  DEFAULT_RELAY_AGENT_IDENTIFIER,
+  loadConfig,
+  resolveTargetApiUrl,
+  saveConfig,
+} from '../config';
 import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
@@ -22,6 +30,7 @@ import { defaultSetupIo, promptChoice, type SetupIo } from './setup/prompts';
 import { connectSlack } from './setup/slack';
 import { connectTelegram } from './setup/telegram';
 import { connectWhatsApp } from './setup/whatsapp';
+import { WHATSAPP_WINDOW_CLOSED } from './whatsapp-refusal';
 
 export type { SetupOptions } from './setup/operator';
 export { reusableAuth } from './setup/operator';
@@ -156,7 +165,7 @@ async function resolveChatChannel(
 
 /** WhatsApp is offered only where the account can connect it, and not on a keyless demo, which has no account. */
 async function offersWhatsApp(client: ApiClient, agentIdentifier: string): Promise<boolean> {
-  if (client.isKeyless) {
+  if (client.isKeyless || agentIdentifier !== DEFAULT_RELAY_AGENT_IDENTIFIER) {
     return false;
   }
 
@@ -261,7 +270,7 @@ async function confirmLinkedChannel(
   }
 
   const { name } = provisioned;
-  await createInteraction(client, {
+  const sent = await createInteraction(client, {
     kind: 'tell',
     card: {
       title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli send approve "Deploy to production?"\`.`,
@@ -269,7 +278,19 @@ async function confirmLinkedChannel(
     to: provisioned.subscriberId,
     via: channel,
     agentIdentifier: provisioned.relay.agentIdentifier,
-  });
+  }).then(
+    () => true,
+    (err: unknown) => {
+      // WhatsApp stays connected after its 24-hour window shuts; only this welcome can't go out until they write.
+      if (errorCode(err) !== WHATSAPP_WINDOW_CLOSED) throw err;
+      info('WhatsApp is connected; the welcome message waits until you next write to the agent there.');
+
+      return false;
+    }
+  );
+  if (!sent) {
+    return;
+  }
 
   const examples = [
     'npx @agentinbox/cli send ask "Which environment should I target?"',

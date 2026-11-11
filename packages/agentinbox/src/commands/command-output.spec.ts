@@ -62,6 +62,13 @@ vi.mock('../api/setup', () => ({
   linkAgentIntegration: vi.fn(),
   createTelegramIntegration: vi.fn(),
   hasChannelEndpoint: (...args: unknown[]) => hasChannelEndpoint(...args),
+  getWhatsAppSetup: vi.fn(async () => ({
+    enabled: true,
+    available: true,
+    connected: true,
+    displayPhoneNumber: '+1 555-010-0199',
+    operatorPhoneNumber: '+15550100201',
+  })),
   issueTelegramSubscriberLink: vi.fn(async () => ({
     deepLinkUrl: 'https://t.me/atlas_bot?start=abc',
     botUsername: 'atlas_bot',
@@ -175,6 +182,18 @@ const run = {
     loadConfig.mockReturnValue(accountConfig);
     hasChannelEndpoint.mockResolvedValue(true);
     await setupCommand('telegram', {});
+  },
+  whatsAppConnectedWindowClosed: async () => {
+    loadConfig.mockReturnValue(accountConfig);
+    const { createInteraction } = await import('../api/agent-inbox');
+    vi.mocked(createInteraction).mockRejectedValueOnce(
+      new ApiError("WhatsApp can't reach ada", 422, 'POST /v1/inbox/messages', {
+        code: 'whatsapp_window_closed',
+        subscriberId: 'ada',
+        availableChannels: [],
+      })
+    );
+    await setupCommand('whatsapp', {});
   },
   login: async () => {
     findOperator.mockResolvedValue('ada_owner');
@@ -454,6 +473,16 @@ describe('without a terminal', () => {
       • Teach your coding agent to use the inbox: npx skills add agentinboxhq/skills
       "
     `);
+  });
+
+  it('finishes a WhatsApp setup run again after its window shut, holding the welcome back', async () => {
+    const output = await printed('whatsAppConnectedWindowClosed');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain('WhatsApp already connected (on +1 555-010-0199, your number +15550100201).');
+    expect(output.stdout).toContain('the welcome message waits until you next write to the agent there');
+    expect(output.stdout).not.toContain('Agents on this machine can now run');
+    expect(output.stderr).toBe('');
   });
 
   it('keeps a login as it was', async () => {

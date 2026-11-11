@@ -1,6 +1,7 @@
 import { type ApiClient, ApiError } from '../../api/client';
 import { getWhatsAppSetup, type WhatsAppSetup } from '../../api/setup';
 import { success } from '../../cli-io';
+import { DEFAULT_RELAY_AGENT_IDENTIFIER } from '../../config';
 import { buildWhatsAppSetupPageUrl, waitForWhatsAppSetup } from '../link-channel';
 import { defaultSetupIo, handOffToSetupPage, type SetupIo } from './prompts';
 
@@ -20,6 +21,15 @@ export async function connectWhatsApp(
     throw new Error(
       'WhatsApp needs an Agent Inbox account: connecting it signs in to Facebook on agentinbox.md. ' +
         'Run `npx @agentinbox/cli login` first, then `channel add whatsapp` again.'
+    );
+  }
+
+  // The WhatsApp drawer on agentinbox.md connects the operator's own agent only; any other agent would wait on a
+  // drawer that never connects it.
+  if (agentIdentifier !== DEFAULT_RELAY_AGENT_IDENTIFIER) {
+    throw new Error(
+      `WhatsApp can only be connected for the ${DEFAULT_RELAY_AGENT_IDENTIFIER} agent for now, on agentinbox.md. ` +
+        `"${agentIdentifier}" can use telegram, slack, or email.`
     );
   }
 

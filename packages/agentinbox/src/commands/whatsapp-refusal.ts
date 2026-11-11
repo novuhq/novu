@@ -2,7 +2,7 @@ import { ApiError } from '../api/client';
 import { errorCode } from '../api/listen';
 import { CLI_COMMAND } from '../config';
 
-const WHATSAPP_WINDOW_CLOSED = 'whatsapp_window_closed';
+export const WHATSAPP_WINDOW_CLOSED = 'whatsapp_window_closed';
 const WHATSAPP_TOO_MANY_BUTTONS = 'whatsapp_too_many_buttons';
 
 interface WhatsAppRefusalBody {

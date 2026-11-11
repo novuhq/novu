@@ -106,6 +106,13 @@ describe('connectWhatsApp', () => {
     expect(getWhatsAppSetup).not.toHaveBeenCalled();
   });
 
+  it('refuses another agent before opening a drawer that only connects the operator’s own', async () => {
+    await expect(connectWhatsApp(client, 'other-relay', terminal().io)).rejects.toThrow(
+      'WhatsApp can only be connected for the human-relay agent'
+    );
+    expect(getWhatsAppSetup).not.toHaveBeenCalled();
+  });
+
   it('stays pending when the operator doesn’t finish in time', async () => {
     getWhatsAppSetup.mockResolvedValue(NOT_CONNECTED);
     waitForWhatsAppSetup.mockResolvedValue('timeout');
