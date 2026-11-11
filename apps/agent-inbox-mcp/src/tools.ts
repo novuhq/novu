@@ -552,6 +552,10 @@ export function mapSetupHint(error: AgentInboxApiError): string {
 const WHATSAPP_WINDOW_CLOSED = 'whatsapp_window_closed';
 const WHATSAPP_TOO_MANY_BUTTONS = 'whatsapp_too_many_buttons';
 
+/** The API checks every recipient before it delivers to any, so one refusal means the whole send went nowhere. */
+const NOTHING_SENT = 'Nothing was sent, to them or to anyone else it named.';
+const RESEND_TO_THE_OTHERS = ' Send it to everyone else it named too, in a separate inbox_send.';
+
 /**
  * WhatsApp refused a send before it went out. The API's words name the CLI's `--via` and `contact invite`, so this
  * says the same with this server's tools. Without the fields it needs, the API's words stand.
@@ -572,20 +576,22 @@ function describeWhatsAppRefusal(error: AgentInboxApiError): string | null {
     : [];
   const [first, ...rest] = others;
   const instead = first
-    ? ` Send it again with inbox_send, to: "${subscriberId}", via: "${first}"${rest.length ? ` (they're also on ${rest.join(', ')})` : ''}.`
-    : ` ${subscriberId} has no other channel. Call contact_invite for ${subscriberId} and give the user the link to pass on.`;
+    ? ` Send it to ${subscriberId} again with inbox_send, to: "${subscriberId}", via: "${first}"${rest.length ? ` (they're also on ${rest.join(', ')})` : ''}.${RESEND_TO_THE_OTHERS}`
+    : ` ${subscriberId} has no other channel. Call contact_invite for ${subscriberId} and give the user the link to pass on.${RESEND_TO_THE_OTHERS}`;
 
   if (error.code === WHATSAPP_WINDOW_CLOSED) {
     const closedAt =
       typeof details.windowClosedAt === 'string' ? ` (their window closed at ${details.windowClosedAt})` : '';
 
-    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message.${instead}`;
+    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message. ${NOTHING_SENT}${instead}`;
   }
 
   const maxButtons = typeof details.maxButtons === 'number' ? details.maxButtons : 3;
   const buttons = typeof details.buttons === 'number' ? ` and this has ${details.buttons}` : '';
 
-  const elsewhere = first ? ` Or send it as it is with inbox_send, to: "${subscriberId}", via: "${first}".` : '';
+  const elsewhere = first
+    ? `, or send it to ${subscriberId} as it is with inbox_send, to: "${subscriberId}", via: "${first}"`
+    : '';
 
-  return `WhatsApp shows at most ${maxButtons} buttons${buttons}. Offer at most ${maxButtons} options.${elsewhere}`;
+  return `WhatsApp shows at most ${maxButtons} buttons${buttons}. ${NOTHING_SENT} Send it again with at most ${maxButtons} options${elsewhere}.${first ? RESEND_TO_THE_OTHERS : ''}`;
 }

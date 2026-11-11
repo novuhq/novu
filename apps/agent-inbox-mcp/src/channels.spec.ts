@@ -651,7 +651,7 @@ describe('inbox_send on WhatsApp', () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toBe(
-      `WhatsApp can't reach alice until they write to you again (their window closed at 2026-11-10T09:00:00.000Z). WhatsApp only lets an agent write within 24 hours of the person's last message. Send it again with inbox_send, to: "alice", via: "telegram" (they're also on email).`
+      `WhatsApp can't reach alice until they write to you again (their window closed at 2026-11-10T09:00:00.000Z). WhatsApp only lets an agent write within 24 hours of the person's last message. Nothing was sent, to them or to anyone else it named. Send it to alice again with inbox_send, to: "alice", via: "telegram" (they're also on email). Send it to everyone else it named too, in a separate inbox_send.`
     );
   });
 
@@ -668,7 +668,7 @@ describe('inbox_send on WhatsApp', () => {
     const result = await send({ message: 'Ping', to: 'alice' });
 
     expect(result.content[0].text).toBe(
-      `WhatsApp can't reach alice until they write to you again. WhatsApp only lets an agent write within 24 hours of the person's last message. alice has no other channel. Call contact_invite for alice and give the user the link to pass on.`
+      `WhatsApp can't reach alice until they write to you again. WhatsApp only lets an agent write within 24 hours of the person's last message. Nothing was sent, to them or to anyone else it named. alice has no other channel. Call contact_invite for alice and give the user the link to pass on. Send it to everyone else it named too, in a separate inbox_send.`
     );
   });
 
@@ -694,7 +694,7 @@ describe('inbox_send on WhatsApp', () => {
     });
 
     expect(result.content[0].text).toBe(
-      'WhatsApp shows at most 3 buttons and this has 4. Offer at most 3 options. Or send it as it is with inbox_send, to: "alice", via: "slack".'
+      'WhatsApp shows at most 3 buttons and this has 4. Nothing was sent, to them or to anyone else it named. Send it again with at most 3 options, or send it to alice as it is with inbox_send, to: "alice", via: "slack". Send it to everyone else it named too, in a separate inbox_send.'
     );
   });
 
