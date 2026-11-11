@@ -1,14 +1,14 @@
 import pc from 'picocolors';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
-import { bootstrapKeylessSession } from '../api/setup';
+import { bootstrapKeylessSession, getWhatsAppSetup } from '../api/setup';
 import { info, success, warn } from '../cli-io';
 import { type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { keptHost } from '../host';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
-import { CHANNEL_NAMES, type ChannelName, type ChatChannel } from './link-channel';
+import { CHANNEL_NAMES, type ChannelName, type ChatChannel, channelLabel } from './link-channel';
 import { AgentInboxProvisioningError, announceAgentInbox, connectEmail } from './setup/email';
 import {
   channelNameFor,
@@ -21,6 +21,7 @@ import {
 import { defaultSetupIo, promptChoice, type SetupIo } from './setup/prompts';
 import { connectSlack } from './setup/slack';
 import { connectTelegram } from './setup/telegram';
+import { connectWhatsApp } from './setup/whatsapp';
 
 export type { SetupOptions } from './setup/operator';
 export { reusableAuth } from './setup/operator';
@@ -75,7 +76,7 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
 
     warn(`Could not set up the email inbox (${err.message}). Chat setup can continue.`);
   }
-  const chat = await resolveChatChannel(channel);
+  const chat = await resolveChatChannel(client, provisioned.relay.agentIdentifier, channel);
   if (chat) {
     await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {
       ...options,
@@ -136,16 +137,38 @@ async function linkInbox(
   await announceAgentInbox(client, provisioned.relay.agentIdentifier);
 }
 
-/** Telegram or Slack from the command, or a prompt after the inbox exists. Enter skips. */
-async function resolveChatChannel(channel: ChannelName | undefined): Promise<ChatChannel | undefined> {
-  if (channel === 'telegram' || channel === 'slack') {
+/** Telegram, Slack or WhatsApp from the command, or a prompt after the inbox exists. Enter skips. */
+async function resolveChatChannel(
+  client: ApiClient,
+  agentIdentifier: string,
+  channel: ChannelName | undefined
+): Promise<ChatChannel | undefined> {
+  if (channel && channel !== 'email') {
     return channel;
   }
 
-  return offerChatChannel();
+  if (!defaultSetupIo.isTTY) {
+    return undefined;
+  }
+
+  return offerChatChannel(await offersWhatsApp(client, agentIdentifier));
 }
 
-async function offerChatChannel(io: SetupIo = defaultSetupIo): Promise<ChatChannel | undefined> {
+/** WhatsApp is offered only where the account can connect it, and not on a keyless demo, which has no account. */
+async function offersWhatsApp(client: ApiClient, agentIdentifier: string): Promise<boolean> {
+  if (client.isKeyless) {
+    return false;
+  }
+
+  const setup = await getWhatsAppSetup(client, agentIdentifier).catch(() => undefined);
+
+  return Boolean(setup?.enabled && setup.available);
+}
+
+export async function offerChatChannel(
+  whatsApp: boolean,
+  io: SetupIo = defaultSetupIo
+): Promise<ChatChannel | undefined> {
   if (!io.isTTY) {
     return undefined;
   }
@@ -154,12 +177,15 @@ async function offerChatChannel(io: SetupIo = defaultSetupIo): Promise<ChatChann
     io,
     {
       heading: 'Also connect a chat channel? Press Enter to skip.',
-      question: 'Channel [1, 2, or Enter]: ',
-      retry: 'Pick 1 for Telegram, 2 for Slack, or press Enter to skip.',
+      question: whatsApp ? 'Channel [1, 2, 3, or Enter]: ' : 'Channel [1, 2, or Enter]: ',
+      retry: whatsApp
+        ? 'Pick 1 for Telegram, 2 for Slack, 3 for WhatsApp, or press Enter to skip.'
+        : 'Pick 1 for Telegram, 2 for Slack, or press Enter to skip.',
     },
     [
       { label: 'Telegram', aliases: ['telegram'], value: 'telegram' },
       { label: 'Slack', aliases: ['slack'], value: 'slack' },
+      ...(whatsApp ? [{ label: 'WhatsApp', aliases: ['whatsapp'], value: 'whatsapp' as const }] : []),
     ],
     { skippable: true }
   );
@@ -253,7 +279,7 @@ async function confirmLinkedChannel(
   const screen = openedScreen();
 
   if (screen) {
-    screen.subtitle(`${channel[0].toUpperCase()}${channel.slice(1)} connected. Agents on this machine can now run:`);
+    screen.subtitle(`${channelLabel(channel)} connected. Agents on this machine can now run:`);
     screen.add(...examples.map((example) => ({ mark: 'next' as const, value: pc.bold(example) })));
     screen.feel('happy');
 
@@ -284,6 +310,10 @@ async function connectChannel(
         subscriberId,
         options
       );
+    case 'whatsapp':
+      await connectWhatsApp(client, relay.agentIdentifier);
+
+      return relay.agentIdentifier;
     default: {
       const unhandled: never = channel;
       throw new Error(`Unsupported channel: ${String(unhandled)}`);
@@ -291,7 +321,7 @@ async function connectChannel(
   }
 }
 
-/** A channel argument adds Telegram, Slack, or account email verification. Omitted, setup is the inbox. */
+/** A channel argument adds Telegram, Slack, WhatsApp, or account email verification. Omitted, setup is the inbox. */
 function parseSetupChannel(channelArg: string | undefined): ChannelName | undefined {
   if (!channelArg) {
     return undefined;
@@ -300,12 +330,6 @@ function parseSetupChannel(channelArg: string | undefined): ChannelName | undefi
   const normalized = channelArg.toLowerCase();
   if ((CHANNEL_NAMES as readonly string[]).includes(normalized)) {
     return normalized as ChannelName;
-  }
-
-  if (normalized === 'whatsapp') {
-    throw new Error(
-      'whatsapp is not supported by `npx @agentinbox/cli setup` yet — use telegram, slack, or email for now.'
-    );
   }
 
   throw new Error(`Unknown channel "${channelArg}". Supported: ${CHANNEL_NAMES.join(', ')}.`);

@@ -5,12 +5,13 @@ import {
   generateConnectOauthUrl,
   getSlackSetupLinkStatus,
   getTelegramMobileLinkStatus,
+  getWhatsAppSetup,
   hasChannelEndpoint,
   issueTelegramSubscriberLink,
 } from '../api/setup';
 import { pollUntil, sleep } from '../poll';
 
-export const CHANNEL_NAMES = ['telegram', 'slack', 'email'] as const;
+export const CHANNEL_NAMES = ['telegram', 'slack', 'whatsapp', 'email'] as const;
 export type ChannelName = (typeof CHANNEL_NAMES)[number];
 
 /** The channels that need a connect dance. Email is verified on the inbox instead. */
@@ -29,6 +30,18 @@ export const CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
 
 export type SetupPageOutcome = 'saved' | 'expired' | 'invalid' | 'timeout';
 
+const CHANNEL_LABELS: Record<ChannelName, string> = {
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+};
+
+/** How a channel is named in a sentence: `WhatsApp`, never `Whatsapp`. */
+export function channelLabel(channel: ChannelName): string {
+  return CHANNEL_LABELS[channel];
+}
+
 export function isChannelName(value: string): value is ChannelName {
   return (CHANNEL_NAMES as readonly string[]).includes(value);
 }
@@ -40,6 +53,8 @@ export function viaForProviderId(providerId: string): ChannelName | null {
     case 'slack':
     case 'novu-slack':
       return 'slack';
+    case 'whatsapp-business':
+      return 'whatsapp';
     case 'agent-email-inbox':
       return 'email';
     default:
@@ -53,6 +68,8 @@ export function providerIdsForVia(via: ChannelName): readonly string[] {
       return ['telegram'];
     case 'slack':
       return ['slack', 'novu-slack'];
+    case 'whatsapp':
+      return ['whatsapp-business'];
     case 'email':
       return ['agent-email-inbox'];
     default: {
@@ -97,11 +114,23 @@ export function isMissingBotTokenError(err: unknown): boolean {
  * the Novu dashboard. The token stays in the URL fragment (never sent to the
  * server, so it stays out of access logs and Referer headers).
  */
-export function buildSetupPageUrl(apiUrl: string, channel: ChatChannel, token: string): string {
-  const siteUrl = apiUrl.replace(/\/$/, '').replace(/\/api$/, '');
+export function buildSetupPageUrl(apiUrl: string, channel: Exclude<ChatChannel, 'whatsapp'>, token: string): string {
   const query = channel === 'telegram' ? '' : `?channel=${channel}`;
 
-  return `${siteUrl}/connect${query}#${token}`;
+  return `${siteUrlOf(apiUrl)}/connect${query}#${token}`;
+}
+
+/**
+ * Where the operator connects WhatsApp: its drawer on the signed-in Configure page, as Meta's Facebook button only
+ * runs in a browser on agentinbox.md. The same drawer then has them bind their own number with a code.
+ */
+export function buildWhatsAppSetupPageUrl(apiUrl: string): string {
+  return `${siteUrlOf(apiUrl)}/configure?setup=whatsapp`;
+}
+
+/** The site this CLI talks to: its API is the site's `/api`. */
+function siteUrlOf(apiUrl: string): string {
+  return apiUrl.replace(/\/$/, '').replace(/\/api$/, '');
 }
 
 type SetupLinkStatus = { valid: boolean; reason?: 'expired' | 'used' | 'invalid' };
@@ -346,4 +375,24 @@ export async function generateSlackUserOauthUrl(
 
     throw err;
   }
+}
+
+/**
+ * Blocks until the operator has connected a WhatsApp Business number and bound their own number with a code, on
+ * agentinbox.md. The page owns both steps; this only reads where they stand.
+ */
+export async function waitForWhatsAppSetup(
+  client: ApiClient,
+  agentIdentifier: string,
+  options: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<SetupPageOutcome> {
+  const connected = await pollUntil(
+    async () => ((await getWhatsAppSetup(client, agentIdentifier)).connected ? 'done' : 'pending'),
+    {
+      intervalMs: options.intervalMs ?? CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: options.timeoutMs ?? SETUP_PAGE_POLL_TIMEOUT_MS,
+    }
+  );
+
+  return connected ? 'saved' : 'timeout';
 }

@@ -204,7 +204,7 @@ export async function setupRelay(
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
-    defaultVia?: 'telegram' | 'slack' | 'email';
+    defaultVia?: 'telegram' | 'slack' | 'whatsapp' | 'email';
   }
 ): Promise<SetupRelayResult> {
   const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
@@ -284,7 +284,7 @@ export async function setRelayAgentPicture(
 }
 
 export interface InviteChannel {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -295,6 +295,29 @@ export interface Invite {
   /** ISO timestamp after which the invite link stops working. */
   expiresAt: string;
   channels: InviteChannel[];
+}
+
+/**
+ * Starts connecting one channel from an invite, as the invite page does. For WhatsApp it is a wa.me link with a
+ * one-time code: sending the prefilled message from their own WhatsApp binds that number.
+ */
+export async function connectInviteChannel(
+  client: ApiClient,
+  input: { token: string; via: InviteChannel['via'] }
+): Promise<{ url: string }> {
+  const res = await client.axios.post<{ data?: { url: string } } | { url: string }>('/v1/invites/connect', input);
+
+  return unwrap(res.data);
+}
+
+/** The token at the end of an invite page link, `…/invite/<token>`. */
+export function inviteTokenOf(url: string): string {
+  const token = new URL(url).pathname.split('/').filter(Boolean).pop();
+  if (!token) {
+    throw new Error(`The invite link ${url} has no token.`);
+  }
+
+  return token;
 }
 
 export async function createInvite(
@@ -309,7 +332,7 @@ export async function createInvite(
 export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type ContactChannel = {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
@@ -321,6 +344,8 @@ export type ContactChannel = {
   connectedAt?: string;
   /** On a contact from the list: whether a message that names no channel goes here. */
   isDefault?: boolean;
+  /** WhatsApp only: the agent can write only within 24 hours of the person's last message. */
+  window?: { open: boolean; lastMessageAt?: string; closesAt?: string };
 };
 
 /** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */

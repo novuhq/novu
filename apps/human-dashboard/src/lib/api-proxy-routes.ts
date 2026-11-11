@@ -42,6 +42,7 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['POST', '/v1/channels/slack/install-link', '/v1/integrations/channel-connections/oauth'],
   ['GET', '/v1/channels/slack/setup', '/v1/agents/public/slack/setup/status'],
   ['POST', '/v1/channels/slack/setup', '/v1/agents/public/slack/setup'],
+  ['GET', '/v1/channels/whatsapp', '/v1/human/agent/whatsapp'],
 
   ['POST', '/v1/setup', '/v1/human/setup'],
   ['POST', '/v1/setup/keyless', '/v1/inbox/session'],

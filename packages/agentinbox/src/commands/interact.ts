@@ -15,6 +15,7 @@ import { answerHint, EXIT_TIMEOUT, emitResult, fail, interactionJson, SetupStill
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 import { isEmailAddress, resolveEmailContact } from './email-contact';
+import { describeWhatsAppRefusal } from './whatsapp-refusal';
 
 export interface SendOptions {
   to?: string;
@@ -544,6 +545,11 @@ export function handleError(err: unknown): never {
   const keylessCap = getKeylessCapDetails(err);
   if (keylessCap) {
     fail(formatKeylessCapMessage(keylessCap));
+  }
+
+  const whatsAppRefusal = describeWhatsAppRefusal(err);
+  if (whatsAppRefusal) {
+    fail(whatsAppRefusal);
   }
 
   if (err instanceof ApiError) {
