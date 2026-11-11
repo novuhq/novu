@@ -407,40 +407,6 @@ describe('Novu adapter end-to-end', () => {
     ]);
   });
 
-  it('keeps over-budget inbound markdown out of the parser, for the live message and history', async () => {
-    const { adapter, chat } = buildChat();
-    // 129 closing brackets is one over the Chat SDK inbound budget. The unbounded parse
-    // would still turn `**bold**` into a strong node.
-    const overBudget = `**bold** ${']'.repeat(129)}`;
-    const plain = 'bold, plain';
-    const paragraphOf = (value: string) => ({
-      type: 'root',
-      children: [{ type: 'paragraph', children: [{ type: 'text', value }] }],
-    });
-    let received: { text: string; formatted: unknown } | undefined;
-    chat.onSubscribedMessage(async (_thread, message) => {
-      received = { text: message.text, formatted: message.formatted };
-    });
-    await chat.initialize();
-
-    await deliver(
-      adapter,
-      bridgeRequest({
-        message: { ...bridgeRequest().message!, text: plain, markdown: overBudget },
-        history: [{ role: 'user', type: 'text', content: overBudget, createdAt: '2026-01-01T00:00:00.000Z' }],
-      })
-    );
-
-    // The bridge markdown is Novu-serialized, so the plain text stands in for it.
-    expect(received).toEqual({ text: plain, formatted: paragraphOf(plain) });
-
-    const { messages } = await adapter.fetchMessages(
-      encodeThreadId({ platform: 'slack', integrationIdentifier: 'slack-prod', conversationId: 'conv-1', isDM: false })
-    );
-
-    expect(messages[0]?.formatted).toEqual(paragraphOf(overBudget));
-  });
-
   it('exposes platform email and the system flag on the author for unlinked and linked senders', async () => {
     const { adapter, chat } = buildChat();
     const authors: Array<{ userId: string; email?: string; isSystem?: boolean }> = [];

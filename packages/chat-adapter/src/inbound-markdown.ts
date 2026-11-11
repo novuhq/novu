@@ -17,12 +17,6 @@ type ChatMarkdownModule = {
 };
 
 export function createInboundMarkdownParser(chat: ChatMarkdownModule): InboundMarkdownParser {
-  // `parseIncoming` arrived in chat 4.44.0. The peer range still allows older
-  // releases, which only have the unbounded parse.
-  if (typeof chat.BaseFormatConverter.prototype.parseIncoming !== 'function') {
-    return (markdown) => chat.parseMarkdown(markdown);
-  }
-
   class InboundMarkdownConverter extends chat.BaseFormatConverter {
     private readonly fallbackText: string | undefined;
 
