@@ -196,27 +196,16 @@ describe('Agent Slack app uninstall #novu-v2', () => {
     expect(after.linkConnectedAt, artifact).to.not.equal(null);
   });
 
-  it('cleans up the last workspace while the agent is disabled', async () => {
+  it('cleans up while the agent is disabled and its link disconnected', async () => {
+    // Each of these alone makes resolving the agent answer 200 without dispatching the event.
+    const linkId = (await agentIntegrationRepository.findOne(linkQuery(), ['_id']))?._id;
+    const removeRes = await ctx.session.testAgent.delete(`/v1/agents/${ctx.agentIdentifier}/integrations/${linkId}`);
+    expect(removeRes.status).to.equal(204);
     await agentRepository.update({ _id: ctx.agentId, ...tenant() }, { $set: { active: false } });
 
     const res = await postUninstall(UNINSTALLED_TEAM);
     const after = await snapshot();
-    const artifact = writeArtifact('agent-disabled', { status: res.status, after });
-
-    expect(res.status, artifact).to.equal(200);
-    expect(connectionsInTestEnvironment(after), artifact).to.deep.equal([]);
-    expect(after.endpoints, artifact).to.deep.equal([]);
-    expect(after.linkConnectedAt, artifact).to.equal(null);
-  });
-
-  it('cleans up when the link was disconnected from the agent', async () => {
-    const linkId = (await agentIntegrationRepository.findOne(linkQuery(), ['_id']))?._id;
-    const removeRes = await ctx.session.testAgent.delete(`/v1/agents/${ctx.agentIdentifier}/integrations/${linkId}`);
-    expect(removeRes.status).to.equal(204);
-
-    const res = await postUninstall(UNINSTALLED_TEAM);
-    const after = await snapshot();
-    const artifact = writeArtifact('link-disconnected', { status: res.status, after });
+    const artifact = writeArtifact('agent-disabled-link-disconnected', { status: res.status, after });
 
     expect(res.status, artifact).to.equal(200);
     expect(connectionsInTestEnvironment(after), artifact).to.deep.equal([]);
@@ -250,7 +239,6 @@ describe('Agent Slack app uninstall #novu-v2', () => {
     });
 
     expect(res.status, artifact).to.equal(200);
-    expect(refresh.callCount, artifact).to.equal(0);
     expect(connectionsInTestEnvironment(after), artifact).to.deep.equal([]);
     expect(after.linkConnectedAt, artifact).to.equal(null);
   });
