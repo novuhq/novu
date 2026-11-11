@@ -739,6 +739,31 @@ function answerOneContact(contact: StubContact | undefined): Response {
   });
 }
 
+/** The agent's card, as the Dashboard API shows it to a host: a 404 before the agent exists. */
+function answerCard(url: string, method: string, setupState: { agent: StubAgent | null }): Response | null {
+  if (method !== 'POST' || url !== `${AGENT_INBOX_API}/v1/agent/card`) {
+    return null;
+  }
+  if (!setupState.agent) {
+    return reply({ message: 'There is no agent yet. Run `npx @agentinbox/cli setup` first.' }, 404);
+  }
+
+  const name = setupState.agent.name ?? 'Atlas';
+
+  return reply({
+    data: {
+      greeting: `Hi Ada, I’m ${name}. I have my own inbox now. Here’s my card, so people can email or message me directly.`,
+      name,
+      handle: 'atlas',
+      address: 'atlas@agentinbox.md',
+      url: 'https://agentinbox.md/p/atlas',
+      look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+      operatorFirstName: 'Ada',
+      firstShown: true,
+    },
+  });
+}
+
 /**
  * Answers the calls the Worker makes: Clerk for who the token is, the Novu API for the account's key, and the
  * Dashboard API for everything else. A call anywhere else gets a 500, so a tool that strays fails its test.
@@ -808,6 +833,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       return (
         answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
         answerSetup(url, method, body, setupState) ??
+        answerCard(url, method, setupState) ??
         answerChannels(url, method, body, setupState, channelState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??

@@ -11,6 +11,30 @@ const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 /** Named like the API's Agent Inbox events (`AGENT_INBOX_EVENTS` in `@novu/shared`), so all of them filter alike. */
 const PAGE_VIEWED = 'Page Viewed - [Agent Inbox]';
 
+/**
+ * What the onboarding where the agent says hi counts, step by step, so Mixpanel shows where people stop: each
+ * screen shown, a prompt or command copied, the host coming in, leaving the onboarding, and sharing the card.
+ */
+export const ONBOARDING_EVENTS = {
+  STEP_VIEWED: 'Onboarding Step Viewed - [Agent Inbox]',
+  COPIED: 'Onboarding Copied - [Agent Inbox]',
+  HOST_CONNECTED: 'Host Connected - [Agent Inbox]',
+  LEFT: 'Onboarding Left - [Agent Inbox]',
+  CARD_SHARE_OPENED: 'Card Share Opened - [Agent Inbox]',
+} as const;
+
+export type OnboardingEvent = (typeof ONBOARDING_EVENTS)[keyof typeof ONBOARDING_EVENTS];
+
+/**
+ * Sends one of the onboarding's events, on the operator's profile like their page views. Nothing about them
+ * goes with it beyond what it names, and nothing is sent where Mixpanel isn't set up.
+ */
+export function trackOnboarding(event: OnboardingEvent, properties: Record<string, string | boolean | null>): void {
+  if (startMixpanel()) {
+    mixpanel.track(event, properties);
+  }
+}
+
 let started = false;
 
 /**

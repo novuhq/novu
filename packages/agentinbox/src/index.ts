@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { cardCommand } from './commands/card';
 import { channelAddCommand, channelDefaultCommand, channelListCommand } from './commands/channels';
 import { connectCommand } from './commands/connect';
 import { contactsCommand } from './commands/contacts';
@@ -18,7 +19,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
-      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. This computer: setup, login, connect, listen.\n\n' +
+      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. Your agent: card. This computer: setup, login, connect, listen.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -194,6 +195,15 @@ channel
   .option('--json', 'print JSON')
   .description('Set the channel used when a message goes to you')
   .action(channelDefaultCommand);
+
+// --- the agent ---
+
+program
+  .command('card')
+  .option('--json', 'print the card as JSON')
+  .option('--api-url <url>', 'API URL override')
+  .description('Your agent says hi and shows its card: its name, address and link, with a QR code to scan')
+  .action(cardCommand);
 
 // --- setup, login, connect ---
 

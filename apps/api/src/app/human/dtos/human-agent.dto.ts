@@ -3,6 +3,7 @@ import { AGENT_INBOX_REACHES, type AgentInboxReach } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { AgentCardShownDto, AgentLookDto } from './human-agent-look.dto';
 import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
 
 /** Whether a mailbox local-part is free on the Agent Inbox domain. */
@@ -110,6 +111,18 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'Where anyone can load the agent’s picture. Missing when it has none.' })
   pictureUrl?: string;
+
+  @ApiProperty({
+    type: AgentLookDto,
+    description: 'How the agent looks: its mascot and its card’s art. The original look until its operator picks one.',
+  })
+  look: AgentLookDto;
+
+  @ApiPropertyOptional({
+    type: AgentCardShownDto,
+    description: 'The first time a host showed the agent’s card. Missing until one did.',
+  })
+  cardShown?: AgentCardShownDto;
 
   @ApiProperty()
   active: boolean;

@@ -161,6 +161,8 @@ type HostPanelProps = {
   showListen?: boolean;
   /** Whether a connected host's box gives way to "<host> is now <agent>". The onboarding moves on instead. */
   showSignedIn?: boolean;
+  /** Told when the box's button copied what it shows, and on which way. */
+  onCopy?: (way: HostWay) => void;
 };
 
 /**
@@ -188,6 +190,7 @@ export function HostPanel({
   showWaiting = true,
   showListen = true,
   showSignedIn = true,
+  onCopy,
 }: HostPanelProps) {
   const router = useRouter();
   const host = hostOf(selected);
@@ -303,6 +306,7 @@ export function HostPanel({
                 code={code}
                 onRetry={onRetry}
                 mcpUrl={mcpUrl ?? ''}
+                onCopy={onCopy}
               />
               <ListenFold host={showListen ? listeningHost(host, way) : null} handle={handle} />
               <WatchLine line={showWaiting && watched ? { host, signedIn: isSignedIn(host.id), handle } : null} />

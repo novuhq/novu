@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.9",
+    "@launchdarkly/node-server-sdk": "^9.7.3",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@radix-ui/react-tabs": "^1.1.21",
@@ -41,6 +42,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
     "mixpanel-browser": "^2.52.0",
+    "motion": "^11.18.2",
     "next": "16.3.8",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

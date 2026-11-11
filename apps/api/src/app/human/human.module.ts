@@ -36,6 +36,7 @@ import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
 import { HumanListenController } from './human-listen.controller';
 import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
+import { AgentInboxFeaturesService } from './services/agent-inbox-features.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
@@ -93,6 +94,7 @@ import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
 import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typing.usecase';
 import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
@@ -168,6 +170,8 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     HumanAgentPictureService,
     HumanTelegramBotService,
     GetHumanAgentCard,
+    ShowHumanAgentCard,
+    AgentInboxFeaturesService,
     HumanAccountAgentService,
     CreateHumanInvite,
     GetHumanInviteStatus,

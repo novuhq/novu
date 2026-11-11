@@ -158,7 +158,7 @@ overrides:
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
   ip-address@<10.7.4: ^10.7.4
-  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  mongoose@>=8.0.0 <8.24.8: ^8.24.8
   newrelic: 13.19.2
   fast-uri@<3.1.9: ^3.1.9
   browserslist@<4.28.7: ^4.28.7
@@ -415,20 +415,20 @@ importers:
         specifier: 3.996.0
         version: 3.996.0
       '@chat-adapter/slack':
-        specifier: 4.43.0
-        version: 4.43.0(debug@4.4.3)(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(debug@4.4.3)(zod@3.25.20)
       '@chat-adapter/state-ioredis':
-        specifier: 4.43.0
-        version: 4.43.0(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(zod@3.25.20)
       '@chat-adapter/teams':
-        specifier: 4.43.0
-        version: 4.43.0(debug@4.4.3)(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(debug@4.4.3)(zod@3.25.20)
       '@chat-adapter/telegram':
-        specifier: 4.43.0
-        version: 4.43.0(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(zod@3.25.20)
       '@chat-adapter/whatsapp':
-        specifier: 4.43.0
-        version: 4.43.0(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(zod@3.25.20)
       '@godaddy/terminus':
         specifier: ^4.12.1
         version: 4.12.1
@@ -458,7 +458,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/throttler':
         specifier: 6.5.0
         version: 6.5.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(reflect-metadata@0.2.2)
@@ -509,7 +509,7 @@ importers:
         version: link:../../libs/testing
       '@novu/thalamus':
         specifier: 0.1.0-alpha.21
-        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
+        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6(debug@4.4.3)
@@ -562,8 +562,8 @@ importers:
         specifier: ^4.2.1
         version: 4.10.4
       chat:
-        specifier: 4.43.0
-        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -1329,6 +1329,9 @@ importers:
       '@clerk/nextjs':
         specifier: ^7.9.9
         version: 7.9.9(next@16.4.2(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@launchdarkly/node-server-sdk':
+        specifier: ^9.7.3
+        version: 9.7.3
       '@radix-ui/react-dialog':
         specifier: ^1.1.23
         version: 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1350,6 +1353,9 @@ importers:
       mixpanel-browser:
         specifier: ^2.52.0
         version: 2.53.0
+      motion:
+        specifier: ^11.18.2
+        version: 11.18.2(@emotion/is-prop-valid@1.2.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next:
         specifier: ^16.4.1
         version: 16.4.2(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1525,7 +1531,7 @@ importers:
         version: 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7)
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261029.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.5(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7)
+        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261029.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.5(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7)
       zod:
         specifier: ^4.6.6
         version: 4.6.7
@@ -1568,7 +1574,7 @@ importers:
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1713,7 +1719,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1931,7 +1937,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/websockets':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-socket.io@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2363,8 +2369,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       passport:
         specifier: 0.7.0
         version: 0.7.0
@@ -2466,8 +2472,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.1.0)
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2669,10 +2675,10 @@ importers:
     dependencies:
       '@novu/thalamus':
         specifier: 0.1.0-alpha.21
-        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7))(@anthropic-ai/sdk@1.3.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
+        version: 0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7))(@anthropic-ai/sdk@1.6.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)
       agents:
         specifier: ^0.21.0
-        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.6.7)
+        version: 0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.6.7)
       eventsource-parser:
         specifier: ^3.0.8
         version: 3.1.0
@@ -2721,11 +2727,11 @@ importers:
   libs/application-generic:
     dependencies:
       '@anthropic-ai/aws-sdk':
-        specifier: 1.1.1
-        version: 1.1.1(zod@3.25.20)
+        specifier: 1.1.2
+        version: 1.1.2(zod@3.25.20)
       '@anthropic-ai/sdk':
-        specifier: 1.3.0
-        version: 1.3.0(zod@3.25.20)
+        specifier: 1.6.0
+        version: 1.6.0(zod@3.25.20)
       '@aws-sdk/client-s3':
         specifier: ^3.996.0
         version: 3.996.0
@@ -2770,7 +2776,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/testing':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
@@ -3092,11 +3098,11 @@ importers:
         specifier: ^6.0.1
         version: 6.1.0
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       mongoose-delete:
         specifier: ^1.0.7
-        version: 1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
+        version: 1.0.7(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -3643,18 +3649,18 @@ importers:
   packages/chat-adapter:
     dependencies:
       '@chat-adapter/shared':
-        specifier: 4.43.0
-        version: 4.43.0(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(zod@4.6.7)
       chat:
         specifier: ^4.40.0
-        version: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+        version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
         version: 19.2.3
     devDependencies:
       '@chat-adapter/state-memory':
-        specifier: 4.43.0
-        version: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       '@novu/agent-event-protocol':
         specifier: workspace:*
         version: link:../agent-event-protocol
@@ -3696,8 +3702,8 @@ importers:
         specifier: ^19.0.0
         version: 19.2.8
       chat:
-        specifier: ^4.43.0
-        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.44.0
+        version: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       react:
         specifier: ^19.2.3
         version: 19.2.3
@@ -3715,11 +3721,11 @@ importers:
     dependencies:
       '@photon-ai/chat-adapter-imessage':
         specifier: ^3.2.0
-        version: 3.2.0(chat@4.43.0(zod@4.6.7))(typescript@6.0.3)(zod@4.6.7)
+        version: 3.2.0(chat@4.44.0(zod@4.6.7))(typescript@6.0.3)(zod@4.6.7)
     devDependencies:
       chat:
-        specifier: ^4.43.0
-        version: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+        specifier: ^4.44.0
+        version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3734,11 +3740,11 @@ importers:
     dependencies:
       chat-adapter-sendblue:
         specifier: ^0.2.0
-        version: 0.2.0(chat@4.43.0(zod@3.25.20))
+        version: 0.2.0(chat@4.44.0(zod@3.25.20))
     devDependencies:
       chat:
-        specifier: ^4.43.0
-        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.44.0
+        version: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3759,8 +3765,8 @@ importers:
         version: 3.3.18
     devDependencies:
       chat:
-        specifier: ^4.43.0
-        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: ^4.44.0
+        version: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3789,8 +3795,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       chat:
-        specifier: 4.43.0
-        version: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+        specifier: 4.44.0
+        version: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0
@@ -4267,11 +4273,11 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3(debug@4.4.3)
       '@chat-adapter/slack':
-        specifier: 4.43.0
-        version: 4.43.0(debug@4.4.3)(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(debug@4.4.3)(zod@4.6.7)
       '@chat-adapter/teams':
-        specifier: 4.43.0
-        version: 4.43.0(debug@4.4.3)(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(debug@4.4.3)(zod@4.6.7)
       '@infobip-api/sdk':
         specifier: ^0.3.2
         version: 0.3.2(debug@4.4.3)
@@ -4703,8 +4709,8 @@ importers:
         specifier: 4.0.34
         version: 4.0.34(react@18.3.1)(zod@4.6.7)
       '@chat-adapter/state-memory':
-        specifier: 4.43.0
-        version: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       '@clerk/react':
         specifier: ^6.6.6
         version: 6.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4817,8 +4823,8 @@ importers:
         specifier: ^6.2.6
         version: 6.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       chat:
-        specifier: 4.43.0
-        version: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+        specifier: 4.44.0
+        version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -5150,8 +5156,8 @@ packages:
   '@antfu/utils@0.7.10':
     resolution: {integrity: sha512-+562v9k4aI80m1+VuMHehNJWLOFjBnXn3tdOitzD0il5b7smkSBal4+a3oKiQTbrwMmN/TBUMDvbdoWDehgOww==}
 
-  '@anthropic-ai/aws-sdk@1.1.1':
-    resolution: {integrity: sha512-JXAcCNZEad43i6Zmypi/WfyjQNL/4eGKHVwwh9LwHE/PaPFOzZ2oCXzdRDjW3RME8pO1hhEbk8b8nPfJEImdEg==}
+  '@anthropic-ai/aws-sdk@1.1.2':
+    resolution: {integrity: sha512-rCK/qDCLz/F6NLK5bujpPWgsOskqw1OKKMh6H5A29+/o2aw0+yuaXP3nDxRNMlNDuFWNDtxk3Ydlc+8FLpVjlg==}
 
   '@anthropic-ai/claude-agent-sdk-darwin-arm64@0.2.141':
     resolution: {integrity: sha512-9HZ0ot6+FwOfQ1aeMqQLH4IJGMm/DcP08SysDxscVjBm6l2JjqleHohxi3zid0DurfGweqT+4x9GScJffwg55g==}
@@ -5221,8 +5227,8 @@ packages:
       zod:
         optional: true
 
-  '@anthropic-ai/sdk@1.3.0':
-    resolution: {integrity: sha512-k7z9BlLLPxfZH+ov7dS6EnaN/wiZeV8YNT1LZfrpAHIy7oY7pHr4UzirF9f2OlHtFEnRBOX+AZQ91Y5fK+TPTw==}
+  '@anthropic-ai/sdk@1.6.0':
+    resolution: {integrity: sha512-XqiO/46n8S6So8jQ/6/uNCkHntyW6QHHs1gZ+hlwTx1fWDr929g4VmwIXfdMVk7SuBWNdQvAlwyi1G3t6SEIuQ==}
     hasBin: true
     peerDependencies:
       zod: ^4.6.6
@@ -7314,36 +7320,36 @@ packages:
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
 
-  '@chat-adapter/catalog@4.43.0':
-    resolution: {integrity: sha512-JRH40HwYIXdIiwSc/gNw65q5T/gaf691n4//2YOhjRE4YO9KzSFJ/N+RrTD3M8iGz2jI4Jg92wb6OAqfYsAkTQ==}
+  '@chat-adapter/catalog@4.44.0':
+    resolution: {integrity: sha512-UtpW5mMgIjYBRDIgxJKh+tfnlFe0GjLsFG5MPPUDA5b/PggSOAt00TFr0xF6UIXXh1SaK3V1u3FiXyM2sdnaJQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/shared@4.43.0':
-    resolution: {integrity: sha512-uclU9sQLQa5f9pN9xpCHkMC7eypnIvXnZRnpgdAzltL2d0PhrsJlSPkijmc4Q4FzSfof4kh+gE6yAMFp/tNsQQ==}
+  '@chat-adapter/shared@4.44.0':
+    resolution: {integrity: sha512-g6MmtkFLVE3Fn19Ly8e+3bZTAw5Kzh/2oP3qKRaVW0IPwVLDa2GRq/Q5fpGS+Xmzn2oqzpaHJrRuQRdWjLboqg==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/slack@4.43.0':
-    resolution: {integrity: sha512-OFu6YURQNTKAqijtMddRRT12duYtj3g8j5xaNq2w846+zYnx+Ywjmjoi9iLA51SCoO8zo1nJb34LRTYUbhjkDw==}
+  '@chat-adapter/slack@4.44.0':
+    resolution: {integrity: sha512-pY8QKy/cKjBX/m+h/j7zSSNfXYEiDTqu0wyjDMPyTg0T7WsDRZZZzdZD9I49cP9rZsr3k+5mb4zbyQMBmGRn+A==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-ioredis@4.43.0':
-    resolution: {integrity: sha512-9KcoDLH9epbOoK3Olj8dD3rO5wxMmkMvB1OjXL7uDcW8IniTh1eklQcesq2b17PAsq0W2ODu5eM2fvrBGAlAVQ==}
+  '@chat-adapter/state-ioredis@4.44.0':
+    resolution: {integrity: sha512-1qBKy0IV3d6kZOrSxittGOt8clwgQtsrqvIQgIw4vh5X4Y986/g2hEGR5WwxHU8Zj6FbL0FZWGrAdy/yYDoVYQ==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/state-memory@4.43.0':
-    resolution: {integrity: sha512-VG9ZbKAIMPh0tcLN/BM/sJ/DQNiwQJhtwvq0IlHEI32mDfjnrZbXKNI6j8kRB1hbU2Xw6eesLue2N6uNsVm5xg==}
+  '@chat-adapter/state-memory@4.44.0':
+    resolution: {integrity: sha512-Z1grqxdp+jYQffWZQJaJ2e2N9zxuX3GbX67D9Xrl7c3xZCi/9Ltvcb0ufvv0UnmgMnGWYFCC8kGATpwcWtmKvg==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/teams@4.43.0':
-    resolution: {integrity: sha512-+fMTr9ouzS5y9v/HmN+gVGmC3rscSs06rEnoIaYM0btReX1MW09/SLoxROeAU8EAxp/quOddIn4qp4+YQgWpbw==}
+  '@chat-adapter/teams@4.44.0':
+    resolution: {integrity: sha512-zGCZprZlta/rolgqSLAqBkHn35bLp+gmZ5kksuiqrpk6tEcY1ngaPsbM8zO4TxfplHrZ8+kVW47p9M+2Is9fcw==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/telegram@4.43.0':
-    resolution: {integrity: sha512-tBtRW7QzvF8pI5rrIUwEWesDMZLPaPdyhn9leTrC5J0B8cwb/uXvhgmrtaOQ5GzEQR8AnbIINGHyEY32nMeNLw==}
+  '@chat-adapter/telegram@4.44.0':
+    resolution: {integrity: sha512-d0o1MZuVfXLCTwxkZfjG2njRBOMB9qd4tEIKEsiTSvpjWlMZCL/YnTsvCIhEMP977tHQIF51EWMJQlwWtcnhUA==}
     engines: {node: '>=20'}
 
-  '@chat-adapter/whatsapp@4.43.0':
-    resolution: {integrity: sha512-TNyIj02VxqV+5F2xC/+ua9fR5pfCJHBLQsCUUWAQ9n7BQoclItSehJ1obcI9rArKlzXM9Xs+4bgK7LzWuxWMJw==}
+  '@chat-adapter/whatsapp@4.44.0':
+    resolution: {integrity: sha512-gxrZ5z5FQt2efEF4/kPguz+coLP5U23pLiZdEsWmoXC6J1WVoaEBi5I7LSAeZhoGLkDHFUUN2ERpvvSN85bNAQ==}
     engines: {node: '>=20'}
 
   '@chevrotain/types@11.1.2':
@@ -10007,7 +10013,7 @@ packages:
       '@nestjs/sequelize': ^10.0.0 || ^11.0.0
       '@nestjs/typeorm': ^10.0.0 || ^11.0.0
       '@prisma/client': '*'
-      mongoose: ^8.24.1
+      mongoose: ^8.24.8
       reflect-metadata: 0.1.x || 0.2.x
       rxjs: 7.x
       sequelize: '*'
@@ -18944,8 +18950,8 @@ packages:
     peerDependencies:
       chat: '>=4.0.0'
 
-  chat@4.43.0:
-    resolution: {integrity: sha512-9ICxMewK1+4J0pEbR7eMBTh3JCL3NkyDHAgGrU/gblyyw/+QUcwFHCXIoQMt0Xlyup1c5smS0/gYytTt8NVc6w==}
+  chat@4.44.0:
+    resolution: {integrity: sha512-DGVc9yV1ifOJFpe8Pz6BAoOBVT7/iI/7kkMuB+ZUrpyQ1iw1ElibxyvYBx7tEo1qPl6w510+Acvt1XSVPSgKjA==}
     engines: {node: '>=20'}
     peerDependencies:
       ai: ^6.0.182 || ^7.0.0
@@ -24618,10 +24624,10 @@ packages:
   mongoose-delete@1.0.7:
     resolution: {integrity: sha512-bOEKYhYdS5LxcPXG1wIimx+Gh3xecmtL1jfWnthzLvMuGDk6+WVQebf8xug2I3aMIKan3StS66CjpAj9UPOdiw==}
     peerDependencies:
-      mongoose: ^8.24.1
+      mongoose: ^8.24.8
 
-  mongoose@8.24.1:
-    resolution: {integrity: sha512-UpHBA0l5kHyKJQFjmBaFYQFo5sgz1DK0TRqDkOyBLYbqiIbKKhIvBpHWBXqeo0rgW4kGI1UhhAw+kTQZoj1BdA==}
+  mongoose@8.24.8:
+    resolution: {integrity: sha512-p6g/mvvW2PJlC3lgzQJ7PECArfaOTKWJVG/KHf67WYU3MvJ72ZWdv5u7syFRe881IjALMZpKwffNE97G10HTzg==}
     engines: {node: '>=16.20.1'}
 
   motion-dom@11.18.1:
@@ -24653,8 +24659,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  mquery@5.0.0:
-    resolution: {integrity: sha512-iQMncpmEK8R8ncT8HJGsGc9Dsp8xcgYMVSbs5jgnm1lFHTZqMJTUWTDx1LBO8+mK3tPNZWFLBghQEIOULSTHZg==}
+  mquery@5.0.1:
+    resolution: {integrity: sha512-C99lWV0TFI34pS008jBsi3JrE2xZPnTgUw5yApQR71nRP0hxLy8D5m1Lbbk83c8AQWJwdJ0329HzFtZ1MRTUIw==}
     engines: {node: '>=14.0.0'}
 
   mri@1.2.0:
@@ -30511,9 +30517,9 @@ snapshots:
 
   '@antfu/utils@0.7.10': {}
 
-  '@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20)':
+  '@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20)':
     dependencies:
-      '@anthropic-ai/sdk': 1.3.0(zod@3.25.20)
+      '@anthropic-ai/sdk': 1.6.0(zod@3.25.20)
       '@aws-crypto/sha256-js': 4.0.0
       '@aws-sdk/credential-providers': 3.1052.0
       '@opentelemetry/api': 1.9.0
@@ -30526,9 +30532,9 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7)':
+  '@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7)':
     dependencies:
-      '@anthropic-ai/sdk': 1.3.0(zod@4.6.7)
+      '@anthropic-ai/sdk': 1.6.0(zod@4.6.7)
       '@aws-crypto/sha256-js': 4.0.0
       '@aws-sdk/credential-providers': 3.1052.0
       '@opentelemetry/api': 1.9.0
@@ -30595,7 +30601,7 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@1.3.0(zod@3.25.20)':
+  '@anthropic-ai/sdk@1.6.0(zod@3.25.20)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       json-schema-to-ts: 3.1.1
@@ -30603,7 +30609,7 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@1.3.0(zod@4.6.7)':
+  '@anthropic-ai/sdk@1.6.0(zod@4.6.7)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       json-schema-to-ts: 3.1.1
@@ -34593,30 +34599,30 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/catalog@4.43.0': {}
+  '@chat-adapter/catalog@4.44.0': {}
 
-  '@chat-adapter/shared@4.43.0(zod@3.25.20)':
+  '@chat-adapter/shared@4.44.0(zod@3.25.20)':
     dependencies:
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/shared@4.43.0(zod@4.6.7)':
+  '@chat-adapter/shared@4.44.0(zod@4.6.7)':
     dependencies:
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/slack@4.43.0(debug@4.4.3)(zod@3.25.20)':
+  '@chat-adapter/slack@4.44.0(debug@4.4.3)(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
+      '@chat-adapter/shared': 4.44.0(zod@3.25.20)
       '@slack/socket-mode': 2.0.7(debug@4.4.3)
       '@slack/web-api': 7.17.0(debug@4.4.3)
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -34625,12 +34631,12 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/slack@4.43.0(debug@4.4.3)(zod@4.6.7)':
+  '@chat-adapter/slack@4.44.0(debug@4.4.3)(zod@4.6.7)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@4.6.7)
+      '@chat-adapter/shared': 4.44.0(zod@4.6.7)
       '@slack/socket-mode': 2.0.7(debug@4.4.3)
       '@slack/web-api': 7.17.0(debug@4.4.3)
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - bufferutil
@@ -34639,66 +34645,66 @@ snapshots:
       - workflow
       - zod
 
-  '@chat-adapter/state-ioredis@4.43.0(zod@3.25.20)':
+  '@chat-adapter/state-ioredis@4.44.0(zod@3.25.20)':
     dependencies:
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       ioredis: 5.11.1
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/state-memory@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)':
+  '@chat-adapter/state-memory@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)':
     dependencies:
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/teams@4.43.0(debug@4.4.3)(zod@3.25.20)':
+  '@chat-adapter/teams@4.44.0(debug@4.4.3)(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
+      '@chat-adapter/shared': 4.44.0(zod@3.25.20)
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.apps': 2.0.16(debug@4.4.3)
       '@microsoft/teams.cards': 2.0.16
       '@microsoft/teams.graph': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph-endpoints': 2.0.16
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - debug
       - workflow
       - zod
 
-  '@chat-adapter/teams@4.43.0(debug@4.4.3)(zod@4.6.7)':
+  '@chat-adapter/teams@4.44.0(debug@4.4.3)(zod@4.6.7)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@4.6.7)
+      '@chat-adapter/shared': 4.44.0(zod@4.6.7)
       '@microsoft/teams.api': 2.0.16(debug@4.4.3)
       '@microsoft/teams.apps': 2.0.16(debug@4.4.3)
       '@microsoft/teams.cards': 2.0.16
       '@microsoft/teams.graph': 2.0.16(debug@4.4.3)
       '@microsoft/teams.graph-endpoints': 2.0.16
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
     transitivePeerDependencies:
       - ai
       - debug
       - workflow
       - zod
 
-  '@chat-adapter/telegram@4.43.0(zod@3.25.20)':
+  '@chat-adapter/telegram@4.44.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.44.0(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
       - zod
 
-  '@chat-adapter/whatsapp@4.43.0(zod@3.25.20)':
+  '@chat-adapter/whatsapp@4.44.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@3.25.20)
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/shared': 4.44.0(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
       - workflow
@@ -38205,7 +38211,7 @@ snapshots:
       class-transformer: 0.5.1
       class-validator: 0.15.1
 
-  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.27)(@nestjs/websockets@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -38217,7 +38223,7 @@ snapshots:
       '@grpc/grpc-js': 1.14.5
       '@grpc/proto-loader': 0.8.0
       '@nestjs/axios': 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2)
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+      mongoose: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
 
   '@nestjs/testing@11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)':
     dependencies:
@@ -38424,16 +38430,16 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
+  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@3.25.20))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
     optionalDependencies:
-      '@anthropic-ai/aws-sdk': 1.1.1(zod@3.25.20)
+      '@anthropic-ai/aws-sdk': 1.1.2(zod@3.25.20)
       '@aws-sdk/credential-provider-node': 3.972.78
       '@smithy/signature-v4': 5.6.12
 
-  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.1(zod@4.6.7))(@anthropic-ai/sdk@1.3.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
+  '@novu/thalamus@0.1.0-alpha.21(@anthropic-ai/aws-sdk@1.1.2(zod@4.6.7))(@anthropic-ai/sdk@1.6.0(zod@4.6.7))(@aws-sdk/credential-provider-node@3.972.78)(@smithy/signature-v4@5.6.12)':
     optionalDependencies:
-      '@anthropic-ai/aws-sdk': 1.1.1(zod@4.6.7)
-      '@anthropic-ai/sdk': 1.3.0(zod@4.6.7)
+      '@anthropic-ai/aws-sdk': 1.1.2(zod@4.6.7)
+      '@anthropic-ai/sdk': 1.6.0(zod@4.6.7)
       '@aws-sdk/credential-provider-node': 3.972.78
       '@smithy/signature-v4': 5.6.12
 
@@ -39917,12 +39923,12 @@ snapshots:
       nice-grpc: 2.1.17
       nice-grpc-common: 2.0.4
 
-  '@photon-ai/chat-adapter-imessage@3.2.0(chat@4.43.0(zod@4.6.7))(typescript@6.0.3)(zod@4.6.7)':
+  '@photon-ai/chat-adapter-imessage@3.2.0(chat@4.44.0(zod@4.6.7))(typescript@6.0.3)(zod@4.6.7)':
     dependencies:
-      '@chat-adapter/shared': 4.43.0(zod@4.6.7)
+      '@chat-adapter/shared': 4.44.0(zod@4.6.7)
       '@spectrum-ts/core': 10.0.0(typescript@6.0.3)
       '@spectrum-ts/imessage': 10.0.0(@spectrum-ts/core@10.0.0(typescript@6.0.3))(typescript@6.0.3)
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       mime-types: 3.0.2
     transitivePeerDependencies:
       - ai
@@ -49216,7 +49222,7 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.6.7):
+  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@4.20260702.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(zod@4.6.7):
     dependencies:
       '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
       '@cfworker/json-schema': 4.1.1
@@ -49236,7 +49242,7 @@ snapshots:
     optionalDependencies:
       '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.6.7)
       ai: 7.0.31(zod@4.6.7)
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react: 19.2.3
     transitivePeerDependencies:
       - '@babel/core'
@@ -49245,7 +49251,7 @@ snapshots:
       - '@cloudflare/workers-types'
       - rolldown
 
-  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261029.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.5(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7):
+  agents@0.21.0(@ai-sdk/react@4.0.34(react@19.2.3)(zod@4.6.7))(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@cloudflare/workers-types@5.20261029.1)(@modelcontextprotocol/client@2.3.1)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.7))(@modelcontextprotocol/server@2.3.1)(ai@7.0.31(zod@4.6.7))(chat@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7))(react@19.2.3)(rolldown@1.2.12)(vite@6.4.5(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))(zod@4.6.7):
     dependencies:
       '@babel/plugin-proposal-decorators': 8.0.2(@babel/core@7.29.7)
       '@cfworker/json-schema': 4.1.1
@@ -49265,7 +49271,7 @@ snapshots:
     optionalDependencies:
       '@ai-sdk/react': 4.0.34(react@19.2.3)(zod@4.6.7)
       ai: 7.0.31(zod@4.6.7)
-      chat: 4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
+      chat: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react: 19.2.3
       vite: 6.4.5(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)
     transitivePeerDependencies:
@@ -50490,14 +50496,14 @@ snapshots:
 
   chardet@2.2.0: {}
 
-  chat-adapter-sendblue@0.2.0(chat@4.43.0(zod@3.25.20)):
+  chat-adapter-sendblue@0.2.0(chat@4.44.0(zod@3.25.20)):
     dependencies:
-      chat: 4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      chat: 4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       sendblue: 3.10.1
 
-  chat@4.43.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
+  chat@4.44.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20):
     dependencies:
-      '@chat-adapter/catalog': 4.43.0
+      '@chat-adapter/catalog': 4.44.0
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
       remark-gfm: 4.0.1
@@ -50509,9 +50515,9 @@ snapshots:
       ai: 7.0.31(zod@3.25.20)
       zod: 3.25.20
 
-  chat@4.43.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7):
+  chat@4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7):
     dependencies:
-      '@chat-adapter/catalog': 4.43.0
+      '@chat-adapter/catalog': 4.44.0
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
       remark-gfm: 4.0.1
@@ -57655,17 +57661,17 @@ snapshots:
       gcp-metadata: 5.3.0
       socks: 2.8.9
 
-  mongoose-delete@1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)):
+  mongoose-delete@1.0.7(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)):
     dependencies:
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+      mongoose: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
 
-  mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9):
+  mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9):
     dependencies:
       bson: 6.10.4
       kareem: 2.6.3
       mongodb: 6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       mpath: 0.9.0
-      mquery: 5.0.0
+      mquery: 5.0.1
       ms: 2.1.3
       sift: 17.1.3
     transitivePeerDependencies:
@@ -57705,7 +57711,7 @@ snapshots:
 
   mprocs@0.9.2: {}
 
-  mquery@5.0.0:
+  mquery@5.0.1:
     dependencies:
       debug: 4.4.3
 

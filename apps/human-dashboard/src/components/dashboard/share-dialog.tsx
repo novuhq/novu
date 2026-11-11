@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Copy, Download, FileText, LoaderCircle, X } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { SHARE_IMAGE_PATH } from '@/components/dashboard/nav';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
@@ -37,8 +37,8 @@ type ShareDialogProps = {
  * "Share atlas’s card" (`4 · Share atlas’s card`): the image people see where the card is shared, the link
  * with Copy link, and the other ways to pass it on: Post on X, Download image and Email signature.
  *
- * The image comes from one request per opening. The preview shows it and Download saves the very same
- * bytes, so the two never differ.
+ * The image comes from one request per opening, or from the one the screen made ahead of it
+ * (`useShareImageAhead`). The preview shows it and Download saves the very same bytes, so the two never differ.
  */
 export function ShareDialog({ open, onOpenChange, besideSidebar = false, ...sheet }: ShareDialogProps) {
   return (
@@ -177,8 +177,51 @@ function ShareSheet({ handle, cardLink, reach }: ShareSheetProps) {
   );
 }
 
-/** Whether the image has come, and once it has, its address in this page. */
-type ShareImageState = { status: 'loading' } | { status: 'ready'; src: string } | { status: 'failed' };
+/**
+ * Whether the image has come, and once it has, its address in this page. `atOnce` when it was there as the sheet
+ * opened: it shows straight away, with no stand-in to fade from.
+ */
+type ShareImageState =
+  | { status: 'loading' }
+  | { status: 'ready'; src: string; atOnce?: boolean }
+  | { status: 'failed' };
+
+/** An image asked for before its sheet opened, with the file once it has come. */
+type EarlyImage = { file: Promise<Blob>; ready?: Blob };
+
+/** The images screens have asked for ahead of their sheet (`useShareImageAhead`), by address. */
+const ahead = new Map<string, EarlyImage>();
+
+/**
+ * Asks for the share image while the calling screen shows, so its share sheet has it the moment it opens, every
+ * time, instead of asking again. For a screen where the card can't change while it shows: the last onboarding
+ * step. Elsewhere each opening asks anew and shows the card as it is then.
+ */
+export function useShareImageAhead(): void {
+  const url = useContext(ShareImageUrlContext);
+
+  useEffect(() => {
+    const early: EarlyImage = { file: fetchImage(url) };
+    ahead.set(url, early);
+    early.file.then(
+      (file) => {
+        early.ready = file;
+      },
+      () => {
+        // The sheet asks for it itself, then.
+        if (ahead.get(url) === early) {
+          ahead.delete(url);
+        }
+      }
+    );
+
+    return () => {
+      if (ahead.get(url) === early) {
+        ahead.delete(url);
+      }
+    };
+  }, [url]);
+}
 
 /**
  * Loads the share image once, as a file. The preview shows it from memory and Download saves it from
@@ -191,7 +234,7 @@ function useShareImage(url: string) {
   const shownAt = useRef<string | null>(null);
   const live = useRef(false);
 
-  const show = useCallback((file: Blob) => {
+  const show = useCallback((file: Blob, atOnce = false) => {
     if (!live.current) {
       return;
     }
@@ -200,21 +243,31 @@ function useShareImage(url: string) {
       URL.revokeObjectURL(shownAt.current);
     }
     shownAt.current = URL.createObjectURL(file);
-    setState({ status: 'ready', src: shownAt.current });
+    setState({ status: 'ready', src: shownAt.current, atOnce });
   }, []);
 
-  useEffect(() => {
+  // Before the sheet is first painted, so an image asked for ahead of it is there in its very first frame.
+  useLayoutEffect(() => {
     live.current = true;
+    const early = ahead.get(url);
     const controller = new AbortController();
-    const blob = fetchImage(url, controller.signal);
-    request.current = blob;
+    if (early?.ready) {
+      request.current = early.file;
+      show(early.ready, true);
+    } else {
+      const blob = early?.file ?? fetchImage(url, controller.signal);
+      request.current = blob;
 
-    blob.then(show, (error) => {
-      if (!controller.signal.aborted) {
-        console.error('Failed to load the share image', error);
-        setState({ status: 'failed' });
-      }
-    });
+      blob.then(
+        (file) => show(file),
+        (error) => {
+          if (!controller.signal.aborted) {
+            console.error('Failed to load the share image', error);
+            setState({ status: 'failed' });
+          }
+        }
+      );
+    }
 
     return () => {
       live.current = false;
@@ -257,7 +310,7 @@ async function fetchImage(url: string, signal?: AbortSignal): Promise<Blob> {
 function SharePreview({ image, handle }: { image: ShareImageState; handle: string }) {
   // The address that finished loading: the image fades in over its stand-in once it has.
   const [loaded, setLoaded] = useState<string>();
-  const shown = image.status === 'ready' && loaded === image.src;
+  const shown = image.status === 'ready' && (image.atOnce || loaded === image.src);
   const fade = 'transition-opacity duration-300 ease-out motion-reduce:transition-none';
 
   return (
