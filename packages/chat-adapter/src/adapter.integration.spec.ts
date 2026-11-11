@@ -407,67 +407,38 @@ describe('Novu adapter end-to-end', () => {
     ]);
   });
 
-  it('falls back to the plain text when inbound markdown is over the parse budget, without blocking the handler', async () => {
+  it('keeps over-budget inbound markdown out of the parser, for the live message and history', async () => {
     const { adapter, chat } = buildChat();
-    const brackets = ']'.repeat(15000);
-    const historyText = 'a'.repeat(20000);
-    const plain = 'short plain';
+    // 129 closing brackets is one over the Chat SDK inbound budget. The unbounded parse
+    // would still turn `**bold**` into a strong node.
+    const overBudget = `**bold** ${']'.repeat(129)}`;
+    const plain = 'bold, plain';
+    const paragraphOf = (value: string) => ({
+      type: 'root',
+      children: [{ type: 'paragraph', children: [{ type: 'text', value }] }],
+    });
     let received: { text: string; formatted: unknown } | undefined;
-    let elapsedMs = Number.POSITIVE_INFINITY;
-    let startedAt = 0;
     chat.onSubscribedMessage(async (_thread, message) => {
-      elapsedMs = performance.now() - startedAt;
       received = { text: message.text, formatted: message.formatted };
     });
     await chat.initialize();
 
-    startedAt = performance.now();
     await deliver(
       adapter,
       bridgeRequest({
-        message: {
-          ...bridgeRequest().message!,
-          text: plain,
-          markdown: brackets,
-        },
-        history: [
-          {
-            role: 'user',
-            type: 'text',
-            content: historyText,
-            createdAt: '2026-01-01T00:00:00.000Z',
-          },
-        ],
+        message: { ...bridgeRequest().message!, text: plain, markdown: overBudget },
+        history: [{ role: 'user', type: 'text', content: overBudget, createdAt: '2026-01-01T00:00:00.000Z' }],
       })
     );
 
-    expect(received?.text).toBe(plain);
-    expect(received?.formatted).toEqual({
-      type: 'root',
-      children: [{ type: 'paragraph', children: [{ type: 'text', value: plain }] }],
-    });
-    expect(elapsedMs).toBeLessThan(100);
+    // The bridge markdown is Novu-serialized, so the plain text stands in for it.
+    expect(received).toEqual({ text: plain, formatted: paragraphOf(plain) });
 
-    const threadId = encodeThreadId({
-      platform: 'slack',
-      integrationIdentifier: 'slack-prod',
-      conversationId: 'conv-1',
-      isDM: false,
-    });
-    const historyStartedAt = performance.now();
-    const { messages } = await adapter.fetchMessages(threadId);
-    const historyElapsedMs = performance.now() - historyStartedAt;
-    const historyMsg = messages[0];
-    if (historyMsg === undefined) {
-      throw new Error('expected a history message');
-    }
+    const { messages } = await adapter.fetchMessages(
+      encodeThreadId({ platform: 'slack', integrationIdentifier: 'slack-prod', conversationId: 'conv-1', isDM: false })
+    );
 
-    expect(historyMsg.text).toBe(historyText);
-    expect(historyMsg.formatted).toEqual({
-      type: 'root',
-      children: [{ type: 'paragraph', children: [{ type: 'text', value: historyText }] }],
-    });
-    expect(historyElapsedMs).toBeLessThan(100);
+    expect(messages[0]?.formatted).toEqual(paragraphOf(overBudget));
   });
 
   it('exposes platform email and the system flag on the author for unlinked and linked senders', async () => {
