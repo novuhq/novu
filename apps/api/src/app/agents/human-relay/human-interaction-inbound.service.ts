@@ -344,8 +344,13 @@ export class HumanInteractionInboundService {
     const repliedTo = this.extractRepliedToMessageIds(turn);
     if (repliedTo.length > 0) {
       const exact = await this.humanInteractionRepository.findPendingByPlatformMessageId(environmentId, repliedTo);
-      // Only an ask takes words for an answer: a reply quoting an approve or a choice is a message, not a decision.
-      if (exact?.kind === HumanInteractionKindEnum.ASK) {
+      if (exact) {
+        // Only an ask takes words for an answer. A reply quoting an approve or a choice is a message about that card,
+        // not a decision, and not an answer to some other question either: it stays in the inbox as it is.
+        if (exact.kind !== HumanInteractionKindEnum.ASK) {
+          return { outcome: 'ignored' };
+        }
+
         const settled = await this.settleAskWithText(exact, text, turn, mode);
 
         return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };

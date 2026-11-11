@@ -424,12 +424,15 @@ describe('HumanInteractionInboundService', () => {
       expect(result.outcome).to.equal('settled');
     });
 
-    it('keeps a reply quoting an approve card as a message, not a decision', async () => {
+    it('keeps a reply quoting an approve card as a message, never a decision or an answer to another question', async () => {
       const { service, humanInteractionRepository, settlement, pendingAsk } = setup();
       humanInteractionRepository.findPendingByPlatformMessageId.resolves({
         ...pendingAsk,
+        identifier: 'hi_approve',
         kind: HumanInteractionKindEnum.APPROVE,
       });
+      // An unrelated ask is waiting too: the quoted reply must not settle it.
+      humanInteractionRepository.findPendingAsks.resolves([pendingAsk]);
 
       const result = await service.tryHandleMessage(
         makeTurn({
