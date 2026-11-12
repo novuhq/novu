@@ -134,7 +134,8 @@ describe('Email webhook - security', () => {
       'x-twilio-email-event-webhook-timestamp': '1513299569',
     };
 
-    it('should keep accepting unverified requests while the flag is off', async () => {
+    it('should keep accepting unverified requests when the flag is turned off', async () => {
+      process.env[FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED] = 'false';
       await createSendgridIntegration('not-a-real-public-key');
 
       const { status, data } = await callWebhook(
@@ -176,8 +177,7 @@ describe('Email webhook - security', () => {
       expect(executionDetails).to.have.length(1);
     });
 
-    it('should reject a request with an invalid signature when the flag is on', async () => {
-      process.env[FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED] = 'true';
+    it('should reject a request with an invalid signature by default (flag not set)', async () => {
       await createSendgridIntegration('not-a-real-public-key');
 
       try {

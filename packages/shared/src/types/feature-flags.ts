@@ -61,8 +61,9 @@ export enum FeatureFlagsKeysEnum {
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
   /**
    * Organization-scoped, read by the legacy webhook service (`apps/webhook`): verifies the provider signature
-   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. Off by default so existing
-   * webhook setups keep working until each organization is rolled over.
+   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. On by default; set it to `false`
+   * for an organization (or the `IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED=false` env var when self-hosted
+   * without LaunchDarkly) to skip verification.
    */
   IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED = 'IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',

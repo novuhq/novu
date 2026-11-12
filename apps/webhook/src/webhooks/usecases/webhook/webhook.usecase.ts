@@ -69,7 +69,7 @@ export class Webhook {
 
     const isSignatureVerificationEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED,
-      defaultValue: false,
+      defaultValue: true,
       organization: { _id: command.organizationId },
       environment: { _id: command.environmentId },
     });
