@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
+import type { AgentEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
+import type { AgentLookDto } from '../dtos/human-agent-look.dto';
+import { agentLookOf } from './agent-look';
 
 /**
  * The Agent Inbox features an account has, by its backing organization, so they can be turned on for some
@@ -28,5 +31,15 @@ export class AgentInboxFeaturesService {
       defaultValue: false,
       organization: { _id: organizationId },
     });
+  }
+
+  /**
+   * The look the agent's mascots show wherever they are drawn outside its card: on its channels, and on the pages
+   * people open without signing in. It is the agent's own look once the new onboarding is on for its account, and
+   * nothing before that, when its mascot is drawn as it always was. Asked each time, so turning the feature on
+   * shows at once.
+   */
+  async mascotLookOf(agent: Pick<AgentEntity, '_organizationId' | 'look'>): Promise<AgentLookDto | null> {
+    return (await this.isNewOnboardingEnabled(agent._organizationId)) ? agentLookOf(agent) : null;
   }
 }

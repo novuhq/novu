@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import { lookToKeep, savedLook } from '../agent-look';
 import { createInteraction } from '../api/agent-inbox';
 import { type ApiClient, createApiClient } from '../api/client';
 import { bootstrapKeylessSession } from '../api/setup';
@@ -34,7 +35,10 @@ export async function setupCommand(
   options: SetupOptions,
   command = channelArg ? `setup ${channelArg}` : 'setup'
 ): Promise<never> {
-  const screen = await openScreen({ command });
+  const screen = await openScreen({
+    command,
+    look: savedLook({ apiUrl: options.apiUrl, secretKey: options.secretKey }),
+  });
 
   try {
     await runSetup(parseSetupChannel(channelArg), options);
@@ -59,6 +63,8 @@ async function runSetup(channel: ChannelName | undefined, options: SetupOptions)
     keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
   });
   const provisioned = await provisionOperator(client, existing, options, picture);
+  // The agent is set up, so the mascot is its own from here on.
+  openedScreen()?.look(setupLook(apiUrl, auth, existing, provisioned).look);
   // Before anything below waits for a person: a run stopped there leaves a setup the next run picks up.
   writeSetupConfig(apiUrl, auth, existing, provisioned, undefined);
 
@@ -185,6 +191,18 @@ export function channelLinkedBySetup(
   return undefined;
 }
 
+/** The look the setup's answer carries, else the one saved for this very agent: an API from before looks says nothing. */
+function setupLook(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator
+): Pick<CliConfig, 'look'> {
+  const { agentIdentifier: relayAgentIdentifier, look } = provisioned.relay;
+
+  return lookToKeep({ apiUrl, auth, relayAgentIdentifier }, existing, look);
+}
+
 function writeSetupConfig(
   apiUrl: string,
   auth: CliConfig['auth'],
@@ -203,6 +221,7 @@ function writeSetupConfig(
     subscriberId: provisioned.subscriberId,
     ...(defaultChannel ? { defaultChannel } : {}),
     ...keptHost(existing, apiUrl),
+    ...setupLook(apiUrl, auth, existing, provisioned),
   });
 
   return defaultChannel;

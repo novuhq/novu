@@ -606,21 +606,20 @@ export class HumanInteractionsController {
   }
 
   /**
-   * The account owner's own contact, so the CLI and the Human dashboard treat the same person as "you".
-   * Nothing is created here; `POST /human/setup` with `operator` records one.
+   * The account owner's own contact, so the CLI and the Human dashboard treat the same person as "you", and the
+   * agent's look, so the CLI's mascot is the agent's own. Nothing is created here; `POST /human/setup` with
+   * `operator` records one.
    */
   @Get('/operator')
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  async getOperator(@UserSession() user: UserSessionData): Promise<HumanOperatorResponseDto> {
-    const subscriberId = await this.humanOperator.find({
+  getOperator(@UserSession() user: UserSessionData): Promise<HumanOperatorResponseDto> {
+    return this.humanOperator.describe({
       environmentId: user.environmentId,
       organizationId: user.organizationId,
       agentIdentifier: DEFAULT_HUMAN_RELAY_IDENTIFIER,
     });
-
-    return subscriberId ? { subscriberId } : {};
   }
 
   /**

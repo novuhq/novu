@@ -1,5 +1,5 @@
 import type { Emotion } from '../mascot/life';
-import type { LookColor, MascotBody } from '../mascot/look';
+import type { MascotLook } from '../mascot/look';
 import { askTerminal } from './ask-terminal';
 import type { ScreenRow, ScreenStatus, Tone } from './layout';
 import { processHost, startLiveScreen } from './live-screen';
@@ -58,6 +58,11 @@ export interface AskOptions {
 export interface Screen {
   /** What the mascot feels. While something is under way, `awake` shows as `thinking`. */
   feel(emotion: Emotion): void;
+  /**
+   * The agent's look, once the API has answered it: the mascot bends into the new body and blends into the new
+   * colour, keeping its face. None is the orb in ember, and the look it already has changes nothing.
+   */
+  look(look: MascotLook | undefined): void;
   /** The line under the command. */
   subtitle(text: string | undefined): void;
   /** Puts these rows in place of the list. */
@@ -92,7 +97,7 @@ export interface ScreenOptions {
   /** The agent's handle, where it is known. */
   handle?: string;
   /** The mascot's body and colour, as the agent's look has them: the orb in ember where it isn't known. */
-  look?: { shape: MascotBody; color: LookColor };
+  look?: MascotLook;
 }
 
 /**

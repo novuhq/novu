@@ -314,7 +314,12 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
 
       const status = await asHost('get', '/v1/human/listen/lease');
       expect(status.status).to.equal(200, JSON.stringify(status.body));
-      expect(status.body.data).to.deep.equal({ listening, paused: false });
+      // The agent's look goes along for the mascot on the listener's screen: the original one here.
+      expect(status.body.data).to.deep.equal({
+        listening,
+        paused: false,
+        look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+      });
       expect((await hostStatus()).listening).to.deep.equal(listening);
 
       // Renewing keeps when it was taken; what it starts may change.

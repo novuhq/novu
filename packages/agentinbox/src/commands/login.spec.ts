@@ -6,6 +6,8 @@ const checkLoginRequest = vi.fn();
 const getKeylessClaimToken = vi.fn();
 const hasSubscriber = vi.fn();
 const findOperator = vi.fn();
+/** How the account says its agent looks, in the same answer as its owner's contact. None from an API before looks. */
+let agentLook: unknown;
 const loadConfig = vi.fn();
 const saveConfig = vi.fn();
 const openInBrowser = vi.fn();
@@ -22,6 +24,11 @@ vi.mock('../api/login', () => ({
   getKeylessClaimToken: (...args: unknown[]) => getKeylessClaimToken(...args),
   hasSubscriber: (...args: unknown[]) => hasSubscriber(...args),
   findOperator: (...args: unknown[]) => findOperator(...args),
+  // The account's whole answer, whose contact is what `findOperator` gives.
+  readOperator: async (...args: unknown[]) => ({
+    subscriberId: await findOperator(...args),
+    ...(agentLook ? { agentLook } : {}),
+  }),
 }));
 
 vi.mock('../config', async (importOriginal) => {
@@ -80,6 +87,7 @@ describe('runLogin', () => {
     hasSubscriber.mockResolvedValue(true);
     // An account nobody set up yet has no contact for its owner.
     findOperator.mockResolvedValue(undefined);
+    agentLook = undefined;
   });
 
   afterEach(() => {
@@ -187,6 +195,48 @@ describe('runLogin', () => {
 
     // Without it, a shell that doesn't say which host it is would check the inbox as General from now on.
     expect(result.config.host).toBe('codex');
+  });
+
+  it('saves how the account’s agent looks, for the next command’s screen to open in', async () => {
+    agentLook = { shape: 'drop', color: 'coral', art: { kind: 'waves', seed: 7 } };
+
+    const result = await runLogin({});
+
+    // Only what the terminal draws is kept: the card's art is the page's.
+    expect(result.config.look).toEqual({ shape: 'drop', color: 'coral' });
+    expect(saveConfig).toHaveBeenCalledWith(expect.objectContaining({ look: { shape: 'drop', color: 'coral' } }));
+  });
+
+  it('keeps the saved look when an API from before looks says nothing, while the account stays the same', async () => {
+    loadConfig.mockReturnValue({
+      apiUrl: 'https://www.agentinbox.md/api',
+      auth: { mode: 'apiKey', secretKey: 'sk_account' },
+      relayAgentIdentifier: 'human-relay',
+      look: { shape: 'bean', color: 'bone' },
+    });
+
+    expect((await runLogin({})).config.look).toEqual({ shape: 'bean', color: 'bone' });
+  });
+
+  it('drops the saved look when the login lands in another account, whose agent is another one', async () => {
+    loadConfig.mockReturnValue({
+      apiUrl: 'https://www.agentinbox.md/api',
+      auth: { mode: 'apiKey', secretKey: 'sk_other_account' },
+      relayAgentIdentifier: 'human-relay',
+      look: { shape: 'bean', color: 'bone' },
+    });
+
+    expect((await runLogin({})).config).not.toHaveProperty('look');
+  });
+
+  it('takes no look for an agent the account’s answer isn’t about, or one this CLI can’t draw', async () => {
+    agentLook = { shape: 'drop', color: 'coral' };
+    loadConfig.mockReturnValue({ ...keylessConfig, relayAgentIdentifier: 'second-agent' });
+    expect((await runLogin({})).config).not.toHaveProperty('look');
+
+    agentLook = { shape: 'cube', color: 'coral' };
+    loadConfig.mockReturnValue(null);
+    expect((await runLogin({})).config).not.toHaveProperty('look');
   });
 
   it('lets the account owner win over another contact saved on this computer', async () => {
@@ -371,6 +421,7 @@ describe('loginCommand', () => {
     });
     hasSubscriber.mockResolvedValue(true);
     findOperator.mockReset().mockResolvedValue(undefined);
+    agentLook = undefined;
   });
 
   afterEach(() => {

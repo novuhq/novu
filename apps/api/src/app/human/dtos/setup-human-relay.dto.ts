@@ -160,4 +160,10 @@ export class SetupHumanRelayResponseDto {
 export class HumanOperatorResponseDto {
   @ApiPropertyOptional({ description: 'subscriberId of the account owner’s contact. Missing before any setup.' })
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    type: AgentLookDto,
+    description: 'The agent’s look, for the CLI’s mascot. Missing before any setup has made the agent.',
+  })
+  agentLook?: AgentLookDto;
 }
