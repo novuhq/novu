@@ -1,5 +1,5 @@
 import { DirectionEnum } from '@novu/shared';
-import { ClassConstructor, plainToInstance } from 'class-transformer';
+import { ClassConstructor } from 'class-transformer';
 import {
   AnyBulkWriteOperation,
   ClientSession,
@@ -24,13 +24,8 @@ import {
   pageSortDirection,
   slicePage,
 } from './cursor-pagination';
-import {
-  convertObjectIds,
-  convertSelectToProjection,
-  IncludedKeys,
-  SelectFieldsObject,
-  SelectInput,
-} from './projection.types';
+import { convertSelectToProjection, IncludedKeys, SelectFieldsObject, SelectInput } from './projection.types';
+import { toEntity } from './to-entity';
 
 // ---------------------------------------------------------------------------
 // Options interfaces
@@ -86,7 +81,7 @@ interface IWriteOptions {
  * - `select` is **required** on all read methods — no accidental SELECT *
  * - Return types are automatically inferred from the `select` input via `Pick<Entity, Keys>`
  * - `.lean()` is used on all reads (no Mongoose document hydration)
- * - ObjectId-to-string conversion is done via a targeted traversal rather than a JSON round-trip
+ * - Documents are mapped with a single-pass walk that gives the same output as a JSON round-trip (`to-entity.ts`)
  * - `findById` is built into the base class
  * - Sort options are typed as `Partial<Record<keyof Entity, 1 | -1>>` instead of `any`
  * - Constructor accepts an optional `defaultReadPreference` for read-heavy repositories
@@ -798,9 +793,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    */
   protected mapProjectedEntity<TData>(data: TData): Partial<T_MappedEntity> | null {
     if (!data) return null;
-    const plain = convertObjectIds(data);
 
-    return plainToInstance(this.entity, plain);
+    return toEntity(this.entity, data);
   }
 
   protected mapProjectedEntities<TData>(data: TData[]): (Partial<T_MappedEntity> | null)[] {
