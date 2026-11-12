@@ -1,17 +1,29 @@
 import { DirectionEnum } from '@novu/shared';
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import {
+  AnyBulkWriteOperation,
   ClientSession,
   FilterQuery,
   Model,
   mongo,
+  PipelineStage,
   QueryOptions,
   QueryWithHelpers,
-  SortOrder,
   Types,
   UpdateQuery,
 } from 'mongoose';
 import { DalException } from '../shared';
+import {
+  buildAdjacentPageQuery,
+  buildCursorSort,
+  buildCursorWalkOr,
+  CursorPaginatedResult,
+  CursorPosition,
+  cursorToken,
+  mergeTopLevelOr,
+  pageSortDirection,
+  slicePage,
+} from './cursor-pagination';
 import {
   convertObjectIds,
   convertSelectToProjection,
@@ -19,21 +31,6 @@ import {
   SelectFieldsObject,
   SelectInput,
 } from './projection.types';
-
-/**
- * Merge a cursor-walking `$or` clause into `target` without dropping an existing
- * top-level `$or` from the caller's query. When both are present, both are
- * preserved by moving each under an entry in `$and` (which Mongo evaluates as
- * an implicit AND with the rest of the query).
- */
-function mergeTopLevelOr(target: Record<string, any>, incomingOr: Record<string, unknown>[]): void {
-  if (target.$or) {
-    target.$and = [...(target.$and ?? []), { $or: target.$or }, { $or: incomingOr }];
-    delete target.$or;
-  } else {
-    target.$or = incomingOr;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Options interfaces
@@ -56,12 +53,13 @@ export interface FindOptionsV2<T_MappedEntity> {
 export interface FindWithCursorPaginationOptionsV2<T_DBModel, T_Select = undefined> {
   query?: FilterQuery<T_DBModel>;
   limit: number;
-  before?: { sortBy: string; paginateField: any };
-  after?: { sortBy: string; paginateField: any };
+  before?: CursorPosition;
+  after?: CursorPosition;
   sortBy: string;
   sortDirection?: DirectionEnum;
   paginateField: string;
-  enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
+  /** May change the query's result type (e.g. `populate`); the rows are mapped as entities either way. */
+  enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => unknown;
   includeCursor?: boolean;
   /**
    * Fields to include in the result documents.
@@ -187,7 +185,11 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.MongooseModel.estimatedDocumentCount();
   }
 
-  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+  async aggregate(
+    query: PipelineStage[],
+    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
+    // biome-ignore lint/suspicious/noExplicitAny: rows are pipeline-shaped; callers annotate their own row types (e.g. TopicRepository.filterTopics)
+  ): Promise<any> {
     return this.MongooseModel.aggregate(query).read(options.readPreference ?? this.defaultReadPreference);
   }
 
@@ -229,7 +231,16 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: SelectInput<T_MappedEntity> | '*',
     options: FindOneOptionsV2<T_DBModel> = {}
-  ): Promise<any> {
+  ): Promise<T_MappedEntity | null> {
+    return this.findOneProjected(query, select, options);
+  }
+
+  /** Shared implementation of the `findOne` / `findById` overloads. */
+  private async findOneProjected(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    select: SelectInput<T_MappedEntity> | '*',
+    options: FindOneOptionsV2<T_DBModel> = {}
+  ): Promise<T_MappedEntity | null> {
     const { session, query: queryOpts, readPreference } = options;
     const projection = convertSelectToProjection(select);
 
@@ -242,7 +253,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     const data = await builder.exec();
     if (!data) return null;
 
-    return this.mapProjectedEntity(data);
+    // Narrowed to the selected fields by the public overloads
+    return this.mapProjectedEntity(data) as T_MappedEntity | null;
   }
 
   // ---------------------------------------------------------------------------
@@ -280,8 +292,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     query: { _id: string } & T_Enforcement,
     select: SelectInput<T_MappedEntity> | '*',
     options?: FindOneOptionsV2<T_DBModel>
-  ): Promise<any> {
-    return this.findOne(query as unknown as FilterQuery<T_DBModel> & T_Enforcement, select as any, options);
+  ): Promise<T_MappedEntity | null> {
+    return this.findOneProjected(query, select, options);
   }
 
   // ---------------------------------------------------------------------------
@@ -318,7 +330,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: SelectInput<T_MappedEntity> | '*',
     options: FindOptionsV2<T_MappedEntity> = {}
-  ): Promise<any> {
+  ): Promise<T_MappedEntity[]> {
     const { session, limit, skip, sort, readPreference } = options;
     const projection = convertSelectToProjection(select);
 
@@ -332,7 +344,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
 
     const data = await builder.exec();
 
-    return this.mapProjectedEntities(data);
+    // Narrowed to the selected fields by the public overloads
+    return this.mapProjectedEntities(data) as T_MappedEntity[];
   }
 
   // ---------------------------------------------------------------------------
@@ -367,7 +380,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     select: SelectInput<T_MappedEntity> | '*',
     options: FindOptionsV2<T_MappedEntity> = {},
     batchSize = 500
-  ): AsyncGenerator<any> {
+  ): AsyncGenerator<T_MappedEntity> {
     const projection = convertSelectToProjection(select);
 
     for await (const doc of this._model
@@ -381,7 +394,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
       .lean()
       .batchSize(batchSize)
       .cursor()) {
-      yield this.mapProjectedEntity(doc);
+      // Narrowed to the selected fields by the public overloads
+      yield this.mapProjectedEntity(doc) as T_MappedEntity;
     }
   }
 
@@ -509,7 +523,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
       },
     }));
 
-    return this.bulkWrite(operations as mongo.AnyBulkWriteOperation[], false);
+    return this.bulkWrite(operations, false);
   }
 
   async upsert(query: FilterQuery<T_DBModel> & T_Enforcement, data: FilterQuery<T_DBModel> & T_Enforcement) {
@@ -520,8 +534,8 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     });
   }
 
-  async bulkWrite(bulkOperations: mongo.AnyBulkWriteOperation[], ordered = false): Promise<any> {
-    return this.MongooseModel.bulkWrite(bulkOperations as any, { ordered });
+  async bulkWrite(bulkOperations: AnyBulkWriteOperation[], ordered = false) {
+    return this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
   // ---------------------------------------------------------------------------
@@ -534,7 +548,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    * Avoid Promise.all / Promise.allSettled / Promise.race inside transactions.
    * See https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
    */
-  async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
+  async withTransaction<TResult>(fn: (session: ClientSession | null) => Promise<TResult>): Promise<TResult> {
     const session = await this._model.db.startSession();
 
     try {
@@ -625,166 +639,138 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     select,
   }: FindWithCursorPaginationOptionsV2<T_DBModel, SelectInput<T_MappedEntity> | '*' | undefined> & {
     query?: FilterQuery<T_DBModel> & T_Enforcement;
-  }): Promise<any> {
+  }): Promise<CursorPaginatedResult<T_MappedEntity>> {
     if (before && after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
+    const key = { sortBy, paginateField };
     const isDesc = sortDirection === DirectionEnum.DESC;
-    const sortValue = isDesc ? -1 : 1;
-    const paginationQuery: any = { ...query };
+    // Backwards pagination runs the query in reverse sort order
+    const reverseResults = Boolean(before);
 
-    let reverseResults = false;
-
-    let cursorOr: Record<string, unknown>[] | undefined;
-    if (before) {
-      cursorOr = [
-        {
-          [sortBy]: isDesc
-            ? { [includeCursor ? '$gte' : '$gt']: before.sortBy }
-            : { [includeCursor ? '$lte' : '$lt']: before.sortBy },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: before.sortBy } },
-            {
-              [paginateField]: isDesc
-                ? { [includeCursor ? '$gte' : '$gt']: before.paginateField }
-                : { [includeCursor ? '$lte' : '$lt']: before.paginateField },
-            },
-          ],
-        },
-      ];
-      reverseResults = true;
-    } else if (after) {
-      cursorOr = [
-        {
-          [sortBy]: isDesc
-            ? { [includeCursor ? '$lte' : '$lt']: after.sortBy }
-            : { [includeCursor ? '$gte' : '$gt']: after.sortBy },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: after.sortBy } },
-            {
-              [paginateField]: isDesc
-                ? { [includeCursor ? '$lte' : '$lt']: after.paginateField }
-                : { [includeCursor ? '$gte' : '$gt']: after.paginateField },
-            },
-          ],
-        },
-      ];
-    }
-
+    const paginationQuery: FilterQuery<T_DBModel> = { ...query };
+    const cursorOr = buildCursorWalkOr<T_DBModel>({ key, before, after, isDesc, includeCursor });
     if (cursorOr) {
       mergeTopLevelOr(paginationQuery, cursorOr);
     }
 
-    // When a select is provided, silently inject the pagination fields so cursor
-    // computation always has access to them — the caller is unaware of this.
-    // When select is '*', skip projection entirely (all fields are returned).
-    let projection: Record<string, 0 | 1> | undefined;
-    if (select !== undefined && select !== '*') {
-      projection = convertSelectToProjection(select);
-      if (projection) {
-        projection[sortBy] = 1;
-        projection[paginateField] = 1;
-        // _id: 0 is intentionally preserved if the caller set it
-      }
-    }
-
-    let builder = this.MongooseModel.find(paginationQuery, projection)
-      .sort({
-        [sortBy]: reverseResults ? -sortValue : sortValue,
-        [paginateField]: reverseResults ? -sortValue : sortValue,
-      } as Record<string, SortOrder>)
+    let builder = this.MongooseModel.find(paginationQuery, this.paginationProjection(select, key))
+      .sort(buildCursorSort(key, pageSortDirection(isDesc, reverseResults)))
       .limit(limit + 1)
       .lean();
 
-    if (enhanceQuery) builder = enhanceQuery(builder as any);
+    if (enhanceQuery) {
+      builder = enhanceQuery(builder as QueryWithHelpers<Array<T_DBModel>, T_DBModel>) as typeof builder;
+    }
 
     const [rawResults, countResult] = await Promise.all([builder.exec(), this.getCountWithLimit(query, 50001)]);
 
-    const hasExtraItem = rawResults.length > limit;
-    const totalCount = countResult.count;
-    const hasMore = countResult.hasMore;
-
-    let startIndex = 0;
-    let endIndex = limit;
-
-    if (reverseResults) {
-      rawResults.reverse();
-      if (hasExtraItem) {
-        startIndex = 1;
-        endIndex = limit + 1;
-      }
-    }
-
-    const pageResults = rawResults.slice(startIndex, endIndex);
+    const { pageResults, hasExtraItem } = slicePage(rawResults, limit, reverseResults);
 
     if (pageResults.length === 0) {
-      return { data: [], next: null, previous: null, totalCount, totalCountCapped: hasMore };
+      return {
+        data: [],
+        next: null,
+        previous: null,
+        totalCount: countResult.count,
+        totalCountCapped: countResult.hasMore,
+      };
     }
 
-    let nextCursor: string | null = null;
-    let prevCursor: string | null = null;
-
-    const firstItem = pageResults[0];
-    const lastItem = pageResults[pageResults.length - 1];
-
-    if (hasExtraItem) {
-      if (before) {
-        prevCursor = firstItem[paginateField].toString();
-      } else {
-        nextCursor = lastItem[paginateField].toString();
-      }
-    }
-
-    if (before) {
-      const nextQuery: any = { ...query };
-      mergeTopLevelOr(nextQuery, [
-        { [sortBy]: isDesc ? { $lt: lastItem[sortBy] } : { $gt: lastItem[sortBy] } },
-        {
-          $and: [
-            { [sortBy]: { $eq: lastItem[sortBy] } },
-            { [paginateField]: isDesc ? { $lt: lastItem[paginateField] } : { $gt: lastItem[paginateField] } },
-          ],
-        },
-      ]);
-
-      const maybeNext = await this.MongooseModel.findOne(nextQuery)
-        .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
-        .limit(1)
-        .exec();
-
-      if (maybeNext) nextCursor = lastItem[paginateField].toString();
-    } else {
-      const prevQuery: any = { ...query };
-      mergeTopLevelOr(prevQuery, [
-        { [sortBy]: isDesc ? { $gt: firstItem[sortBy] } : { $lt: firstItem[sortBy] } },
-        {
-          $and: [
-            { [sortBy]: { $eq: firstItem[sortBy] } },
-            { [paginateField]: isDesc ? { $gt: firstItem[paginateField] } : { $lt: firstItem[paginateField] } },
-          ],
-        },
-      ]);
-
-      const maybePrev = await this.MongooseModel.findOne(prevQuery)
-        .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
-        .limit(1)
-        .exec();
-
-      if (maybePrev) prevCursor = firstItem[paginateField].toString();
-    }
+    const { next, previous } = await this.resolvePageCursors({
+      query,
+      key,
+      pageResults,
+      hasExtraItem,
+      isBackward: Boolean(before),
+      isDesc,
+    });
 
     return {
       data: this.mapProjectedEntities(pageResults) as T_MappedEntity[],
-      next: nextCursor,
-      previous: prevCursor,
-      totalCount,
-      totalCountCapped: hasMore,
+      next,
+      previous,
+      totalCount: countResult.count,
+      totalCountCapped: countResult.hasMore,
     };
+  }
+
+  /**
+   * When a select is provided, silently inject the pagination fields so cursor
+   * computation always has access to them — the caller is unaware of this.
+   * When select is '*', skip projection entirely (all fields are returned).
+   */
+  private paginationProjection(
+    select: SelectInput<T_MappedEntity> | '*' | undefined,
+    key: { sortBy: string; paginateField: string }
+  ): Record<string, 0 | 1> | undefined {
+    if (select === undefined || select === '*') return undefined;
+
+    const projection = convertSelectToProjection(select);
+    if (projection) {
+      projection[key.sortBy] = 1;
+      projection[key.paginateField] = 1;
+      // _id: 0 is intentionally preserved if the caller set it
+    }
+
+    return projection;
+  }
+
+  /**
+   * The cursor in the paging direction exists when the page query returned an extra
+   * row; the opposite one exists when a probe finds a row beyond the page boundary.
+   */
+  private async resolvePageCursors<TRow>({
+    query,
+    key,
+    pageResults,
+    hasExtraItem,
+    isBackward,
+    isDesc,
+  }: {
+    query: FilterQuery<T_DBModel> & T_Enforcement;
+    key: { sortBy: string; paginateField: string };
+    pageResults: TRow[];
+    hasExtraItem: boolean;
+    isBackward: boolean;
+    isDesc: boolean;
+  }): Promise<{ next: string | null; previous: string | null }> {
+    const firstItem = pageResults[0];
+    const lastItem = pageResults[pageResults.length - 1];
+
+    if (isBackward) {
+      const previous = hasExtraItem ? cursorToken(firstItem, key.paginateField) : null;
+      const hasNextPage = await this.hasAdjacentRow(
+        buildAdjacentPageQuery({ query, key, boundaryItem: lastItem, towardsGreater: !isDesc }),
+        key,
+        isDesc
+      );
+
+      return { next: hasNextPage ? cursorToken(lastItem, key.paginateField) : null, previous };
+    }
+
+    const next = hasExtraItem ? cursorToken(lastItem, key.paginateField) : null;
+    const hasPreviousPage = await this.hasAdjacentRow(
+      buildAdjacentPageQuery({ query, key, boundaryItem: firstItem, towardsGreater: isDesc }),
+      key,
+      isDesc
+    );
+
+    return { next, previous: hasPreviousPage ? cursorToken(firstItem, key.paginateField) : null };
+  }
+
+  private async hasAdjacentRow(
+    adjacentQuery: FilterQuery<T_DBModel>,
+    key: { sortBy: string; paginateField: string },
+    isDesc: boolean
+  ): Promise<boolean> {
+    const adjacentRow = await this.MongooseModel.findOne(adjacentQuery)
+      .sort(buildCursorSort(key, pageSortDirection(isDesc, false)))
+      .limit(1)
+      .exec();
+
+    return Boolean(adjacentRow);
   }
 
   // ---------------------------------------------------------------------------
@@ -810,14 +796,14 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    * Uses a targeted ObjectId traversal instead of JSON.parse(JSON.stringify())
    * to convert ObjectId → string while avoiding a full serialization cycle.
    */
-  protected mapProjectedEntity<TData>(data: TData): Partial<T_MappedEntity> {
-    if (!data) return null as any;
+  protected mapProjectedEntity<TData>(data: TData): Partial<T_MappedEntity> | null {
+    if (!data) return null;
     const plain = convertObjectIds(data);
 
-    return plainToInstance(this.entity, plain) as any;
+    return plainToInstance(this.entity, plain);
   }
 
-  protected mapProjectedEntities(data: any[]): Partial<T_MappedEntity>[] {
+  protected mapProjectedEntities<TData>(data: TData[]): (Partial<T_MappedEntity> | null)[] {
     return data.map((doc) => this.mapProjectedEntity(doc));
   }
 }
