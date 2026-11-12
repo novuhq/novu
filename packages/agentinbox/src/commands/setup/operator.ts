@@ -5,9 +5,11 @@ import { type SetupRelayResult, setRelayAgentPicture } from '../../api/agent-inb
 import type { ApiClient } from '../../api/client';
 import { info, promptLine } from '../../cli-io';
 import { type CliConfig, DEFAULT_RELAY_AGENT_IDENTIFIER } from '../../config';
+import { lookOf, sameLook } from '../../mascot/look';
 import { splitName } from '../invite';
 import { parseEmailAddress } from '../link-channel';
 import { resolveNewAgent, setUpAgent } from './agent';
+import { completedLook } from './look';
 import { defaultSetupIo } from './prompts';
 
 /** What the API calls a relay agent until you name it. The name is the API's, so it is mirrored here as is. */
@@ -165,6 +167,10 @@ export interface SetupOptions {
   agentDescription?: string;
   /** A JPEG or PNG for your agent: a file on this computer or a web address. */
   agentPicture?: string;
+  /** The shape of a new agent's mascot, such as `drop`. It can't be changed later. */
+  agentShape?: string;
+  /** The colour of a new agent's mascot, such as `coral`. It can't be changed later. */
+  agentColor?: string;
   /** `false` leaves out the command that installs the skills, for `channel add`, which runs setup again. */
   showSkills?: boolean;
 }
@@ -229,6 +235,10 @@ export async function provisionOperator(
   }
   if (options.agentHandle && !relay.emailAddress) {
     info("Your agent keeps the address it has: an address can't be changed once it's made.");
+  }
+  if (newAgent.look && !sameLook(lookOf(relay.look), completedLook(newAgent.look))) {
+    // The API takes a look only where looks are on, which isn't everywhere yet.
+    info("Looks aren't available here yet, so your agent has the original one.");
   }
   await uploadPicture(client, picture, relay.agentIdentifier);
   const subscriberId = relay.subscriberId || localSubscriberId;

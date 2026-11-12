@@ -49,6 +49,23 @@ export interface AskOptions {
   check?: (answer: string) => Promise<AskNote | undefined>;
 }
 
+/** A question answered by picking one of a few, rather than by typing. */
+export interface PickOptions<Choice extends string> {
+  /** What there is to pick from, in the order it shows. */
+  choices: readonly Choice[];
+  /** The one the person starts on, which Enter alone keeps: the first where none is given. */
+  initial?: Choice;
+  /** How a choice reads, such as `Drop`: as it is named where nothing says otherwise. */
+  label?: (choice: Choice) => string;
+  /** Told the choice the person is on, each time they move to another. */
+  onMove?: (choice: Choice) => void;
+  /**
+   * The row that keeps the pick once the question is gone, or `undefined` for none. By default the question
+   * and the pick.
+   */
+  remember?: (choice: Choice) => ScreenRow | undefined;
+}
+
 /**
  * The shared terminal layout of a command: the mascot, the command, a line under it, a list of rows and what
  * is under way, drawn in place and kept up to date. Any command can open one; what it shows is up to the
@@ -85,6 +102,11 @@ export interface Screen {
    * is typed and stays in the list, and everything else keeps moving meanwhile.
    */
   ask(question: string, options?: AskOptions): Promise<string>;
+  /**
+   * Asks for one of a few at the end of the list. They show side by side: the arrow keys move between them and
+   * Enter takes the one the person is on. Where nothing is drawn in place, they are named and one is typed.
+   */
+  pick<Choice extends string>(question: string, options: PickOptions<Choice>): Promise<Choice>;
   /** Ends the screen on the mascot's own still face for `emotion`, once its eyes have got there. */
   done(emotion: 'happy' | 'asleep'): Promise<void>;
   /** Ends the screen with `message` as a ✕ row (a → row for something still `pending`), the mascot asleep. */

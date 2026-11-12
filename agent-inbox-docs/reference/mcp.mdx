@@ -45,8 +45,10 @@ Creates the agent and its email inbox, sends the owner a confirmation link, or s
 | `agent_name` | What the agent is called. Up to 60 characters. Pass it with `handle` to create the agent |
 | `handle` | The inbox address before the `@`, such as `atlas`. Letters, digits, and hyphens, up to 32. Alone, it finishes a mailbox that was not created |
 | `email` | The owner's email, after they confirm it. A confirmation link goes out |
+| `shape` | The shape of a new agent's mascot: `orb`, `pebble`, `drop`, `bean`, `peek` or `mochi`. Optional, with `agent_name` and `handle` |
+| `color` | Its colour: `ember`, `marigold`, `coral`, `paprika`, `peach` or `bone`. Optional, with `agent_name` and `handle` |
 
-Ask for the name and the address before you create the agent. A name never renames an existing agent, and a handle never moves an existing mailbox. An email that is already confirmed is changed on agentinbox.md. Telegram and Slack come from [`channel_add`](#channel_add).
+Ask for the name and the address before you create the agent. When the status says a look can be picked, you can also ask for a shape and a colour; the result names the look the agent got, and [`agent_card`](#agent_card) shows it. A name never renames an existing agent, a handle never moves an existing mailbox, and an existing agent keeps its look. An email that is already confirmed is changed on agentinbox.md. Telegram and Slack come from [`channel_add`](#channel_add).
 
 ## channel_add
 

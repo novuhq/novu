@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ReadOptions } from '../cli-io';
+import type { PickReadOptions, ReadOptions } from '../cli-io';
 import { MASCOT_EYE_COLOR } from '../mascot/drawing';
 import { terminalPalette } from '../mascot/look';
 import { TONES } from './layout';
@@ -16,8 +16,8 @@ const drawnSoon = () => new Promise((resolve) => setImmediate(resolve));
 
 /**
  * A terminal and a clock for the screen to run on. Frames come only when the test calls `tick`. An answer
- * read on the screen comes from `type` and `enter`, as keys do; `answers` are for one asked on a plain
- * terminal, written as it echoes them.
+ * read on the screen comes from `type` and `enter`, as keys do, and a pick from `move` and `enter`; `answers`
+ * are for one asked on a plain terminal, written as it echoes them.
  */
 function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 'dark' | 'light' } = {}) {
   const terminal = new VirtualTerminal(columns, rows);
@@ -25,6 +25,7 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
   const answers: string[] = [];
   const exits: Array<() => void> = [];
   let reading: { answer: string; onChange: ReadOptions['onChange']; finish: (answer: string) => void } | undefined;
+  let picking: (PickReadOptions & { index: number; finish: (index: number) => void }) | undefined;
   let frame: (() => void) | undefined;
   let interval = 0;
   let now = 0;
@@ -75,6 +76,10 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
       new Promise((finish) => {
         reading = { answer: initial, onChange, finish };
       }),
+    pick: (options) =>
+      new Promise((finish) => {
+        picking = { ...options, index: options.initial, finish };
+      }),
     beforeExit: (listener) => {
       exits.push(listener);
 
@@ -110,13 +115,30 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
         reading.onChange(text, text.length);
       }
     },
-    /** Enter, on the answer being read. */
+    /** An arrow key, on the pick being read: `1` for → and ↓, `-1` for ← and ↑. They go round. */
+    move: (step: 1 | -1) => {
+      if (picking) {
+        picking.index = (picking.index + step + picking.count) % picking.count;
+        picking.onMove(picking.index);
+      }
+    },
+    /** Enter, on the answer or the pick being read. */
     enter: () => {
       reading?.finish(reading.answer);
       reading = undefined;
+      picking?.finish(picking.index);
+      picking = undefined;
     },
     /** Whether an answer is being read on the screen. */
     reading: () => reading !== undefined,
+    /** Whether a pick is being read on the screen. */
+    picking: () => picking !== undefined,
+    /** The text on screen as a person reads it: without the blank lines, and with plain spaces for the cells that pad. */
+    read: () =>
+      terminal
+        .screen()
+        .filter(Boolean)
+        .map((line) => line.replace(/\u00a0/g, ' ')),
     /** The text on screen, without the blank lines. */
     shown: () => terminal.screen().filter(Boolean),
     /** The lines on screen, trimmed, for what is centred. */
@@ -770,6 +792,184 @@ describe('startLiveScreen', () => {
     const text = fake.writes.join('');
     expect(text).toMatch(/[⠁-⣿]/);
     expect(text).not.toContain('238;229;216');
+  });
+});
+
+describe('picking one of a few on the screen', () => {
+  const shapes = ['orb', 'pebble', 'drop'] as const;
+  const named = (shape: string) => `${shape[0].toUpperCase()}${shape.slice(1)}`;
+  /** The one that is lit, as the caret is: the last text written inverted. */
+  const lit = (writes: string[]) => [...writes.join('').matchAll(/\x1b\[7m([^\x1b]+)\x1b\[27m/g)].at(-1)?.[1].trim();
+
+  it('shows them side by side with the one it starts on lit, and the keys that pick under them', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, initial: 'pebble', label: named });
+    await drawnSoon();
+
+    const shown = fake.read();
+    const at = shown.findIndex((line) => line.includes('Shape:'));
+    expect(shown[at]).toContain('→   Shape:  Orb   Pebble   Drop');
+    expect(shown[at + 1].trim()).toBe('← → to change · Enter to pick');
+    expect(lit(fake.writes)).toBe('Pebble');
+    expect(fake.picking()).toBe(true);
+
+    fake.enter();
+    await expect(pick).resolves.toBe('pebble');
+  });
+
+  it('starts on the first where none is given', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes });
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('orb');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('orb');
+  });
+
+  it('lights the one the person moves to, tells who asked, and gives it on Enter', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+    const onMove = vi.fn();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named, onMove });
+    await drawnSoon();
+
+    fake.move(1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Pebble');
+    expect(onMove).toHaveBeenLastCalledWith('pebble');
+
+    fake.move(1);
+    fake.move(1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Orb');
+    expect(onMove).toHaveBeenLastCalledWith('orb');
+
+    fake.move(-1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Drop');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('drop');
+    expect(onMove).toHaveBeenCalledTimes(4);
+  });
+
+  it('moves nothing else on the line as the pick moves', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    const before = fake.read().find((line) => line.includes('Shape:'));
+
+    fake.move(1);
+    await drawnSoon();
+
+    expect(fake.read().find((line) => line.includes('Shape:'))).toBe(before);
+
+    fake.enter();
+    await pick;
+  });
+
+  it('keeps the pick in the list in place of the question, as it reads or as who asked says', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const first = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    fake.move(1);
+    fake.enter();
+    await first;
+
+    const second = screen.pick('Color: ', {
+      choices: ['ember', 'coral'],
+      remember: (color) => ({ mark: 'done', value: `In ${color}` }),
+    });
+    await drawnSoon();
+    fake.enter();
+    await second;
+    await drawnSoon();
+    await drawnSoon();
+
+    const shown = fake.read().join('\n');
+    expect(shown).toContain('✔   Shape: Pebble');
+    expect(shown).toContain('✔   In ember');
+    expect(shown).not.toContain('to change');
+    expect(shown).not.toContain('Drop');
+  });
+
+  it('keeps the mascot moving while a pick waits', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes });
+    await drawnSoon();
+    const before = fake.writes.length;
+    fake.tick(400);
+    fake.tick(400);
+
+    expect(fake.writes.length).toBeGreaterThan(before);
+
+    fake.enter();
+    await pick;
+  });
+
+  it('carries on from a line of its own once the screen no longer fits, arrow keys and all', async () => {
+    const fake = fakeHost({ columns: 60, rows: 12 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    expect(fake.read().join('\n')).toContain('Shape:  Orb   Pebble   Drop');
+
+    fake.out.rows = 3;
+    fake.move(1);
+    await drawnSoon();
+    expect(fake.terminal.text()).toContain('Shape: ‹ Pebble ›  ← → to change · Enter to pick');
+
+    fake.move(1);
+    expect(fake.terminal.text()).toContain('Shape: ‹ Drop ›  ← → to change · Enter to pick');
+    expect(fake.terminal.text()).not.toContain('‹ Pebble ›');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('drop');
+    await screen.done('happy');
+
+    expect(fake.terminal.text()).toContain('Shape: Drop');
+  });
+
+  it('names them for one to be typed where the screen has no room for them', async () => {
+    const fake = fakeHost({ rows: 5 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('drop');
+
+    await expect(screen.pick('Shape: ', { choices: shapes, label: named })).resolves.toBe('drop');
+
+    expect(fake.picking()).toBe(false);
+    expect(fake.terminal.text()).toContain('Shape (orb, pebble or drop) [orb]: drop');
+  });
+
+  it('names them for one to be typed where nothing is drawn in place, asking again for none of them', async () => {
+    const fake = fakeHost({ rows: 0 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('cube', '');
+
+    await expect(screen.pick('Shape: ', { choices: shapes, initial: 'pebble' })).resolves.toBe('pebble');
+
+    expect(fake.terminal.text()).toContain('Shape (orb, pebble or drop) [pebble]: cube');
+    expect(fake.terminal.text()).toContain('Pick orb, pebble or drop.');
   });
 });
 

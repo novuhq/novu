@@ -53,6 +53,104 @@ describe('inbox_setup', () => {
     });
   });
 
+  describe('the look of a new agent', () => {
+    const noAgent = { agent: null, operator: null, channels: [], userEmail: 'ada@acme.co' };
+    const setupCall = (calls: ReturnType<typeof stubBackends>) =>
+      calls.find((call) => call.url === `${AGENT_INBOX_API}/v1/setup` && call.method === 'POST');
+
+    it('says a shape and a color can be asked for, where the API says a look can be picked', async () => {
+      stubBackends({ ...noAgent, looksCanBePicked: true });
+
+      const { content } = await callSetup();
+
+      expect(content[0].text).toContain('ask which shape and color its mascot should have');
+      expect(content[0].text).toContain('neither can be changed later');
+    });
+
+    it('says nothing about a look where one can’t be picked', async () => {
+      const { content } = await callSetup();
+
+      expect(content[0].text).toContain('not set up yet');
+      expect(content[0].text).not.toContain('shape');
+    });
+
+    it('creates the agent in the shape and color the user picked, and offers its card', async () => {
+      const calls = stubBackends({ ...noAgent, looksCanBePicked: true });
+
+      const result = await callSetup({ agent_name: 'Atlas', handle: 'atlas', shape: 'drop', color: 'coral' });
+
+      expect(result.isError).toBeFalsy();
+      expect(setupCall(calls)?.body).toMatchObject({
+        agentName: 'Atlas',
+        inboxHandle: 'atlas',
+        look: { shape: 'drop', color: 'coral' },
+      });
+      expect(result.content[0].text).toContain('Its mascot is Drop · Coral.');
+      expect(result.content[0].text).toContain('agent_card');
+      expect(result.content[0].text).toContain('Agent: Atlas');
+    });
+
+    it('takes one of the two alone: the other is the original look’s', async () => {
+      const calls = stubBackends({ ...noAgent, looksCanBePicked: true });
+
+      const result = await callSetup({ agent_name: 'Atlas', handle: 'atlas', color: 'bone' });
+
+      expect(setupCall(calls)?.body).toMatchObject({ look: { color: 'bone' } });
+      expect(setupCall(calls)?.body).not.toHaveProperty('look.shape');
+      expect(result.content[0].text).toContain('Its mascot is Orb · Bone.');
+    });
+
+    it('sends no look, and says nothing about one, when none was picked', async () => {
+      const calls = stubBackends({ ...noAgent, looksCanBePicked: true });
+
+      const result = await callSetup({ agent_name: 'Atlas', handle: 'atlas' });
+
+      expect(setupCall(calls)?.body).not.toHaveProperty('look');
+      expect(result.content[0].text).not.toContain('mascot');
+    });
+
+    it('says the look was not taken where the API left it out, and still creates the agent', async () => {
+      const calls = stubBackends(noAgent);
+
+      const result = await callSetup({ agent_name: 'Atlas', handle: 'atlas', shape: 'drop' });
+
+      expect(result.isError).toBeFalsy();
+      expect(setupCall(calls)).toBeDefined();
+      expect(result.content[0].text).toContain('The shape and color you passed were not taken');
+      expect(result.content[0].text).toContain('Agent: Atlas');
+    });
+
+    it('leaves the look of an agent that exists alone, and says so', async () => {
+      const calls = stubBackends({
+        agent: { agentId: 'agent_1', agentIdentifier: 'human-relay', name: 'Atlas' },
+        channels: [{ integration: { providerId: 'agent-email-inbox', sharedInboundAddress: 'atlas@agentinbox.md' } }],
+        looksCanBePicked: true,
+      });
+
+      const result = await callSetup({ shape: 'drop', color: 'coral' });
+
+      expect(result.isError).toBeFalsy();
+      expect(setupCall(calls)).toBeUndefined();
+      expect(result.content[0].text).toContain('An agent keeps the look it was made with');
+      expect(result.content[0].text).not.toContain('The name and handle you passed were ignored');
+    });
+
+    it('still needs a name and a handle to create, whatever look was passed', async () => {
+      stubBackends({ ...noAgent, looksCanBePicked: true });
+
+      const result = await callSetup({ shape: 'drop' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('needs both agent_name and handle');
+    });
+
+    it('refuses a shape or a color there is none of', async () => {
+      const result = await callSetup({ agent_name: 'Atlas', handle: 'atlas', shape: 'cube' });
+
+      expect(result.isError).toBe(true);
+    });
+  });
+
   it('refuses a taken handle without creating anything', async () => {
     const calls = stubBackends({
       agent: null,

@@ -181,6 +181,22 @@ export function typedAnswer(
   return `${before}${caret ? inverted(atCaret) : atCaret}${after.join('')}${muted(suffix)}`;
 }
 
+/**
+ * A few to pick from, side by side, with the one the person is on lit as the caret is. Each takes the same
+ * room lit or not, so nothing moves as the pick does, and none is parted from its own padding where a line breaks.
+ */
+export function pickedAmong(labels: readonly string[], index: number, look: Look): string {
+  return labels
+    .map((label, place) => {
+      const padded = `${EMPTY_CELL}${label}${EMPTY_CELL}`;
+
+      return place === index
+        ? paint(`${INVERSE}${padded}${NOT_INVERSE}`, 'accent', look)
+        : paint(padded, 'secondary', look);
+    })
+    .join(' ');
+}
+
 /** The characters of what was typed, with a tab or anything else that would move the cursor as a space. */
 function printable(text: string): string[] {
   return [...text.replace(/\p{Cc}/gu, ' ')];
