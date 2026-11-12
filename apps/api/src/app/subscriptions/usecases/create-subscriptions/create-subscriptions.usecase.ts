@@ -40,6 +40,13 @@ import {
 import { CreateSubscriptionPreferencesUsecase } from '../create-subscription-preferences/create-subscription-preferences.usecase';
 import { CreateSubscriptionsCommand } from './create-subscriptions.command';
 
+/** A found subscriber paired with the identifier and name it asked for (or the default identifier). */
+interface RequestedSubscription {
+  subscriber: SubscriberEntity;
+  identifier: string;
+  name?: string;
+}
+
 @Injectable()
 export class CreateSubscriptionsUsecase {
   constructor(
@@ -123,14 +130,28 @@ export class CreateSubscriptionsUsecase {
       };
     }
 
+    const requestedSubscriptions = this.resolveRequestedSubscriptions(
+      command.topicKey,
+      foundSubscribers,
+      validSubscriptions,
+      contextKeys
+    );
     const existingSubscriptions = await this.findExistingSubscriptions({
       command,
       topic,
-      foundSubscribers,
-      validSubscriptions,
+      requestedSubscriptions,
       contextKeys,
       useContextFiltering,
     });
+
+    const subscribersById = new Map(foundSubscribers.map((subscriber) => [subscriber._id.toString(), subscriber]));
+    const toResponse = (subscription: TopicSubscribersEntity, preferences?: SubscriptionPreferenceDto[]) =>
+      this.toSubscriptionResponse(
+        subscription,
+        subscribersById.get(subscription._subscriberId.toString()),
+        topic,
+        preferences
+      );
 
     const existingSubscriberIds = existingSubscriptions.map((sub) => sub._subscriberId.toString());
     let subscribersToCreate = foundSubscribers.filter((sub) => !existingSubscriberIds.includes(sub._id.toString()));
@@ -152,14 +173,14 @@ export class CreateSubscriptionsUsecase {
         useContextFiltering
       );
 
-      subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
+      subscriptionData.push(toResponse(subscription, preferences));
     }
 
     if (subscribersToCreate.length > 0) {
+      const subscriberIdsToCreate = new Set(subscribersToCreate.map((subscriber) => subscriber._id.toString()));
       const subscriptionsToCreate = this.buildSubscriptionEntity(
         topic,
-        subscribersToCreate,
-        validSubscriptions,
+        requestedSubscriptions.filter((requested) => subscriberIdsToCreate.has(requested.subscriber._id.toString())),
         contextKeys
       );
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
@@ -193,7 +214,7 @@ export class CreateSubscriptionsUsecase {
         const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription.identifier);
         const preferences = preferencesEntry?.preferences;
 
-        subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
+        subscriptionData.push(toResponse(subscription, preferences));
       }
 
       for (const subscription of newSubscriptions.updated) {
@@ -204,7 +225,7 @@ export class CreateSubscriptionsUsecase {
           useContextFiltering
         );
 
-        subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
+        subscriptionData.push(toResponse(subscription, preferences));
       }
     }
 
@@ -219,32 +240,45 @@ export class CreateSubscriptionsUsecase {
     };
   }
 
+  /** The single place that decides which identifier each subscriber is creating or looking up. */
+  private resolveRequestedSubscriptions(
+    topicKey: string,
+    foundSubscribers: SubscriberEntity[],
+    subscriptions: CreateSubscriptionsCommand['subscriptions'],
+    contextKeys?: string[]
+  ): RequestedSubscription[] {
+    return foundSubscribers.map((subscriber) => {
+      const subscription = subscriptions.find((requested) => requested.subscriberId === subscriber.subscriberId);
+
+      return {
+        subscriber,
+        identifier:
+          subscription?.identifier ||
+          buildDefaultSubscriptionIdentifier(topicKey, subscriber.subscriberId, contextKeys),
+        name: subscription?.name,
+      };
+    });
+  }
+
   /**
-   * Identifiers can come from a subscriber session, so a subscription only counts as existing when it belongs to
-   * the subscriber that requested that identifier. Matching on the identifier alone would hand one subscriber
-   * another subscriber's subscription and preferences.
+   * A subscription counts as existing only when it belongs to the subscriber that requested its identifier.
+   * Identifiers can come from a subscriber session, so matching on the identifier alone is not enough.
    */
   private async findExistingSubscriptions({
     command,
     topic,
-    foundSubscribers,
-    validSubscriptions,
+    requestedSubscriptions,
     contextKeys,
     useContextFiltering,
   }: {
     command: CreateSubscriptionsCommand;
     topic: TopicEntity;
-    foundSubscribers: SubscriberEntity[];
-    validSubscriptions: Array<{ identifier?: string; subscriberId: string }>;
+    requestedSubscriptions: RequestedSubscription[];
     contextKeys: string[] | undefined;
     useContextFiltering: boolean;
   }): Promise<TopicSubscribersEntity[]> {
     const requestedIdentifierBySubscriberId = new Map(
-      foundSubscribers.map((sub) => [
-        sub._id.toString(),
-        validSubscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
-          buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId, contextKeys),
-      ])
+      requestedSubscriptions.map(({ subscriber, identifier }) => [subscriber._id.toString(), identifier])
     );
 
     const candidates = await this.topicSubscribersRepository.find({
@@ -258,18 +292,17 @@ export class CreateSubscriptionsUsecase {
 
     // The two $in filters also match a subscriber with an identifier another subscriber requested in the same batch.
     return candidates.filter(
-      (sub) => requestedIdentifierBySubscriberId.get(sub._subscriberId.toString()) === sub.identifier
+      (subscription) =>
+        requestedIdentifierBySubscriberId.get(subscription._subscriberId.toString()) === subscription.identifier
     );
   }
 
   private toSubscriptionResponse(
     subscription: TopicSubscribersEntity,
+    subscriber: SubscriberEntity | undefined,
     topic: TopicEntity,
-    foundSubscribers: SubscriberEntity[],
     preferences: SubscriptionPreferenceDto[] | undefined
   ): SubscriptionResponseDto {
-    const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-
     return {
       _id: subscription._id.toString(),
       identifier: subscription.identifier,
@@ -446,26 +479,20 @@ export class CreateSubscriptionsUsecase {
 
   private buildSubscriptionEntity(
     topic: TopicEntity,
-    subscribers: SubscriberEntity[],
-    subscriptions: Array<{ identifier?: string; subscriberId: string; name?: string }>,
+    requestedSubscriptions: RequestedSubscription[],
     contextKeys?: string[]
   ): CreateTopicSubscribersEntity[] {
-    return subscribers.map((subscriber) => {
-      const subscription = subscriptions.find((sub) => sub.subscriberId === subscriber.subscriberId);
-      return {
-        _environmentId: subscriber._environmentId,
-        _organizationId: subscriber._organizationId,
-        _subscriberId: subscriber._id,
-        _topicId: topic._id,
-        topicKey: topic.key,
-        externalSubscriberId: subscriber.subscriberId,
-        identifier:
-          subscription?.identifier ||
-          buildDefaultSubscriptionIdentifier(topic.key, subscriber.subscriberId, contextKeys),
-        name: subscription?.name,
-        contextKeys: contextKeys,
-      };
-    });
+    return requestedSubscriptions.map(({ subscriber, identifier, name }) => ({
+      _environmentId: subscriber._environmentId,
+      _organizationId: subscriber._organizationId,
+      _subscriberId: subscriber._id,
+      _topicId: topic._id,
+      topicKey: topic.key,
+      externalSubscriberId: subscriber.subscriberId,
+      identifier,
+      name,
+      contextKeys,
+    }));
   }
 
   private async fetchPreferencesForSubscription(
