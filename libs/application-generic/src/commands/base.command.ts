@@ -1,10 +1,97 @@
 import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Type } from 'class-transformer';
 import { ValidationError, validateSync } from 'class-validator';
+
+// Any class constructor, abstract or not — the key class-transformer stores metadata under.
+type ClassConstructor = abstract new (...args: never[]) => unknown;
+
+const TRANSFORMER_METADATA_MAPS = [
+  '_typeMetadatas',
+  '_transformMetadatas',
+  '_exposeMetadatas',
+  '_excludeMetadatas',
+] as const;
+
+/** The per-class maps of class-transformer's `MetadataStorage` that `skipDeepTransform` must respect. */
+type TransformerMetadataMaps = ReadonlyMap<ClassConstructor, unknown>[];
+
+/** Shape of `class-transformer/cjs/storage`, as far as this file reads it. */
+type ClassTransformerStorageModule = {
+  defaultMetadataStorage?: Partial<Record<(typeof TRANSFORMER_METADATA_MAPS)[number], unknown>>;
+};
+
+/** A command class; `skipDeepTransform` is the protected static opt-in on {@link BaseCommand}. */
+type CommandClass = ClassConstructor & { readonly skipDeepTransform?: boolean };
+
+/**
+ * class-transformer's internal storage (`@nestjs/mapped-types` reads the same one); it ships without
+ * typings. Returns null when it is missing or its shape changed, which keeps every command deep.
+ */
+function loadTransformerMetadataMaps(): TransformerMetadataMaps | null {
+  let storageModule: ClassTransformerStorageModule;
+  try {
+    // biome-ignore lint/style/noCommonJs: subpath has no typings or ESM entry; the probe below guards identity
+    storageModule = require('class-transformer/cjs/storage');
+  } catch {
+    return null;
+  }
+
+  const maps: TransformerMetadataMaps = [];
+  for (const key of TRANSFORMER_METADATA_MAPS) {
+    const map = storageModule.defaultMetadataStorage?.[key];
+    if (!(map instanceof Map)) {
+      return null;
+    }
+    maps.push(map);
+  }
+
+  return maps;
+}
+
+const transformerMetadataMaps = loadTransformerMetadataMaps();
+
+/** Whether `target` or an ancestor declares @Type / @Transform / @Expose / @Exclude. Unknown → true. */
+function hasTransformerMetadata(target: ClassConstructor): boolean {
+  if (!transformerMetadataMaps) {
+    return true;
+  }
+
+  for (let cls: ClassConstructor | null = target; cls && cls !== Function.prototype; cls = Object.getPrototypeOf(cls)) {
+    const current = cls;
+    if (transformerMetadataMaps.some((map) => map.has(current))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+class MetadataStorageProbe {
+  @Type(() => Object)
+  probe?: unknown;
+}
+
+/**
+ * The decorators must register in the storage we read (an ESM bundle can load a second copy of
+ * class-transformer), or skip-transform detection would be blind to @Type and friends.
+ */
+const IS_METADATA_STORAGE_READABLE = hasTransformerMetadata(MetadataStorageProbe);
+
+const shallowCreateByClass = new WeakMap<ClassConstructor, boolean>();
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Base class pattern for command validation
 export abstract class BaseCommand {
+  /**
+   * Opt-in for hot-path commands that carry large entities (job, workflow, step): `create()` assigns
+   * `data` onto the instance instead of deep-copying it through `plainToInstance`. Validation is
+   * unchanged. The command then shares nested objects with the caller, so only opt in when no
+   * consumer mutates a nested field in place — the deep copy is otherwise what keeps per-subscriber
+   * writes out of shared objects such as workflows from the in-memory LRU cache.
+   * Ignored (deep path) when the class uses class-transformer decorators.
+   */
+  protected static readonly skipDeepTransform: boolean = false;
+
   /**
    * @param data - Plain command fields validated via class-transformer / class-validator.
    * @param extras - Runtime objects that must not go through `plainToInstance`
@@ -13,9 +100,13 @@ export abstract class BaseCommand {
    */
   static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T, extras?: Partial<T>): T {
     // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
-    const convertedObject = plainToInstance<T, unknown>(this, {
-      ...data,
-    });
+    const convertedObject = isShallowCreate(this)
+      ? // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
+        Object.assign(new this(), data)
+      : // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
+        plainToInstance<T, unknown>(this, {
+          ...data,
+        });
 
     const errors = validateSync(convertedObject, { forbidUnknownValues: false });
     const flattenedErrors = flattenErrors(errors);
@@ -30,6 +121,16 @@ export abstract class BaseCommand {
 
     return convertedObject;
   }
+}
+
+function isShallowCreate(target: CommandClass): boolean {
+  let shallow = shallowCreateByClass.get(target);
+  if (shallow === undefined) {
+    shallow = target.skipDeepTransform === true && IS_METADATA_STORAGE_READABLE && !hasTransformerMetadata(target);
+    shallowCreateByClass.set(target, shallow);
+  }
+
+  return shallow;
 }
 
 export class ConstraintValidation {
