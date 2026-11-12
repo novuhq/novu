@@ -44,6 +44,9 @@ const humanContactRepository = new HumanContactRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
 const subscriberRepository = new SubscriberRepository();
 
+/** The look of an agent nobody picked one for, which the listen status answers for the listener's mascot. */
+const ORIGINAL_LOOK = { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } };
+
 const OPERATOR_CHAT_ID = '777501';
 const BOB_CHAT_ID = '777502';
 const CAROL_CHAT_ID = '777503';
@@ -315,11 +318,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       const status = await asHost('get', '/v1/human/listen/lease');
       expect(status.status).to.equal(200, JSON.stringify(status.body));
       // The agent's look goes along for the mascot on the listener's screen: the original one here.
-      expect(status.body.data).to.deep.equal({
-        listening,
-        paused: false,
-        look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
-      });
+      expect(status.body.data).to.deep.equal({ listening, paused: false, look: ORIGINAL_LOOK });
       expect((await hostStatus()).listening).to.deep.equal(listening);
 
       // Renewing keeps when it was taken; what it starts may change.
@@ -375,6 +374,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
       expect((await hostStatus()).listening).to.equal(null);
       const wait = await waitFor({});
@@ -413,6 +413,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
 
       const again = await asHost('post', '/v1/human/listen/lease/release').send({
@@ -441,6 +442,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
     });
 
@@ -461,6 +463,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
     });
 
@@ -477,6 +480,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease', 'claude-code', other)).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
       expect((await holdLease(MACBOOK, other)).computerId).to.equal(MACBOOK.computerId);
       expect((await hostStatus()).listening.computerId).to.equal(MACBOOK.computerId);
@@ -509,7 +513,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       // `listen status` and `listen stop` still work: where it is listening, that it is paused, and letting go.
       const status = await asHost('get', '/v1/human/listen/lease');
       expect(status.status).to.equal(200, JSON.stringify(status.body));
-      expect(status.body.data).to.deep.equal({ listening: macbook, paused: true });
+      expect(status.body.data).to.deep.equal({ listening: macbook, paused: true, look: ORIGINAL_LOOK });
       const release = await asHost('post', '/v1/human/listen/lease/release').send({
         computerId: MACBOOK.computerId,
         host: MACBOOK.host,
@@ -519,6 +523,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: true,
+        look: ORIGINAL_LOOK,
       });
 
       const resume = await asDashboard('patch', '/v1/human/agent').send({ paused: false });
@@ -526,6 +531,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asHost('get', '/v1/human/listen/lease')).body.data).to.deep.equal({
         listening: null,
         paused: false,
+        look: ORIGINAL_LOOK,
       });
       expect((await takeLease(MACBOOK)).status).to.equal(200);
     });

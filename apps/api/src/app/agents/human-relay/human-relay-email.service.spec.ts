@@ -9,7 +9,7 @@ const scope = {
   recipientAddress: 'maya@acme.co',
 };
 
-function setUp(
+function build(
   options: {
     agent?: unknown;
     operatorId?: string | null;
@@ -46,7 +46,11 @@ function setUp(
     features as never
   );
 
-  return Object.assign(service, { features });
+  return { service, features };
+}
+
+function setUp(options: Parameters<typeof build>[0] = {}) {
+  return build(options).service;
 }
 
 describe('HumanRelayEmailService', () => {
@@ -86,16 +90,16 @@ describe('HumanRelayEmailService', () => {
   });
 
   it('shows the mascot in the agent’s look once its mascots show it', async () => {
-    const service = setUp({ look: { shape: 'drop', color: 'coral' } });
+    const { service, features } = build({ look: { shape: 'drop', color: 'coral' } });
 
     const { sender } = await service.findParties(scope);
 
     expect(sender.pictureUrl).to.equal('https://agentinbox.md/brand/mascot/drop-coral.png');
-    expect(service.features.mascotLookOf.firstCall.args[0]).to.include({ _id: 'agent-1' });
+    expect(features.mascotLookOf.firstCall.args[0]).to.include({ _id: 'agent-1' });
   });
 
   it('never asks for the look of an agent that has a picture', async () => {
-    const service = setUp({
+    const { service, features } = build({
       agent: { _id: 'agent-1', _environmentId: 'env-1', name: 'Atlas', picture: { storageKey: 'k', version: 'v1' } },
       look: { shape: 'drop', color: 'coral' },
     });
@@ -103,7 +107,7 @@ describe('HumanRelayEmailService', () => {
     const { sender } = await service.findParties(scope);
 
     expect(sender.pictureUrl).to.equal('https://agentinbox.md/api/v1/agent-pictures/env-1/agent-1/v1');
-    expect(service.features.mascotLookOf.called).to.equal(false);
+    expect(features.mascotLookOf.called).to.equal(false);
   });
 
   it('leaves out the placeholder name', async () => {

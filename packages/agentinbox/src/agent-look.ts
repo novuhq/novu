@@ -28,12 +28,18 @@ function actsAsSameAgent(saved: CliConfig, other: Connection): boolean {
 
 /**
  * The look of the agent saved on this computer, for a command's screen to open in. None while the command is
- * headed for another API or another account than the saved one (`--api-url`, INBOX_API_URL, a key of its own):
- * the agent there isn't known until the API answers.
+ * headed for another API, another account or another agent than the saved one (`--api-url`, INBOX_API_URL, a key
+ * of its own, `--agent-identifier`): the agent there isn't known until the API answers.
  */
-export function savedLook(target: { apiUrl?: string; secretKey?: string } = {}): MascotLook | undefined {
+export function savedLook(
+  target: { apiUrl?: string; secretKey?: string; agentIdentifier?: string } = {}
+): MascotLook | undefined {
   const saved = loadConfig();
   if (!saved || resolveTargetApiUrl(target.apiUrl, saved) !== saved.apiUrl.replace(/\/$/, '')) {
+    return undefined;
+  }
+
+  if (target.agentIdentifier && target.agentIdentifier !== saved.relayAgentIdentifier) {
     return undefined;
   }
 
@@ -56,13 +62,20 @@ export function lookToKeep(next: Connection, existing: CliConfig | null, answere
  * Keeps the look an API answer carries, for the next command's screen to open in, and gives it back. It is saved
  * only for the agent the saved config acts as: an answer got with a key from the shell is another agent's. An
  * answer without a look, as an older API's is, changes nothing.
+ *
+ * Keeping it only helps the next screen, so a config that can't be written, such as a read-only one, never fails
+ * the command that got the answer: `card` and `listen status` still print what they asked for.
  */
 export function rememberLook(config: CliConfig, answered: unknown): MascotLook | undefined {
   const look = lookOf(answered);
   const saved = look ? loadConfig() : null;
 
   if (look && saved && actsAsSameAgent(saved, config) && !sameLook(lookOf(saved.look), look)) {
-    saveConfig({ ...saved, look });
+    try {
+      saveConfig({ ...saved, look });
+    } catch {
+      // The next screen opens as the orb and bends into the look again.
+    }
   }
 
   return look;

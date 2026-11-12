@@ -1,9 +1,9 @@
-import { mkdtempSync } from 'node:fs';
+import { chmodSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { lookToKeep, rememberLook, savedLook } from './agent-look';
-import { type CliConfig, DEFAULT_API_URL, loadConfig, saveConfig } from './config';
+import { type CliConfig, configPath, DEFAULT_API_URL, loadConfig, saveConfig } from './config';
 
 const account: CliConfig = {
   apiUrl: DEFAULT_API_URL,
@@ -49,6 +49,13 @@ describe('savedLook', () => {
 
     process.env.INBOX_API_URL = 'http://localhost:4300/api';
     expect(savedLook()).toBeUndefined();
+  });
+
+  it('is none for a command about another agent than the saved one, whose look isn’t known yet', () => {
+    saveConfig({ ...account, look: DROP });
+
+    expect(savedLook({ agentIdentifier: 'second-agent' })).toBeUndefined();
+    expect(savedLook({ agentIdentifier: account.relayAgentIdentifier })).toEqual(DROP);
   });
 
   it('is none for a look kept by a newer CLI that this one can’t draw', () => {
@@ -129,5 +136,17 @@ describe('rememberLook', () => {
     expect(rememberLook(account, DROP)).toEqual(DROP);
 
     expect(loadConfig()).toBeNull();
+  });
+
+  it('still gives the look back when the config can’t be written, so the command that asked goes on', () => {
+    saveConfig({ ...account, look: BEAN });
+    chmodSync(configPath(), 0o444);
+
+    try {
+      expect(rememberLook(account, DROP)).toEqual(DROP);
+      expect(loadConfig()?.look).toEqual(BEAN);
+    } finally {
+      chmodSync(configPath(), 0o600);
+    }
   });
 });

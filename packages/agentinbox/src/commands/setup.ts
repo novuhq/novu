@@ -37,7 +37,11 @@ export async function setupCommand(
 ): Promise<never> {
   const screen = await openScreen({
     command,
-    look: savedLook({ apiUrl: options.apiUrl, secretKey: options.secretKey }),
+    look: savedLook({
+      apiUrl: options.apiUrl,
+      secretKey: options.secretKey,
+      agentIdentifier: options.agentIdentifier,
+    }),
   });
 
   try {
