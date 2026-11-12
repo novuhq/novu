@@ -78,7 +78,8 @@ Exercise the change the way a user reaches it (the dashboard, the public API), n
   them.
 - **Inbox, preferences, subscriptions (what a customer embeds):** open the playground's pages at `<box>-app`, as the
   seed user's subscriber, or another with `?subscriberId=<id>`; trigger from the dashboard signed in as the seed user.
-  A page that's missing there belongs in its own playground PR, not in the PR it would prove.
+  A page that's missing there belongs in its own playground PR, not in the PR it would prove. That PR also adds its
+  path to `docker/box/image/config/Caddyfile`, which boxes serve only after `box deploy` and a rebake of `base`.
 - **Broad changes** (shared libraries, auth, queues): also drive the main flows the change could break (sign-in,
   trigger a workflow and check the message, an agent reply).
 

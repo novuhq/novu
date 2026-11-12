@@ -4,6 +4,7 @@ export const DOMAIN = 'box.novu-staging.co';
 export const SLACK_HOST = `slack.${DOMAIN}`;
 const API = '-api';
 const APP = '-app';
+const SUFFIXES = [API, APP];
 
 export function boxOrigin(box: string): string {
   return `https://${box}.${DOMAIN}`;
@@ -20,7 +21,9 @@ export function appOrigin(box: string): string {
 // A box name can't be `slack` or end in -api or -app, so every host under DOMAIN is the hub, Slack, or one box.
 export function isBoxName(box: string): boolean {
   return (
-    /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(box) && box !== 'slack' && !box.endsWith(API) && !box.endsWith(APP)
+    /^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$/.test(box) &&
+    box !== 'slack' &&
+    !SUFFIXES.some((suffix) => box.endsWith(suffix))
   );
 }
 
@@ -37,7 +40,7 @@ export function prOfBox(box: string): number | null {
 export function boxOfHost(hostname: string): string | null {
   if (!hostname.endsWith(`.${DOMAIN}`)) return null;
   const label = hostname.slice(0, -DOMAIN.length - 1);
-  const suffix = [API, APP].find((end) => label.endsWith(end));
+  const suffix = SUFFIXES.find((end) => label.endsWith(end));
   const box = suffix ? label.slice(0, -suffix.length) : label;
 
   return isBoxName(box) ? box : null;

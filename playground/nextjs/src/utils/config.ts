@@ -7,7 +7,7 @@ export type NovuConfig = {
   socketOptions?: { socketType: 'cloud' | 'self-hosted' };
 };
 
-// The build's values; `_app` replaces them with `/api/novu-config`'s, read when the page loads, before any page renders.
+// The build's values; `_app` replaces them with `/api/novu-config`'s, read when the page loads, before any `pages/` page renders.
 export const novuConfig: NovuConfig = {
   applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '',
   subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '',
