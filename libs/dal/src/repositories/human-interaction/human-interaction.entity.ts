@@ -55,6 +55,12 @@ export class HumanInteractionEntity {
    */
   deliveries?: HumanInteractionDelivery[];
 
+  /**
+   * People this hasn't reached yet: their WhatsApp window was closed, so they got the account's approved first-message
+   * template instead. It goes out, and moves to `deliveries`, when they next write to the agent there.
+   */
+  held?: HumanInteractionHold[];
+
   /** Conversation the delivery/reply is threaded on, once one exists. */
   _conversationId?: string;
 
@@ -83,6 +89,17 @@ export interface HumanInteractionDelivery {
   platform: string;
   platformMessageId: string;
   platformThreadId: string;
+}
+
+export interface HumanInteractionHold {
+  subscriberId: string;
+  integrationIdentifier: string;
+  platformThreadId: string;
+  /** Meta's id for the template message that went out instead. */
+  templateMessageId?: string;
+  heldAt: string;
+  /** Set while a release is sending it, so a second reply doesn't send it too. */
+  claimedAt?: string;
 }
 
 export function primaryHumanInteractionDelivery(

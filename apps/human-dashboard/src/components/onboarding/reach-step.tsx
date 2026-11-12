@@ -190,7 +190,12 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, ch
             {...drawerProps('slack')}
           />
           {setupAtOpen.whatsapp.step !== 'hidden' && (
-            <WhatsAppSetup setup={setupAtOpen.whatsapp} handle={handle} {...drawerProps('whatsapp')} />
+            <WhatsAppSetup
+              setup={setupAtOpen.whatsapp}
+              handle={handle}
+              agentName={setupAtOpen.slackAppName}
+              {...drawerProps('whatsapp')}
+            />
           )}
         </TooltipProvider>
       )}

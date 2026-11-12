@@ -46,9 +46,29 @@ That prints a wa.me link with a code in it. When Bob sends that message, their n
 
 WhatsApp lets the agent write to someone only within 24 hours of their last message. After that, a send that would go to them on WhatsApp goes out on another channel they are on instead.
 
-The send is refused when you asked for WhatsApp with `--via whatsapp`, or when WhatsApp is the only channel they have. Then nothing goes out, to them or to anyone else in the same send. The error says when their window closed and names another channel they are on, to send with `--via`. When they have none, it says to `contact invite` them.
+When you asked for WhatsApp with `--via whatsapp`, or WhatsApp is the only channel they have, the agent sends your first message instead, if Meta approved one. The send waits, and goes out as soon as they reply or tap **View message**. The CLI and MCP say so: an `ask` keeps waiting for the answer, and a plain message reads as not delivered yet.
 
-The window opens again as soon as they write to the agent. Writing first outside the window is not available yet.
+Without an approved first message, the send is refused, and nothing goes out, to them or to anyone else in the same send. The error says when their window closed and names another channel they are on, to send with `--via`. When they have none, it says to `contact invite` them.
+
+The window opens again as soon as they write to the agent.
+
+A reply into an existing WhatsApp conversation with a closed window is still refused. Start a new one with `send` instead.
+
+## Your first message
+
+Set it as the last step of the WhatsApp setup on agentinbox.md. It starts as this, and you can change the words:
+
+```text
+You have a message from {{agent_name}}. Reply here to view it.
+```
+
+`{{agent_name}}` becomes your agent's name when it is sent. The message always ends with a **View message** button.
+
+Meta reviews it, usually within minutes, sometimes up to 24 hours. The setup and Configure show where the review stands, and why Meta rejected it if it did. Keep it a plain notice: offers or promotions get rejected, or charged as marketing.
+
+Meta charges these messages to your WhatsApp Business account, so it needs a payment method in Meta's Business settings. Without one, the send is refused with that reason.
+
+An edit goes to Meta again. The approved version keeps working until the new one is approved.
 
 ## Buttons
 

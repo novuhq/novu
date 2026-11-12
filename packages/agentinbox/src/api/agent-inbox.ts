@@ -62,6 +62,11 @@ export interface Interaction {
   };
   failedTo?: string[];
   /**
+   * Who it hasn't reached yet: their WhatsApp window was closed, so they got the account's first message instead.
+   * It goes out when they reply.
+   */
+  heldFor?: string[];
+  /**
    * On create: the conversation each message landed in, and how many messages in it were unread.
    * The API calls them threads; the CLI prints them as `conversations`.
    */

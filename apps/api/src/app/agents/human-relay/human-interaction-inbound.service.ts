@@ -83,6 +83,11 @@ export class HumanInteractionInboundService {
     mode: HumanInboundMode,
     parsed: HumanActionParsed
   ): Promise<HumanInboundResult> {
+    // The tap already released the held message on its way in; there is nothing to settle.
+    if (parsed.type === 'open') {
+      return { outcome: 'consumed' };
+    }
+
     const environmentId = turn.config.environmentId;
     const interaction =
       (await this.humanInteractionRepository.findByIdentifier(environmentId, parsed.identifier)) ??

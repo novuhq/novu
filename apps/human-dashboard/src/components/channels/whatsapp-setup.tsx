@@ -20,6 +20,7 @@ import {
   SetupCheck,
   useConnectionPoll,
 } from '@/components/channels/setup-parts';
+import { WhatsAppFirstMessageStep } from '@/components/channels/whatsapp-first-message-step';
 import { WhatsAppSignupButton } from '@/components/channels/whatsapp-signup-button';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
@@ -27,6 +28,7 @@ import { Step, Stepper } from '@/components/ui/stepper';
 import { toast } from '@/components/ui/toast';
 import type { WhatsAppLink } from '@/lib/human-channels-api';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
+import type { FirstMessage } from '@/lib/whatsapp-first-message';
 
 /** `checking` and `unreadable` only happen when the page couldn't read the setup and the drawer has to. */
 type DrawerState =
@@ -34,8 +36,14 @@ type DrawerState =
   | { step: 'unreadable' }
   | { step: 'not-offered' }
   | { step: 'connect'; appId: string; configId: string }
-  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds }
-  | { step: 'connected'; displayPhoneNumber?: string; operatorPhoneNumber?: string; reconnect?: MetaIds };
+  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds; firstMessage?: FirstMessage }
+  | {
+      step: 'connected';
+      displayPhoneNumber?: string;
+      operatorPhoneNumber?: string;
+      reconnect?: MetaIds;
+      firstMessage?: FirstMessage;
+    };
 
 type MetaIds = { appId: string; configId: string };
 
@@ -44,6 +52,8 @@ type WhatsAppSetupProps = {
   setup: WhatsAppSetupState;
   /** How the agent is called in a sentence: its address without the domain. */
   handle: string;
+  /** The agent's name, for the preview of its first message. Falls back to `handle`. */
+  agentName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -53,7 +63,7 @@ type WhatsAppSetupProps = {
  * Facebook button, then proves their own number by sending a code to it from a wa.me link. The Configure
  * page's channels open it, and so does the last step of the onboarding.
  */
-export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSetupProps) {
+export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenChange }: WhatsAppSetupProps) {
   const router = useRouter();
   const [state, setState] = useState<DrawerState>(drawerStateOf(setup));
   const [error, setError] = useState<string>();
@@ -215,6 +225,14 @@ export function WhatsAppSetup({ setup, handle, open, onOpenChange }: WhatsAppSet
               }
               reconnectButton={linked && state.reconnect ? signupButton(state.reconnect, 'again') : null}
               error={error}
+              firstMessageStep={
+                <WhatsAppFirstMessageStep
+                  index={3}
+                  ready={state.step === 'connected'}
+                  agentName={agentName}
+                  firstMessage={firstMessageOf(state)}
+                />
+              }
             />
           </Stepper>
         )}
@@ -236,12 +254,15 @@ function OwnNumberSteps({
   sendCode,
   reconnectButton,
   error,
+  firstMessageStep,
 }: {
   state: SetupStepState;
   handle: string;
   sendCode: ReactNode;
   reconnectButton: ReactNode;
   error?: string;
+  /** Step 3, the optional first message for outside WhatsApp's 24-hour window. */
+  firstMessageStep: ReactNode;
 }) {
   const ownNumber = state.step === 'connected' ? state.operatorPhoneNumber : undefined;
 
@@ -256,6 +277,8 @@ function OwnNumberSteps({
       >
         {state.step === 'verify' && sendCode}
       </Step>
+
+      {firstMessageStep}
 
       {state.step === 'connected' && (
         <ConnectedCard via="whatsapp" title="WhatsApp connected">
@@ -402,4 +425,9 @@ function drawerStateOf(setup: WhatsAppSetupState): DrawerState {
       return exhaustive;
     }
   }
+}
+
+/** Where the first message stands, once a business number is linked. */
+function firstMessageOf(state: DrawerState): FirstMessage | undefined {
+  return state.step === 'verify' || state.step === 'connected' ? state.firstMessage : undefined;
 }

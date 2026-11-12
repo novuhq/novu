@@ -317,7 +317,8 @@ describe('AgentInboundHandler', () => {
       agentConfigResolver as any,
       keylessEmailGate as any,
       contactHandles as any,
-      whatsAppBindInbound as any
+      whatsAppBindInbound as any,
+      { release: sinon.stub().resolves() } as any
     );
 
     return {

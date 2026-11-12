@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   ensureWhatsAppChannel: vi.fn(),
   connectWhatsApp: vi.fn(),
   issueWhatsAppLink: vi.fn(),
+  submitWhatsAppFirstMessage: vi.fn(),
   readWhatsAppSetup: vi.fn(),
   findOperatorContactId: vi.fn(),
   ensureRelay: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('@/lib/human-channels-api', () => ({
   ensureWhatsAppChannel: mocks.ensureWhatsAppChannel,
   connectWhatsApp: mocks.connectWhatsApp,
   issueWhatsAppLink: mocks.issueWhatsAppLink,
+  submitWhatsAppFirstMessage: mocks.submitWhatsAppFirstMessage,
 }));
 vi.mock('@/lib/human-operator', () => ({
   ensureOperatorContact: vi.fn(),
@@ -34,7 +36,12 @@ vi.mock('@/lib/human-telegram-setup', () => ({ readTelegramSetup: vi.fn() }));
 vi.mock('@/lib/human-whatsapp-setup', () => ({ readWhatsAppSetup: mocks.readWhatsAppSetup }));
 
 const { HumanApiError } = await import('@/lib/human-api-error');
-const { checkWhatsAppConnectedAction, connectWhatsAppAction, issueWhatsAppLinkAction } = await import('./actions');
+const {
+  checkWhatsAppConnectedAction,
+  connectWhatsAppAction,
+  issueWhatsAppLinkAction,
+  submitWhatsAppFirstMessageAction,
+} = await import('./actions');
 
 const SIGNUP = { code: ' meta-code ', wabaId: 'waba-1', phoneNumberId: 'phone-1' };
 
@@ -167,5 +174,40 @@ describe('checkWhatsAppConnectedAction', () => {
 
     expect(await checkWhatsAppConnectedAction()).toEqual(connected);
     expect(mocks.revalidatePath).toHaveBeenCalled();
+  });
+});
+
+describe('submitWhatsAppFirstMessageAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sends the trimmed message to Meta and hands back where the review stands', async () => {
+    const firstMessage = { status: 'PENDING', body: 'Hi from {{agent_name}}, reply here.', approved: false };
+    mocks.submitWhatsAppFirstMessage.mockResolvedValue(firstMessage);
+
+    expect(await submitWhatsAppFirstMessageAction('  Hi from {{agent_name}}, reply here.  ')).toEqual({
+      ok: true,
+      firstMessage,
+    });
+    expect(mocks.submitWhatsAppFirstMessage).toHaveBeenCalledWith(expect.anything(), firstMessage.body);
+  });
+
+  it('says what is wrong before asking Meta', async () => {
+    const result = await submitWhatsAppFirstMessageAction('{{agent_name}} wrote to you.');
+
+    expect(result.ok).toBe(false);
+    expect(mocks.submitWhatsAppFirstMessage).not.toHaveBeenCalled();
+  });
+
+  it('passes on why the API or Meta refused it', async () => {
+    mocks.submitWhatsAppFirstMessage.mockRejectedValue(
+      new HumanApiError(400, 'first_message_refused', 'Meta didn’t take the message: Invalid parameter')
+    );
+
+    expect(await submitWhatsAppFirstMessageAction('Hi from {{agent_name}}, reply here.')).toEqual({
+      ok: false,
+      error: 'Meta didn’t take the message: Invalid parameter',
+    });
   });
 });

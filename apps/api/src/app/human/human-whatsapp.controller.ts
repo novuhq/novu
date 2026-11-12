@@ -21,8 +21,10 @@ import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
   ConnectHumanWhatsAppRequestDto,
   type ConnectHumanWhatsAppResponseDto,
+  type HumanWhatsAppFirstMessageDto,
   type HumanWhatsAppLinkResponseDto,
   type HumanWhatsAppSetupResponseDto,
+  SubmitHumanWhatsAppFirstMessageRequestDto,
 } from './dtos/human-whatsapp.dto';
 import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
 import { HumanOperatorService } from './services/human-operator.service';
@@ -31,6 +33,7 @@ import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-wh
 import { GetHumanWhatsAppSetupCommand } from './usecases/human-whatsapp/get-human-whatsapp-setup.command';
 import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
 import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
+import { SubmitHumanWhatsAppFirstMessage } from './usecases/human-whatsapp/submit-human-whatsapp-first-message.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from './usecases/setup-human-relay/setup-human-relay.usecase';
 
 /**
@@ -48,7 +51,8 @@ export class HumanWhatsAppController {
     private readonly getHumanWhatsAppSetupUsecase: GetHumanWhatsAppSetup,
     private readonly connectHumanWhatsAppUsecase: ConnectHumanWhatsApp,
     private readonly issueHumanWhatsAppLinkUsecase: IssueHumanWhatsAppLink,
-    private readonly humanOperator: HumanOperatorService
+    private readonly humanOperator: HumanOperatorService,
+    private readonly submitFirstMessageUsecase: SubmitHumanWhatsAppFirstMessage
   ) {}
 
   /**
@@ -121,5 +125,28 @@ export class HumanWhatsAppController {
     const { subscriberId } = await this.humanOperator.require(scope);
 
     return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId });
+  }
+
+  /**
+   * Sends the first message for outside the 24-hour window to Meta for review, as a template on the operator's own
+   * WhatsApp Business account. Only from the operator's dashboard.
+   */
+  @Post('/first-message')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  submitFirstMessage(
+    @UserSession() user: UserSessionData,
+    @Body() body: SubmitHumanWhatsAppFirstMessageRequestDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<HumanWhatsAppFirstMessageDto> {
+    assertFromHumanDashboard(headers, 'The first WhatsApp message is set on agentinbox.md.');
+
+    return this.submitFirstMessageUsecase.execute({
+      environmentId: user.environmentId,
+      organizationId: user.organizationId,
+      agentIdentifier: body.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER,
+      body: body.body,
+    });
   }
 }

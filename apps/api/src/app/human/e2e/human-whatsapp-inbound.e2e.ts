@@ -16,6 +16,7 @@ import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
+import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
@@ -257,5 +258,48 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
       );
 
     expect(await statusOf(approve.identifier)).to.equal(HumanInteractionStatusEnum.APPROVED);
+  });
+
+  it('sends a question held for Ada once she writes, and does not take her words as its answer', async () => {
+    const held = await humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: 'Which region?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      held: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+          templateMessageId: 'wamid.first-message',
+          heldAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+    const gateway = testServer.getService(OutboundGateway);
+    const sendDirect = sinon
+      .stub(gateway, 'sendDirectMessage')
+      .resolves({ messageId: 'wamid.released', platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}` } as never);
+
+    try {
+      await sendWhatsApp('hi, what is it?', ADA_WA_ID);
+    } finally {
+      sendDirect.restore();
+    }
+
+    expect(sendDirect.calledOnce).to.equal(true);
+    expect(sendDirect.firstCall.args.slice(1, 3)).to.deep.equal([whatsAppIdentifier, ADA_WA_ID]);
+    const after = await humanInteractionRepository.findOne(
+      { _environmentId: session.environment._id, _id: held._id } as never,
+      '*'
+    );
+    expect(after?.status).to.equal(HumanInteractionStatusEnum.PENDING);
+    expect(after?.held ?? []).to.have.length(0);
+    expect(after?.deliveries?.[0]).to.include({ subscriberId: operatorId, platformMessageId: 'wamid.released' });
   });
 });

@@ -89,6 +89,7 @@ import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
 import { WhatsAppBindCodeService } from './human-relay/whatsapp-bind-code.service';
 import { WhatsAppBindInbound } from './human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppHeldRelease } from './human-relay/whatsapp-held-release.service';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
@@ -198,6 +199,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WhatsAppBindCodeService,
     BindWhatsAppNumber,
     WhatsAppBindInbound,
+    WhatsAppHeldRelease,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
     HumanInteractionSettlementService,

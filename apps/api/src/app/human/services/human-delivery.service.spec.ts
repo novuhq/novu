@@ -37,6 +37,19 @@ function whatsAppWindow(window: { open: boolean; closesAt?: string } = { open: t
   return { describe: sinon.stub().resolves(window) };
 }
 
+/** The account's first message: approved under `approvedName`, or none. */
+function firstMessageService(approvedName?: string) {
+  return {
+    read: sinon
+      .stub()
+      .resolves(
+        approvedName
+          ? { status: 'APPROVED', body: 'Hi from {{agent_name}}', approved: { name: approvedName, body: 'Hi' } }
+          : undefined
+      ),
+  };
+}
+
 /** The service lists a person's endpoints; these specs stub the one lookup, so the list is that one, or none. */
 function withFind<Repository extends { findOne: sinon.SinonStub }>(repository: Repository) {
   return Object.assign(repository, {
@@ -69,7 +82,9 @@ describe('HumanDeliveryService.resolveChannel', () => {
       outboundGateway as never,
       keylessEmailGate as never,
       channelGate() as never,
-      whatsAppWindow() as never
+      whatsAppWindow() as never,
+      firstMessageService() as never,
+      {} as never
     );
 
     return {
@@ -493,7 +508,9 @@ describe('HumanDeliveryService keyless email', () => {
       { sendDirectMessage: sinon.stub() } as never,
       keylessEmailGate as never,
       channelGate() as never,
-      whatsAppWindow() as never
+      whatsAppWindow() as never,
+      firstMessageService() as never,
+      {} as never
     );
 
     return { service, humanContactRepository, agentIntegrationRepository, integrationRepository, keylessEmailGate };
@@ -603,7 +620,9 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       {} as never,
       emailGate() as never,
       channelGate() as never,
-      whatsAppWindow() as never
+      whatsAppWindow() as never,
+      firstMessageService() as never,
+      {} as never
     );
 
     const channels = await service.listInviteChannels({ environmentId: 'env1', organizationId: 'org1', agentId: 'a1' });
@@ -643,7 +662,9 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       {} as never,
       emailGate() as never,
       channelGate() as never,
-      whatsAppWindow() as never
+      whatsAppWindow() as never,
+      firstMessageService() as never,
+      {} as never
     );
 
     const channels = await service.listWorkingChannels({
@@ -720,7 +741,8 @@ describe('HumanDeliveryService on WhatsApp', () => {
   function setup(
     whatsAppEnabled: boolean,
     integrations: unknown[] = [whatsApp, telegram],
-    window: { open: boolean; closesAt?: string } = { open: true }
+    window: { open: boolean; closesAt?: string } = { open: true },
+    approvedFirstMessage?: string
   ) {
     const getFlag = sinon.stub().resolves(whatsAppEnabled);
     const channelEndpointRepository = { findOne: sinon.stub().resolves(null) };
@@ -733,7 +755,9 @@ describe('HumanDeliveryService on WhatsApp', () => {
       {} as never,
       emailGate() as never,
       new HumanChannelGate({ getFlag } as never),
-      windows as never
+      windows as never,
+      firstMessageService(approvedFirstMessage) as never,
+      {} as never
     );
 
     return { service, channelEndpointRepository, getFlag, windows };
@@ -820,6 +844,67 @@ describe('HumanDeliveryService on WhatsApp', () => {
 
     expect(body).to.include({ code: 'whatsapp_window_closed' });
     expect(body.availableChannels).to.deep.equal([]);
+  });
+
+  it('sends the approved first message instead of refusing, when WhatsApp was asked for and the window is shut', async () => {
+    const { service, channelEndpointRepository } = setup(
+      true,
+      [whatsApp, telegram],
+      { open: false },
+      'agentinbox_first_message'
+    );
+    onBoth(channelEndpointRepository);
+
+    const target = await service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP });
+
+    expect(target).to.deep.include({
+      platform: 'whatsapp',
+      integrationIdentifier: 'whatsapp-main',
+      firstMessage: { templateName: 'agentinbox_first_message', body: 'Hi' },
+    });
+  });
+
+  it('sends the approved first message when WhatsApp is all they have and the window is shut', async () => {
+    const { service, channelEndpointRepository } = setup(
+      true,
+      [whatsApp, telegram],
+      { open: false },
+      'agentinbox_first_message_2'
+    );
+    onBoth(channelEndpointRepository, { telegramToo: false });
+
+    const target = await service.resolveChannel(params);
+
+    expect(target.firstMessage).to.deep.equal({ templateName: 'agentinbox_first_message_2', body: 'Hi' });
+  });
+
+  it('still prefers their next channel over the first message when no channel was asked for', async () => {
+    const { service, channelEndpointRepository } = setup(
+      true,
+      [whatsApp, telegram],
+      { open: false },
+      'agentinbox_first_message'
+    );
+    onBoth(channelEndpointRepository);
+
+    const target = await service.resolveChannel(params);
+
+    expect(target).to.include({ platform: HumanChannelViaEnum.TELEGRAM });
+    expect(target.firstMessage).to.equal(undefined);
+  });
+
+  it('still refuses too many buttons when a first message is approved', async () => {
+    const { service, channelEndpointRepository } = setup(
+      true,
+      [whatsApp, telegram],
+      { open: true },
+      'agentinbox_first_message'
+    );
+    onBoth(channelEndpointRepository);
+
+    const body = await refusal(service.resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP, buttons: 4 }));
+
+    expect(body).to.include({ code: 'whatsapp_too_many_buttons' });
   });
 
   it('refuses a card with more buttons than WhatsApp shows, instead of losing some', async () => {
