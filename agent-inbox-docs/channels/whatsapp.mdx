@@ -44,13 +44,15 @@ That prints a wa.me link with a code in it. When Bob sends that message, his num
 
 ## The 24-hour window
 
-WhatsApp lets the agent write to someone only within 24 hours of their last message. After that, a send to them is refused before anything goes out, to them or to anyone else in the same send. The error says when their window closed and names another channel they are on, to send with `--via`. When they have none, it says to `contact invite` them.
+WhatsApp lets the agent write to someone only within 24 hours of their last message. After that, a send that would go to them on WhatsApp goes out on another channel they are on instead.
+
+The send is refused when you asked for WhatsApp with `--via whatsapp`, or when WhatsApp is the only channel they have. Then nothing goes out, to them or to anyone else in the same send. The error says when their window closed and names another channel they are on, to send with `--via`. When they have none, it says to `contact invite` them.
 
 The window opens again as soon as they write to the agent. Writing first outside the window is not available yet.
 
 ## Buttons
 
-WhatsApp shows at most 3 buttons. An `approve` with extra actions, or a `choose` with more than 3 options, is refused the same way, with another channel to send it on. See [Ask, approve, and choose](/questions).
+WhatsApp shows at most 3 buttons. An `approve` can have one extra action beside Approve and Deny. An `approve` with two or more extra actions, or a `choose` with more than 3 options, goes out on another channel the person is on. It is refused the same way as above when you asked for WhatsApp or they have no other channel. See [Ask, approve, and choose](/questions).
 
 ## Strangers
 

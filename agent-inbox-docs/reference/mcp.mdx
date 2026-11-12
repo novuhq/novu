@@ -29,7 +29,8 @@ There are no exit codes. The result says what happened.
 | `The request was canceled.` | Treat it as not approved |
 | `The request is still open` | Call `inbox_wait` with the id it gives you |
 | `Agent Inbox is not set up yet.` | Ask for a name and an address, then call `inbox_setup` |
-| `WhatsApp can't reach …`, `WhatsApp shows at most 3 buttons` | Nothing was sent. Send again with `inbox_send` and the `to` and `via` it names, and to everyone else in a separate send. See [WhatsApp](/channels/whatsapp) |
+| `WhatsApp can't reach …` | Nothing was sent. If it names another channel, send again with `inbox_send` and the `to` and `via` it gives. If not, call `contact_invite` and pass the link on, or wait for them to write. Send to everyone else in a separate `inbox_send`. See [WhatsApp](/channels/whatsapp) |
+| `WhatsApp shows at most 3 buttons` | Nothing was sent. Send again with at most 3 buttons, or with the `to` and `via` it names. Send to everyone else in a separate `inbox_send`. See [WhatsApp](/channels/whatsapp) |
 
 A plain message returns `Delivered` as soon as delivery is confirmed.
 
