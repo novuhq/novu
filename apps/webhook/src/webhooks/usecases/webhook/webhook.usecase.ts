@@ -1,7 +1,21 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import { AnalyticsService, IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Scope,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  AnalyticsService,
+  FeatureFlagsService,
+  IMailHandler,
+  ISmsHandler,
+  MailFactory,
+  SmsFactory,
+} from '@novu/application-generic';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, providers } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
 import { WebhookTypes } from '../../interfaces/webhook.interface';
@@ -13,12 +27,14 @@ export class Webhook {
   public readonly mailFactory = new MailFactory();
   public readonly smsFactory = new SmsFactory();
   private provider: IEmailProvider | ISmsProvider;
+  private handler: IMailHandler | ISmsHandler;
 
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
     private messageRepository: MessageRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
@@ -51,10 +67,21 @@ export class Webhook {
       channel,
     });
 
-    this.createProvider(integration, command.type);
+    const isSignatureVerificationEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+    });
+
+    this.createProvider(integration, command.type, isSignatureVerificationEnabled);
 
     if (!this.provider.getMessageId || !this.provider.parseEventBody) {
       throw new NotFoundException(`Provider with ${integration.providerId} can not handle webhooks`);
+    }
+
+    if (isSignatureVerificationEnabled) {
+      await this.verifySignature(command, integration);
     }
 
     const events = await this.parseEvents(command, integration.providerId, channel);
@@ -76,7 +103,7 @@ export class Webhook {
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult[]> {
     const { body } = command;
-    const messageIdentifiers: string[] = this.provider.getMessageId(body);
+    const messageIdentifiers = this.normalizeMessageIdentifiers(this.provider.getMessageId(body));
 
     const events: IWebhookResult[] = [];
 
@@ -146,6 +173,50 @@ export class Webhook {
     return parsedEvent;
   }
 
+  private async verifySignature(command: WebhookCommand, integration: IntegrationEntity): Promise<void> {
+    // Handlers whose provider doesn't implement verification (e.g. all SMS providers today) return success.
+    const result = await this.handler.verifySignature({
+      body: command.body as Record<string, unknown>,
+      headers: command.headers ?? {},
+      rawBody: command.rawBody,
+    });
+
+    if (!result.success) {
+      Logger.warn(
+        `Webhook signature verification failed for integration ${integration._id} (${integration.providerId}): ${result.message}`
+      );
+
+      throw new UnauthorizedException(`Invalid signature: ${result.message}`);
+    }
+  }
+
+  /**
+   * Provider parsers return identifiers straight from the request body. Only strings (and numbers, which Mongo would
+   * cast to a string anyway) are valid message identifiers — anything else, e.g. `{ "$ne": null }`, would turn the
+   * message lookup into a query operator, so it is dropped.
+   */
+  private normalizeMessageIdentifiers(identifiers: unknown): string[] {
+    if (!Array.isArray(identifiers)) {
+      return [];
+    }
+
+    return identifiers.flatMap((identifier) => {
+      if (typeof identifier === 'string' && identifier.length > 0) {
+        return [identifier];
+      }
+
+      if (typeof identifier === 'number' && Number.isFinite(identifier)) {
+        return [String(identifier)];
+      }
+
+      if (identifier !== undefined && identifier !== null) {
+        Logger.warn(`Ignoring webhook message identifier of unsupported type: ${typeof identifier}`);
+      }
+
+      return [];
+    });
+  }
+
   private getHandler(integration: IntegrationEntity, type: WebhookTypes): ISmsHandler | IMailHandler | null {
     switch (type) {
       case 'sms':
@@ -155,13 +226,27 @@ export class Webhook {
     }
   }
 
-  private createProvider(integration: IntegrationEntity, type: 'sms' | 'email') {
+  private createProvider(
+    integration: IntegrationEntity,
+    type: 'sms' | 'email',
+    withSignatureVerificationConfig: boolean
+  ) {
     const handler = this.getHandler(integration, type);
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${integration.providerId} was not found`);
     }
-    handler.buildProvider(integration.credentials);
 
+    /*
+     * Signing keys (`inboundWebhookSigningKey`) live on `configurations`. Only merge them in when verification is on,
+     * so the provider is built exactly as before for everyone else.
+     */
+    handler.buildProvider(
+      withSignatureVerificationConfig
+        ? { ...integration.credentials, ...integration.configurations }
+        : integration.credentials
+    );
+
+    this.handler = handler;
     this.provider = handler.getProvider();
   }
 }

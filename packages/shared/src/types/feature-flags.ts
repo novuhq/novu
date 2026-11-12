@@ -59,6 +59,12 @@ export enum FeatureFlagsKeysEnum {
 
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
+  /**
+   * Organization-scoped, read by the legacy webhook service (`apps/webhook`): verifies the provider signature
+   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. Off by default so existing
+   * webhook setups keep working until each organization is rolled over.
+   */
+  IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED = 'IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
