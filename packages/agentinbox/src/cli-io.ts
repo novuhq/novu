@@ -210,7 +210,15 @@ export async function readAnswer({ initial, onChange }: ReadOptions, from: ReadF
 export async function readPick({ count, initial, onMove }: PickReadOptions, from: ReadFrom = {}): Promise<number> {
   let index = initial;
 
-  await readQuietly(from, undefined, (_rl, key) => {
+  await readQuietly(from, undefined, (rl, key) => {
+    // What was typed is out of sight but still on readline's line, where Ctrl-D only deletes. Here it ends the
+    // command whatever was typed, as it does on the empty line the person sees.
+    if (key?.ctrl && key.name === 'd') {
+      rl.close();
+
+      return;
+    }
+
     const step = ARROW_STEPS.get(key?.name ?? '');
     if (step) {
       index = (index + step + count) % count;

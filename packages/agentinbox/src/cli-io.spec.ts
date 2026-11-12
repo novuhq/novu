@@ -150,6 +150,15 @@ describe('readPick', () => {
     expect(interrupt).toHaveBeenCalledOnce();
   });
 
+  it('ends the command on Ctrl-D after something was typed too, which nobody can see', async () => {
+    const { interrupt, type } = picking();
+
+    await type('drop');
+    await type('\x04');
+
+    expect(interrupt).toHaveBeenCalledOnce();
+  });
+
   it('never writes anything: the screen draws the pick', async () => {
     const write = vi.spyOn(process.stdout, 'write');
     const { pick, type } = picking();
