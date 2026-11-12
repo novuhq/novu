@@ -34,6 +34,7 @@ export function mapTopicSubscriptionsToDto(
       lastName: subscriber.lastName,
       email: subscriber.email,
       avatar: subscriber.avatar,
+      ...(subscriber.data != null ? { data: subscriber.data } : {}),
     },
   };
 }
