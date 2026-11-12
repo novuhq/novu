@@ -1,6 +1,6 @@
 ---
 title: "Create an inbox"
-description: "Run setup to create a keyless Agent Inbox, print its address, and optionally connect Telegram or Slack."
+description: "Run setup to create a keyless Agent Inbox, print its address, and optionally connect Telegram, Slack, or WhatsApp."
 ---
 
 `setup` creates an inbox before you have an account. It asks for your first and last name, an email address and the agent's name, offers the agent an address, creates the agent, and prints that address. It then emails you a confirmation link and waits up to 5 minutes for you to open it.
@@ -9,7 +9,7 @@ description: "Run setup to create a keyless Agent Inbox, print its address, and 
 npx @agentinbox/cli setup
 ```
 
-It then asks whether to connect Telegram or Slack. Press Enter to skip. Add a channel later with [`channel add`](/channels).
+It then asks whether to connect Telegram or Slack, or WhatsApp when your account has it. Press Enter to skip. Add a channel later with [`channel add`](/channels).
 
 ```bash
 npx @agentinbox/cli setup telegram
@@ -48,7 +48,7 @@ A new agent needs `--agent-name`. Without `--agent-handle`, its address comes fr
 
 When an agent runs `setup` or `login`, give it time: `setup` waits up to 5 minutes for the email, and `login` up to an hour for you to approve.
 
-`--telegram-bot-token` and `--slack-config-token` skip the prompt. An agent must not ask you for those tokens. Without a terminal it prints a page and waits. Forward that URL and let the person finish it. See [Telegram](/channels/telegram) and [Slack](/channels/slack).
+`--telegram-bot-token` and `--slack-config-token` skip the prompt. An agent must not ask you for those tokens. Without a terminal it prints a page and waits. Forward that URL and let the person finish it. See [Telegram](/channels/telegram) and [Slack](/channels/slack). WhatsApp has no flag: it always finishes on the page. See [WhatsApp](/channels/whatsapp).
 
 ## The skills
 

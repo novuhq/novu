@@ -13,7 +13,7 @@ You sign in with your Agent Inbox account when the app asks. The app never sees 
 
 Opening that address in a browser redirects here.
 
-There are no tools for `login`, `connect`, or the rest of `channel`. You do those on agentinbox.md or with the [CLI](/reference/cli). `inbox_setup` covers the agent and its email inbox, and `channel_add` adds Telegram or Slack.
+There are no tools for `login`, `connect`, or the rest of `channel`. You do those on agentinbox.md or with the [CLI](/reference/cli). `inbox_setup` covers the agent and its email inbox, and `channel_add` adds Telegram, Slack, or WhatsApp.
 
 The tools are named after the CLI, the conversation ones with `inbox_` in front. `send` is `inbox_send`. `contact list` is `contact_list`. `inbox_wait` is the one the CLI does not have.
 
@@ -29,6 +29,8 @@ There are no exit codes. The result says what happened.
 | `The request was canceled.` | Treat it as not approved |
 | `The request is still open` | Call `inbox_wait` with the id it gives you |
 | `Agent Inbox is not set up yet.` | Ask for a name and an address, then call `inbox_setup` |
+| `WhatsApp can't reach …` | Nothing was sent. If it names another channel, send again with `inbox_send` and the `to` and `via` it gives. If not, call `contact_invite` and pass the link on, or wait for them to write. Send to everyone else in a separate `inbox_send`. See [WhatsApp](/channels/whatsapp) |
+| `WhatsApp shows at most 3 buttons` | Nothing was sent. Send again with at most 3 buttons, or with the `to` and `via` it names. Send to everyone else in a separate `inbox_send`. See [WhatsApp](/channels/whatsapp) |
 
 A plain message returns `Delivered` as soon as delivery is confirmed.
 
@@ -42,15 +44,15 @@ Creates the agent and its email inbox, sends the owner a confirmation link, or s
 | `handle` | The inbox address before the `@`, such as `atlas`. Letters, digits, and hyphens, up to 32. Alone, it finishes a mailbox that was not created |
 | `email` | The owner's email, after they confirm it. A confirmation link goes out |
 
-Ask for the name and the address before you create the agent. A name never renames an existing agent, and a handle never moves an existing mailbox. An email that is already confirmed is changed on agentinbox.md. Telegram and Slack come from [`channel_add`](#channel_add).
+Ask for the name and the address before you create the agent. A name never renames an existing agent, and a handle never moves an existing mailbox. An email that is already confirmed is changed on agentinbox.md. Telegram, Slack, and WhatsApp come from [`channel_add`](#channel_add).
 
 ## channel_add
 
-Adds Telegram or Slack for you, the account's owner.
+Adds Telegram, Slack, or WhatsApp for you, the account's owner.
 
 | Argument | Meaning |
 | --- | --- |
-| `channel` | `telegram` or `slack`. Required |
+| `channel` | `telegram`, `slack`, or `whatsapp`. Required |
 
 Each call says where things stand and gives the one next step:
 
@@ -59,6 +61,9 @@ Each call says where things stand and gives the one next step:
 | No bot or Slack app yet | A link to the setup page on agentinbox.md |
 | Telegram has its bot, not started | The bot's name and its `/start` link |
 | Slack has its app, not installed | The install link, good for 5 minutes |
+| No WhatsApp Business number yet | A link to the WhatsApp setup on agentinbox.md, where you sign in |
+| WhatsApp Business connected, your number not proved | The same link, to send yourself the code |
+| WhatsApp not on your account | Says WhatsApp isn't available for this account yet |
 | Connected | Says so. `inbox_send` can reach you there |
 
 It returns right away and never waits for you. The agent gives you the link, and you finish in your own browser. Then it calls `channel_add` again, which picks up where things stand. Each link says when it stops working, and the next call makes a fresh one.
@@ -66,6 +71,8 @@ It returns right away and never waits for you. The agent gives you the link, and
 It takes no bot token and no App Configuration Token. The setup page collects them, so they stay out of chat transcripts. Email is not a choice here. `inbox_setup` handles it.
 
 Whoever opens the link connects as you, so open it yourself. The agent shows it to you in the chat and doesn't send it through the inbox.
+
+The WhatsApp link is the WhatsApp setup on agentinbox.md, which asks you to sign in and doesn't run out. Facebook's signup and the code that proves your number both happen there. See [WhatsApp](/channels/whatsapp).
 
 ## inbox_send
 
@@ -76,7 +83,7 @@ Starts a conversation. Leave `kind` out for a plain message.
 | `message` | The main text. Required |
 | `kind` | `ask`, `approve`, or `choose`. Omit for a plain message |
 | `to` | Contact id, email, or up to 50 of them. Omit to reach you |
-| `via` | `telegram`, `slack`, or `email` |
+| `via` | `telegram`, `slack`, `whatsapp`, or `email` |
 | `from` | Attribution, such as `deploy-bot` |
 | `ttl_seconds` | How long a question stays answerable. Default 86400, min 60, max 432000 |
 | `wait_seconds` | How long to wait now. Default 45, max 50. Questions only |

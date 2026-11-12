@@ -1,0 +1,59 @@
+---
+title: "WhatsApp"
+description: "Connect your own WhatsApp Business number with Facebook, then prove your own number by sending it a code."
+---
+
+WhatsApp connects a WhatsApp Business number that you own. The agent writes from that number, and people answer it in WhatsApp.
+
+<Note>
+WhatsApp is rolling out. If Configure on agentinbox.md does not offer it, your account does not have it yet, and `channel add whatsapp` says it is not available.
+</Note>
+
+You need a Meta business and a phone number that is not on WhatsApp yet. Facebook walks you through adding one.
+
+```bash
+npx @agentinbox/cli channel add whatsapp
+```
+
+The signup with Facebook only runs in a browser, so the CLI opens a page on agentinbox.md, or prints it without a terminal, and waits up to 15 minutes:
+
+```text
+https://www.agentinbox.md/configure?setup=whatsapp
+```
+
+1. **Connect your WhatsApp Business account.** Click **Continue with Facebook**, pick your Meta business, then the number the agent should use.
+2. **Send yourself the code.** Open the wa.me link, or scan the QR code, and send the message it fills in from your own WhatsApp. That proves your number.
+
+The CLI finishes when both are done. Exit code `11` means the wait ran out. Nothing is broken. Run the command again. It resumes at the missing step.
+
+A keyless inbox runs `npx @agentinbox/cli login` first. The page needs an account.
+
+<Warning>
+An agent forwards the URL. It does not ask you for your Facebook login or anything from WhatsApp.
+</Warning>
+
+An app connected through MCP has no terminal. It calls [`channel_add`](/reference/mcp#channel_add) and gives you the same page.
+
+Invite someone else on WhatsApp:
+
+```bash
+npx @agentinbox/cli contact invite bob --via whatsapp --async --name "Bob"
+```
+
+That prints a wa.me link with a code in it. When Bob sends that message, their number is proved and WhatsApp becomes their default channel. The code works for 10 minutes. The invite page offers WhatsApp too.
+
+## The 24-hour window
+
+WhatsApp lets the agent write to someone only within 24 hours of their last message. After that, a send that would go to them on WhatsApp goes out on another channel they are on instead.
+
+The send is refused when you asked for WhatsApp with `--via whatsapp`, or when WhatsApp is the only channel they have. Then nothing goes out, to them or to anyone else in the same send. The error says when their window closed and names another channel they are on, to send with `--via`. When they have none, it says to `contact invite` them.
+
+The window opens again as soon as they write to the agent. Writing first outside the window is not available yet.
+
+## Buttons
+
+WhatsApp shows at most 3 buttons. An `approve` can have one extra action beside Approve and Deny. An `approve` with two or more extra actions, or a `choose` with more than 3 options, goes out on another channel the person is on. It is refused the same way as above when you asked for WhatsApp or they have no other channel. See [Ask, approve, and choose](/questions).
+
+## Strangers
+
+With [Who can reach](/permissions) set to Anyone, someone who is not a contact can write to the agent's WhatsApp number first. They show up in the inbox by their number. With Contacts only, their messages are dropped.

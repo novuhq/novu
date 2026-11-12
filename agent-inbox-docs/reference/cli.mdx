@@ -31,7 +31,7 @@ Agents branch on these. Do not parse the prose when a code will do.
 | --- | --- |
 | `INBOX_SECRET_KEY` | API secret key. Wins over `login` and `setup` |
 | `INBOX_TO` | Default recipient: contact id or ids, comma-separated, as `--to` (max 50) |
-| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, or `email`. Ignored when `--to` names someone else |
+| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, `whatsapp`, or `email`. Ignored when `--to` names someone else |
 | `INBOX_API_URL` | API URL. The default is `https://www.agentinbox.md/api` |
 | `INBOX_CONFIG` | Config file path. The default is `~/.agentinbox/config.json` |
 
@@ -49,7 +49,7 @@ On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating 
 Creates a keyless inbox, then optionally connects a channel. A keyless setup waits up to 5 minutes for you to open the confirmation email. Running it again keeps the same inbox. See [Create an inbox](/setup).
 
 ```bash
-npx @agentinbox/cli setup [telegram|slack|email]
+npx @agentinbox/cli setup [telegram|slack|whatsapp|email]
 ```
 
 | Flag | Meaning |
@@ -131,7 +131,7 @@ A plain message returns when it is delivered. Start the words with `ask`, `appro
 | Flag | Meaning |
 | --- | --- |
 | `--to` | Contact id, email, or a comma-separated list (max 50). Default: `INBOX_TO`, then you |
-| `--via` | `telegram`, `slack`, or `email`. Default channel for this send |
+| `--via` | `telegram`, `slack`, `whatsapp`, or `email`. Default channel for this send |
 | `--from` | Label shown to the person |
 | `--ttl` | How long a question stays answerable. Default 24h, max 5d |
 | `--timeout` | How long this command waits. Default: until answered or expired |
@@ -167,12 +167,12 @@ npx @agentinbox/cli contact invite <id|email>
 
 | Flag | Meaning |
 | --- | --- |
-| `--via` | `telegram`, `slack`, or `email`. Skips the invite page. Becomes their default |
+| `--via` | `telegram`, `slack`, `whatsapp`, or `email`. Skips the invite page. Becomes their default |
 | `--email` | Required for `--via email` when there is no terminal, unless the argument is already an email |
 | `--name` | Display name |
 | `--async` | Print the link, or send the confirmation email, and exit |
 
-The page link works for 3 days. A Telegram or Slack link from `--via` works for minutes.
+The page link works for 3 days. A Telegram, Slack, or WhatsApp link from `--via` works for minutes.
 
 ## channel list
 
@@ -181,7 +181,7 @@ Prints the channels you connected and which one is your default.
 ## channel add
 
 ```bash
-npx @agentinbox/cli channel add <telegram|slack|email>
+npx @agentinbox/cli channel add <telegram|slack|whatsapp|email>
 ```
 
 `--telegram-bot-token`, `--slack-config-token`, and `--email` skip the prompts.
@@ -189,7 +189,7 @@ npx @agentinbox/cli channel add <telegram|slack|email>
 ## channel default
 
 ```bash
-npx @agentinbox/cli channel default <telegram|slack|email>
+npx @agentinbox/cli channel default <telegram|slack|whatsapp|email>
 ```
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
