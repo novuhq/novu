@@ -1560,7 +1560,7 @@ export class AgentInboundHandler implements OnModuleInit {
     } else if (mention.rejected) {
       this.logger.debug(
         { err: mention.rejected },
-        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} mention check rejected the bot user id`
+        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} mention check failed; treating it as unmentioned`
       );
     }
 

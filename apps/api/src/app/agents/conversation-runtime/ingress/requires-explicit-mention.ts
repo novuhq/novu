@@ -154,18 +154,24 @@ export async function checkAgentMention(
         return { mentioned: false };
       }
 
+      const event = slackEventOf(message);
+
+      if (!event) {
+        return { mentioned: false };
+      }
+
       const { isBotMention } = (await esmImport('@chat-adapter/slack/webhook')) as {
         isBotMention: typeof SlackIsBotMention;
       };
 
       try {
-        if (isBotMention(slackEventOf(message), botUserId)) {
+        if (isBotMention(event, botUserId)) {
           return { mentioned: true };
         }
 
         return { mentioned: false };
       } catch (error) {
-        if (isRejectedSlackBotId(error)) {
+        if (error instanceof TypeError) {
           return { mentioned: false, rejected: error };
         }
 
@@ -251,20 +257,16 @@ function collectSlackMentionedUserIds(message: Message): string[] {
   return ids;
 }
 
-function isRejectedSlackBotId(error: unknown): error is TypeError {
-  return error instanceof TypeError && error.message.startsWith('isBotMention:');
-}
-
-function slackEventOf(message: Message): Record<string, unknown> {
+function slackEventOf(message: Message): Record<string, unknown> | undefined {
   const raw = asRecord(message.raw);
   const event = asRecord(raw?.event) ?? raw;
 
   if (!event) {
-    return {};
+    return undefined;
   }
 
   if (event.subtype === 'message_changed') {
-    return asRecord(event.message) ?? {};
+    return asRecord(event.message);
   }
 
   return event;
@@ -272,7 +274,7 @@ function slackEventOf(message: Message): Record<string, unknown> {
 
 function collectSlackBlockMentionedUserIds(message: Message): string[] {
   const event = slackEventOf(message);
-  const blocks = Array.isArray(event.blocks) ? event.blocks : [];
+  const blocks = Array.isArray(event?.blocks) ? event.blocks : [];
   const ids: string[] = [];
 
   for (const block of blocks) {
@@ -358,7 +360,7 @@ function slackMentionTexts(message: Message): SlackProse[] {
     texts.push(maskSlackCodeSpans(message.text));
   }
 
-  const rawText = slackEventOf(message).text;
+  const rawText = slackEventOf(message)?.text;
 
   if (typeof rawText === 'string' && rawText.length > 0) {
     texts.push(maskSlackCodeSpans(rawText));

@@ -536,17 +536,17 @@ describe('checkAgentMention', () => {
     }
   });
 
-  it('does not treat a payload the classifier cannot read as an unmentioned message', async () => {
-    try {
-      await checkAgentMention(
-        slackMessage({ type: 'message', text: 'hi', blocks: {} }),
-        AgentPlatformEnum.SLACK,
-        'UBOT'
-      );
-      expect.fail('expected a payload TypeError to propagate');
-    } catch (error) {
-      expect(error).to.be.instanceOf(TypeError);
-      expect((error as TypeError).message.startsWith('isBotMention:')).to.equal(false);
+  it('treats a payload the classifier cannot read as not mentioned', async () => {
+    const result = await checkAgentMention(
+      slackMessage({ type: 'message', text: 'hi', blocks: {} }),
+      AgentPlatformEnum.SLACK,
+      'UBOT'
+    );
+
+    expect(result.mentioned).to.equal(false);
+
+    if (!result.mentioned) {
+      expect(result.rejected).to.be.instanceOf(TypeError);
     }
   });
 
