@@ -57,6 +57,7 @@ export class CreateSubscriptionsUsecase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential subscription steps (identifier validation, topic upsert, subscriber lookup, limit check, create, preferences) assembled into one response
   async execute(command: CreateSubscriptionsCommand): Promise<CreateSubscriptionsResponseDto> {
     const { validSubscriptions, identifierErrors } = this.validateSubscriptionIdentifiers(command.subscriptions);
     const errors: SubscriptionErrorDto[] = [...identifierErrors];
