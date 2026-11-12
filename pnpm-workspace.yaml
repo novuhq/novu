@@ -182,7 +182,15 @@ overrides:
   # the previous `<1.4.0` floor so transitive consumers (@nestjs/jwt, selfsigned,
   # webpack-dev-server, verdaccio, @puppeteer/*, msal-node, mongodb-connection-string-url)
   # pick up the fix.
-  node-forge@<1.4.1: ^1.4.1
+  # GHSA-6889-vf6x-f3g5 (low) Ed25519 signature verification accepts small-order
+  # public keys, GHSA-w4xr-hqv8-ch44 (moderate) TLS client crash on an
+  # unsupported ServerHello compression method, GHSA-6cv4-p8m7-4r25 (moderate)
+  # ReDoS in forge.http response header and cookie trimming, and
+  # GHSA-j8rw-jp99-435v (moderate) TLS client crash on a handshake record
+  # received without a session. All four are patched in 1.4.3 (patch bump
+  # within the 1.4.x line). Widen the previous `<1.4.1` floor so transitive
+  # consumers pick up the fix.
+  node-forge@<1.4.3: ^1.4.3
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5

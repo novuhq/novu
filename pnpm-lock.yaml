@@ -51,7 +51,7 @@ overrides:
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.5: ^6.4.5
   follow-redirects@>=1.16.0 <1.16.2: ^1.16.2
-  node-forge@<1.4.1: ^1.4.1
+  node-forge@<1.4.3: ^1.4.3
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
@@ -24938,8 +24938,8 @@ packages:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  node-forge@1.4.2:
-    resolution: {integrity: sha512-rRtAR5XLJ8gCKd9du4qrKAsgCG1ObGP4gLeNJMa4vYSeq4bmBMOJk5IHkrviBV0q7uoAJlVd8HEQYQSVUb4FGQ==}
+  node-forge@1.4.3:
+    resolution: {integrity: sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp-build-optional-packages@5.0.7:
@@ -39899,7 +39899,7 @@ snapshots:
     dependencies:
       debug: 4.3.3
       jsonwebtoken: 9.0.0
-      node-forge: 1.4.2
+      node-forge: 1.4.3
       verror: 1.10.1
 
   '@phenomnomnominal/tsquery@6.2.0(typescript@6.0.3)':
@@ -53105,7 +53105,7 @@ snapshots:
       google-auth-library: 9.15.1
       jsonwebtoken: 9.0.3
       jwks-rsa: 3.1.0
-      node-forge: 1.4.2
+      node-forge: 1.4.3
       uuid: 11.1.1
     optionalDependencies:
       '@google-cloud/firestore': 7.11.0
@@ -53656,11 +53656,11 @@ snapshots:
 
   google-p12-pem@3.1.4:
     dependencies:
-      node-forge: 1.4.2
+      node-forge: 1.4.3
 
   google-p12-pem@4.0.1:
     dependencies:
-      node-forge: 1.4.2
+      node-forge: 1.4.3
 
   googleapis-common@4.4.3:
     dependencies:
@@ -58071,7 +58071,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.4.2: {}
+  node-forge@1.4.3: {}
 
   node-gyp-build-optional-packages@5.0.7:
     optional: true
