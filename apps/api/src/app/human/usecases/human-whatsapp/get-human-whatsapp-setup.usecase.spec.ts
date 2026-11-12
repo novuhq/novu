@@ -42,6 +42,7 @@ describe('GetHumanWhatsAppSetup', () => {
     available?: { available: boolean; reason?: 'feature_disabled' | 'missing_platform_config' };
     credentials?: Record<string, unknown>;
     operatorEndpoints?: Array<Record<string, unknown>>;
+    firstMessage?: Record<string, unknown>;
   }) {
     const availability = { execute: sinon.stub().resolves(options.available ?? { available: true }) };
     const agentRepository = {
@@ -71,7 +72,8 @@ describe('GetHumanWhatsAppSetup', () => {
       agentIntegrationRepository as never,
       integrationRepository as never,
       channelEndpointRepository as never,
-      humanOperator as never
+      humanOperator as never,
+      { read: sinon.stub().resolves(options.firstMessage) } as never
     );
 
     return { usecase, availability, integrationRepository, channelEndpointRepository };

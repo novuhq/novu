@@ -56,6 +56,7 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { WhatsAppFirstMessageService } from './services/whatsapp-first-message.service';
 import { WhatsAppWindowService } from './services/whatsapp-window.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -85,6 +86,7 @@ import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.use
 import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
 import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
 import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
+import { SubmitHumanWhatsAppFirstMessage } from './usecases/human-whatsapp/submit-human-whatsapp-first-message.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
@@ -152,6 +154,8 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     GetHumanWhatsAppSetup,
     ConnectHumanWhatsApp,
     IssueHumanWhatsAppLink,
+    SubmitHumanWhatsAppFirstMessage,
+    WhatsAppFirstMessageService,
     HumanDeliveryService,
     WhatsAppWindowService,
     HumanKeylessCapService,

@@ -34,6 +34,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import { WhatsAppBindInbound } from '../../human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppHeldRelease } from '../../human-relay/whatsapp-held-release.service';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -358,7 +359,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly contactHandles: ContactHandleService,
-    private readonly whatsAppBindInbound: WhatsAppBindInbound
+    private readonly whatsAppBindInbound: WhatsAppBindInbound,
+    private readonly whatsAppHeldRelease: WhatsAppHeldRelease
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -526,7 +528,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    await this.dispatchInboundTurn({
+    await this.dispatchThenReleaseHeld({
       agentId,
       config,
       thread,
@@ -814,6 +816,27 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
       throw err;
+    }
+  }
+
+  /**
+   * Their message opened the WhatsApp window, so what waited for it goes out after it is handled. Only after their
+   * words were read: they wrote them before they saw it, so they never answer it.
+   */
+  private async dispatchThenReleaseHeld(
+    args: Parameters<AgentInboundHandler['dispatchInboundTurn']>[0]
+  ): Promise<void> {
+    try {
+      await this.dispatchInboundTurn(args);
+    } finally {
+      await this.whatsAppHeldRelease
+        .release({
+          agentId: args.agentId,
+          config: args.config,
+          subscriberId: args.subscriberId,
+          platformUserId: args.platformThreadId.split(':').pop() ?? '',
+        })
+        .catch((err) => this.logger.warn({ err, agentId: args.agentId }, 'Could not send what was held on WhatsApp'));
     }
   }
 
@@ -2295,6 +2318,15 @@ export class AgentInboundHandler implements OnModuleInit {
         config.platform === AgentPlatformEnum.WEB_CHAT
           ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
+    });
+
+    // Tapping "View message" on the WhatsApp first message opens the window: what waited goes out now.
+    await this.whatsAppHeldRelease.release({
+      agentId,
+      config,
+      subscriberId,
+      platformUserId: userId,
+      conversationId: conversation._id,
     });
 
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({

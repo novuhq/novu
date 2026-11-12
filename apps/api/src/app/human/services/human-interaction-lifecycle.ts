@@ -1,6 +1,11 @@
 import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
 import { isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
-import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import {
+  HumanInteractionDelivery,
+  HumanInteractionEntity,
+  HumanInteractionHold,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import {
   type CardChrome,
   HUMAN_INTERACTION_DEFAULT_TTL_SECONDS,
@@ -41,6 +46,11 @@ export interface HumanDeliveryRefs {
   platformMessageId: string;
   platformThreadId: string;
   _conversationId?: string;
+  /**
+   * WhatsApp's window was closed, so the approved first message went out instead (its id is `platformMessageId`).
+   * The message itself is held until they reply.
+   */
+  held?: boolean;
 }
 
 export interface HumanDeliveryTarget {
@@ -387,6 +397,43 @@ function passesThrough(error: unknown): boolean {
   return isAgentEmailInboxQuotaExceeded(error) || isWhatsAppUndeliverable(error);
 }
 
+function withHeld(held: HumanInteractionHold[]): { held?: HumanInteractionHold[] } {
+  return held.length ? { held } : {};
+}
+
+/**
+ * What one send left: a delivery, or a hold when WhatsApp's window was closed and the first message went instead.
+ * A hold reaches only the person it was for, never a thread.
+ */
+function recordOf(
+  target: HumanDeliveryTarget,
+  refs: HumanDeliveryRefs
+): ({ hold: HumanInteractionHold } | { delivery: HumanInteractionDelivery }) & { reaches: string[] } {
+  if (refs.held) {
+    return {
+      hold: {
+        subscriberId: target.subscriberId,
+        integrationIdentifier: target.integrationIdentifier,
+        platformThreadId: refs.platformThreadId,
+        templateMessageId: refs.platformMessageId,
+        heldAt: new Date().toISOString(),
+      },
+      reaches: [target.subscriberId],
+    };
+  }
+
+  return {
+    delivery: {
+      subscriberId: target.subscriberId,
+      integrationIdentifier: target.integrationIdentifier,
+      platform: target.platform,
+      platformMessageId: refs.platformMessageId,
+      platformThreadId: refs.platformThreadId,
+    },
+    reaches: target.reaches ?? [target.subscriberId],
+  };
+}
+
 /**
  * Deliver to every target, stamp `deliveries[]` (and denormalized top-level
  * ids from the first success), and roll the row back only when nobody received
@@ -411,6 +458,7 @@ export async function deliverToTargets(
   }
 ): Promise<{ interaction: HumanInteractionEntity; failedSubscriberIds: string[] }> {
   const deliveries: HumanInteractionDelivery[] = [];
+  const held: HumanInteractionHold[] = [];
   const failedSubscriberIds: string[] = [];
   const reached: string[] = [];
   let lastError: unknown;
@@ -419,17 +467,14 @@ export async function deliverToTargets(
   for (const target of targets) {
     try {
       const refs = await target.deliver();
-      deliveries.push({
-        subscriberId: target.subscriberId,
-        integrationIdentifier: target.integrationIdentifier,
-        platform: target.platform,
-        platformMessageId: refs.platformMessageId,
-        platformThreadId: refs.platformThreadId,
-      });
-      reached.push(...(target.reaches ?? [target.subscriberId]));
-      if (!conversationId && refs._conversationId) {
-        conversationId = refs._conversationId;
+      const record = recordOf(target, refs);
+      if ('hold' in record) {
+        held.push(record.hold);
+      } else {
+        deliveries.push(record.delivery);
       }
+      reached.push(...record.reaches);
+      conversationId ??= refs._conversationId;
     } catch (err) {
       lastError = err;
       failedSubscriberIds.push(target.subscriberId);
@@ -446,7 +491,7 @@ export async function deliverToTargets(
     }
   }
 
-  if (deliveries.length === 0) {
+  if (deliveries.length === 0 && held.length === 0) {
     await repository
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
@@ -474,6 +519,7 @@ export async function deliverToTargets(
 
   await repository.stampDelivery(interaction._environmentId, interaction._id, {
     deliveries,
+    held,
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   });
@@ -481,11 +527,13 @@ export async function deliverToTargets(
   const delivered: HumanInteractionEntity = {
     ...interaction,
     deliveries,
+    ...withHeld(held),
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   };
 
-  if (interaction.kind === HumanInteractionKindEnum.TELL) {
+  // A message still held for someone isn't delivered yet: it settles when the last of them is released.
+  if (interaction.kind === HumanInteractionKindEnum.TELL && held.length === 0) {
     const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
 
     return {

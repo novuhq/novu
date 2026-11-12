@@ -328,3 +328,142 @@ export function flattenScopes(debug: DebugTokenResponse): string[] {
 
   return Array.from(flat);
 }
+
+/** Meta's review states for a message template. */
+export type MessageTemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED' | 'IN_APPEAL';
+
+export type MessageTemplate = {
+  id?: string;
+  name?: string;
+  status?: MessageTemplateStatus | string;
+  category?: string;
+  rejected_reason?: string;
+};
+
+export type CreateMessageTemplateResponse = { id?: string; status?: string; category?: string } & MetaErrorBody;
+
+export type ListMessageTemplatesResponse = { data?: MessageTemplate[] } & MetaErrorBody;
+
+/** A template's body variable and the button that comes back to us, in the shape Meta wants for a named body. */
+export interface MessageTemplateDefinition {
+  name: string;
+  language: string;
+  /** Uses named variables, such as `{{agent_name}}`. */
+  body: string;
+  /** An example value for each named variable, which Meta's review needs. */
+  examples: Record<string, string>;
+  /** Quick-reply buttons, in order. */
+  quickReplies?: string[];
+}
+
+/**
+ * Submits a UTILITY template for review on a WhatsApp Business account. Meta answers with its id and the first
+ * status (usually PENDING); review can take up to 24 hours.
+ */
+export async function createMessageTemplate(args: {
+  accessToken: string;
+  wabaId: string;
+  template: MessageTemplateDefinition;
+  timeoutMs?: number;
+}): Promise<{ body: CreateMessageTemplateResponse; statusCode: number }> {
+  const { template } = args;
+  const components: object[] = [
+    {
+      type: 'BODY',
+      text: template.body,
+      example: {
+        body_text_named_params: Object.entries(template.examples).map(([param_name, example]) => ({
+          param_name,
+          example,
+        })),
+      },
+    },
+  ];
+  if (template.quickReplies?.length) {
+    components.push({
+      type: 'BUTTONS',
+      buttons: template.quickReplies.map((text) => ({ type: 'QUICK_REPLY', text })),
+    });
+  }
+
+  return metaGraphPostJson<CreateMessageTemplateResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    {
+      name: template.name,
+      language: template.language,
+      category: 'UTILITY',
+      parameter_format: 'NAMED',
+      components,
+    },
+    { timeoutMs: args.timeoutMs }
+  );
+}
+
+/** One template by name on a WhatsApp Business account, or `undefined` when there is none. */
+export async function findMessageTemplate(args: {
+  accessToken: string;
+  wabaId: string;
+  name: string;
+  timeoutMs?: number;
+}): Promise<{ template?: MessageTemplate; error?: MetaErrorSummary; statusCode: number }> {
+  const { body, statusCode } = await metaGraphGet<ListMessageTemplatesResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    {
+      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason' },
+      timeoutMs: args.timeoutMs,
+    }
+  );
+  const error = extractMetaError(body);
+  if (error || statusCode >= 400) {
+    return { error: error ?? { message: `Meta answered ${statusCode}` }, statusCode };
+  }
+
+  // Meta matches `name` as a prefix, so pick the exact one.
+  return { template: body.data?.find((candidate) => candidate.name === args.name), statusCode };
+}
+
+/**
+ * Sends an approved template with named body parameters and a payload on each quick-reply button, so a tap comes
+ * back as that payload.
+ */
+export async function sendNamedWhatsAppTemplate(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  to: string;
+  templateName: string;
+  languageCode: string;
+  bodyParameters: Record<string, string>;
+  quickReplyPayloads?: string[];
+  timeoutMs?: number;
+}): Promise<{ body: SendTemplateResponse; statusCode: number }> {
+  const components: object[] = [
+    {
+      type: 'body',
+      parameters: Object.entries(args.bodyParameters).map(([parameter_name, text]) => ({
+        type: 'text',
+        parameter_name,
+        text,
+      })),
+    },
+    ...(args.quickReplyPayloads ?? []).map((payload, index) => ({
+      type: 'button',
+      sub_type: 'quick_reply',
+      index: String(index),
+      parameters: [{ type: 'payload', payload }],
+    })),
+  ];
+
+  return metaGraphPostJson<SendTemplateResponse>(
+    `/${encodeURIComponent(args.phoneNumberId)}/messages`,
+    args.accessToken,
+    {
+      messaging_product: 'whatsapp',
+      to: args.to,
+      type: 'template',
+      template: { name: args.templateName, language: { code: args.languageCode }, components },
+    },
+    { timeoutMs: args.timeoutMs }
+  );
+}

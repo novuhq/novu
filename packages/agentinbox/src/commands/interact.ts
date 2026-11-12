@@ -209,6 +209,12 @@ export async function runSend(words: string[], options: SendOptions, conversatio
       process.stderr.write(`warning: delivered to some recipients but failed for: ${created.failedTo.join(', ')}\n`);
     }
 
+    if (created.heldFor?.length) {
+      process.stderr.write(
+        `note: WhatsApp's 24-hour window was closed for ${created.heldFor.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.\n`
+      );
+    }
+
     if (!options.json) {
       reportConversations(created, conversation !== undefined);
     }

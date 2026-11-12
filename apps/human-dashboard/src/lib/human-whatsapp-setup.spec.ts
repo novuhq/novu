@@ -70,6 +70,20 @@ describe('toWhatsAppSetupState', () => {
       reconnect: { appId: 'app-1', configId: 'config-1' },
     });
   });
+
+  it('carries where the first message stands with Meta', () => {
+    const firstMessage = { status: 'PENDING', body: 'Hi from {{agent_name}}, reply here.', approved: false };
+
+    expect(
+      toWhatsAppSetupState({
+        enabled: true,
+        available: false,
+        connected: true,
+        displayPhoneNumber: '+1 555',
+        firstMessage,
+      })
+    ).toEqual({ step: 'connected', displayPhoneNumber: '+1 555', firstMessage });
+  });
 });
 
 describe('whatsAppRows', () => {

@@ -23,6 +23,7 @@ import {
   type SlackWorkspace,
   saveTelegramBotToken,
   sendTestMessage,
+  submitWhatsAppFirstMessage,
   type WhatsAppLink,
   type WhatsAppSignup,
 } from '@/lib/human-channels-api';
@@ -31,6 +32,7 @@ import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
 import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
 import { readWhatsAppSetup, type WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 import { validateSlackAppName, validateSlackConfigToken } from '@/lib/slack-app';
+import { type FirstMessage, firstMessageProblem } from '@/lib/whatsapp-first-message';
 
 const CHANNELS_PATH = '/configure';
 
@@ -228,6 +230,28 @@ export async function issueWhatsAppLinkAction(): Promise<IssueWhatsAppLinkResult
     console.error('Failed to make a WhatsApp code', error);
 
     return { ok: false, error: describeWhatsAppLinkError(error) };
+  }
+}
+
+export type SubmitWhatsAppFirstMessageResult = { ok: true; firstMessage: FirstMessage } | { ok: false; error: string };
+
+/** Sends the operator's first message for outside the 24-hour window to Meta for review. */
+export async function submitWhatsAppFirstMessageAction(body: string): Promise<SubmitWhatsAppFirstMessageResult> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const problem = typeof body === 'string' ? firstMessageProblem(body) : 'Write the message first.';
+  if (problem) {
+    return { ok: false, error: problem };
+  }
+
+  try {
+    const firstMessage = await submitWhatsAppFirstMessage(account, body.trim());
+    revalidatePath(CHANNELS_PATH);
+
+    return { ok: true, firstMessage };
+  } catch (error) {
+    console.error('Failed to send the WhatsApp first message to Meta', error);
+
+    return { ok: false, error: describeFirstMessageError(error) };
   }
 }
 
@@ -448,6 +472,18 @@ function describeWhatsAppLinkError(error: unknown): string {
   }
 
   return 'We couldn’t make a code just now. Please try again.';
+}
+
+function describeFirstMessageError(error: unknown): string {
+  if (error instanceof HumanApiError && error.status >= 400 && error.status < 500 && error.status !== 401) {
+    if (error.status === 403) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    return error.message;
+  }
+
+  return 'We couldn’t send the message to Meta just now. Please try again.';
 }
 
 function describeWhatsAppError(error: unknown): string {

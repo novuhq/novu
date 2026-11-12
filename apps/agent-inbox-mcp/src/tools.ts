@@ -217,7 +217,8 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
   });
 
   if (!input.kind) {
-    return describeOutcome({ ...created, status: 'delivered' });
+    // A plain message is delivered once it's sent, unless it's still waiting on someone's WhatsApp reply.
+    return describeOutcome(created.heldFor?.length ? created : { ...created, status: 'delivered' });
   }
 
   return describeOutcome(

@@ -13,6 +13,11 @@ export type Interaction = {
   content?: { cardChrome?: { options?: Option[] } };
   response?: { type: 'text' | 'option'; text?: string; optionId?: string; respondedBy?: string };
   failedTo?: string[];
+  /**
+   * Who it hasn't reached yet: their WhatsApp window was closed, so they got the account's first message instead.
+   * It goes out when they reply.
+   */
+  heldFor?: string[];
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
   threads?: Array<{ id: string; unreadBefore: number }>;
 };
@@ -213,10 +218,15 @@ export function describeOutcome(interaction: Interaction): string {
   const failureNote = interaction.failedTo?.length
     ? ` Warning: delivery failed for ${interaction.failedTo.join(', ')}.`
     : '';
+  const heldNote = describeHeld(interaction.heldFor);
+
+  if (interaction.kind === 'tell' && status === 'pending' && heldNote) {
+    return `Not delivered yet.${heldNote}${threadNote}${failureNote}`;
+  }
 
   switch (status) {
     case 'pending':
-      return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
+      return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${heldNote}${threadNote}${failureNote}`;
     case 'approved':
       return `Approved${by}.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'denied':
@@ -232,6 +242,15 @@ export function describeOutcome(interaction: Interaction): string {
     default:
       return `The request is ${status}.${threadNote}`;
   }
+}
+
+/** Who got the WhatsApp first message instead, because their 24-hour window was closed. */
+function describeHeld(heldFor: Interaction['heldFor']): string {
+  if (!heldFor?.length) {
+    return '';
+  }
+
+  return ` WhatsApp's 24-hour window was closed for ${heldFor.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.`;
 }
 
 function describeThreads(threads: Interaction['threads']): string {

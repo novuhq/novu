@@ -8,7 +8,12 @@ export const WHATSAPP_WINDOW_CLOSED = 'whatsapp_window_closed';
 export const WHATSAPP_TOO_MANY_BUTTONS = 'whatsapp_too_many_buttons';
 
 export type WhatsAppUnfit =
-  | { reason: typeof WHATSAPP_WINDOW_CLOSED; windowClosedAt?: string }
+  | {
+      reason: typeof WHATSAPP_WINDOW_CLOSED;
+      windowClosedAt?: string;
+      /** Why the approved first message couldn't go out in its place, when one was tried. */
+      firstMessageFailure?: string;
+    }
   | { reason: typeof WHATSAPP_TOO_MANY_BUTTONS; buttons: number };
 
 /**
@@ -23,9 +28,10 @@ export class WhatsAppUndeliverableException extends UnprocessableEntityException
 
     if (unfit.reason === WHATSAPP_WINDOW_CLOSED) {
       const when = unfit.windowClosedAt ? `: their window closed at ${unfit.windowClosedAt}` : '';
+      const failure = unfit.firstMessageFailure ? ` ${unfit.firstMessageFailure}` : '';
       super({
         code: WHATSAPP_WINDOW_CLOSED,
-        message: `WhatsApp can't reach ${subscriberId} until they write to you again${when}.${instead}`,
+        message: `WhatsApp can't reach ${subscriberId} until they write to you again${when}.${failure}${instead}`,
         subscriberId,
         ...(unfit.windowClosedAt ? { windowClosedAt: unfit.windowClosedAt } : {}),
         availableChannels,

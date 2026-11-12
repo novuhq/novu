@@ -73,6 +73,20 @@ export interface ICredentials {
    * use `outboundConnectedAt` for now.
    */
   whatsNextCompletedAt?: string;
+  /**
+   * Agent Inbox WhatsApp: the first-message template the operator submitted on their WhatsApp Business account,
+   * so the agent can write first outside the 24-hour window. Name, Meta id, Meta's review status and reason, the
+   * body with its `{{agent_name}}` variable, and when the status was last read from Meta. None are secrets.
+   */
+  whatsappTemplateName?: string;
+  whatsappTemplateId?: string;
+  whatsappTemplateStatus?: string;
+  whatsappTemplateBody?: string;
+  whatsappTemplateRejectedReason?: string;
+  whatsappTemplateCheckedAt?: string;
+  /** The last version Meta approved, which sends use while a later edit is under review. */
+  whatsappTemplateApprovedName?: string;
+  whatsappTemplateApprovedBody?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**

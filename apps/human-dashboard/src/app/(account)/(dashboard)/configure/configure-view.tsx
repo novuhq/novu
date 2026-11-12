@@ -17,6 +17,7 @@ import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
+import { firstMessageBadge } from '@/lib/whatsapp-first-message';
 
 import { AgentSettingsCard } from './agent-settings';
 import { AgentSetup } from './agent-setup';
@@ -178,7 +179,12 @@ export function ConfigureView({
         {...drawerProps('slack')}
       />
       {whatsappSetup.step !== 'hidden' && (
-        <WhatsAppSetup setup={whatsappSetup} handle={agent.handle} {...drawerProps('whatsapp')} />
+        <WhatsAppSetup
+          setup={whatsappSetup}
+          handle={agent.handle}
+          agentName={slackAppName}
+          {...drawerProps('whatsapp')}
+        />
       )}
       <ShareDialog
         open={sharing}
@@ -212,9 +218,21 @@ function channelDetails({
   };
 }
 
-/** The business number linked for WhatsApp, when the setup knows it. */
+/**
+ * The business number linked for WhatsApp, when the setup knows it, and where the first message for outside the
+ * 24-hour window stands with Meta, when one was sent.
+ */
 function linkedNumber(setup: WhatsAppSetupState): string | undefined {
-  return setup.step === 'connected' ? setup.displayPhoneNumber : undefined;
+  if (setup.step !== 'connected') {
+    return undefined;
+  }
+
+  const badge = firstMessageBadge(setup.firstMessage);
+
+  return (
+    joinDefined([setup.displayPhoneNumber, badge ? `first message ${badge.label.toLowerCase()}` : undefined], ' · ') ||
+    undefined
+  );
 }
 
 /** The Slack app's name and the workspace it's in. Either can be missing when Slack couldn't be read just now. */

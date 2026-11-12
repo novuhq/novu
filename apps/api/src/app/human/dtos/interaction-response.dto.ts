@@ -67,6 +67,13 @@ export class InteractionResponseDto {
   })
   answerReadAt?: string;
 
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Who it hasn’t reached yet: their WhatsApp window was closed, so they got the account’s first message instead. It goes out when they reply.',
+  })
+  heldFor?: string[];
+
   @ApiProperty()
   expiresAt: string;
 
@@ -80,6 +87,7 @@ export function toInteractionResponse(
   threads?: InteractionThreadDto[]
 ): InteractionResponseDto {
   const primary = primaryHumanInteractionDelivery(entity);
+  const heldFor = entity.held?.map((hold) => hold.subscriberId) ?? [];
 
   return {
     id: entity.identifier,
@@ -88,12 +96,13 @@ export function toInteractionResponse(
     content: entity.content,
     from: entity.fromLabel,
     to: humanInteractionRecipientIds(entity),
-    integrationIdentifier: primary?.integrationIdentifier ?? '',
-    platform: primary?.platform ?? '',
+    integrationIdentifier: primary?.integrationIdentifier ?? entity.held?.[0]?.integrationIdentifier ?? '',
+    platform: primary?.platform ?? (heldFor.length ? 'whatsapp' : ''),
     response: entity.response,
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     ...(threads && threads.length > 0 ? { threads } : {}),
     ...(entity.answerReadAt ? { answerReadAt: entity.answerReadAt } : {}),
+    ...(heldFor.length ? { heldFor } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

@@ -1,8 +1,10 @@
 import { encryptCredentials } from '@novu/application-generic';
 import { AgentIntegrationRepository, ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import sinon from 'sinon';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
 
@@ -185,5 +187,68 @@ describe('Agent Inbox WhatsApp delivery #novu-v2', () => {
     const whatsApp = ada?.channels.find((channel) => channel.via === 'whatsapp');
     expect(whatsApp?.window).to.include({ open: false });
     expect(whatsApp?.window.closesAt).to.be.a('string');
+  });
+
+  describe('with an approved first message', () => {
+    let request: sinon.SinonStub;
+
+    beforeEach(() => {
+      request = sinon.stub(safeOutboundHttp, 'safeOutboundJsonRequest');
+      request.resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first-message' }] } } as never);
+    });
+
+    afterEach(() => {
+      request.restore();
+    });
+
+    async function approveFirstMessage() {
+      const whatsApp = await integrationRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      });
+      await integrationRepository.update(
+        { _id: whatsApp!._id, _environmentId: session.environment._id, _organizationId: session.organization._id },
+        {
+          $set: {
+            'credentials.whatsappTemplateName': 'agentinbox_first_message',
+            'credentials.whatsappTemplateStatus': 'APPROVED',
+            'credentials.whatsappTemplateBody': 'You have a message from {{agent_name}}. Reply here to view it.',
+            'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
+            'credentials.whatsappTemplateApprovedBody':
+              'You have a message from {{agent_name}}. Reply here to view it.',
+          },
+        }
+      );
+    }
+
+    it('sends it in place of a send WhatsApp would refuse, and holds the message for her reply', async () => {
+      await adaOnWhatsApp();
+      await approveFirstMessage();
+
+      const res = await send({ via: 'whatsapp' });
+
+      expect(res.status).to.equal(201, JSON.stringify(res.body));
+      const created = res.body.data;
+      expect(created.status).to.equal('pending');
+      expect(created.heldFor).to.deep.equal([contactId]);
+      const call = request.getCalls().find((candidate) => String(candidate.args[0].url).endsWith('/1234/messages'));
+      expect(call, 'the template send').to.not.equal(undefined);
+      expect(call!.args[0].body).to.deep.include({ to: '15550100201', type: 'template' });
+      expect(call!.args[0].body.template.name).to.equal('agentinbox_first_message');
+      expect(JSON.stringify(call!.args[0].body.template.components)).to.contain(`human:${created.id}:open`);
+    });
+
+    it('still refuses when Meta won’t send it, with Meta’s reason', async () => {
+      await adaOnWhatsApp({ telegram: false });
+      await approveFirstMessage();
+      request.resolves({ statusCode: 400, body: { error: { code: 131042, message: 'Payment issue' } } } as never);
+
+      const res = await send({ via: 'whatsapp' });
+
+      expect(res.status).to.equal(422, JSON.stringify(res.body));
+      expect(res.body.code).to.equal('whatsapp_window_closed');
+      expect(res.body.message).to.contain('add a payment method');
+    });
   });
 });

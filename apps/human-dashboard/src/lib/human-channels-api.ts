@@ -4,6 +4,7 @@ import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { HumanApiError, isHumanApiNotFound } from './human-api-error';
 import { requestForAccount, requestPageForAccount } from './human-api-key';
+import type { FirstMessage } from './whatsapp-first-message';
 
 /** The most links the API returns at once; a relay has a handful. */
 const CHANNELS_LIMIT = 100;
@@ -223,6 +224,17 @@ export function issueWhatsAppLink(account: HumanAccount): Promise<WhatsAppLink> 
   return requestForAccount<WhatsAppLink>(account, '/v1/human/agent/whatsapp/link', {
     method: 'POST',
     body: { agentIdentifier: RELAY_AGENT_IDENTIFIER },
+  });
+}
+
+/**
+ * Sends the operator's first message to Meta for review, as a template on their own WhatsApp Business account.
+ * Agents send it when someone's 24-hour window has closed, and what they sent follows when the person replies.
+ */
+export function submitWhatsAppFirstMessage(account: HumanAccount, body: string): Promise<FirstMessage> {
+  return requestForAccount<FirstMessage>(account, '/v1/human/agent/whatsapp/first-message', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, body },
   });
 }
 

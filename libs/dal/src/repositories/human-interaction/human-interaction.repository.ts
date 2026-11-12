@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { HumanInteractionDBModel, HumanInteractionDelivery, HumanInteractionEntity } from './human-interaction.entity';
+import {
+  HumanInteractionDBModel,
+  HumanInteractionDelivery,
+  HumanInteractionEntity,
+  HumanInteractionHold,
+} from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
 @Injectable()
@@ -53,6 +58,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         subscriberIds: subscriberId,
         kind: HumanInteractionKindEnum.ASK,
         status: HumanInteractionStatusEnum.PENDING,
+        // A question still held for them hasn't reached them, so their next words can't answer it.
+        'held.subscriberId': { $ne: subscriberId },
       },
       '*',
       { sort: { createdAt: -1 }, limit }
@@ -149,16 +156,63 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
+  /** What is still held for someone on this WhatsApp integration and not yet expired, oldest first. */
+  async findHeldFor(
+    environmentId: string,
+    organizationId: string,
+    subscriberId: string,
+    integrationIdentifier: string,
+    nowIso: string
+  ): Promise<HumanInteractionEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        status: HumanInteractionStatusEnum.PENDING,
+        expiresAt: { $gte: nowIso },
+        held: { $elemMatch: { subscriberId, integrationIdentifier } },
+      },
+      '*',
+      { sort: { createdAt: 1 }, limit: 20 }
+    );
+  }
+
+  /** Records someone as held, after the first-message template went out to them. */
+  async addHold(environmentId: string, id: string, hold: HumanInteractionHold): Promise<void> {
+    await this.update({ _id: id, _environmentId: environmentId }, { $push: { held: hold } });
+  }
+
+  /**
+   * Takes someone's hold off the row before the held message is sent, so two replies at once send it only once.
+   * Returns the hold, or null when another reply took it first. Put it back with `addHold` if the send fails.
+   */
+  async takeHold(environmentId: string, id: string, subscriberId: string): Promise<HumanInteractionHold | null> {
+    const before = await this.findOneAndUpdate(
+      { _id: id, _environmentId: environmentId, 'held.subscriberId': subscriberId },
+      { $pull: { held: { subscriberId } } },
+      { new: false }
+    );
+
+    return before?.held?.find((hold) => hold.subscriberId === subscriberId) ?? null;
+  }
+
+  /** Records a delivery made after the row was created, such as a held message going out. */
+  async addDelivery(environmentId: string, id: string, delivery: HumanInteractionDelivery): Promise<void> {
+    await this.update({ _id: id, _environmentId: environmentId }, { $push: { deliveries: delivery } });
+  }
+
   async stampDelivery(
     environmentId: string,
     id: string,
     delivery: {
       deliveries: HumanInteractionDelivery[];
+      held?: HumanInteractionHold[];
       _conversationId?: string;
       subscriberIds?: string[];
     }
   ): Promise<void> {
     const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
+    if (delivery.held?.length) $set.held = delivery.held;
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 

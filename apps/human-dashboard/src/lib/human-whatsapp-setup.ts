@@ -3,6 +3,7 @@ import 'server-only';
 import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
+import type { FirstMessage } from './whatsapp-first-message';
 
 /**
  * Where the WhatsApp drawer opens. `hidden` means WhatsApp isn't offered to this account at all, so no row
@@ -18,9 +19,16 @@ export type WhatsAppSetupState =
    * `reconnect` carries the Meta ids while the flow can run: the number is saved before Meta's webhook is set
    * up, so a setup that failed halfway is fixed by connecting again.
    */
-  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds }
+  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds; firstMessage?: FirstMessage }
   /** The business number is linked and the operator's own number is bound to it. */
-  | { step: 'connected'; displayPhoneNumber?: string; operatorPhoneNumber?: string; reconnect?: MetaIds }
+  | {
+      step: 'connected';
+      displayPhoneNumber?: string;
+      operatorPhoneNumber?: string;
+      reconnect?: MetaIds;
+      /** The first message for outside the 24-hour window, once one was sent to Meta. */
+      firstMessage?: FirstMessage;
+    }
   | { step: 'unknown' };
 
 type MetaIds = { appId: string; configId: string };
@@ -36,6 +44,7 @@ type WhatsAppSetupResponse = {
   displayPhoneNumber?: string;
   operatorNumberBound?: boolean;
   operatorPhoneNumber?: string;
+  firstMessage?: FirstMessage;
 };
 
 /** How far the WhatsApp setup got. Nothing is created here, and a failed read never fails the page. */
@@ -64,6 +73,7 @@ export function toWhatsAppSetupState(setup: WhatsAppSetupResponse): WhatsAppSetu
   const business = {
     ...(setup.displayPhoneNumber ? { displayPhoneNumber: setup.displayPhoneNumber } : {}),
     ...(ids ? { reconnect: ids } : {}),
+    ...(setup.firstMessage ? { firstMessage: setup.firstMessage } : {}),
   };
 
   if (setup.connected) {

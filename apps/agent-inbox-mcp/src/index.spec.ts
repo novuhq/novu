@@ -850,6 +850,23 @@ describe('hostOfSession', () => {
   });
 });
 
+describe('a message waiting on a WhatsApp reply', () => {
+  it('says a plain message is not delivered yet, and when it will be', () => {
+    const text = describeOutcome({ id: 'hi_1', kind: 'tell', status: 'pending', heldFor: ['alice'] });
+
+    expect(text).toBe(
+      "Not delivered yet. WhatsApp's 24-hour window was closed for alice, so they got your first message asking them to reply; this goes out as soon as they do."
+    );
+  });
+
+  it('keeps an ask waiting and says why', () => {
+    const text = describeOutcome({ id: 'hi_1', kind: 'ask', status: 'pending', heldFor: ['alice'] });
+
+    expect(text).toContain('call inbox_wait with id "hi_1"');
+    expect(text).toContain("WhatsApp's 24-hour window was closed for alice");
+  });
+});
+
 describe('waiting for an answer', () => {
   it('stops at the time limit and says how to keep waiting', async () => {
     const api = { get: vi.fn(async () => ({ id: 'hi_1', kind: 'ask', status: 'pending' })), post: vi.fn() };

@@ -18,8 +18,10 @@ import { WhatsAppEmbeddedSignupAvailability } from '../../../integrations/usecas
 import type { HumanWhatsAppSetupResponseDto } from '../../dtos/human-whatsapp.dto';
 import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
+import { WhatsAppFirstMessageService } from '../../services/whatsapp-first-message.service';
 import { GetHumanWhatsAppSetupCommand } from './get-human-whatsapp-setup.command';
 import { findRelayWhatsAppIntegration } from './relay-whatsapp-integration';
+import { toFirstMessageDto } from './submit-human-whatsapp-first-message.usecase';
 
 /**
  * What the WhatsApp drawer on agentinbox.md opens with: whether the channel exists for this organization,
@@ -35,7 +37,8 @@ export class GetHumanWhatsAppSetup {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly humanOperator: HumanOperatorService
+    private readonly humanOperator: HumanOperatorService,
+    private readonly firstMessage: WhatsAppFirstMessageService
   ) {}
 
   private repositories() {
@@ -69,8 +72,10 @@ export class GetHumanWhatsAppSetup {
     const businessConnected = credentials ? hasWhatsAppSendCredentials(credentials) : false;
     const displayPhoneNumber =
       businessConnected && typeof credentials?.from === 'string' ? credentials.from : undefined;
-    const operatorPhoneNumber =
-      businessConnected && integration ? await this.operatorPhoneNumber(command, integration) : undefined;
+    const [operatorPhoneNumber, firstMessage] =
+      businessConnected && integration
+        ? await Promise.all([this.operatorPhoneNumber(command, integration), this.firstMessage.read(integration)])
+        : [undefined, undefined];
 
     return {
       enabled: true,
@@ -82,6 +87,7 @@ export class GetHumanWhatsAppSetup {
       ...(displayPhoneNumber ? { displayPhoneNumber } : {}),
       operatorNumberBound: Boolean(operatorPhoneNumber),
       ...(operatorPhoneNumber ? { operatorPhoneNumber } : {}),
+      ...(firstMessage ? { firstMessage: toFirstMessageDto(firstMessage) } : {}),
     };
   }
 
