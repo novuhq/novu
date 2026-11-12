@@ -12,6 +12,8 @@ export const integrationsAssets = {
 } satisfies SectionAssets;
 
 export const INTEGRATIONS_HEADING = {
+  index: '04',
+  label: 'Integrations',
   lead: 'Works',
   accent: 'everywhere',
   rest: 'your agents are',
@@ -55,7 +57,7 @@ const MCP_SERVER_URL = 'https://mcp.agentinbox.md';
 // The hosted MCP server, as the dashboard writes it for Cursor (`cursorMcpConfig`).
 const MCP_SERVER_CONFIG = `{
   "mcpServers": {
-    "inbox": {
+    "AgentInbox": {
       "url": "${MCP_SERVER_URL}"
     }
   }
@@ -81,6 +83,18 @@ export const INTEGRATIONS: readonly Integration[] = [
       before: 'Install the AgentInbox skills:',
       lines: ['npx skills add agentinboxhq/skills'],
       after: 'This installs instructions for using AgentInbox. Complete CLI or MCP setup separately.',
+    },
+  },
+  {
+    id: 'mcp',
+    label: 'MCP',
+    snippet: {
+      kind: 'steps',
+      before: 'For clients supporting remote HTTP MCP servers with OAuth, use:',
+      lines: [MCP_SERVER_URL],
+      copy: MCP_SERVER_URL,
+      after:
+        'Complete AgentInbox sign-in. No API key or custom headers are required. The client determines the configuration format.',
     },
   },
   {
@@ -121,24 +135,13 @@ export const INTEGRATIONS: readonly Integration[] = [
   {
     id: 'hermes',
     label: 'Hermes',
+    // One command: it signs in and then asks before it enables the tools, so a line after it would be the answer.
     snippet: {
       kind: 'commands',
-      before: 'Install the skills into Hermes’ global skills directory:',
-      lines: ['npx skills add agentinboxhq/skills \\', '    -g --agent hermes-agent -y'],
+      before: 'Add the MCP server on the computer where Hermes runs:',
+      lines: ['hermes mcp add AgentInbox \\', `    --url ${MCP_SERVER_URL} \\`, '    --auth oauth'],
       after:
-        'Start a new Hermes session afterward. The AgentInbox CLI must also be connected on the computer where Hermes runs.',
-    },
-  },
-  {
-    id: 'mcp',
-    label: 'MCP',
-    snippet: {
-      kind: 'steps',
-      before: 'For clients supporting remote HTTP MCP servers with OAuth, use:',
-      lines: [MCP_SERVER_URL],
-      copy: MCP_SERVER_URL,
-      after:
-        'Complete AgentInbox sign-in. No API key or custom headers are required. The client determines the configuration format.',
+        'Complete sign-in in the browser, then say yes when Hermes asks to enable the tools. Start a new Hermes session, or run /reload-mcp in an open one.',
     },
   },
   {

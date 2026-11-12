@@ -14,11 +14,13 @@ import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue
 import { ConsumeSlackSetupLink } from '../channels/slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
 import { GetSlackSetupLinkStatus } from '../channels/slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
 import { IssueSlackSetupLink } from '../channels/slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
+import { RemoveSlackWorkspaceInstallation } from '../channels/slack-uninstall/remove-slack-workspace-installation/remove-slack-workspace-installation.usecase';
 import { ConfigureWhatsAppWebhook } from '../channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
+import { CancelConversationTurn } from '../conversation-runtime/runtime/cancel-conversation-turn.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
 import { ResumeToolApprovalFromHitl } from '../human-relay/resume-tool-approval-from-hitl.usecase';
 import { HandleNovuHuman } from '../managed-runtime/novu-human/handle-novu-human.usecase';
@@ -55,6 +57,7 @@ import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generat
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { IngestAgentEvents } from '../shared/ingest-agent-events/ingest-agent-events.usecase';
+import { CancelWebChatConversationTurn } from '../web-chat/usecases/cancel-web-chat-conversation-turn/cancel-web-chat-conversation-turn.usecase';
 import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
 import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
 import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
@@ -81,6 +84,7 @@ export const USE_CASES = [
   ConfigureWhatsAppWebhook,
   GenerateManagedAgent,
   IssueSlackSetupLink,
+  RemoveSlackWorkspaceInstallation,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,
@@ -119,6 +123,8 @@ export const USE_CASES = [
   ResumeManagedHuman,
   ResumeToolApprovalFromHitl,
   IngestAgentEvents,
+  CancelConversationTurn,
+  CancelWebChatConversationTurn,
   GetWebChatConversation,
   ListWebChatConversations,
   ListWebChatConversationEvents,

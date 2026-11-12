@@ -2,7 +2,16 @@ import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnu
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AGENT_HOST_VIAS, AGENT_INBOX_REACHES, AgentDBModel, LISTEN_HOST_IDS } from './agent.entity';
+import {
+  AGENT_CARD_ART_KINDS,
+  AGENT_HOST_IDS,
+  AGENT_HOST_VIAS,
+  AGENT_INBOX_REACHES,
+  AGENT_LOOK_COLORS,
+  AGENT_MASCOT_BODIES,
+  AgentDBModel,
+  LISTEN_HOST_IDS,
+} from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -19,6 +28,34 @@ const agentSchema = new Schema<AgentDBModel>(
       storageKey: Schema.Types.String,
       contentType: Schema.Types.String,
       version: Schema.Types.String,
+    },
+    look: {
+      shape: {
+        type: Schema.Types.String,
+        enum: [...AGENT_MASCOT_BODIES],
+      },
+      color: {
+        type: Schema.Types.String,
+        enum: [...AGENT_LOOK_COLORS],
+      },
+      art: {
+        kind: {
+          type: Schema.Types.String,
+          enum: [...AGENT_CARD_ART_KINDS],
+        },
+        seed: Schema.Types.Number,
+      },
+    },
+    cardShown: {
+      at: Schema.Types.String,
+      via: {
+        type: Schema.Types.String,
+        enum: [...AGENT_HOST_VIAS],
+      },
+      host: {
+        type: Schema.Types.String,
+        enum: [...AGENT_HOST_IDS],
+      },
     },
     hosts: {
       byId: {

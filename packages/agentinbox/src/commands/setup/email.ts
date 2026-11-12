@@ -4,8 +4,9 @@ import type { ApiClient } from '../../api/client';
 import { addAgentEmailIntegration } from '../../api/setup';
 import { info, promptLine } from '../../cli-io';
 import { startWaitIndicator } from '../../spinner';
-import { parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
+import { isEmailVerified, parseEmailAddress, waitForVerifiedEmail } from '../link-channel';
 import type { SetupOptions } from './operator';
+import { defaultSetupIo } from './prompts';
 
 /**
  * Email needs no linking dance: the relay gets a per-agent Agent Email Inbox
@@ -72,30 +73,10 @@ export async function connectEmail(
     throw new Error('No valid email address provided. Re-run `npx @agentinbox/cli setup email` or pass --email.');
   }
 
-  info('Registering your email address...');
-  const sent = await requestAddressVerification(client, {
-    subscriberId,
-    agentIdentifier,
-    via: 'email',
-    address: email,
-  });
-  info(`Verification email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
-
-  const stopIndicator = startWaitIndicator(
-    'Waiting for you to verify your email',
-    'Ctrl-C detaches; resume with: npx @agentinbox/cli setup email'
-  );
-  try {
-    await waitForVerifiedEmail(
-      client,
-      subscriberId,
-      agentIdentifier,
-      sent.requestedAt,
-      'you verify your email',
-      'Re-run `npx @agentinbox/cli setup email` to resend.'
-    );
-  } finally {
-    stopIndicator();
+  if (await isEmailVerified(client, subscriberId, agentIdentifier, email)) {
+    info(`${pc.bold(email)} is already confirmed.`);
+  } else {
+    await confirmEmail(client, agentIdentifier, subscriberId, email);
   }
 
   if (inboundAddress) {
@@ -110,11 +91,44 @@ export async function connectEmail(
   return identifier;
 }
 
+async function confirmEmail(
+  client: ApiClient,
+  agentIdentifier: string,
+  subscriberId: string,
+  email: string
+): Promise<void> {
+  info('Registering your email address...');
+  const sent = await requestAddressVerification(client, {
+    subscriberId,
+    agentIdentifier,
+    via: 'email',
+    address: email,
+  });
+  info(`Confirmation email sent to ${pc.bold(email)} (shown as ${sent.address}).`);
+
+  const stopIndicator = startWaitIndicator(
+    'Waiting for you to confirm your email',
+    'Ctrl-C detaches; resume with: npx @agentinbox/cli setup email'
+  );
+  try {
+    await waitForVerifiedEmail(
+      client,
+      subscriberId,
+      agentIdentifier,
+      sent.requestedAt,
+      'you confirm your email',
+      'Re-run `npx @agentinbox/cli setup email` to resend.'
+    );
+  } finally {
+    stopIndicator();
+  }
+}
+
 async function promptForEmail(): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const email = parseEmailAddress(await promptLine('Your email address: '));
     if (email) return email;
-    process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
+    defaultSetupIo.write(`${pc.yellow('That does not look like an email address.')}\n`);
   }
 
   throw new Error('No valid email address provided. Re-run `npx @agentinbox/cli setup email` or pass --email.');

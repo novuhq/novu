@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import Sendblue from 'sendblue';
 import { restore, stub } from 'sinon';
 
-import * as sendblueWebhookClient from '../shared/sendblue-webhook-client';
 import { ConfigureSendblueWebhookCommand } from './configure-sendblue-webhook.command';
 import { ConfigureSendblueWebhook } from './configure-sendblue-webhook.usecase';
 
@@ -14,6 +14,14 @@ const INTEGRATION_IDENTIFIER = 'sendblue-int';
 const CALLBACK_URL = `https://api.example.com/v1/agents/${AGENT_ID}/webhook/${INTEGRATION_IDENTIFIER}`;
 const OTHER_NOVU_WEBHOOK_URL = `https://other-env.example.com/v1/agents/other-agent-id/webhook/other-integration`;
 const THIRD_PARTY_WEBHOOK_URL = 'https://third-party-service.example.com/sendblue-webhook';
+
+function receiveWebhooks(receive: Array<{ url: string; secret?: string }>) {
+  return { webhooks: { receive } };
+}
+
+function usedCredentials(sdkStub: sinon.SinonStub) {
+  return sdkStub.thisValues.map(({ _client }) => ({ apiKey: _client.apiKey, apiSecret: _client.apiSecret }));
+}
 
 function buildCommand(overrides: Partial<ConfigureSendblueWebhookCommand> = {}) {
   return ConfigureSendblueWebhookCommand.create({
@@ -76,9 +84,9 @@ describe('ConfigureSendblueWebhook usecase', () => {
       warn: stub(),
     };
 
-    listStub = stub(sendblueWebhookClient, 'listSendblueReceiveWebhooks').resolves([]);
-    createStub = stub(sendblueWebhookClient, 'createSendblueReceiveWebhook').resolves();
-    deleteStub = stub(sendblueWebhookClient, 'deleteSendblueReceiveWebhooks').resolves();
+    listStub = stub(Sendblue.Webhooks.prototype, 'list').resolves(receiveWebhooks([]) as any);
+    createStub = stub(Sendblue.Webhooks.prototype, 'create').resolves({} as any);
+    deleteStub = stub(Sendblue.Webhooks.prototype, 'delete').resolves({} as any);
   });
 
   afterEach(() => {
@@ -112,15 +120,16 @@ describe('ConfigureSendblueWebhook usecase', () => {
     expect(result.existingNovuWebhookUrls).to.equal(undefined);
     expect(deleteStub.called).to.equal(false);
     expect(
-      createStub.calledOnceWith(
-        { apiKey: 'key', secretKey: 'secret' },
-        { url: CALLBACK_URL, secret: 'existing-signing-secret' }
-      )
+      createStub.calledOnceWith({
+        webhooks: [{ url: CALLBACK_URL, secret: 'existing-signing-secret' }],
+        type: 'receive',
+      })
     ).to.equal(true);
+    expect(usedCredentials(createStub)).to.deep.equal([{ apiKey: 'key', apiSecret: 'secret' }]);
   });
 
   it('detects other Novu agent webhooks already registered on the account', async () => {
-    listStub.resolves([{ url: OTHER_NOVU_WEBHOOK_URL }]);
+    listStub.resolves(receiveWebhooks([{ url: OTHER_NOVU_WEBHOOK_URL }]));
 
     const result = await buildUsecase().execute(buildCommand());
 
@@ -132,19 +141,20 @@ describe('ConfigureSendblueWebhook usecase', () => {
   });
 
   it('replaces (delete+create) its own previous registration instead of appending a duplicate', async () => {
-    listStub.resolves([{ url: CALLBACK_URL, secret: 'existing-signing-secret' }]);
+    listStub.resolves(receiveWebhooks([{ url: CALLBACK_URL, secret: 'existing-signing-secret' }]));
 
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(true);
     expect(result.existingNovuWebhookUrls).to.equal(undefined);
-    expect(deleteStub.calledOnceWith({ apiKey: 'key', secretKey: 'secret' }, [CALLBACK_URL])).to.equal(true);
+    expect(deleteStub.calledOnceWith({ webhooks: [CALLBACK_URL] })).to.equal(true);
+    expect(usedCredentials(deleteStub)).to.deep.equal([{ apiKey: 'key', apiSecret: 'secret' }]);
     expect(createStub.calledOnce).to.equal(true);
     expect(deleteStub.calledBefore(createStub)).to.equal(true);
   });
 
   it('ignores unrelated third-party webhooks (does not flag or delete them)', async () => {
-    listStub.resolves([{ url: THIRD_PARTY_WEBHOOK_URL }]);
+    listStub.resolves(receiveWebhooks([{ url: THIRD_PARTY_WEBHOOK_URL }]));
 
     const result = await buildUsecase().execute(buildCommand());
 

@@ -13,9 +13,13 @@ export const useFetchLatestAiChat = ({
 }) => {
   const { currentEnvironment } = useEnvironment();
 
-  const { data, isPending, error, refetch } = useQuery({
+  const { data, isPending, isFetching, error, refetch } = useQuery({
     queryKey: [QueryKeys.fetchChat, currentEnvironment?._id, resourceType, resourceId],
-    queryFn: () => fetchLatestChat({ environment: currentEnvironment!, resourceType, resourceId: resourceId! }),
+    queryFn: () => {
+      if (!currentEnvironment || !resourceId) throw new Error('The latest chat needs an environment and a resource');
+
+      return fetchLatestChat({ environment: currentEnvironment, resourceType, resourceId });
+    },
     enabled: !!currentEnvironment && !!resourceType && !!resourceId,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -24,6 +28,7 @@ export const useFetchLatestAiChat = ({
   return {
     latestChat: data,
     isPending,
+    isFetching,
     error,
     refetch,
   };

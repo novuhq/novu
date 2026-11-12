@@ -3,7 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
   GetLayoutUseCase,
-  GetLayoutUseCase as GetLayoutUseCaseV0,
+  GetLayoutUseCaseV0,
   JSONSchemaDto,
   LayoutCreationSourceEnum,
   LayoutDtoV0,

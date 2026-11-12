@@ -29,13 +29,14 @@ const conversationRepository = new ConversationRepository();
 const CONTACT_CHAT_ID = '777301';
 const STRANGER_CHAT_ID = '888402';
 const DASHBOARD_SECRET = 'e2e-agent-settings-dashboard-secret';
+const TELEGRAM_WEBHOOK_SECRET = 'e2e-settings-telegram-secret';
 
 /**
- * The Settings block of the Configure page: who can reach the agent, pausing it, and deleting it. A host
- * calls with the account's key (the CLI, MCP); the operator's dashboard calls with the same key and its
- * own secret. Only the dashboard may change these.
+ * The Settings block of the Configure page: who can reach the agent, acknowledging incoming messages, pausing it,
+ * and deleting it. A host calls with the account's key (the CLI, MCP); the operator's dashboard calls with the same
+ * key and its own secret. Only the dashboard may change these.
  */
-describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', () => {
+describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete) #novu-v2', () => {
   const originalSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
   let session: UserSession;
   let telegramApiStub: TelegramApiStub;
@@ -70,7 +71,7 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
       channel: ChannelTypeEnum.CHAT,
       credentials: encryptCredentials({
         apiToken: '12345678:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        token: 'e2e-settings-telegram-secret',
+        token: TELEGRAM_WEBHOOK_SECRET,
       }),
       active: true,
       identifier: `telegram-settings-e2e-${Date.now()}`,
@@ -226,6 +227,122 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
     });
   });
 
+  describe('acknowledging incoming messages', () => {
+    function typingCalls() {
+      return telegramApiStub.calls.filter((call) => call.method === 'sendChatAction');
+    }
+
+    it('is off until the operator turns it on, so a message arrives with no typing', async () => {
+      const res = await asHost('get', '/v1/human/agent');
+      expect(res.body.data).to.include({ acknowledgeOnReceived: false });
+
+      await sendMessageToRelay('are you there?', CONTACT_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(0);
+    });
+
+    it('shows typing as a message arrives once it is on, and stops when it is off again', async () => {
+      expect(await updateAgent({ acknowledgeOnReceived: true })).to.include({ acknowledgeOnReceived: true });
+      expect((await asHost('get', '/v1/human/agent')).body.data).to.include({ acknowledgeOnReceived: true });
+
+      await sendMessageToRelay('are you there?', CONTACT_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(1);
+      expect(typingCalls()[0].payload).to.include({ action: 'typing' });
+      expect(String(typingCalls()[0].payload.chat_id)).to.equal(CONTACT_CHAT_ID);
+
+      expect(await updateAgent({ acknowledgeOnReceived: false })).to.include({ acknowledgeOnReceived: false });
+      telegramApiStub.reset();
+
+      await sendMessageToRelay('still there?', CONTACT_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(0);
+    });
+
+    it('stays quiet while the agent is paused, and keeps the setting for when it resumes', async () => {
+      await updateAgent({ acknowledgeOnReceived: true });
+      expect(await updateAgent({ paused: true })).to.include({ acknowledgeOnReceived: true });
+
+      await sendMessageToRelay('are you there?', CONTACT_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(0);
+
+      await updateAgent({ paused: false });
+      await sendMessageToRelay('and now?', CONTACT_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(1);
+    });
+
+    it('gives no sign to a stranger kept out by contacts only', async () => {
+      await updateAgent({ acknowledgeOnReceived: true, reach: 'contacts' });
+
+      await sendMessageToRelay('hi, who is this?', STRANGER_CHAT_ID);
+
+      expect(typingCalls()).to.have.length(0);
+    });
+
+    describe('when Telegram delivers the message to the webhook', () => {
+      /** A direct message as Telegram sends it, so the Telegram adapter handles it before Novu does. */
+      async function postTelegramMessage(text: string, chatId: string) {
+        const res = await session.testAgent
+          .post(`/v1/agents/${relayAgentId}/webhook/${integrationIdentifier}`)
+          .set('x-telegram-bot-api-secret-token', TELEGRAM_WEBHOOK_SECRET)
+          .set('content-type', 'application/json')
+          .send({
+            update_id: Date.now(),
+            message: {
+              message_id: Math.floor(Math.random() * 1_000_000) + 1,
+              date: Math.floor(Date.now() / 1000),
+              chat: { id: Number(chatId), type: 'private', first_name: 'Ada' },
+              from: { id: Number(chatId), is_bot: false, first_name: 'Ada' },
+              text,
+            },
+          });
+        expect(res.status).to.equal(200, JSON.stringify(res.body));
+      }
+
+      async function waitUntil(done: () => Promise<boolean> | boolean, what: string) {
+        const deadline = Date.now() + 15_000;
+
+        while (!(await done())) {
+          if (Date.now() > deadline) {
+            throw new Error(`Timed out waiting for ${what}`);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      async function messageReachedTheInbox() {
+        return (await relayConversations()).length > 0;
+      }
+
+      it('shows no typing while it is off', async () => {
+        await postTelegramMessage('are you there?', CONTACT_CHAT_ID);
+        await waitUntil(messageReachedTheInbox, 'the message to reach the inbox');
+
+        expect(typingCalls()).to.have.length(0);
+      });
+
+      it('shows typing once when it is on', async () => {
+        await updateAgent({ acknowledgeOnReceived: true });
+
+        await postTelegramMessage('are you there?', CONTACT_CHAT_ID);
+        await waitUntil(messageReachedTheInbox, 'the message to reach the inbox');
+        await waitUntil(() => typingCalls().length > 0, 'typing');
+
+        expect(typingCalls()).to.have.length(1);
+        expect(String(typingCalls()[0].payload.chat_id)).to.equal(CONTACT_CHAT_ID);
+      });
+    });
+
+    it('refuses anything but true or false', async () => {
+      const res = await asDashboard('patch', '/v1/human/agent').send({ acknowledgeOnReceived: 'yes' });
+
+      expect(res.status).to.be.within(400, 422, JSON.stringify(res.body));
+    });
+  });
+
   describe('pause', () => {
     it('keeps hosts out with agent_paused while mail keeps arriving, and lets them back in on resume', async () => {
       const paused = await updateAgent({ paused: true });
@@ -284,15 +401,16 @@ describe('Agent Inbox agent settings (who can reach, pause, delete) #novu-v2', (
       expect(res.body.code).to.equal(DASHBOARD_ONLY);
     }
 
-    it('refuses a host that changes who can reach the agent or pauses it, and changes nothing', async () => {
+    it('refuses a host that changes who can reach the agent, acknowledging or pausing, and changes nothing', async () => {
       expectDashboardOnly(await asHost('patch', '/v1/human/agent').send({ reach: 'contacts' }));
+      expectDashboardOnly(await asHost('patch', '/v1/human/agent').send({ acknowledgeOnReceived: true }));
       expectDashboardOnly(await asHost('patch', '/v1/human/agent').send({ paused: true }));
       // A rename in the same call goes nowhere either.
       expectDashboardOnly(await asHost('patch', '/v1/human/agent').send({ name: 'Renamed', paused: true }));
 
       const res = await asHost('get', '/v1/human/agent');
       expect(res.status).to.equal(200, JSON.stringify(res.body));
-      expect(res.body.data).to.include({ reach: 'anyone', paused: false });
+      expect(res.body.data).to.include({ reach: 'anyone', paused: false, acknowledgeOnReceived: false });
       expect(res.body.data.name).to.not.equal('Renamed');
     });
 

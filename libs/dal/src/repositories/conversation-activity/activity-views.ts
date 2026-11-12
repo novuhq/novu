@@ -30,13 +30,16 @@ export const ACTIVITY_KINDS = [
   'signal.other',
   'tool_approval_request',
   'tool_approval_decision',
+  'tool_call',
   'tool_result',
+  'tool_result.record',
   'mcp_connection_request',
   'mcp_connection_result',
   'human_interaction_request',
   'human_interaction_response',
   'run_start',
   'run_finish',
+  'run_finish.aborted',
   'run_error',
   'custom',
 ] as const;
@@ -61,13 +64,17 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_approval_decision: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
+  tool_call: ['operator_timeline'],
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
+  'tool_result.record': ['operator_timeline'],
   mcp_connection_request: ['client_events', 'operator_timeline'],
   mcp_connection_result: ['client_events', 'operator_timeline'],
   human_interaction_request: ['agent_handoff', 'operator_timeline'],
   human_interaction_response: ['agent_handoff', 'operator_timeline'],
   run_start: ['client_events'],
   run_finish: ['client_events'],
+  // A stopped turn is the one run end the model must hear about; completed/paused finishes stay bookkeeping.
+  'run_finish.aborted': ['agent_handoff'],
   run_error: ['client_events'],
   custom: ['client_events', 'operator_timeline'],
 };
@@ -139,8 +146,14 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'tool_approval_decision':
       return { type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION };
 
+    case 'tool_call':
+      return { type: ConversationActivityTypeEnum.TOOL_CALL };
+
     case 'tool_result':
-      return { type: ConversationActivityTypeEnum.TOOL_RESULT };
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': { $ne: true } };
+
+    case 'tool_result.record':
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': true };
 
     case 'mcp_connection_request':
       return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };
@@ -159,6 +172,12 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'run_finish':
       return { type: ConversationActivityTypeEnum.RUN_FINISH };
+
+    case 'run_finish.aborted':
+      return {
+        type: ConversationActivityTypeEnum.RUN_FINISH,
+        'richContent.lifecycle.outcome': 'aborted',
+      };
 
     case 'run_error':
       return { type: ConversationActivityTypeEnum.RUN_ERROR };

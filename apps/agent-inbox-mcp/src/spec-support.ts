@@ -95,7 +95,19 @@ export type StubBackendsOptions = {
   replacesVerifiedAddress?: boolean;
   /** POST /v1/human/accounts fails with this status instead of opening the account. */
   accountCreateStatus?: number;
+  /** Override GET /v1/channels/apps. */
+  channelApps?: StubChannelApp[];
+  /** The integrations, by identifier, the operator has a channel endpoint on. */
+  connectedApps?: string[];
+  /** The integrations, by identifier, that have a saved bot token or Slack app. */
+  appsWithCredentials?: string[];
+  /** How many checks still see no credentials, as while the setup page is saving them. */
+  checksBeforeSaved?: number;
+  /** Channel calls that fail, keyed like `POST /v1/channels`. */
+  channelFailures?: Record<string, StubFailure>;
 };
+
+export type StubFailure = { status: number; message: string };
 
 export type StubContact = {
   id: string;
@@ -111,7 +123,22 @@ export type StubAgent = {
 };
 
 export type StubChannelLink = {
-  integration: { providerId: string; sharedInboundAddress?: string };
+  integration: {
+    _id?: string;
+    identifier?: string;
+    providerId: string;
+    active?: boolean;
+    sharedInboundAddress?: string;
+  };
+};
+
+/** An integration, as GET /v1/channels/apps lists it. */
+export type StubChannelApp = {
+  _id: string;
+  identifier: string;
+  providerId: string;
+  channel: string;
+  active?: boolean;
 };
 
 export type StubAddressCheck = {
@@ -165,7 +192,12 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'setupError' in options ||
     'channelsError' in options ||
     'replacesVerifiedAddress' in options ||
-    'accountCreateStatus' in options
+    'accountCreateStatus' in options ||
+    'channelApps' in options ||
+    'connectedApps' in options ||
+    'appsWithCredentials' in options ||
+    'checksBeforeSaved' in options ||
+    'channelFailures' in options
   );
 }
 
@@ -177,8 +209,66 @@ function normalizeOptions(options: StubBackendsOptions | Partial<Interaction>): 
   return { interaction: options };
 }
 
-/** Who each test token belongs to. `user_2` signed in but has no Agent Inbox account. */
-const USERS_BY_TOKEN: Record<string, string> = { 'good-token': 'user_1', 'newcomer-token': 'user_2' };
+/**
+ * Who each test token belongs to. `user_2` signed in but has no Agent Inbox account. `grok-bot-token` and
+ * `cursor-editor-token` are `user_1`'s too, issued to the sign-in apps of `SIGN_IN_APPS`.
+ */
+const USERS_BY_TOKEN: Record<string, string> = {
+  'good-token': 'user_1',
+  'newcomer-token': 'user_2',
+  'grok-bot-token': 'user_1',
+  'cursor-editor-token': 'user_1',
+};
+
+/** The Agent Inbox Clerk app's secret key, which the Clerk Backend API answers to. */
+export const CLERK_SECRET = 'clerk-secret';
+const CLERK_API = 'https://api.clerk.com/v1';
+
+/**
+ * The sign-in app each token was issued to, and where Clerk returns its sign-ins: one made in Cursor's cloud,
+ * as Grok Bot's is, and the Cursor editor's.
+ */
+const SIGN_IN_APPS: Record<string, { clientId: string; redirectUris: string[] }> = {
+  'grok-bot-token': {
+    clientId: 'client_cursor_cloud',
+    redirectUris: ['http://localhost:8787/callback', 'https://www.cursor.com/agents/mcp/oauth/callback'],
+  },
+  'cursor-editor-token': {
+    clientId: 'client_cursor_editor',
+    redirectUris: [
+      'cursor://anysphere.cursor-mcp/oauth/callback',
+      'http://localhost:8787/callback',
+      'https://www.cursor.com/agents/mcp/oauth/callback',
+    ],
+  },
+};
+
+/** The Clerk Backend API: which sign-in app a token was issued to, and an app found by its client id. */
+function answerClerk(url: string, method: string, headers: Headers, body: unknown): Response {
+  if (headers.get('Authorization') !== `Bearer ${CLERK_SECRET}`) {
+    return reply({}, 401);
+  }
+
+  if (url === `${CLERK_API}/oauth_applications/access_tokens/verify` && method === 'POST') {
+    const app = SIGN_IN_APPS[(body as { access_token?: string } | undefined)?.access_token ?? ''];
+
+    return app
+      ? reply({ object: 'clerk_idp_oauth_access_token', client_id: app.clientId, subject: 'user_1' })
+      : reply({ errors: [{ code: 'oauth_access_token_not_found' }] }, 404);
+  }
+
+  if (url.startsWith(`${CLERK_API}/oauth_applications?`) && method === 'GET') {
+    const clientId = new URL(url).searchParams.get('name_query');
+    const apps = Object.values(SIGN_IN_APPS).filter((app) => app.clientId === clientId);
+
+    return reply({
+      data: apps.map((app) => ({ client_id: app.clientId, name: 'Cursor', redirect_uris: app.redirectUris })),
+      total_count: apps.length,
+    });
+  }
+
+  return reply({ message: 'not stubbed' }, 500);
+}
 
 /** A call's path on the Dashboard API without its query, such as `/v1/inbox`, or `null` for a call elsewhere. */
 function dashboardPathOf(url: string): string | null {
@@ -194,6 +284,10 @@ function answerAuth(
   userEmail?: string,
   accountCreateStatus?: number
 ): Response | null {
+  if (url.startsWith(`${CLERK_API}/`)) {
+    return answerClerk(url, method, headers, body);
+  }
+
   if (url === `${ISSUER}/oauth/userinfo`) {
     const user = USERS_BY_TOKEN[headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''];
 
@@ -258,7 +352,7 @@ function answerEnsureAccount(
 
   accounts.add(humanUserId);
 
-  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1', region: 'us' } });
+  return reply({ data: { organizationId: 'org_1', userId: 'novu_user_1', environmentId: 'env_1' } });
 }
 
 type SetupStubState = {
@@ -346,6 +440,152 @@ function answerCreateSetup(body: unknown, state: SetupStubState): Response {
       emailAddress: `${handle}@agentinbox.md`,
     },
   });
+}
+
+type ChannelStubState = {
+  apps: StubChannelApp[];
+  connectedApps: string[];
+  appsWithCredentials: string[];
+  checksBeforeSaved: number;
+  failures: Record<string, StubFailure>;
+};
+
+/** Everything `channel_add` calls beside the agent, the operator and the list of what's linked. */
+function answerChannels(
+  url: string,
+  method: string,
+  body: unknown,
+  setup: SetupStubState,
+  state: ChannelStubState
+): Response | null {
+  const path = dashboardPathOf(url);
+  if (!path?.startsWith('/v1/channels')) {
+    return null;
+  }
+
+  const failure = state.failures[`${method} ${path}`];
+  if (failure) {
+    return reply({ message: failure.message }, failure.status);
+  }
+
+  if (method === 'GET') {
+    return answerChannelReads(url, path, state);
+  }
+
+  return (
+    answerChannelLinking(path, body, setup, state) ??
+    answerSetupLink(path, setup) ??
+    answerConnectLink(path, body, state)
+  );
+}
+
+function answerChannelReads(url: string, path: string, state: ChannelStubState): Response | null {
+  if (path === '/v1/channels/apps') {
+    return reply({ data: state.apps });
+  }
+
+  if (path === '/v1/channels/links') {
+    const identifier = new URL(url).searchParams.get('integrationIdentifier') ?? '';
+
+    return reply({ data: state.connectedApps.includes(identifier) ? [{ identifier: 'endpoint_1' }] : [], next: null });
+  }
+
+  return null;
+}
+
+function answerChannelLinking(
+  path: string,
+  body: unknown,
+  setup: SetupStubState,
+  state: ChannelStubState
+): Response | null {
+  if (path === '/v1/channels/apps') {
+    const { providerId, channel } = body as { providerId: string; channel: string };
+    const created = { _id: 'app_created', identifier: `${providerId}-created`, providerId, channel };
+    state.apps.push(created);
+
+    return reply({ data: created }, 201);
+  }
+
+  if (path === '/v1/channels') {
+    const { integrationIdentifier } = body as { integrationIdentifier: string };
+    const app = state.apps.find((candidate) => candidate.identifier === integrationIdentifier);
+    if (!app) {
+      return reply({ message: `Integration with identifier "${integrationIdentifier}" was not found.` }, 404);
+    }
+
+    setup.channels.push({ integration: app });
+
+    return reply({ data: { integration: app } }, 201);
+  }
+
+  return null;
+}
+
+/** As the API does: Telegram's route finds the integration by its identifier and Slack's by its `_id`, once linked. */
+function answerSetupLink(path: string, setup: SetupStubState): Response | null {
+  const match = /^\/v1\/channels\/apps\/([^/]+)\/(telegram-link|slack-setup-link)$/.exec(path);
+  if (!match) {
+    return null;
+  }
+
+  const [, appId, route] = match;
+  const channel = route === 'telegram-link' ? 'telegram' : 'slack';
+  const linked = setup.channels.some(({ integration }) =>
+    channel === 'telegram' ? integration.identifier === appId : integration._id === appId
+  );
+  if (!linked) {
+    return reply({ message: `Integration ${appId} not found` }, 404);
+  }
+
+  const token = `tok_${channel}`;
+
+  return reply({
+    data: {
+      token,
+      url: `https://dashboard.example.test/agents/${channel}/connect/${token}`,
+      expiresAt: '2026-10-30T12:15:00.000Z',
+    },
+  });
+}
+
+function answerConnectLink(path: string, body: unknown, state: ChannelStubState): Response | null {
+  const { integrationIdentifier } = (body ?? {}) as { integrationIdentifier?: string };
+
+  if (path === '/v1/channels/telegram/link') {
+    return credentialsReadable(integrationIdentifier, state)
+      ? reply({
+          data: {
+            url: 'https://t.me/atlas_bot?start=code_1',
+            providerMetadata: { botUsername: 'atlas_bot', expiresAt: '2026-10-30T12:10:00.000Z' },
+          },
+        })
+      : reply(
+          {
+            message:
+              'Bot Token is missing from integration credentials. Save the Bot Token and re-run the webhook configuration first.',
+          },
+          422
+        );
+  }
+
+  if (path === '/v1/channels/slack/install-link') {
+    return credentialsReadable(integrationIdentifier, state)
+      ? reply({ data: { url: 'https://slack.com/oauth/v2/authorize?client_id=1' } }, 201)
+      : reply({ message: 'Slack integration missing credentials ' }, 404);
+  }
+
+  return null;
+}
+
+function credentialsReadable(identifier: string | undefined, state: ChannelStubState): boolean {
+  if (state.checksBeforeSaved > 0) {
+    state.checksBeforeSaved -= 1;
+
+    return false;
+  }
+
+  return state.appsWithCredentials.includes(identifier ?? '');
 }
 
 function answerInbox(
@@ -499,6 +739,31 @@ function answerOneContact(contact: StubContact | undefined): Response {
   });
 }
 
+/** The agent's card, as the Dashboard API shows it to a host: a 404 before the agent exists. */
+function answerCard(url: string, method: string, setupState: { agent: StubAgent | null }): Response | null {
+  if (method !== 'POST' || url !== `${AGENT_INBOX_API}/v1/agent/card`) {
+    return null;
+  }
+  if (!setupState.agent) {
+    return reply({ message: 'There is no agent yet. Run `npx @agentinbox/cli setup` first.' }, 404);
+  }
+
+  const name = setupState.agent.name ?? 'Atlas';
+
+  return reply({
+    data: {
+      greeting: `Hi Ada, I’m ${name}. I have my own inbox now. Here’s my card, so people can email or message me directly.`,
+      name,
+      handle: 'atlas',
+      address: 'atlas@agentinbox.md',
+      url: 'https://agentinbox.md/p/atlas',
+      look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+      operatorFirstName: 'Ada',
+      firstShown: true,
+    },
+  });
+}
+
 /**
  * Answers the calls the Worker makes: Clerk for who the token is, the Novu API for the account's key, and the
  * Dashboard API for everything else. A call anywhere else gets a 500, so a tool that strays fails its test.
@@ -538,6 +803,13 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
     channelsError: opts.channelsError,
     contactsById,
   };
+  const channelState = {
+    apps: opts.channelApps ?? [],
+    connectedApps: opts.connectedApps ?? [],
+    appsWithCredentials: opts.appsWithCredentials ?? [],
+    checksBeforeSaved: opts.checksBeforeSaved ?? 0,
+    failures: opts.channelFailures ?? {},
+  };
 
   if (opts.agent !== null && !contactsById.operator_1 && setupState.operator?.subscriberId) {
     contactsById[setupState.operator.subscriberId] = contactsById[setupState.operator.subscriberId] ?? {
@@ -561,6 +833,8 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       return (
         answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
         answerSetup(url, method, body, setupState) ??
+        answerCard(url, method, setupState) ??
+        answerChannels(url, method, body, setupState, channelState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??
         answerInteractions(url, method, body, interaction, createdInteraction) ??
@@ -588,6 +862,14 @@ export function rpc(method: string, params: unknown, token: string | null = 'goo
 export function inSession(request: Request, sessionId: string): Request {
   const headers = new Headers(request.headers);
   headers.set('Mcp-Session-Id', sessionId);
+
+  return new Request(request, { headers });
+}
+
+/** The same request, from an app that names itself in its User-Agent. */
+export function withUserAgent(request: Request, userAgent: string): Request {
+  const headers = new Headers(request.headers);
+  headers.set('User-Agent', userAgent);
 
   return new Request(request, { headers });
 }

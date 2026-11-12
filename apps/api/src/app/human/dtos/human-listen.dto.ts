@@ -190,7 +190,7 @@ export class ListenMessageDto {
   @ApiProperty({ description: 'The message’s own id. It never changes, so a message is handled once.' })
   id: string;
 
-  @ApiProperty({ description: 'The conversation it is in, as `inbox show` and `inbox reply` take it.' })
+  @ApiProperty({ description: 'The conversation it is in, as `show` and `reply` take it.' })
   conversationId: string;
 
   @ApiProperty({ description: 'As the inbox shows it: `telegram`, `slack`, `email`.' })

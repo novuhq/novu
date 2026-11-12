@@ -24,6 +24,7 @@ export enum SnapshotSourceTypeEnum {
   ONBOARDING_WORKFLOWS = 'onboarding-workflows',
   WORKFLOW_SUGGESTIONS = 'workflow-suggestions',
   AGENT_SUGGESTIONS = 'agent-suggestions',
+  COPILOT_WEB_CHAT = 'copilot-web-chat',
 }
 
 export enum AiWorkflowToolsEnum {

@@ -120,7 +120,7 @@ describe('Human invites (invite link → page → connect) #novu-v2', () => {
     const status = await getStatus(invite.token);
     expect(status).to.deep.include({
       valid: true,
-      agentName: 'Human',
+      agentName: 'Agent',
       inviteeName: 'Alice Chen',
       channels: [
         { via: 'telegram', connected: false, isDefault: false, status: 'unverified' },

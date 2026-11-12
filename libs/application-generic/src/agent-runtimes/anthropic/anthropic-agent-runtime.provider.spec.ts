@@ -1,6 +1,7 @@
 import { APIError } from '@anthropic-ai/sdk';
 import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
 import { expect } from 'chai';
+import type { Mock } from 'vitest';
 import { AgentRuntimeBadRequestError } from '../errors';
 import type { UploadSkillInput } from '../i-agent-runtime-provider';
 
@@ -10,14 +11,14 @@ import type { UploadSkillInput } from '../i-agent-runtime-provider';
 // provider continue to work. `toFile` is a stub: the production code only
 // uses its return value as opaque uploadables, so a passthrough is enough
 // and avoids relying on Web `File` being exposed in the Jest sandbox.
-jest.mock('@anthropic-ai/sdk', () => {
-  const actual = jest.requireActual('@anthropic-ai/sdk');
+vi.mock('@anthropic-ai/sdk', async () => {
+  const actual = await vi.importActual('@anthropic-ai/sdk');
 
   return {
     __esModule: true,
     ...actual,
-    default: jest.fn(),
-    toFile: jest.fn((content: unknown, path: string) => Promise.resolve({ path, content })),
+    default: vi.fn(),
+    toFile: vi.fn((content: unknown, path: string) => Promise.resolve({ path, content })),
   };
 });
 
@@ -61,10 +62,10 @@ function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark
 interface MockClient {
   beta: {
     skills: {
-      create: jest.Mock;
-      list: jest.Mock;
+      create: Mock;
+      list: Mock;
       versions: {
-        create: jest.Mock;
+        create: Mock;
       };
     };
   };
@@ -74,10 +75,10 @@ function buildMockClient(): MockClient {
   return {
     beta: {
       skills: {
-        create: jest.fn(),
-        list: jest.fn(),
+        create: vi.fn(),
+        list: vi.fn(),
         versions: {
-          create: jest.fn(),
+          create: vi.fn(),
         },
       },
     },
@@ -117,9 +118,11 @@ interface AgentToolsetPayloadEntry {
   };
 }
 
-function installAgentsMockClient(agents: { retrieve: jest.Mock; update?: jest.Mock }) {
-  (Anthropic as unknown as jest.Mock).mockReset();
-  (Anthropic as unknown as jest.Mock).mockImplementation(() => ({ beta: { agents } }));
+function installAgentsMockClient(agents: { retrieve: Mock; update?: Mock }) {
+  (Anthropic as unknown as Mock).mockReset();
+  (Anthropic as unknown as Mock).mockImplementation(function () {
+    return { beta: { agents } };
+  });
 }
 
 function getToolsetPayload(updatePayload: {
@@ -134,13 +137,15 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
   beforeEach(() => {
     mockClient = buildMockClient();
-    (Anthropic as unknown as jest.Mock).mockReset();
-    (Anthropic as unknown as jest.Mock).mockImplementation(() => mockClient);
+    (Anthropic as unknown as Mock).mockReset();
+    (Anthropic as unknown as Mock).mockImplementation(function () {
+      return mockClient;
+    });
     provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('happy path', () => {
@@ -363,7 +368,7 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
   it('does not map mcp_toolset entries into tools', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: 'You are helpful',
       tools: [
@@ -400,7 +405,7 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
 
     for (const [model, expected] of cases) {
       installAgentsMockClient({
-        retrieve: jest.fn().mockResolvedValue({ model, system: '', tools: [], mcp_servers: [], skills: [] }),
+        retrieve: vi.fn().mockResolvedValue({ model, system: '', tools: [], mcp_servers: [], skills: [] }),
       });
 
       const result = await provider.getConfig('ext-agent-id');
@@ -413,7 +418,7 @@ describe('AnthropicAgentRuntimeProvider.getConfig', () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
     installAgentsMockClient({
-      retrieve: jest.fn().mockResolvedValue({
+      retrieve: vi.fn().mockResolvedValue({
         model: { id: 'claude-sonnet-4-6' },
         system: '',
         tools: [
@@ -437,14 +442,14 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('uses tool externalId (not display name) when serialising the toolset payload', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       version: 1,
       tools: [],
       mcp_servers: [],
       skills: [],
     });
 
-    const update = jest.fn().mockResolvedValue({
+    const update = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: '',
       tools: [
@@ -486,7 +491,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('treats an empty tools array as "disable all tools" by emitting enabled=false for every catalog entry', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       version: 1,
       tools: [
         {
@@ -498,7 +503,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    const update = jest.fn().mockResolvedValue({
+    const update = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: '',
       tools: [],
@@ -523,7 +528,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       version: 1,
       tools: [
         {
@@ -539,7 +544,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    const update = jest.fn().mockResolvedValue({
+    const update = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: '',
       tools: [
@@ -578,7 +583,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('force-enables read when attaching skills without rebuilding tools from a tools patch', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       version: 1,
       tools: [
         {
@@ -593,7 +598,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       skills: [],
     });
 
-    const update = jest.fn().mockResolvedValue({
+    const update = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: '',
       tools: [],
@@ -618,14 +623,14 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('force-enables read when tools are patched while skills remain attached', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
-    const retrieve = jest.fn().mockResolvedValue({
+    const retrieve = vi.fn().mockResolvedValue({
       version: 1,
       tools: [],
       mcp_servers: [],
       skills: [{ type: 'anthropic', skill_id: 'pdf', version: null }],
     });
 
-    const update = jest.fn().mockResolvedValue({
+    const update = vi.fn().mockResolvedValue({
       model: 'claude-sonnet-4-5',
       system: '',
       tools: [],

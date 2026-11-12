@@ -21,6 +21,7 @@ const mockResponse = () => ({
   statusMessage: 'OK',
   headers: {},
   body: {},
+  isJson: true,
 });
 
 const channelData = (url: string = WEBHOOK_URL, authToken?: string): GrafanaOnCallIntegrationData => ({
@@ -238,7 +239,7 @@ test('blocks unsafe webhook URLs before any request is made', async () => {
 test('throws when the response status is not 2xx', async () => {
   const safeOutboundSpy = vi
     .spyOn(safeOutboundHttp, 'safeOutboundJsonRequest')
-    .mockResolvedValue({ statusCode: 403, statusMessage: 'Forbidden', headers: {}, body: {} });
+    .mockResolvedValue({ statusCode: 403, statusMessage: 'Forbidden', headers: {}, body: {}, isJson: true });
 
   const provider = new GrafanaProvider();
   await expect(provider.sendMessage({ content: 'ping', channelData: channelData() })).rejects.toThrow(

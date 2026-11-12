@@ -46,6 +46,19 @@ describe('GetInteraction', () => {
     expect(repository.markAnswerRead.calledOnceWith('env1', 'hi-row-1')).to.equal(true);
   });
 
+  it('says when the answer was handed over before, and not on the read that hands it over', async () => {
+    const answered = {
+      status: HumanInteractionStatusEnum.ANSWERED,
+      response: { type: 'text', text: 'prod', respondedAt: '2026-10-27T10:05:00.000Z' },
+    };
+
+    const first = setup(answered);
+    expect(await first.usecase.execute(first.command)).to.not.have.property('answerReadAt');
+
+    const again = setup({ ...answered, answerReadAt: '2026-10-27T10:05:01.000Z' });
+    expect((await again.usecase.execute(again.command)).answerReadAt).to.equal('2026-10-27T10:05:01.000Z');
+  });
+
   it('notes nothing while the question waits, once its answer was read, or for what no person settled', async () => {
     for (const interaction of [
       { status: HumanInteractionStatusEnum.PENDING },

@@ -9,7 +9,7 @@ import {
   type ResolvedAgentRuntime,
   resolveAgentRuntime,
 } from '@novu/application-generic';
-import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentMcpServerRepository, AgentRepository, type ClientSession, IntegrationRepository } from '@novu/dal';
 import {
   AGENT_MANAGED_DEFINITION_VERSION,
   AgentRuntimeProviderIdEnum,
@@ -18,7 +18,6 @@ import {
   MCP_SERVERS,
   McpConnectionScopeEnum,
 } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
 import { EnsureNovuHumanSkill } from '../../../managed-runtime/novu-human/ensure-novu-human-skill.service';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/shared/resolve-mcp-servers';
@@ -48,6 +47,7 @@ export class ProvisionManagedAgent {
     private readonly logger: PinoLogger
   ) {}
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing managed-agent provisioning is outside this import change
   async execute(
     command: ProvisionManagedAgentCommand,
     options: ProvisionManagedAgentOptions

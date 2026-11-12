@@ -30,12 +30,12 @@ npx @agentinbox/cli contact invite carol@acme.com --name "Carol Diaz"
 
 `--via telegram` or `--via slack` skips the page and prints that channel's link. It works for minutes, and that channel becomes their default. `--async` prints the link and returns.
 
-Passing an email address invites them on email. The contact id comes from the address (`carol@acme.com` becomes `carol`, with a short suffix when `carol` is taken). They must click **Verify this email** before the agent can message that address.
+Passing an email address invites them on email. The contact id comes from the address (`carol@acme.com` becomes `carol`, with a short suffix when `carol` is taken). They must click **Confirm email** before a send that names their contact id can use that address.
 
 `--name` is what `contact list` shows next to the id.
 
-On MCP, `contact_invite` takes `id` and `name` and returns the page link only. To reach someone by email from MCP, put their address in `to` on `inbox_send`. The same verification rule applies.
+On MCP, `contact_invite` takes `id` and `name` and returns the page link only. To reach someone by email from MCP, put their address in `to` on `inbox_send`. A new address gets the message as typed.
 
-After they connect or verify, address them with `--to alice`. Messages go to the default they picked unless you pass `--via` on send.
+After they connect or confirm, address them with `--to alice`. Messages go to the default they picked unless you pass `--via` on send.
 
 The same person on email and on Telegram can be two contacts. These docs do not cover merging them.

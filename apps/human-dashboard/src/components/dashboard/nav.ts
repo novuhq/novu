@@ -44,8 +44,7 @@ export const MAIN_NAV: NavItem[] = [
   { href: '/contacts', label: 'Contacts', icon: Users },
 ];
 
-// There is no docs site yet, so Docs points at the package page like the landing page does.
-export const DOCS_URL = 'https://www.npmjs.com/package/@agentinbox/cli';
+export const DOCS_URL = 'https://docs.agentinbox.md';
 
 /** Where Share feedback leads until the product has a feedback form of its own. */
 export const FEEDBACK_URL = 'mailto:support@novu.co?subject=Agent%20Inbox%20feedback';

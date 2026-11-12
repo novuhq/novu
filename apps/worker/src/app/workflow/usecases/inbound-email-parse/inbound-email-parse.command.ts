@@ -98,6 +98,16 @@ export class InboundEmailParseCommand extends BaseCommand implements IInboundPar
   @IsString()
   spf: string;
 
+  // Optional: jobs queued by an inbound-mail service that predates them.
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  dkimDomains?: string[];
+
+  @IsOptional()
+  @IsString()
+  spfDomain?: string | null;
+
   @IsDefined()
   @IsNumber()
   spamScore: number;
@@ -107,7 +117,7 @@ export class InboundEmailParseCommand extends BaseCommand implements IInboundPar
   language: string;
 
   @IsDefined()
-  cc: any[];
+  cc: ITo[];
 
   @IsOptional()
   @IsArray()

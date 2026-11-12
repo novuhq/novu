@@ -5,12 +5,19 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { AgentReach } from './agent-settings';
 import { buildChannelPrompt } from './agent-setup-prompt';
-import type { ToolId } from './ai-tools';
+import { isToolId, type ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
+import { type AgentInboxFeatures, loadFeatures } from './feature-flags';
 import type { HostStatus } from './host-status';
 import type { HostId } from './hosts';
 import type { HumanAccount } from './human-account';
-import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
+import {
+  agentDisplayName,
+  type CardShown,
+  DEFAULT_AGENT_NAME,
+  getRelayAgent,
+  type RelayAgent,
+} from './human-agent-api';
 import { requestForAccount } from './human-api-key';
 import { listChannels } from './human-channels-api';
 import { loadChannelsOverview } from './human-channels-overview';
@@ -18,7 +25,7 @@ import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
-import { listConnectedTools, readMcpUrl } from './human-tools-api';
+import { listSignIns, readMcpUrl, type SignIn } from './human-tools-api';
 import {
   activityIsAfter,
   humanMessageAfter,
@@ -29,6 +36,7 @@ import {
   preferNewerInbound,
 } from './inbound-email';
 import type { InboxThread } from './inbox';
+import type { AgentLook } from './look';
 import {
   AGENT_DOMAIN,
   cardLinkOf,
@@ -39,22 +47,34 @@ import {
 } from './onboarding';
 import {
   awaitsTestMail,
+  belongsInOnboarding,
   isSetupUnfinished,
   rememberTestReply,
   resolveStep,
   type SetupStep,
+  signedInSince,
   wasMadeInTheSteps,
 } from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
+import { legacyStepOf, resolveSayHiStep, type SayHiStep } from './say-hi-progress';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
 export { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps };
 
 export type SetupProgress = {
+  /** The earlier onboarding's step, which the dashboard's banners and redirects read in either onboarding. */
   step: SetupStep;
+  /** The step of the onboarding where the agent says hi with its card, or `null` where the account hasn't got it. */
+  sayHiStep: SayHiStep | null;
+  features: AgentInboxFeatures;
   state: OnboardingState;
   agent: RelayAgent | null;
   hostStatus: HostStatus | null;
+  /**
+   * The apps that signed in through the MCP server since the agent was made, while the API has seen no host:
+   * one of them is the host that came in. Only asked then.
+   */
+  signIns: SignIn[];
   /** Missing only when the session outlived its user; the pages have sent that visitor to sign in by then. */
   user: User | null;
   /**
@@ -69,16 +89,77 @@ export type SetupProgress = {
  * lets it catch up with what happened since: see `catchUp`.
  */
 export const loadSetupProgress = cache(async (account: HumanAccount): Promise<SetupProgress> => {
-  const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
+  const [user, agent, features] = await Promise.all([findCurrentUser(), getRelayAgent(account), loadFeatures(account)]);
   const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
-    return { step: resolveStep(agent, {}, hostStatus), state: {}, agent, hostStatus, user, testMail: null };
+    return {
+      step: resolveStep(agent, {}, hostStatus),
+      sayHiStep: features.newOnboarding ? resolveSayHiStep(agent, {}, hostStatus) : null,
+      features,
+      state: {},
+      agent,
+      hostStatus,
+      signIns: [],
+      user,
+      testMail: null,
+    };
+  }
+
+  if (features.newOnboarding) {
+    return loadSayHiProgress(account, user, agent, hostStatus, features);
   }
 
   const { state, testMail } = await catchUp(user, account, agent, readOnboardingState(user));
+  const step = resolveStep(agent, state, hostStatus);
+  // Step 3 waits for a host. One that signed in through the MCP server has come in, before the API sees it check.
+  const signIns =
+    step === 'connect' && agent ? (await listSignIns(account)).filter((signIn) => signedInSince(signIn.at, agent)) : [];
 
-  return { step: resolveStep(agent, state, hostStatus), state, agent, hostStatus, user, testMail };
+  return {
+    step: signIns.length > 0 ? resolveStep(agent, state, hostStatus, true) : step,
+    sayHiStep: null,
+    features,
+    state,
+    agent,
+    hostStatus,
+    signIns,
+    user,
+    testMail,
+  };
 });
+
+/**
+ * The progress of the onboarding where the agent says hi with its card. It has no test email to look out for:
+ * the agent says hi in its host instead. Until a host connects, an app that signed in through the MCP server
+ * since the agent was made is a host that came in, before the API sees it check.
+ */
+async function loadSayHiProgress(
+  account: HumanAccount,
+  user: User,
+  agent: RelayAgent | null,
+  hostStatus: HostStatus | null,
+  features: AgentInboxFeatures
+): Promise<SetupProgress> {
+  const state = readOnboardingState(user);
+  const waiting = resolveSayHiStep(agent, state, hostStatus);
+  const signIns =
+    agent && (waiting === 'host' || waiting === 'connect')
+      ? (await listSignIns(account)).filter((signIn) => signedInSince(signIn.at, agent))
+      : [];
+  const sayHiStep = signIns.length > 0 ? resolveSayHiStep(agent, state, hostStatus, true) : waiting;
+
+  return {
+    step: legacyStepOf(sayHiStep),
+    sayHiStep,
+    features,
+    state,
+    agent,
+    hostStatus,
+    signIns,
+    user,
+    testMail: null,
+  };
+}
 
 /**
  * Brings the stored state up to date with mail that landed after the agent was created. Only the time is
@@ -184,9 +265,9 @@ export async function requireSetUpAgent(
   connect: HostId | null = null
 ): Promise<SetupProgress & { agent: RelayAgent }> {
   const progress = await loadSetupProgress(account);
-  const { agent } = progress;
+  const { agent, step, state } = progress;
 
-  if (!agent || (isSetupUnfinished(progress.step) && !progress.state.skippedAt)) {
+  if (!agent || belongsInOnboarding(agent, step, state)) {
     redirect(connect ? onboardingConnectPath(connect) : ONBOARDING_PATH);
   }
 
@@ -194,10 +275,14 @@ export async function requireSetUpAgent(
 }
 
 /** What the onboarding page keeps asking for, to notice a change it has to show. Cheap to work out. */
-export function describeProgress({ step, state, agent, hostStatus }: SetupProgress): string {
+export function describeProgress({ step, sayHiStep, state, agent, hostStatus }: SetupProgress): string {
   return [
     step,
+    sayHiStep,
     agent?.id,
+    agent?.cardShown?.at,
+    hostStatus?.cardShown?.at,
+    state.hostPickedAt,
     state.testSentAt,
     state.testReplyAt,
     agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
@@ -318,7 +403,7 @@ export type OnboardingView = {
   apiUrl: string;
   /** The hosted MCP server the chat apps of step 3 connect to, or `null` while there is none. */
   mcpUrl: string | null;
-  /** The chat apps that have signed in to the account. Only asked on step 3, whose drawers show it. */
+  /** The apps that signed in through the MCP server since the agent was made, which step 3's picker ticks. */
   connectedTools: ToolId[];
   channels: { telegram: boolean; slack: boolean };
   /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
@@ -345,7 +430,7 @@ export type OnboardingChannelSetup = {
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
 export async function loadOnboardingView(account: HumanAccount): Promise<OnboardingView | null> {
   const progress = await loadSetupProgress(account);
-  const { step, state, agent, hostStatus, user } = progress;
+  const { step, state, agent, hostStatus, signIns, user } = progress;
   if (step === 'done' || !user) {
     return null;
   }
@@ -358,13 +443,16 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
       ])
     : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
   const mcpUrl = readMcpUrl();
-  const [origin, mailDomain, connectedTools] = await Promise.all([
-    readSiteOrigin(),
-    readInboxMailDomain(account),
-    step === 'connect' && mcpUrl ? listConnectedTools(account) : [],
-  ]);
+  const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
+  // Only an app that signed in since the agent was made is ticked; one that did would have moved the steps on.
+  const connectedTools = signIns.map((signIn) => signIn.id).filter(isToolId);
   const host = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
     (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
+  // Until the API sees a host check, the first app that signed in through the MCP server is the one that came in.
+  const signedIn = signIns.reduce<SignIn | null>(
+    (earliest, signIn) => (!earliest || signIn.at < earliest.at ? signIn : earliest),
     null
   );
   const identity = agent && describeAgentIdentity(agent, state, origin, channels.emailAddress);
@@ -381,7 +469,11 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
       from: progress.testMail?.from,
       subject: progress.testMail?.subject,
     },
-    host: host ? { via: host.via, connectedAt: host.connectedAt } : null,
+    host: host
+      ? { via: host.via, connectedAt: host.connectedAt }
+      : signedIn
+        ? { via: 'mcp', connectedAt: signedIn.at }
+        : null,
     hostStatusUnavailable: Boolean(agent && state.testLeftAt && !hostStatus),
     waitingMessage: hostStatus?.waitingMessage ?? null,
     waiting,
@@ -400,6 +492,77 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
             },
           }
         : null,
+    reach: agent?.settings?.reach ?? null,
+    origin,
+    mailDomain,
+  };
+}
+
+/**
+ * What the onboarding where the agent says hi shows (`A.1` to `A.4`). `null` once it has nothing left to show:
+ * the operator opened the inbox, or the agent came from a terminal.
+ */
+export type SayHiView = {
+  step: Exclude<SayHiStep, 'done'>;
+  /** `describeProgress` of what this view shows, which the page polls for a change. */
+  status: string;
+  operator: { email: string | null; firstName: string | null };
+  /** Missing on A.1, where the agent is still being named. */
+  agent: (AgentIdentity & { look: AgentLook }) | null;
+  /** The host picked on A.2, which A.3 opens on. `null` before one was picked. */
+  pickedHost: HostId | null;
+  /** The host that came in first, and the way it came: what A.4a asks to say hi. `null` before one did. */
+  connected: { via: 'cli' | 'mcp'; host: HostId | null } | null;
+  /** The first time a host showed the card, and which: what A.4 shows happening. `null` before. */
+  cardShown: CardShown | null;
+  /** Messages already in the inbox, waiting for a host to read them. `null` when they couldn't be counted. */
+  waiting: number | null;
+  apiUrl: string;
+  mcpUrl: string | null;
+  /** The apps that signed in through the MCP server since the agent was made. */
+  connectedTools: ToolId[];
+  /** Who can reach the agent, for the Share dialog of A.4. `null` when it couldn't be read. */
+  reach: AgentReach | null;
+  origin: string;
+  mailDomain: string;
+};
+
+export async function loadSayHiView(account: HumanAccount): Promise<SayHiView | null> {
+  const progress = await loadSetupProgress(account);
+  const { sayHiStep, state, agent, hostStatus, signIns, user } = progress;
+  if (!sayHiStep || sayHiStep === 'done' || !user) {
+    return null;
+  }
+
+  const [channels, waiting, origin, mailDomain, apiUrl] = await Promise.all([
+    agent ? loadChannelFacts(account) : { telegram: false, slack: false, emailAddress: undefined },
+    agent ? countWaitingMessages(account) : 0,
+    readSiteOrigin(),
+    readInboxMailDomain(account),
+    readApiUrl(),
+  ]);
+  const first = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
+    (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
+  const signedIn = signIns.reduce<SignIn | null>(
+    (earliest, signIn) => (!earliest || signIn.at < earliest.at ? signIn : earliest),
+    null
+  );
+  const identity = agent ? describeAgentIdentity(agent, state, origin, channels.emailAddress) : null;
+
+  return {
+    step: sayHiStep,
+    status: describeProgress(progress),
+    operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
+    agent: identity && agent ? { ...identity, look: agent.look } : null,
+    pickedHost: state.pickedHost ?? null,
+    connected: first ? { via: first.via, host: first.id ?? null } : signedIn ? { via: 'mcp', host: signedIn.id } : null,
+    cardShown: agent?.cardShown ?? hostStatus?.cardShown ?? null,
+    waiting,
+    apiUrl,
+    mcpUrl: readMcpUrl(),
+    connectedTools: signIns.map((signIn) => signIn.id).filter(isToolId),
     reach: agent?.settings?.reach ?? null,
     origin,
     mailDomain,

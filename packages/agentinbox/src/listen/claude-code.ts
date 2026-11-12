@@ -1,10 +1,9 @@
 import { type ChildProcessWithoutNullStreams, spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { accessSync, constants, readFileSync, realpathSync } from 'node:fs';
-import { homedir, userInfo } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { HOST_MARKER_VARIABLES } from '../host';
 import { shortPath } from './computer';
 import type {
   HostAdapter,
@@ -19,6 +18,21 @@ import type {
   SessionInput,
   TurnEnded,
 } from './host-adapter';
+import {
+  briefMcpCall,
+  clip,
+  delay,
+  describeMcpCall,
+  executable,
+  hostOf,
+  onPath,
+  programEnv,
+  sentence,
+  settingsAmong,
+  stringOf,
+  withAccount,
+  within,
+} from './host-program';
 
 /** Claude Code's own install command for macOS, Linux and WSL, as its setup docs give it. */
 const INSTALL_COMMAND = 'curl -fsSL https://claude.ai/install.sh | bash';
@@ -36,26 +50,47 @@ const INTERRUPT_GRACE_MS = 10_000;
 /** How long `close` waits for Claude Code to exit by itself once its input has ended. */
 const CLOSE_GRACE_MS = 5_000;
 
-/** The longest command or path a progress line keeps. */
-const NOTE_LENGTH = 120;
+/**
+ * Claude Code's own settings among the shell's variables (code.claude.com/docs/en/env-vars): which provider it uses
+ * and how it reaches it (`CLAUDE_CODE_USE_BEDROCK`, `AWS_PROFILE`, `CLOUD_ML_REGION`, `ANTHROPIC_BASE_URL`…), which
+ * models, and where its own settings are.
+ */
+const SETTINGS =
+  /^(ANTHROPIC_\w+|CLAUDE_CODE_(USE|SKIP)_\w+|CLAUDE_CODE_SUBAGENT_MODEL|CLAUDE_CONFIG_DIR|CLOUD_ML_REGION|VERTEX_REGION_\w+|AWS_(PROFILE|REGION|DEFAULT_REGION|CONFIG_FILE|SHARED_CREDENTIALS_FILE)|GOOGLE_APPLICATION_CREDENTIALS)$/;
+
+/** An AWS access key, as the shell gives it to AWS's own sign-in. */
+const AWS_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN'];
 
 /**
- * Variables a parent Claude Code session (an agent that ran `listen --foreground`, say) leaves in the
- * environment. The session the listener starts is one of its own, so they go, with every host's marks.
+ * The providers Claude Code reaches, as `claude auth status` names them: what it signs in to each with from the
+ * shell, instead of a sign-in it keeps or finds itself (code.claude.com/docs/en/env-vars), and the setting that
+ * leaves signing in to a gateway. Only Anthropic's own sign-in is checked; any other provider says it is signed in
+ * whatever it has, so `name` says which one that is.
  */
-const PARENT_SESSION_VARIABLES = [
-  'CLAUDECODE',
-  'CLAUDE_CODE_SESSION_ID',
-  'CLAUDE_CODE_CHILD_SESSION',
-  'CLAUDE_CODE_BRIDGE_SESSION_ID',
-  'CLAUDE_CODE_MESSAGING_SOCKET',
-  'CLAUDE_CODE_MESSAGING_TOKEN',
-  'CLAUDE_CODE_SSE_PORT',
-  'CLAUDE_CODE_EXECPATH',
-  'CLAUDE_CODE_SESSION_ATTENDED',
-  'CLAUDE_PID',
-  'CLAUDE_CODE_ENTRYPOINT',
-];
+const PROVIDERS: Record<string, { name?: string; secrets: string[]; skip?: string }> = {
+  firstParty: { secrets: ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_OAUTH_TOKEN'] },
+  bedrock: {
+    name: 'Amazon Bedrock',
+    secrets: ['AWS_BEARER_TOKEN_BEDROCK', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_BEDROCK_AUTH',
+  },
+  mantle: {
+    name: 'Amazon Bedrock',
+    secrets: ['AWS_BEARER_TOKEN_BEDROCK', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_MANTLE_AUTH',
+  },
+  anthropicAws: {
+    name: 'Claude Platform on AWS',
+    secrets: ['ANTHROPIC_AWS_API_KEY', ...AWS_KEYS],
+    skip: 'CLAUDE_CODE_SKIP_ANTHROPIC_AWS_AUTH',
+  },
+  foundry: {
+    name: 'Microsoft Foundry',
+    secrets: ['ANTHROPIC_FOUNDRY_API_KEY', 'ANTHROPIC_FOUNDRY_AUTH_TOKEN'],
+    skip: 'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
+  },
+  vertex: { name: 'Vertex AI', secrets: [] },
+};
 
 /**
  * Claude Code, driven in print mode with stream-json both ways: messages go in on stdin while it works, and
@@ -65,7 +100,8 @@ const PARENT_SESSION_VARIABLES = [
 export const claudeCode: HostAdapter = {
   id: 'claude-code',
   name: 'Claude Code',
-  check: checkClaude,
+  check: async (project, env) => checkClaude(project, env),
+  settingsIn: (env) => settingsAmong(env, SETTINGS),
   open: (options, handlers) => new ClaudeCodeSession(options, handlers),
 };
 
@@ -120,9 +156,13 @@ function checkClaude(project: string, given: NodeJS.ProcessEnv = process.env): H
     };
   }
 
-  if (signedOut(command, env)) {
+  const status = authStatus(command, env);
+  if (status.signedOut) {
     return { ok: false, message: CLAUDE_CODE_SIGNED_OUT_HELP };
   }
+
+  const provider = PROVIDERS[status.provider];
+  const gateway = provider?.skip && /^(1|true|yes|on)$/i.test(env[provider.skip]?.trim() ?? '');
 
   // Kept as found: the native installer's launcher stays the same path while it updates Claude Code.
   return {
@@ -130,21 +170,24 @@ function checkClaude(project: string, given: NodeJS.ProcessEnv = process.env): H
     program: { command, args: [] },
     version: /\d+\.\d+\.\d+/.exec(ran.stdout)?.[0],
     warnings: untrustedProject(project, env) ? [untrustedWarning(project)] : [],
+    secrets: gateway ? [] : (provider?.secrets ?? []).filter((name) => env[name]?.trim()),
+    ...(status.provider === 'firstParty' ? {} : { provider: provider?.name ?? status.provider }),
   };
 }
 
 /**
- * Whether Claude Code says it isn't signed in. Only `loggedIn` is read (the answer also names the account).
- * Bedrock, Vertex and the like sign in their own way, and an answer that can't be read doesn't stop anything.
+ * What `claude auth status` says: whether it isn't signed in, and the provider it reaches. Only `loggedIn` and
+ * `apiProvider` are read (the answer also names the account). An answer that can't be read doesn't stop anything.
  */
-function signedOut(command: string, env: NodeJS.ProcessEnv): boolean {
+function authStatus(command: string, env: NodeJS.ProcessEnv): { signedOut: boolean; provider: string } {
   const ran = spawnSync(command, ['auth', 'status', '--json'], { encoding: 'utf8', timeout: 30_000, env });
   try {
     const status = JSON.parse(ran.stdout) as { loggedIn?: unknown; apiProvider?: unknown };
+    const provider = typeof status.apiProvider === 'string' ? status.apiProvider : 'firstParty';
 
-    return status.loggedIn === false && (status.apiProvider ?? 'firstParty') === 'firstParty';
+    return { signedOut: status.loggedIn === false && provider === 'firstParty', provider };
   } catch {
-    return false;
+    return { signedOut: false, provider: 'firstParty' };
   }
 }
 
@@ -194,54 +237,12 @@ function realpathOr(path: string): string {
   }
 }
 
-function onPath(name: string, path: string | undefined): string | undefined {
-  for (const folder of (path ?? '').split(delimiter)) {
-    const found = folder ? executable(join(folder, name)) : undefined;
-    if (found) {
-      return found;
-    }
-  }
-
-  return undefined;
-}
-
-function executable(file: string): string | undefined {
-  try {
-    accessSync(file, constants.X_OK);
-
-    return file;
-  } catch {
-    return undefined;
-  }
-}
-
 /**
- * The environment a session the listener starts runs in: the program's own, without a parent session's marks,
- * nor a connection the shell names. Its own commands use the one the listener uses, saved on this computer.
+ * The environment a Claude Code session the listener starts runs in (`programEnv`). Each command starts in the project,
+ * as Claude Code doesn't say where one runs: the listener goes by that when it lets the agent's own commands through.
  */
 export function sessionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const dropped = new Set([...PARENT_SESSION_VARIABLES, ...HOST_MARKER_VARIABLES, 'INBOX_API_URL', 'INBOX_SECRET_KEY']);
-
-  return withAccount(Object.fromEntries(Object.entries(env).filter(([name]) => !dropped.has(name))));
-}
-
-/**
- * Claude Code finds its sign-in in the Keychain under the account `USER` names, and a service launchd starts has
- * no `USER` (nor `LOGNAME` or `HOME`): the account this program runs as stands in, else it says it isn't signed in.
- */
-function withAccount(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  if (env.USER) {
-    return env;
-  }
-
-  const account = userInfo();
-
-  return {
-    ...env,
-    USER: account.username,
-    LOGNAME: env.LOGNAME || account.username,
-    HOME: env.HOME || account.homedir,
-  };
+  return { ...programEnv(env), CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR: '1' };
 }
 
 /** One line of Claude Code's stream-json output, as far as the listener reads it. */
@@ -260,6 +261,8 @@ type Line = {
   errors?: string[];
   user_message_uuid?: string;
   user_message_uuids?: string[];
+  /** How many model turns a result's turn took. */
+  num_turns?: number;
 };
 
 /** Claude Code's permission question, as `--permission-prompt-tool stdio` sends it. */
@@ -495,9 +498,16 @@ class ClaudeCodeSession implements HostSession {
       return;
     }
 
+    const named = line.user_message_uuids ?? (line.user_message_uuid ? [line.user_message_uuid] : undefined);
+    if (!named && !line.is_error && line.num_turns === 0) {
+      // A turn of Claude Code's own, which answered none of ours. Going on with a session whose last run left a
+      // background command, Claude Code 2.1.318 first gives its notice that the command didn't finish a turn: it
+      // names no message and runs no model (seen 2026-11-04). The message waiting behind it is yet to be read.
+      return;
+    }
+
     // One result a turn. A CLI that doesn't list what the turn answered answered everything sent so far.
-    const uuids =
-      line.user_message_uuids ?? (line.user_message_uuid ? [line.user_message_uuid] : [...this.inputs.keys()]);
+    const uuids = named ?? [...this.inputs.keys()];
     const inputIds = uuids.filter((uuid) => this.inputs.has(uuid)).map((uuid) => this.takeInput(uuid));
     const aborted = /^aborted/.test(line.terminal_reason ?? '');
     // A turn that failed to run lists `errors`; one whose model call failed ("Not logged in · Please run /login")
@@ -630,39 +640,6 @@ class ClaudeCodeSession implements HostSession {
 
 type AskedQuestion = { question?: string; options?: Array<{ label?: string }>; multiSelect?: boolean };
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms).unref();
-  });
-}
-
-async function within(promise: Promise<void>, ms: number): Promise<boolean> {
-  return Promise.race([promise.then(() => true), delay(ms).then(() => false)]);
-}
-
-function clip(text: string, length = NOTE_LENGTH): string {
-  const line = text.replace(/\s+/g, ' ').trim();
-
-  return line.length > length ? `${line.slice(0, length - 1)}…` : line;
-}
-
-/** Ends with a full stop, unless it ends with its own punctuation. */
-function sentence(text: string): string {
-  return /[.!?…]$/.test(text) ? text : `${text}.`;
-}
-
-function stringOf(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value : undefined;
-}
-
-function hostOf(url: string): string[] {
-  try {
-    return [new URL(url).hostname];
-  } catch {
-    return [];
-  }
-}
-
 /** What is asked for, so the core can tell the agent's own replies from everything else. */
 export function subjectOf(request: CanUseToolRequest): PermissionQuestion['subject'] {
   const input = request.input ?? {};
@@ -683,10 +660,9 @@ export function subjectOf(request: CanUseToolRequest): PermissionQuestion['subje
     return { kind: 'network', hosts: [] };
   }
   if (tool.startsWith('mcp__')) {
-    // Claude Code names an MCP server's tools `mcp__<server>__<tool>`.
-    const [, server = '', ...name] = tool.split('__');
+    const [server, name] = mcpName(tool);
 
-    return { kind: 'mcp', server, tool: name.join('__'), input };
+    return { kind: 'mcp', server, tool: name, input };
   }
   if (tool) {
     return { kind: 'tool', name: tool };
@@ -724,20 +700,17 @@ export function describeAction(request: CanUseToolRequest): string {
   }
 
   if (tool.startsWith('mcp__')) {
-    // Whole, with what it would be called with, as a command is: the operator allows what they read.
-    const args = Object.entries(input).map(([name, value]) => `${name} ${JSON.stringify(value)}`);
-
-    return `${mcpTool(tool)}${args.length > 0 ? ` with ${args.join(', ')}` : ''}`;
+    return describeMcpCall(...mcpName(tool), input);
   }
 
   return `use ${request.display_name ?? tool}`;
 }
 
-/** "use create_issue from github": an MCP server's tool, by the name Claude Code gives it, `mcp__<server>__<tool>`. */
-function mcpTool(tool: string): string {
-  const [, server, name] = tool.split('__');
+/** An MCP server's tool, by the name Claude Code gives it: `mcp__<server>__<tool>`. */
+function mcpName(tool: string): [server: string, name: string] {
+  const [, server = '', ...name] = tool.split('__');
 
-  return `use ${name ?? tool} from ${server ?? 'an MCP server'}`;
+  return [server, name.join('__')];
 }
 
 /** What `describeAction` says, short, for a card title the whole doesn't fit. */
@@ -761,7 +734,9 @@ export function describeBrief(request: CanUseToolRequest): string {
       return 'search the web';
     default:
       // An MCP tool or another tool goes by its name, which is short already.
-      return request.tool_name?.startsWith('mcp__') ? mcpTool(request.tool_name) : describeAction(request);
+      return request.tool_name?.startsWith('mcp__')
+        ? briefMcpCall(...mcpName(request.tool_name))
+        : describeAction(request);
   }
 }
 

@@ -2,7 +2,8 @@
 
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ComponentProps, useState, useTransition } from 'react';
 
 import {
   CONFIGURE_PATH,
@@ -15,6 +16,7 @@ import {
 import { Brand } from '@/components/site/brand';
 import { AgentAvatar } from '@/components/ui/agent-avatar';
 import { formatInboxCount } from '@/lib/inbox';
+import { ONBOARDING_PATH } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
 export type SidebarAgent = {
@@ -27,17 +29,45 @@ export type SidebarAgent = {
   pictureUrl?: string;
   /** The operator left the onboarding before a host was connected. Configure is where they pick it up. */
   setupUnfinished?: boolean;
+  /**
+   * The operator belongs in the onboarding (`belongsInOnboarding`). The main pages would only send them there,
+   * and Next draws nothing while such a page redirects, so their links go straight to it.
+   */
+  onboardingDue?: boolean;
   /** Threads with something the agent hasn't read: the number on Inbox, "at least" when `capped`. */
   unreadThreads?: { count: number; capped: boolean };
 };
 
+type NavigateEvent = Parameters<NonNullable<ComponentProps<typeof Link>['onNavigate']>>[0];
+
 export function Sidebar({ agent }: { agent: SidebarAgent }) {
   const current = findNavItem(usePathname());
+  const router = useRouter();
+  const leadsTo = agent.onboardingDue ? ONBOARDING_PATH : undefined;
+  const [leaving, startLeaving] = useTransition();
+  const [clicked, setClicked] = useState<string>();
+
+  /**
+   * Leaves for the onboarding once. Nothing else shows that it is on its way, as the dashboard stays on screen
+   * until that page is ready, and another click would throw the page away and ask for it all over again.
+   */
+  function leaveForOnboarding(event: NavigateEvent, href: string) {
+    event.preventDefault();
+    if (leaving) {
+      return;
+    }
+
+    setClicked(href);
+    startLeaving(() => router.push(ONBOARDING_PATH));
+  }
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-3 border-b border-border bg-subtle p-3 md:sticky md:top-0 md:h-dvh md:w-62 md:border-r md:border-b-0">
       <div className="flex h-8 items-center px-1.5">
-        <Brand href={DASHBOARD_HOME} />
+        <Brand
+          href={leadsTo ?? DASHBOARD_HOME}
+          onNavigate={leadsTo ? (event) => leaveForOnboarding(event, DASHBOARD_HOME) : undefined}
+        />
       </div>
 
       <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-2.5 py-[10.5px]">
@@ -56,6 +86,9 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
         <NavList
           items={MAIN_NAV}
           current={current}
+          leadsTo={leadsTo}
+          onNavigate={leadsTo ? leaveForOnboarding : undefined}
+          pending={leaving ? clicked : undefined}
           flagged={agent.setupUnfinished ? CONFIGURE_PATH : undefined}
           counts={{
             [DASHBOARD_HOME]: agent.unreadThreads
@@ -72,35 +105,58 @@ export function Sidebar({ agent }: { agent: SidebarAgent }) {
 type NavListProps = {
   items: NavItem[];
   current: NavItem | undefined;
+  /** Where the links go instead of their own pages. */
+  leadsTo?: string;
+  /** Takes over the navigation of a link, by its address. */
+  onNavigate?: (event: NavigateEvent, href: string) => void;
+  /** The page whose link was clicked and is on its way. */
+  pending?: string;
   /** The page that has something waiting for the operator: its link gets a dot. */
   flagged?: string;
   /** A number to show on a page's link, by its address, as written (`formatInboxCount`). None shows for zero. */
   counts?: Record<string, string>;
 };
 
-function NavList({ items, current, flagged, counts }: NavListProps) {
+function NavList({ items, current, leadsTo, onNavigate, pending, flagged, counts }: NavListProps) {
   return (
     <ul className="flex flex-row flex-wrap gap-1 md:flex-col md:flex-nowrap">
       {items.map((item) => (
         <li key={item.href}>
-          <NavLink item={item} active={item === current} flagged={item.href === flagged} count={counts?.[item.href]} />
+          <NavLink
+            item={item}
+            active={item === current}
+            leadsTo={leadsTo}
+            onNavigate={onNavigate}
+            pending={item.href === pending}
+            flagged={item.href === flagged}
+            count={counts?.[item.href]}
+          />
         </li>
       ))}
     </ul>
   );
 }
 
-type NavLinkProps = { item: NavItem; active: boolean; flagged: boolean; count?: string };
+type NavLinkProps = {
+  item: NavItem;
+  active: boolean;
+  leadsTo?: string;
+  onNavigate?: NavListProps['onNavigate'];
+  pending: boolean;
+  flagged: boolean;
+  count?: string;
+};
 
-function NavLink({ item, active, flagged, count }: NavLinkProps) {
+function NavLink({ item, active, leadsTo, onNavigate, pending, flagged, count }: NavLinkProps) {
   const Icon = item.icon;
+  const lit = active || pending;
   const className = cn(
     'flex h-8 items-center gap-2.5 rounded px-2 text-sm tracking-tight transition-colors motion-reduce:transition-none',
-    active ? 'bg-raised text-foreground' : 'text-secondary hover:bg-raised hover:text-foreground'
+    lit ? 'bg-raised text-foreground' : 'text-secondary hover:bg-raised hover:text-foreground'
   );
   const content = (
     <>
-      <Icon aria-hidden="true" className={cn('size-4 shrink-0', active && 'text-accent')} />
+      <Icon aria-hidden="true" className={cn('size-4 shrink-0', lit && 'text-accent')} />
       <span className="flex-1">{item.label}</span>
     </>
   );
@@ -125,8 +181,20 @@ function NavLink({ item, active, flagged, count }: NavLinkProps) {
   }
 
   return (
-    <Link href={item.href} aria-current={active ? 'page' : undefined} className={className}>
+    <Link
+      href={leadsTo ?? item.href}
+      onNavigate={onNavigate && ((event) => onNavigate(event, item.href))}
+      aria-busy={pending || undefined}
+      aria-current={active ? 'page' : undefined}
+      className={className}
+    >
       {content}
+      {pending && (
+        <>
+          <span aria-hidden="true" className="size-1.5 shrink-0 animate-pulse rounded-full bg-accent" />
+          <span className="sr-only">(opening)</span>
+        </>
+      )}
       {flagged && (
         <>
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-accent" />

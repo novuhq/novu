@@ -60,6 +60,7 @@ export type {
   SendActionResult,
   SendMessageInput,
   SendMessageResult,
+  StopResult,
   WebChat,
   WebChatConversation,
   WebChatDefinition,
@@ -67,8 +68,8 @@ export type {
   WebChatPaginationStatus,
   WebChatToolsDefinition,
 } from './web-chat';
-export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
 export { pendingActionKey } from './web-chat/derive-pending-actions';
+export { WebChatPlanLimitError, type WebChatPlanLimitReason } from './web-chat/web-chat-plan-limit-error';
 
 /**
  * Load Web Chat on a {@link Novu} instance. Safe to call more than one time.

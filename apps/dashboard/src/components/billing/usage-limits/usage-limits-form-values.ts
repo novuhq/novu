@@ -91,7 +91,7 @@ export type TierSuggestion =
   | { kind: 'upgrade_to_teams'; monthlyCost: number; teamsCost: number }
   | { kind: 'contact_sales'; monthlyCost: number; fromPlan: 'PRO' | 'TEAM' };
 
-export const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
+const CONTACT_SALES_MONTHLY_COST_THRESHOLD = 600;
 
 const TEAMS_MONTHLY_COST = getFeatureForTierAsNumber(
   FeatureNameEnum.PLATFORM_MONTHLY_COST,

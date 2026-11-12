@@ -73,6 +73,11 @@ export type HostStatus = {
   waitingMessage: { conversationId: string; from: string; subject: string; at: string; seenAt: string } | null;
   /** Where the agent is listening, or `null` when no computer keeps it listening. Missing from an older API. */
   listening?: Listening | null;
+  /**
+   * The first time a host showed the agent's card (`agent_card`, `agentinbox card`), and which: how the onboarding
+   * sees the agent say hi. `null` until one did; missing from an older API.
+   */
+  cardShown?: { at: string; via?: HostVia; host?: HostId } | null;
 };
 
 /** A one-time code for `agentinbox connect <handle> --code <code>`. It works once, for ten minutes. */
@@ -82,6 +87,8 @@ export type ConnectCode = {
   /** The agent it connects to, as the command names it. */
   handle: string;
   expiresAt: string;
+  /** The host the page asked it for (`useHostConnectCode`), so the one that used it can be named. */
+  host?: HostId;
 };
 
 /** What the server answers when asked for a code. `expiresInMs` is measured on the server, against its own clock. */
@@ -177,17 +184,17 @@ export function formatCheckedAgo(iso: string, now: number): string {
 }
 
 /**
- * The way a host came in that came in since `before`, or `null`: a host that wasn't there, or one that had
- * stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
+ * The host that came in since `before`, with the way it came in, or `null`: a host that wasn't there, or one
+ * that had stopped checking (`HOST_STALE_AFTER_MS`) and checked again.
  *
  * The same host on one more computer doesn't show here: it shares its entry with the first one, and a check
  * of the new one looks like a check of the old. The code it used tells that one apart (`useCodeWatch`).
  */
-export function findNewHost(before: HostStatus, after: HostStatus): HostVia | null {
+export function findNewHost(before: HostStatus, after: HostStatus): AgentHost | null {
   for (const host of after.hosts) {
     const known = before.hosts.find((entry) => entryKey(entry) === entryKey(host));
     if (!known || known.connectedAt !== host.connectedAt) {
-      return host.via;
+      return host;
     }
 
     if (host.lastCheckedAt && host.lastCheckedAt !== known.lastCheckedAt) {
@@ -195,7 +202,7 @@ export function findNewHost(before: HostStatus, after: HostStatus): HostVia | nu
       const knownCheckedAt = known.lastCheckedAt ? Date.parse(known.lastCheckedAt) : Number.NaN;
 
       if (Number.isNaN(knownCheckedAt) || checkedAt - knownCheckedAt > HOST_STALE_AFTER_MS) {
-        return host.via;
+        return host;
       }
     }
   }
