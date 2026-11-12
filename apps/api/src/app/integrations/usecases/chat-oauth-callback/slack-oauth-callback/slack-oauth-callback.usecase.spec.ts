@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { GetNovuProviderCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -325,6 +326,60 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
     expect(updateArg.workspace.id).to.equal(MOCK_TEAM_ID);
     expect(updateArg.workspace.name).to.equal(MOCK_TEAM_NAME);
   });
+
+  const ownershipCases = [
+    {
+      name: "refuses another subscriber's connection",
+      connection: { subscriberId: 'another-subscriber', contextKeys: [] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID },
+      allowed: false,
+    },
+    {
+      name: "refuses a tenant's shared connection from another tenant",
+      connection: { contextKeys: ['tenant:acme'] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID, context: { tenant: 'globex' } },
+      allowed: false,
+    },
+    {
+      name: "lets a member of the tenant refresh the tenant's shared connection",
+      connection: { contextKeys: ['tenant:acme'] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID, connectionMode: 'subscriber', context: { tenant: 'acme' } },
+      allowed: true,
+    },
+  ];
+
+  for (const { name, connection, caller, allowed } of ownershipCases) {
+    it(`reconnect by identifier ${name}`, async () => {
+      harness.channelConnectionRepository.findOne
+        .onFirstCall()
+        .resolves({ identifier: MOCK_CONNECTION_IDENTIFIER, ...connection } as any);
+
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.Slack,
+        identifier: MOCK_CONNECTION_IDENTIFIER,
+        ...caller,
+      });
+
+      let error: unknown;
+      try {
+        await harness.usecase.execute(SlackOauthCallbackCommand.create({ providerCode: 'slack-code', state }));
+      } catch (err) {
+        error = err;
+      }
+
+      if (allowed) {
+        expect(error).to.be.undefined;
+        expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
+      } else {
+        expect(error).to.be.instanceOf(ConflictException);
+        expect(harness.updateChannelConnection.execute.called).to.be.false;
+        expect(harness.createChannelConnection.execute.called).to.be.false;
+      }
+    });
+  }
 
   it('should update connection and create endpoint when autoLinkUser=true on reconnect', async () => {
     harness.channelConnectionRepository.findOne.onFirstCall().resolves({
