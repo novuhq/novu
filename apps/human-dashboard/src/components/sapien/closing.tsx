@@ -14,6 +14,7 @@ import {
 
 import { AgentIdCard } from './agent-id-card';
 import { Artwork } from './artwork';
+import { DisplayAccent } from './section-eyebrow';
 import { SectionFrame } from './section-frame';
 
 // Figma feathers the card with a blurred 575×360 ellipse; this box is the mask
@@ -35,7 +36,7 @@ export function Closing() {
           {CLOSING_HEADING.lead}
           <br />
           {`${CLOSING_HEADING.rest} `}
-          <em className="font-sapien-display leading-[0] tracking-tight text-accent">{CLOSING_HEADING.accent}</em>
+          <DisplayAccent className="text-[1.2em] leading-[0]">{CLOSING_HEADING.accent}</DisplayAccent>
         </h2>
         <p className="mt-[13px] h-[42px] text-[15px] leading-[1.375] tracking-tight text-sapien-foreground/70 sm:mt-[11px]">
           {CLOSING_DESCRIPTION[0]}

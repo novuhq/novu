@@ -39,7 +39,7 @@ describe('messageForHost', () => {
       attachments: [{ name: 'report.pdf' }, { type: 'image' }],
     });
     expect(text).toContain('conv_1 (telegram, a group)');
-    expect(text).toContain('(With 2 files: report.pdf, image. See npx @agentinbox/cli inbox show conv_1.)');
+    expect(text).toContain('(With 2 files: report.pdf, image. See npx @agentinbox/cli show conv_1.)');
 
     expect(
       messageForHost({ ...MESSAGE, answersMessageId: 'int_9', answer: { status: 'answered', optionId: 'b' } })
@@ -53,14 +53,27 @@ describe('messageForHost', () => {
 
 describe('hostInstructions', () => {
   it('tells the host it started which conversation is its own and how to answer in it', () => {
-    const text = hostInstructions({ conversationId: 'conv_1', channel: 'telegram', project: '~/app' });
+    const text = hostInstructions({
+      conversationId: 'conv_1',
+      channel: 'telegram',
+      project: '~/app',
+      alongside: false,
+    });
 
     expect(text).toContain('started you in ~/app');
-    expect(text).toContain('`npx @agentinbox/cli inbox reply conv_1 "…"`');
+    expect(text).toContain('`npx @agentinbox/cli reply conv_1 "…"`');
     expect(text).toContain('run without asking anyone');
     expect(text).toContain('add `--to <contact>` to that reply');
-    expect(text).toContain('`npx @agentinbox/cli inbox resolve conv_1`');
+    expect(text).toContain('`npx @agentinbox/cli resolve conv_1`');
     expect(text).toContain('only your operator allows things');
+    expect(text).not.toContain('Other sessions');
+  });
+
+  it('tells it other sessions may work in the same folder when runs go on side by side', () => {
+    const text = hostInstructions({ conversationId: 'conv_1', channel: 'telegram', project: '~/app', alongside: true });
+
+    expect(text).toContain('Other sessions may work in this folder at the same time');
+    expect(text).toContain('Leave the changes you didn’t make alone.');
   });
 });
 
@@ -117,11 +130,63 @@ describe('permissionCard', () => {
   });
 
   it('keeps a command too long for a card title whole in the body, where it isn’t cut', () => {
-    const command = `npx @agentinbox/cli inbox reply conv_1 "${'The folder is empty. '.repeat(6).trim()}"`;
+    const command = `npx @agentinbox/cli reply conv_1 "${'The folder is empty. '.repeat(6).trim()}"`;
 
     expect(card(`run \`${command}\``)).toEqual({
       title: 'Claude Code wants to run a command',
       body: `Run \`${command}\`.\n\nSend the reply. In ~/app on MacBook, for your message. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.`,
+    });
+  });
+
+  describe('for a contact’s run', () => {
+    const forBen = (action: string, text: string) =>
+      permissionCard({
+        hostName: 'Claude Code',
+        action,
+        brief: 'run a command',
+        project: '~/app',
+        computerName: 'MacBook',
+        startedBy: { name: 'Ben', channel: 'telegram', text },
+        timeoutSeconds: 600,
+      });
+
+    it('says first whose run it is, where they wrote, and what they asked', () => {
+      expect(forBen('run `npm publish`', 'Publish the new version')).toEqual({
+        title: 'Claude Code wants to run `npm publish`',
+        body: 'For Ben’s message on Telegram: “Publish the new version”\n\nIn ~/app on MacBook. Its settings for this project don’t allow this. No answer in 10 minutes counts as Deny.',
+      });
+    });
+
+    it('shows how a long message began, on one line', () => {
+      const text = `Deploy the staging branch\n\nthen ${'check every page '.repeat(10)}`;
+      const first = forBen('run `npm publish`', text)?.body.split('\n\n')[0];
+
+      expect(first).toMatch(/^For Ben’s message on Telegram: “Deploy the staging branch then check every page .*…”$/);
+      expect(first?.length).toBeLessThan(150);
+    });
+
+    it('names the contact before a command too long for the title, and the channel as it is when unknown', () => {
+      const command = 'echo ready\nnpm publish';
+      const card = permissionCard({
+        hostName: 'Claude Code',
+        action: `run \`${command}\``,
+        brief: 'run a command',
+        project: '~/app',
+        computerName: 'MacBook',
+        startedBy: { name: 'Ben', channel: 'email', text: 'Ship it' },
+        timeoutSeconds: 600,
+      });
+
+      expect(card?.body).toMatch(
+        /^For Ben’s message on email: “Ship it”\n\nRun `echo ready\nnpm publish`\.\n\nIn ~\/app/
+      );
+    });
+
+    it('says only whose message it was when it had no words, or when the action leaves no room for them', () => {
+      expect(forBen('run `ls`', '  ')?.body).toMatch(/^For Ben’s message on Telegram\.\n\nIn /);
+
+      const long = `run \`echo ${'x'.repeat(2840)}\``;
+      expect(forBen(long, 'Print a lot of x')?.body).toMatch(/^For Ben’s message on Telegram\.\n\n/);
     });
   });
 });

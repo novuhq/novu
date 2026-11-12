@@ -14,6 +14,10 @@ _Avoid_: owner, user, inviter
 Anyone an operator's agents can reach, including the operator.
 _Avoid_: subscriber, recipient
 
+**Confirm**:
+Proving an email address is yours by pressing the button in the email sent to it.
+_Avoid_: verify, opt in
+
 **Stranger**:
 A person or service that writes to an agent without being one of its contacts.
 _Avoid_: unknown sender, guest, anonymous
@@ -23,6 +27,26 @@ _Avoid_: unknown sender, guest, anonymous
 **Agent**:
 The identity contacts see and talk to: one name, one picture, one presence on each channel.
 _Avoid_: relay, bot
+
+**Address**:
+The email address an agent has on agentinbox.md, such as sid@agentinbox.md, which its contacts write to; it is picked when the agent is made and never changes.
+_Avoid_: email, mailbox
+
+**Mascot**:
+The drawn face an agent shows wherever it has no picture its operator uploaded.
+_Avoid_: avatar, blob
+
+**Look**:
+The shape and colour of an agent's mascot, and the art on its card, as its operator picked them. Every agent starts with the original look, the round orange mascot (shape Orb, colour Ember), and keeps it until its operator picks another. Its face is not part of it: the face follows the moment.
+_Avoid_: appearance, style, theme, skin
+
+**Agent card**:
+The agent as people are shown it: its name, mascot, card art, address and link, on its public page and wherever the agent shares it.
+_Avoid_: profile, business card, ID card
+
+**Card art**:
+The dotted drawing across the top of an agent card, in its look's colour; the operator can redraw it until they like one.
+_Avoid_: pattern, texture, background, seed
 
 **Host**:
 The program that acts as an agent for an operator, such as Claude Code or a scheduled routine; an agent can have several, each reaching it through the CLI or through MCP.
@@ -86,6 +110,24 @@ _Avoid_: active, in progress
 A conversation the host has declared finished; it becomes open again when anyone says something in it.
 _Avoid_: closed, archived, done
 
+### Messages
+
+**Question**:
+A message from an agent that waits for a person's words; their reply is the answer.
+_Avoid_: prompt, request
+
+**Approval**:
+A message from an agent that waits for a person to approve or deny something; on email only its buttons answer it.
+_Avoid_: permission request, confirmation
+
+**Choice**:
+A message from an agent that waits for a person to pick one option; on email only its buttons answer it.
+_Avoid_: poll, picker
+
+**Confirmation page**:
+The page a person lands on after pressing a button in an agent's email, where one more click sends their answer, so a link scanner can't answer for them.
+_Avoid_: preview page, action page
+
 ### Accounts
 
 **Agent Inbox account**:
@@ -97,7 +139,7 @@ The hidden Novu organization, with its hidden Novu user, behind an Agent Inbox a
 _Avoid_: shadow org, Novu account, workspace
 
 **Keyless setup**:
-What an operator, or an agent for them, builds with the CLI before signing up.
+What an operator, or an agent for them, builds with the CLI before signing up. People see it as a demo setup.
 _Avoid_: demo, demo workspace
 
 **Claim**:

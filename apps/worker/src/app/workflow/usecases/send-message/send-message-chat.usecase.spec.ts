@@ -96,6 +96,7 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       job: {
         _id: 'job_1',
         tenant: undefined,
+        step: {},
       } as never,
     });
   }
@@ -226,7 +227,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       { execute: sinon.stub().resolves(endpointGroups) } as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
-      { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
+      { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService: IS_CHAT_BLOCK_EDITOR_ENABLED
     );
 
     return usecase;

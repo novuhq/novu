@@ -23,11 +23,5 @@ export const geistMono = localFont({
   display: 'swap',
 });
 
-/** Italic display face for the accent words in the headings. */
-export const ivyPresto = localFont({
-  src: '../../public/fonts/ivy-presto-italic.woff2',
-  weight: '400',
-  style: 'italic',
-  variable: '--font-ivy-presto',
-  display: 'swap',
-});
+/** Redaction 35 italic for the accent lines. Plate numbers use Geist Mono. */
+export { redaction } from './redaction-font';

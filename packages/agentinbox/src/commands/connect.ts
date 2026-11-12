@@ -5,6 +5,7 @@ import { findOperator } from '../api/login';
 import { info, promptLine, success } from '../cli-io';
 import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { detectHost, type HostId, isHostId } from '../host';
+import { hostNameOf, startableHosts } from '../listen/hosts';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
@@ -56,7 +57,7 @@ export async function connectCommand(agent: string, options: ConnectOptions): Pr
       info(`Messages need --to until the account has you as a contact: run ${pc.bold(`${CLI_COMMAND} setup`)}.`);
     }
 
-    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} inbox list`)}`;
+    const check = `Check it works: ${pc.bold(`${CLI_COMMAND} list`)}`;
     const listen = listenHint(detectHost() ?? result.config.host, handle);
     if (screen) {
       screen.add({ mark: 'next', value: check }, ...(listen ? [{ mark: 'next' as const, value: listen }] : []));
@@ -131,15 +132,15 @@ export async function runConnect(
 }
 
 /**
- * The optional last step, for a host `listen` can start (Claude Code for now): listening for messages, so one
- * to the agent starts it on this computer. Undefined for every other host.
+ * The optional last step, for a host `listen` can start: listening for messages, so one to the agent starts it on
+ * this computer. Undefined for every other host.
  */
 export function listenHint(host: HostId | undefined, handle: string): string | undefined {
-  if (host !== 'claude-code') {
+  if (!host || !(startableHosts() as readonly string[]).includes(host)) {
     return undefined;
   }
 
-  return `Optional: keep Claude Code listening, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} listen claude-code`)}`;
+  return `Optional: keep ${hostNameOf(host)} listening, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} listen ${host}`)}`;
 }
 
 /**

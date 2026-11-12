@@ -2,11 +2,10 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
-import {
-  resolveHumanDashboardBaseUrl,
-  resolveHumanRegion,
-} from '../../shared/helpers/resolve-human-dashboard-base-url';
+import { relayAcknowledgesMessages } from '../../agents/human-relay/relay-acknowledges-messages';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
+import { agentLookOf, cardShownOf } from './agent-look';
+import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
 import { HumanOperatorService } from './human-operator.service';
 
@@ -37,29 +36,12 @@ export function detectPictureType(file: Buffer): PictureType | null {
   return null;
 }
 
-/** Where anyone can load the agent's picture, or nothing when it has none. */
-export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId' | 'picture'>): string | undefined {
-  if (!agent.picture?.storageKey) {
-    return undefined;
-  }
-
-  const path = `${agent._environmentId}/${agent._id}/${agent.picture.version}`;
-
-  // Where the Agent Inbox dashboard runs, its API (`/api/v1/agent-pictures/…`) forwards to this one, so the
-  // people who see the picture never see this API's address. It only forwards to the US API; the EU API, and an
-  // API without a dashboard, hand out their own address.
-  if (process.env.HUMAN_DASHBOARD_URL?.trim() && resolveHumanRegion() === 'us') {
-    return `${resolveHumanDashboardBaseUrl()}/api/v1/agent-pictures/${path}`;
-  }
-
-  return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
-}
-
 type AgentScope = { environmentId: string; organizationId: string; agentIdentifier: string };
 
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
- * public too), and set on the agent's Telegram bots. A Slack app's icon can only be changed in Slack.
+ * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
+ * after that the icon can only be changed in Slack.
  */
 @Injectable()
 export class HumanAgentPictureService {
@@ -76,6 +58,7 @@ export class HumanAgentPictureService {
   /** The agent as the Human endpoints report it. */
   describe(agent: AgentEntity): HumanAgentResponseDto {
     const pictureUrl = agentPictureUrl(agent);
+    const cardShown = cardShownOf(agent);
 
     return {
       agentId: agent._id,
@@ -83,11 +66,14 @@ export class HumanAgentPictureService {
       name: agent.name,
       ...(agent.description ? { description: agent.description } : {}),
       ...(pictureUrl ? { pictureUrl } : {}),
+      look: agentLookOf(agent),
+      ...(cardShown ? { cardShown } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
       reach: agent.reach ?? 'anyone',
       paused: Boolean(agent.pausedAt),
       ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
+      acknowledgeOnReceived: relayAcknowledgesMessages(agent),
     };
   }
 

@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils';
 type OnboardingShellProps = {
   /** The right end of the top bar: who is signed in, and the way to sign out. */
   aside: ReactNode;
+  /**
+   * The screens lay themselves out over the whole space between the bars, the design's `Canvas`, edge to edge:
+   * no card in the middle, and no margins of the shell's own.
+   */
+  canvas?: boolean;
   children: ReactNode;
 };
 
@@ -16,7 +21,7 @@ type OnboardingShellProps = {
  * The onboarding's own full screen, outside the dashboard: the logo, one card in the middle, and the
  * credit, Docs and Help at the bottom. No sidebar and no top bar, so nothing changes under a refresh.
  */
-export function OnboardingShell({ aside, children }: OnboardingShellProps) {
+export function OnboardingShell({ aside, canvas = false, children }: OnboardingShellProps) {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-x-clip">
       <Pattern />
@@ -25,7 +30,11 @@ export function OnboardingShell({ aside, children }: OnboardingShellProps) {
         <Brand />
         <div className="ml-auto flex min-w-0 items-center gap-4">{aside}</div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-10 md:px-10">{children}</main>
+      <main
+        className={cn('flex flex-1 flex-col', canvas ? 'relative' : 'items-center justify-center px-4 pb-10 md:px-10')}
+      >
+        {children}
+      </main>
       <footer className="flex items-center gap-4 px-4 py-4.5 text-xs leading-4 text-muted md:px-10">
         <a
           href="https://novu.co/"
@@ -78,13 +87,14 @@ type SetupCardProps = {
 /**
  * The card in the middle (`Setup`): the step on the left, the agent's card on the right.
  *
- * It is as tall as its tallest step: the last one, once the host has read the message that waited for
- * it (722px where the card has its full width). The steps differ by up to 160px, and a card that
- * followed them would move itself and all that is on it up and down the page from one step to the next.
+ * It is 723px tall on every step, as every frame of the design draws it, which is as tall as its tallest
+ * steps: the connect step, and the last one once the host has read the message that waited for it. The
+ * steps differ by up to 160px, and a card that followed them would move itself and all that is on it up
+ * and down the page from one step to the next.
  */
 export function SetupCard({ stage, children }: SetupCardProps) {
   return (
-    <section className="flex w-full max-w-280 rounded-xl border border-border bg-background md:min-h-180.5">
+    <section className="flex w-full max-w-280 rounded-xl border border-border bg-background md:min-h-180.75">
       {/* Clipped, so a step that is taller than the last one shows only as far as the card has grown. */}
       <div className="flex min-w-0 flex-1 flex-col gap-5.5 overflow-hidden p-6 md:p-11">{children}</div>
       <div className="relative isolate hidden w-110 shrink-0 overflow-hidden rounded-r-[11px] border-l border-border lg:block">

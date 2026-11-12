@@ -23,13 +23,16 @@ export interface ListenLimits {
   runsPerHour: number;
   /** How long one run may go on, in seconds. */
   maxRunSeconds: number;
+  /** How many runs may go on at once, each for its own conversation. */
+  runsAtOnce: number;
 }
 
 /**
  * Twenty runs an hour is one every three minutes, more than a person writing needs, and it caps what a
- * runaway exchange can cost. Half an hour covers a real piece of work, approvals included.
+ * runaway exchange can cost. Half an hour covers a real piece of work, approvals included. Five at once lets a
+ * few people be answered together, without as many hosts working on one computer as there are conversations.
  */
-export const DEFAULT_LIMITS: ListenLimits = { runsPerHour: 20, maxRunSeconds: 30 * 60 };
+export const DEFAULT_LIMITS: ListenLimits = { runsPerHour: 20, maxRunSeconds: 30 * 60, runsAtOnce: 5 };
 
 /** Why it stopped for good: retrying would not help, so it waits until listening is turned on again. */
 export type StopReason = 'key_changed' | 'listening_elsewhere' | 'host_missing' | 'connection_changed';
@@ -77,6 +80,12 @@ export interface ListenState {
   cursor?: string;
   /** Messages that came and aren't handled yet, oldest first. */
   queue: ListenMessage[];
+  /**
+   * The answers to the host's questions among them that the listener looked up, or began to: a look reads the
+   * answer, so another would take that read for a command's. They join a run as they are; one that a command had
+   * got already, the look dropped.
+   */
+  lookedUp?: string[];
   /** The latest handled message ids, so none is handled twice. */
   handled: string[];
   /**
@@ -92,10 +101,10 @@ export interface ListenState {
   /** When runs started within the last hour. */
   runs: string[];
   /**
-   * The run in progress, while it is: one the program's end cut off is still here when it starts again, and its
-   * conversation is told.
+   * The runs in progress, one per conversation, while they are: those the program's end cut off are still here when
+   * it starts again, and their conversations are told.
    */
-  running?: { conversationId: string; at: string };
+  inProgress?: Array<{ conversationId: string; at: string }>;
   /** When the operator was last told the hourly limit holds messages back. */
   limitToldAt?: string;
   /** Set when it stopped for good. */

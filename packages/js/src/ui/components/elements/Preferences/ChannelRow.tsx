@@ -115,7 +115,7 @@ type ChannelIconProps = JSX.IntrinsicElements['svg'] & {
 const ChannelIcon = (props: ChannelIconProps) => {
   const style = useStyle();
 
-  const iconMap: Record<ChannelType, { key: AllIconKey; component: JSX.Element }> = {
+  const iconMap: Partial<Record<ChannelType, { key: AllIconKey; component: JSX.Element }>> = {
     [ChannelType.IN_APP]: {
       key: 'inApp',
       component: (

@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { HostLogo } from '@/components/connect/host-logo';
 import { HostPicker } from '@/components/connect/host-picker';
-import { ChatAppSteps, CommandSteps, commandsLead, Divider } from '@/components/connect/host-steps';
+import { HostSetupBox } from '@/components/connect/host-setup-box';
+import { AppLink, Divider, ListenStep } from '@/components/connect/host-steps';
 import { configureConnectPath } from '@/components/dashboard/nav';
 import { Brand } from '@/components/site/brand';
 import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
+import { type HostWay, waysOf } from '@/lib/host-ways';
 import {
   type Host,
   type HostId,
@@ -17,6 +20,7 @@ import {
   hostPath,
   hostSubject,
   hostSummary,
+  listenCommand,
   MCP_URL,
   tellYourAgent,
 } from '@/lib/hosts';
@@ -25,12 +29,12 @@ import { cn } from '@/lib/utils';
 
 /**
  * A host's public page on agentinbox.md (`/claude-code`), for the person setting it up: what to tell their
- * agent, then the same steps as the dashboard's picker, from the same list. Where the dashboard has the
- * one-time code, this page says "sign in to get your code", which opens "Connect another agent" on this host
- * once they're signed in. The other hosts are a click away in the same picker, each a page of its own.
+ * agent, then the same setup box as the dashboard's onboarding, from the same snippets. Where the dashboard
+ * has the one-time code, this page says "sign in to get your code", which opens "Connect another agent" on
+ * this host once they're signed in. The other hosts are a click away in the same picker, each a page of its own.
  *
- * Not drawn in the design: it's built from the dashboard's own parts, the prompt box of `4.7`, the steps of
- * `4c.1` and the onboarding's "or from your terminal" divider (`0.3 · Connect`).
+ * Not drawn in the design: it's built from the dashboard's own parts, the prompt box of `4.7` and the
+ * onboarding's setup box (`1.4 · Connect`).
  */
 export function HostPage({ hostId }: { hostId: HostId }) {
   const host = hostOf(hostId);
@@ -81,20 +85,7 @@ export function HostPage({ hostId }: { hostId: HostId }) {
           <Divider>or set it up yourself</Divider>
 
           <section aria-label="Set it up yourself" className="flex flex-col gap-4.5">
-            {host.group === 'commands' ? (
-              <>
-                <p className="text-[13px] leading-[19px] text-secondary">{commandsLead(host)}</p>
-                <CommandSteps
-                  host={host}
-                  handle=""
-                  code={{ status: 'signed-out', signInHref }}
-                  mcpUrl={MCP_URL}
-                  hideLead
-                />
-              </>
-            ) : (
-              <ChatAppSteps host={host} mcpUrl={MCP_URL} />
-            )}
+            <PublicHostSetup host={host} signInHref={signInHref} />
           </section>
         </div>
       </main>
@@ -122,11 +113,45 @@ export function HostPage({ hostId }: { hostId: HostId }) {
 }
 
 /**
+ * The dashboard's setup box for this host (`HostSetupBox`): the same tabs and snippets as onboarding. The CLI
+ * tab has no code here, so it sends the operator to sign in. Listening for messages sits under that tab, as
+ * it does in the dashboard.
+ */
+function PublicHostSetup({ host, signInHref }: { host: Host; signInHref: string }) {
+  const ways = waysOf(host);
+  const [chosen, setChosen] = useState<HostWay | null>(null);
+  const way = chosen && ways.includes(chosen) ? chosen : ways[0];
+  const listen = host.group === 'commands' && way === 'cli' ? listenCommand(host) : undefined;
+
+  return (
+    <>
+      <HostSetupBox
+        host={host}
+        waysFor={() => ways}
+        wayFor={() => way}
+        onWayChange={setChosen}
+        handle="<agent>"
+        signedOut={{ signInHref }}
+        mcpUrl={MCP_URL}
+      />
+      {host.group === 'commands' && listen && <ListenStep host={host} handle="" command={listen} />}
+      {host.group === 'chat' && host.settings && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <AppLink href={host.settings.url} desktopUrl={host.settings.desktopUrl}>
+            {host.settings.label}
+          </AppLink>
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
  * What the page opens with: the line to tell the agent, in a box like the prompt of "Connect another agent"
  * (`4.7`), with the button that copies it.
  */
 function TellYourAgent({ host }: { host: Host }) {
-  const line = tellYourAgent(host.id);
+  const line = tellYourAgent();
   const subject = hostSubject(host);
 
   return (

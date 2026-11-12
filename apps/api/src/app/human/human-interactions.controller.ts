@@ -46,6 +46,7 @@ import {
   type SendHumanTestEmailResponseDto,
   UpdateHumanAgentRequestDto,
 } from './dtos/human-agent.dto';
+import { ShowHumanAgentCardResponseDto } from './dtos/human-agent-card-shown.dto';
 import {
   CreateHumanInviteRequestDto,
   CreateHumanInviteResponseDto,
@@ -73,7 +74,7 @@ import {
   SetupHumanRelayResponseDto,
 } from './dtos/setup-human-relay.dto';
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
-import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
 import {
   AGENT_PICTURE_FIELD,
@@ -83,6 +84,7 @@ import {
 import {
   AGENT_INBOX_HOST_HEADER,
   AGENT_INBOX_VIA_HEADER,
+  GENERAL_HOST,
   HumanHostStatusService,
   readHostId,
   readHostVia,
@@ -123,6 +125,8 @@ import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
   SetupHumanRelay,
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowHumanAgentCardCommand } from './usecases/show-human-agent-card/show-human-agent-card.command';
+import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
 import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 
@@ -153,7 +157,8 @@ export class HumanInteractionsController {
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
     private readonly hostStatus: HumanHostStatusService,
-    private readonly setContactListenToUsecase: SetContactListenTo
+    private readonly setContactListenToUsecase: SetContactListenTo,
+    private readonly showHumanAgentCardUsecase: ShowHumanAgentCard
   ) {}
 
   @Post('/interactions')
@@ -391,6 +396,7 @@ export class HumanInteractionsController {
   async setup(
     @UserSession() user: UserSessionData,
     @Body() body: SetupHumanRelayRequestDto,
+    @Headers() headers: Record<string, unknown>,
     @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string,
     @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
     @Headers(AGENT_INBOX_HOST_HEADER) host?: string
@@ -407,10 +413,14 @@ export class HumanInteractionsController {
         agentDescription: body.agentDescription,
         inboxHandle: body.inboxHandle,
         email: body.email,
+        // Hosts hold the same key, so only the dashboard's server, which read it from Clerk, can vouch for an address.
+        emailVerified: body.emailVerified === true && carriesHumanDashboardSecret(headers),
         firstName: body.firstName,
         lastName: body.lastName,
         defaultVia: body.defaultVia,
         analyticsSource: readAnalyticsSource(analyticsSource),
+        // The operator picks the look on the dashboard; a host setting up the agent leaves the original one.
+        look: body.look && carriesHumanDashboardSecret(headers) ? body.look : undefined,
       })
     );
 
@@ -429,8 +439,9 @@ export class HumanInteractionsController {
 
   /**
    * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
-   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
-   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
+   * page, in emails and on the agent's Telegram bot), sets who can reach it and whether it acknowledges
+   * incoming messages, and pauses or resumes it. Those settings are the operator's, on the dashboard; a host
+   * gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -441,7 +452,7 @@ export class HumanInteractionsController {
     @Body() body: UpdateHumanAgentRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
-    if (body.reach !== undefined || body.paused !== undefined) {
+    if (body.reach !== undefined || body.paused !== undefined || body.acknowledgeOnReceived !== undefined) {
       assertFromHumanDashboard(headers);
     }
 
@@ -455,6 +466,7 @@ export class HumanInteractionsController {
         description: body.description,
         reach: body.reach,
         paused: body.paused,
+        acknowledgeOnReceived: body.acknowledgeOnReceived,
       })
     );
   }
@@ -522,6 +534,39 @@ export class HumanInteractionsController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   getAgent(@UserSession() user: UserSessionData, @Query() query: HumanAgentQueryDto): Promise<HumanAgentResponseDto> {
     return this.humanAgentPicture.get(relayOf(user, query.agentIdentifier));
+  }
+
+  /**
+   * A host shows the agent's card to its operator (`agent_card` over MCP, `agentinbox card` in the CLI): what the
+   * agent says, its name, address, link and look. The first showing is kept on the agent, with the host that
+   * showed it, which is how the dashboard's onboarding sees the agent say hi.
+   */
+  @Post('/agent/card')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  showAgentCard(
+    @UserSession() user: UserSessionData,
+    @Body() body: HumanAgentQueryDto,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
+  ): Promise<ShowHumanAgentCardResponseDto> {
+    const hostVia = readHostVia(via);
+
+    return this.showHumanAgentCardUsecase.execute(
+      ShowHumanAgentCardCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: body.agentIdentifier,
+        hostVia,
+        // A host that didn't say which it is counts as any other host, as its inbox checks do.
+        hostId: hostVia ? (readHostId(host) ?? GENERAL_HOST) : undefined,
+        analyticsSource: readAnalyticsSource(analyticsSource),
+      })
+    );
   }
 
   /**

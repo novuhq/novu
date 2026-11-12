@@ -21,6 +21,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "preview": "vite preview",
+    "test": "VITE_CLERK_PUBLISHABLE_KEY=pk_test_unit vitest run --dir src",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
@@ -28,7 +29,8 @@
     "test:e2e:codegen": "playwright codegen",
     "test:e2e:show-report": "npx playwright show-report",
     "test:e2e:merge-report": "playwright merge-reports --reporter html",
-    "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc -b"
+    "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc -b",
+    "typecheck:spec": "NODE_OPTIONS='--max-old-space-size=6144' tsc --noEmit -p tsconfig.spec.json"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.51",
@@ -198,7 +200,8 @@
     "typescript": "6.0.3",
     "vite": "^8.3.3",
     "vite-plugin-ejs": "^2.0.0",
-    "vite-plugin-static-copy": "^4.1.1"
+    "vite-plugin-static-copy": "^4.1.1",
+    "vitest": "^4.1.0"
   },
   "nx": {
     "tags": [

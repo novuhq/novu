@@ -13,12 +13,14 @@ import {
   resolveCurrentMessage as foldCurrentMessage,
   isDuplicateKeyError,
 } from '@novu/dal';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { AGENT_HISTORY_LIMIT, getInboundActivityPreview } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  FindToolCallParams,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
@@ -31,9 +33,11 @@ import type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  RecordToolResultParams,
   UpdateInboundMessageParams,
 } from './agent-conversation.types';
 // biome-ignore lint/style/noRestrictedImports: sequence minting is owned by this ledger
@@ -41,8 +45,10 @@ import { ConversationEventSequenceService } from './conversation-event-sequence.
 import {
   describeRunLifecycleFromEvent,
   type PersistRunLifecycleParams,
+  runIdFromLifecycleIdentifier,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
+import { toolResultData } from './tool-result-content';
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -75,7 +81,7 @@ export class ConversationActivityLedger {
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
     @Inject(forwardRef(() => WebChatLiveActivityPublisher))
-    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly webChatLiveActivityPublisher: WrapperType<WebChatLiveActivityPublisher>,
     private readonly conversationRepository: ConversationRepository,
     private readonly logger: PinoLogger
   ) {
@@ -476,6 +482,57 @@ export class ConversationActivityLedger {
     );
   }
 
+  async persistToolCall(params: PersistToolCallParams): Promise<void> {
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...params,
+        identifier: `tool-call:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: `Called ${params.toolName}`,
+        toolData: {
+          toolCallId: params.toolCallId,
+          toolName: params.toolName,
+          ...(params.input ? { input: params.input } : {}),
+          ...(params.mcpServerName ? { mcpServerName: params.mcpServerName } : {}),
+        },
+      },
+      ConversationActivityTypeEnum.TOOL_CALL,
+      'none'
+    );
+  }
+
+  /**
+   * Looks across runs: a managed tool that needed approval is called in one run and returns its result
+   * in the run Thalamus starts after the approval.
+   */
+  async findToolCallName(params: FindToolCallParams): Promise<string | undefined> {
+    const call = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        _conversationId: params.conversationId,
+        type: ConversationActivityTypeEnum.TOOL_CALL,
+        'toolData.toolCallId': params.toolCallId,
+      },
+      ['toolData']
+    );
+
+    return call?.toolData?.toolName;
+  }
+
+  async recordToolResult(params: RecordToolResultParams): Promise<void> {
+    await this.persistAndEmitClientEvent(
+      params,
+      {
+        ...params,
+        identifier: `tool-result:${params.conversationId}:${params.runId}:${params.toolCallId}`,
+        content: params.modelFacing?.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+        toolData: toolResultData(params),
+      },
+      ConversationActivityTypeEnum.TOOL_RESULT,
+      'none'
+    );
+  }
+
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
     const sequence = await this.resolveEventSequence(
       params.conversationId,
@@ -711,6 +768,70 @@ export class ConversationActivityLedger {
     );
   }
 
+  /**
+   * The latest run started after the message that began the turn, and before the next user message, when it has
+   * neither finished nor failed. A turn stopped before its run started has none, even while an earlier run (such as a
+   * previous Stop's `onAbort`) is still open, and a run a later turn started (for example from another tab) is never
+   * taken for it. Without that message, the conversation's latest run counts.
+   */
+  async findOpenRunId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    turnMessageId?: string;
+  }): Promise<string | undefined> {
+    const scope = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+    };
+    const turnMessage = params.turnMessageId
+      ? await this.activityRepository.findOne(
+          { ...scope, platformMessageId: params.turnMessageId, type: ConversationActivityTypeEnum.MESSAGE },
+          ['sequence']
+        )
+      : null;
+    const turnSequence = typeof turnMessage?.sequence === 'number' ? turnMessage.sequence : undefined;
+    const nextUserMessage =
+      turnSequence === undefined
+        ? null
+        : await this.activityRepository.findOne(
+            {
+              ...scope,
+              type: ConversationActivityTypeEnum.MESSAGE,
+              senderType: {
+                $in: [ConversationActivitySenderTypeEnum.SUBSCRIBER, ConversationActivitySenderTypeEnum.PLATFORM_USER],
+              },
+              sequence: { $gt: turnSequence },
+            },
+            ['sequence'],
+            { query: { sort: { sequence: 1 } } }
+          );
+    const withinTurn = {
+      ...(turnSequence === undefined ? {} : { $gt: turnSequence }),
+      ...(typeof nextUserMessage?.sequence === 'number' ? { $lt: nextUserMessage.sequence } : {}),
+    };
+    const runStart = await this.activityRepository.findOne(
+      { ...scope, type: ConversationActivityTypeEnum.RUN_START, sequence: { $type: 'number', ...withinTurn } },
+      ['identifier'],
+      { query: { sort: { sequence: -1 } } }
+    );
+    const runId = runStart?.identifier ? runIdFromLifecycleIdentifier(runStart.identifier) : undefined;
+    if (!runId) {
+      return undefined;
+    }
+
+    const ended = await this.activityRepository.findOne(
+      {
+        _environmentId: params.environmentId,
+        identifier: { $in: [runLifecycleIdentifier(runId, 'finish'), runLifecycleIdentifier(runId, 'error')] },
+      },
+      ['_id']
+    );
+
+    return ended ? undefined : runId;
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
@@ -837,7 +958,9 @@ export class ConversationActivityLedger {
 
   private async persistAndEmitClientEvent(
     context: ConversationActivityContext,
-    params: PersistAgentActivityParams,
+    params: PersistAgentActivityParams & {
+      toolData?: ConversationActivityToolData;
+    },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview' | 'none'
   ): Promise<ConversationActivityEntity> {

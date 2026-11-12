@@ -9,6 +9,7 @@
       "type": "swc",
       "options": {
         "extensions": [".js", ".ts", ".jsx", ".tsx"],
+        "ignore": ["**/*.spec.ts", "**/*.e2e.ts", "**/*.e2e-ee.ts"],
         "stripLeadingPaths": true
       }
     },

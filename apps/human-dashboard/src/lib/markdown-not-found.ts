@@ -34,16 +34,15 @@ const EXACT_PATHS = new Set([
   '/settings',
   '/settings/billing',
   '/sign-in',
-  '/sign-in/sso-callback',
   '/sign-up',
-  '/sign-up/sso-callback',
   '/sitemap.xml',
 ]);
 
 /**
  * Anything under these is a real route or a file in `public/`. `/api/` is the proxy to the Novu API,
  * `/.well-known/` is skills and the ARD catalog, `/v1/` is rewritten to that API, and the rest are
- * pictures and fonts. `/p/`, `/invite/` and `/verify/` are one dynamic segment.
+ * pictures and fonts. `/p/`, `/invite/` and `/verify/` are one dynamic segment, and `/sign-in/` and `/sign-up/`
+ * are the later steps of Clerk's forms.
  */
 const PREFIXES = [
   '/.well-known/',
@@ -55,6 +54,8 @@ const PREFIXES = [
   '/invite/',
   '/media/',
   '/p/',
+  '/sign-in/',
+  '/sign-up/',
   '/tools/',
   '/v1/',
   '/verify/',

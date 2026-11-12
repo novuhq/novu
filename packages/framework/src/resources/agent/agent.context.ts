@@ -9,6 +9,7 @@ import type { CardElement, ChatElement, Emoji } from 'chat';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
+  AgentAbortedTurn,
   AgentAction,
   AgentBridgeRequest,
   AgentContextPayload,
@@ -226,6 +227,19 @@ function toSideEffectEvents(
 ): AgentEvent[] {
   const events: AgentEvent[] = [];
 
+  // Novu retries a whole batch when one event fails. Tool results are idempotent writes, so they go before
+  // anything that posts to the user, like the approval card, which a retry would post again.
+  for (const result of sideEffects.toolResults) {
+    events.push({
+      type: 'tool-use-result',
+      toolUseId: result.toolCallId,
+      content: [
+        { type: 'text', text: String(result.preview ?? '') },
+        { type: 'json', value: result.output },
+      ],
+    });
+  }
+
   if (sideEffects.toolApprovalRequest) {
     const request = sideEffects.toolApprovalRequest;
     events.push({
@@ -238,17 +252,6 @@ function toSideEffectEvents(
       ...(request.to !== undefined ? { to: request.to } : {}),
       ...(request.from !== undefined ? { from: request.from } : {}),
       ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
-    });
-  }
-
-  for (const result of sideEffects.toolResults) {
-    events.push({
-      type: 'tool-use-result',
-      toolUseId: result.toolCallId,
-      content: [
-        { type: 'text', text: String(result.preview ?? '') },
-        { type: 'json', value: result.output },
-      ],
     });
   }
 
@@ -282,9 +285,22 @@ class EventOutboxTransport {
     return this.live !== undefined;
   }
 
-  /** Writes to the bridge response, which only Novu's live reader sees; durable events go through the outbox. */
+  /**
+   * Writes to the bridge response, which only Novu's live reader sees; durable events go through the outbox.
+   * A stopped turn writes nothing more: Novu already ended its live reply with the text streamed so far.
+   */
   writeLive(event: AgentEvent): void {
+    if (this.outbox.isTurnAborted) return;
+
     this.live?.write(this.outbox.envelope(event));
+  }
+
+  /**
+   * Posts what is queued, such as the turn's `run-start`, without holding up the live text. A reply that only streams
+   * text posts nothing else until it ends, and the run must read as running (and stoppable) while it streams.
+   */
+  postQueued(): void {
+    this.outbox.flush().catch(() => undefined);
   }
 
   /** `streamedMessageId` marks a reply whose text was written live under that id. */
@@ -378,6 +394,14 @@ class EventOutboxTransport {
   }
 }
 
+/** Reads `stream` until `signal` aborts, so a stopped turn's reply is not read any further. */
+async function* untilAborted(stream: ReplyStream, signal: AbortSignal): ReplyStream {
+  for await (const delta of stream) {
+    if (signal.aborted) return;
+    yield delta;
+  }
+}
+
 class ReplyHandleImpl implements ReplyHandle {
   public messageId: string;
   public platformThreadId: string;
@@ -448,8 +472,10 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
   readonly humanResponse: AgentHumanResponse | null;
+  readonly abortedTurn: AgentAbortedTurn | null;
   readonly typing: TypingControl;
   readonly toolApproval: ToolApprovalControl;
+  readonly signal: AbortSignal;
 
   readonly metadata: {
     get(key: string): unknown;
@@ -469,6 +495,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _transport: EventOutboxTransport;
   private _pendingHumanRenders: Array<() => Promise<void>> = [];
+  private readonly _abortController = new AbortController();
 
   constructor(
     request: AgentBridgeRequest,
@@ -489,6 +516,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.platform = request.platform;
     this.platformContext = request.platformContext;
     this.humanResponse = request.humanResponse ?? null;
+    this.abortedTurn = request.abortedTurn ?? null;
+    this.signal = this._abortController.signal;
 
     this._toolApprovalConfig = toolApprovalConfig;
     const eventsUrl = request.eventsUrl;
@@ -503,6 +532,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
         conversationId: request.conversationId,
         agentId: request.agentId,
         turnId: request.deliveryId,
+        onTurnAborted: () => this._abortController.abort(),
       }),
       live
     );
@@ -569,9 +599,12 @@ export class AgentContextImpl implements AgentRuntimeContext {
     let completed = false;
 
     try {
-      for await (const delta of stream) {
+      for await (const delta of untilAborted(stream, this.signal)) {
         if (!delta) continue;
-        if (streamLive && !text) this._transport.writeLive({ type: 'message-start', messageId });
+        if (streamLive && !text) {
+          this._transport.writeLive({ type: 'message-start', messageId });
+          this._transport.postQueued();
+        }
         text += delta;
         if (streamLive) this._transport.writeLive({ type: 'message-delta', messageId, delta });
       }
@@ -586,7 +619,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
       }
     }
 
-    if (!text.trim()) {
+    // A stopped turn's reply is dropped by Novu, which keeps the text streamed before the stop.
+    if (!text.trim() || this.signal.aborted) {
       return new NoopReplyHandle();
     }
 

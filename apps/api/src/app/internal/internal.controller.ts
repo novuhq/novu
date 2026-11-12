@@ -6,6 +6,7 @@ import {
   UpdateSubscriberOnlineStateRequestDto,
   UpdateSubscriberOnlineStateResponseDto,
 } from './dtos/subscriber-online-state.dto';
+import { StatelessSubscriberSession, SUBSCRIBER_JWT_STATELESS_STRATEGY } from './subscriber-jwt-stateless.strategy';
 import { UpdateSubscriberOnlineStateCommand } from './usecases/update-subscriber-online-state/update-subscriber-online-state.command';
 import { UpdateSubscriberOnlineState } from './usecases/update-subscriber-online-state/update-subscriber-online-state.usecase';
 
@@ -15,11 +16,12 @@ export class InternalController {
   constructor(private readonly updateSubscriberOnlineStateUsecase: UpdateSubscriberOnlineState) {}
 
   @Post('/subscriber-online-state')
-  @UseGuards(AuthGuard('subscriberJwt'))
+  // Stateless guard: called on every socket connect/disconnect, so it must not load the subscriber
+  @UseGuards(AuthGuard(SUBSCRIBER_JWT_STATELESS_STRATEGY))
   @HttpCode(HttpStatus.OK)
   async updateSubscriberOnlineState(
     @Body() body: UpdateSubscriberOnlineStateRequestDto,
-    @SubscriberSession() subscriberSession: SubscriberSession
+    @SubscriberSession() subscriberSession: StatelessSubscriberSession
   ): Promise<UpdateSubscriberOnlineStateResponseDto> {
     const command = UpdateSubscriberOnlineStateCommand.create({
       subscriberId: subscriberSession.subscriberId,

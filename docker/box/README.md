@@ -19,7 +19,7 @@ node docker/box/src/cli/main.ts doctor     # "ok": true when it's fit to test on
 `up` prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co` (the box's Mailpit under
 `/mail`), and the API at `https://<branch>-api.box.novu-staging.co`. After more changes, `sync` puts them on the
 box. Coding agents follow
-the `verify-in-box` skill (`.cursor/skills/verify-in-box/SKILL.md`).
+the `verify-in-box` skill (`.agents/skills/verify-in-box/SKILL.md`).
 
 ## Commands
 
@@ -99,7 +99,8 @@ exercised as in production.
 
 The bake seeds:
 
-- the seed user `agent@novu.co` (password: the `BOX_SEED_PASSWORD` secret) and its org, on the Team plan;
+- the seed user `agent@novu.co` (password: the `BOX_SEED_PASSWORD` secret) and its org, on the Team plan; Clerk
+  refuses to delete either from the dashboard, so a test that signs in as it can't remove it from every box;
 - Mailpit as the email integration, and SMS, push and chat integrations pointing at the sink, with the seed
   subscriber's phone, push token and chat webhook, so Test Workflow reaches every channel;
 - the bridge app synced to the Development environment, and its agents linked to web chat.

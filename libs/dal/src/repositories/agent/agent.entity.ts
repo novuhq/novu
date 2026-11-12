@@ -131,6 +131,44 @@ export interface AgentHostWaitingMessage {
   seenAt: string;
 }
 
+/** The bodies an Agent Inbox agent's mascot can have: the shape it takes. `orb` is the original, round one. */
+export const AGENT_MASCOT_BODIES = ['orb', 'pebble', 'drop', 'bean', 'peek', 'mochi'] as const;
+
+export type AgentMascotBody = (typeof AGENT_MASCOT_BODIES)[number];
+
+/** The colours of an Agent Inbox agent's mascot and card art. `ember` is the original orange. */
+export const AGENT_LOOK_COLORS = ['ember', 'marigold', 'coral', 'paprika', 'peach', 'bone'] as const;
+
+export type AgentLookColor = (typeof AGENT_LOOK_COLORS)[number];
+
+/** The kinds of dotted drawing across the top of an agent card. */
+export const AGENT_CARD_ART_KINDS = ['rays', 'waves', 'arcs', 'sparkles'] as const;
+
+export type AgentCardArtKind = (typeof AGENT_CARD_ART_KINDS)[number];
+
+/** The largest seed a card's art can have: any whole number from 0 up to it draws one drawing of its kind. */
+export const AGENT_CARD_ART_MAX_SEED = 2_147_483_647;
+
+/**
+ * The look its operator picked for an Agent Inbox agent while setting it up: its mascot's shape and colour, and
+ * the art across the top of its card, which its kind and seed draw the same way wherever the card is shown.
+ */
+export interface AgentLook {
+  shape: AgentMascotBody;
+  color: AgentLookColor;
+  art: { kind: AgentCardArtKind; seed: number };
+}
+
+/** The first time a host showed the agent's card (`agent_card` over MCP, `agentinbox card` in the CLI). */
+export interface AgentCardShown {
+  /** ISO timestamp. */
+  at: string;
+  /** The way the host that showed it came in. Missing when it didn't say. */
+  via?: AgentHostVia;
+  /** The host that showed it. Missing when it didn't say. */
+  host?: AgentHostId;
+}
+
 /** Who can write to an Agent Inbox agent: anyone, or only its contacts. */
 export const AGENT_INBOX_REACHES = ['anyone', 'contacts'] as const;
 
@@ -163,6 +201,15 @@ export class AgentEntity {
 
   /** Set for Human relay agents only (`human agent update --picture`). */
   picture?: AgentPicture;
+
+  /**
+   * Set for Human relay agents only, when their operator picked a look while setting them up on the dashboard.
+   * Missing reads as the original look: an orb in ember, with rays.
+   */
+  look?: AgentLook;
+
+  /** Set for Human relay agents only, the first time a host showed the agent's card. */
+  cardShown?: AgentCardShown;
 
   /** Set for Human relay agents only, once a host has connected or checked the inbox. */
   hosts?: AgentHosts;

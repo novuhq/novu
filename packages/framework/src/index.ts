@@ -3,6 +3,8 @@ export { CronExpression } from './constants';
 export { NovuRequestHandler, type ServeHandlerOptions } from './handler';
 export type {
   Agent,
+  AgentAbortContext,
+  AgentAbortedTurn,
   AgentAction,
   AgentActionContext,
   AgentAttachment,

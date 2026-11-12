@@ -2,8 +2,10 @@
 
 import type { ReactNode } from 'react';
 
+import { AgentCardVertical, CardMascot } from '@/components/agent-card/agent-card-vertical';
 import { CardName, CardPortrait } from '@/components/agent-card/card-parts';
 import { CopyButton } from '@/components/ui/copy-button';
+import { cardSerialOf } from '@/lib/agent-card';
 import type { ChannelVia } from '@/lib/human-channels-api';
 import { writtenLink } from '@/lib/onboarding';
 import type { PublicAgentCard } from '@/lib/public-agent-card';
@@ -17,6 +19,10 @@ import { TiltCard } from './tilt-card';
  * loaded, and leans towards the pointer with a glare across it and its edge lit (`TiltCard`).
  */
 export function PublicCard({ card }: { card: PublicAgentCard }) {
+  if (card.newCard) {
+    return <NewPublicCard card={card} />;
+  }
+
   return (
     <div className="w-full animate-rise-in motion-reduce:animate-none">
       <TiltCard
@@ -25,7 +31,7 @@ export function PublicCard({ card }: { card: PublicAgentCard }) {
       >
         <CardPortrait
           handle={card.handle}
-          address={card.address}
+          cardLink={card.cardLink}
           pictureUrl={card.pictureUrl ?? undefined}
           state={card.status}
         />
@@ -71,5 +77,34 @@ function ReachLine({ via, children }: { via: ChannelVia; children: ReactNode }) 
         {children}
       </span>
     </li>
+  );
+}
+
+/**
+ * The public card as the new agent card (`Agent card · Vertical`), for the accounts that have it: the agent's look,
+ * who runs it, its address and Telegram bot, and its link. It rises in and leans towards the pointer as the ID card
+ * does.
+ */
+function NewPublicCard({ card }: { card: PublicAgentCard }) {
+  const status =
+    card.status === 'paused' ? 'Paused for now' : card.operatorName ? `Run by ${card.operatorName}` : 'An agent';
+
+  return (
+    <div className="w-full animate-rise-in motion-reduce:animate-none">
+      <TiltCard aria-label={`${card.name}’s card`} cornerClassName="rounded-[6%/3.9%]" className="w-full">
+        <AgentCardVertical
+          look={card.look}
+          name={card.name}
+          status={status}
+          address={card.address}
+          link={writtenLink(card.cardLink)}
+          serial={cardSerialOf(card.handle)}
+          mascot={<CardMascot look={card.look} />}
+          picture={card.pictureUrl ?? undefined}
+          lines={{ telegram: card.telegramBot }}
+          className="w-full"
+        />
+      </TiltCard>
+    </div>
   );
 }

@@ -34,11 +34,7 @@ describe('validateEnvironmentVariableValues', () => {
     await validateEnvironmentVariableValues(
       environmentRepositoryMock as unknown as EnvironmentRepository,
       organizationId,
-      [
-        { _environmentId: 'env-a', value: 'a' },
-        { _environmentId: 'env-b', value: 'b' },
-        { _environmentId: 'env-a', value: 'a-duplicate' },
-      ]
+      [{ _environmentId: 'env-a' }, { _environmentId: 'env-b' }, { _environmentId: 'env-a' }]
     );
 
     expect(environmentRepositoryMock.findByIdAndOrganization.callCount).to.equal(2);
@@ -51,7 +47,7 @@ describe('validateEnvironmentVariableValues', () => {
       await validateEnvironmentVariableValues(
         environmentRepositoryMock as unknown as EnvironmentRepository,
         organizationId,
-        [{ _environmentId: 'foreign-env-id', value: 'value' }]
+        [{ _environmentId: 'foreign-env-id' }]
       );
       throw new Error('Should not reach here');
     } catch (error) {
@@ -65,7 +61,7 @@ describe('validateEnvironmentVariableValues', () => {
       await validateEnvironmentVariableValues(
         environmentRepositoryMock as unknown as EnvironmentRepository,
         organizationId,
-        [{ _environmentId: 'env-b', value: 'value' }],
+        [{ _environmentId: 'env-b' }],
         {
           restrictToUserEnvironment: true,
           userEnvironmentId: 'env-a',

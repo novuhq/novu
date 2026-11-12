@@ -15,6 +15,7 @@ import type { ChannelVia } from '@/lib/human-channels-api';
 import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
+import type { AgentLook } from '@/lib/look';
 
 import { AgentSettingsCard } from './agent-settings';
 import { AgentSetup } from './agent-setup';
@@ -32,6 +33,8 @@ export type ConfigureAgent = {
   pictureUrl?: string;
   createdAt?: string;
   active: boolean;
+  /** Its mascot's body and colour and its card's art. */
+  look: AgentLook;
 };
 
 type ConfigureViewProps = {
@@ -58,8 +61,10 @@ type ConfigureViewProps = {
   docsUrl: string;
   mcpUrl: string | null;
   connectedTools: ToolId[];
-  /** Who can reach the agent and whether it is paused: the SETTINGS block. `null` when they couldn't be read. */
+  /** The SETTINGS block: who can reach the agent, acknowledging, the pause. `null` when they couldn't be read. */
   settings: AgentSettings | null;
+  /** The new agent card in place of the ID card, for the accounts that have it (the onboarding's flag). */
+  newCard: boolean;
 };
 
 /**
@@ -83,6 +88,7 @@ export function ConfigureView({
   mcpUrl,
   connectedTools,
   settings,
+  newCard,
 }: ConfigureViewProps) {
   const [openDrawer, setOpenDrawer] = useState<ChannelVia | null>(initialDrawer);
   const [sharing, setSharing] = useState(false);
@@ -126,6 +132,8 @@ export function ConfigureView({
           telegram={connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null}
           slack={slack && (joinDefined([slack.appName, slack.workspace], ' · ') || 'Connected')}
           onShare={() => setSharing(true)}
+          look={agent.look}
+          newCard={newCard}
         />
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-5">
@@ -147,6 +155,7 @@ export function ConfigureView({
           />
           <AgentSetup
             handle={agent.handle}
+            address={email}
             apiUrl={apiUrl}
             lastCheckedAt={lastCheckedAt}
             hosts={hostStatus?.hosts}

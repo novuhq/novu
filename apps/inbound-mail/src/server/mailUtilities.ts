@@ -22,6 +22,40 @@ const SPF_VERDICT_LOGS: Record<number, { level: 'warn' | 'info'; message: string
   14: { level: 'warn', message: 'SPF verification found an invalid SPF record — treating spf as failed.' },
 };
 
+/*
+ * verifydkim.py prints one JSON line with a result per DKIM signature, top
+ * first, and exits 11 when none verifies — keep in sync.
+ */
+type DkimSignatureResult = {
+  domain: string | null;
+  selector: string | null;
+  result: 'pass' | 'fail';
+  reason?: string;
+};
+
+type DkimReport = {
+  signatures: DkimSignatureResult[];
+  /* Signatures past the script's limit, left unchecked. */
+  unchecked?: number;
+  /* Why the message could not be read at all. */
+  error?: string;
+};
+
+function parseDkimReport(stdout: string): DkimReport | undefined {
+  const lastLine = stdout.trim().split('\n').pop();
+  if (!lastLine) {
+    return undefined;
+  }
+
+  try {
+    const report = JSON.parse(lastLine);
+
+    return Array.isArray(report?.signatures) ? report : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const spamc = new Spamc();
 
 /*
@@ -55,10 +89,15 @@ if (!shell.which('spamassassin') || !shell.which('spamc')) {
  * a spam score.
  */
 module.exports = {
-  /* @param rawEmail is the full raw mime email as a string. */
+  /*
+   * @param rawEmail is the full raw mime email, ideally the bytes as received:
+   * the signatures cover the exact bytes.
+   * Calls back with { isValid, domains }: whether any signature verified, and
+   * the d= domains of those that did.
+   */
   validateDkim(rawEmail, callback) {
     if (!pythonBin) {
-      return callback(null, false);
+      return callback(null, { isValid: false, domains: [] });
     }
 
     const verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
@@ -77,24 +116,43 @@ module.exports = {
     });
 
     verifyDkim.on('close', (code) => {
-      if (code) {
+      const report = parseDkimReport(stdout);
+
+      if (code === 11 && report) {
         /*
-         * Exit 11 is the script's "signature did not verify" code; anything
-         * else (tracebacks, missing modules, spawn issues) means the check
-         * itself is broken and every email would be stamped as failed.
+         * The sender's verdict: no signature verified. Each signature's
+         * reason (e.g. "missing public key", "body hash mismatch") says why.
+         */
+        logger.warn(
+          {
+            context: LOG_CONTEXT,
+            exitCode: code,
+            signatures: report.signatures,
+            unchecked: report.unchecked,
+            error: report.error,
+          },
+          report.signatures.length || report.error
+            ? 'DKIM verification failed: no signature verified.'
+            : 'DKIM verification failed: the email has no DKIM signature.'
+        );
+      } else if (code) {
+        /*
+         * Anything else (tracebacks, missing modules, spawn issues) means the
+         * check itself is broken and every email would be stamped as failed.
          */
         logger.warn(
           { context: LOG_CONTEXT, exitCode: code, stdout: stdout.trim(), stderr: stderr.trim() },
-          code === 11
-            ? 'DKIM verification failed: signature did not verify.'
-            : 'DKIM verification errored: verifier script did not run cleanly — treating dkim as failed.'
+          'DKIM verification errored: verifier script did not run cleanly — treating dkim as failed.'
         );
       } else {
-        logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
+        logger.verbose({ context: LOG_CONTEXT, signatures: report?.signatures }, 'DKIM verification passed.');
       }
 
-      /* Convert return code to appropriate boolean. */
-      return callback(null, !code);
+      const domains = (report?.signatures ?? [])
+        .filter((signature) => signature.result === 'pass' && signature.domain)
+        .map((signature) => signature.domain as string);
+
+      return callback(null, { isValid: !code, domains });
     });
 
     verifyDkim.stdin.write(rawEmail);

@@ -185,11 +185,11 @@ describe('describeAction and subjectOf', () => {
     // An MCP tool with what it would be called with, whole, as a command is: who it writes to, and what.
     expect(
       describeAction({
-        tool_name: 'mcp__inbox__inbox_reply',
+        tool_name: 'mcp__AgentInbox__inbox_reply',
         input: { conversation: 'conv_1', kind: 'approve', message: `Ship it?\n${'x'.repeat(300)}`, to: ['carol'] },
       })
     ).toBe(
-      `use inbox_reply from inbox with conversation "conv_1", kind "approve", message ${JSON.stringify(`Ship it?\n${'x'.repeat(300)}`)}, to ["carol"]`
+      `use inbox_reply from AgentInbox with conversation "conv_1", kind "approve", message ${JSON.stringify(`Ship it?\n${'x'.repeat(300)}`)}, to ["carol"]`
     );
     expect(subjectOf({ tool_name: 'mcp__github__create_issue', input: { title: 'Bug' } })).toEqual({
       kind: 'mcp',
@@ -218,7 +218,7 @@ describe('describeAction and subjectOf', () => {
 });
 
 describe('sessionEnv', () => {
-  it('leaves out the marks of a session listen was started from, and keeps the rest', () => {
+  it('leaves out the marks of a session listen was started from, keeps the rest, and starts each command in the project', () => {
     expect(
       sessionEnv({
         PATH: '/bin',
@@ -240,13 +240,15 @@ describe('sessionEnv', () => {
       CLAUDE_CODE_USE_BEDROCK: '1',
       ANTHROPIC_MODEL: 'opus',
       INBOX_CONFIG: '/Users/ada/.agentinbox-local/config.json',
+      // Each command starts in the project, where the agent's own commands are looked at.
+      CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR: '1',
     });
   });
 
   it('names the account Claude Code signs in under when the environment doesn’t, as under launchd', () => {
     const account = userInfo();
 
-    expect(sessionEnv({ PATH: '/bin' })).toEqual({
+    expect(sessionEnv({ PATH: '/bin' })).toMatchObject({
       PATH: '/bin',
       USER: account.username,
       LOGNAME: account.username,
@@ -256,55 +258,78 @@ describe('sessionEnv', () => {
 });
 
 describe('claudeCode.check', () => {
-  it('finds claude on the PATH, its version, and that it is signed in', () => {
+  it('finds claude on the PATH, its version, and that it is signed in', async () => {
     const bin = installFake();
 
-    const checked = claudeCode.check(dir, { PATH: bin, HOME: dir });
+    const checked = await claudeCode.check(dir, { PATH: bin, HOME: dir });
 
     expect(checked).toEqual({
       ok: true,
       program: { command: join(bin, 'claude'), args: [] },
       version: '2.1.310',
       warnings: [],
+      secrets: [],
     });
   });
 
-  it('says how to install Claude Code when it isn’t there', () => {
+  it('names the secrets from the shell it signs in with, to the provider it reaches', async () => {
+    const bin = installFake();
+    const shell = {
+      PATH: bin,
+      HOME: dir,
+      ANTHROPIC_API_KEY: 'sk-ant-secret',
+      AWS_ACCESS_KEY_ID: 'AKIA',
+      AWS_SECRET_ACCESS_KEY: 'secret',
+    };
+
+    expect(await claudeCode.check(dir, shell)).toMatchObject({ ok: true, secrets: ['ANTHROPIC_API_KEY'] });
+    expect(await claudeCode.check(dir, { ...shell, ANTHROPIC_API_KEY: ' ' })).toMatchObject({ ok: true, secrets: [] });
+    // Bedrock says it is signed in whatever it has: it names the provider, as a sign-in that isn't checked.
+    const bedrock = await claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1' });
+    expect(bedrock).toMatchObject({ secrets: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'] });
+    expect(bedrock.ok && bedrock.provider).toBe('Amazon Bedrock');
+    // A gateway signs in for it.
+    expect(
+      await claudeCode.check(dir, { ...shell, CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: 'true' })
+    ).toMatchObject({ ok: true, secrets: [] });
+  });
+
+  it('says how to install Claude Code when it isn’t there', async () => {
     vi.stubEnv('HOME', dir);
 
-    expect(claudeCode.check(dir, { PATH: join(dir, 'nowhere') })).toEqual({
+    expect(await claudeCode.check(dir, { PATH: join(dir, 'nowhere') })).toEqual({
       ok: false,
       message: CLAUDE_CODE_MISSING_HELP,
     });
     expect(CLAUDE_CODE_MISSING_HELP).toContain('curl -fsSL https://claude.ai/install.sh | bash');
   });
 
-  it('says so when claude is there but doesn’t start', () => {
+  it('says so when claude is there but doesn’t start', async () => {
     const file = join(dir, 'claude');
     writeFileSync(file, '#!/bin/sh\necho "broken install" >&2\nexit 3\n');
     chmodSync(file, 0o755);
 
-    const checked = claudeCode.check(dir, { PATH: dir });
+    const checked = await claudeCode.check(dir, { PATH: dir });
 
     expect(checked.ok === false && checked.message).toContain('didn’t start: broken install');
   });
 
-  it('finds the sign-in when the environment doesn’t name the account, as a service launchd starts', () => {
+  it('finds the sign-in when the environment doesn’t name the account, as a service launchd starts', async () => {
     const bin = installFake();
 
-    expect(claudeCode.check(dir, { PATH: bin })).toMatchObject({ ok: true });
+    expect(await claudeCode.check(dir, { PATH: bin })).toMatchObject({ ok: true });
   });
 
-  it('asks to sign in to Claude Code first', () => {
+  it('asks to sign in to Claude Code first', async () => {
     const bin = installFake();
 
-    expect(claudeCode.check(dir, { PATH: bin, FAKE_CLAUDE_SIGNED_OUT: '1' })).toEqual({
+    expect(await claudeCode.check(dir, { PATH: bin, FAKE_CLAUDE_SIGNED_OUT: '1' })).toEqual({
       ok: false,
       message: CLAUDE_CODE_SIGNED_OUT_HELP,
     });
   });
 
-  it('warns when the project’s own allow list won’t apply, because Claude Code hasn’t trusted the folder', () => {
+  it('warns when the project’s own allow list won’t apply, because Claude Code hasn’t trusted the folder', async () => {
     const bin = installFake();
     const config = join(dir, 'config');
     mkdirSync(join(dir, '.claude'), { recursive: true });
@@ -315,7 +340,7 @@ describe('claudeCode.check', () => {
     );
     writeFileSync(join(config, '.claude.json'), JSON.stringify({ projects: {} }));
 
-    const checked = claudeCode.check(dir, { PATH: bin, CLAUDE_CONFIG_DIR: config });
+    const checked = await claudeCode.check(dir, { PATH: bin, CLAUDE_CONFIG_DIR: config });
 
     expect(checked.ok && checked.warnings[0]).toContain('the project’s own allow list won’t apply until it is');
 
@@ -326,8 +351,51 @@ describe('claudeCode.check', () => {
     expect(untrustedProject(dir, { CLAUDE_CONFIG_DIR: config })).toBe(false);
   });
 
-  it('doesn’t warn for a project without an allow list of its own', () => {
+  it('doesn’t warn for a project without an allow list of its own', async () => {
     expect(untrustedProject(dir, { CLAUDE_CONFIG_DIR: join(dir, 'none') })).toBe(false);
+  });
+});
+
+describe('Claude Code’s settings from the shell', () => {
+  const SHELL = {
+    PATH: '/usr/bin',
+    HOME: '/Users/ada',
+    CLAUDE_CODE_USE_BEDROCK: '1',
+    CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+    AWS_PROFILE: 'work',
+    AWS_REGION: 'us-east-1',
+    ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+    ANTHROPIC_MODEL: 'claude-opus-5-5',
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+    CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+    VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+    CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    ANTHROPIC_API_KEY: 'sk-ant-secret',
+    ANTHROPIC_AUTH_TOKEN: 'secret',
+    ANTHROPIC_CUSTOM_HEADERS: 'X-Key: secret',
+    ANTHROPIC_FOUNDRY_API_KEY: 'secret',
+    CLAUDE_CODE_OAUTH_TOKEN: 'secret',
+    AWS_ACCESS_KEY_ID: 'AKIA',
+    AWS_SECRET_ACCESS_KEY: 'secret',
+    AWS_SESSION_TOKEN: 'secret',
+    AWS_BEARER_TOKEN_BEDROCK: 'secret',
+    CLAUDE_CODE_SESSION_ID: 'a parent session',
+    CLAUDE_CODE_ENTRYPOINT: 'cli',
+  };
+
+  it('keeps which provider and models it uses, and how it reaches them, never a secret nor a session’s marks', () => {
+    expect(claudeCode.settingsIn(SHELL)).toEqual({
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1',
+      AWS_PROFILE: 'work',
+      AWS_REGION: 'us-east-1',
+      ANTHROPIC_BEDROCK_BASE_URL: 'https://bedrock.example',
+      ANTHROPIC_MODEL: 'claude-opus-5-5',
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: 'claude-haiku-5-5',
+      CLAUDE_CODE_SUBAGENT_MODEL: 'claude-sonnet-5-5',
+      VERTEX_REGION_CLAUDE_5_5_OPUS: 'us-east5',
+      CLAUDE_CONFIG_DIR: '/Users/ada/.claude-work',
+    });
   });
 });
 
@@ -446,7 +514,7 @@ describe('a Claude Code session', { timeout: 15_000 }, () => {
 
   it('withdraws a permission question when interrupted while it waits', async () => {
     let withdrawn = false;
-    const { session } = open({
+    const { session, told } = open({
       permission: (_question, signal) =>
         new Promise((resolve) => {
           signal.addEventListener('abort', () => {
@@ -456,7 +524,7 @@ describe('a Claude Code session', { timeout: 15_000 }, () => {
         }),
     });
     session.send(message('m1', 'ask:deploy'));
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await vi.waitFor(() => expect(told.asked).toHaveLength(1));
 
     await session.interrupt();
 
@@ -480,6 +548,20 @@ describe('a Claude Code session', { timeout: 15_000 }, () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(gone.told.lost[0]).toMatchObject({ sessionGone: true });
     await gone.session.close();
+  });
+
+  it('waits for the answer when Claude Code first gives a command the last run left in the background a turn', async () => {
+    const first = open();
+    first.session.send(message('m1', 'background'));
+    await first.turn();
+    await first.session.close();
+
+    const again = open({ resume: first.session.id });
+    again.session.send(message('m2', 'hello'));
+
+    expect(await again.turn()).toEqual({ inputIds: ['m2'], outcome: 'completed', text: 'Echo: hello' });
+    expect(again.told.turns).toHaveLength(1);
+    await again.session.close();
   });
 
   it('says what each tool it starts is: a line for the log, and the subject the core goes by', async () => {

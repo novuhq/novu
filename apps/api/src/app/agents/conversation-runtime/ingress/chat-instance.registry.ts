@@ -19,9 +19,11 @@ import type {
 } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
+import { HumanRelayEmailService } from '../../human-relay/human-relay-email.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
@@ -37,6 +39,7 @@ import { parseEmailThreadAddress } from './email-thread-id';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
 import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
+import { resolveTelegramCommandMessage } from './telegram-command-message';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -169,8 +172,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
     private readonly webChatAcceptIdempotency: WebChatAcceptIdempotencyService,
+    private readonly humanRelayEmail: HumanRelayEmailService,
     @Inject(forwardRef(() => PlanLimitGateService))
-    private readonly planLimitGate: PlanLimitGateService
+    private readonly planLimitGate: WrapperType<PlanLimitGateService>
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -490,14 +494,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         }
 
         const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+        const telegram = createTelegramAdapter({
+          botToken: credentials.apiToken,
+          secretToken: credentials.token,
+          mode: 'webhook',
+        });
 
-        return {
-          telegram: createTelegramAdapter({
-            botToken: credentials.apiToken,
-            secretToken: credentials.token,
-            mode: 'webhook',
-          }),
-        };
+        if (config.isHumanRelay) {
+          stopTypingOnArrival(telegram);
+        }
+
+        return { telegram };
       }
       case AgentPlatformEnum.SENDBLUE:
         return this.buildSendblueAdapter(config);
@@ -519,7 +526,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             defaultAgentAddress: this.agentEmailSender.resolveSharedInboxAddress(config),
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             stripAgentReplyToken,
-            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style, cardTitle }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.emailActionTokenService.signActionToken({
                 agentId,
@@ -535,10 +542,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
                 label,
                 style,
                 userIdentifier,
+                ...(config.isHumanRelay ? { agentInbox: { question: cardTitle } } : {}),
               });
 
               return url;
             },
+            ...(config.isHumanRelay
+              ? {
+                  layout: (message) =>
+                    this.humanRelayEmail.layout(config, extractRecipientFromThreadId(message.threadId), message),
+                }
+              : {}),
           }),
         };
       }
@@ -846,45 +860,18 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     }
 
     const threadId = event.channel.id;
-    const message = await this.resolveTelegramCommandMessage(event, threadId);
+    const message = await resolveTelegramCommandMessage(event, threadId);
 
     await cached.chat.processMessage(event.adapter, threadId, message);
   }
+}
 
-  /**
-   * The Telegram adapter parses and caches the inbound message before emitting
-   * the slash-command event, so the cached copy (with formatting, author flags,
-   * and attachments intact) is preferred. Falls back to rebuilding the message
-   * from the event payload when the in-process cache no longer holds it.
-   */
-  private async resolveTelegramCommandMessage(event: SlashCommandEvent, threadId: string): Promise<Message> {
-    const raw = event.raw as { message_id?: number; chat?: { id?: number | string }; date?: number } | undefined;
-    const chatId = raw?.chat?.id;
-    const rawMessageId = raw?.message_id;
-    const hasPlatformIds = chatId !== undefined && rawMessageId !== undefined;
-    // Mirrors the Telegram adapter's `encodeMessageId` composite format so the
-    // chat SDK dedupe key matches the one a regular-message delivery would use.
-    const messageId = hasPlatformIds ? `${chatId}:${rawMessageId}` : `telegram-command:${threadId}:${Date.now()}`;
-
-    if (hasPlatformIds && event.adapter.fetchMessage) {
-      const cachedMessage = await event.adapter.fetchMessage(threadId, messageId);
-      if (cachedMessage) {
-        return cachedMessage;
-      }
-    }
-
-    const { Message: MessageCtor, parseMarkdown } = await esmImport('chat');
-    const text = event.text ? `${event.command} ${event.text}` : event.command;
-
-    return new MessageCtor({
-      id: messageId,
-      threadId,
-      text,
-      formatted: parseMarkdown(text),
-      raw: event.raw,
-      author: event.user,
-      metadata: { dateSent: raw?.date !== undefined ? new Date(raw.date * 1000) : new Date() },
-      attachments: [],
-    });
-  }
+/**
+ * The Telegram adapter shows typing on every direct message the moment it arrives, before Novu looks at it. An Agent
+ * Inbox agent shows typing only when its operator turned on acknowledging incoming messages, and never to a stranger
+ * it keeps out, so `InboundAckService` shows it instead. The settings e2e sends a real webhook, which catches an
+ * adapter update that renames this method.
+ */
+function stopTypingOnArrival(adapter: TelegramAdapter): void {
+  Object.assign(adapter, { startTypingForPrivateMessage: () => undefined });
 }

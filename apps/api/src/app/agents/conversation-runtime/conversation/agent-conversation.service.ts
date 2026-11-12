@@ -13,6 +13,7 @@ import { getConversationTitle } from './agent-conversation.helpers';
 import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
+  FindToolCallParams,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
@@ -25,9 +26,11 @@ import type {
   PersistMcpConnectionResultParams,
   PersistToolApprovalDecisionParams,
   PersistToolApprovalRequestParams,
+  PersistToolCallParams,
   PersistToolResultParams,
   PersistTriggerSignalParams,
   PersistWorkflowOriginHydrationParams,
+  RecordToolResultParams,
   ResolveConversationParams,
   UpdateInboundMessageParams,
   UpdateMetadataParams,
@@ -472,6 +475,18 @@ export class AgentConversationService {
     return this.ledger.persistHumanInteractionResponse(params);
   }
 
+  async persistToolCall(params: PersistToolCallParams): Promise<void> {
+    return this.ledger.persistToolCall(params);
+  }
+
+  async findToolCallName(params: FindToolCallParams): Promise<string | undefined> {
+    return this.ledger.findToolCallName(params);
+  }
+
+  async recordToolResult(params: RecordToolResultParams): Promise<void> {
+    return this.ledger.recordToolResult(params);
+  }
+
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
     return this.ledger.persistToolResult(params);
   }
@@ -494,6 +509,15 @@ export class AgentConversationService {
 
   async persistRunLifecycle(params: PersistRunLifecycleParams): Promise<ConversationActivityEntity | null> {
     return this.ledger.persistRunLifecycle(params);
+  }
+
+  async findOpenRunId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    turnMessageId?: string;
+  }): Promise<string | undefined> {
+    return this.ledger.findOpenRunId(params);
   }
 
   // --- Lookups ---

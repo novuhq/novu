@@ -1,8 +1,27 @@
+import {
+  BODY_OUTLINES,
+  type BodyOutline,
+  DARK_EYES,
+  LIGHT_EYES,
+  LOOK_PALETTES,
+  type LookColor,
+  type MascotBody,
+  mixOutlines,
+  mixRgb,
+  outlineRadiusToward,
+  type Rgb,
+} from './look';
+
 /**
  * Draws the agent mascot the way the design system's drawing is made: a lit sphere in six oranges,
  * ordered-dithered on a pixel grid, with a dotted halo and two eyes. Drawing it instead of showing the
  * exported picture is what lets it turn: the light and the eyes move across the sphere with the pose.
  * At rest it reproduces the exported `mascot-idle.svg` (48px grid) and `mascot-waiting.svg` (120px grid).
+ *
+ * Its body and colour can be any of an agent's looks (`look.ts`): the body bends the sphere's outline, and
+ * the light, the halo and the eyes follow it; the colour swaps the six tones. The orb in ember is the mascot
+ * as it always was, pixel for pixel. Where an agent's look is shown, it is drawn as the design's `Avatar v2`
+ * instead (`MascotLook.avatar`): the same bodies and tones, shaded the way that drawing is.
  */
 
 /**
@@ -34,19 +53,73 @@ export type MascotLook = {
    * has to face ahead: the happy drawing does, and the eyes would step sideways with every change.
    */
   ahead?: boolean;
+  /**
+   * Drawn for light paper: the shadow side stays orange instead of going near black, and the halo is a
+   * sparse scatter of pale dots instead of a dark ring.
+   */
+  paper?: boolean;
+  /**
+   * Drawn as the design's `Avatar v2`, the mascot of the looks an agent picks: no lit ball, but the tones in rings
+   * that follow the body's own outline out from a highlight up and to the left, a dark rim all the way round, and
+   * a glow of the darkest tone only. Every body reads by its whole outline this way, where a lit ball loses its
+   * shadow side in the dark. Its sphere fills `AVATAR_RADIUS` of the square, as the design's does.
+   */
+  avatar?: boolean;
 };
 
-/** From the halo's darkest dot to the highlight. Level 0 is nothing at all. */
-const PALETTE = [
-  [0x1c, 0x13, 0x10],
-  [0x3a, 0x1a, 0x10],
-  [0x7a, 0x28, 0x12],
-  [0xc2, 0x40, 0x1c],
-  [0xff, 0x5c, 0x30],
-  [0xff, 0x8a, 0x5e],
+/** The share of its square an `Avatar v2` sphere's radius takes, rim included, as the design draws it. */
+export const AVATAR_RADIUS = 0.3584;
+
+/**
+ * What the mascot is made of: its body's outline, its colour's six tones from the halo's darkest dot to the
+ * highlight (level 0 is nothing at all), and the colour of its eyes.
+ */
+export type MascotForm = { outline: BodyOutline; tones: readonly Rgb[]; eyes: Rgb };
+
+/** The mascot as it always was: the orb in ember, with cream eyes. */
+export const ORIGINAL_FORM: MascotForm = formOf('orb', 'ember');
+
+/** The mascot with this body in this colour. */
+export function formOf(body: MascotBody, color: LookColor): MascotForm {
+  const palette = LOOK_PALETTES[color];
+
+  return {
+    outline: BODY_OUTLINES[body],
+    tones: palette.tones,
+    eyes: palette.eyes === 'dark' ? DARK_EYES : LIGHT_EYES,
+  };
+}
+
+/** A mascot on its way from one form to the other, `share` of the way: the outline bends, the tones blend. */
+export function mixForms(from: MascotForm, to: MascotForm, share: number): MascotForm {
+  if (share <= 0) {
+    return from;
+  }
+  if (share >= 1) {
+    return to;
+  }
+
+  return {
+    outline: mixOutlines(from.outline, to.outline, share),
+    tones: from.tones.map((tone, index) => mixRgb(tone, to.tones[index], share)),
+    eyes: mixRgb(from.eyes, to.eyes, share),
+  };
+}
+
+const PAPER_PALETTE = [
+  [0xe4, 0x6e, 0x4c],
+  [0xee, 0x76, 0x52],
+  [0xf6, 0x7e, 0x58],
+  [0xfb, 0x8c, 0x66],
+  [0xfd, 0xa6, 0x88],
+  [0xff, 0xcc, 0xb8],
 ];
 
-const EYE_COLOR = [0xee, 0xe5, 0xd8];
+const PAPER_EYE_COLOR = [0xff, 0xf8, 0xf1];
+
+/** On paper the halo is one pale dot colour, thinned to this share of its dark-mode strength. */
+const PAPER_HALO_COLOR = [0xf8, 0xc6, 0xb4];
+const PAPER_HALO_STRENGTH = 0.24;
 
 /** A 4x4 Bayer matrix: which pixels of a shade in between two levels take the brighter one. */
 const BAYER = [
@@ -106,9 +179,42 @@ const HAPPY_EYE_CUT_BELOW = 1 + HAPPY_EYE_CUT.height;
 /** The awake drawing already looks a touch to the right. The other two face straight ahead. */
 const REST_YAW = 0.08;
 
+/*
+ * `Avatar v2`, measured cell by cell from the design's six bodies (120-cell grids, sphere radius 43 cells): its
+ * tones are bands of one radial gradient, the body's own outline being its outer ring and a point up and to the
+ * left its middle, ordered-dithered across narrow seams between them. These numbers draw 89% of the body's cells
+ * and 97% of the glow's exactly as the design does, and the rest one tone off at a seam.
+ */
+
+/** The gradient's middle, the highlight, in the body's own radii from its middle. */
+const AVATAR_HIGHLIGHT = { x: -0.319, y: -0.315 };
+
+/**
+ * How near the body's edge the highlight may come, in the body's radii, as the mascot turns: any nearer and the
+ * rings on that side would crowd into a single line.
+ */
+const AVATAR_HIGHLIGHT_REACH = 0.8;
+
+/**
+ * Where one tone gives way to the next brighter one, as shares of the way from the edge's rim (1) to the
+ * highlight (0): the rim is the second-darkest tone, and every seam passed towards the highlight is one tone up.
+ */
+const AVATAR_SEAMS = [0.929, 0.76, 0.541, 0.3];
+
+/** How wide a seam's dither is, in the same shares. */
+const AVATAR_SEAM_DITHER = 0.139;
+
+/**
+ * The glow, in the darkest tone only: this share of its cells lit right at the edge, thinning out evenly to none
+ * at `reach` sphere radii beyond it. It reaches as far beyond every body, however wide.
+ */
+const AVATAR_GLOW = { atEdge: 0.61, reach: 0.265 };
+
 /**
  * Fills `pixels` (RGBA, `size` x `size`) with the mascot in `pose`. `radiusShare` is the sphere's radius
- * as a share of the grid: 0.308 leaves room for the whole halo, 0.406 fills an avatar with the sphere.
+ * as a share of the grid: 0.308 leaves room for the whole halo, 0.406 fills an avatar with the sphere. `form`
+ * is its body and colour; a body bigger than the sphere, such as peek, is cut off at the grid's edges. Paper
+ * is only ever drawn for the original form, the one the landing page shows.
  */
 export function drawMascot(
   pixels: Uint8ClampedArray,
@@ -116,7 +222,8 @@ export function drawMascot(
   pose: MascotPose,
   radiusShare: number,
   mood: MascotMood = 'awake',
-  look: MascotLook = {}
+  look: MascotLook = {},
+  form: MascotForm = ORIGINAL_FORM
 ): void {
   const radius = size * radiusShare;
   const centerX = size / 2;
@@ -126,9 +233,15 @@ export function drawMascot(
   const lightY = LIGHT.y + Math.sin(pose.pitch) * LIGHT_SWING;
   const lightLength = Math.hypot(lightX, lightY, LIGHT.z);
   const light = { x: lightX / lightLength, y: lightY / lightLength, z: LIGHT.z / lightLength };
+  const highlight = avatarHighlight(pose, form.outline);
+  // An avatar faces straight ahead at rest, as the design draws it, so its eyes and its highlight turn as one.
+  const faceLook = look.avatar ? { ...look, ahead: true } : look;
 
+  const { face } = form.outline;
   const eyes = matchEyes(
-    [placeEye(-EYE_SPREAD, pose, radius, mood, look), placeEye(EYE_SPREAD, pose, radius, mood, look)],
+    [placeEye(-EYE_SPREAD, pose, radius, mood, faceLook), placeEye(EYE_SPREAD, pose, radius, mood, faceLook)].map(
+      (eye) => eye && { ...eye, x: eye.x + face.x, y: eye.y + face.y }
+    ),
     radius,
     centerX,
     centerY
@@ -138,31 +251,151 @@ export function drawMascot(
     for (let column = 0; column < size; column += 1) {
       const x = (column + 0.5 - centerX) / radius;
       const y = (row + 0.5 - centerY) / radius;
-      const distanceSquared = x * x + y * y;
       const offset = (row * size + column) * 4;
-
-      if (distanceSquared <= 1 && eyes.some((eye) => eye && isInEye(eye, x, y))) {
-        paint(pixels, offset, EYE_COLOR);
-        continue;
-      }
-
-      const shade =
-        distanceSquared <= 1
-          ? shadeOfSphere(x, y, Math.sqrt(1 - distanceSquared), light)
-          : shadeOfHalo(x, y, Math.sqrt(distanceSquared), light);
       const threshold = (BAYER[row & 3][column & 3] + 0.5) / 16;
-      const level = Math.min(PALETTE.length, Math.floor(shade) + (shade - Math.floor(shade) > threshold ? 1 : 0));
+      const color = look.avatar
+        ? avatarColorAt(x, y, threshold, eyes, highlight, form)
+        : colorAt(x, y, threshold, eyes, light, look.paper ?? false, form);
 
-      if (level <= 0) {
-        pixels[offset + 3] = 0;
+      if (color) {
+        paint(pixels, offset, color);
       } else {
-        paint(pixels, offset, PALETTE[level - 1]);
+        pixels[offset + 3] = 0;
       }
     }
   }
 }
 
-function paint(pixels: Uint8ClampedArray, offset: number, color: number[]) {
+/**
+ * The colour of the pixel at `x`, `y` (in sphere radii from the middle), or `null` where nothing is drawn. The
+ * body is lit as if it were the sphere stretched to its outline: a point some share of the way from the body's
+ * middle to its edge is shaded as the point that share of the way across the sphere, in the same direction.
+ */
+function colorAt(
+  x: number,
+  y: number,
+  threshold: number,
+  eyes: Array<Eye | null>,
+  light: { x: number; y: number; z: number },
+  paper: boolean,
+  form: MascotForm
+): readonly number[] | null {
+  const { outline } = form;
+  const fromX = x - outline.dx;
+  const fromY = y - outline.dy;
+  // A round body reaches as far every way, so it needs no direction: the orb stays exactly the sphere it was.
+  const fromMiddle = Math.sqrt(fromX * fromX + fromY * fromY);
+  const reach =
+    outline.a.length === 1
+      ? outline.a[0]
+      : outlineRadiusToward(outline, fromMiddle ? fromX / fromMiddle : 1, fromMiddle ? fromY / fromMiddle : 0);
+  const bodyX = fromX / reach;
+  const bodyY = fromY / reach;
+  const distanceSquared = bodyX * bodyX + bodyY * bodyY;
+  const onSphere = distanceSquared <= 1;
+
+  if (onSphere && eyes.some((eye) => eye && isInEye(eye, x, y))) {
+    return paper ? PAPER_EYE_COLOR : form.eyes;
+  }
+
+  const shade = onSphere
+    ? shadeOfSphere(bodyX, bodyY, Math.sqrt(1 - distanceSquared), light)
+    : shadeOfHalo(bodyX, bodyY, Math.sqrt(distanceSquared), light) * (paper ? PAPER_HALO_STRENGTH : 1);
+  const palette = paper ? PAPER_PALETTE : form.tones;
+  const level = Math.min(palette.length, Math.floor(shade) + (shade - Math.floor(shade) > threshold ? 1 : 0));
+
+  if (level <= 0) {
+    return null;
+  }
+
+  return paper && !onSphere ? PAPER_HALO_COLOR : palette[level - 1];
+}
+
+/** The colour of the pixel at `x`, `y` (in sphere radii from the middle) as `Avatar v2` draws it, or `null`. */
+function avatarColorAt(
+  x: number,
+  y: number,
+  threshold: number,
+  eyes: Array<Eye | null>,
+  highlight: { x: number; y: number },
+  form: MascotForm
+): readonly number[] | null {
+  const { outline, tones } = form;
+  const fromX = x - outline.dx;
+  const fromY = y - outline.dy;
+  const fromMiddle = Math.sqrt(fromX * fromX + fromY * fromY);
+  const reach =
+    outline.a.length === 1
+      ? outline.a[0]
+      : outlineRadiusToward(outline, fromMiddle ? fromX / fromMiddle : 1, fromMiddle ? fromY / fromMiddle : 0);
+
+  if (fromMiddle > reach) {
+    const glow = AVATAR_GLOW.atEdge * (1 - (fromMiddle - reach) / AVATAR_GLOW.reach);
+
+    return glow > threshold ? tones[0] : null;
+  }
+
+  if (eyes.some((eye) => eye && isInEye(eye, x, y))) {
+    return form.eyes;
+  }
+
+  const across = shareFromHighlight(fromX / reach, fromY / reach, highlight);
+  const dither = AVATAR_SEAM_DITHER * (threshold - 0.5);
+  let level = 2;
+  for (const seam of AVATAR_SEAMS) {
+    if (across < seam + dither) {
+      level += 1;
+    }
+  }
+
+  return tones[level - 1];
+}
+
+/**
+ * Where an avatar's highlight sits with the mascot in `pose`, in the body's own radii from its middle. It moves
+ * exactly as far as the middle of the face does when the eyes turn (`placeEye`), so the shading and the eyes go
+ * round together. A highlight that moved less made the eyes slide over a body that seemed to lag behind them.
+ */
+function avatarHighlight(pose: MascotPose, outline: BodyOutline): { x: number; y: number } {
+  // The middle of the face, between the eyes, turned the way `placeEye` turns each eye.
+  const front = Math.sqrt(1 - EYE_HEIGHT * EYE_HEIGHT);
+  const faceX = front * Math.sin(pose.yaw);
+  const faceY = EYE_HEIGHT * Math.cos(pose.pitch) + front * Math.cos(pose.yaw) * Math.sin(pose.pitch);
+  // From sphere radii to the body's, which the gradient is drawn in.
+  const perBody = 1 / outline.a[0];
+  let x = AVATAR_HIGHLIGHT.x + faceX * perBody;
+  let y = AVATAR_HIGHLIGHT.y + (faceY - EYE_HEIGHT) * perBody;
+
+  const away = Math.sqrt(x * x + y * y);
+  if (away > AVATAR_HIGHLIGHT_REACH) {
+    x *= AVATAR_HIGHLIGHT_REACH / away;
+    y *= AVATAR_HIGHLIGHT_REACH / away;
+  }
+
+  return { x, y };
+}
+
+/**
+ * How far the point `x`, `y` of the unit disc is from `highlight` towards the disc's edge, along the line from the
+ * highlight through it: 0 at the highlight and 1 at the edge, whichever way. This is a radial gradient whose middle
+ * sits off centre, as a design tool draws one.
+ */
+function shareFromHighlight(x: number, y: number, highlight: { x: number; y: number }): number {
+  const awayX = x - highlight.x;
+  const awayY = y - highlight.y;
+  const away = Math.sqrt(awayX * awayX + awayY * awayY);
+  if (!away) {
+    return 0;
+  }
+
+  // The rest of the way to the edge along that line, from |highlight + edge·direction| = 1.
+  const along = (highlight.x * awayX + highlight.y * awayY) / away;
+  const toEdge = -along + Math.sqrt(along * along - (highlight.x * highlight.x + highlight.y * highlight.y) + 1);
+
+  return away / toEdge;
+}
+
+function paint(pixels: Uint8ClampedArray, offset: number, color: readonly number[]) {
   pixels[offset] = color[0];
   pixels[offset + 1] = color[1];
   pixels[offset + 2] = color[2];

@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import {
-  FeatureFlagsService,
   IWebSocketDataDto,
   PinoLogger,
   SocketWorkerService,
@@ -8,7 +7,6 @@ import {
   WebSocketsQueueService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
@@ -33,14 +31,6 @@ const mockSqsService = {
   send: async () => {},
   sendBulk: async () => {},
 } as unknown as SqsService;
-
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
 
 const mockLogger = {
   setContext: () => {},
@@ -75,8 +65,6 @@ describe('WebSocket Worker', () => {
       workflowInMemoryProviderService,
       mockSocketWorkerService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
       mockLogger
     );
     await webSocketsQueueService.queue.obliterate();

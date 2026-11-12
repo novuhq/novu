@@ -24,10 +24,10 @@
     "nanoid": "^3.1.20"
   },
   "peerDependencies": {
-    "chat": ">=4.33.0"
+    "chat": ">=4.44.0"
   },
   "devDependencies": {
-    "chat": "^4.40.0",
+    "chat": "^4.44.0",
     "rimraf": "~3.0.2",
     "typescript": "6.0.3",
     "vitest": "^4.1.0",

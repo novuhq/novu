@@ -12,8 +12,9 @@ import type {
 } from 'chat';
 import type { CardNode } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
+import { createInboundMarkdownParser } from './inbound-markdown.js';
 import { MessageParser } from './message-parser.js';
-import { renderMessage } from './message-renderer.js';
+import { renderMessage, renderWithLayout } from './message-renderer.js';
 import { ThreadResolver } from './thread-resolver.js';
 import type { NovuEmailAdapterConfig, NovuEmailRawMessage, NovuEmailThreadId } from './types.js';
 import { generateMessageId, hashMessageId, parseEmailAddress } from './utils.js';
@@ -50,7 +51,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   private readonly messageParser = new MessageParser();
   private readonly formatConverter = new EmailFormatConverter();
   private readonly webhookHandler: WebhookHandler;
-  private parseMarkdownFn!: (md: string) => Root;
+  private outboundParseMarkdown!: (md: string) => Root;
 
   constructor(config: NovuEmailAdapterConfig) {
     this.config = config;
@@ -63,8 +64,8 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     this.threadResolver.setStateAdapter(chat.getState());
 
     const chatModule = await import('chat');
-    this.parseMarkdownFn = chatModule.parseMarkdown;
-    this.messageParser.setChatModule(chatModule.Message, chatModule.parseMarkdown);
+    this.outboundParseMarkdown = chatModule.parseMarkdown;
+    this.messageParser.setChatModule(chatModule.Message, createInboundMarkdownParser(chatModule));
   }
 
   // -- Thread ID methods --
@@ -136,6 +137,8 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       attachments: payload.attachments,
       dkim: payload.dkim,
       spf: payload.spf,
+      dkimDomains: payload.dkimDomains,
+      spfDomain: payload.spfDomain,
     };
   }
 
@@ -162,17 +165,29 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     // click handler uses the same Message-ID to locate the originating thread/message.
     const messageId = generateMessageId(agentAddress);
     const buildActionUrl = this.config.actionUrlBuilder;
-    const rendered = await renderMessage({
+    const renderInput = {
       ...normalized,
       ...(normalized.card && buildActionUrl ? { actionContext: { threadId, messageId, buildActionUrl } } : {}),
-    });
+    };
+    const rendered = this.config.layout
+      ? await renderWithLayout({
+          ...renderInput,
+          threadId,
+          layout: this.config.layout,
+          renderMarkdown: (markdown) => this.formatConverter.fromAst(this.outboundParseMarkdown(markdown)),
+        })
+      : await renderMessage(renderInput);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject
       ? /^re:/i.test(storedSubject)
         ? storedSubject
         : `Re: ${storedSubject}`
-      : 'New message';
+      : (rendered.subject ?? 'New message');
+
+    if (!storedSubject && rendered.subject) {
+      await this.threadResolver.trackSubject(threadId, rendered.subject);
+    }
 
     const result = await this.config.sendEmail({
       from: agentAddress,
@@ -259,7 +274,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     }
     if ('markdown' in message) {
       const md = (message as { markdown: string }).markdown;
-      const formatted = this.parseMarkdownFn(md);
+      const formatted = this.outboundParseMarkdown(md);
 
       return { formatted, text: md };
     }

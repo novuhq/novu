@@ -3,8 +3,8 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-import { ensureStoredBackingAccount, readStoredBackingAccount } from '@/lib/human-account';
-import { claimKeylessSetup, type HumanRegion, REGION_NAMES } from '@/lib/human-accounts-api';
+import { ensureStoredBackingAccount } from '@/lib/human-account';
+import { claimKeylessSetup } from '@/lib/human-accounts-api';
 import { HumanApiError } from '@/lib/human-api-error';
 import { claimPastSignUp, isAccountAgentInUse } from '@/lib/human-claim';
 import { noteAgentClaimed } from '@/lib/human-onboarding';
@@ -22,17 +22,9 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
   }
 
   const token = String(formData.get('token') ?? '');
-  const region: HumanRegion = formData.get('region') === 'eu' ? 'eu' : 'us';
 
   if (!CLAIM_TOKEN_PATTERN.test(token)) {
     return { error: 'This link isn’t valid. Open the newest link your agent sent you.' };
-  }
-
-  const stored = readStoredBackingAccount(user);
-  if (stored && stored.region !== region) {
-    return {
-      error: `This setup was made in the ${REGION_NAMES[region]} region, but your Agent Inbox account is in the ${REGION_NAMES[stored.region]} region, so it can’t be moved there.`,
-    };
   }
 
   // The page doesn't offer the move once the agent is in use; this is the same answer for a stale tab.
@@ -41,9 +33,9 @@ export async function claimSetupAction(_previous: ClaimFormState, formData: Form
   }
 
   try {
-    await ensureStoredBackingAccount(user, region);
+    await ensureStoredBackingAccount(user);
     await claimPastSignUp(user, () =>
-      claimKeylessSetup(region, { humanUserId: user.id, firstName: user.firstName, lastName: user.lastName }, token)
+      claimKeylessSetup({ humanUserId: user.id, firstName: user.firstName, lastName: user.lastName }, token)
     );
   } catch (error) {
     console.error('Failed to claim the keyless setup', error);

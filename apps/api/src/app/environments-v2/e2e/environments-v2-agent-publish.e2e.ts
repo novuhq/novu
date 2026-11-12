@@ -214,7 +214,7 @@ describe('Agent Promotion - /v2/environments/:targetEnvironmentId/publish (POST)
 
     const prodAgent = await agentRepository.findOne(
       { identifier, _environmentId: prodEnv._id, _organizationId: session.organization._id },
-      ['_id'] as any
+      ['_id']
     );
 
     const prodLinks = await agentIntegrationRepository.find(

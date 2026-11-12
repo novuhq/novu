@@ -10,6 +10,7 @@ import {
 } from '@/components/dashboard/nav';
 import { ResumeSetupCard, SetupDoneBanner } from '@/components/dashboard/setup-banners';
 import { buildChannelPrompt, type PromptContext } from '@/lib/agent-setup-prompt';
+import { loadFeatures } from '@/lib/feature-flags';
 import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
@@ -60,11 +61,12 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
   const progress = await requireSetUpAgent(account, connectHost);
   const { agent } = progress;
   const mcpUrl = readMcpUrl();
-  const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus] = await Promise.all([
+  const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus, features] = await Promise.all([
     loadSetupSummary(account, progress),
     mcpUrl ? listConnectedTools(account) : [],
     loadChannelsOverview(account),
     loadHostStatus(account),
+    loadFeatures(account),
   ]);
 
   const context: PromptContext = { apiUrl: await readApiUrl() };
@@ -84,7 +86,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
       <ConfigureView
         initialDrawer={openDrawer}
         connectHost={connectHost}
-        agent={{ ...setup.agent, active: agent.active }}
+        agent={{ ...setup.agent, active: agent.active, look: agent.look }}
         operatorName={agent.operatorName}
         channels={rows}
         telegramSetup={telegramSetup}
@@ -101,6 +103,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
         mcpUrl={mcpUrl}
         connectedTools={connectedTools}
         settings={agent.settings}
+        newCard={features.newOnboarding}
       />
     </>
   );

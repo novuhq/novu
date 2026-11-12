@@ -15,7 +15,6 @@ describe('keyless-signup.helpers', () => {
     DASHBOARD_URL: process.env.DASHBOARD_URL,
     FRONT_BASE_URL: process.env.FRONT_BASE_URL,
     HUMAN_DASHBOARD_URL: process.env.HUMAN_DASHBOARD_URL,
-    NOVU_REGION: process.env.NOVU_REGION,
   };
 
   afterEach(() => {
@@ -67,16 +66,8 @@ describe('keyless-signup.helpers', () => {
 
   it('buildHumanClaimUrl points at the Human dashboard when it is configured', () => {
     process.env.HUMAN_DASHBOARD_URL = 'https://www.gethuman.md/';
-    process.env.NOVU_REGION = 'us-east-1';
 
     expect(buildHumanClaimUrl('abc')).to.equal('https://www.gethuman.md/claim?token=abc');
-  });
-
-  it('buildHumanClaimUrl adds the region on EU deployments', () => {
-    process.env.HUMAN_DASHBOARD_URL = 'https://www.gethuman.md';
-    process.env.NOVU_REGION = 'eu-central-1';
-
-    expect(buildHumanClaimUrl('abc')).to.equal('https://www.gethuman.md/claim?token=abc&region=eu');
   });
 
   it('buildHumanClaimUrl falls back to the dashboard claim page without a Human dashboard', () => {

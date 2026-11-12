@@ -10,7 +10,10 @@ import { AgentTestContext, conversationRepository, setupAgentTestContext } from 
 const POLL_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
 
-async function pollFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = POLL_TIMEOUT_MS): Promise<T> {
+async function pollFor<T>(
+  fn: () => T | null | undefined | Promise<T | null | undefined>,
+  timeoutMs = POLL_TIMEOUT_MS
+): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
 
@@ -74,10 +77,7 @@ describe('Web Chat - context-scoped conversations #novu-v2', () => {
     body: { agentId: string; text: string; conversationIdentifier?: string },
     token = subscriberToken
   ) {
-    return ctx.session.testAgent
-      .post('/v1/web-chat/conversations')
-      .set('Authorization', `Bearer ${token}`)
-      .send(body);
+    return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
   }
 
   function listConversations(token = subscriberToken) {

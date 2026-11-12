@@ -14,6 +14,9 @@ const agentIntegrationRepository = new AgentIntegrationRepository();
 const INBOX_DOMAIN = 'agentinbox.md';
 const DASHBOARD_SECRET = 'e2e-agent-card-dashboard-secret';
 
+/** The look an agent has until its operator picks one. */
+const ORIGINAL_LOOK = { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } };
+
 /** The username the Telegram API stub gives every bot. */
 const STUB_BOT_USERNAME = 'novu_e2e_bot';
 
@@ -63,6 +66,8 @@ describe('Agent Inbox public agent card #novu-v2', () => {
       'operatorFirstName',
       'createdAt',
       'address',
+      'look',
+      'newCard',
     ]);
     expect(card).to.include({
       handle,
@@ -71,7 +76,11 @@ describe('Agent Inbox public agent card #novu-v2', () => {
       operatorName: 'Ada L.',
       operatorFirstName: 'Ada',
       address: `${handle}@${INBOX_DOMAIN}`,
+      // `IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED` is off unless an account gets it.
+      newCard: false,
     });
+    // Nobody picked a look for this agent: it has the original one.
+    expect(card.look).to.deep.equal(ORIGINAL_LOOK);
     // Of the operator's last name, a stranger gets the initial only.
     expect(JSON.stringify(res.data)).to.not.include('Lovelace');
     expect(Date.parse(card.createdAt)).to.be.closeTo(Date.now(), 60_000);
@@ -194,7 +203,95 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     expect(res.data.data).to.include({ handle, name: 'Atlas', address: `${handle}@${INBOX_DOMAIN}` });
     expectNotAvailable(await readCard(`other-${inboxRoutingKey}`));
   });
+
+  it('keeps the look the operator picked on the dashboard, and ignores one a host sends', async () => {
+    const picked = { shape: 'bean', color: 'marigold', art: { kind: 'waves', seed: 4242 } };
+    const { session, handle } = await createAgent({ agentName: 'Atlas', look: picked });
+
+    expect((await readCard(handle)).data.data.look).to.deep.equal(picked);
+    const agent = await asDashboard(session, 'get', '/v1/human/agent');
+    expect(agent.body.data.look).to.deep.equal(picked);
+
+    // Hosts hold the same key, but the look is the operator's to pick: setup from a host leaves the original one.
+    const hostSession = new UserSession();
+    await hostSession.initialize();
+    const hostHandle = freshHandle();
+    const fromHost = await hostSession.testAgent
+      .post('/v1/human/setup')
+      .set('Authorization', `ApiKey ${hostSession.apiKey}`)
+      .send({ operator: true, firstName: 'Ada', inboxHandle: hostHandle, agentName: 'Juno', look: picked });
+    expect(fromHost.status).to.equal(200, JSON.stringify(fromHost.body));
+    expect((await readCard(hostHandle)).data.data.look).to.deep.equal(ORIGINAL_LOOK);
+  });
+
+  it('refuses a look it doesn’t know', async () => {
+    const session = new UserSession();
+    await session.initialize();
+
+    const res = await asDashboard(session, 'post', '/v1/human/setup').send({
+      operator: true,
+      inboxHandle: freshHandle(),
+      look: { shape: 'cube', color: 'ember', art: { kind: 'rays', seed: 1 } },
+    });
+
+    expect(res.status).to.equal(422, JSON.stringify(res.body));
+  });
+
+  it('shows the card to a host, and keeps the first showing with the host that showed it', async () => {
+    const { session, handle } = await createAgent({ agentName: 'Atlas' });
+
+    const first = await showCard(session, { via: 'cli', host: 'claude-code' });
+    expect(first.status).to.equal(200, JSON.stringify(first.body));
+    expect(first.body.data).to.deep.equal({
+      greeting:
+        'Hi Ada, I’m Atlas. I have my own inbox now. Here’s my card, so people can email or message me directly.',
+      name: 'Atlas',
+      handle,
+      address: `${handle}@${INBOX_DOMAIN}`,
+      url: `${(process.env.HUMAN_DASHBOARD_URL || 'https://agentinbox.md').replace(/\/$/, '')}/p/${handle}`,
+      look: ORIGINAL_LOOK,
+      operatorFirstName: 'Ada',
+      firstShown: true,
+    });
+
+    const again = await showCard(session, { via: 'mcp', host: 'chatgpt' });
+    expect(again.status).to.equal(200, JSON.stringify(again.body));
+    expect(again.body.data.firstShown).to.equal(false);
+
+    // The first showing stays the one the dashboard's onboarding reads, with the host that showed it.
+    const agent = await asDashboard(session, 'get', '/v1/human/agent');
+    expect(agent.body.data.cardShown).to.deep.include({ via: 'cli', host: 'claude-code' });
+    const status = await asDashboard(session, 'get', '/v1/human/agent/hosts');
+    expect(status.body.data.cardShown).to.deep.equal(agent.body.data.cardShown);
+    // Showing the card connected both hosts.
+    expect(status.body.data.hosts.map((host: { id: string }) => host.id).sort()).to.deep.equal([
+      'chatgpt',
+      'claude-code',
+    ]);
+  });
+
+  it('leaves the link out while only its contacts can reach the agent', async () => {
+    const { session, handle } = await createAgent({ agentName: 'Atlas' });
+    await updateAgent(session, { reach: 'contacts' });
+
+    const res = await showCard(session, { via: 'cli' });
+
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+    expect(res.body.data).to.include({ handle, address: `${handle}@${INBOX_DOMAIN}` });
+    expect(res.body.data).to.not.have.property('url');
+  });
 });
+
+/** What a host sends when it shows the card: the account's key, and the way in and the host it is. */
+function showCard(session: UserSession, { via, host }: { via: 'cli' | 'mcp'; host?: string }) {
+  const req = session.testAgent
+    .post('/v1/human/agent/card')
+    .set('Authorization', `ApiKey ${session.apiKey}`)
+    .set('agent-inbox-via', via)
+    .set('Novu-Analytics-Source', via);
+
+  return (host ? req.set('agent-inbox-host', host) : req).send({});
+}
 
 /** Read as a stranger would: no key, no secret, no session. */
 function readCard(handle: string) {
@@ -214,7 +311,7 @@ function freshHandle(): string {
 }
 
 /** An Agent Inbox account with its agent, made as the dashboard's onboarding makes it. */
-async function createAgent({ agentName }: { agentName?: string }) {
+async function createAgent({ agentName, look }: { agentName?: string; look?: Record<string, unknown> }) {
   const session = new UserSession();
   await session.initialize();
 
@@ -226,6 +323,7 @@ async function createAgent({ agentName }: { agentName?: string }) {
     email: 'ada@acme.co',
     inboxHandle: handle,
     ...(agentName ? { agentName } : {}),
+    ...(look ? { look } : {}),
   });
   expect(res.status).to.equal(200, JSON.stringify(res.body));
 

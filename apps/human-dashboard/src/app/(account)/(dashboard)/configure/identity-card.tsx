@@ -2,6 +2,7 @@
 
 import { Bot, Share2 } from 'lucide-react';
 
+import { AgentCardVertical, CardMascot } from '@/components/agent-card/agent-card-vertical';
 import {
   type AgentState,
   CardLine,
@@ -13,6 +14,8 @@ import {
 } from '@/components/agent-card/card-parts';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
+import { cardSerialOf } from '@/lib/agent-card';
+import type { AgentLook } from '@/lib/look';
 import { writtenLink } from '@/lib/onboarding';
 
 import { ChannelLogo } from './channel-logo';
@@ -43,6 +46,10 @@ export type IdentityCardProps = {
   slack: string | null;
   /** "Share card": opens the Share dialog. */
   onShare: () => void;
+  /** Its mascot's body and colour and its card's art. */
+  look: AgentLook;
+  /** Shows the new agent card, for the accounts that have it (the onboarding's flag). */
+  newCard: boolean;
 };
 
 /**
@@ -50,6 +57,10 @@ export type IdentityCardProps = {
  * reach it and the host behind it, and the link to its public card.
  */
 export function IdentityCard(props: IdentityCardProps) {
+  if (props.newCard) {
+    return <NewIdentityCard {...props} />;
+  }
+
   const { name, handle, address, cardLink, operatorName, createdAt, hostConnected, telegram, slack, onShare } = props;
 
   return (
@@ -57,7 +68,13 @@ export function IdentityCard(props: IdentityCardProps) {
       aria-label={`${name}’s card`}
       className="w-full max-w-85 shrink-0 overflow-hidden rounded-[14px] border border-border-strong bg-background lg:w-85"
     >
-      <CardPortrait handle={handle} address={address} pictureUrl={props.pictureUrl} state={props.state} />
+      {/* The public card is found through the inbox, so without an address the link would lead nowhere. */}
+      <CardPortrait
+        handle={handle}
+        cardLink={address ? cardLink : null}
+        pictureUrl={props.pictureUrl}
+        state={props.state}
+      />
 
       <CardName name={name} operatorName={operatorName} createdAt={createdAt} />
 
@@ -103,6 +120,55 @@ export function IdentityCard(props: IdentityCardProps) {
       </ul>
 
       <div className="flex items-center gap-2 border-t border-border bg-subtle/90 px-3.5 py-3">
+        <p className="min-w-0 flex-1 truncate font-mono text-xs leading-4 text-default">{writtenLink(cardLink)}</p>
+        <CopyButton
+          value={cardLink}
+          label="Copy the link to the card"
+          variant="secondary"
+          className="size-7 px-0 text-foreground"
+          iconClassName="size-4"
+        />
+        <Button variant="secondary" className={SMALL_BUTTON} onClick={onShare}>
+          <Share2 aria-hidden="true" className="size-3.5" />
+          Share card
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The agent's card as the new agent card (`Agent card · Vertical`), for the accounts that have it: its look, whether
+ * a host has it and who runs it, its address, Telegram and Slack once connected, and its link; under it the link to
+ * copy and Share card, as the ID card has them.
+ */
+function NewIdentityCard(props: IdentityCardProps) {
+  const { name, handle, address, cardLink, operatorName, state, hostConnected, telegram, slack, onShare, look } = props;
+  const status =
+    state === 'paused'
+      ? 'Paused'
+      : hostConnected
+        ? operatorName
+          ? `Run by ${operatorName}`
+          : 'Connected'
+        : 'Not connected yet';
+
+  return (
+    <section aria-label={`${name}’s card`} className="flex w-full max-w-85 shrink-0 flex-col gap-3 lg:w-85">
+      <AgentCardVertical
+        look={look}
+        name={name}
+        status={status}
+        address={address ?? 'No address yet'}
+        link={writtenLink(cardLink)}
+        serial={cardSerialOf(handle)}
+        mascot={<CardMascot look={look} />}
+        picture={props.pictureUrl}
+        lines={{ telegram: telegram ? (telegram.bot ?? 'Connected') : null, slack }}
+        placeholder={{ address: !address }}
+        className="w-full"
+      />
+      <div className="flex items-center gap-2 rounded-[14px] border border-border bg-subtle/90 px-3.5 py-3">
         <p className="min-w-0 flex-1 truncate font-mono text-xs leading-4 text-default">{writtenLink(cardLink)}</p>
         <CopyButton
           value={cardLink}

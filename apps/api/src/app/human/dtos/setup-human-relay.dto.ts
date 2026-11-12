@@ -1,17 +1,20 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AGENT_NAME_MAX_LENGTH, HumanChannelViaEnum } from '@novu/shared';
-import { Transform, type TransformFnParams } from 'class-transformer';
+import { Transform, type TransformFnParams, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { AgentLookDto } from './human-agent-look.dto';
 
 /** As long as a Telegram bot's description may be, the longest of the places it is shown. */
 export const AGENT_DESCRIPTION_MAX_LENGTH = 512;
@@ -50,7 +53,7 @@ export class SetupHumanRelayRequestDto {
   @ApiPropertyOptional({
     description:
       'What the relay agent is called, as people see it on the invite page, in emails and on its chat bots. ' +
-      'Missing leaves the name it has; a new agent is called "Human".',
+      'Missing leaves the name it has; a new agent is called "Agent".',
     maxLength: AGENT_NAME_MAX_LENGTH,
   })
   @IsOptional()
@@ -87,6 +90,15 @@ export class SetupHumanRelayRequestDto {
   @IsEmail()
   email?: string;
 
+  /**
+   * Sign-in has proved `email` is the operator's, so it needs no confirmation link. Only the dashboard's server
+   * can say so: hosts hold the same key, so the API ignores this from anyone without the dashboard's secret.
+   */
+  @ApiHideProperty()
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
+
   @ApiPropertyOptional({
     description: 'The human’s first name (display name shown to agents and in reply attribution).',
   })
@@ -109,6 +121,17 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /**
+   * The look the operator picked while setting the agent up: its mascot's shape and colour, and its card's art.
+   * Only a new agent takes it, and only from the dashboard's server: the API ignores it from anyone else.
+   */
+  @ApiHideProperty()
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => AgentLookDto)
+  look?: AgentLookDto;
 }
 
 export class SetupHumanRelayResponseDto {

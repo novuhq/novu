@@ -7,9 +7,14 @@ import {
   hasLegacyIntegrationConditions,
   PinoLogger,
 } from '@novu/application-generic';
-import { ControlValuesRepository, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  type ClientSession,
+  ControlValuesRepository,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';

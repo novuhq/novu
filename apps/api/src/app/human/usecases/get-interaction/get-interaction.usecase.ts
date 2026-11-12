@@ -34,6 +34,7 @@ export class GetInteraction {
       );
     }
 
+    // As it was before this read: the listener asks whether a command that waited got the answer already.
     return toInteractionResponse(interaction);
   }
 

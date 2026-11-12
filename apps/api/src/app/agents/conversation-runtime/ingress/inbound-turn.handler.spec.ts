@@ -44,6 +44,8 @@ describe('AgentInboundHandler', () => {
 
   afterEach(() => {
     delete (conversation as { _notificationId?: string })._notificationId;
+    // The handler records the first platform message id on the shared fixture's primary channel.
+    delete (conversation.channels[0] as { firstPlatformMessageId?: string }).firstPlatformMessageId;
   });
 
   function makeLogger() {
@@ -319,6 +321,7 @@ describe('AgentInboundHandler', () => {
     return {
       handler,
       logger,
+      connectionContextResolver,
       replyApprovalInterceptor,
       humanInteractionInbound,
       humanRelayRuntime,
@@ -395,11 +398,29 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
-    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
-    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
-    // simulate a spoofed `From`.
-    const { dkim = 'pass', spf = 'pass' } = auth;
+  function makeEmailDmMessage(
+    senderEmail: string,
+    auth: {
+      dkim?: string;
+      spf?: string;
+      dkimDomains?: string[];
+      spfDomain?: string | null;
+      withoutDomains?: boolean;
+    } = {}
+  ) {
+    // Default to a DKIM/SPF-verified sender, both checks passing for the
+    // sender's own domain, so existing cases model a legitimate (non-spoofed)
+    // email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to simulate a
+    // spoofed `From`, `dkimDomains` / `spfDomain` for the domains the checks
+    // passed for, and `withoutDomains` for a payload that predates them.
+    const senderDomain = senderEmail.slice(senderEmail.lastIndexOf('@') + 1);
+    const {
+      dkim = 'pass',
+      spf = 'pass',
+      dkimDomains = [senderDomain],
+      spfDomain = senderDomain,
+      withoutDomains = false,
+    } = auth;
 
     return {
       id: 'email-msg-1',
@@ -411,7 +432,7 @@ describe('AgentInboundHandler', () => {
         userName: senderEmail,
         isBot: false,
       },
-      raw: { dkim, spf },
+      raw: withoutDomains ? { dkim, spf } : { dkim, spf, dkimDomains, spfDomain },
       attachments: [],
     };
   }
@@ -483,6 +504,32 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('should forward the resolved context and its bridge URL override to the bridge', async () => {
+      const { handler, bridgeExecutor, connectionContextResolver } = makeHandler();
+      const context = { tenant: { id: 'org-1', data: { environmentId: 'env-1' } } };
+      connectionContextResolver.resolve.resolves({ context, bridgeUrl: 'https://org-1.example.com/api/novu' });
+
+      const message = { ...makeSlackDmMessage(), id: '1777837499.000001' };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      // The resolver reads the workspace id from the raw payload and the sender from the author.
+      expect(connectionContextResolver.resolve.firstCall.args).to.deep.equal([
+        config,
+        message.raw,
+        message.author.userId,
+      ]);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.context).to.deep.equal(context);
+      expect(params.bridgeUrlOverride).to.equal('https://org-1.example.com/api/novu');
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();
@@ -700,6 +747,75 @@ describe('AgentInboundHandler', () => {
       expect(humanInteractionInbound.hasPendingConversationAsk.calledOnce).to.equal(true);
       expect(conversationService.persistInboundMessage.called).to.equal(false);
       expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('drops a nested-thread message whose only bot mention is inside code when mention-only is on', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'try `<@UBOT>` in a snippet',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('dispatches a mention-only message that names the bot outside code even when the adapter missed the flag', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: '<@UBOT> see `<@UBOT>`',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
 
     it('dispatches an unmentioned nested-thread follow-up after the agent has joined', async () => {
@@ -1027,6 +1143,28 @@ describe('AgentInboundHandler', () => {
           agentConfigResolver.resolveSlackInstallation.calledOnceWith('env1', 'org1', 'slack-main', undefined)
         ).to.equal(true);
         expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('keeps following when the incumbent only writes a teammate id in code', async () => {
+        const { handler, conversationService, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub1'));
+        const thread = makeNestedThread();
+
+        await handler.handle(
+          'agent1',
+          smartConfig as any,
+          thread as any,
+          makeFollowUp({
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            text: 'see `<@U99>`',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(conversationService.updateMetadata.called).to.equal(false);
+        expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       });
 
       it('keeps following when the smart mention-required flag cannot be persisted', async () => {
@@ -2103,6 +2241,128 @@ describe('AgentInboundHandler', () => {
       expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    describe('when DKIM and SPF passed, but for which domain', () => {
+      const restrictedEmailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+
+      function makeRestrictedEmailHandler() {
+        return makeHandler({
+          subscriberResolve: sinon.stub().resolves('known-subscriber'),
+          subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+          agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        });
+      }
+
+      it("should not map the From address's subscriber when both checks passed for another domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // The attacker signs as, and sends through, their own domain, then writes the victim's address in From.
+        const message = makeEmailDmMessage('victim@example.com', {
+          dkimDomains: ['evil.example'],
+          spfDomain: 'evil.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
+      });
+
+      it("should resolve the sender when a DKIM signature is from the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // SPF passed only for the email service's bounce domain, but DKIM aligns.
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example', 'example.com'],
+          spfDomain: 'bounces.esp.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.called).to.equal(false);
+      });
+
+      it("should resolve the sender when SPF passed for a subdomain of the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example'],
+          spfDomain: 'em123.example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('should trust the verdicts alone for a payload without the domains, and log it', async () => {
+        const { handler, logger, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        // Queued by an inbound-mail service that predates the domains, e.g. during a deploy.
+        const message = makeEmailDmMessage('member@example.com', { withoutDomains: true });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        const warnings = logger.warn.getCalls().map((call) => String(call.args[1]));
+        expect(warnings.some((text) => text.startsWith('Inbound email payload has no DKIM/SPF domains'))).to.equal(
+          true
+        );
+      });
+
+      it('should still require both checks to pass when the domains align', async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          spf: 'failed',
+          dkimDomains: ['example.com'],
+          spfDomain: 'example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+      });
     });
 
     it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {

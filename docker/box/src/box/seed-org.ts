@@ -12,25 +12,29 @@ const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 export async function seedClerk(): Promise<string> {
   const found = await findSeedUser();
   const password = seedPassword();
-  const user = found.user
-    ? await clerk(`/users/${found.user.id}`, WithId, {
-        method: 'PATCH',
-        json: { password, skip_password_checks: true },
-      })
-    : await clerk('/users', WithId, {
-        method: 'POST',
-        json: {
-          email_address: [SEED.email],
-          password,
-          first_name: SEED.firstName,
-          last_name: SEED.lastName,
-          skip_password_checks: true,
-          skip_legal_checks: true,
-        },
-      });
+  const user =
+    found.user ??
+    (await clerk('/users', WithId, {
+      method: 'POST',
+      json: {
+        email_address: [SEED.email],
+        password,
+        first_name: SEED.firstName,
+        last_name: SEED.lastName,
+        skip_password_checks: true,
+        skip_legal_checks: true,
+      },
+    }));
+  // Agents and TesterArmy sign in as the seed user, and the dashboard lets a signed-in user delete their account
+  // and an admin their org; Clerk accepts these two flags only on an update.
+  await clerk(`/users/${user.id}`, WithId, {
+    method: 'PATCH',
+    json: { password, skip_password_checks: true, delete_self_enabled: false },
+  });
   const org =
     found.org ??
     (await clerk('/organizations', WithId, { method: 'POST', json: { name: SEED.orgName, created_by: user.id } }));
+  await clerk(`/organizations/${org.id}`, WithId, { method: 'PATCH', json: { admin_delete_enabled: false } });
   const linkOrg = (externalOrgId: string | null) =>
     clerk(`/organizations/${org.id}/metadata`, WithId, {
       method: 'PATCH',

@@ -136,7 +136,7 @@ describe('formatConversationReport', () => {
     const lines = formatConversationReport({ threads: [{ id: 'conv_1', unreadBefore: 2 }] }, false);
 
     expect(lines[1]).toContain('this conversation had 2 unread messages');
-    expect(lines[1]).toContain('npx @agentinbox/cli inbox show conv_1');
+    expect(lines[1]).toContain('npx @agentinbox/cli show conv_1');
   });
 
   it('keeps the conversations of the create response on a later read of the interaction', () => {
@@ -410,7 +410,7 @@ describe('inbox commands', () => {
     expect(stdout).toContain('--senders all');
 
     await expect(inboxListCommand({ status: 'all' })).rejects.toThrow('exit:0');
-    expect(stdout).toContain('npx @agentinbox/cli inbox list --status all --after conv_1');
+    expect(stdout).toContain('npx @agentinbox/cli list --status all --after conv_1');
   });
 
   it('rejects an unknown filter value and --timeout without --wait', async () => {

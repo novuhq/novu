@@ -6,9 +6,12 @@ import {
   ChannelEndpointRepository,
   type ContextEntity,
   ContextRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import type { AgentContextPayload, AgentContextValue } from '@novu/framework';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { WORKSPACE_ID_EXTRACTORS } from '../../shared/util/workspace-id';
@@ -35,7 +38,7 @@ const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
 
 /**
  * Resolves the connect-time context bound to an inbound chat so a Novu-hosted multi-tenant agent
- * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Two scopes are supported,
+ * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Three scopes are supported,
  * matching where the connect flow persisted the context:
  *
  *  - **Workspace scope** (Slack, Teams): one Novu-hosted app is installed across many customer
@@ -44,6 +47,8 @@ const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
  *    Additionally the *author's* own `SLACK_USER` / `MS_TEAMS_USER` endpoint is resolved and its
  *    verified per-user context takes precedence over the workspace hint on conflict — the connection
  *    is only a tenant/routing fallback for unlinked authors.
+ *
+ *  - **Session scope** (web chat): the tenant rides on the subscriber session's `contextKeys`.
  *
  *  - **Endpoint scope** (Telegram): there is no workspace — the subscriber links their chat via a
  *    `/start` deep link that binds the tenant to their per-subscriber `ChannelEndpoint`. Matched by
@@ -62,6 +67,7 @@ export class InboundConnectionContextResolver {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly contextRepository: ContextRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -77,6 +83,10 @@ export class InboundConnectionContextResolver {
     rawEvent: unknown,
     platformUserId?: string | null
   ): Promise<ResolvedInboundContext> {
+    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
+      return this.resolveBySessionContextKeys(config, rawEvent);
+    }
+
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
@@ -84,6 +94,62 @@ export class InboundConnectionContextResolver {
     }
 
     return this.resolveByEndpoint(config, platformUserId ?? null);
+  }
+
+  /**
+   * Web chat has no connection or endpoint: the subscriber's session token carries the tenant as
+   * `contextKeys`, which the adapter stamps on every inbound raw payload (messages and actions).
+   *
+   * Session init only verifies the context signature when the environment's in-app integration
+   * enforces HMAC; otherwise any caller can mint a session naming any context of the environment.
+   * The keys are only trusted as the agent's tenant (and bridge URL) when HMAC is enforced.
+   */
+  private async resolveBySessionContextKeys(
+    config: ResolvedAgentConfig,
+    rawEvent: unknown
+  ): Promise<ResolvedInboundContext> {
+    const contextKeys = (rawEvent as { contextKeys?: unknown } | null | undefined)?.contextKeys;
+    if (!Array.isArray(contextKeys) || contextKeys.length === 0) {
+      return EMPTY_RESOLVED_CONTEXT;
+    }
+
+    try {
+      if (!(await this.isSessionContextSigned(config))) {
+        this.logger.warn(
+          { integrationIdentifier: config.integrationIdentifier, environmentId: config.environmentId },
+          'Ignoring web chat session context: the in-app integration does not enforce HMAC'
+        );
+
+        return EMPTY_RESOLVED_CONTEXT;
+      }
+
+      return await this.buildContextFromKeys(
+        config,
+        contextKeys.filter((key): key is string => typeof key === 'string')
+      );
+    } catch (err) {
+      this.logResolveFailure(err, config, { scope: 'session' });
+
+      return EMPTY_RESOLVED_CONTEXT;
+    }
+  }
+
+  /** Every active Novu in-app integration of the environment enforces HMAC, so session init verified the context. */
+  private async isSessionContextSigned(config: ResolvedAgentConfig): Promise<boolean> {
+    const inAppIntegrations = await this.integrationRepository.find(
+      {
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+        active: true,
+      },
+      'credentials'
+    );
+
+    return (
+      inAppIntegrations.length > 0 && inAppIntegrations.every((integration) => integration.credentials?.hmac === true)
+    );
   }
 
   /**

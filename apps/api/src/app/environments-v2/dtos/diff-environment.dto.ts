@@ -32,6 +32,11 @@ export class UserInfoDto {
   @IsOptional()
   @IsString()
   externalId?: string;
+
+  @ApiPropertyOptional({ type: 'string', description: 'User email, used when the user has no name' })
+  @IsOptional()
+  @IsString()
+  email?: string | null;
 }
 
 export class ResourceInfoDto {

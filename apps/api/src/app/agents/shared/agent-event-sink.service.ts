@@ -5,7 +5,10 @@ import { ConversationActivityEntity, type ConversationChannel, ConversationRepos
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import {
+  AgentConversationService,
+  type ConversationActivityContext,
+} from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
@@ -172,7 +175,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'tool-use-done':
-        await this.handleToolUseDone(event, baseFields, context.sessionId);
+        await this.handleToolUseDone(event, baseFields, context, envelope.runId);
 
         return 'accepted';
 
@@ -644,13 +647,32 @@ export class AgentEventSink {
   private async handleToolUseDone(
     event: Extract<AgentEvent, { type: 'tool-use-done' }>,
     baseFields: BaseCommandFields,
-    sessionId?: string
+    context: AgentEventContext,
+    runId: string
   ): Promise<void> {
-    try {
-      if (this.isInternalTool(event.toolName)) {
-        return;
-      }
+    const { sessionId } = context;
 
+    if (this.isInternalTool(event.toolName)) {
+      return;
+    }
+
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-done',
+      (activityContext) =>
+        this.conversationService.persistToolCall({
+          ...activityContext,
+          runId,
+          toolCallId: event.toolUseId,
+          toolName: event.toolName,
+          input: event.input,
+          mcpServerName: this.mcpServerNameOf(event.source),
+        }),
+      { rethrow: true }
+    );
+
+    try {
       if (!event.input || Object.keys(event.input).length === 0) {
         return;
       }
@@ -686,16 +708,52 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<void> {
+    const toolCallId = event.toolUseId;
+
     if (context.source === 'bridge') {
-      await this.dispatchReply(
-        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [mapToolUseResultEvent(event)] }),
+      await this.persistActivity(
         context,
-        'tool-use-result',
-        runId
+        runId,
+        'record-tool-use-result',
+        async (activityContext) => {
+          const { output, preview } = mapToolUseResultEvent(event);
+          await this.conversationService.recordToolResult({
+            ...activityContext,
+            runId,
+            toolCallId,
+            content: event.content,
+            isError: event.isError,
+            modelFacing: { output, preview },
+          });
+        },
+        { rethrow: true }
       );
 
       return;
     }
+
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-result',
+      async (activityContext) => {
+        // A result carries no tool name. An internal tool never gets a call row, so its result is skipped too.
+        const toolName = await this.conversationService.findToolCallName({ ...activityContext, toolCallId });
+        if (!toolName) {
+          return;
+        }
+
+        await this.conversationService.recordToolResult({
+          ...activityContext,
+          runId,
+          toolCallId,
+          toolName,
+          content: event.content,
+          isError: event.isError,
+        });
+      },
+      { rethrow: true }
+    );
 
     try {
       await this.handlePlanProgress.execute(
@@ -835,6 +893,8 @@ export class AgentEventSink {
       return;
     }
 
+    this.logger.error({ runId, sessionId: context.sessionId, code: event.code }, `Agent run failed: ${event.message}`);
+
     const error = new Error(event.message);
 
     if (event.code) {
@@ -867,13 +927,29 @@ export class AgentEventSink {
     runId: string,
     event: RunLifecycleEvent
   ): Promise<void> {
+    await this.persistActivity(
+      context,
+      runId,
+      'persist-run-lifecycle',
+      (activityContext) => this.conversationService.persistRunLifecycle({ ...activityContext, runId, event }),
+      { rethrow: event.type === 'run-start' }
+    );
+  }
+
+  private async persistActivity(
+    context: AgentEventContext,
+    runId: string,
+    operation: string,
+    persist: (activityContext: ConversationActivityContext) => Promise<unknown>,
+    { rethrow }: { rethrow: boolean }
+  ): Promise<void> {
     const channel = context.channel;
     if (!channel) {
-      const message = 'run lifecycle persist skipped: missing channel on AgentEventContext';
+      const message = `${operation} skipped: missing channel on AgentEventContext`;
       this.logger.error({ runId, conversationId: context.conversationId }, message);
       captureAgentException(new Error(message), {
         component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
+        operation,
         sessionId: context.sessionId,
       });
 
@@ -881,24 +957,22 @@ export class AgentEventSink {
     }
 
     try {
-      await this.conversationService.persistRunLifecycle({
+      await persist({
         conversationId: context.conversationId,
         channel,
         agentIdentifier: context.agentIdentifier,
         environmentId: context.environmentId,
         organizationId: context.organizationId,
-        runId,
-        event,
       });
     } catch (err) {
-      this.logger.error(err, `run lifecycle persist failed: run=${runId}`);
+      this.logger.error(err, `${operation} failed: run=${runId}`);
       captureAgentException(err, {
         component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
+        operation,
         sessionId: context.sessionId,
       });
 
-      if (event.type === 'run-start') {
+      if (rethrow) {
         throw err;
       }
     }

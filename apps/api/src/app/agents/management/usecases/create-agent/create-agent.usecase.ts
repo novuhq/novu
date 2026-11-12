@@ -7,9 +7,8 @@ import {
   slugifyOrRandom,
   throwPlanLimitExceeded,
 } from '@novu/application-generic';
-import { AgentEntity, AgentRepository } from '@novu/dal';
+import { AgentEntity, AgentRepository, type ClientSession } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
 import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';

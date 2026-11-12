@@ -19,6 +19,7 @@ import {
   type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
+  type ClientSession,
   CommunityOrganizationRepository,
   IntegrationEntity,
   type IntegrationQuery,
@@ -35,7 +36,6 @@ import {
   providers,
   slugify,
 } from '@novu/shared';
-import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';

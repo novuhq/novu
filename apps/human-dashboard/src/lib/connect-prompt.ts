@@ -32,6 +32,6 @@ export function connectCommands({ handle, code, apiUrl }: ConnectDetails, host?:
   return [
     { label: 'Connect', command: `${NPX_CLI} connect ${handle} --code ${code} --yes${api}` },
     { label: 'Add the skills', command: host ? skillsCommand(host) : INSTALL_SKILLS_COMMAND },
-    { label: 'Check it works', command: `${NPX_CLI} inbox list` },
+    { label: 'Check it works', command: `${NPX_CLI} list` },
   ];
 }

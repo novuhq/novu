@@ -213,7 +213,7 @@ function printConversations(page: InboxPage, options: InboxListOptions): void {
     if (page.next) {
       // Filters are applied after the scan, so older conversations may still match.
       process.stdout.write(
-        `No conversations match so far. Keep looking: ${CLI_COMMAND} inbox list${filterFlags(options)} --after ${page.next}\n`
+        `No conversations match so far. Keep looking: ${CLI_COMMAND} list${filterFlags(options)} --after ${page.next}\n`
       );
 
       return;
@@ -230,6 +230,6 @@ function printConversations(page: InboxPage, options: InboxListOptions): void {
   }
 
   if (page.next) {
-    process.stdout.write(`\nMore: ${CLI_COMMAND} inbox list${filterFlags(options)} --after ${page.next}\n`);
+    process.stdout.write(`\nMore: ${CLI_COMMAND} list${filterFlags(options)} --after ${page.next}\n`);
   }
 }

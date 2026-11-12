@@ -1,3 +1,4 @@
+import type { AgentToolResultContent } from '@novu/agent-event-protocol';
 import type { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationChannel } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 
@@ -182,6 +183,18 @@ export interface PersistHumanInteractionActivityParams extends ConversationActiv
   answeredElsewhere?: boolean;
 }
 
+export interface PersistToolCallParams extends ConversationActivityContext {
+  runId: string;
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  mcpServerName?: string;
+}
+
+export interface FindToolCallParams extends Pick<ConversationActivityContext, 'environmentId' | 'conversationId'> {
+  toolCallId: string;
+}
+
 export interface PersistToolResultParams extends ConversationActivityContext {
   toolCallId: string;
   toolName?: string;
@@ -189,6 +202,17 @@ export interface PersistToolResultParams extends ConversationActivityContext {
   output: unknown;
   /** Human-readable preview for the display timeline; defaults to a generic line. */
   preview?: string;
+}
+
+/** A tool result from the AgentEvent protocol. Its run-scoped identifier makes a redelivered result write nothing. */
+export interface RecordToolResultParams extends ConversationActivityContext {
+  runId: string;
+  toolCallId: string;
+  toolName?: string;
+  content: AgentToolResultContent[];
+  isError?: boolean;
+  /** What the model saw. Without it the result is kept for the record only. */
+  modelFacing?: { output: unknown; preview?: string };
 }
 
 export interface PersistMcpConnectionRequestParams extends ConversationActivityContext {

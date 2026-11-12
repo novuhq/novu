@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type ApiClient, ApiError } from '../api/client';
 import type { AgentIntegrationLink } from '../api/setup';
-import { DEFAULT_API_URL, SETUP_PAGE_ORIGIN } from '../config';
+import { DEFAULT_API_URL } from '../config';
 
 const { getSlackSetupLinkStatus, getTelegramMobileLinkStatus, hasChannelEndpoint } = vi.hoisted(() => ({
   getSlackSetupLinkStatus: vi.fn(),
@@ -22,6 +22,7 @@ import {
   CHANNEL_POLL_INTERVAL_MS,
   CHANNEL_POLL_TIMEOUT_MS,
   findLinkedIntegration,
+  isEmailVerified,
   isMissingBotTokenError,
   parseEmailAddress,
   viaForProviderId,
@@ -69,6 +70,59 @@ describe('parseEmailAddress', () => {
   });
 });
 
+describe('isEmailVerified', () => {
+  const answers = (contact: Record<string, unknown>) =>
+    ({ axios: { get: vi.fn(async () => ({ data: { data: [{ id: 'sub-1', ...contact }], next: null } })) } }) as never;
+  const confirmed = (address: string) => answers({ emailVerification: { address, status: 'verified' } });
+
+  it('is true for the address this contact confirmed', async () => {
+    await expect(isEmailVerified(confirmed('ada@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      true
+    );
+    await expect(isEmailVerified(confirmed('Ada@Example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      true
+    );
+  });
+
+  it('asks about this contact, for this agent', async () => {
+    const client = confirmed('ada@example.com');
+
+    await isEmailVerified(client, 'sub-1', 'relay', 'ada@example.com');
+
+    expect((client as unknown as { axios: { get: ReturnType<typeof vi.fn> } }).axios.get).toHaveBeenCalledWith(
+      '/v1/contacts',
+      { params: { subscriberId: 'sub-1', agentIdentifier: 'relay', limit: 1 } }
+    );
+  });
+
+  it('is false for an address another agent confirmed, which is the one on the contact', async () => {
+    const sharedContact = answers({
+      email: 'ada@example.com',
+      emailVerification: { address: 'own@example.com', status: 'verified' },
+    });
+
+    await expect(isEmailVerified(sharedContact, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
+  });
+
+  it('is false for another address, even one that looks the same once masked', async () => {
+    await expect(isEmailVerified(confirmed('adam@example.com'), 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(
+      false
+    );
+  });
+
+  it('is false while the link has not been opened', async () => {
+    const pending = answers({ emailVerification: { address: 'ada@example.com', status: 'pending' } });
+
+    await expect(isEmailVerified(pending, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
+  });
+
+  it('is false while the contact does not exist', async () => {
+    const missing = { axios: { get: vi.fn().mockRejectedValue(new Error('not found')) } } as never;
+
+    await expect(isEmailVerified(missing, 'sub-1', 'relay', 'ada@example.com')).resolves.toBe(false);
+  });
+});
+
 describe('isMissingBotTokenError', () => {
   it('matches only the 422 "bot token is missing" response', () => {
     expect(isMissingBotTokenError(new ApiError('Telegram bot token is missing', 422, 'POST x', {}))).toBe(true);
@@ -79,27 +133,25 @@ describe('isMissingBotTokenError', () => {
 });
 
 describe('buildSetupPageUrl', () => {
-  it('puts the token in the fragment of the person.md page for Novu Cloud', () => {
-    expect(buildSetupPageUrl(DEFAULT_API_URL, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect#tok_123`
-    );
-    expect(buildSetupPageUrl(`${DEFAULT_API_URL}/`, 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect#tok_123`
+  it('puts the token in the fragment of the agentinbox.md page', () => {
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'telegram', 'tok_123')).toBe('https://www.agentinbox.md/connect#tok_123');
+    expect(buildSetupPageUrl(`${DEFAULT_API_URL}/`, 'telegram', 'tok_123')).toBe(
+      'https://www.agentinbox.md/connect#tok_123'
     );
   });
 
   it('selects the channel with a query parameter so the token stays in the fragment', () => {
-    expect(buildSetupPageUrl(DEFAULT_API_URL, 'slack', 'tok_123', 'https://dash/fallback')).toBe(
-      `${SETUP_PAGE_ORIGIN}/connect?channel=slack#tok_123`
+    expect(buildSetupPageUrl(DEFAULT_API_URL, 'slack', 'tok_123')).toBe(
+      'https://www.agentinbox.md/connect?channel=slack#tok_123'
     );
   });
 
-  it('falls back to the server-minted dashboard URL for self-hosted or local APIs', () => {
-    expect(buildSetupPageUrl('http://localhost:3000', 'slack', 'tok_123', 'https://dash/fallback')).toBe(
-      'https://dash/fallback'
+  it('stays on the local or self-hosted site the CLI talks to', () => {
+    expect(buildSetupPageUrl('http://localhost:4300/api', 'slack', 'tok_123')).toBe(
+      'http://localhost:4300/connect?channel=slack#tok_123'
     );
-    expect(buildSetupPageUrl('https://api.novu.example.com', 'telegram', 'tok_123', 'https://dash/fallback')).toBe(
-      'https://dash/fallback'
+    expect(buildSetupPageUrl('https://your-dashboard.example/api', 'telegram', 'tok_123')).toBe(
+      'https://your-dashboard.example/connect#tok_123'
     );
   });
 });

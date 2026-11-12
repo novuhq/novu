@@ -6,11 +6,11 @@ import type {
   FormattedContent,
   Message,
   RawMessage,
-  Root,
   StreamChunk,
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
+import { createInboundMarkdownParser, type InboundMarkdownParser } from './inbound-markdown.js';
 import type {
   WebChatAdapterConfig,
   WebChatDeliverMessageResult,
@@ -30,6 +30,7 @@ import {
   mintConversationId,
   mintMessageId,
   parsePostableMessage,
+  sanitizeMessageMetadata,
   toThreadId,
 } from './utils.js';
 
@@ -91,7 +92,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   private readonly config: WebChatAdapterConfig;
   private chat: ChatInstance | null = null;
   private MessageClass: typeof Message | null = null;
-  private parseMarkdownFn: ((md: string) => Root) | null = null;
+  private parseInbound: InboundMarkdownParser | null = null;
 
   constructor(config: WebChatAdapterConfig) {
     this.config = config;
@@ -102,7 +103,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     this.chat = chat;
     const chatModule = await import('chat');
     this.MessageClass = chatModule.Message;
-    this.parseMarkdownFn = chatModule.parseMarkdown;
+    this.parseInbound = createInboundMarkdownParser(chatModule);
   }
 
   private requireChat(): ChatInstance {
@@ -275,12 +276,14 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     }
 
     const messageId = clientMessageId || mintMessageId();
+    const metadata = sanitizeMessageMetadata(body.metadata);
     const message = this.parseMessage({
       id: messageId,
       text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
       contextKeys: session.contextKeys ?? [],
+      ...(metadata ? { metadata } : {}),
     });
 
     try {
@@ -345,7 +348,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
           messageId: kind.sourceMessageId ?? '',
           threadId,
           user,
-          raw: { ...body, contextKeys: session.contextKeys ?? [] },
+          raw: { ...body, metadata: sanitizeMessageMetadata(body.metadata), contextKeys: session.contextKeys ?? [] },
         },
         options
       );
@@ -493,7 +496,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   parseMessage(raw: WebChatRawMessage): Message<WebChatRawMessage> {
-    if (!this.MessageClass || !this.parseMarkdownFn) {
+    if (!this.MessageClass || !this.parseInbound) {
       throw new Error('Adapter not initialized. Call initialize() first.');
     }
 
@@ -501,7 +504,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       id: raw.id,
       threadId: '',
       text: raw.text,
-      formatted: this.parseMarkdownFn(raw.text),
+      formatted: this.parseInbound(raw.text),
       raw,
       author: {
         userId: raw.subscriberId,
@@ -583,10 +586,6 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   renderFormatted(content: FormattedContent): string {
-    if (!this.parseMarkdownFn) {
-      return '';
-    }
-
     // Formatted content is already markdown-derived; callers that need a string
     // use the markdown they passed to postMessage. Keep a minimal escape hatch.
     return typeof content === 'object' ? '' : String(content);

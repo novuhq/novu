@@ -67,6 +67,16 @@ export type WebChatRespondToActionResponse = {
   identifier: string;
 };
 
+export type WebChatCancelRunArgs = AgentHashFields & {
+  agentId?: string;
+  conversationId: string;
+};
+
+/** `aborted` when the server stopped an active turn. `idle` when the conversation had no active turn. */
+export type WebChatCancelRunResponse = {
+  status: 'aborted' | 'idle';
+};
+
 export class WebChatService {
   #httpClient: HttpClient;
 
@@ -105,6 +115,20 @@ export class WebChatService {
       ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
+  }
+
+  async cancelRun(args: WebChatCancelRunArgs): Promise<WebChatCancelRunResponse> {
+    try {
+      return await this.#httpClient.post<WebChatCancelRunResponse>(
+        `${WEB_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/cancel`,
+        {
+          ...(args.agentId ? { agentId: args.agentId } : {}),
+          ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+        }
+      );
+    } catch (err) {
+      throw this.#maybeRethrowPlanLimitError(err);
+    }
   }
 
   async #postAccept<T extends WebChatSendMessageResponse | WebChatRespondToActionResponse>(

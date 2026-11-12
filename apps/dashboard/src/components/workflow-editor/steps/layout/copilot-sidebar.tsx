@@ -1,7 +1,8 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { type ReactNode, useCallback, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { RiCodeBlock, RiSidebarFoldLine, RiSidebarUnfoldLine } from 'react-icons/ri';
 import { PanelSize, usePanelRef } from 'react-resizable-panels';
+import { ChatBodySkeleton } from '@/components/ai-sidekick/chat-body';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -25,6 +26,9 @@ type CopilotSidebarProps = {
   autoSaveId?: string;
   hideCollapseButton?: boolean;
   maxSize?: string;
+  /** While true the sidebar expands on the Copilot tab, so the Copilot's composer can take the focus. */
+  isRevealPending?: boolean;
+  headerActions?: ReactNode;
 };
 
 function RailIconButton({
@@ -127,6 +131,7 @@ function TabbedExpandedPanel({
   copilotContent,
   previewContent,
   testWorkflowButton,
+  headerActions,
   onCollapse,
   hideCollapseButton,
 }: {
@@ -135,6 +140,7 @@ function TabbedExpandedPanel({
   copilotContent: ReactNode;
   previewContent: ReactNode;
   testWorkflowButton?: ReactNode;
+  headerActions?: ReactNode;
   onCollapse: () => void;
   hideCollapseButton?: boolean;
 }) {
@@ -159,6 +165,7 @@ function TabbedExpandedPanel({
           </TabsTrigger>
         </TabsList>
         <div className="ml-auto flex items-center gap-1">
+          {headerActions}
           {testWorkflowButton}
           {!hideCollapseButton && <CollapseButton onClick={onCollapse} />}
         </div>
@@ -176,14 +183,18 @@ function TabbedExpandedPanel({
 function CopilotOnlyExpandedPanel({
   copilotContent,
   isGenerating,
+  headerActions,
   onCollapse,
   hideCollapseButton,
 }: {
   copilotContent: ReactNode;
   isGenerating?: boolean;
+  headerActions?: ReactNode;
   onCollapse: () => void;
   hideCollapseButton?: boolean;
 }) {
+  const collapseButton = !hideCollapseButton && <CollapseButton onClick={onCollapse} />;
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
@@ -206,9 +217,25 @@ function CopilotOnlyExpandedPanel({
             BETA
           </Badge>
         </div>
-        {!hideCollapseButton && <CollapseButton onClick={onCollapse} />}
+        {headerActions ? (
+          <div className="flex items-center gap-1">
+            {headerActions}
+            {collapseButton}
+          </div>
+        ) : (
+          collapseButton
+        )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">{copilotContent}</div>
+    </div>
+  );
+}
+
+/** The Copilot content while the workflow visit's Copilot mode is not known yet. */
+export function CopilotSidebarSkeleton() {
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
+      <ChatBodySkeleton />
     </div>
   );
 }
@@ -222,12 +249,19 @@ export function CopilotSidebar({
   autoSaveId,
   hideCollapseButton,
   maxSize = '60%',
+  isRevealPending,
+  headerActions,
 }: CopilotSidebarProps) {
   const hasPreview = !!previewContent;
   const panelRef = usePanelRef();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>(hasPreview ? 'preview' : 'copilot');
   const groupRef = useRef<HTMLDivElement>(null);
+
+  // Switched while rendering rather than in an effect, so the composer is already visible when its effect focuses it.
+  if (isRevealPending && !isCollapsed && activeTab !== 'copilot') {
+    setActiveTab('copilot');
+  }
 
   const handleExpand = (tab?: SidebarTab) => {
     if (tab) setActiveTab(tab);
@@ -269,6 +303,12 @@ export function CopilotSidebar({
     [panelRef]
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleExpand only touches refs and state setters
+  useEffect(() => {
+    // Only a collapsed sidebar is resized: expanding resets the width the user dragged an open one to.
+    if (isRevealPending && panelRef.current?.isCollapsed()) handleExpand('copilot');
+  }, [isRevealPending]);
+
   return (
     <ResizablePanelGroup
       ref={groupRef}
@@ -302,6 +342,7 @@ export function CopilotSidebar({
             copilotContent={copilotContent}
             previewContent={previewContent}
             testWorkflowButton={testWorkflowButton}
+            headerActions={headerActions}
             onCollapse={handleCollapse}
             hideCollapseButton={hideCollapseButton}
           />
@@ -309,6 +350,7 @@ export function CopilotSidebar({
           <CopilotOnlyExpandedPanel
             copilotContent={copilotContent}
             isGenerating={isGenerating}
+            headerActions={headerActions}
             onCollapse={handleCollapse}
             hideCollapseButton={hideCollapseButton}
           />
