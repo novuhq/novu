@@ -182,6 +182,8 @@ export interface SetupRelayResult {
   emailAddress?: string;
   /** The mailbox is not the slug of the name, because that handle was taken or could not be one. */
   emailHandleAdjusted?: boolean;
+  /** How the agent looks (see `lookOf`). Missing from an API from before looks. */
+  look?: unknown;
 }
 
 export async function setupRelay(

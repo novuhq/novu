@@ -1,6 +1,16 @@
 import { askLine, askOffering, askSecret, type ReadOptions, readAnswer } from '../cli-io';
-import { drawMascot, formOf, ORIGINAL_FORM, SHIMMER, type Theme, toCells } from '../mascot/drawing';
+import {
+  drawMascot,
+  formOf,
+  type MascotForm,
+  mixForms,
+  ORIGINAL_FORM,
+  SHIMMER,
+  type Theme,
+  toCells,
+} from '../mascot/drawing';
 import { createMascotLife, type Emotion, type MascotMoment, restingFace } from '../mascot/life';
+import { type MascotLook, sameLook } from '../mascot/look';
 import {
   fitScreen,
   heightOf,
@@ -61,6 +71,8 @@ const STILL_SPINNER = '•';
 const SETTLES_WITHIN_MS = 3000;
 /** Shown for a secret answer, whatever its length. */
 const HIDDEN_ANSWER = '••••••••';
+/** How long a new look takes to settle, as on the dashboard: the outline bends and the tones blend into the new ones. */
+const BENDS_IN_MS = 520;
 /** How long the caret stays on, and then off, once the typing stops. */
 const CARET_BLINK_MS = 530;
 /** How long the person has to stop typing before an answer is checked. */
@@ -149,7 +161,12 @@ export function startLiveScreen(
 ): Screen {
   const { out, err, colors, aspect, theme } = host;
   const look: Look = { colors, theme };
-  const form = agentLook ? formOf(agentLook.shape, agentLook.color) : ORIGINAL_FORM;
+  const formFor = (worn: MascotLook | undefined) => (worn ? formOf(worn.shape, worn.color) : ORIGINAL_FORM);
+  // The look the mascot has, or is on its way to, and the form drawn for it.
+  let wearing = agentLook;
+  let form = formFor(agentLook);
+  // A new look bends in from what the mascot was at that moment, itself a look on its way perhaps.
+  let bend: { from: MascotForm; since: number } | undefined;
   const life = createMascotLife({ random: host.random });
   // Bound now, before stray writes are kept off the terminal: the screen's own writes go through as they are.
   const writeOut: (text: string) => boolean = out.write.bind(out);
@@ -215,7 +232,25 @@ export function startLiveScreen(
     };
   };
 
+  /** The mascot's form at `now`: the look it has, or one on its way there, slow at both ends. */
+  const formAt = (now: number): MascotForm => {
+    if (!bend) {
+      return form;
+    }
+
+    const progress = (now - bend.since) / BENDS_IN_MS;
+    if (progress >= 1) {
+      bend = undefined;
+
+      return form;
+    }
+
+    return mixForms(bend.from, form, ease(Math.max(0, progress)));
+  };
+
   const linesFor = (shown: ScreenView, fit: ScreenFit, moment: MascotMoment, now: number, final: boolean) => {
+    // The screen is left in the look it has, whether or not the bend into it was over.
+    const drawn = final ? form : formAt(now);
     const mascot = fit.mascotWidth
       ? paintMascot(
           toCells(
@@ -224,12 +259,12 @@ export function startLiveScreen(
               theme,
               time: now,
               shimmer: moment.still ? 0 : SHIMMER,
-              form,
+              form: drawn,
             })
           ),
           look,
           columns(),
-          form
+          drawn
         )
       : undefined;
     const spinner =
@@ -241,7 +276,8 @@ export function startLiveScreen(
   const momentNow = (now: number, emotion: Emotion): MascotMoment => {
     life.feel(emotion, now);
     const moment = life.frame(now);
-    if (moment.settled) {
+    // A look still bending in is seen through before the screen is left.
+    if (moment.settled && formAt(now) === form) {
       settled?.();
     }
 
@@ -535,6 +571,18 @@ export function startLiveScreen(
       feeling = emotion;
       changed();
     },
+    look: (next) => {
+      if (finished || sameLook(next, wearing)) {
+        return;
+      }
+
+      const now = host.now();
+      // Where nothing moves, or nothing is drawn in place, the mascot is simply in its new look when next drawn.
+      bend = host.animate && live ? { from: formAt(now), since: now } : undefined;
+      wearing = next;
+      form = formFor(next);
+      changed();
+    },
     subtitle: (text) => {
       subtitle = text;
       changed();
@@ -698,4 +746,9 @@ export function startLiveScreen(
   }
 
   return screen;
+}
+
+/** Slow at both ends, so a new look neither starts nor lands with a snap. */
+function ease(progress: number): number {
+  return progress * progress * (3 - 2 * progress);
 }

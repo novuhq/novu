@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReadOptions } from '../cli-io';
+import { MASCOT_EYE_COLOR } from '../mascot/drawing';
+import { terminalPalette } from '../mascot/look';
+import { TONES } from './layout';
 import { type ScreenHost, startLiveScreen } from './live-screen';
 import { setOpenedScreen } from './opened';
 import { BEGIN_FRAME, HIDE_CURSOR, SHOW_CURSOR } from './painter';
@@ -767,5 +770,181 @@ describe('startLiveScreen', () => {
     const text = fake.writes.join('');
     expect(text).toMatch(/[⠁-⣿]/);
     expect(text).not.toContain('238;229;216');
+  });
+});
+
+describe('the agent’s look on the screen', () => {
+  const DROP = { shape: 'drop', color: 'coral' } as const;
+
+  /** The mascot as it stands on the terminal: its lines of braille. */
+  const mascotOn = (fake: ReturnType<typeof fakeHost>) =>
+    fake.terminal.screen().filter((line) => /[\u2801-\u28ff]/.test(line));
+
+  /** The same frames on each terminal, so that only the look can make them differ. */
+  const tickAll = (frames: number, ...fakes: Array<ReturnType<typeof fakeHost>>) => {
+    for (let frame = 0; frame < frames; frame += 1) {
+      for (const fake of fakes) {
+        fake.tick();
+      }
+    }
+  };
+
+  it('opens in the look it is given, and as the orb in ember without one', async () => {
+    const orb = fakeHost();
+    const drop = fakeHost();
+    startLiveScreen({ command: 'listen claude-code' }, orb.host);
+    startLiveScreen({ command: 'listen claude-code', look: DROP }, drop.host);
+    await drawnSoon();
+
+    expect(mascotOn(drop)).not.toEqual(mascotOn(orb));
+    expect(drop.writes.join('')).toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
+    expect(orb.writes.join('')).not.toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
+  });
+
+  it('bends into a new look over about half a second, and ends exactly on it', async () => {
+    const bending = fakeHost({ animate: true });
+    const there = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, bending.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+    const orb = mascotOn(bending);
+
+    screen.look(DROP);
+    // 8 frames, 267ms: about halfway through the 520.
+    tickAll(8, bending, there);
+    const halfway = mascotOn(bending);
+    expect(halfway).not.toEqual(orb);
+    expect(halfway).not.toEqual(mascotOn(there));
+
+    // 16 frames, 533ms: the bend is over, and the mascot is the one a screen opened in that look draws.
+    tickAll(8, bending, there);
+    expect(mascotOn(bending)).toEqual(mascotOn(there));
+  });
+
+  it('blends into the new colour through tones in between, never from one palette straight to the other', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+    const known = new Set(
+      [
+        ...terminalPalette('ember').dark,
+        ...terminalPalette('coral').dark,
+        MASCOT_EYE_COLOR,
+        ...Object.values(TONES.dark),
+      ].map((tone) => tone?.join(';'))
+    );
+    const colours = (from: number) =>
+      [
+        ...fake.writes
+          .slice(from)
+          .join('')
+          .matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g),
+      ].map((match) => match[1]);
+
+    screen.look({ shape: 'orb', color: 'coral' });
+    const bendStarts = fake.writes.length;
+    tickAll(8, fake);
+    expect(colours(bendStarts).some((colour) => !known.has(colour))).toBe(true);
+
+    tickAll(8, fake);
+    const bendOver = fake.writes.length;
+    tickAll(4, fake);
+    // Only the shimmer moves now, in the new colour's own tones.
+    expect(colours(bendOver).every((colour) => known.has(colour))).toBe(true);
+    expect(colours(bendOver)).toContain(terminalPalette('coral').dark[4].join(';'));
+  });
+
+  it('goes on from where it was when the look changes again before the bend is over', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    tickAll(8, fake);
+    const halfway = mascotOn(fake);
+
+    screen.look({ shape: 'bean', color: 'bone' });
+    // The very same moment drawn again: the mascot hasn't jumped anywhere.
+    fake.tick(0);
+    expect(mascotOn(fake)).toEqual(halfway);
+
+    tickAll(16, fake);
+    expect(mascotOn(fake)).not.toEqual(halfway);
+  });
+
+  it('is simply in its new look where nothing moves', async () => {
+    const fake = fakeHost();
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    await drawnSoon();
+
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('writes nothing for the look it already has', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'login', look: DROP }, fake.host);
+    await drawnSoon();
+    tickAll(1, fake);
+    const before = fake.writes.length;
+
+    screen.look({ ...DROP });
+    fake.tick(0);
+    await drawnSoon();
+
+    expect(fake.writes.slice(before).join('')).toBe('');
+  });
+
+  it('sees a bend through before it leaves the screen, and leaves it in the new look', async () => {
+    const fake = fakeHost({ animate: true });
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    let left = false;
+    const done = screen.done('happy').then(() => {
+      left = true;
+    });
+    // 500ms of frames: the smile is there after 420, the bend takes 520.
+    tickAll(15, fake);
+    await drawnSoon();
+    expect(left).toBe(false);
+
+    fake.tick(50);
+    await done;
+    expect(left).toBe(true);
+
+    await startLiveScreen({ command: 'connect', look: DROP }, there.host).done('happy');
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('leaves the new look on the screen if the process ends before the bend is over', async () => {
+    const fake = fakeHost({ animate: true });
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    tickAll(4, fake);
+    for (const exit of [...fake.exits, ...there.exits]) {
+      exit();
+    }
+
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('draws the new look at the end where nothing is drawn in place', async () => {
+    const fake = fakeHost({ rows: 0 });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    screen.look(DROP);
+    await screen.done('happy');
+
+    expect(fake.writes.join('')).toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
   });
 });

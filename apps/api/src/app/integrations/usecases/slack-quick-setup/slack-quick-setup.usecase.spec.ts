@@ -28,15 +28,17 @@ function buildHarness() {
   };
   const agentRepository = { findOne: sinon.stub().resolves({ _id: MOCK_AGENT_ID, runtime: 'self-hosted' }) };
   const logger = { setContext: sinon.stub(), info: sinon.stub(), warn: sinon.stub() };
+  const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(null) };
 
   const usecase = new SlackQuickSetup(
     integrationRepository as any,
     agentIntegrationRepository as any,
     agentRepository as any,
+    agentInboxFeatures as any,
     logger as any
   );
 
-  return { usecase, integrationRepository, agentRepository, logger };
+  return { usecase, integrationRepository, agentRepository, agentInboxFeatures, logger };
 }
 
 function buildCommand(overrides: Partial<SlackQuickSetupCommand> = {}): SlackQuickSetupCommand {
@@ -192,15 +194,32 @@ describe('SlackQuickSetup', () => {
       expect(logger.warn.called).to.equal(false);
     });
 
+    it("gives a Human agent's app its mascot in its look once its mascots show it", async () => {
+      const { usecase, agentRepository, agentInboxFeatures } = buildHarness();
+      const look = { shape: 'drop', color: 'coral', art: { kind: 'rays', seed: 0 } };
+      agentRepository.findOne.resolves({ _id: MOCK_AGENT_ID, runtime: 'human_relay', look });
+      agentInboxFeatures.mascotLookOf.resolves(look);
+
+      await usecase.execute(buildCommand());
+
+      expect(sentIconParams(axiosPost).url).to.equal('https://www.agentinbox.md/brand/mascot/drop-coral.png');
+      expect(agentInboxFeatures.mascotLookOf.firstCall.args[0]).to.deep.equal({
+        _organizationId: MOCK_ORGANIZATION_ID,
+        look,
+      });
+    });
+
     it("gives a Human agent's app its own picture", async () => {
-      const { usecase, agentRepository } = buildHarness();
+      const { usecase, agentRepository, agentInboxFeatures } = buildHarness();
       agentRepository.findOne.resolves({ _id: MOCK_AGENT_ID, runtime: 'human_relay', picture });
+      agentInboxFeatures.mascotLookOf.resolves({ shape: 'drop', color: 'coral' });
 
       await usecase.execute(buildCommand());
 
       expect(sentIconParams(axiosPost).url).to.equal(
         `https://www.agentinbox.md/api/v1/agent-pictures/${MOCK_ENVIRONMENT_ID}/${MOCK_AGENT_ID}/v1`
       );
+      expect(agentInboxFeatures.mascotLookOf.called).to.equal(false);
     });
 
     it('reads the picture of the agent', async () => {
@@ -208,7 +227,7 @@ describe('SlackQuickSetup', () => {
 
       await usecase.execute(buildCommand());
 
-      expect(agentRepository.findOne.firstCall.args[1]).to.include('picture');
+      expect(agentRepository.findOne.firstCall.args[1]).to.include.members(['picture', 'look']);
     });
 
     it('sets the icon once the credentials are saved, with a short wait', async () => {

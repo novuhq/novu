@@ -2,6 +2,7 @@ import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptApiKey } from '@novu/application-generic';
 import { type AgentHostId, AgentRepository, EnvironmentRepository } from '@novu/dal';
 import type { ConnectHostResponseDto } from '../../dtos/human-host.dto';
+import { agentLookOf } from '../../services/agent-look';
 import {
   CONNECT_CODE_EXPIRED,
   HumanConnectCodeService,
@@ -34,7 +35,7 @@ export class ConnectHost {
     const scope = { environmentId: target.environmentId, organizationId: target.organizationId };
     const agent = await this.agentRepository.findOne(
       { _id: target.agentId, _environmentId: scope.environmentId, _organizationId: scope.organizationId },
-      ['_id', 'identifier', 'name', 'runtime']
+      ['_id', 'identifier', 'name', 'runtime', 'look']
     );
 
     if (!agent || agent.runtime !== 'human_relay') {
@@ -65,7 +66,8 @@ export class ConnectHost {
     return {
       apiKey,
       environmentId: scope.environmentId,
-      agent: { identifier: agent.identifier, name: agent.name, handle: target.handle },
+      // Its look goes along so the CLI's mascot can be the agent's own from here on.
+      agent: { identifier: agent.identifier, name: agent.name, handle: target.handle, look: agentLookOf(agent) },
       host,
     };
   }

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateIf } from 'class-validator';
 import type { HumanInviteVia } from '../services/human-delivery.service';
+import type { AgentLookDto } from './human-agent-look.dto';
 
 const INVITE_VIAS: HumanInviteVia[] = [
   HumanChannelViaEnum.TELEGRAM,
@@ -188,6 +189,8 @@ export type HumanInviteStatusResult =
       agentName: string;
       /** Where the agent's picture can be loaded. Missing when it has none. */
       agentPictureUrl?: string;
+      /** The agent's look, for its mascot on the invite page. Missing while its mascots show the original one. */
+      agentLook?: AgentLookDto;
       /** The account owner's name. Missing when they haven't given one. */
       inviterName?: string;
       /** Display name, falling back to the subscriberId. */

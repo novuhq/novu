@@ -144,6 +144,9 @@ export class SetupHumanRelayResponseDto {
   @ApiProperty({ description: 'What the relay agent is called.' })
   agentName: string;
 
+  @ApiProperty({ type: AgentLookDto, description: 'How the agent looks, for the mascot on the CLI’s screen.' })
+  look: AgentLookDto;
+
   @ApiProperty()
   subscriberId: string;
 
@@ -160,4 +163,10 @@ export class SetupHumanRelayResponseDto {
 export class HumanOperatorResponseDto {
   @ApiPropertyOptional({ description: 'subscriberId of the account owner’s contact. Missing before any setup.' })
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    type: AgentLookDto,
+    description: 'The agent’s look, for the CLI’s mascot. Missing before any setup has made the agent.',
+  })
+  agentLook?: AgentLookDto;
 }

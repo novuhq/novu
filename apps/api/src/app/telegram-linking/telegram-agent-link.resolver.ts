@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AgentIntegrationRepository, type AgentPicture, AgentRepository } from '@novu/dal';
+import { AgentIntegrationRepository, type AgentLook, type AgentPicture, AgentRepository } from '@novu/dal';
 import type { AgentRuntime } from '@novu/shared';
 import Axios from 'axios';
 
@@ -15,6 +15,8 @@ export interface ResolvedTelegramAgent {
   agentDescription?: string;
   agentRuntime?: AgentRuntime;
   agentPicture?: AgentPicture;
+  /** The look its operator picked for it, as stored: missing for an agent that has the original look. */
+  agentLook?: AgentLook;
 }
 
 interface TelegramGetWebhookInfoResponse {
@@ -100,7 +102,7 @@ export class TelegramAgentLinkResolver {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
       },
-      ['_id', 'identifier', 'name', 'description', 'runtime', 'picture']
+      ['_id', 'identifier', 'name', 'description', 'runtime', 'picture', 'look']
     );
 
     if (!agent) {
@@ -114,6 +116,7 @@ export class TelegramAgentLinkResolver {
       agentDescription: agent.description,
       agentRuntime: agent.runtime,
       ...(agent.picture?.storageKey ? { agentPicture: agent.picture } : {}),
+      ...(agent.look ? { agentLook: agent.look } : {}),
     };
   }
 

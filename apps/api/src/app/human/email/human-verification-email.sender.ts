@@ -6,6 +6,7 @@ import type { IEmailOptions } from '@novu/shared';
 import type { ResolvedAgentOutboundEmail } from '../../agents/email/resolve-agent-outbound-email';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
+import { AgentInboxFeaturesService } from '../services/agent-inbox-features.service';
 import { agentPictureOrDefaultUrl } from '../services/agent-picture-url';
 import { HumanOperatorService } from '../services/human-operator.service';
 import { resolveRelaySender } from '../services/relay-owner-name';
@@ -23,6 +24,7 @@ export class HumanVerificationEmailSender {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly operatorService: HumanOperatorService,
     private readonly inboxQuota: AgentEmailInboxQuotaService,
+    private readonly features: AgentInboxFeaturesService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -69,9 +71,11 @@ export class HumanVerificationEmailSender {
           )
         : Promise.resolve(null),
     ]);
+    // Only an agent with no picture of its own shows its mascot, so only then is its look asked for.
+    const look = agent.picture?.storageKey ? null : await this.features.mascotLookOf(agent);
     const sender = {
       ...resolveRelaySender({ agent, operator }),
-      pictureUrl: agentPictureOrDefaultUrl(agent),
+      pictureUrl: agentPictureOrDefaultUrl(agent, look),
     };
 
     const { senderIntegration, from, senderName } = params.outbound;

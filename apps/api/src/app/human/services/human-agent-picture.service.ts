@@ -4,6 +4,7 @@ import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
 import { relayAcknowledgesMessages } from '../../agents/human-relay/relay-acknowledges-messages';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
+import { AgentInboxFeaturesService } from './agent-inbox-features.service';
 import { agentLookOf, cardShownOf } from './agent-look';
 import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
@@ -41,7 +42,7 @@ type AgentScope = { environmentId: string; organizationId: string; agentIdentifi
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
  * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
- * after that the icon can only be changed in Slack.
+ * after that the icon can only be changed in Slack. An agent with no picture shows its mascot in those places.
  */
 @Injectable()
 export class HumanAgentPictureService {
@@ -50,6 +51,7 @@ export class HumanAgentPictureService {
     private readonly storageService: StorageService,
     private readonly humanAgentIdentity: HumanAgentIdentityService,
     private readonly humanOperator: HumanOperatorService,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -132,7 +134,11 @@ export class HumanAgentPictureService {
       { $unset: { picture: 1 } }
     );
     await this.deleteFile(agent.picture.storageKey);
-    await this.humanAgentIdentity.updateTelegramBots(agent, { picture: null });
+    // Its bots go back to its mascot, in the look its mascots show.
+    await this.humanAgentIdentity.updateTelegramBots(agent, {
+      picture: null,
+      mascot: await this.agentInboxFeatures.mascotLookOf(agent),
+    });
 
     return { ...agent, picture: undefined };
   }
