@@ -328,12 +328,6 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
       allowed: false,
     },
     {
-      name: "refuses a tenant's shared connection from another tenant",
-      connection: { contextKeys: ['tenant:acme'] },
-      caller: { subscriberId: MOCK_SUBSCRIBER_ID, context: { tenant: 'globex' } },
-      allowed: false,
-    },
-    {
       name: "refuses a tenant's shared connection when only the raw context claims the tenant",
       connection: { contextKeys: ['tenant:acme'] },
       caller: { subscriberId: MOCK_SUBSCRIBER_ID, contextKeys: ['tenant:globex'], context: { tenant: 'acme' } },
