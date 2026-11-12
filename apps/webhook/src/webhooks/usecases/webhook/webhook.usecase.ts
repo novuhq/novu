@@ -107,8 +107,7 @@ export class Webhook {
 
     const events: IWebhookResult[] = [];
 
-    for (let eventIndex = 0; eventIndex < messageIdentifiers.length; eventIndex++) {
-      const messageIdentifier = messageIdentifiers[eventIndex];
+    for (const { messageIdentifier, eventIndex } of messageIdentifiers) {
       const event = await this.parseEvent(messageIdentifier, command, providerId, channel, eventIndex);
 
       if (event === undefined) {
@@ -194,19 +193,22 @@ export class Webhook {
    * Provider parsers return identifiers straight from the request body. Only strings (and numbers, which Mongo would
    * cast to a string anyway) are valid message identifiers — anything else, e.g. `{ "$ne": null }`, would turn the
    * message lookup into a query operator, so it is dropped.
+   *
+   * Each kept identifier carries its position in the original body: batch parsers (e.g. SendGrid) use that index to
+   * pick the matching body entry, so it must not shift when earlier entries are dropped.
    */
-  private normalizeMessageIdentifiers(identifiers: unknown): string[] {
+  private normalizeMessageIdentifiers(identifiers: unknown): { messageIdentifier: string; eventIndex: number }[] {
     if (!Array.isArray(identifiers)) {
       return [];
     }
 
-    return identifiers.flatMap((identifier) => {
+    return identifiers.flatMap((identifier, eventIndex) => {
       if (typeof identifier === 'string' && identifier.length > 0) {
-        return [identifier];
+        return [{ messageIdentifier: identifier, eventIndex }];
       }
 
       if (typeof identifier === 'number' && Number.isFinite(identifier)) {
-        return [String(identifier)];
+        return [{ messageIdentifier: String(identifier), eventIndex }];
       }
 
       if (identifier !== undefined && identifier !== null) {
