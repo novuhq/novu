@@ -123,23 +123,13 @@ export class CreateSubscriptionsUsecase {
       };
     }
 
-    const subscribersToFind = foundSubscribers.map((sub) => ({
-      _subscriberId: sub._id.toString(),
-      identifier:
-        validSubscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
-        buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId, contextKeys),
-    }));
-
-    const contextQuery = this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
-      enabled: useContextFiltering,
-    });
-
-    const existingSubscriptions = await this.topicSubscribersRepository.find({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _topicId: topic._id,
-      identifier: { $in: subscribersToFind.map((sub) => sub.identifier) },
-      ...contextQuery,
+    const existingSubscriptions = await this.findExistingSubscriptions({
+      command,
+      topic,
+      foundSubscribers,
+      validSubscriptions,
+      contextKeys,
+      useContextFiltering,
     });
 
     const existingSubscriberIds = existingSubscriptions.map((sub) => sub._subscriberId.toString());
@@ -155,7 +145,6 @@ export class CreateSubscriptionsUsecase {
     }
 
     for (const subscription of existingSubscriptions) {
-      const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
       const preferences = await this.fetchPreferencesForSubscription(
         command,
         subscription,
@@ -163,33 +152,7 @@ export class CreateSubscriptionsUsecase {
         useContextFiltering
       );
 
-      subscriptionData.push({
-        _id: subscription._id.toString(),
-        identifier: subscription.identifier,
-        name: subscription.name,
-        topic: {
-          _id: topic._id,
-          key: topic.key,
-          name: topic.name,
-          data: topic.data,
-        },
-        subscriber: subscriber
-          ? {
-              _id: subscriber._id,
-              subscriberId: subscriber.subscriberId,
-              avatar: subscriber.avatar,
-              firstName: subscriber.firstName,
-              lastName: subscriber.lastName,
-              email: subscriber.email,
-              createdAt: subscriber.createdAt,
-              updatedAt: subscriber.updatedAt,
-            }
-          : null,
-        preferences,
-        contextKeys: subscription.contextKeys,
-        createdAt: subscription.createdAt ?? '',
-        updatedAt: subscription.updatedAt ?? '',
-      });
+      subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
     }
 
     if (subscribersToCreate.length > 0) {
@@ -227,42 +190,13 @@ export class CreateSubscriptionsUsecase {
       }
 
       for (const subscription of newSubscriptions.created) {
-        const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
         const preferencesEntry = preferencesArray.find((entry) => entry.subscriptionId === subscription.identifier);
         const preferences = preferencesEntry?.preferences;
 
-        subscriptionData.push({
-          _id: subscription._id.toString(),
-          identifier: subscription.identifier,
-          name: subscription.name,
-          topic: {
-            _id: topic._id,
-            key: topic.key,
-            name: topic.name,
-            data: topic.data,
-          },
-          subscriber: subscriber
-            ? {
-                _id: subscriber._id,
-                subscriberId: subscriber.subscriberId,
-                avatar: subscriber.avatar,
-                firstName: subscriber.firstName,
-                lastName: subscriber.lastName,
-                email: subscriber.email,
-                createdAt: subscriber.createdAt,
-                updatedAt: subscriber.updatedAt,
-              }
-            : null,
-          preferences,
-          contextKeys: subscription.contextKeys,
-          createdAt: subscription.createdAt ?? '',
-          updatedAt: subscription.updatedAt ?? '',
-        });
+        subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
       }
 
       for (const subscription of newSubscriptions.updated) {
-        const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
-
         const preferences = await this.fetchPreferencesForSubscription(
           command,
           subscription,
@@ -270,33 +204,7 @@ export class CreateSubscriptionsUsecase {
           useContextFiltering
         );
 
-        subscriptionData.push({
-          _id: subscription._id.toString(),
-          identifier: subscription.identifier,
-          name: subscription.name,
-          topic: {
-            _id: topic._id,
-            key: topic.key,
-            name: topic.name,
-            data: topic.data,
-          },
-          subscriber: subscriber
-            ? {
-                _id: subscriber._id,
-                subscriberId: subscriber.subscriberId,
-                avatar: subscriber.avatar,
-                firstName: subscriber.firstName,
-                lastName: subscriber.lastName,
-                email: subscriber.email,
-                createdAt: subscriber.createdAt,
-                updatedAt: subscriber.updatedAt,
-              }
-            : null,
-          preferences,
-          contextKeys: subscription.contextKeys,
-          createdAt: subscription.createdAt ?? '',
-          updatedAt: subscription.updatedAt ?? '',
-        });
+        subscriptionData.push(this.toSubscriptionResponse(subscription, topic, foundSubscribers, preferences));
       }
     }
 
@@ -308,6 +216,86 @@ export class CreateSubscriptionsUsecase {
         failed: errors.length,
       },
       errors: errors.length > 0 ? errors : undefined,
+    };
+  }
+
+  /**
+   * Identifiers can come from a subscriber session, so a subscription only counts as existing when it belongs to
+   * the subscriber that requested that identifier. Matching on the identifier alone would hand one subscriber
+   * another subscriber's subscription and preferences.
+   */
+  private async findExistingSubscriptions({
+    command,
+    topic,
+    foundSubscribers,
+    validSubscriptions,
+    contextKeys,
+    useContextFiltering,
+  }: {
+    command: CreateSubscriptionsCommand;
+    topic: TopicEntity;
+    foundSubscribers: SubscriberEntity[];
+    validSubscriptions: Array<{ identifier?: string; subscriberId: string }>;
+    contextKeys: string[] | undefined;
+    useContextFiltering: boolean;
+  }): Promise<TopicSubscribersEntity[]> {
+    const requestedIdentifierBySubscriberId = new Map(
+      foundSubscribers.map((sub) => [
+        sub._id.toString(),
+        validSubscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
+          buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId, contextKeys),
+      ])
+    );
+
+    const candidates = await this.topicSubscribersRepository.find({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _topicId: topic._id,
+      _subscriberId: { $in: [...requestedIdentifierBySubscriberId.keys()] },
+      identifier: { $in: [...requestedIdentifierBySubscriberId.values()] },
+      ...this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, { enabled: useContextFiltering }),
+    });
+
+    // The two $in filters also match a subscriber with an identifier another subscriber requested in the same batch.
+    return candidates.filter(
+      (sub) => requestedIdentifierBySubscriberId.get(sub._subscriberId.toString()) === sub.identifier
+    );
+  }
+
+  private toSubscriptionResponse(
+    subscription: TopicSubscribersEntity,
+    topic: TopicEntity,
+    foundSubscribers: SubscriberEntity[],
+    preferences: SubscriptionPreferenceDto[] | undefined
+  ): SubscriptionResponseDto {
+    const subscriber = foundSubscribers.find((sub) => sub._id.toString() === subscription._subscriberId.toString());
+
+    return {
+      _id: subscription._id.toString(),
+      identifier: subscription.identifier,
+      name: subscription.name,
+      topic: {
+        _id: topic._id,
+        key: topic.key,
+        name: topic.name,
+        data: topic.data,
+      },
+      subscriber: subscriber
+        ? {
+            _id: subscriber._id,
+            subscriberId: subscriber.subscriberId,
+            avatar: subscriber.avatar,
+            firstName: subscriber.firstName,
+            lastName: subscriber.lastName,
+            email: subscriber.email,
+            createdAt: subscriber.createdAt,
+            updatedAt: subscriber.updatedAt,
+          }
+        : null,
+      preferences,
+      contextKeys: subscription.contextKeys,
+      createdAt: subscription.createdAt ?? '',
+      updatedAt: subscription.updatedAt ?? '',
     };
   }
 
