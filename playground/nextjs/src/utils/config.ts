@@ -1,7 +1,6 @@
 export type NovuConfig = {
   applicationIdentifier: string;
   subscriberId: string;
-  subscriberHash?: string;
   backendUrl: string;
   socketUrl: string;
   socketOptions?: { socketType: 'cloud' | 'self-hosted' };

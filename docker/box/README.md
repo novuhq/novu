@@ -101,7 +101,7 @@ exercised as in production.
 A third host, `<box>-app`, is a customer's app: the `playground/nextjs` pages that embed the Inbox, preferences and
 subscriptions (the list is in the Caddyfile), connected to the seed org's Development environment as the seed
 user's subscriber. `?subscriberId=<id>` on a page picks another subscriber. The pages read these settings from
-`/api/novu-config` when they load, with an HMAC hash, so they work with HMAC on too. Every other path there is a
+`/api/novu-config` when they load. They send no HMAC hash, so they can't sign in with HMAC on. Every other path there is a
 404: the playground's other routes hold the secret key and the managed Claude key. A new page needs its path in
 the Caddyfile too, which boxes serve only after `box deploy` and a rebake of `base`.
 
