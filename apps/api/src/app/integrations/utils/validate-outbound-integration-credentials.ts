@@ -71,7 +71,7 @@ export async function validateOutboundIntegrationCredentials(
     }
 
     if (providerId === SmsProviderIdEnum.Kannel) {
-      resolveSafeProviderUrl(buildKannelBaseUrl(credentials.host ?? '', credentials.port ?? ''), {
+      resolveSafeProviderUrl(buildKannelBaseUrl(credentials.host ?? '', credentials.port), {
         blockedPrefix: 'Kannel host blocked',
       });
     }

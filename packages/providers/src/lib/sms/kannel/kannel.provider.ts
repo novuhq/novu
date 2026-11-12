@@ -7,7 +7,7 @@ import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeProviderUrl } from '../../../utils/safe-provider-url';
 import { WithPassthrough } from '../../../utils/types';
 
-export function buildKannelBaseUrl(host: string, port: string): string {
+export function buildKannelBaseUrl(host: string, port?: string): string {
   const trimmedHost = String(host).trim().replace(/\/+$/, '');
   const trimmedPort = String(port ?? '').trim();
 
