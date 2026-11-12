@@ -55,7 +55,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send(
-      this.transform<MailDataRequired>(bridgeProviderData, mailData as unknown as Record<string, unknown>).body
+      this.transform<MailDataRequired>(bridgeProviderData, { ...mailData }).body
     );
 
     return {
@@ -88,7 +88,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
 
   private createMailData(options: IEmailOptions) {
     const dynamicTemplateData = options.customData?.dynamicTemplateData;
-    const templateId = options.customData?.templateId as unknown as string;
+    const templateId: string = options.customData?.templateId;
     /*
      * deleted below values from customData to avoid passing them
      * in customArgs because customArgs has max limit of 10,000 bytes
@@ -181,10 +181,15 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
 
   getMessageId(body: unknown | unknown[]): string[] {
     if (Array.isArray(body)) {
-      return body.map((item: any) => item.id);
+      return body.map((item) => this.readEventId(item));
     }
 
-    return [(body as any).id];
+    return [this.readEventId(body)];
+  }
+
+  // Returns the raw `id` as sent; callers validate its type before using it as a message identifier.
+  private readEventId(item: unknown): string {
+    return (item as { id: string } | null | undefined)?.id;
   }
 
   async verifySignature({
@@ -192,24 +197,35 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     headers = {},
     body: _body,
   }: {
-    rawBody: any;
+    rawBody: unknown;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
   }): Promise<{ success: boolean; message?: string }> {
     try {
-      const signature = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-signature');
-      const timestamp = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-timestamp');
-      const isSignatureVerificationEnabled = signature && timestamp;
-
-      if (!isSignatureVerificationEnabled) {
-        return { success: true, message: 'SendGrid signature verification is disabled for this request' };
-      }
       const publicKey = this.config.webhookPublicKey;
 
-      if (!publicKey || rawBody === undefined) {
-        const message = [!publicKey ? 'Public key is undefined' : '', !rawBody ? 'Body is undefined' : '']
+      /*
+       * No stored key means signed webhooks were never set up for this integration, so there is nothing to verify.
+       * Once a key is stored (autoConfigureInboundWebhook enables signing in SendGrid at the same time), every request
+       * must carry a valid signature: a missing header fails instead of skipping verification.
+       */
+      if (!publicKey) {
+        return { success: true, message: 'SendGrid signature verification is not configured' };
+      }
+
+      const signature = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-signature');
+      const timestamp = this.getHeaderValue(headers, 'x-twilio-email-event-webhook-timestamp');
+      const hasBody = typeof rawBody === 'string' || Buffer.isBuffer(rawBody);
+
+      if (!signature || !timestamp || !hasBody) {
+        const message = [
+          !signature ? 'Signature header is missing' : '',
+          !timestamp ? 'Timestamp header is missing' : '',
+          !hasBody ? 'Body is undefined' : '',
+        ]
           .filter(Boolean)
-          .join(',');
+          .join(', ');
+
         return { success: false, message };
       }
 
@@ -294,10 +310,13 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
           inboundWebhookSigningKey: publicKey,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
+      const apiMessage = (error as { response?: { body?: { errors?: { message?: string }[] } } } | undefined)?.response
+        ?.body?.errors?.[0]?.message;
+
       return {
         success: false,
-        message: `Error configuring SendGrid webhook: ${error?.response?.body?.errors?.[0]?.message ? error?.response?.body?.errors?.[0]?.message : 'Unknown error'}`,
+        message: `Error configuring SendGrid webhook: ${apiMessage ? apiMessage : 'Unknown error'}`,
       };
     }
   }
