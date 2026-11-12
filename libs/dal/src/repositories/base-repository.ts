@@ -1,33 +1,37 @@
 import { DirectionEnum } from '@novu/shared';
-import { ClassConstructor, plainToInstance } from 'class-transformer';
+import { ClassConstructor } from 'class-transformer';
 import {
+  AnyBulkWriteOperation,
   ClientSession,
   FilterQuery,
   Model,
   mongo,
+  PipelineStage,
   ProjectionType,
   QueryOptions,
   QueryWithHelpers,
-  SortOrder,
   Types,
   UpdateQuery,
 } from 'mongoose';
 import { DalException } from '../shared';
+import {
+  buildAdjacentPageQuery,
+  buildCursorSort,
+  buildCursorWalkOr,
+  CursorPaginatedResult,
+  CursorPosition,
+  cursorToken,
+  mergeTopLevelOr,
+  pageSortDirection,
+  slicePage,
+} from './cursor-pagination';
+import { toEntity } from './to-entity';
 
-/**
- * Merge a cursor-walking `$or` clause into `target` without dropping an existing
- * top-level `$or` from the caller's query. When both are present, both are
- * preserved by moving each under an entry in `$and` (which Mongo evaluates as
- * an implicit AND with the rest of the query).
- */
-function mergeTopLevelOr(target: Record<string, any>, incomingOr: Record<string, unknown>[]): void {
-  if (target.$or) {
-    target.$and = [...(target.$and ?? []), { $or: target.$or }, { $or: incomingOr }];
-    delete target.$or;
-  } else {
-    target.$or = incomingOr;
-  }
-}
+/** Query helpers type of the repository models (none are registered); the `{}` mongoose defaults to. */
+type NoQueryHelpers = Record<never, never>;
+
+/** Mongoose's own type for the `sort` query option. */
+type SortOption<TModel> = QueryOptions<TModel>['sort'];
 
 /**
  * @deprecated Use BaseRepositoryV2 instead. BaseRepositoryV2 enforces required
@@ -139,7 +143,11 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.MongooseModel.estimatedDocumentCount();
   }
 
-  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+  async aggregate(
+    query: PipelineStage[],
+    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
+    // biome-ignore lint/suspicious/noExplicitAny: rows are pipeline-shaped; callers annotate their own row types (e.g. TopicRepository.filterTopics)
+  ): Promise<any> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }
 
@@ -150,9 +158,11 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       readPreference?: 'secondaryPreferred' | 'primary';
       query?: QueryOptions<T_DBModel>;
       session?: ClientSession | null;
-      enhanceQuery?: <TQuery extends QueryWithHelpers<T_DBModel | null, T_DBModel, {}, T_DBModel, 'findOne'>>(
+      enhanceQuery?: <
+        TQuery extends QueryWithHelpers<T_DBModel | null, T_DBModel, NoQueryHelpers, T_DBModel, 'findOne'>,
+      >(
         queryBuilder: TQuery
-      ) => QueryWithHelpers<T_DBModel | null, T_DBModel, {}, T_DBModel, 'findOne'>;
+      ) => QueryWithHelpers<T_DBModel | null, T_DBModel, NoQueryHelpers, T_DBModel, 'findOne'>;
     } = {}
   ): Promise<T_MappedEntity | null> {
     const { session, ...queryOptions } = options;
@@ -221,7 +231,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     select: ProjectionType<T_MappedEntity> = '',
     options: {
       limit?: number;
-      sort?: any;
+      sort?: SortOption<T_DBModel>;
       skip?: number;
       session?: ClientSession | null;
       readPreference?: 'secondaryPreferred' | 'primary';
@@ -249,7 +259,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async *findBatch(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select = '',
-    options: { limit?: number; sort?: any; skip?: number } = {},
+    options: { limit?: number; sort?: SortOption<T_DBModel>; skip?: number } = {},
     batchSize = 500
   ) {
     for await (const doc of this._model
@@ -283,7 +293,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     if (paginateField && afterItem[paginateField]) {
       const paginatedFieldValue = afterItem[paginateField];
       cursorOrStatements = [
-        { [paginateField]: isSortDesc ? { $lt: paginatedFieldValue } : { $gt: paginatedFieldValue } } as any,
+        {
+          [paginateField]: isSortDesc ? { $lt: paginatedFieldValue } : { $gt: paginatedFieldValue },
+        } as FilterQuery<T_DBModel>,
         { [paginateField]: { $eq: paginatedFieldValue }, _id: isSortDesc ? { $lt: after } : { $gt: after } },
       ];
       const firstStatement = (queryOrStatements ?? []).map((item) => ({
@@ -324,9 +336,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     limit: number;
     offset: number;
     after?: string;
-    sort?: any;
+    sort?: SortOption<T_DBModel>;
     paginateField?: string;
-    enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
+    /** May change the query's result type (e.g. `populate`); the rows are mapped as entities either way. */
+    enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => unknown;
   }): Promise<{ data: T_MappedEntity[]; hasMore: boolean }> {
     const isAfterDefined = typeof after !== 'undefined';
     const sortKeys = Object.keys(sort ?? {});
@@ -355,7 +368,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     if (enhanceQuery) {
-      findQueryBuilder = enhanceQuery(findQueryBuilder);
+      findQueryBuilder = enhanceQuery(findQueryBuilder) as typeof findQueryBuilder;
     }
 
     const messages = await findQueryBuilder.exec();
@@ -467,16 +480,19 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     });
   }
 
-  async bulkWrite(bulkOperations: any, ordered = false): Promise<any> {
+  async bulkWrite(bulkOperations: AnyBulkWriteOperation[], ordered = false) {
     return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
+  /**
+   * Same output as `plainToInstance(this.entity, JSON.parse(JSON.stringify(data)))` in one pass; see `to-entity.ts`.
+   */
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
-    return plainToInstance(this.entity, JSON.parse(JSON.stringify(data))) as any;
+    return toEntity(this.entity, data) as TData extends null ? null : T_MappedEntity;
   }
 
-  protected mapEntities(data: any): T_MappedEntity[] {
-    return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
+  protected mapEntities(data: unknown): T_MappedEntity[] {
+    return toEntity(this.entity, data as unknown[]);
   }
 
   /*
@@ -488,7 +504,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
    *
    * Refer to https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
    */
-  async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
+  async withTransaction<TResult>(fn: (session: ClientSession | null) => Promise<TResult>): Promise<TResult> {
     const session = await this._model.db.startSession();
     try {
       return await session.withTransaction(fn);
@@ -523,192 +539,125 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }: {
     query?: FilterQuery<T_DBModel> & T_Enforcement;
     limit: number;
-    before?: { sortBy: string; paginateField: any };
-    after?: { sortBy: string; paginateField: any };
+    before?: CursorPosition;
+    after?: CursorPosition;
     sortBy: string;
     sortDirection: DirectionEnum;
     paginateField: string;
-    enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
+    /** May change the query's result type (e.g. `populate`); the rows are mapped as entities either way. */
+    enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => unknown;
     includeCursor?: boolean;
-  }): Promise<{
-    data: T_MappedEntity[];
-    next: string | null;
-    previous: string | null;
-    totalCount: number;
-    totalCountCapped: boolean;
-  }> {
+  }): Promise<CursorPaginatedResult<T_MappedEntity>> {
     if (before && after) {
       throw new DalException('Cannot specify both "before" and "after" cursors at the same time.');
     }
 
+    const key = { sortBy, paginateField };
     const isDesc = sortDirection === DirectionEnum.DESC;
-    const sortValue = isDesc ? -1 : 1;
-    const paginationQuery: any = { ...query };
+    // Backwards pagination runs the query in reverse sort order
+    const reverseResults = Boolean(before);
 
-    let reverseResults = false;
-
-    let cursorOr: Record<string, unknown>[] | undefined;
-    if (before) {
-      cursorOr = [
-        {
-          [sortBy]: isDesc
-            ? { [includeCursor ? '$gte' : '$gt']: before.sortBy }
-            : { [includeCursor ? '$lte' : '$lt']: before.sortBy },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: before.sortBy } },
-            {
-              [paginateField]: isDesc
-                ? { [includeCursor ? '$gte' : '$gt']: before.paginateField }
-                : { [includeCursor ? '$lte' : '$lt']: before.paginateField },
-            },
-          ],
-        },
-      ];
-
-      // Reverse sort order for backwards pagination
-      reverseResults = true;
-    } else if (after) {
-      cursorOr = [
-        {
-          [sortBy]: isDesc
-            ? { [includeCursor ? '$lte' : '$lt']: after.sortBy }
-            : { [includeCursor ? '$gte' : '$gt']: after.sortBy },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: after.sortBy } },
-            {
-              [paginateField]: isDesc
-                ? { [includeCursor ? '$lte' : '$lt']: after.paginateField }
-                : { [includeCursor ? '$gte' : '$gt']: after.paginateField },
-            },
-          ],
-        },
-      ];
-    }
-
+    const paginationQuery: FilterQuery<T_DBModel> = { ...query };
+    const cursorOr = buildCursorWalkOr<T_DBModel>({ key, before, after, isDesc, includeCursor });
     if (cursorOr) {
       mergeTopLevelOr(paginationQuery, cursorOr);
     }
 
     let builder = this.MongooseModel.find(paginationQuery)
-      .sort({
-        [sortBy]: reverseResults ? -sortValue : sortValue,
-        [paginateField]: reverseResults ? -sortValue : sortValue,
-      } as Record<string, SortOrder>)
+      .sort(buildCursorSort(key, pageSortDirection(isDesc, reverseResults)))
       .limit(limit + 1);
 
     if (enhanceQuery) {
-      builder = enhanceQuery(builder);
+      builder = enhanceQuery(builder) as typeof builder;
     }
 
     // Run find query and count aggregation in parallel
     const [rawResults, countResult] = await Promise.all([builder.exec(), this.getCountWithLimit(query, 50001)]);
 
-    const hasExtraItem = rawResults.length > limit;
-    const totalCount = countResult.count;
-    const hasMore = countResult.hasMore;
-
-    let startIndex = 0;
-    let endIndex = limit;
-    if (reverseResults) {
-      rawResults.reverse();
-
-      /**
-       * If we have an extra item, we need to adjust the start and end index
-       * as it is reversed, the first item is actually the extra item
-       */
-      if (hasExtraItem) {
-        startIndex = 1;
-        endIndex = limit + 1;
-      }
-    }
-
-    const pageResults = rawResults.slice(startIndex, endIndex);
+    const { pageResults, hasExtraItem } = slicePage(rawResults, limit, reverseResults);
 
     if (pageResults.length === 0) {
       return {
         data: [],
         next: null,
         previous: null,
-        totalCount: totalCount,
-        totalCountCapped: hasMore,
+        totalCount: countResult.count,
+        totalCountCapped: countResult.hasMore,
       };
     }
 
-    let nextCursor: string | null = null;
-    let prevCursor: string | null = null;
-
-    const firstItem = pageResults[0];
-    const lastItem = pageResults[pageResults.length - 1];
-
-    if (hasExtraItem) {
-      if (before) {
-        prevCursor = firstItem[paginateField].toString();
-      } else {
-        nextCursor = lastItem[paginateField].toString();
-      }
-    }
-
-    if (before) {
-      const nextQuery: any = { ...query };
-
-      mergeTopLevelOr(nextQuery, [
-        {
-          [sortBy]: isDesc ? { $lt: lastItem[sortBy] } : { $gt: lastItem[sortBy] },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: lastItem[sortBy] } },
-            {
-              [paginateField]: isDesc ? { $lt: lastItem[paginateField] } : { $gt: lastItem[paginateField] },
-            },
-          ],
-        },
-      ]);
-
-      const maybeNext = await this.MongooseModel.findOne(nextQuery)
-        .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
-        .limit(1)
-        .exec();
-
-      if (maybeNext) {
-        nextCursor = lastItem[paginateField].toString();
-      }
-    } else {
-      const prevQuery: any = { ...query };
-
-      mergeTopLevelOr(prevQuery, [
-        {
-          [sortBy]: isDesc ? { $gt: firstItem[sortBy] } : { $lt: firstItem[sortBy] },
-        },
-        {
-          $and: [
-            { [sortBy]: { $eq: firstItem[sortBy] } },
-            { [paginateField]: isDesc ? { $gt: firstItem[paginateField] } : { $lt: firstItem[paginateField] } },
-          ],
-        },
-      ]);
-
-      const maybePrev = await this.MongooseModel.findOne(prevQuery)
-        .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
-        .limit(1)
-        .exec();
-
-      if (maybePrev) {
-        prevCursor = firstItem[paginateField].toString();
-      }
-    }
+    const { next, previous } = await this.resolvePageCursors({
+      query,
+      key,
+      pageResults,
+      hasExtraItem,
+      isBackward: Boolean(before),
+      isDesc,
+    });
 
     return {
       data: this.mapEntities(pageResults),
-      next: nextCursor,
-      previous: prevCursor,
-      totalCount: totalCount,
-      totalCountCapped: hasMore,
+      next,
+      previous,
+      totalCount: countResult.count,
+      totalCountCapped: countResult.hasMore,
     };
+  }
+
+  /**
+   * The cursor in the paging direction exists when the page query returned an extra
+   * row; the opposite one exists when a probe finds a row beyond the page boundary.
+   */
+  private async resolvePageCursors<TRow>({
+    query,
+    key,
+    pageResults,
+    hasExtraItem,
+    isBackward,
+    isDesc,
+  }: {
+    query: FilterQuery<T_DBModel> & T_Enforcement;
+    key: { sortBy: string; paginateField: string };
+    pageResults: TRow[];
+    hasExtraItem: boolean;
+    isBackward: boolean;
+    isDesc: boolean;
+  }): Promise<{ next: string | null; previous: string | null }> {
+    const firstItem = pageResults[0];
+    const lastItem = pageResults[pageResults.length - 1];
+
+    if (isBackward) {
+      const previous = hasExtraItem ? cursorToken(firstItem, key.paginateField) : null;
+      const hasNextPage = await this.hasAdjacentRow(
+        buildAdjacentPageQuery({ query, key, boundaryItem: lastItem, towardsGreater: !isDesc }),
+        key,
+        isDesc
+      );
+
+      return { next: hasNextPage ? cursorToken(lastItem, key.paginateField) : null, previous };
+    }
+
+    const next = hasExtraItem ? cursorToken(lastItem, key.paginateField) : null;
+    const hasPreviousPage = await this.hasAdjacentRow(
+      buildAdjacentPageQuery({ query, key, boundaryItem: firstItem, towardsGreater: isDesc }),
+      key,
+      isDesc
+    );
+
+    return { next, previous: hasPreviousPage ? cursorToken(firstItem, key.paginateField) : null };
+  }
+
+  private async hasAdjacentRow(
+    adjacentQuery: FilterQuery<T_DBModel>,
+    key: { sortBy: string; paginateField: string },
+    isDesc: boolean
+  ): Promise<boolean> {
+    const adjacentRow = await this.MongooseModel.findOne(adjacentQuery)
+      .sort(buildCursorSort(key, pageSortDirection(isDesc, false)))
+      .limit(1)
+      .exec();
+
+    return Boolean(adjacentRow);
   }
 
   protected regExpEscape(literalString: string): string {

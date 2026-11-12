@@ -77,39 +77,3 @@ export function convertSelectToProjection<T>(select: SelectInput<T>): Record<str
 
   return { ...(select as Record<string, 0 | 1>) };
 }
-
-/**
- * Recursively converts Mongoose ObjectId and Date instances to their primitive
- * string representations. This replaces the JSON.parse(JSON.stringify()) round-trip
- * used in BaseRepository, which is the mechanism that converts ObjectId to string
- * (since entity classes use plain `string` for all ID fields and have no @Transform decorators).
- *
- * Compared to a full JSON cycle this is faster for projected (small) documents
- * because it skips serializing/deserializing primitive values.
- */
-export function convertObjectIds(obj: unknown): unknown {
-  if (obj == null) return obj;
-
-  if (typeof obj === 'object') {
-    if (isObjectId(obj)) return (obj as { toHexString(): string }).toHexString();
-    if (obj instanceof Date) return obj.toISOString();
-
-    if (Array.isArray(obj)) return obj.map(convertObjectIds);
-
-    if (obj.constructor === Object) {
-      const result: Record<string, unknown> = {};
-
-      for (const key of Object.keys(obj)) {
-        result[key] = convertObjectIds((obj as Record<string, unknown>)[key]);
-      }
-
-      return result;
-    }
-  }
-
-  return obj;
-}
-
-function isObjectId(value: object): boolean {
-  return '_bsontype' in value && (value as { _bsontype: unknown })._bsontype === 'ObjectId';
-}

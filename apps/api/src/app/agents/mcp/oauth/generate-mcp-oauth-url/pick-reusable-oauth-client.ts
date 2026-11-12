@@ -15,8 +15,8 @@ import { type McpConnectionOAuthClient } from '@novu/dal';
  *
  * NOTE: `McpConnectionOAuthClient.clientSecretExpiresAt` is declared as `Date`
  * on the entity type, but `BaseRepositoryV2.mapProjectedEntity` runs the row
- * through `convertObjectIds` (see `libs/dal/src/repositories/projection.types.ts`)
- * which serialises every `Date` instance to an ISO string. So at runtime this
+ * through `toEntity` (see `libs/dal/src/repositories/to-entity.ts`)
+ * which serialises every `Date` instance to an ISO string, as a JSON round-trip does. So at runtime this
  * field is a string when loaded from Mongo, and only a `Date` immediately
  * after construction in-process. We accept both shapes — `new Date(value)`
  * happily takes either.
@@ -30,7 +30,7 @@ export function pickReusableOAuthClient(
   if (client.issuer !== asIssuer) return undefined;
   if (!client.redirectUri || client.redirectUri !== redirectUri) return undefined;
   if (client.clientSecretExpiresAt) {
-    const expiresMs = new Date(client.clientSecretExpiresAt as unknown as string | Date).getTime();
+    const expiresMs = new Date(client.clientSecretExpiresAt).getTime();
     // A corrupted/unparseable timestamp is treated as non-reusable so we never
     // replay a bad client config — re-register instead of trusting it.
     if (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) {

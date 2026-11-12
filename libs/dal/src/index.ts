@@ -41,6 +41,7 @@ export * from './repositories/schema-default.options';
 export * from './repositories/snapshot';
 export * from './repositories/subscriber';
 export * from './repositories/tenant';
+export * from './repositories/to-entity';
 export * from './repositories/topic';
 export * from './repositories/translation-group';
 export * from './repositories/translations';
