@@ -469,6 +469,9 @@ export async function deliverToTargets(
       const refs = await target.deliver();
       const record = recordOf(target, refs);
       if ('hold' in record) {
+        // Saved as soon as the first message is out, so a reply that comes while later contacts are still being
+        // sent to can't answer a question they haven't seen.
+        await repository.addHold(interaction._environmentId, interaction._id, record.hold);
         held.push(record.hold);
       } else {
         deliveries.push(record.delivery);
@@ -519,7 +522,6 @@ export async function deliverToTargets(
 
   await repository.stampDelivery(interaction._environmentId, interaction._id, {
     deliveries,
-    held,
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   });

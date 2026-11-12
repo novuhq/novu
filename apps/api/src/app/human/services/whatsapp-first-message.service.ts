@@ -7,12 +7,14 @@ import {
   extractMetaError,
   findMessageTemplate,
   type MetaErrorSummary,
+  templateBodyOf,
 } from '../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import {
   AGENT_NAME_EXAMPLE,
   AGENT_NAME_VARIABLE,
   FIRST_MESSAGE_LANGUAGE,
   nextFirstMessageName,
+  usesAgentName,
   VIEW_MESSAGE_BUTTON,
 } from './whatsapp-first-message';
 
@@ -74,6 +76,11 @@ export class WhatsAppFirstMessageService {
       return stored;
     }
 
+    // Noted before asking, so while Meta can't be reached every read and send doesn't ask again and wait on it.
+    await this.save(integration, { whatsappTemplateCheckedAt: new Date().toISOString() }, whatsappTemplateName).catch(
+      () => undefined
+    );
+
     try {
       const found = await findMessageTemplate({
         accessToken: apiToken,
@@ -87,14 +94,18 @@ export class WhatsAppFirstMessageService {
 
       const status = found.template.status;
       const rejectedReason = presentReason(found.template.rejected_reason);
-      await this.save(integration, {
-        whatsappTemplateStatus: status,
-        whatsappTemplateRejectedReason: rejectedReason ?? '',
-        whatsappTemplateCheckedAt: new Date().toISOString(),
-        ...(status === 'APPROVED'
-          ? { whatsappTemplateApprovedName: whatsappTemplateName, whatsappTemplateApprovedBody: stored.body }
-          : {}),
-      });
+      // Only onto the submission that was checked: a newer edit saved meanwhile keeps its own review.
+      await this.save(
+        integration,
+        {
+          whatsappTemplateStatus: status,
+          whatsappTemplateRejectedReason: rejectedReason ?? '',
+          ...(status === 'APPROVED'
+            ? { whatsappTemplateApprovedName: whatsappTemplateName, whatsappTemplateApprovedBody: stored.body }
+            : {}),
+        },
+        whatsappTemplateName
+      );
 
       const { rejectedReason: _previous, ...rest } = stored;
 
@@ -127,32 +138,20 @@ export class WhatsAppFirstMessageService {
       throw new FirstMessageSubmitError({ message: 'Connect your WhatsApp Business account first.' });
     }
 
-    const name = nextFirstMessageName(credentials.whatsappTemplateName);
-    const created = await createMessageTemplate({
-      accessToken: apiToken,
-      wabaId: businessAccountId,
-      template: {
-        name,
-        language: FIRST_MESSAGE_LANGUAGE,
-        body,
-        examples: { [AGENT_NAME_VARIABLE]: AGENT_NAME_EXAMPLE },
-        quickReplies: [VIEW_MESSAGE_BUTTON],
-      },
-    });
-    const error = extractMetaError(created.body);
-    let id = created.body.id;
-    let status = created.body.status;
-    if (error || created.statusCode >= 400 || !id) {
-      const existing = await findMessageTemplate({ accessToken: apiToken, wabaId: businessAccountId, name }).catch(
-        () => undefined
-      );
-      if (!existing?.template?.id) {
-        throw new FirstMessageSubmitError(error ?? { message: `Meta answered ${created.statusCode}.` });
-      }
-
-      id = existing.template.id;
-      status = existing.template.status;
+    const access = { accessToken: apiToken, wabaId: businessAccountId };
+    let name = nextFirstMessageName(credentials.whatsappTemplateName);
+    let created = await this.create(access, name, body);
+    // Another submission may have taken the name first, with other words: this text goes under the next one.
+    if (created.taken) {
+      name = nextFirstMessageName(name);
+      created = await this.create(access, name, body);
     }
+
+    if (!created.id) {
+      throw new FirstMessageSubmitError(created.error ?? { message: 'Meta didn’t take the message.' });
+    }
+
+    const { id, status } = created;
 
     const state = {
       status: status ?? 'PENDING',
@@ -174,7 +173,44 @@ export class WhatsAppFirstMessageService {
     return state.status === 'APPROVED' ? { ...state, approved: { name, body } } : state;
   }
 
-  private async save(integration: IntegrationEntity, fields: Record<string, string>): Promise<void> {
+  /**
+   * Submits one template. A name Meta already has is adopted only when it holds this very text (a retry after a
+   * lost answer); with other words, `taken` says to try the next name.
+   */
+  private async create(
+    access: { accessToken: string; wabaId: string },
+    name: string,
+    body: string
+  ): Promise<{ id?: string; status?: string; error?: MetaErrorSummary; taken?: boolean }> {
+    const created = await createMessageTemplate({
+      ...access,
+      template: {
+        name,
+        language: FIRST_MESSAGE_LANGUAGE,
+        body,
+        examples: usesAgentName(body) ? { [AGENT_NAME_VARIABLE]: AGENT_NAME_EXAMPLE } : {},
+        quickReplies: [VIEW_MESSAGE_BUTTON],
+      },
+    });
+    const error = extractMetaError(created.body);
+    if (!error && created.statusCode < 400 && created.body.id) {
+      return { id: created.body.id, status: created.body.status };
+    }
+
+    const existing = await findMessageTemplate({ ...access, name }).catch(() => undefined);
+    if (!existing?.template?.id) {
+      return { error: error ?? { message: `Meta answered ${created.statusCode}.` } };
+    }
+
+    if (templateBodyOf(existing.template) !== body) {
+      return { taken: true };
+    }
+
+    return { id: existing.template.id, status: existing.template.status };
+  }
+
+  /** Saves onto the integration; with `onlyFor`, only while that template is still the latest submission. */
+  private async save(integration: IntegrationEntity, fields: Record<string, string>, onlyFor?: string): Promise<void> {
     const $set = Object.fromEntries(Object.entries(fields).map(([key, value]) => [`credentials.${key}`, value]));
 
     await this.integrationRepository.update(
@@ -182,6 +218,7 @@ export class WhatsAppFirstMessageService {
         _id: integration._id,
         _environmentId: integration._environmentId,
         _organizationId: integration._organizationId,
+        ...(onlyFor ? { 'credentials.whatsappTemplateName': onlyFor } : {}),
       },
       { $set }
     );

@@ -152,7 +152,17 @@ export class HumanInteractionActivityRecorder {
     interaction: HumanInteractionEntity,
     first: InteractionThread
   ): Promise<InteractionThread[]> {
-    const deliveries = interaction.deliveries ?? [];
+    // Someone still waiting on their WhatsApp first message has a thread too, filed when it went out.
+    const deliveries: HumanInteractionDelivery[] = [
+      ...(interaction.deliveries ?? []),
+      ...(interaction.held ?? []).map((hold) => ({
+        subscriberId: hold.subscriberId,
+        integrationIdentifier: hold.integrationIdentifier,
+        platform: 'whatsapp',
+        platformMessageId: hold.templateMessageId ?? '',
+        platformThreadId: hold.platformThreadId,
+      })),
+    ];
     if (deliveries.length < 2) {
       return [];
     }

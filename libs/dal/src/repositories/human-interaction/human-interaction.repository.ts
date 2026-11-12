@@ -162,7 +162,8 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     organizationId: string,
     subscriberId: string,
     integrationIdentifier: string,
-    nowIso: string
+    nowIso: string,
+    options: { limit?: number; excludeIds?: string[] } = {}
   ): Promise<HumanInteractionEntity[]> {
     return this.find(
       {
@@ -171,9 +172,10 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         status: HumanInteractionStatusEnum.PENDING,
         expiresAt: { $gte: nowIso },
         held: { $elemMatch: { subscriberId, integrationIdentifier } },
+        ...(options.excludeIds?.length ? { _id: { $nin: options.excludeIds } } : {}),
       },
       '*',
-      { sort: { createdAt: 1 }, limit: 20 }
+      { sort: { createdAt: 1 }, limit: options.limit ?? 20 }
     );
   }
 
@@ -193,7 +195,14 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     integrationIdentifier: string
   ): Promise<HumanInteractionHold | null> {
     const before = await this.findOneAndUpdate(
-      { _id: id, _environmentId: environmentId, held: { $elemMatch: { subscriberId, integrationIdentifier } } },
+      {
+        _id: id,
+        _environmentId: environmentId,
+        // Fresh checks, so one canceled, answered or expired since it was found is never sent.
+        status: HumanInteractionStatusEnum.PENDING,
+        expiresAt: { $gte: new Date().toISOString() },
+        held: { $elemMatch: { subscriberId, integrationIdentifier } },
+      },
       // Only the hold on the integration they wrote on: the held message goes back through that same number.
       { $pull: { held: { subscriberId, integrationIdentifier } } },
       { new: false }
@@ -203,6 +212,23 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       before?.held?.find(
         (hold) => hold.subscriberId === subscriberId && hold.integrationIdentifier === integrationIdentifier
       ) ?? null
+    );
+  }
+
+  /**
+   * Settles a plain message as delivered once nobody is still waiting for it, decided by the row itself, so two
+   * releases at once can't both leave it pending.
+   */
+  async markTellDeliveredWhenReleased(environmentId: string, id: string): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        kind: HumanInteractionKindEnum.TELL,
+        status: HumanInteractionStatusEnum.PENDING,
+        'held.0': { $exists: false },
+      },
+      { $set: { status: HumanInteractionStatusEnum.DELIVERED } }
     );
   }
 
@@ -216,13 +242,11 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     id: string,
     delivery: {
       deliveries: HumanInteractionDelivery[];
-      held?: HumanInteractionHold[];
       _conversationId?: string;
       subscriberIds?: string[];
     }
   ): Promise<void> {
     const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
-    if (delivery.held?.length) $set.held = delivery.held;
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 

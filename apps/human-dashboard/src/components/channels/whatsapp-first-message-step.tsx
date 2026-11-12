@@ -59,6 +59,13 @@ export function WhatsAppFirstMessageStep({
     setFirstMessage(initial);
   }, [initial]);
 
+  // A check can bring newer text, such as an edit from another tab: an untouched form follows it.
+  useEffect(() => {
+    if (!editing && firstMessage?.body) {
+      setDraft(firstMessage.body);
+    }
+  }, [editing, firstMessage?.body]);
+
   const inReview = firstMessage?.status === 'PENDING' || firstMessage?.status === 'IN_APPEAL';
 
   // Meta says nothing on its own here, so while the review runs the drawer looks again now and then.

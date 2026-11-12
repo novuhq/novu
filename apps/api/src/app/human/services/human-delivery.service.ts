@@ -46,7 +46,7 @@ import {
   WhatsAppUndeliverableException,
   type WhatsAppUnfit,
 } from './whatsapp-delivery.errors';
-import { AGENT_NAME_VARIABLE, FIRST_MESSAGE_LANGUAGE } from './whatsapp-first-message';
+import { AGENT_NAME_VARIABLE, FIRST_MESSAGE_LANGUAGE, usesAgentName } from './whatsapp-first-message';
 import { WhatsAppFirstMessageService } from './whatsapp-first-message.service';
 import { type WhatsAppWindow, WhatsAppWindowService } from './whatsapp-window.service';
 
@@ -58,7 +58,7 @@ export interface ResolvedHumanTarget {
    * WhatsApp only: their 24-hour window is closed, so this approved template goes out instead and the message is
    * held until they reply.
    */
-  firstMessage?: { templateName: string };
+  firstMessage?: { templateName: string; body: string };
 }
 
 /** A channel the human can receive on right now. */
@@ -316,11 +316,11 @@ export class HumanDeliveryService {
   async approvedFirstMessage(
     integrations: IntegrationEntity[],
     integrationIdentifier: string
-  ): Promise<{ templateName: string } | undefined> {
+  ): Promise<{ templateName: string; body: string } | undefined> {
     const integration = integrations.find((candidate) => candidate.identifier === integrationIdentifier);
     const approved = integration ? (await this.firstMessage.read(integration))?.approved : undefined;
 
-    return approved ? { templateName: approved.name } : undefined;
+    return approved ? { templateName: approved.name, body: approved.body } : undefined;
   }
 
   /**
@@ -768,10 +768,12 @@ export class HumanDeliveryService {
   /** Delivers the pending message and returns the platform refs for stamping. */
   async deliver(
     interaction: HumanInteractionEntity,
-    target: ResolvedHumanTarget
+    target: ResolvedHumanTarget,
+    /** Who this delivery is for, when the interaction names several. */
+    subscriberId = interaction.subscriberIds[0] ?? 'this person'
   ): Promise<{ platformMessageId: string; platformThreadId: string; held?: boolean }> {
     if (target.firstMessage) {
-      return { ...(await this.sendFirstMessage(interaction, target, target.firstMessage)), held: true };
+      return { ...(await this.sendFirstMessage(interaction, target, target.firstMessage, subscriberId)), held: true };
     }
 
     return this.deliverContent(interaction._agentId, target, buildPendingDeliveryContent(interaction));
@@ -784,7 +786,8 @@ export class HumanDeliveryService {
   private async sendFirstMessage(
     interaction: HumanInteractionEntity,
     target: ResolvedHumanTarget,
-    firstMessage: { templateName: string }
+    firstMessage: { templateName: string; body: string },
+    subscriberId: string
   ): Promise<{ platformMessageId: string; platformThreadId: string }> {
     const scope = { _environmentId: interaction._environmentId, _organizationId: interaction._organizationId };
     const [integration, agent] = await Promise.all([
@@ -792,7 +795,6 @@ export class HumanDeliveryService {
       this.agentRepository.findOne({ ...scope, _id: interaction._agentId }, ['name']),
     ]);
     const credentials = decryptCredentials(integration?.credentials ?? {});
-    const subscriberId = interaction.subscriberIds[0] ?? 'this person';
     const refuse = async (failure: string) =>
       new WhatsAppUndeliverableException(
         subscriberId,
@@ -817,7 +819,8 @@ export class HumanDeliveryService {
       to: target.platformUserId,
       templateName: firstMessage.templateName,
       languageCode: FIRST_MESSAGE_LANGUAGE,
-      bodyParameters: { [AGENT_NAME_VARIABLE]: agentName },
+      // Only a message with the agent's name in it takes the name: Meta refuses a parameter it has no place for.
+      bodyParameters: usesAgentName(firstMessage.body) ? { [AGENT_NAME_VARIABLE]: agentName } : {},
       // A tap comes back as this interaction, so it releases what was held for them.
       quickReplyPayloads: [buildHumanOpenActionId(interaction.identifier)],
     });

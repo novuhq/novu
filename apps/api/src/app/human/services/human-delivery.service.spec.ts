@@ -860,7 +860,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
     expect(target).to.deep.include({
       platform: 'whatsapp',
       integrationIdentifier: 'whatsapp-main',
-      firstMessage: { templateName: 'agentinbox_first_message' },
+      firstMessage: { templateName: 'agentinbox_first_message', body: 'Hi' },
     });
   });
 
@@ -875,7 +875,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
 
     const target = await service.resolveChannel(params);
 
-    expect(target.firstMessage).to.deep.equal({ templateName: 'agentinbox_first_message_2' });
+    expect(target.firstMessage).to.deep.equal({ templateName: 'agentinbox_first_message_2', body: 'Hi' });
   });
 
   it('still prefers their next channel over the first message when no channel was asked for', async () => {

@@ -67,3 +67,8 @@ export function nextFirstMessageName(current: string | undefined): string {
 
   return `${FIRST_MESSAGE_TEMPLATE_PREFIX}_${(version ? Number(version[1]) : 1) + 1}`;
 }
+
+/** Whether the message has the agent's name in it, so a send passes the name and Meta's review needs an example. */
+export function usesAgentName(body: string): boolean {
+  return [...body.matchAll(VARIABLE)].some((match) => match[1] === AGENT_NAME_VARIABLE);
+}

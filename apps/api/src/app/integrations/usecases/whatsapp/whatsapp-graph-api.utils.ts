@@ -338,7 +338,13 @@ export type MessageTemplate = {
   status?: MessageTemplateStatus | string;
   category?: string;
   rejected_reason?: string;
+  components?: Array<{ type?: string; text?: string }>;
 };
+
+/** The body text Meta holds for a template. */
+export function templateBodyOf(template: MessageTemplate): string | undefined {
+  return template.components?.find((component) => component.type?.toUpperCase() === 'BODY')?.text;
+}
 
 export type CreateMessageTemplateResponse = { id?: string; status?: string; category?: string } & MetaErrorBody;
 
@@ -367,16 +373,13 @@ export async function createMessageTemplate(args: {
   timeoutMs?: number;
 }): Promise<{ body: CreateMessageTemplateResponse; statusCode: number }> {
   const { template } = args;
+  const examples = Object.entries(template.examples).map(([param_name, example]) => ({ param_name, example }));
+  // A body without variables takes no example: Meta refuses one it has nothing to match against.
   const components: object[] = [
     {
       type: 'BODY',
       text: template.body,
-      example: {
-        body_text_named_params: Object.entries(template.examples).map(([param_name, example]) => ({
-          param_name,
-          example,
-        })),
-      },
+      ...(examples.length ? { example: { body_text_named_params: examples } } : {}),
     },
   ];
   if (template.quickReplies?.length) {
@@ -411,7 +414,7 @@ export async function findMessageTemplate(args: {
     `/${encodeURIComponent(args.wabaId)}/message_templates`,
     args.accessToken,
     {
-      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason' },
+      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason,components' },
       timeoutMs: args.timeoutMs,
     }
   );
@@ -438,15 +441,14 @@ export async function sendNamedWhatsAppTemplate(args: {
   quickReplyPayloads?: string[];
   timeoutMs?: number;
 }): Promise<{ body: SendTemplateResponse; statusCode: number }> {
+  const parameters = Object.entries(args.bodyParameters).map(([parameter_name, text]) => ({
+    type: 'text',
+    parameter_name,
+    text,
+  }));
+  // A template without variables takes no body component: Meta refuses parameters it doesn't expect.
   const components: object[] = [
-    {
-      type: 'body',
-      parameters: Object.entries(args.bodyParameters).map(([parameter_name, text]) => ({
-        type: 'text',
-        parameter_name,
-        text,
-      })),
-    },
+    ...(parameters.length ? [{ type: 'body', parameters }] : []),
     ...(args.quickReplyPayloads ?? []).map((payload, index) => ({
       type: 'button',
       sub_type: 'quick_reply',

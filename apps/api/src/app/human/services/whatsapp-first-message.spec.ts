@@ -134,13 +134,58 @@ describe('WhatsApp first message', () => {
       request.onFirstCall().resolves({ statusCode: 400, body: { error: { code: 100, message: 'already exists' } } });
       request.onSecondCall().resolves({
         statusCode: 200,
-        body: { data: [{ id: 'tpl1', name: 'agentinbox_first_message', status: 'APPROVED' }] },
+        body: {
+          data: [
+            {
+              id: 'tpl1',
+              name: 'agentinbox_first_message',
+              status: 'APPROVED',
+              components: [{ type: 'BODY', text: DEFAULT_FIRST_MESSAGE }],
+            },
+          ],
+        },
       });
 
       const state = await service.submit(integration, DEFAULT_FIRST_MESSAGE);
 
       expect(state.status).to.equal('APPROVED');
       expect(state.approved?.name).to.equal('agentinbox_first_message');
+    });
+
+    it('takes the next name when Meta already has this one with other words', async () => {
+      const { service, integration } = setup({});
+      request.onCall(0).resolves({ statusCode: 400, body: { error: { code: 100, message: 'already exists' } } });
+      request.onCall(1).resolves({
+        statusCode: 200,
+        body: {
+          data: [
+            {
+              id: 'tpl1',
+              name: 'agentinbox_first_message',
+              status: 'PENDING',
+              components: [{ type: 'BODY', text: 'Other words from {{agent_name}} here.' }],
+            },
+          ],
+        },
+      });
+      request.onCall(2).resolves({ statusCode: 200, body: { id: 'tpl2', status: 'PENDING' } });
+
+      const state = await service.submit(integration, DEFAULT_FIRST_MESSAGE);
+
+      expect(request.getCall(2).args[0].body.name).to.equal('agentinbox_first_message_2');
+      expect(state).to.deep.equal({ status: 'PENDING', body: DEFAULT_FIRST_MESSAGE });
+    });
+
+    it('sends a message without the agent’s name without an example', async () => {
+      const { service, integration } = setup({});
+      request.resolves({ statusCode: 200, body: { id: 'tpl1', status: 'PENDING' } });
+
+      await service.submit(integration, 'You have a new message. Reply here to read it.');
+
+      expect(request.firstCall.args[0].body.components[0]).to.deep.equal({
+        type: 'BODY',
+        text: 'You have a new message. Reply here to read it.',
+      });
     });
 
     it('passes on what Meta refused', async () => {
@@ -177,7 +222,9 @@ describe('WhatsApp first message', () => {
         body: DEFAULT_FIRST_MESSAGE,
         approved: { name: 'agentinbox_first_message', body: DEFAULT_FIRST_MESSAGE },
       });
-      expect(savedFields(integrationRepository)).to.include({
+      const statusSave = integrationRepository.update.lastCall.args;
+      expect(statusSave[0]).to.include({ 'credentials.whatsappTemplateName': 'agentinbox_first_message' });
+      expect(statusSave[1].$set).to.include({
         'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
       });
     });
