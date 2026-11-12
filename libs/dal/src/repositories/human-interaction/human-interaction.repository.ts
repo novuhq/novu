@@ -10,6 +10,9 @@ import {
 } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
+/** A send that claimed a hold and never finished (a crash) frees it after this long. */
+const STALE_HOLD_CLAIM_MS = 15 * 60_000;
+
 @Injectable()
 export class HumanInteractionRepository extends BaseRepositoryV2<
   HumanInteractionDBModel,
@@ -185,33 +188,75 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Takes someone's hold on one WhatsApp integration off the row before the held message is sent, so two replies at once send it only once.
-   * Returns the hold, or null when another reply took it first. Put it back with `addHold` if the send fails.
+   * Claims someone's hold on one WhatsApp integration before the held message is sent, so two replies at once send
+   * it only once. The hold stays on the row while it is sent, so the row can't settle as delivered meanwhile; a
+   * claim left by a send that never finished can be taken again after a while. Returns the hold, or null when it is
+   * claimed already or the row stopped waiting.
    */
-  async takeHold(
+  async claimHold(
     environmentId: string,
     id: string,
     subscriberId: string,
     integrationIdentifier: string
   ): Promise<HumanInteractionHold | null> {
-    const before = await this.findOneAndUpdate(
+    const now = new Date();
+    const staleBefore = new Date(now.getTime() - STALE_HOLD_CLAIM_MS).toISOString();
+    const claimed = await this.findOneAndUpdate(
       {
         _id: id,
         _environmentId: environmentId,
         // Fresh checks, so one canceled, answered or expired since it was found is never sent.
         status: HumanInteractionStatusEnum.PENDING,
-        expiresAt: { $gte: new Date().toISOString() },
-        held: { $elemMatch: { subscriberId, integrationIdentifier } },
+        expiresAt: { $gte: now.toISOString() },
+        // Only the hold on the integration they wrote on: the held message goes back through that same number.
+        held: {
+          $elemMatch: {
+            subscriberId,
+            integrationIdentifier,
+            $or: [{ claimedAt: { $exists: false } }, { claimedAt: { $lt: staleBefore } }],
+          },
+        },
       },
-      // Only the hold on the integration they wrote on: the held message goes back through that same number.
-      { $pull: { held: { subscriberId, integrationIdentifier } } },
-      { new: false }
+      { $set: { 'held.$.claimedAt': now.toISOString() } },
+      { new: true }
     );
 
     return (
-      before?.held?.find(
+      claimed?.held?.find(
         (hold) => hold.subscriberId === subscriberId && hold.integrationIdentifier === integrationIdentifier
       ) ?? null
+    );
+  }
+
+  /** The held message went out: its hold becomes a delivery, in one update. */
+  async completeHold(
+    environmentId: string,
+    id: string,
+    hold: Pick<HumanInteractionHold, 'subscriberId' | 'integrationIdentifier'>,
+    delivery: HumanInteractionDelivery
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId },
+      {
+        $pull: { held: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } },
+        $push: { deliveries: delivery },
+      }
+    );
+  }
+
+  /** The send failed: the hold is free again for their next message. */
+  async releaseHoldClaim(
+    environmentId: string,
+    id: string,
+    hold: Pick<HumanInteractionHold, 'subscriberId' | 'integrationIdentifier'>
+  ): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        held: { $elemMatch: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } },
+      },
+      { $unset: { 'held.$.claimedAt': '' } }
     );
   }
 
@@ -232,11 +277,6 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
-  /** Records a delivery made after the row was created, such as a held message going out. */
-  async addDelivery(environmentId: string, id: string, delivery: HumanInteractionDelivery): Promise<void> {
-    await this.update({ _id: id, _environmentId: environmentId }, { $push: { deliveries: delivery } });
-  }
-
   async stampDelivery(
     environmentId: string,
     id: string,
@@ -246,11 +286,18 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
       subscriberIds?: string[];
     }
   ): Promise<void> {
-    const $set: Record<string, unknown> = { deliveries: delivery.deliveries };
+    const $set: Record<string, unknown> = {};
     if (delivery._conversationId) $set._conversationId = delivery._conversationId;
     if (delivery.subscriberIds) $set.subscriberIds = delivery.subscriberIds;
 
-    await this.update({ _id: id, _environmentId: environmentId }, { $set });
+    // Appended, never replaced: a held message released while the send was still going adds its own delivery.
+    await this.update(
+      { _id: id, _environmentId: environmentId },
+      {
+        ...(Object.keys($set).length ? { $set } : {}),
+        ...(delivery.deliveries.length ? { $push: { deliveries: { $each: delivery.deliveries } } } : {}),
+      }
+    );
   }
 
   /**

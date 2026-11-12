@@ -33,9 +33,9 @@ describe('WhatsAppHeldRelease', () => {
     findHeldFor.onFirstCall().resolves(rows);
     const repository = {
       findHeldFor,
-      takeHold: sinon.stub().resolves(taken),
-      addDelivery: sinon.stub().resolves(),
-      addHold: sinon.stub().resolves(),
+      claimHold: sinon.stub().resolves(taken),
+      completeHold: sinon.stub().resolves(),
+      releaseHoldClaim: sinon.stub().resolves(),
       markTellDeliveredWhenReleased: sinon.stub().resolves(),
     };
     const agents = { findOne: sinon.stub().resolves(paused ? { pausedAt: '2026-11-12T09:00:00.000Z' } : {}) };
@@ -63,13 +63,13 @@ describe('WhatsAppHeldRelease', () => {
     await release.release(scope);
 
     expect(repository.findHeldFor.firstCall.args.slice(0, 4)).to.deep.equal(['env1', 'org1', 'ada', 'whatsapp-main']);
-    expect(repository.takeHold.firstCall.args).to.deep.equal(['env1', 'hi-row', 'ada', 'whatsapp-main']);
+    expect(repository.claimHold.firstCall.args).to.deep.equal(['env1', 'hi-row', 'ada', 'whatsapp-main']);
     expect(gateway.sendDirectMessage.firstCall.args.slice(0, 3)).to.deep.equal([
       'agent1',
       'whatsapp-main',
       '15551234567',
     ]);
-    expect(repository.addDelivery.firstCall.args[2]).to.deep.include({
+    expect(repository.completeHold.firstCall.args[3]).to.deep.include({
       subscriberId: 'ada',
       platform: 'whatsapp',
       platformMessageId: 'wamid.real',
@@ -92,17 +92,17 @@ describe('WhatsAppHeldRelease', () => {
 
     await release.release(scope);
 
-    expect(repository.takeHold.called).to.equal(false);
+    expect(repository.claimHold.called).to.equal(false);
     expect(gateway.sendDirectMessage.called).to.equal(false);
   });
 
-  it('never puts back a hold once the message went out, even if recording it fails', async () => {
+  it('never lets go of the claim once the message went out, even if recording it fails', async () => {
     const { release, repository } = setup([interaction()]);
-    repository.addDelivery.rejects(new Error('db down'));
+    repository.completeHold.rejects(new Error('db down'));
 
     await release.release(scope);
 
-    expect(repository.addHold.called).to.equal(false);
+    expect(repository.releaseHoldClaim.called).to.equal(false);
   });
 
   it('sends nothing when another message took the hold first', async () => {
@@ -113,14 +113,14 @@ describe('WhatsAppHeldRelease', () => {
     expect(gateway.sendDirectMessage.called).to.equal(false);
   });
 
-  it('puts the hold back when the send fails, so their next message tries again', async () => {
+  it('lets go of the claim when the send fails, so their next message tries again', async () => {
     const { release, repository, gateway } = setup([interaction()]);
     gateway.sendDirectMessage.rejects(new Error('Meta down'));
 
     await release.release(scope);
 
-    expect(repository.addHold.calledOnceWith('env1', 'hi-row', hold)).to.equal(true);
-    expect(repository.addDelivery.called).to.equal(false);
+    expect(repository.releaseHoldClaim.calledOnceWith('env1', 'hi-row', hold)).to.equal(true);
+    expect(repository.completeHold.called).to.equal(false);
   });
 
   it('marks the window open when a tap, not a message, released it', async () => {

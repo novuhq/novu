@@ -21,6 +21,7 @@ const humanInteractionHoldSchema = new Schema(
     platformThreadId: { type: Schema.Types.String, required: true },
     templateMessageId: { type: Schema.Types.String },
     heldAt: { type: Schema.Types.String, required: true },
+    claimedAt: { type: Schema.Types.String },
   },
   { _id: false }
 );

@@ -98,6 +98,8 @@ export interface HumanInteractionHold {
   /** Meta's id for the template message that went out instead. */
   templateMessageId?: string;
   heldAt: string;
+  /** Set while a release is sending it, so a second reply doesn't send it too. */
+  claimedAt?: string;
 }
 
 export function primaryHumanInteractionDelivery(

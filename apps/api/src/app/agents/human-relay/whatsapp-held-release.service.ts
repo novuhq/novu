@@ -119,9 +119,9 @@ export class WhatsAppHeldRelease {
 
   private async releaseOne(scope: ReleaseScope, interaction: HumanInteractionEntity, subscriberId: string) {
     const { environmentId, integrationIdentifier } = scope.config;
-    // Taken off the row first, so a second message at the same moment doesn't send it again.
+    // Claimed first, so a second message at the same moment doesn't send it again. It stays on the row until sent.
     const hold = await this.humanInteractionRepository
-      .takeHold(environmentId, interaction._id, subscriberId, integrationIdentifier)
+      .claimHold(environmentId, interaction._id, subscriberId, integrationIdentifier)
       .catch(() => null);
     if (!hold) {
       return;
@@ -136,8 +136,10 @@ export class WhatsAppHeldRelease {
         buildPendingDeliveryContent(interaction)
       );
     } catch (err) {
-      // Not sent, so it is put back for their next message to try again.
-      await this.humanInteractionRepository.addHold(environmentId, interaction._id, hold).catch(() => undefined);
+      // Not sent, so the claim is let go for their next message to try again.
+      await this.humanInteractionRepository
+        .releaseHoldClaim(environmentId, interaction._id, hold)
+        .catch(() => undefined);
       this.logger.warn(
         { err, interactionIdentifier: interaction.identifier, subscriberId },
         'Could not send a held WhatsApp message'
@@ -146,9 +148,9 @@ export class WhatsAppHeldRelease {
       return;
     }
 
-    // Sent: whatever happens to the bookkeeping now, it is never put back, so it is never sent twice.
+    // Sent: whatever happens to the bookkeeping now, the claim is never let go, so it is never sent twice.
     try {
-      await this.humanInteractionRepository.addDelivery(environmentId, interaction._id, {
+      await this.humanInteractionRepository.completeHold(environmentId, interaction._id, hold, {
         subscriberId,
         integrationIdentifier: hold.integrationIdentifier,
         platform: AgentPlatformEnum.WHATSAPP,
