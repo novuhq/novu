@@ -186,6 +186,8 @@ describe('SendMessageInApp - compiled CTA copy-on-write', () => {
       jobId: 'job_1',
       tags: [],
       contextKeys: [],
+      // Null bridgeData takes the non-bridge compile path, which writes the compiled CTA.
+      bridgeData: null,
       compileContext: { subscriber: { subscriberId: 'sub_1', locale: 'en' } } as never,
       environment: { _id: 'env_1', identifier: 'env-identifier' } as never,
       step: step as never,
