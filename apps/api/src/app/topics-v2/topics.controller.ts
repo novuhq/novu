@@ -299,6 +299,7 @@ export class TopicsController {
         topicKey,
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
+        renameExistingTopic: true,
         preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         context: body.context,
       })

@@ -339,7 +339,7 @@ export class CreateSubscriptionsUsecase {
           throw error;
         }
       }
-    } else if (command.name) {
+    } else if (command.renameExistingTopic && command.name) {
       topic = await this.topicRepository.findOneAndUpdate(
         {
           _id: topic._id,

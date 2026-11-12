@@ -23,7 +23,6 @@ import { CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-sub
 import { UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription/update-subscription.usecase';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
-import { UpsertTopicUseCase } from '../topics-v2/usecases/upsert-topic/upsert-topic.usecase';
 import { InboxController } from './inbox.controller';
 import { InboxTopicController } from './inbox.topic.controller';
 import { USE_CASES } from './usecases';
@@ -53,7 +52,6 @@ import { USE_CASES } from './usecases';
     TopicSubscribersRepository,
     NotificationTemplateRepository,
     SubscriberRepository,
-    UpsertTopicUseCase,
     CreateSubscriptionsUsecase,
     UpdateSubscriptionUsecase,
   ],
