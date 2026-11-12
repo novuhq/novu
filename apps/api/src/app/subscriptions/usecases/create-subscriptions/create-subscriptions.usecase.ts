@@ -130,12 +130,12 @@ export class CreateSubscriptionsUsecase {
       };
     }
 
-    const requestedSubscriptions = this.resolveRequestedSubscriptions(
-      command.topicKey,
+    const requestedSubscriptions = this.resolveRequestedSubscriptions({
+      topicKey: command.topicKey,
       foundSubscribers,
-      validSubscriptions,
-      contextKeys
-    );
+      subscriptions: validSubscriptions,
+      contextKeys,
+    });
     const existingSubscriptions = await this.findExistingSubscriptions({
       command,
       topic,
@@ -146,12 +146,12 @@ export class CreateSubscriptionsUsecase {
 
     const subscribersById = new Map(foundSubscribers.map((subscriber) => [subscriber._id.toString(), subscriber]));
     const toResponse = (subscription: TopicSubscribersEntity, preferences?: SubscriptionPreferenceDto[]) =>
-      this.toSubscriptionResponse(
+      this.toSubscriptionResponse({
         subscription,
-        subscribersById.get(subscription._subscriberId.toString()),
+        subscriber: subscribersById.get(subscription._subscriberId.toString()),
         topic,
-        preferences
-      );
+        preferences,
+      });
 
     const existingSubscriberIds = existingSubscriptions.map((sub) => sub._subscriberId.toString());
     let subscribersToCreate = foundSubscribers.filter((sub) => !existingSubscriberIds.includes(sub._id.toString()));
@@ -178,11 +178,13 @@ export class CreateSubscriptionsUsecase {
 
     if (subscribersToCreate.length > 0) {
       const subscriberIdsToCreate = new Set(subscribersToCreate.map((subscriber) => subscriber._id.toString()));
-      const subscriptionsToCreate = this.buildSubscriptionEntity(
+      const subscriptionsToCreate = this.buildSubscriptionEntity({
         topic,
-        requestedSubscriptions.filter((requested) => subscriberIdsToCreate.has(requested.subscriber._id.toString())),
-        contextKeys
-      );
+        requestedSubscriptions: requestedSubscriptions.filter((requested) =>
+          subscriberIdsToCreate.has(requested.subscriber._id.toString())
+        ),
+        contextKeys,
+      });
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
 
       if (newSubscriptions.failed && newSubscriptions.failed.length > 0) {
@@ -241,12 +243,17 @@ export class CreateSubscriptionsUsecase {
   }
 
   /** The single place that decides which identifier each subscriber is creating or looking up. */
-  private resolveRequestedSubscriptions(
-    topicKey: string,
-    foundSubscribers: SubscriberEntity[],
-    subscriptions: CreateSubscriptionsCommand['subscriptions'],
-    contextKeys?: string[]
-  ): RequestedSubscription[] {
+  private resolveRequestedSubscriptions({
+    topicKey,
+    foundSubscribers,
+    subscriptions,
+    contextKeys,
+  }: {
+    topicKey: string;
+    foundSubscribers: SubscriberEntity[];
+    subscriptions: CreateSubscriptionsCommand['subscriptions'];
+    contextKeys?: string[];
+  }): RequestedSubscription[] {
     return foundSubscribers.map((subscriber) => {
       const subscription = subscriptions.find((requested) => requested.subscriberId === subscriber.subscriberId);
 
@@ -297,12 +304,17 @@ export class CreateSubscriptionsUsecase {
     );
   }
 
-  private toSubscriptionResponse(
-    subscription: TopicSubscribersEntity,
-    subscriber: SubscriberEntity | undefined,
-    topic: TopicEntity,
-    preferences: SubscriptionPreferenceDto[] | undefined
-  ): SubscriptionResponseDto {
+  private toSubscriptionResponse({
+    subscription,
+    subscriber,
+    topic,
+    preferences,
+  }: {
+    subscription: TopicSubscribersEntity;
+    subscriber: SubscriberEntity | undefined;
+    topic: TopicEntity;
+    preferences: SubscriptionPreferenceDto[] | undefined;
+  }): SubscriptionResponseDto {
     return {
       _id: subscription._id.toString(),
       identifier: subscription.identifier,
@@ -477,11 +489,15 @@ export class CreateSubscriptionsUsecase {
     return { validSubscribers, limitErrors };
   }
 
-  private buildSubscriptionEntity(
-    topic: TopicEntity,
-    requestedSubscriptions: RequestedSubscription[],
-    contextKeys?: string[]
-  ): CreateTopicSubscribersEntity[] {
+  private buildSubscriptionEntity({
+    topic,
+    requestedSubscriptions,
+    contextKeys,
+  }: {
+    topic: TopicEntity;
+    requestedSubscriptions: RequestedSubscription[];
+    contextKeys?: string[];
+  }): CreateTopicSubscribersEntity[] {
     return requestedSubscriptions.map(({ subscriber, identifier, name }) => ({
       _environmentId: subscriber._environmentId,
       _organizationId: subscriber._organizationId,
