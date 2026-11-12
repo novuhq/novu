@@ -24,7 +24,7 @@
     "nanoid": "^3.1.20"
   },
   "peerDependencies": {
-    "chat": ">=4.33.0"
+    "chat": ">=4.44.0"
   },
   "devDependencies": {
     "chat": "^4.44.0",

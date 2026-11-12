@@ -19,4 +19,5 @@ export const SLACK_AGENT_BOT_EVENTS = [
   'app_context_changed',
   'reaction_added',
   'reaction_removed',
+  'app_uninstalled',
 ] as const;

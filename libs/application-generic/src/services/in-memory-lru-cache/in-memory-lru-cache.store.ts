@@ -30,7 +30,7 @@ export interface InternalAuthMembership {
 
 export type WorkflowCacheData = NotificationTemplateEntity | null;
 export type OrganizationCacheData = OrganizationEntity | null;
-export type EnvironmentCacheData = Pick<EnvironmentEntity, '_id' | 'echo' | 'apiKeys'> | null;
+export type EnvironmentCacheData = EnvironmentEntity | null;
 export type EnvironmentVariablesCacheData = Record<string, string>;
 export type ApiKeyUserCacheData = UserSessionData | null;
 export type ActiveWorkflowsCacheData = NotificationTemplateEntity[];

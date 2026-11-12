@@ -51,15 +51,13 @@ overrides:
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.5: ^6.4.5
   follow-redirects@>=1.16.0 <1.16.2: ^1.16.2
-  node-forge@<1.4.1: ^1.4.1
+  node-forge@<1.4.3: ^1.4.3
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
   nextjs>next: ^15.5.28
   next@<16.4.1: ^16.4.1
-  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
-  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
-  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
+  fast-xml-parser@<5.12.0: ^5.12.0
   basic-ftp@<6.2.1: ^6.2.1
   http-cache-semantics@<4.2.1: ^4.2.1
   axios@>=1.0.0 <1.20.0: ^1.20.0
@@ -158,7 +156,7 @@ overrides:
   protobufjs@<7.6.5: ^7.6.5
   protobufjs@>=8.0.0 <8.6.6: ^8.6.6
   ip-address@<10.7.4: ^10.7.4
-  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  mongoose@>=8.0.0 <8.24.8: ^8.24.8
   newrelic: 13.19.2
   fast-uri@<3.1.9: ^3.1.9
   browserslist@<4.28.7: ^4.28.7
@@ -458,7 +456,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/throttler':
         specifier: 6.5.0
         version: 6.5.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(reflect-metadata@0.2.2)
@@ -1574,7 +1572,7 @@ importers:
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1719,7 +1717,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1937,7 +1935,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/websockets':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-socket.io@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2384,8 +2382,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       passport:
         specifier: 0.7.0
         version: 0.7.0
@@ -2487,8 +2485,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.1.0)
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2791,7 +2789,7 @@ importers:
         version: 11.4.7(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/testing':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
@@ -3113,11 +3111,11 @@ importers:
         specifier: ^6.0.1
         version: 6.1.0
       mongoose:
-        specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+        specifier: ^8.24.8
+        version: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       mongoose-delete:
         specifier: ^1.0.7
-        version: 1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
+        version: 1.0.7(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -3667,7 +3665,7 @@ importers:
         specifier: 4.44.0
         version: 4.44.0(zod@4.6.7)
       chat:
-        specifier: ^4.40.0
+        specifier: ^4.44.0
         version: 4.44.0(ai@7.0.31(zod@4.6.7))(zod@4.6.7)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
@@ -10016,7 +10014,7 @@ packages:
       '@nestjs/sequelize': ^10.0.0 || ^11.0.0
       '@nestjs/typeorm': ^10.0.0 || ^11.0.0
       '@prisma/client': '*'
-      mongoose: ^8.24.1
+      mongoose: ^8.24.8
       reflect-metadata: 0.1.x || 0.2.x
       rxjs: 7.x
       sequelize: '*'
@@ -10224,8 +10222,8 @@ packages:
   '@nodable/entities@2.1.0':
     resolution: {integrity: sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==}
 
-  '@nodable/entities@3.0.0':
-    resolution: {integrity: sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw==}
+  '@nodable/entities@3.1.0':
+    resolution: {integrity: sha512-LsS/DjHr+uDM647Gru/cA8+J3a3HfhttwCKLyuoyN7yXTFCxKBtSgMQBvrW9yNPa2/zDRUNuGPaH5QUFoa4arQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -20979,18 +20977,11 @@ packages:
   fast-url-parser@1.1.3:
     resolution: {integrity: sha512-5jOCVXADYNuRkKFzNJ0dCCewsZiYo0dz8QNYljkOpFC6r2U4OBmKtvm/Tsuh4w1YYdDqDb31a8TVhBJ2OJKdqQ==}
 
-  fast-xml-builder@1.1.8:
-    resolution: {integrity: sha512-sDVBc2gg8pSKvcbE8rBmOyjSGQf0AdsbqvHeIOv3D/uYNoV4eCReQXyDF8Pdv8+m1FHazACypSz2hR7O2S1LLw==}
+  fast-xml-builder@1.3.1:
+    resolution: {integrity: sha512-pIM/1n3ntFXKYrUZwW7QCK0gAW7XY+wzj1YMIV3tLDvPj/V+zTGJK5e3/4WJfwj0qWw2ElNXiTixda/R+3YSug==}
 
-  fast-xml-builder@1.2.1:
-    resolution: {integrity: sha512-tPb5TTWfgfVx5BNSi2xV0eLr89POeXXn0dXIsCJ9m1narrWxeIyx6je9d7Rce/3NyXLbvuQmLkxq+RuxMWejvw==}
-
-  fast-xml-parser@5.10.1:
-    resolution: {integrity: sha512-IEMIf7298kXuZSRFoGfMYrl7is8LpavODgbNz1cwIudv7KwVFnuU+UsMporfq6PD6aXSlawZlARiA3UywCTfMw==}
-    hasBin: true
-
-  fast-xml-parser@5.7.3:
-    resolution: {integrity: sha512-C0AaNuC+mscy6vrAQKAc/rMq+zAPHodfHGZu4sGVehvAQt/JLG1O5zEcYcXSY5zSqr4YVgxsB+pHXTq0i7eDlg==}
+  fast-xml-parser@5.12.0:
+    resolution: {integrity: sha512-/pXxRBtwxY9w8z7YbgsvIPPcPvFDsTbIkWwTQJhzNJPokj+TbN6ftmcv4j/pEQDvOCNnKGDzuk5Bo2oogIOiFg==}
     hasBin: true
 
   fastest-levenshtein@1.0.16:
@@ -22454,8 +22445,8 @@ packages:
     resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
     engines: {node: '>=18'}
 
-  is-unsafe@2.0.0:
-    resolution: {integrity: sha512-2LdV822R+wmI86unXA93WCFpL6g+av8ynWk0nrHyJqGop5VoocYsSLFgN8jrfalT6iGeLNM4KXuVSsULP53kEA==}
+  is-unsafe@2.0.3:
+    resolution: {integrity: sha512-ZBllczCCO267vgdFb6Tq3pv+LhHaCiGMdr+ZsuL+OopruAg7S+3ZDs1vD0RPC0uSrkjzbraxaGjtX1YBxjPeFQ==}
 
   is-upper-case@1.1.2:
     resolution: {integrity: sha512-GQYSJMgfeAmVwh9ixyk888l7OIhNAGKtY6QA+IrWlu9MDTCaXmeozOZ2S9Knj7bQwBO/H6J2kb+pbyTUiMNbsw==}
@@ -24633,10 +24624,10 @@ packages:
   mongoose-delete@1.0.7:
     resolution: {integrity: sha512-bOEKYhYdS5LxcPXG1wIimx+Gh3xecmtL1jfWnthzLvMuGDk6+WVQebf8xug2I3aMIKan3StS66CjpAj9UPOdiw==}
     peerDependencies:
-      mongoose: ^8.24.1
+      mongoose: ^8.24.8
 
-  mongoose@8.24.1:
-    resolution: {integrity: sha512-UpHBA0l5kHyKJQFjmBaFYQFo5sgz1DK0TRqDkOyBLYbqiIbKKhIvBpHWBXqeo0rgW4kGI1UhhAw+kTQZoj1BdA==}
+  mongoose@8.24.8:
+    resolution: {integrity: sha512-p6g/mvvW2PJlC3lgzQJ7PECArfaOTKWJVG/KHf67WYU3MvJ72ZWdv5u7syFRe881IjALMZpKwffNE97G10HTzg==}
     engines: {node: '>=16.20.1'}
 
   motion-dom@11.18.1:
@@ -24668,8 +24659,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  mquery@5.0.0:
-    resolution: {integrity: sha512-iQMncpmEK8R8ncT8HJGsGc9Dsp8xcgYMVSbs5jgnm1lFHTZqMJTUWTDx1LBO8+mK3tPNZWFLBghQEIOULSTHZg==}
+  mquery@5.0.1:
+    resolution: {integrity: sha512-C99lWV0TFI34pS008jBsi3JrE2xZPnTgUw5yApQR71nRP0hxLy8D5m1Lbbk83c8AQWJwdJ0329HzFtZ1MRTUIw==}
     engines: {node: '>=14.0.0'}
 
   mri@1.2.0:
@@ -24947,8 +24938,8 @@ packages:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  node-forge@1.4.2:
-    resolution: {integrity: sha512-rRtAR5XLJ8gCKd9du4qrKAsgCG1ObGP4gLeNJMa4vYSeq4bmBMOJk5IHkrviBV0q7uoAJlVd8HEQYQSVUb4FGQ==}
+  node-forge@1.4.3:
+    resolution: {integrity: sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp-build-optional-packages@5.0.7:
@@ -25635,10 +25626,6 @@ packages:
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
     engines: {node: '>=8'}
-
-  path-expression-matcher@1.5.0:
-    resolution: {integrity: sha512-cbrerZV+6rvdQrrD+iGMcZFEiiSrbv9Tfdkvnusy6y0x0GKBXREFg/Y65GhIfm0tnLntThhzCnfKwp1WRjeCyQ==}
-    engines: {node: '>=14.0.0'}
 
   path-expression-matcher@1.6.2:
     resolution: {integrity: sha512-enSlaiat05iasnzmgNxRj8reFdj3puY2QpNgP1aPIaVfT6nn9ICuPoFlKHk8EN22HcwewshO+mN2DGbkCEOtqQ==}
@@ -28148,11 +28135,8 @@ packages:
     resolution: {integrity: sha512-OUA32uhNoSoM6wOodyFbV+3IBCoO140uzdXmBArQ0S88D4EbH91xl2v+Ml1sKalcFKUBadHLeHfU/p9AbsOfGw==}
     engines: {node: '>=12.*'}
 
-  strnum@2.2.3:
-    resolution: {integrity: sha512-oKx6RUCuHfT3oyVjtnrmn19H1SiCqgJSg+54XqURKp5aCMbrXrhLjRN9TjuwMjiYstZ0MzDrHqkGZ5dFTKd+zg==}
-
-  strnum@2.4.1:
-    resolution: {integrity: sha512-M9eUSMT2dCB2cTNPG7UYj6KuK7RJR2SN2+yCV/fTW3xzTCS6EaGZ5pSMgDIjB7r8zSfTGk+dvvn9rTjpVS9Mwg==}
+  strnum@2.5.1:
+    resolution: {integrity: sha512-UM4nTLWzQiDBseVxUGxN0wJzIk0UU89Qi7pKXz9qISo+lhviJikTuikBsK/oFRlpvYHvSdz0TVoLyQ+sEpYwxA==}
 
   strtok3@10.3.5:
     resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
@@ -29996,10 +29980,6 @@ packages:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
 
-  xml-naming@0.1.0:
-    resolution: {integrity: sha512-k8KO9hrMyNk6tUWqUfkTEZbezRRpONVOzUTnc97VnCvyj6Tf9lyUR9EDAIeiVLv56jsMcoXEwjW8Kv5yPY52lw==}
-    engines: {node: '>=16.0.0'}
-
   xml-naming@0.3.0:
     resolution: {integrity: sha512-ghig2TBE/H11aOVgmahA3MhimvkBr6JIYknH/Dhdk10nXwdbIqBJsbfMxpvFPG8bAw77gN29aQWvKpmVoPlvPQ==}
     engines: {node: '>=16.0.0'}
@@ -31688,7 +31668,7 @@ snapshots:
       '@smithy/signature-v4': 3.1.2
       '@smithy/smithy-client': 3.2.0
       '@smithy/types': 3.3.0
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       tslib: 2.8.1
 
   '@aws-sdk/core@3.973.12':
@@ -32969,21 +32949,21 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.16':
     dependencies:
       '@smithy/types': 4.14.2
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.22':
     dependencies:
       '@nodable/entities': 2.1.0
       '@smithy/types': 4.14.2
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.25':
     dependencies:
       '@nodable/entities': 2.1.0
       '@smithy/types': 4.14.2
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.37':
@@ -32999,7 +32979,7 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.5':
     dependencies:
       '@smithy/types': 4.14.2
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.3': {}
@@ -34455,7 +34435,7 @@ snapshots:
       '@better-fetch/fetch': 1.3.1
       better-auth: 1.6.23(007ede0d4fa47571c182cef107991dfb)
       better-call: 1.3.7(zod@4.6.7)
-      fast-xml-parser: 5.10.1
+      fast-xml-parser: 5.12.0
       jose: 6.1.3
       samlify: 2.13.1
       tldts: 6.1.86
@@ -34468,7 +34448,7 @@ snapshots:
       '@better-fetch/fetch': 1.3.1
       better-auth: 1.6.23(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(next@16.4.2(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@4.1.12(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@21.0.4)(jsdom@30.0.1(@noble/hashes@2.0.1))(vite@8.3.3(@types/node@22.15.13)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))
       better-call: 1.3.7(zod@4.6.7)
-      fast-xml-parser: 5.10.1
+      fast-xml-parser: 5.12.0
       jose: 6.1.3
       samlify: 2.13.1
       tldts: 6.1.86
@@ -36182,7 +36162,7 @@ snapshots:
       duplexify: 4.1.2
       ent: 2.2.0
       extend: 3.0.2
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       gaxios: 5.1.3
       google-auth-library: 8.9.0
       mime: 3.0.0
@@ -36202,7 +36182,7 @@ snapshots:
       abort-controller: 3.0.0
       async-retry: 1.3.3
       duplexify: 4.1.3
-      fast-xml-parser: 5.7.3
+      fast-xml-parser: 5.12.0
       gaxios: 6.1.1
       google-auth-library: 9.15.1
       html-entities: 2.5.2
@@ -38201,7 +38181,7 @@ snapshots:
       class-transformer: 0.5.1
       class-validator: 0.15.1
 
-  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.5)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.27)(@nestjs/websockets@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -38213,7 +38193,7 @@ snapshots:
       '@grpc/grpc-js': 1.14.5
       '@grpc/proto-loader': 0.8.0
       '@nestjs/axios': 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.20.0(debug@4.4.3))(rxjs@7.8.2)
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+      mongoose: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
 
   '@nestjs/testing@11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)':
     dependencies:
@@ -38377,7 +38357,7 @@ snapshots:
 
   '@nodable/entities@2.1.0': {}
 
-  '@nodable/entities@3.0.0': {}
+  '@nodable/entities@3.1.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -39892,7 +39872,7 @@ snapshots:
     dependencies:
       debug: 4.3.3
       jsonwebtoken: 9.0.0
-      node-forge: 1.4.2
+      node-forge: 1.4.3
       verror: 1.10.1
 
   '@phenomnomnominal/tsquery@6.2.0(typescript@6.0.3)':
@@ -52873,30 +52853,19 @@ snapshots:
     dependencies:
       punycode: 1.4.1
 
-  fast-xml-builder@1.1.8:
+  fast-xml-builder@1.3.1:
     dependencies:
-      path-expression-matcher: 1.5.0
-
-  fast-xml-builder@1.2.1:
-    dependencies:
-      path-expression-matcher: 1.5.0
-      xml-naming: 0.1.0
-
-  fast-xml-parser@5.10.1:
-    dependencies:
-      '@nodable/entities': 3.0.0
-      fast-xml-builder: 1.2.1
-      is-unsafe: 2.0.0
       path-expression-matcher: 1.6.2
-      strnum: 2.4.1
       xml-naming: 0.3.0
 
-  fast-xml-parser@5.7.3:
+  fast-xml-parser@5.12.0:
     dependencies:
-      '@nodable/entities': 2.1.0
-      fast-xml-builder: 1.1.8
-      path-expression-matcher: 1.5.0
-      strnum: 2.2.3
+      '@nodable/entities': 3.1.0
+      fast-xml-builder: 1.3.1
+      is-unsafe: 2.0.3
+      path-expression-matcher: 1.6.2
+      strnum: 2.5.1
+      xml-naming: 0.3.0
 
   fastest-levenshtein@1.0.16: {}
 
@@ -53074,7 +53043,7 @@ snapshots:
       google-auth-library: 9.15.1
       jsonwebtoken: 9.0.3
       jwks-rsa: 3.1.0
-      node-forge: 1.4.2
+      node-forge: 1.4.3
       uuid: 11.1.1
     optionalDependencies:
       '@google-cloud/firestore': 7.11.0
@@ -53625,11 +53594,11 @@ snapshots:
 
   google-p12-pem@3.1.4:
     dependencies:
-      node-forge: 1.4.2
+      node-forge: 1.4.3
 
   google-p12-pem@4.0.1:
     dependencies:
-      node-forge: 1.4.2
+      node-forge: 1.4.3
 
   googleapis-common@4.4.3:
     dependencies:
@@ -54622,7 +54591,7 @@ snapshots:
 
   is-unicode-supported@2.1.0: {}
 
-  is-unsafe@2.0.0: {}
+  is-unsafe@2.0.3: {}
 
   is-upper-case@1.1.2:
     dependencies:
@@ -57640,17 +57609,17 @@ snapshots:
       gcp-metadata: 5.3.0
       socks: 2.8.9
 
-  mongoose-delete@1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)):
+  mongoose-delete@1.0.7(mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)):
     dependencies:
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
+      mongoose: 8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
 
-  mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9):
+  mongoose@8.24.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9):
     dependencies:
       bson: 6.10.4
       kareem: 2.6.3
       mongodb: 6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
       mpath: 0.9.0
-      mquery: 5.0.0
+      mquery: 5.0.1
       ms: 2.1.3
       sift: 17.1.3
     transitivePeerDependencies:
@@ -57690,7 +57659,7 @@ snapshots:
 
   mprocs@0.9.2: {}
 
-  mquery@5.0.0:
+  mquery@5.0.1:
     dependencies:
       debug: 4.4.3
 
@@ -58050,7 +58019,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.4.2: {}
+  node-forge@1.4.3: {}
 
   node-gyp-build-optional-packages@5.0.7:
     optional: true
@@ -58906,8 +58875,6 @@ snapshots:
   path-exists@3.0.0: {}
 
   path-exists@4.0.0: {}
-
-  path-expression-matcher@1.5.0: {}
 
   path-expression-matcher@1.6.2: {}
 
@@ -62100,9 +62067,7 @@ snapshots:
       '@types/node': 22.15.13
       qs: 6.16.1
 
-  strnum@2.2.3: {}
-
-  strnum@2.4.1:
+  strnum@2.5.1:
     dependencies:
       anynum: 1.0.1
 
@@ -64438,8 +64403,6 @@ snapshots:
   xml-name-validator@3.0.0: {}
 
   xml-name-validator@5.0.0: {}
-
-  xml-naming@0.1.0: {}
 
   xml-naming@0.3.0: {}
 

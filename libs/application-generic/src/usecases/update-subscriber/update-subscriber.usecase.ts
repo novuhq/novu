@@ -77,30 +77,19 @@ export class UpdateSubscriber {
       }),
     });
 
-    await this.subscriberRepository.update(
+    // Return the saved document so server-set fields like updatedAt are accurate, without an extra read
+    const savedSubscriber = await this.subscriberRepository.findOneAndUpdate(
       {
         _environmentId: command.environmentId,
         _id: foundSubscriber._id,
       },
       {
         $set: updatePayload,
-      }
+      },
+      { new: true }
     );
 
-    // fetch subscriber again as channel credentials are updated
-    if (command.channels?.length) {
-      const updatedSubscriber = await this.fetchSubscriber({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      });
-
-      return updatedSubscriber;
-    }
-
-    return {
-      ...foundSubscriber,
-      ...updatePayload,
-    };
+    return savedSubscriber ?? { ...foundSubscriber, ...updatePayload };
   }
 
   private async updateSubscriberChannels(command: UpdateSubscriberCommand, foundSubscriber: SubscriberEntity) {

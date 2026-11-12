@@ -90,6 +90,7 @@ export class RunJob {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing job orchestration is outside this change.
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     setUser({
       id: command.userId,
@@ -201,25 +202,29 @@ export class RunJob {
       // later, only for render-bound jobs.
       const stepTemplateHydration = await this.stepTemplateHydrationService.hydrateJobStep(job, workflow);
 
-      const schedule = await this.getSubscriberSchedule.execute(
-        GetSubscriberScheduleCommand.create({
-          environmentId: job._environmentId,
-          organizationId: job._organizationId,
-          _subscriberId: job._subscriberId,
-          contextKeys: job.contextKeys,
-        })
-      );
-
-      const subscriber = await this.subscriberRepository.findOne(
-        {
+      /*
+       * Both reads are reused by SendMessage: the global preference feeds the channel
+       * preference evaluation and the subscriber feeds rendering, so neither is read twice.
+       * The subscriber is read from the primary because the trigger may have just upserted it.
+       */
+      const [subscriberGlobalPreference, subscriber] = await Promise.all([
+        this.getSubscriberSchedule.getSubscriberGlobalPreference(
+          GetSubscriberScheduleCommand.create({
+            environmentId: job._environmentId,
+            organizationId: job._organizationId,
+            _subscriberId: job._subscriberId,
+            contextKeys: job.contextKeys,
+          })
+        ),
+        this.subscriberRepository.findOne({
           _id: job._subscriberId,
           _environmentId: job._environmentId,
           _organizationId: job._organizationId,
-        },
-        'timezone',
-        { readPreference: 'secondaryPreferred' }
-      );
+        }),
+      ]);
+      const schedule = subscriberGlobalPreference?.schedule;
       const timezone = subscriber?.timezone;
+      const isJobSubscriber = !!subscriber && subscriber.subscriberId === job.subscriberId;
       const isOutsideSubscriberSchedule = schedule?.isEnabled
         ? !isWithinSchedule(schedule, new Date(), timezone)
         : false;
@@ -327,6 +332,11 @@ export class RunJob {
           statelessPreferences: job.preferences,
           contextKeys: job.contextKeys || [],
           workflow,
+          /*
+           * Handed over only when the lookup by internal id resolved the job's subscriber
+           * (legacy jobs may lack `_subscriberId`); otherwise SendMessage reads both itself.
+           */
+          ...(isJobSubscriber && { subscriber, subscriberGlobalPreference }),
         })
       );
 
@@ -601,6 +611,7 @@ export class RunJob {
    *   ends (no next job), we skip creating the status trace here and let setJobAsFailed handle it
    *   to avoid duplicate traces and ensure correct error status.
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing chain-queueing logic is outside this change.
   private async tryQueueNextJobs(
     job: JobEntity,
     notification?: PartialNotificationEntity | null,
