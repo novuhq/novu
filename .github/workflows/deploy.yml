@@ -720,6 +720,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: ${{ matrix.target.gh_environment }}
+    # Runs that target the same Worker queue here, whatever services they selected
+    concurrency:
+      group: cf-worker-mcp-server-${{ matrix.target.wrangler_env }}
+      cancel-in-progress: false
     permissions:
       contents: read
     strategy:
