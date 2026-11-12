@@ -17,7 +17,8 @@ node docker/box/src/cli/main.ts doctor     # "ok": true when it's fit to test on
 ```
 
 `up` prints the box's addresses: the dashboard at `https://<branch>.box.novu-staging.co` (the box's Mailpit under
-`/mail`), and the API at `https://<branch>-api.box.novu-staging.co`. After more changes, `sync` puts them on the
+`/mail`), the API at `https://<branch>-api.box.novu-staging.co`, and the playground's customer pages at
+`https://<branch>-app.box.novu-staging.co`. After more changes, `sync` puts them on the
 box. Coding agents follow
 the `verify-in-box` skill (`.agents/skills/verify-in-box/SKILL.md`).
 
@@ -85,7 +86,7 @@ process-compose (`image/process-compose.yaml`) supervises:
 | `api`, `worker` | The production builds (`pnpm deploy` output) under `pm2-runtime`, as in the production images |
 | `socket` | The socket worker, for realtime Inbox |
 | `dashboard` | The built dashboard, served by Caddy |
-| `bridge` | `playground/nextjs`: code-first workflows and one agent per `novu connect` runtime, on the checkout's `@novu/framework` |
+| `bridge` | `playground/nextjs`: code-first workflows and one agent per `novu connect` runtime, on the checkout's `@novu/framework`, and the customer pages at `<box>-app` |
 | `thalamus` | The managed-agent runtime (only with `NOVU_MANAGED_CLAUDE_API_KEY`) |
 | `stripe` | `stripe listen`, forwarding the Stripe sandbox's webhooks to the API |
 | `mongo`, `redis-7000..7002`, `clickhouse` | MongoDB 8 (replica set), a 3-node Redis 7.2 cluster over TLS, ClickHouse 24.3 |
@@ -96,6 +97,12 @@ A box has two hosts, `<box>` and `<box>-api` under `box.novu-staging.co`, and Ca
 routes both by path: `/v1`, `/v2` and `/.well-known` to the API, `/ws` to the socket worker, `/mail` to Mailpit,
 `/novu-box` and `/cdn` to S3, the rest to the dashboard. The dashboard calls the API on its own host, so CORS is
 exercised as in production.
+
+A third host, `<box>-app`, is a customer's app: the `playground/nextjs` pages that embed the Inbox, preferences and
+subscriptions (the list is in the Caddyfile), connected to the seed org's Development environment as the seed
+user's subscriber. `?subscriberId=<id>` on a page picks another subscriber. The pages read these settings from
+`/api/novu-config` when they load, with an HMAC hash, so they work with HMAC on too. Every other path there is a
+404: the playground's other routes hold the secret key and the managed Claude key.
 
 The bake seeds:
 
@@ -115,7 +122,8 @@ An apply (from `sync`, a PR push, or `base`'s refresh) logs its plan first, for 
 - **A library:** that library, then the libraries depending on it whose output can change, through nx.
   `@novu/framework` builds without its type declarations unless something compiles against them.
 - **`pnpm-lock.yaml`, `pnpm-workspace.yaml` or `.source`:** everything (reinstall, build, redeploy, restart).
-- **`@novu/framework`, `@novu/agent-toolkit` or `playground/nextjs`:** the bridge app is rebuilt and synced again.
+- **`@novu/framework`, `@novu/agent-toolkit`, the Inbox SDKs (`@novu/js`, `@novu/react`, `@novu/nextjs`) or
+  `playground/nextjs`:** the bridge app is rebuilt and synced again.
 
 The box skips type checks, so it runs code CI would reject; `apply` logs a WARN when the PR's CI failed. One apply
 runs at a time; an interrupted one is completed by the next. Measured on Cloudflare (standard-4):
@@ -170,7 +178,8 @@ DMs. No box ever sees the real token. The Slack app's event, interactivity and `
 Every box runs in one Cloudflare Worker, `novu-box-hub` (`src/cloud/`, defined by `wrangler.jsonc`): one Durable
 Object and one container per box, the Slack router, and a registry of the boxes `up` created. It picks what a
 request reaches by hostname: `box.novu-staging.co` is the hub's own API, `slack.box.novu-staging.co` the Slack
-router, and `<box>` or `<box>-api` that box. So a box name can't be `slack` or end in `-api`.
+router, and `<box>`, `<box>-api` or `<box>-app` that box. So a box name can't be `slack` or end in `-api` or
+`-app`.
 
 ![The parts on Cloudflare: hostnames under box.novu-staging.co reach the one hub Worker, which picks the Registry, a Box or the Router Durable Object; each awake box has a container, an asleep box a snapshot](./docs/07-cloudflare.svg)
 

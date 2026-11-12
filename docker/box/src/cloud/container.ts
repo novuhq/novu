@@ -131,6 +131,7 @@ export function boxEnv(
   if (!origin) return secrets;
   // Separate hosts, as in Novu Cloud, so the dashboard's calls to the API are cross-origin (CORS) there too.
   const api = apiOrigin(boxOfOrigin(origin));
+  const socket = `${origin.replace(/^http/, 'ws')}/ws`;
 
   return {
     ...secrets,
@@ -139,7 +140,9 @@ export function boxEnv(
     DASHBOARD_URL: origin,
     VITE_API_HOSTNAME: api,
     VITE_DASHBOARD_URL: origin,
-    VITE_WEBSOCKET_HOSTNAME: `${origin.replace(/^http/, 'ws')}/ws`,
+    VITE_WEBSOCKET_HOSTNAME: socket,
+    NEXT_PUBLIC_NOVU_BACKEND_URL: api,
+    NEXT_PUBLIC_NOVU_SOCKET_URL: socket,
     S3_LOCAL_STACK: origin,
     CDN_URL: `${origin}/cdn`,
   };
