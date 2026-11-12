@@ -1,22 +1,15 @@
 import jwt from '@tsndr/cloudflare-worker-jwt';
 import type { Context, Next } from 'hono';
 
-export async function verifyJWT(token: string, secret: string): Promise<boolean> {
-  try {
-    const result = await jwt.verify(token, secret);
+// Other tokens signed with JWT_SECRET, such as Community dashboard user tokens, carry no audience
+const SUBSCRIBER_SESSION_AUDIENCE = 'widget_user';
 
-    return !!result;
-  } catch {
-    return false;
-  }
-}
-
-export function decodeJWT(token: string): any {
-  try {
-    return jwt.decode(token);
-  } catch {
-    return null;
-  }
+interface ISubscriberSessionPayload {
+  _id?: string;
+  subscriberId?: string;
+  organizationId?: string;
+  environmentId?: string;
+  contextKeys?: string[];
 }
 
 export async function authenticateJWT(context: Context, next: Next) {
@@ -27,22 +20,18 @@ export async function authenticateJWT(context: Context, next: Next) {
   }
 
   try {
-    const isValid = await verifyJWT(token, context.env.JWT_SECRET);
-    if (!isValid) {
+    // verify() throws instead of returning undefined when the token cannot be decoded
+    const verified = await jwt.verify<ISubscriberSessionPayload>(token, context.env.JWT_SECRET).catch(() => undefined);
+    if (!verified) {
       return context.json({ error: 'Unauthorized: Invalid JWT token' }, 401);
     }
 
-    const payload = decodeJWT(token);
-    if (!payload || !payload.payload) {
+    const userPayload = verified.payload;
+    if (!userPayload || userPayload.aud !== SUBSCRIBER_SESSION_AUDIENCE) {
       return context.json({ error: 'Unauthorized: Invalid JWT payload' }, 401);
     }
 
-    // Extract user information from JWT payload
-    const userPayload = payload.payload;
-    const userId = userPayload._id;
-    const subscriberId = userPayload.subscriberId || userId;
-    const { organizationId, environmentId } = userPayload;
-    const contextKeys = userPayload.contextKeys;
+    const { _id: userId, subscriberId, organizationId, environmentId, contextKeys } = userPayload;
 
     if (!userId || !subscriberId || !organizationId || !environmentId) {
       return context.json({ error: 'Unauthorized: Missing required user information in JWT' }, 401);
