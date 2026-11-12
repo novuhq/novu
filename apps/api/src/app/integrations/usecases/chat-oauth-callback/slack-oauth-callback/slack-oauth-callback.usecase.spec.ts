@@ -295,6 +295,8 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
   it('should update the existing connection token when reconnecting with the same identifier', async () => {
     harness.channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
 
     const state = buildEncodedState({
@@ -327,6 +329,8 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
   it('should update connection and create endpoint when autoLinkUser=true on reconnect', async () => {
     harness.channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
     harness.updateChannelConnection.execute.resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,

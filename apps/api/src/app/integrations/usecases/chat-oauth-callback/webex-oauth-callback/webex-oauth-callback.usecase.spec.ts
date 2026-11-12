@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { BadGatewayException, BadRequestException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
 import {
   ChannelConnectionRepository,
   ContextRepository,
@@ -209,6 +209,8 @@ describe('WebexOauthCallback', () => {
   it('should update the existing Webex connection token when reconnecting with the same identifier', async () => {
     channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
     axiosPost.resolves({
       data: {
@@ -250,6 +252,36 @@ describe('WebexOauthCallback', () => {
     expect(lookupArg.integrationIdentifier).to.equal(MOCK_INTEGRATION_IDENTIFIER);
   });
 
+  it("should refuse to replace another subscriber's Webex connection named by identifier", async () => {
+    channelConnectionRepository.findOne.onFirstCall().resolves({
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: 'another-subscriber',
+      contextKeys: [],
+    } as any);
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      autoLinkUser: true,
+    });
+
+    let error: unknown;
+    try {
+      await usecase.execute(WebexOauthCallbackCommand.create({ providerCode: 'webex-code', state }));
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(ConflictException);
+    expect(updateChannelConnection.execute.called).to.be.false;
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+  });
+
   it('should update the existing Webex connection token when reconnecting with the same integration, subscriber, and context', async () => {
     channelConnectionRepository.findOne.resolves({
       identifier: 'existing-generated-webex-connection',
@@ -289,6 +321,8 @@ describe('WebexOauthCallback', () => {
   it('should update connection and auto-link endpoint when reconnecting with autoLinkUser=true', async () => {
     channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
     updateChannelConnection.execute.resolves({ identifier: MOCK_CONNECTION_IDENTIFIER } as any);
 

@@ -20,6 +20,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
+import { assertCanReconnectChannelConnection } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
@@ -255,9 +256,12 @@ export class SlackOauthCallback {
         identifier: stateData.identifier,
         _organizationId: stateData.organizationId,
         _environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
       });
 
       if (connectionByIdentifier) {
+        assertCanReconnectChannelConnection(connectionByIdentifier, stateData);
+
         return connectionByIdentifier;
       }
     }
