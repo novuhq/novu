@@ -216,9 +216,13 @@ overrides:
   # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
   # on 16.4.1+.
   next@<16.4.1: ^16.4.1
-  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
-  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
-  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
+  # GHSA-474x-hrwr-fgx4 (low): fast-xml-parser quadratic CPU consumption
+  # scanning unterminated stop-node tags. Patched in 5.12.0 (minor bump within
+  # the 5.x line). Consolidate the previous `>=4.0.0 <5.0.0`, `>=5.0.0 <5.7.3`,
+  # and `>=5.9.3 <5.10.1` overrides into a single blanket floor since no fix
+  # was backported to earlier majors and transitive 5.10.x / 5.11.x
+  # resolutions (via @aws-sdk/*, @smithy/*, mailparser) need the bump.
+  fast-xml-parser@<5.12.0: ^5.12.0
   # GHSA-c475-qrg2-pj4r: basic-ftp SSRF via `./` prefixed paths in list()
   # bypassing the loopback / private-IP guard. Patched in 6.2.1. Widen the
   # override from the previous 5.3.1 floor so the transitive `get-uri` >
