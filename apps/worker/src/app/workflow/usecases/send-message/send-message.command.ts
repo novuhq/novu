@@ -1,5 +1,11 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import type { JobEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import type {
+  JobEntity,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  PreferencesEntity,
+  SubscriberEntity,
+} from '@novu/dal';
 import type { SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@novu/shared';
 import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
@@ -9,6 +15,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped trigger payload is outside this change.
   payload: any;
 
   @IsDefined()
@@ -37,6 +44,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   jobId: string;
 
   @IsOptional()
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped digest events are outside this change.
   events?: any[];
 
   @IsDefined()
@@ -64,4 +72,16 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
    */
   @IsOptional()
   isPayloadDedupEnabled?: boolean;
+
+  /** The job's subscriber, when RunJob already loaded it. Omitted, SendMessage fetches it. */
+  @IsOptional()
+  subscriber?: SubscriberEntity | null;
+
+  /**
+   * The subscriber's SUBSCRIBER_GLOBAL preference RunJob read for the schedule check,
+   * reused by the channel preference evaluation. `null` means there is none;
+   * `undefined` means it was not read.
+   */
+  @IsOptional()
+  subscriberGlobalPreference?: PreferencesEntity | null;
 }

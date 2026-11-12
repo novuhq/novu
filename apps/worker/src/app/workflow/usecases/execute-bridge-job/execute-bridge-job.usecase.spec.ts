@@ -21,7 +21,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const messageRepository = { findOne: sinon.stub().resolves(null) };
     const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
+      findByIdAndOrganization: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
     const controlValuesRepository = {
       findOne: sinon.stub().resolves(null),

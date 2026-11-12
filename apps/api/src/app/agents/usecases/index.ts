@@ -14,6 +14,7 @@ import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue
 import { ConsumeSlackSetupLink } from '../channels/slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
 import { GetSlackSetupLinkStatus } from '../channels/slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
 import { IssueSlackSetupLink } from '../channels/slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
+import { RemoveSlackWorkspaceInstallation } from '../channels/slack-uninstall/remove-slack-workspace-installation/remove-slack-workspace-installation.usecase';
 import { ConfigureWhatsAppWebhook } from '../channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -83,6 +84,7 @@ export const USE_CASES = [
   ConfigureWhatsAppWebhook,
   GenerateManagedAgent,
   IssueSlackSetupLink,
+  RemoveSlackWorkspaceInstallation,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,

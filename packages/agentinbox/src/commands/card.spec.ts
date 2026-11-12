@@ -50,4 +50,23 @@ describe('agentinbox card', () => {
     expect(printed(CARD, false)).not.toContain('█');
     expect(printed({ ...CARD, url: undefined }, true)).not.toContain('█');
   });
+
+  it('keeps terminal escape sequences in the card from reaching the terminal', () => {
+    const hostile: ShownCard = {
+      ...CARD,
+      greeting: '\u001b]0;Injected title\u0007Hi',
+      name: '\u001b[2JSid',
+      address: 'sid@agentinbox.md\u001b[1A',
+      url: 'https://agentinbox.md/p/sid\u009b2J\u001b]52;c;aGk=\u0007',
+    };
+    let text = '';
+    printCard(hostile, { write: (chunk) => (text += chunk), isTTY: false });
+
+    expect(plain(text)).toBe('Hi\n\n  Sid\n  sid@agentinbox.md\n  https://agentinbox.md/p/sid2J\n');
+    expect(cardRows(hostile).map((row) => plain(row.value))).toEqual([
+      'Sid',
+      'sid@agentinbox.md',
+      'https://agentinbox.md/p/sid2J',
+    ]);
+  });
 });
