@@ -238,6 +238,9 @@ processes:
     command: >-
       while [ ! -s /data/bridge/secret-key ]; do sleep 1; done;
       NOVU_SECRET_KEY=$(cat /data/bridge/secret-key) ANTHROPIC_API_KEY=$NOVU_MANAGED_CLAUDE_API_KEY
+      NEXT_PUBLIC_NOVU_APP_ID=$(cat /data/bridge/app-id) NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=$(cat /data/bridge/subscriber-id)
+      NEXT_PUBLIC_NOVU_BACKEND_URL=$VITE_API_HOSTNAME NEXT_PUBLIC_NOVU_SOCKET_URL=$VITE_WEBSOCKET_HOSTNAME
+      NEXT_PUBLIC_NOVU_SOCKET_TYPE=$VITE_WEBSOCKET_TYPE
       exec node_modules/.bin/next start -p 4000 -H 127.0.0.1
     working_dir: /data/novu/playground/nextjs
     environment:

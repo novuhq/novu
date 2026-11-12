@@ -18,7 +18,10 @@ export default {
       if (url.pathname === '/__box/users' || url.pathname.startsWith('/__box/users/')) return users(request, env, url);
       if (url.pathname.startsWith('/__box/testerarmy/')) return testerArmy(request, env, url);
 
-      return text(`${HOST}: a box is https://<box>.${DOMAIN}, its API https://<box>-api.${DOMAIN}\n`, 404);
+      return text(
+        `${HOST}: a box is https://<box>.${DOMAIN}, its API https://<box>-api.${DOMAIN}, its playground https://<box>-app.${DOMAIN}\n`,
+        404
+      );
     }
     if (url.pathname.startsWith('/__box/') && !(await authorize(request, env)))
       return text(

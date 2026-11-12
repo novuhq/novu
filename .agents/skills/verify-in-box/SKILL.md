@@ -45,7 +45,8 @@ box rebuilt and restarted) for your report: a proof against a stale apply isn't 
   start. Start it with `up --box <name> --from base`, then `sync --box <name>`: without `--from base` a new named box
   bakes `next`, and `up --box` doesn't put your checkout on it.
 - `up` prints the dashboard's address, `https://<box>.box.novu-staging.co` (`<box>` below), with Mailpit under
-  `/mail`, and the API's, `https://<box>-api.box.novu-staging.co`.
+  `/mail`, the API's, `https://<box>-api.box.novu-staging.co`, and the playground's customer pages,
+  `https://<box>-app.box.novu-staging.co` (`<box>-app` below).
 - `sync` sends new files only inside the repo's existing top-level folders. A new file at the root or in a new
   top-level folder isn't sent; commit it or move it if the box needs it.
 - `sync` stops over 25 MB and names the biggest changed files. Ask the user before deleting or ignoring any of them.
@@ -75,6 +76,10 @@ Exercise the change the way a user reaches it (the dashboard, the public API), n
   3. For a template change, open the `view` URL it prints in a browser and screenshot it at 600 px and 375 px wide.
 - **Bridge workflows and agents:** sign in as the seed user; change them in `playground/nextjs`, and `sync` rebuilds
   them.
+- **Inbox, preferences, subscriptions (what a customer embeds):** open the playground's pages at `<box>-app`, as the
+  seed user's subscriber, or another with `?subscriberId=<id>`; trigger from the dashboard signed in as the seed user.
+  A page that's missing there belongs in its own playground PR, not in the PR it would prove. That PR also adds its
+  path to `docker/box/image/config/Caddyfile`, which boxes serve only after `box deploy` and a rebake of `base`.
 - **Broad changes** (shared libraries, auth, queues): also drive the main flows the change could break (sign-in,
   trigger a workflow and check the message, an agent reply).
 
