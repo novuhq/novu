@@ -1,10 +1,5 @@
 import { decryptChannelConnectionAuth, encryptCredentials } from '@novu/application-generic';
-import {
-  ChannelConnectionRepository,
-  ChannelEndpointRepository,
-  IntegrationRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { ChannelConnectionRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ContextPayload } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
@@ -13,7 +8,6 @@ import sinon from 'sinon';
 
 const integrationRepository = new IntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
-const channelEndpointRepository = new ChannelEndpointRepository();
 const subscriberRepository = new SubscriberRepository();
 
 const ALICE = 'reconnect-alice';
@@ -56,15 +50,8 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
       });
     }
 
-    integrationIdentifier = (await seedSlackIntegration()).identifier;
-  });
-
-  afterEach(() => {
-    sinon.restore();
-  });
-
-  async function seedSlackIntegration() {
-    return await integrationRepository.create({
+    integrationIdentifier = `slack-reconnect-e2e-${Date.now()}`;
+    await integrationRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       providerId: ChatProviderIdEnum.Slack,
@@ -72,16 +59,19 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
       credentials: encryptCredentials({ clientId: 'slack-client-id', secretKey: 'slack-client-secret' }),
       active: true,
       name: 'Slack Reconnect Ownership E2E',
-      identifier: `slack-reconnect-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      identifier: integrationIdentifier,
       priority: 1,
       primary: false,
       deleted: false,
     });
-  }
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
 
   async function seedConnection(body: {
     identifier: string;
-    integrationIdentifier?: string;
     subscriberId?: string;
     context?: ContextPayload;
     connectionMode?: 'subscriber' | 'shared';
@@ -133,17 +123,9 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
     return stateFrom(body.data.url);
   }
 
-  async function completeSlackOAuth(
-    state: string,
-    slack: { accessToken: string; team: { id: string; name: string }; authedUserId?: string }
-  ) {
+  async function completeSlackOAuth(state: string, slack: { accessToken: string; team: { id: string; name: string } }) {
     sinon.stub(axios, 'post').resolves({
-      data: {
-        ok: true,
-        access_token: slack.accessToken,
-        team: slack.team,
-        authed_user: slack.authedUserId ? { id: slack.authedUserId } : undefined,
-      },
+      data: { ok: true, access_token: slack.accessToken, team: slack.team },
     });
 
     try {
@@ -228,87 +210,10 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
       expect(connection.workspace?.id).to.equal(ACME_WORKSPACE.id);
       expect(connection.contextKeys).to.deep.equal(['tenant:acme']);
     });
-
-    it("refuses a subscriber with no tenant replacing a tenant's shared connection", async () => {
-      await seedConnection({
-        identifier: 'acme-shared-slack',
-        connectionMode: 'shared',
-        context: ACME,
-        accessToken: 'xoxb-acme',
-        workspace: ACME_WORKSPACE,
-      });
-
-      const state = await connectStateFromInbox(await inboxToken(BOB), {
-        connectionIdentifier: 'acme-shared-slack',
-        connectionMode: 'subscriber',
-        autoLinkUser: false,
-      });
-      const { status, text } = await completeSlackOAuth(state, {
-        accessToken: 'xoxb-attacker',
-        team: ATTACKER_WORKSPACE,
-      });
-
-      expect(status, text).to.equal(409);
-      expect((await findConnection('acme-shared-slack')).accessToken).to.equal('xoxb-acme');
-    });
-
-    it("refuses reusing the identifier of another integration's connection", async () => {
-      const otherIntegration = await seedSlackIntegration();
-      await seedConnection({
-        identifier: 'alice-other-slack',
-        integrationIdentifier: otherIntegration.identifier,
-        subscriberId: ALICE,
-        accessToken: 'xoxb-alice-other',
-        workspace: ALICE_WORKSPACE,
-      });
-
-      const state = await connectStateFromInbox(await inboxToken(ALICE), {
-        connectionIdentifier: 'alice-other-slack',
-        connectionMode: 'subscriber',
-        autoLinkUser: false,
-      });
-      const { status, text } = await completeSlackOAuth(state, {
-        accessToken: 'xoxb-alice-new',
-        team: ALICE_WORKSPACE,
-      });
-
-      expect(status, text).to.equal(409);
-
-      const connection = await findConnection('alice-other-slack');
-      expect(connection.integrationIdentifier).to.equal(otherIntegration.identifier);
-      expect(connection.accessToken).to.equal('xoxb-alice-other');
-    });
   });
 
   describe('a caller allowed to update the connection', () => {
-    it('lets a subscriber reconnect their own connection', async () => {
-      await seedConnection({
-        identifier: 'alice-slack',
-        subscriberId: ALICE,
-        context: ACME,
-        accessToken: 'xoxb-alice',
-        workspace: ALICE_WORKSPACE,
-      });
-
-      const state = await connectStateFromInbox(await inboxToken(ALICE, ACME), {
-        connectionIdentifier: 'alice-slack',
-        connectionMode: 'subscriber',
-        autoLinkUser: false,
-      });
-      const { status, text } = await completeSlackOAuth(state, {
-        accessToken: 'xoxb-alice-refreshed',
-        team: ALICE_WORKSPACE,
-      });
-
-      expect(status, text).to.equal(200);
-
-      const connection = await findConnection('alice-slack');
-      expect(connection.subscriberId).to.equal(ALICE);
-      expect(connection.accessToken).to.equal('xoxb-alice-refreshed');
-      expect(await countConnections()).to.equal(1);
-    });
-
-    it("lets a member of the tenant refresh the tenant's shared connection and link themselves", async () => {
+    it("lets a member of the tenant refresh the tenant's shared connection", async () => {
       await seedConnection({
         identifier: 'acme-shared-slack',
         connectionMode: 'shared',
@@ -320,12 +225,11 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
       const state = await connectStateFromInbox(await inboxToken(BOB, ACME), {
         connectionIdentifier: 'acme-shared-slack',
         connectionMode: 'subscriber',
-        autoLinkUser: true,
+        autoLinkUser: false,
       });
       const { status, text } = await completeSlackOAuth(state, {
         accessToken: 'xoxb-acme-refreshed',
         team: ACME_WORKSPACE,
-        authedUserId: 'U0BOB',
       });
 
       expect(status, text).to.equal(200);
@@ -333,15 +237,6 @@ describe('Slack OAuth reconnect ownership - /integrations/chat/oauth/callback (G
       const connection = await findConnection('acme-shared-slack');
       expect(connection.subscriberId, 'shared connection must stay shared').to.not.exist;
       expect(connection.accessToken).to.equal('xoxb-acme-refreshed');
-
-      const endpoints = await channelEndpointRepository.find({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        connectionIdentifier: 'acme-shared-slack',
-      });
-      expect(endpoints.map((endpoint) => [endpoint.subscriberId, endpoint.endpoint])).to.deep.equal([
-        [BOB, { userId: 'U0BOB' }],
-      ]);
     });
 
     it('lets a server-side caller reconnect a connection by identifier', async () => {

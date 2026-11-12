@@ -256,7 +256,6 @@ export class SlackOauthCallback {
         identifier: stateData.identifier,
         _organizationId: stateData.organizationId,
         _environmentId: stateData.environmentId,
-        integrationIdentifier: integration.identifier,
       });
 
       if (connectionByIdentifier) {
