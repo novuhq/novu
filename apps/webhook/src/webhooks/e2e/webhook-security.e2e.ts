@@ -195,7 +195,27 @@ describe('Email webhook - security', () => {
       expect(executionDetails).to.have.length(0);
     });
 
-    it('should follow provider semantics for unsigned requests when the flag is on', async () => {
+    it('should reject an unsigned request when a signing key is stored and the flag is on', async () => {
+      process.env[FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED] = 'true';
+      const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
+      await createSendgridIntegration(publicKey.export({ type: 'spki', format: 'pem' }).toString());
+
+      try {
+        await callWebhook(environmentId, organizationId, sendgridEvent(messageId));
+        expect.fail('should have thrown');
+      } catch (error) {
+        expect(error.response?.status).to.equal(401);
+      }
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _notificationId: notificationId,
+      });
+      expect(executionDetails).to.have.length(0);
+    });
+
+    it('should accept unsigned requests when no signing key is stored and the flag is on', async () => {
       process.env[FeatureFlagsKeysEnum.IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED] = 'true';
       await createSendgridIntegration();
 
