@@ -1,5 +1,5 @@
 import { DirectionEnum } from '@novu/shared';
-import { ClassConstructor, plainToInstance } from 'class-transformer';
+import { ClassConstructor } from 'class-transformer';
 import {
   AnyBulkWriteOperation,
   ClientSession,
@@ -25,6 +25,7 @@ import {
   pageSortDirection,
   slicePage,
 } from './cursor-pagination';
+import { toEntity } from './to-entity';
 
 /** Query helpers type of the repository models (none are registered); the `{}` mongoose defaults to. */
 type NoQueryHelpers = Record<never, never>;
@@ -483,12 +484,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
+  /**
+   * Same output as `plainToInstance(this.entity, JSON.parse(JSON.stringify(data)))` in one pass; see `to-entity.ts`.
+   */
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
-    return plainToInstance(this.entity, JSON.parse(JSON.stringify(data))) as TData extends null ? null : T_MappedEntity;
+    return toEntity(this.entity, data) as TData extends null ? null : T_MappedEntity;
   }
 
   protected mapEntities(data: unknown): T_MappedEntity[] {
-    return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
+    return toEntity(this.entity, data as unknown[]);
   }
 
   /*
