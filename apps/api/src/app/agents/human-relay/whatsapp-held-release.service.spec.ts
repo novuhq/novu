@@ -59,6 +59,7 @@ describe('WhatsAppHeldRelease', () => {
     await release.release(scope);
 
     expect(repository.findHeldFor.firstCall.args.slice(0, 4)).to.deep.equal(['env1', 'org1', 'ada', 'whatsapp-main']);
+    expect(repository.takeHold.firstCall.args).to.deep.equal(['env1', 'hi-row', 'ada', 'whatsapp-main']);
     expect(gateway.sendDirectMessage.firstCall.args.slice(0, 3)).to.deep.equal([
       'agent1',
       'whatsapp-main',

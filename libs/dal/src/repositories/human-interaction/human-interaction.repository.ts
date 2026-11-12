@@ -183,17 +183,27 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Takes someone's hold off the row before the held message is sent, so two replies at once send it only once.
+   * Takes someone's hold on one WhatsApp integration off the row before the held message is sent, so two replies at once send it only once.
    * Returns the hold, or null when another reply took it first. Put it back with `addHold` if the send fails.
    */
-  async takeHold(environmentId: string, id: string, subscriberId: string): Promise<HumanInteractionHold | null> {
+  async takeHold(
+    environmentId: string,
+    id: string,
+    subscriberId: string,
+    integrationIdentifier: string
+  ): Promise<HumanInteractionHold | null> {
     const before = await this.findOneAndUpdate(
-      { _id: id, _environmentId: environmentId, 'held.subscriberId': subscriberId },
-      { $pull: { held: { subscriberId } } },
+      { _id: id, _environmentId: environmentId, held: { $elemMatch: { subscriberId, integrationIdentifier } } },
+      // Only the hold on the integration they wrote on: the held message goes back through that same number.
+      { $pull: { held: { subscriberId, integrationIdentifier } } },
       { new: false }
     );
 
-    return before?.held?.find((hold) => hold.subscriberId === subscriberId) ?? null;
+    return (
+      before?.held?.find(
+        (hold) => hold.subscriberId === subscriberId && hold.integrationIdentifier === integrationIdentifier
+      ) ?? null
+    );
   }
 
   /** Records a delivery made after the row was created, such as a held message going out. */

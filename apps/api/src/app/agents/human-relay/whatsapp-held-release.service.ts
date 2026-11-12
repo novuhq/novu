@@ -81,7 +81,12 @@ export class WhatsAppHeldRelease {
   private async releaseOne(scope: ReleaseScope, interaction: HumanInteractionEntity, subscriberId: string) {
     const { environmentId } = scope.config;
     // Taken off the row first, so a second message at the same moment doesn't send it again.
-    const hold = await this.humanInteractionRepository.takeHold(environmentId, interaction._id, subscriberId);
+    const hold = await this.humanInteractionRepository.takeHold(
+      environmentId,
+      interaction._id,
+      subscriberId,
+      scope.config.integrationIdentifier
+    );
     if (!hold) {
       return;
     }
@@ -101,7 +106,9 @@ export class WhatsAppHeldRelease {
         platformThreadId: sent.platformThreadId,
       });
 
-      const stillHeld = (interaction.held ?? []).some((other) => other.subscriberId !== subscriberId);
+      const stillHeld = (interaction.held ?? []).some(
+        (other) => other.subscriberId !== subscriberId || other.integrationIdentifier !== hold.integrationIdentifier
+      );
       if (interaction.kind === HumanInteractionKindEnum.TELL && !stillHeld) {
         await this.humanInteractionRepository.markDeliveredIfPending(environmentId, interaction._id);
       }
