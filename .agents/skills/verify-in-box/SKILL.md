@@ -83,6 +83,23 @@ _tracer_, not proof: drive at least one failure case the change handles.
 
 The box skips type checks, so it runs code CI would reject. Run the affected project's typecheck as well.
 
+### Before and after
+
+For a bug fix or a change a user sees, drive the same steps on `next` too, so a reviewer sees what was broken. A
+box started from `base` and never synced runs the latest `next` (`base` is refreshed on every push to it):
+
+```sh
+node docker/box/src/cli/main.ts up --box <box>-before --from base
+node docker/box/src/cli/main.ts doctor --box <box>-before
+```
+
+- `baked.sha` in `doctor` is the `next` commit it runs. `sync` merged your changes onto your own box's `baked.sha`;
+  when the two differ, your box started from an older `next`, so name both commits in the proof.
+- Never `sync` the before box. Use the same account, data and steps on both boxes, so the change is the only
+  difference.
+- Done when the before box shows the bug (or the old behaviour) and your box shows the fix. Before and after that
+  look the same are a finding, not proof: check you drove the changed path.
+
 ### Accounts
 
 **The seed user** `agent@novu.co` is the fast path: `user seed` prints a link that signs the browser in as it, once,
@@ -109,6 +126,10 @@ user's own org and environments, as for a real sign-up. Then, if needed:
 - You own the proof: attach it to the PR (its description or a comment), or to your reply when there's no PR, with
   the box address, the applied commit, and each command or page that made it. For a UI change attach screenshots,
   or a video for a flow with several steps.
+- Record one take per box with your browser tool's recorder. Without one, use Playwright (installed with
+  `apps/dashboard`): a browser context with `recordVideo` saves a .webm when it closes. For an API or CLI change,
+  record a terminal running the requests, or attach the request and response as text.
+  `gh pr edit <n> --attach <file>` uploads an image or video to the PR description; a video renders as a player.
 - Never paste a password, sign-in link or secret key into a PR, chat or log, and keep them out of screenshots and
   videos: PR attachments are public.
 
@@ -117,4 +138,5 @@ user's own org and environments, as for a real sign-up. Then, if needed:
 Leave the box running while the user may still look at it; it saves itself and sleeps after an hour without
 requests, and wakes on the next one. `down` puts it to sleep now; the data stays for the next `up`.
 
-Ask the user before `delete`, which deletes the box with its data.
+Ask the user before `delete`, which deletes the box with its data. The exception is a before box you started:
+`delete --box <box>-before` once its proof is attached.
