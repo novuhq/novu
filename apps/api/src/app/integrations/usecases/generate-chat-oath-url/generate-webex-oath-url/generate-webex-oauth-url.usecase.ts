@@ -15,6 +15,7 @@ export interface StateData {
   identifier?: string;
   subscriberId?: string;
   context?: ContextPayload;
+  contextKeys?: string[];
   environmentId: string;
   organizationId: string;
   integrationIdentifier: string;
@@ -63,7 +64,8 @@ export class GenerateWebexOauthUrl {
       command.connectionIdentifier,
       command.mode,
       command.connectionMode,
-      command.autoLinkUser
+      command.autoLinkUser,
+      command.contextKeys
     );
 
     return this.getOAuthUrl(clientId, secureState, this.resolveScopes(command));
@@ -86,6 +88,7 @@ export class GenerateWebexOauthUrl {
       connectionMode: command.connectionMode,
       subscriberId: command.subscriberId,
       context: command.context,
+      contextKeys: command.contextKeys,
     });
   }
 
@@ -132,14 +135,20 @@ export class GenerateWebexOauthUrl {
     connectionIdentifier?: string,
     mode?: OAuthMode,
     connectionMode?: ConnectionMode,
-    autoLinkUser?: boolean
+    autoLinkUser?: boolean,
+    contextKeys?: string[]
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
+
+    // A session-validated context is carried as trusted keys; drop the raw payload
+    // so a mismatched body.context can never ride along in the signed state.
+    const hasContextKeys = Boolean(contextKeys?.length);
 
     const stateData: StateData = {
       identifier: connectionIdentifier,
       subscriberId,
-      context,
+      context: hasContextKeys ? undefined : context,
+      contextKeys: hasContextKeys ? contextKeys : undefined,
       environmentId: _environmentId,
       organizationId: _organizationId,
       integrationIdentifier: identifier,

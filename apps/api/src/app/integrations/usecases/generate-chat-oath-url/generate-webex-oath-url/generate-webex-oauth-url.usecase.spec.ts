@@ -84,4 +84,25 @@ describe('GenerateWebexOauthUrl', () => {
     expect(scope?.split(' ')).to.deep.equal([...WEBEX_DEFAULT_OAUTH_SCOPES]);
     expect(scope).to.include('spark:kms');
   });
+
+  it('should sign the session context keys into the state instead of the raw context payload', async () => {
+    const command = GenerateWebexOauthUrlCommand.create({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      subscriberId: 'subscriber-1',
+      integration: buildMockIntegration(),
+      connectionMode: 'shared',
+      context: { tenant: 'acme' },
+      contextKeys: ['tenant:globex'],
+    });
+
+    const url = await usecase.execute(command);
+    const state = await GenerateWebexOauthUrl.validateAndDecodeState(
+      new URL(url).searchParams.get('state') as string,
+      MOCK_API_KEY
+    );
+
+    expect(state.contextKeys).to.deep.equal(['tenant:globex']);
+    expect(state.context).to.be.undefined;
+  });
 });

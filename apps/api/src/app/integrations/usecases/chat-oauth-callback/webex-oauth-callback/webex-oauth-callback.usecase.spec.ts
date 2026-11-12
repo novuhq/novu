@@ -1,11 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
-import {
-  ChannelConnectionRepository,
-  ContextRepository,
-  EnvironmentRepository,
-  IntegrationRepository,
-} from '@novu/dal';
+import { ChannelConnectionRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
@@ -77,7 +72,6 @@ describe('WebexOauthCallback', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let channelConnectionRepository: sinon.SinonStubbedInstance<ChannelConnectionRepository>;
-  let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
   let createChannelConnection: sinon.SinonStubbedInstance<CreateChannelConnection>;
   let updateChannelConnection: sinon.SinonStubbedInstance<UpdateChannelConnection>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
@@ -89,7 +83,6 @@ describe('WebexOauthCallback', () => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
     channelConnectionRepository = sinon.createStubInstance(ChannelConnectionRepository);
-    contextRepository = sinon.createStubInstance(ContextRepository);
     createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
     updateChannelConnection = sinon.createStubInstance(UpdateChannelConnection);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
@@ -98,7 +91,6 @@ describe('WebexOauthCallback', () => {
       integrationRepository as any,
       environmentRepository as any,
       channelConnectionRepository as any,
-      contextRepository as any,
       createChannelConnection as any,
       updateChannelConnection as any,
       createChannelEndpoint as any
@@ -115,7 +107,6 @@ describe('WebexOauthCallback', () => {
     integrationRepository.findOne.resolves(buildMockIntegration());
     channelConnectionRepository.findOne.resolves(null);
     channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    contextRepository.findOrCreateContextsFromPayload.resolves([]);
     createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
     updateChannelConnection.execute.resolves({ identifier: MOCK_CONNECTION_IDENTIFIER } as any);
     createChannelEndpoint.execute.resolves({} as any);
@@ -239,7 +230,6 @@ describe('WebexOauthCallback', () => {
 
     expect(createChannelConnection.execute.called).to.be.false;
     expect(updateChannelConnection.execute.calledOnce).to.be.true;
-    expect(contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     const updateArg = updateChannelConnection.execute.firstCall.args[0];
     expect(updateArg.identifier).to.equal(MOCK_CONNECTION_IDENTIFIER);

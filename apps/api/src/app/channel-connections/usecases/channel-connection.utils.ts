@@ -62,29 +62,34 @@ export function validateConnectionMode({
  * can only replace the auth of a connection created for them. A connection with a
  * subscriber belongs to that subscriber in its exact context; a connection without one
  * belongs to its exact, non-empty context.
- *
- * `caller.contextKeys` (session-validated) wins over `caller.context`. Keys are derived
- * from the payload without touching the contexts collection.
  */
 export function assertCanReconnectChannelConnection(
   connection: Pick<ChannelConnectionEntity, 'identifier' | 'subscriberId' | 'contextKeys'>,
-  caller: { subscriberId?: string; context?: ContextPayload; contextKeys?: string[] }
+  caller: { subscriberId?: string; contextKeys: string[] }
 ): void {
-  const callerContextKeys = caller.contextKeys?.length ? caller.contextKeys : toContextKeys(caller.context);
-  const isSameContext = haveSameKeys(connection.contextKeys ?? [], callerContextKeys);
-  const isOwner = connection.subscriberId
-    ? connection.subscriberId === caller.subscriberId
-    : callerContextKeys.length > 0;
+  const connectionContextKeys = connection.contextKeys ?? [];
+  const isSameContext = haveSameKeys(connectionContextKeys, caller.contextKeys);
+  const canReconnect = connection.subscriberId
+    ? connection.subscriberId === caller.subscriberId && isSameContext
+    : connectionContextKeys.length > 0 && isSameContext;
 
-  if (!isOwner || !isSameContext) {
+  if (!canReconnect) {
     throw new ConflictException(
       `Channel connection "${connection.identifier}" already exists for a different subscriber or context`
     );
   }
 }
 
-function toContextKeys(context: ContextPayload | undefined): string[] {
-  return Object.entries(context ?? {}).flatMap(([type, value]) => {
+/**
+ * Context keys of an OAuth caller. Session-validated `contextKeys` win over the raw
+ * `context` payload; keys are derived without touching the contexts collection.
+ */
+export function resolveCallerContextKeys(caller: { context?: ContextPayload; contextKeys?: string[] }): string[] {
+  if (caller.contextKeys?.length) {
+    return caller.contextKeys;
+  }
+
+  return Object.entries(caller.context ?? {}).flatMap(([type, value]) => {
     if (!value) {
       return [];
     }

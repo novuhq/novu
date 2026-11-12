@@ -4,7 +4,6 @@ import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   ChannelTypeEnum,
-  ContextRepository,
   EnvironmentRepository,
   ICredentialsEntity,
   IntegrationEntity,
@@ -12,7 +11,10 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
-import { assertCanReconnectChannelConnection } from '../../../../channel-connections/usecases/channel-connection.utils';
+import {
+  assertCanReconnectChannelConnection,
+  resolveCallerContextKeys,
+} from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
@@ -53,7 +55,6 @@ export class WebexOauthCallback {
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private channelConnectionRepository: ChannelConnectionRepository,
-    private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
     private updateChannelConnection: UpdateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint
@@ -130,6 +131,7 @@ export class WebexOauthCallback {
         connectionIdentifier,
         subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         type: ENDPOINT_TYPES.WEBEX_PERSON,
         endpoint,
       })
@@ -374,6 +376,7 @@ export class WebexOauthCallback {
         integrationIdentifier: integration.identifier,
         subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         connectionMode: stateData.connectionMode,
         auth,
         workspace,
@@ -386,6 +389,8 @@ export class WebexOauthCallback {
     integration: IntegrationEntity,
     subscriberId: string | undefined
   ): Promise<ChannelConnectionEntity | null> {
+    const contextKeys = resolveCallerContextKeys(stateData);
+
     if (stateData.identifier) {
       const connectionByIdentifier = await this.channelConnectionRepository.findOne({
         identifier: stateData.identifier,
@@ -395,13 +400,15 @@ export class WebexOauthCallback {
       });
 
       if (connectionByIdentifier) {
-        assertCanReconnectChannelConnection(connectionByIdentifier, stateData);
+        assertCanReconnectChannelConnection(connectionByIdentifier, {
+          subscriberId: stateData.subscriberId,
+          contextKeys,
+        });
 
         return connectionByIdentifier;
       }
     }
 
-    const contextKeys = await this.resolveContextKeys(stateData);
     const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
 
     return await this.channelConnectionRepository.findOne({
@@ -411,19 +418,5 @@ export class WebexOauthCallback {
       subscriberId,
       ...contextQuery,
     });
-  }
-
-  private async resolveContextKeys(stateData: StateData): Promise<string[]> {
-    if (!stateData.context) {
-      return [];
-    }
-
-    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-      stateData.environmentId,
-      stateData.organizationId,
-      stateData.context
-    );
-
-    return contexts.map((context) => context.key);
   }
 }

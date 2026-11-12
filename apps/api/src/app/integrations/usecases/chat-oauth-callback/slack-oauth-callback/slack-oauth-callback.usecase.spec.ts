@@ -4,7 +4,6 @@ import {
   AgentIntegrationRepository,
   AgentRepository,
   ChannelConnectionRepository,
-  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
 } from '@novu/dal';
@@ -75,7 +74,6 @@ function createSlackOauthCallbackHarness() {
   const integrationRepository = sinon.createStubInstance(IntegrationRepository);
   const environmentRepository = sinon.createStubInstance(EnvironmentRepository);
   const channelConnectionRepository = sinon.createStubInstance(ChannelConnectionRepository);
-  const contextRepository = sinon.createStubInstance(ContextRepository);
   const createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
   const updateChannelConnection = sinon.createStubInstance(UpdateChannelConnection);
   const createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
@@ -89,7 +87,6 @@ function createSlackOauthCallbackHarness() {
     environmentRepository as any,
     getNovuProviderCredentials as any,
     channelConnectionRepository as any,
-    contextRepository as any,
     createChannelConnection as any,
     updateChannelConnection as any,
     createChannelEndpoint as any,
@@ -102,7 +99,6 @@ function createSlackOauthCallbackHarness() {
     integrationRepository,
     environmentRepository,
     channelConnectionRepository,
-    contextRepository,
     createChannelConnection,
     updateChannelConnection,
     createChannelEndpoint,
@@ -133,7 +129,6 @@ describe('SlackOauthCallback — autoLinkUser', () => {
     harness.integrationRepository.findOne.resolves(buildMockIntegration());
     harness.channelConnectionRepository.findOne.resolves(null);
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
 
     axiosPost = sinon.stub(axios, 'post').resolves({ data: buildSlackAuthResponse() });
 
@@ -276,7 +271,6 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
 
     harness.integrationRepository.findOne.resolves(buildMockIntegration());
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
 
     sinon.stub(axios, 'post').resolves({
       data: buildSlackAuthResponse({ access_token: MOCK_REFRESHED_ACCESS_TOKEN }),
@@ -318,7 +312,6 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
 
     expect(harness.createChannelConnection.execute.called).to.be.false;
     expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
-    expect(harness.contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     const updateArg = harness.updateChannelConnection.execute.firstCall.args[0];
     expect(updateArg.identifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
@@ -338,6 +331,12 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
       name: "refuses a tenant's shared connection from another tenant",
       connection: { contextKeys: ['tenant:acme'] },
       caller: { subscriberId: MOCK_SUBSCRIBER_ID, context: { tenant: 'globex' } },
+      allowed: false,
+    },
+    {
+      name: "refuses a tenant's shared connection when only the raw context claims the tenant",
+      connection: { contextKeys: ['tenant:acme'] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID, contextKeys: ['tenant:globex'], context: { tenant: 'acme' } },
       allowed: false,
     },
     {
@@ -467,7 +466,6 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
     harness.integrationRepository.findOne.resolves(buildMockIntegration());
     harness.channelConnectionRepository.findOne.resolves(null);
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
     harness.agentIntegrationRepository.find.resolves([]);
     harness.createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
 
