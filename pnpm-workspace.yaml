@@ -560,8 +560,11 @@ overrides:
   # `meta http-equiv=refresh` URLs. Patched in 2.18.0.
   sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
-  better-auth@<1.6.13: ^1.6.23
-  '@better-auth/sso@<1.6.13': ^1.6.23
+  # GHSA-965c-763c-88jm (critical): OAuth state accepted as a Magic Link token.
+  # Patched only in 1.7.7+ (no 1.6.x backport). Novu does not enable the
+  # Magic Link plugin, but the floor keeps every resolution on a patched release.
+  better-auth@<1.7.7: ^1.7.19
+  '@better-auth/sso@<1.7.7': ^1.7.19
   # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
   # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
