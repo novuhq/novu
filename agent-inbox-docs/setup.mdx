@@ -31,6 +31,8 @@ npx @agentinbox/cli setup telegram \
 
 `--agent-picture` takes a JPEG or PNG of up to 2 MB. It needs [`login`](/account) first.
 
+`--agent-shape` and `--agent-color` pick the look of a new agent's mascot, which shows wherever the agent has no picture. Pass one or both. On a terminal, setup asks for them after the address, where a look can be picked: the arrow keys move through the shapes and colours, the mascot shows each one, and Enter keeps the one you are on. Both start on the round orange one. A look can't be changed once the agent is made.
+
 On a terminal, setup draws one screen and updates it in place. In a pipe, in CI, or when an agent runs the command, it prints the same steps as plain text.
 
 ## Run it again

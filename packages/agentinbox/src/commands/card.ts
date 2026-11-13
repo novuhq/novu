@@ -1,6 +1,6 @@
 import pc from 'picocolors';
+import { rememberLook } from '../agent-look';
 import { type ShownCard, showCard } from '../api/card';
-import { isLookColor, isMascotBody, type LookColor, type MascotBody } from '../mascot/look';
 import { stripTerminalControls } from '../output';
 import { renderQR } from '../qr';
 import { openScreen, type ScreenRow } from '../screen/screen';
@@ -27,13 +27,15 @@ export async function cardCommand(options: CardOptions): Promise<never> {
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
     const card = await showCard(client, config.relayAgentIdentifier);
+    // Kept for the next command's screen too; a look this CLI doesn't know yet draws the orb in ember.
+    const look = rememberLook(config, card.look);
 
     if (options.json) {
       process.stdout.write(`${JSON.stringify(card, null, 2)}\n`);
       process.exit(0);
     }
 
-    const screen = await openScreen({ command: 'card', handle: card.handle, look: lookOf(card) });
+    const screen = await openScreen({ command: 'card', handle: card.handle, look });
     if (!screen) {
       printCard(card, { write: (text) => process.stdout.write(text), isTTY: Boolean(process.stdout.isTTY) });
       process.exit(0);
@@ -95,12 +97,4 @@ function terminalSafe(card: ShownCard): ShownCard {
     address: card.address === undefined ? undefined : stripTerminalControls(card.address),
     url: card.url === undefined ? undefined : stripTerminalControls(card.url),
   };
-}
-
-/** The mascot's body and colour from the card, or none for a look this CLI doesn't know yet: the orb in ember. */
-function lookOf(card: ShownCard): { shape: MascotBody; color: LookColor } | undefined {
-  const body = card.look?.shape;
-  const color = card.look?.color;
-
-  return isMascotBody(body) && isLookColor(color) ? { shape: body, color } : undefined;
 }

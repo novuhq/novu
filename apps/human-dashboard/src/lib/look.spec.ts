@@ -5,9 +5,11 @@ import {
   artColorOf,
   BODY_OUTLINES,
   type BodyOutline,
+  glowOf,
   isAgentLook,
   LOOK_PALETTES,
   lookOf,
+  mascotLookOf,
   mixOutlines,
   ORIGINAL_LOOK,
   outlineRadius,
@@ -30,6 +32,30 @@ describe('looks', () => {
     expect(isAgentLook({ ...picked, shape: 'cube' })).toBe(false);
     expect(isAgentLook({ ...picked, art: { kind: 'arcs', seed: -1 } })).toBe(false);
     expect(sameLook(lookOf(picked), picked as never)).toBe(true);
+  });
+
+  it('reads the body and colour a mascot is drawn in from an API answer or from a link', () => {
+    expect(mascotLookOf({ shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 12 } })).toEqual({
+      shape: 'drop',
+      color: 'coral',
+    });
+    expect(mascotLookOf({ status: 'connected', shape: 'peek', color: 'bone' })).toEqual({
+      shape: 'peek',
+      color: 'bone',
+    });
+  });
+
+  it('has no look for a mascot where none was given, or one it doesn’t know', () => {
+    expect(mascotLookOf(undefined)).toBeNull();
+    expect(mascotLookOf({ status: 'connected' })).toBeNull();
+    expect(mascotLookOf({ shape: 'cube', color: 'coral' })).toBeNull();
+    expect(mascotLookOf({ shape: 'drop', color: ['coral', 'bone'] })).toBeNull();
+  });
+
+  it('keeps the dark red glow behind an ember mascot, and gives every other colour a dark tone of its own', () => {
+    expect(glowOf('ember')).toBe('#6b210d');
+    expect(glowOf('marigold')).toBe('rgb(109 73 24)');
+    expect(new Set(Object.keys(LOOK_PALETTES).map((color) => glowOf(color as never))).size).toBe(6);
   });
 
   it('keeps the orb a circle, so it draws as the mascot always has', () => {

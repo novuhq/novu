@@ -7,7 +7,7 @@ import {
   type AgentEntity,
   type AgentLook,
 } from '@novu/dal';
-import type { AgentCardShownDto, AgentLookDto } from '../dtos/human-agent-look.dto';
+import type { AgentCardShownDto, AgentLookDto, SetupAgentLookDto } from '../dtos/human-agent-look.dto';
 
 /** The look every agent starts with, and the one an agent made before looks were picked keeps. */
 export const ORIGINAL_AGENT_LOOK: AgentLook = { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } };
@@ -31,6 +31,24 @@ export function agentLookOf(agent: Pick<AgentEntity, 'look'>): AgentLookDto {
   const chosen = known ? look : ORIGINAL_AGENT_LOOK;
 
   return { shape: chosen.shape, color: chosen.color, art: { kind: chosen.art.kind, seed: chosen.art.seed } };
+}
+
+/**
+ * The look a new agent is made with, from what was asked for: whatever was left out is the original look's.
+ * Nothing when nothing was asked for, and the agent is then made without a look of its own.
+ */
+export function lookToMake(asked: SetupAgentLookDto | undefined): AgentLook | undefined {
+  if (!asked || (!asked.shape && !asked.color && !asked.art)) {
+    return undefined;
+  }
+
+  const art = asked.art ?? ORIGINAL_AGENT_LOOK.art;
+
+  return {
+    shape: asked.shape ?? ORIGINAL_AGENT_LOOK.shape,
+    color: asked.color ?? ORIGINAL_AGENT_LOOK.color,
+    art: { kind: art.kind, seed: art.seed },
+  };
 }
 
 /** The first time a host showed the agent's card, as the API answers it. Null before any host did. */

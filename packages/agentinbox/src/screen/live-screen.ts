@@ -1,6 +1,25 @@
-import { askLine, askOffering, askSecret, type ReadOptions, readAnswer } from '../cli-io';
-import { drawMascot, formOf, ORIGINAL_FORM, SHIMMER, type Theme, toCells } from '../mascot/drawing';
+import {
+  askLine,
+  askOffering,
+  askSecret,
+  type PickReadOptions,
+  pickTyped,
+  type ReadOptions,
+  readAnswer,
+  readPick,
+} from '../cli-io';
+import {
+  drawMascot,
+  formOf,
+  type MascotForm,
+  mixForms,
+  ORIGINAL_FORM,
+  SHIMMER,
+  type Theme,
+  toCells,
+} from '../mascot/drawing';
 import { createMascotLife, type Emotion, type MascotMoment, restingFace } from '../mascot/life';
+import { type MascotLook, sameLook } from '../mascot/look';
 import {
   fitScreen,
   heightOf,
@@ -8,6 +27,7 @@ import {
   layoutScreen,
   paint,
   paintMascot,
+  pickedAmong,
   type ScreenFit,
   type ScreenRow,
   type ScreenView,
@@ -15,7 +35,7 @@ import {
 } from './layout';
 import { setOpenedScreen } from './opened';
 import { BEGIN_FRAME, END_FRAME, HIDE_CURSOR, repaint, SHOW_CURSOR } from './painter';
-import type { AskNote, AskOptions, Screen, ScreenOptions, ScreenWait } from './screen';
+import type { AskNote, AskOptions, PickOptions, Screen, ScreenOptions, ScreenWait } from './screen';
 import { animationOff, type ColorMode, CSI, rowsOf, stripEscapes, type TerminalStream } from './terminal';
 
 /** An output stream the screen draws on, such as `process.stdout`. */
@@ -47,6 +67,8 @@ export interface ScreenHost {
   ask: (question: string, secret: boolean) => Promise<string>;
   /** Reads an answer typed on the terminal, writing nothing, for the screen to draw it. */
   read: (options: ReadOptions) => Promise<string>;
+  /** Reads a pick made with the arrow keys, writing nothing, for the screen to draw it. Gives its place. */
+  pick: (options: PickReadOptions) => Promise<number>;
   /** Calls `listener` before the process exits or is interrupted. Gives the way to stop listening. */
   beforeExit: (listener: () => void) => () => void;
 }
@@ -61,17 +83,27 @@ const STILL_SPINNER = '•';
 const SETTLES_WITHIN_MS = 3000;
 /** Shown for a secret answer, whatever its length. */
 const HIDDEN_ANSWER = '••••••••';
+/** How long a new look takes to settle, as on the dashboard: the outline bends and the tones blend into the new ones. */
+const BENDS_IN_MS = 520;
 /** How long the caret stays on, and then off, once the typing stops. */
 const CARET_BLINK_MS = 530;
 /** How long the person has to stop typing before an answer is checked. */
 const CHECK_AFTER_MS = 250;
 /** Under an answer while it is checked. */
 const CHECKING: AskNote = { text: 'checking…', tone: 'muted' };
+/** Under a few to pick from: the keys that do it. */
+const PICK_KEYS: AskNote = { text: '← → to change · Enter to pick', tone: 'muted' };
 /**
  * Escapes other than colours and styles, which absorbed text has no use for: control sequences ending in
  * anything but `m` (the colours), and OSC strings.
  */
 const MOVES = /\x1b\[[0-?]*[ -/]*[@A-Za-ln-z[\\\]^_`{|}~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g;
+
+/** A few to pick from: how each reads, and the place of the one the person is on. */
+interface Picking {
+  labels: readonly string[];
+  index: number;
+}
 
 /** A question being answered on the screen. */
 interface Asked {
@@ -89,6 +121,8 @@ interface Asked {
   note?: AskNote;
   /** How many rows the answer took when it was last written on a line of its own. */
   echoedRows: number;
+  /** Set where the answer is one of a few, picked with the arrow keys instead of typed. */
+  picking?: Picking;
 }
 
 /** The host for a real run: the process's streams and clock, and `readline` to ask. */
@@ -114,6 +148,7 @@ export function processHost(colors: ColorMode, { aspect, theme }: { aspect: numb
     later: (task) => setImmediate(task),
     ask: (question, secret) => (secret ? askSecret(question) : askLine(question)),
     read: (options) => readAnswer(options),
+    pick: (options) => readPick(options),
     beforeExit: (listener) => {
       // Ctrl-C would end the process without a word; the terminal is put right first, and then it does.
       const interrupt = () => {
@@ -149,7 +184,12 @@ export function startLiveScreen(
 ): Screen {
   const { out, err, colors, aspect, theme } = host;
   const look: Look = { colors, theme };
-  const form = agentLook ? formOf(agentLook.shape, agentLook.color) : ORIGINAL_FORM;
+  const formFor = (worn: MascotLook | undefined) => (worn ? formOf(worn.shape, worn.color) : ORIGINAL_FORM);
+  // The look the mascot has, or is on its way to, and the form drawn for it.
+  let wearing = agentLook;
+  let form = formFor(agentLook);
+  // A new look bends in from what the mascot was at that moment, itself a look on its way perhaps.
+  let bend: { from: MascotForm; since: number } | undefined;
   const life = createMascotLife({ random: host.random });
   // Bound now, before stray writes are kept off the terminal: the screen's own writes go through as they are.
   const writeOut: (text: string) => boolean = out.write.bind(out);
@@ -179,13 +219,22 @@ export function startLiveScreen(
   const columns = () => out.columns ?? 80;
   const size = () => ({ columns: columns(), rows: out.rows ?? 0, aspect });
 
-  /** A question as rows: its words, then the answer as it is typed with what is said about it under it. */
-  const askedRows = (question: Asked): ScreenRow[] => {
-    const caret = !host.animate || Math.floor((host.now() - question.typedAt) / CARET_BLINK_MS) % 2 === 0;
-    const { answer, cursor, secret, suffix, display } = question;
-    const typed = display
+  /** An answer as it stands: what was typed so far with the caret in it, or the few to pick from. */
+  const answerSoFar = ({ answer, cursor, secret, suffix, display, typedAt, picking }: Asked): string => {
+    if (picking) {
+      return pickedAmong(picking.labels, picking.index, look);
+    }
+
+    const caret = !host.animate || Math.floor((host.now() - typedAt) / CARET_BLINK_MS) % 2 === 0;
+
+    return display
       ? typedAnswer(display(answer), display(answer.slice(0, cursor)).length, { secret, suffix, caret, look })
       : typedAnswer(answer, cursor, { secret, suffix, caret, look });
+  };
+
+  /** A question as rows: its words, then the answer as it stands with what is said about it under it. */
+  const askedRows = (question: Asked): ScreenRow[] => {
+    const typed = answerSoFar(question);
     const note = question.note ? paint(question.note.text, question.note.tone, look) : '';
 
     return [
@@ -215,7 +264,25 @@ export function startLiveScreen(
     };
   };
 
+  /** The mascot's form at `now`: the look it has, or one on its way there, slow at both ends. */
+  const formAt = (now: number): MascotForm => {
+    if (!bend) {
+      return form;
+    }
+
+    const progress = (now - bend.since) / BENDS_IN_MS;
+    if (progress >= 1) {
+      bend = undefined;
+
+      return form;
+    }
+
+    return mixForms(bend.from, form, ease(Math.max(0, progress)));
+  };
+
   const linesFor = (shown: ScreenView, fit: ScreenFit, moment: MascotMoment, now: number, final: boolean) => {
+    // The screen is left in the look it has, whether or not the bend into it was over.
+    const drawn = final ? form : formAt(now);
     const mascot = fit.mascotWidth
       ? paintMascot(
           toCells(
@@ -224,12 +291,12 @@ export function startLiveScreen(
               theme,
               time: now,
               shimmer: moment.still ? 0 : SHIMMER,
-              form,
+              form: drawn,
             })
           ),
           look,
           columns(),
-          form
+          drawn
         )
       : undefined;
     const spinner =
@@ -241,7 +308,8 @@ export function startLiveScreen(
   const momentNow = (now: number, emotion: Emotion): MascotMoment => {
     life.feel(emotion, now);
     const moment = life.frame(now);
-    if (moment.settled) {
+    // A look still bending in is seen through before the screen is left.
+    if (moment.settled && formAt(now) === form) {
       settled?.();
     }
 
@@ -264,11 +332,16 @@ export function startLiveScreen(
     }
   };
 
-  /** Keeps an answer in sight once nothing is drawn in place: it is written over itself, on every row it took. */
+  /**
+   * Keeps an answer in sight once nothing is drawn in place: it is written over itself, on every row it took.
+   * A pick shows as the one the person is on, with the keys that change it.
+   */
   const echoAnswer = (question: Asked) => {
-    const { prompt, secret, suffix = '', display, answer, echoedRows } = question;
+    const { prompt, secret, suffix = '', display, answer, echoedRows, picking } = question;
     const shown = secret ? answer && HIDDEN_ANSWER : display ? display(answer) : answer;
-    const text = `${prompt}${shown}${suffix}`;
+    const text = picking
+      ? `${prompt}‹ ${picking.labels[picking.index]} ›  ${PICK_KEYS.text}`
+      : `${prompt}${shown}${suffix}`;
 
     writeOut(`${echoedRows > 1 ? `${CSI}${echoedRows - 1}F` : '\r'}${CSI}J${text}`);
     question.echoedRows = rowsOf(text, columns());
@@ -404,6 +477,51 @@ export function startLiveScreen(
     }
   };
 
+  /** Asks for one of a few on the screen: the arrow keys are read from the terminal and the pick is drawn here. */
+  const pickOnScreen = async (question: Asked, picking: Picking, moved: (index: number) => void): Promise<number> => {
+    asked = question;
+    changed();
+
+    try {
+      return await host.pick({
+        count: picking.labels.length,
+        initial: picking.index,
+        onMove: (index) => {
+          picking.index = index;
+          moved(index);
+          if (live) {
+            changed();
+          } else {
+            echoAnswer(question);
+          }
+        },
+      });
+    } finally {
+      asked = null;
+      if (!live) {
+        writeOut('\n');
+      }
+    }
+  };
+
+  /** What a question leaves behind: the row that keeps its answer, and nothing of what was written for it. */
+  const keepAnswer = (question: string, row: ScreenRow | undefined) => {
+    if (row) {
+      rows.push(row);
+    }
+    lastAsked = { question, row, printed: printed.length };
+    // The next question may be on its way, which decides what stays. Without one, what came with this goes.
+    host.later(() => {
+      if (!asking && !finished) {
+        printed = [];
+        if (lastAsked) {
+          lastAsked.printed = 0;
+        }
+        changed();
+      }
+    });
+  };
+
   const finishActivity = (mark: ScreenRow['mark']) => {
     if (activity) {
       rows.push({ mark, value: activity.replace(/(\.\.\.|…)$/, '') });
@@ -535,6 +653,18 @@ export function startLiveScreen(
       feeling = emotion;
       changed();
     },
+    look: (next) => {
+      if (finished || sameLook(next, wearing)) {
+        return;
+      }
+
+      const now = host.now();
+      // Where nothing moves, or nothing is drawn in place, the mascot is simply in its new look when next drawn.
+      bend = host.animate && live ? { from: formAt(now), since: now } : undefined;
+      wearing = next;
+      form = formFor(next);
+      changed();
+    },
     subtitle: (text) => {
       subtitle = text;
       changed();
@@ -643,27 +773,64 @@ export function startLiveScreen(
         asking = false;
       }
 
-      const row = remember
-        ? remember(answer)
-        : answer.trim()
-          ? { mark: 'done' as const, value: `${prompt.trim()} ${secret ? HIDDEN_ANSWER : answer.trim()}` }
-          : undefined;
-      if (row) {
-        rows.push(row);
-      }
-      lastAsked = { question, row, printed: printed.length };
-      // The next question may be on its way, which decides what stays. Without one, what came with this goes.
-      host.later(() => {
-        if (!asking && !finished) {
-          printed = [];
-          if (lastAsked) {
-            lastAsked.printed = 0;
-          }
-          changed();
-        }
-      });
+      keepAnswer(
+        question,
+        remember
+          ? remember(answer)
+          : answer.trim()
+            ? { mark: 'done', value: `${prompt.trim()} ${secret ? HIDDEN_ANSWER : answer.trim()}` }
+            : undefined
+      );
 
       return answer;
+    },
+    pick: async <Choice extends string>(question: string, options: PickOptions<Choice>): Promise<Choice> => {
+      const { choices, initial, label = (choice: Choice) => choice, onMove, remember } = options;
+      const pickPlainly = () =>
+        pickTyped(question, options, { ask: (words) => host.ask(words, false), say: screen.print });
+      if (finished) {
+        return pickPlainly();
+      }
+
+      finishActivity('done');
+      moveOn(question);
+      asking = true;
+      const above = question.split('\n');
+      const prompt = above.pop() ?? '';
+      const picking: Picking = {
+        labels: choices.map(label),
+        index: Math.max(0, initial === undefined ? 0 : choices.indexOf(initial)),
+      };
+      const onScreen: Asked = {
+        above: above.filter((line) => line.trim()),
+        prompt,
+        secret: false,
+        answer: '',
+        cursor: 0,
+        typedAt: host.now(),
+        noted: true,
+        note: PICK_KEYS,
+        echoedRows: 0,
+        picking,
+      };
+      let picked: Choice;
+      try {
+        if (live && !fitScreen(view(onScreen), size())) {
+          giveUpDrawing();
+        }
+        if (live) {
+          picked = choices[await pickOnScreen(onScreen, picking, (index) => onMove?.(choices[index]))];
+        } else {
+          snapshot();
+          picked = await pickPlainly();
+        }
+      } finally {
+        asking = false;
+      }
+
+      keepAnswer(question, remember ? remember(picked) : { mark: 'done', value: `${prompt.trim()} ${label(picked)}` });
+
+      return picked;
     },
     done: (emotion) => end(emotion),
     fail: async (message, { pending = false } = {}) => {
@@ -698,4 +865,9 @@ export function startLiveScreen(
   }
 
   return screen;
+}
+
+/** Slow at both ends, so a new look neither starts nor lands with a snap. */
+function ease(progress: number): number {
+  return progress * progress * (3 - 2 * progress);
 }

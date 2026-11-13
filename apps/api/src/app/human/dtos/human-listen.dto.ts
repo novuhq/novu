@@ -3,6 +3,7 @@ import { LISTEN_HOST_IDS, type ListenHostId } from '@novu/dal';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { HumanAgentQueryDto } from './human-agent.dto';
+import { AgentLookDto } from './human-agent-look.dto';
 import { HUMAN_INBOX_MAX_WAIT_SECONDS, type InboxAttachmentDto } from './human-inbox.dto';
 import { trimmed } from './setup-human-relay.dto';
 
@@ -155,6 +156,9 @@ export class ListenLeaseStatusResponseDto {
       'The operator paused the agent on agentinbox.md: no host takes the lease or waits until it is resumed.',
   })
   paused: boolean;
+
+  @ApiProperty({ type: AgentLookDto, description: 'The agent’s look, for the mascot on the listener’s screen.' })
+  look: AgentLookDto;
 }
 
 export class ReleaseListenLeaseResponseDto {

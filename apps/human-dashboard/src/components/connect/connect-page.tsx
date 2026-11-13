@@ -4,9 +4,10 @@ import { ArrowUpRight } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 
 import { AppIcon } from '@/components/invite/app-icon';
+import { AgentLookProvider, AgentMascot } from '@/components/ui/agent-look';
 import { Button, buttonClassName } from '@/components/ui/button';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
+import type { MascotLook } from '@/lib/look';
 import {
   type InactiveSetupReason,
   parseTelegramCredential,
@@ -46,6 +47,8 @@ type ConnectPageProps = {
  */
 export function ConnectPage({ apiUrl, channel }: ConnectPageProps) {
   const [view, setView] = useState<ConnectView>({ kind: 'loading' });
+  // Whose setup this is, for the mascot once it's done. The link's status says; the views after it don't.
+  const [agentLook, setAgentLook] = useState<MascotLook>();
 
   useEffect(() => {
     const token = readSetupToken(window.location.hash);
@@ -69,6 +72,7 @@ export function ConnectPage({ apiUrl, channel }: ConnectPageProps) {
           return;
         }
 
+        setAgentLook(status.agentLook);
         setView({ kind: 'form', agentName: status.agentName });
       })
       .catch((error: unknown) => {
@@ -96,8 +100,10 @@ export function ConnectPage({ apiUrl, channel }: ConnectPageProps) {
           onSlackSuccess={(result) => setView({ kind: 'slack-success', result })}
         />
       )}
-      {view.kind === 'telegram-success' && <TelegramSuccess result={view.result} />}
-      {view.kind === 'slack-success' && <SlackSuccess result={view.result} />}
+      <AgentLookProvider look={agentLook}>
+        {view.kind === 'telegram-success' && <TelegramSuccess result={view.result} />}
+        {view.kind === 'slack-success' && <SlackSuccess result={view.result} />}
+      </AgentLookProvider>
     </ConnectCard>
   );
 }
@@ -419,7 +425,7 @@ function TelegramSuccess({ result }: { result: TelegramSetupResult }) {
 
   return (
     <>
-      <MascotFace art="waiting" mood="happy" className="size-35" />
+      <AgentMascot art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         <span className="font-mono text-[22px]">{name}</span> is <Accent>wired up</Accent>
       </h1>
@@ -450,7 +456,7 @@ function TelegramSuccess({ result }: { result: TelegramSetupResult }) {
 function SlackSuccess({ result }: { result: SlackSetupResult }) {
   return (
     <>
-      <MascotFace art="waiting" mood="happy" className="size-35" />
+      <AgentMascot art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         Add it to <Accent>your workspace</Accent>
       </h1>

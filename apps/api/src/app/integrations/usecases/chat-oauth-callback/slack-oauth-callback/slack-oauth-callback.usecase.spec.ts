@@ -81,6 +81,7 @@ function createSlackOauthCallbackHarness() {
   const agentIntegrationRepository = sinon.createStubInstance(AgentIntegrationRepository);
   const agentRepository = sinon.createStubInstance(AgentRepository);
   agentIntegrationRepository.find.resolves([]);
+  const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(null) };
 
   const usecase = new SlackOauthCallback(
     integrationRepository as any,
@@ -91,7 +92,8 @@ function createSlackOauthCallbackHarness() {
     updateChannelConnection as any,
     createChannelEndpoint as any,
     agentIntegrationRepository as any,
-    agentRepository as any
+    agentRepository as any,
+    agentInboxFeatures as any
   );
 
   return {
@@ -105,6 +107,7 @@ function createSlackOauthCallbackHarness() {
     getNovuProviderCredentials,
     agentIntegrationRepository,
     agentRepository,
+    agentInboxFeatures,
   };
 }
 
@@ -506,6 +509,21 @@ describe('SlackOauthCallback — Agent Inbox result page', () => {
 
     expect(result.type).to.equal(ResponseTypeEnum.URL);
     expect(result.result).to.equal('https://agentinbox.md/connect/slack/result?status=connected');
+  });
+
+  it('puts the agent’s look on the link to the result page once its mascots show it', async () => {
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
+    harness.agentInboxFeatures.mascotLookOf.resolves({ shape: 'drop', color: 'coral' });
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({ credentials: { clientId: MOCK_CLIENT_ID, secretKey: MOCK_SECRET_KEY } })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.result).to.equal(
+      'https://agentinbox.md/connect/slack/result?status=connected&shape=drop&color=coral'
+    );
   });
 
   it('keeps the API page for a Slack app that is not an Agent Inbox agent', async () => {

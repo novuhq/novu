@@ -52,7 +52,7 @@
     "@novu/maily-tsconfig": "workspace:*",
     "@tiptap/core": "^2.11.5",
     "@types/react": "^19.2.8",
-    "happy-dom": "^20.8.9",
+    "happy-dom": "^21.0.4",
     "tsup": "^9.0.0",
     "typescript": "6.0.3",
     "vite": "^6.4.3",

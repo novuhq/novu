@@ -45,7 +45,8 @@ box rebuilt and restarted) for your report: a proof against a stale apply isn't 
   start. Start it with `up --box <name> --from base`, then `sync --box <name>`: without `--from base` a new named box
   bakes `next`, and `up --box` doesn't put your checkout on it.
 - `up` prints the dashboard's address, `https://<box>.box.novu-staging.co` (`<box>` below), with Mailpit under
-  `/mail`, and the API's, `https://<box>-api.box.novu-staging.co`.
+  `/mail`, the API's, `https://<box>-api.box.novu-staging.co`, and the playground's customer pages,
+  `https://<box>-app.box.novu-staging.co` (`<box>-app` below).
 - `sync` sends new files only inside the repo's existing top-level folders. A new file at the root or in a new
   top-level folder isn't sent; commit it or move it if the box needs it.
 - `sync` stops over 25 MB and names the biggest changed files. Ask the user before deleting or ignoring any of them.
@@ -75,6 +76,10 @@ Exercise the change the way a user reaches it (the dashboard, the public API), n
   3. For a template change, open the `view` URL it prints in a browser and screenshot it at 600 px and 375 px wide.
 - **Bridge workflows and agents:** sign in as the seed user; change them in `playground/nextjs`, and `sync` rebuilds
   them.
+- **Inbox, preferences, subscriptions (what a customer embeds):** open the playground's pages at `<box>-app`, as the
+  seed user's subscriber, or another with `?subscriberId=<id>`; trigger from the dashboard signed in as the seed user.
+  A page that's missing there belongs in its own playground PR, not in the PR it would prove. That PR also adds its
+  path to `docker/box/image/config/Caddyfile`, which boxes serve only after `box deploy` and a rebake of `base`.
 - **Broad changes** (shared libraries, auth, queues): also drive the main flows the change could break (sign-in,
   trigger a workflow and check the message, an agent reply).
 
@@ -82,6 +87,23 @@ Done when the changed behaviour is observed working, and the behaviour beside it
 _tracer_, not proof: drive at least one failure case the change handles.
 
 The box skips type checks, so it runs code CI would reject. Run the affected project's typecheck as well.
+
+### Before and after
+
+For a bug fix or a change a user sees, drive the same steps on `next` too, so a reviewer sees what was broken. A
+box started from `base` and never synced runs the latest `next` (`base` is refreshed on every push to it):
+
+```sh
+node docker/box/src/cli/main.ts up --box <box>-before --from base
+node docker/box/src/cli/main.ts doctor --box <box>-before
+```
+
+- `baked.sha` in `doctor` is the `next` commit it runs. `sync` merged your changes onto your own box's `baked.sha`;
+  when the two differ, your box started from an older `next`, so name both commits in the proof.
+- Never `sync` the before box. Use the same account, data and steps on both boxes, so the change is the only
+  difference.
+- Done when the before box shows the bug (or the old behaviour) and your box shows the fix. Before and after that
+  look the same are a finding, not proof: check you drove the changed path.
 
 ### Accounts
 
@@ -109,6 +131,10 @@ user's own org and environments, as for a real sign-up. Then, if needed:
 - You own the proof: attach it to the PR (its description or a comment), or to your reply when there's no PR, with
   the box address, the applied commit, and each command or page that made it. For a UI change attach screenshots,
   or a video for a flow with several steps.
+- Record one take per box with your browser tool's recorder. Without one, use Playwright (installed with
+  `apps/dashboard`): a browser context with `recordVideo` saves a .webm when it closes. For an API or CLI change,
+  record a terminal running the requests, or attach the request and response as text.
+  `gh pr edit <n> --attach <file>` uploads an image or video to the PR description; a video renders as a player.
 - Never paste a password, sign-in link or secret key into a PR, chat or log, and keep them out of screenshots and
   videos: PR attachments are public.
 
@@ -117,4 +143,5 @@ user's own org and environments, as for a real sign-up. Then, if needed:
 Leave the box running while the user may still look at it; it saves itself and sleeps after an hour without
 requests, and wakes on the next one. `down` puts it to sleep now; the data stays for the next `up`.
 
-Ask the user before `delete`, which deletes the box with its data.
+Ask the user before `delete`, which deletes the box with its data. The exception is a before box you started:
+`delete --box <box>-before` once its proof is attached.

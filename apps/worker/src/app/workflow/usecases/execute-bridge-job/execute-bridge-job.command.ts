@@ -4,6 +4,9 @@ import { EnvironmentEntity, JobEntity, NotificationTemplateEntity } from '@novu/
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class ExecuteBridgeJobCommand extends EnvironmentWithUserCommand {
+  /** Carries the job and the cached workflow on every v2 step; ExecuteBridgeJob only reads them. */
+  protected static readonly skipDeepTransform = true;
+
   @IsDefined()
   @IsString()
   environmentId: string;

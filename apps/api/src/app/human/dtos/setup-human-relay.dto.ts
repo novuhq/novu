@@ -14,7 +14,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { AgentLookDto } from './human-agent-look.dto';
+import { AgentLookDto, SetupAgentLookDto } from './human-agent-look.dto';
 
 /** As long as a Telegram bot's description may be, the longest of the places it is shown. */
 export const AGENT_DESCRIPTION_MAX_LENGTH = 512;
@@ -123,15 +123,21 @@ export class SetupHumanRelayRequestDto {
   defaultVia?: HumanChannelViaEnum;
 
   /**
-   * The look the operator picked while setting the agent up: its mascot's shape and colour, and its card's art.
-   * Only a new agent takes it, and only from the dashboard's server: the API ignores it from anyone else.
+   * The look picked for the agent while it is made: its mascot's shape and colour, and its card's art. The
+   * dashboard's server sends the one its operator picked in the onboarding. A host may send one too, and it is
+   * taken where looks are on, with an account or without one (`GET /human/inbox-address` says so), and ignored
+   * elsewhere.
    */
-  @ApiHideProperty()
+  @ApiPropertyOptional({
+    type: SetupAgentLookDto,
+    description:
+      'The look of a new agent: its mascot’s shape and colour. Only a new agent takes it, and only where looks are on; an agent that exists keeps its own. A part left out is the original look’s.',
+  })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Type(() => AgentLookDto)
-  look?: AgentLookDto;
+  @Type(() => SetupAgentLookDto)
+  look?: SetupAgentLookDto;
 }
 
 export class SetupHumanRelayResponseDto {
@@ -143,6 +149,9 @@ export class SetupHumanRelayResponseDto {
 
   @ApiProperty({ description: 'What the relay agent is called.' })
   agentName: string;
+
+  @ApiProperty({ type: AgentLookDto, description: 'How the agent looks, for the mascot on the CLI’s screen.' })
+  look: AgentLookDto;
 
   @ApiProperty()
   subscriberId: string;
@@ -160,4 +169,10 @@ export class SetupHumanRelayResponseDto {
 export class HumanOperatorResponseDto {
   @ApiPropertyOptional({ description: 'subscriberId of the account owner’s contact. Missing before any setup.' })
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    type: AgentLookDto,
+    description: 'The agent’s look, for the CLI’s mascot. Missing before any setup has made the agent.',
+  })
+  agentLook?: AgentLookDto;
 }

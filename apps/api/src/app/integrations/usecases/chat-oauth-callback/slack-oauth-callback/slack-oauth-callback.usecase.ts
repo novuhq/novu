@@ -29,6 +29,7 @@ import { UpdateChannelConnectionCommand } from '../../../../channel-connections/
 import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { AgentInboxFeaturesService } from '../../../../human/services/agent-inbox-features.service';
 import { buildHumanDashboardUrl } from '../../../../shared/helpers/resolve-human-dashboard-base-url';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
@@ -55,7 +56,8 @@ export class SlackOauthCallback {
     private updateChannelConnection: UpdateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
     private agentIntegrationRepository: AgentIntegrationRepository,
-    private agentRepository: AgentRepository
+    private agentRepository: AgentRepository,
+    private agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -172,13 +174,19 @@ export class SlackOauthCallback {
         _environmentId: integration._environmentId,
         _organizationId: integration._organizationId,
       },
-      ['_id']
+      ['_id', '_organizationId', 'look']
     );
     if (!humanRelay) {
       return null;
     }
 
-    return buildHumanDashboardUrl('/connect/slack/result', { status });
+    // The page has nothing else to tell whose agent it is, so the link carries the look its mascot shows there.
+    const look = await this.agentInboxFeatures.mascotLookOf(humanRelay);
+
+    return buildHumanDashboardUrl('/connect/slack/result', {
+      status,
+      ...(look ? { shape: look.shape, color: look.color } : {}),
+    });
   }
 
   private async upsertWorkspaceConnection(

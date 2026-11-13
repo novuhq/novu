@@ -8,11 +8,23 @@ const HANDLE_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** The shapes a new agent's mascot can have, as the API takes them. `orb` is the original, round one. */
+export const MASCOT_BODIES = ['orb', 'pebble', 'drop', 'bean', 'peek', 'mochi'] as const;
+
+/** The colours it can have. `ember` is the original orange. */
+export const LOOK_COLORS = ['ember', 'marigold', 'coral', 'paprika', 'peach', 'bone'] as const;
+
 export type InboxSetupInput = {
   agent_name?: string;
   handle?: string;
   email?: string;
+  /** The look of a new agent's mascot. Only a new agent takes it, and only where the API says one can be picked. */
+  shape?: (typeof MASCOT_BODIES)[number];
+  color?: (typeof LOOK_COLORS)[number];
 };
+
+/** The part of a look a mascot is drawn from, as the user asked for it: a shape, a colour or both. */
+type AskedLook = Pick<InboxSetupInput, 'shape' | 'color'>;
 
 export type AgentInfo = {
   agentId: string;
@@ -40,6 +52,8 @@ type AddressCheck = {
   available: boolean;
   suggestion?: string;
   domain: string;
+  /** Whether a new agent made by this account can be given a look. Missing from an API from before that. */
+  canPickLook?: boolean;
 };
 
 type SetupStatus = {
@@ -47,7 +61,12 @@ type SetupStatus = {
   inboxAddress: string | null;
   operatorId: string | null;
   ownerEmail: { address: string; status: 'unverified' | 'pending' | 'verified' } | null;
+  /** Before there is an agent: whether the one to be made can be given a look. */
+  canPickLook: boolean;
 };
+
+/** Said for an agent that exists and a look that was passed: a look is picked once, when the agent is made. */
+const LOOK_STAYS = 'An agent keeps the look it was made with, so shape and color were ignored.';
 
 /**
  * One idempotent call that reports how far setup got, creates the agent and its mailbox, and sends the
@@ -57,7 +76,7 @@ type SetupStatus = {
 export async function inboxSetup(api: AgentInboxApi, input: InboxSetupInput, suggestedEmail?: string): Promise<string> {
   let status = await readSetupStatus(api);
   const notes: string[] = [];
-  const wantsFields = input.agent_name !== undefined || input.handle !== undefined;
+  const wantsFields = input.agent_name !== undefined || input.handle !== undefined || lookOf(input) !== undefined;
 
   if (!status.agent && wantsFields && (!input.agent_name?.trim() || !input.handle?.trim())) {
     throw new AgentInboxApiError(
@@ -87,28 +106,65 @@ async function ensureAgent(
   input: InboxSetupInput,
   suggestedEmail?: string
 ): Promise<{ status: SetupStatus; notes: string[] }> {
+  const look = lookOf(input);
+
   if (!status.agent) {
-    return {
-      status: await createAgent(
-        api,
-        input.agent_name?.trim() ?? '',
-        input.handle?.trim().toLowerCase() ?? '',
-        suggestedEmail
-      ),
-      notes: [],
-    };
+    return createAgent(
+      api,
+      { name: input.agent_name?.trim() ?? '', handle: input.handle?.trim().toLowerCase() ?? '', look },
+      suggestedEmail
+    );
   }
 
   if (status.inboxAddress) {
+    const passedIdentity = input.agent_name !== undefined || input.handle !== undefined;
+
     return {
       status,
       notes: [
-        `This account already has an agent (${status.agent.name} at ${status.inboxAddress}). The name and handle you passed were ignored.`,
+        [
+          `This account already has an agent (${status.agent.name} at ${status.inboxAddress}).`,
+          ...(passedIdentity ? ['The name and handle you passed were ignored.'] : []),
+          ...(look ? [LOOK_STAYS] : []),
+        ].join(' '),
       ],
     };
   }
 
-  return finishMailbox(api, status, input, suggestedEmail);
+  const finished = await finishMailbox(api, status, input, suggestedEmail);
+
+  return look ? { status: finished.status, notes: [...finished.notes, LOOK_STAYS] } : finished;
+}
+
+/** The shape and colour the user asked for, or nothing when they asked for neither. */
+function lookOf(input: InboxSetupInput): AskedLook | undefined {
+  if (input.shape === undefined && input.color === undefined) {
+    return undefined;
+  }
+
+  return { ...(input.shape ? { shape: input.shape } : {}), ...(input.color ? { color: input.color } : {}) };
+}
+
+/** `Drop · Coral`, as agentinbox.md names a look. */
+function nameOf(look: { shape: string; color: string }): string {
+  const label = (word: string) => `${word[0].toUpperCase()}${word.slice(1)}`;
+
+  return `${label(look.shape)} · ${label(look.color)}`;
+}
+
+/**
+ * What to say about the look that was asked for, from the one the API answers the new agent has. The API fills
+ * a part that was left out with the original look's, and leaves the whole look out where looks can't be picked.
+ */
+function lookNote(asked: AskedLook, answered: unknown): string {
+  const wanted = { shape: asked.shape ?? MASCOT_BODIES[0], color: asked.color ?? LOOK_COLORS[0] };
+  const made = (answered && typeof answered === 'object' ? answered : {}) as { shape?: unknown; color?: unknown };
+
+  if (made.shape === wanted.shape && made.color === wanted.color) {
+    return `Its mascot is ${nameOf(wanted)}. Call agent_card to show the user their agent's card.`;
+  }
+
+  return 'The shape and color you passed were not taken: a look can’t be picked for this account yet, so the mascot is the original orange one.';
 }
 
 /** The agent was saved and the mailbox was not. A handle finishes it; a name is never written onto the agent. */
@@ -179,10 +235,9 @@ async function confirmOwnerEmail(
 
 async function createAgent(
   api: AgentInboxApi,
-  agentName: string,
-  handle: string,
+  { name: agentName, handle, look }: { name: string; handle: string; look?: AskedLook },
   suggestedEmail?: string
-): Promise<SetupStatus> {
+): Promise<{ status: SetupStatus; notes: string[] }> {
   if (!agentName || agentName.length > AGENT_NAME_MAX_LENGTH) {
     throw new AgentInboxApiError(400, `Give the agent a name of up to ${AGENT_NAME_MAX_LENGTH} characters.`);
   }
@@ -195,14 +250,15 @@ async function createAgent(
   }
 
   await assertHandleAvailable(api, handle, suggestedEmail);
-  await postSetup(api, {
+  const created = await postSetup(api, {
     operator: true,
     agentName,
     inboxHandle: handle,
     ...(suggestedEmail ? { email: suggestedEmail } : {}),
+    ...(look ? { look } : {}),
   });
 
-  return readSetupStatus(api);
+  return { status: await readSetupStatus(api), notes: look ? [lookNote(look, created.look)] : [] };
 }
 
 async function assertHandleAvailable(api: AgentInboxApi, handle: string, suggestedEmail?: string): Promise<void> {
@@ -228,10 +284,10 @@ async function assertHandleAvailable(api: AgentInboxApi, handle: string, suggest
 
 async function postSetup(
   api: AgentInboxApi,
-  body: { operator: true; agentName?: string; inboxHandle: string; email?: string }
-): Promise<void> {
+  body: { operator: true; agentName?: string; inboxHandle: string; email?: string; look?: AskedLook }
+): Promise<{ look?: unknown }> {
   try {
-    await api.post('/v1/setup', body);
+    return (await api.post<{ look?: unknown } | undefined>('/v1/setup', body)) ?? {};
   } catch (error) {
     if (error instanceof AgentInboxApiError && error.code === 'inbox_address_taken') {
       const suggestion = error.suggestion ? ` Try "${error.suggestion}".` : '';
@@ -275,7 +331,17 @@ async function readSetupStatus(api: AgentInboxApi): Promise<SetupStatus> {
   });
 
   if (!agent) {
-    return { agent: null, inboxAddress: null, operatorId: null, ownerEmail: null };
+    // The address check is what a host asks before it makes an agent, and it says whether a look can be picked.
+    // It only decides what to ask the user, so a failed check reads as no.
+    const check = await api.get<AddressCheck>('/v1/inbox-address').catch(() => null);
+
+    return {
+      agent: null,
+      inboxAddress: null,
+      operatorId: null,
+      ownerEmail: null,
+      canPickLook: check?.canPickLook === true,
+    };
   }
 
   const [channels, operator] = await Promise.all([
@@ -290,7 +356,7 @@ async function readSetupStatus(api: AgentInboxApi): Promise<SetupStatus> {
   const operatorId = operator?.subscriberId ?? null;
   const ownerEmail = operatorId ? await readOwnerEmail(api, operatorId) : null;
 
-  return { agent, inboxAddress, operatorId, ownerEmail };
+  return { agent, inboxAddress, operatorId, ownerEmail, canPickLook: false };
 }
 
 /**
@@ -338,6 +404,11 @@ function formatStatus(status: SetupStatus, suggestedEmail?: string): string {
     return [
       'Agent Inbox is not set up yet.',
       'Ask the user for an agent name and an inbox address (letters, digits and hyphens), then call inbox_setup with agent_name and handle.',
+      ...(status.canPickLook
+        ? [
+            'You can also ask which shape and color its mascot should have and pass shape and color with them. Both are optional, and neither can be changed later.',
+          ]
+        : []),
       `After that, pass email so a confirmation link goes out.${suggestion}`,
     ].join(' ');
   }

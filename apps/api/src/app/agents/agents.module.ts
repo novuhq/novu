@@ -31,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { HumanOperatorService } from '../human/services/human-operator.service';
 import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
@@ -192,6 +193,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanRelayRuntime,
     HumanRelayEmailService,
     HumanOperatorService,
+    AgentInboxFeaturesService,
     ContactHandleService,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
