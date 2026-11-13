@@ -17,4 +17,8 @@ export class SessionCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly clientIp?: string;
+
+  @IsOptional()
+  @IsString()
+  readonly clientVersion?: string;
 }

@@ -25,4 +25,8 @@ export class InitializeSessionCommand extends BaseCommand {
   @IsString()
   @IsOptional()
   hmacHash?: string;
+
+  @IsString()
+  @IsOptional()
+  clientVersion?: string;
 }

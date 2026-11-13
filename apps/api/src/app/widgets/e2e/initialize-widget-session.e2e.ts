@@ -1,8 +1,13 @@
 import { createHash } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
+import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import {
+  LEGACY_WIDGET_SESSION_CLIENT,
+  SubscriberSessionAuthMethodEnum,
+  SubscriberSessionAuthStatsService,
+} from '../../shared/services/subscriber-session-auth-stats.service';
 
 // import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 
@@ -77,6 +82,33 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
 
     expect(responseInvalidSubscriberId.body?.data?.profile).to.not.exist;
     expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');
+  });
+
+  it('should record hmac widget sessions as legacy-widget and skip failed hmac', async () => {
+    session = new UserSession();
+    await session.initialize({ noWidgetSession: true });
+    await setHmacConfig(session);
+
+    const stats = testServer.getService(SubscriberSessionAuthStatsService);
+    const secretKey = session.environment.apiKeys[0].key;
+    const hmacHash = createHash(secretKey, subscriberId);
+
+    const valid = await initWidgetSession(subscriberId, session, hmacHash);
+    expect(valid.status).to.equal(201);
+
+    const invalid = await initWidgetSession(subscriberId, session, 'invalid-hash');
+    expect(invalid.body.message).to.contain('Please provide a valid HMAC hash');
+
+    const counts = await stats.countLastDays(session.environment._id, 1);
+
+    expect(counts).to.have.lengthOf(1);
+    expect(counts).to.have.deep.members([
+      {
+        authMethod: SubscriberSessionAuthMethodEnum.HMAC,
+        client: LEGACY_WIDGET_SESSION_CLIENT,
+        count: 1,
+      },
+    ]);
   });
 
   it('should fail the test with invalid secret key', async () => {

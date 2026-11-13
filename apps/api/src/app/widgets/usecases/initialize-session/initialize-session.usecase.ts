@@ -12,6 +12,12 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import {
+  LEGACY_WIDGET_SESSION_CLIENT,
+  parseSessionClient,
+  SubscriberSessionAuthMethodEnum,
+  SubscriberSessionAuthStatsService,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { InitializeSessionCommand } from './initialize-session.command';
@@ -23,7 +29,8 @@ export class InitializeSession {
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
   ) {}
 
   @LogDecorator()
@@ -50,6 +57,12 @@ export class InitializeSession {
     }
     const { integration: inAppIntegration } = selection;
 
+    const hmacValid = isHmacValidForAnyKey(
+      environment.apiKeys.map((apiKey) => apiKey.key),
+      command.subscriberId,
+      command.hmacHash
+    );
+
     if (inAppIntegration.credentials.hmac) {
       validateNotificationCenterEncryption(environment, command);
     }
@@ -63,11 +76,7 @@ export class InitializeSession {
         lastName: command.lastName,
         email: command.email,
         phone: command.phone,
-        allowUpdate: isHmacValidForAnyKey(
-          environment.apiKeys.map((apiKey) => apiKey.key),
-          command.subscriberId,
-          command.hmacHash
-        ),
+        allowUpdate: hmacValid,
       })
     );
 
@@ -75,6 +84,12 @@ export class InitializeSession {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
+    });
+
+    void this.subscriberSessionAuthStatsService.record({
+      environmentId: environment._id,
+      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
+      client: parseSessionClient(command.clientVersion) ?? LEGACY_WIDGET_SESSION_CLIENT,
     });
 
     return {
