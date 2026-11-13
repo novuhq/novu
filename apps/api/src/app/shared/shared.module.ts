@@ -67,6 +67,7 @@ import {
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
 import { ActivityRetentionService } from './services/activity-retention.service';
+import { SubscriberTokenSigner } from './services/subscriber-token-signer.service';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -162,6 +163,7 @@ const PROVIDERS = [
   InvalidateCacheService,
   NotificationPayloadService,
   storageService,
+  SubscriberTokenSigner,
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
