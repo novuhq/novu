@@ -168,6 +168,12 @@ export enum FeatureFlagsKeysEnum {
    * `NOVU_INTERNAL_AUTH_SECRET`; without it the Copilot keeps the direct path.
    */
   IS_COPILOT_MCP_TOOLS_ENABLED = 'IS_COPILOT_MCP_TOOLS_ENABLED',
+  /**
+   * Run the Copilot's turns (Slack Copilot and web-chat) on GPT-6 Luna through AWS Bedrock (Mantle) instead of OpenAI,
+   * with a Bedrock Guardrail in place of OpenAI moderation. Per organization, default off. Acts only where all
+   * `AI_BEDROCK_*` env vars are set; otherwise the Copilot stays on OpenAI. Turning it off moves the next turn to OpenAI.
+   */
+  IS_COPILOT_BEDROCK_ENABLED = 'IS_COPILOT_BEDROCK_ENABLED',
   /** Copilot in the workflow editor runs on the agent web-chat channel inside the existing sidebar instead of the legacy AI chat. The agent refuses web-chat turns while it is off. */
   IS_COPILOT_WEB_CHAT_ENABLED = 'IS_COPILOT_WEB_CHAT_ENABLED',
   /** Shows the web-chat Copilot as a bottom-right launcher and popover instead of the sidebar. Only read when IS_COPILOT_WEB_CHAT_ENABLED is on. */
