@@ -206,12 +206,6 @@ export class Session {
       context: contextKeys,
     });
 
-    void this.subscriberSessionAuthStatsService.record({
-      environmentId: environment._id,
-      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
-      client: parseSessionClient(command.clientVersion) ?? UNKNOWN_SESSION_CLIENT,
-    });
-
     const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
@@ -301,6 +295,12 @@ export class Session {
         }
       );
     }
+
+    void this.subscriberSessionAuthStatsService.record({
+      environmentId: environment._id,
+      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
+      client: parseSessionClient(command.clientVersion) ?? UNKNOWN_SESSION_CLIENT,
+    });
 
     return {
       applicationIdentifier: environment.identifier,

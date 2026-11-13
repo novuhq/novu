@@ -3,6 +3,8 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import sinon from 'sinon';
+import { AuthService } from '../../auth/services/auth.service';
 import {
   LEGACY_WIDGET_SESSION_CLIENT,
   SubscriberSessionAuthMethodEnum,
@@ -109,6 +111,27 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
         count: 1,
       },
     ]);
+  });
+
+  it('should not record a widget session that fails after authentication', async () => {
+    session = new UserSession();
+    await session.initialize({ noWidgetSession: true });
+    await setHmacConfig(session);
+
+    const stats = testServer.getService(SubscriberSessionAuthStatsService);
+    const hmacHash = createHash(session.environment.apiKeys[0].key, subscriberId);
+    const tokenStub = sinon
+      .stub(testServer.getService(AuthService), 'getSubscriberWidgetToken')
+      .rejects(new Error('token failure'));
+
+    try {
+      const { status } = await initWidgetSession(subscriberId, session, hmacHash);
+      expect(status).to.equal(500);
+    } finally {
+      tokenStub.restore();
+    }
+
+    expect(await stats.countLastDays(session.environment._id, 1)).to.deep.equal([]);
   });
 
   it('should fail the test with invalid secret key', async () => {

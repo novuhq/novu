@@ -86,6 +86,8 @@ export class InitializeSession {
       _subscriber: subscriber._id,
     });
 
+    const token = await this.authService.getSubscriberWidgetToken(subscriber, []);
+
     void this.subscriberSessionAuthStatsService.record({
       environmentId: environment._id,
       authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
@@ -93,7 +95,7 @@ export class InitializeSession {
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, []),
+      token,
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,

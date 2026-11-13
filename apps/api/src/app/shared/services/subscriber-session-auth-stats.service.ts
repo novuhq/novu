@@ -2,25 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
 const TTL_SECONDS = 35 * 24 * 60 * 60;
-const MAX_FIELDS = 100;
+const MAX_CLIENTS = 100;
 const OTHER_CLIENT = 'other';
 const MAX_DAYS = 35;
 
 /**
- * HEXISTS + HLEN + HINCRBY + EXPIRE must be one script so two writers at the
- * 100-field cap cannot both create a new named field.
+ * The cap check and both writes must be one script so two writers at the
+ * 100-client cap cannot both add a new client.
  */
 const RECORD_SCRIPT = `
-local field = ARGV[1]
-local overflow = ARGV[2]
-local maxFields = tonumber(ARGV[3])
-local ttl = tonumber(ARGV[4])
-if redis.call('HEXISTS', KEYS[1], field) == 0 and redis.call('HLEN', KEYS[1]) >= maxFields then
-  redis.call('HINCRBY', KEYS[1], overflow, 1)
-else
+local client = ARGV[1]
+local field = ARGV[2]
+local overflow = ARGV[3]
+local maxClients = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
+if redis.call('SISMEMBER', KEYS[2], client) == 1 or redis.call('SCARD', KEYS[2]) < maxClients then
+  redis.call('SADD', KEYS[2], client)
   redis.call('HINCRBY', KEYS[1], field, 1)
+else
+  redis.call('HINCRBY', KEYS[1], overflow, 1)
 end
 redis.call('EXPIRE', KEYS[1], ttl)
+redis.call('EXPIRE', KEYS[2], ttl)
 return 1
 `;
 
@@ -62,22 +65,25 @@ export class SubscriberSessionAuthStatsService {
     this.logger.setContext(this.constructor.name);
   }
 
-  /** Never rejects: a Redis failure is logged at warn and swallowed so session creation is unaffected. */
   async record(params: {
     environmentId: string;
     authMethod: SubscriberSessionAuthMethodEnum;
     client: string;
   }): Promise<void> {
-    try {
-      if (!this.cacheService.client) {
-        return;
-      }
+    if (!this.cacheService.cacheEnabled()) {
+      return;
+    }
 
-      const key = dayKey(params.environmentId, new Date());
+    try {
+      const now = new Date();
       const field = `${params.authMethod}|${params.client}`;
       const overflow = `${params.authMethod}|${OTHER_CLIENT}`;
 
-      await this.cacheService.eval(RECORD_SCRIPT, [key], [field, overflow, MAX_FIELDS, TTL_SECONDS]);
+      await this.cacheService.eval(
+        RECORD_SCRIPT,
+        [dayKey(params.environmentId, now), clientsKey(params.environmentId, now)],
+        [params.client, field, overflow, MAX_CLIENTS, TTL_SECONDS]
+      );
     } catch (err) {
       this.logger.warn(
         { err, environmentId: params.environmentId, authMethod: params.authMethod, client: params.client },
@@ -86,10 +92,9 @@ export class SubscriberSessionAuthStatsService {
     }
   }
 
-  /** Sums the last `days` UTC days including today, `days` clamped to [1, 35]. Returns [] when the cache client is absent. */
   async countLastDays(environmentId: string, days: number): Promise<SubscriberSessionAuthCount[]> {
     const client = this.cacheService.client;
-    if (!client) {
+    if (!client || !this.cacheService.cacheEnabled()) {
       return [];
     }
 
@@ -119,11 +124,19 @@ export class SubscriberSessionAuthStatsService {
 }
 
 function dayKey(environmentId: string, now: Date): string {
+  return `subscriber-session-auth:{${environmentId}}:${utcDate(now)}`;
+}
+
+function clientsKey(environmentId: string, now: Date): string {
+  return `subscriber-session-auth-clients:{${environmentId}}:${utcDate(now)}`;
+}
+
+function utcDate(now: Date): string {
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, '0');
   const day = String(now.getUTCDate()).padStart(2, '0');
 
-  return `subscriber-session-auth:{${environmentId}}:${year}-${month}-${day}`;
+  return `${year}-${month}-${day}`;
 }
 
 function utcDayOffset(now: Date, daysAgo: number): Date {

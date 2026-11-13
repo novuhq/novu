@@ -4,6 +4,8 @@ import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
+import sinon from 'sinon';
+import { AuthService } from '../../auth/services/auth.service';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import {
   SubscriberSessionAuthMethodEnum,
@@ -1461,6 +1463,34 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     ]);
   });
 
+  it('should not record a session that fails after authentication', async () => {
+    session = new UserSession();
+    await session.initialize({ noWidgetSession: true });
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+
+    const stats = testServer.getService(SubscriberSessionAuthStatsService);
+    const tokenStub = sinon
+      .stub(testServer.getService(AuthService), 'getSubscriberWidgetToken')
+      .rejects(new Error('token failure'));
+
+    try {
+      const { status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        clientVersion: '@novu/js@3.14.0',
+      });
+      expect(status).to.equal(500);
+    } finally {
+      tokenStub.restore();
+    }
+
+    expect(await stats.countLastDays(session.environment._id, 1)).to.deep.equal([]);
+  });
+
   it('should cap distinct session clients per day at 100 and count the rest as other', async () => {
     const stats = testServer.getService(SubscriberSessionAuthStatsService);
     const environmentId = `cap-${randomBytes(8).toString('hex')}`;
@@ -1487,6 +1517,27 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     expect(named.every((row) => row.authMethod === SubscriberSessionAuthMethodEnum.NONE && row.count === 1)).to.equal(
       true
     );
+  });
+
+  it('should cap by client, so a known client keeps its label under another auth method', async () => {
+    const stats = testServer.getService(SubscriberSessionAuthStatsService);
+    const environmentId = `cap-${randomBytes(8).toString('hex')}`;
+
+    for (let i = 0; i < 60; i += 1) {
+      for (const authMethod of [SubscriberSessionAuthMethodEnum.NONE, SubscriberSessionAuthMethodEnum.HMAC]) {
+        await stats.record({ environmentId, authMethod, client: `@novu/js@1.0.${i}` });
+      }
+    }
+
+    const counts = await stats.countLastDays(environmentId, 1);
+
+    expect(counts).to.have.lengthOf(120);
+    expect(counts.some((row) => row.client === 'other')).to.equal(false);
+    expect(counts).to.deep.include({
+      authMethod: SubscriberSessionAuthMethodEnum.HMAC,
+      client: '@novu/js@1.0.59',
+      count: 1,
+    });
   });
 });
 
