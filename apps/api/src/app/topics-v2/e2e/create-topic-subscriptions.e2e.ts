@@ -111,6 +111,20 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
     expect(subscribers[0]?._subscriberId).to.equal(subscriber3._id);
   });
 
+  it('should rename an existing topic when subscribing with a different name', async () => {
+    const topicKey = `topic-key-rename-${Date.now()}`;
+    await novuClient.topics.create({ key: topicKey, name: 'Original Topic Name' });
+
+    const response = await novuClient.topics.subscriptions.create(
+      { subscriberIds: [subscriber1.subscriberId], name: 'Renamed Topic Name' },
+      topicKey
+    );
+
+    expect(response.result.meta.successful).to.equal(1);
+    const topic = await novuClient.topics.get(topicKey);
+    expect(topic.result.name).to.equal('Renamed Topic Name');
+  });
+
   it('should handle removal of subscribers from a topic', async () => {
     const topicKey = `topic-key-removal-${Date.now()}`;
 

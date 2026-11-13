@@ -64,6 +64,7 @@ export class CreateSubscriptionsUsecase {
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential subscription steps (identifier validation, topic upsert, subscriber lookup, limit check, create, preferences) assembled into one response
   async execute(command: CreateSubscriptionsCommand): Promise<CreateSubscriptionsResponseDto> {
     const { validSubscriptions, identifierErrors } = this.validateSubscriptionIdentifiers(command.subscriptions);
     const errors: SubscriptionErrorDto[] = [...identifierErrors];
@@ -372,7 +373,7 @@ export class CreateSubscriptionsUsecase {
           throw error;
         }
       }
-    } else if (command.name) {
+    } else if (command.renameExistingTopic && command.name) {
       topic = await this.topicRepository.findOneAndUpdate(
         {
           _id: topic._id,
