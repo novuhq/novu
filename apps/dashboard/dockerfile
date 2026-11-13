@@ -20,8 +20,12 @@ COPY pnpm-lock.yaml .
 # pnpm-workspace.yaml lists patchedDependencies, which pnpm install reads from here
 COPY patches ./patches
 
+# Only apps/dashboard is copied, so install just the workspace root and the
+# dashboard with its workspace dependencies. An unfiltered frozen install fails
+# because pnpm requires every importer in pnpm-lock.yaml (apps/api, apps/worker, ...)
+# to have its package.json present.
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
-  pnpm install --frozen-lockfile --unsafe-perm
+  pnpm install --frozen-lockfile --unsafe-perm --filter root --filter "@novu/dashboard..."
 
 ARG VITE_EE_AUTH_PROVIDER
 ARG VITE_SELF_HOSTED=true
