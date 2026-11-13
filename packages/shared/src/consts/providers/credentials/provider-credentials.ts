@@ -294,6 +294,16 @@ export const plunkConfig: IConfigCredential[] = [
   ...mailConfigBase,
 ];
 
+export const groundmailConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const sparkpostConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
