@@ -23,6 +23,11 @@ export class GenerateWebexOauthUrlCommand extends EnvironmentCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  readonly contextKeys?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   readonly scope?: string[];
 
   @IsOptional()

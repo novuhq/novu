@@ -1,12 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import {
   type ChannelConnectionAuth,
   decryptCredentials,
   isRotatingTokenProvider,
   normalizeRotatingAuth,
 } from '@novu/application-generic';
-import { IntegrationEntity } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload, ProvidersIdEnum } from '@novu/shared';
+import { ChannelConnectionEntity, IntegrationEntity } from '@novu/dal';
+import { ChatProviderIdEnum, ConnectionMode, ContextPayload, createContextKey, ProvidersIdEnum } from '@novu/shared';
 import { AuthDto } from '../dtos/shared.dto';
 
 /**
@@ -55,6 +55,53 @@ export function validateConnectionMode({
   if (!subscriberId && !hasContext) {
     throw new BadRequestException('Either subscriberId or context must be provided');
   }
+}
+
+/**
+ * Guards an OAuth reconnect that names an existing connection by identifier, so a caller
+ * can only replace the auth of a connection created for them. A connection with a
+ * subscriber belongs to that subscriber in its exact context; a connection without one
+ * belongs to its exact, non-empty context.
+ */
+export function assertCanReconnectChannelConnection(
+  connection: Pick<ChannelConnectionEntity, 'identifier' | 'subscriberId' | 'contextKeys'>,
+  caller: { subscriberId?: string; contextKeys: string[] }
+): void {
+  const connectionContextKeys = connection.contextKeys ?? [];
+  const isSameContext = haveSameKeys(connectionContextKeys, caller.contextKeys);
+  const canReconnect = connection.subscriberId
+    ? connection.subscriberId === caller.subscriberId && isSameContext
+    : connectionContextKeys.length > 0 && isSameContext;
+
+  if (!canReconnect) {
+    throw new ConflictException(
+      `Channel connection "${connection.identifier}" already exists for a different subscriber or context`
+    );
+  }
+}
+
+/**
+ * Context keys of an OAuth caller. Session-validated `contextKeys` win over the raw
+ * `context` payload; keys are derived without touching the contexts collection.
+ */
+export function resolveCallerContextKeys(caller: { context?: ContextPayload; contextKeys?: string[] }): string[] {
+  if (caller.contextKeys?.length) {
+    return caller.contextKeys;
+  }
+
+  return Object.entries(caller.context ?? {}).flatMap(([type, value]) => {
+    if (!value) {
+      return [];
+    }
+
+    return [createContextKey(type, typeof value === 'string' ? value : value.id)];
+  });
+}
+
+function haveSameKeys(left: string[], right: string[]): boolean {
+  const rightKeys = new Set(right);
+
+  return left.length === rightKeys.size && left.every((key) => rightKeys.has(key));
 }
 
 /**

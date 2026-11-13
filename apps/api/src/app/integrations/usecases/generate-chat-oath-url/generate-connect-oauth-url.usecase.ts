@@ -73,6 +73,7 @@ export class GenerateConnectOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            contextKeys: command.contextKeys,
             scope: command.scope,
             connectionMode: command.connectionMode,
             autoLinkUser: command.autoLinkUser,
