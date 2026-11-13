@@ -2,6 +2,7 @@ export * from './africas-talking.handler';
 export * from './afro-sms.handler';
 export * from './azure-sms.handler';
 export * from './bandwidth.handler';
+export * from './bird.handler';
 export * from './brevo-sms.handler';
 export * from './bulk-sms.handler';
 export * from './burst-sms.handler';
