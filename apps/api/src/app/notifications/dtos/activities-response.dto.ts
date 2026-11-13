@@ -289,8 +289,8 @@ export class ActivityNotificationJobResponseDto {
 
 // Activity Notification Subscriber Response DTO
 export class ActivityNotificationSubscriberResponseDto {
-  @ApiPropertyOptional({ description: 'First name of the subscriber', type: String })
-  firstName?: string;
+  @ApiPropertyOptional({ description: 'First name of the subscriber', type: String, nullable: true })
+  firstName?: string | null;
 
   @ApiProperty({ description: 'External unique identifier of the subscriber', type: String })
   subscriberId: string;
@@ -298,14 +298,14 @@ export class ActivityNotificationSubscriberResponseDto {
   @ApiProperty({ description: 'Internal to Novu unique identifier of the subscriber', type: String })
   _id: string;
 
-  @ApiPropertyOptional({ description: 'Last name of the subscriber', type: String })
-  lastName?: string;
+  @ApiPropertyOptional({ description: 'Last name of the subscriber', type: String, nullable: true })
+  lastName?: string | null;
 
-  @ApiPropertyOptional({ description: 'Email address of the subscriber', type: String })
-  email?: string;
+  @ApiPropertyOptional({ description: 'Email address of the subscriber', type: String, nullable: true })
+  email?: string | null;
 
-  @ApiPropertyOptional({ description: 'Phone number of the subscriber', type: String })
-  phone?: string;
+  @ApiPropertyOptional({ description: 'Phone number of the subscriber', type: String, nullable: true })
+  phone?: string | null;
 }
 
 // Notification Trigger Variable DTO

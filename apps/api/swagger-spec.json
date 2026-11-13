@@ -29970,7 +29970,8 @@
         "properties": {
           "firstName": {
             "type": "string",
-            "description": "First name of the subscriber"
+            "description": "First name of the subscriber",
+            "nullable": true
           },
           "subscriberId": {
             "type": "string",
@@ -29982,15 +29983,18 @@
           },
           "lastName": {
             "type": "string",
-            "description": "Last name of the subscriber"
+            "description": "Last name of the subscriber",
+            "nullable": true
           },
           "email": {
             "type": "string",
-            "description": "Email address of the subscriber"
+            "description": "Email address of the subscriber",
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "description": "Phone number of the subscriber"
+            "description": "Phone number of the subscriber",
+            "nullable": true
           }
         },
         "required": ["subscriberId", "_id"]
