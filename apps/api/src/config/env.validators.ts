@@ -165,6 +165,8 @@ export const envValidators = {
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
+  // Comma-separated base64 PEM P-256 private keys. The first signs, all verify. Unset derives one from JWT_SECRET.
+  SUBSCRIBER_TOKEN_SIGNING_KEYS: str({ default: undefined }),
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),

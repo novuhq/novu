@@ -277,6 +277,12 @@ export enum FeatureFlagsKeysEnum {
    * when self-hosted or local.
    */
   IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED',
+  /**
+   * Organization-scoped: short-lived subscriber tokens signed by Novu (ES256) for the browser components, accepted
+   * alongside `subscriberHash`. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_SUBSCRIBER_TOKENS_ENABLED=true` for the API when self-hosted. Default off.
+   */
+  IS_SUBSCRIBER_TOKENS_ENABLED = 'IS_SUBSCRIBER_TOKENS_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
