@@ -50,7 +50,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
     const chosen = freshHandle();
 
     const free = await checkAddress(session, chosen);
-    expect(free).to.deep.equal({ handle: chosen, available: true, domain: INBOX_DOMAIN });
+    expect(free).to.deep.equal({ handle: chosen, available: true, domain: INBOX_DOMAIN, canPickLook: false });
 
     const created = await createFromDashboard(session, { agentName: 'Atlas', inboxHandle: chosen });
 
@@ -76,6 +76,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
       available: false,
       suggestion: `${chosen}-acme`,
       domain: INBOX_DOMAIN,
+      canPickLook: false,
     });
 
     const refused = await asDashboard(second, 'post', '/v1/human/setup').send(
@@ -169,7 +170,7 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
       const session = await startSession();
       const published = await readPublishedDomain(session);
 
-      expect(published).to.deep.equal({ handle: '', available: false, domain: devDomain });
+      expect(published).to.deep.equal({ handle: '', available: false, domain: devDomain, canPickLook: false });
     } finally {
       process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = INBOX_DOMAIN;
     }
@@ -184,7 +185,12 @@ describe('Agent Inbox address (create, taken, test email, CLI) #novu-v2', () => 
       const published = await readPublishedDomain(session);
 
       // Off means the production domain, even while a staging domain is still configured.
-      expect(published).to.deep.equal({ handle: '', available: false, domain: 'agentinbox.md' });
+      expect(published).to.deep.equal({
+        handle: '',
+        available: false,
+        domain: 'agentinbox.md',
+        canPickLook: false,
+      });
     } finally {
       delete process.env.IS_SELF_HOSTED;
       process.env.NOVU_AGENT_INBOX_INBOUND_DOMAIN = INBOX_DOMAIN;

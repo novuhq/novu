@@ -18,6 +18,7 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
   let contextAToken: string;
   let contextBToken: string;
   let noContextToken: string;
+  let clientWithoutVersionAgent: UserSession['testAgent'];
 
   beforeEach(async () => {
     (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
@@ -27,6 +28,7 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
 
     // Wrap testAgent to include Novu-Client-Version header for context-aware behavior
     const agent = session.testAgent;
+    clientWithoutVersionAgent = agent;
     session.testAgent = {
       get: (url: string) => agent.get(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
       post: (url: string) => agent.post(url).set('Novu-Client-Version', '@novu/js@3.13.0'),
@@ -237,6 +239,31 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
 
       const getNoContext = await getSubscription(session, topicKey, identifier, noContextToken);
       expect(getNoContext.status).to.equal(204);
+    });
+
+    it('should scope a client without Novu-Client-Version to the no-context subscriptions', async () => {
+      const topicKey = generateUniqueId('topic');
+      const identifierB = generateUniqueId('sub-b');
+
+      await createSubscription(session, topicKey, { identifier: identifierB }, contextBToken);
+
+      const createWithoutVersion = await clientWithoutVersionAgent
+        .post(`/v1/inbox/topics/${topicKey}/subscriptions`)
+        .set('Authorization', `Bearer ${contextAToken}`)
+        .send({});
+      expect(createWithoutVersion.status).to.equal(201);
+      const { identifier } = createWithoutVersion.body.data;
+      expect(identifier).to.equal(buildDefaultSubscriptionIdentifier(topicKey, session.subscriberId, []));
+
+      const getOwn = await clientWithoutVersionAgent
+        .get(`/v1/inbox/topics/${topicKey}/subscriptions/${identifier}`)
+        .set('Authorization', `Bearer ${contextAToken}`);
+      expect(getOwn.status).to.equal(200);
+
+      const getOtherContext = await clientWithoutVersionAgent
+        .get(`/v1/inbox/topics/${topicKey}/subscriptions/${identifierB}`)
+        .set('Authorization', `Bearer ${contextAToken}`);
+      expect(getOtherContext.status).to.equal(204);
     });
   });
 

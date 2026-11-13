@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ReadOptions } from '../cli-io';
+import type { PickReadOptions, ReadOptions } from '../cli-io';
+import { MASCOT_EYE_COLOR } from '../mascot/drawing';
+import { terminalPalette } from '../mascot/look';
+import { TONES } from './layout';
 import { type ScreenHost, startLiveScreen } from './live-screen';
 import { setOpenedScreen } from './opened';
 import { BEGIN_FRAME, HIDE_CURSOR, SHOW_CURSOR } from './painter';
@@ -13,8 +16,8 @@ const drawnSoon = () => new Promise((resolve) => setImmediate(resolve));
 
 /**
  * A terminal and a clock for the screen to run on. Frames come only when the test calls `tick`. An answer
- * read on the screen comes from `type` and `enter`, as keys do; `answers` are for one asked on a plain
- * terminal, written as it echoes them.
+ * read on the screen comes from `type` and `enter`, as keys do, and a pick from `move` and `enter`; `answers`
+ * are for one asked on a plain terminal, written as it echoes them.
  */
 function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 'dark' | 'light' } = {}) {
   const terminal = new VirtualTerminal(columns, rows);
@@ -22,6 +25,7 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
   const answers: string[] = [];
   const exits: Array<() => void> = [];
   let reading: { answer: string; onChange: ReadOptions['onChange']; finish: (answer: string) => void } | undefined;
+  let picking: (PickReadOptions & { index: number; finish: (index: number) => void }) | undefined;
   let frame: (() => void) | undefined;
   let interval = 0;
   let now = 0;
@@ -72,6 +76,10 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
       new Promise((finish) => {
         reading = { answer: initial, onChange, finish };
       }),
+    pick: (options) =>
+      new Promise((finish) => {
+        picking = { ...options, index: options.initial, finish };
+      }),
     beforeExit: (listener) => {
       exits.push(listener);
 
@@ -107,13 +115,30 @@ function fakeHost({ columns = 80, rows = 40, animate = false, theme = 'dark' as 
         reading.onChange(text, text.length);
       }
     },
-    /** Enter, on the answer being read. */
+    /** An arrow key, on the pick being read: `1` for → and ↓, `-1` for ← and ↑. They go round. */
+    move: (step: 1 | -1) => {
+      if (picking) {
+        picking.index = (picking.index + step + picking.count) % picking.count;
+        picking.onMove(picking.index);
+      }
+    },
+    /** Enter, on the answer or the pick being read. */
     enter: () => {
       reading?.finish(reading.answer);
       reading = undefined;
+      picking?.finish(picking.index);
+      picking = undefined;
     },
     /** Whether an answer is being read on the screen. */
     reading: () => reading !== undefined,
+    /** Whether a pick is being read on the screen. */
+    picking: () => picking !== undefined,
+    /** The text on screen as a person reads it: without the blank lines, and with plain spaces for the cells that pad. */
+    read: () =>
+      terminal
+        .screen()
+        .filter(Boolean)
+        .map((line) => line.replace(/\u00a0/g, ' ')),
     /** The text on screen, without the blank lines. */
     shown: () => terminal.screen().filter(Boolean),
     /** The lines on screen, trimmed, for what is centred. */
@@ -767,5 +792,359 @@ describe('startLiveScreen', () => {
     const text = fake.writes.join('');
     expect(text).toMatch(/[⠁-⣿]/);
     expect(text).not.toContain('238;229;216');
+  });
+});
+
+describe('picking one of a few on the screen', () => {
+  const shapes = ['orb', 'pebble', 'drop'] as const;
+  const named = (shape: string) => `${shape[0].toUpperCase()}${shape.slice(1)}`;
+  /** The one that is lit, as the caret is: the last text written inverted. */
+  const lit = (writes: string[]) => [...writes.join('').matchAll(/\x1b\[7m([^\x1b]+)\x1b\[27m/g)].at(-1)?.[1].trim();
+
+  it('shows them side by side with the one it starts on lit, and the keys that pick under them', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, initial: 'pebble', label: named });
+    await drawnSoon();
+
+    const shown = fake.read();
+    const at = shown.findIndex((line) => line.includes('Shape:'));
+    expect(shown[at]).toContain('→   Shape:  Orb   Pebble   Drop');
+    expect(shown[at + 1].trim()).toBe('← → to change · Enter to pick');
+    expect(lit(fake.writes)).toBe('Pebble');
+    expect(fake.picking()).toBe(true);
+
+    fake.enter();
+    await expect(pick).resolves.toBe('pebble');
+  });
+
+  it('starts on the first where none is given', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes });
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('orb');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('orb');
+  });
+
+  it('lights the one the person moves to, tells who asked, and gives it on Enter', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+    const onMove = vi.fn();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named, onMove });
+    await drawnSoon();
+
+    fake.move(1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Pebble');
+    expect(onMove).toHaveBeenLastCalledWith('pebble');
+
+    fake.move(1);
+    fake.move(1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Orb');
+    expect(onMove).toHaveBeenLastCalledWith('orb');
+
+    fake.move(-1);
+    await drawnSoon();
+    expect(lit(fake.writes)).toBe('Drop');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('drop');
+    expect(onMove).toHaveBeenCalledTimes(4);
+  });
+
+  it('moves nothing else on the line as the pick moves', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    const before = fake.read().find((line) => line.includes('Shape:'));
+
+    fake.move(1);
+    await drawnSoon();
+
+    expect(fake.read().find((line) => line.includes('Shape:'))).toBe(before);
+
+    fake.enter();
+    await pick;
+  });
+
+  it('keeps the pick in the list in place of the question, as it reads or as who asked says', async () => {
+    const fake = fakeHost();
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const first = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    fake.move(1);
+    fake.enter();
+    await first;
+
+    const second = screen.pick('Color: ', {
+      choices: ['ember', 'coral'],
+      remember: (color) => ({ mark: 'done', value: `In ${color}` }),
+    });
+    await drawnSoon();
+    fake.enter();
+    await second;
+    await drawnSoon();
+    await drawnSoon();
+
+    const shown = fake.read().join('\n');
+    expect(shown).toContain('✔   Shape: Pebble');
+    expect(shown).toContain('✔   In ember');
+    expect(shown).not.toContain('to change');
+    expect(shown).not.toContain('Drop');
+  });
+
+  it('keeps the mascot moving while a pick waits', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes });
+    await drawnSoon();
+    const before = fake.writes.length;
+    fake.tick(400);
+    fake.tick(400);
+
+    expect(fake.writes.length).toBeGreaterThan(before);
+
+    fake.enter();
+    await pick;
+  });
+
+  it('carries on from a line of its own once the screen no longer fits, arrow keys and all', async () => {
+    const fake = fakeHost({ columns: 60, rows: 12 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    await drawnSoon();
+
+    const pick = screen.pick('Shape: ', { choices: shapes, label: named });
+    await drawnSoon();
+    expect(fake.read().join('\n')).toContain('Shape:  Orb   Pebble   Drop');
+
+    fake.out.rows = 3;
+    fake.move(1);
+    await drawnSoon();
+    expect(fake.terminal.text()).toContain('Shape: ‹ Pebble ›  ← → to change · Enter to pick');
+
+    fake.move(1);
+    expect(fake.terminal.text()).toContain('Shape: ‹ Drop ›  ← → to change · Enter to pick');
+    expect(fake.terminal.text()).not.toContain('‹ Pebble ›');
+
+    fake.enter();
+    await expect(pick).resolves.toBe('drop');
+    await screen.done('happy');
+
+    expect(fake.terminal.text()).toContain('Shape: Drop');
+  });
+
+  it('names them for one to be typed where the screen has no room for them', async () => {
+    const fake = fakeHost({ rows: 5 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('drop');
+
+    await expect(screen.pick('Shape: ', { choices: shapes, label: named })).resolves.toBe('drop');
+
+    expect(fake.picking()).toBe(false);
+    expect(fake.terminal.text()).toContain('Shape (orb, pebble or drop) [orb]: drop');
+  });
+
+  it('names them for one to be typed where nothing is drawn in place, asking again for none of them', async () => {
+    const fake = fakeHost({ rows: 0 });
+    const screen = startLiveScreen({ command: 'setup' }, fake.host);
+    fake.answers.push('cube', '');
+
+    await expect(screen.pick('Shape: ', { choices: shapes, initial: 'pebble' })).resolves.toBe('pebble');
+
+    expect(fake.terminal.text()).toContain('Shape (orb, pebble or drop) [pebble]: cube');
+    expect(fake.terminal.text()).toContain('Pick orb, pebble or drop.');
+  });
+});
+
+describe('the agent’s look on the screen', () => {
+  const DROP = { shape: 'drop', color: 'coral' } as const;
+
+  /** The mascot as it stands on the terminal: its lines of braille. */
+  const mascotOn = (fake: ReturnType<typeof fakeHost>) =>
+    fake.terminal.screen().filter((line) => /[\u2801-\u28ff]/.test(line));
+
+  /** The same frames on each terminal, so that only the look can make them differ. */
+  const tickAll = (frames: number, ...fakes: Array<ReturnType<typeof fakeHost>>) => {
+    for (let frame = 0; frame < frames; frame += 1) {
+      for (const fake of fakes) {
+        fake.tick();
+      }
+    }
+  };
+
+  it('opens in the look it is given, and as the orb in ember without one', async () => {
+    const orb = fakeHost();
+    const drop = fakeHost();
+    startLiveScreen({ command: 'listen claude-code' }, orb.host);
+    startLiveScreen({ command: 'listen claude-code', look: DROP }, drop.host);
+    await drawnSoon();
+
+    expect(mascotOn(drop)).not.toEqual(mascotOn(orb));
+    expect(drop.writes.join('')).toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
+    expect(orb.writes.join('')).not.toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
+  });
+
+  it('bends into a new look over about half a second, and ends exactly on it', async () => {
+    const bending = fakeHost({ animate: true });
+    const there = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, bending.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+    const orb = mascotOn(bending);
+
+    screen.look(DROP);
+    // 8 frames, 267ms: about halfway through the 520.
+    tickAll(8, bending, there);
+    const halfway = mascotOn(bending);
+    expect(halfway).not.toEqual(orb);
+    expect(halfway).not.toEqual(mascotOn(there));
+
+    // 16 frames, 533ms: the bend is over, and the mascot is the one a screen opened in that look draws.
+    tickAll(8, bending, there);
+    expect(mascotOn(bending)).toEqual(mascotOn(there));
+  });
+
+  it('blends into the new colour through tones in between, never from one palette straight to the other', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+    const known = new Set(
+      [
+        ...terminalPalette('ember').dark,
+        ...terminalPalette('coral').dark,
+        MASCOT_EYE_COLOR,
+        ...Object.values(TONES.dark),
+      ].map((tone) => tone?.join(';'))
+    );
+    const colours = (from: number) =>
+      [
+        ...fake.writes
+          .slice(from)
+          .join('')
+          .matchAll(/\x1b\[38;2;(\d+;\d+;\d+)m/g),
+      ].map((match) => match[1]);
+
+    screen.look({ shape: 'orb', color: 'coral' });
+    const bendStarts = fake.writes.length;
+    tickAll(8, fake);
+    expect(colours(bendStarts).some((colour) => !known.has(colour))).toBe(true);
+
+    tickAll(8, fake);
+    const bendOver = fake.writes.length;
+    tickAll(4, fake);
+    // Only the shimmer moves now, in the new colour's own tones.
+    expect(colours(bendOver).every((colour) => known.has(colour))).toBe(true);
+    expect(colours(bendOver)).toContain(terminalPalette('coral').dark[4].join(';'));
+  });
+
+  it('goes on from where it was when the look changes again before the bend is over', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    tickAll(8, fake);
+    const halfway = mascotOn(fake);
+
+    screen.look({ shape: 'bean', color: 'bone' });
+    // The very same moment drawn again: the mascot hasn't jumped anywhere.
+    fake.tick(0);
+    expect(mascotOn(fake)).toEqual(halfway);
+
+    tickAll(16, fake);
+    expect(mascotOn(fake)).not.toEqual(halfway);
+  });
+
+  it('is simply in its new look where nothing moves', async () => {
+    const fake = fakeHost();
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    await drawnSoon();
+
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('writes nothing for the look it already has', async () => {
+    const fake = fakeHost({ animate: true });
+    const screen = startLiveScreen({ command: 'login', look: DROP }, fake.host);
+    await drawnSoon();
+    tickAll(1, fake);
+    const before = fake.writes.length;
+
+    screen.look({ ...DROP });
+    fake.tick(0);
+    await drawnSoon();
+
+    expect(fake.writes.slice(before).join('')).toBe('');
+  });
+
+  it('sees a bend through before it leaves the screen, and leaves it in the new look', async () => {
+    const fake = fakeHost({ animate: true });
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    let left = false;
+    const done = screen.done('happy').then(() => {
+      left = true;
+    });
+    // 500ms of frames: the smile is there after 420, the bend takes 520.
+    tickAll(15, fake);
+    await drawnSoon();
+    expect(left).toBe(false);
+
+    fake.tick(50);
+    await done;
+    expect(left).toBe(true);
+
+    await startLiveScreen({ command: 'connect', look: DROP }, there.host).done('happy');
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('leaves the new look on the screen if the process ends before the bend is over', async () => {
+    const fake = fakeHost({ animate: true });
+    const there = fakeHost();
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    startLiveScreen({ command: 'connect', look: DROP }, there.host);
+    await drawnSoon();
+
+    screen.look(DROP);
+    tickAll(4, fake);
+    for (const exit of [...fake.exits, ...there.exits]) {
+      exit();
+    }
+
+    expect(mascotOn(fake)).toEqual(mascotOn(there));
+  });
+
+  it('draws the new look at the end where nothing is drawn in place', async () => {
+    const fake = fakeHost({ rows: 0 });
+    const screen = startLiveScreen({ command: 'connect' }, fake.host);
+    screen.look(DROP);
+    await screen.done('happy');
+
+    expect(fake.writes.join('')).toContain(`38;2;${terminalPalette('coral').dark[4].join(';')}m`);
   });
 });

@@ -1,5 +1,5 @@
 import type { Emotion } from '../mascot/life';
-import type { LookColor, MascotBody } from '../mascot/look';
+import type { MascotLook } from '../mascot/look';
 import { askTerminal } from './ask-terminal';
 import type { ScreenRow, ScreenStatus, Tone } from './layout';
 import { processHost, startLiveScreen } from './live-screen';
@@ -49,6 +49,23 @@ export interface AskOptions {
   check?: (answer: string) => Promise<AskNote | undefined>;
 }
 
+/** A question answered by picking one of a few, rather than by typing. */
+export interface PickOptions<Choice extends string> {
+  /** What there is to pick from, in the order it shows. */
+  choices: readonly Choice[];
+  /** The one the person starts on, which Enter alone keeps: the first where none is given. */
+  initial?: Choice;
+  /** How a choice reads, such as `Drop`: as it is named where nothing says otherwise. */
+  label?: (choice: Choice) => string;
+  /** Told the choice the person is on, each time they move to another. */
+  onMove?: (choice: Choice) => void;
+  /**
+   * The row that keeps the pick once the question is gone, or `undefined` for none. By default the question
+   * and the pick.
+   */
+  remember?: (choice: Choice) => ScreenRow | undefined;
+}
+
 /**
  * The shared terminal layout of a command: the mascot, the command, a line under it, a list of rows and what
  * is under way, drawn in place and kept up to date. Any command can open one; what it shows is up to the
@@ -58,6 +75,11 @@ export interface AskOptions {
 export interface Screen {
   /** What the mascot feels. While something is under way, `awake` shows as `thinking`. */
   feel(emotion: Emotion): void;
+  /**
+   * The agent's look, once the API has answered it: the mascot bends into the new body and blends into the new
+   * colour, keeping its face. None is the orb in ember, and the look it already has changes nothing.
+   */
+  look(look: MascotLook | undefined): void;
   /** The line under the command. */
   subtitle(text: string | undefined): void;
   /** Puts these rows in place of the list. */
@@ -80,6 +102,11 @@ export interface Screen {
    * is typed and stays in the list, and everything else keeps moving meanwhile.
    */
   ask(question: string, options?: AskOptions): Promise<string>;
+  /**
+   * Asks for one of a few at the end of the list. They show side by side: the arrow keys move between them and
+   * Enter takes the one the person is on. Where nothing is drawn in place, they are named and one is typed.
+   */
+  pick<Choice extends string>(question: string, options: PickOptions<Choice>): Promise<Choice>;
   /** Ends the screen on the mascot's own still face for `emotion`, once its eyes have got there. */
   done(emotion: 'happy' | 'asleep'): Promise<void>;
   /** Ends the screen with `message` as a ✕ row (a → row for something still `pending`), the mascot asleep. */
@@ -92,7 +119,7 @@ export interface ScreenOptions {
   /** The agent's handle, where it is known. */
   handle?: string;
   /** The mascot's body and colour, as the agent's look has them: the orb in ember where it isn't known. */
-  look?: { shape: MascotBody; color: LookColor };
+  look?: MascotLook;
 }
 
 /**

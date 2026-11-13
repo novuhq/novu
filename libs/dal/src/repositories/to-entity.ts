@@ -20,6 +20,9 @@ import { ClassConstructor, plainToInstance } from 'class-transformer';
  * `@Expose`, or an `@Exclude` that is not `toPlainOnly`), constructor-assigned fields or
  * accessors fall back to the original two-step path.
  *
+ * Objects with fewer than 128 keys are built with `defineProperty` so they stay in V8 fast mode,
+ * as JSON.parse's objects do; see `JSON_PARSE_FAST_KEY_LIMIT`.
+ *
  * One intentional difference: class-transformer throws on a nested object with a truthy
  * own `constructor` key; this walk drops the key like it does for falsy values.
  */
@@ -131,6 +134,20 @@ function walkObject(value: object, stack: object[], target: object | undefined):
   return out;
 }
 
+/**
+ * JSON.parse keeps objects with fewer keys than this in V8 fast (hidden-class) mode and puts
+ * larger ones in dictionary mode. Below the limit fields are added with `defineProperty`: V8
+ * moves an object to dictionary mode after about 20 computed-key assignments (`out[key] = v`),
+ * which costs several times the memory and makes reads slower. At or above the limit plain
+ * assignment gives the same dictionary-mode object JSON.parse does, without creating a hidden
+ * class for every distinct key set (large `Mixed` payloads).
+ */
+const JSON_PARSE_FAST_KEY_LIMIT = 128;
+
+function defineField(out: object, key: string, value: JsonValue): void {
+  Object.defineProperty(out, key, { value, writable: true, enumerable: true, configurable: true });
+}
+
 function walkArray(value: unknown[], stack: object[], target: object | undefined): JsonValue[] {
   const out: JsonValue[] = [];
   const length = value.length;
@@ -145,13 +162,15 @@ function walkArray(value: unknown[], stack: object[], target: object | undefined
 
 function walkJsonObject(value: Record<string, unknown>, stack: object[]): { [key: string]: JsonValue } {
   const out: { [key: string]: JsonValue } = {};
-  for (const key of Object.keys(value)) {
+  const keys = Object.keys(value);
+  const compact = keys.length < JSON_PARSE_FAST_KEY_LIMIT;
+  for (const key of keys) {
     const item = walk(key, value[key], stack, undefined);
     if (item === OMIT) continue;
 
-    if (key === '__proto__') {
-      // JSON.parse creates an own `__proto__` property instead of changing the prototype.
-      Object.defineProperty(out, key, { value: item, writable: true, enumerable: true, configurable: true });
+    // `defineProperty` also keeps an own `__proto__` key as a data property, as JSON.parse does.
+    if (compact || key === '__proto__') {
+      defineField(out, key, item);
     } else {
       out[key] = item;
     }
@@ -166,12 +185,18 @@ function walkEntityObject(
   target: object
 ): { [key: string]: JsonValue } {
   const out: { [key: string]: JsonValue } = target === OBJECT_PROTOTYPE ? {} : Object.create(target);
-  for (const key of Object.keys(value)) {
+  const keys = Object.keys(value);
+  const compact = keys.length < JSON_PARSE_FAST_KEY_LIMIT;
+  for (const key of keys) {
     const item = walk(key, value[key], stack, OBJECT_PROTOTYPE);
     // class-transformer skips `__proto__`, `constructor` and keys that the new instance already inherits.
     if (item === OMIT || key in target) continue;
 
-    out[key] = item;
+    if (compact) {
+      defineField(out, key, item);
+    } else {
+      out[key] = item;
+    }
   }
 
   return out;

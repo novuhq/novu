@@ -36,6 +36,12 @@ export class CheckInboxAddressResponseDto {
 
   @ApiProperty({ description: 'The mailbox domain this deployment publishes, such as `dev.agentinbox.md`.' })
   domain: string;
+
+  @ApiProperty({
+    description:
+      'Whether a new agent made here, with an account or without one, can be given a look: `POST /human/setup` takes one from a host only then. It is what tells the CLI and the MCP server to ask for a shape and a colour.',
+  })
+  canPickLook: boolean;
 }
 
 /** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */

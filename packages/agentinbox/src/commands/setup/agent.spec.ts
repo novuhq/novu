@@ -5,17 +5,27 @@ const findRelayAgent = vi.fn();
 const checkInboxAddress = vi.fn();
 const setupRelay = vi.fn();
 
+const info = vi.fn();
+
 vi.mock('../../api/agent-inbox', () => ({
   findRelayAgent: (...args: unknown[]) => findRelayAgent(...args),
   checkInboxAddress: (...args: unknown[]) => checkInboxAddress(...args),
   setupRelay: (...args: unknown[]) => setupRelay(...args),
 }));
 
+vi.mock('../../cli-io', async (original) => ({
+  ...(await original<object>()),
+  info: (...args: unknown[]) => info(...args),
+}));
+
 const { resolveNewAgent, setUpAgent, toHandle } = await import('./agent');
 
 const client = {} as Parameters<typeof resolveNewAgent>[0];
 
-/** A terminal: the answers, in turn, and what it was asked and told. */
+/**
+ * A terminal: the answers, in turn, whether typed or picked from a few, and what it was asked and told.
+ * `<enter>` keeps what a question starts on.
+ */
 function terminal(...answers: string[]) {
   const said: string[] = [];
   const prompt = vi.fn(async (_question: string, options?: { initial?: string }) => {
@@ -23,10 +33,16 @@ function terminal(...answers: string[]) {
 
     return answer === undefined || answer === '<enter>' ? (options?.initial ?? '') : answer;
   });
+  const pick = vi.fn(async (_question: string, options: { choices: readonly string[]; initial?: string }) => {
+    const answer = answers.shift();
+
+    return answer === undefined || answer === '<enter>' ? (options.initial ?? options.choices[0]) : answer;
+  });
 
   return {
     said,
     prompt,
+    pick,
     io: {
       isTTY: true,
       write: (text: string) => {
@@ -35,6 +51,7 @@ function terminal(...answers: string[]) {
       prompt,
       promptSecret: vi.fn(),
       openInBrowser: vi.fn(),
+      pick: pick as never,
     },
   };
 }
@@ -294,6 +311,108 @@ describe('resolveNewAgent', () => {
       resolveNewAgent(client, 'human-relay', { agentName: 'Atlas' }, undefined, noTerminal())
     ).resolves.toEqual({ agentName: 'Atlas' });
     expect(checkInboxAddress).not.toHaveBeenCalled();
+  });
+
+  describe('its look', () => {
+    /** The API says, with every address it checks, that a new agent can be given a look. */
+    function looksCanBePicked() {
+      checkInboxAddress.mockImplementation(async (_client: unknown, handle: string | undefined) => ({
+        handle: handle ?? '',
+        available: true,
+        domain: 'agentinbox.md',
+        canPickLook: true,
+      }));
+    }
+
+    it('asks for the shape and the colour after the address, where the API says a look can be picked', async () => {
+      looksCanBePicked();
+      const { io, prompt, pick } = terminal('Atlas', '<enter>', 'drop', 'coral');
+
+      await expect(resolveNewAgent(client, 'human-relay', {}, undefined, io)).resolves.toEqual({
+        agentName: 'Atlas',
+        inboxHandle: 'atlas',
+        look: { shape: 'drop', color: 'coral' },
+      });
+      expect(prompt.mock.calls.map(([question]) => question)).toEqual([
+        "Your agent's name: ",
+        "Your agent's address: ",
+      ]);
+      // The look is picked from the ones there are, not typed.
+      expect(pick.mock.calls.map(([question]) => question)).toEqual(['Shape: ', 'Color: ']);
+    });
+
+    it('sends no look for whoever keeps the orange orb', async () => {
+      looksCanBePicked();
+      const { io } = terminal('Atlas', '<enter>', '<enter>', '<enter>');
+
+      await expect(resolveNewAgent(client, 'human-relay', {}, undefined, io)).resolves.toEqual({
+        agentName: 'Atlas',
+        inboxHandle: 'atlas',
+      });
+    });
+
+    it('asks nothing about the look where the API doesn’t say one can be picked', async () => {
+      const { io, prompt, pick } = terminal('Atlas', '<enter>');
+
+      await expect(resolveNewAgent(client, 'human-relay', {}, undefined, io)).resolves.toEqual({
+        agentName: 'Atlas',
+        inboxHandle: 'atlas',
+      });
+      expect(prompt).toHaveBeenCalledTimes(2);
+      expect(pick).not.toHaveBeenCalled();
+    });
+
+    it('takes --agent-shape and --agent-color as they are, with no terminal and nothing asked', async () => {
+      await expect(
+        resolveNewAgent(client, 'human-relay', { agentName: 'Atlas', agentShape: 'Drop' }, undefined, noTerminal())
+      ).resolves.toEqual({ agentName: 'Atlas', look: { shape: 'drop' } });
+      expect(checkInboxAddress).not.toHaveBeenCalled();
+    });
+
+    it('doesn’t ask whoever passed the look, even where one can be picked', async () => {
+      looksCanBePicked();
+      const { io, prompt, pick } = terminal('Atlas', '<enter>');
+
+      await expect(resolveNewAgent(client, 'human-relay', { agentColor: 'bone' }, undefined, io)).resolves.toEqual({
+        agentName: 'Atlas',
+        inboxHandle: 'atlas',
+        look: { color: 'bone' },
+      });
+      expect(prompt).toHaveBeenCalledTimes(2);
+      expect(pick).not.toHaveBeenCalled();
+    });
+
+    it('doesn’t ask whoever passed the address: they say the look the same way', async () => {
+      looksCanBePicked();
+      const { io, prompt, pick } = terminal();
+
+      await expect(
+        resolveNewAgent(client, 'human-relay', { agentName: 'Atlas', agentHandle: 'atlas' }, undefined, io)
+      ).resolves.toEqual({ agentName: 'Atlas', inboxHandle: 'atlas' });
+      expect(prompt).not.toHaveBeenCalled();
+      expect(pick).not.toHaveBeenCalled();
+    });
+
+    it('stops before anything is asked for a shape there is none of', async () => {
+      const { io, prompt } = terminal('Atlas');
+
+      await expect(resolveNewAgent(client, 'human-relay', { agentShape: 'cube' }, undefined, io)).rejects.toThrow(
+        '--agent-shape takes orb, pebble, drop, bean, peek or mochi.'
+      );
+      expect(findRelayAgent).not.toHaveBeenCalled();
+      expect(prompt).not.toHaveBeenCalled();
+    });
+
+    it('sends no look for an agent that exists, and says it keeps the one it has', async () => {
+      findRelayAgent.mockResolvedValue({ agentId: 'agent_1', name: 'Atlas' });
+
+      await expect(
+        resolveNewAgent(client, 'human-relay', { agentShape: 'drop', agentColor: 'coral' }, undefined, noTerminal())
+      ).resolves.toEqual({});
+      expect(info).toHaveBeenCalledWith(
+        "Your agent keeps the look it has: a look can't be changed once the agent is made."
+      );
+    });
   });
 });
 

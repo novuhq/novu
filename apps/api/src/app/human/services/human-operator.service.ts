@@ -1,6 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
+import { type AgentEntity, AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
+import type { HumanOperatorResponseDto } from '../dtos/setup-human-relay.dto';
+import { agentLookOf } from './agent-look';
 import { buildRelayOwnerCardName } from './relay-owner-name';
 
 /** The subscriberId `human setup` made up for the operator before the API kept track: `human_` and 12 hex characters. */
@@ -38,6 +40,22 @@ export class HumanOperatorService {
   }
 
   /**
+   * The operator's contact, and the agent's look for the CLI's mascot, from one read of the agent. It is what
+   * the CLI asks right after `login`, when it knows neither. Before `human setup` has made the agent there is
+   * no look, and nobody is its operator.
+   */
+  async describe(scope: RelayScope): Promise<HumanOperatorResponseDto> {
+    const agent = await this.findRelayAgent(scope);
+    if (!agent) {
+      return {};
+    }
+
+    const subscriberId = await this.findForAgent({ ...scope, agentId: agent._id });
+
+    return { ...(subscriberId ? { subscriberId } : {}), agentLook: agentLookOf(agent) };
+  }
+
+  /**
    * The relay agent and its operator, for a call that changes the operator's own contact. A 404 before
    * `human setup` has made the agent, or while nobody is set up as its operator.
    */
@@ -62,16 +80,20 @@ export class HumanOperatorService {
   }
 
   private async findRelayAgentId(scope: RelayScope): Promise<string | null> {
+    return (await this.findRelayAgent(scope))?._id ?? null;
+  }
+
+  private async findRelayAgent(scope: RelayScope): Promise<Pick<AgentEntity, '_id' | 'look'> | null> {
     const agent = await this.agentRepository.findOne(
       {
         identifier: scope.agentIdentifier,
         _environmentId: scope.environmentId,
         _organizationId: scope.organizationId,
       },
-      ['_id', 'runtime']
+      ['_id', 'runtime', 'look']
     );
 
-    return agent?.runtime === 'human_relay' ? agent._id : null;
+    return agent?.runtime === 'human_relay' ? agent : null;
   }
 
   /**

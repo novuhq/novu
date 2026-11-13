@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AgentLookDto } from '../../../human/dtos/human-agent-look.dto';
 
 export class SlackSetupLinkStatusResponseDto {
   @ApiProperty({ type: Boolean })
@@ -16,4 +17,11 @@ export class SlackSetupLinkStatusResponseDto {
 
   @ApiPropertyOptional({ type: String, description: 'Provider being configured (always "slack")' })
   providerName?: string;
+
+  @ApiPropertyOptional({
+    type: AgentLookDto,
+    description:
+      'An Agent Inbox agent’s look, for the mascot on its setup page. Missing while its mascots show the original one.',
+  })
+  agentLook?: AgentLookDto;
 }

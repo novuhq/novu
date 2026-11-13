@@ -204,7 +204,7 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     expectNotAvailable(await readCard(`other-${inboxRoutingKey}`));
   });
 
-  it('keeps the look the operator picked on the dashboard, and ignores one a host sends', async () => {
+  it('keeps the look the operator picked on the dashboard, and ignores one a host sends while looks are off', async () => {
     const picked = { shape: 'bean', color: 'marigold', art: { kind: 'waves', seed: 4242 } };
     const { session, handle } = await createAgent({ agentName: 'Atlas', look: picked });
 
@@ -212,7 +212,7 @@ describe('Agent Inbox public agent card #novu-v2', () => {
     const agent = await asDashboard(session, 'get', '/v1/human/agent');
     expect(agent.body.data.look).to.deep.equal(picked);
 
-    // Hosts hold the same key, but the look is the operator's to pick: setup from a host leaves the original one.
+    // A host may pick a look only where looks are on for the account: here its setup leaves the original one.
     const hostSession = new UserSession();
     await hostSession.initialize();
     const hostHandle = freshHandle();
@@ -222,6 +222,47 @@ describe('Agent Inbox public agent card #novu-v2', () => {
       .send({ operator: true, firstName: 'Ada', inboxHandle: hostHandle, agentName: 'Juno', look: picked });
     expect(fromHost.status).to.equal(200, JSON.stringify(fromHost.body));
     expect((await readCard(hostHandle)).data.data.look).to.deep.equal(ORIGINAL_LOOK);
+  });
+
+  it('takes the look a host picks for a new agent once looks are on for the account', async () => {
+    const flag = process.env.IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED;
+    process.env.IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'true';
+
+    try {
+      const session = new UserSession();
+      await session.initialize();
+      const handle = freshHandle();
+      const asHost = (method: 'get' | 'post', path: string) =>
+        session.testAgent[method](path).set('Authorization', `ApiKey ${session.apiKey}`);
+
+      // What a host asks before it makes the agent says a look can be picked.
+      const check = await asHost('get', '/v1/human/inbox-address').query({ handle });
+      expect(check.status).to.equal(200, JSON.stringify(check.body));
+      expect(check.body.data.canPickLook).to.equal(true);
+
+      // A shape alone: the colour and the art are the original look's.
+      const made = await asHost('post', '/v1/human/setup').send({
+        operator: true,
+        firstName: 'Ada',
+        inboxHandle: handle,
+        agentName: 'Juno',
+        look: { shape: 'drop' },
+      });
+      expect(made.status).to.equal(200, JSON.stringify(made.body));
+      const picked = { shape: 'drop', color: 'ember', art: { kind: 'rays', seed: 0 } };
+      expect(made.body.data.look).to.deep.equal(picked);
+      expect((await readCard(handle)).data.data.look).to.deep.equal(picked);
+
+      // An agent that exists keeps its look, whatever a later setup asks for.
+      const again = await asHost('post', '/v1/human/setup').send({
+        operator: true,
+        look: { shape: 'bean', color: 'bone' },
+      });
+      expect(again.status).to.equal(200, JSON.stringify(again.body));
+      expect(again.body.data.look).to.deep.equal(picked);
+    } finally {
+      restoreEnv('IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED', flag);
+    }
   });
 
   it('refuses a look it doesn’t know', async () => {
