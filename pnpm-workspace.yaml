@@ -469,7 +469,19 @@ overrides:
   # in 4.13.5; stay on the 4.x line (patch bump within 4.x).
   # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
   # middleware on static paths. Patched in 4.13.11.
-  hono@<4.13.11: ^4.13.11
+  # GHSA-4m76-xfj5-7975 (moderate): `mount()` / `app.mount()` forwards a path
+  # that bypasses middleware scoped inside the mount prefix.
+  # GHSA-h7mg-cq63-vhpq (moderate): RegExpRouter skips wildcard middleware
+  # for some route sets and for paths with an encoded line terminator.
+  # GHSA-46wx-v44x-9hh2 (moderate): `csrf()` does not check requests sent by
+  # hyperlink auditing (`text/ping`).
+  # GHSA-4h7h-rv7c-7m2v (moderate): `validator('form')` skips validation for
+  # `multipart/form-data` requests with extra parameters. All four are
+  # patched in 4.13.16 (patch bump within the 4.13.x line). Widen the previous
+  # `<4.13.11` floor so transitive consumers (packages/framework,
+  # enterprise/workers/socket, @modelcontextprotocol/sdk, @hono/node-server)
+  # pick up the fix.
+  hono@<4.13.16: ^4.13.16
   # GHSA-rmxm-3fg6-px4f (moderate): @hono/node-server 1.19.10 - 2.1.2 passes
   # the full request URL (including query string) to the Node.js HTTP response
   # body-less code path, enabling response-splitting / request-smuggling-like
