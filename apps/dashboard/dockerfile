@@ -17,6 +17,8 @@ COPY tsconfig.json .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
+# pnpm-workspace.yaml lists patchedDependencies, which pnpm install reads from here
+COPY patches ./patches
 
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
