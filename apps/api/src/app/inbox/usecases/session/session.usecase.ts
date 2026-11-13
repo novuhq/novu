@@ -66,6 +66,12 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import {
+  parseSessionClient,
+  SubscriberSessionAuthMethodEnum,
+  SubscriberSessionAuthStatsService,
+  UNKNOWN_SESSION_CLIENT,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
@@ -113,7 +119,8 @@ export class Session {
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
     private updatePreferencesUsecase: UpdatePreferences,
-    private keylessAbuseGuard: KeylessAbuseGuardService
+    private keylessAbuseGuard: KeylessAbuseGuardService,
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -146,6 +153,11 @@ export class Session {
     const { integration: inAppIntegration } = selection;
 
     const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+    const hmacValid = isHmacValidForAnyKey(
+      environmentApiKeys,
+      subscriber.subscriberId,
+      command.requestData.subscriberHash
+    );
 
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
@@ -182,11 +194,7 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
-        allowUpdate: isHmacValidForAnyKey(
-          environmentApiKeys,
-          subscriber.subscriberId,
-          command.requestData.subscriberHash
-        ),
+        allowUpdate: hmacValid,
       })
     );
 
@@ -287,6 +295,12 @@ export class Session {
         }
       );
     }
+
+    void this.subscriberSessionAuthStatsService.record({
+      environmentId: environment._id,
+      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
+      client: parseSessionClient(command.clientVersion) ?? UNKNOWN_SESSION_CLIENT,
+    });
 
     return {
       applicationIdentifier: environment.identifier,

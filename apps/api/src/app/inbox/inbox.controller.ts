@@ -163,6 +163,7 @@ export class InboxController {
   async sessionInitialize(
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string,
+    @Headers('novu-client-version') clientVersion: string,
     @Req() request: Request
   ): Promise<SubscriberSessionResponseDto> {
     return await this.initializeSessionUsecase.execute(
@@ -170,6 +171,7 @@ export class InboxController {
         requestData: body,
         origin,
         clientIp: getClientIp(request) ?? undefined,
+        clientVersion,
       })
     );
   }
