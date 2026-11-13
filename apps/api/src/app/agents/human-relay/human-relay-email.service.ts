@@ -3,6 +3,7 @@ import type { EmailLayoutMessage, EmailLayoutResult } from '@novu/chat-adapter-e
 import { AgentRepository, HumanContactRepository, SubscriberRepository } from '@novu/dal';
 import { buildHumanAgentEmail } from '../../human/email/human-agent-email.template';
 import type { HumanEmailParties } from '../../human/email/human-email-layout';
+import { AgentInboxFeaturesService } from '../../human/services/agent-inbox-features.service';
 import { agentPictureOrDefaultUrl } from '../../human/services/agent-picture-url';
 import { HumanOperatorService } from '../../human/services/human-operator.service';
 import { buildRelayOwnerName, resolveRelayAgentName } from '../../human/services/relay-owner-name';
@@ -20,7 +21,8 @@ export class HumanRelayEmailService {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly humanContactRepository: HumanContactRepository,
-    private readonly operatorService: HumanOperatorService
+    private readonly operatorService: HumanOperatorService,
+    private readonly features: AgentInboxFeaturesService
   ) {}
 
   async layout(
@@ -43,7 +45,7 @@ export class HumanRelayEmailService {
     const [agent, operatorId, contacts] = await Promise.all([
       this.agentRepository.findOne(
         { _id: scope.agentId, _environmentId: scope.environmentId, _organizationId: scope.organizationId },
-        ['_id', '_environmentId', 'name', 'picture']
+        ['_id', '_environmentId', '_organizationId', 'name', 'picture', 'look']
       ),
       this.operatorService.findForAgent(scope),
       this.humanContactRepository.findContactsByEmailAddress(
@@ -67,12 +69,17 @@ export class HumanRelayEmailService {
     const operatorName = buildRelayOwnerName(operator?.firstName, operator?.lastName);
     const contactName = buildRelayOwnerName(contact?.firstName, contact?.lastName);
     const contactFirstName = contact?.firstName?.trim();
+    // Only an agent with no picture of its own shows its mascot, so only then is its look asked for.
+    const look = agent && !agent.picture?.storageKey ? await this.features.mascotLookOf(agent) : null;
 
     return {
       sender: {
         ...(agentName ? { agentName } : {}),
         ...(operatorName ? { operatorName } : {}),
-        pictureUrl: agentPictureOrDefaultUrl(agent ?? { _id: scope.agentId, _environmentId: scope.environmentId }),
+        pictureUrl: agentPictureOrDefaultUrl(
+          agent ?? { _id: scope.agentId, _environmentId: scope.environmentId },
+          look
+        ),
       },
       recipient: {
         ...(contactName ? { name: contactName } : {}),

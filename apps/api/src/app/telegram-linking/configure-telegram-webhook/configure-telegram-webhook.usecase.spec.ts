@@ -42,13 +42,15 @@ describe('ConfigureTelegramWebhook', () => {
     };
     const agentLinkResolver = { resolveOptional: sinon.stub().resolves(agent) };
     const botProfile = { apply: sinon.stub().resolves() };
+    const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(null) };
     const usecase = new ConfigureTelegramWebhook(
       integrationRepository as never,
       agentLinkResolver as never,
-      botProfile as never
+      botProfile as never,
+      agentInboxFeatures as never
     );
 
-    return { usecase, integrationRepository, botProfile };
+    return { usecase, integrationRepository, botProfile, agentInboxFeatures };
   }
 
   beforeEach(() => {
@@ -110,8 +112,19 @@ describe('ConfigureTelegramWebhook', () => {
 
     expect(botProfile.apply.firstCall.args).to.deep.equal([
       'bot-token',
-      { name: 'Deploy bot', picture: 'default-if-none' },
+      { name: 'Deploy bot', picture: 'default-if-none', mascot: null },
     ]);
+  });
+
+  it('gives that bot the mascot in the agent’s look once its mascots show it', async () => {
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'rays', seed: 0 } } as const;
+    const { usecase, botProfile, agentInboxFeatures } = setup({ ...RELAY_AGENT, agentLook: look });
+    agentInboxFeatures.mascotLookOf.resolves(look);
+
+    await usecase.execute(buildCommand());
+
+    expect(agentInboxFeatures.mascotLookOf.firstCall.args[0]).to.deep.equal({ _organizationId: 'org-1', look });
+    expect(botProfile.apply.firstCall.args[1]).to.deep.include({ picture: 'default-if-none', mascot: look });
   });
 
   it('gives the bot of a Human agent its own picture', async () => {
@@ -121,6 +134,7 @@ describe('ConfigureTelegramWebhook', () => {
     await usecase.execute(buildCommand());
 
     expect(botProfile.apply.firstCall.args[1].picture).to.deep.equal(picture);
+    expect(botProfile.apply.firstCall.args[1].mascot).to.equal(null);
   });
 
   it('leaves the profile of any other agent’s bot alone', async () => {

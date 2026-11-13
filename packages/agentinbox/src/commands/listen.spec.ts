@@ -197,6 +197,31 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
   });
 
+  it('keeps how the agent looks, as the lease’s status says it, for the next screen to open in', async () => {
+    api.look = { shape: 'drop', color: 'coral', art: { kind: 'waves', seed: 7 } };
+    const { deps: listener } = deps();
+
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
+
+    // Only what the terminal draws is kept, next to everything else saved here.
+    expect(config()).toMatchObject({ look: { shape: 'drop', color: 'coral' }, subscriberId: 'ada' });
+    expect(config().computerId).toMatch(/^cmp_/);
+    // Nothing was asked for the look alone.
+    expect(api.callsTo('GET', '/v1/listen/lease')).toHaveLength(1);
+  });
+
+  it('leaves the saved look alone when an API from before looks says nothing, or names one this CLI can’t draw', async () => {
+    const saved = { ...config(), look: { shape: 'bean', color: 'bone' } };
+    writeFileSync(join(dir, 'config.json'), JSON.stringify(saved));
+
+    await listenOn('claude-code', {}, deps().deps);
+    expect(config().look).toEqual({ shape: 'bean', color: 'bone' });
+
+    api.look = { shape: 'cube', color: 'coral' };
+    await listenOn('claude-code', {}, deps().deps);
+    expect(config().look).toEqual({ shape: 'bean', color: 'bone' });
+  });
+
   it('keeps the limits it was given', async () => {
     const { deps: listener, store } = deps();
 
@@ -638,6 +663,14 @@ describe('listen status', () => {
       new RegExp(`^Listening on MacBook \\(this computer\\): Claude Code, in ${project}, for \\d+s now\\.$`)
     );
     expect(lines[1]).toBe(`This computer listens for Claude Code in ${project}, in the background (launchd).`);
+  });
+
+  it('keeps how the agent looks too, since its answer says it', async () => {
+    api.look = { shape: 'mochi', color: 'marigold' };
+
+    expect(await listenStatus({}, deps().deps)).toBe(EXIT_OK);
+
+    expect(config().look).toEqual({ shape: 'mochi', color: 'marigold' });
   });
 
   it('says the agent is paused, where it is still listening, and what this computer does', async () => {

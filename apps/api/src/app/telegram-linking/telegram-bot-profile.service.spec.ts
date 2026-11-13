@@ -154,6 +154,30 @@ describe('TelegramBotProfile', () => {
     });
   });
 
+  describe('when the agent’s mascots show its look', () => {
+    it('gives a bot with no photo the mascot in that look, as a JPEG', async () => {
+      await profile.apply(BOT_TOKEN, { picture: 'default-if-none', mascot: { shape: 'drop', color: 'coral' } });
+
+      expect(String(fetchStub.firstCall.args[0])).to.equal(`${DASHBOARD_URL}/brand/mascot/drop-coral.jpg`);
+      expect((await uploadedPicture()).type).to.equal('image/jpeg');
+    });
+
+    it('puts it where a picture was taken away', async () => {
+      await profile.apply(BOT_TOKEN, { picture: null, mascot: { shape: 'peek', color: 'bone' } });
+
+      expect(telegramMethods()).to.deep.equal(['removeMyProfilePhoto']);
+      expect(String(fetchStub.firstCall.args[0])).to.equal(`${DASHBOARD_URL}/brand/mascot/peek-bone.jpg`);
+    });
+
+    it('still leaves a bot that already has a photo alone', async () => {
+      answers.getUserProfilePhotos = { ok: true, result: { total_count: 1, photos: [[]] } };
+
+      await profile.apply(BOT_TOKEN, { picture: 'default-if-none', mascot: { shape: 'drop', color: 'coral' } });
+
+      expect(fetchStub.called).to.equal(false);
+    });
+  });
+
   describe('when the agent’s own picture was taken away', () => {
     it('removes it and puts the default picture there, without asking what the bot has', async () => {
       answers.getUserProfilePhotos = { ok: true, result: { total_count: 1, photos: [[]] } };

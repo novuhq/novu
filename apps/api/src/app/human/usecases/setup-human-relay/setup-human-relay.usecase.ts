@@ -90,6 +90,8 @@ export class SetupHumanRelay {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
+      // Its look goes along so the CLI's mascot can be the agent's own from here on.
+      look: agentLookOf(agent),
       subscriberId,
       ...inbox,
     };

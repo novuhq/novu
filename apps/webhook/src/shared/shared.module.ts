@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, featureFlagsService } from '@novu/application-generic';
 import { DalService, ExecutionDetailsRepository, IntegrationRepository, MessageRepository } from '@novu/dal';
 
 const DAL_MODELS = [ExecutionDetailsRepository, MessageRepository, IntegrationRepository];
@@ -16,6 +16,7 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
+  featureFlagsService,
   {
     provide: AnalyticsService,
     useFactory: async () => {

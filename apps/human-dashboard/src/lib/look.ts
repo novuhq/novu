@@ -307,6 +307,44 @@ export function lookOf(value: unknown): AgentLook {
   return isAgentLook(value) ? value : ORIGINAL_LOOK;
 }
 
+/** The glow behind the small mascot as it always was: the dark red of the design's `Mascot`. */
+const ORIGINAL_GLOW = '#6b210d';
+
+/**
+ * The colour at the middle of the glow behind a small mascot (`AgentAvatar`): a dark tone of the mascot's own
+ * colour, as the dark red is of ember.
+ */
+export function glowOf(color: LookColor): string {
+  if (color === 'ember') {
+    return ORIGINAL_GLOW;
+  }
+
+  const { tones } = LOOK_PALETTES[color];
+
+  return `rgb(${mixRgb(tones[2], tones[1], 0.2).join(' ')})`;
+}
+
+/** The part of a look a mascot is drawn from: its body and its colour. */
+export type MascotLook = Pick<AgentLook, 'shape' | 'color'>;
+
+/**
+ * The body and colour a mascot outside the card is drawn in, from whatever a page was handed: an API answer's
+ * look, or the two words on a link. `null` where there is none, or one this page doesn't know, and the mascot
+ * then shows as it always has.
+ */
+export function mascotLookOf(value: unknown): MascotLook | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const look = value as { shape?: unknown; color?: unknown };
+  const known =
+    (MASCOT_BODIES as readonly unknown[]).includes(look.shape) &&
+    (LOOK_COLORS as readonly unknown[]).includes(look.color);
+
+  return known ? { shape: look.shape as MascotBody, color: look.color as LookColor } : null;
+}
+
 /** Whether two looks draw the same. */
 export function sameLook(a: AgentLook, b: AgentLook): boolean {
   return a.shape === b.shape && a.color === b.color && a.art.kind === b.art.kind && a.art.seed === b.art.seed;

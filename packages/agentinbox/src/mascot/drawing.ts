@@ -24,6 +24,8 @@ import {
   type BodyOutline,
   type LookColor,
   type MascotBody,
+  mixOutlines,
+  mixRgb,
   outlineRadius,
   type TerminalPalette,
   terminalPalette,
@@ -98,12 +100,58 @@ export const MASCOT_DARK_EYE_COLOR: Rgb = [0x17, 0x12, 0x0f];
 export interface MascotForm {
   outline: BodyOutline;
   palette: TerminalPalette;
+  /**
+   * The colour of its eyes while it bends from a look with light eyes into one with dark eyes, or back (see
+   * {@link mixForms}). Eyes of this colour are drawn on any background, so they turn from one into the other in
+   * sight; only once the bend is over are the eyes the background already shows left out again.
+   */
+  eyesTurning?: Rgb;
 }
 
 export const ORIGINAL_FORM: MascotForm = formOf('orb', 'ember');
 
 export function formOf(body: MascotBody, color: LookColor): MascotForm {
   return { outline: BODY_OUTLINES[body], palette: terminalPalette(color) };
+}
+
+/**
+ * A mascot on its way from one form to the other, `share` of the way, as the dashboard's `mixForms` has it: the
+ * outline bends and the tones blend. At 0 and 1 it is exactly the form at that end. Where one has light eyes and
+ * the other dark ones, the eyes blend too (`eyesTurning`), and so do those of a form that was itself on its way.
+ */
+export function mixForms(from: MascotForm, to: MascotForm, share: number): MascotForm {
+  if (share <= 0) {
+    return from;
+  }
+  if (share >= 1) {
+    return to;
+  }
+
+  const blend = (tones: readonly Rgb[], into: readonly Rgb[]) =>
+    tones.map((tone, level) => mixRgb(tone, into[level], share));
+  const turning = Boolean(from.eyesTurning || to.eyesTurning) || from.palette.eyes !== to.palette.eyes;
+
+  return {
+    outline: mixOutlines(from.outline, to.outline, share),
+    palette: {
+      dark: blend(from.palette.dark, to.palette.dark),
+      light: blend(from.palette.light, to.palette.light),
+      eyes: to.palette.eyes,
+    },
+    ...(turning ? { eyesTurning: mixRgb(eyeColorOf(from), eyeColorOf(to), share) } : {}),
+  };
+}
+
+function eyeColorOf(form: MascotForm): Rgb {
+  return form.eyesTurning ?? (form.palette.eyes === 'dark' ? MASCOT_DARK_EYE_COLOR : MASCOT_EYE_COLOR);
+}
+
+/**
+ * Eyes are drawn where they differ from the background behind the mascot, and left out where they don't. Eyes on
+ * their way from light to dark, or back, are always drawn.
+ */
+function eyesAreDrawn(form: MascotForm, theme: Theme): boolean {
+  return form.eyesTurning !== undefined || (theme === 'light') === (form.palette.eyes === 'dark');
 }
 
 /** The widths the mascot is drawn at, in dots, from the largest: 40, 32 and 24 columns. */
@@ -114,7 +162,7 @@ export const SHIMMER = 0.08;
 
 export function dotColor(level: number, theme: Theme = 'dark', form: MascotForm = ORIGINAL_FORM): Rgb {
   if (level === EYE) {
-    return form.palette.eyes === 'dark' ? MASCOT_DARK_EYE_COLOR : MASCOT_EYE_COLOR;
+    return eyeColorOf(form);
   }
 
   return (theme === 'light' ? form.palette.light : form.palette.dark)[level - 1];
@@ -212,7 +260,7 @@ export interface DrawOptions {
   theme?: Theme;
   /**
    * Its body and colour, the orb in ember by default. Dark eyes are left out on a dark background instead, where
-   * the background is the colour they need.
+   * the background is the colour they need. Eyes on their way from light to dark, or back, are always drawn.
    */
   form?: MascotForm;
 }
@@ -240,8 +288,7 @@ export function drawMascot(width: number, face: MascotFace, options: DrawOptions
       halfWidth: eye.halfWidth * shift.scale,
     };
   });
-  // Eyes are drawn where they differ from the background behind the mascot, and left out where they don't.
-  const eyesShow = (theme === 'light') === (form.palette.eyes === 'dark');
+  const eyesShow = eyesAreDrawn(form, theme);
   // The shimmer is two slow waves across the dots, as on the landing page.
   const across = time * 0.00012 * 9;
   const down = time * 0.00009 * 7;

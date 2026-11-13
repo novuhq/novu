@@ -12,6 +12,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
 import { humanRelayProfile } from '../../agents/human-relay/human-relay-identity';
+import { AgentInboxFeaturesService } from '../../human/services/agent-inbox-features.service';
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
 import { TelegramBotProfile } from '../telegram-bot-profile.service';
 import {
@@ -74,7 +75,8 @@ export class ConfigureTelegramWebhook {
   constructor(
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentLinkResolver: TelegramAgentLinkResolver,
-    private readonly botProfile: TelegramBotProfile
+    private readonly botProfile: TelegramBotProfile,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   async execute(command: ConfigureTelegramWebhookCommand): Promise<TelegramSetWebhookResult> {
@@ -127,10 +129,19 @@ export class ConfigureTelegramWebhook {
     await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
 
     // A Human agent speaks as itself, so the bot takes the name, description and picture its operator gave it.
+    // With no picture, a bot that has no photo yet takes the agent's mascot, in the look its mascots show.
     if (agent?.agentRuntime === 'human_relay') {
+      const mascot = agent.agentPicture
+        ? null
+        : await this.agentInboxFeatures.mascotLookOf({
+            _organizationId: command.organizationId,
+            look: agent.agentLook,
+          });
+
       await this.botProfile.apply(botToken, {
         ...humanRelayProfile({ name: agent.agentName, description: agent.agentDescription }),
         picture: agent.agentPicture ?? 'default-if-none',
+        mascot,
       });
     }
 

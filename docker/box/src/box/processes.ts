@@ -21,7 +21,11 @@ export const PROCESSES: Readonly<Record<string, ProcessEntry>> = {
   socket: { kind: 'app', paths: ['enterprise/workers/socket/'] },
   dashboard: { kind: 'app', projects: ['@novu/dashboard'] },
   stripe: { kind: 'app' },
-  bridge: { kind: 'app', projects: ['@novu/framework', '@novu/agent-toolkit'], paths: ['playground/nextjs/'] },
+  bridge: {
+    kind: 'app',
+    projects: ['@novu/framework', '@novu/agent-toolkit', '@novu/js', '@novu/react', '@novu/nextjs'],
+    paths: ['playground/nextjs/'],
+  },
   thalamus: { kind: 'app', paths: ['enterprise/workers/thalamus-observer/'] },
 };
 

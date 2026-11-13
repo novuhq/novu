@@ -135,7 +135,8 @@ const commands: Record<string, Command> = {
 const NOTES = `boxes run on Cloudflare, all of them in one host Worker.
 every command but deploy takes:
   --box <name>  default the current branch; the box is https://<name>.box.novu-staging.co,
-                its API https://<name>-api.box.novu-staging.co.
+                its API https://<name>-api.box.novu-staging.co, the playground's customer pages
+                https://<name>-app.box.novu-staging.co.
                 \`up --deploy\` redeploys the host (after a change to docker/box), which applies to every box.
                 \`up --from <box>\` starts a new box from that box's latest snapshot instead of baking.
                 Without --box, \`up\` is this branch's box: a new one starts from \`base\` (when it has a

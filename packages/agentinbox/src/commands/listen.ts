@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 import { version } from '../../package.json';
+import { rememberLook } from '../agent-look';
 import { type ApiClient, createApiClient } from '../api/client';
 import {
   errorCode,
@@ -49,8 +50,9 @@ import {
   PAUSED_MESSAGE,
   uncheckedSignInMessage,
 } from '../listen/words';
+import { lookOf } from '../mascot/look';
 import { EXIT_DENIED, EXIT_ERROR, EXIT_GONE, EXIT_OK, EXIT_TIMEOUT, fail, formatRelativeTime } from '../output';
-import { openScreen, type Screen } from '../screen/screen';
+import { openedScreen, openScreen, type Screen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError, parseDuration } from './interact';
 
@@ -93,7 +95,11 @@ export interface ListenDeps {
 export async function listenCommand(what: string, options: ListenOptions): Promise<never> {
   const word = what.trim().toLowerCase();
   const turningOn = word !== 'run' && word !== 'status' && word !== 'stop';
-  const screen = turningOn && personAtTerminal() ? await openScreen({ command: `listen ${word}` }) : null;
+  // `listen` only ever acts as the agent saved on this computer (see `savedConfig`), so its look is the saved one.
+  const screen =
+    turningOn && personAtTerminal()
+      ? await openScreen({ command: `listen ${word}`, look: lookOf(loadConfig()?.look) })
+      : null;
   let ended = false;
   const endScreen = async (emotion: 'happy' | 'asleep') => {
     if (screen && !ended) {
@@ -284,7 +290,12 @@ async function planListen(hostInput: string, options: ListenOptions, deps: Liste
 
   const computerId = ensureComputerId(config);
   const client = clientFor(config, host.id);
-  const { listening: holder, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const lease = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const { listening: holder, paused } = lease;
+  // The answer says how the agent looks, which a computer connected before looks were kept doesn't know yet. It
+  // is kept whether or not there is a screen to show it on.
+  const look = rememberLook(config, lease.look) ?? lookOf(config.look);
+  openedScreen()?.look(look);
   if (paused) {
     throw new Error(PAUSED_MESSAGE);
   }
@@ -654,7 +665,9 @@ async function statusFacts(deps: ListenDeps): Promise<StatusFacts> {
   const config = savedConfig(deps.env);
   const state = deps.store.load();
   const client = clientFor(config, state?.host ?? 'claude-code');
-  const { listening, paused } = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const lease = await getLease(client, config.relayAgentIdentifier).catch(rethrowKey);
+  const { listening, paused } = lease;
+  rememberLook(config, lease.look);
   const service = deps.service();
   const installed = !isUnsupported(service) && service.isInstalled();
   const sessions = state
