@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { agentPagePairs, CHANNEL_IDS } from '@/data/channel-pages';
+
 import { HOST_IDS } from './host-ids';
 import { markdownNotFoundResponse, prefersMarkdown, servesAppResource } from './markdown-not-found';
 
@@ -37,6 +39,8 @@ function routesIn(dir: string, segments: string[], found: string[]) {
 }
 
 function sampleFor(segments: string[]): string {
+  if (segments.includes('[agent]')) return '/telegram/openclaw';
+
   if (segments.includes('[host]')) {
     const tail = segments[segments.length - 1] === 'index.md' ? '/index.md' : '';
 
@@ -82,6 +86,21 @@ describe('markdown 404', () => {
     expect(servesAppResource('/not-a-host/index.md')).toBe(false);
     expect(servesAppResource('/inbox/missing')).toBe(false);
     expect(servesAppResource('/connect/slack')).toBe(false);
+  });
+
+  it('recognizes every published landing route without accepting unsupported pairs or Markdown documents', () => {
+    const routes = [
+      ...CHANNEL_IDS.map((channel) => `/${channel}`),
+      ...agentPagePairs().map(({ channel, agent }) => `/${channel}/${agent}`),
+    ];
+    for (const route of routes) {
+      expect(servesAppResource(route), route).toBe(true);
+      expect(servesAppResource(`${route}/`), route).toBe(true);
+      expect(servesAppResource(`${route}.md`), route).toBe(false);
+    }
+    for (const route of ['/email/general', '/telegram/unknown', '/unknown/openclaw', '/telegram/openclaw/missing']) {
+      expect(servesAppResource(route), route).toBe(false);
+    }
   });
 
   it('treats text/markdown as the wanted type only when it outranks HTML', () => {

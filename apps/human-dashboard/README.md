@@ -8,6 +8,7 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. A person who is already signed in is sent straight to the inbox. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
 | `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "Visit Dashboard" link into the inbox. A person who is already signed in is sent straight to the inbox. |
+| `/pricing`        | Hobby, Pro ($10/month), and Enterprise; the feature comparison, conversation-counting rules and pricing FAQ. Uses the landing templates' design. See [pricing](docs/pricing.md). |
 | `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it, to `/agents.md` and to each host's page. |
 | `/[host]`, `/[host].md` | A page for each host Agent Inbox has steps for (`/claude-code`, `/codex`, `/chatgpt`, …), and the same as Markdown for agents (`/claude-code.md`, rewritten to `/claude-code/index.md`). Each opens with what to tell the agent, then the same steps as the dashboard's host picker, with "sign in to get your code" where the dashboard has the code. Built from the host list in `src/lib/hosts.ts`; any other address at that level is not found. |
 | `/robots.txt`, `/sitemap.xml` | For search engines. The sitemap lists the public pages (`/`, `/sapien`, and each host page) at `https://www.agentinbox.md` (`SITE_ORIGIN` in `src/lib/seo.ts`), and robots.txt points to it. A new website page is added in `SITE_PAGES`. Those pages, their Markdown, and `/llms.txt` are indexed on production. `SITE_INDEXED` in `src/lib/seo.ts` is that switch. Preview and development deployments always send `noindex`. `SITE_NOINDEX=true` does the same for every route on a deployment that must stay unindexed, such as `staging.agentinbox.md`. Set that on the Vercel environment before the build. |
@@ -183,3 +184,32 @@ The website's browser tests (`tests/`, Playwright) build the app and serve it on
 pnpm --filter @novu/human-dashboard exec playwright install chromium
 pnpm --filter @novu/human-dashboard test:e2e
 ```
+
+## Channel and agent landing templates
+
+The channel template serves `/email`, `/telegram`, and `/slack`. Agent pages use
+`/<channel>/<agent>` for all ten agents on each channel (30 pairs) in `src/data/channel-pages.ts`; unsupported
+pairs are 404s. The existing `src/app/[host]` route also serves host setup pages,
+which retain their prior behavior. New landing routes are included in the sitemap.
+
+Page composition stays in the two route files. Reusable sections live under
+`src/components/pages/channels/`; typed content, supported pairs, setup commands,
+FAQs, and related links live in `src/data/channel-pages.ts`. The templates reuse
+Sapien's fonts, shell, rails, Radix tabs, copy controls, carousel, and FAQ rows.
+
+Figma's reference pages are Telegram and Telegram/OpenClaw. Channel and agent copy,
+setup commands and prompt scenes are filled from the page specification. Shared
+hero artwork still represents Telegram where no separate design was supplied. Source artwork is under
+`public/images/landing/`: vectors are SVG, opaque hero interiors are 2× JPG, and transparent CTA/prompt previews are 2× PNG. Rounded shells and shadows are CSS.
+The screenshots are illustrative examples; the displayed message controls do not
+send messages. Setup and message tabs, copy buttons, FAQs and carousel controls
+are interactive.
+
+Local environment comes from Vercel project `novuhq/agent-inbox-dashboard`,
+Development target, in ignored `.env.local`. Keep values private. Existing pinned
+app dependencies were installed with pnpm 11.28.2 and the root frozen lockfile.
+Sparse checkout also includes existing `patches/` required by that lockfile;
+root manifests and the lockfile remain unchanged.
+
+See [channel page implementation notes](docs/channel-pages.md) for the route matrix,
+setup, content review requirements and visual-audit limitations.

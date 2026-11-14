@@ -2,15 +2,21 @@ import { HOME_FAQ } from '@/data/home';
 import { homeStructuredNodes } from '@/lib/home-structured-data';
 import { contentStructuredData, type PageContent, SITE_ORIGIN, type SitePage, siteStructuredData } from '@/lib/seo';
 
-type SiteStructuredDataProps = { page: SitePage; content?: never } | { content: PageContent; page?: never };
+type SiteStructuredDataProps = ({ page: SitePage; content?: never } | { content: PageContent; page?: never }) & {
+  /** More nodes for the page's graph, such as its FAQPage and BreadcrumbList. */
+  nodes?: object[];
+};
 
 /**
  * What search engines read about the page (JSON-LD), and where language models find `/llms.txt`. One of the
  * two website pages by name, or any other website page, such as a host's, by what it says about itself.
  */
-export function SiteStructuredData({ page, content }: SiteStructuredDataProps) {
+export function SiteStructuredData({ page, content, nodes = [] }: SiteStructuredDataProps) {
   const data = page ? siteStructuredData(page) : contentStructuredData(content);
-  const graph = page === 'home' ? [...data['@graph'], homeFaq(), ...homeStructuredNodes()] : data['@graph'];
+  const graph = [
+    ...(page === 'home' ? [...data['@graph'], homeFaq(), ...homeStructuredNodes()] : data['@graph']),
+    ...nodes,
+  ];
 
   return (
     <>

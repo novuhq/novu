@@ -8,9 +8,11 @@ export type CopyCommandProps = {
   label: string;
   /** "default" shows a labelled Copy button; "icon" shows an icon-only copy button. */
   variant?: 'default' | 'icon';
+  /** Show the `$` shell prompt. Off for text that isn't a shell command, such as an address or a prompt. */
+  prompt?: boolean;
   className?: string;
 };
-export function CopyCommand({ command, label, variant = 'default', className = '' }: CopyCommandProps) {
+export function CopyCommand({ command, label, variant = 'default', prompt = true, className = '' }: CopyCommandProps) {
   const { state, copy } = useClipboard(command);
   const icon = variant === 'icon';
   // Below 360px the 15px command no longer fits beside the icon button, so it
@@ -28,13 +30,15 @@ export function CopyCommand({ command, label, variant = 'default', className = '
           icon ? 'pr-0.5' : 'pr-px'
         )}
       >
-        <span
-          aria-hidden="true"
-          className="-translate-y-px font-sapien-mono text-[15px] leading-[22px] text-accent max-[359px]:text-sm"
-        >
-          $
-        </span>
-        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
+        {prompt && (
+          <span
+            aria-hidden="true"
+            className="-translate-y-px font-sapien-mono text-[15px] leading-[22px] text-accent max-[359px]:text-sm"
+          >
+            $
+          </span>
+        )}
+        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-pre-line select-text max-[359px]:text-sm">
           {command}
         </code>
         {icon ? (

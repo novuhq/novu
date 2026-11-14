@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { footerAssets } from '@/data/sapien-assets';
 
 import { SiteBrand } from './site-brand';
@@ -17,6 +19,9 @@ export function SiteFooter() {
           <NovuMark className="size-3.5" />
           built by novu
         </a>
+        <Link href="/pricing" className="text-sapien-foreground/70 hover:text-accent">
+          pricing
+        </Link>
       </p>
       <SiteNavigation
         label="Footer navigation"
