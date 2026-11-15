@@ -3,6 +3,7 @@ import 'server-only';
 import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
+import type { WhatsAppWebhook } from './human-channels-api';
 import type { FirstMessage } from './whatsapp-first-message';
 
 /**
@@ -19,7 +20,14 @@ export type WhatsAppSetupState =
    * `reconnect` carries the Meta ids while the flow can run: the number is saved before Meta's webhook is set
    * up, so a setup that failed halfway is fixed by connecting again.
    */
-  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds; firstMessage?: FirstMessage }
+  | {
+      step: 'verify';
+      displayPhoneNumber?: string;
+      reconnect?: MetaIds;
+      firstMessage?: FirstMessage;
+      /** Connected with API keys: the webhook that may still be theirs to add in their Meta app. */
+      webhook?: WhatsAppWebhook;
+    }
   /** The business number is linked and the operator's own number is bound to it. */
   | {
       step: 'connected';
@@ -45,6 +53,7 @@ type WhatsAppSetupResponse = {
   operatorNumberBound?: boolean;
   operatorPhoneNumber?: string;
   firstMessage?: FirstMessage;
+  webhook?: WhatsAppWebhook;
 };
 
 /** How far the WhatsApp setup got. Nothing is created here, and a failed read never fails the page. */
@@ -85,7 +94,7 @@ export function toWhatsAppSetupState(setup: WhatsAppSetupResponse): WhatsAppSetu
   }
 
   if (setup.businessConnected) {
-    return { step: 'verify', ...business };
+    return { step: 'verify', ...business, ...(setup.webhook ? { webhook: setup.webhook } : {}) };
   }
 
   return ids ? { step: 'connect', ...ids } : { step: 'unavailable' };

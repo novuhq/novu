@@ -511,7 +511,7 @@ describe('channel_add', () => {
       const { text } = await addChannel('whatsapp');
 
       expect(text).toContain(
-        `WhatsApp Business is connected on +1 555 0100. Give the user this link to connect their own number by sending the agent a code: ${PAGE}`
+        `WhatsApp Business is connected on +1 555 0100. Give the user this link to connect their own number by saying hi to the agent on WhatsApp: ${PAGE}`
       );
     });
 

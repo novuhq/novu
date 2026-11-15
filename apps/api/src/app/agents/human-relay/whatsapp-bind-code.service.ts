@@ -17,6 +17,7 @@ export const WHATSAPP_BIND_CODE_FAILURE_WINDOW_SECONDS = 10 * 60;
 const CODE_LENGTH = 8;
 const CODE_ATTEMPTS = 5;
 const CODE_KEY_PREFIX = 'agent-inbox-whatsapp-code';
+const OPERATOR_KEY_PREFIX = 'agent-inbox-whatsapp-operator';
 const FAILURE_KEY_PREFIX = 'agent-inbox-whatsapp-code-failures';
 
 /**
@@ -144,6 +145,71 @@ export class WhatsAppBindCodeService {
 
     return { status: 'missing' };
   }
+}
+
+/**
+ * The operator's own setup binds without a code: the "Say hi on WhatsApp" step opens a window on the business number,
+ * and the first message from a number not already connected binds it as the operator, then closes the window. Kept
+ * apart from codes, which contacts still need: a contact's invite never opens this window.
+ */
+@Injectable()
+export class WhatsAppOperatorWindowService {
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  /** Opens the window, or starts it over: the drawer opens it again whenever its wait starts over. */
+  async open(payload: WhatsAppBindCodePayload): Promise<{ expiresAt: string }> {
+    if (!this.cacheService.cacheEnabled()) {
+      throw new ServiceUnavailableException({
+        code: 'whatsapp_code_unavailable',
+        message: 'WhatsApp can’t wait for your message right now. Try again in a moment.',
+      });
+    }
+
+    await this.cacheService.set(operatorKey(payload.integrationId), JSON.stringify(payload), {
+      ttl: WHATSAPP_BIND_CODE_TTL_SECONDS,
+      jitter: false,
+    });
+
+    return { expiresAt: new Date(Date.now() + WHATSAPP_BIND_CODE_TTL_SECONDS * 1000).toISOString() };
+  }
+
+  /** Whether the business number waits for its operator's first message. One cache read, on every inbound message. */
+  async isOpen(integrationId: string): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) {
+      return false;
+    }
+
+    try {
+      return Boolean(await this.cacheService.get(operatorKey(integrationId)));
+    } catch (err) {
+      this.logger.warn(`Failed to read the WhatsApp operator window: ${(err as Error).message}`);
+
+      return false;
+    }
+  }
+
+  /** Closes the window and says who it was for, once however many messages arrive together. */
+  async take(integrationId: string): Promise<WhatsAppBindCodePayload | null> {
+    try {
+      const raw = await this.cacheService.eval<string | null>(CONSUME_SCRIPT, [operatorKey(integrationId)], []);
+      const payload = raw ? parsePayload(raw) : null;
+
+      return payload && payload.integrationId === integrationId ? payload : null;
+    } catch (err) {
+      this.logger.warn(`Failed to take the WhatsApp operator window: ${(err as Error).message}`);
+
+      return null;
+    }
+  }
+}
+
+function operatorKey(integrationId: string): string {
+  return `${OPERATOR_KEY_PREFIX}:${integrationId}`;
 }
 
 function mintCode(): string {

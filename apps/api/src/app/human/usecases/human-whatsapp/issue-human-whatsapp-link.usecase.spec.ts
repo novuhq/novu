@@ -26,6 +26,7 @@ describe('IssueHumanWhatsAppLink', () => {
     relay = { _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' } as Record<string, unknown> | null,
   } = {}) {
     const codes = { issue: sinon.stub().resolves({ code: 'BCDF-GHJK', expiresAt: '2026-11-10T15:00:00.000Z' }) };
+    const operatorWindow = { open: sinon.stub().resolves({ expiresAt: '2026-11-10T15:00:00.000Z' }) };
     const integrationRepository = {
       find: sinon.stub().resolves(
         credentials
@@ -43,12 +44,13 @@ describe('IssueHumanWhatsAppLink', () => {
     const usecase = new IssueHumanWhatsAppLink(
       new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never),
       codes as never,
+      operatorWindow as never,
       { findOne: sinon.stub().resolves(relay) } as never,
       { find: sinon.stub().resolves([{ _integrationId: 'int-wa' }]) } as never,
       integrationRepository as never
     );
 
-    return { usecase, codes };
+    return { usecase, codes, operatorWindow };
   }
 
   it('opens WhatsApp at the business number with the code ready to send', async () => {
@@ -66,6 +68,31 @@ describe('IssueHumanWhatsAppLink', () => {
       agentIdentifier: 'human-relay',
       subscriberId: 'ada',
     });
+  });
+
+  it('opens a window for the operator’s own number instead of a code, with a hello ready to send', async () => {
+    const { usecase, codes, operatorWindow } = setup();
+
+    expect(await usecase.execute({ ...PARAMS, proof: 'operator' })).to.deep.equal({
+      url: 'https://wa.me/15550100199?text=Hi',
+      expiresAt: '2026-11-10T15:00:00.000Z',
+    });
+    expect(operatorWindow.open.firstCall.args[0]).to.deep.equal({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      integrationId: 'int-wa',
+      agentIdentifier: 'human-relay',
+      subscriberId: 'ada',
+    });
+    expect(codes.issue.called).to.equal(false);
+  });
+
+  it('keeps codes for everyone else, such as a contact’s invite', async () => {
+    const { usecase, operatorWindow } = setup();
+
+    await usecase.execute(PARAMS);
+
+    expect(operatorWindow.open.called).to.equal(false);
   });
 
   it('refuses while WhatsApp is turned off, like an unknown channel', async () => {

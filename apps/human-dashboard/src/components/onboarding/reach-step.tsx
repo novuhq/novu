@@ -194,6 +194,7 @@ export function ReachStep({ handle, cardLink, host, waitingMessage, channels, ch
               setup={setupAtOpen.whatsapp}
               handle={handle}
               agentName={setupAtOpen.slackAppName}
+              prompt={setupAtOpen.prompts.whatsapp}
               {...drawerProps('whatsapp')}
             />
           )}

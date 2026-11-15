@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, CreditCard, KeyRound, type LucideIcon, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
@@ -11,22 +11,25 @@ import {
   issueWhatsAppLinkAction,
   loadWhatsAppSetupAction,
 } from '@/app/(account)/(dashboard)/channels/actions';
-import { ChannelIcon } from '@/components/channels/channel-icon';
+import { ComingSoonLogo } from '@/components/channels/coming-soon-logo';
 import {
-  ConnectedCard,
+  AgentPromptCard,
+  AgentPromptOption,
   DRAWER_FOOTER,
   DRAWER_HEADER,
   FieldError,
   SetupCheck,
   useConnectionPoll,
 } from '@/components/channels/setup-parts';
-import { WhatsAppFirstMessageStep } from '@/components/channels/whatsapp-first-message-step';
+import { WhatsAppOn } from '@/components/channels/whatsapp-first-message-card';
+import { type SendCodeParts, WhatsAppKeysSteps } from '@/components/channels/whatsapp-keys-steps';
 import { WhatsAppSignupButton } from '@/components/channels/whatsapp-signup-button';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
+import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Step, Stepper } from '@/components/ui/stepper';
 import { toast } from '@/components/ui/toast';
-import type { WhatsAppLink } from '@/lib/human-channels-api';
+import type { WhatsAppLink, WhatsAppWebhook } from '@/lib/human-channels-api';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 import type { FirstMessage } from '@/lib/whatsapp-first-message';
 
@@ -35,8 +38,16 @@ type DrawerState =
   | { step: 'checking' }
   | { step: 'unreadable' }
   | { step: 'not-offered' }
+  /** No Facebook button on this deployment (no Novu Meta app): keys from the operator's own Meta app still work. */
+  | { step: 'keys-only' }
   | { step: 'connect'; appId: string; configId: string }
-  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds; firstMessage?: FirstMessage }
+  | {
+      step: 'verify';
+      displayPhoneNumber?: string;
+      reconnect?: MetaIds;
+      firstMessage?: FirstMessage;
+      webhook?: WhatsAppWebhook;
+    }
   | {
       step: 'connected';
       displayPhoneNumber?: string;
@@ -54,18 +65,41 @@ type WhatsAppSetupProps = {
   handle: string;
   /** The agent's name, for the preview of its first message. Falls back to `handle`. */
   agentName?: string;
+  /** What the operator hands their own agent, so it runs the setup with them. */
+  prompt: string;
+  /**
+   * Opens on the steps rather than on the prompt: the drawer was opened from the link the operator's agent handed
+   * over (`?setup=whatsapp`), so the agent is already on it.
+   */
+  startWithSteps?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
+/** Connect the business account, then say hi from your own WhatsApp. The first message comes after, on its own. */
+const BY_HAND_STEPS = 2;
+
 /**
- * The drawer that sets WhatsApp up: the operator connects their own WhatsApp Business account with Meta's
- * Facebook button, then proves their own number by sending a code to it from a wa.me link. The Configure
+ * The drawer that sets WhatsApp up. Before anything is connected it opens on the prompt for the operator's own
+ * agent, which runs `channel add whatsapp` (or `channel_add`) and hands back the link to this drawer; the steps
+ * for doing it by hand fold out under it. By hand, the operator connects their own WhatsApp Business account with
+ * Meta's Facebook button, then connects their own number by sending it any message from a wa.me link. The Configure
  * page's channels open it, and so does the last step of the onboarding.
  */
-export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenChange }: WhatsAppSetupProps) {
+export function WhatsAppSetup({
+  setup,
+  handle,
+  agentName = handle,
+  prompt,
+  startWithSteps = false,
+  open,
+  onOpenChange,
+}: WhatsAppSetupProps) {
   const router = useRouter();
   const [state, setState] = useState<DrawerState>(drawerStateOf(setup));
+  const [byHand, setByHand] = useState(startWithSteps);
+  // The steps for keys from the operator's own Meta app, instead of the Facebook button.
+  const [withKeys, setWithKeys] = useState(false);
   const [error, setError] = useState<string>();
   const [link, setLink] = useState<WhatsAppLink>();
   const [linkError, setLinkError] = useState<string>();
@@ -82,12 +116,12 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
     const result = await issueWhatsAppLinkAction().catch(() => null);
     if (result?.ok) {
       liveLink.current = {
-        link: { url: result.url, code: result.code, expiresAt: result.expiresAt },
+        link: { url: result.url, expiresAt: result.expiresAt },
         businessNumber,
       };
     } else {
       liveLink.current = undefined;
-      setLinkError(result?.error ?? 'We couldn’t make a code just now. Please try again.');
+      setLinkError(result?.error ?? 'We couldn’t get WhatsApp ready for your message. Please try again.');
     }
     setLink(liveLink.current?.link);
   }, []);
@@ -123,7 +157,6 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
       return;
     }
 
-    setError(undefined);
     if (setup.step === 'unknown') {
       void check();
     } else {
@@ -131,7 +164,30 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
     }
   }, [open, setup, check, show]);
 
-  // WhatsApp tells the API when the operator sends the code; the drawer asks until that shows up.
+  // Each opening starts over, but only an opening: saving keys or connecting refreshes the page and hands the drawer
+  // a new `setup`, which must not throw the operator back to the start or wipe the error they're reading.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only an opening picks the way; `setup` changes whenever the page refreshes, which must not switch it mid-setup.
+  useEffect(() => {
+    if (open) {
+      setError(undefined);
+      setByHand(startWithSteps);
+      setWithKeys(startsWithKeys(setup));
+    }
+  }, [open, startWithSteps]);
+
+  // Nothing is connected yet and the prompt is on screen: once the operator's agent got them through Meta's
+  // signup (on this page, maybe in another tab), the drawer moves on to the steps that are left by itself.
+  const view = viewOf(state, byHand);
+  const agentPoll = useConnectionPoll({
+    waiting: open && view === 'prompt',
+    check: readSetupPastConnect,
+    onConnected: (next) => {
+      show(next);
+      router.refresh();
+    },
+  });
+
+  // WhatsApp tells the API when the operator's message arrives; the drawer asks until that shows up.
   const { waitedTooLong, keepWaiting } = useConnectionPoll({
     waiting: open && state.step === 'verify',
     check: () => checkWhatsAppConnectedAction(),
@@ -141,11 +197,12 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
     },
   });
 
-  const signupButton = (ids: MetaIds, mode: 'first' | 'again') => (
+  const signupButton = (ids: MetaIds, mode: 'first' | 'again', aside?: ReactNode) => (
     <WhatsAppSignupButton
       appId={ids.appId}
       configId={ids.configId}
       mode={mode}
+      aside={aside}
       connect={connectWhatsAppAction}
       onConnected={(result) => {
         setError(undefined);
@@ -163,12 +220,38 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
 
   const linked = state.step === 'verify' || state.step === 'connected';
   const businessNumber = linked ? state.displayPhoneNumber : undefined;
+  const header = withKeys ? KEYS_HEADER : FACEBOOK_HEADER;
+  const keys = keysViewOf(state, withKeys, () => setWithKeys(false));
+
+  // Once both steps are done: WhatsApp is on, and the first message to set up, whichever way it was connected.
+  const whatsAppOn = state.step === 'connected' && (
+    <WhatsAppOn
+      handle={handle}
+      agentName={agentName}
+      businessNumber={businessNumber}
+      firstMessage={firstMessageOf(state)}
+    />
+  );
+  const codeTimedOut = waitedTooLong || expired;
+  const sendCode: SendCodeParts = {
+    body: <SendCode handle={handle} businessNumber={businessNumber} link={link} linkError={linkError} />,
+    footer: (
+      <SendCodeStatus
+        stale={codeTimedOut}
+        failed={Boolean(linkError)}
+        onNewCode={() => {
+          keepWaiting();
+          void refreshLink(businessNumber);
+        }}
+      />
+    ),
+  };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
-        title="Set up WhatsApp"
-        description={`Give ${handle} your own WhatsApp Business number. About two minutes.`}
+        title={header.title}
+        description={header.description}
         headerClassName={DRAWER_HEADER}
         footerClassName={DRAWER_FOOTER}
         footer={
@@ -191,48 +274,51 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
             WhatsApp can’t be connected here yet. Nothing was changed.
           </p>
         )}
-        {(state.step === 'connect' || linked) && (
+        <AgentWay
+          view={view}
+          prompt={prompt}
+          // From the agent's link the agent is already on it; once a number is linked, the steps are what's left.
+          offerAlongsideSteps={state.step === 'connect' && !startWithSteps && !withKeys}
+          waitedTooLong={agentPoll.waitedTooLong}
+          onKeepWaiting={agentPoll.keepWaiting}
+          onShowSteps={() => setByHand(true)}
+        />
+        {view === 'steps' && keys && (
           <Stepper>
-            <Step
-              index={1}
-              title="Connect your WhatsApp Business account"
-              status={linked ? 'done' : error ? 'error' : 'current'}
-              summary={businessNumber ? `${businessNumber} · connected` : 'Business number connected'}
-            >
-              <p className="text-[13px] leading-4.5 text-secondary">
-                Sign in with Facebook and pick your Meta business, then the number {handle} should use. You need a Meta
-                business and a phone number that isn’t on WhatsApp yet; Facebook walks you through adding one.
-              </p>
-              {state.step === 'connect' && signupButton(state, 'first')}
-              {state.step === 'connect' && error && <SignupError message={error} />}
-            </Step>
+            <WhatsAppKeysSteps
+              state={keys.state}
+              webhook={keys.webhook}
+              sendCode={sendCode}
+              whatsAppOn={whatsAppOn}
+              onConnected={(result) => {
+                show({ step: 'verify', displayPhoneNumber: result.displayPhoneNumber });
+                router.refresh();
+              }}
+              onUseFacebook={keys.onUseFacebook}
+            />
+          </Stepper>
+        )}
+        {view === 'steps' && isSetupStep(state) && !withKeys && (
+          <Stepper>
+            <MetaStep
+              handle={handle}
+              linked={linked}
+              businessNumber={businessNumber}
+              error={state.step === 'connect' ? error : undefined}
+              renderSignup={state.step === 'connect' ? (aside) => signupButton(state, 'first', aside) : undefined}
+              onUseKeys={() => {
+                setError(undefined);
+                setWithKeys(true);
+              }}
+            />
 
             <OwnNumberSteps
               state={state}
               handle={handle}
-              sendCode={
-                <SendCode
-                  handle={handle}
-                  businessNumber={businessNumber}
-                  link={link}
-                  linkError={linkError}
-                  waitedTooLong={waitedTooLong || expired}
-                  onNewCode={() => {
-                    keepWaiting();
-                    void refreshLink(businessNumber);
-                  }}
-                />
-              }
+              sendCode={sendCode}
               reconnectButton={linked && state.reconnect ? signupButton(state.reconnect, 'again') : null}
               error={error}
-              firstMessageStep={
-                <WhatsAppFirstMessageStep
-                  index={3}
-                  ready={state.step === 'connected'}
-                  agentName={agentName}
-                  firstMessage={firstMessageOf(state)}
-                />
-              }
+              whatsAppOn={whatsAppOn}
             />
           </Stepper>
         )}
@@ -242,6 +328,70 @@ export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenC
 }
 
 type SetupStepState = Extract<DrawerState, { step: 'connect' | 'verify' | 'connected' }>;
+
+/** Keys when there's no Facebook button, or when a keys setup still has its webhook to add in Meta. */
+function startsWithKeys(setup: WhatsAppSetupState): boolean {
+  return setup.step === 'unavailable' || (setup.step === 'verify' && Boolean(setup.webhook));
+}
+
+/**
+ * The keys steps' view of the setup: a deployment without the Facebook button starts them from nothing, a webhook
+ * still to add comes along, and going back to Facebook is offered only while nothing is saved and it's there.
+ */
+function keysViewOf(
+  state: DrawerState,
+  withKeys: boolean,
+  useFacebook: () => void
+): { state: SetupStepState | { step: 'connect' }; webhook?: WhatsAppWebhook; onUseFacebook?: () => void } | null {
+  if (!withKeys) {
+    return null;
+  }
+
+  if (state.step === 'keys-only') {
+    return { state: { step: 'connect' } };
+  }
+
+  if (!isSetupStep(state)) {
+    return null;
+  }
+
+  return {
+    state,
+    ...(state.step === 'verify' && state.webhook ? { webhook: state.webhook } : {}),
+    ...(state.step === 'connect' ? { onUseFacebook: useFacebook } : {}),
+  };
+}
+
+function isSetupStep(state: DrawerState): state is SetupStepState {
+  return state.step === 'connect' || state.step === 'verify' || state.step === 'connected';
+}
+
+type AgentWayProps = {
+  view: 'prompt' | 'steps' | null;
+  prompt: string;
+  /** Whether the steps keep the prompt above them, for an operator who changed their mind. */
+  offerAlongsideSteps: boolean;
+  waitedTooLong: boolean;
+  onKeepWaiting: () => void;
+  onShowSteps: () => void;
+};
+
+/** The operator's agent as the way in: the whole drawer while the steps are folded away, a card above them after. */
+function AgentWay({ view, prompt, offerAlongsideSteps, waitedTooLong, onKeepWaiting, onShowSteps }: AgentWayProps) {
+  if (view === 'prompt') {
+    return (
+      <AgentPromptCard
+        prompt={prompt}
+        stepCount={BY_HAND_STEPS}
+        waitedTooLong={waitedTooLong}
+        onKeepWaiting={onKeepWaiting}
+        onShowSteps={onShowSteps}
+      />
+    );
+  }
+
+  return view === 'steps' && offerAlongsideSteps ? <AgentPromptOption prompt={prompt} /> : null;
+}
 
 /**
  * Step 2, proving the operator's own number, then what the finished setup says. Under them, connecting the
@@ -254,15 +404,15 @@ function OwnNumberSteps({
   sendCode,
   reconnectButton,
   error,
-  firstMessageStep,
+  whatsAppOn,
 }: {
   state: SetupStepState;
   handle: string;
-  sendCode: ReactNode;
+  sendCode: SendCodeParts;
   reconnectButton: ReactNode;
   error?: string;
-  /** Step 3, the optional first message for outside WhatsApp's 24-hour window. */
-  firstMessageStep: ReactNode;
+  /** What closes the steps once both are done: WhatsApp is on, and the first message. */
+  whatsAppOn: ReactNode;
 }) {
   const ownNumber = state.step === 'connected' ? state.operatorPhoneNumber : undefined;
 
@@ -270,28 +420,21 @@ function OwnNumberSteps({
     <>
       <Step
         index={2}
-        title="Send yourself the code"
+        title="Say hi on WhatsApp"
         status={state.step === 'connected' ? 'done' : state.step === 'verify' ? 'current' : 'upcoming'}
-        summary={ownNumber ? `${ownNumber} · connected` : 'Your number is connected'}
+        summary={ownNumber ? `Message received from ${ownNumber}` : 'Your number is connected'}
+        footer={sendCode.footer}
         glow
       >
-        {state.step === 'verify' && sendCode}
+        {state.step === 'verify' && sendCode.body}
       </Step>
 
-      {firstMessageStep}
-
-      {state.step === 'connected' && (
-        <ConnectedCard via="whatsapp" title="WhatsApp connected">
-          {ownNumber
-            ? `${handle} can now reach you on WhatsApp at ${ownNumber}.`
-            : `${handle} can now reach you on WhatsApp.`}
-        </ConnectedCard>
-      )}
+      {whatsAppOn}
       {reconnectButton && (
         <li className="flex flex-col gap-2">
           <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
             {state.step === 'verify'
-              ? 'Your code gets no answer, or a different business number?'
+              ? 'Your message gets no answer, or a different business number?'
               : `Messages not reaching ${handle}, or a different number?`}
             {reconnectButton}
           </p>
@@ -302,76 +445,80 @@ function OwnNumberSteps({
   );
 }
 
-/** The wa.me link with the code typed in, a QR code to open it on a phone, and the code to type by hand. */
+/**
+ * The business number to write to, the wa.me link with a hello ready to send, and a QR code to open it on a phone.
+ * No code: while this step waits, the first message from a number that isn't connected yet binds it as the operator's.
+ */
 function SendCode({
   handle,
   businessNumber,
   link,
   linkError,
-  waitedTooLong,
-  onNewCode,
 }: {
   handle: string;
   businessNumber?: string;
   link?: WhatsAppLink;
   linkError?: string;
-  waitedTooLong: boolean;
-  onNewCode: () => void;
 }) {
+  if (!link) {
+    return linkError ? <SignupError message={linkError} /> : null;
+  }
+
   return (
-    <>
-      <p className="text-[13px] leading-4.5 text-secondary">
-        Send this code to {businessNumber ?? 'your business number'} from the WhatsApp on your own phone. It proves the
-        number is yours, so {handle} knows where to reach you.
-      </p>
-      {link ? (
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-3">
-            <p className="font-mono text-xl leading-6 tracking-[0.2em] text-foreground" aria-label="Your code">
-              {link.code}
-            </p>
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
-            >
-              <ArrowUpRight aria-hidden="true" className="size-3.5" />
-              Open WhatsApp
-            </a>
-          </div>
-          <figure className="flex shrink-0 flex-col items-center gap-1.5">
-            <div className="relative rounded-md bg-foreground p-2">
-              <QRCode
-                value={link.url}
-                size={96}
-                level="H"
-                bgColor="#ebe2d6"
-                fgColor="#0a0908"
-                aria-label="QR code that opens WhatsApp with your code"
-              />
-              <ChannelIcon
-                via="whatsapp"
-                className="absolute top-1/2 left-1/2 size-6 -translate-1/2 [&>svg]:size-3.5"
-              />
-            </div>
-            <figcaption className="text-xs leading-4 text-muted">Scan to open on your phone</figcaption>
-          </figure>
-        </div>
-      ) : (
-        linkError && <SignupError message={linkError} />
-      )}
-      {waitedTooLong || linkError ? (
-        <p className="flex flex-wrap items-center gap-2.5 text-xs leading-4 text-secondary">
-          {waitedTooLong ? 'This code has expired.' : null}
-          <Button variant="secondary" className={SMALL_BUTTON} onClick={onNewCode}>
-            Get a new code
-          </Button>
+    <div className="flex flex-wrap items-center gap-4.5">
+      <div className="flex min-w-0 flex-1 basis-60 flex-col gap-2.5">
+        <p className="text-[13px] leading-4.5 text-secondary">
+          From your own phone, send any message to {handle}’s new number.
         </p>
-      ) : (
-        <p className="text-xs leading-4 text-muted">Waiting for your message…</p>
-      )}
-    </>
+        {businessNumber && <CopyField value={businessNumber} label={`Copy ${handle}’s WhatsApp number`} />}
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonClassName('secondary', `${SMALL_BUTTON} self-start`)}
+        >
+          <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          Open WhatsApp
+        </a>
+      </div>
+      <figure className="flex shrink-0 flex-col items-center gap-1.5">
+        <div className="relative rounded-md bg-foreground p-2">
+          <QRCode
+            value={link.url}
+            size={96}
+            level="H"
+            bgColor="#ebe2d6"
+            fgColor="#0a0908"
+            aria-label="QR code that opens WhatsApp with a message ready to send"
+          />
+          <span className="absolute top-1/2 left-1/2 flex -translate-1/2 rounded-full bg-foreground p-1">
+            <ComingSoonLogo via="whatsapp" size={24} />
+          </span>
+        </div>
+        <figcaption className="text-xs leading-4 text-muted">Scan to open on your phone</figcaption>
+      </figure>
+    </div>
+  );
+}
+
+/** The step's footer: waiting for the message, or a way to wait again once the window closed. */
+function SendCodeStatus({ stale, failed, onNewCode }: { stale: boolean; failed: boolean; onNewCode: () => void }) {
+  if (stale || failed) {
+    return (
+      <>
+        <p className="text-xs text-secondary">{stale ? 'Your message didn’t arrive in time.' : 'Not ready yet.'}</p>
+        <Button variant="secondary" className={SMALL_BUTTON} onClick={onNewCode}>
+          Wait again
+        </Button>
+      </>
+    );
+  }
+
+  return (
+    <p aria-live="polite" className="flex items-center gap-2 text-xs text-foreground">
+      <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-accent" />
+      Waiting for your message
+    </p>
   );
 }
 
@@ -400,6 +547,68 @@ function useExpired(deadline: string | undefined): boolean {
   return expired;
 }
 
+const FACEBOOK_HEADER = {
+  title: 'Enable WhatsApp Business',
+  description: 'Connect your WhatsApp Business account. About five minutes.',
+};
+
+const KEYS_HEADER = {
+  title: 'Connect WhatsApp Business with API keys',
+  description: 'For a Meta app you already set up. About ten minutes.',
+};
+
+type MetaStepProps = {
+  handle: string;
+  linked: boolean;
+  businessNumber?: string;
+  error?: string;
+  /** The Facebook button while the step is still to do, with what goes beside it. It owns the whole footer. */
+  renderSignup?: (aside: ReactNode) => ReactNode;
+  onUseKeys: () => void;
+};
+
+/** Step 1 the Facebook way: Meta's Embedded Signup, with the way to API keys beside its button. */
+function MetaStep({ handle, linked, businessNumber, error, renderSignup, onUseKeys }: MetaStepProps) {
+  return (
+    <Step
+      index={1}
+      title="Connect with Meta"
+      status={linked ? 'done' : error ? 'error' : 'current'}
+      summary={businessNumber ? `${businessNumber} · connected` : 'Business number connected'}
+      footer={renderSignup?.(
+        <button
+          type="button"
+          onClick={onUseKeys}
+          className="flex cursor-pointer items-center gap-1.5 text-xs text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+        >
+          <KeyRound aria-hidden="true" className="size-[13px]" />
+          Have API keys? Connect manually
+        </button>
+      )}
+    >
+      <p className="text-[13px] leading-4.5 text-secondary">
+        Log in with Facebook, pick your Meta Business account and add the number {handle} will use. Meta texts it a code
+        to confirm.
+      </p>
+      <StepHint icon={Phone}>Use a number just for {handle}. It can’t be on personal WhatsApp.</StepHint>
+      <StepHint icon={CreditCard}>
+        Meta bills messages to your Meta Business account. Keep a card on file there.
+      </StepHint>
+      {error && <SignupError message={error} />}
+    </Step>
+  );
+}
+
+/** A line of what to have ready, under a step's instructions, with its icon. */
+function StepHint({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 text-xs leading-4 text-secondary">
+      <Icon aria-hidden="true" className="mt-px size-[13px] shrink-0" />
+      {children}
+    </p>
+  );
+}
+
 function SignupError({ message }: { message: string }) {
   return (
     <p role="alert" className="text-xs leading-4 text-danger">
@@ -408,13 +617,37 @@ function SignupError({ message }: { message: string }) {
   );
 }
 
+/**
+ * What the drawer's body shows once the setup was read: the prompt for the operator's agent while nothing is
+ * connected and the steps are folded away, the steps otherwise.
+ */
+function viewOf(state: DrawerState, byHand: boolean): 'prompt' | 'steps' | null {
+  if (state.step === 'keys-only') {
+    return 'steps';
+  }
+
+  if (state.step === 'connect') {
+    return byHand ? 'steps' : 'prompt';
+  }
+
+  return state.step === 'verify' || state.step === 'connected' ? 'steps' : null;
+}
+
+/** The setup, once the business account is connected: what the prompt view waits for. */
+async function readSetupPastConnect(): Promise<WhatsAppSetupState | null> {
+  const next = await loadWhatsAppSetupAction();
+
+  return next.step === 'verify' || next.step === 'connected' ? next : null;
+}
+
 function drawerStateOf(setup: WhatsAppSetupState): DrawerState {
   switch (setup.step) {
     case 'unknown':
       return { step: 'unreadable' };
     case 'hidden':
-    case 'unavailable':
       return { step: 'not-offered' };
+    case 'unavailable':
+      return { step: 'keys-only' };
     case 'connect':
     case 'verify':
     case 'connected':

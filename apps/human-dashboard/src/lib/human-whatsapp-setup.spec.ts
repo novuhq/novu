@@ -94,7 +94,7 @@ describe('whatsAppRows', () => {
 
   it('shows a row to set up while nothing is linked', () => {
     expect(whatsAppRows({ step: 'connect', appId: 'a', configId: 'c' })).toEqual([
-      { via: 'whatsapp', name: 'WhatsApp', handles: [], connected: false },
+      { via: 'whatsapp', name: 'WhatsApp Business', handles: [], connected: false },
     ]);
   });
 
@@ -102,7 +102,7 @@ describe('whatsAppRows', () => {
     expect(whatsAppRows({ step: 'verify', displayPhoneNumber: '+1 555' })).toEqual([
       {
         via: 'whatsapp',
-        name: 'WhatsApp',
+        name: 'WhatsApp Business',
         handles: [{ value: '+1 555', label: 'business number' }],
         connected: false,
       },
@@ -113,7 +113,7 @@ describe('whatsAppRows', () => {
     expect(whatsAppRows({ step: 'connected', displayPhoneNumber: '+1 555' })).toEqual([
       {
         via: 'whatsapp',
-        name: 'WhatsApp',
+        name: 'WhatsApp Business',
         handles: [{ value: '+1 555', label: 'business number' }],
         connected: true,
       },

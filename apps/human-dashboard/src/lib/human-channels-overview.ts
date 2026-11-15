@@ -29,7 +29,7 @@ type ChannelLabels = Pick<ChannelRow, 'via' | 'name'>;
 const EMAIL: ChannelLabels = { via: 'email', name: 'Email' };
 const TELEGRAM: ChannelLabels = { via: 'telegram', name: 'Telegram' };
 const SLACK: ChannelLabels = { via: 'slack', name: 'Slack' };
-const WHATSAPP: ChannelLabels = { via: 'whatsapp', name: 'WhatsApp' };
+const WHATSAPP: ChannelLabels = { via: 'whatsapp', name: 'WhatsApp Business' };
 
 export type ChannelsOverview = {
   rows: ChannelRow[];

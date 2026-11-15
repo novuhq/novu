@@ -305,7 +305,7 @@ async function nextWhatsAppStep(api: AgentInboxApi, agentIdentifier: string): Pr
 
   const page = `${api.siteUrl}/configure?setup=whatsapp`;
   const step = setup.businessConnected
-    ? `WhatsApp Business is connected${setup.displayPhoneNumber ? ` on ${setup.displayPhoneNumber}` : ''}. Give the user this link to connect their own number by sending the agent a code: ${page}`
+    ? `WhatsApp Business is connected${setup.displayPhoneNumber ? ` on ${setup.displayPhoneNumber}` : ''}. Give the user this link to connect their own number by saying hi to the agent on WhatsApp: ${page}`
     : `WhatsApp needs the user's WhatsApp Business number first. Give them this link to connect it on agentinbox.md, where they sign in as the owner: ${page}`;
 
   return `${step}\nAfter they finish, call channel_add again.\nShow the link to the user in this chat and nowhere else, never through inbox_send or inbox_reply.`;

@@ -84,6 +84,7 @@ import { GetInteraction } from './usecases/get-interaction/get-interaction.useca
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
 import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
+import { ConnectHumanWhatsAppKeys } from './usecases/human-whatsapp/connect-human-whatsapp-keys.usecase';
 import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
 import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
 import { SubmitHumanWhatsAppFirstMessage } from './usecases/human-whatsapp/submit-human-whatsapp-first-message.usecase';
@@ -153,6 +154,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     HumanChannelGate,
     GetHumanWhatsAppSetup,
     ConnectHumanWhatsApp,
+    ConnectHumanWhatsAppKeys,
     IssueHumanWhatsAppLink,
     SubmitHumanWhatsAppFirstMessage,
     WhatsAppFirstMessageService,

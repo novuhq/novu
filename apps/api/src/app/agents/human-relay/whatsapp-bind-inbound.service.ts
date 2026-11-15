@@ -10,7 +10,12 @@ import { captureAgentException, captureAgentWarning } from '../shared/errors/cap
 import { toCanonicalE164Phone } from '../shared/util/phone-normalization';
 import { BindWhatsAppNumber } from './bind-whatsapp-number.service';
 import { ContactHandleService } from './contact-handle.service';
-import { extractWhatsAppBindCode, WhatsAppBindCodeService } from './whatsapp-bind-code.service';
+import {
+  extractWhatsAppBindCode,
+  type WhatsAppBindCodePayload,
+  WhatsAppBindCodeService,
+  WhatsAppOperatorWindowService,
+} from './whatsapp-bind-code.service';
 import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_LAST_CODE_AT_FIELD } from './whatsapp-number-proof';
 
 export const WHATSAPP_BIND_SUCCESS_REPLY = "You're connected. This agent will reach you here on WhatsApp.";
@@ -36,7 +41,8 @@ export class WhatsAppBindInbound {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly contactHandles: ContactHandleService,
     private readonly outboundGateway: OutboundGateway,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly operatorWindow: WhatsAppOperatorWindowService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -60,7 +66,7 @@ export class WhatsAppBindInbound {
     const skipped = messageContext?.skipped ?? [];
     const withCode = [...skipped, message].find((inbound) => extractWhatsAppBindCode(inbound.text));
     if (!withCode) {
-      return false;
+      return this.tryOperatorHello(agentId, config, thread, message);
     }
 
     const code = extractWhatsAppBindCode(withCode.text) as string;
@@ -76,6 +82,37 @@ export class WhatsAppBindInbound {
     }
 
     return false;
+  }
+
+  /**
+   * The operator's own setup needs no code: while the window the "Say hi on WhatsApp" step opened lasts, the first
+   * message from a number that isn't connected yet binds it as the operator. A number already connected, a contact
+   * writing in, goes on to the inbox as usual and leaves the window open. Like a code, the hello is answered here and
+   * never reaches the inbox.
+   */
+  private async tryOperatorHello(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<boolean> {
+    if (!(await this.operatorWindow.isOpen(config.integrationId))) {
+      return false;
+    }
+
+    const phoneNumber = toCanonicalE164Phone(message.author?.userId ?? '');
+    if (!phoneNumber || (await this.isBound(config, phoneNumber))) {
+      return false;
+    }
+
+    const payload = await this.operatorWindow.take(config.integrationId);
+    if (!payload) {
+      return false;
+    }
+
+    await this.reply(thread, await this.bindNumber(agentId, config, message, payload, phoneNumber), agentId);
+
+    return true;
   }
 
   private async bind(agentId: string, config: ResolvedAgentConfig, message: Message, code: string): Promise<string> {
@@ -95,8 +132,19 @@ export class WhatsAppBindInbound {
       return (await this.isBound(config, phoneNumber)) ? WHATSAPP_BIND_DUPLICATE_REPLY : WHATSAPP_BIND_EXPIRED_REPLY;
     }
 
+    return this.bindNumber(agentId, config, message, result.payload, phoneNumber);
+  }
+
+  /** Binds the number to whom the code or window was for, and says how it went. */
+  private async bindNumber(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    message: Message,
+    payload: WhatsAppBindCodePayload,
+    phoneNumber: string
+  ): Promise<string> {
     try {
-      const bound = await this.bindWhatsAppNumber.execute(result.payload, phoneNumber);
+      const bound = await this.bindWhatsAppNumber.execute(payload, phoneNumber);
 
       // The contact card shows their WhatsApp name from the moment they connect.
       await this.contactHandles.refresh({

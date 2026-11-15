@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowUpRight } from 'lucide-react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ConnectWhatsAppResult } from '@/app/(account)/(dashboard)/channels/actions';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
@@ -13,6 +14,10 @@ import {
 } from '@/lib/facebook-embedded-signup';
 import type { WhatsAppSignup } from '@/lib/human-channels-api';
 
+/** The design's "Continue with Facebook": a light button with Meta's logo, set apart from the orange actions. */
+const FIRST_BUTTON =
+  'ml-auto gap-2 bg-foreground pr-3.5 pl-3 text-background hover:bg-foreground/90 disabled:hover:bg-foreground';
+
 type WhatsAppSignupButtonProps = {
   appId: string;
   configId: string;
@@ -22,7 +27,15 @@ type WhatsAppSignupButtonProps = {
   onError: (message: string) => void;
   /** `again` is the quieter button under a connected number, for when messages don't arrive. */
   mode?: 'first' | 'again';
+  /**
+   * Beside the `first` button while nothing runs, such as the way to API keys. The whole step footer is this
+   * button's: while Meta's window is open it says so instead, with a way to open the window again.
+   */
+  aside?: ReactNode;
 };
+
+/** Where an attempt is: nothing running, Meta's window open, or what Meta handed back on its way to the API. */
+type Phase = 'idle' | 'window' | 'saving';
 
 /**
  * Opens Meta's Embedded Signup in a Facebook popup. Meta answers twice: `FB.login` with a code, and a
@@ -36,8 +49,12 @@ export function WhatsAppSignupButton({
   onConnected,
   onError,
   mode = 'first',
+  aside,
 }: WhatsAppSignupButtonProps) {
-  const [pending, setPending] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
+  // Which attempt is the live one: "Reopen window" starts another while the first popup may still be open, and that
+  // popup's late answer must not cancel the newer attempt.
+  const attemptSeq = useRef(0);
   const attempt = useRef<{ pairing: ReturnType<typeof createSignupPairing>; listener: (event: MessageEvent) => void }>(
     null
   );
@@ -56,7 +73,7 @@ export function WhatsAppSignupButton({
   const fail = useCallback(
     (message: string) => {
       endAttempt();
-      setPending(false);
+      setPhase('idle');
       onError(message);
     },
     [endAttempt, onError]
@@ -65,6 +82,7 @@ export function WhatsAppSignupButton({
   const finish = useCallback(
     async (signup: PairedSignup) => {
       endAttempt();
+      setPhase('saving');
 
       try {
         const result = await connect(signup);
@@ -76,22 +94,31 @@ export function WhatsAppSignupButton({
       } catch {
         onError('Something went wrong while connecting WhatsApp. Please try again.');
       } finally {
-        setPending(false);
+        setPhase('idle');
       }
     },
     [connect, endAttempt, onConnected, onError]
   );
 
   const start = useCallback(async () => {
+    attemptSeq.current += 1;
+    const mine = attemptSeq.current;
+    const stale = () => attemptSeq.current !== mine;
     endAttempt();
-    setPending(true);
+    setPhase('window');
 
     let sdk: Awaited<ReturnType<typeof loadFacebookSdk>>;
     try {
       sdk = await loadFacebookSdk(appId);
     } catch (error) {
-      fail(error instanceof Error ? error.message : 'Facebook didn’t load. Please try again.');
+      if (!stale()) {
+        fail(error instanceof Error ? error.message : 'Facebook didn’t load. Please try again.');
+      }
 
+      return;
+    }
+
+    if (stale()) {
       return;
     }
 
@@ -111,6 +138,10 @@ export function WhatsAppSignupButton({
     window.addEventListener('message', listener);
 
     sdk.login((response) => {
+      if (stale()) {
+        return;
+      }
+
       if (response.authResponse?.code) {
         pairing.code(response.authResponse.code);
 
@@ -120,23 +151,63 @@ export function WhatsAppSignupButton({
       // Closing the popup reads as `unknown`: the operator changed their mind, which needs no message.
       if (response.status === 'unknown') {
         endAttempt();
-        setPending(false);
+        setPhase('idle');
       } else {
         fail('Facebook didn’t finish the setup. Please connect again.');
       }
     }, embeddedSignupLoginOptions(configId));
   }, [appId, configId, endAttempt, fail, finish]);
 
+  if (mode === 'again') {
+    return (
+      <Button
+        variant="secondary"
+        className={`${SMALL_BUTTON} self-start`}
+        pending={phase !== 'idle'}
+        onClick={() => void start()}
+      >
+        <FacebookMark />
+        Connect again
+      </Button>
+    );
+  }
+
+  if (phase === 'window') {
+    return (
+      <>
+        <MetaWaitLine>Finish the steps in the Meta window</MetaWaitLine>
+        {/* A popup the browser blocked, or one lost behind this window, opens again from here. */}
+        <Button variant="secondary" className="ml-auto" onClick={() => void start()}>
+          <ArrowUpRight aria-hidden="true" className="size-3.5" />
+          Reopen window
+        </Button>
+      </>
+    );
+  }
+
+  if (phase === 'saving') {
+    return <MetaWaitLine>Connecting your number…</MetaWaitLine>;
+  }
+
   return (
-    <Button
-      variant={mode === 'again' ? 'secondary' : 'primary'}
-      className={mode === 'again' ? `${SMALL_BUTTON} self-start` : 'self-start'}
-      pending={pending}
-      onClick={() => void start()}
-    >
-      <FacebookMark />
-      {mode === 'again' ? 'Connect again' : 'Continue with Facebook'}
-    </Button>
+    <>
+      {aside}
+      <Button className={FIRST_BUTTON} onClick={() => void start()}>
+        {/* Meta's own logo in its colors, as the design has it on the light button. */}
+        <img src="/brand/facebook.svg" alt="" width={16} height={16} className="size-4 shrink-0" />
+        Continue with Facebook
+      </Button>
+    </>
+  );
+}
+
+/** The step footer's line while Meta's side of the signup runs. */
+function MetaWaitLine({ children }: { children: ReactNode }) {
+  return (
+    <p aria-live="polite" className="flex items-center gap-2 text-xs text-foreground">
+      <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-warning" />
+      {children}
+    </p>
   );
 }
 

@@ -64,7 +64,7 @@ describe('connectWhatsApp', () => {
 
     await connectWhatsApp(client, 'human-relay', io);
 
-    expect(said.join('')).toContain('now send the code from your own WhatsApp');
+    expect(said.join('')).toContain('now say hi to it from your own WhatsApp');
   });
 
   it('does nothing more when WhatsApp is connected already', async () => {

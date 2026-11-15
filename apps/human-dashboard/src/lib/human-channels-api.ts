@@ -213,8 +213,41 @@ export function connectWhatsApp(
   });
 }
 
+/** What the operator types in from their own Meta app, instead of the Facebook button. */
+export type WhatsAppKeys = { accessToken: string; phoneNumberId: string; businessAccountId: string; appSecret: string };
+
+/** Where Meta sends the number's messages: set for the operator, or the two values for them to add in Meta. */
+export type WhatsAppWebhook = { configured: boolean; callbackUrl: string; verifyToken?: string; reason?: string };
+
+export type WhatsAppKeysResult = {
+  success: boolean;
+  displayPhoneNumber?: string;
+  webhook?: WhatsAppWebhook;
+  error?: { code: string; message: string };
+};
+
+/**
+ * Connects the relay's WhatsApp channel with keys from the operator's own Meta app: the API checks them with Meta,
+ * saves them encrypted and sets the webhook when Meta lets it. The keys go from the drawer's form to here to the API,
+ * and are kept nowhere on the way.
+ */
+export function connectWhatsAppWithKeys(
+  account: HumanAccount,
+  integrationIdentifier: string,
+  keys: WhatsAppKeys
+): Promise<WhatsAppKeysResult> {
+  return requestForAccount<WhatsAppKeysResult>(account, '/v1/human/agent/whatsapp/keys', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, integrationIdentifier, ...keys },
+  });
+}
+
 /** A wa.me link to the business number with a one-time code typed in, and the code for typing by hand. */
-export type WhatsAppLink = { url: string; code: string; expiresAt: string };
+/**
+ * A wa.me link to the business number with a hello ready to send. For the operator's own number there is no code:
+ * the first message from a new number binds it while `expiresAt` hasn't passed.
+ */
+export type WhatsAppLink = { url: string; code?: string; expiresAt: string };
 
 /**
  * A new wa.me link with a code for the operator's own WhatsApp number. Sending it from WhatsApp binds that
