@@ -49,6 +49,8 @@ The **Secret Keys** card on the API Keys page lists every active key with per-ke
 2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
 3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
 
+Bridge requests and HTTP request steps are signed with every active secret key. The `novu-signature` header contains one `v1` value per key, and the original key's signature stays first. A bridge accepts the request when any `v1` matches the secret key it is configured with, so an application can move to the new key before the original key is deleted. An endpoint that verifies the header itself must accept a match on any `v1`, not only the first one.
+
 ## API URLs
 
 The following hostnames are used to connect to the Novu cloud platform.

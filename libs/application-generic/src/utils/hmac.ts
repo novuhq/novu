@@ -3,12 +3,27 @@ import { ContextPayload } from '@novu/shared';
 import { canonicalize } from '@tufjs/canonical-json';
 import { createHmac } from 'crypto';
 
-export function buildNovuSignatureHeader(secretKey: string, payload: unknown): string {
-  const timestamp = Date.now();
-  const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
-  const hmac = createHmac('sha256', secretKey).update(publicKey).digest('hex');
+/**
+ * Build a `novu-signature` header.
+ *
+ * Header format: `t=<unix-ms>,v1=<hmac>[,v1=<hmac>...]`.
+ * One `v1` is produced per secret key, in the order given. The original key
+ * stays first so verifiers that only read the first signature keep working.
+ * Verifiers that check every `v1` accept a bridge that has moved to a newer
+ * key while the original key is still active.
+ */
+export function buildNovuSignatureHeader(secretKey: string | readonly string[], payload: unknown): string {
+  const secretKeys = typeof secretKey === 'string' ? [secretKey] : [...secretKey];
 
-  return `t=${timestamp},v1=${hmac}`;
+  if (secretKeys.length === 0) {
+    throw new Error('At least one secret key is required to build a novu-signature header');
+  }
+
+  const timestamp = Date.now();
+  const signedPayload = `${timestamp}.${JSON.stringify(payload)}`;
+  const signatures = secretKeys.map((key) => `v1=${createHmac('sha256', key).update(signedPayload).digest('hex')}`);
+
+  return `t=${timestamp},${signatures.join(',')}`;
 }
 
 export function createHash(key: string, valueToHash: string): string | null {

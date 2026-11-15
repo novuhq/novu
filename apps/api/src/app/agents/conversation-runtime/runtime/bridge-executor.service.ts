@@ -228,7 +228,7 @@ export class BridgeExecutorService {
       throw new NoBridgeUrlError(agentIdentifier);
     }
 
-    const secretKey = await this.getDecryptedSecretKey.execute(
+    const secretKeys = await this.getDecryptedSecretKey.executeAll(
       GetDecryptedSecretKeyCommand.create({
         environmentId: params.config.environmentId,
         organizationId: params.config.organizationId,
@@ -239,7 +239,7 @@ export class BridgeExecutorService {
     return {
       bridgeUrl,
       payload,
-      signatureHeader: buildNovuSignatureHeader(secretKey, payload),
+      signatureHeader: buildNovuSignatureHeader(secretKeys, payload),
     };
   }
 
@@ -254,7 +254,7 @@ export class BridgeExecutorService {
         throw new NoBridgeUrlError(agentIdentifier);
       }
 
-      const secretKey = await this.getDecryptedSecretKey.execute(
+      const secretKeys = await this.getDecryptedSecretKey.executeAll(
         GetDecryptedSecretKeyCommand.create({
           environmentId: config.environmentId,
           organizationId: config.organizationId,
@@ -274,7 +274,7 @@ export class BridgeExecutorService {
         });
       }
 
-      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier, !!onEventStream)
+      this.fireWithRetries(bridgeUrl, payload, secretKeys, agentIdentifier, !!onEventStream)
         .then((response) => {
           if (stoppable && bridgeHandlesOnAbort(response.headers)) {
             void this.turnAbortStore.markBridgeHandlesOnAbort(conversationId, payload.deliveryId);
@@ -327,7 +327,7 @@ export class BridgeExecutorService {
   private async fireWithRetries(
     url: string,
     payload: AgentBridgeRequest,
-    secretKey: string,
+    secretKeys: readonly string[],
     agentIdentifier: string,
     streamReply: boolean
   ): Promise<SafeOutboundStreamResponse> {
@@ -350,7 +350,7 @@ export class BridgeExecutorService {
 
       // HMAC is computed and attached only after the destination has been
       // validated, so a blocked URL never sees the signed payload.
-      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
+      const signatureHeader = buildNovuSignatureHeader(secretKeys, payload);
 
       try {
         const response = await safeOutboundStreamRequest({

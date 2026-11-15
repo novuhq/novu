@@ -186,16 +186,28 @@ export class ExecuteFrameworkRequest {
 
   @Instrument()
   private async buildRequestSignature(command: ExecuteBridgeRequestCommand) {
-    const encryptedSecretKey = command.environment?.apiKeys?.[0]?.key;
-    const secretKey = encryptedSecretKey
-      ? decryptApiKey(encryptedSecretKey)
-      : await this.getDecryptedSecretKey.execute(
-          GetDecryptedSecretKeyCommand.create({
-            environmentId: command.environmentId,
-          })
-        );
+    const secretKeys = await this.resolveSigningKeys(command);
 
-    return buildNovuSignatureHeader(secretKey, command.event || {});
+    return buildNovuSignatureHeader(secretKeys, command.event || {});
+  }
+
+  /**
+   * Sign with every active key already loaded on the environment. That is the
+   * same document the bridge call already has, so rotation does not add a read
+   * on the trigger path. Keys are appended, and the header keeps that order.
+   */
+  private async resolveSigningKeys(command: ExecuteBridgeRequestCommand): Promise<string[]> {
+    const storedKeys = command.environment?.apiKeys?.map((apiKey) => apiKey.key) ?? [];
+
+    if (storedKeys.length > 0) {
+      return storedKeys.map((key) => decryptApiKey(key));
+    }
+
+    return this.getDecryptedSecretKey.executeAll(
+      GetDecryptedSecretKeyCommand.create({
+        environmentId: command.environmentId,
+      })
+    );
   }
 
   @Instrument()

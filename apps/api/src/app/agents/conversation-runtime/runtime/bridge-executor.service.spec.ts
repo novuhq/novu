@@ -345,7 +345,10 @@ describe('BridgeExecutorService', () => {
     };
 
     function stubDelivery(service: BridgeExecutorService, headers: Record<string, string> = {}) {
-      (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
+      (service as any).getDecryptedSecretKey = {
+        execute: sinon.stub().resolves('secret'),
+        executeAll: sinon.stub().resolves(['secret']),
+      };
       sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
       sinon.stub(service as any, 'fireWithRetries').resolves({ headers, body: { resume: sinon.stub() } });
     }
@@ -413,7 +416,10 @@ describe('BridgeExecutorService', () => {
 
     it('logs a bridge that fails to take onAbort as a warning, since the turn it follows is already stopped', async () => {
       const { service, logger } = makeService();
-      (service as any).getDecryptedSecretKey = { execute: sinon.stub().resolves('secret') };
+      (service as any).getDecryptedSecretKey = {
+        execute: sinon.stub().resolves('secret'),
+        executeAll: sinon.stub().resolves(['secret']),
+      };
       sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
       sinon.stub(service as any, 'fireWithRetries').rejects(new Error('Bridge returned 503: Service Unavailable'));
 
