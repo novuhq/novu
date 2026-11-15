@@ -725,6 +725,23 @@ describe('inbox_send on WhatsApp', () => {
     expect(result.content[0].text).toBe('WhatsApp window closed.');
   });
 
+  it('looks again after a held send, so a first message Meta failed is reported right away', async () => {
+    const failure = {
+      subscriberId: 'alice',
+      reason:
+        'Meta didn’t deliver the first message: your WhatsApp Business account has no payment method or currency set up.',
+    };
+    stubBackends({
+      createdInteraction: { kind: 'tell', status: 'pending', heldFor: ['alice'] },
+      interaction: { kind: 'tell', status: 'pending', heldFor: ['alice'], firstMessageFailed: [failure] },
+    });
+
+    const result = await send({ message: 'Hungry?', to: 'alice', via: 'whatsapp' });
+
+    expect(result.content[0].text).toContain('Not delivered yet.');
+    expect(result.content[0].text).toContain("So alice wasn't asked to reply");
+  });
+
   it('lists whatsapp in channel_add and inbox_send', async () => {
     stubBackends();
     const { env, ctx } = setup();

@@ -220,6 +220,8 @@ export async function runSend(words: string[], options: SendOptions, conversatio
     }
 
     if (kind === 'tell' || options.async) {
+      // Not waiting for an answer, so look briefly for Meta saying the first message never arrived.
+      await warnIfFirstMessageFailed(client, created);
       process.exit(emitResult(created, Boolean(options.json)));
     }
 
@@ -579,4 +581,29 @@ export function handleError(err: unknown): never {
   }
 
   fail(err instanceof Error ? err.message : String(err));
+}
+
+/** Meta reports a first message it took but couldn't deliver a second or two after the send. */
+const FIRST_MESSAGE_REPORT_MS = 6_000;
+const FIRST_MESSAGE_CHECK_MS = 1_500;
+
+/** After a send held for a WhatsApp reply, warns when Meta reports the first message undelivered. */
+async function warnIfFirstMessageFailed(client: ApiClient, created: Interaction): Promise<void> {
+  if (!created.heldFor?.length) {
+    return;
+  }
+
+  for (let waited = 0; waited < FIRST_MESSAGE_REPORT_MS; waited += FIRST_MESSAGE_CHECK_MS) {
+    await sleep(FIRST_MESSAGE_CHECK_MS);
+    const latest = await getInteraction(client, created.id).catch(() => null);
+    if (latest?.firstMessageFailed?.length) {
+      for (const { subscriberId, reason } of latest.firstMessageFailed) {
+        process.stderr.write(
+          `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
+        );
+      }
+
+      return;
+    }
+  }
 }
