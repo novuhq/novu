@@ -15,7 +15,7 @@ function roundTrip(logic: RQBJsonLogic) {
 
 describe('array item conditions', () => {
   it('round-trips an existence check over array items', () => {
-    const logic = { some: [{ var: 'steps.digest-step.events' }, { var: 'payload.channels.email' }] };
+    const logic: RQBJsonLogic = { some: [{ var: 'steps.digest-step.events' }, { var: 'payload.channels.email' }] };
     const { query, logic: formatted } = roundTrip(logic);
 
     expect(query.rules[0]).toMatchObject({
@@ -26,8 +26,13 @@ describe('array item conditions', () => {
     expect(formatted).toEqual({ and: [logic] });
   });
 
-  it.each(['some', 'all', 'none'])('round-trips a comparison with the "%s" operator', (operator) => {
-    const logic = { [operator]: [{ var: 'steps.digest-step.events' }, { '==': [{ var: 'payload.status' }, 'foo'] }] };
+  const comparisonCases: Array<[operator: string, logic: RQBJsonLogic]> = [
+    ['some', { some: [{ var: 'steps.digest-step.events' }, { '==': [{ var: 'payload.status' }, 'foo'] }] }],
+    ['all', { all: [{ var: 'steps.digest-step.events' }, { '==': [{ var: 'payload.status' }, 'foo'] }] }],
+    ['none', { none: [{ var: 'steps.digest-step.events' }, { '==': [{ var: 'payload.status' }, 'foo'] }] }],
+  ];
+
+  it.each(comparisonCases)('round-trips a comparison with the "%s" operator', (operator, logic) => {
     const { query, logic: formatted } = roundTrip(logic);
 
     expect(query.rules[0]).toMatchObject({
@@ -39,7 +44,7 @@ describe('array item conditions', () => {
   });
 
   it('keeps array item conditions next to other rules', () => {
-    const logic = {
+    const logic: RQBJsonLogic = {
       and: [
         { '==': [{ var: 'payload.foo' }, 'bar'] },
         { none: [{ var: 'steps.digest-step.events' }, { '>': [{ var: 'payload.count' }, 5] }] },
@@ -56,7 +61,7 @@ describe('array item conditions', () => {
   });
 
   it('ignores unsupported nested logic', () => {
-    const logic = {
+    const logic: RQBJsonLogic = {
       some: [{ var: 'steps.digest-step.events' }, { and: [{ var: 'payload.a' }, { var: 'payload.b' }] }],
     };
 

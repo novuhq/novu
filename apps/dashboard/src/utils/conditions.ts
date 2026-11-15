@@ -9,15 +9,29 @@ import {
 } from '@/components/conditions-editor/array-item-condition';
 import { isRelativeDateOperator, isUnaryJsonLogicOperator } from '@/components/conditions-editor/field-type-operators';
 
-function parseArrayOperatorArgs(val: any, operator: string) {
-  if (!val || !Array.isArray(val) || val.length < 2) {
+function isJsonLogicObject(node: JsonLogicNode | undefined): node is { [key: string]: JsonLogicNode } {
+  return !!node && typeof node === 'object' && !Array.isArray(node);
+}
+
+function getVarName(node: JsonLogicNode | undefined): string | undefined {
+  return isJsonLogicObject(node) && typeof node.var === 'string' ? node.var : undefined;
+}
+
+function parseArrayOperatorArgs(val: JsonLogicNode, operator: string) {
+  if (!Array.isArray(val) || val.length < 2) {
+    return false;
+  }
+
+  const field = getVarName(val[0]);
+
+  if (!field) {
     return false;
   }
 
   const secondOperand = val[1];
   let values: string;
 
-  if (secondOperand && typeof secondOperand === 'object' && 'var' in secondOperand) {
+  if (isJsonLogicObject(secondOperand) && 'var' in secondOperand) {
     values = `{{${secondOperand.var}}}`;
   } else if (Array.isArray(secondOperand)) {
     values = secondOperand.join(', ');
@@ -26,51 +40,58 @@ function parseArrayOperatorArgs(val: any, operator: string) {
   }
 
   return {
-    field: val[0]?.var,
+    field,
     operator,
     value: values,
   };
 }
 
-function parseRelativeDateArgs(val: any, operator: string) {
-  if (!val || !Array.isArray(val) || val.length < 2) {
+function parseRelativeDateArgs(val: JsonLogicNode, operator: string) {
+  if (!Array.isArray(val) || val.length < 2) {
+    return false;
+  }
+
+  const field = getVarName(val[0]);
+
+  if (!field) {
     return false;
   }
 
   return {
-    field: val[0]?.var,
+    field,
     operator,
     value: JSON.stringify(val[1]),
   };
 }
 
-function parseUnaryOperatorArgs(val: unknown, operator: string) {
-  if (!val || !Array.isArray(val) || val.length !== 1) {
+function parseUnaryOperatorArgs(val: JsonLogicNode, operator: string) {
+  if (!Array.isArray(val) || val.length !== 1) {
     return false;
   }
 
-  const [operand] = val;
-  if (!operand || typeof operand !== 'object' || !('var' in operand) || typeof operand.var !== 'string') {
+  const field = getVarName(val[0]);
+
+  if (!field) {
     return false;
   }
 
   return {
-    field: operand.var,
+    field,
     operator,
     value: '',
   };
 }
 
 const customJsonLogicOperations = {
-  moreThanXAgo: (val: any) => parseRelativeDateArgs(val, 'moreThanXAgo'),
-  lessThanXAgo: (val: any) => parseRelativeDateArgs(val, 'lessThanXAgo'),
-  exactlyXAgo: (val: any) => parseRelativeDateArgs(val, 'exactlyXAgo'),
-  withinLast: (val: any) => parseRelativeDateArgs(val, 'withinLast'),
-  notWithinLast: (val: any) => parseRelativeDateArgs(val, 'notWithinLast'),
-  containsAny: (val: any) => parseArrayOperatorArgs(val, 'containsAny'),
-  doesNotContainAny: (val: any) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
-  isEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isEmpty'),
-  isNonEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isNonEmpty'),
+  moreThanXAgo: (val: JsonLogicNode) => parseRelativeDateArgs(val, 'moreThanXAgo'),
+  lessThanXAgo: (val: JsonLogicNode) => parseRelativeDateArgs(val, 'lessThanXAgo'),
+  exactlyXAgo: (val: JsonLogicNode) => parseRelativeDateArgs(val, 'exactlyXAgo'),
+  withinLast: (val: JsonLogicNode) => parseRelativeDateArgs(val, 'withinLast'),
+  notWithinLast: (val: JsonLogicNode) => parseRelativeDateArgs(val, 'notWithinLast'),
+  containsAny: (val: JsonLogicNode) => parseArrayOperatorArgs(val, 'containsAny'),
+  doesNotContainAny: (val: JsonLogicNode) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
+  isEmpty: (val: JsonLogicNode) => parseUnaryOperatorArgs(val, 'isEmpty'),
+  isNonEmpty: (val: JsonLogicNode) => parseUnaryOperatorArgs(val, 'isNonEmpty'),
   some: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'some'),
   all: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'all'),
   none: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'none'),
