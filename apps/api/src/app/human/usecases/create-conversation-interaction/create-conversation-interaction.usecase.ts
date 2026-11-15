@@ -11,6 +11,7 @@ import {
   assertHumanPendingCap,
   buildPendingHumanInteraction,
   deliverToTargets,
+  type HumanDeliveryRefs,
   type HumanDeliveryTarget,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
@@ -59,6 +60,11 @@ export class CreateConversationInteraction {
     outside?: {
       alsoTo?: (interaction: HumanInteractionEntity) => HumanDeliveryTarget[];
       onPosted?: () => void;
+      /**
+       * Sends something else into the conversation in place of the card, such as WhatsApp's approved first message
+       * when the person's window is closed. Refs marked `held` keep the card waiting for their reply.
+       */
+      sendInstead?: (interaction: HumanInteractionEntity) => Promise<HumanDeliveryRefs>;
     }
   ): Promise<HumanInteractionEntity> {
     const title = command.card.title?.trim();
@@ -117,6 +123,13 @@ export class CreateConversationInteraction {
           integrationIdentifier: command.integrationIdentifier,
           platform: command.channel.platform,
           deliver: async () => {
+            if (outside?.sendInstead) {
+              const refs = await outside.sendInstead(interaction);
+              outside.onPosted?.();
+
+              return { ...refs, _conversationId: command.conversation._id };
+            }
+
             const sent = await this.outboundGateway.deliver(
               {
                 agentId: command.conversation._agentId,
