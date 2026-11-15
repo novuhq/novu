@@ -21,6 +21,7 @@ import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
+import { WhatsAppFirstMessageStatus } from '../../agents/human-relay/whatsapp-first-message-status.service';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
 
@@ -351,5 +352,56 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
     );
     expect(row?.held?.[0]).to.include({ subscriberId: operatorId, integrationIdentifier: whatsAppIdentifier });
     expect(row?.deliveries ?? []).to.have.length(0);
+  });
+
+  it('says when Meta reports the first message undelivered, and keeps the question waiting', async () => {
+    const held = await humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: 'Are you hungry?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      held: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+          templateMessageId: 'wamid.first-message-failed',
+          heldAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+
+    await testServer.getService(WhatsAppFirstMessageStatus).record(await relayConfig(), {
+      entry: [
+        {
+          changes: [
+            {
+              field: 'messages',
+              value: {
+                statuses: [
+                  {
+                    id: 'wamid.first-message-failed',
+                    status: 'failed',
+                    errors: [{ code: 131042, title: 'Business eligibility payment issue' }],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const res = await session.testAgent.get(`/v1/human/interactions/${held.identifier}`);
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+    expect(res.body.data.status).to.equal('pending');
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    expect(res.body.data.firstMessageFailed).to.have.length(1);
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain('no payment method or currency');
   });
 });

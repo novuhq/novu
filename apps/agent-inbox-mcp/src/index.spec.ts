@@ -859,6 +859,24 @@ describe('a message waiting on a WhatsApp reply', () => {
     );
   });
 
+  it('says when Meta reported the first message undelivered, so the agent tells the user', () => {
+    const text = describeOutcome({
+      id: 'hi_1',
+      kind: 'ask',
+      status: 'pending',
+      heldFor: ['alice'],
+      firstMessageFailed: [
+        {
+          subscriberId: 'alice',
+          reason: 'Meta didn’t deliver the first message: no payment method or currency set up.',
+        },
+      ],
+    });
+
+    expect(text).toContain("So alice wasn't asked to reply; this goes out only if they write first. Tell the user.");
+    expect(text).not.toContain('so they got your first message');
+  });
+
   it('keeps an ask waiting and says why', () => {
     const text = describeOutcome({ id: 'hi_1', kind: 'ask', status: 'pending', heldFor: ['alice'] });
 
