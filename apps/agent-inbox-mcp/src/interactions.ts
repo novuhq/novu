@@ -179,7 +179,7 @@ export async function waitForAnswer(
 
   let interaction = typeof sent === 'string' ? await check() : sent;
 
-  while (interaction.status === 'pending' && Date.now() + POLL_EVERY_MS <= deadline) {
+  while (interaction.status === 'pending' && !nobodyWasAsked(interaction) && Date.now() + POLL_EVERY_MS <= deadline) {
     await sleep(POLL_EVERY_MS);
 
     try {
@@ -300,4 +300,48 @@ function answerOf({ content, response }: Interaction): string {
   }
 
   return response.text ? ` They said: ${response.text}` : '';
+}
+
+/** Meta reports a first message undelivered a second or two after taking it. */
+const FIRST_MESSAGE_REPORT_MS = 6_000;
+const FIRST_MESSAGE_CHECK_MS = 1_500;
+
+/**
+ * After a send held for someone's WhatsApp reply, looks again for a few seconds: Meta reports a first message it
+ * took but couldn't deliver (a missing payment method) only after the send returns, and the agent should hear it.
+ */
+export async function awaitFirstMessageReport(
+  api: AgentInboxApi,
+  created: Interaction,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+): Promise<Interaction> {
+  if (!created.heldFor?.length) {
+    return created;
+  }
+
+  let interaction = created;
+  for (let waited = 0; waited < FIRST_MESSAGE_REPORT_MS; waited += FIRST_MESSAGE_CHECK_MS) {
+    await sleep(FIRST_MESSAGE_CHECK_MS);
+    try {
+      interaction = keepCreateDetails(
+        await api.get<Interaction>(`/v1/inbox/messages/${encodeURIComponent(created.id)}`),
+        created
+      );
+    } catch {
+      // A missed check leaves what is known.
+    }
+
+    if (interaction.status !== 'pending' || interaction.firstMessageFailed?.length) {
+      break;
+    }
+  }
+
+  return interaction;
+}
+
+/** Every first message that stood in for this one failed, so nobody was asked to reply and waiting won't help. */
+function nobodyWasAsked(interaction: Interaction): boolean {
+  const failed = new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+
+  return Boolean(interaction.heldFor?.length) && (interaction.heldFor ?? []).every((id) => failed.has(id));
 }
