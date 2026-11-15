@@ -312,6 +312,21 @@ export class HumanDeliveryService {
     );
   }
 
+  /** The approved first-message template on the WhatsApp integration a conversation is on, if there is one. */
+  async approvedFirstMessageOn(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+  }): Promise<{ templateName: string; body: string } | undefined> {
+    const integration = await this.integrationRepository.findOne({
+      _id: params.integrationId,
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+    });
+
+    return integration ? this.approvedFirstMessage([integration], integration.identifier) : undefined;
+  }
+
   /** The approved first-message template on this WhatsApp integration, if there is one. */
   async approvedFirstMessage(
     integrations: IntegrationEntity[],

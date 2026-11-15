@@ -672,6 +672,25 @@ describe('inbox_send on WhatsApp', () => {
     );
   });
 
+  it('passes on why the first message could not go in its place', async () => {
+    stubBackends(
+      refused({
+        code: 'whatsapp_window_closed',
+        message: 'closed',
+        subscriberId: 'alice',
+        firstMessageFailure:
+          "Meta couldn't send the first message: add a payment method to your WhatsApp Business account.",
+        availableChannels: [],
+      })
+    );
+
+    const result = await send({ message: 'Ping', to: 'alice', via: 'whatsapp' });
+
+    expect(result.content[0].text).toContain(
+      "within 24 hours of the person's last message. Meta couldn't send the first message: add a payment method"
+    );
+  });
+
   it('asks for fewer options when there are too many buttons', async () => {
     stubBackends(
       refused({

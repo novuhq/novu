@@ -584,7 +584,10 @@ function describeWhatsAppRefusal(error: AgentInboxApiError): string | null {
     const closedAt =
       typeof details.windowClosedAt === 'string' ? ` (their window closed at ${details.windowClosedAt})` : '';
 
-    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message. ${NOTHING_SENT}${instead}`;
+    // Why the approved first message couldn't go in its place, such as a missing payment method, in Meta's words.
+    const failure = typeof details.firstMessageFailure === 'string' ? ` ${details.firstMessageFailure}` : '';
+
+    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message.${failure} ${NOTHING_SENT}${instead}`;
   }
 
   const maxButtons = typeof details.maxButtons === 'number' ? details.maxButtons : 3;

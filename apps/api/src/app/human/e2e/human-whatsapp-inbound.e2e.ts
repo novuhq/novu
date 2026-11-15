@@ -2,6 +2,7 @@ import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   ChannelEndpointRepository,
+  ConversationRepository,
   HumanInteractionRepository,
   IntegrationRepository,
 } from '@novu/dal';
@@ -12,6 +13,7 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -26,6 +28,7 @@ const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const conversationRepository = new ConversationRepository();
 
 const DASHBOARD_SECRET = 'e2e-whatsapp-inbound-dashboard-secret';
 const PHONE_NUMBER_ID = '1234';
@@ -301,5 +304,52 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
     expect(after?.status).to.equal(HumanInteractionStatusEnum.PENDING);
     expect(after?.held ?? []).to.have.length(0);
     expect(after?.deliveries?.[0]).to.include({ subscriberId: operatorId, platformMessageId: 'wamid.released' });
+  });
+
+  it('holds a reply in Ada’s conversation when her window is closed and a first message is approved', async () => {
+    await sendWhatsApp('hello from Ada', ADA_WA_ID);
+    const [thread] = await operatorInbox();
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const scope = { _environmentId: session.environment._id, _organizationId: session.organization._id };
+    // Her last message and her proof are two days old, so her window is closed.
+    await conversationRepository.update({ ...scope, identifier: thread.id } as never, {
+      $set: { lastHumanMessageAt: twoDaysAgo },
+    });
+    await channelEndpointRepository.update({ ...scope, subscriberId: operatorId } as never, {
+      $set: { 'endpoint.provedAt': twoDaysAgo },
+    });
+    const body = 'You have a message from {{agent_name}}. Reply here to view it.';
+    await integrationRepository.update({ ...scope, identifier: whatsAppIdentifier } as never, {
+      $set: {
+        'credentials.whatsappTemplateName': 'agentinbox_first_message',
+        'credentials.whatsappTemplateStatus': 'APPROVED',
+        'credentials.whatsappTemplateBody': body,
+        'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
+        'credentials.whatsappTemplateApprovedBody': body,
+      },
+    });
+    const request = sinon
+      .stub(safeOutboundHttp, 'safeOutboundJsonRequest')
+      .resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first-message' }] } } as never);
+
+    let res: { status: number; body: Record<string, any> };
+    try {
+      res = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'ask', card: { title: 'Are you hungry?' }, thread: thread.id });
+    } finally {
+      request.restore();
+    }
+
+    expect(res.status).to.equal(201, JSON.stringify(res.body));
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    const sent = request.getCalls().find((call) => String(call.args[0].url).endsWith(`/${PHONE_NUMBER_ID}/messages`));
+    expect(sent?.args[0].body).to.deep.include({ to: ADA_WA_ID, type: 'template' });
+    const row = await humanInteractionRepository.findOne(
+      { _environmentId: session.environment._id, identifier: res.body.data.id } as never,
+      '*'
+    );
+    expect(row?.held?.[0]).to.include({ subscriberId: operatorId, integrationIdentifier: whatsAppIdentifier });
+    expect(row?.deliveries ?? []).to.have.length(0);
   });
 });
