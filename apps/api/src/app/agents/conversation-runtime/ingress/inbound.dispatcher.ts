@@ -67,7 +67,7 @@ export class InboundDispatcher {
     const webResponse = await handler(webRequest);
 
     // Only after the adapter verified Meta's signature: the delivery statuses it drops can say a first message failed.
-    // Not awaited, so Meta's webhook is answered at once while a status waits for its hold to be saved.
+    // Not awaited, so Meta's webhook is answered at once.
     if (webResponse.ok && req.method === 'POST' && platform === AgentPlatformEnum.WHATSAPP) {
       void this.whatsAppFirstMessageStatus
         .record(config, req.body ?? (req as ExpressRequest & { rawBody?: Buffer }).rawBody?.toString('utf8'))

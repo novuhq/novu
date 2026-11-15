@@ -16,13 +16,6 @@ type MetaStatus = {
   }>;
 };
 
-/**
- * Meta can report a failure before the send saved its hold (written once the first message went out and its
- * conversation was filed), so a status that matches nothing yet is tried again this many times, a second apart.
- */
-const MATCH_ATTEMPTS = 4;
-const MATCH_RETRY_MS = 1_000;
-
 type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: MetaStatus[] } }> }> };
 
 /**
@@ -30,12 +23,12 @@ type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: Meta
  * payment method, and says so only in its webhook's delivery statuses. The chat adapter drops those, so this reads
  * the failed ones and notes on what the first message stood in for why it never arrived. Called only for verified
  * WhatsApp webhooks to the relay; a status for any other message costs one indexed read.
+ *
+ * The hold is saved before the first message goes out and takes Meta's id as soon as Meta accepts it, so a failure
+ * finds it on the first try.
  */
 @Injectable()
 export class WhatsAppFirstMessageStatus {
-  /** Swapped in tests, so they don't wait. */
-  sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly logger: PinoLogger
@@ -51,26 +44,15 @@ export class WhatsAppFirstMessageStatus {
       return;
     }
 
-    // All of a webhook's failures are tried together, and only the ones that matched nothing yet wait a round, so
-    // an ordinary message's failure never holds up a first message's.
-    let pending = failedStatusesOf(payload).map((status) => ({
-      id: status.id as string,
-      failure: describeFailure(status),
-    }));
-    for (let attempt = 0; attempt < MATCH_ATTEMPTS && pending.length > 0; attempt += 1) {
-      if (attempt > 0) {
-        await this.sleep(MATCH_RETRY_MS);
-      }
-
-      const rows = await Promise.all(
-        pending.map(({ id, failure }) => this.recordOnce(config.environmentId, id, failure))
-      );
-      pending = pending.filter((_, index) => !rows[index]);
-    }
+    await Promise.all(
+      failedStatusesOf(payload).map((status) =>
+        this.recordFailure(config.environmentId, status.id as string, describeFailure(status))
+      )
+    );
   }
 
-  /** One try at noting a failure on the hold that sent this first message; null when none matched or it failed. */
-  private async recordOnce(environmentId: string, templateMessageId: string, failure: HumanInteractionHoldFailure) {
+  /** Notes a failure on the hold that sent this first message; null when none matched or the write failed. */
+  private async recordFailure(environmentId: string, templateMessageId: string, failure: HumanInteractionHoldFailure) {
     const row = await this.humanInteractionRepository
       .recordHoldFailure(environmentId, templateMessageId, failure)
       .catch((err) => {

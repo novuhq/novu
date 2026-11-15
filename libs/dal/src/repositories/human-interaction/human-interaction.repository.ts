@@ -183,9 +183,41 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     );
   }
 
-  /** Records someone as held, after the first-message template went out to them. */
+  /**
+   * Records someone as held, before the first-message template goes out to them, so neither their reply nor Meta's
+   * word on that template can arrive ahead of the hold.
+   */
   async addHold(environmentId: string, id: string, hold: HumanInteractionHold): Promise<void> {
     await this.update({ _id: id, _environmentId: environmentId }, { $push: { held: hold } });
+  }
+
+  /** The first message went out: the hold takes Meta's id for it, which a later delivery failure names. */
+  async setHoldTemplateMessageId(
+    environmentId: string,
+    id: string,
+    hold: Pick<HumanInteractionHold, 'subscriberId' | 'integrationIdentifier'>,
+    templateMessageId: string
+  ): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        held: { $elemMatch: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } },
+      },
+      { $set: { 'held.$.templateMessageId': templateMessageId } }
+    );
+  }
+
+  /** The first message never went out, so nothing is held for them after all. */
+  async removeHold(
+    environmentId: string,
+    id: string,
+    hold: Pick<HumanInteractionHold, 'subscriberId' | 'integrationIdentifier'>
+  ): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId },
+      { $pull: { held: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } } }
+    );
   }
 
   /**

@@ -9,6 +9,7 @@ import {
   type HumanContactChannelAddresses,
   HumanContactRepository,
   HumanInteractionEntity,
+  HumanInteractionRepository,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
@@ -188,7 +189,8 @@ export class HumanDeliveryService {
     private readonly channelGate: HumanChannelGate,
     private readonly whatsAppWindow: WhatsAppWindowService,
     private readonly firstMessage: WhatsAppFirstMessageService,
-    private readonly agentRepository: AgentRepository
+    private readonly agentRepository: AgentRepository,
+    private readonly humanInteractionRepository: HumanInteractionRepository
   ) {}
 
   async resolveChannel(params: {
@@ -832,6 +834,9 @@ export class HumanDeliveryService {
   /**
    * Sends the approved first-message template in place of the message, with the agent's name in it and a button
    * that comes back as this interaction. A failure is a refusal for the closed window, with Meta's reason.
+   *
+   * The hold is saved before the template goes out, so a reply or a tap can't arrive before there is something
+   * to release, and it is taken back when the template never went.
    */
   private async sendFirstMessage(
     interaction: HumanInteractionEntity,
@@ -861,6 +866,18 @@ export class HumanDeliveryService {
       throw await refuse("The first message couldn't go out: connect WhatsApp again on agentinbox.md.");
     }
 
+    const platformThreadId = `whatsapp:${credentials.phoneNumberIdentification}:${target.platformUserId}`;
+    const hold = { subscriberId, integrationIdentifier: target.integrationIdentifier };
+    await this.humanInteractionRepository.addHold(interaction._environmentId, interaction._id, {
+      ...hold,
+      platformThreadId,
+      heldAt: new Date().toISOString(),
+    });
+    const dropHold = () =>
+      this.humanInteractionRepository
+        .removeHold(interaction._environmentId, interaction._id, hold)
+        .catch(() => undefined);
+
     // The name agentinbox.md shows for an agent that was never named, so the preview there matches.
     const agentName = agent?.name && agent.name !== HUMAN_RELAY_DEFAULT_NAME ? agent.name : 'Inbox agent';
     const sent = await sendNamedWhatsAppTemplate({
@@ -873,17 +890,25 @@ export class HumanDeliveryService {
       bodyParameters: usesAgentName(firstMessage.body) ? { [AGENT_NAME_VARIABLE]: agentName } : {},
       // A tap comes back as this interaction, so it releases what was held for them.
       quickReplyPayloads: [buildHumanOpenActionId(interaction.identifier)],
+    }).catch(async (err) => {
+      await dropHold();
+
+      throw err;
     });
     const error = extractMetaError(sent.body);
     const messageId = sent.body.messages?.[0]?.id;
     if (error || sent.statusCode >= 400 || !messageId) {
+      await dropHold();
+
       throw await refuse(describeFirstMessageFailure(error?.code, error?.message));
     }
 
-    return {
-      platformMessageId: messageId,
-      platformThreadId: `whatsapp:${credentials.phoneNumberIdentification}:${target.platformUserId}`,
-    };
+    // It went out, so failing to note its id must not fail the send: only a later delivery failure would go unnamed.
+    await this.humanInteractionRepository
+      .setHoldTemplateMessageId(interaction._environmentId, interaction._id, hold, messageId)
+      .catch(() => undefined);
+
+    return { platformMessageId: messageId, platformThreadId };
   }
 
   /** One-off DM of arbitrary content (e.g. the keyless sign-up CTA) to an already-resolved target. */

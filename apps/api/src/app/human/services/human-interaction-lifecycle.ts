@@ -469,9 +469,7 @@ export async function deliverToTargets(
       const refs = await target.deliver();
       const record = recordOf(target, refs);
       if ('hold' in record) {
-        // Saved as soon as the first message is out, so a reply that comes while later contacts are still being
-        // sent to can't answer a question they haven't seen.
-        await repository.addHold(interaction._environmentId, interaction._id, record.hold);
+        // Already on the row: the send saved it before the first message went out.
         held.push(record.hold);
       } else {
         deliveries.push(record.delivery);

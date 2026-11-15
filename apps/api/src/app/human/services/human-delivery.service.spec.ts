@@ -7,6 +7,7 @@ import {
   HumanAddressVerificationStateEnum,
   HumanChannelViaEnum,
 } from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
@@ -84,6 +85,7 @@ describe('HumanDeliveryService.resolveChannel', () => {
       channelGate() as never,
       whatsAppWindow() as never,
       firstMessageService() as never,
+      {} as never,
       {} as never
     );
 
@@ -510,6 +512,7 @@ describe('HumanDeliveryService keyless email', () => {
       channelGate() as never,
       whatsAppWindow() as never,
       firstMessageService() as never,
+      {} as never,
       {} as never
     );
 
@@ -622,6 +625,7 @@ describe('HumanDeliveryService.listInviteChannels', () => {
       channelGate() as never,
       whatsAppWindow() as never,
       firstMessageService() as never,
+      {} as never,
       {} as never
     );
 
@@ -664,6 +668,7 @@ describe('HumanDeliveryService.listWorkingChannels', () => {
       channelGate() as never,
       whatsAppWindow() as never,
       firstMessageService() as never,
+      {} as never,
       {} as never
     );
 
@@ -757,6 +762,7 @@ describe('HumanDeliveryService on WhatsApp', () => {
       new HumanChannelGate({ getFlag } as never),
       windows as never,
       firstMessageService(approvedFirstMessage) as never,
+      {} as never,
       {} as never
     );
 
@@ -1174,5 +1180,112 @@ describe('pickDefaultTarget with WhatsApp', () => {
 
   it('keeps email after WhatsApp even when email was verified first', () => {
     expect(pickDefaultTarget([email, whatsApp])).to.equal(whatsApp);
+  });
+});
+
+describe('HumanDeliveryService first message', () => {
+  let request: sinon.SinonStub;
+
+  beforeEach(() => {
+    request = sinon.stub(safeOutboundHttp, 'safeOutboundJsonRequest');
+  });
+
+  afterEach(() => {
+    request.restore();
+  });
+
+  function setup() {
+    const interactions = {
+      addHold: sinon.stub().resolves(),
+      setHoldTemplateMessageId: sinon.stub().resolves(),
+      removeHold: sinon.stub().resolves(),
+    };
+    const service = new HumanDeliveryService(
+      { find: sinon.stub().resolves([]) } as never,
+      { find: sinon.stub().resolves([]), findOne: sinon.stub().resolves(null) } as never,
+      {
+        find: sinon.stub().resolves([]),
+        findOne: sinon.stub().resolves({ credentials: { apiToken: 'token', phoneNumberIdentification: '1234' } }),
+      } as never,
+      { findContact: sinon.stub().resolves(null), find: sinon.stub().resolves([]) } as never,
+      {} as never,
+      emailGate() as never,
+      channelGate(true) as never,
+      whatsAppWindow() as never,
+      {} as never,
+      { findOne: sinon.stub().resolves({ name: 'Deploy bot' }) } as never,
+      interactions as never
+    );
+    const interaction = {
+      _id: 'hi-row',
+      identifier: 'hi_1',
+      _agentId: 'agent1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      subscriberIds: ['ada'],
+    };
+    const target = {
+      platform: HumanChannelViaEnum.WHATSAPP,
+      platformUserId: '15550100201',
+      integrationIdentifier: 'whatsapp-main',
+      firstMessage: { templateName: 'agentinbox_first_message', body: 'Hi' },
+    };
+
+    return { deliver: () => service.deliver(interaction as never, target as never, 'ada'), interactions };
+  }
+
+  const hold = { subscriberId: 'ada', integrationIdentifier: 'whatsapp-main' };
+
+  it('saves the hold before the first message goes out, then notes Meta’s id on it', async () => {
+    const { deliver, interactions } = setup();
+    request.resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first' }] } } as never);
+
+    const refs = await deliver();
+
+    expect(interactions.addHold.calledBefore(request)).to.equal(true);
+    expect(interactions.addHold.firstCall.args.slice(0, 2)).to.deep.equal(['env1', 'hi-row']);
+    expect(interactions.addHold.firstCall.args[2]).to.deep.include({
+      ...hold,
+      platformThreadId: 'whatsapp:1234:15550100201',
+    });
+    expect(interactions.addHold.firstCall.args[2]).to.not.have.property('templateMessageId');
+    expect(interactions.setHoldTemplateMessageId.calledAfter(request)).to.equal(true);
+    expect(interactions.setHoldTemplateMessageId.firstCall.args).to.deep.equal(['env1', 'hi-row', hold, 'wamid.first']);
+    expect(interactions.removeHold.called).to.equal(false);
+    expect(refs).to.deep.equal({
+      platformMessageId: 'wamid.first',
+      platformThreadId: 'whatsapp:1234:15550100201',
+      held: true,
+    });
+  });
+
+  it('takes the hold back when Meta won’t send the first message', async () => {
+    const { deliver, interactions } = setup();
+    request.resolves({ statusCode: 400, body: { error: { code: 131042, message: 'Payment issue' } } } as never);
+
+    const error = await deliver().catch((err: unknown) => err);
+
+    expect(error).to.be.instanceOf(WhatsAppUndeliverableException);
+    expect(interactions.removeHold.calledOnceWith('env1', 'hi-row', hold)).to.equal(true);
+    expect(interactions.setHoldTemplateMessageId.called).to.equal(false);
+  });
+
+  it('takes the hold back when Meta can’t be reached', async () => {
+    const { deliver, interactions } = setup();
+    request.rejects(new Error('socket hang up'));
+
+    const error = await deliver().catch((err: unknown) => err);
+
+    expect((error as Error).message).to.equal('socket hang up');
+    expect(interactions.removeHold.calledOnceWith('env1', 'hi-row', hold)).to.equal(true);
+  });
+
+  it('still counts the first message as sent when its id can’t be noted', async () => {
+    const { deliver, interactions } = setup();
+    request.resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first' }] } } as never);
+    interactions.setHoldTemplateMessageId.rejects(new Error('db blip'));
+
+    expect(await deliver()).to.include({ platformMessageId: 'wamid.first', held: true });
+    expect(interactions.removeHold.called).to.equal(false);
   });
 });

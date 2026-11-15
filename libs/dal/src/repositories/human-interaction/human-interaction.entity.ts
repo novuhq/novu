@@ -95,7 +95,7 @@ export interface HumanInteractionHold {
   subscriberId: string;
   integrationIdentifier: string;
   platformThreadId: string;
-  /** Meta's id for the template message that went out instead. */
+  /** Meta's id for the template message that went out instead. Unset until Meta accepts it. */
   templateMessageId?: string;
   heldAt: string;
   /** Set while a release is sending it, so a second reply doesn't send it too. */

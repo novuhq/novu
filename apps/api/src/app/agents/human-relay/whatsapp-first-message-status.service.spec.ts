@@ -44,42 +44,26 @@ describe('WhatsAppFirstMessageStatus', () => {
     );
   });
 
-  it('tries again when Meta reports the failure before the send saved its hold', async () => {
+  it('tries each failure once, and a write that fails doesn’t stop the others', async () => {
     const { status, repository } = setup();
-    status.sleep = async () => undefined;
-    repository.recordHoldFailure.onFirstCall().resolves(null);
-    repository.recordHoldFailure.onSecondCall().rejects(new Error('db blip'));
-    repository.recordHoldFailure.onThirdCall().resolves({ identifier: 'hi_1' });
+    repository.recordHoldFailure.callsFake(async (_env: string, id: string) => {
+      if (id === 'wamid.broken') {
+        throw new Error('db blip');
+      }
 
-    await status.record(relay, webhook([paymentFailure]));
+      return id === 'wamid.first' ? { identifier: 'hi_1' } : null;
+    });
 
-    expect(repository.recordHoldFailure.callCount).to.equal(3);
-  });
-
-  it('lets a status go after a few tries when nothing was held for it', async () => {
-    const { status, repository } = setup();
-    status.sleep = async () => undefined;
-    repository.recordHoldFailure.resolves(null);
-
-    await status.record(relay, webhook([paymentFailure]));
-
-    expect(repository.recordHoldFailure.callCount).to.equal(4);
-  });
-
-  it('tries a webhook’s failures together, so an unmatched one doesn’t hold up the rest', async () => {
-    const { status, repository } = setup();
-    const sleeps: number[] = [];
-    status.sleep = async (ms) => void sleeps.push(ms);
-    repository.recordHoldFailure.callsFake(async (_env: string, id: string) =>
-      id === 'wamid.first' ? { identifier: 'hi_1' } : null
+    await status.record(
+      relay,
+      webhook([{ ...paymentFailure, id: 'wamid.ordinary' }, { ...paymentFailure, id: 'wamid.broken' }, paymentFailure])
     );
 
-    await status.record(relay, webhook([{ ...paymentFailure, id: 'wamid.ordinary' }, paymentFailure]));
-
-    const first = repository.recordHoldFailure.getCalls().filter((call) => call.args[1] === 'wamid.first');
-    expect(first).to.have.length(1);
-    // The unmatched one was tried four times, in three rounds a second apart: one wait per round, not per status.
-    expect(sleeps).to.deep.equal([1000, 1000, 1000]);
+    expect(repository.recordHoldFailure.getCalls().map((call) => call.args[1])).to.deep.equal([
+      'wamid.ordinary',
+      'wamid.broken',
+      'wamid.first',
+    ]);
   });
 
   it('reads a body that arrives as text', async () => {
