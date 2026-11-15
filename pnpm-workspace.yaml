@@ -230,7 +230,15 @@ overrides:
   # the 6.x line. basic-ftp 6.0 removed the deprecated `Client.list()` string
   # overload and tightened TypeScript signatures, but `get-uri` only calls
   # `Client.access()` + `Client.downloadTo()`, which are unchanged.
-  basic-ftp@<6.2.1: ^6.2.1
+  # GHSA-4xjp-22g4-fmrf (moderate): uncaught `TypeError` in the MLSD
+  # directory-listing parser via a `__proto__` fact name causes
+  # `Client.list()` to crash the Node.js process (DoS). Patched in 6.2.4.
+  # GHSA-3hrq-5c38-xwg2 (moderate): uncaught exception crashes the Node.js
+  # process when a password (or resumed-download path) contains CR/LF.
+  # Patched in 6.2.3. Widen the previous `<6.2.1` floor to `<6.2.4` so the
+  # same transitive chain picks up the 6.2.4+ fix; the 6.2.x line is a pure
+  # patch series with no further API changes.
+  basic-ftp@<6.2.4: ^6.2.4
   # GHSA-ch52-4w7c-c8xp: http-cache-semantics max-stale handling can disclose
   # cross-user cached responses. Patched in 4.2.1. Transitive via got >
   # cacheable-request across build tooling.
