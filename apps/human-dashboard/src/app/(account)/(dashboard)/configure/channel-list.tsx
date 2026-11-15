@@ -3,6 +3,7 @@
 import { ChevronRight, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button, SMALL_BUTTON } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import type { ChannelVia } from '@/lib/human-channels-api';
@@ -24,8 +25,11 @@ const PLACEHOLDERS: Record<ChannelVia, (handle: string) => string> = {
   email: () => 'Its own email address',
   telegram: (handle) => `People DM ${handle}’s bot.`,
   slack: () => 'Its own app in your workspace',
-  whatsapp: () => 'Your own WhatsApp Business number',
+  whatsapp: () => 'Connect your own WhatsApp Business account.',
 };
+
+/** Channels that wear a NEW tag, with a faint accent wash on the row, until they're connected. */
+const NEW_CHANNELS: ReadonlySet<ChannelVia> = new Set(['whatsapp']);
 
 const COMING_SOON: { via: ComingSoonVia; name: string }[] = [
   { via: 'whatsapp', name: 'WhatsApp' },
@@ -103,11 +107,18 @@ type ChannelListRowProps = {
 
 function ChannelListRow({ channel, placeholder, detail, onOpen }: ChannelListRowProps) {
   const { connected, name } = channel;
+  const isNew = !connected && NEW_CHANNELS.has(channel.via);
 
   return (
-    <li className={cn(ROW, 'transition-colors duration-150 hover:bg-raised motion-reduce:transition-none')}>
+    <li
+      className={cn(
+        ROW,
+        'transition-colors duration-150 hover:bg-raised motion-reduce:transition-none',
+        isNew && 'bg-accent/4'
+      )}
+    >
       <ChannelLogo via={channel.via} size={24} />
-      <RowText name={name} dim={!connected}>
+      <RowText name={name} dim={!connected} isNew={isNew}>
         {/* A new key when the channel connects, so its new line fades in. */}
         <p
           key={String(connected)}
@@ -134,7 +145,7 @@ function ChannelListRow({ channel, placeholder, detail, onOpen }: ChannelListRow
       ) : (
         <Button variant="secondary" className={cn(SMALL_BUTTON, WHOLE_ROW)} onClick={onOpen}>
           <Plus aria-hidden="true" className="size-3.5" />
-          Set up
+          Enable
           <span className="sr-only"> {name}</span>
         </Button>
       )}
@@ -142,10 +153,17 @@ function ChannelListRow({ channel, placeholder, detail, onOpen }: ChannelListRow
   );
 }
 
-function RowText({ name, dim, children }: { name: string; dim: boolean; children: ReactNode }) {
+type RowTextProps = { name: string; dim: boolean; isNew?: boolean; children: ReactNode };
+
+function RowText({ name, dim, isNew, children }: RowTextProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-      <h3 className={cn('text-[13px] leading-4.5 font-medium', dim ? 'text-default' : 'text-foreground')}>{name}</h3>
+      <div className="flex min-w-0 items-center gap-2">
+        <h3 className={cn('truncate text-[13px] leading-4.5 font-medium', dim ? 'text-default' : 'text-foreground')}>
+          {name}
+        </h3>
+        {isNew && <Badge variant="accent">New</Badge>}
+      </div>
       {children}
     </div>
   );
