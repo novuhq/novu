@@ -75,6 +75,14 @@ describe('parseTagsQueryValue', () => {
     });
   });
 
+  it('reads named keys with scalar values as one AND group per key', () => {
+    expect(parseTagsQueryValue({ foo: 'a', bar: 'b' })).to.deep.equal({ and: [{ or: ['a'] }, { or: ['b'] }] });
+  });
+
+  it('reads sparse index keys as the flat list qs builds below the array limit', () => {
+    expect(parseTagsQueryValue({ 0: 'a', 30: 'b' })).to.deep.equal(['a', 'b']);
+  });
+
   it('reads a keyed object without "or" / "and" as a list of groups', () => {
     expect(parseTagsQueryValue({ foo: 'a', bar: ['b'] })).to.deep.equal({ and: [{ or: ['a'] }, { or: ['b'] }] });
   });
@@ -120,6 +128,12 @@ describe('parseTagsQueryValue with the API query parser', () => {
   it('matches an overflowing OR group together with a second group', () => {
     expect(tagsMongoQuery(`${groupQuery(0, tags.slice(0, 21))}&${groupQuery(1, ['z'])}`)).to.deep.equal({
       $and: [{ tags: { $in: tags.slice(0, 21) } }, { tags: { $in: ['z'] } }],
+    });
+  });
+
+  it('keeps named keys as AND groups', () => {
+    expect(tagsMongoQuery('tags[foo]=t0&tags[bar]=z')).to.deep.equal({
+      $and: [{ tags: { $in: ['t0'] } }, { tags: { $in: ['z'] } }],
     });
   });
 

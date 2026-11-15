@@ -62,13 +62,17 @@ function toGroup(item: unknown): string[] {
   return Array.isArray(item) ? toTagList(item) : [String(item)];
 }
 
+function toAndGroups(list: unknown[]): { and: { or: string[] }[] } {
+  return { and: list.map((group) => ({ or: toGroup(group) })) };
+}
+
 function parseList(list: unknown[]): TagsFilter {
   if (list.length === 0) {
     return [];
   }
 
   if (list.some((item) => Array.isArray(item))) {
-    return { and: list.map((group) => ({ or: toGroup(group) })) };
+    return toAndGroups(list);
   }
 
   return toTagList(list);
@@ -107,10 +111,11 @@ function parseExplicitObject(record: Record<string, NormalizedQueryValue>): Tags
 }
 
 /**
- * A keyed object without "or" / "and" (e.g. `tags[0][]=a&tags[1][]=b` past the qs array limit) is read as a list of
- * its values in key order. A single group collapses to a flat tag list.
+ * A keyed object without "or" / "and". Index keys (`{ '0': …, '1': … }`) are a list `qs` could not build as an array
+ * (more than 20 items, or sparse indices), so they parse exactly like that list. Named keys (`tags[foo]=a&tags[bar]=b`)
+ * keep their legacy meaning: one AND group per key. Either way, a single group collapses to a flat tag list.
  */
-function parseKeyedObject(record: Record<string, NormalizedQueryValue>): TagsFilter | undefined {
+function parseKeyedObject(record: Record<string, NormalizedQueryValue>, isIndexKeyed: boolean): TagsFilter | undefined {
   const list = Object.keys(record)
     .sort((a, b) => Number(a) - Number(b))
     .map((key) => record[key])
@@ -120,7 +125,7 @@ function parseKeyedObject(record: Record<string, NormalizedQueryValue>): TagsFil
     return undefined;
   }
 
-  const parsed = parseList(list);
+  const parsed = isIndexKeyed ? parseList(list) : toAndGroups(list);
 
   if (!Array.isArray(parsed) && 'and' in parsed && parsed.and.length === 1) {
     return parsed.and[0]?.or;
@@ -156,5 +161,5 @@ export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
     return parseExplicitObject(record);
   }
 
-  return parseKeyedObject(record);
+  return parseKeyedObject(record, isIndexKeyedObject(value));
 }
