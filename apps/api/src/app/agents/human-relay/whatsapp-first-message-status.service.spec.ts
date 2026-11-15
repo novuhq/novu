@@ -5,10 +5,21 @@ import { describeFailure, WhatsAppFirstMessageStatus } from './whatsapp-first-me
 describe('WhatsAppFirstMessageStatus', () => {
   const relay = { environmentId: 'env1', platform: 'whatsapp', isHumanRelay: true };
   const webhook = (statuses: unknown[]) => ({ entry: [{ changes: [{ field: 'messages', value: { statuses } }] }] });
+  const billingPage =
+    'https://business.facebook.com/billing_hub/accounts/details/?business_id=1&asset_id=2&wizard_name=CHANGE_COUNTRY_CURRENCY';
   const paymentFailure = {
     id: 'wamid.first',
     status: 'failed',
-    errors: [{ code: 131042, title: 'Business eligibility payment issue' }],
+    errors: [
+      {
+        code: 131042,
+        title: 'Business eligibility payment issue',
+        error_data: {
+          details: `Message failed to send because your WhatsApp Business account currency is not configured. Visit ${billingPage} to resolve this issue.`,
+        },
+        href: billingPage,
+      },
+    ],
   };
 
   function setup() {
@@ -27,7 +38,10 @@ describe('WhatsAppFirstMessageStatus', () => {
     const [environmentId, messageId, failure] = repository.recordHoldFailure.firstCall.args;
     expect([environmentId, messageId]).to.deep.equal(['env1', 'wamid.first']);
     expect(failure).to.include({ code: 131042 });
-    expect(failure.message).to.contain('no payment method or currency');
+    // Meta's own sentence, with the page that fixes it, so the agent can hand the user the link.
+    expect(failure.message).to.equal(
+      `Meta didn’t deliver the first message: Message failed to send because your WhatsApp Business account currency is not configured. Visit ${billingPage} to resolve this issue.`
+    );
   });
 
   it('reads a body that arrives as text', async () => {
@@ -47,6 +61,17 @@ describe('WhatsAppFirstMessageStatus', () => {
     await status.record(relay, 'not json');
 
     expect(repository.recordHoldFailure.called).to.equal(false);
+  });
+
+  it('adds Meta’s link when its sentence doesn’t carry it, and says what 131042 means without one', () => {
+    expect(
+      describeFailure({
+        status: 'failed',
+        errors: [{ code: 131042, href: 'https://business.facebook.com/billing_hub' }],
+      }).message
+    ).to.equal(
+      'Meta didn’t deliver the first message: your WhatsApp Business account has no payment method or currency set up. Fix it here: https://business.facebook.com/billing_hub'
+    );
   });
 
   it('keeps Meta’s details for other failures', () => {

@@ -263,7 +263,7 @@ function describeHeld(heldFor: Interaction['heldFor'], failed: Interaction['firs
     // Meta took the first message, then reported it undelivered: nobody was told to reply, so waiting won't help.
     ...(failed ?? []).map(
       ({ subscriberId, reason }) =>
-        ` ${reason} So ${subscriberId} wasn't asked to reply; this goes out only if they write first. Tell the user.`
+        ` ${reason} So ${subscriberId} wasn't asked to reply; this goes out only if they write first. Tell the user, with any link Meta gave, so they can fix it, then send again.`
     ),
   ];
 
