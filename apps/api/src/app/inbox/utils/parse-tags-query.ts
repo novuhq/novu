@@ -44,10 +44,14 @@ function normalizeIndexedLists(value: unknown): NormalizedQueryValue {
   }
 
   if (isPlainObject(value)) {
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, normalizeIndexedLists(item)]));
+    return normalizeValues(value);
   }
 
   return value as NormalizedQueryValue;
+}
+
+function normalizeValues(record: Record<string, unknown>): Record<string, NormalizedQueryValue> {
+  return Object.fromEntries(Object.entries(record).map(([key, item]) => [key, normalizeIndexedLists(item)]));
 }
 
 function toTagList(values: unknown[]): string[] {
@@ -82,27 +86,47 @@ function parseAndEntry(item: unknown): { or: string[] } {
   throw new TagsFilterValidationError('Each "and" entry must be { or: string[] } or a tag array');
 }
 
-function parseExplicitObject(record: Record<string, unknown>): TagsFilter | undefined {
-  const hasOr = Object.prototype.hasOwnProperty.call(record, 'or');
-  const hasAnd = Object.prototype.hasOwnProperty.call(record, 'and');
+function hasOwn(record: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
 
-  if (hasOr && hasAnd) {
+function parseExplicitObject(record: Record<string, NormalizedQueryValue>): TagsFilter | undefined {
+  if (hasOwn(record, 'or') && hasOwn(record, 'and')) {
     throw new TagsFilterValidationError('Tags filter cannot have both "or" and "and"');
   }
 
-  if (hasOr) {
+  if (hasOwn(record, 'or')) {
     const orVal = record.or;
 
     return Array.isArray(orVal) ? { or: toTagList(orVal) } : undefined;
   }
 
-  if (hasAnd) {
-    const andVal = record.and;
+  const andVal = record.and;
 
-    return Array.isArray(andVal) ? { and: andVal.map(parseAndEntry) } : undefined;
+  return Array.isArray(andVal) ? { and: andVal.map(parseAndEntry) } : undefined;
+}
+
+/**
+ * A keyed object without "or" / "and" (e.g. `tags[0][]=a&tags[1][]=b` past the qs array limit) is read as a list of
+ * its values in key order. A single group collapses to a flat tag list.
+ */
+function parseKeyedObject(record: Record<string, NormalizedQueryValue>): TagsFilter | undefined {
+  const list = Object.keys(record)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((key) => record[key])
+    .filter((item) => item !== undefined && item !== null);
+
+  if (list.length === 0) {
+    return undefined;
   }
 
-  return undefined;
+  const parsed = parseList(list);
+
+  if (!Array.isArray(parsed) && 'and' in parsed && parsed.and.length === 1) {
+    return parsed.and[0]?.or;
+  }
+
+  return parsed;
 }
 
 /**
@@ -117,27 +141,20 @@ export function parseTagsQueryValue(value: unknown): TagsFilter | undefined {
     return [value];
   }
 
-  const wasIndexKeyedObject = isIndexKeyedObject(value);
-  const normalized = normalizeIndexedLists(value);
-
-  if (Array.isArray(normalized)) {
-    const parsed = parseList(normalized);
-
-    // Preserve legacy behavior: an index-keyed object with a single group collapses to a flat list.
-    if (wasIndexKeyedObject && !Array.isArray(parsed) && 'and' in parsed && parsed.and.length === 1) {
-      return parsed.and[0]?.or;
-    }
-
-    if (wasIndexKeyedObject && Array.isArray(parsed) && parsed.length === 0) {
-      return undefined;
-    }
-
-    return parsed;
+  if (Array.isArray(value)) {
+    return parseList(value.map(normalizeIndexedLists));
   }
 
-  if (isPlainObject(normalized)) {
-    return parseExplicitObject(normalized);
+  if (!isPlainObject(value)) {
+    return undefined;
   }
 
-  return undefined;
+  // Normalize the values, not the object itself, so the top-level keys stay visible to the checks below.
+  const record = normalizeValues(value);
+
+  if (hasOwn(record, 'or') || hasOwn(record, 'and')) {
+    return parseExplicitObject(record);
+  }
+
+  return parseKeyedObject(record);
 }

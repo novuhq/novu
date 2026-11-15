@@ -1,4 +1,6 @@
+import { buildTagsQuery, normalizeTagGroups, TagsFilterValidationError } from '@novu/shared';
 import { expect } from 'chai';
+import express from 'express';
 
 import { parseTagsQueryValue } from './parse-tags-query';
 
@@ -67,6 +69,68 @@ describe('parseTagsQueryValue', () => {
       expect(parseTagsQueryValue({ and: [{ or: asIndexedObject(tagList(21)) }] })).to.deep.equal({
         and: [{ or: tagList(21) }],
       });
+    });
+    it('keeps a single overflowing group as a flat list', () => {
+      expect(parseTagsQueryValue({ 0: asIndexedObject(tagList(21)) })).to.deep.equal(tagList(21));
+    });
+  });
+
+  it('reads a keyed object without "or" / "and" as a list of groups', () => {
+    expect(parseTagsQueryValue({ foo: 'a', bar: ['b'] })).to.deep.equal({ and: [{ or: ['a'] }, { or: ['b'] }] });
+  });
+
+  it('rejects an { and } entry that is neither { or } nor an array', () => {
+    expect(() => parseTagsQueryValue({ and: ['a'] })).to.throw(TagsFilterValidationError);
+  });
+
+  it('rejects a filter with both "or" and "and"', () => {
+    expect(() => parseTagsQueryValue({ or: ['a'], and: [['b']] })).to.throw(TagsFilterValidationError);
+  });
+});
+
+describe('parseTagsQueryValue with the API query parser', () => {
+  // Same parser as apps/api/src/bootstrap.ts (`app.set('query parser', 'extended')`).
+  const app = express();
+  app.set('query parser', 'extended');
+  const parseQueryString: (queryString: string) => Record<string, unknown> = app.get('query parser fn');
+
+  const tags = Array.from({ length: 31 }, (_, i) => `t${i}`);
+  const flatQuery = (count: number) =>
+    tags
+      .slice(0, count)
+      .map((tag) => `tags[]=${tag}`)
+      .join('&');
+  const groupQuery = (index: number, groupTags: string[]) =>
+    groupTags.map((tag) => `tags[${index}][]=${tag}`).join('&');
+  const tagsMongoQuery = (queryString: string) =>
+    buildTagsQuery(normalizeTagGroups(parseTagsQueryValue(parseQueryString(queryString).tags)));
+
+  it('matches any of 20 flat tags (below the qs array limit)', () => {
+    expect(tagsMongoQuery(flatQuery(20))).to.deep.equal({ tags: { $in: tags.slice(0, 20) } });
+  });
+
+  it('matches any of 21 flat tags', () => {
+    expect(tagsMongoQuery(flatQuery(21))).to.deep.equal({ tags: { $in: tags.slice(0, 21) } });
+  });
+
+  it('matches any of 31 flat tags', () => {
+    expect(tagsMongoQuery(flatQuery(31))).to.deep.equal({ tags: { $in: tags } });
+  });
+
+  it('matches an overflowing OR group together with a second group', () => {
+    expect(tagsMongoQuery(`${groupQuery(0, tags.slice(0, 21))}&${groupQuery(1, ['z'])}`)).to.deep.equal({
+      $and: [{ tags: { $in: tags.slice(0, 21) } }, { tags: { $in: ['z'] } }],
+    });
+  });
+
+  it('keeps 22 AND groups as AND groups', () => {
+    const query = tags
+      .slice(0, 22)
+      .map((tag, i) => groupQuery(i, [tag]))
+      .join('&');
+
+    expect(tagsMongoQuery(query)).to.deep.equal({
+      $and: tags.slice(0, 22).map((tag) => ({ tags: { $in: [tag] } })),
     });
   });
 });
