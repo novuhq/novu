@@ -605,7 +605,10 @@ async function checkFirstMessageReports(client: ApiClient, created: Interaction)
     }
   }
 
-  return keepConversations(latest, created);
+  // A read leaves out who the send failed for: that is only on the create response.
+  const read = keepConversations(latest, created);
+
+  return created.failedTo?.length && !read.failedTo?.length ? { ...read, failedTo: created.failedTo } : read;
 }
 
 function warnFirstMessageFailures(interaction: Interaction, told: Set<string>): void {

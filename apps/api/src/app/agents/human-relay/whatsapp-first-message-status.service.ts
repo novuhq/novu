@@ -16,7 +16,10 @@ type MetaStatus = {
   }>;
 };
 
-/** A status that matches no hold yet is tried again this many times, a second apart. */
+/**
+ * Meta can report a failure before the send saved its hold (written once the first message went out and its
+ * conversation was filed), so a status that matches nothing yet is tried again this many times, a second apart.
+ */
 const MATCH_ATTEMPTS = 4;
 const MATCH_RETRY_MS = 1_000;
 
@@ -48,42 +51,41 @@ export class WhatsAppFirstMessageStatus {
       return;
     }
 
-    for (const status of failedStatusesOf(payload)) {
-      const failure = describeFailure(status);
-      const row = await this.recordWhenHeld(config.environmentId, status.id as string, failure);
-      if (row) {
-        this.logger.warn(
-          { interactionIdentifier: row.identifier, code: failure.code },
-          'Meta did not deliver the WhatsApp first message'
-        );
-      }
-    }
-  }
-
-  /**
-   * Meta can report the failure before the send saved its hold: the hold is written once the first message went
-   * out and its conversation was filed. So a status that matches nothing yet, or a write that fails, is tried again
-   * a few times before it is let go. Only failed statuses get here, which are rare.
-   */
-  private async recordWhenHeld(environmentId: string, templateMessageId: string, failure: HumanInteractionHoldFailure) {
-    for (let attempt = 0; attempt < MATCH_ATTEMPTS; attempt += 1) {
+    // All of a webhook's failures are tried together, and only the ones that matched nothing yet wait a round, so
+    // an ordinary message's failure never holds up a first message's.
+    let pending = failedStatusesOf(payload).map((status) => ({
+      id: status.id as string,
+      failure: describeFailure(status),
+    }));
+    for (let attempt = 0; attempt < MATCH_ATTEMPTS && pending.length > 0; attempt += 1) {
       if (attempt > 0) {
         await this.sleep(MATCH_RETRY_MS);
       }
 
-      const row = await this.humanInteractionRepository
-        .recordHoldFailure(environmentId, templateMessageId, failure)
-        .catch((err) => {
-          this.logger.warn({ err, templateMessageId }, 'Could not record a failed WhatsApp first message');
+      const rows = await Promise.all(
+        pending.map(({ id, failure }) => this.recordOnce(config.environmentId, id, failure))
+      );
+      pending = pending.filter((_, index) => !rows[index]);
+    }
+  }
 
-          return null;
-        });
-      if (row) {
-        return row;
-      }
+  /** One try at noting a failure on the hold that sent this first message; null when none matched or it failed. */
+  private async recordOnce(environmentId: string, templateMessageId: string, failure: HumanInteractionHoldFailure) {
+    const row = await this.humanInteractionRepository
+      .recordHoldFailure(environmentId, templateMessageId, failure)
+      .catch((err) => {
+        this.logger.warn({ err, templateMessageId }, 'Could not record a failed WhatsApp first message');
+
+        return null;
+      });
+    if (row) {
+      this.logger.warn(
+        { interactionIdentifier: row.identifier, code: failure.code },
+        'Meta did not deliver the WhatsApp first message'
+      );
     }
 
-    return null;
+    return row;
   }
 }
 

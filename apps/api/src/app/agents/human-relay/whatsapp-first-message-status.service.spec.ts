@@ -66,6 +66,22 @@ describe('WhatsAppFirstMessageStatus', () => {
     expect(repository.recordHoldFailure.callCount).to.equal(4);
   });
 
+  it('tries a webhook’s failures together, so an unmatched one doesn’t hold up the rest', async () => {
+    const { status, repository } = setup();
+    const sleeps: number[] = [];
+    status.sleep = async (ms) => void sleeps.push(ms);
+    repository.recordHoldFailure.callsFake(async (_env: string, id: string) =>
+      id === 'wamid.first' ? { identifier: 'hi_1' } : null
+    );
+
+    await status.record(relay, webhook([{ ...paymentFailure, id: 'wamid.ordinary' }, paymentFailure]));
+
+    const first = repository.recordHoldFailure.getCalls().filter((call) => call.args[1] === 'wamid.first');
+    expect(first).to.have.length(1);
+    // The unmatched one was tried four times, in three rounds a second apart: one wait per round, not per status.
+    expect(sleeps).to.deep.equal([1000, 1000, 1000]);
+  });
+
   it('reads a body that arrives as text', async () => {
     const { status, repository } = setup();
 
