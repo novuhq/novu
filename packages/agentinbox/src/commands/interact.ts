@@ -354,9 +354,20 @@ export async function waitForResolution(
   );
 
   let current = interaction;
+  const toldFailed = new Set<string>();
 
   try {
     while (current.status === 'pending') {
+      // Meta can fail the first message after taking it; nobody was asked to reply, so say so once.
+      for (const { subscriberId, reason } of current.firstMessageFailed ?? []) {
+        if (!toldFailed.has(subscriberId)) {
+          toldFailed.add(subscriberId);
+          process.stderr.write(
+            `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
+          );
+        }
+      }
+
       if (Date.now() >= deadline) {
         stopIndicator();
         if (options.json) {

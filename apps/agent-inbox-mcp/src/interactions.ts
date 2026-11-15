@@ -18,6 +18,8 @@ export type Interaction = {
    * It goes out when they reply.
    */
   heldFor?: string[];
+  /** Who Meta reported the first message undelivered for, and why. */
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
   threads?: Array<{ id: string; unreadBefore: number }>;
 };
@@ -218,7 +220,7 @@ export function describeOutcome(interaction: Interaction): string {
   const failureNote = interaction.failedTo?.length
     ? ` Warning: delivery failed for ${interaction.failedTo.join(', ')}.`
     : '';
-  const heldNote = describeHeld(interaction.heldFor);
+  const heldNote = describeHeld(interaction.heldFor, interaction.firstMessageFailed);
 
   if (interaction.kind === 'tell' && status === 'pending' && heldNote) {
     return `Not delivered yet.${heldNote}${threadNote}${failureNote}`;
@@ -245,12 +247,27 @@ export function describeOutcome(interaction: Interaction): string {
 }
 
 /** Who got the WhatsApp first message instead, because their 24-hour window was closed. */
-function describeHeld(heldFor: Interaction['heldFor']): string {
+function describeHeld(heldFor: Interaction['heldFor'], failed: Interaction['firstMessageFailed']): string {
   if (!heldFor?.length) {
     return '';
   }
 
-  return ` WhatsApp's 24-hour window was closed for ${heldFor.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.`;
+  const failedFor = new Set((failed ?? []).map((failure) => failure.subscriberId));
+  const reached = heldFor.filter((subscriberId) => !failedFor.has(subscriberId));
+  const notes = [
+    ...(reached.length
+      ? [
+          ` WhatsApp's 24-hour window was closed for ${reached.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.`,
+        ]
+      : []),
+    // Meta took the first message, then reported it undelivered: nobody was told to reply, so waiting won't help.
+    ...(failed ?? []).map(
+      ({ subscriberId, reason }) =>
+        ` ${reason} So ${subscriberId} wasn't asked to reply; this goes out only if they write first. Tell the user.`
+    ),
+  ];
+
+  return notes.join('');
 }
 
 function describeThreads(threads: Interaction['threads']): string {

@@ -22,6 +22,16 @@ const humanInteractionHoldSchema = new Schema(
     templateMessageId: { type: Schema.Types.String },
     heldAt: { type: Schema.Types.String, required: true },
     claimedAt: { type: Schema.Types.String },
+    failure: {
+      type: new Schema(
+        {
+          code: { type: Schema.Types.Number },
+          message: { type: Schema.Types.String, required: true },
+          at: { type: Schema.Types.String, required: true },
+        },
+        { _id: false }
+      ),
+    },
   },
   { _id: false }
 );
@@ -116,6 +126,9 @@ humanInteractionSchema.index({ _environmentId: 1, requestId: 1 }, { sparse: true
 humanInteractionSchema.index({ _environmentId: 1, subscriberIds: 1, status: 1, createdAt: -1 });
 // Exact reply-to correlation by delivered card message id.
 humanInteractionSchema.index({ _environmentId: 1, 'deliveries.platformMessageId': 1 });
+
+// Matching Meta's delivery report for a first message back to what it stands in for.
+humanInteractionSchema.index({ _environmentId: 1, 'held.templateMessageId': 1 }, { sparse: true });
 
 // Releasing what was held for someone when they write to the agent on WhatsApp.
 humanInteractionSchema.index({ _environmentId: 1, 'held.subscriberId': 1, status: 1 }, { sparse: true });

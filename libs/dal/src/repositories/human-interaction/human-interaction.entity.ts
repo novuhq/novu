@@ -100,6 +100,15 @@ export interface HumanInteractionHold {
   heldAt: string;
   /** Set while a release is sending it, so a second reply doesn't send it too. */
   claimedAt?: string;
+  /** Meta accepted the first message, then reported it undelivered: why, in Meta's words. */
+  failure?: HumanInteractionHoldFailure;
+}
+
+export interface HumanInteractionHoldFailure {
+  /** Meta's error code, such as 131042 for a billing problem. */
+  code?: number;
+  message: string;
+  at: string;
 }
 
 export function primaryHumanInteractionDelivery(
