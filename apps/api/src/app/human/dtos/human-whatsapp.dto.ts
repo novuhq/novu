@@ -60,6 +60,12 @@ export class HumanWhatsAppSetupResponseDto {
     description: 'The first message for outside the 24-hour window, once one was sent to Meta for review.',
   })
   firstMessage?: HumanWhatsAppFirstMessageDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Connected with API keys and the webhook still to add in Meta: the callback URL and verify token. Only to the operator’s dashboard, and only until their number is connected.',
+  })
+  webhook?: { configured: boolean; callbackUrl: string; verifyToken?: string };
 }
 
 export class SubmitHumanWhatsAppFirstMessageRequestDto extends HumanAgentQueryDto {

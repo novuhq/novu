@@ -31,7 +31,10 @@ type WhatsAppKeysStepsProps = {
   /** What closes the steps once all three are done: WhatsApp is on, and the first message. */
   whatsAppOn: ReactNode;
   onConnected: (result: ConnectedKeys) => void;
-  onUseFacebook: () => void;
+  /** Back to the Facebook button. None where this deployment has no Facebook button, or once keys are saved. */
+  onUseFacebook?: () => void;
+  /** A webhook a keys setup still has to add, as the API remembers it after a reload or a closed drawer. */
+  webhook?: WhatsAppWebhook;
 };
 
 /**
@@ -39,12 +42,19 @@ type WhatsAppKeysStepsProps = {
  * checks with Meta and saves; add the webhook in Meta, unless the API could set it for them; then say hi from
  * their own WhatsApp with the code, as with the Facebook button.
  */
-export function WhatsAppKeysSteps({ state, sendCode, whatsAppOn, onConnected, onUseFacebook }: WhatsAppKeysStepsProps) {
-  const [webhook, setWebhook] = useState<WhatsAppWebhook>();
+export function WhatsAppKeysSteps({
+  state,
+  sendCode,
+  whatsAppOn,
+  onConnected,
+  onUseFacebook,
+  webhook: savedWebhook,
+}: WhatsAppKeysStepsProps) {
+  const [webhook, setWebhook] = useState<WhatsAppWebhook | undefined>(savedWebhook);
   const [webhookAdded, setWebhookAdded] = useState(false);
 
   const linked = state.step !== 'connect';
-  // Opened on a number that's linked already, the webhook was set up then: nothing is left to add.
+  // Linked with no webhook to add (Meta took it, or Novu's own app), or the operator says they added it.
   const webhookDone = linked && (!webhook || webhook.configured || webhookAdded);
   const ownNumber = state.step === 'connected' ? state.operatorPhoneNumber : undefined;
 
@@ -87,7 +97,7 @@ const NO_KEYS: WhatsAppKeys = { accessToken: '', phoneNumberId: '', businessAcco
 type KeysStepProps = {
   linked: boolean;
   businessNumber?: string;
-  onUseFacebook: () => void;
+  onUseFacebook?: () => void;
   onConnected: (result: ConnectedKeys) => void;
 };
 
@@ -135,15 +145,17 @@ function KeysStep({ linked, businessNumber, onUseFacebook, onConnected }: KeysSt
       summary={businessNumber ? `${businessNumber} · keys saved` : 'Keys saved'}
       footer={
         <>
-          <button
-            type="button"
-            onClick={onUseFacebook}
-            className="flex cursor-pointer items-center gap-1.5 text-xs text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
-          >
-            <ArrowLeft aria-hidden="true" className="size-[13px]" />
-            Use Facebook instead
-          </button>
-          <Button type="submit" form={formId} pending={checking}>
+          {onUseFacebook && (
+            <button
+              type="button"
+              onClick={onUseFacebook}
+              className="flex cursor-pointer items-center gap-1.5 text-xs text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+            >
+              <ArrowLeft aria-hidden="true" className="size-[13px]" />
+              Use Facebook instead
+            </button>
+          )}
+          <Button type="submit" form={formId} pending={checking} className="ml-auto">
             Check keys
           </Button>
         </>

@@ -28,7 +28,7 @@ import {
   type HumanWhatsAppSetupResponseDto,
   SubmitHumanWhatsAppFirstMessageRequestDto,
 } from './dtos/human-whatsapp.dto';
-import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard';
+import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { HumanOperatorService } from './services/human-operator.service';
 import { ConnectHumanWhatsAppCommand } from './usecases/human-whatsapp/connect-human-whatsapp.command';
 import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
@@ -69,7 +69,8 @@ export class HumanWhatsAppController {
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   getSetup(
     @UserSession() user: UserSessionData,
-    @Query() query: HumanAgentQueryDto
+    @Query() query: HumanAgentQueryDto,
+    @Headers() headers: Record<string, unknown>
   ): Promise<HumanWhatsAppSetupResponseDto> {
     return this.getHumanWhatsAppSetupUsecase.execute(
       GetHumanWhatsAppSetupCommand.create({
@@ -77,6 +78,8 @@ export class HumanWhatsAppController {
         organizationId: user.organizationId,
         userId: user._id,
         agentIdentifier: query.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER,
+        // A host holding the same key reads where setup stands, never the webhook's verify token.
+        fromDashboard: carriesHumanDashboardSecret(headers),
       })
     );
   }

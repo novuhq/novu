@@ -29,7 +29,7 @@ import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
 import { Step, Stepper } from '@/components/ui/stepper';
 import { toast } from '@/components/ui/toast';
-import type { WhatsAppLink } from '@/lib/human-channels-api';
+import type { WhatsAppLink, WhatsAppWebhook } from '@/lib/human-channels-api';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 import type { FirstMessage } from '@/lib/whatsapp-first-message';
 
@@ -38,8 +38,16 @@ type DrawerState =
   | { step: 'checking' }
   | { step: 'unreadable' }
   | { step: 'not-offered' }
+  /** No Facebook button on this deployment (no Novu Meta app): keys from the operator's own Meta app still work. */
+  | { step: 'keys-only' }
   | { step: 'connect'; appId: string; configId: string }
-  | { step: 'verify'; displayPhoneNumber?: string; reconnect?: MetaIds; firstMessage?: FirstMessage }
+  | {
+      step: 'verify';
+      displayPhoneNumber?: string;
+      reconnect?: MetaIds;
+      firstMessage?: FirstMessage;
+      webhook?: WhatsAppWebhook;
+    }
   | {
       step: 'connected';
       displayPhoneNumber?: string;
@@ -158,11 +166,12 @@ export function WhatsAppSetup({
 
   // Each opening starts over, but only an opening: saving keys or connecting refreshes the page and hands the drawer
   // a new `setup`, which must not throw the operator back to the start or wipe the error they're reading.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only an opening picks the way; `setup` changes whenever the page refreshes, which must not switch it mid-setup.
   useEffect(() => {
     if (open) {
       setError(undefined);
       setByHand(startWithSteps);
-      setWithKeys(false);
+      setWithKeys(startsWithKeys(setup));
     }
   }, [open, startWithSteps]);
 
@@ -212,6 +221,7 @@ export function WhatsAppSetup({
   const linked = state.step === 'verify' || state.step === 'connected';
   const businessNumber = linked ? state.displayPhoneNumber : undefined;
   const header = withKeys ? KEYS_HEADER : FACEBOOK_HEADER;
+  const keys = keysViewOf(state, withKeys, () => setWithKeys(false));
 
   // Once both steps are done: WhatsApp is on, and the first message to set up, whichever way it was connected.
   const whatsAppOn = state.step === 'connected' && (
@@ -273,17 +283,18 @@ export function WhatsAppSetup({
           onKeepWaiting={agentPoll.keepWaiting}
           onShowSteps={() => setByHand(true)}
         />
-        {view === 'steps' && isSetupStep(state) && withKeys && (
+        {view === 'steps' && keys && (
           <Stepper>
             <WhatsAppKeysSteps
-              state={state}
+              state={keys.state}
+              webhook={keys.webhook}
               sendCode={sendCode}
               whatsAppOn={whatsAppOn}
               onConnected={(result) => {
                 show({ step: 'verify', displayPhoneNumber: result.displayPhoneNumber });
                 router.refresh();
               }}
-              onUseFacebook={() => setWithKeys(false)}
+              onUseFacebook={keys.onUseFacebook}
             />
           </Stepper>
         )}
@@ -317,6 +328,39 @@ export function WhatsAppSetup({
 }
 
 type SetupStepState = Extract<DrawerState, { step: 'connect' | 'verify' | 'connected' }>;
+
+/** Keys when there's no Facebook button, or when a keys setup still has its webhook to add in Meta. */
+function startsWithKeys(setup: WhatsAppSetupState): boolean {
+  return setup.step === 'unavailable' || (setup.step === 'verify' && Boolean(setup.webhook));
+}
+
+/**
+ * The keys steps' view of the setup: a deployment without the Facebook button starts them from nothing, a webhook
+ * still to add comes along, and going back to Facebook is offered only while nothing is saved and it's there.
+ */
+function keysViewOf(
+  state: DrawerState,
+  withKeys: boolean,
+  useFacebook: () => void
+): { state: SetupStepState | { step: 'connect' }; webhook?: WhatsAppWebhook; onUseFacebook?: () => void } | null {
+  if (!withKeys) {
+    return null;
+  }
+
+  if (state.step === 'keys-only') {
+    return { state: { step: 'connect' } };
+  }
+
+  if (!isSetupStep(state)) {
+    return null;
+  }
+
+  return {
+    state,
+    ...(state.step === 'verify' && state.webhook ? { webhook: state.webhook } : {}),
+    ...(state.step === 'connect' ? { onUseFacebook: useFacebook } : {}),
+  };
+}
 
 function isSetupStep(state: DrawerState): state is SetupStepState {
   return state.step === 'connect' || state.step === 'verify' || state.step === 'connected';
@@ -578,6 +622,10 @@ function SignupError({ message }: { message: string }) {
  * connected and the steps are folded away, the steps otherwise.
  */
 function viewOf(state: DrawerState, byHand: boolean): 'prompt' | 'steps' | null {
+  if (state.step === 'keys-only') {
+    return 'steps';
+  }
+
   if (state.step === 'connect') {
     return byHand ? 'steps' : 'prompt';
   }
@@ -597,8 +645,9 @@ function drawerStateOf(setup: WhatsAppSetupState): DrawerState {
     case 'unknown':
       return { step: 'unreadable' };
     case 'hidden':
-    case 'unavailable':
       return { step: 'not-offered' };
+    case 'unavailable':
+      return { step: 'keys-only' };
     case 'connect':
     case 'verify':
     case 'connected':

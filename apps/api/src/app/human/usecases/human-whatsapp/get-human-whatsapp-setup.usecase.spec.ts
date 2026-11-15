@@ -187,4 +187,53 @@ describe('GetHumanWhatsAppSetup', () => {
 
     expect(await usecase.execute(command)).to.include({ connected: false });
   });
+
+  describe('a webhook still to add for keys from the operator’s own Meta app', () => {
+    const OWN_APP = {
+      apiToken: 'EAAG-own',
+      phoneNumberIdentification: 'phone-1',
+      businessAccountId: 'waba-1',
+      from: '+1 555-010-0199',
+      isNovuManaged: false,
+      token: 'verify-123',
+    };
+    let apiRoot: string | undefined;
+
+    beforeEach(() => {
+      apiRoot = process.env.AGENT_API_HOSTNAME;
+      process.env.AGENT_API_HOSTNAME = 'https://api.example.com';
+    });
+
+    afterEach(() => {
+      if (apiRoot === undefined) {
+        delete process.env.AGENT_API_HOSTNAME;
+      } else {
+        process.env.AGENT_API_HOSTNAME = apiRoot;
+      }
+    });
+
+    const fromDashboard = GetHumanWhatsAppSetupCommand.create({ ...command, fromDashboard: true } as never);
+
+    it('hands the callback URL and verify token to the operator’s dashboard until their number connects', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: OWN_APP });
+
+      expect((await usecase.execute(fromDashboard)).webhook).to.deep.equal({
+        configured: false,
+        callbackUrl: 'https://api.example.com/v1/agents/relay1/webhook/whatsapp-main',
+        verifyToken: 'verify-123',
+      });
+    });
+
+    it('never hands the verify token to a host holding the same key', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: OWN_APP });
+
+      expect(await usecase.execute(command)).to.not.have.property('webhook');
+    });
+
+    it('has nothing to add for Novu’s own app', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: { ...OWN_APP, isNovuManaged: true } });
+
+      expect(await usecase.execute(fromDashboard)).to.not.have.property('webhook');
+    });
+  });
 });

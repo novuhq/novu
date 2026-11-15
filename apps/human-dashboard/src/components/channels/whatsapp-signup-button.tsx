@@ -52,6 +52,9 @@ export function WhatsAppSignupButton({
   aside,
 }: WhatsAppSignupButtonProps) {
   const [phase, setPhase] = useState<Phase>('idle');
+  // Which attempt is the live one: "Reopen window" starts another while the first popup may still be open, and that
+  // popup's late answer must not cancel the newer attempt.
+  const attemptSeq = useRef(0);
   const attempt = useRef<{ pairing: ReturnType<typeof createSignupPairing>; listener: (event: MessageEvent) => void }>(
     null
   );
@@ -98,6 +101,9 @@ export function WhatsAppSignupButton({
   );
 
   const start = useCallback(async () => {
+    attemptSeq.current += 1;
+    const mine = attemptSeq.current;
+    const stale = () => attemptSeq.current !== mine;
     endAttempt();
     setPhase('window');
 
@@ -105,8 +111,14 @@ export function WhatsAppSignupButton({
     try {
       sdk = await loadFacebookSdk(appId);
     } catch (error) {
-      fail(error instanceof Error ? error.message : 'Facebook didn’t load. Please try again.');
+      if (!stale()) {
+        fail(error instanceof Error ? error.message : 'Facebook didn’t load. Please try again.');
+      }
 
+      return;
+    }
+
+    if (stale()) {
       return;
     }
 
@@ -126,6 +138,10 @@ export function WhatsAppSignupButton({
     window.addEventListener('message', listener);
 
     sdk.login((response) => {
+      if (stale()) {
+        return;
+      }
+
       if (response.authResponse?.code) {
         pairing.code(response.authResponse.code);
 

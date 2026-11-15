@@ -7,7 +7,8 @@ import {
   type IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES, type ICredentials } from '@novu/shared';
+import { buildAgentWebhookUrl } from '../../../agents/channels/shared/resolve-agent-integration-webhook.util';
 import { provedWhatsAppNumberOf } from '../../../agents/human-relay/whatsapp-number-proof';
 import {
   getNovuWhatsAppPlatformConfig,
@@ -55,7 +56,7 @@ export class GetHumanWhatsAppSetup {
       return { enabled: false, available: false, connected: false };
     }
 
-    const [availability, { integration }] = await Promise.all([
+    const [availability, { agent, integration }] = await Promise.all([
       this.availability.execute(
         WhatsAppEmbeddedSignupAvailabilityCommand.create({
           environmentId: command.environmentId,
@@ -88,6 +89,9 @@ export class GetHumanWhatsAppSetup {
       operatorNumberBound: Boolean(operatorPhoneNumber),
       ...(operatorPhoneNumber ? { operatorPhoneNumber } : {}),
       ...(firstMessage ? { firstMessage: toFirstMessageDto(firstMessage) } : {}),
+      ...(command.fromDashboard && businessConnected && !operatorPhoneNumber
+        ? pendingWebhookOf(agent, integration, credentials)
+        : {}),
     };
   }
 
@@ -115,4 +119,30 @@ export class GetHumanWhatsAppSetup {
     // A number written through the channel-endpoints API carries no proof, so it never counts as bound.
     return endpoints.map(provedWhatsAppNumberOf).find(Boolean);
   }
+}
+
+/**
+ * Connected with the operator's own Meta app and their number not connected yet: the webhook may still be theirs to
+ * add, so the callback URL and verify token stay at hand after a reload or a closed drawer. Nothing to store: both
+ * are known, and a message from their number shows the webhook works, which ends it. Novu's own app needs none.
+ */
+function pendingWebhookOf(
+  agent: { _id: string } | null,
+  integration: IntegrationEntity | null,
+  credentials: ICredentials | undefined
+): { webhook?: { configured: boolean; callbackUrl: string; verifyToken?: string } } {
+  if (!agent || !integration || !credentials || credentials.isNovuManaged === true) {
+    return {};
+  }
+
+  let callbackUrl: string;
+  try {
+    callbackUrl = buildAgentWebhookUrl(String(agent._id), integration.identifier);
+  } catch {
+    return {};
+  }
+
+  const verifyToken = typeof credentials.token === 'string' ? credentials.token : undefined;
+
+  return { webhook: { configured: false, callbackUrl, ...(verifyToken ? { verifyToken } : {}) } };
 }
