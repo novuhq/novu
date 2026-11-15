@@ -10,6 +10,7 @@ import { PostActionEnum, type Workflow } from '@novu/framework/internal';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import type { Request, Response } from 'express';
+import { getBridgeSecretKeysCacheKey } from './bridge-secret-keys-cache';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
 
 /*
@@ -66,7 +67,7 @@ export class NovuBridgeClient {
       workflows.push(programmaticallyConstructedWorkflow);
     }
 
-    const cacheKey = `bridge-secret-keys:${environmentId}`;
+    const cacheKey = getBridgeSecretKeysCacheKey(environmentId);
     const storeName = InMemoryLRUCacheStore.VALIDATOR;
 
     let secretKeys: string[];
