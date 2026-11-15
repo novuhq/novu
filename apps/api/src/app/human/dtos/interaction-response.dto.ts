@@ -74,6 +74,12 @@ export class InteractionResponseDto {
   })
   heldFor?: string[];
 
+  @ApiPropertyOptional({
+    description:
+      'Who Meta reported the WhatsApp first message undelivered for, and why. It stays waiting, and goes out if they write first.',
+  })
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
+
   @ApiProperty()
   expiresAt: string;
 
@@ -88,6 +94,9 @@ export function toInteractionResponse(
 ): InteractionResponseDto {
   const primary = primaryHumanInteractionDelivery(entity);
   const heldFor = entity.held?.map((hold) => hold.subscriberId) ?? [];
+  const firstMessageFailed = (entity.held ?? []).flatMap((hold) =>
+    hold.failure ? [{ subscriberId: hold.subscriberId, reason: hold.failure.message }] : []
+  );
 
   return {
     id: entity.identifier,
@@ -103,6 +112,7 @@ export function toInteractionResponse(
     ...(threads && threads.length > 0 ? { threads } : {}),
     ...(entity.answerReadAt ? { answerReadAt: entity.answerReadAt } : {}),
     ...(heldFor.length ? { heldFor } : {}),
+    ...(firstMessageFailed.length ? { firstMessageFailed } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

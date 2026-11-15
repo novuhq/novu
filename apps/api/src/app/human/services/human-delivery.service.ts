@@ -312,6 +312,56 @@ export class HumanDeliveryService {
     );
   }
 
+  /**
+   * Whether a WhatsApp conversation's number is still one the contact proved. A number can move to someone else, who
+   * proves it with a code; the conversation still names the old contact, so holding a reply for them would send the
+   * first message to the new owner and the reply, later, to the old contact's other number.
+   */
+  async isWhatsAppNumberOf(params: {
+    environmentId: string;
+    organizationId: string;
+    subscriberId: string;
+    integrationId: string;
+    platformThreadId: string;
+  }): Promise<boolean> {
+    const integration = await this.integrationRepository.findOne(
+      { _id: params.integrationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
+      'identifier'
+    );
+    if (!integration) {
+      return false;
+    }
+
+    const waId = params.platformThreadId.split(':').pop();
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        subscriberId: params.subscriberId,
+        integrationIdentifier: integration.identifier,
+        type: ENDPOINT_TYPES.PHONE,
+      },
+      ''
+    );
+
+    return endpoints.some((endpoint) => platformUserIdOf(endpoint) === waId);
+  }
+
+  /** The approved first-message template on the WhatsApp integration a conversation is on, if there is one. */
+  async approvedFirstMessageOn(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+  }): Promise<{ templateName: string; body: string } | undefined> {
+    const integration = await this.integrationRepository.findOne({
+      _id: params.integrationId,
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+    });
+
+    return integration ? this.approvedFirstMessage([integration], integration.identifier) : undefined;
+  }
+
   /** The approved first-message template on this WhatsApp integration, if there is one. */
   async approvedFirstMessage(
     integrations: IntegrationEntity[],

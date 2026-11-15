@@ -34,6 +34,7 @@ export class WhatsAppUndeliverableException extends UnprocessableEntityException
         message: `WhatsApp can't reach ${subscriberId} until they write to you again${when}.${failure}${instead}`,
         subscriberId,
         ...(unfit.windowClosedAt ? { windowClosedAt: unfit.windowClosedAt } : {}),
+        ...(unfit.firstMessageFailure ? { firstMessageFailure: unfit.firstMessageFailure } : {}),
         availableChannels,
       });
 

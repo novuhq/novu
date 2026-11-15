@@ -672,6 +672,25 @@ describe('inbox_send on WhatsApp', () => {
     );
   });
 
+  it('passes on why the first message could not go in its place', async () => {
+    stubBackends(
+      refused({
+        code: 'whatsapp_window_closed',
+        message: 'closed',
+        subscriberId: 'alice',
+        firstMessageFailure:
+          "Meta couldn't send the first message: add a payment method to your WhatsApp Business account.",
+        availableChannels: [],
+      })
+    );
+
+    const result = await send({ message: 'Ping', to: 'alice', via: 'whatsapp' });
+
+    expect(result.content[0].text).toContain(
+      "within 24 hours of the person's last message. Meta couldn't send the first message: add a payment method"
+    );
+  });
+
   it('asks for fewer options when there are too many buttons', async () => {
     stubBackends(
       refused({
@@ -704,6 +723,23 @@ describe('inbox_send on WhatsApp', () => {
     const result = await send({ message: 'Ping', to: 'alice', via: 'whatsapp' });
 
     expect(result.content[0].text).toBe('WhatsApp window closed.');
+  });
+
+  it('looks again after a held send, so a first message Meta failed is reported right away', async () => {
+    const failure = {
+      subscriberId: 'alice',
+      reason:
+        'Meta didn’t deliver the first message: your WhatsApp Business account has no payment method or currency set up.',
+    };
+    stubBackends({
+      createdInteraction: { kind: 'tell', status: 'pending', heldFor: ['alice'] },
+      interaction: { kind: 'tell', status: 'pending', heldFor: ['alice'], firstMessageFailed: [failure] },
+    });
+
+    const result = await send({ message: 'Hungry?', to: 'alice', via: 'whatsapp' });
+
+    expect(result.content[0].text).toContain('Not delivered yet.');
+    expect(result.content[0].text).toContain("So alice wasn't asked to reply");
   });
 
   it('lists whatsapp in channel_add and inbox_send', async () => {

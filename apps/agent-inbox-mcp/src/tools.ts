@@ -15,6 +15,7 @@ import {
 } from './inbox';
 import { formatInboxPage, formatThreadDigest } from './inbox-digest';
 import {
+  awaitFirstMessageReport,
   type Card,
   DEFAULT_WAIT_SECONDS,
   describeOutcome,
@@ -216,13 +217,16 @@ async function sendOrReply(api: AgentInboxApi, input: SendToolInput | ReplyToolI
     ...(input.ttl_seconds !== undefined ? { ttlSeconds: input.ttl_seconds } : {}),
   });
 
+  // Held for a WhatsApp reply: give Meta a moment to say whether the first message reached them.
+  const reported = await awaitFirstMessageReport(api, created);
+
   if (!input.kind) {
     // A plain message is delivered once it's sent, unless it's still waiting on someone's WhatsApp reply.
-    return describeOutcome(created.heldFor?.length ? created : { ...created, status: 'delivered' });
+    return describeOutcome(reported.heldFor?.length ? reported : { ...reported, status: 'delivered' });
   }
 
   return describeOutcome(
-    await waitForAnswer(api, created, input.wait_seconds ?? DEFAULT_WAIT_SECONDS, undefined, since)
+    await waitForAnswer(api, reported, input.wait_seconds ?? DEFAULT_WAIT_SECONDS, undefined, since)
   );
 }
 
@@ -584,7 +588,10 @@ function describeWhatsAppRefusal(error: AgentInboxApiError): string | null {
     const closedAt =
       typeof details.windowClosedAt === 'string' ? ` (their window closed at ${details.windowClosedAt})` : '';
 
-    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message. ${NOTHING_SENT}${instead}`;
+    // Why the approved first message couldn't go in its place, such as a missing payment method, in Meta's words.
+    const failure = typeof details.firstMessageFailure === 'string' ? ` ${details.firstMessageFailure}` : '';
+
+    return `WhatsApp can't reach ${subscriberId} until they write to you again${closedAt}. WhatsApp only lets an agent write within 24 hours of the person's last message.${failure} ${NOTHING_SENT}${instead}`;
   }
 
   const maxButtons = typeof details.maxButtons === 'number' ? details.maxButtons : 3;

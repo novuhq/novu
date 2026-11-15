@@ -59,6 +59,8 @@ describe('CreateInteraction', () => {
       deliver: sinon.stub().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' }),
       deliverContent: sinon.stub().resolves({ platformMessageId: 'cta-1', platformThreadId: 'thread-1' }),
       otherReachableVias: sinon.stub().resolves(['telegram']),
+      approvedFirstMessageOn: sinon.stub().resolves(undefined),
+      isWhatsAppNumberOf: sinon.stub().resolves(true),
     };
     const connectClaimTokenService = {
       isEnvironmentClaimed: sinon.stub().resolves(false),
@@ -360,6 +362,68 @@ describe('CreateInteraction', () => {
         expect(body.availableChannels).to.deep.equal(['telegram']);
         expect(deliveryService.otherReachableVias.firstCall.args[0]).to.include({ subscriberId: 'sub-1' });
         expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('sends the approved first message into the thread instead, and waits for the person to reply', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+        });
+        inbox.firstContactId.returns('sub-1');
+        (deliveryService as unknown as { approvedFirstMessageOn: sinon.SinonStub }).approvedFirstMessageOn.resolves({
+          templateName: 'agentinbox_first_message',
+          body: 'Hi from {{agent_name}}',
+        });
+
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+        const sendInstead = createConversationInteraction.execute.firstCall.args[1].sendInstead;
+        expect(sendInstead).to.be.a('function');
+        await sendInstead({ _id: 'hi-row', identifier: 'hi_1' });
+        expect(deliveryService.deliver.firstCall.args[1]).to.deep.include({
+          platform: 'whatsapp',
+          platformUserId: '15551234567',
+          integrationIdentifier: 'whatsapp-main',
+          firstMessage: { templateName: 'agentinbox_first_message', body: 'Hi from {{agent_name}}' },
+        });
+        expect(deliveryService.deliver.firstCall.args[2]).to.equal('sub-1');
+      });
+
+      it('refuses when the conversation’s number has moved to someone else, instead of holding it for the old contact', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+        });
+        inbox.firstContactId.returns('sub-1');
+        const service = deliveryService as unknown as {
+          approvedFirstMessageOn: sinon.SinonStub;
+          isWhatsAppNumberOf: sinon.SinonStub;
+        };
+        service.approvedFirstMessageOn.resolves({ templateName: 'agentinbox_first_message', body: 'Hi' });
+        service.isWhatsAppNumberOf.resolves(false);
+
+        const body = await refused(usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any));
+
+        expect(service.isWhatsAppNumberOf.firstCall.args[0]).to.include({
+          subscriberId: 'sub-1',
+          integrationId: 'int1',
+          platformThreadId: 'whatsapp:1234:15551234567',
+        });
+        expect(body).to.include({ code: 'whatsapp_window_closed' });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('still refuses a thread open to anyone, since anyone else in it would get nothing', async () => {
+        const { usecase, command, deliveryService, inbox } = inWhatsAppThread({ reason: 'whatsapp_window_closed' });
+        inbox.firstContactId.returns('sub-1');
+        (deliveryService as unknown as { approvedFirstMessageOn: sinon.SinonStub }).approvedFirstMessageOn.resolves({
+          templateName: 'agentinbox_first_message',
+          body: 'Hi',
+        });
+
+        const body = await refused(
+          usecase.execute({ ...command, to: undefined, thread: 'conv_abc', anyoneMayAnswer: true } as any)
+        );
+
+        expect(body).to.include({ code: 'whatsapp_window_closed' });
       });
 
       it('refuses a choice with more options than WhatsApp has buttons', async () => {

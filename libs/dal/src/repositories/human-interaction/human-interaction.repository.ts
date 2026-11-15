@@ -7,6 +7,7 @@ import {
   HumanInteractionDelivery,
   HumanInteractionEntity,
   HumanInteractionHold,
+  HumanInteractionHoldFailure,
 } from './human-interaction.entity';
 import { HumanInteraction } from './human-interaction.schema';
 
@@ -241,6 +242,26 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         $pull: { held: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } },
         $push: { deliveries: delivery },
       }
+    );
+  }
+
+  /**
+   * Meta reported the first message undelivered: the hold says why, and stays, so the message still goes out if the
+   * person writes first. Returns the row when one was waiting on that message.
+   */
+  async recordHoldFailure(
+    environmentId: string,
+    templateMessageId: string,
+    failure: HumanInteractionHoldFailure
+  ): Promise<HumanInteractionEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        status: HumanInteractionStatusEnum.PENDING,
+        'held.templateMessageId': templateMessageId,
+      },
+      { $set: { 'held.$.failure': failure } },
+      { new: true }
     );
   }
 

@@ -66,6 +66,8 @@ export interface Interaction {
    * It goes out when they reply.
    */
   heldFor?: string[];
+  /** Who Meta reported the first message undelivered for, and why. It still goes out if they write first. */
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
   /**
    * On create: the conversation each message landed in, and how many messages in it were unread.
    * The API calls them threads; the CLI prints them as `conversations`.
@@ -159,9 +161,14 @@ export async function createInteraction(client: ApiClient, input: CreateInteract
   return unwrap(res.data);
 }
 
-export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
+export async function getInteraction(
+  client: ApiClient,
+  id: string,
+  options: { timeoutMs?: number } = {}
+): Promise<Interaction> {
   const res = await client.axios.get<{ data?: Interaction } | Interaction>(
-    `/v1/inbox/messages/${encodeURIComponent(id)}`
+    `/v1/inbox/messages/${encodeURIComponent(id)}`,
+    options.timeoutMs ? { timeout: options.timeoutMs } : undefined
   );
 
   return unwrap(res.data);

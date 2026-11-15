@@ -2,6 +2,7 @@ import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   ChannelEndpointRepository,
+  ConversationRepository,
   HumanInteractionRepository,
   IntegrationRepository,
 } from '@novu/dal';
@@ -12,6 +13,7 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -19,6 +21,7 @@ import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
+import { WhatsAppFirstMessageStatus } from '../../agents/human-relay/whatsapp-first-message-status.service';
 import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
 
@@ -26,6 +29,7 @@ const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const humanInteractionRepository = new HumanInteractionRepository();
+const conversationRepository = new ConversationRepository();
 
 const DASHBOARD_SECRET = 'e2e-whatsapp-inbound-dashboard-secret';
 const PHONE_NUMBER_ID = '1234';
@@ -301,5 +305,112 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
     expect(after?.status).to.equal(HumanInteractionStatusEnum.PENDING);
     expect(after?.held ?? []).to.have.length(0);
     expect(after?.deliveries?.[0]).to.include({ subscriberId: operatorId, platformMessageId: 'wamid.released' });
+  });
+
+  it('holds a reply in Ada’s conversation when her window is closed and a first message is approved', async () => {
+    await sendWhatsApp('hello from Ada', ADA_WA_ID);
+    const [thread] = await operatorInbox();
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const scope = { _environmentId: session.environment._id, _organizationId: session.organization._id };
+    // Her last message and her proof are two days old, so her window is closed.
+    await conversationRepository.update({ ...scope, identifier: thread.id } as never, {
+      $set: { lastHumanMessageAt: twoDaysAgo },
+    });
+    await channelEndpointRepository.update({ ...scope, subscriberId: operatorId } as never, {
+      $set: { 'endpoint.provedAt': twoDaysAgo },
+    });
+    const body = 'You have a message from {{agent_name}}. Reply here to view it.';
+    await integrationRepository.update({ ...scope, identifier: whatsAppIdentifier } as never, {
+      $set: {
+        'credentials.whatsappTemplateName': 'agentinbox_first_message',
+        'credentials.whatsappTemplateStatus': 'APPROVED',
+        'credentials.whatsappTemplateBody': body,
+        'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
+        'credentials.whatsappTemplateApprovedBody': body,
+      },
+    });
+    const request = sinon
+      .stub(safeOutboundHttp, 'safeOutboundJsonRequest')
+      .resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first-message' }] } } as never);
+
+    let res: { status: number; body: Record<string, any> };
+    try {
+      res = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'ask', card: { title: 'Are you hungry?' }, thread: thread.id });
+    } finally {
+      request.restore();
+    }
+
+    expect(res.status).to.equal(201, JSON.stringify(res.body));
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    const sent = request.getCalls().find((call) => String(call.args[0].url).endsWith(`/${PHONE_NUMBER_ID}/messages`));
+    expect(sent?.args[0].body).to.deep.include({ to: ADA_WA_ID, type: 'template' });
+    const row = await humanInteractionRepository.findOne(
+      { _environmentId: session.environment._id, identifier: res.body.data.id } as never,
+      '*'
+    );
+    expect(row?.held?.[0]).to.include({ subscriberId: operatorId, integrationIdentifier: whatsAppIdentifier });
+    expect(row?.deliveries ?? []).to.have.length(0);
+  });
+
+  it('says when Meta reports the first message undelivered, and keeps the question waiting', async () => {
+    const held = await humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: 'Are you hungry?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      held: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+          templateMessageId: 'wamid.first-message-failed',
+          heldAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+
+    await testServer.getService(WhatsAppFirstMessageStatus).record(await relayConfig(), {
+      entry: [
+        {
+          changes: [
+            {
+              field: 'messages',
+              value: {
+                statuses: [
+                  {
+                    id: 'wamid.first-message-failed',
+                    status: 'failed',
+                    errors: [
+                      {
+                        code: 131042,
+                        title: 'Business eligibility payment issue',
+                        href: 'https://business.facebook.com/billing_hub/accounts/details/?business_id=1',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const res = await session.testAgent.get(`/v1/human/interactions/${held.identifier}`);
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+    expect(res.body.data.status).to.equal('pending');
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    expect(res.body.data.firstMessageFailed).to.have.length(1);
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain('no payment method or currency');
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain(
+      'Fix it here: https://business.facebook.com/billing_hub/accounts/details/?business_id=1'
+    );
   });
 });

@@ -59,7 +59,7 @@ import {
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
-import { WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
+import { WHATSAPP_WINDOW_CLOSED, WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -410,7 +410,10 @@ export class CreateInteraction {
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
     const channel = this.inbox.primaryChannel(conversation);
-    await this.assertWhatsAppThreadFits(command, agent, conversation, channel);
+    // Only a reply to the one person the conversation is with can wait for them: anyone else would get nothing.
+    const firstMessage = await this.assertWhatsAppThreadFits(command, agent, conversation, channel, {
+      canHold: outside.length === 0 && !audience.anyoneMayAnswer,
+    });
 
     // A new thread is refused in resolveChannel. An existing email thread skips that, so check here.
     // The claim reply does not come through this path.
@@ -474,6 +477,20 @@ export class CreateInteraction {
           onPosted: () => {
             postedInThread = true;
           },
+          // Their window is closed: the approved first message goes into the conversation, and this waits for them.
+          sendInstead: firstMessage
+            ? (created) =>
+                this.deliveryService.deliver(
+                  created,
+                  {
+                    platform: HumanChannelViaEnum.WHATSAPP,
+                    platformUserId: channel.platformThreadId.split(':').pop() ?? '',
+                    integrationIdentifier,
+                    firstMessage: { templateName: firstMessage.templateName, body: firstMessage.body },
+                  },
+                  firstMessage.subscriberId
+                )
+            : undefined,
         }
       );
       // Whoever got nothing takes no credit: the people in the thread when its post failed while a contact outside
@@ -820,16 +837,18 @@ export class CreateInteraction {
 
   /**
    * A WhatsApp thread takes a card only inside the person's 24-hour window, and only with as many buttons as
-   * WhatsApp shows. Refused before anything is sent, naming the person's channels that still work.
+   * WhatsApp shows. Refused before anything is sent, naming the person's channels that still work. With a closed
+   * window, an approved first message and `canHold`, the first message goes instead: this returns it.
    */
   private async assertWhatsAppThreadFits(
     command: CreateInteractionCommand,
     agent: AgentEntity,
     conversation: ConversationEntity,
-    channel: { platform: string; platformThreadId: string; _integrationId: string }
-  ): Promise<void> {
+    channel: { platform: string; platformThreadId: string; _integrationId: string },
+    options: { canHold: boolean }
+  ): Promise<{ templateName: string; body: string; subscriberId: string } | undefined> {
     if (channel.platform !== HumanChannelViaEnum.WHATSAPP) {
-      return;
+      return undefined;
     }
 
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
@@ -843,7 +862,29 @@ export class CreateInteraction {
       buttons: countHumanCardButtons(command.kind, command.card),
     });
     if (!unfit) {
-      return;
+      return undefined;
+    }
+
+    if (
+      unfit.reason === WHATSAPP_WINDOW_CLOSED &&
+      person &&
+      options.canHold &&
+      // Only while the conversation's number is still theirs: a number that moved to someone else would get the
+      // first message while the reply waited for the old contact.
+      (await this.deliveryService.isWhatsAppNumberOf({
+        ...scope,
+        subscriberId: person,
+        integrationId: String(channel._integrationId),
+        platformThreadId: channel.platformThreadId,
+      }))
+    ) {
+      const approved = await this.deliveryService.approvedFirstMessageOn({
+        ...scope,
+        integrationId: String(channel._integrationId),
+      });
+      if (approved) {
+        return { ...approved, subscriberId: person };
+      }
     }
 
     const availableChannels = person
