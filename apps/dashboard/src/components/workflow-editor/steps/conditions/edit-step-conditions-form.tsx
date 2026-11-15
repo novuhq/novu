@@ -6,6 +6,7 @@ import { formatQuery, generateID, RQBJsonLogic, RuleGroupType, RuleType } from '
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
+import { getArrayItemConditionIssue, isArrayItemOperator } from '@/components/conditions-editor/array-item-condition';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
 import { isRelativeDateOperator, isValuelessOperator } from '@/components/conditions-editor/field-type-operators';
 import { Form, FormField } from '@/components/primitives/form/form';
@@ -80,6 +81,12 @@ const getRuleSchema = (
               message: 'Invalid relative date format',
               path: ['value'],
             });
+          }
+        } else if (isArrayItemOperator(operator)) {
+          const issue = getArrayItemConditionIssue(value);
+
+          if (issue) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: issue, path: ['value'] });
           }
         } else if (!isValuelessOperator(operator)) {
           const trimmedValue = value?.trim();

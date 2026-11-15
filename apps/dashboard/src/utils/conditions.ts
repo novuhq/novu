@@ -1,5 +1,12 @@
 import { defaultRuleProcessorJsonLogic, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
+import {
+  formatArrayItemConditionJsonLogic,
+  isArrayItemOperator,
+  type JsonLogicNode,
+  parseArrayItemConditionJsonLogic,
+  parseArrayItemConditionValue,
+} from '@/components/conditions-editor/array-item-condition';
 import { isRelativeDateOperator, isUnaryJsonLogicOperator } from '@/components/conditions-editor/field-type-operators';
 
 function parseArrayOperatorArgs(val: any, operator: string) {
@@ -64,6 +71,9 @@ const customJsonLogicOperations = {
   doesNotContainAny: (val: any) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
   isEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isEmpty'),
   isNonEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isNonEmpty'),
+  some: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'some'),
+  all: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'all'),
+  none: (val: JsonLogicNode) => parseArrayItemConditionJsonLogic(val, 'none'),
 };
 
 // Shared parse options for consistency
@@ -162,6 +172,10 @@ export const customRuleProcessor = (rule: RuleType, options: Parameters<typeof d
     return {
       [rule.operator]: [{ var: rule.field }],
     };
+  }
+
+  if (isArrayItemOperator(rule.operator)) {
+    return formatArrayItemConditionJsonLogic(rule.operator, rule.field, parseArrayItemConditionValue(rule.value));
   }
 
   if (isRelativeDateOperator(rule.operator)) {

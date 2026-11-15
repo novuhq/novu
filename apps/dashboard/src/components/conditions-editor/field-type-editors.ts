@@ -1,5 +1,6 @@
 import type { ValueEditorType } from 'react-querybuilder';
 import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
+import { isArrayItemOperator } from './array-item-condition';
 import { isRelativeDateOperator, isValuelessOperator } from './field-type-operators';
 
 export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
@@ -21,6 +22,10 @@ export function getPlaceholderForField(
   { fieldData }: { fieldData: EnhancedField }
 ): string {
   const { dataType } = fieldData;
+
+  if (isArrayItemOperator(operator)) {
+    return 'item property';
+  }
 
   // Handle between operators with two values
   if (operator === 'between' || operator === 'notBetween') {
@@ -78,8 +83,34 @@ export type HelpTextInfo = {
   examples: string[];
 };
 
+const ARRAY_ITEM_HELP_EXAMPLES = ['payload.channels.email has value', 'payload.status equals read'];
+
+const ARRAY_ITEM_HELP_TEXT = {
+  some: {
+    title: 'Any item matches',
+    description:
+      'Passes when at least one item in the array matches. The property path is relative to each item. Leave the comparison as "has value" to check that the property is set.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+  all: {
+    title: 'Every item matches',
+    description:
+      'Passes when every item in the array matches. Empty arrays do not pass. The property path is relative to each item.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+  none: {
+    title: 'No item matches',
+    description: 'Passes when no item in the array matches. The property path is relative to each item.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+} satisfies Record<string, HelpTextInfo>;
+
 export function getHelpTextForField(operator: string, { fieldData }: { fieldData: EnhancedField }): HelpTextInfo {
   const { dataType } = fieldData;
+
+  if (isArrayItemOperator(operator)) {
+    return ARRAY_ITEM_HELP_TEXT[operator];
+  }
 
   // Handle between operators
   if (operator === 'between' || operator === 'notBetween') {

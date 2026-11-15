@@ -1,10 +1,21 @@
 import { useFormContext } from 'react-hook-form';
 import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
+import {
+  ARRAY_ITEM_COMPARISON_OPERATORS,
+  ARRAY_ITEM_EXISTS_OPERATOR,
+  type ArrayItemComparisonOperator,
+  type ArrayItemCondition,
+  isArrayItemOperator,
+  parseArrayItemConditionValue,
+  serializeArrayItemConditionValue,
+} from '@/components/conditions-editor/array-item-condition';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
 import { shouldUseRelativeDateEditor } from '@/components/conditions-editor/field-type-editors';
 import { isValuelessOperator } from '@/components/conditions-editor/field-type-operators';
 import { HelpIcon } from '@/components/conditions-editor/help-icon';
 import type { ConditionsValueInput } from '@/components/conditions-editor/types';
+import { VariableSelect } from '@/components/conditions-editor/variable-select';
+import { Code2 } from '@/components/icons/code-2';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -19,6 +30,8 @@ type ExtendedContext = {
   isAllowedVariable: IsAllowedVariable;
   getPlaceholder?: (fieldName: string, operator: string) => string;
   getHelpText?: (fieldName: string, operator: string) => HelpTextInfo;
+  getArrayItemPaths?: (fieldName: string) => string[];
+  saveForm?: () => void;
   valueInput?: ConditionsValueInput;
 };
 
@@ -36,7 +49,6 @@ const TIME_UNITS = [
  * sized plain input. Do not default to workflow `ControlInput` here.
  */
 const DefaultConditionsValueInput: ConditionsValueInput = ({ value, onChange, placeholder, disabled }) => {
-
   return (
     <InputPure
       className="text-paragraph-xs h-7 px-2"
@@ -70,6 +82,8 @@ export const ValueEditor = (props: ValueEditorProps) => {
     isAllowedVariable,
     getPlaceholder,
     getHelpText,
+    getArrayItemPaths,
+    saveForm,
     valueInput: ValueInput = DefaultConditionsValueInput,
   } = (props.context as ExtendedContext) ?? {};
   const { value, handleOnChange, operator, field, disabled } = props;
@@ -93,6 +107,25 @@ export const ValueEditor = (props: ValueEditorProps) => {
         onChange={handleOnChange}
         variables={variables}
         isAllowedVariable={isAllowedVariable || (() => true)}
+        hasError={hasError}
+        helpText={helpText}
+        errorMessage={error?.message}
+        disabled={isDisabled}
+        ValueInput={ValueInput}
+      />
+    );
+  }
+
+  if (isArrayItemOperator(operator)) {
+    return (
+      <ArrayItemConditionEditor
+        value={stringValue}
+        onChange={handleOnChange}
+        itemPaths={getArrayItemPaths?.(field) ?? []}
+        saveForm={saveForm}
+        placeholder={placeholder}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
         hasError={hasError}
         helpText={helpText}
         errorMessage={error?.message}
@@ -221,6 +254,103 @@ function BetweenValueEditor({
       {editors[0]}
       <span className="text-foreground-600 text-paragraph-xs mt-1.5">and</span>
       {editors[1]}
+    </div>
+  );
+}
+
+function ArrayItemConditionEditor({
+  value,
+  onChange,
+  itemPaths,
+  saveForm,
+  placeholder,
+  variables,
+  isAllowedVariable,
+  hasError,
+  helpText,
+  errorMessage,
+  disabled,
+  ValueInput,
+}: BaseEditorProps & {
+  itemPaths: string[];
+  saveForm?: () => void;
+}) {
+  const condition = parseArrayItemConditionValue(value);
+  const hasComparison = condition.operator !== ARRAY_ITEM_EXISTS_OPERATOR;
+  const itemPathOptions = itemPaths.map((path) => ({ label: path, value: path }));
+
+  const updateCondition = (changes: Partial<ArrayItemCondition>) => {
+    const nextCondition = { ...condition, ...changes };
+
+    if (nextCondition.operator === ARRAY_ITEM_EXISTS_OPERATOR) {
+      nextCondition.value = '';
+    }
+
+    onChange(serializeArrayItemConditionValue(nextCondition));
+  };
+
+  const helpIcon = <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} />;
+
+  return (
+    <div className="flex items-start gap-1">
+      <VariableSelect
+        className="w-44"
+        leftIcon={<Code2 className="text-feature size-3 min-w-3" />}
+        title="Item properties"
+        placeholder={placeholder}
+        options={itemPathOptions}
+        value={condition.path}
+        onChange={(path) => {
+          if (path === condition.path) return;
+
+          updateCondition({ path });
+          saveForm?.();
+        }}
+        disabled={disabled}
+        error={hasError && !condition.path.trim() ? errorMessage : undefined}
+      />
+      <Select
+        value={condition.operator}
+        onValueChange={(newOperator) => {
+          updateCondition({ operator: newOperator as ArrayItemComparisonOperator });
+          saveForm?.();
+        }}
+        disabled={disabled}
+      >
+        <SelectTrigger
+          size="2xs"
+          className="bg-background hover:bg-bg-weak hover:text-text-strong text-label-xs w-fit gap-1"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="text-label-xs max-h-48 min-w-18 gap-1">
+          {ARRAY_ITEM_COMPARISON_OPERATORS.map((comparison) => (
+            <SelectItem key={comparison.name} value={comparison.name} className="h-6">
+              <span className="text-foreground-600 text-label-xs font-medium">{comparison.label}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {hasComparison ? (
+        <InputRoot className="bg-bg-white w-32" hasError={hasError && !!condition.path.trim()}>
+          <InputWrapper className="gap-0 px-0">
+            <ValueInput
+              multiline={false}
+              indentWithTab={false}
+              placeholder="value"
+              value={condition.value}
+              onChange={(newValue) => updateCondition({ value: newValue })}
+              variables={variables}
+              isAllowedVariable={isAllowedVariable}
+              size="3xs"
+              disabled={disabled}
+            />
+            {helpIcon}
+          </InputWrapper>
+        </InputRoot>
+      ) : (
+        <div className="flex h-7 items-center">{helpIcon}</div>
+      )}
     </div>
   );
 }
