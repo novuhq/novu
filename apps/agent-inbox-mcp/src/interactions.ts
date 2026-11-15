@@ -18,6 +18,8 @@ export type Interaction = {
    * It goes out when they reply.
    */
   heldFor?: string[];
+  /** Everyone it was for. */
+  to?: string[];
   /** Who Meta reported the first message undelivered for, and why. */
   firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
@@ -307,31 +309,38 @@ const FIRST_MESSAGE_REPORT_MS = 6_000;
 const FIRST_MESSAGE_CHECK_MS = 1_500;
 
 /**
- * After a send held for someone's WhatsApp reply, looks again for a few seconds: Meta reports a first message it
- * took but couldn't deliver (a missing payment method) only after the send returns, and the agent should hear it.
+ * After a send held for someone's WhatsApp reply, looks again for up to six seconds of wall-clock time, each read
+ * capped to what is left: Meta reports a first message it took but couldn't deliver (a missing payment method) only
+ * after the send returns, and the agent should hear it. Stops once every held person's report is in, or it settles.
  */
 export async function awaitFirstMessageReport(
   api: AgentInboxApi,
   created: Interaction,
-  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now: () => number = Date.now
 ): Promise<Interaction> {
   if (!created.heldFor?.length) {
     return created;
   }
 
+  const deadline = now() + FIRST_MESSAGE_REPORT_MS;
   let interaction = created;
-  for (let waited = 0; waited < FIRST_MESSAGE_REPORT_MS; waited += FIRST_MESSAGE_CHECK_MS) {
+  while (now() + FIRST_MESSAGE_CHECK_MS < deadline) {
     await sleep(FIRST_MESSAGE_CHECK_MS);
     try {
       interaction = keepCreateDetails(
-        await api.get<Interaction>(`/v1/inbox/messages/${encodeURIComponent(created.id)}`),
+        await api.get<Interaction>(
+          `/v1/inbox/messages/${encodeURIComponent(created.id)}`,
+          undefined,
+          Math.max(1, deadline - now())
+        ),
         created
       );
     } catch {
       // A missed check leaves what is known.
     }
 
-    if (interaction.status !== 'pending' || interaction.firstMessageFailed?.length) {
+    if (interaction.status !== 'pending' || everyHeldFailed(interaction)) {
       break;
     }
   }
@@ -339,9 +348,24 @@ export async function awaitFirstMessageReport(
   return interaction;
 }
 
-/** Every first message that stood in for this one failed, so nobody was asked to reply and waiting won't help. */
-function nobodyWasAsked(interaction: Interaction): boolean {
-  const failed = new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+function failedIds(interaction: Interaction): Set<string> {
+  return new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+}
 
-  return Boolean(interaction.heldFor?.length) && (interaction.heldFor ?? []).every((id) => failed.has(id));
+/** Every held person's first message failed: no more reports are coming. */
+function everyHeldFailed(interaction: Interaction): boolean {
+  const failed = failedIds(interaction);
+
+  return (interaction.heldFor ?? []).every((id) => failed.has(id));
+}
+
+/**
+ * Nobody who could answer was reached: everyone it was for had their first message fail, so waiting won't help.
+ * Anyone who got the question normally can still answer, so then it keeps waiting.
+ */
+function nobodyWasAsked(interaction: Interaction): boolean {
+  const failed = failedIds(interaction);
+  const everyone = interaction.to ?? [];
+
+  return failed.size > 0 && everyone.length > 0 && everyone.every((id) => failed.has(id));
 }

@@ -3,7 +3,13 @@ import { AgentInboxApiError } from './agent-inbox-api';
 import { hostOfClientName, hostOfSession, hostOfUserAgent, sessionIdFor } from './connections';
 import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from './constants';
 import worker from './index';
-import { describeOutcome, type Interaction, sendInteraction, waitForAnswer } from './interactions';
+import {
+  awaitFirstMessageReport,
+  describeOutcome,
+  type Interaction,
+  sendInteraction,
+  waitForAnswer,
+} from './interactions';
 import { hostOfRedirectUris } from './sign-in-apps';
 import {
   AGENT_INBOX_API,
@@ -884,6 +890,100 @@ describe('a message waiting on a WhatsApp reply', () => {
 
     expect(text).toContain('call inbox_wait with id "hi_1"');
     expect(text).toContain("WhatsApp's 24-hour window was closed for alice");
+  });
+});
+
+describe('first message reports', () => {
+  const failed = (subscriberId: string) => ({ subscriberId, reason: 'Meta didn’t deliver the first message.' });
+
+  it('keeps looking until every held person’s report is in', async () => {
+    const api = {
+      get: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 'hi_1',
+          kind: 'tell',
+          status: 'pending',
+          heldFor: ['a', 'b'],
+          firstMessageFailed: [failed('a')],
+        })
+        .mockResolvedValueOnce({
+          id: 'hi_1',
+          kind: 'tell',
+          status: 'pending',
+          heldFor: ['a', 'b'],
+          firstMessageFailed: [failed('a'), failed('b')],
+        }),
+    };
+    let clock = 0;
+
+    const result = await awaitFirstMessageReport(
+      api as never,
+      { id: 'hi_1', kind: 'tell', status: 'pending', heldFor: ['a', 'b'] },
+      async (ms) => void (clock += ms),
+      () => clock
+    );
+
+    expect(api.get).toHaveBeenCalledTimes(2);
+    expect(result.firstMessageFailed).toHaveLength(2);
+  });
+
+  it('gives each check only what is left of six seconds', async () => {
+    const api = { get: vi.fn().mockResolvedValue({ id: 'hi_1', kind: 'tell', status: 'pending', heldFor: ['a'] }) };
+    let clock = 0;
+
+    await awaitFirstMessageReport(
+      api as never,
+      { id: 'hi_1', kind: 'tell', status: 'pending', heldFor: ['a'] },
+      async (ms) => void (clock += ms),
+      () => clock
+    );
+
+    expect(api.get).toHaveBeenCalledTimes(3);
+    expect(api.get.mock.calls.every(([, , timeout]) => timeout <= 6_000 - 1_500)).toBe(true);
+  });
+
+  it('keeps waiting for an answer while someone who got the question can still give it', async () => {
+    const pendingWithBobFailed = {
+      id: 'hi_1',
+      kind: 'ask',
+      status: 'pending',
+      to: ['alice', 'bob'],
+      heldFor: ['bob'],
+      firstMessageFailed: [failed('bob')],
+    };
+    const api = {
+      get: vi
+        .fn()
+        .mockResolvedValueOnce(pendingWithBobFailed)
+        .mockResolvedValueOnce({
+          ...pendingWithBobFailed,
+          status: 'answered',
+          response: { type: 'text', text: 'Yes' },
+        }),
+      post: vi.fn(),
+    };
+
+    const result = await waitForAnswer(api as never, pendingWithBobFailed as Interaction, 10, async () => undefined);
+
+    expect(result.status).toBe('answered');
+  });
+
+  it('stops waiting when everyone it was for had their first message fail', async () => {
+    const allFailed = {
+      id: 'hi_1',
+      kind: 'ask',
+      status: 'pending',
+      to: ['bob'],
+      heldFor: ['bob'],
+      firstMessageFailed: [failed('bob')],
+    };
+    const api = { get: vi.fn(), post: vi.fn() };
+
+    const result = await waitForAnswer(api as never, allFailed as Interaction, 10, async () => undefined);
+
+    expect(api.get).not.toHaveBeenCalled();
+    expect(result.status).toBe('pending');
   });
 });
 

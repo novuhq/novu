@@ -16,6 +16,10 @@ type MetaStatus = {
   }>;
 };
 
+/** A status that matches no hold yet is tried again this many times, a second apart. */
+const MATCH_ATTEMPTS = 4;
+const MATCH_RETRY_MS = 1_000;
+
 type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: MetaStatus[] } }> }> };
 
 /**
@@ -26,6 +30,9 @@ type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: Meta
  */
 @Injectable()
 export class WhatsAppFirstMessageStatus {
+  /** Swapped in tests, so they don't wait. */
+  sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
   constructor(
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly logger: PinoLogger
@@ -43,11 +50,7 @@ export class WhatsAppFirstMessageStatus {
 
     for (const status of failedStatusesOf(payload)) {
       const failure = describeFailure(status);
-      const row = await this.humanInteractionRepository.recordHoldFailure(
-        config.environmentId,
-        status.id as string,
-        failure
-      );
+      const row = await this.recordWhenHeld(config.environmentId, status.id as string, failure);
       if (row) {
         this.logger.warn(
           { interactionIdentifier: row.identifier, code: failure.code },
@@ -55,6 +58,32 @@ export class WhatsAppFirstMessageStatus {
         );
       }
     }
+  }
+
+  /**
+   * Meta can report the failure before the send saved its hold: the hold is written once the first message went
+   * out and its conversation was filed. So a status that matches nothing yet, or a write that fails, is tried again
+   * a few times before it is let go. Only failed statuses get here, which are rare.
+   */
+  private async recordWhenHeld(environmentId: string, templateMessageId: string, failure: HumanInteractionHoldFailure) {
+    for (let attempt = 0; attempt < MATCH_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) {
+        await this.sleep(MATCH_RETRY_MS);
+      }
+
+      const row = await this.humanInteractionRepository
+        .recordHoldFailure(environmentId, templateMessageId, failure)
+        .catch((err) => {
+          this.logger.warn({ err, templateMessageId }, 'Could not record a failed WhatsApp first message');
+
+          return null;
+        });
+      if (row) {
+        return row;
+      }
+    }
+
+    return null;
   }
 }
 

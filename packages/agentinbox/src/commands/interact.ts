@@ -220,9 +220,10 @@ export async function runSend(words: string[], options: SendOptions, conversatio
     }
 
     if (kind === 'tell' || options.async) {
-      // Not waiting for an answer, so look briefly for Meta saying the first message never arrived.
-      await warnIfFirstMessageFailed(client, created);
-      process.exit(emitResult(created, Boolean(options.json)));
+      // Not waiting for an answer, so look briefly for Meta saying the first message never arrived. What it read is
+      // what is printed: a read can hand over an answer, which is then marked read.
+      const latest = await checkFirstMessageReports(client, created);
+      process.exit(emitResult(latest, Boolean(options.json)));
     }
 
     process.exit(await waitForResolution(client, created, options));
@@ -361,14 +362,7 @@ export async function waitForResolution(
   try {
     while (current.status === 'pending') {
       // Meta can fail the first message after taking it; nobody was asked to reply, so say so once.
-      for (const { subscriberId, reason } of current.firstMessageFailed ?? []) {
-        if (!toldFailed.has(subscriberId)) {
-          toldFailed.add(subscriberId);
-          process.stderr.write(
-            `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
-          );
-        }
-      }
+      warnFirstMessageFailures(current, toldFailed);
 
       if (Date.now() >= deadline) {
         stopIndicator();
@@ -587,23 +581,47 @@ export function handleError(err: unknown): never {
 const FIRST_MESSAGE_REPORT_MS = 6_000;
 const FIRST_MESSAGE_CHECK_MS = 1_500;
 
-/** After a send held for a WhatsApp reply, warns when Meta reports the first message undelivered. */
-async function warnIfFirstMessageFailed(client: ApiClient, created: Interaction): Promise<void> {
+/**
+ * After a send held for a WhatsApp reply, looks again for up to six seconds of wall-clock time, each read capped to
+ * what is left, until every held person's report is in or it settles. Warns once per failure and returns the last
+ * read, with the conversations the send landed in.
+ */
+async function checkFirstMessageReports(client: ApiClient, created: Interaction): Promise<Interaction> {
   if (!created.heldFor?.length) {
-    return;
+    return created;
   }
 
-  for (let waited = 0; waited < FIRST_MESSAGE_REPORT_MS; waited += FIRST_MESSAGE_CHECK_MS) {
+  const deadline = Date.now() + FIRST_MESSAGE_REPORT_MS;
+  const told = new Set<string>();
+  let latest = created;
+  while (Date.now() + FIRST_MESSAGE_CHECK_MS < deadline) {
     await sleep(FIRST_MESSAGE_CHECK_MS);
-    const latest = await getInteraction(client, created.id).catch(() => null);
-    if (latest?.firstMessageFailed?.length) {
-      for (const { subscriberId, reason } of latest.firstMessageFailed) {
-        process.stderr.write(
-          `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
-        );
-      }
-
-      return;
+    latest =
+      (await getInteraction(client, created.id, { timeoutMs: Math.max(1, deadline - Date.now()) }).catch(() => null)) ??
+      latest;
+    warnFirstMessageFailures(latest, told);
+    if (latest.status !== 'pending' || everyHeldFailed(latest)) {
+      break;
     }
   }
+
+  return keepConversations(latest, created);
+}
+
+function warnFirstMessageFailures(interaction: Interaction, told: Set<string>): void {
+  for (const { subscriberId, reason } of interaction.firstMessageFailed ?? []) {
+    if (!told.has(subscriberId)) {
+      told.add(subscriberId);
+      process.stderr.write(
+        `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
+      );
+    }
+  }
+}
+
+/** Every held person's first message failed: no more reports are coming. */
+function everyHeldFailed(interaction: Interaction): boolean {
+  const failed = new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+
+  return (interaction.heldFor ?? []).every((subscriberId) => failed.has(subscriberId));
 }

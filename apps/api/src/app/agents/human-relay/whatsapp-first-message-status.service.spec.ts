@@ -44,6 +44,28 @@ describe('WhatsAppFirstMessageStatus', () => {
     );
   });
 
+  it('tries again when Meta reports the failure before the send saved its hold', async () => {
+    const { status, repository } = setup();
+    status.sleep = async () => undefined;
+    repository.recordHoldFailure.onFirstCall().resolves(null);
+    repository.recordHoldFailure.onSecondCall().rejects(new Error('db blip'));
+    repository.recordHoldFailure.onThirdCall().resolves({ identifier: 'hi_1' });
+
+    await status.record(relay, webhook([paymentFailure]));
+
+    expect(repository.recordHoldFailure.callCount).to.equal(3);
+  });
+
+  it('lets a status go after a few tries when nothing was held for it', async () => {
+    const { status, repository } = setup();
+    status.sleep = async () => undefined;
+    repository.recordHoldFailure.resolves(null);
+
+    await status.record(relay, webhook([paymentFailure]));
+
+    expect(repository.recordHoldFailure.callCount).to.equal(4);
+  });
+
   it('reads a body that arrives as text', async () => {
     const { status, repository } = setup();
 
