@@ -87,7 +87,7 @@ import { HumanInteractionInboundService } from './human-relay/human-interaction-
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
-import { WhatsAppBindCodeService } from './human-relay/whatsapp-bind-code.service';
+import { WhatsAppBindCodeService, WhatsAppOperatorWindowService } from './human-relay/whatsapp-bind-code.service';
 import { WhatsAppBindInbound } from './human-relay/whatsapp-bind-inbound.service';
 import { WhatsAppFirstMessageStatus } from './human-relay/whatsapp-first-message-status.service';
 import { WhatsAppHeldRelease } from './human-relay/whatsapp-held-release.service';
@@ -198,6 +198,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanOperatorService,
     ContactHandleService,
     WhatsAppBindCodeService,
+    WhatsAppOperatorWindowService,
     BindWhatsAppNumber,
     WhatsAppBindInbound,
     WhatsAppHeldRelease,
@@ -270,6 +271,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentConversationService,
     CreateConversationInteraction,
     WhatsAppBindCodeService,
+    WhatsAppOperatorWindowService,
   ],
 })
 export class AgentsModule {}

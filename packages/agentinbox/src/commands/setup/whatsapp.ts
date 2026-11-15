@@ -9,7 +9,7 @@ const RERUN_COMMAND = 'npx @agentinbox/cli channel add whatsapp';
 
 /**
  * Links WhatsApp for the operator. Meta's Facebook button only runs in a browser on agentinbox.md, so the CLI sends
- * the operator to its WhatsApp drawer, which connects the business number and then has them send a code from their
+ * the operator to its WhatsApp drawer, which connects the business number and then has them send a message from their
  * own number, and waits here until both are done.
  */
 export async function connectWhatsApp(
@@ -45,8 +45,8 @@ export async function connectWhatsApp(
     channelLabel: 'WhatsApp',
     rerunCommand: RERUN_COMMAND,
     intro: setup.businessConnected
-      ? 'Your WhatsApp Business number is connected; now send the code from your own WhatsApp.'
-      : 'Connect your WhatsApp Business number, then send the code from your own WhatsApp.',
+      ? 'Your WhatsApp Business number is connected; now say hi to it from your own WhatsApp.'
+      : 'Connect your WhatsApp Business number, then say hi to it from your own WhatsApp.',
     waiting: 'Waiting for WhatsApp to be connected on agentinbox.md...',
     savedMessage: 'WhatsApp connected.',
     pageUrl: buildWhatsAppSetupPageUrl(client.apiUrl),

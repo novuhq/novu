@@ -36,7 +36,7 @@ export function setupMarkdown(apiUrl: string): string {
     '',
     'Show the link in your chat with your operator and nowhere else: whoever opens it connects the channel as them. Never send it through the inbox, and never ask for a bot token, a Slack token or Meta (WhatsApp) keys. The page collects what it needs.',
     '',
-    '- **WhatsApp:** the link opens WhatsApp Business setup on Agent Inbox, the "Meta link" in the prompt. Your operator signs in with Facebook, picks their Meta business account and the number the agent uses, then sends a code from their own WhatsApp to prove their number. WhatsApp only connects for the agent that `setup` made for your operator, and Meta bills its messages to their Meta Business account.',
+    '- **WhatsApp:** the link opens WhatsApp Business setup on Agent Inbox, the "Meta link" in the prompt. Your operator signs in with Facebook, picks their Meta business account and the number the agent uses, then sends any message from their own WhatsApp to connect their number. WhatsApp only connects for the agent that `setup` made for your operator, and Meta bills its messages to their Meta Business account.',
     '- **Telegram:** the page has them create a bot with BotFather and press Start.',
     "- **Slack:** the page has them install the agent's own Slack app in their workspace.",
     '',

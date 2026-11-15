@@ -19,6 +19,8 @@ import { ThrottlerCategory } from '../rate-limiting/guards';
 import { UserSession } from '../shared/framework/user.decorator';
 import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
+  ConnectHumanWhatsAppKeysRequestDto,
+  type ConnectHumanWhatsAppKeysResponseDto,
   ConnectHumanWhatsAppRequestDto,
   type ConnectHumanWhatsAppResponseDto,
   type HumanWhatsAppFirstMessageDto,
@@ -30,6 +32,8 @@ import { assertFromHumanDashboard } from './guards/human-dashboard-secret.guard'
 import { HumanOperatorService } from './services/human-operator.service';
 import { ConnectHumanWhatsAppCommand } from './usecases/human-whatsapp/connect-human-whatsapp.command';
 import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
+import { ConnectHumanWhatsAppKeysCommand } from './usecases/human-whatsapp/connect-human-whatsapp-keys.command';
+import { ConnectHumanWhatsAppKeys } from './usecases/human-whatsapp/connect-human-whatsapp-keys.usecase';
 import { GetHumanWhatsAppSetupCommand } from './usecases/human-whatsapp/get-human-whatsapp-setup.command';
 import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
 import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
@@ -52,7 +56,8 @@ export class HumanWhatsAppController {
     private readonly connectHumanWhatsAppUsecase: ConnectHumanWhatsApp,
     private readonly issueHumanWhatsAppLinkUsecase: IssueHumanWhatsAppLink,
     private readonly humanOperator: HumanOperatorService,
-    private readonly submitFirstMessageUsecase: SubmitHumanWhatsAppFirstMessage
+    private readonly submitFirstMessageUsecase: SubmitHumanWhatsAppFirstMessage,
+    private readonly connectHumanWhatsAppKeysUsecase: ConnectHumanWhatsAppKeys
   ) {}
 
   /**
@@ -103,6 +108,36 @@ export class HumanWhatsAppController {
   }
 
   /**
+   * Connects the business number with keys from the operator's own Meta app instead of the Facebook button. Only
+   * from the operator's dashboard: the keys are typed there and never pass through an agent.
+   */
+  @Post('/keys')
+  @HttpCode(HttpStatus.OK)
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  connectWithKeys(
+    @UserSession() user: UserSessionData,
+    @Body() body: ConnectHumanWhatsAppKeysRequestDto,
+    @Headers() headers: Record<string, unknown>
+  ): Promise<ConnectHumanWhatsAppKeysResponseDto> {
+    assertFromHumanDashboard(headers);
+
+    return this.connectHumanWhatsAppKeysUsecase.execute(
+      ConnectHumanWhatsAppKeysCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: body.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER,
+        accessToken: body.accessToken,
+        phoneNumberId: body.phoneNumberId,
+        businessAccountId: body.businessAccountId,
+        appSecret: body.appSecret,
+        integrationIdentifier: body.integrationIdentifier,
+      })
+    );
+  }
+
+  /**
    * A wa.me link with a one-time code for the operator's own number: sending it from WhatsApp binds that number.
    * Always for the operator; a contact gets theirs from their invite page.
    */
@@ -124,7 +159,8 @@ export class HumanWhatsAppController {
     };
     const { subscriberId } = await this.humanOperator.require(scope);
 
-    return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId });
+    // The operator's own number: any message from it binds while the window this opens lasts. Invites keep codes.
+    return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId, proof: 'operator' });
   }
 
   /**

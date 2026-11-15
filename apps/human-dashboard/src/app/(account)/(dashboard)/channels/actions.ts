@@ -9,6 +9,7 @@ import { HumanApiError } from '@/lib/human-api-error';
 import {
   type ChannelVia,
   connectWhatsApp,
+  connectWhatsAppWithKeys,
   createSlackApp,
   ensureSlackChannel,
   ensureTelegramChannel,
@@ -24,8 +25,10 @@ import {
   saveTelegramBotToken,
   sendTestMessage,
   submitWhatsAppFirstMessage,
+  type WhatsAppKeys,
   type WhatsAppLink,
   type WhatsAppSignup,
+  type WhatsAppWebhook,
 } from '@/lib/human-channels-api';
 import { ensureOperatorContact, ensureRelay, findOperatorContactId } from '@/lib/human-operator';
 import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
@@ -210,6 +213,54 @@ export async function createSlackAppAction(appName: string, configToken: string)
 export type ConnectWhatsAppResult =
   | { ok: true; displayPhoneNumber?: string; warning?: string }
   | { ok: false; error: string };
+
+export type ConnectWhatsAppKeysResult =
+  | { ok: true; displayPhoneNumber?: string; webhook?: WhatsAppWebhook }
+  | { ok: false; error: string };
+
+/**
+ * Connects the operator's own WhatsApp Business number with keys from a Meta app they set up themselves. The relay
+ * gets its WhatsApp channel first, as with the Facebook button. Meta's reason comes back when it refuses the keys;
+ * the keys themselves never do.
+ */
+export async function connectWhatsAppKeysAction(keys: WhatsAppKeys): Promise<ConnectWhatsAppKeysResult> {
+  const trimmed: WhatsAppKeys = {
+    accessToken: keys.accessToken?.trim() ?? '',
+    phoneNumberId: keys.phoneNumberId?.trim() ?? '',
+    businessAccountId: keys.businessAccountId?.trim() ?? '',
+    appSecret: keys.appSecret?.trim() ?? '',
+  };
+  if (Object.values(trimmed).some((value) => !value)) {
+    return { ok: false, error: 'Fill in all four keys from your Meta app.' };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    await ensureRelayWithOperator(account);
+    const integrationIdentifier = await ensureWhatsAppChannel(account);
+    const result = await connectWhatsAppWithKeys(account, integrationIdentifier, trimmed);
+    revalidatePath(CHANNELS_PATH);
+
+    if (!result.success) {
+      return { ok: false, error: result.error?.message ?? 'Meta didn’t accept these keys. Check them and try again.' };
+    }
+
+    return {
+      ok: true,
+      ...(result.displayPhoneNumber ? { displayPhoneNumber: result.displayPhoneNumber } : {}),
+      ...(result.webhook ? { webhook: result.webhook } : {}),
+    };
+  } catch (error) {
+    console.error('Failed to connect WhatsApp with API keys', error);
+
+    return { ok: false, error: describeWhatsAppError(error) };
+  }
+}
 
 /** Reads the WhatsApp setup again, for a drawer that opened on a page where it couldn't be read. */
 export async function loadWhatsAppSetupAction(): Promise<WhatsAppSetupState> {
@@ -471,7 +522,7 @@ function describeWhatsAppLinkError(error: unknown): string {
     }
   }
 
-  return 'We couldn’t make a code just now. Please try again.';
+  return 'We couldn’t get WhatsApp ready for your message. Please try again.';
 }
 
 function describeFirstMessageError(error: unknown): string {

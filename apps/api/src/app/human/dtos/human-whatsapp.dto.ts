@@ -70,15 +70,15 @@ export class SubmitHumanWhatsAppFirstMessageRequestDto extends HumanAgentQueryDt
   body: string;
 }
 
-/** A wa.me link with a one-time code that binds the sender's WhatsApp number. */
+/** A wa.me link that binds the operator's own WhatsApp number with the first message they send. */
 export class HumanWhatsAppLinkResponseDto {
-  @ApiProperty({ description: 'Opens WhatsApp at the business number with the code ready to send.' })
+  @ApiProperty({ description: 'Opens WhatsApp at the business number with a message ready to send.' })
   url: string;
 
-  @ApiProperty({ description: 'The code, `BCDF-GHJK`, for typing by hand.' })
-  code: string;
+  @ApiPropertyOptional({ description: 'A code, `BCDF-GHJK`, when the link carries one. None for the operator.' })
+  code?: string;
 
-  @ApiProperty({ description: 'When the code stops working.' })
+  @ApiProperty({ description: 'When the window for the operator’s first message closes.' })
   expiresAt: string;
 }
 
@@ -121,4 +121,78 @@ export class ConnectHumanWhatsAppResponseDto {
 
   @ApiPropertyOptional()
   error?: WhatsAppEmbeddedSignupFailure;
+}
+
+export class ConnectHumanWhatsAppKeysRequestDto extends HumanAgentQueryDto {
+  @ApiProperty({ description: 'A Meta System User access token with whatsapp_business_messaging.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1024)
+  accessToken: string;
+
+  @ApiProperty({ description: 'The phone number id from the Meta app’s API Setup page.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(64)
+  phoneNumberId: string;
+
+  @ApiProperty({ description: 'The WhatsApp Business Account id the number belongs to.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(64)
+  businessAccountId: string;
+
+  @ApiProperty({ description: 'The Meta app’s secret, from App settings › Basic, to check Meta’s webhook signatures.' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(256)
+  appSecret: string;
+
+  @ApiPropertyOptional({ description: 'The relay’s WhatsApp channel to connect. Defaults to its active one.' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  integrationIdentifier?: string;
+}
+
+/** Where Meta sends the number's messages: set for the operator when Meta allowed it, otherwise for them to add. */
+export class HumanWhatsAppWebhookDto {
+  @ApiProperty({ description: 'Meta accepted the webhook, so nothing is left to add in the Meta app.' })
+  configured: boolean;
+
+  @ApiProperty({ description: 'The callback URL for the Meta app’s WhatsApp webhook.' })
+  callbackUrl: string;
+
+  @ApiPropertyOptional({ description: 'The verify token to paste next to it, while the webhook is still to add.' })
+  verifyToken?: string;
+
+  @ApiPropertyOptional({ description: 'Why Meta didn’t take the webhook automatically.' })
+  reason?: string;
+}
+
+export type HumanWhatsAppKeysFailure = {
+  code:
+    | 'invalid_token'
+    | 'expired_token'
+    | 'phone_not_found'
+    | 'phone_mismatch'
+    | 'waba_not_accessible'
+    | 'waba_phone_mismatch'
+    | 'missing_messaging_scope'
+    | 'unknown';
+  message: string;
+};
+
+export class ConnectHumanWhatsAppKeysResponseDto {
+  @ApiProperty()
+  success: boolean;
+
+  @ApiPropertyOptional({ description: 'The business number as WhatsApp shows it.' })
+  displayPhoneNumber?: string;
+
+  @ApiPropertyOptional({ type: HumanWhatsAppWebhookDto })
+  webhook?: HumanWhatsAppWebhookDto;
+
+  @ApiPropertyOptional({ description: 'Why Meta refused the keys. Nothing was saved.' })
+  error?: HumanWhatsAppKeysFailure;
 }
