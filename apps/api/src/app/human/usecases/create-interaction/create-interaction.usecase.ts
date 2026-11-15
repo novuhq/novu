@@ -865,7 +865,19 @@ export class CreateInteraction {
       return undefined;
     }
 
-    if (unfit.reason === WHATSAPP_WINDOW_CLOSED && person && options.canHold) {
+    if (
+      unfit.reason === WHATSAPP_WINDOW_CLOSED &&
+      person &&
+      options.canHold &&
+      // Only while the conversation's number is still theirs: a number that moved to someone else would get the
+      // first message while the reply waited for the old contact.
+      (await this.deliveryService.isWhatsAppNumberOf({
+        ...scope,
+        subscriberId: person,
+        integrationId: String(channel._integrationId),
+        platformThreadId: channel.platformThreadId,
+      }))
+    ) {
       const approved = await this.deliveryService.approvedFirstMessageOn({
         ...scope,
         integrationId: String(channel._integrationId),
