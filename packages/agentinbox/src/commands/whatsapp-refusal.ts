@@ -30,14 +30,13 @@ export function describeWhatsAppRefusal(err: unknown): string | undefined {
 
   const body = err.body as WhatsAppRefusalBody;
   const who = body.subscriberId ?? 'They';
+  const maxButtons = body.maxButtons ?? 3;
   const reason =
     code === WHATSAPP_WINDOW_CLOSED
       ? `WhatsApp can't reach ${who} right now: it only lets the agent write within 24 hours of their last message${
           body.windowClosedAt ? `, and theirs closed ${formatWhen(body.windowClosedAt)}` : ''
         }. It opens again when they write to you.`
-      : `WhatsApp shows at most ${body.maxButtons ?? 3} buttons and this has ${body.buttons ?? 'more'}. Offer ${
-          body.maxButtons ?? 3
-        } options or fewer.`;
+      : `WhatsApp shows at most ${maxButtons} buttons and this has ${body.buttons ?? 'more'}. Offer ${maxButtons} options or fewer.`;
 
   return `${reason}\n${instead(body)}`;
 }

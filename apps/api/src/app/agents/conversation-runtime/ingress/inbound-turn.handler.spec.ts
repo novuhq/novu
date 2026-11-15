@@ -290,7 +290,9 @@ describe('AgentInboundHandler', () => {
       resolveOperatorClaimCard: sinon.stub().resolves(undefined),
     };
     const contactHandles = { refresh: sinon.stub().resolves() };
-    const whatsAppBindInbound = { tryConsume: sinon.stub().resolves(false) };
+    const whatsAppBindInbound = {
+      tryConsume: sinon.stub().callsFake(async (_agentId, _config, _thread, message) => message),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -2618,7 +2620,7 @@ describe('AgentInboundHandler', () => {
 
     it('stops a message that carried a code before the sender is resolved', async () => {
       const { handler, whatsAppBindInbound, subscriberResolver, conversationService } = makeHandler();
-      whatsAppBindInbound.tryConsume.resolves(true);
+      whatsAppBindInbound.tryConsume.resolves(null);
       const message = { id: 'wamid-1', text: 'Connect me to ada: BCDF-GHJK', author: { userId: '15550100199' } };
 
       await handler.handle('agent1', whatsAppConfig as any, {} as any, message as any, AgentEventEnum.ON_MESSAGE);

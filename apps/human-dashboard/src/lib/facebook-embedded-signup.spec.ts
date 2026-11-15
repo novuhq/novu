@@ -177,4 +177,23 @@ describe('loadFacebookSdk', () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it('gives up when Facebook says it is ready without its SDK, rather than waiting forever', async () => {
+    const page: { fbAsyncInit?: () => void } = {};
+    vi.stubGlobal('window', page);
+    vi.stubGlobal('document', {
+      getElementById: () => null,
+      createElement: () => ({ id: '', remove: () => undefined }),
+      body: { appendChild: () => undefined },
+    });
+
+    try {
+      const loading = loadFacebookSdk('app-1');
+      page.fbAsyncInit?.();
+
+      await expect(loading).rejects.toThrow('Facebook didn’t load');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

@@ -27,7 +27,7 @@ import { WhatsAppSignupButton } from '@/components/channels/whatsapp-signup-butt
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyField } from '@/components/ui/copy-field';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
-import { Step, Stepper } from '@/components/ui/stepper';
+import { Step, Stepper, type StepStatus } from '@/components/ui/stepper';
 import { toast } from '@/components/ui/toast';
 import type { WhatsAppLink, WhatsAppWebhook } from '@/lib/human-channels-api';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
@@ -329,6 +329,20 @@ export function WhatsAppSetup({
 
 type SetupStepState = Extract<DrawerState, { step: 'connect' | 'verify' | 'connected' }>;
 
+function connectStepStatus(linked: boolean, error?: string): StepStatus {
+  if (linked) {
+    return 'done';
+  }
+
+  return error ? 'error' : 'current';
+}
+
+const OWN_NUMBER_STEP_STATUS: Record<SetupStepState['step'], StepStatus> = {
+  connect: 'upcoming',
+  verify: 'current',
+  connected: 'done',
+};
+
 /** Keys when there's no Facebook button, or when a keys setup still has its webhook to add in Meta. */
 function startsWithKeys(setup: WhatsAppSetupState): boolean {
   return setup.step === 'unavailable' || (setup.step === 'verify' && Boolean(setup.webhook));
@@ -421,7 +435,7 @@ function OwnNumberSteps({
       <Step
         index={2}
         title="Say hi on WhatsApp"
-        status={state.step === 'connected' ? 'done' : state.step === 'verify' ? 'current' : 'upcoming'}
+        status={OWN_NUMBER_STEP_STATUS[state.step]}
         summary={ownNumber ? `Message received from ${ownNumber}` : 'Your number is connected'}
         footer={sendCode.footer}
         glow
@@ -573,7 +587,7 @@ function MetaStep({ handle, linked, businessNumber, error, renderSignup, onUseKe
     <Step
       index={1}
       title="Connect with Meta"
-      status={linked ? 'done' : error ? 'error' : 'current'}
+      status={connectStepStatus(linked, error)}
       summary={businessNumber ? `${businessNumber} · connected` : 'Business number connected'}
       footer={renderSignup?.(
         <button

@@ -72,8 +72,9 @@ describe('WhatsAppBindInbound', () => {
     return { id: 'wamid-1', text, author: { userId, fullName: 'Ada Lovelace' } };
   }
 
+  /** True when the message was used up here, with nothing left to go on with. */
   async function send(service: WhatsAppBindInbound, text: string, config: object = CONFIG) {
-    return service.tryConsume('agent1', config as never, {} as never, message(text) as never);
+    return (await service.tryConsume('agent1', config as never, {} as never, message(text) as never)) === null;
   }
 
   function replied(outboundGateway: { replyOnThread: sinon.SinonStub }) {
@@ -185,18 +186,31 @@ describe('WhatsAppBindInbound', () => {
     const codeMessage = message('Connect my WhatsApp: BCDF-GHJK');
     const context = { skipped: [codeMessage, message('first question')], totalSinceLastHandler: 3 };
 
-    const stopped = await service.tryConsume(
-      'agent1',
-      CONFIG as never,
-      {} as never,
-      message('and another thing') as never,
-      context as never
-    );
+    const latest = message('and another thing');
+    const next = await service.tryConsume('agent1', CONFIG as never, {} as never, latest as never, context as never);
 
-    expect(stopped).to.equal(false);
+    expect(next).to.equal(latest);
     expect(codes.consume.calledOnce).to.equal(true);
     expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
     expect(context.skipped.map((item) => item.text)).to.deep.equal(['first question']);
+  });
+
+  it('goes on with what they wrote before the code when the code came last', async () => {
+    const { service, outboundGateway } = setup();
+    const earlier = [message('first question'), message('and another thing')];
+    const context = { skipped: [...earlier], totalSinceLastHandler: 3 };
+
+    const next = await service.tryConsume(
+      'agent1',
+      CONFIG as never,
+      {} as never,
+      message('Connect my WhatsApp: BCDF-GHJK') as never,
+      context as never
+    );
+
+    expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
+    expect(next).to.equal(earlier[1]);
+    expect(context.skipped).to.deep.equal([earlier[0]]);
   });
 
   it('keeps when the number wrote a code, whatever became of it, as that opened WhatsApp’s window', async () => {

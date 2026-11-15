@@ -48,9 +48,9 @@ export class WhatsAppBindInbound {
   }
 
   /**
-   * True when the latest message carried a code and was answered here. A code in a message WhatsApp held back
-   * with it (a burst) is used and taken out of the burst, and false lets the ordinary messages around it go on,
-   * without the code.
+   * The message to go on with, or `null` when a code was all there was. A code anywhere in what WhatsApp delivered
+   * together (a burst) is used and answered here, and the ordinary messages around it go on without it: the
+   * newest of them takes the code's place when the code came last.
    */
   async tryConsume(
     agentId: string,
@@ -58,30 +58,29 @@ export class WhatsAppBindInbound {
     thread: Thread,
     message: Message,
     messageContext?: MessageContext
-  ): Promise<boolean> {
+  ): Promise<Message | null> {
     if (config.platform !== AgentPlatformEnum.WHATSAPP || !config.isHumanRelay) {
-      return false;
+      return message;
     }
 
-    const skipped = messageContext?.skipped ?? [];
-    const withCode = [...skipped, message].find((inbound) => extractWhatsAppBindCode(inbound.text));
+    const burst = [...(messageContext?.skipped ?? []), message];
+    const withCode = burst.find((inbound) => extractWhatsAppBindCode(inbound.text));
     if (!withCode) {
-      return this.tryOperatorHello(agentId, config, thread, message);
+      // A hello that connected the operator is used up here, like a code.
+      return (await this.tryOperatorHello(agentId, config, thread, message)) ? null : message;
     }
 
     const code = extractWhatsAppBindCode(withCode.text) as string;
     await this.reply(thread, await this.bind(agentId, config, withCode, code), agentId);
 
-    if (extractWhatsAppBindCode(message.text)) {
-      return true;
-    }
-
     // Codes never reach the inbox: the burst goes on without them.
+    const ordinary = burst.filter((inbound) => !extractWhatsAppBindCode(inbound.text));
+    const latest = ordinary.pop() ?? null;
     if (messageContext) {
-      messageContext.skipped = skipped.filter((inbound) => !extractWhatsAppBindCode(inbound.text));
+      messageContext.skipped = ordinary;
     }
 
-    return false;
+    return latest;
   }
 
   /**

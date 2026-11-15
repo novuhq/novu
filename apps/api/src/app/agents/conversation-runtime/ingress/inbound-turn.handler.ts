@@ -382,16 +382,18 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    message: Message,
+    received: Message,
     event: AgentEventEnum,
     messageContext?: MessageContext
   ): Promise<void> {
-    if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
+    if (await this.consumeTelegramStartLink(agentId, config, thread, received, messageContext)) {
       return;
     }
 
     // A code from a wa.me link binds the sender's WhatsApp number to an Agent Inbox contact, like `/start` above.
-    if (await this.whatsAppBindInbound.tryConsume(agentId, config, thread, message, messageContext)) {
+    // What they wrote around the code goes on without it.
+    const message = await this.whatsAppBindInbound.tryConsume(agentId, config, thread, received, messageContext);
+    if (!message) {
       return;
     }
 

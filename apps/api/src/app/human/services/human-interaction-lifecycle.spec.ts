@@ -1,7 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
+import type { HumanInteractionEntity } from '@novu/dal';
+import { HumanChannelViaEnum, HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
 import { assertHumanCardActions, countHumanCardButtons, deliverToTargets } from './human-interaction-lifecycle';
 import { WhatsAppUndeliverableException } from './whatsapp-delivery.errors';
 
@@ -83,6 +85,64 @@ describe('countHumanCardButtons', () => {
     };
 
     expect(countHumanCardButtons(HumanInteractionKindEnum.APPROVE, card)).to.equal(4);
+  });
+});
+
+describe('countHumanCardButtons and the card builder', () => {
+  function builtButtons(node: unknown): number {
+    if (Array.isArray(node)) {
+      return node.reduce((sum: number, item) => sum + builtButtons(item), 0);
+    }
+    if (!node || typeof node !== 'object') {
+      return 0;
+    }
+    const { type, children } = node as { type?: string; children?: unknown };
+
+    return type === 'button' ? 1 : builtButtons(children);
+  }
+
+  // The count is worked out before the card exists, so this holds it to what the builder really lays out.
+  it('agree on how many buttons a card has', () => {
+    const cards = [
+      { kind: HumanInteractionKindEnum.APPROVE, card: { title: 'Deploy?' } },
+      {
+        kind: HumanInteractionKindEnum.APPROVE,
+        card: { title: 'Deploy?', extraActions: [{ id: 'later', label: 'Later' }] },
+      },
+      {
+        kind: HumanInteractionKindEnum.CHOOSE,
+        card: {
+          title: 'Which?',
+          options: [
+            { id: 'a', label: 'A' },
+            { id: 'b', label: 'B' },
+            { id: 'c', label: 'C' },
+          ],
+        },
+      },
+      { kind: HumanInteractionKindEnum.ASK, card: { title: 'Why?' } },
+    ];
+
+    for (const { kind, card } of cards) {
+      const built = buildPendingContent({
+        _id: 'id1',
+        identifier: 'hi_1',
+        kind,
+        status: HumanInteractionStatusEnum.PENDING,
+        content: { cardChrome: card },
+        subscriberIds: ['sub-1'],
+        _agentId: 'agent1',
+        expiresAt: new Date().toISOString(),
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as HumanInteractionEntity);
+
+      expect(builtButtons(built.card), `${kind} with ${JSON.stringify(card)}`).to.equal(
+        countHumanCardButtons(kind, card)
+      );
+    }
   });
 });
 

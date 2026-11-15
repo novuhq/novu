@@ -48,7 +48,13 @@ export function loadFacebookSdk(appId: string): Promise<FacebookSdk> {
       clearTimeout(timeout);
       if (window.FB) {
         resolve(window.FB);
+
+        return;
       }
+
+      // The timeout is off by now, so without this the button would wait forever.
+      sdkLoading = undefined;
+      reject(new Error('Facebook didn’t load. Refresh the page and try again.'));
     };
 
     if (document.getElementById('facebook-jssdk')) {
