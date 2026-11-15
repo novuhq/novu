@@ -474,11 +474,18 @@ overrides:
   # the full request URL (including query string) to the Node.js HTTP response
   # body-less code path, enabling response-splitting / request-smuggling-like
   # confusion when a malicious URL is reflected into the response status line.
-  # Patched in 2.1.3 (patch bump within the 2.x line). Widen the previous
-  # <2.0.5 floor so transitive consumers (apps/api > emulate, apps/agent-inbox-mcp
-  # > @modelcontextprotocol/sdk, playground/web-chat, packages/novu, enterprise
-  # workers) land on the fix.
-  '@hono/node-server@<2.1.3': ^2.1.3
+  # Patched in 2.1.3 (patch bump within the 2.x line).
+  # GHSA-qv5m-9pm6-hqp3 (moderate): unhandled `ECONNRESET` on the socket
+  # during an asynchronous WebSocket upgrade crashes the Node.js process.
+  # GHSA-jpvv-r467-5p4w (moderate): backslash in the request path is parsed
+  # as a path separator, bypassing path-based access control at a reverse
+  # proxy. Both patched in 2.1.6 (patch bump within the 2.1.x line). Widen
+  # the previous `<2.1.3` floor so transitive consumers (apps/api > emulate,
+  # apps/agent-inbox-mcp > @modelcontextprotocol/sdk, apps/mcp-server >
+  # @modelcontextprotocol/sdk, playground/web-chat, packages/novu >
+  # @anthropic-ai/claude-agent-sdk, enterprise/workers/thalamus-observer >
+  # agents) land on the fix.
+  '@hono/node-server@<2.1.6': ^2.1.6
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
