@@ -387,7 +387,13 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
                   {
                     id: 'wamid.first-message-failed',
                     status: 'failed',
-                    errors: [{ code: 131042, title: 'Business eligibility payment issue' }],
+                    errors: [
+                      {
+                        code: 131042,
+                        title: 'Business eligibility payment issue',
+                        href: 'https://business.facebook.com/billing_hub/accounts/details/?business_id=1',
+                      },
+                    ],
                   },
                 ],
               },
@@ -403,5 +409,8 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
     expect(res.body.data.heldFor).to.deep.equal([operatorId]);
     expect(res.body.data.firstMessageFailed).to.have.length(1);
     expect(res.body.data.firstMessageFailed[0].reason).to.contain('no payment method or currency');
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain(
+      'Fix it here: https://business.facebook.com/billing_hub/accounts/details/?business_id=1'
+    );
   });
 });

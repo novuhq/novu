@@ -6,7 +6,14 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 type MetaStatus = {
   id?: string;
   status?: string;
-  errors?: Array<{ code?: number; title?: string; message?: string; error_data?: { details?: string } }>;
+  errors?: Array<{
+    code?: number;
+    title?: string;
+    message?: string;
+    error_data?: { details?: string };
+    /** Where Meta says to fix it, such as the WhatsApp Business account's billing page. */
+    href?: string;
+  }>;
 };
 
 type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: MetaStatus[] } }> }> };
@@ -68,26 +75,22 @@ function parseWebhook(text: string): MetaWebhook | undefined {
   }
 }
 
-/** Meta's reason, in words the operator can act on where its code says what to do. */
+/**
+ * Meta's reason, with where to fix it, so an agent can pass both on: Meta's own sentence usually names the fix and
+ * links to it (for 131042, the account's billing page to set a currency and payment method).
+ */
 export function describeFailure(status: MetaStatus): HumanInteractionHoldFailure {
   const [error] = status.errors ?? [];
   const code = error?.code;
   const at = new Date().toISOString();
+  const details = error?.error_data?.details?.trim();
+  const reason =
+    details ||
+    (code === 131042
+      ? 'your WhatsApp Business account has no payment method or currency set up'
+      : error?.message || error?.title);
+  const link = error?.href && !details?.includes(error.href) ? ` Fix it here: ${error.href}` : '';
+  const sentence = reason ? `: ${reason.replace(/\.$/, '')}.` : '.';
 
-  if (code === 131042) {
-    return {
-      code,
-      message:
-        'Meta didn’t deliver the first message: your WhatsApp Business account has no payment method or currency set up.',
-      at,
-    };
-  }
-
-  const reason = error?.error_data?.details || error?.message || error?.title;
-
-  return {
-    ...(code ? { code } : {}),
-    message: `Meta didn’t deliver the first message${reason ? `: ${reason}` : ''}.`,
-    at,
-  };
+  return { ...(code ? { code } : {}), message: `Meta didn’t deliver the first message${sentence}${link}`, at };
 }
