@@ -20,7 +20,7 @@ WHERE environment_id = {environmentId:String}
   AND created_at >= {oldestRunCreatedAt:DateTime64(3, 'UTC')}
 ORDER BY step_run_id, version DESC
 LIMIT 1 BY step_run_id
-LIMIT {limit:UInt32}
+LIMIT {limit:UInt32} OFFSET {offset:UInt32}
 SETTINGS max_execution_time = 10, max_rows_to_read = 10000000
 `;
 
@@ -29,6 +29,8 @@ export type FindStepRunsV2ByWorkflowRunIdsParams = {
   workflowRunIds: string[];
   oldestRunCreatedAt: Date;
   limit: number;
+  /** Rows to skip, for paging through runs with more step rows than one read returns. */
+  offset?: number;
 };
 
 @Injectable()
@@ -69,6 +71,7 @@ export class StepRunV2Repository implements OnModuleInit {
     workflowRunIds,
     oldestRunCreatedAt,
     limit,
+    offset = 0,
   }: FindStepRunsV2ByWorkflowRunIdsParams): Promise<StepRunV2ReadRow[]> {
     if (!environmentId) {
       throw new Error('environmentId is required');
@@ -76,6 +79,10 @@ export class StepRunV2Repository implements OnModuleInit {
 
     if (!Number.isInteger(limit) || limit < 1 || limit > STEP_RUNS_V2_MAX_READ_LIMIT) {
       throw new Error(`Limit must be an integer between 1 and ${STEP_RUNS_V2_MAX_READ_LIMIT}`);
+    }
+
+    if (!Number.isInteger(offset) || offset < 0) {
+      throw new Error('Offset must be a non-negative integer');
     }
 
     if (workflowRunIds.length === 0) {
@@ -89,6 +96,7 @@ export class StepRunV2Repository implements OnModuleInit {
         workflowRunIds,
         oldestRunCreatedAt,
         limit,
+        offset,
       },
     });
 
