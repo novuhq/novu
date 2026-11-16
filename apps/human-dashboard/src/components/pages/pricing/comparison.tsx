@@ -24,19 +24,19 @@ export function PricingComparison() {
         tabIndex={0}
         className="isolate mt-4 overflow-x-auto overscroll-x-contain rounded-xl border border-sapien-border focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:mt-12"
       >
-        <table className="w-full min-w-175 table-fixed border-collapse text-[15px] leading-[21px] md:min-w-0">
+        <table className="w-full min-w-134 table-fixed border-collapse text-[15px] leading-[21px] md:min-w-0">
           <caption className="sr-only">Agent Inbox plan comparison</caption>
           <colgroup>
-            <col className="w-37.5 md:w-2/5" />
+            <col className="w-32 md:w-2/5" />
             {PRICING_PLANS.map((plan) => (
-              <col key={plan.id} className="md:w-1/5" />
+              <col key={plan.id} className="w-34 md:w-1/5" />
             ))}
           </colgroup>
           <thead>
             <tr className="bg-sapien-border">
               <th
                 scope="col"
-                className="sticky left-0 z-10 bg-sapien-border px-5 py-5 text-left font-sapien-mono text-xs font-normal text-sapien-foreground/50"
+                className="sticky left-0 z-10 bg-sapien-border px-4 py-5 text-left font-sapien-mono text-xs font-normal text-sapien-foreground/50 md:px-5"
               >
                 What’s included
               </th>
@@ -45,7 +45,7 @@ export function PricingComparison() {
                   key={plan.id}
                   id={`pricing-column-${plan.id}`}
                   scope="col"
-                  className={cn('px-5 py-5 text-left font-medium', plan.id === 'pro' && 'text-accent')}
+                  className={cn('px-4 py-5 text-left font-medium md:px-5', plan.id === 'pro' && 'text-accent')}
                 >
                   {plan.name}
                 </th>
@@ -58,7 +58,7 @@ export function PricingComparison() {
                 <th
                   id={`pricing-feature-${feature.key}`}
                   scope="row"
-                  className="sticky left-0 z-10 bg-sapien-background px-5 py-5 text-left font-normal tracking-tight text-sapien-foreground/70"
+                  className="sticky left-0 z-10 bg-sapien-background px-4 py-5 text-left font-normal tracking-tight text-sapien-foreground/70 md:px-5"
                 >
                   {feature.label}
                 </th>
@@ -66,7 +66,7 @@ export function PricingComparison() {
                   <td
                     key={plan.id}
                     headers={`pricing-feature-${feature.key} pricing-column-${plan.id}`}
-                    className={cn('px-5 py-5 text-left', plan.id === 'pro' && 'bg-sapien-border/50')}
+                    className={cn('px-4 py-5 text-left md:px-5', plan.id === 'pro' && 'bg-sapien-border/50')}
                   >
                     <FeatureValue value={plan.limits[feature.key]} />
                   </td>

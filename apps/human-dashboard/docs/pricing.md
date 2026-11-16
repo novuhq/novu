@@ -19,6 +19,12 @@ These exports were previously delivered through Prime's component-export workflo
 - Hero: adapted Prime anatomy; one h1 and a desktop description column, stacked on smaller screens. The November 16 review moves “Priced” into the first line and removes the comparison shortcut.
 - Plans: custom semantic articles, three equal columns from `md`, stacked below; plan, price, capacity, features, CTA in that order. Pro receives an accent treatment without a popularity claim.
 - Comparison: one semantic table at every size, with an outer border, neutral header and brighter Pro column. Mobile uses native horizontal scrolling with sticky feature labels and keyboard focus; all values remain accessible without JavaScript. No billing selector.
+
+Below `md`, the feature column is 128px and each plan column is 136px, with
+16px horizontal cell padding. A complete plan column fits beside the fixed
+labels at 320px. Browser regressions check the visible text/icon bounds for all
+Enterprise values at the final scroll position, including “Custom volume” and
+“Removable”; a partially visible column header alone is insufficient.
 - Conversations: homepage-style bordered cards with numbered badges and inline title/description paragraphs, followed by a bordered examples table with a filled header. The fixed 24-hour rules, exclusions and billing-cycle attribution are unchanged.
 - FAQ: reuse existing `FaqRow`, including keyboard controls, focus treatment and reduced-motion behavior.
 

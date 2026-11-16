@@ -31,7 +31,7 @@ for (const width of [320, 375, 768, 1024, 1440]) {
       expect(Math.max(...featureTops) - Math.min(...featureTops)).toBeLessThan(1);
     } else {
       const region = page.getByRole('region', { name: 'Compare plans', exact: true });
-      await region.scrollIntoViewIfNeeded();
+      await region.evaluate((node) => node.scrollIntoView({ block: 'start' }));
       const firstLabel = table.locator('tbody th').first();
       const initialX = (await firstLabel.boundingBox())!.x;
       await region.focus();
@@ -40,6 +40,24 @@ for (const width of [320, 375, 768, 1024, 1440]) {
       // Native touch/trackpad scrolling must expose the last plan without moving feature labels.
       await region.evaluate((node) => node.scrollTo({ left: node.scrollWidth }));
       await expect(table.getByRole('columnheader', { name: 'Enterprise', exact: true })).toBeInViewport();
+      const hiddenValues = await region.evaluate((node) => {
+        const left = node.querySelector('tbody th')!.getBoundingClientRect().right;
+        const right = node.getBoundingClientRect().right;
+        return [...node.querySelectorAll('tbody tr')]
+          .filter((row) => {
+            const cell = row.lastElementChild!;
+            const icon = cell.querySelector('svg');
+            if (icon) {
+              const r = icon.getBoundingClientRect();
+              return r.left < left - 1 || r.right > right + 1;
+            }
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            return [...range.getClientRects()].some((r) => r.left < left - 1 || r.right > right + 1);
+          })
+          .map((row) => row.lastElementChild!.textContent);
+      });
+      expect(hiddenValues).toEqual([]);
       expect(Math.abs((await firstLabel.boundingBox())!.x - initialX)).toBeLessThan(1);
       await region.evaluate((node) => node.scrollTo({ left: 0 }));
     }
@@ -139,7 +157,7 @@ test('pricing content and native FAQ controls work without JavaScript', async ({
     await expect(item).toHaveAttribute('open');
     await expect(item.locator('p')).toBeVisible();
     const comparison = page.getByRole('region', { name: 'Compare plans', exact: true });
-    await comparison.scrollIntoViewIfNeeded();
+    await comparison.evaluate((node) => node.scrollIntoView({ block: 'start' }));
     await comparison.evaluate((node) => node.scrollTo({ left: node.scrollWidth }));
     await expect(comparison.getByRole('columnheader', { name: 'Enterprise', exact: true })).toBeInViewport();
   } finally {
