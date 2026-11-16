@@ -81,13 +81,14 @@ export class CreateNotificationJobs {
 
     const steps = await this.createSteps(command, activeSteps, notification);
 
-    // Both dedup flags shrink what a job persists and are read once here (the
-    // worker's read paths handle either shape, so both are forward-only and safe
-    // to toggle off): payload-dedup drops the per-job trigger payload (resolved
-    // from the notification via `_notificationId`); job-step-dedup persists a
-    // lean step (ids/filters/metadata + a `{ _id, type }` template stub) that
-    // the worker rehydrates from the live workflow at execution time.
-    const [isPayloadDedupEnabled, isJobStepDedupEnabled] = await Promise.all([
+    // The dedup flags shrink what a job persists and are read once here (the
+    // worker's read paths handle either shape, so all are forward-only and safe
+    // to toggle off): payload-dedup drops the per-job trigger payload and
+    // overrides-dedup drops the per-job trigger overrides (both resolved from the
+    // notification via `_notificationId`); job-step-dedup persists a lean step
+    // (ids/filters/metadata + a `{ _id, type }` template stub) that the worker
+    // rehydrates from the live workflow at execution time.
+    const [isPayloadDedupEnabled, isJobStepDedupEnabled, isOverridesDedupEnabled] = await Promise.all([
       this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PAYLOAD_DEDUP_ENABLED,
         organization: { _id: command.organizationId },
@@ -100,21 +101,44 @@ export class CreateNotificationJobs {
         user: { _id: command.userId },
         defaultValue: false,
       }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_OVERRIDES_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
     ]);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
+    const adhocTriggerJob = this.createATriggerJobIfMissing(
+      steps,
+      command,
+      notification,
+      isPayloadDedupEnabled,
+      isOverridesDedupEnabled
+    );
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
 
     for (const step of steps) {
-      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled, isJobStepDedupEnabled));
+      jobs.push(
+        this.buildJobFromStep(
+          step,
+          command,
+          notification,
+          isPayloadDedupEnabled,
+          isJobStepDedupEnabled,
+          isOverridesDedupEnabled
+        )
+      );
     }
 
     return jobs;
   }
 
   private async createNotification(command: CreateNotificationJobsCommand, channels: StepTypeEnum[]) {
+    const hasOverrides = !!command.overrides && Object.keys(command.overrides).length > 0;
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -124,6 +148,7 @@ export class CreateNotificationJobs {
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,
+      ...(hasOverrides && { overrides: command.overrides }),
       channels,
       controls: command.controls,
       tags: command.template.tags,
@@ -235,7 +260,8 @@ export class CreateNotificationJobs {
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
     isPayloadDedupEnabled: boolean,
-    isJobStepDedupEnabled: boolean
+    isJobStepDedupEnabled: boolean,
+    isOverridesDedupEnabled: boolean
   ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
@@ -243,7 +269,7 @@ export class CreateNotificationJobs {
     return {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
-      overrides: command.overrides,
+      overrides: isOverridesDedupEnabled ? undefined : command.overrides,
       ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
       step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
@@ -349,7 +375,8 @@ export class CreateNotificationJobs {
     steps: NotificationStepWithTemplate[],
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
-    isPayloadDedupEnabled = false
+    isPayloadDedupEnabled = false,
+    isOverridesDedupEnabled = false
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -360,7 +387,7 @@ export class CreateNotificationJobs {
     return {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
-      overrides: command.overrides,
+      overrides: isOverridesDedupEnabled ? undefined : command.overrides,
       ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
       step: {

@@ -6,6 +6,7 @@ import {
   FeatureFlagsService,
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
+  getEffectiveJobOverrides,
   getEffectiveJobPayload,
   getJobDigest,
   InMemoryLRUCacheService,
@@ -182,6 +183,8 @@ export class RunJob {
         job,
         notification
       );
+      // Overrides-dedup: hydrated in memory only, never written back to the job.
+      job.overrides = getEffectiveJobOverrides(job, notification);
 
       // Purely stateless jobs have no persisted workflow id. Synced workflows
       // triggered with an override `bridgeUrl` still have `_templateId`, but
@@ -489,6 +492,7 @@ export class RunJob {
         channels: 1,
         to: 1,
         payload: 1,
+        overrides: 1,
         controls: 1,
         topics: 1,
         _digestedNotificationId: 1,
