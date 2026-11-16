@@ -69,6 +69,56 @@ export class ConversationRepository extends BaseRepositoryV2<
   }
 
   /**
+   * The newest message a person wrote on each of these platform threads of one integration, across every agent on
+   * it, keyed by thread id. A read over `lastHumanMessageAt`, which the inbound path already keeps, so it writes
+   * nothing. Agent Inbox reads it for WhatsApp's 24-hour window, which belongs to the business number, not an agent.
+   */
+  async findLastHumanMessageAtByPlatformThreads(
+    environmentId: string,
+    organizationId: string,
+    integrationId: string,
+    platformThreadIds: string[]
+  ): Promise<Map<string, string>> {
+    const latest = new Map<string, string>();
+    if (platformThreadIds.length === 0) {
+      return latest;
+    }
+
+    const integration = new Types.ObjectId(integrationId);
+    const rows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        channels: { $elemMatch: { platformThreadId: { $in: platformThreadIds }, _integrationId: integration } },
+        lastHumanMessageAt: { $exists: true },
+      },
+      { channels: 1, lastHumanMessageAt: 1 }
+    );
+
+    const wanted = new Set(platformThreadIds);
+    for (const row of rows) {
+      const at = row.lastHumanMessageAt;
+      if (!at) {
+        continue;
+      }
+
+      for (const channel of row.channels ?? []) {
+        const threadId = channel.platformThreadId;
+        if (!wanted.has(threadId) || String(channel._integrationId) !== String(integration)) {
+          continue;
+        }
+
+        const known = latest.get(threadId);
+        if (!known || new Date(at).getTime() > new Date(known).getTime()) {
+          latest.set(threadId, at);
+        }
+      }
+    }
+
+    return latest;
+  }
+
+  /**
    * How many other agents already have a conversation on this platform thread.
    * Used by Smart reply-policy so a second Novu agent counts like a second speaker.
    */
@@ -197,6 +247,33 @@ export class ConversationRepository extends BaseRepositoryV2<
         },
       },
       { $set: { 'participants.$.id': params.toSubscriberId } }
+    );
+
+    return result.modified;
+  }
+
+  /**
+   * Takes a subscriber out of the direct threads with one platform user on one integration, such as a WhatsApp
+   * number that someone else has just proved theirs. The thread stays, for whoever writes from it next. Returns the
+   * number of conversations changed.
+   */
+  async removeSubscriberFromPlatformUserThreads(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    /** The user's id as the thread id ends with it, after the last `:`. */
+    platformUserId: string;
+    subscriberId: string;
+  }): Promise<number> {
+    const endsWithUser = new RegExp(`:${params.platformUserId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: { $elemMatch: { _integrationId: params.integrationId, platformThreadId: endsWithUser } },
+        participants: { $elemMatch: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } },
+      },
+      { $pull: { participants: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } } }
     );
 
     return result.modified;

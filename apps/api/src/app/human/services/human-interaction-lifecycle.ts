@@ -1,6 +1,11 @@
 import { BadGatewayException, BadRequestException, HttpException } from '@nestjs/common';
 import { isAgentEmailInboxQuotaExceeded, type PinoLogger, shortId } from '@novu/application-generic';
-import { HumanInteractionDelivery, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
+import {
+  HumanInteractionDelivery,
+  HumanInteractionEntity,
+  HumanInteractionHold,
+  HumanInteractionRepository,
+} from '@novu/dal';
 import {
   type CardChrome,
   HUMAN_INTERACTION_DEFAULT_TTL_SECONDS,
@@ -20,6 +25,7 @@ import {
   mintHumanOptions,
 } from '@novu/shared';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
+import { isWhatsAppUndeliverable } from './whatsapp-delivery.errors';
 
 const DEFAULT_PENDING_CAP = 25;
 
@@ -40,6 +46,11 @@ export interface HumanDeliveryRefs {
   platformMessageId: string;
   platformThreadId: string;
   _conversationId?: string;
+  /**
+   * WhatsApp's window was closed, so the approved first message went out instead (its id is `platformMessageId`).
+   * The message itself is held until they reply.
+   */
+  held?: boolean;
 }
 
 export interface HumanDeliveryTarget {
@@ -227,6 +238,30 @@ export function assertHumanCardActions(
   assertHumanApproveExtraActions(kind, extraActions);
 }
 
+/**
+ * How many buttons the delivered card shows, as the card builder lays them out: Deny and Approve plus any extra
+ * actions, one button per choice, none for ask and tell, and every action button of a posted card. WhatsApp shows
+ * at most three, so a send there is refused above that rather than losing the rest.
+ */
+export function countHumanCardButtons(
+  kind: HumanInteractionKindEnum,
+  card: HumanInteractionChromeInput | HumanPostedCardInput
+): number {
+  if (isHumanCardElement(card)) {
+    return collectCardActionButtons(card.children as CardTreeNode[] | undefined).length;
+  }
+
+  const { options, extraActions } = readHumanCardActions(card);
+  switch (kind) {
+    case HumanInteractionKindEnum.APPROVE:
+      return 2 + (extraActions?.length ?? 0);
+    case HumanInteractionKindEnum.CHOOSE:
+      return options?.length ?? 0;
+    default:
+      return 0;
+  }
+}
+
 function humanOptionId(option: HumanOptionInput): string {
   return typeof option === 'string' ? option : option.id;
 }
@@ -355,6 +390,62 @@ export async function assertHumanPendingCap(
 }
 
 /**
+ * Failures that already tell the caller what to do, kept as they are rather than wrapped as a delivery failure:
+ * the inbox cap is a 429 with a reset time, and a WhatsApp refusal says why and names the channels that still work.
+ */
+function passesThrough(error: unknown): boolean {
+  return isAgentEmailInboxQuotaExceeded(error) || isWhatsAppUndeliverable(error);
+}
+
+function withHeld(held: HumanInteractionHold[]): { held?: HumanInteractionHold[] } {
+  return held.length ? { held } : {};
+}
+
+/**
+ * What one send left: a delivery, or a hold when WhatsApp's window was closed and the first message went instead.
+ * A hold reaches only the person it was for, never a thread.
+ */
+function recordOf(
+  target: HumanDeliveryTarget,
+  refs: HumanDeliveryRefs
+): ({ hold: HumanInteractionHold } | { delivery: HumanInteractionDelivery }) & { reaches: string[] } {
+  if (refs.held) {
+    return {
+      hold: {
+        subscriberId: target.subscriberId,
+        integrationIdentifier: target.integrationIdentifier,
+        platformThreadId: refs.platformThreadId,
+        templateMessageId: refs.platformMessageId,
+        heldAt: new Date().toISOString(),
+      },
+      reaches: [target.subscriberId],
+    };
+  }
+
+  return {
+    delivery: {
+      subscriberId: target.subscriberId,
+      integrationIdentifier: target.integrationIdentifier,
+      platform: target.platform,
+      platformMessageId: refs.platformMessageId,
+      platformThreadId: refs.platformThreadId,
+    },
+    reaches: target.reaches ?? [target.subscriberId],
+  };
+}
+
+/** A release for an earlier contact may have settled the row before a later contact's hold was saved. */
+async function keepWaitingWhileHeld(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  held: HumanInteractionHold[]
+): Promise<void> {
+  if (interaction.kind === HumanInteractionKindEnum.TELL && held.length > 0) {
+    await repository.keepTellPendingWhileHeld(interaction._environmentId, interaction._id);
+  }
+}
+
+/**
  * Deliver to every target, stamp `deliveries[]` (and denormalized top-level
  * ids from the first success), and roll the row back only when nobody received
  * the card. Partial fan-out failures stay on the row; the caller surfaces them.
@@ -378,6 +469,7 @@ export async function deliverToTargets(
   }
 ): Promise<{ interaction: HumanInteractionEntity; failedSubscriberIds: string[] }> {
   const deliveries: HumanInteractionDelivery[] = [];
+  const held: HumanInteractionHold[] = [];
   const failedSubscriberIds: string[] = [];
   const reached: string[] = [];
   let lastError: unknown;
@@ -386,17 +478,15 @@ export async function deliverToTargets(
   for (const target of targets) {
     try {
       const refs = await target.deliver();
-      deliveries.push({
-        subscriberId: target.subscriberId,
-        integrationIdentifier: target.integrationIdentifier,
-        platform: target.platform,
-        platformMessageId: refs.platformMessageId,
-        platformThreadId: refs.platformThreadId,
-      });
-      reached.push(...(target.reaches ?? [target.subscriberId]));
-      if (!conversationId && refs._conversationId) {
-        conversationId = refs._conversationId;
+      const record = recordOf(target, refs);
+      if ('hold' in record) {
+        // Already on the row: the send saved it before the first message went out.
+        held.push(record.hold);
+      } else {
+        deliveries.push(record.delivery);
       }
+      reached.push(...record.reaches);
+      conversationId ??= refs._conversationId;
     } catch (err) {
       lastError = err;
       failedSubscriberIds.push(target.subscriberId);
@@ -413,13 +503,12 @@ export async function deliverToTargets(
     }
   }
 
-  if (deliveries.length === 0) {
+  if (deliveries.length === 0 && held.length === 0) {
     await repository
       .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
       .catch(() => undefined);
 
-    // The inbox cap is a 429 with a reset time. Wrapping it as a gateway error drops that.
-    if (isAgentEmailInboxQuotaExceeded(lastError)) {
+    if (passesThrough(lastError)) {
       throw lastError;
     }
 
@@ -449,11 +538,15 @@ export async function deliverToTargets(
   const delivered: HumanInteractionEntity = {
     ...interaction,
     deliveries,
+    ...withHeld(held),
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   };
 
-  if (interaction.kind === HumanInteractionKindEnum.TELL) {
+  await keepWaitingWhileHeld(repository, interaction, held);
+
+  // A message still held for someone isn't delivered yet: it settles when the last of them is released.
+  if (interaction.kind === HumanInteractionKindEnum.TELL && held.length === 0) {
     const settled = await repository.markDeliveredIfPending(interaction._environmentId, interaction._id);
 
     return {

@@ -36,6 +36,7 @@ const EXACT_PATHS = new Set([
   '/sapien',
   '/settings',
   '/settings/billing',
+  '/setup.md',
   '/sign-in',
   '/sign-up',
   '/sitemap.xml',

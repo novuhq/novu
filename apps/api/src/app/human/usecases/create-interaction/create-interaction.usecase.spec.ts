@@ -17,15 +17,17 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { contactIdFromEmail } from '../../services/explicit-email-recipient';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanKeylessCapService } from '../../services/human-keyless-cap.service';
 import { HumanMessageQuotaExceededException } from '../../services/human-message-quota.service';
+import { WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateInteraction } from './create-interaction.usecase';
 
 /** What a send into a thread hands `CreateConversationInteraction`: deliveries outside it, and word of its post. */
 type Outside = { alsoTo?: (row: unknown) => any[]; onPosted?: () => void };
 
 describe('CreateInteraction', () => {
-  function setup() {
+  function setup({ whatsAppEnabled = false } = {}) {
     const created = {
       identifier: 'hi_1',
       kind: HumanInteractionKindEnum.APPROVE,
@@ -56,6 +58,9 @@ describe('CreateInteraction', () => {
       }),
       deliver: sinon.stub().resolves({ platformMessageId: 'msg-1', platformThreadId: 'thread-1' }),
       deliverContent: sinon.stub().resolves({ platformMessageId: 'cta-1', platformThreadId: 'thread-1' }),
+      otherReachableVias: sinon.stub().resolves(['telegram']),
+      approvedFirstMessageOn: sinon.stub().resolves(undefined),
+      isWhatsAppNumberOf: sinon.stub().resolves(true),
     };
     const connectClaimTokenService = {
       isEnvironmentClaimed: sinon.stub().resolves(false),
@@ -149,7 +154,8 @@ describe('CreateInteraction', () => {
       keylessEmailGate as any,
       humanContactRepository as any,
       subscriberRepository as any,
-      analyticsService as any
+      analyticsService as any,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never)
     );
     const command = {
       userId: 'user1',
@@ -308,6 +314,159 @@ describe('CreateInteraction', () => {
       expect(createConversationInteraction.execute.firstCall.args[0].anyoneMayAnswer).to.equal(false);
       expect(inbox.findStrangers.called).to.equal(false);
       expect(result.threads).to.deep.equal([{ id: 'conv_abc', unreadBefore: 1 }]);
+    });
+
+    describe('into a WhatsApp thread', () => {
+      const thread = {
+        _id: 'conv1',
+        identifier: 'conv_abc',
+        status: 'active',
+        participants: [{ type: 'subscriber', id: 'sub-1' }],
+        channels: [{ platform: 'whatsapp', _integrationId: 'int1', platformThreadId: 'whatsapp:1234:15551234567' }],
+      };
+
+      function inWhatsAppThread(unfit: Record<string, unknown> | null) {
+        const context = setup({ whatsAppEnabled: true });
+        context.agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+        context.inbox.findThread.resolves(thread);
+        context.inbox.primaryChannel.returns(thread.channels[0]);
+        context.inbox.resolveIntegrationIdentifier.resolves('whatsapp-main');
+        Object.assign(context.deliveryService, { whatsAppThreadUnfit: sinon.stub().resolves(unfit) });
+
+        return context as typeof context & { deliveryService: { whatsAppThreadUnfit: sinon.SinonStub } };
+      }
+
+      async function refused(promise: Promise<unknown>) {
+        const error = await promise.catch((err: unknown) => err);
+        expect(error).to.be.instanceOf(WhatsAppUndeliverableException);
+
+        return (error as WhatsAppUndeliverableException).getResponse() as Record<string, unknown>;
+      }
+
+      it('checks the window of the person the thread is with, not of someone else `to` names', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+          windowClosedAt: '2026-11-10T10:00:00.000Z',
+        });
+        inbox.firstContactId.returns('sub-1');
+
+        const body = await refused(usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any));
+
+        expect(deliveryService.whatsAppThreadUnfit.firstCall.args[0]).to.include({
+          subscriberId: 'sub-1',
+          integrationId: 'int1',
+          platformThreadId: 'whatsapp:1234:15551234567',
+          buttons: 2,
+        });
+        expect(body).to.include({ code: 'whatsapp_window_closed', subscriberId: 'sub-1' });
+        expect(body.availableChannels).to.deep.equal(['telegram']);
+        expect(deliveryService.otherReachableVias.firstCall.args[0]).to.include({ subscriberId: 'sub-1' });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('sends the approved first message into the thread instead, and waits for the person to reply', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+        });
+        inbox.firstContactId.returns('sub-1');
+        (deliveryService as unknown as { approvedFirstMessageOn: sinon.SinonStub }).approvedFirstMessageOn.resolves({
+          templateName: 'agentinbox_first_message',
+          body: 'Hi from {{agent_name}}',
+        });
+
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+        const sendInstead = createConversationInteraction.execute.firstCall.args[1].sendInstead;
+        expect(sendInstead).to.be.a('function');
+        await sendInstead({ _id: 'hi-row', identifier: 'hi_1' });
+        expect(deliveryService.deliver.firstCall.args[1]).to.deep.include({
+          platform: 'whatsapp',
+          platformUserId: '15551234567',
+          integrationIdentifier: 'whatsapp-main',
+          firstMessage: { templateName: 'agentinbox_first_message', body: 'Hi from {{agent_name}}' },
+        });
+        expect(deliveryService.deliver.firstCall.args[2]).to.equal('sub-1');
+      });
+
+      it('refuses when the conversation’s number has moved to someone else, instead of holding it for the old contact', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService, inbox } = inWhatsAppThread({
+          reason: 'whatsapp_window_closed',
+        });
+        inbox.firstContactId.returns('sub-1');
+        const service = deliveryService as unknown as {
+          approvedFirstMessageOn: sinon.SinonStub;
+          isWhatsAppNumberOf: sinon.SinonStub;
+        };
+        service.approvedFirstMessageOn.resolves({ templateName: 'agentinbox_first_message', body: 'Hi' });
+        service.isWhatsAppNumberOf.resolves(false);
+
+        const body = await refused(usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any));
+
+        expect(service.isWhatsAppNumberOf.firstCall.args[0]).to.include({
+          subscriberId: 'sub-1',
+          integrationId: 'int1',
+          platformThreadId: 'whatsapp:1234:15551234567',
+        });
+        expect(body).to.include({ code: 'whatsapp_window_closed' });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('still refuses a thread open to anyone, since anyone else in it would get nothing', async () => {
+        const { usecase, command, deliveryService, inbox } = inWhatsAppThread({ reason: 'whatsapp_window_closed' });
+        inbox.firstContactId.returns('sub-1');
+        (deliveryService as unknown as { approvedFirstMessageOn: sinon.SinonStub }).approvedFirstMessageOn.resolves({
+          templateName: 'agentinbox_first_message',
+          body: 'Hi',
+        });
+
+        const body = await refused(
+          usecase.execute({ ...command, to: undefined, thread: 'conv_abc', anyoneMayAnswer: true } as any)
+        );
+
+        expect(body).to.include({ code: 'whatsapp_window_closed' });
+      });
+
+      it('refuses a choice with more options than WhatsApp has buttons', async () => {
+        const { usecase, command, createConversationInteraction, deliveryService } = inWhatsAppThread({
+          reason: 'whatsapp_too_many_buttons',
+          buttons: 4,
+        });
+
+        const body = await refused(
+          usecase.execute({
+            ...command,
+            kind: HumanInteractionKindEnum.CHOOSE,
+            card: { title: 'Which?', options: ['a', 'b', 'c', 'd'] },
+            to: undefined,
+            thread: 'conv_abc',
+          } as any)
+        );
+
+        expect(deliveryService.whatsAppThreadUnfit.firstCall.args[0]).to.include({ buttons: 4 });
+        expect(body).to.include({ code: 'whatsapp_too_many_buttons', buttons: 4 });
+        expect(createConversationInteraction.execute.called).to.equal(false);
+      });
+
+      it('sends while WhatsApp can carry it', async () => {
+        const { usecase, command, createConversationInteraction } = inWhatsAppThread(null);
+
+        await usecase.execute({ ...command, to: undefined, thread: 'conv_abc' } as any);
+
+        expect(createConversationInteraction.execute.calledOnce).to.equal(true);
+      });
+    });
+
+    it('passes the card’s button count to resolveChannel, so WhatsApp can refuse what it can’t show', async () => {
+      const { usecase, command, agentRepository, deliveryService } = setup();
+      agentRepository.findOne.resolves({ _id: 'agent-relay', identifier: 'human-relay' });
+
+      await usecase.execute({
+        ...command,
+        kind: HumanInteractionKindEnum.CHOOSE,
+        card: { title: 'Which?', options: ['a', 'b', 'c', 'd'] },
+      } as any);
+
+      expect(deliveryService.resolveChannel.firstCall.args[0]).to.include({ buttons: 4 });
     });
 
     it('refuses a keyless reply into an email thread before it is sent', async () => {

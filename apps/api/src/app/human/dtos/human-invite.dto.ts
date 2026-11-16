@@ -4,15 +4,18 @@ import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, Va
 import type { HumanInviteVia } from '../services/human-delivery.service';
 import type { AgentLookDto } from './human-agent-look.dto';
 
-const INVITE_VIAS: HumanInviteVia[] = [
+/** Apps a human can connect themselves from the invite page. */
+export const HUMAN_INVITE_VIAS: HumanInviteVia[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
+  HumanChannelViaEnum.WHATSAPP,
   HumanChannelViaEnum.EMAIL,
 ];
 
 export const HUMAN_INVITE_APP_NAMES: Record<HumanInviteVia, string> = {
   [HumanChannelViaEnum.TELEGRAM]: 'Telegram',
   [HumanChannelViaEnum.SLACK]: 'Slack',
+  [HumanChannelViaEnum.WHATSAPP]: 'WhatsApp',
   [HumanChannelViaEnum.EMAIL]: 'Email',
 };
 
@@ -44,7 +47,7 @@ export class CreateHumanInviteRequestDto {
 }
 
 export class HumanInviteChannelDto {
-  @ApiProperty({ enum: INVITE_VIAS })
+  @ApiProperty({ enum: HUMAN_INVITE_VIAS })
   via: HumanInviteVia;
 
   @ApiProperty()
@@ -73,15 +76,15 @@ export class HumanInviteTokenRequestDto {
 }
 
 export class HumanInviteChannelRequestDto extends HumanInviteTokenRequestDto {
-  @ApiProperty({ enum: INVITE_VIAS })
-  @IsIn(INVITE_VIAS)
+  @ApiProperty({ enum: HUMAN_INVITE_VIAS })
+  @IsIn(HUMAN_INVITE_VIAS)
   via: HumanInviteVia;
 }
 
 /** Connect action — email requires an address for double opt-in. */
 export class HumanInviteConnectRequestDto extends HumanInviteTokenRequestDto {
-  @ApiProperty({ enum: INVITE_VIAS })
-  @IsIn(INVITE_VIAS)
+  @ApiProperty({ enum: HUMAN_INVITE_VIAS })
+  @IsIn(HUMAN_INVITE_VIAS)
   via: HumanInviteVia;
 
   @ApiPropertyOptional({ description: 'Required when `via` is `email`.' })

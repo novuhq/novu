@@ -4,6 +4,7 @@ import type { Chat } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { AgentConfigResolver, AgentConfigResolveSource } from '../../channels/agent-config-resolver.service';
 import type { AgentEmailActionClaims } from '../../email/agent-email-action-token.service';
+import { WhatsAppFirstMessageStatus } from '../../human-relay/whatsapp-first-message-status.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../../shared/util/express-to-web-request';
 import { ChatInstanceRegistry, InboundCallbacks, platformAdapterKey } from './chat-instance.registry';
@@ -34,6 +35,7 @@ export class InboundDispatcher {
     private readonly logger: PinoLogger,
     private readonly registry: ChatInstanceRegistry,
     private readonly agentConfigResolver: AgentConfigResolver,
+    private readonly whatsAppFirstMessageStatus: WhatsAppFirstMessageStatus,
     private readonly slackAppUninstall: SlackAppUninstallIngress
   ) {
     this.logger.setContext(this.constructor.name);
@@ -74,6 +76,14 @@ export class InboundDispatcher {
 
     const webRequest = toWebRequest(req);
     const webResponse = await handler(webRequest);
+
+    // Only after the adapter verified Meta's signature: the delivery statuses it drops can say a first message failed.
+    // Not awaited, so Meta's webhook is answered at once.
+    if (webResponse.ok && req.method === 'POST' && platform === AgentPlatformEnum.WHATSAPP) {
+      void this.whatsAppFirstMessageStatus
+        .record(config, req.body ?? (req as ExpressRequest & { rawBody?: Buffer }).rawBody?.toString('utf8'))
+        .catch((err) => this.logger.warn({ err, agentId }, 'Could not read WhatsApp delivery statuses'));
+    }
 
     await sendWebResponse(webResponse, res);
   }

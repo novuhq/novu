@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name(CLI_COMMAND)
   .description(
-    'An inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers.\n\n' +
+    'An inbox for your agent. People write to it on Telegram, Slack, WhatsApp or email; it reads, asks and answers.\n\n' +
       'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. Your agent: card. This computer: setup, login, connect, listen.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
@@ -29,7 +29,7 @@ program.addHelpText(
   '\nEnvironment variables (headless/containerized use, no config file needed):\n' +
     '  INBOX_SECRET_KEY  API secret key (takes priority over `login` and `setup`)\n' +
     '  INBOX_TO          default recipient: contact id(s), comma-separated (as --to)\n' +
-    '  INBOX_VIA         default channel for INBOX_TO: telegram, slack, or email (as --via; ignored when --to names someone else)\n' +
+    '  INBOX_VIA         default channel for INBOX_TO: telegram, slack, whatsapp, or email (as --via; ignored when --to names someone else)\n' +
     '  INBOX_API_URL     API URL override\n' +
     '  INBOX_CONFIG      config file path override\n' +
     'Precedence: CLI flags > environment variables > ~/.agentinbox/config.json\n'
@@ -115,7 +115,7 @@ withSendOptions(
     )
     .option(
       '--via <channel>',
-      "deliver on a specific channel (telegram, slack, email) instead of each contact's default (env: INBOX_VIA, ignored when --to names someone else)"
+      "deliver on a specific channel (telegram, slack, whatsapp, email) instead of each contact's default (env: INBOX_VIA, ignored when --to names someone else)"
     )
     .description(`Start a conversation. ${SEND_USAGE}`)
 ).action((words: string[], options) => runSend(words, options));
@@ -157,20 +157,22 @@ contact
   )
   .option(
     '--via <channel>',
-    'skip the invite page and link them on one channel (telegram, slack, email); it becomes their default'
+    'skip the invite page and link them on one channel (telegram, slack, whatsapp, email); it becomes their default'
   )
   .option('--email <address>', 'their email address (required for --via email when not a TTY)')
   .option('--name <name>', 'their display name, e.g. "Alice Chen" (shown in `contact list`)')
   .option('--async', 'print the link and exit instead of waiting for them to connect')
   .option('--api-url <url>', 'API URL override')
   .description(
-    'Get a link to share with a new contact: they connect Telegram, Slack or email on a page and pick their default'
+    'Get a link to share with a new contact: they connect Telegram, Slack, WhatsApp or email on a page and pick their default'
   )
   .action(inviteCommand);
 
 // --- channel ---
 
-const channel = program.command('channel').description('Where your agent reaches you: Telegram, Slack or email');
+const channel = program
+  .command('channel')
+  .description('Where your agent reaches you: Telegram, Slack, WhatsApp or email');
 
 channel
   .command('list')
@@ -181,7 +183,7 @@ channel
 
 channel
   .command('add')
-  .argument('<channel>', 'channel to connect: telegram, slack, or email')
+  .argument('<channel>', 'channel to connect: telegram, slack, whatsapp, or email')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
@@ -191,7 +193,7 @@ channel
 
 channel
   .command('default')
-  .argument('<channel>', 'telegram, slack, or email')
+  .argument('<channel>', 'telegram, slack, whatsapp, or email')
   .option('--json', 'print JSON')
   .description('Set the channel used when a message goes to you')
   .action(channelDefaultCommand);
@@ -209,7 +211,7 @@ program
 
 program
   .command('setup')
-  .argument('[channel]', 'also link telegram or slack, or confirm email on an account')
+  .argument('[channel]', 'also link telegram, slack or whatsapp, or confirm email on an account')
   .option('--api-url <url>', 'API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless (self-hosted)')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the paste-or-page prompt)')
@@ -235,7 +237,7 @@ program
     "its colour: ember, marigold, coral, paprika, peach or bone (default: ember). It can't be changed later"
   )
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
-  .description('Create your agent inbox, then optionally connect Telegram or Slack')
+  .description('Create your agent inbox, then optionally connect Telegram, Slack or WhatsApp')
   // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.
   .action((channelArg: string | undefined, options) => setupCommand(channelArg, options));
 

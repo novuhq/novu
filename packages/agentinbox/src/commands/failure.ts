@@ -2,6 +2,7 @@ import { ApiError } from '../api/client';
 import { EXIT_ERROR, EXIT_TIMEOUT, SetupStillPendingError } from '../output';
 import type { Screen } from '../screen/screen';
 import { formatKeylessCapMessage, getKeylessCapDetails } from './interact';
+import { describeWhatsAppRefusal } from './whatsapp-refusal';
 
 /** How a command ends on an error: the words, whether it is only still pending, and the exit code. */
 export interface Failure {
@@ -18,6 +19,11 @@ export function describeFailure(err: unknown): Failure {
   const keylessCap = getKeylessCapDetails(err);
   if (keylessCap) {
     return { message: formatKeylessCapMessage(keylessCap), pending: false, exitCode: EXIT_ERROR };
+  }
+
+  const whatsAppRefusal = describeWhatsAppRefusal(err);
+  if (whatsAppRefusal) {
+    return { message: whatsAppRefusal, pending: false, exitCode: EXIT_ERROR };
   }
 
   if (err instanceof ApiError) {

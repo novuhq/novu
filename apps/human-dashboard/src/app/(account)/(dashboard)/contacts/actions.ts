@@ -24,7 +24,7 @@ const SESSION_ENDED = 'Your session has ended. Sign in again to continue.';
 /** What `<input type="email">` takes, near enough; the API checks the address again. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const CHANNEL_VIAS: readonly ContactChannelVia[] = ['telegram', 'slack', 'email'];
+const CHANNEL_VIAS: readonly ContactChannelVia[] = ['telegram', 'slack', 'whatsapp', 'email'];
 
 export type CreateInviteResult =
   | { ok: true; url: string; expiresAt: string }
@@ -136,7 +136,7 @@ export async function setDefaultChannelAction(via: ContactChannelVia): Promise<C
   }
 
   if (!CHANNEL_VIAS.includes(via)) {
-    return { ok: false, error: 'Pick Telegram, Slack or email.' };
+    return { ok: false, error: 'Pick Telegram, Slack, WhatsApp or email.' };
   }
 
   try {
