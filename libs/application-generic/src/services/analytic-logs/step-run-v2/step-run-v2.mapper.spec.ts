@@ -51,6 +51,7 @@ describe('mapJobToStepRunV2', () => {
       wait_unit: '',
       wait_type: '',
       wait_until: '1970-01-01T00:00:00.000',
+      digest_metadata: '',
       digest_events_count: 0,
       schedule_extensions_count: 0,
       created_at: '2026-11-03T09:59:00.000',
@@ -289,6 +290,23 @@ describe('mapJobToStepRunV2', () => {
       mapJobToStepRunV2(buildJob({ type: StepTypeEnum.DELAY, status: JobStatusEnum.COMPLETED, digest }))
         .digest_events_count
     ).toBe(0);
+  });
+
+  it('stores job.digest without its events as digest_metadata', () => {
+    const digest = {
+      type: DigestTypeEnum.TIMED,
+      digestKey: 'postId',
+      timed: { atTime: '08:00', untilDate: '2026-11-04T08:00:00.000Z' },
+      events: [{ _id: 'event-1' }],
+    } as JobEntity['digest'];
+
+    const row = mapJobToStepRunV2(buildJob({ type: StepTypeEnum.DIGEST, digest }));
+
+    expect(JSON.parse(row.digest_metadata)).toEqual({
+      type: DigestTypeEnum.TIMED,
+      digestKey: 'postId',
+      timed: { atTime: '08:00', untilDate: '2026-11-04T08:00:00.000Z' },
+    });
   });
 
   it('accepts an epoch-milliseconds string createdAt, as written by the snooze job', () => {

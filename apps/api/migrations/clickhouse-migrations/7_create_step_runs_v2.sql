@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS step_runs_v2
   wait_unit                 LowCardinality(String) DEFAULT '',
   wait_type                 LowCardinality(String) DEFAULT '',
   wait_until                DateTime64(3, 'UTC') DEFAULT 0,
+  digest_metadata           String DEFAULT '' CODEC(ZSTD(1)),
   digest_events_count       UInt32 DEFAULT 0,
   schedule_extensions_count UInt16 DEFAULT 0,
   created_at                DateTime64(3, 'UTC') CODEC(Delta, ZSTD(1)),

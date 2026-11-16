@@ -79,11 +79,33 @@ describe('StepRunV2Repository', () => {
 
       expect(clickhouseService.query).toHaveBeenCalledWith({
         query: FIND_BY_WORKFLOW_RUN_IDS_QUERY,
-        params: { environmentId: 'env-1', workflowRunIds: ['run-1', 'run-2'], oldestRunCreatedAt, limit: 500 },
+        params: {
+          environmentId: 'env-1',
+          workflowRunIds: ['run-1', 'run-2'],
+          oldestRunCreatedAt,
+          limit: 500,
+          offset: 0,
+        },
       });
       expect(FIND_BY_WORKFLOW_RUN_IDS_QUERY).toContain('environment_id = {environmentId:String}');
       expect(FIND_BY_WORKFLOW_RUN_IDS_QUERY).toContain('ORDER BY step_run_id, version DESC');
       expect(FIND_BY_WORKFLOW_RUN_IDS_QUERY).toContain('LIMIT 1 BY step_run_id');
+      expect(FIND_BY_WORKFLOW_RUN_IDS_QUERY).toContain('OFFSET {offset:UInt32}');
+    });
+
+    it.each([-1, 1.5])('rejects offset %s', async (offset) => {
+      const { repository, clickhouseService } = buildRepository();
+
+      await expect(
+        repository.findByWorkflowRunIds({
+          environmentId: 'env-1',
+          workflowRunIds: ['run-1'],
+          oldestRunCreatedAt,
+          limit: 10,
+          offset,
+        })
+      ).rejects.toThrow('Offset must be a non-negative integer');
+      expect(clickhouseService.query).not.toHaveBeenCalled();
     });
 
     it.each([0, 1001, 1.5])('rejects limit %s', async (limit) => {
