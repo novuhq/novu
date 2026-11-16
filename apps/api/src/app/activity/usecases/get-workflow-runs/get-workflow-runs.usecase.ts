@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ClickhouseOperator,
-  FeatureFlagsService,
   FieldCondition,
   PinoLogger,
   QueryBuilder,
@@ -13,11 +12,10 @@ import {
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { TopicSubscribersRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum, SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum } from '@novu/shared';
 import { ActivityRetentionRange, ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
-import { WorkflowRunsV2Reader } from '../../services/workflow-runs-v2-reader.service';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
@@ -71,26 +69,12 @@ export class GetWorkflowRuns {
     private stepRunRepository: StepRunRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private activityRetentionService: ActivityRetentionService,
-    private featureFlagsService: FeatureFlagsService,
-    private workflowRunsV2Reader: WorkflowRunsV2Reader,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
   }
 
   async execute(command: GetWorkflowRunsCommand): Promise<GetWorkflowRunsResponseDto> {
-    const isStepRunsV2ReadEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-    });
-
-    if (isStepRunsV2ReadEnabled) {
-      return this.workflowRunsV2Reader.list(command);
-    }
-
     this.logger.debug(
       {
         organizationId: command.organizationId,

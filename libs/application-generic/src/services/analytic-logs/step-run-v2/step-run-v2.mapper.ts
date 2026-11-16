@@ -77,6 +77,20 @@ function getWaitFields(
   };
 }
 
+/**
+ * The activity feed renders a step's digest settings from `job.digest`. Its events are dropped here: they are
+ * logged once on the `digest_triggered` trace instead of on every status row.
+ */
+function serializeDigestMetadata(digest: JobEntity['digest']): string {
+  if (!digest) {
+    return '';
+  }
+
+  const { events: _events, ...metadata } = digest;
+
+  return JSON.stringify(metadata);
+}
+
 function parseOptionalDate(value: string | Date | undefined): Date | undefined {
   if (!value) {
     return undefined;
@@ -126,6 +140,7 @@ export function mapJobToStepRunV2(job: JobEntity): StepRunV2Row {
     status,
     provider_id: job.providerId || '',
     ...getWaitFields(job, stepTypeEnum),
+    digest_metadata: serializeDigestMetadata(job.digest),
     digest_events_count: isCompletedDigest ? (job.digest?.events?.length ?? 0) : 0,
     schedule_extensions_count: job.scheduleExtensionsCount ?? 0,
     created_at: toClickHouseDateTime64(createdAt),

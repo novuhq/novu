@@ -8,6 +8,7 @@ export * from './request-log';
 export { StepRun, StepRunFinalStatus, StepRunNonFinalStatus, StepRunRepository, StepRunStatus } from './step-run';
 export {
   FindStepRunsV2ByWorkflowRunIdsParams,
+  STEP_RUNS_V2_MAX_READ_LIMIT,
   StepRunV2ReadRow,
   StepRunV2Repository,
   StepRunV2Row,

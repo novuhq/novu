@@ -41,72 +41,6 @@ export interface NotificationFeedFilters {
   contextKeys?: string[];
 }
 
-export type WorkflowRunStatusFilter = 'processing' | 'completed' | 'error';
-
-export interface WorkflowRunsPageFilters extends NotificationFeedFilters {
-  statuses?: WorkflowRunStatusFilter[];
-}
-
-export interface WorkflowRunsPageCursor {
-  createdAt: string;
-  id: string;
-}
-
-export interface FindWorkflowRunsPageParams {
-  environmentId: string;
-  filters: WorkflowRunsPageFilters;
-  cursor?: WorkflowRunsPageCursor;
-  limit: number;
-  direction: 'ASC' | 'DESC';
-}
-
-export type NotificationWorkflowRunItem = Pick<
-  NotificationEntity,
-  | '_id'
-  | '_templateId'
-  | '_environmentId'
-  | '_organizationId'
-  | '_subscriberId'
-  | 'transactionId'
-  | 'to'
-  | 'topics'
-  | 'channels'
-  | 'severity'
-  | 'critical'
-  | 'contextKeys'
-  | 'lastEmittedDeliveryEvent'
-  | 'lastEmittedWorkflowStatusEvent'
-  | '_digestedNotificationId'
-  | 'createdAt'
-  | 'updatedAt'
->;
-
-const WORKFLOW_RUNS_PAGE_PROJECTION: Record<keyof NotificationWorkflowRunItem, 1> = {
-  _id: 1,
-  _templateId: 1,
-  _environmentId: 1,
-  _organizationId: 1,
-  _subscriberId: 1,
-  transactionId: 1,
-  to: 1,
-  topics: 1,
-  channels: 1,
-  severity: 1,
-  critical: 1,
-  contextKeys: 1,
-  lastEmittedDeliveryEvent: 1,
-  lastEmittedWorkflowStatusEvent: 1,
-  _digestedNotificationId: 1,
-  createdAt: 1,
-  updatedAt: 1,
-};
-
-const WORKFLOW_STATUS_EVENT_BY_FILTER: Record<WorkflowRunStatusFilter, TerminalWorkflowStatusEvent | null> = {
-  processing: null,
-  completed: 'workflow_run_status_completed',
-  error: 'workflow_run_status_error',
-};
-
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
   NotificationEntity,
@@ -141,56 +75,24 @@ export class NotificationRepository extends BaseRepository<
   }
 
   /**
-   * Keyset page of workflow runs ordered by (createdAt, _id), without populating jobs.
-   * DESC returns runs older than the cursor, ASC returns runs newer than it.
+   * The activity feed page without the jobs populate: notification fields plus the subscriber and workflow.
+   * Steps are read from ClickHouse `step_runs_v2` by the caller.
    */
-  async findWorkflowRunsPage(params: FindWorkflowRunsPageParams): Promise<NotificationWorkflowRunItem[]> {
-    const sortOrder = params.direction === 'DESC' ? -1 : 1;
-    const response = await this.MongooseModel.find(
-      this.buildWorkflowRunsPageQuery(params),
-      WORKFLOW_RUNS_PAGE_PROJECTION
-    )
-      .sort({ createdAt: sortOrder, _id: sortOrder })
-      .limit(params.limit)
+  async getFeedWithoutJobs(
+    environmentId: string,
+    query: NotificationFeedFilters = {},
+    skip = 0,
+    limit = 10
+  ): Promise<NotificationFeedItemEntity[]> {
+    const requestQuery = this.buildFeedQuery(environmentId, query);
+
+    const response = await this.populateNotificationMetadataOnly(this.MongooseModel.find(requestQuery))
       .read('secondaryPreferred')
-      .lean();
+      .skip(skip)
+      .limit(limit)
+      .sort('-createdAt');
 
-    return this.mapEntities(response);
-  }
-
-  buildWorkflowRunsPageQuery({
-    environmentId,
-    filters,
-    cursor,
-    direction,
-  }: Omit<FindWorkflowRunsPageParams, 'limit'>): FilterQuery<NotificationDBModel> {
-    const requestQuery = this.buildFeedQuery(environmentId, filters);
-    const andConditions: Array<FilterQuery<NotificationDBModel>> = [];
-
-    if (filters.statuses?.length) {
-      andConditions.push({
-        lastEmittedWorkflowStatusEvent: {
-          $in: filters.statuses.map((status) => WORKFLOW_STATUS_EVENT_BY_FILTER[status]),
-        },
-      });
-    }
-
-    if (cursor) {
-      const operator = direction === 'DESC' ? '$lt' : '$gt';
-      const cursorCreatedAt = new Date(cursor.createdAt);
-      andConditions.push({
-        $or: [
-          { createdAt: { [operator]: cursorCreatedAt } },
-          { createdAt: cursorCreatedAt, _id: { [operator]: cursor.id } },
-        ],
-      });
-    }
-
-    if (andConditions.length > 0) {
-      requestQuery.$and = [...(requestQuery.$and ?? []), ...andConditions];
-    }
-
-    return requestQuery;
+    return this.toFeedItems(response).map((item) => ({ ...item, jobs: [] }));
   }
 
   private buildFeedQuery(environmentId: string, query: NotificationFeedFilters): FilterQuery<NotificationDBModel> {

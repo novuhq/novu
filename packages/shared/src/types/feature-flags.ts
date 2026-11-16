@@ -87,8 +87,9 @@ export enum FeatureFlagsKeysEnum {
   /** Per-environment write of every job status change to ClickHouse `step_runs_v2`. Cloud only, default false. */
   IS_STEP_RUNS_V2_WRITE_ENABLED = 'IS_STEP_RUNS_V2_WRITE_ENABLED',
   /**
-   * Per-environment read of the v2 `/activity/workflow-runs` endpoints from Mongo notifications,
-   * ClickHouse `step_runs_v2` and traces instead of `workflow_runs` / `step_runs`. Default false.
+   * Per-environment read of `GET /v1/notifications` and `GET /v1/notifications/:id` without the jobs
+   * collection: notifications from Mongo, steps from ClickHouse `step_runs_v2`, execution details and digest
+   * events from traces. Needs IS_STEP_RUNS_V2_WRITE_ENABLED on for the runs it reads. Default false.
    */
   IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED = 'IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED',
   IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED',
