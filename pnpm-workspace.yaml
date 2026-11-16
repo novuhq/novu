@@ -448,7 +448,12 @@ overrides:
   svelte: 5.55.7
   # GHSA-29g2-3rmr-qm68: ReDoS (O(n^2)) in @sveltejs/kit content negotiation
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
-  '@sveltejs/kit@<2.70.2': ^2.70.2
+  # GHSA-mw6w-2fmv-pvw3 (moderate): adapter-node crashes with an unhandled
+  # URIError when `reroute` rewrites malformed pathnames (DoS). Patched in
+  # 2.70.4 (patch bump within the 2.70.x line). Widen the previous `<2.70.2`
+  # floor so transitive consumers (packages/framework, enterprise/packages/auth
+  # > better-auth, @better-auth/sso) pick up the fix.
+  '@sveltejs/kit@<2.70.4': ^2.70.4
   langsmith@<0.6.0: ^0.6.3
   devalue@<5.9.3: ^5.9.3
   picomatch@<2.3.2: ^2.3.2
