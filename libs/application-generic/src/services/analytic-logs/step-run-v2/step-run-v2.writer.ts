@@ -6,6 +6,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { MetricsService } from '../../metrics/metrics.service';
 import { mapJobToStepRunV2 } from './step-run-v2.mapper';
 import { StepRunV2Repository } from './step-run-v2.repository';
+import { StepRunV2Row } from './step-run-v2.schema';
 
 export const STEP_RUNS_V2_INSERT_ERROR_METRIC = 'step_runs_v2.insert_error';
 export const STEP_RUNS_V2_DROPPED_METRIC = 'step_runs_v2.dropped';
@@ -26,7 +27,8 @@ export type WriteStepRunsV2ByIdsParams = {
 /**
  * Writes jobs to step_runs_v2 exactly as Mongo holds them after a status change: pass the post-update document,
  * or use writeByIds after bulk updates that return none. Callers never wait: every method returns immediately
- * and never throws, so ClickHouse latency or failures cannot delay job processing.
+ * and never throws, so ClickHouse latency or failures cannot delay job processing. Rows are built when a method
+ * is called, so later in-memory changes to the job (e.g. step template hydration) never reach them.
  */
 @Injectable()
 export class StepRunV2Writer {
@@ -55,28 +57,31 @@ export class StepRunV2Writer {
       return;
     }
 
-    const jobsByEnvironment = new Map<string, JobEntity[]>();
+    const jobsByEnvironment = new Map<string, { organizationId: string; jobIds: string[]; rows: StepRunV2Row[] }>();
 
     for (const job of jobs) {
       if (!job) {
         continue;
       }
 
+      const row = this.mapJob(job);
+      if (!row) {
+        continue;
+      }
+
       const environmentId = String(job._environmentId);
-      const environmentJobs = jobsByEnvironment.get(environmentId) ?? [];
-      environmentJobs.push(job);
+      const environmentJobs = jobsByEnvironment.get(environmentId) ?? {
+        organizationId: String(job._organizationId),
+        jobIds: [],
+        rows: [],
+      };
+      environmentJobs.jobIds.push(String(job._id));
+      environmentJobs.rows.push(row);
       jobsByEnvironment.set(environmentId, environmentJobs);
     }
 
-    for (const environmentJobs of jobsByEnvironment.values()) {
-      const firstJob = environmentJobs[0];
-
-      this.runInBackground(
-        environmentJobs.map((job) => String(job._id)),
-        String(firstJob._environmentId),
-        String(firstJob._organizationId),
-        async () => environmentJobs
-      );
+    for (const [environmentId, { organizationId, jobIds, rows }] of jobsByEnvironment) {
+      this.runInBackground(jobIds, environmentId, organizationId, async () => rows);
     }
   }
 
@@ -88,16 +93,33 @@ export class StepRunV2Writer {
       return;
     }
 
-    this.runInBackground(jobIds.map(String), String(environmentId), String(organizationId), () =>
-      this.jobRepository.find({ _environmentId: environmentId, _id: { $in: jobIds } }, REREAD_JOB_PROJECTION)
-    );
+    this.runInBackground(jobIds.map(String), String(environmentId), String(organizationId), async () => {
+      const reread = await this.jobRepository.find(
+        { _environmentId: environmentId, _id: { $in: jobIds } },
+        REREAD_JOB_PROJECTION
+      );
+
+      return reread.map((job) => mapJobToStepRunV2(job));
+    });
+  }
+
+  /** Never throws: a job that cannot be mapped is logged and skipped. */
+  private mapJob(job: JobEntity): StepRunV2Row | undefined {
+    try {
+      return mapJobToStepRunV2(job);
+    } catch (error) {
+      this.metricsService?.recordMetric(STEP_RUNS_V2_INSERT_ERROR_METRIC, 1);
+      this.logger.error({ err: error, stepRunId: String(job._id) }, 'Failed to map job to a step_runs_v2 row');
+
+      return undefined;
+    }
   }
 
   private runInBackground(
     stepRunIds: string[],
     environmentId: string,
     organizationId: string,
-    loadJobs: () => Promise<JobEntity[]>
+    loadRows: () => Promise<StepRunV2Row[]>
   ): void {
     if (this.pendingRows + stepRunIds.length > STEP_RUNS_V2_MAX_PENDING_ROWS) {
       this.metricsService?.recordMetric(STEP_RUNS_V2_DROPPED_METRIC, stepRunIds.length);
@@ -111,16 +133,16 @@ export class StepRunV2Writer {
 
     this.pendingRows += stepRunIds.length;
 
-    void this.writeEnvironmentJobs(stepRunIds, environmentId, organizationId, loadJobs).finally(() => {
+    void this.writeEnvironmentRows(stepRunIds, environmentId, organizationId, loadRows).finally(() => {
       this.pendingRows -= stepRunIds.length;
     });
   }
 
-  private async writeEnvironmentJobs(
+  private async writeEnvironmentRows(
     stepRunIds: string[],
     environmentId: string,
     organizationId: string,
-    loadJobs: () => Promise<JobEntity[]>
+    loadRows: () => Promise<StepRunV2Row[]>
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
@@ -134,9 +156,7 @@ export class StepRunV2Writer {
         return;
       }
 
-      const jobs = await loadJobs();
-
-      await this.stepRunV2Repository.insertMany(jobs.map((job) => mapJobToStepRunV2(job)));
+      await this.stepRunV2Repository.insertMany(await loadRows());
     } catch (error) {
       this.metricsService?.recordMetric(STEP_RUNS_V2_INSERT_ERROR_METRIC, 1);
       this.logger.error({ err: error, stepRunIds }, 'Failed to write step_runs_v2 rows');

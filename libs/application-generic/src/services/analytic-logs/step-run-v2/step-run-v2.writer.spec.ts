@@ -144,6 +144,32 @@ describe('StepRunV2Writer', () => {
     expect(rows[0]).toMatchObject({ step_run_id: 'job-1', status: 'canceled' });
   });
 
+  it('writes the job as it was when write was called, not later in-memory changes', async () => {
+    const { writer, repository } = buildWriter();
+    const job = buildJob({ digest: { type: 'regular', amount: 1, unit: 'seconds' } as JobEntity['digest'] });
+
+    writer.write(job);
+    job.status = JobStatusEnum.COMPLETED;
+    job.digest = { type: 'regular', amount: 9, unit: 'hours' } as JobEntity['digest'];
+
+    await vi.waitFor(() => expect(repository.insertMany).toHaveBeenCalled());
+    const [rows] = repository.insertMany.mock.calls[0];
+    expect(rows[0].status).toBe('queued');
+    expect(JSON.parse(rows[0].digest_metadata)).toEqual({ type: 'regular', amount: 1, unit: 'seconds' });
+  });
+
+  it('skips a job it cannot map without throwing and still writes the others', async () => {
+    const { writer, repository } = buildWriter();
+
+    expect(() =>
+      writer.writeMany([buildJob({ _id: 'job-bad', createdAt: 'not-a-date' }), buildJob({ _id: 'job-good' })])
+    ).not.toThrow();
+
+    await vi.waitFor(() => expect(repository.insertMany).toHaveBeenCalled());
+    const [rows] = repository.insertMany.mock.calls[0];
+    expect(rows.map((row: { step_run_id: string }) => row.step_run_id)).toEqual(['job-good']);
+  });
+
   it('versions a late cancel below a completion Mongo applied after it', async () => {
     const { writer, repository, jobRepository } = buildWriter();
     const completed = buildJob({ status: JobStatusEnum.COMPLETED, updatedAt: '2026-11-03T10:00:03.000Z' });
