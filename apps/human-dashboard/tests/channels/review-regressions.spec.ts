@@ -97,3 +97,45 @@ for (const channel of CHANNEL_IDS) {
     await expect(page).toHaveURL(new RegExp(`/${channel}#message-types$`));
   });
 }
+
+for (const unavailable of [false, true]) {
+  test(`long command stays readable when clipboard is ${unavailable ? 'unavailable' : 'denied'}`, async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.addInitScript((absent) => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: absent
+          ? undefined
+          : {
+              writeText: async () => {
+                throw new Error('denied');
+              },
+            },
+      });
+    }, unavailable);
+    await page.goto('/slack');
+    const field = page.locator('#who-can-reach [role="group"]').nth(1);
+    const code = field.locator('code');
+    const command = await code.textContent();
+    await field.getByRole('button', { name: 'Copy command', exact: true }).click();
+    await expect(field.getByRole('status')).toContainText("Couldn't copy");
+    const reading = await code.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const bounds = node.getBoundingClientRect();
+      const selection = window.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return {
+        selected: selection.toString(),
+        visible: [...range.getClientRects()].every((r) => r.left >= bounds.left - 1 && r.right <= bounds.right + 1),
+        height: bounds.height,
+        lineHeight: Number.parseFloat(getComputedStyle(node).lineHeight),
+      };
+    });
+    expect(reading.selected).toBe(command);
+    expect(reading.visible).toBe(true);
+    expect(reading.height).toBeGreaterThan(reading.lineHeight);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  });
+}

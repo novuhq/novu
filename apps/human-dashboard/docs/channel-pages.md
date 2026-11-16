@@ -234,8 +234,20 @@ paragraph above the same command field. `CopyCommand` opts into this treatment
 with `appearance="surface"`; existing hero and Sapien callers keep their default
 appearance. Long commands are visually ellipsized but copied in full. Regression
 coverage exercises every new command field on all three channel pages.
+If clipboard access is denied or unavailable, the field expands to reveal the
+complete, selectable command alongside the manual-copy notice.
 
 Agent capability links now sit in a rounded bordered group, with stacked labels
 and descriptions and a full-width closing button. The five destination anchors
 remain unchanged. The earlier exact Figma audit describes its recorded baseline;
 these intentionally revised sections follow Ivan's later concept review.
+
+Production build, typecheck, scoped Biome, 176 unit tests and 192 Chromium browser
+cases pass. The November 16 deployed smoke run covers pricing, Slack and
+Slack/OpenClaw in Windows Chrome/Edge/Firefox, macOS Safari, iPhone 17/iOS 26
+Safari and OnePlus 13R/Android 15 Chrome (Galaxy A16 unavailable): 114 assertions
+pass. All 18 normal-state full-page baselines and their 52 readable composites
+were reviewed, including media, rails and corner marks. Safari/mobile baselines
+pause the setup walkthrough through its own controls to keep stitched tiles in
+one state. The final clipboard-failure reveal is additionally covered by the
+denied/unavailable regression tests. No artwork re-export was required.

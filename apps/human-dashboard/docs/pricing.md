@@ -32,6 +32,16 @@ Ivan's November 11–12 review supplies the [pricing draft](https://www.figma.co
 
 The November 16 changes use the same cached Prime reference pack: adapt the card typography and border hierarchy locally; use native table scrolling instead of importing the reference carousel or its dependencies. The hero, comparison, conversation cards and shared command-field consumers are covered by app regressions. Earlier verification results below describe their recorded commits, not later changes.
 
+The November 16 production build, typecheck, scoped Biome, 176 unit tests and
+192 Chromium cases pass. Post-change BrowserStack smoke QA covers pricing and
+both template types in six desktop/mobile environments: 114 assertions pass,
+with all 18 normal-state full-page baselines reviewed. Pricing's updated
+desktop overview is retained in `docs/screenshots/pricing.png`. This is a
+concept/reference review; the existing pixel typography and spacing remain
+intentional. The shared clipboard fallback is separately covered by denied and
+unavailable API tests. The PR's affected-packages CI job currently cannot find
+the merge base within its 50-commit shallow fetch; the Vercel app build succeeds.
+
 The final production build, typecheck, 176 unit tests and all 187 Chromium browser tests pass, including 12 pricing cases. Five complete pricing captures at 320, 375, 768, 1024 and 1440px include decoded fonts/images. Readable slices were reviewed from header to footer. The tablet view reserves equal capacity/feature slots so plan rows align; the narrowest conversation heading avoids an orphan word. Explicit accessible names identify each plan action.
 
 Manual browser checks follow Hobby and Pro into the existing sign-in flow, open the Enterprise meeting page, exercise the comparison link and FAQ, and open/close the mobile menu. No account or booking was created. The production preview must use `localhost` to match the configured development auth origin.

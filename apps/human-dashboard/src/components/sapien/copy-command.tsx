@@ -52,7 +52,7 @@ export function CopyCommand({
           title={appearance === 'surface' ? command : undefined}
           className={cn(
             'min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-pre-line select-text max-[359px]:text-sm',
-            appearance === 'surface' && 'truncate whitespace-nowrap'
+            appearance === 'surface' && state !== 'error' && 'truncate whitespace-nowrap'
           )}
         >
           {command}
