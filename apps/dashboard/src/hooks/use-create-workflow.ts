@@ -1,7 +1,9 @@
 import { type CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { NovuApiError } from '@/api/api.client';
 import { getLayouts } from '@/api/layouts';
 import { createWorkflow } from '@/api/workflows';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -14,18 +16,51 @@ interface UseCreateWorkflowOptions {
   onSuccess?: () => void;
 }
 
+export type WorkflowLimitError = {
+  limit: number;
+};
+
+/**
+ * Maps a create-workflow API rejection to the limit dialog: a 402 or 409 that carries
+ * a numeric `limit`. Other errors, including other 409 conflicts, fall through to the caller.
+ */
+export function parseWorkflowLimitError(error: unknown): WorkflowLimitError | null {
+  if (!(error instanceof NovuApiError)) {
+    return null;
+  }
+
+  const rawLimit = (error.rawError as { limit?: unknown } | undefined)?.limit;
+
+  if (typeof rawLimit !== 'number') {
+    return null;
+  }
+
+  if (error.status === 402 || error.status === 409) {
+    return { limit: rawLimit };
+  }
+
+  return null;
+}
+
+type SubmitOptions = {
+  source?: WorkflowCreationSourceEnum;
+  /** Navigation state for the editor the new workflow opens in. */
+  navigationState?: unknown;
+};
+
 export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const [workflowLimitError, setWorkflowLimitError] = useState<WorkflowLimitError | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (workflow: CreateWorkflowDto) => {
+    mutationFn: async ({ workflow }: { workflow: CreateWorkflowDto; navigationState?: unknown }) => {
       const environment = requireEnvironment(currentEnvironment, 'No current environment selected');
 
       return createWorkflow({ environment, workflow });
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, { navigationState }) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
@@ -40,17 +75,30 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
         buildRoute(ROUTES.EDIT_WORKFLOW, {
           environmentSlug: currentEnvironment?.slug ?? '',
           workflowSlug: result.data.slug ?? '',
-        })
+        }),
+        { state: navigationState }
       );
 
       onSuccess?.();
     },
     onError: (error) => {
+      const limitError = parseWorkflowLimitError(error);
+
+      if (limitError) {
+        setWorkflowLimitError(limitError);
+
+        return;
+      }
+
       showErrorToast(undefined, error);
     },
   });
 
-  const submit = async (values: z.infer<typeof workflowSchema>, template?: CreateWorkflowDto) => {
+  const submit = async (
+    values: z.infer<typeof workflowSchema>,
+    template?: CreateWorkflowDto,
+    { source, navigationState }: SubmitOptions = {}
+  ) => {
     let steps = template?.steps ?? [];
 
     const isFromTemplateStore = template?.__source === WorkflowCreationSourceEnum.TEMPLATE_STORE;
@@ -83,19 +131,25 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
     }
 
     return mutation.mutateAsync({
-      name: values.name,
-      steps,
-      __source: template?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
-      workflowId: values.workflowId,
-      description: values.description || undefined,
-      tags: values.tags || [],
-      isTranslationEnabled: values.isTranslationEnabled || false,
-      payloadSchema: template?.payloadSchema,
+      workflow: {
+        name: values.name,
+        steps,
+        __source: source ?? template?.__source ?? WorkflowCreationSourceEnum.DASHBOARD,
+        workflowId: values.workflowId,
+        description: values.description || undefined,
+        tags: values.tags || [],
+        isTranslationEnabled: values.isTranslationEnabled || false,
+        payloadSchema: template?.payloadSchema,
+      },
+      navigationState,
     });
   };
 
   return {
     submit,
     isLoading: mutation.isPending,
+    /** Set when creation was blocked by a workflow limit; render `WorkflowLimitUpgradeDialog` with it. */
+    workflowLimitError,
+    clearWorkflowLimitError: () => setWorkflowLimitError(null),
   };
 }

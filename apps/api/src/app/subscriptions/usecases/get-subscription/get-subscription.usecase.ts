@@ -53,9 +53,10 @@ export class GetSubscription {
       organization: { _id: command.organizationId },
     });
 
-    // Admin API (topics-v2): contextKeys undefined → no context filtering (identifier is sufficient)
+    // Admin API (topics-v2): contextKeys undefined → no context filtering (identifier is sufficient).
+    // Subscriber-scoped (inbox) lookups always filter: undefined means the no-context scope there.
     const contextQuery =
-      command.contextKeys === undefined
+      command.contextKeys === undefined && !command._subscriberId
         ? {}
         : this.topicSubscribersRepository.buildContextExactMatchQuery(command.contextKeys, {
             enabled: useContextFiltering,

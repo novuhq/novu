@@ -32,3 +32,9 @@ describe('api proxy routes for listen', () => {
     expect(isProxiedRoute('DELETE', '/v1/listen/lease')).toBe(false);
   });
 });
+
+describe('api proxy routes for the agent card', () => {
+  it('lets the CLI and the MCP server show the agent’s card', () => {
+    expect(isProxiedRoute('POST', '/v1/agent/card')).toBe(true);
+  });
+});

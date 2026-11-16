@@ -31,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { HumanOperatorService } from '../human/services/human-operator.service';
 import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
@@ -61,9 +62,11 @@ import { InboundConnectionContextResolver } from './conversation-runtime/ingress
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { SlackAppUninstallIngress } from './conversation-runtime/ingress/slack-app-uninstall.ingress';
 import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { AgentTurnAbortStore } from './conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
@@ -182,6 +185,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
+    AgentTurnAbortStore,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     BridgeLiveReplies,
@@ -189,6 +193,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanRelayRuntime,
     HumanRelayEmailService,
     HumanOperatorService,
+    AgentInboxFeaturesService,
     ContactHandleService,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
@@ -227,6 +232,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,
+    SlackAppUninstallIngress,
     InboundConnectionContextResolver,
     FileMaterializer,
     AgentEmailSender,

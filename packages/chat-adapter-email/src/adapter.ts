@@ -12,6 +12,7 @@ import type {
 } from 'chat';
 import type { CardNode } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
+import { createInboundMarkdownParser } from './inbound-markdown.js';
 import { MessageParser } from './message-parser.js';
 import { renderMessage, renderWithLayout } from './message-renderer.js';
 import { ThreadResolver } from './thread-resolver.js';
@@ -50,7 +51,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   private readonly messageParser = new MessageParser();
   private readonly formatConverter = new EmailFormatConverter();
   private readonly webhookHandler: WebhookHandler;
-  private parseMarkdownFn!: (md: string) => Root;
+  private outboundParseMarkdown!: (md: string) => Root;
 
   constructor(config: NovuEmailAdapterConfig) {
     this.config = config;
@@ -63,8 +64,8 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     this.threadResolver.setStateAdapter(chat.getState());
 
     const chatModule = await import('chat');
-    this.parseMarkdownFn = chatModule.parseMarkdown;
-    this.messageParser.setChatModule(chatModule.Message, chatModule.parseMarkdown);
+    this.outboundParseMarkdown = chatModule.parseMarkdown;
+    this.messageParser.setChatModule(chatModule.Message, createInboundMarkdownParser(chatModule));
   }
 
   // -- Thread ID methods --
@@ -173,7 +174,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
           ...renderInput,
           threadId,
           layout: this.config.layout,
-          renderMarkdown: (markdown) => this.formatConverter.fromAst(this.parseMarkdownFn(markdown)),
+          renderMarkdown: (markdown) => this.formatConverter.fromAst(this.outboundParseMarkdown(markdown)),
         })
       : await renderMessage(renderInput);
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
@@ -273,7 +274,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     }
     if ('markdown' in message) {
       const md = (message as { markdown: string }).markdown;
-      const formatted = this.parseMarkdownFn(md);
+      const formatted = this.outboundParseMarkdown(md);
 
       return { formatted, text: md };
     }

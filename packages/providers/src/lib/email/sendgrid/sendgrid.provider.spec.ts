@@ -1,3 +1,4 @@
+import { generateKeyPairSync, sign } from 'node:crypto';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
@@ -316,4 +317,69 @@ test('getMessageId returns one id per batched event including duplicates', () =>
   ];
 
   expect(provider.getMessageId(batch)).toEqual([messageId, messageId]);
+});
+
+const signedWebhook = () => {
+  const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'secp256k1' });
+  const rawBody = JSON.stringify([{ id: 'message-a', event: 'delivered' }]);
+  const timestamp = '1513299569';
+  const signature = sign('sha256', Buffer.from(timestamp + rawBody), privateKey).toString('base64');
+
+  return {
+    webhookPublicKey: publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+    rawBody,
+    headers: {
+      'X-Twilio-Email-Event-Webhook-Signature': signature,
+      'X-Twilio-Email-Event-Webhook-Timestamp': timestamp,
+    },
+  };
+};
+
+test('verifySignature skips verification when no public key is configured', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+
+  const result = await provider.verifySignature({ rawBody: '{}', headers: {} });
+
+  expect(result.success).toBe(true);
+});
+
+test('verifySignature accepts a valid signature', async () => {
+  const { webhookPublicKey, rawBody, headers } = signedWebhook();
+  const provider = new SendgridEmailProvider({ ...mockConfig, webhookPublicKey });
+
+  const result = await provider.verifySignature({ rawBody, headers });
+
+  expect(result.success).toBe(true);
+});
+
+test('verifySignature rejects a tampered body', async () => {
+  const { webhookPublicKey, rawBody, headers } = signedWebhook();
+  const provider = new SendgridEmailProvider({ ...mockConfig, webhookPublicKey });
+
+  const result = await provider.verifySignature({ rawBody: rawBody.replace('delivered', 'open'), headers });
+
+  expect(result.success).toBe(false);
+});
+
+test.each([
+  ['both signature headers', {}],
+  ['the signature header', { 'X-Twilio-Email-Event-Webhook-Timestamp': '1513299569' }],
+  ['the timestamp header', { 'X-Twilio-Email-Event-Webhook-Signature': 'c2lnbmF0dXJl' }],
+])('verifySignature fails when a public key is configured and %s is missing', async (_case, headers) => {
+  const { webhookPublicKey, rawBody } = signedWebhook();
+  const provider = new SendgridEmailProvider({ ...mockConfig, webhookPublicKey });
+
+  const result = await provider.verifySignature({ rawBody, headers });
+
+  expect(result.success).toBe(false);
+});
+
+test('verifySignature fails when a public key is configured and the raw body is missing', async () => {
+  const { webhookPublicKey, headers } = signedWebhook();
+  const provider = new SendgridEmailProvider({ ...mockConfig, webhookPublicKey });
+
+  const result = await provider.verifySignature({ rawBody: undefined, headers });
+
+  expect(result.success).toBe(false);
+  expect(result.message).toContain('Body is undefined');
 });

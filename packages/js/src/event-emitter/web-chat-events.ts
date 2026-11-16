@@ -39,6 +39,8 @@ export type WebChatMessagesUpdated = {
   key: string;
   messages: AgentMessage[];
   isRunning: boolean;
+  /** True from `stop()` until the run ends. */
+  isStopping: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;

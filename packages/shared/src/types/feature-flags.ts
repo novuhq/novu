@@ -59,6 +59,13 @@ export enum FeatureFlagsKeysEnum {
 
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
+  /**
+   * Organization-scoped, read by the legacy webhook service (`apps/webhook`): verifies the provider signature
+   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. On by default; set it to `false`
+   * for an organization (or the `IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED=false` env var when self-hosted
+   * without LaunchDarkly) to skip verification.
+   */
+  IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED = 'IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
@@ -161,6 +168,10 @@ export enum FeatureFlagsKeysEnum {
    * `NOVU_INTERNAL_AUTH_SECRET`; without it the Copilot keeps the direct path.
    */
   IS_COPILOT_MCP_TOOLS_ENABLED = 'IS_COPILOT_MCP_TOOLS_ENABLED',
+  /** Copilot in the workflow editor runs on the agent web-chat channel inside the existing sidebar instead of the legacy AI chat. The agent refuses web-chat turns while it is off. */
+  IS_COPILOT_WEB_CHAT_ENABLED = 'IS_COPILOT_WEB_CHAT_ENABLED',
+  /** Shows the web-chat Copilot as a bottom-right launcher and popover instead of the sidebar. Only read when IS_COPILOT_WEB_CHAT_ENABLED is on. */
+  IS_COPILOT_WEB_CHAT_POPOVER_ENABLED = 'IS_COPILOT_WEB_CHAT_POPOVER_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */
@@ -252,6 +263,20 @@ export enum FeatureFlagsKeysEnum {
    * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
+  /**
+   * When true (default), free-tier organizations are capped at `FREE_TIER_MAX_WORKFLOWS` workflows
+   * per environment. Set to false in LaunchDarkly to fall back to `FREE_TIER_LEGACY_MAX_WORKFLOWS`
+   * for an organization or segment. Self-hosted deployments ignore this flag and use the system ceiling.
+   */
+  IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED = 'IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED',
+  /**
+   * Organization-scoped, for Agent Inbox accounts (their backing organization): the onboarding where the operator
+   * names their agent and picks its look, connects a host, and the agent then says hi with its card; and that new
+   * card on the agent's public page, on Configure and in its link preview. Off keeps today's onboarding and card.
+   * Create the boolean in LaunchDarkly for cloud, or set `IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED=true` for the API
+   * when self-hosted or local.
+   */
+  IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',

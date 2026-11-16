@@ -74,6 +74,7 @@ import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.se
 import { getActionPlatformThreadId, getInboundPlatformThreadId, isNestedSharedThread } from './platform-thread-id';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 import {
+  checkAgentMention,
   conversationHasSmartMentionRequired,
   countHumanParticipants,
   countOtherAgentParticipants,
@@ -81,7 +82,6 @@ import {
   type ExplicitMentionContext,
   followsNestedThreadWithoutMention,
   messageContainsUserMention,
-  messageMentionsAgent,
   requiresExplicitMention,
 } from './requires-explicit-mention';
 import { seedSlackThreadHistory } from './seed-slack-thread-history';
@@ -1550,11 +1550,17 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const botUserId = await this.resolveMentionBotUserId(config, message);
+    const mention = await checkAgentMention(message, config.platform, botUserId);
 
-    if (messageMentionsAgent(message, config.platform, botUserId)) {
+    if (mention.mentioned) {
       message.isMention = true;
       this.logger.debug(
         `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} @-mentions this agent but arrived without the mention flag; treating it as a mention`
+      );
+    } else if (mention.rejected) {
+      this.logger.debug(
+        { err: mention.rejected },
+        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} mention check failed; treating it as unmentioned`
       );
     }
 

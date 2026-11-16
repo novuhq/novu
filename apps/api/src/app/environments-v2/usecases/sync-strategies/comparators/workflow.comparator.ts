@@ -89,7 +89,7 @@ export class WorkflowComparator {
       // Get localization group diffs for this workflow only if translation is enabled
       const localizationDiffs =
         sourceWorkflow.isTranslationEnabled || targetWorkflow.isTranslationEnabled
-          ? await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id)
+          ? await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow._environmentId, userContext._id)
           : [];
 
       return { workflowChanges, otherDiffs: [...stepDiffs, ...localizationDiffs] };
@@ -100,10 +100,26 @@ export class WorkflowComparator {
     }
   }
 
+  /**
+   * A new workflow has no target to compare against, but publishing it also publishes its
+   * translation groups, so they are listed as added.
+   */
+  async getNewWorkflowLocalizationDiffs(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetEnvironmentId: string,
+    userId: string
+  ): Promise<IResourceDiff[]> {
+    if (!sourceWorkflow.isTranslationEnabled) {
+      return [];
+    }
+
+    return this.getLocalizationDiffs(sourceWorkflow, targetEnvironmentId, userId);
+  }
+
   @Instrument()
   private async getLocalizationDiffs(
     sourceWorkflow: NotificationTemplateEntity,
-    targetWorkflow: NotificationTemplateEntity,
+    targetEnvironmentId: string,
     userId: string
   ): Promise<IResourceDiff[]> {
     try {
@@ -120,7 +136,7 @@ export class WorkflowComparator {
 
       return await diffTranslationGroups.execute({
         sourceEnvironmentId: sourceWorkflow._environmentId,
-        targetEnvironmentId: targetWorkflow._environmentId,
+        targetEnvironmentId,
         resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
         resourceType: LocalizationResourceEnum.WORKFLOW,
         userId,

@@ -44,6 +44,8 @@ describe('AgentInboundHandler', () => {
 
   afterEach(() => {
     delete (conversation as { _notificationId?: string })._notificationId;
+    // The handler records the first platform message id on the shared fixture's primary channel.
+    delete (conversation.channels[0] as { firstPlatformMessageId?: string }).firstPlatformMessageId;
   });
 
   function makeLogger() {
@@ -319,6 +321,7 @@ describe('AgentInboundHandler', () => {
     return {
       handler,
       logger,
+      connectionContextResolver,
       replyApprovalInterceptor,
       humanInteractionInbound,
       humanRelayRuntime,
@@ -501,6 +504,32 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('should forward the resolved context and its bridge URL override to the bridge', async () => {
+      const { handler, bridgeExecutor, connectionContextResolver } = makeHandler();
+      const context = { tenant: { id: 'org-1', data: { environmentId: 'env-1' } } };
+      connectionContextResolver.resolve.resolves({ context, bridgeUrl: 'https://org-1.example.com/api/novu' });
+
+      const message = { ...makeSlackDmMessage(), id: '1777837499.000001' };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      // The resolver reads the workspace id from the raw payload and the sender from the author.
+      expect(connectionContextResolver.resolve.firstCall.args).to.deep.equal([
+        config,
+        message.raw,
+        message.author.userId,
+      ]);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.context).to.deep.equal(context);
+      expect(params.bridgeUrlOverride).to.equal('https://org-1.example.com/api/novu');
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();
@@ -773,6 +802,7 @@ describe('AgentInboundHandler', () => {
         text: '<@UBOT> see `<@UBOT>`',
         author: { userId: 'U1', fullName: 'Ada', isBot: false },
         isMention: false,
+        raw: { event: { type: 'message', text: '<@UBOT> see `<@UBOT>`' } },
         attachments: [],
       };
       const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
@@ -787,6 +817,80 @@ describe('AgentInboundHandler', () => {
 
       expect(unsubscribe.called).to.equal(false);
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
+    it('drops a nested-thread message that mentions another user when mention-only is on', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'hey <@U99> take a look',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        raw: { event: { type: 'message', text: 'hey <@U99> take a look' } },
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('does not throw or dispatch when the resolved Slack bot user id is not a Slack id', async () => {
+      const { handler, conversationService, bridgeExecutor, agentConfigResolver } = makeHandler();
+      agentConfigResolver.resolveSlackInstallation.resolves({ token: 'xoxb-test', botUserId: 'not a slack id!' });
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: '<@UBOT> help',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        raw: { event: { type: 'message', text: '<@UBOT> help' } },
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(message.isMention).to.equal(false);
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
     it('dispatches an unmentioned nested-thread follow-up after the agent has joined', async () => {
@@ -1030,6 +1134,7 @@ describe('AgentInboundHandler', () => {
             author: { userId: 'U1', fullName: 'Ada', isBot: false },
             text: '<@UBOT> what is the status?',
             isMention: false,
+            raw: { event: { type: 'message', text: '<@UBOT> what is the status?' } },
           }) as any,
           AgentEventEnum.ON_MESSAGE
         );
@@ -1220,6 +1325,7 @@ describe('AgentInboundHandler', () => {
             author: { userId: 'U1', fullName: 'Ada', isBot: false },
             text: '<@UBOT> help',
             isMention: false,
+            raw: { event: { type: 'message', text: '<@UBOT> help' } },
           }) as any,
           AgentEventEnum.ON_MESSAGE
         );

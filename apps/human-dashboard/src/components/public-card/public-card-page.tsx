@@ -62,7 +62,17 @@ export function PublicCardPage({ card }: { card: PublicAgentCard }) {
         <span aria-hidden="true" className="text-[13px] leading-4.5">
           ·
         </span>
-        <span className="text-[11px] leading-3.5">A product of Novu</span>
+        <span className="text-[11px] leading-3.5">
+          A product of{' '}
+          <a
+            href="https://novu.co"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm underline-offset-2 transition-colors duration-150 hover:text-foreground hover:underline"
+          >
+            Novu
+          </a>
+        </span>
       </footer>
     </div>
   );

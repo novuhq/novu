@@ -47,6 +47,7 @@ export const PROXY_ROUTES: readonly ProxyRoute[] = [
   ['POST', '/v1/setup/keyless', '/v1/inbox/session'],
   ['GET', '/v1/inbox-address', '/v1/human/inbox-address'],
   ['GET', '/v1/agent', '/v1/human/agent'],
+  ['POST', '/v1/agent/card', '/v1/human/agent/card'],
   ['PUT', '/v1/agent/picture', '/v1/human/agent/picture'],
   ['POST', '/v1/login', '/v1/cli/device-sessions'],
   ['POST', '/v1/login/claim', '/v1/human/claim-token'],

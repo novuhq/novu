@@ -192,6 +192,42 @@ describe('tool-approval', () => {
 
       expect(results.size).toBe(0);
     });
+
+    it('does not run an approved tool again after the user stopped the turn that ran it', async () => {
+      const ctx = fakeRuntimeCtx([
+        ...approvedCycleHistory(),
+        {
+          role: 'system',
+          type: 'run_finish',
+          content: '',
+          richContent: { lifecycle: { outcome: 'aborted' } },
+          createdAt: '3',
+        },
+      ]);
+      const run = vi.fn();
+
+      const results = await executeApprovedTools([fakeTool('issueRefund', run)], ctx);
+
+      expect(results.size).toBe(0);
+      expect(run).not.toHaveBeenCalled();
+    });
+
+    it('still runs a tool approved after an earlier stopped turn', async () => {
+      const ctx = fakeRuntimeCtx([
+        {
+          role: 'system',
+          type: 'run_finish',
+          content: '',
+          richContent: { lifecycle: { outcome: 'aborted' } },
+          createdAt: '0',
+        },
+        ...approvedCycleHistory(),
+      ]);
+
+      const results = await executeApprovedTools([fakeTool('issueRefund', () => 'ok')], ctx);
+
+      expect(results.get('tc_1')?.output).toBe('ok');
+    });
   });
 
   describe('postApprovalCard', () => {

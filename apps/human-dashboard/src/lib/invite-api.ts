@@ -44,6 +44,11 @@ export type InviteStatus =
       agentName: string;
       /** Where the agent's own picture can be loaded. Missing when it has none. */
       agentPictureUrl?: string;
+      /**
+       * The agent's look, as the API answered it, for its mascot on this page (read it with `mascotLookOf`).
+       * Missing while its mascots show as they always have.
+       */
+      agentLook?: unknown;
       /** Who invited them: the account owner's name. Missing when they haven't given one. */
       inviterName?: string;
       /** Display name of the invited person, falling back to their subscriberId. */

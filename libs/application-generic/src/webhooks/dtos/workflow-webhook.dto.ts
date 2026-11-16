@@ -17,6 +17,12 @@ import { WorkflowPreferencesDto } from '../../dtos/workflow/workflow-preferences
 import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { PreferenceChannelsDto } from './preference-webhook.dto';
 
+/**
+ * Renames an underscore-prefixed property in the generated SDKs. Speakeasy strips the leading
+ * underscore, so `_updatedBy` would otherwise collide with `updatedBy`.
+ */
+const sdkFieldName = (name: string) => ({ 'x-speakeasy-name-override': name });
+
 type PersistedWorkflowContract = Omit<NotificationTemplateEntity, 'deletedAt' | 'deletedBy'> &
   Partial<Pick<NotificationTemplateEntity, 'deletedAt' | 'deletedBy'>>;
 
@@ -225,7 +231,10 @@ export class PersistedWorkflowWebhookDto implements PersistedWorkflowContract {
   @ApiPropertyOptional({ description: 'Last updated timestamp' })
   updatedAt?: string;
 
-  @ApiPropertyOptional({ description: 'User who last updated the workflow' })
+  @ApiPropertyOptional({
+    description: 'User who last updated the workflow',
+    ...sdkFieldName('updatedById'),
+  })
   _updatedBy?: string;
 
   @ApiPropertyOptional({ type: () => UserResponseDto })
@@ -288,7 +297,10 @@ export class PersistedWorkflowWebhookDto implements PersistedWorkflowContract {
   @ApiPropertyOptional({ description: 'Timestamp of the last workflow publication' })
   lastPublishedAt?: string;
 
-  @ApiPropertyOptional({ description: 'User who last published the workflow' })
+  @ApiPropertyOptional({
+    description: 'User who last published the workflow',
+    ...sdkFieldName('lastPublishedById'),
+  })
   _lastPublishedBy?: string;
 
   @ApiPropertyOptional({ type: () => UserResponseDto })

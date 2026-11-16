@@ -16,6 +16,7 @@ import {
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { WorkflowLimitUpgradeDialog } from '@/components/workflow-editor/workflow-limit-upgrade-dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
@@ -99,6 +100,10 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
             {buttonText}
           </Button>
         </SheetFooter>
+        <WorkflowLimitUpgradeDialog
+          error={createWorkflow.workflowLimitError}
+          onClose={createWorkflow.clearWorkflowLimitError}
+        />
       </SheetContent>
     </Sheet>
   );

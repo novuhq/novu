@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { toPayloadPropertyPath } from "./payload-schema";
-import { workflowStepSchema } from "./step-schemas";
+import { workflowStepInputSchema } from "./step-schemas";
 
 /**
  * Workflow input schemas for Novu MCP tools.
@@ -13,15 +13,11 @@ import { workflowStepSchema } from "./step-schemas";
  *   `normalizeObjectSchema` silently drops top-level discriminated unions
  *   (modelcontextprotocol/typescript-sdk#1643), so callers must always
  *   register a `z.object` whose properties may contain unions.
- * - Use factory functions (`createXSchema`) when the same sub-schema is
- *   referenced from multiple union members. Reusing a single instance causes
- *   `zod-to-json-schema` to emit deeply-nested `$defs` chains that some MCP
- *   clients reject.
  * - Pack constraint hints into `.describe()` strings as well as `.min/.max`
  *   so the LLM sees them when reading the schema.
  *
  * File organisation:
- * - Skip-condition factories live in `./skip-schemas.ts`.
+ * - Skip-condition schemas live in `./skip-schemas.ts`.
  * - Step-level schemas (per-channel control values, `workflowStepSchema`)
  *   live in `./step-schemas.ts`.
  * - Maily TipTap email body lives in `./maily-schemas.ts`.
@@ -32,7 +28,7 @@ import { workflowStepSchema } from "./step-schemas";
 
 // --- Re-exports (backward compatibility) ---------------------------------
 
-export { createSkipConditionSchema } from "./skip-schemas";
+export { skipConditionInputSchema } from "./skip-schemas";
 export type {
 	DelayType,
 	DigestType,
@@ -47,6 +43,7 @@ export type {
 } from "./step-schemas";
 export {
 	delayTypeSchema,
+	describeStepControlValues,
 	digestTypeSchema,
 	editorTypeSchema,
 	httpMethodSchema,
@@ -54,7 +51,9 @@ export {
 	stepTypeSchema,
 	throttleTypeSchema,
 	timeUnitSchema,
+	workflowStepContentInputSchema,
 	workflowStepContentSchema,
+	workflowStepInputSchema,
 	workflowStepSchema,
 } from "./step-schemas";
 
@@ -185,7 +184,7 @@ function createPayloadPropertyBaseSchema() {
 	});
 }
 
-export const payloadPropertySchema = z.union([
+export const payloadPropertySchema = z.discriminatedUnion("type", [
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("string") }),
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("number") }),
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("integer") }),
@@ -221,6 +220,44 @@ export const payloadPropertySchema = z.union([
 	createPayloadPropertyBaseSchema().extend({ type: z.literal("object") }),
 ]);
 
+/**
+ * The advertised payload property: one flat object piped into the union. Each
+ * union option strips the fields of the other types whatever their value, so
+ * those fields stay `unknown` here (e.g. `enumValues: null` on a string).
+ */
+export const payloadPropertyInputSchema = z
+	.object({
+		arrayItemProperties: z
+			.unknown()
+			.optional()
+			.describe(
+				'For arrayItemsType "object": the properties of each item, each one required, e.g. [{ "name": "address.city", "type": "string" }] with type string, number, integer or boolean. Omit for scalar arrays.',
+			),
+		arrayItemsType: z
+			.unknown()
+			.optional()
+			.describe(
+				'Required when type is "array": "string", "number", "integer", "boolean" or "object".',
+			),
+		enumValues: z
+			.unknown()
+			.optional()
+			.describe(
+				'Required when type is "enum": the complete set of allowed string values, e.g. ["free", "pro"]. Only use enum when the user explicitly defines a fixed list.',
+			),
+		isRequired: z
+			.boolean()
+			.optional()
+			.describe("Whether the property is required in the payload (default: true)."),
+		name: z
+			.string()
+			.describe(
+				'Property path relative to the payload, without "payload.": "orderId" for {{payload.orderId}}, "order.total" for {{payload.order.total}}.',
+			),
+		type: z.enum(["string", "number", "integer", "boolean", "enum", "array", "object"]),
+	})
+	.pipe(payloadPropertySchema);
+
 // --- Workflow input schemas ----------------------------------------------
 
 export const baseWorkflowInputSchema = z.object({
@@ -252,7 +289,7 @@ export const baseWorkflowInputSchema = z.object({
 		.max(MAX_NAME_LENGTH)
 		.describe(`Name of the workflow (non-empty, max ${MAX_NAME_LENGTH} characters).`),
 	payloadProperties: z
-		.array(payloadPropertySchema)
+		.array(payloadPropertyInputSchema)
 		.optional()
 		.describe(
 			"Flat list of payload property descriptors. LLM-friendly alternative to `payloadSchema`. Tooling converts these to JSON Schema before sending to Novu.",
@@ -273,10 +310,10 @@ export const baseWorkflowInputSchema = z.object({
 			"Workflow severity: 'high' for critical alerts, 'medium' for important, 'low' for informational, 'none' for unspecified.",
 		),
 	steps: z
-		.array(workflowStepSchema)
+		.array(workflowStepInputSchema)
 		.min(1)
 		.describe(
-			"Steps of the workflow — at least one step required. Each step is discriminated by `type`. Always use {{payload.variableName}} for dynamic content (e.g. {{payload.userName}}, {{payload.orderId}}).",
+			"Steps of the workflow in order, at least one. Always use {{payload.variableName}} for dynamic content (e.g. {{payload.userName}}, {{payload.orderId}}).",
 		),
 	tags: z
 		.array(
@@ -299,10 +336,10 @@ export const createWorkflowInputSchema = baseWorkflowInputSchema.extend({
 	__source: workflowSourceSchema.optional().describe("Source of workflow creation."),
 	// Zod 4 keeps every `.min()` check, so `shape.steps.min(0)` would still require one step.
 	steps: z
-		.array(workflowStepSchema)
+		.array(workflowStepInputSchema)
 		.optional()
 		.describe(
-			"Steps of the workflow, each discriminated by `type`. Omit to create an empty workflow and add steps later with add_workflow_step. Always use {{payload.variableName}} for dynamic content.",
+			"Steps of the workflow in order. Omit to create an empty workflow and add steps later with add_workflow_step. Each step's stepId is generated from its name; read it from the response before referring to steps.<stepId>. Always use {{payload.variableName}} for dynamic content.",
 		),
 	workflowId: z
 		.string()

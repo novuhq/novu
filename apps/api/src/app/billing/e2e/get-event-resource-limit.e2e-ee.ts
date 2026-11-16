@@ -46,6 +46,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         start: 1609459200000,
         reset: 1612137600000,
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        isCappedTrial: false,
       });
     });
 
@@ -61,6 +62,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         start: 1609459200000,
         reset: 1612137600000,
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        isCappedTrial: false,
       });
     });
   });
@@ -85,6 +87,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         start: 0,
         apiServiceLevel: ApiServiceLevelEnum.FREE,
         locked: false,
+        isCappedTrial: false,
       });
     });
 
@@ -101,6 +104,7 @@ describe('GetEventResourceUsage #novu-v2', async () => {
         start: 0,
         apiServiceLevel: ApiServiceLevelEnum.FREE,
         locked: false,
+        isCappedTrial: false,
       });
     });
   });

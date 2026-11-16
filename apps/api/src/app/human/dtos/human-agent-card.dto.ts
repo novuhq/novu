@@ -1,3 +1,5 @@
+import type { AgentLookDto } from './human-agent-look.dto';
+
 /**
  * An agent's public card (`agentinbox.md/p/{handle}`): everything the card shows, and nothing else. Anyone can
  * read it without signing in.
@@ -21,4 +23,11 @@ export type HumanAgentCardResult = {
   address: string;
   /** Its Telegram bot's username, without the `@`. Missing without a bot that Telegram answers for. */
   telegramBotUsername?: string;
+  /** How the agent looks: its mascot and its card's art. The original look until its operator picks one. */
+  look: AgentLookDto;
+  /**
+   * Whether the page shows the new card, the one onboarding shows (the agent's account has
+   * `IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED`). Otherwise it shows the card it showed before.
+   */
+  newCard: boolean;
 };

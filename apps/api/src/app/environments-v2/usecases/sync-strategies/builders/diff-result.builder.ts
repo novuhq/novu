@@ -30,12 +30,13 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addResourceAdded(sourceResource: IResourceInfo): this {
+  addResourceAdded(sourceResource: IResourceInfo, diffs?: IResourceDiff['diffs']): this {
     const diff: IResourceDiff = {
       sourceResource,
       targetResource: null,
       resourceType: this.resourceType,
       action: DiffActionEnum.ADDED,
+      ...(diffs ? { diffs } : {}),
     };
 
     this.results.push({

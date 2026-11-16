@@ -1,3 +1,4 @@
+import { TopicRepository } from '@novu/dal';
 import { StepTypeEnum, TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -5,6 +6,7 @@ import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscrip
 
 describe('Create topic subscription - /inbox/topics/:topicKey/subscriptions (POST) #novu-v2', () => {
   let session: UserSession;
+  const topicRepository = new TopicRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -149,6 +151,40 @@ describe('Create topic subscription - /inbox/topics/:topicKey/subscriptions (POS
     expect(subscriptionResponse.status).to.equal(201);
     expect(subscriptionResponse.body.data.identifier).to.exist;
     expect(subscriptionResponse.body.data.identifier.length).to.be.at.most(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH);
+  });
+
+  it('should not rename an existing topic when subscribing with a different topic name', async () => {
+    const topicKey = `topic-${Date.now()}`;
+    await topicRepository.createTopic({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      key: topicKey,
+      name: 'Original Topic Name',
+    });
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: { topic: { name: 'Hijacked Topic Name' } },
+    });
+
+    expect(subscriptionResponse.status).to.equal(201);
+    const topic = await topicRepository.findTopicByKey(topicKey, session.organization._id, session.environment._id);
+    expect(topic?.name).to.equal('Original Topic Name');
+  });
+
+  it('should create a missing topic with the provided topic name', async () => {
+    const topicKey = `topic-${Date.now()}`;
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: { topic: { name: 'New Topic Name' } },
+    });
+
+    expect(subscriptionResponse.status).to.equal(201);
+    const topic = await topicRepository.findTopicByKey(topicKey, session.organization._id, session.environment._id);
+    expect(topic?.name).to.equal('New Topic Name');
   });
 });
 

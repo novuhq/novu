@@ -1,21 +1,39 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { drawMascot, MASCOT_AT_REST, type MascotMood, type MascotPose } from '@/lib/mascot-sphere';
+import type { LookColor, MascotBody } from '@/lib/look';
+import {
+  AVATAR_RADIUS,
+  drawMascot,
+  formOf,
+  MASCOT_AT_REST,
+  type MascotForm,
+  type MascotMood,
+  type MascotPose,
+  mixForms,
+} from '@/lib/mascot-sphere';
 import { cn } from '@/lib/utils';
 
 /**
  * `idle` is the small mascot of avatars; `waiting` is the large one with its whole halo. `poster` is
- * `waiting` on a finer grid, for a mascot shown hundreds of pixels wide.
+ * `waiting` on a finer grid, for a mascot shown hundreds of pixels wide. `avatar` is an agent's look as the design
+ * draws it (`Avatar v2`), on the design's own 120-cell grid, and `swatch` is that drawing in the look pickers.
  */
-export type MascotArt = 'idle' | 'waiting' | 'poster';
+export type MascotArt = 'idle' | 'waiting' | 'poster' | 'avatar' | 'swatch';
 
-/** The pixel grid each drawing is made on, and how much of it the sphere takes. */
-const ART: Record<MascotArt, { grid: number; radius: number }> = {
+/**
+ * The pixel grid each drawing is made on, how much of it the sphere takes, and whether it is the design's
+ * `Avatar v2` (`MascotLook.avatar`). A `smooth` drawing is shown smaller than its grid and scaled down smoothly, as
+ * the design's own finer drawing shows at that size.
+ */
+const ART: Record<MascotArt, { grid: number; radius: number; avatar?: boolean; smooth?: boolean }> = {
   idle: { grid: 48, radius: 0.406 },
   waiting: { grid: 120, radius: 0.308 },
   poster: { grid: 200, radius: 0.308 },
+  avatar: { grid: 120, radius: AVATAR_RADIUS, avatar: true },
+  // Two cells to a pixel of the largest, 44px swatch: as fine as a Retina screen shows it.
+  swatch: { grid: 88, radius: AVATAR_RADIUS, avatar: true, smooth: true },
 };
 
 /** How far the mascot turns towards the pointer at most, in radians. */
@@ -47,6 +65,9 @@ const BLINK_MS = BLINK_CLOSE_MS + BLINK_OPEN_MS;
 /** How long the eyes take to turn from open to happy, or back: long enough to see one become the other. */
 const TURNS_HAPPY_IN_MS = 420;
 
+/** How long a new body or colour takes to settle: the outline bends and the tones blend into the new ones. */
+const MORPHS_IN_MS = 520;
+
 /**
  * The drawings exported from the design, by size and mood. One of them shows until the canvas has
  * painted, so the mascot is there from the first frame; the other combinations simply start a frame later.
@@ -70,7 +91,7 @@ type MascotFaceProps = {
   mood?: MascotMood;
   /** Faces straight ahead at rest, where the awake drawing looks a touch to the right: see `MascotLook`. */
   ahead?: boolean;
-  /** Stands still: no turning towards the pointer and no blinking. */
+  /** Stands still: no turning towards the pointer and no blinking. A new body or colour still bends in. */
   still?: boolean;
   /**
    * Leaves the exported drawing out, and lets the drawn mascot fade in once it is there. The two differ
@@ -80,6 +101,11 @@ type MascotFaceProps = {
   drawnOnly?: boolean;
   /** Drawn for light paper (see `MascotLook.paper`). A paper poster shows until the canvas paints. */
   paper?: boolean;
+  /**
+   * Its body and colour, as the agent's look has them: the orb in ember by default, the mascot as it always was.
+   * When they change, the mascot bends into the new body and blends into the new colour, keeping its pose.
+   */
+  look?: { shape: MascotBody; color: LookColor };
   className?: string;
 };
 
@@ -96,24 +122,39 @@ export function MascotFace({
   drawnOnly = false,
   ahead = false,
   paper = false,
+  look,
   className,
 }: MascotFaceProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const body = look?.shape ?? 'orb';
+  const color = look?.color ?? 'ember';
+  const form = useMemo(() => formOf(body, color), [body, color]);
+  // The body and colour asked for, where the drawing reads them, so a change bends the mascot instead of
+  // starting the drawing over.
+  const wantedForm = useRef<MascotForm>(form);
   const [painted, setPainted] = useState(false);
   // The mood asked for, where the drawing reads it. A change from awake to happy or back doesn't start
   // the drawing over: the mascot keeps looking where it looks, and its eyes turn into the other ones.
   const wanted = useRef(mood);
   // Draws the mood asked for at once. Only there while the mascot stands still, with nothing else to draw it.
   const redraw = useRef<(() => void) | null>(null);
-  const { grid, radius } = ART[art];
+  const { grid, radius, avatar = false, smooth } = ART[art];
   const asleep = mood === 'asleep';
+  // The exported drawings are of the lit orb in ember: any other look, and any avatar, only shows once it is drawn.
+  const original = !avatar && body === 'orb' && color === 'ember';
+  const fadesIn = drawnOnly || !original;
   let exported: string | undefined;
-  if (!drawnOnly) exported = paper ? PAPER_POSTER : EXPORTED[`${art}-${mood}`];
+  if (!fadesIn) exported = paper ? PAPER_POSTER : EXPORTED[`${art}-${mood}`];
 
   useEffect(() => {
     wanted.current = mood;
     redraw.current?.();
   }, [mood]);
+
+  useEffect(() => {
+    wantedForm.current = form;
+    redraw.current?.();
+  }, [form]);
 
   useEffect(() => {
     const element = canvas.current;
@@ -135,23 +176,63 @@ export function MascotFace({
     let turningBack: { yaw: number; pitch: number; since: number } | null = null;
     let blinkAt = performance.now() + randomBetween(BLINK_EVERY_MS.min, BLINK_EVERY_MS.max);
     let blinks = pickBlinks();
+    // The body and colour drawn now, and the bend under way, if any, from what was drawn when it started.
+    let shown = wantedForm.current;
+    let drawnForm: MascotForm | null = null;
+    let morph: { from: MascotForm; to: MascotForm; since: number } | null = null;
 
     const paint = () => {
-      drawMascot(image.data, grid, pose, radius, asleep ? 'asleep' : 'awake', { ahead, paper });
+      drawMascot(image.data, grid, pose, radius, asleep ? 'asleep' : 'awake', { ahead, paper, avatar }, shown);
       context.putImageData(image, 0, 0);
       drawn = { ...pose };
+      drawnForm = shown;
+    };
+
+    // A new body or colour bends in from wherever the mascot is now, even halfway through another bend.
+    const bend = (now: number) => {
+      const target = wantedForm.current;
+      if (target !== (morph ? morph.to : shown)) {
+        morph = { from: shown, to: target, since: now };
+      }
+      if (!morph) {
+        return;
+      }
+
+      const progress = Math.min(1, (now - morph.since) / MORPHS_IN_MS);
+      shown = progress === 1 ? morph.to : mixForms(morph.from, morph.to, ease(progress));
+      if (progress === 1) {
+        morph = null;
+      }
     };
 
     paint();
     setPainted(true);
 
-    if (still || asleep || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still || asleep || reducedMotion) {
+      // It neither turns nor blinks, but a new body or colour bends in all the same, as on the mascot that moves.
+      let bending = 0;
+      const bendInPlace = (now: number) => {
+        bend(now);
+        paint();
+        bending = morph ? requestAnimationFrame(bendInPlace) : 0;
+      };
+
       redraw.current = () => {
         pose.joy = wanted.current === 'happy' ? 1 : 0;
-        paint();
+        cancelAnimationFrame(bending);
+        if (reducedMotion) {
+          shown = wantedForm.current;
+          paint();
+
+          return;
+        }
+
+        bendInPlace(performance.now());
       };
 
       return () => {
+        cancelAnimationFrame(bending);
         redraw.current = null;
       };
     }
@@ -213,6 +294,7 @@ export function MascotFace({
     // The grid is coarse: a pose that moved less than this paints the very same pixels.
     const hasMoved = () =>
       !drawn ||
+      drawnForm !== shown ||
       Math.abs(pose.yaw - drawn.yaw) > 0.002 ||
       Math.abs(pose.pitch - drawn.pitch) > 0.002 ||
       Math.abs(pose.blink - drawn.blink) > 0.01 ||
@@ -222,6 +304,7 @@ export function MascotFace({
       turnEyes(now);
       turnHead(now);
       blink(now);
+      bend(now);
       if (hasMoved()) {
         paint();
       }
@@ -259,7 +342,7 @@ export function MascotFace({
       window.removeEventListener('pointermove', follow);
       document.documentElement.removeEventListener('pointerleave', rest);
     };
-  }, [still, asleep, ahead, paper, grid, radius]);
+  }, [still, asleep, ahead, paper, avatar, grid, radius]);
 
   return (
     <span aria-hidden="true" className={cn('relative block shrink-0', className)}>
@@ -275,9 +358,10 @@ export function MascotFace({
         width={grid}
         height={grid}
         className={cn(
-          'absolute inset-0 size-full [image-rendering:pixelated]',
+          'absolute inset-0 size-full',
+          !smooth && '[image-rendering:pixelated]',
           !painted && 'invisible',
-          painted && drawnOnly && 'animate-overlay-in motion-reduce:animate-none'
+          painted && fadesIn && 'animate-overlay-in motion-reduce:animate-none'
         )}
       />
     </span>

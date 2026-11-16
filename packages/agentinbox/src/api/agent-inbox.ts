@@ -182,6 +182,8 @@ export interface SetupRelayResult {
   emailAddress?: string;
   /** The mailbox is not the slug of the name, because that handle was taken or could not be one. */
   emailHandleAdjusted?: boolean;
+  /** How the agent looks (see `lookOf`). Missing from an API from before looks. */
+  look?: unknown;
 }
 
 export async function setupRelay(
@@ -205,6 +207,11 @@ export async function setupRelay(
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
     defaultVia?: 'telegram' | 'slack' | 'email';
+    /**
+     * The look of a new agent: its mascot's shape, colour or both. The API takes it where a look can be picked
+     * (`InboxAddressCheck.canPickLook`) and leaves the original one elsewhere, and for an agent that exists.
+     */
+    look?: { shape?: string; color?: string };
   }
 ): Promise<SetupRelayResult> {
   const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
@@ -248,6 +255,8 @@ export interface InboxAddressCheck {
   suggestion?: string;
   /** The mailbox domain this deployment publishes. */
   domain: string;
+  /** Whether a new agent made here can be given a look. Missing from an API from before looks could be picked. */
+  canPickLook?: boolean;
 }
 
 /**

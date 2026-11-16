@@ -22,6 +22,10 @@ const TYPE_MESSAGE = 'message';
 const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
 const TYPE_TOOL_APPROVAL_DECISION = 'tool_approval_decision';
 const TYPE_TOOL_RESULT = 'tool_result';
+const TYPE_RUN_FINISH = 'run_finish';
+
+const STOPPED_TURN_MARKER =
+  '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
@@ -62,6 +66,18 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMe
   return { role: 'user', content };
 }
 
+/** A stopped turn leaves its user prompt with no reply; the marker tells the model it was never carried out. */
+function isAbortedRunFinish(entry: AgentHistoryEntry): boolean {
+  const lifecycle = entry.richContent?.lifecycle;
+
+  return (
+    entry.type === TYPE_RUN_FINISH &&
+    typeof lifecycle === 'object' &&
+    lifecycle !== null &&
+    (lifecycle as { outcome?: unknown }).outcome === 'aborted'
+  );
+}
+
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): ModelMessage[] {
   switch (entry.type) {
     case TYPE_MESSAGE: {
@@ -81,6 +97,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
 
       return resultMessage ? [resultMessage] : [];
     }
+    case TYPE_RUN_FINISH:
+      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model.
+      return isAbortedRunFinish(entry) ? [{ role: 'assistant', content: STOPPED_TURN_MARKER }] : [];
     default:
       // `edit`, `signal`, and unknown types are UI/runtime artifacts — not model transcript.
       return [];
