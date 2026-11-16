@@ -47,20 +47,24 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   }
 
   public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
-    const stored: JobEntity[] = [];
+    const created: InstanceType<typeof this.MongooseModel>[] = [];
     for (let index = 0; index < jobs.length; index += 1) {
       if (index > 0) {
-        jobs[index]._parentId = stored[index - 1]._id;
+        jobs[index]._parentId = String(created[index - 1]._id);
       }
 
-      const created = new this.MongooseModel({ ...jobs[index], createdAt: Date.now() });
-
-      stored.push(this.mapEntity(created));
+      created.push(new this.MongooseModel({ ...jobs[index], createdAt: Date.now() }));
     }
 
-    await this.insertMany(stored, true);
+    // Mongoose stamps updatedAt on these documents as it inserts them, so map them only afterwards:
+    // callers (e.g. the step_runs_v2 writer) then get the timestamps Mongo stored.
+    try {
+      await this.MongooseModel.insertMany(created, { ordered: true });
+    } catch (error: unknown) {
+      throw new DalException(error instanceof Error ? error.message : 'An unknown error occurred');
+    }
 
-    return stored;
+    return created.map((document) => this.mapEntity(document));
   }
 
   public async updateStatus(
