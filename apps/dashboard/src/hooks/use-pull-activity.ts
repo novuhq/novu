@@ -1,4 +1,4 @@
-import { IActivity, JobStatusEnum } from '@novu/shared';
+import { JobStatusEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { ActivityResponse } from '@/api/activity';
@@ -7,7 +7,7 @@ import { useFetchActivity } from '@/hooks/use-fetch-activity';
 import { QueryKeys } from '@/utils/query-keys';
 
 const ACTIVE_REFETCH_INTERVAL_MS = 1000;
-const MERGED_REFETCH_INTERVAL_MS = 10_000;
+const SETTLED_REFETCH_INTERVAL_MS = 10_000;
 const SETTLE_GRACE_PERIOD_MS = 5000;
 
 const IN_FLIGHT_JOB_STATUSES: string[] = [
@@ -16,14 +16,6 @@ const IN_FLIGHT_JOB_STATUSES: string[] = [
   JobStatusEnum.RUNNING,
   JobStatusEnum.DELAYED,
 ];
-
-/**
- * A merged follower resumes when its master digest is canceled (CancelDelayed promotes it back to delayed),
- * so runs with merged jobs keep polling at a slower interval instead of stopping.
- */
-function getSettledRefetchInterval(activity: IActivity): number | false {
-  return activity.jobs.some((job) => job.status === JobStatusEnum.MERGED) ? MERGED_REFETCH_INTERVAL_MS : false;
-}
 
 export const usePullActivity = (activityId?: string | null) => {
   const queryClient = useQueryClient();
@@ -54,7 +46,12 @@ export const usePullActivity = (activityId?: string | null) => {
      * For any non-inserted traces.
      */
     const timeout = setTimeout(() => {
-      setRefetchInterval(getSettledRefetchInterval(activity));
+      /**
+       * A settled run still changes: recipients read or interact with its messages and providers report delivery
+       * later, each written as a new step trace, and a merged follower resumes when its master digest is canceled.
+       * Keep polling the open run, just slower.
+       */
+      setRefetchInterval(SETTLED_REFETCH_INTERVAL_MS);
 
       // invalidate that single activity in the activities list cache
       queryClient.setQueriesData(
