@@ -51,6 +51,10 @@ function makeContextRepository(contexts: FakeContext[]) {
   };
 }
 
+function makeIntegrationRepository(inAppHmac: boolean[] = [true]) {
+  return { find: sinon.stub().resolves(inAppHmac.map((hmac) => ({ credentials: { hmac } }))) };
+}
+
 describe('InboundConnectionContextResolver', () => {
   describe('endpoint scope (Telegram)', () => {
     function build(endpointContextKeys: string[], contexts: FakeContext[]) {
@@ -65,6 +69,7 @@ describe('InboundConnectionContextResolver', () => {
         channelConnectionRepository as any,
         channelEndpointRepository as any,
         contextRepository as any,
+        makeIntegrationRepository() as any,
         logger as any
       );
 
@@ -139,6 +144,7 @@ describe('InboundConnectionContextResolver', () => {
         channelConnectionRepository as any,
         channelEndpointRepository as any,
         contextRepository as any,
+        makeIntegrationRepository() as any,
         logger as any
       );
 
@@ -163,12 +169,88 @@ describe('InboundConnectionContextResolver', () => {
         channelConnectionRepository as any,
         channelEndpointRepository as any,
         contextRepository as any,
+        makeIntegrationRepository() as any,
         logger as any
       );
 
       const result = await resolver.resolve(makeConfig(AgentPlatformEnum.SLACK), { team_id: 'W1' }, 'U1');
 
       expect(result.bridgeUrl).to.equal('https://workspace.example.com/api/novu');
+    });
+  });
+
+  describe('session scope (web chat)', () => {
+    function build(contexts: FakeContext[], inAppHmac: boolean[] = [true]) {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
+      const contextRepository = makeContextRepository(contexts);
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository(inAppHmac) as any,
+        makeLogger() as any
+      );
+
+      return { resolver, channelConnectionRepository, channelEndpointRepository, contextRepository };
+    }
+
+    it('ignores session contextKeys when the in-app integration does not enforce HMAC', async () => {
+      const { resolver, contextRepository } = build(
+        [makeContext('tenant', 'acme', 'https://acme.example.com/api/novu')],
+        [false]
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: null });
+      expect(contextRepository.findByKeys.called).to.equal(false);
+    });
+
+    it('ignores session contextKeys while any active in-app integration skips HMAC, or none is active', async () => {
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+      const contexts = [makeContext('tenant', 'acme')];
+
+      expect(
+        (await build(contexts, [true, false]).resolver.resolve(config, { contextKeys: ['tenant:acme'] })).context
+      ).to.equal(null);
+      expect((await build(contexts, []).resolver.resolve(config, { contextKeys: ['tenant:acme'] })).context).to.equal(
+        null
+      );
+    });
+
+    it('returns the bridge URL override of a signed session context', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme', 'https://acme.example.com/api/novu')]);
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: { tenant: 'acme' }, bridgeUrl: 'https://acme.example.com/api/novu' });
+    });
+
+    it('resolves the session contextKeys the same way connect-time context resolves', async () => {
+      const { resolver, channelConnectionRepository, channelEndpointRepository } = build([
+        makeContext('tenant', 'acme', undefined, { plan: 'pro' }),
+        makeContext('region', 'eu'),
+      ]);
+
+      const result = await resolver.resolve(
+        makeConfig(AgentPlatformEnum.WEB_CHAT),
+        { contextKeys: ['tenant:acme', 'region:eu'] },
+        'sub-1'
+      );
+
+      expect(result.context).to.deep.equal({ tenant: { id: 'acme', data: { plan: 'pro' } }, region: 'eu' });
+      expect(channelConnectionRepository.findOne.called).to.equal(false);
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+    });
+
+    it('returns an empty context when the session has no contextKeys', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme')]);
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+
+      expect((await resolver.resolve(config, { contextKeys: [] }, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, {}, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, undefined, 'sub-1')).context).to.equal(null);
     });
   });
 });

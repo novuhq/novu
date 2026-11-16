@@ -1,3 +1,24 @@
+## v3.20.0 (2026-11-16)
+
+### 🚀 Features
+
+- **dashboard:** run the workflow editor Copilot on the agent web-chat channel fixes NV-9137 ([#13010](https://github.com/novuhq/novu/pull/13010))
+- **js,react:** inbox micro-interactions and motion fixes NV-8847 ([#12712](https://github.com/novuhq/novu/pull/12712))
+- **js,react,nextjs:** improved rendering architecture fixes NV-8839 ([#12591](https://github.com/novuhq/novu/pull/12591))
+
+### 🩹 Fixes
+
+- **react:** host outlets under the component that owns them fixes NV-8839 ([#12708](https://github.com/novuhq/novu/pull/12708))
+
+### ❤️ Thank You
+
+- Claude Fable 5.1
+- Claude Opus 5.5
+- Claude Opus 5.5 (1M context)
+- Cursor @cursoragent
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
 ## v3.19.2 (2026-09-07)
 
 ### 🚀 Features

@@ -259,7 +259,7 @@ const ApiId = z.object({ _id: z.string() });
 export const ApiOrganization = data(ApiId.extend({ name: z.string() }));
 export const ApiUser = data(ApiId.extend({ email: z.string(), firstName: z.string(), lastName: z.string() }));
 export const ApiEnvironments = data(
-  z.array(ApiId.extend({ name: z.string(), apiKeys: z.array(z.object({ key: z.string() })) }))
+  z.array(ApiId.extend({ name: z.string(), identifier: z.string(), apiKeys: z.array(z.object({ key: z.string() })) }))
 );
 export const ApiEnvironment = data(ApiId);
 export const ApiCreated = data(ApiId);

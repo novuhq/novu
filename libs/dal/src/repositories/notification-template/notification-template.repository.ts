@@ -39,8 +39,7 @@ export class NotificationTemplateRepository extends BaseRepository<
         _environmentId: 1,
         isTranslationEnabled: 1,
       })
-      .populate('updatedBy', '_id firstName lastName externalId')
-      .populate('lastPublishedBy', '_id firstName lastName externalId');
+      .populate('updatedBy', '_id firstName lastName externalId email');
 
     return this.mapEntities(items);
   }
@@ -516,7 +515,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(query)
       .populate('steps.template')
       .populate('steps.variants.template')
-      .populate('updatedBy')
+      .populate('updatedBy', '_id firstName lastName externalId email')
       .lean();
 
     return this.mapEntities(items);

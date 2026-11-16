@@ -24,7 +24,7 @@ describe('registerControllerDecorators', () => {
     const firstDecorator = (): ClassDecorator => (target) => {
       Reflect.defineMetadata(firstKey, 'first', target);
 
-      return class extends (target as typeof NovuController) {};
+      return class extends (target as unknown as typeof NovuController) {} as unknown as typeof target;
     };
     const secondDecorator = (): ClassDecorator => (target) => {
       Reflect.defineMetadata(secondKey, 'second', target);

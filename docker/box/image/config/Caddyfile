@@ -5,8 +5,19 @@
 }
 
 # Everything the browser reaches, on the box's two addresses (<box> and <box>-api under box.novu-staging.co), routed
-# by path: either host reaches any of it.
+# by path: either host reaches any of it. The third, <box>-app, reaches only the playground's customer pages.
 :18080 {
+	# The playground (the bridge app) on its own origin, like a customer's app. Only these pages and their config:
+	# its other routes hold the secret key and the managed Claude key, or need what a box lacks (Firebase, SMTP).
+	@playground header_regexp Host ^[a-z0-9-]+-app\.box\.novu-staging\.co(:[0-9]+)?$
+	handle @playground {
+		@page path / /render-bell /render-notification /notification-item /notifications /hooks /novu-theme /custom-icons /custom-popover /custom-popover-icons /custom-subject-body /preferences /subscription /subscription-components /subscription-hooks /api/novu-config /_next/static/* /favicon.ico
+		handle @page {
+			reverse_proxy 127.0.0.1:4000
+		}
+		respond 404
+	}
+
 	@api path /v1/* /v2/* /.well-known/*
 	handle @api {
 		reverse_proxy 127.0.0.1:3000

@@ -1,7 +1,0 @@
-// Relaxed TS for Novu V0 e2e only (ts-node type-checks these files). V2 e2e uses swc-register.js, which compiles with SWC and does no type checking.
-{
-  "extends": "./tsconfig.spec.json",
-  "compilerOptions": {
-    "strictNullChecks": false
-  }
-}

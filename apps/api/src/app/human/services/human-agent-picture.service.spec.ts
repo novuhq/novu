@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { agentPictureUrl } from './agent-picture-url';
+import { agentPictureOrDefaultUrl, agentPictureUrl, mascotPictureUrl } from './agent-picture-url';
 import { AGENT_PICTURE_MAX_BYTES, detectPictureType, HumanAgentPictureService } from './human-agent-picture.service';
 
 const ENV = '69f84d848bed9b0a73216d98';
@@ -32,15 +32,17 @@ describe('HumanAgentPictureService', () => {
       cardNameFor: sinon.stub().resolves({ operatorName: 'Ada L.', operatorFirstName: 'Ada' }),
     };
     const logger = { setContext: sinon.stub(), warn: sinon.stub() };
+    const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(null) };
     const service = new HumanAgentPictureService(
       agentRepository as never,
       storageService as never,
       humanAgentIdentity as never,
       humanOperator as never,
+      agentInboxFeatures as never,
       logger as never
     );
 
-    return { service, agentRepository, storageService, humanAgentIdentity, humanOperator };
+    return { service, agentRepository, storageService, humanAgentIdentity, humanOperator, agentInboxFeatures };
   }
 
   it('names the operator as the agent’s card does when the agent is read', async () => {
@@ -109,7 +111,21 @@ describe('HumanAgentPictureService', () => {
 
     expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({ $unset: { picture: 1 } });
     expect(storageService.deleteFile.firstCall.args[0]).to.equal('old-key');
-    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1]).to.deep.equal({ picture: null });
+    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1]).to.deep.equal({ picture: null, mascot: null });
+  });
+
+  it('puts the mascot in the agent’s look on its bots once its picture is gone', async () => {
+    const { service, humanAgentIdentity, agentInboxFeatures } = setup({
+      picture: { storageKey: 'old-key', contentType: 'image/png', version: 'v0' },
+    });
+    agentInboxFeatures.mascotLookOf.resolves({ shape: 'drop', color: 'coral' });
+
+    await service.remove(scope);
+
+    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1]).to.deep.equal({
+      picture: null,
+      mascot: { shape: 'drop', color: 'coral' },
+    });
   });
 
   it('serves a picture only at its current address', async () => {
@@ -170,6 +186,28 @@ describe('agentPictureUrl', () => {
 
   it('has no address for an agent without a picture', () => {
     expect(agentPictureUrl({ _id: AGENT, _environmentId: ENV })).to.equal(undefined);
+  });
+
+  it('stands the mascot in for an agent without a picture: in its look, else the default picture', () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md/';
+    const bare = { _id: AGENT, _environmentId: ENV };
+
+    expect(agentPictureOrDefaultUrl(bare)).to.equal('https://www.agentinbox.md/brand/agent-avatar.png');
+    expect(agentPictureOrDefaultUrl(bare, null)).to.equal('https://www.agentinbox.md/brand/agent-avatar.png');
+    expect(agentPictureOrDefaultUrl(bare, { shape: 'peek', color: 'bone' })).to.equal(
+      'https://www.agentinbox.md/brand/mascot/peek-bone.png'
+    );
+    expect(mascotPictureUrl({ shape: 'peek', color: 'bone' }, 'jpg')).to.equal(
+      'https://www.agentinbox.md/brand/mascot/peek-bone.jpg'
+    );
+  });
+
+  it('keeps the picture of an agent that has one, whatever its look', () => {
+    process.env.HUMAN_DASHBOARD_URL = 'https://www.agentinbox.md/';
+
+    expect(agentPictureOrDefaultUrl(agent, { shape: 'peek', color: 'bone' })).to.equal(
+      `https://www.agentinbox.md/api/v1/agent-pictures/${ENV}/${AGENT}/v1`
+    );
   });
 });
 

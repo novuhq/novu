@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import { RiCheckLine, RiErrorWarningLine, RiSendPlaneFill, RiSmartphoneLine } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { patchSubscriber } from '@/api/subscribers';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';

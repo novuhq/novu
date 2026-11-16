@@ -8,7 +8,8 @@ import {
 
 export type WorkflowRunsUsageState = 'within_included' | 'billed_on_demand' | 'paused';
 
-export type PausedUsagePlan = 'free' | 'paid';
+/** `trial` (the capped Pro trial) hard-stops at its trial cap like `free`, but has no overages and cannot edit limits. */
+export type PausedUsagePlan = 'free' | 'trial' | 'paid';
 
 export type WorkflowRunsUsage = {
   /** Measured against the usage-alert allowance override while it is set, like `max`. */
@@ -16,6 +17,8 @@ export type WorkflowRunsUsage = {
   current: number;
   /** The plan's included runs, even under the allowance override, since pausing and billing still follow them. */
   included: number;
+  /** The allowance the footer labels as included: the trial cap on a capped trial, otherwise `included`. */
+  displayedIncluded: number;
   onDemandLimit: number | null;
   /**
    * The usage limit, or the included runs when no limit is set. Under the usage-alert allowance override, the
@@ -48,7 +51,7 @@ export type UsageLimitsPlan = {
   billingInterval: 'month' | 'year';
 };
 
-type SubscriptionUsage = Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events'>;
+type SubscriptionUsage = Pick<GetSubscriptionDto, 'apiServiceLevel' | 'events' | 'trial' | 'usageLimits'>;
 
 /** Unmetered or still-loading subscriptions have no `included`, so fall back to the plan's tier allowance for display. */
 export function getIncludedWorkflowRuns(subscription: SubscriptionUsage | undefined): number {
@@ -124,9 +127,36 @@ export function isNearingOverageLimit(view: Pick<UsageLimitsView, 'usage' | 'set
   return usage.current - usage.included >= onDemandLimit * OVERAGE_WARNING_RATIO;
 }
 
-function getPausedUsagePlan({ apiServiceLevel, events }: SubscriptionUsage): PausedUsagePlan | null {
+/**
+ * Only the Pro trial is capped, and the backend is the only source for it: it reports a capped trial as Pro with
+ * limits that cannot be configured. Stripe's `trial.isActive` is not evidence, since a paying Pro customer whose
+ * subscription is put into `trialing` stays configurable. A Team trial is uncapped and follows the Team plan's limits.
+ */
+export function isCappedTrial({
+  apiServiceLevel,
+  usageLimits,
+}: Pick<SubscriptionUsage, 'apiServiceLevel' | 'usageLimits'>): boolean {
+  return apiServiceLevel === ApiServiceLevelEnum.PRO && usageLimits?.isConfigurable === false;
+}
+
+/** The allowance labelled as included: the trial cap on a capped trial, otherwise the plan's included runs. */
+export function getDisplayedIncludedWorkflowRuns(subscription: SubscriptionUsage | undefined): number {
+  if (subscription && isCappedTrial(subscription)) {
+    return getWorkflowRunsMax(subscription);
+  }
+
+  return getIncludedWorkflowRuns(subscription);
+}
+
+function getPausedUsagePlan(subscription: SubscriptionUsage): PausedUsagePlan | null {
+  const { apiServiceLevel, events } = subscription;
+
   if (!events.isPaused) {
     return null;
+  }
+
+  if (isCappedTrial(subscription)) {
+    return 'trial';
   }
 
   switch (apiServiceLevel) {
@@ -178,12 +208,14 @@ export function getUsageLimitsView(
       : Math.floor(allowanceOverride);
   const { onDemandLimit } = usageLimits.settings.workflowRuns;
   const meter = getWorkflowRunsMeter(subscription, onDemandLimit, measuredOverride);
+  const included = getIncludedWorkflowRuns(subscription);
 
   return {
     usage: {
       state: getWorkflowRunsUsageState(subscription, meter.onDemandFrom),
       current: subscription.events.current,
-      included: getIncludedWorkflowRuns(subscription),
+      included,
+      displayedIncluded: getDisplayedIncludedWorkflowRuns(subscription),
       onDemandLimit,
       max: meter.max,
       allowanceOverride: measuredOverride,

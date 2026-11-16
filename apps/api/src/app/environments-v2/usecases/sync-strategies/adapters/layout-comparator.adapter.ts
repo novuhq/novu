@@ -9,6 +9,10 @@ import { LayoutComparator } from '../comparators/layout.comparator';
 export class LayoutComparatorAdapter implements IBaseComparator<LayoutEntity> {
   constructor(private readonly layoutComparator: LayoutComparator) {}
 
+  async snapshotNewResource(layout: LayoutEntity): Promise<Record<string, unknown> | null> {
+    return await this.layoutComparator.snapshotLayout(layout);
+  }
+
   async compareResources(
     sourceResource: LayoutEntity,
     targetResource: LayoutEntity,

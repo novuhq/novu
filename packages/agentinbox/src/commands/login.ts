@@ -1,13 +1,15 @@
 import { hostname } from 'node:os';
 import pc from 'picocolors';
+import { lookToKeep, savedLook } from '../agent-look';
 import { type ApiClient, createApiClient } from '../api/client';
 import {
   checkLoginRequest,
-  findOperator,
   getKeylessClaimToken,
   hasSubscriber,
   type LoginRequest,
   type LoginRequestStatus,
+  type OperatorAnswer,
+  readOperator,
   startLoginRequest,
 } from '../api/login';
 import { info, success } from '../cli-io';
@@ -52,7 +54,7 @@ const MACHINE_NAME_MAX_LENGTH = 64;
 const MAX_WAIT_MS = 60 * 60 * 1000;
 
 export async function loginCommand(options: LoginOptions): Promise<never> {
-  const screen = await openScreen({ command: 'login' });
+  const screen = await openScreen({ command: 'login', look: savedLook({ apiUrl: options.apiUrl }) });
 
   try {
     const result = await runLogin(options);
@@ -120,19 +122,28 @@ export async function runLogin(options: LoginOptions): Promise<LoginResult> {
   // Who agents on this computer reach by default is the contact the account has for its owner, so "you" is
   // one person here, on the dashboard and on any other computer. The key is handed over only once, so a
   // failed lookup must not fail the login.
-  const operatorId = await findOperator(client).catch(() => undefined);
+  const operator = await readOperator(client).catch((): OperatorAnswer => ({}));
+  const operatorId = operator.subscriberId || undefined;
   const keptSetup = await isStillYou(client, savedId, operatorId);
+  const auth: CliConfig['auth'] = { mode: 'apiKey', secretKey: approved.apiKey };
+  const relayAgentIdentifier = current?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER;
+  // The account answers for the agent it sets up by default, which is the one this computer acts as unless
+  // `setup --agent-identifier` named another.
+  const answeredLook = relayAgentIdentifier === DEFAULT_RELAY_AGENT_IDENTIFIER ? operator.agentLook : undefined;
 
   const config: CliConfig = {
     apiUrl,
-    auth: { mode: 'apiKey', secretKey: approved.apiKey },
-    relayAgentIdentifier: current?.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER,
+    auth,
+    relayAgentIdentifier,
     // The default channel saved here is that contact's own preference, so it only stays with them.
     ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
     ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
     ...keptHost(existing, apiUrl),
+    ...lookToKeep({ apiUrl, auth, relayAgentIdentifier }, existing, answeredLook),
   };
   saveConfig(config);
+  // The account's agent is known now, so the mascot is its own; an account with none yet keeps the orb.
+  openedScreen()?.look(config.look);
 
   return { config, email: approved.user?.email ?? undefined, keptSetup };
 }

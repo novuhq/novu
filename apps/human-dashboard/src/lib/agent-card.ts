@@ -29,3 +29,17 @@ export function formatIssuedDate(iso: string, timeZone?: string): string | null 
 
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone });
 }
+
+/**
+ * The agent's number on the new card (`No. 0482`): four digits from its address, so the same agent has the same
+ * number wherever its card is shown.
+ */
+export function cardSerialOf(handle: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < handle.length; index += 1) {
+    hash ^= handle.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return String((hash >>> 0) % 10_000).padStart(4, '0');
+}

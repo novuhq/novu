@@ -163,6 +163,7 @@ export class InboxController {
   async sessionInitialize(
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string,
+    @Headers('novu-client-version') clientVersion: string,
     @Req() request: Request
   ): Promise<SubscriberSessionResponseDto> {
     return await this.initializeSessionUsecase.execute(
@@ -170,6 +171,7 @@ export class InboxController {
         requestData: body,
         origin,
         clientIp: getClientIp(request) ?? undefined,
+        clientVersion,
       })
     );
   }
@@ -186,6 +188,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         contextKeys: subscriberSession.contextKeys,
+        subscriber: subscriberSession,
         limit: query.limit,
         offset: query.offset,
         after: query.after,
@@ -215,6 +218,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         contextKeys: subscriberSession.contextKeys,
         filters: query.filters,
+        subscriber: subscriberSession,
       })
     );
 

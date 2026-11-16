@@ -34,40 +34,36 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
 
   switch (event.type) {
     case 'run-start':
-      return { ...state, isRunning: true, error: undefined };
+      return { ...state, isRunning: true, openRunIds: [...state.openRunIds, envelope.runId], error: undefined };
 
     case 'run-finish':
-      return finalizeOpenStreamingParts({
-        ...state,
-        isRunning: false,
-        activeAssistantMessageId: undefined,
-        error: undefined,
-      });
-
     case 'run-error':
-      return finalizeOpenStreamingParts({
-        ...state,
-        isRunning: false,
-        activeAssistantMessageId: undefined,
-        error: { message: event.message, code: event.code },
-      });
+      return applyRunEnd(state, envelope);
 
     case 'resolve':
       return { ...state, status: 'resolved' };
 
-    case 'message-start':
-      return clearTyping(
-        withAssistantMessage(state, envelope, event.messageId, (message) => ({
-          ...message,
-          parts: [...message.parts, createStreamingTextPart('')],
-        }))
-      );
+    case 'message-start': {
+      const next = withAssistantMessage(state, envelope, event.messageId, (message) => ({
+        ...message,
+        parts: [...message.parts, createStreamingTextPart('')],
+      }));
 
-    case 'message-delta':
-      return withAssistantMessage(state, envelope, event.messageId, (message) => ({
+      return clearTyping(adoptStoppedReply(state, next, event.messageId));
+    }
+
+    case 'message-delta': {
+      if (isClosedByRunEnd(state, event.messageId)) {
+        return state;
+      }
+
+      const next = withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,
         parts: appendToStreamingTextPart(message.parts, event.delta),
       }));
+
+      return adoptStoppedReply(state, next, event.messageId);
+    }
 
     case 'message-end':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
@@ -83,7 +79,8 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
       }));
 
       if (event.role === 'assistant') {
-        return clearTyping(next);
+        // A card is never the partial reply of a stopped run.
+        return clearTyping('markdown' in event.content ? adoptStoppedReply(state, next, event.messageId) : next);
       }
 
       return next;
@@ -239,6 +236,55 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     default:
       return state;
   }
+}
+
+/** A `run-finish` or `run-error`. The timeline settles once no later run is still open. */
+function applyRunEnd(state: AgentConversationState, envelope: AgentEventEnvelope): AgentConversationState {
+  const { event } = envelope;
+  const openRunIds = closeRun(state, envelope.runId);
+  const error = event.type === 'run-error' ? { message: event.message, code: event.code } : undefined;
+  const isAborted = event.type === 'run-finish' && event.outcome === 'aborted';
+  // A later run is still going (the turn after a stop can overlap `onAbort`'s run), and its reply still streams.
+  if (openRunIds.length) {
+    const stillRunning = { ...state, openRunIds, error };
+    // A turn stopped before its run started still gets its mark, without taking over the open run's message.
+    if (isAborted && !state.openRunIds.includes(envelope.runId)) {
+      const messageId = `${envelope.runId}_stopped`;
+
+      return {
+        ...markStopped(
+          withAssistantMessage(stillRunning, envelope, messageId, (message) => message),
+          messageId
+        ),
+        activeAssistantMessageId: state.activeAssistantMessageId,
+      };
+    }
+
+    return stillRunning;
+  }
+
+  const finished = finalizeOpenStreamingParts({
+    ...state,
+    isRunning: false,
+    openRunIds,
+    activeAssistantMessageId: undefined,
+    error,
+  });
+
+  if (!isAborted) {
+    return finished;
+  }
+
+  // A run stopped before it wrote anything gets an empty assistant message to carry the mark, live and on replay.
+  const messageId = state.activeAssistantMessageId ?? `${envelope.runId}_stopped`;
+
+  return {
+    ...markStopped(
+      withAssistantMessage(finished, envelope, messageId, (message) => message),
+      messageId
+    ),
+    activeAssistantMessageId: undefined,
+  };
 }
 
 function withMessage(
@@ -608,6 +654,88 @@ function clearTyping(state: AgentConversationState): AgentConversationState {
   return {
     ...state,
     typing: undefined,
+  };
+}
+
+/**
+ * A stopped run's `run-finish` can reach the timeline before the tail of its partial reply: Novu ends the live reply
+ * once it notices the stop, so the preview can open after the finish, and the saved message follows it. Live
+ * envelopes of a reply carry no run id to match them with the run, so the reply is recognised by position: a text
+ * message that first appears while no run is active, right behind the message the finish flagged. The mark moves
+ * onto it, so "Stopped" reads below the text, on live and replayed timelines alike. An empty placeholder the finish
+ * added for want of a message is dropped.
+ *
+ * A reply that follows a stop is also closed to the run's active message: it must not catch the next run's events.
+ */
+function adoptStoppedReply(
+  previous: AgentConversationState,
+  next: AgentConversationState,
+  messageId: string
+): AgentConversationState {
+  const holder = findStopMarkHolder(previous);
+  let adopted = next;
+
+  if (holder && !findAssistantMessage(previous, messageId)) {
+    adopted = {
+      ...next,
+      messages: next.messages.flatMap((message) => {
+        if (message.id === messageId) {
+          return [{ ...message, stopped: true }];
+        }
+
+        if (message.id !== holder.id) {
+          return [message];
+        }
+
+        return message.parts.length ? [{ ...message, stopped: undefined }] : [];
+      }),
+    };
+  }
+
+  return !adopted.isRunning && findAssistantMessage(adopted, messageId)?.stopped
+    ? { ...adopted, activeAssistantMessageId: undefined }
+    : adopted;
+}
+
+function findAssistantMessage(state: AgentConversationState, messageId: string): AgentMessage | undefined {
+  return state.messages.find((message) => message.role === 'assistant' && message.id === messageId);
+}
+
+/** The message a stop flagged, while no run is active, nothing came after it and the client has not acted since. */
+function findStopMarkHolder(state: AgentConversationState): AgentMessage | undefined {
+  const last = state.messages[state.messages.length - 1];
+
+  return !state.isRunning && !state.hasActedSinceStop && last?.role === 'assistant' && last.stopped ? last : undefined;
+}
+
+/**
+ * The runs still open once `runId` ends. The server only ever treats the latest run to start as open, so a run that
+ * ends also closes the ones that started before it: one that never reported its end must not keep the conversation
+ * running. A run whose start never reached the timeline closes none.
+ */
+function closeRun({ openRunIds }: AgentConversationState, runId: string): string[] {
+  return openRunIds.slice(openRunIds.indexOf(runId) + 1);
+}
+
+/**
+ * A live delta published after the run ended, for a message whose text it already closed. A stop does not reach
+ * the live reader at once, so the preview keeps streaming for a moment past the aborted `run-finish`. The saved
+ * message carries the whole text: a delta must not reopen the closed part, or the text shows twice.
+ */
+function isClosedByRunEnd(state: AgentConversationState, messageId: string): boolean {
+  const message = findAssistantMessage(state, messageId);
+
+  return !state.isRunning && message !== undefined && findStreamingTextPartIndex(message.parts) < 0;
+}
+
+/** Flag the run's last assistant message as stopped. Until the client acts, the run's late reply can take the mark. */
+function markStopped(state: AgentConversationState, messageId: string): AgentConversationState {
+  return {
+    ...state,
+    hasActedSinceStop: false,
+    messages: state.messages.map((message) =>
+      message.id === messageId && message.role === 'assistant' ? { ...message, stopped: true } : message
+    ),
   };
 }
 

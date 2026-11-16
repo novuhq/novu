@@ -63,7 +63,9 @@ export class PatchWorkflowUsecase {
       eventType: WebhookEventEnum.WORKFLOW_UPDATED,
       objectType: WebhookObjectTypeEnum.WORKFLOW,
       payload: {
+        // biome-ignore lint/plugin: webhook payloads carry the workflow DTO as a loose JSON object
         object: updatedWorkflow as unknown as Record<string, unknown>,
+        // biome-ignore lint/plugin: webhook payloads carry the workflow DTO as a loose JSON object
         previousObject: persistedWorkflow as unknown as Record<string, unknown>,
       },
       organizationId: command.user.organizationId,
@@ -94,12 +96,14 @@ export class PatchWorkflowUsecase {
 
       const controlSchemas = resolveStepControlSchemas({
         stepType: step.template.type,
+        // biome-ignore lint/style/noNonNullAssertion: a persisted workflow has an origin before its step issues are rebuilt
         workflowOrigin: workflow.origin!,
         existingControls: step.template?.controls,
         stepResolverHash: step.template?.stepResolverHash,
       });
 
       const stepIssues = await this.buildStepIssuesUsecase.execute({
+        // biome-ignore lint/style/noNonNullAssertion: a persisted workflow has an origin before its step issues are rebuilt
         workflowOrigin: workflow.origin!,
         user: userSessionData,
         stepInternalId: step._templateId,
@@ -152,6 +156,7 @@ export class PatchWorkflowUsecase {
       },
       {
         ...workflowWithIssues,
+        _updatedBy: userSessionData._id,
       }
     );
   }

@@ -23,22 +23,25 @@ import {
 import { apiError, workflowResult } from "../utils/workflow-results";
 import {
 	createPropertyPathSchema,
-	createSkipConditionSchema,
 	createWorkflowSourceInputSchema,
+	describeStepControlValues,
 	MAX_DESCRIPTION_LENGTH,
 	MAX_NAME_LENGTH,
 	MAX_TAG_ELEMENTS,
 	MAX_TAG_LENGTH,
-	payloadPropertySchema,
+	payloadPropertyInputSchema,
 	severitySchema,
+	skipConditionInputSchema,
+	stepTypeSchema,
 	type WorkflowStep,
-	workflowStepContentSchema,
-	workflowStepSchema,
+	workflowStepContentInputSchema,
+	workflowStepInputSchema,
 } from "../utils/workflow-schemas";
 import { WorkflowValidationUtils } from "../utils/workflow-validation";
 
 export const WORKFLOW_STEP_TOOL_NAMES = {
 	ADD_STEP: "add_workflow_step",
+	GET_STEP_SCHEMA: "get_step_schema",
 	INSERT_STEP: "insert_workflow_step",
 	MOVE_STEP: "move_workflow_step",
 	REMOVE_STEP: "remove_workflow_step",
@@ -51,12 +54,15 @@ export const WORKFLOW_STEP_TOOL_NAMES = {
 const PAYLOAD_SCHEMA_REMINDER =
 	"The payload schema is never inferred from the step: declare the payload variables it reads that the schema lacks (orderId for {{payload.orderId}}) in addPayloadProperties to save them with the step, or call update_workflow_payload_schema afterwards.";
 
+export const STEP_SCHEMA_HINT =
+	"The controlValues field lists each step type's keys; get_step_schema returns a type's full schema and a valid example.";
+
 const workflowIdField = z
 	.string()
 	.describe("The workflow to change: its workflowId (slug) or _id, from get_workflows.");
 
 const addPayloadPropertiesField = z
-	.array(payloadPropertySchema)
+	.array(payloadPropertyInputSchema)
 	.optional()
 	.describe(
 		"Payload properties to add to the workflow's payload schema, or replace in it, in the same save, as update_workflow_payload_schema's addProperties does. Payload validation is turned on while the schema has properties. Omit to leave the payload schema as it is.",
@@ -66,7 +72,7 @@ function createNewStepFields() {
 	return {
 		__source: createWorkflowSourceInputSchema(),
 		addPayloadProperties: addPayloadPropertiesField,
-		step: workflowStepSchema.describe("The step to add, discriminated by `type`."),
+		step: workflowStepInputSchema.describe("The step to add."),
 		stepId: z
 			.string()
 			.optional()
@@ -90,8 +96,23 @@ interface MutationInput {
 }
 
 export function registerWorkflowStepTools(server: McpServer, accessors: ToolAccessors) {
+	// Static data: no Novu API call, so no credential, environmentId or idempotencyKey.
+	server.registerTool(
+		WORKFLOW_STEP_TOOL_NAMES.GET_STEP_SCHEMA,
+		{
+			annotations: { destructiveHint: false, openWorldHint: false, readOnlyHint: true },
+			description:
+				'Get the full JSON Schema of one step type\'s controlValues, with a valid example and, for email, how to build a Maily block body. Call it before writing an email with editorType "block", or when a step tool rejects controlValues. Read-only; calls no API.',
+			inputSchema: { stepType: stepTypeSchema.describe('Step type, e.g. "email".') },
+			title: "Get step schema",
+		},
+		async ({ stepType }) => ({
+			content: [{ text: describeStepControlValues(stepType), type: "text" }],
+		}),
+	);
+
 	ToolFactory.createTool(server, accessors, {
-		description: `Append a step to the end of an existing workflow. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Append a step to the end of an existing workflow. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${STEP_SCHEMA_HINT} ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				if (input.stepId && findStepIndex(request, input.stepId, workflow) !== -1) {
@@ -111,7 +132,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Insert a step into an existing workflow immediately after the step afterStepId. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Insert a step into an existing workflow immediately after the step afterStepId. Returns the saved workflow. Pass stepId to make retries safe: if a step with that stepId already exists, the workflow is returned unchanged. ${STEP_SCHEMA_HINT} ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				if (input.stepId && findStepIndex(request, input.stepId, workflow) !== -1) {
@@ -142,7 +163,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Replace the content (control values) of one existing step. content.type must match the step's type. The step's name, id and skip conditions are kept; use update_workflow_step_conditions to change conditions. Any other control value you leave out is cleared, so send the step's current values along with your change. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Replace the content (control values) of one existing step. content.type must match the step's type; edit trigger and custom steps with update_workflow. The step's name, id and skip condition are kept and a skip in content is ignored; use update_workflow_step_conditions to change it. Any other control value you leave out is cleared, so send the step's current values along with your change; get_workflow returns a block email body as a JSON string, so send it back parsed, as an object. Returns the saved workflow. ${STEP_SCHEMA_HINT} ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(request, workflow, input.stepId, { editable: true });
@@ -179,8 +200,8 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
 			addPayloadProperties: addPayloadPropertiesField,
-			content: workflowStepContentSchema.describe(
-				"New control values, discriminated by the step `type`.",
+			content: workflowStepContentInputSchema.describe(
+				"New control values for the step's type.",
 			),
 			stepId: z.string().describe("stepId of the step to edit."),
 			workflowId: workflowIdField,
@@ -188,7 +209,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 	});
 
 	ToolFactory.createTool(server, accessors, {
-		description: `Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip to remove the condition. The step's content is kept. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
+		description: `Set or clear the skip condition of one step (e.g. only send when the subscriber is offline). Omit skip or pass null to remove the condition. The step's content is kept. Returns the saved workflow. ${PAYLOAD_SCHEMA_REMINDER}`,
 		handler: async (input, context) =>
 			mutateWorkflow(context, input, (request, workflow) => {
 				const located = locateStep(request, workflow, input.stepId, { editable: true });
@@ -208,7 +229,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
 			addPayloadProperties: addPayloadPropertiesField,
-			skip: createSkipConditionSchema(),
+			skip: skipConditionInputSchema,
 			stepId: z.string().describe("stepId of the step to update."),
 			workflowId: workflowIdField,
 		}),
@@ -279,7 +300,7 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 		schema: z.object({
 			__source: createWorkflowSourceInputSchema(),
 			addProperties: z
-				.array(payloadPropertySchema)
+				.array(payloadPropertyInputSchema)
 				.optional()
 				.describe("Properties to add or replace."),
 			removeProperties: z

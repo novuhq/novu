@@ -21,44 +21,65 @@ function createSignedRequest(payload: EmailWebhookPayload): Request {
   });
 }
 
+async function receiveInboundEmail(payload: Partial<EmailWebhookPayload> = {}) {
+  const processMessage = sinon.stub();
+  const adapter = createNovuEmailAdapter({
+    signingSecret: SIGNING_SECRET,
+    sendEmail: sinon.stub(),
+    stripAgentReplyToken: (address) => address,
+  });
+  const state = {
+    set: sinon.stub().resolves(),
+    appendToList: sinon.stub().resolves(),
+    setIfNotExists: sinon.stub().resolves(),
+  };
+  await adapter.initialize({
+    getState: () => state,
+    processMessage,
+  } as never);
+
+  if (!adapter.handleWebhook) {
+    throw new Error('Email adapter must support webhooks');
+  }
+
+  const response = await adapter.handleWebhook(
+    createSignedRequest({
+      messageId: 'inbound-message@example.com',
+      from: { address: 'person@example.com', name: 'Person' },
+      to: [{ address: 'agent@example.com' }],
+      subject: 'Agent reply',
+      text: 'Hello',
+      date: new Date().toISOString(),
+      ...payload,
+    })
+  );
+
+  return { response, processMessage };
+}
+
 describe('agent email adapter', () => {
   it('preserves the resolved thread ID on messages passed to Chat processing', async () => {
-    const processMessage = sinon.stub();
-    const adapter = createNovuEmailAdapter({
-      signingSecret: SIGNING_SECRET,
-      sendEmail: sinon.stub(),
-      stripAgentReplyToken: (address) => address,
-    });
-    const state = {
-      set: sinon.stub().resolves(),
-      appendToList: sinon.stub().resolves(),
-      setIfNotExists: sinon.stub().resolves(),
-    };
-    await adapter.initialize({
-      getState: () => state,
-      processMessage,
-    } as never);
-
-    if (!adapter.handleWebhook) {
-      throw new Error('Email adapter must support webhooks');
-    }
-
-    const response = await adapter.handleWebhook(
-      createSignedRequest({
-        messageId: 'inbound-message@example.com',
-        from: { address: 'person@example.com', name: 'Person' },
-        to: [{ address: 'agent@example.com' }],
-        subject: 'Agent reply',
-        text: 'Hello',
-        date: new Date().toISOString(),
-      })
-    );
+    const { response, processMessage } = await receiveInboundEmail();
 
     expect(response.status).to.equal(200);
     expect(processMessage.calledOnce).to.equal(true);
     const [, threadId, message] = processMessage.firstCall.args;
     expect(threadId).to.match(/^email:person%40example\.com:/);
     expect(message.threadId).to.equal(threadId);
+  });
+
+  it('keeps the DKIM/SPF verdicts, and the domains they vouch for, on message.raw', async () => {
+    // The agent runtime reads these to decide whether to trust the From address.
+    const { processMessage } = await receiveInboundEmail({
+      dkim: 'pass',
+      spf: 'pass',
+      dkimDomains: ['example.com'],
+      spfDomain: 'em123.example.com',
+    });
+
+    const [, , message] = processMessage.firstCall.args;
+    expect(message.raw).to.include({ dkim: 'pass', spf: 'pass', spfDomain: 'em123.example.com' });
+    expect(message.raw.dkimDomains).to.deep.equal(['example.com']);
   });
 
   describe('agent-opened threads (openDM → postMessage)', () => {

@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import axios, { AxiosInstance } from 'axios';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
-import * as photonWebhookClient from '../shared/photon-webhook-client';
 import { RemovePhotonWebhooksCommand } from './remove-photon-webhooks.command';
 import { RemovePhotonWebhooks } from './remove-photon-webhooks.usecase';
 
@@ -12,6 +12,10 @@ const AGENT_ID = 'agent-mongo-id';
 const INTEGRATION_IDENTIFIER = 'photon-int';
 const STALE_NOVU_WEBHOOK_URL = 'https://other-env.example.com/v1/agents/other-agent/webhook/other-integration';
 const THIRD_PARTY_WEBHOOK_URL = 'https://third-party-service.example.com/photon-webhook';
+
+function photonResponse(data: unknown) {
+  return { data: { succeed: true, data } };
+}
 
 function buildCommand(webhookUrls: string[]) {
   return RemovePhotonWebhooksCommand.create({
@@ -32,7 +36,8 @@ describe('RemovePhotonWebhooks usecase', () => {
   let integrationRepository: { findOne: sinon.SinonStub };
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
-  let deleteStub: sinon.SinonStub;
+  let createClientStub: sinon.SinonStub;
+  let photonApi: { get: sinon.SinonStub; delete: sinon.SinonStub };
 
   function buildUsecase() {
     return new RemovePhotonWebhooks(
@@ -65,11 +70,16 @@ describe('RemovePhotonWebhooks usecase', () => {
       warn: stub(),
     };
 
-    stub(photonWebhookClient, 'listPhotonWebhooks').resolves([
-      { id: 'stale-id', webhookUrl: STALE_NOVU_WEBHOOK_URL },
-      { id: 'third-party-id', webhookUrl: THIRD_PARTY_WEBHOOK_URL },
-    ]);
-    deleteStub = stub(photonWebhookClient, 'deletePhotonWebhooks').resolves();
+    photonApi = {
+      get: stub().resolves(
+        photonResponse([
+          { id: 'stale-id', webhookUrl: STALE_NOVU_WEBHOOK_URL },
+          { id: 'third-party-id', webhookUrl: THIRD_PARTY_WEBHOOK_URL },
+        ])
+      ),
+      delete: stub().resolves(photonResponse(null)),
+    };
+    createClientStub = stub(axios, 'create').returns(photonApi as unknown as AxiosInstance);
   });
 
   afterEach(() => {
@@ -84,7 +94,7 @@ describe('RemovePhotonWebhooks usecase', () => {
 
     expect(result.success).to.equal(false);
     expect(result.removedWebhookUrls).to.deep.equal([]);
-    expect(deleteStub.called).to.equal(false);
+    expect(photonApi.delete.called).to.equal(false);
   });
 
   it('resolves supplied URLs to webhook ids and removes them', async () => {
@@ -93,12 +103,13 @@ describe('RemovePhotonWebhooks usecase', () => {
     expect(result.success).to.equal(true);
     expect(result.removedWebhookUrls).to.deep.equal([STALE_NOVU_WEBHOOK_URL]);
     expect(
-      deleteStub.calledOnceWith({ projectId: 'project-id', projectSecret: 'project-secret' }, ['stale-id'])
+      createClientStub.alwaysCalledWithMatch({ auth: { username: 'project-id', password: 'project-secret' } })
     ).to.equal(true);
+    expect(photonApi.delete.calledOnceWith('/webhooks/stale-id')).to.equal(true);
   });
 
   it('returns a failure message when Photon rejects the deletion', async () => {
-    deleteStub.rejects(new Error('boom'));
+    photonApi.delete.rejects(new Error('boom'));
 
     const result = await buildUsecase().execute(buildCommand([STALE_NOVU_WEBHOOK_URL]));
 

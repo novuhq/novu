@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { User } from '@clerk/nextjs/server';
-
+import { loadFeatures } from './feature-flags';
 import { hostLiveness } from './host-status';
 import type { HumanAccount } from './human-account';
 import { getRelayAgent } from './human-agent-api';
@@ -24,10 +24,11 @@ export async function loadOwnShareImage(account: HumanAccount, user: User): Prom
     return null;
   }
 
-  const [{ rows, telegramSetup, slackSetup }, hostStatus, origin] = await Promise.all([
+  const [{ rows, telegramSetup, slackSetup }, hostStatus, origin, features] = await Promise.all([
     loadChannelsOverview(account),
     loadHostStatus(account),
     readSiteOrigin(),
+    loadFeatures(account),
   ]);
 
   // As the Configure page reads them for its card.
@@ -52,6 +53,8 @@ export async function loadOwnShareImage(account: HumanAccount, user: User): Prom
     telegram: connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null,
     host: { connected: hostConnected },
     slack: connected('slack') ? slackNames || 'Connected' : null,
+    look: agent.look,
+    newCard: features.newOnboarding,
   };
 }
 
@@ -68,5 +71,7 @@ export function publicShareImage(card: PublicAgentCard): ShareImageCard {
     operatorFirstName: card.operatorFirstName,
     state: card.status,
     telegram: card.telegramBot ? { bot: card.telegramBot } : null,
+    look: card.look,
+    newCard: card.newCard,
   };
 }

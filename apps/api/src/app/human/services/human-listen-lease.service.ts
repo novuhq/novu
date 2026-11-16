@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { type AgentListening, AgentRepository } from '@novu/dal';
 import { agentPausedError } from '../../agents/human-relay/agent-paused.error';
 import type { ListeningDto, ListenLeaseResponseDto, ListenLeaseStatusResponseDto } from '../dtos/human-listen.dto';
+import { agentLookOf } from './agent-look';
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
 
 /** A lease lapses this long after its last renewal: a computer that went quiet stops keeping the agent listening. */
@@ -74,11 +75,18 @@ export class HumanListenLeaseService {
     return liveListening(stored?.listening, new Date());
   }
 
-  /** Where the agent is listening now, and whether the operator paused it, in one look: what `listen status` shows. */
+  /**
+   * Where the agent is listening now, and whether the operator paused it, in one look: what `listen status` shows.
+   * The agent's look goes along, for the mascot on the screen of `agentinbox listen`, which asks here first.
+   */
   async status(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>): Promise<ListenLeaseStatusResponseDto> {
-    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['listening', 'pausedAt']);
+    const stored = await this.agentRepository.findOne(agentQuery(scope, agent._id), ['listening', 'pausedAt', 'look']);
 
-    return { listening: liveListening(stored?.listening, new Date()), paused: Boolean(stored?.pausedAt) };
+    return {
+      listening: liveListening(stored?.listening, new Date()),
+      paused: Boolean(stored?.pausedAt),
+      look: agentLookOf(stored ?? {}),
+    };
   }
 
   /** Lets go of the lease when `holder` holds it. Says whether it held a live one. */

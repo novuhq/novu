@@ -14,6 +14,8 @@ import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
+  FREE_TIER_LEGACY_MAX_WORKFLOWS,
+  FREE_TIER_MAX_WORKFLOWS,
   getFeatureForTierAsNumber,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -48,9 +50,12 @@ export const SYSTEM_LIMITS = {
   CUSTOM_EMAIL_DOMAINS: 50,
 } as const;
 
-/* The threshold below which validation is skipped */
+/*
+ * The threshold below which validation is skipped.
+ * WORKFLOWS stays at the free-tier cap so creates below that count cannot skip it.
+ */
 export const MIN_VALIDATION_LIMITS = {
-  WORKFLOWS: 20,
+  WORKFLOWS: FREE_TIER_MAX_WORKFLOWS,
   LAYOUTS: 1,
   STEPS_PER_WORKFLOW: 20,
   DEFER_DURATION_MS: DAY_IN_MS,
@@ -104,50 +109,56 @@ export class ResourceValidatorService {
 
     const environment = await this.getEnvironment(environmentId);
     const organization = await this.getOrganization(environment._organizationId);
-    const maxWorkflowLimit = await this.getWorkflowLimit(environment, organization);
+    const tierLimitOverride = await this.getWorkflowTierLimitOverride(environment, organization);
 
-    if (workflowsCount >= maxWorkflowLimit) {
-      throw new BadRequestException({
-        message: 'Workflow limit exceeded. Please contact us to support more workflows.',
+    const { limit, limitSource } = await resolveTierLimit({
+      featureFlagsService: this.featureFlagService,
+      flagKey: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
+      systemDefault: SYSTEM_LIMITS.WORKFLOWS,
+      featureName: FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
+      organizationId: organization._id,
+      apiServiceLevel: organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      environment,
+      organization,
+      tierLimitOverride,
+    });
+
+    if (workflowsCount >= limit) {
+      throwPlanLimitExceeded({
+        resource: 'workflows',
+        limitSource,
+        limit,
         currentCount: workflowsCount,
-        limit: maxWorkflowLimit,
       });
     }
   }
 
-  private async getWorkflowLimit(environment: EnvironmentEntity, organization: OrganizationEntity) {
-    const systemLimitMaxWorkflow = await this.getMaxWorkflowSystemLimit(environment, organization);
-
-    // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
-    const isSpecialLimit = systemLimitMaxWorkflow !== SYSTEM_LIMITS.WORKFLOWS;
-    if (isSpecialLimit) {
-      return systemLimitMaxWorkflow;
-    }
-
-    const maxWorkflowsTierLimit = await this.getMaxWorkflowsTierLimit(environment, organization);
-
-    return Math.min(systemLimitMaxWorkflow, maxWorkflowsTierLimit);
-  }
-
-  private async getMaxWorkflowsTierLimit(environment, organization) {
+  /**
+   * Returns a tier cap that replaces the one in the tier table, or undefined to use the table value.
+   * Self-hosted is unlimited. Free-tier organizations fall back to the legacy cap while
+   * `IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED` is off.
+   */
+  private async getWorkflowTierLimitOverride(
+    environment: EnvironmentEntity,
+    organization: OrganizationEntity
+  ): Promise<number | undefined> {
     if (process.env.IS_SELF_HOSTED === 'true') {
-      return UNLIMITED_VALUE; // Use existing constant for unlimited
+      return UNLIMITED_VALUE;
     }
 
-    return getFeatureForTierAsNumber(
-      FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
-      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
-      false
-    );
-  }
+    const tier = organization.apiServiceLevel || ApiServiceLevelEnum.FREE;
+    if (tier !== ApiServiceLevelEnum.FREE) {
+      return undefined;
+    }
 
-  private async getMaxWorkflowSystemLimit(environment, organization) {
-    return await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
-      defaultValue: SYSTEM_LIMITS.WORKFLOWS,
+    const isFreeTierWorkflowLimitEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED,
+      defaultValue: true,
       environment,
       organization,
     });
+
+    return isFreeTierWorkflowLimitEnabled ? undefined : FREE_TIER_LEGACY_MAX_WORKFLOWS;
   }
 
   async validateStepResolversLimit(

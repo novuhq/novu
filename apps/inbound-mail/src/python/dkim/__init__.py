@@ -419,8 +419,9 @@ class DKIM(object):
     if include_headers is None:
         include_headers = self.default_sign_headers()
 
-    # rfc4871 says FROM is required
-    if 'from' not in ( x.lower() for x in include_headers ):
+    # rfc4871 says FROM is required. Header names are bytes on Python 3, so
+    # compare with b'from' ('from' never matched and every sign() raised).
+    if b'from' not in ( x.lower() for x in include_headers ):
         raise ParameterError("The From header field MUST be signed")
 
     # raise exception for any SHOULD_NOT headers, call can modify 

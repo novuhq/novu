@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { SetOperatorDefaultChannelCommand } from './set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './set-operator-default-channel.usecase';
 
@@ -23,7 +24,8 @@ describe('SetOperatorDefaultChannel', () => {
     const usecase = new SetOperatorDefaultChannel(
       humanOperator as never,
       deliveryService as never,
-      humanContactRepository as never
+      humanContactRepository as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, humanOperator, deliveryService, humanContactRepository };

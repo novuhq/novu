@@ -108,9 +108,10 @@ export function useWebChat(_: UseWebChatProps): UseWebChatResult {
     pendingActions: [],
     isLoading: true,
     isRunning: false,
+    isStopping: false,
     typing: undefined,
     conversationStatus: 'active',
-    run: { isRunning: false },
+    run: { isRunning: false, isStopping: false },
     pagination: {
       status: 'idle',
       hasMore: false,
@@ -123,6 +124,7 @@ export function useWebChat(_: UseWebChatProps): UseWebChatResult {
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
     retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+    stop: () => Promise.resolve({ data: undefined, error: undefined }),
     startNewConversation: () => {},
   };
 }

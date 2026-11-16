@@ -6,7 +6,6 @@
     "outDir": "./dist",
     "sourceMap": true,
     "strictNullChecks": false,
-    "target": "es2017",
     "types": ["node", "mocha", "chai", "sinon"]
   },
   "include": ["src/**/*"],

@@ -169,6 +169,7 @@ export class GetPreferences {
           excludeSubscriberPreferences: command.excludeSubscriberPreferences,
           contextKeys: command.contextKeys,
           skipCache: command.skipCache,
+          subscriberGlobalPreference: command.subscriberGlobalPreference,
         })
       );
     } catch (e) {
@@ -247,16 +248,18 @@ export class GetPreferences {
           undefined,
           queryOptions
         ),
-        this.preferencesRepository.findOne(
-          {
-            ...baseQuery,
-            _subscriberId: command.subscriberId,
-            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-            ...contextQuery,
-          },
-          undefined,
-          queryOptions
-        )
+        command.subscriberGlobalPreference !== undefined
+          ? Promise.resolve(command.subscriberGlobalPreference)
+          : this.preferencesRepository.findOne(
+              {
+                ...baseQuery,
+                _subscriberId: command.subscriberId,
+                type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+                ...contextQuery,
+              },
+              undefined,
+              queryOptions
+            )
       );
     }
 
@@ -344,16 +347,18 @@ export class GetPreferences {
               queryOptions
             )
           : Promise.resolve(null),
-        this.preferencesRepository.findOne(
-          {
-            ...baseQuery,
-            _subscriberId: command.subscriberId,
-            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-            ...contextQuery,
-          },
-          undefined,
-          queryOptions
-        ),
+        command.subscriberGlobalPreference !== undefined
+          ? Promise.resolve(command.subscriberGlobalPreference)
+          : this.preferencesRepository.findOne(
+              {
+                ...baseQuery,
+                _subscriberId: command.subscriberId,
+                type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+                ...contextQuery,
+              },
+              undefined,
+              queryOptions
+            ),
       ]);
 
       subscriberWorkflowPreference = workflowPref;

@@ -69,6 +69,8 @@ type HostSetupBoxProps = {
   signedOut?: { signInHref: string };
   /** The hosted MCP server. Without one, the ways that need it are left out (`waysFor`). */
   mcpUrl: string;
+  /** Told when the header's button copied what the box shows, and on which way. */
+  onCopy?: (way: HostWay) => void;
 };
 
 /**
@@ -92,6 +94,7 @@ export function HostSetupBox({
   onRetry,
   signedOut,
   mcpUrl,
+  onCopy,
 }: HostSetupBoxProps) {
   const tabsId = useId();
   const way = wayFor(host);
@@ -140,7 +143,14 @@ export function HostSetupBox({
                 idPrefix={tabsId}
               />
             </div>
-            <BoxAction host={host} way={way} code={code} details={details} signedOut={signedOut} />
+            <BoxAction
+              host={host}
+              way={way}
+              code={code}
+              details={details}
+              signedOut={signedOut}
+              onCopy={onCopy ? () => onCopy(way) : undefined}
+            />
           </div>
 
           <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${way}`}>
@@ -193,10 +203,12 @@ function BoxAction({
   code,
   details,
   signedOut,
+  onCopy,
 }: {
   host: Host;
   way: HostWay;
   code?: ConnectCodeState;
+  onCopy?: () => void;
   details: Details;
   signedOut?: { signInHref: string };
 }) {
@@ -240,7 +252,7 @@ function BoxAction({
   }
 
   return (
-    <CopyButton value={action.value} label={action.copyLabel} variant="primary" className={className}>
+    <CopyButton value={action.value} label={action.copyLabel} variant="primary" className={className} onCopy={onCopy}>
       <MorphingText text={action.label} />
     </CopyButton>
   );

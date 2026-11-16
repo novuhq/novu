@@ -13,6 +13,15 @@ export type Interaction = {
   content?: { cardChrome?: { options?: Option[] } };
   response?: { type: 'text' | 'option'; text?: string; optionId?: string; respondedBy?: string };
   failedTo?: string[];
+  /**
+   * Who it hasn't reached yet: their WhatsApp window was closed, so they got the account's first message instead.
+   * It goes out when they reply.
+   */
+  heldFor?: string[];
+  /** Everyone it was for. */
+  to?: string[];
+  /** Who Meta reported the first message undelivered for, and why. */
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
   /** Threads the send landed in. Sending marks each one read; `unreadBefore` is what was unread then. */
   threads?: Array<{ id: string; unreadBefore: number }>;
 };
@@ -172,7 +181,7 @@ export async function waitForAnswer(
 
   let interaction = typeof sent === 'string' ? await check() : sent;
 
-  while (interaction.status === 'pending' && Date.now() + POLL_EVERY_MS <= deadline) {
+  while (interaction.status === 'pending' && !nobodyWasAsked(interaction) && Date.now() + POLL_EVERY_MS <= deadline) {
     await sleep(POLL_EVERY_MS);
 
     try {
@@ -213,10 +222,15 @@ export function describeOutcome(interaction: Interaction): string {
   const failureNote = interaction.failedTo?.length
     ? ` Warning: delivery failed for ${interaction.failedTo.join(', ')}.`
     : '';
+  const heldNote = describeHeld(interaction.heldFor, interaction.firstMessageFailed);
+
+  if (interaction.kind === 'tell' && status === 'pending' && heldNote) {
+    return `Not delivered yet.${heldNote}${threadNote}${failureNote}`;
+  }
 
   switch (status) {
     case 'pending':
-      return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${threadNote}${failureNote}`;
+      return `No answer yet. The request is still open: call inbox_wait with id "${id}" to keep waiting. Do not go ahead without the answer.${heldNote}${threadNote}${failureNote}`;
     case 'approved':
       return `Approved${by}.${answerOf(interaction)}${threadNote}${failureNote}`;
     case 'denied':
@@ -232,6 +246,30 @@ export function describeOutcome(interaction: Interaction): string {
     default:
       return `The request is ${status}.${threadNote}`;
   }
+}
+
+/** Who got the WhatsApp first message instead, because their 24-hour window was closed. */
+function describeHeld(heldFor: Interaction['heldFor'], failed: Interaction['firstMessageFailed']): string {
+  if (!heldFor?.length) {
+    return '';
+  }
+
+  const failedFor = new Set((failed ?? []).map((failure) => failure.subscriberId));
+  const reached = heldFor.filter((subscriberId) => !failedFor.has(subscriberId));
+  const notes = [
+    ...(reached.length
+      ? [
+          ` WhatsApp's 24-hour window was closed for ${reached.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.`,
+        ]
+      : []),
+    // Meta took the first message, then reported it undelivered: nobody was told to reply, so waiting won't help.
+    ...(failed ?? []).map(
+      ({ subscriberId, reason }) =>
+        ` ${reason} So ${subscriberId} wasn't asked to reply; this goes out only if they write first. Tell the user, with any link Meta gave, so they can fix it. Don't send it again: this one still waits and goes out when they write, so a second send would reach them twice.`
+    ),
+  ];
+
+  return notes.join('');
 }
 
 function describeThreads(threads: Interaction['threads']): string {
@@ -264,4 +302,70 @@ function answerOf({ content, response }: Interaction): string {
   }
 
   return response.text ? ` They said: ${response.text}` : '';
+}
+
+/** Meta reports a first message undelivered a second or two after taking it. */
+const FIRST_MESSAGE_REPORT_MS = 6_000;
+const FIRST_MESSAGE_CHECK_MS = 1_500;
+
+/**
+ * After a send held for someone's WhatsApp reply, looks again for up to six seconds of wall-clock time, each read
+ * capped to what is left: Meta reports a first message it took but couldn't deliver (a missing payment method) only
+ * after the send returns, and the agent should hear it. Stops once every held person's report is in, or it settles.
+ */
+export async function awaitFirstMessageReport(
+  api: AgentInboxApi,
+  created: Interaction,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now: () => number = Date.now
+): Promise<Interaction> {
+  if (!created.heldFor?.length) {
+    return created;
+  }
+
+  const deadline = now() + FIRST_MESSAGE_REPORT_MS;
+  let interaction = created;
+  while (now() + FIRST_MESSAGE_CHECK_MS < deadline) {
+    await sleep(FIRST_MESSAGE_CHECK_MS);
+    try {
+      interaction = keepCreateDetails(
+        await api.get<Interaction>(
+          `/v1/inbox/messages/${encodeURIComponent(created.id)}`,
+          undefined,
+          Math.max(1, deadline - now())
+        ),
+        created
+      );
+    } catch {
+      // A missed check leaves what is known.
+    }
+
+    if (interaction.status !== 'pending' || everyHeldFailed(interaction)) {
+      break;
+    }
+  }
+
+  return interaction;
+}
+
+function failedIds(interaction: Interaction): Set<string> {
+  return new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+}
+
+/** Every held person's first message failed: no more reports are coming. */
+function everyHeldFailed(interaction: Interaction): boolean {
+  const failed = failedIds(interaction);
+
+  return (interaction.heldFor ?? []).every((id) => failed.has(id));
+}
+
+/**
+ * Nobody who could answer was reached: everyone it was for had their first message fail, so waiting won't help.
+ * Anyone who got the question normally can still answer, so then it keeps waiting.
+ */
+function nobodyWasAsked(interaction: Interaction): boolean {
+  const failed = failedIds(interaction);
+  const everyone = interaction.to ?? [];
+
+  return failed.size > 0 && everyone.length > 0 && everyone.every((id) => failed.has(id));
 }

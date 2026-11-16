@@ -30,7 +30,7 @@ cd apps/api && pnpm test
 
 # Single unit spec — NO e2e harness, NO dropDatabase
 cd apps/api && cross-env NODE_ENV=test NOVU_ENTERPRISE=true CLERK_ENABLED=true \
-  npx mocha --no-config --timeout 30000 --require ts-node/register --exit \
+  npx mocha --no-config --timeout 30000 --require @novu/testing/swc-register --exit \
   'src/path/to/file.spec.ts'
 ```
 
@@ -41,7 +41,7 @@ cd apps/api && cross-env NODE_ENV=test NOVU_ENTERPRISE=true CLERK_ENABLED=true \
 npx mocha 'src/**/*.spec.ts'
 
 # ❌ NEVER — same problem without NODE_ENV=test
-npx mocha --require ts-node/register 'src/foo.spec.ts'
+npx mocha --require @novu/testing/swc-register 'src/foo.spec.ts'
 ```
 
 If you need to verify test logic without mocha, use a targeted script with `--no-config` or run via `pnpm test` with the official env vars — never raw mocha from `apps/api` without both safeguards.

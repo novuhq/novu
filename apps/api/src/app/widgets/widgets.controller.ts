@@ -5,6 +5,7 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -101,7 +102,10 @@ export class WidgetsController {
 
   @ExcludeFromIdempotency()
   @Post('/session/initialize')
-  async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
+  async sessionInitialize(
+    @Body() body: SessionInitializeRequestDto,
+    @Headers('novu-client-version') clientVersion: string
+  ): Promise<SessionInitializeResponseDto> {
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
         subscriberId: body.subscriberId,
@@ -111,6 +115,7 @@ export class WidgetsController {
         lastName: body.lastName,
         phone: body.phone,
         hmacHash: body.hmacHash,
+        clientVersion,
       })
     );
   }
@@ -386,7 +391,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('messageId') messageId: string,
     @Param('type') type: ButtonTypeEnum,
-    @Body() body: { payload: any; status: MessageActionStatusEnum }
+    @Body() body: { payload: unknown; status: MessageActionStatusEnum }
   ): Promise<MessageEntity> {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({

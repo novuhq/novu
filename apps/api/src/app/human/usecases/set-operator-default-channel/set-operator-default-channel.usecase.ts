@@ -3,6 +3,7 @@ import { InstrumentUsecase } from '@novu/application-generic';
 import { HumanContactRepository } from '@novu/dal';
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
 import type { SetOperatorDefaultChannelResponseDto } from '../../dtos/human-operator-contact.dto';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -18,11 +19,13 @@ export class SetOperatorDefaultChannel {
   constructor(
     private readonly humanOperator: HumanOperatorService,
     private readonly deliveryService: HumanDeliveryService,
-    private readonly humanContactRepository: HumanContactRepository
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   @InstrumentUsecase()
   async execute(command: SetOperatorDefaultChannelCommand): Promise<SetOperatorDefaultChannelResponseDto> {
+    await this.channelGate.assertViaEnabled(command.via, command);
     const { agentId, subscriberId } = await this.humanOperator.require({
       environmentId: command.environmentId,
       organizationId: command.organizationId,

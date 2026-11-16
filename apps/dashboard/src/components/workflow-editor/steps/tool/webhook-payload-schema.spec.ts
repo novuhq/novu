@@ -244,8 +244,9 @@ describe('mergeWebhookPayloadSchemas', () => {
       },
     ]);
 
-    expect(result.properties.toString.type).toBe('string');
-    expect(result.properties.toString.conflicts).toEqual([
+    const key: string = 'toString';
+    expect(result.properties[key].type).toBe('string');
+    expect(result.properties[key].conflicts).toEqual([
       { source: { name: 'Webhook A', identifier: 'webhook-a' }, type: 'string' },
       { source: { name: 'Webhook B', identifier: 'webhook-b' }, type: 'number' },
     ]);

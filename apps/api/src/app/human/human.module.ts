@@ -35,11 +35,14 @@ import { HumanInboxController } from './human-inbox.controller';
 import { HumanInteractionsController } from './human-interactions.controller';
 import { HumanInvitesPublicController, HumanVerifyPublicController } from './human-invites-public.controller';
 import { HumanListenController } from './human-listen.controller';
+import { HumanWhatsAppController } from './human-whatsapp.controller';
 import { AgentInboxChannelAnalytics } from './services/agent-inbox-channel-analytics.service';
+import { AgentInboxFeaturesService } from './services/agent-inbox-features.service';
 import { HumanAccountAgentService } from './services/human-account-agent.service';
 import { HumanAgentIdentityService } from './services/human-agent-identity.service';
 import { HumanAgentPictureService } from './services/human-agent-picture.service';
 import { HumanBackingAccounts } from './services/human-backing-accounts.service';
+import { HumanChannelGate } from './services/human-channel-gate.service';
 import { HumanConnectCodeService } from './services/human-connect-code.service';
 import { HumanDeliveryService } from './services/human-delivery.service';
 import { HumanHostStatusService } from './services/human-host-status.service';
@@ -54,6 +57,8 @@ import { HumanOperatorService } from './services/human-operator.service';
 import { HumanTelegramBotService } from './services/human-telegram-bot.service';
 import { HumanVerificationRateLimitService } from './services/human-verification-rate-limit.service';
 import { HumanVerificationTokenService } from './services/human-verification-token.service';
+import { WhatsAppFirstMessageService } from './services/whatsapp-first-message.service';
+import { WhatsAppWindowService } from './services/whatsapp-window.service';
 import { ApproveHumanCliLogin } from './usecases/approve-human-cli-login/approve-human-cli-login.usecase';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
 import { ChangeOperatorEmail } from './usecases/change-operator-email/change-operator-email.usecase';
@@ -79,6 +84,11 @@ import { GetInboxThread } from './usecases/get-inbox-thread/get-inbox-thread.use
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { GetKeylessClaimToken } from './usecases/get-keyless-claim-token/get-keyless-claim-token.usecase';
 import { GetListenLease } from './usecases/get-listen-lease/get-listen-lease.usecase';
+import { ConnectHumanWhatsApp } from './usecases/human-whatsapp/connect-human-whatsapp.usecase';
+import { ConnectHumanWhatsAppKeys } from './usecases/human-whatsapp/connect-human-whatsapp-keys.usecase';
+import { GetHumanWhatsAppSetup } from './usecases/human-whatsapp/get-human-whatsapp-setup.usecase';
+import { IssueHumanWhatsAppLink } from './usecases/human-whatsapp/issue-human-whatsapp-link.usecase';
+import { SubmitHumanWhatsAppFirstMessage } from './usecases/human-whatsapp/submit-human-whatsapp-first-message.usecase';
 import { ListContacts } from './usecases/list-contacts/list-contacts.usecase';
 import { ListInboxThreads } from './usecases/list-inbox-threads/list-inbox-threads.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
@@ -93,6 +103,7 @@ import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
 import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typing.usecase';
 import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
@@ -117,6 +128,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
   ],
   controllers: [
     HumanInteractionsController,
+    HumanWhatsAppController,
     HumanInboxController,
     HumanInvitesPublicController,
     HumanVerifyPublicController,
@@ -141,7 +153,15 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     AgentMcpServerRepository,
     McpConnectionRepository,
     AgentInboxChannelAnalytics,
+    HumanChannelGate,
+    GetHumanWhatsAppSetup,
+    ConnectHumanWhatsApp,
+    ConnectHumanWhatsAppKeys,
+    IssueHumanWhatsAppLink,
+    SubmitHumanWhatsAppFirstMessage,
+    WhatsAppFirstMessageService,
     HumanDeliveryService,
+    WhatsAppWindowService,
     HumanKeylessCapService,
     HumanMessageQuotaService,
     CreateInteraction,
@@ -168,6 +188,8 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     HumanAgentPictureService,
     HumanTelegramBotService,
     GetHumanAgentCard,
+    ShowHumanAgentCard,
+    AgentInboxFeaturesService,
     HumanAccountAgentService,
     CreateHumanInvite,
     GetHumanInviteStatus,

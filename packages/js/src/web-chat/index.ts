@@ -32,6 +32,7 @@ export type {
   ConversationArgs,
   SendMessageInput,
 } from './conversation-runtime.types';
+export { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 export type {
   AgentEventEnvelope,
   AgentHashFields,
@@ -43,11 +44,11 @@ export type {
   RetryMessageResult,
   SendActionResult,
   SendMessageResult,
+  StopResult,
   WebChatConversation,
   WebChatPagination,
   WebChatPaginationStatus,
 } from './types';
-export { derivePendingActions, pendingActionKey } from './derive-pending-actions';
 export { WebChat } from './web-chat';
 export type {
   AgentToolDefinition,

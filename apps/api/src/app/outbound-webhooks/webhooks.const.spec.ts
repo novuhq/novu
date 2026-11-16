@@ -196,6 +196,13 @@ describe('outbound webhook OpenAPI schemas', () => {
     );
   });
 
+  it('renames underscore-prefixed persisted workflow fields that would collide in the SDKs', () => {
+    const properties = schemas.PersistedWorkflowWebhookDto.properties as Record<string, Record<string, unknown>>;
+
+    expect(properties._updatedBy['x-speakeasy-name-override']).to.equal('updatedById');
+    expect(properties._lastPublishedBy['x-speakeasy-name-override']).to.equal('lastPublishedById');
+  });
+
   it('keeps the shared workflow response schema aligned with runtime', () => {
     expect(schemas.ControlsMetadataDto.properties).to.include.keys('dataSchema', 'uiSchema', 'values');
     const workflowIssues = schemas.WorkflowResponseDto.properties?.issues?.additionalProperties as Schema;

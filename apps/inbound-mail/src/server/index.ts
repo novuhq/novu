@@ -223,20 +223,27 @@ class Mailin extends events.EventEmitter {
 
             return logInboundMailAccepted(connection)
               .then(() => retrieveRawEmail(connection))
-              .then((rawEmail) =>
-                Promise.all([
+              .then((rawEmailBytes) => {
+                const rawEmail = rawEmailBytes.toString();
+
+                return Promise.all([
                   rawEmail,
-                  validateDkim(connection, rawEmail),
+                  /*
+                   * DKIM signs the exact bytes. Decoding them as UTF-8 and back
+                   * would change any 8-bit text in another charset and break
+                   * a valid signature.
+                   */
+                  validateDkim(connection, rawEmailBytes),
                   validateSpf(connection),
                   computeSpamScore(connection, rawEmail),
                   parseEmail(connection),
-                ])
-              )
-              .then(([rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail]) =>
+                ]);
+              })
+              .then(([rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail]) =>
                 Promise.all([
                   connection,
                   rawEmail,
-                  isDkimValid,
+                  dkimVerdict,
                   isSpfValid,
                   spamScore,
                   parsedEmail,
@@ -246,13 +253,13 @@ class Mailin extends events.EventEmitter {
               .then(function ([
                 connectionFinalize,
                 rawEmail,
-                isDkimValid,
+                dkimVerdict,
                 isSpfValid,
                 spamScore,
                 parsedEmail,
                 language,
               ]) {
-                const args = [connectionFinalize, rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail, language];
+                const args = [connectionFinalize, rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail, language];
 
                 return finalizeMessage.apply(this, args);
               })
@@ -380,15 +387,13 @@ class Mailin extends events.EventEmitter {
     }
 
     function retrieveRawEmail(connection) {
-      return nr.startSegment('inbound-mail/retrieve-raw-email', true, () =>
-        fs.promises.readFile(connection.mailPath).then((rawEmail) => rawEmail.toString())
-      );
+      return nr.startSegment('inbound-mail/retrieve-raw-email', true, () => fs.promises.readFile(connection.mailPath));
     }
 
     function validateDkim(connection, rawEmail) {
       return nr.startSegment('inbound-mail/validate-dkim', true, () => {
         if (configuration.disableDkim) {
-          return Promise.resolve(false);
+          return Promise.resolve({ isValid: false, domains: [] });
         }
 
         logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating dkim.`);
@@ -399,7 +404,7 @@ class Mailin extends events.EventEmitter {
             `${connection.id} Unable to validate dkim. Consider dkim as failed.`
           );
 
-          return false;
+          return { isValid: false, domains: [] };
         });
       });
     }
@@ -505,18 +510,28 @@ class Mailin extends events.EventEmitter {
       });
     }
 
-    function finalizeMessage(connection, rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail, language) {
+    function finalizeMessage(connection, rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail, language) {
       /* Finalize the parsed email object. */
-      parsedEmail.dkim = isDkimValid ? 'pass' : 'failed';
+      parsedEmail.dkim = dkimVerdict.isValid ? 'pass' : 'failed';
       parsedEmail.spf = isSpfValid ? 'pass' : 'failed';
+      /*
+       * The domains the verdicts vouch for. A pass only proves that some
+       * domain sent the email, so consumers that trust the From address also
+       * check that one of these is its domain (alignment, as in DMARC):
+       *   dkimDomains: the d= domains whose signatures verified
+       *   spfDomain:   the MAIL FROM domain SPF checked, null without one
+       */
+      parsedEmail.dkimDomains = dkimVerdict.domains;
+      parsedEmail.spfDomain = extractEmailDomain(connection.envelope?.mailFrom?.address ?? '')?.toLowerCase() || null;
       parsedEmail.spamScore = spamScore;
       parsedEmail.language = language;
 
       /*
        * One searchable line per email with the final sender-auth verdicts and
        * the exact inputs the SPF check used. Downstream (agent runtime) fails
-       * closed on anything but pass/pass, so this is the primary breadcrumb
-       * when inbound agent mail bounces with "couldn't verify your email".
+       * closed unless both pass and one of the domains is the From address's,
+       * so this is the primary breadcrumb when inbound agent mail bounces with
+       * "couldn't verify your email".
        */
       logger.info(
         {
@@ -528,6 +543,8 @@ class Mailin extends events.EventEmitter {
           clientHostname: connection.clientHostname,
           dkim: parsedEmail.dkim,
           spf: parsedEmail.spf,
+          dkimDomains: parsedEmail.dkimDomains,
+          spfDomain: parsedEmail.spfDomain,
           spamScore,
           dkimCheckDisabled: configuration.disableDkim,
           spfCheckDisabled: configuration.disableSpf,
@@ -813,36 +830,44 @@ class Mailin extends events.EventEmitter {
         connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
-        stream.pipe(fs.createWriteStream(mailPath));
+        const signalTemporaryFailure = (error) => {
+          nr.noticeError(error);
+          logger.error(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
+          );
+
+          /*
+           * Signal a transient failure (4xx) to the sending MTA so it retries
+           * delivery instead of treating the message as accepted. Without
+           * this, a queue-insert failure after an unconditional onDataCallback()
+           * would silently drop the message — sender thinks 250 OK, we have
+           * nothing persisted.
+           */
+          const smtpError: Error & { responseCode?: number } =
+            error instanceof Error ? error : new Error(String(error));
+          if (typeof smtpError.responseCode !== 'number') {
+            smtpError.responseCode = 451;
+          }
+          onDataCallback(smtpError);
+        };
+
+        const mailFile = fs.createWriteStream(mailPath);
+        stream.pipe(mailFile);
 
         stream.on('data', (chunk) => {
           _this.emit('data', connection, chunk);
         });
 
-        stream.on('end', () => {
+        // The SMTP stream ends before the temp file is flushed, so reading on 'end' can hit ENOENT.
+        mailFile.on('finish', () => {
           dataReady(connection)
             .then(() => onDataCallback())
-            .catch((error) => {
-              nr.noticeError(error);
-              logger.error(
-                { err: error, context: LOG_CONTEXT, connectionId: connection.id },
-                `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
-              );
+            .catch(signalTemporaryFailure);
+        });
 
-              /*
-               * Signal a transient failure (4xx) to the sending MTA so it retries
-               * delivery instead of treating the message as accepted. Without
-               * this, a queue-insert failure after an unconditional onDataCallback()
-               * would silently drop the message — sender thinks 250 OK, we have
-               * nothing persisted.
-               */
-              const smtpError: Error & { responseCode?: number } =
-                error instanceof Error ? error : new Error(String(error));
-              if (typeof smtpError.responseCode !== 'number') {
-                smtpError.responseCode = 451;
-              }
-              onDataCallback(smtpError);
-            });
+        mailFile.on('error', (error) => {
+          unlinkFile(connection).then(() => signalTemporaryFailure(error));
         });
 
         stream.on('close', () => {

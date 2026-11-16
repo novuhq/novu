@@ -112,7 +112,10 @@ describe('createListPresence', () => {
     document.body.innerHTML = '';
   });
 
-  const setup = (initialKeys: string[], overrides: Partial<ListPresenceOptions<string>> = {}) => {
+  const setup = (
+    initialKeys: string[],
+    overrides: Partial<Pick<ListPresenceOptions<string>, 'exit' | 'exitList' | 'isOnScreen'>> = {}
+  ) => {
     animations = installAnimateSpy();
     const [keys, setKeys] = createSignal<readonly string[]>(initialKeys);
     const [ready, setReady] = createSignal(true);
