@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
+const DAY_SECONDS = 24 * 60 * 60;
 const RETENTION_DAYS = 35;
-const TTL_SECONDS = RETENTION_DAYS * 24 * 60 * 60;
+const TTL_SECONDS = RETENTION_DAYS * DAY_SECONDS;
 const MAX_CLIENTS = 100;
 const OTHER_CLIENT = 'other';
 const FIELD_SEPARATOR = '|';
@@ -10,25 +11,27 @@ const FIELD_SEPARATOR = '|';
 /**
  * The cap check and both writes must be one script so two writers at the
  * 100-client cap cannot both add a new client. Fallback labels skip the cap so
- * junk headers cannot push them into `other`.
+ * junk headers cannot push them into `other`. The clients set only matters during
+ * its own UTC day, so it expires a day after its last write.
  */
 const RECORD_SCRIPT = `
 local client = ARGV[1]
 local field = ARGV[2]
 local overflow = ARGV[3]
 local maxClients = tonumber(ARGV[4])
-local ttl = tonumber(ARGV[5])
-local capped = ARGV[6] == '1'
-if not capped or redis.call('SISMEMBER', KEYS[2], client) == 1 or redis.call('SCARD', KEYS[2]) < maxClients then
-  if capped then
-    redis.call('SADD', KEYS[2], client)
-  end
+local countsTtl = tonumber(ARGV[5])
+local clientsTtl = tonumber(ARGV[6])
+local capped = ARGV[7] == '1'
+if not capped then
+  redis.call('HINCRBY', KEYS[1], field, 1)
+elseif redis.call('SISMEMBER', KEYS[2], client) == 1 or redis.call('SCARD', KEYS[2]) < maxClients then
+  redis.call('SADD', KEYS[2], client)
+  redis.call('EXPIRE', KEYS[2], clientsTtl)
   redis.call('HINCRBY', KEYS[1], field, 1)
 else
   redis.call('HINCRBY', KEYS[1], overflow, 1)
 end
-redis.call('EXPIRE', KEYS[1], ttl)
-redis.call('EXPIRE', KEYS[2], ttl)
+redis.call('EXPIRE', KEYS[1], countsTtl)
 return 1
 `;
 
@@ -94,6 +97,7 @@ export class SubscriberSessionAuthStatsService {
           encodeField(authMethod, OTHER_CLIENT),
           MAX_CLIENTS,
           TTL_SECONDS,
+          DAY_SECONDS,
           parsedClient ? '1' : '0',
         ]
       );

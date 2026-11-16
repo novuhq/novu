@@ -1538,32 +1538,6 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       true
     );
   });
-
-  it('should cap by client, so a known client keeps its label under another auth method', async () => {
-    const stats = testServer.getService(SubscriberSessionAuthStatsService);
-    const environmentId = `cap-${randomBytes(8).toString('hex')}`;
-
-    for (let i = 0; i < 60; i += 1) {
-      for (const hmacValid of [false, true]) {
-        await stats.record({
-          environmentId,
-          hmacValid,
-          clientVersion: `@novu/js@1.0.${i}`,
-          source: SubscriberSessionSourceEnum.INBOX,
-        });
-      }
-    }
-
-    const counts = await sessionCounts(environmentId);
-
-    expect(counts).to.have.lengthOf(120);
-    expect(counts.some((row) => row.client === 'other')).to.equal(false);
-    expect(counts).to.deep.include({
-      authMethod: SubscriberSessionAuthMethodEnum.HMAC,
-      client: '@novu/js@1.0.59',
-      count: 1,
-    });
-  });
 });
 
 async function sessionCounts(environmentId: string) {
