@@ -218,3 +218,24 @@ provide remote evidence.
 Local run reports, native screenshots, readable
 review slices and the credential-free temporary harness are retained outside
 product source under the dated QA run directory.
+
+## Ivan's design review (2026-11-16)
+
+The [channel](https://www.figma.com/design/iylx1T9ZuYkodD0dTXFwqj/Human.md?node-id=1373-1817)
+and [agent](https://www.figma.com/design/iylx1T9ZuYkodD0dTXFwqj/Human.md?node-id=1380-1817)
+drafts supply the revised layout concepts. Existing section spacing, pixel
+accent typography, illustrations and CLI content are retained. Introductory
+descriptions use balanced wrapping; the agent-grid description has a narrower
+measure.
+
+Reach rows use full-width neutral command fields with copy feedback and styled
+configure buttons. Use-case cards combine their title and description into a
+paragraph above the same command field. `CopyCommand` opts into this treatment
+with `appearance="surface"`; existing hero and Sapien callers keep their default
+appearance. Long commands are visually ellipsized but copied in full. Regression
+coverage exercises every new command field on all three channel pages.
+
+Agent capability links now sit in a rounded bordered group, with stacked labels
+and descriptions and a full-width closing button. The five destination anchors
+remain unchanged. The earlier exact Figma audit describes its recorded baseline;
+these intentionally revised sections follow Ivan's later concept review.

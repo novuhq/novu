@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CopyCommand } from '@/components/sapien/copy-command';
 import { SectionFrame } from '@/components/sapien/section-frame';
 import { CAPABILITIES, CHANNELS, type ChannelId, channelHub } from '@/data/channel-pages';
 
@@ -24,20 +25,23 @@ export function ReachSection({ channel }: { channel: ChannelId }) {
             className="flex items-start gap-5 border-t border-sapien-border p-6 first:border-t-0"
           >
             <LandingMark name={item.icon} />
-            <div className="flex min-w-0 flex-col items-start">
+            <div className="flex min-w-0 flex-1 flex-col items-start">
               <h3 className="text-lg leading-none tracking-tight">{item.title}</h3>
-              <p className="mt-2.5 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
+              <p className="mt-2 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
                 {item.description}
               </p>
               {item.command ? (
-                <code className="mt-3 block max-w-full overflow-x-auto rounded bg-sapien-border px-2.5 py-1.5 font-sapien-mono text-xs leading-3 whitespace-nowrap text-sapien-foreground/50">
-                  <span className="text-accent">$ </span>
-                  {item.command}
-                </code>
+                <CopyCommand
+                  command={item.command}
+                  label={`${item.title} command`}
+                  variant="icon"
+                  appearance="surface"
+                  className="mt-3 w-full"
+                />
               ) : (
                 <Link
                   href="/configure"
-                  className="mt-3 block rounded bg-sapien-border px-2.5 py-1.5 font-sapien-mono text-xs leading-3 text-sapien-foreground/50 hover:text-accent"
+                  className="mt-3 flex min-h-10 items-center justify-center rounded-lg bg-sapien-border px-6 py-2 text-[15px] font-medium tracking-tight transition-colors hover:bg-sapien-surface motion-reduce:transition-none"
                 >
                   Configure on agentinbox.md →
                 </Link>
@@ -63,21 +67,25 @@ export function MoreCapabilities({ channel }: { channel: ChannelId }) {
           Everything your agent gets on {CHANNELS[channel].name}.
         </p>
       </div>
-      <div className="flex min-w-0 flex-col border-t border-sapien-border">
-        {CAPABILITIES.map(({ label: key, description: label, anchor }) => (
-          <Link
-            key={key}
-            href={`/${channel}#${anchor}`}
-            className="group flex min-h-14 items-center gap-4 border-b border-sapien-border py-4.5 text-lg leading-none tracking-tight hover:text-accent"
-          >
-            <span className="w-14 shrink-0 font-sapien-mono text-[11px] text-sapien-foreground/50">{key}</span>
-            <span className="flex-1">{label}</span>
-            <LandingMark name="arrow-up-right" size={20} />
-          </Link>
-        ))}
+      <div className="min-w-0">
+        <div className="overflow-hidden rounded-xl border border-sapien-border">
+          {CAPABILITIES.map(({ label: key, description: label, anchor }) => (
+            <Link
+              key={key}
+              href={`/${channel}#${anchor}`}
+              className="group flex min-h-14 items-center gap-4 border-b border-sapien-border p-3 last:border-b-0 transition-colors hover:bg-sapien-border/50 motion-reduce:transition-none"
+            >
+              <span className="flex min-w-0 flex-1 flex-col gap-2">
+                <span className="font-sapien-mono text-[13px] leading-none text-accent">{key}</span>
+                <span className="text-lg leading-[23px] tracking-tight">{label}</span>
+              </span>
+              <LandingMark name="arrow-up-right" size={20} />
+            </Link>
+          ))}
+        </div>
         <Link
           href={`/${channel}`}
-          className="mt-5 block font-sapien-mono text-[13px] leading-none tracking-tight text-accent hover:underline"
+          className="mt-5 flex min-h-10 w-full items-center justify-center rounded-lg bg-sapien-border px-6 py-2 text-[15px] font-medium tracking-tight transition-colors hover:bg-sapien-surface motion-reduce:transition-none"
         >
           All {CHANNELS[channel].name} features →
         </Link>

@@ -13,81 +13,69 @@ export function PricingComparison() {
         accent="Room to grow."
         description="The same tools on every plan. Choose the capacity that fits your agents."
       />
-      <table className="mt-12 hidden w-full table-fixed border-collapse text-[15px] leading-[21px] md:table">
-        <caption className="sr-only">Agent Inbox plan comparison</caption>
-        <colgroup>
-          <col className="w-2/5" />
-          {PRICING_PLANS.map((plan) => (
-            <col key={plan.id} className="w-1/5" />
-          ))}
-        </colgroup>
-        <thead>
-          <tr className="border-b border-sapien-surface">
-            <th
-              scope="col"
-              className="py-5 pr-4 text-left font-sapien-mono text-xs font-normal text-sapien-foreground/50"
-            >
-              What’s included
-            </th>
+      <p className="mt-8 font-sapien-mono text-[11px] leading-[18px] text-sapien-foreground/50 md:hidden">
+        Swipe to compare plans →
+        <span className="sr-only"> Or focus the table and use the left and right arrow keys.</span>
+      </p>
+      <section
+        aria-label="Compare plans"
+        aria-description="Swipe to compare plans, or use the left and right arrow keys when focused."
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: native horizontal scrolling must be keyboard accessible
+        tabIndex={0}
+        className="isolate mt-4 overflow-x-auto overscroll-x-contain rounded-xl border border-sapien-border focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:mt-12"
+      >
+        <table className="w-full min-w-175 table-fixed border-collapse text-[15px] leading-[21px] md:min-w-0">
+          <caption className="sr-only">Agent Inbox plan comparison</caption>
+          <colgroup>
+            <col className="w-37.5 md:w-2/5" />
             {PRICING_PLANS.map((plan) => (
-              <th
-                key={plan.id}
-                id={`pricing-column-${plan.id}`}
-                scope="col"
-                className={cn('px-3 py-5 text-center font-medium', plan.id === 'pro' && 'text-accent')}
-              >
-                {plan.name}
-              </th>
+              <col key={plan.id} className="md:w-1/5" />
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {PRICING_FEATURES.map((feature) => (
-            <tr key={feature.key} className="border-b border-sapien-border">
+          </colgroup>
+          <thead>
+            <tr className="bg-sapien-border">
               <th
-                id={`pricing-feature-${feature.key}`}
-                scope="row"
-                className="py-5 pr-4 text-left font-normal tracking-tight text-sapien-foreground/70"
+                scope="col"
+                className="sticky left-0 z-10 bg-sapien-border px-5 py-5 text-left font-sapien-mono text-xs font-normal text-sapien-foreground/50"
               >
-                {feature.label}
+                What’s included
               </th>
               {PRICING_PLANS.map((plan) => (
-                <td
+                <th
                   key={plan.id}
-                  headers={`pricing-feature-${feature.key} pricing-column-${plan.id}`}
-                  className={cn('px-3 py-5 text-center', plan.id === 'pro' && 'bg-sapien-border/20')}
+                  id={`pricing-column-${plan.id}`}
+                  scope="col"
+                  className={cn('px-5 py-5 text-left font-medium', plan.id === 'pro' && 'text-accent')}
                 >
-                  <FeatureValue value={plan.limits[feature.key]} />
-                </td>
+                  {plan.name}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="mt-10 divide-y divide-sapien-border border-y border-sapien-border md:hidden">
-        {PRICING_FEATURES.map((feature) => (
-          <div key={feature.key} className="py-5">
-            <h3 className="text-sm tracking-tight text-sapien-foreground/80">{feature.label}</h3>
-            <dl className="mt-4 grid grid-cols-3 gap-2">
-              {PRICING_PLANS.map((plan) => (
-                <div key={plan.id} className="min-w-0">
-                  <dt
-                    className={cn(
-                      'font-sapien-mono text-[11px] text-sapien-foreground/50',
-                      plan.id === 'pro' && 'text-accent'
-                    )}
+          </thead>
+          <tbody>
+            {PRICING_FEATURES.map((feature) => (
+              <tr key={feature.key} className="border-b border-sapien-border last:border-b-0">
+                <th
+                  id={`pricing-feature-${feature.key}`}
+                  scope="row"
+                  className="sticky left-0 z-10 bg-sapien-background px-5 py-5 text-left font-normal tracking-tight text-sapien-foreground/70"
+                >
+                  {feature.label}
+                </th>
+                {PRICING_PLANS.map((plan) => (
+                  <td
+                    key={plan.id}
+                    headers={`pricing-feature-${feature.key} pricing-column-${plan.id}`}
+                    className={cn('px-5 py-5 text-left', plan.id === 'pro' && 'bg-sapien-border/50')}
                   >
-                    {plan.name}
-                  </dt>
-                  <dd className="mt-2 text-[13px] leading-[18px]">
                     <FeatureValue value={plan.limits[feature.key]} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     </SectionFrame>
   );
 }

@@ -16,10 +16,10 @@ The user explicitly chose the previously downloaded Prime references. No provide
 
 These exports were previously delivered through Prime's component-export workflow. The available cached set has no pricing-table candidate; that limitation is covered by the user's explicit cached-reference choice, not a fabricated catalog match.
 
-- Hero: adapted Prime anatomy; one centered h1, no raster media or motion.
+- Hero: adapted Prime anatomy; one h1 and a desktop description column, stacked on smaller screens. The November 16 review moves “Priced” into the first line and removes the comparison shortcut.
 - Plans: custom semantic articles, three equal columns from `md`, stacked below; plan, price, capacity, features, CTA in that order. Pro receives an accent treatment without a popularity claim.
-- Comparison: custom semantic table on desktop. Mobile presents each feature with a definition list of plan/value pairs; both views use the same data. No hidden feature state, horizontal-scroll trap or billing selector.
-- Conversations: custom text/rules/examples layout explaining fixed 24-hour windows, exclusions and billing-cycle attribution. No product mockup.
+- Comparison: one semantic table at every size, with an outer border, neutral header and brighter Pro column. Mobile uses native horizontal scrolling with sticky feature labels and keyboard focus; all values remain accessible without JavaScript. No billing selector.
+- Conversations: homepage-style bordered cards with numbered badges and inline title/description paragraphs, followed by a bordered examples table with a filled header. The fixed 24-hour rules, exclusions and billing-cycle attribution are unchanged.
 - FAQ: reuse existing `FaqRow`, including keyboard controls, focus treatment and reduced-motion behavior.
 
 Local conventions win: 960px `LandingShell`, `SectionFrame`, `LandingHeading`, Inter/Redaction/Geist Mono, existing `sapien-*` tokens, orange accent, static Tailwind utilities and `cn`. The new sections are Server Components. No dependencies, custom CSS or raster assets are added. Shared navigation changes are limited to a pricing link in the existing landing footer.
@@ -28,7 +28,9 @@ Local conventions win: 960px `LandingShell`, `SectionFrame`, `LandingHeading`, I
 
 Run `CI=true pnpm typecheck`, `CI=true pnpm test`, scoped Biome, and `CI=true pnpm exec playwright test`. Pricing browser tests cover the confirmed matrix, account/demo actions, metadata/sitemap/Markdown requests, all FAQ disclosures, mobile menu, no-JavaScript rendering and responsive overflow. Verify the shared footer on Sapien and channel/agent consumers.
 
-There is no pricing Figma reference. Rendered review establishes consistency with the existing templates; it does not claim exact Figma parity.
+Ivan's November 11–12 review supplies the [pricing draft](https://www.figma.com/design/iylx1T9ZuYkodD0dTXFwqj/Human.md?node-id=1349-4008). It is a layout concept: retain the existing spacing and Redaction pixel accent, rather than reproducing its substitute font or draft spacing. Rendered review establishes consistency with the templates, without claiming exact pixel parity. Pro uses a solid neutral surface and retains its orange price and light CTA.
+
+The November 16 changes use the same cached Prime reference pack: adapt the card typography and border hierarchy locally; use native table scrolling instead of importing the reference carousel or its dependencies. The hero, comparison, conversation cards and shared command-field consumers are covered by app regressions. Earlier verification results below describe their recorded commits, not later changes.
 
 The final production build, typecheck, 176 unit tests and all 187 Chromium browser tests pass, including 12 pricing cases. Five complete pricing captures at 320, 375, 768, 1024 and 1440px include decoded fonts/images. Readable slices were reviewed from header to footer. The tablet view reserves equal capacity/feature slots so plan rows align; the narrowest conversation heading avoids an orphan word. Explicit accessible names identify each plan action.
 

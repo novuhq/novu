@@ -13,7 +13,7 @@ export function PricingPlans() {
           <PlanCard key={plan.id} plan={plan} index={index} />
         ))}
       </div>
-      <p className="mt-7 text-center font-sapien-mono text-[11px] leading-[18px] text-sapien-foreground/50">
+      <p className="mt-7 rounded-lg bg-sapien-border/50 px-4 py-3 text-center font-sapien-mono text-[11px] leading-[18px] text-sapien-foreground/50">
         Every plan includes contacts, invitations, CLI, MCP, SDK, API, human-in-the-loop and webhooks.
       </p>
     </SectionFrame>
@@ -27,7 +27,7 @@ function PlanCard({ plan, index }: { plan: PricingPlan; index: number }) {
       aria-labelledby={`plan-${plan.id}`}
       className={cn(
         'relative flex min-w-0 flex-col overflow-hidden rounded-[14px] border border-sapien-border p-5 lg:p-6',
-        pro && 'border-accent/70 bg-sapien-border/30'
+        pro && 'bg-sapien-border'
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -73,7 +73,7 @@ function PlanCard({ plan, index }: { plan: PricingPlan; index: number }) {
           </div>
         ))}
       </dl>
-      <p className="mt-auto border-t border-sapien-border pt-4 font-sapien-mono text-[11px] leading-[18px] text-sapien-foreground/50">
+      <p className="mt-auto rounded-md bg-sapien-foreground/8 px-3 py-2.5 text-center font-sapien-mono text-[11px] leading-[18px] text-sapien-foreground/50">
         Extra conversations: <span className="text-sapien-foreground/80">{plan.limits.extra}</span>
       </p>
     </article>

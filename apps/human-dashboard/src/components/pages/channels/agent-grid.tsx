@@ -32,7 +32,7 @@ export function AgentsSection({ channel }: { channel: ChannelId }) {
   return (
     <SectionFrame anchor="agents" auditId="agents" className="flex flex-col gap-14 px-4 py-20 md:px-8 md:py-30">
       <LandingHeading
-        descriptionClassName="max-w-95"
+        descriptionClassName="max-w-75 text-balance"
         lead="Works with"
         accent="your agent"
         description="Pick your agent for setup steps and prompts written for it."

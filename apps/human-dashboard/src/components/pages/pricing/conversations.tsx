@@ -4,30 +4,38 @@ import { CONVERSATION_EXAMPLES, CONVERSATION_RULES } from '@/data/pricing';
 
 export function PricingConversations() {
   return (
-    <SectionFrame anchor="conversations" className="px-4 py-20 md:px-8 md:py-24">
-      <LandingHeading
-        lead="What counts as"
-        accent="a conversation?"
-        className="max-[359px]:[&_em]:text-[40px]"
-        description="One thread. One channel. One fixed 24-hour window. The full exchange counts once."
-      />
-      <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+    <SectionFrame anchor="conversations" className="py-20 md:py-24">
+      <div className="px-4 md:px-8">
+        <LandingHeading
+          lead="What counts as"
+          accent="a conversation?"
+          className="max-[359px]:[&_em]:text-[40px]"
+          description="One thread. One channel. One fixed 24-hour window. The full exchange counts once."
+        />
+      </div>
+      <ol className="mt-12 grid border-y border-sapien-border md:grid-cols-3">
         {CONVERSATION_RULES.map((rule, index) => (
-          <li key={rule.title} className="border-t border-sapien-border pt-5">
-            <span aria-hidden="true" className="font-sapien-mono text-xs text-accent">
-              0{index + 1}
+          <li
+            key={rule.title}
+            className="border-b border-sapien-border p-6 last:border-b-0 md:border-r md:border-b-0 md:p-8 md:last:border-r-0"
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-6 place-items-center rounded bg-sapien-foreground/8 font-sapien-mono text-xs text-accent"
+            >
+              {index + 1}
             </span>
-            <h3 className="mt-4 text-lg leading-6 tracking-tight md:min-h-12">{rule.title}</h3>
-            <p className="mt-3 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
-              {rule.description}
+            <p className="mt-6 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
+              <strong className="font-normal text-sapien-foreground">{rule.title}</strong> {rule.description}
             </p>
           </li>
         ))}
       </ol>
-      <div className="mt-12 overflow-hidden rounded-[14px] border border-sapien-border">
-        <h3 className="border-b border-sapien-border px-5 py-4 font-sapien-mono text-xs text-sapien-foreground/50 md:px-6">
-          In practice
-        </h3>
+      <div className="mx-4 mt-12 overflow-hidden rounded-[14px] border border-sapien-border md:mx-8">
+        <div className="flex items-center justify-between gap-5 bg-sapien-border px-5 py-4 font-sapien-mono text-xs text-sapien-foreground/50 md:px-6">
+          <h3>In practice</h3>
+          <span>Conversations</span>
+        </div>
         <dl className="divide-y divide-sapien-border">
           {CONVERSATION_EXAMPLES.map((item) => (
             <div key={item.example} className="flex items-center justify-between gap-5 px-5 py-5 md:px-6">

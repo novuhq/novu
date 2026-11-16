@@ -51,6 +51,7 @@ export function ChannelSetup({ channel, agent }: { channel: ChannelId; agent?: A
         lead={agent ? `Connect ${setupSubject(agent)}` : 'Set up in'}
         accent={agent ? 'in four steps' : 'three steps'}
         description={page ? plain(page.setupIntro) : undefined}
+        descriptionClassName={agent ? 'max-w-88 text-balance' : undefined}
       />
       <Tabs
         value={active}

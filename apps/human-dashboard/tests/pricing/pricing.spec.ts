@@ -21,19 +21,27 @@ for (const width of [320, 375, 768, 1024, 1440]) {
     await expect(plans.getByRole('article', { name: 'Pro', exact: true })).toContainText('500');
     await expect(plans.getByRole('article', { name: 'Enterprise', exact: true })).toContainText('Custom');
     const table = page.getByRole('table', { name: 'Agent Inbox plan comparison', includeHidden: true });
+    await expect(table).toBeVisible();
+    await expect(table.getByRole('row')).toHaveCount(11);
     if (width >= 768) {
-      await expect(table).toBeVisible();
-      await expect(table.getByRole('row')).toHaveCount(11);
       await expect(table.getByRole('row', { name: 'Agent inboxes 1 10 Custom', exact: true })).toBeVisible();
       const featureTops = await plans
         .locator('article dl')
         .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
       expect(Math.max(...featureTops) - Math.min(...featureTops)).toBeLessThan(1);
     } else {
-      await expect(table).toBeHidden();
-      await expect(page.locator('#comparison dl')).toHaveCount(10);
-      await expect(page.locator('#comparison dl').first()).toContainText('Hobby');
-      await expect(page.locator('#comparison dl').first()).toContainText('Enterprise');
+      const region = page.getByRole('region', { name: 'Compare plans', exact: true });
+      await region.scrollIntoViewIfNeeded();
+      const firstLabel = table.locator('tbody th').first();
+      const initialX = (await firstLabel.boundingBox())!.x;
+      await region.focus();
+      await region.press('ArrowRight');
+      await expect.poll(() => region.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
+      // Native touch/trackpad scrolling must expose the last plan without moving feature labels.
+      await region.evaluate((node) => node.scrollTo({ left: node.scrollWidth }));
+      await expect(table.getByRole('columnheader', { name: 'Enterprise', exact: true })).toBeInViewport();
+      expect(Math.abs((await firstLabel.boundingBox())!.x - initialX)).toBeLessThan(1);
+      await region.evaluate((node) => node.scrollTo({ left: 0 }));
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     const clipped = await page
@@ -84,13 +92,12 @@ test('all FAQ disclosures work with keyboard input and reduced motion', async ({
   }
 });
 
-test('the shared footer discovers pricing and its comparison link navigates', async ({ page }) => {
+test('the shared footer discovers pricing and the hero uses the reviewed title', async ({ page }) => {
   await page.goto('/sapien');
   await page.locator('footer').getByRole('link', { name: 'pricing', exact: true }).click();
   await expect(page).toHaveURL(/\/pricing$/);
-  await page.getByRole('link', { name: 'Compare all features' }).click();
-  await expect(page).toHaveURL(/\/pricing#comparison$/);
-  await expect(page.getByRole('heading', { name: 'Everything you need. Room to grow.' })).toBeInViewport();
+  await expect(page.locator('h1')).toHaveText('Built for agents. Priced by conversation');
+  await expect(page.getByRole('link', { name: 'Compare all features' })).toHaveCount(0);
 });
 
 test('the mobile menu opens, closes and restores keyboard focus', async ({ page }) => {
@@ -118,7 +125,11 @@ test('shared landing footers still fit at narrow and tablet widths', async ({ pa
 });
 
 test('pricing content and native FAQ controls work without JavaScript', async ({ browser, baseURL }) => {
-  const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
+  const context = await browser.newContext({
+    baseURL,
+    javaScriptEnabled: false,
+    viewport: { width: 375, height: 812 },
+  });
   try {
     const page = await context.newPage();
     await page.goto('/pricing');
@@ -127,6 +138,10 @@ test('pricing content and native FAQ controls work without JavaScript', async ({
     await item.locator('summary').click();
     await expect(item).toHaveAttribute('open');
     await expect(item.locator('p')).toBeVisible();
+    const comparison = page.getByRole('region', { name: 'Compare plans', exact: true });
+    await comparison.scrollIntoViewIfNeeded();
+    await comparison.evaluate((node) => node.scrollTo({ left: node.scrollWidth }));
+    await expect(comparison.getByRole('columnheader', { name: 'Enterprise', exact: true })).toBeInViewport();
   } finally {
     await context.close();
   }

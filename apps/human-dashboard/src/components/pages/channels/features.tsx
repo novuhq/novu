@@ -15,6 +15,7 @@ export function ChannelFeatures({ channel, agent }: { channel: ChannelId; agent?
           lead={page ? page.benefitsHeading[0] : 'What your agent can do'}
           accent={page ? page.benefitsHeading[1] : CHANNELS[channel].location}
           description={page ? plain(page.benefitsIntro) : undefined}
+          descriptionClassName={agent ? 'max-w-88 text-balance' : undefined}
         />
       </div>
       <div className={cn('grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4', agent && 'md:grid-cols-3')}>

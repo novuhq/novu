@@ -71,3 +71,29 @@ for (const route of ['/telegram', '/telegram/openclaw']) {
     await expect(setup.getByRole('tab').nth(1)).toHaveAttribute('aria-selected', 'true');
   });
 }
+
+for (const channel of CHANNEL_IDS) {
+  test(`reviewed command fields copy complete values on ${channel}`, async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(`/${channel}`);
+    const fields = page.locator('#who-can-reach [role="group"], #use-cases [role="group"]');
+    expect(await fields.count()).toBeGreaterThan(4);
+    for (const field of await fields.all()) {
+      const command = await field.locator('code').textContent();
+      await field.getByRole('button', { name: 'Copy command', exact: true }).click();
+      await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(command);
+      await expect(field.getByRole('status')).toHaveText('Command copied to clipboard');
+      expect(await field.evaluate((node) => node.getBoundingClientRect().right <= innerWidth)).toBe(true);
+    }
+    await page.goto(`/${channel}/openclaw`);
+    const capabilities = page.locator('#more-features');
+    await expect(capabilities.getByRole('link')).toHaveCount(6);
+    for (const link of await capabilities.getByRole('link').all()) {
+      const href = await link.getAttribute('href');
+      expect(href).toMatch(new RegExp(`^/${channel}(#.+)?$`));
+    }
+    await capabilities.getByRole('link').first().click();
+    await expect(page).toHaveURL(new RegExp(`/${channel}#message-types$`));
+  });
+}
