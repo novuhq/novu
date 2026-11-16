@@ -30,7 +30,7 @@ export function ChannelUseCases({ channel }: { channel: ChannelId }) {
                   {...landingAudit(`use-case-${index}-title`, 'use-cases', 'text', 'label')}
                   className="font-normal text-sapien-foreground"
                 >
-                  {item.title}
+                  {item.title}.
                 </strong>{' '}
                 {item.description}
               </p>

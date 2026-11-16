@@ -26,7 +26,7 @@ export function PricingConversations() {
               {index + 1}
             </span>
             <p className="mt-6 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
-              <strong className="font-normal text-sapien-foreground">{rule.title}</strong> {rule.description}
+              <strong className="font-normal text-sapien-foreground">{rule.title}.</strong> {rule.description}
             </p>
           </li>
         ))}
