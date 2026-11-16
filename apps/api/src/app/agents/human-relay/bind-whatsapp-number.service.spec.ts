@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { encryptCredentials } from '@novu/application-generic';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -90,6 +91,24 @@ describe('BindWhatsAppNumber', () => {
     providerId: ChatProviderIdEnum.WhatsAppBusiness,
     endpoint: { phoneNumber: NUMBER, provedAt: '2026-11-01T10:00:00.000Z' },
   };
+
+  it('keeps which business number the code went to with the proof, as its window is with that number', async () => {
+    const { usecase, channelEndpointRepository } = setup({
+      integration: {
+        _id: 'integration1',
+        identifier: 'whatsapp-main',
+        providerId: ChatProviderIdEnum.WhatsAppBusiness,
+        active: true,
+        credentials: encryptCredentials({ phoneNumberIdentification: '1234' } as never),
+      },
+    });
+
+    await usecase.execute(PAYLOAD, NUMBER);
+
+    const proof = channelEndpointRepository.update.firstCall.args[1].$set;
+    expect(proof['endpoint.provedOn']).to.equal('1234');
+    expect(proof['endpoint.provedAt']).to.be.a('string');
+  });
 
   it('changes nothing when the number is already theirs and proved', async () => {
     const { usecase, createChannelEndpoint, channelEndpointRepository } = setup({

@@ -28,6 +28,7 @@ import {
   provedWhatsAppNumberOf,
   whatsAppNumberLastCodeAtOf,
   whatsAppNumberProvedAtOf,
+  whatsAppNumberProvedOnOf,
 } from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from '../../agents/shared/errors/agent-inactive.exception';
@@ -74,6 +75,8 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   window?: WhatsAppWindow;
   /** WhatsApp only: when the number last sent a code message, which is never stored but opened a window. */
   lastCodeAt?: string;
+  /** WhatsApp only: the business number's Meta id that proof and code went to, when it was kept. */
+  provedOn?: string;
 }
 
 /** Apps a human can connect themselves from the invite page. */
@@ -419,7 +422,9 @@ export class HumanDeliveryService {
         via: HumanChannelViaEnum.WHATSAPP,
         platformUserId: waId,
         integrationIdentifier: integration?.identifier ?? '',
-        ...(endpoint ? { lastCodeAt: whatsAppNumberLastCodeAtOf(endpoint) } : {}),
+        ...(endpoint
+          ? { lastCodeAt: whatsAppNumberLastCodeAtOf(endpoint), provedOn: whatsAppNumberProvedOnOf(endpoint) }
+          : {}),
       },
       integration ? [integration] : []
     );
@@ -430,7 +435,7 @@ export class HumanDeliveryService {
     params: { environmentId: string; organizationId: string; buttons?: number },
     target: Pick<
       ReachableHumanTarget,
-      'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt' | 'lastCodeAt'
+      'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt' | 'lastCodeAt' | 'provedOn'
     >,
     integrations: IntegrationEntity[]
   ): Promise<WhatsAppUnfit | null> {
@@ -451,6 +456,7 @@ export class HumanDeliveryService {
     const window = await this.whatsAppWindow.describe(params, integration, {
       waId: target.platformUserId,
       provedAt: target.lastCodeAt ?? target.connectedAt,
+      ...(target.provedOn ? { provedOn: target.provedOn } : {}),
     });
 
     return window.open ? null : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
@@ -772,6 +778,7 @@ export class HumanDeliveryService {
         onIntegration.map((target) => ({
           waId: target.platformUserId,
           provedAt: target.lastCodeAt ?? target.connectedAt,
+          ...(target.provedOn ? { provedOn: target.provedOn } : {}),
         }))
       );
       for (const target of onIntegration) {
@@ -1086,6 +1093,7 @@ export class HumanDeliveryService {
 
     const handle = readContactHandle(endpoint.endpoint);
     const lastCodeAt = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberLastCodeAtOf(endpoint) : undefined;
+    const provedOn = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberProvedOnOf(endpoint) : undefined;
 
     return {
       via,
@@ -1095,6 +1103,7 @@ export class HumanDeliveryService {
       // A WhatsApp number connected when it was proved, which can be later than the endpoint when it moved owners.
       connectedAt: (endpoint.type === ENDPOINT_TYPES.PHONE && whatsAppNumberProvedAtOf(endpoint)) || endpoint.createdAt,
       ...(lastCodeAt ? { lastCodeAt } : {}),
+      ...(provedOn ? { provedOn } : {}),
       ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }

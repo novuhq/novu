@@ -14,6 +14,20 @@ export const WHATSAPP_NUMBER_PROVED_AT_FIELD = 'provedAt';
  */
 export const WHATSAPP_NUMBER_LAST_CODE_AT_FIELD = 'lastCodeAt';
 
+/**
+ * Which business number the times above were written to: its Meta phone number id. WhatsApp's window is with one
+ * business number, so a proof sent to a number the integration has since left opens no window on the new one.
+ * Endpoints from before this was kept carry none, and count as before.
+ */
+export const WHATSAPP_NUMBER_PROVED_ON_FIELD = 'provedOn';
+
+/** The business number's Meta id the endpoint's proof and code times were written to, when it was kept. */
+export function whatsAppNumberProvedOnOf(endpoint: Pick<ChannelEndpointEntity, 'endpoint'>): string | undefined {
+  const provedOn = (endpoint.endpoint as Record<string, unknown>)[WHATSAPP_NUMBER_PROVED_ON_FIELD];
+
+  return typeof provedOn === 'string' && provedOn ? provedOn : undefined;
+}
+
 /** The last time the number wrote a code message, proving it or not: a start of WhatsApp's 24-hour window. */
 export function whatsAppNumberLastCodeAtOf(endpoint: Pick<ChannelEndpointEntity, 'endpoint'>): string | undefined {
   const data = endpoint.endpoint as Record<string, unknown>;

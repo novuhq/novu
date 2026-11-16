@@ -16,7 +16,11 @@ import {
   WhatsAppBindCodeService,
 } from './whatsapp-bind-code.service';
 import { WhatsAppHeldRelease } from './whatsapp-held-release.service';
-import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_LAST_CODE_AT_FIELD } from './whatsapp-number-proof';
+import {
+  provedWhatsAppNumberOf,
+  WHATSAPP_NUMBER_LAST_CODE_AT_FIELD,
+  WHATSAPP_NUMBER_PROVED_ON_FIELD,
+} from './whatsapp-number-proof';
 
 export const WHATSAPP_BIND_SUCCESS_REPLY = "You're connected. This agent will reach you here on WhatsApp.";
 export const WHATSAPP_BIND_DUPLICATE_REPLY = 'This number is already connected. No changes needed.';
@@ -169,6 +173,7 @@ export class WhatsAppBindInbound {
    * a number that isn't bound yet; binding it records the proof instead.
    */
   private async noteCodeMessage(config: ResolvedAgentConfig, phoneNumber: string): Promise<void> {
+    const businessNumberId = config.credentials?.phoneNumberIdentification;
     try {
       await this.channelEndpointRepository.update(
         {
@@ -178,7 +183,11 @@ export class WhatsAppBindInbound {
           type: ENDPOINT_TYPES.PHONE,
           'endpoint.phoneNumber': phoneNumber,
         },
-        { $max: { [`endpoint.${WHATSAPP_NUMBER_LAST_CODE_AT_FIELD}`]: new Date().toISOString() } }
+        {
+          $max: { [`endpoint.${WHATSAPP_NUMBER_LAST_CODE_AT_FIELD}`]: new Date().toISOString() },
+          // The window this opened is with the business number they wrote to.
+          ...(businessNumberId ? { $set: { [`endpoint.${WHATSAPP_NUMBER_PROVED_ON_FIELD}`]: businessNumberId } } : {}),
+        }
       );
     } catch (err) {
       this.logger.warn(err, 'Could not keep when a WhatsApp number last wrote a code');

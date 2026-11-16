@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { decryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -13,7 +14,11 @@ import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-c
 import { CONTACT_HANDLE_FIELDS } from '../../human/services/contact-handle';
 import { normalizePhoneForMeta } from '../shared/util/phone-normalization';
 import type { WhatsAppBindCodePayload } from './whatsapp-bind-code.service';
-import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_PROVED_AT_FIELD } from './whatsapp-number-proof';
+import {
+  provedWhatsAppNumberOf,
+  WHATSAPP_NUMBER_PROVED_AT_FIELD,
+  WHATSAPP_NUMBER_PROVED_ON_FIELD,
+} from './whatsapp-number-proof';
 
 const HANDLE_UNSET = Object.fromEntries(CONTACT_HANDLE_FIELDS.map((field) => [`endpoint.${field}`, '']));
 
@@ -48,7 +53,7 @@ export class BindWhatsAppNumber {
 
     const integration = await this.integrationRepository.findOne(
       { ...scope, _id: payload.integrationId },
-      '_id identifier providerId active'
+      '_id identifier providerId active credentials'
     );
     if (!integration || integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness || !integration.active) {
       throw new NotFoundException('WhatsApp integration not found for this code.');
@@ -78,7 +83,12 @@ export class BindWhatsAppNumber {
       endpointValue: phoneNumber,
     });
 
-    const proof = { [`endpoint.${WHATSAPP_NUMBER_PROVED_AT_FIELD}`]: new Date().toISOString() };
+    // Kept with the business number the code went to: the window that code opened is with that number only.
+    const businessNumberId = decryptCredentials(integration.credentials ?? {}).phoneNumberIdentification;
+    const proof = {
+      [`endpoint.${WHATSAPP_NUMBER_PROVED_AT_FIELD}`]: new Date().toISOString(),
+      ...(businessNumberId ? { [`endpoint.${WHATSAPP_NUMBER_PROVED_ON_FIELD}`]: businessNumberId } : {}),
+    };
 
     if (existing) {
       const ownedAlready = existing.subscriberId === subscriber.subscriberId;

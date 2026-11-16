@@ -244,5 +244,17 @@ describe('WhatsAppBindInbound', () => {
       'endpoint.phoneNumber': '+15550100199',
     });
     expect(change.$max['endpoint.lastCodeAt']).to.be.a('string');
+    expect(change).to.not.have.property('$set');
+  });
+
+  it('keeps which business number that code went to, as the window it opened is with that number', async () => {
+    const { service, channelEndpointRepository } = setup({ consumed: { status: 'missing' } });
+
+    await send(service, 'Connect my WhatsApp: BCDF-GHJK', {
+      ...CONFIG,
+      credentials: { phoneNumberIdentification: '1234' },
+    });
+
+    expect(channelEndpointRepository.update.firstCall.args[1].$set).to.deep.equal({ 'endpoint.provedOn': '1234' });
   });
 });

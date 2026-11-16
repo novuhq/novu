@@ -20,6 +20,8 @@ export type WhatsAppWindowTarget = {
   waId: string;
   /** When they sent the code that proved the number. That message is never stored, but it opened a window. */
   provedAt?: string;
+  /** The business number's Meta id that code went to, when it was kept. A proof to another number opens nothing. */
+  provedOn?: string;
 };
 
 /**
@@ -59,7 +61,12 @@ export class WhatsAppWindowService {
     const windows = new Map<string, WhatsAppWindow>();
     for (const target of targets) {
       const threadId = threadIdOf(target.waId);
-      const lastMessageAt = latestOf(threadId ? lastMessages.get(threadId) : undefined, target.provedAt);
+      // The window is with this business number: a code sent to one the integration has since left doesn't count.
+      const provedHere = !target.provedOn || !phoneNumberId || target.provedOn === phoneNumberId;
+      const lastMessageAt = latestOf(
+        threadId ? lastMessages.get(threadId) : undefined,
+        provedHere ? target.provedAt : undefined
+      );
       windows.set(target.waId, windowFrom(lastMessageAt, now));
     }
 

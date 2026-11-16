@@ -65,6 +65,30 @@ describe('WhatsAppWindowService', () => {
     expect(window).to.include({ open: true, lastMessageAt: provedAt });
   });
 
+  it('counts a proof only on the business number it was sent to, and one from before that was kept', async () => {
+    const provedAt = ago(5 * 60 * 1000);
+    const { service } = setup();
+    const target = { waId: '15551234567', provedAt };
+
+    // Proved to the number the integration had before: no window on this one.
+    expect((await service.describe(SCOPE, INTEGRATION as never, { ...target, provedOn: '9999' })).open).to.equal(false);
+    expect((await service.describe(SCOPE, INTEGRATION as never, { ...target, provedOn: '1234' })).open).to.equal(true);
+    expect((await service.describe(SCOPE, INTEGRATION as never, target)).open).to.equal(true);
+  });
+
+  it('still counts what they wrote on this number, whatever number their proof went to', async () => {
+    const wrote = ago(60 * 1000);
+    const { service } = setup({ 'whatsapp:1234:15551234567': wrote });
+
+    const window = await service.describe(SCOPE, INTEGRATION as never, {
+      waId: '15551234567',
+      provedAt: ago(5 * 60 * 1000),
+      provedOn: '9999',
+    });
+
+    expect(window).to.include({ open: true, lastMessageAt: wrote });
+  });
+
   it('is shut for someone who never wrote', async () => {
     const { service } = setup();
 
