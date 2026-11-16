@@ -16,7 +16,10 @@ const SETTLED = 0.001;
 /** How near the edge the pointer has to be for the border to start glowing: 0 is the centre, 1 the edge. */
 const EDGE_FROM = 0.55;
 
-type TiltCardProps = ComponentProps<'section'>;
+type TiltCardProps = ComponentProps<'section'> & {
+  /** The corners of the card it holds, which its glare and lit edge follow: the ID card's 14px by default. */
+  cornerClassName?: string;
+};
 
 /**
  * The agent card held in the hand: it leans towards the pointer, a soft glare follows the pointer across it,
@@ -25,7 +28,7 @@ type TiltCardProps = ComponentProps<'section'>;
  * nothing re-renders; it eases there and back, and lies flat and unlit once the pointer leaves. Still on touch
  * screens, and for anyone who prefers reduced motion. It has the agent card's 14px corners.
  */
-export function TiltCard({ className, children, ...props }: TiltCardProps) {
+export function TiltCard({ className, cornerClassName = 'rounded-[14px]', children, ...props }: TiltCardProps) {
   const frame = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
 
@@ -112,7 +115,10 @@ export function TiltCard({ className, children, ...props }: TiltCardProps) {
     <div ref={frame} className="w-full perspective-distant">
       <div
         ref={card}
-        className="relative rounded-[14px] transform-[rotateX(var(--tilt-x,0deg))_rotateY(var(--tilt-y,0deg))] will-change-transform"
+        className={cn(
+          'relative transform-[rotateX(var(--tilt-x,0deg))_rotateY(var(--tilt-y,0deg))] will-change-transform',
+          cornerClassName
+        )}
       >
         {/* The lit edge's halo, behind the card: only what spills past its border shows. */}
         <span

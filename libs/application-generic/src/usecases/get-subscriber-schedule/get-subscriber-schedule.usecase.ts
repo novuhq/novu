@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PreferencesRepository } from '@novu/dal';
+import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, PreferencesTypeEnum, Schedule } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
@@ -14,6 +14,18 @@ export class GetSubscriberSchedule {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberScheduleCommand): Promise<Schedule | undefined> {
+    const subscriberGlobalPreference = await this.getSubscriberGlobalPreference(command);
+
+    return subscriberGlobalPreference?.schedule;
+  }
+
+  /**
+   * The SUBSCRIBER_GLOBAL preference that holds the schedule. Exposed so a caller
+   * that also evaluates preferences can hand the same document to
+   * `GetPreferences` instead of reading it twice.
+   */
+  @Instrument()
+  async getSubscriberGlobalPreference(command: GetSubscriberScheduleCommand): Promise<PreferencesEntity | null> {
     const useContextFiltering = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
       defaultValue: false,
@@ -24,7 +36,7 @@ export class GetSubscriberSchedule {
       enabled: useContextFiltering,
     });
 
-    const subscriberGlobalPreference = await this.preferencesRepository.findOne(
+    return this.preferencesRepository.findOne(
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -35,7 +47,5 @@ export class GetSubscriberSchedule {
       undefined,
       { readPreference: 'secondaryPreferred' }
     );
-
-    return subscriberGlobalPreference?.schedule;
   }
 }

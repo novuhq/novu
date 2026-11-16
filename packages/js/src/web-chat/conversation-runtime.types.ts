@@ -14,6 +14,8 @@ export type AgentConversationSessionStatus = 'ready' | 'loading' | 'fetching';
 /** Whether the agent turn is in progress, plus an optional typing indicator. */
 export type AgentConversationRunSnapshot = {
   isRunning: boolean;
+  /** True from `stop()` until the run ends. Stopping is asynchronous: the agent finishes its current step first. */
+  isStopping: boolean;
   typing?: AgentConversationTyping;
 };
 

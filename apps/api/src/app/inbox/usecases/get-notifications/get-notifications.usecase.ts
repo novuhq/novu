@@ -20,11 +20,13 @@ export class GetNotifications {
   ) {}
 
   async execute(command: GetNotificationsCommand): Promise<GetNotificationsResponseDto> {
-    const subscriber = await this.getSubscriber.execute({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      subscriberId: command.subscriberId,
-    });
+    const subscriber =
+      command.subscriber ??
+      (await this.getSubscriber.execute({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+      }));
 
     if (!subscriber) {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);

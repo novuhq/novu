@@ -47,6 +47,15 @@ function agentMessage(content: string): AgentHistoryEntry {
   return entry({ role: 'agent', type: 'message', content });
 }
 
+function runFinish(outcome: string): AgentHistoryEntry {
+  return entry({
+    role: 'agent',
+    type: 'run_finish',
+    content: `Run finished: ${outcome}`,
+    richContent: { lifecycle: { outcome } },
+  });
+}
+
 function approvalRequest(params: {
   approvalId: string;
   toolCallId: string;
@@ -165,6 +174,54 @@ describe('toModelMessages', () => {
       expect(result).toEqual([
         { role: 'user', content: 'Alice: one' },
         { role: 'user', content: 'Bob: two' },
+      ]);
+    });
+  });
+
+  describe('stopped turns', () => {
+    const stoppedMarker =
+      '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
+
+    it('maps an aborted run finish to a marker right after the stopped prompt and before the next message', () => {
+      const result = toModelMessages([
+        userMessage('Add an email step'),
+        runFinish('aborted'),
+        userMessage('What does this workflow do?'),
+      ]);
+
+      expect(result).toEqual([
+        { role: 'user', content: 'Add an email step' },
+        { role: 'assistant', content: stoppedMarker },
+        { role: 'user', content: 'What does this workflow do?' },
+      ]);
+    });
+
+    it('keeps a prompt the user sends again after the stop as a plain user turn after the marker', () => {
+      const result = toModelMessages([
+        userMessage('Add SMS and push steps'),
+        runFinish('aborted'),
+        userMessage('Add SMS and push steps'),
+      ]);
+
+      expect(result).toEqual([
+        { role: 'user', content: 'Add SMS and push steps' },
+        { role: 'assistant', content: stoppedMarker },
+        { role: 'user', content: 'Add SMS and push steps' },
+      ]);
+    });
+
+    it('maps a completed or paused run finish to nothing', () => {
+      const result = toModelMessages([
+        userMessage('hi'),
+        agentMessage('hello!'),
+        runFinish('completed'),
+        runFinish('paused'),
+        entry({ role: 'agent', type: 'run_finish', content: 'Run finished' }),
+      ]);
+
+      expect(result).toEqual([
+        { role: 'user', content: 'hi' },
+        { role: 'assistant', content: 'hello!' },
       ]);
     });
   });

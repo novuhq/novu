@@ -2,7 +2,13 @@ import { type ZodTypeAny, z } from 'zod';
 
 type JsonSchema = Record<string, unknown>;
 
-const SUPPORTED_STRING_FORMATS = new Set(['email', 'uri', 'uuid', 'date-time', 'date', 'time']);
+const SUPPORTED_STRING_FORMATS = ['email', 'uri', 'uuid', 'date-time', 'date', 'time'] as const;
+
+type SupportedStringFormat = (typeof SUPPORTED_STRING_FORMATS)[number];
+
+function isSupportedStringFormat(format: string): format is SupportedStringFormat {
+  return (SUPPORTED_STRING_FORMATS as readonly string[]).includes(format);
+}
 
 export function safeJsonSchemaToZod(schema: JsonSchema): ZodTypeAny {
   return buildSchema(schema, schema);
@@ -10,23 +16,7 @@ export function safeJsonSchemaToZod(schema: JsonSchema): ZodTypeAny {
 
 function buildSchema(schema: JsonSchema, root: JsonSchema, refStack: Set<string> = new Set()): ZodTypeAny {
   if ('$ref' in schema && typeof schema.$ref === 'string') {
-    if (refStack.has(schema.$ref)) {
-      return fallbackSchema();
-    }
-
-    const resolved = resolveRef(schema.$ref, root);
-
-    if (!resolved) {
-      return fallbackSchema();
-    }
-
-    refStack.add(schema.$ref);
-
-    const resolvedSchema = buildSchema(resolved, root, refStack);
-
-    refStack.delete(schema.$ref);
-
-    return resolvedSchema;
+    return buildRef(schema.$ref, root, refStack);
   }
 
   if (Array.isArray(schema.allOf)) {
@@ -52,21 +42,7 @@ function buildSchema(schema: JsonSchema, root: JsonSchema, refStack: Set<string>
   const type = schema.type;
 
   if (Array.isArray(type)) {
-    const nonNullTypes = type.filter((value) => value !== 'null');
-
-    if (nonNullTypes.length === 0) {
-      return z.null();
-    }
-
-    const variants = nonNullTypes.map((value) => buildSchema({ ...schema, type: value }, root, refStack));
-    const unionSchema =
-      variants.length === 1 ? variants[0] : z.union(variants as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
-
-    if (type.includes('null')) {
-      return unionSchema.nullable();
-    }
-
-    return unionSchema;
+    return buildTypeUnion(type, schema, root, refStack);
   }
 
   if (type === 'object' || schema.properties) {
@@ -94,6 +70,44 @@ function buildSchema(schema: JsonSchema, root: JsonSchema, refStack: Set<string>
   }
 
   return fallbackSchema();
+}
+
+function buildTypeUnion(type: unknown[], schema: JsonSchema, root: JsonSchema, refStack: Set<string>): ZodTypeAny {
+  const nonNullTypes = type.filter((value) => value !== 'null');
+
+  if (nonNullTypes.length === 0) {
+    return z.null();
+  }
+
+  const variants = nonNullTypes.map((value) => buildSchema({ ...schema, type: value }, root, refStack));
+  const unionSchema =
+    variants.length === 1 ? variants[0] : z.union(variants as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
+
+  if (type.includes('null')) {
+    return unionSchema.nullable();
+  }
+
+  return unionSchema;
+}
+
+function buildRef(ref: string, root: JsonSchema, refStack: Set<string>): ZodTypeAny {
+  if (refStack.has(ref)) {
+    return fallbackSchema();
+  }
+
+  const resolved = resolveRef(ref, root);
+
+  if (!resolved) {
+    return fallbackSchema();
+  }
+
+  refStack.add(ref);
+
+  const resolvedSchema = buildSchema(resolved, root, refStack);
+
+  refStack.delete(ref);
+
+  return resolvedSchema;
 }
 
 function resolveRef(ref: string, root: JsonSchema): JsonSchema | null {
@@ -156,7 +170,7 @@ function buildUnion(schemas: unknown[], root: JsonSchema, refStack: Set<string>)
 }
 
 function buildEnum(values: unknown[]): ZodTypeAny {
-  const literals = values.map((value) => z.literal(value as never));
+  const literals: ZodTypeAny[] = values.map((value) => z.literal(value as never));
 
   if (literals.length === 0) {
     return fallbackSchema();
@@ -346,14 +360,14 @@ function buildString(schema: JsonSchema): ZodTypeAny {
     }
   }
 
-  if (typeof schema.format === 'string' && SUPPORTED_STRING_FORMATS.has(schema.format)) {
+  if (typeof schema.format === 'string' && isSupportedStringFormat(schema.format)) {
     stringSchema = applyStringFormat(stringSchema as z.ZodString, schema.format);
   }
 
   return applyDescription(stringSchema, schema);
 }
 
-function applyStringFormat(stringSchema: z.ZodString, format: string): z.ZodString {
+function applyStringFormat(stringSchema: z.ZodString, format: SupportedStringFormat): z.ZodString {
   switch (format) {
     case 'email':
       return stringSchema.email();

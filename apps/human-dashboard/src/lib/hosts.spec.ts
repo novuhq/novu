@@ -254,7 +254,7 @@ describe('the Markdown for agents', () => {
     );
     expect(markdown).toContain('`npx @agentinbox/cli login`');
     expect(markdown).toContain('claude plugin install agentinbox@agentinbox');
-    expect(markdown).toContain('Never ask for a Telegram bot token or a Slack token');
+    expect(markdown).toContain('Never ask for a Telegram bot token, a Slack token or WhatsApp credentials');
     expect(hostMarkdown(hostOf('cursor'))).toContain(cursorInstallLink(MCP_URL));
     expect(hostMarkdown(hostOf('cursor'))).toContain('"mcpServers"');
     expect(hostMarkdown(hostOf('opencode'))).toContain('opencode mcp add AgentInbox --url https://mcp.agentinbox.md');

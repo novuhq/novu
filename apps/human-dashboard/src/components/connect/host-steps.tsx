@@ -6,9 +6,9 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { useConnectionPoll, WaitingLine } from '@/components/channels/setup-parts';
 import { HostSetupBox } from '@/components/connect/host-setup-box';
+import { AgentMascot } from '@/components/ui/agent-look';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { CopyField } from '@/components/ui/copy-field';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { Fold } from '@/components/ui/stepper';
 import type { ConnectCodeState } from '@/hooks/use-connect-code';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
@@ -115,7 +115,7 @@ type HostSignedInProps = {
 function HostSignedIn({ host, handle, onShowSteps }: HostSignedInProps) {
   return (
     <div className="flex flex-col items-center gap-3.5 py-10 text-center">
-      <MascotFace art="waiting" mood="happy" className="size-40" />
+      <AgentMascot art="waiting" mood="happy" className="size-40" />
       <h3 className="text-base leading-6 font-medium text-foreground">
         {host.name} is now {handle}
       </h3>
@@ -161,6 +161,8 @@ type HostPanelProps = {
   showListen?: boolean;
   /** Whether a connected host's box gives way to "<host> is now <agent>". The onboarding moves on instead. */
   showSignedIn?: boolean;
+  /** Told when the box's button copied what it shows, and on which way. */
+  onCopy?: (way: HostWay) => void;
 };
 
 /**
@@ -188,6 +190,7 @@ export function HostPanel({
   showWaiting = true,
   showListen = true,
   showSignedIn = true,
+  onCopy,
 }: HostPanelProps) {
   const router = useRouter();
   const host = hostOf(selected);
@@ -303,6 +306,7 @@ export function HostPanel({
                 code={code}
                 onRetry={onRetry}
                 mcpUrl={mcpUrl ?? ''}
+                onCopy={onCopy}
               />
               <ListenFold host={showListen ? listeningHost(host, way) : null} handle={handle} />
               <WatchLine line={showWaiting && watched ? { host, signedIn: isSignedIn(host.id), handle } : null} />

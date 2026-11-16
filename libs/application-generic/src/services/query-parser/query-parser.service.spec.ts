@@ -4,6 +4,38 @@ import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { evaluateRules, extractRuleVariables } from './query-parser.service';
 
 describe('QueryParserService', () => {
+  describe('Array Item Operations', () => {
+    const data = {
+      steps: {
+        digest: {
+          events: [
+            { id: '1', payload: { status: 'read', count: 3, channels: { email: 'a@b.com' } } },
+            { id: '2', payload: { status: 'unread', count: 7, channels: {} } },
+          ],
+        },
+      },
+    };
+
+    it('should check a nested property exists on any array item', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        some: [{ var: 'steps.digest.events' }, { var: 'payload.channels.email' }],
+      };
+      expect(evaluateRules(rule, data).result).to.be.true;
+    });
+
+    it('should compare nested properties with some, all and none', () => {
+      const some = { some: [{ var: 'steps.digest.events' }, { '==': [{ var: 'payload.status' }, 'read'] }] };
+      const all = { all: [{ var: 'steps.digest.events' }, { '>': [{ var: 'payload.count' }, '2'] }] };
+      const none = { none: [{ var: 'steps.digest.events' }, { '==': [{ var: 'payload.status' }, 'archived'] }] };
+      const notAll = { all: [{ var: 'steps.digest.events' }, { var: 'payload.channels.email' }] };
+
+      expect(evaluateRules(some as RulesLogic<AdditionalOperation>, data).result).to.be.true;
+      expect(evaluateRules(all as RulesLogic<AdditionalOperation>, data).result).to.be.true;
+      expect(evaluateRules(none as RulesLogic<AdditionalOperation>, data).result).to.be.true;
+      expect(evaluateRules(notAll as RulesLogic<AdditionalOperation>, data).result).to.be.false;
+    });
+  });
+
   describe('Smoke Tests', () => {
     it('should evaluate a simple equality rule', () => {
       const rule: RulesLogic<AdditionalOperation> = { '=': [{ var: 'value' }, 42] };

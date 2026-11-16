@@ -30,7 +30,7 @@ export function RepeatBubbleMenu(
   const state = useRepeatState(editor);
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'repeat');
+    const renderContainer = getRenderContainer(editor, 'repeat');
     const rect = renderContainer?.getBoundingClientRect() || new DOMRect(-1000, -1000, 0, 0);
 
     return rect;
@@ -80,7 +80,7 @@ export function RepeatBubbleMenu(
 
   const eachKey = state?.each || '';
   const autoCompleteOptions = useMemo(() => {
-    return processVariables(variables, {
+    return processVariables(variables || [], {
       query: eachKey || '',
       editor,
       from: 'repeat-variable',
@@ -118,7 +118,7 @@ export function RepeatBubbleMenu(
                 }}
                 className="mly-flex mly-items-center"
               >
-                {renderVariable({
+                {renderVariable?.({
                   variable: {
                     name: state?.each,
                     valid: isValidEachKey,

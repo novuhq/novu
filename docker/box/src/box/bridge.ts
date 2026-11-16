@@ -10,18 +10,26 @@ import {
   ApiEnvironments,
   ApiIntegrations,
   ApiSynced,
+  ApiUser,
   BridgeDiscovery,
 } from '../shared/contracts.ts';
 import { api, apiHas } from './api.ts';
-import { BRIDGE_SECRET, BRIDGE_URL, MANAGED_AGENT } from './paths.ts';
+import { BRIDGE_APP_ID, BRIDGE_SECRET, BRIDGE_SUBSCRIBER_ID, BRIDGE_URL, MANAGED_AGENT } from './paths.ts';
 import { waitForHttp } from './runtime.ts';
 import { pc } from './supervisor.ts';
 
 export async function seedBridge(token: string): Promise<void> {
-  const { data } = await api('/v1/environments', ApiEnvironments, { headers: { Authorization: `Bearer ${token}` } });
-  const key = data.find((environment) => environment.name === 'Development')?.apiKeys[0]?.key;
-  if (!key) throw new Error('the seed org has no Development environment');
+  const headers = { Authorization: `Bearer ${token}` };
+  const { data } = await api('/v1/environments', ApiEnvironments, { headers });
+  const development = data.find((environment) => environment.name === 'Development');
+  const key = development?.apiKeys[0]?.key;
+  if (!development || !key) throw new Error('the seed org has no Development environment');
+  const me = (await api('/v1/users/me', ApiUser, { headers })).data;
   fs.mkdirSync(dirname(BRIDGE_SECRET), { recursive: true });
+  // For the playground's pages, whose subscriber is the seed user (as in seedChannels). Before the key, which the
+  // bridge process waits for.
+  fs.writeFileSync(BRIDGE_APP_ID, development.identifier);
+  fs.writeFileSync(BRIDGE_SUBSCRIBER_ID, me._id);
   fs.writeFileSync(BRIDGE_SECRET, key, { mode: 0o600 });
   await syncBridge();
 }

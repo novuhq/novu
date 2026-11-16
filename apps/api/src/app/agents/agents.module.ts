@@ -31,6 +31,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { HumanOperatorService } from '../human/services/human-operator.service';
 import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
@@ -61,9 +62,11 @@ import { InboundConnectionContextResolver } from './conversation-runtime/ingress
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { SlackAppUninstallIngress } from './conversation-runtime/ingress/slack-app-uninstall.ingress';
 import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { AgentTurnAbortStore } from './conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
@@ -77,6 +80,7 @@ import { AgentInboxAddressService } from './email/novu-email/agent-inbox-address
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
+import { BindWhatsAppNumber } from './human-relay/bind-whatsapp-number.service';
 import { ContactHandleService } from './human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
 import { HumanEmailActionsController } from './human-relay/human-email-actions.controller';
@@ -85,6 +89,10 @@ import { HumanInteractionInboundService } from './human-relay/human-interaction-
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
+import { WhatsAppBindCodeService } from './human-relay/whatsapp-bind-code.service';
+import { WhatsAppBindInbound } from './human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppFirstMessageStatus } from './human-relay/whatsapp-first-message-status.service';
+import { WhatsAppHeldRelease } from './human-relay/whatsapp-held-release.service';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
@@ -182,6 +190,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
+    AgentTurnAbortStore,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     BridgeLiveReplies,
@@ -189,7 +198,13 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     HumanRelayRuntime,
     HumanRelayEmailService,
     HumanOperatorService,
+    AgentInboxFeaturesService,
     ContactHandleService,
+    WhatsAppBindCodeService,
+    BindWhatsAppNumber,
+    WhatsAppBindInbound,
+    WhatsAppHeldRelease,
+    WhatsAppFirstMessageStatus,
     HumanConversationInboundInterceptor,
     HumanInteractionInboundService,
     HumanInteractionSettlementService,
@@ -227,6 +242,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,
+    SlackAppUninstallIngress,
     InboundConnectionContextResolver,
     FileMaterializer,
     AgentEmailSender,
@@ -257,6 +273,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     NovuEmailProvisioningService,
     AgentConversationService,
     CreateConversationInteraction,
+    WhatsAppBindCodeService,
   ],
 })
 export class AgentsModule {}

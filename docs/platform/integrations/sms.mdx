@@ -37,7 +37,7 @@ Within the SMS step editor, write the message body. The editor supports dynamic 
 <Step> 
 ### Store subscriber phone number
 
-Novu automatically sends the notification to the phone number stored on the subscriber's profile. You must ensure that this field is set for any subscriber who needs to receive SMS messages. You can store subscribers phone number using the Novu API, or SDK.
+Novu automatically sends the notification to the phone number stored on the subscriber's profile. Make sure this field is set for any subscriber who needs to receive SMS messages, unless you supply a recipient with the [`to` override](#override-sms-settings) at trigger time. You can store subscribers phone number using the Novu API, or SDK.
 </Step>
 <Step>
 ### Trigger the workflow
@@ -81,6 +81,10 @@ Each provider has different requirements.
 ## Override SMS settings
 
 You can override the SMS settings when triggerring a notification by passing the `overrides` object. The overrides object field supports an `sms` property and `from`, `to`, and `content` field overrides. This lets you send a message to a different recipient, from a different sender, or with a different content.
+
+<Note>
+  When you set `to` in the SMS overrides, Novu delivers the message to that number even if the subscriber has no stored phone number. Without a `to` override, Novu uses the subscriber's stored phone number and skips the SMS step when it is missing.
+</Note>
 
 <Tabs>
   <Tab title="Node.js">

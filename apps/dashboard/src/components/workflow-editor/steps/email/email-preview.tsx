@@ -105,10 +105,11 @@ type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
   resourceOrigin: ResourceOriginEnum;
   isStepResolver?: boolean;
+  readOnlyBranding?: boolean;
 };
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
-  const { body, className, resourceOrigin, isStepResolver, ...rest } = props;
+  const { body, className, resourceOrigin, isStepResolver, readOnlyBranding = false, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -181,7 +182,7 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} />
+      <NovuBranding resourceOrigin={resourceOrigin} isStepResolver={isStepResolver} readOnly={readOnlyBranding} />
     </div>
   );
 };

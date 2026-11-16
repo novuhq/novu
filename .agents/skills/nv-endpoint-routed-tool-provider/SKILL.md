@@ -143,7 +143,7 @@ CI=true pnpm --filter @novu/providers exec vitest run src/lib/tool/<provider>
 # channel-endpoints e2e (from apps/api)
 pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true \
   NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 \
-  --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts \
+  --grep '#novu-v2' --require @novu/testing/swc-register --exit --file e2e/setup.ts \
   'src/**/create-channel-endpoint.e2e{,-ee}.ts'
 ```
 

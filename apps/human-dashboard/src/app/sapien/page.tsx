@@ -12,7 +12,6 @@ import { SiteFooter } from '@/components/sapien/site-footer';
 import { SiteHeader } from '@/components/sapien/site-header';
 import { UseCases } from '@/components/sapien/use-cases';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
-import { ProductHuntBanner } from '@/components/site/product-hunt-banner';
 import { geistMono, inter, redaction } from '@/lib/sapien-fonts';
 import { pageMetadata } from '@/lib/seo';
 import { cn } from '@/lib/utils';
@@ -37,7 +36,6 @@ export default function SapienPage() {
       <SiteStructuredData page="sapien" />
       {/* Mobile Figma frames keep a 10px gutter (340px canvas at 360px). */}
       <div className="mx-auto w-[calc(100%-20px)] max-w-240 sm:w-[calc(100%-2rem)]">
-        <ProductHuntBanner tone="ink" />
         <SiteHeader />
         <main>
           <Hero />

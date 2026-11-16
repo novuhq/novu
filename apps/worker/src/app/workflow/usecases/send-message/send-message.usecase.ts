@@ -26,6 +26,7 @@ import {
   EnvironmentVariableRepository,
   JobEntity,
   NotificationTemplateRepository,
+  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -45,6 +46,7 @@ import {
   ResourceTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
+import { getCachedEnvironment } from '../../../shared/utils';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
@@ -92,7 +94,36 @@ export class SendMessage {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
-    const { compileContext: variables, environment } = await this.buildVariables(command);
+    const subscriber =
+      command.subscriber ??
+      (await this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }));
+
+    if (!subscriber) throw new PlatformException('Subscriber not found');
+
+    /*
+     * Preferences are checked before anything else: a step the subscriber opted out of
+     * is skipped whatever its conditions or bridge output say, so building variables and
+     * calling the bridge for it is wasted work.
+     */
+    const channelPreference = await this.evaluateChannelPreference(command, subscriber);
+    if (!channelPreference.result) {
+      if (!command.payload?.$on_boarding_trigger) {
+        this.sendProcessStepEvent(command, undefined, null, false, isBridgeExecutedWorkflow(command));
+      }
+
+      return {
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE,
+        },
+      };
+    }
+
+    const { compileContext: variables, environment } = await this.buildVariables(command, subscriber);
 
     const stepType = command.step?.template?.type;
 
@@ -102,6 +133,7 @@ export class SendMessage {
         ...command,
         variables,
         workflow: command.workflow,
+        environment,
       });
     }
 
@@ -120,29 +152,17 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
+    const stepCondition = await this.evaluateStepCondition(command, variables);
     if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(
-        command,
-        isBridgeSkipped,
-        stepCondition,
-        channelPreference.result,
-        !!bridgeResponse?.outputs
-      );
+      this.sendProcessStepEvent(command, isBridgeSkipped, stepCondition, true, !!bridgeResponse?.outputs);
     }
 
-    const conditionsShouldRun = stepCondition?.passed;
-    const preferenceShouldRun = channelPreference.result;
-    const isBridgeSkippedShouldRun = !isBridgeSkipped;
-
-    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
+    if (!stepCondition?.passed || isBridgeSkipped) {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
           status: DeliveryLifecycleStatusEnum.SKIPPED,
-          detail: !channelPreference.result
-            ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
-            : DeliveryLifecycleDetail.USER_STEP_CONDITION,
+          detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
     }
@@ -228,21 +248,6 @@ export class SendMessage {
         throw new Error(`Unsupported step type: ${stepType}`);
       }
     }
-  }
-
-  private async evaluateFilters(
-    command: SendMessageCommand,
-    variables: ICompileContext
-  ): Promise<{
-    stepCondition: IConditionsFilterResponse;
-    channelPreference: { result: boolean; reason?: DetailEnum };
-  }> {
-    const [stepCondition, channelPreference] = await Promise.all([
-      this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command, variables),
-    ]);
-
-    return { stepCondition, channelPreference };
   }
 
   private async evaluateStepCondition(command: SendMessageCommand, variables: ICompileContext) {
@@ -341,7 +346,7 @@ export class SendMessage {
   @Instrument()
   private async evaluateChannelPreference(
     command: SendMessageCommand,
-    compileContext: ICompileContext
+    subscriber: SubscriberEntity
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
@@ -355,9 +360,6 @@ export class SendMessage {
         _id: job._templateId,
         environmentId: job._environmentId,
       }));
-
-    const subscriber = compileContext.subscriber;
-    if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
     let subscriberPreferenceType: PreferencesTypeEnum;
@@ -391,6 +393,7 @@ export class SendMessage {
           tenant: job.tenant,
           includeInactiveChannels: false,
           contextKeys: job.contextKeys,
+          subscriberGlobalPreference: command.subscriberGlobalPreference,
         })
       );
       subscriberPreference = preference;
@@ -440,13 +443,10 @@ export class SendMessage {
 
   @Instrument()
   private async buildVariables(
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    subscriber: SubscriberEntity
   ): Promise<{ compileContext: ICompileContext; environment: EnvironmentEntity }> {
-    const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
-      this.getSubscriberBySubscriberId({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
+    const [actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       command.job.actorId &&
         this.getSubscriberBySubscriberId({
           subscriberId: command.job.actorId,
@@ -455,10 +455,9 @@ export class SendMessage {
       this.handleTenantExecution(command.job),
       this.resolveContext(command),
       this.getEnvironmentVariables(command),
-      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
+      this.getEnvironment(command.environmentId, command.organizationId),
     ]);
 
-    if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!environmentEntity) throw new PlatformException('EnvironmentEntity not found');
 
     // Compile-safe: adding a required field to EnvironmentSystemVariables will cause a TS error here
@@ -487,6 +486,18 @@ export class SendMessage {
     };
 
     return { compileContext, environment: environmentEntity };
+  }
+
+  /**
+   * The full environment, shared with ExecuteBridgeJob (and from there the bridge
+   * request) so one cached read serves variables, webhooks and the bridge call.
+   */
+  @Instrument()
+  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentEntity | null> {
+    return getCachedEnvironment(this.inMemoryLRUCacheService, this.environmentRepository, {
+      environmentId,
+      organizationId,
+    });
   }
 
   @Instrument()
@@ -634,6 +645,21 @@ export class SendMessage {
 
     return tenant;
   }
+}
+
+/**
+ * Whether ExecuteBridgeJob would have produced bridge outputs for this step: stateless
+ * bridge-URL jobs, or stateful workflows of the bridge/echo type. Keeps the analytics
+ * `workflowType` stable for steps skipped before the bridge call.
+ */
+function isBridgeExecutedWorkflow(command: SendMessageCommand): boolean {
+  if (command.job.step.bridgeUrl) {
+    return true;
+  }
+
+  const workflowType = command.workflow?.type;
+
+  return workflowType === ResourceTypeEnum.BRIDGE || workflowType === ResourceTypeEnum.ECHO;
 }
 
 function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {

@@ -33,6 +33,8 @@ import { TelegramStartCodeService } from '../../../telegram-linking/telegram-sta
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
+import { WhatsAppBindInbound } from '../../human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppHeldRelease } from '../../human-relay/whatsapp-held-release.service';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -66,6 +68,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
+import { alignedEmailChecks } from './email-sender-alignment';
 import { parseEmailThreadAddress } from './email-thread-id';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
@@ -73,6 +76,7 @@ import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.se
 import { getActionPlatformThreadId, getInboundPlatformThreadId, isNestedSharedThread } from './platform-thread-id';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 import {
+  checkAgentMention,
   conversationHasSmartMentionRequired,
   countHumanParticipants,
   countOtherAgentParticipants,
@@ -80,7 +84,6 @@ import {
   type ExplicitMentionContext,
   followsNestedThreadWithoutMention,
   messageContainsUserMention,
-  messageMentionsAgent,
   requiresExplicitMention,
 } from './requires-explicit-mention';
 import { seedSlackThreadHistory } from './seed-slack-thread-history';
@@ -219,17 +222,44 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
   return preview;
 }
 
+type InboundEmailSenderCheck = 'verified' | 'verified-without-domains' | 'unauthenticated' | 'unaligned';
+
 /**
  * An inbound email's sender identity is taken from the `From` header, which is
  * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
- * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
- * The sender is only trusted when both verdicts are `'pass'`; anything else —
- * including a missing verdict on an older payload — is treated as unverified so
- * the resolver never maps a spoofed `From` onto a registered subscriber. Fails
- * closed by design.
+ * and forwards the verdicts on the webhook payload (surfaced on `message.raw`),
+ * with the domains they vouch for. The sender is only trusted when both
+ * verdicts are `'pass'` and one of those domains is the sender's own: anyone
+ * can pass both checks for a domain they own while writing someone else's
+ * address in `From`. Anything else — including a missing verdict on an older
+ * payload — is treated as unverified so the resolver never maps a spoofed
+ * `From` onto a registered subscriber. Fails closed by design.
+ *
+ * A payload without the domains predates them (queued by an older inbound-mail
+ * service, e.g. during a deploy) and keeps the check it had before. The sender
+ * can't drop them: only our own services set them. The caller logs each such
+ * payload, since a service that stopped forwarding them would land here too.
  */
-function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
-  return raw?.dkim === 'pass' && raw?.spf === 'pass';
+function checkInboundEmailSender(
+  raw: Record<string, unknown> | undefined,
+  senderAddress: string
+): InboundEmailSenderCheck {
+  if (raw?.dkim !== 'pass' || raw?.spf !== 'pass') {
+    return 'unauthenticated';
+  }
+
+  if (!Array.isArray(raw.dkimDomains)) {
+    return 'verified-without-domains';
+  }
+
+  const aligned = alignedEmailChecks({
+    senderAddress,
+    dkimDomains: raw.dkimDomains,
+    spfDomain: raw.spfDomain,
+    spfPassed: true,
+  });
+
+  return aligned.dkim || aligned.spf ? 'verified' : 'unaligned';
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -328,7 +358,9 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly keylessEmailGate: KeylessEmailGateService,
-    private readonly contactHandles: ContactHandleService
+    private readonly contactHandles: ContactHandleService,
+    private readonly whatsAppBindInbound: WhatsAppBindInbound,
+    private readonly whatsAppHeldRelease: WhatsAppHeldRelease
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -350,11 +382,18 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    message: Message,
+    received: Message,
     event: AgentEventEnum,
     messageContext?: MessageContext
   ): Promise<void> {
-    if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
+    if (await this.consumeTelegramStartLink(agentId, config, thread, received, messageContext)) {
+      return;
+    }
+
+    // A code from a wa.me link binds the sender's WhatsApp number to an Agent Inbox contact, like `/start` above.
+    // What they wrote around the code goes on without it.
+    const message = await this.whatsAppBindInbound.tryConsume(agentId, config, thread, received, messageContext);
+    if (!message) {
       return;
     }
 
@@ -491,7 +530,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    await this.dispatchInboundTurn({
+    await this.dispatchThenReleaseHeld({
       agentId,
       config,
       thread,
@@ -678,8 +717,18 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message
   ): Promise<{ resolution: SubscriberResolution; isVerifiedEmailSender: boolean } | null> {
     const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
-    const isVerifiedEmailSender =
-      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
+    const emailSenderCheck: InboundEmailSenderCheck =
+      config.platform === AgentPlatformEnum.EMAIL
+        ? checkInboundEmailSender(emailAuthRaw, message.author.userId)
+        : 'verified';
+    const isVerifiedEmailSender = emailSenderCheck === 'verified' || emailSenderCheck === 'verified-without-domains';
+
+    if (emailSenderCheck === 'verified-without-domains') {
+      this.logger.warn(
+        { agentId, organizationId: config.organizationId, messageId: message.id },
+        'Inbound email payload has no DKIM/SPF domains — trusted on its verdicts alone, without checking them against From. Expected only for emails queued before inbound-mail sent the domains.'
+      );
+    }
 
     // Open-access agents may lookup-or-provision; restricted stay lookup-only.
     // Keyless email demos stay lookup-only until tool approval.
@@ -702,12 +751,16 @@ export class AgentInboundHandler implements OnModuleInit {
             fromAddress: message.author.userId,
             dkim: emailAuthRaw?.dkim,
             spf: emailAuthRaw?.spf,
+            dkimDomains: emailAuthRaw?.dkimDomains,
+            spfDomain: emailAuthRaw?.spfDomain,
             messageId: message.id,
             subscriberAccess: config.subscriberAccess,
             isKeyless: config.isKeyless,
             canAutoProvision,
           },
-          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+          emailSenderCheck === 'unaligned'
+            ? "Inbound email passed DKIM/SPF only for domains that aren't its From domain — skipping subscriber resolution so a spoofed From cannot assume an existing identity."
+            : 'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
 
         return { resolution: { outcome: 'not_found' }, isVerifiedEmailSender };
@@ -765,6 +818,27 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
       throw err;
+    }
+  }
+
+  /**
+   * Their message opened the WhatsApp window, so what waited for it goes out after it is handled. Only after their
+   * words were read: they wrote them before they saw it, so they never answer it.
+   */
+  private async dispatchThenReleaseHeld(
+    args: Parameters<AgentInboundHandler['dispatchInboundTurn']>[0]
+  ): Promise<void> {
+    try {
+      await this.dispatchInboundTurn(args);
+    } finally {
+      await this.whatsAppHeldRelease
+        .release({
+          agentId: args.agentId,
+          config: args.config,
+          subscriberId: args.subscriberId,
+          platformUserId: args.platformThreadId.split(':').pop() ?? '',
+        })
+        .catch((err) => this.logger.warn({ err, agentId: args.agentId }, 'Could not send what was held on WhatsApp'));
     }
   }
 
@@ -1256,6 +1330,8 @@ export class AgentInboundHandler implements OnModuleInit {
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
         agentIdentifier: config.agentIdentifier,
+        // A relay's WhatsApp senders are its contacts only by a number they proved, never by a profile phone.
+        isHumanRelay: config.isHumanRelay,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
@@ -1508,11 +1584,17 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const botUserId = await this.resolveMentionBotUserId(config, message);
+    const mention = await checkAgentMention(message, config.platform, botUserId);
 
-    if (messageMentionsAgent(message, config.platform, botUserId)) {
+    if (mention.mentioned) {
       message.isMention = true;
       this.logger.debug(
         `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} @-mentions this agent but arrived without the mention flag; treating it as a mention`
+      );
+    } else if (mention.rejected) {
+      this.logger.debug(
+        { err: mention.rejected },
+        `[agent:${config.agentId}] Inbound message ${message.id ?? '<unknown>'} mention check failed; treating it as unmentioned`
       );
     }
 
@@ -2244,6 +2326,15 @@ export class AgentInboundHandler implements OnModuleInit {
         config.platform === AgentPlatformEnum.WEB_CHAT
           ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
+    });
+
+    // Tapping "View message" on the WhatsApp first message opens the window: what waited goes out now.
+    await this.whatsAppHeldRelease.release({
+      agentId,
+      config,
+      subscriberId,
+      platformUserId: userId,
+      conversationId: conversation._id,
     });
 
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({

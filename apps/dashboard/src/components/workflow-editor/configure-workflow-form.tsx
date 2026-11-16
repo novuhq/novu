@@ -30,6 +30,7 @@ import type { ExternalToast } from 'sonner';
 import { getAgent, getAgentDetailQueryKey, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useCopilotWorkflowFormSync } from '@/components/copilot-web-chat';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
 import { RouteFill } from '@/components/icons/route-fill';
 import { PageMeta } from '@/components/page-meta';
@@ -246,6 +247,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     resolver: standardSchemaResolver(workflowSchema),
     shouldFocusError: false,
   });
+  useCopilotWorkflowFormSync(form, workflow);
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: workflow,

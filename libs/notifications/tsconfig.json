@@ -5,7 +5,6 @@
     "strictNullChecks": false,
     "outDir": "build/main",
     "module": "commonjs",
-    "target": "es6",
     "rootDir": "src",
     "strict": true,
     "types": ["node", "jest"],

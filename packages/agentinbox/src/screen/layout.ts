@@ -1,4 +1,12 @@
-import { dotColor, MASCOT_WIDTHS, type MascotCell, mascotLines, type Rgb, type Theme } from '../mascot/drawing';
+import {
+  dotColor,
+  MASCOT_WIDTHS,
+  type MascotCell,
+  type MascotForm,
+  mascotLines,
+  type Rgb,
+  type Theme,
+} from '../mascot/drawing';
 import type { Emotion } from '../mascot/life';
 import { type ColorMode, CSI, foreground, rowsOf, textWidth } from './terminal';
 import { wrapStyled } from './wrap';
@@ -173,6 +181,22 @@ export function typedAnswer(
   return `${before}${caret ? inverted(atCaret) : atCaret}${after.join('')}${muted(suffix)}`;
 }
 
+/**
+ * A few to pick from, side by side, with the one the person is on lit as the caret is. Each takes the same
+ * room lit or not, so nothing moves as the pick does, and none is parted from its own padding where a line breaks.
+ */
+export function pickedAmong(labels: readonly string[], index: number, look: Look): string {
+  return labels
+    .map((label, place) => {
+      const padded = `${EMPTY_CELL}${label}${EMPTY_CELL}`;
+
+      return place === index
+        ? paint(`${INVERSE}${padded}${NOT_INVERSE}`, 'accent', look)
+        : paint(padded, 'secondary', look);
+    })
+    .join(' ');
+}
+
 /** The characters of what was typed, with a tab or anything else that would move the cursor as a space. */
 function printable(text: string): string[] {
   return [...text.replace(/\p{Cc}/gu, ' ')];
@@ -182,7 +206,8 @@ function printable(text: string): string[] {
 export function paintMascot(
   cells: ReadonlyArray<ReadonlyArray<MascotCell | null>>,
   { colors, theme }: Look,
-  columns: number
+  columns: number,
+  form?: MascotForm
 ): string[] {
   const indent = ' '.repeat(Math.max(0, Math.floor((columns - (cells[0]?.length ?? 0)) / 2)));
 
@@ -197,7 +222,7 @@ export function paintMascot(
         continue;
       }
       if (cell.level !== level) {
-        text += foreground(dotColor(cell.level, theme), colors);
+        text += foreground(dotColor(cell.level, theme, form), colors);
         level = cell.level;
       }
       text += cell.char;

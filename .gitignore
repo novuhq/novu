@@ -130,6 +130,9 @@ demos/web-chat-demo/next-env.d.ts
 
 .claude/worktrees
 
+# Personal agent config, skills and run records (see AGENTS.md)
+.agents-local/
+
 # CF Worker
 *.sqlite
 *.sqlite-shm

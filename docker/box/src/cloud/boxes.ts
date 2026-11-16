@@ -20,7 +20,10 @@ async function route(request: Request, env: HostEnv, url: URL): Promise<Response
   if (request.method === 'GET' && url.pathname === '/__box/boxes') return json({ boxes: await liveBoxes(env) });
   const box = url.pathname.slice('/__box/boxes/'.length);
   if (!isBoxName(box))
-    return text(`not a box name: ${box} (lowercase letters, digits and dashes; not slack, nor ending in -api)\n`, 400);
+    return text(
+      `not a box name: ${box} (lowercase letters, digits and dashes; not slack, nor ending in -api or -app)\n`,
+      400
+    );
   const origin = boxOrigin(box);
   if (request.method === 'PUT') {
     const failed = (await registry(env).has(box)) ? null : await introduce(env, box);

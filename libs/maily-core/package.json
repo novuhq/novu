@@ -126,7 +126,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "lint": "biome lint .",
     "check": "biome check .",
     "check:fix": "biome check --write .",

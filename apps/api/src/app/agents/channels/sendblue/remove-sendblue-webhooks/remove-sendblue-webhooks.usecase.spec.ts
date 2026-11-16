@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import Sendblue from 'sendblue';
 import { restore, stub } from 'sinon';
 
-import * as sendblueWebhookClient from '../shared/sendblue-webhook-client';
 import { RemoveSendblueWebhooksCommand } from './remove-sendblue-webhooks.command';
 import { RemoveSendblueWebhooks } from './remove-sendblue-webhooks.usecase';
 
@@ -67,7 +67,7 @@ describe('RemoveSendblueWebhooks usecase', () => {
       warn: stub(),
     };
 
-    deleteStub = stub(sendblueWebhookClient, 'deleteSendblueReceiveWebhooks').resolves();
+    deleteStub = stub(Sendblue.Webhooks.prototype, 'delete').resolves({} as any);
   });
 
   afterEach(() => {
@@ -85,7 +85,12 @@ describe('RemoveSendblueWebhooks usecase', () => {
 
     expect(result.success).to.equal(true);
     expect(result.removedWebhookUrls).to.deep.equal([NOVU_WEBHOOK_URL]);
-    expect(deleteStub.calledOnceWith({ apiKey: 'key', secretKey: 'secret' }, [NOVU_WEBHOOK_URL])).to.equal(true);
+    expect(deleteStub.calledOnceWith({ webhooks: [NOVU_WEBHOOK_URL] })).to.equal(true);
+    const [{ _client }] = deleteStub.thisValues;
+    expect({ apiKey: _client.apiKey, apiSecret: _client.apiSecret }).to.deep.equal({
+      apiKey: 'key',
+      apiSecret: 'secret',
+    });
   });
 
   it('rejects when none of the supplied URLs are Novu-shaped', async () => {

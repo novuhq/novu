@@ -15,7 +15,7 @@ alwaysApply: false
 - Never mock MongoDB models directly; use the test harness in `libs/testing` which manages real database state.
 
 **API (`apps/api`)**
-- Unit tests: `cd apps/api && pnpm test` (Mocha + ts-node, matches `src/**/*.spec.ts`)
+- Unit tests: `cd apps/api && pnpm test` (Mocha + SWC, matches `src/**/*.spec.ts`)
 - Lint: `cd apps/api && pnpm check`
 - OpenAPI validation: `npm run lint:openapi` (requires API running)
 - E2E tests: see `.agents/skills/run-api-e2e-tests/SKILL.md`
@@ -27,6 +27,6 @@ alwaysApply: false
 - Tests live in `apps/dashboard/tests/` (or `e2e/`).
 
 **Worker (`apps/worker`)**
-- Unit tests: `cd apps/worker && pnpm test` (Mocha + ts-node, matches `src/**/**/*.spec.ts`)
+- Unit tests: `cd apps/worker && pnpm test` (Mocha + SWC, matches `src/**/**/*.spec.ts`)
 - Lint: `cd apps/worker && pnpm check`
 - The worker must be running (`pnpm start:worker`) when testing end-to-end notification flows.

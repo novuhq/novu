@@ -25,7 +25,8 @@ import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow
 import { workflowSchema } from '@/components/workflow-editor/schema';
 import { showErrorToast } from '@/components/workflow-editor/toasts';
 import { WorkflowCanvas } from '@/components/workflow-editor/workflow-canvas';
-import { useCreateWorkflow } from '@/hooks/use-create-workflow';
+import { WorkflowLimitUpgradeDialog } from '@/components/workflow-editor/workflow-limit-upgrade-dialog';
+import { parseWorkflowLimitError, useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingWorkflowSuggestions } from '@/hooks/use-onboarding-workflow-suggestions';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -66,7 +67,12 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const navigate = useNavigate();
   const { environmentSlug, templateId } = useParams();
   const [searchParams] = useSearchParams();
-  const { submit: createFromTemplate, isLoading: isCreating } = useCreateWorkflow();
+  const {
+    submit: createFromTemplate,
+    isLoading: isCreating,
+    workflowLimitError,
+    clearWorkflowLimitError,
+  } = useCreateWorkflow();
   const [selectedCategory, setSelectedCategory] = useState<string>('popular');
   const [hasUserSelectedCategory, setHasUserSelectedCategory] = useState(false);
   const [internalSelectedTemplate, setInternalSelectedTemplate] = useState<IWorkflowSuggestion | null>(null);
@@ -149,6 +155,10 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
         });
       })
       .catch((error: unknown) => {
+        if (parseWorkflowLimitError(error)) {
+          return;
+        }
+
         const message =
           typeof error === 'object' && error !== null && 'message' in error
             ? String((error as { message?: unknown }).message || '').toLowerCase()
@@ -329,6 +339,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
             </Button>
           </DialogFooter>
         )}
+        <WorkflowLimitUpgradeDialog error={workflowLimitError} onClose={clearWorkflowLimitError} />
       </DialogContent>
     </Dialog>
   );

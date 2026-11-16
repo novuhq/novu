@@ -124,8 +124,6 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    const phone = command.payload.phone || subscriber.phone;
-
     if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -165,6 +163,7 @@ export class SendMessageSms extends SendMessageBase {
       integration?.providerId,
       command.step.stepId
     ) as SmsMessageOverrides;
+    const phone = resolveSmsDestination(overrides.to, command.payload.phone, subscriber.phone);
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -324,16 +323,13 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: overrides.to || phone,
+        to: phone,
         from: overrides.from || integration.credentials.from,
         content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
-        bridgeProviderData: combineProviderOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
+        bridgeProviderData: omitBlankSmsDestination(
+          combineProviderOverrides(command.bridgeData, command.overrides, command.step.stepId, integration.providerId)
         ),
       });
 
@@ -430,4 +426,59 @@ export class SendMessageSms extends SendMessageBase {
       providerId: integration.providerId,
     };
   }
+}
+
+function resolveSmsDestination(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (isSmsDestination(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Provider SDKs merge this object over the resolved recipient. A blank `to` would replace the
+ * subscriber or payload phone that `resolveSmsDestination` already chose.
+ */
+function omitBlankSmsDestination(providerData: Record<string, unknown>): Record<string, unknown> {
+  const withoutTopLevelTo = isBlankString(providerData.to) ? withoutKey(providerData, 'to') : providerData;
+  const passthrough = withoutTopLevelTo._passthrough;
+
+  if (!isRecord(passthrough)) {
+    return withoutTopLevelTo;
+  }
+
+  const body = passthrough.body;
+
+  if (!isRecord(body) || !isBlankString(body.to)) {
+    return withoutTopLevelTo;
+  }
+
+  return {
+    ...withoutTopLevelTo,
+    _passthrough: {
+      ...passthrough,
+      body: withoutKey(body, 'to'),
+    },
+  };
+}
+
+function isSmsDestination(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isBlankString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length === 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutKey(record: Record<string, unknown>, key: string): Record<string, unknown> {
+  const { [key]: _removed, ...rest } = record;
+
+  return rest;
 }

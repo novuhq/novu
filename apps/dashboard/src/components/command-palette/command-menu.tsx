@@ -11,14 +11,17 @@ const CommandDialog = ({
   children,
   className,
   overlayClassName,
+  onCloseAutoFocus,
   ...rest
 }: DialogProps & {
   className?: string;
   overlayClassName?: string;
+  onCloseAutoFocus?: React.ComponentProps<typeof DialogContent>['onCloseAutoFocus'];
 }) => {
   return (
     <Dialog {...rest}>
       <DialogContent
+        onCloseAutoFocus={onCloseAutoFocus}
         className={cn(
           'flex h-auto w-[720px] max-w-[720px] flex-col overflow-hidden rounded-2xl p-0 border-0 shadow-lg bg-background',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',

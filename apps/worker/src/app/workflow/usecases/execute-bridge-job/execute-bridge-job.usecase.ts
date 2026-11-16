@@ -5,12 +5,10 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   dashboardSanitizeControlValues,
-  EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   enhanceStepsMap,
   InMemoryLRUCacheService,
-  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   NotificationPayloadService,
@@ -21,6 +19,7 @@ import {
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -48,6 +47,7 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
+import { getCachedEnvironment } from '../../../shared/utils';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
 export interface ExecuteBridgeJobResult extends ExecuteOutput {
@@ -111,7 +111,8 @@ export class ExecuteBridgeJob {
       throw new Error('Step id is not set');
     }
 
-    const environment = await this.getEnvironment(command.environmentId, command.organizationId);
+    const environment =
+      command.environment ?? (await this.getEnvironment(command.environmentId, command.organizationId));
 
     if (!environment) {
       throw new Error(`Environment id ${command.environmentId} is not found`);
@@ -158,6 +159,7 @@ export class ExecuteBridgeJob {
       event: bridgeEvent,
       job: command.job,
       stepResolverHash,
+      environment,
       searchParams: {
         workflowId,
         stepId,
@@ -313,6 +315,7 @@ export class ExecuteBridgeJob {
     environmentId,
     organizationId,
     stepResolverHash,
+    environment,
   }: Omit<ExecuteBridgeRequestCommand, 'processError' | 'action' | 'retriesLimit'> & {
     job: JobEntity;
   }): Promise<ExecuteOutput> {
@@ -325,6 +328,7 @@ export class ExecuteBridgeJob {
       environmentId,
       organizationId,
       stepResolverHash,
+      environment,
       // Re-apply the DNS-pinned SSRF guard on every EXTERNAL bridge EXECUTE
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
@@ -450,24 +454,11 @@ export class ExecuteBridgeJob {
   }
 
   @Instrument()
-  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentCacheData | null> {
-    return this.inMemoryLRUCacheService.get(
-      InMemoryLRUCacheStore.ENVIRONMENT,
-      `${organizationId}:${environmentId}`,
-      () =>
-        this.environmentRepository.findOne(
-          {
-            _id: environmentId,
-            _organizationId: organizationId,
-          },
-          'echo apiKeys _id'
-        ),
-      {
-        environmentId,
-        organizationId,
-        cacheVariant: '_id:apiKeys:echo',
-      }
-    );
+  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentEntity | null> {
+    return getCachedEnvironment(this.inMemoryLRUCacheService, this.environmentRepository, {
+      environmentId,
+      organizationId,
+    });
   }
 }
 

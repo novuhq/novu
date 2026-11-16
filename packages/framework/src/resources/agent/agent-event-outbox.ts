@@ -10,6 +10,8 @@ export interface AgentEventOutboxOptions {
   turnId: string;
   fetchFn?: typeof fetch;
   maxRetries?: number;
+  /** Called once when Novu answers a post with `abortTurn`: the user stopped this turn. */
+  onTurnAborted?: () => void;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -34,6 +36,8 @@ export class AgentEventOutbox {
   private readonly turnId: string;
   private readonly fetchFn: typeof fetch;
   private readonly maxRetries: number;
+  private readonly onTurnAborted?: () => void;
+  private turnAborted = false;
 
   constructor(options: AgentEventOutboxOptions) {
     this.runId = `run_${crypto.randomUUID()}`;
@@ -44,6 +48,12 @@ export class AgentEventOutbox {
     this.turnId = options.turnId;
     this.fetchFn = options.fetchFn ?? fetch;
     this.maxRetries = options.maxRetries ?? 3;
+    this.onTurnAborted = options.onTurnAborted;
+  }
+
+  /** Novu reported the turn as stopped; only the final `run-finish` is sent from now on. */
+  get isTurnAborted(): boolean {
+    return this.turnAborted;
   }
 
   envelope(event: AgentEvent): AgentEventEnvelope {
@@ -72,7 +82,7 @@ export class AgentEventOutbox {
 
     const batch = this.buffer;
     this.buffer = [];
-    this.chain = this.chain.catch(() => undefined).then(() => this.postBatchWithRetry(batch));
+    this.chain = this.chain.catch(() => undefined).then(() => this.postUnlessAborted(batch));
 
     return this.chain;
   }
@@ -80,6 +90,16 @@ export class AgentEventOutbox {
   async emit(event: AgentEvent): Promise<void> {
     this.enqueue(event);
     await this.flush();
+  }
+
+  /** Novu drops a stopped turn's events, so only the run-finish that closes it is still worth sending. */
+  private async postUnlessAborted(batch: AgentEventEnvelope[]): Promise<void> {
+    const events = this.turnAborted ? batch.filter(isRunFinish) : batch;
+    if (events.length === 0) {
+      return;
+    }
+
+    await this.postBatchWithRetry(events);
   }
 
   private async postBatchWithRetry(batch: AgentEventEnvelope[]): Promise<void> {
@@ -127,6 +147,26 @@ export class AgentEventOutbox {
     if (!response.ok) {
       throw new AgentDeliveryError(response.status, responseBody);
     }
+
+    if (!this.turnAborted && isAbortTurnResponse(responseBody)) {
+      this.turnAborted = true;
+      this.onTurnAborted?.();
+    }
+  }
+}
+
+function isRunFinish(envelope: AgentEventEnvelope): boolean {
+  return envelope.event.type === 'run-finish';
+}
+
+/** Novu answers an ingest post with `{ data: { abortTurn: true } }` once the user stopped the turn. */
+function isAbortTurnResponse(body: string): boolean {
+  if (!body) return false;
+
+  try {
+    return (JSON.parse(body) as { data?: { abortTurn?: unknown } | null })?.data?.abortTurn === true;
+  } catch {
+    return false;
   }
 }
 

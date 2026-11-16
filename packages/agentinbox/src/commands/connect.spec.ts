@@ -9,6 +9,8 @@ import {
 } from '../api/client';
 import type { CliConfig } from '../config';
 import { HOST_MARKER_VARIABLES } from '../host';
+import { setOpenedScreen } from '../screen/opened';
+import type { Screen } from '../screen/screen';
 
 /** As in a shell no host started: whatever ran these tests, no host's variables are set. */
 function clearHostMarkers() {
@@ -197,6 +199,61 @@ describe('runConnect', () => {
     const saved = saveConfig.mock.calls[0][0] as CliConfig;
     expect(saved.subscriberId).toBe('operator_1');
     expect(saved.defaultChannel).toBeUndefined();
+  });
+
+  it('saves how the agent looks, as the answer to the code says it', async () => {
+    connectWithCode.mockResolvedValue({
+      ...CONNECTED,
+      agent: { ...CONNECTED.agent, look: { shape: 'drop', color: 'coral', art: { kind: 'waves', seed: 7 } } },
+    });
+
+    await runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io);
+
+    // Only what the terminal draws is kept: the card's art is the page's.
+    expect((saveConfig.mock.calls[0][0] as CliConfig).look).toEqual({ shape: 'drop', color: 'coral' });
+  });
+
+  it('keeps the look saved for this very agent when an API from before looks says nothing', async () => {
+    loadConfig.mockReturnValue({ ...loggedInConfig, look: { shape: 'bean', color: 'bone' } });
+
+    await runConnect('atlas', { code: 'BCDF-GHJK', yes: true }, ioAnswering(null).io);
+
+    expect((saveConfig.mock.calls[0][0] as CliConfig).look).toEqual({ shape: 'bean', color: 'bone' });
+  });
+
+  it('drops a look saved for another agent: another account’s, or another one of this account', async () => {
+    const saved = { ...loggedInConfig, look: { shape: 'bean', color: 'bone' } as const };
+
+    loadConfig.mockReturnValue({ ...saved, auth: { mode: 'apiKey', secretKey: 'sk_other' } });
+    await runConnect('atlas', { code: 'BCDF-GHJK', yes: true }, ioAnswering(null).io);
+    expect(saveConfig.mock.calls[0][0]).not.toHaveProperty('look');
+
+    loadConfig.mockReturnValue(saved);
+    connectWithCode.mockResolvedValue({ ...CONNECTED, agent: { ...CONNECTED.agent, identifier: 'second-agent' } });
+    await runConnect('atlas', { code: 'BCDF-GHJK', yes: true }, ioAnswering(null).io);
+    expect(saveConfig.mock.calls[1][0]).not.toHaveProperty('look');
+  });
+
+  it('bends the mascot on its screen into the agent’s look once the code is accepted, before anything else is asked', async () => {
+    const look = vi.fn();
+    setOpenedScreen({ look, wait: () => () => undefined } as unknown as Screen);
+    connectWithCode.mockResolvedValue({
+      ...CONNECTED,
+      agent: { ...CONNECTED.agent, look: { shape: 'peek', color: 'peach' } },
+    });
+    findOperator.mockImplementation(async () => {
+      expect(look).toHaveBeenCalledWith({ shape: 'peek', color: 'peach' });
+
+      return 'ada';
+    });
+
+    try {
+      await runConnect('atlas', { code: 'BCDF-GHJK' }, ioAnswering(null).io);
+    } finally {
+      setOpenedScreen(null);
+    }
+
+    expect(look).toHaveBeenCalledTimes(1);
   });
 
   it('remembers the host the code was made for, when the shell doesn’t say which host runs the CLI', async () => {
