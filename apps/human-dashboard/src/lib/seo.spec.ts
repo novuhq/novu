@@ -36,6 +36,9 @@ describe('SITE_NOINDEX', () => {
       googleBot: { index: true, follow: true },
     });
     expect(pageMetadata('sapien', 'production', false).robots).toMatchObject({ index: true, follow: true });
+    expect(pageMetadata('pricing', 'production', false).alternates?.canonical).toBe(
+      'https://www.agentinbox.md/pricing'
+    );
     expect(pageMetadata('home', 'production', true).robots).toMatchObject({ index: false, follow: false });
   });
 });
