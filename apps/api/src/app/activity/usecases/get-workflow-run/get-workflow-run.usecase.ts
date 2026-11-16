@@ -395,6 +395,7 @@ export class GetWorkflowRun {
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
       topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : [],
+      digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
       overrides,
     };
   }

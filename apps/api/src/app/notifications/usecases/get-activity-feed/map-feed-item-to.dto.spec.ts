@@ -5,6 +5,35 @@ import { expect } from 'chai';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
 describe('mapFeedItemToDto', () => {
+  it('returns run-level overrides from the notification, also when it has no jobs', () => {
+    const overrides = { email: { to: 'override@example.com' } };
+
+    const dto = mapFeedItemToDto({
+      _id: 'notification-id',
+      overrides,
+      jobs: [],
+    } as unknown as NotificationFeedItemEntity);
+
+    expect(dto.overrides).to.deep.equal(overrides);
+  });
+
+  it('never takes run-level overrides from a job', () => {
+    const entity = {
+      _id: 'notification-id',
+      jobs: [
+        {
+          _id: 'job-id',
+          type: StepTypeEnum.EMAIL,
+          executionDetails: [],
+          step: { _id: 'step-id' },
+          overrides: { email: { to: 'job@example.com' } },
+        },
+      ],
+    } as unknown as NotificationFeedItemEntity;
+
+    expect(mapFeedItemToDto(entity).overrides).to.equal(undefined);
+  });
+
   it('maps nested step filter groups in filter children without throwing', () => {
     const entity = {
       _id: 'notification-id',

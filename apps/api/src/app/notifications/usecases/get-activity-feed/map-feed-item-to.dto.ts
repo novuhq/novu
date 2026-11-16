@@ -80,6 +80,8 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
     updatedAt: entity.updatedAt,
     controls: entity.controls as Record<string, unknown>,
     payload: entity.payload as Record<string, unknown>,
+    // Read from the notification only: overrides of older runs are migrated onto their notification.
+    overrides: entity.overrides,
     to: entity.to as Record<string, unknown>,
     subscriber: entity.subscriber ? buildSubscriberDto(entity.subscriber) : undefined,
     template: entity.template ? buildTemplate(entity.template) : undefined,
