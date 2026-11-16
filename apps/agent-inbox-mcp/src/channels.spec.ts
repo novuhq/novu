@@ -542,12 +542,12 @@ describe('channel_add', () => {
       expect(text).toBe("WhatsApp isn't available for this account yet. Use Telegram or Slack instead.");
     });
 
-    it('says the same when Agent Inbox cannot connect WhatsApp anywhere', async () => {
+    it('still hands over the page where there is no Facebook button, as it connects with API keys', async () => {
       stubBackends({ whatsAppSetup: { enabled: true, available: false, connected: false } });
 
       const { text } = await addChannel('whatsapp');
 
-      expect(text).toContain("WhatsApp isn't available for this account yet.");
+      expect(text).toContain(`connect it on agentinbox.md, where they sign in as the owner: ${PAGE}`);
     });
 
     it('reads an older API that keeps the status to the dashboard as not available', async () => {

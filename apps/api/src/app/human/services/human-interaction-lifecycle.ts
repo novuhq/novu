@@ -434,6 +434,17 @@ function recordOf(
   };
 }
 
+/** A release for an earlier contact may have settled the row before a later contact's hold was saved. */
+async function keepWaitingWhileHeld(
+  repository: HumanInteractionRepository,
+  interaction: HumanInteractionEntity,
+  held: HumanInteractionHold[]
+): Promise<void> {
+  if (interaction.kind === HumanInteractionKindEnum.TELL && held.length > 0) {
+    await repository.keepTellPendingWhileHeld(interaction._environmentId, interaction._id);
+  }
+}
+
 /**
  * Deliver to every target, stamp `deliveries[]` (and denormalized top-level
  * ids from the first success), and roll the row back only when nobody received
@@ -531,6 +542,8 @@ export async function deliverToTargets(
     ...(conversationId ? { _conversationId: conversationId } : {}),
     ...recipientPatch,
   };
+
+  await keepWaitingWhileHeld(repository, interaction, held);
 
   // A message still held for someone isn't delivered yet: it settles when the last of them is released.
   if (interaction.kind === HumanInteractionKindEnum.TELL && held.length === 0) {

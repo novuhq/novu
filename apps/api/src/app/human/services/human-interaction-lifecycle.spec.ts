@@ -172,4 +172,43 @@ describe('deliverToTargets', () => {
     expect(error).to.equal(refusal);
     expect(repository.delete.calledOnce).to.equal(true);
   });
+
+  it('keeps a plain message waiting while it is still held for someone, and never saves the hold a second time', async () => {
+    const repository = {
+      stampDelivery: sinon.stub().resolves(),
+      keepTellPendingWhileHeld: sinon.stub().resolves(),
+      markDeliveredIfPending: sinon.stub().resolves(null),
+      addHold: sinon.stub().resolves(),
+    };
+    const held = (subscriberId: string) => ({
+      subscriberId,
+      integrationIdentifier: 'wa',
+      platform: 'whatsapp',
+      deliver: async () => ({
+        platformMessageId: `wamid.${subscriberId}`,
+        platformThreadId: 'whatsapp:1:2',
+        held: true,
+      }),
+    });
+
+    const { interaction } = await deliverToTargets(
+      repository as never,
+      { warn: sinon.stub() } as never,
+      {
+        _id: 'hi1',
+        _environmentId: 'env1',
+        identifier: 'hi_1',
+        kind: HumanInteractionKindEnum.TELL,
+        subscriberIds: ['ada', 'bob'],
+      } as never,
+      [held('ada'), held('bob')],
+      { logMessage: 'failed' }
+    );
+
+    expect(repository.keepTellPendingWhileHeld.calledOnceWith('env1', 'hi1')).to.equal(true);
+    expect(repository.markDeliveredIfPending.called).to.equal(false);
+    // The send itself saves each hold before its first message goes out.
+    expect(repository.addHold.called).to.equal(false);
+    expect(interaction.held?.map((hold) => hold.subscriberId)).to.deep.equal(['ada', 'bob']);
+  });
 });

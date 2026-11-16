@@ -24,16 +24,21 @@ describe('ConnectHumanWhatsAppKeys', () => {
     appSecret: 'app-secret',
   });
 
-  function setup(options: { whatsAppEnabled?: boolean; relay?: boolean; linked?: boolean } = {}) {
-    const { whatsAppEnabled = true, relay = true, linked = true } = options;
+  function setup(options: { whatsAppEnabled?: boolean; relay?: boolean; linked?: boolean; credentials?: object } = {}) {
+    const { whatsAppEnabled = true, relay = true, linked = true, credentials } = options;
     const integrationRepository = {
-      find: sinon
-        .stub()
-        .resolves(
-          linked
-            ? [{ _id: INTEGRATION_ID, identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]
-            : []
-        ),
+      find: sinon.stub().resolves(
+        linked
+          ? [
+              {
+                _id: INTEGRATION_ID,
+                identifier: 'whatsapp-main',
+                providerId: ChatProviderIdEnum.WhatsAppBusiness,
+                ...(credentials ? { credentials: encryptCredentials(credentials) } : {}),
+              },
+            ]
+          : []
+      ),
       findOne: sinon.stub().resolves({ credentials: encryptCredentials({ token: 'verify-123' }) }),
     };
     const validateToken = {
@@ -127,6 +132,21 @@ describe('ConnectHumanWhatsAppKeys', () => {
       displayPhoneNumber: '+1 555-123-4567',
       webhook: { configured: true, callbackUrl: CALLBACK_URL },
     });
+  });
+
+  it('forgets the first message approved on another business account, and keeps one on the same account', async () => {
+    const approved = { whatsappTemplateStatus: 'APPROVED', whatsappTemplateApprovedName: 'agentinbox_first_message' };
+    const moved = setup({ credentials: { businessAccountId: 'waba-old', ...approved } });
+    const same = setup({ credentials: { businessAccountId: 'waba-1', ...approved } });
+
+    await moved.usecase.execute(command);
+    await same.usecase.execute(command);
+
+    expect(moved.updateIntegration.execute.firstCall.args[0].credentials).to.include({
+      whatsappTemplateStatus: '',
+      whatsappTemplateApprovedName: '',
+    });
+    expect(same.updateIntegration.execute.firstCall.args[0].credentials).to.not.have.property('whatsappTemplateStatus');
   });
 
   it('hands back the callback URL and verify token when Meta didn’t take the webhook', async () => {

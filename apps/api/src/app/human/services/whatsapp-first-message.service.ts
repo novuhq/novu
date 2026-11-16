@@ -8,6 +8,7 @@ import {
   findMessageTemplate,
   type MetaErrorSummary,
   templateBodyOf,
+  templateButtonsOf,
 } from '../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import {
   AGENT_NAME_EXAMPLE,
@@ -202,7 +203,14 @@ export class WhatsAppFirstMessageService {
       return { error: error ?? { message: `Meta answered ${created.statusCode}.` } };
     }
 
-    if (templateBodyOf(existing.template) !== body) {
+    // Only a template the send can use is taken over: the same words, in the language it sends in, with a
+    // quick-reply button first for the tap to come back on. Anything else goes under the next name.
+    const [firstButton] = templateButtonsOf(existing.template);
+    const sendable =
+      templateBodyOf(existing.template) === body &&
+      (existing.template.language ?? FIRST_MESSAGE_LANGUAGE) === FIRST_MESSAGE_LANGUAGE &&
+      firstButton?.type?.toUpperCase() === 'QUICK_REPLY';
+    if (!sendable) {
       return { taken: true };
     }
 

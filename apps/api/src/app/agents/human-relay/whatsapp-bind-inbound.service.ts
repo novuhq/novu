@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { ChannelEndpointRepository } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES, FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Message, MessageContext, Thread } from 'chat';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
@@ -42,7 +42,8 @@ export class WhatsAppBindInbound {
     private readonly contactHandles: ContactHandleService,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger,
-    private readonly operatorWindow: WhatsAppOperatorWindowService
+    private readonly operatorWindow: WhatsAppOperatorWindowService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -68,6 +69,17 @@ export class WhatsAppBindInbound {
     if (!withCode) {
       // A hello that connected the operator is used up here, like a code.
       return (await this.tryOperatorHello(agentId, config, thread, message)) ? null : message;
+    }
+
+    // WhatsApp turned off for the organization binds nothing: the message goes on as any other would.
+    const enabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INBOX_WHATSAPP_ENABLED,
+      defaultValue: false,
+      organization: { _id: config.organizationId },
+      environment: { _id: config.environmentId },
+    });
+    if (!enabled) {
+      return message;
     }
 
     const code = extractWhatsAppBindCode(withCode.text) as string;

@@ -338,12 +338,18 @@ export type MessageTemplate = {
   status?: MessageTemplateStatus | string;
   category?: string;
   rejected_reason?: string;
-  components?: Array<{ type?: string; text?: string }>;
+  language?: string;
+  components?: Array<{ type?: string; text?: string; buttons?: Array<{ type?: string; text?: string }> }>;
 };
 
 /** The body text Meta holds for a template. */
 export function templateBodyOf(template: MessageTemplate): string | undefined {
   return template.components?.find((component) => component.type?.toUpperCase() === 'BODY')?.text;
+}
+
+/** A template's buttons, in the order Meta shows them. */
+export function templateButtonsOf(template: MessageTemplate): Array<{ type?: string; text?: string }> {
+  return template.components?.find((component) => component.type?.toUpperCase() === 'BUTTONS')?.buttons ?? [];
 }
 
 export type CreateMessageTemplateResponse = { id?: string; status?: string; category?: string } & MetaErrorBody;
@@ -414,7 +420,7 @@ export async function findMessageTemplate(args: {
     `/${encodeURIComponent(args.wabaId)}/message_templates`,
     args.accessToken,
     {
-      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason,components' },
+      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason,language,components' },
       timeoutMs: args.timeoutMs,
     }
   );

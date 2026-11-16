@@ -140,7 +140,11 @@ describe('WhatsApp first message', () => {
               id: 'tpl1',
               name: 'agentinbox_first_message',
               status: 'APPROVED',
-              components: [{ type: 'BODY', text: DEFAULT_FIRST_MESSAGE }],
+              language: 'en',
+              components: [
+                { type: 'BODY', text: DEFAULT_FIRST_MESSAGE },
+                { type: 'BUTTONS', buttons: [{ type: 'QUICK_REPLY', text: 'View message' }] },
+              ],
             },
           ],
         },
@@ -151,6 +155,39 @@ describe('WhatsApp first message', () => {
       expect(state.status).to.equal('APPROVED');
       expect(state.approved?.name).to.equal('agentinbox_first_message');
     });
+
+    for (const [why, template] of [
+      ['in another language', { language: 'es', buttons: [{ type: 'QUICK_REPLY', text: 'View message' }] }],
+      ['without a quick-reply button', { language: 'en', buttons: [] }],
+      ['with a link for its first button', { language: 'en', buttons: [{ type: 'URL', text: 'Open' }] }],
+    ] as const) {
+      it(`takes the next name when Meta has this one with the same words but ${why}`, async () => {
+        const { service, integration } = setup({});
+        request.onCall(0).resolves({ statusCode: 400, body: { error: { code: 100, message: 'already exists' } } });
+        request.onCall(1).resolves({
+          statusCode: 200,
+          body: {
+            data: [
+              {
+                id: 'tpl1',
+                name: 'agentinbox_first_message',
+                status: 'APPROVED',
+                language: template.language,
+                components: [
+                  { type: 'BODY', text: DEFAULT_FIRST_MESSAGE },
+                  { type: 'BUTTONS', buttons: template.buttons },
+                ],
+              },
+            ],
+          },
+        });
+        request.onCall(2).resolves({ statusCode: 200, body: { id: 'tpl2', status: 'PENDING' } });
+
+        await service.submit(integration, DEFAULT_FIRST_MESSAGE);
+
+        expect(request.getCall(2).args[0].body.name).to.equal('agentinbox_first_message_2');
+      });
+    }
 
     it('takes the next name when Meta already has this one with other words', async () => {
       const { service, integration } = setup({});

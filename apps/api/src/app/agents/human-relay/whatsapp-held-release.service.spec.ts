@@ -28,7 +28,7 @@ describe('WhatsAppHeldRelease', () => {
     held,
   });
 
-  function setup(rows: unknown[], taken: unknown = hold, { paused = false } = {}) {
+  function setup(rows: unknown[], taken: unknown = hold, { paused = false, enabled = true } = {}) {
     const findHeldFor = sinon.stub().resolves([]);
     findHeldFor.onFirstCall().resolves(rows);
     const repository = {
@@ -49,7 +49,8 @@ describe('WhatsAppHeldRelease', () => {
       conversations as never,
       gateway as never,
       agents as never,
-      logger as never
+      logger as never,
+      { getFlag: sinon.stub().resolves(enabled) } as never
     );
 
     return { release, repository, conversations, gateway };
@@ -85,6 +86,44 @@ describe('WhatsAppHeldRelease', () => {
 
     expect(gateway.sendDirectMessage.callCount).to.equal(2);
     expect(repository.findHeldFor.thirdCall.args[5]).to.deep.include({ excludeIds: ['hi-row', 'hi-row-2'] });
+  });
+
+  it('sends nothing once WhatsApp is turned off for the organization', async () => {
+    const { release, repository, gateway } = setup([interaction()], hold, { enabled: false });
+
+    await release.release(scope);
+
+    expect(repository.claimHold.called).to.equal(false);
+    expect(gateway.sendDirectMessage.called).to.equal(false);
+  });
+
+  it('only looks for what this agent sent, as one business number can serve several', async () => {
+    const { release, repository } = setup([interaction()]);
+
+    await release.release(scope);
+
+    expect(repository.findHeldFor.firstCall.args[5]).to.deep.include({ agentId: 'agent1' });
+  });
+
+  it('tries the record of a sent message again, so a stale claim doesn’t send it twice', async () => {
+    const { release, repository, gateway } = setup([interaction(HumanInteractionKindEnum.TELL)]);
+    repository.completeHold.onFirstCall().rejects(new Error('db blip'));
+    repository.markTellDeliveredWhenReleased.onFirstCall().rejects(new Error('db blip'));
+
+    await release.release(scope);
+
+    expect(gateway.sendDirectMessage.calledOnce).to.equal(true);
+    expect(repository.completeHold.callCount).to.equal(2);
+    expect(repository.markTellDeliveredWhenReleased.callCount).to.equal(2);
+  });
+
+  it('marks the window open on a tap even when nothing waited for it', async () => {
+    const { release, conversations, gateway } = setup([]);
+
+    await release.release({ ...scope, conversationId: 'conv1' });
+
+    expect(conversations.touchActivity.firstCall.args[5]).to.have.property('humanMessageAt');
+    expect(gateway.sendDirectMessage.called).to.equal(false);
   });
 
   it('sends nothing while the agent is paused', async () => {

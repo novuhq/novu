@@ -167,12 +167,14 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
     subscriberId: string,
     integrationIdentifier: string,
     nowIso: string,
-    options: { limit?: number; excludeIds?: string[] } = {}
+    options: { limit?: number; excludeIds?: string[]; agentId?: string } = {}
   ): Promise<HumanInteractionEntity[]> {
     return this.find(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
+        // One business number can serve several agents: only what this agent sent is released through it.
+        ...(options.agentId ? { _agentId: options.agentId } : {}),
         status: HumanInteractionStatusEnum.PENDING,
         expiresAt: { $gte: nowIso },
         held: { $elemMatch: { subscriberId, integrationIdentifier } },
@@ -310,6 +312,24 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         held: { $elemMatch: { subscriberId: hold.subscriberId, integrationIdentifier: hold.integrationIdentifier } },
       },
       { $unset: { 'held.$.claimedAt': '' } }
+    );
+  }
+
+  /**
+   * A plain message sent to several people can be released for the first of them while it is still going out to
+   * the rest, which settles it as delivered with the others' holds still to come. Once the send is over, a row
+   * that still holds something for someone waits again, so their reply can release it.
+   */
+  async keepTellPendingWhileHeld(environmentId: string, id: string): Promise<void> {
+    await this.update(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        kind: HumanInteractionKindEnum.TELL,
+        status: HumanInteractionStatusEnum.DELIVERED,
+        'held.0': { $exists: true },
+      },
+      { $set: { status: HumanInteractionStatusEnum.PENDING } }
     );
   }
 

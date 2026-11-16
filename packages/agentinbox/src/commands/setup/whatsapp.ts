@@ -68,17 +68,16 @@ async function readWhatsAppSetup(client: ApiClient, agentIdentifier: string): Pr
     throw err;
   }
 
-  if (!setup.enabled || !setup.available) {
-    throw new Error(unavailable(setup.reason));
+  // `available` only says whether the Facebook button works here: without it, the page connects with API keys.
+  if (!setup.enabled) {
+    throw new Error(unavailable());
   }
 
   return setup;
 }
 
-function unavailable(reason?: WhatsAppSetup['reason']): string {
-  const why = reason === 'missing_platform_config' ? ' (agentinbox.md has no WhatsApp app set up here)' : '';
-
-  return `WhatsApp isn't available for this agent yet${why}. Use telegram, slack, or email for now.`;
+function unavailable(): string {
+  return "WhatsApp isn't available for this agent yet. Use telegram, slack, or email for now.";
 }
 
 function connectedNumbers(setup: WhatsAppSetup): string {

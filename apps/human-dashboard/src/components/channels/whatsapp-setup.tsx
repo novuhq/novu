@@ -146,6 +146,8 @@ export function WhatsAppSetup({
   const check = useCallback(async () => {
     setState({ step: 'checking' });
     const next = await loadWhatsAppSetupAction().catch((): WhatsAppSetupState => ({ step: 'unknown' }));
+    // The way in couldn't be picked while the setup was unknown. Keys the operator already chose stay chosen.
+    setWithKeys((chosen) => chosen || startsWithKeys(next));
     show(next);
     if (next.step === 'connected') {
       router.refresh();

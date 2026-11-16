@@ -10,6 +10,7 @@ import {
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AgentInactiveException } from '../../agents/shared/errors/agent-inactive.exception';
 import { KEYLESS_EMAIL_REQUIRES_ACCOUNT_CODE } from '../../keyless/keyless-email-gate.service';
 import { HumanChannelGate } from './human-channel-gate.service';
 import { HumanDeliveryService, pickDefaultTarget, type ReachableHumanTarget } from './human-delivery.service';
@@ -1194,7 +1195,7 @@ describe('HumanDeliveryService first message', () => {
     request.restore();
   });
 
-  function setup() {
+  function setup({ active = true } = {}) {
     const interactions = {
       addHold: sinon.stub().resolves(),
       setHoldTemplateMessageId: sinon.stub().resolves(),
@@ -1213,7 +1214,7 @@ describe('HumanDeliveryService first message', () => {
       channelGate(true) as never,
       whatsAppWindow() as never,
       {} as never,
-      { findOne: sinon.stub().resolves({ name: 'Deploy bot' }) } as never,
+      { findOne: sinon.stub().resolves({ name: 'Deploy bot', active }) } as never,
       interactions as never
     );
     const interaction = {
@@ -1257,6 +1258,16 @@ describe('HumanDeliveryService first message', () => {
       platformThreadId: 'whatsapp:1234:15550100201',
       held: true,
     });
+  });
+
+  it('sends nothing for a disabled agent, and holds nothing', async () => {
+    const { deliver, interactions } = setup({ active: false });
+
+    const error = await deliver().catch((err: unknown) => err);
+
+    expect(error).to.be.instanceOf(AgentInactiveException);
+    expect(request.called).to.equal(false);
+    expect(interactions.addHold.called).to.equal(false);
   });
 
   it('takes the hold back when Meta won’t send the first message', async () => {

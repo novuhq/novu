@@ -30,6 +30,7 @@ import {
   whatsAppNumberProvedAtOf,
 } from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
+import { AgentInactiveException } from '../../agents/shared/errors/agent-inactive.exception';
 import { normalizePhoneForMeta } from '../../agents/shared/util/phone-normalization';
 import {
   extractMetaError,
@@ -847,8 +848,13 @@ export class HumanDeliveryService {
     const scope = { _environmentId: interaction._environmentId, _organizationId: interaction._organizationId };
     const [integration, agent] = await Promise.all([
       this.integrationRepository.findOne({ ...scope, identifier: target.integrationIdentifier }),
-      this.agentRepository.findOne({ ...scope, _id: interaction._agentId }, ['name']),
+      this.agentRepository.findOne({ ...scope, _id: interaction._agentId }, ['name', 'active']),
     ]);
+    // The template goes straight to Meta, past the gateway that turns a disabled agent away.
+    if (agent?.active === false) {
+      throw new AgentInactiveException(interaction._agentId);
+    }
+
     const credentials = decryptCredentials(integration?.credentials ?? {});
     const refuse = async (failure: string) =>
       new WhatsAppUndeliverableException(

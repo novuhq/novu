@@ -91,6 +91,16 @@ describe('connectWhatsApp', () => {
     );
   });
 
+  it('still sends the operator to the page where there is no Facebook button, as it connects with API keys', async () => {
+    getWhatsAppSetup.mockResolvedValue({ ...NOT_CONNECTED, available: false });
+    waitForWhatsAppSetup.mockResolvedValue('saved');
+    const { io, said } = terminal();
+
+    await connectWhatsApp(client, 'human-relay', io);
+
+    expect(said.join('')).toContain('https://www.agentinbox.md/configure?setup=whatsapp');
+  });
+
   it('says the same against an API that keeps WhatsApp setup to the dashboard', async () => {
     getWhatsAppSetup.mockRejectedValue(new ApiError('dashboard only', 403, 'GET /v1/channels/whatsapp', {}));
 

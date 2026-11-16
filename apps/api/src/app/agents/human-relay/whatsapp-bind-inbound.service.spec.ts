@@ -33,6 +33,7 @@ describe('WhatsAppBindInbound', () => {
     consumed = { status: 'consumed', payload: PAYLOAD } as unknown,
     bound = null as unknown,
     windowOpen = false,
+    enabled = true,
   } = {}) {
     const codes = { consume: sinon.stub().resolves(consumed) };
     const operatorWindow = {
@@ -47,6 +48,7 @@ describe('WhatsAppBindInbound', () => {
     const contactHandles = { refresh: sinon.stub().resolves() };
     const outboundGateway = { replyOnThread: sinon.stub().resolves() };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub() };
+    const featureFlags = { getFlag: sinon.stub().resolves(enabled) };
     const service = new WhatsAppBindInbound(
       codes as never,
       bindWhatsAppNumber as never,
@@ -54,7 +56,8 @@ describe('WhatsAppBindInbound', () => {
       contactHandles as never,
       outboundGateway as never,
       logger as never,
-      operatorWindow as never
+      operatorWindow as never,
+      featureFlags as never
     );
 
     return {
@@ -93,6 +96,14 @@ describe('WhatsAppBindInbound', () => {
       platformUserId: '+15550100199',
     });
     expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
+  });
+
+  it('binds nothing once WhatsApp is turned off for the organization, and lets the message go on', async () => {
+    const { service, codes, outboundGateway } = setup({ enabled: false });
+
+    expect(await send(service, 'Connect me to ada: BCDF-GHJK')).to.equal(false);
+    expect(codes.consume.called).to.equal(false);
+    expect(outboundGateway.replyOnThread.called).to.equal(false);
   });
 
   it('lets an ordinary message through untouched', async () => {

@@ -289,7 +289,8 @@ const WHATSAPP_UNAVAILABLE = "WhatsApp isn't available for this account yet. Use
  */
 async function nextWhatsAppStep(api: AgentInboxApi, agentIdentifier: string): Promise<string> {
   const setup = await readWhatsAppSetup(api, agentIdentifier);
-  if (!setup?.enabled || !setup.available) {
+  // `available` only says whether the Facebook button works there: without it, the page connects with API keys.
+  if (!setup?.enabled) {
     return WHATSAPP_UNAVAILABLE;
   }
 

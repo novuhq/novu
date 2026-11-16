@@ -16,6 +16,12 @@ type MetaStatus = {
   }>;
 };
 
+/**
+ * The hold takes Meta's id one write after Meta accepts the first message. A failure that beat that write matches
+ * nothing yet, so what matched nothing is tried once more after this long.
+ */
+const RETRY_UNMATCHED_AFTER_MS = 1_000;
+
 type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: MetaStatus[] } }> }> };
 
 /**
@@ -25,7 +31,7 @@ type MetaWebhook = { entry?: Array<{ changes?: Array<{ value?: { statuses?: Meta
  * WhatsApp webhooks to the relay; a status for any other message costs one indexed read.
  *
  * The hold is saved before the first message goes out and takes Meta's id as soon as Meta accepts it, so a failure
- * finds it on the first try.
+ * nearly always finds it on the first try. The webhook is answered without waiting for this.
  */
 @Injectable()
 export class WhatsAppFirstMessageStatus {
@@ -44,11 +50,27 @@ export class WhatsAppFirstMessageStatus {
       return;
     }
 
-    await Promise.all(
-      failedStatusesOf(payload).map((status) =>
-        this.recordFailure(config.environmentId, status.id as string, describeFailure(status))
-      )
-    );
+    const failed = failedStatusesOf(payload).map((status) => ({
+      id: status.id as string,
+      failure: describeFailure(status),
+    }));
+    const unmatched = await this.recordAll(config.environmentId, failed);
+    if (unmatched.length === 0) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, RETRY_UNMATCHED_AFTER_MS));
+    await this.recordAll(config.environmentId, unmatched);
+  }
+
+  /** Tries each failure once, together, and returns the ones that matched no hold. */
+  private async recordAll<T extends { id: string; failure: HumanInteractionHoldFailure }>(
+    environmentId: string,
+    failed: T[]
+  ): Promise<T[]> {
+    const rows = await Promise.all(failed.map(({ id, failure }) => this.recordFailure(environmentId, id, failure)));
+
+    return failed.filter((_, index) => !rows[index]);
   }
 
   /** Notes a failure on the hold that sent this first message; null when none matched or the write failed. */

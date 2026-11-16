@@ -8,6 +8,18 @@ export const AGENT_NAME_VARIABLE = 'agent_name';
 export const DEFAULT_FIRST_MESSAGE = `You have a message from {{${AGENT_NAME_VARIABLE}}}. Reply here to view it.`;
 /** The one button the template carries. Tapping it opens the window, and the held message follows. */
 export const VIEW_MESSAGE_BUTTON = 'View message';
+
+/** The first message's state on the integration's credentials, emptied: read back as no first message at all. */
+export const CLEARED_FIRST_MESSAGE = {
+  whatsappTemplateName: '',
+  whatsappTemplateId: '',
+  whatsappTemplateStatus: '',
+  whatsappTemplateBody: '',
+  whatsappTemplateRejectedReason: '',
+  whatsappTemplateCheckedAt: '',
+  whatsappTemplateApprovedName: '',
+  whatsappTemplateApprovedBody: '',
+};
 export const FIRST_MESSAGE_MAX_LENGTH = 1024;
 /** What Meta's review sees in place of the variable. */
 export const AGENT_NAME_EXAMPLE = 'Atlas';

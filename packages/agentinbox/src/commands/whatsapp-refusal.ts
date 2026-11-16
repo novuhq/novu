@@ -11,6 +11,8 @@ interface WhatsAppRefusalBody {
   maxButtons?: number;
   buttons?: number;
   availableChannels?: string[];
+  /** Why Meta wouldn't send the first message that would have stood in, such as a billing problem. */
+  firstMessageFailure?: string;
 }
 
 /**
@@ -35,7 +37,7 @@ export function describeWhatsAppRefusal(err: unknown): string | undefined {
     code === WHATSAPP_WINDOW_CLOSED
       ? `WhatsApp can't reach ${who} right now: it only lets the agent write within 24 hours of their last message${
           body.windowClosedAt ? `, and theirs closed ${formatWhen(body.windowClosedAt)}` : ''
-        }. It opens again when they write to you.`
+        }. It opens again when they write to you.${body.firstMessageFailure ? ` ${body.firstMessageFailure}` : ''}`
       : `WhatsApp shows at most ${maxButtons} buttons and this has ${body.buttons ?? 'more'}. Offer ${maxButtons} options or fewer.`;
 
   return `${reason}\n${instead(body)}`;

@@ -10,6 +10,7 @@ import { WhatsAppValidateTokenCommand } from '../../../integrations/usecases/wha
 import { WhatsAppValidateToken } from '../../../integrations/usecases/whatsapp/whatsapp-validate-token.usecase';
 import type { ConnectHumanWhatsAppKeysResponseDto, HumanWhatsAppWebhookDto } from '../../dtos/human-whatsapp.dto';
 import { HumanChannelGate } from '../../services/human-channel-gate.service';
+import { CLEARED_FIRST_MESSAGE } from '../../services/whatsapp-first-message';
 import { ConnectHumanWhatsAppKeysCommand } from './connect-human-whatsapp-keys.command';
 import { findRelayWhatsAppIntegration } from './relay-whatsapp-integration';
 
@@ -78,6 +79,9 @@ export class ConnectHumanWhatsAppKeys {
       };
     }
 
+    const previousAccountId = decryptCredentials(integration.credentials ?? {}).businessAccountId;
+    const movedAccount = Boolean(previousAccountId) && previousAccountId !== businessAccountId;
+
     await this.updateIntegration.execute(
       UpdateIntegrationCommand.create({
         userId: command.userId,
@@ -93,6 +97,8 @@ export class ConnectHumanWhatsAppKeys {
           // Their own Meta app now, not Novu's: a number connected with Facebook before stops using Novu's app.
           isNovuManaged: false,
           ...(check.displayPhoneNumber ? { from: check.displayPhoneNumber } : {}),
+          // A first message approved on another business account isn't approved on this one.
+          ...(movedAccount ? CLEARED_FIRST_MESSAGE : {}),
         },
         check: false,
         allowNovuManagedWhatsAppCredentials: true,

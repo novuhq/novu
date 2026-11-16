@@ -44,26 +44,50 @@ describe('WhatsAppFirstMessageStatus', () => {
     );
   });
 
-  it('tries each failure once, and a write that fails doesn’t stop the others', async () => {
+  it('tries what matched nothing once more a second later, as the hold takes Meta’s id just after the send', async () => {
     const { status, repository } = setup();
+    const clock = sinon.useFakeTimers();
     repository.recordHoldFailure.callsFake(async (_env: string, id: string) => {
       if (id === 'wamid.broken') {
         throw new Error('db blip');
       }
 
-      return id === 'wamid.first' ? { identifier: 'hi_1' } : null;
+      // The first message's hold has its id only by the second try.
+      return id === 'wamid.first' && repository.recordHoldFailure.callCount > 3 ? { identifier: 'hi_1' } : null;
     });
 
-    await status.record(
-      relay,
-      webhook([{ ...paymentFailure, id: 'wamid.ordinary' }, { ...paymentFailure, id: 'wamid.broken' }, paymentFailure])
-    );
+    try {
+      const recording = status.record(
+        relay,
+        webhook([
+          { ...paymentFailure, id: 'wamid.ordinary' },
+          { ...paymentFailure, id: 'wamid.broken' },
+          paymentFailure,
+        ])
+      );
+      await clock.tickAsync(999);
+      expect(repository.recordHoldFailure.callCount).to.equal(3);
+      await clock.tickAsync(1);
+      await recording;
+    } finally {
+      clock.restore();
+    }
 
-    expect(repository.recordHoldFailure.getCalls().map((call) => call.args[1])).to.deep.equal([
-      'wamid.ordinary',
-      'wamid.broken',
-      'wamid.first',
-    ]);
+    // Once each, then once more for all three, and never a third time.
+    expect(repository.recordHoldFailure.callCount).to.equal(6);
+  });
+
+  it('doesn’t wait when every failure found its hold', async () => {
+    const { status, repository } = setup();
+    const clock = sinon.useFakeTimers();
+
+    try {
+      await status.record(relay, webhook([paymentFailure]));
+    } finally {
+      clock.restore();
+    }
+
+    expect(repository.recordHoldFailure.calledOnce).to.equal(true);
   });
 
   it('reads a body that arrives as text', async () => {

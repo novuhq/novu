@@ -103,6 +103,13 @@ describe('a send WhatsApp refused', () => {
   });
 
   it('points to an invite when they have no other channel', () => {
+    expect(
+      refusal({
+        code: 'whatsapp_window_closed',
+        subscriberId: 'bob',
+        firstMessageFailure: 'Meta wouldn’t send the first message: Payment issue.',
+      }).message
+    ).toContain('It opens again when they write to you. Meta wouldn’t send the first message: Payment issue.');
     expect(refusal({ code: 'whatsapp_window_closed', subscriberId: 'bob', availableChannels: [] }).message).toContain(
       'bob has no other channel: add one with `npx @agentinbox/cli contact invite bob`.'
     );
