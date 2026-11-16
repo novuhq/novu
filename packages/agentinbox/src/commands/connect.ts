@@ -1,4 +1,5 @@
 import pc from 'picocolors';
+import { lookToKeep } from '../agent-look';
 import { ApiError, createApiClient } from '../api/client';
 import { type ConnectedAgent, connectWithCode } from '../api/connect';
 import { findOperator } from '../api/login';
@@ -107,6 +108,13 @@ export async function runConnect(
     })
     .finally(stopWaiting);
 
+  const auth: CliConfig['auth'] = { mode: 'apiKey', secretKey: connected.apiKey };
+  const relayAgentIdentifier = connected.agent.identifier;
+  // The code is accepted, so the mascot is this agent's from here on. An API from before looks says nothing:
+  // the look saved for this very agent stays then.
+  const look = lookToKeep({ apiUrl, auth, relayAgentIdentifier }, existing, connected.agent.look);
+  openedScreen()?.look(look.look);
+
   // Who agents here reach by default only carries over from the same account, which has the same key.
   const current = existing?.apiUrl === apiUrl ? existing : null;
   const sameAccount = current?.auth.mode === 'apiKey' && current.auth.secretKey === connected.apiKey;
@@ -120,11 +128,12 @@ export async function runConnect(
 
   const config: CliConfig = {
     apiUrl,
-    auth: { mode: 'apiKey', secretKey: connected.apiKey },
-    relayAgentIdentifier: connected.agent.identifier,
+    auth,
+    relayAgentIdentifier,
     ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
     ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
     ...(host ? { host } : {}),
+    ...look,
   };
   saveConfig(config);
 

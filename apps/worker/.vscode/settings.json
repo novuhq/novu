@@ -1,7 +1,7 @@
 {
   "mochaExplorer.configFile": ".mocharc.json",
   "mochaExplorer.files": ["e2e/setup.ts", "src/**/*.e2e.ts", "src/**/**/*.spec.ts"],
-  "mochaExplorer.require": ["ts-node/register"],
+  "mochaExplorer.require": ["@novu/testing/swc-register"],
   "mochaExplorer.env": {
     "NODE_ENV": "test"
   }

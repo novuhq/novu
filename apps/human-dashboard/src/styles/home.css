@@ -8,8 +8,6 @@
   --home-muted: #8c8985;
   --home-document-width: 744px;
   --home-inset: 56px;
-  /* The launch strip: one 20px line plus the 8px under it. Narrow pages wrap it; see 479px. */
-  --home-launch-h: 28px;
   position: relative;
   isolation: isolate;
   min-height: 100svh;
@@ -92,34 +90,6 @@
 .home-human-banner a {
   color: inherit;
   text-decoration: underline;
-}
-
-/* One quiet line above the human note. The orange square is the same accent the people page uses. */
-.home-launch {
-  margin-bottom: 8px;
-}
-
-.home-launch p {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 12px;
-}
-
-.home-launch-mark {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  background: #ff5c30;
-}
-
-.home-page .home-launch a {
-  display: inline-flex;
-  align-items: center;
-  color: #ff5c30;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  white-space: nowrap;
 }
 
 .home-page .home-description {
@@ -529,8 +499,7 @@
   /* No pane: the mascot and its bubble in a row, in the gap above the description. */
   .home-artwork {
     position: absolute;
-    /* The launch strip sits above the title, so the mascot keeps the same gap under it. */
-    top: calc(184px + var(--home-launch-h));
+    top: 184px;
     right: auto;
     bottom: auto;
     left: calc(var(--home-inset) - 32px);
@@ -571,7 +540,7 @@
   }
 
   .home-page .home-description {
-    margin-top: calc(212px + var(--home-launch-h));
+    margin-top: 212px;
   }
 }
 
@@ -599,8 +568,6 @@
   .home-page {
     font-size: 13px;
     line-height: 18px;
-    /* Room for the launch line to wrap once: 18 + 2 + 18, plus the 8px under it. */
-    --home-launch-h: 46px;
   }
 
   .home-page h1,
@@ -641,7 +608,7 @@
   }
 
   .home-artwork {
-    top: calc(196px + var(--home-launch-h));
+    top: 196px;
     height: 160px;
   }
 
@@ -654,7 +621,7 @@
   }
 
   .home-page .home-description {
-    margin-top: calc(216px + var(--home-launch-h));
+    margin-top: 216px;
   }
 
   .home-human-banner > p {

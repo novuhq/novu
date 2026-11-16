@@ -46,6 +46,21 @@ describe("workflow step tools", () => {
 			expect(result.structuredContent).toEqual({ workflow: api.workflow });
 		});
 
+		it("accepts the null skip the dashboard saves for a step without conditions", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				step: { ...smsStep, controlValues: { ...smsStep.controlValues, skip: null } },
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			expect(api.puts[0].body!.steps.at(-1).controlValues).toEqual({
+				body: "Code: {{payload.code}}",
+				skip: null,
+			});
+		});
+
 		it("returns the workflow unchanged when the stepId already exists", async () => {
 			const api = fakeWorkflowsApi();
 
@@ -130,6 +145,32 @@ describe("workflow step tools", () => {
 				editorType: "block",
 				skip,
 				subject: "Hello",
+			});
+		});
+
+		it.each([
+			["null, as the dashboard saves a cleared condition", null],
+			["one the step tools reject", { and: [{ and: [] }] }],
+		])("ignores a skip sent with the content: %s", async (_label, contentSkip) => {
+			const workflow = workflowResponseFixture();
+			const skip = { "==": [{ var: "subscriber.isOnline" }, true] };
+			Object.assign(workflow.steps[0].controlValues, { skip });
+			const api = fakeWorkflowsApi(workflow);
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: { body: "Updated", skip: contentSkip, subject: "Hi" },
+					type: "in_app",
+				},
+				stepId: "in-app-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			expect(api.puts[0].body!.steps[0].controlValues).toEqual({
+				body: "Updated",
+				skip,
+				subject: "Hi",
 			});
 		});
 
@@ -224,6 +265,146 @@ describe("workflow step tools", () => {
 			expect(api.puts[0].body!.steps[1].controlValues.body).toBe(JSON.stringify(doc));
 		});
 
+		it("saves the dashboard editor's defaults for the email body attributes a node leaves out", async () => {
+			const api = fakeWorkflowsApi();
+			const button = { attrs: { text: "Open", url: "https://example.com" }, type: "button" };
+			const image = { attrs: { src: "https://example.com/a.png" }, type: "image" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: {
+							content: [{ content: [button], type: "paragraph" }, image],
+							type: "doc",
+						},
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			const [paragraph, savedImage] = JSON.parse(
+				api.puts[0].body!.steps[1].controlValues.body,
+			).content;
+			expect(paragraph.attrs).toEqual({ showIfKey: null, textAlign: null });
+			expect(paragraph.content[0].attrs).toMatchObject({
+				alignment: "left",
+				borderRadius: "smooth",
+				buttonColor: "#000000",
+				paddingLeft: 32,
+				paddingTop: 10,
+				showIfKey: null,
+				text: "Open",
+				textColor: "#ffffff",
+				url: "https://example.com",
+				variant: "filled",
+			});
+			expect(savedImage.attrs).toMatchObject({
+				alignment: "center",
+				height: "auto",
+				isSrcVariable: false,
+				width: "auto",
+			});
+		});
+
+		it("gives a section the same editor defaults whether attrs is omitted or empty, and keeps an explicit null", async () => {
+			const api = fakeWorkflowsApi();
+			const paragraph = { content: [{ text: "Hi", type: "text" }], type: "paragraph" };
+			const sections = [{}, { attrs: {} }, { attrs: null }].map((attrs) => ({
+				...attrs,
+				content: [paragraph],
+				type: "section",
+			}));
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: sections, type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(result.isError).toBeFalsy();
+			const [omitted, empty, explicitNull] = JSON.parse(
+				api.puts[0].body!.steps[1].controlValues.body,
+			).content;
+			expect(omitted.attrs).toMatchObject({ backgroundColor: "#f7f7f7", borderRadius: 6 });
+			expect(empty.attrs).toEqual(omitted.attrs);
+			expect(explicitNull.attrs).toBeNull();
+		});
+
+		it("rejects a container node without its content, as the dashboard never saves one", async () => {
+			const api = fakeWorkflowsApi();
+			const list = { items: [{ type: "listItem" }], type: "bulletList" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: [list], type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain("at content.controlValues.body.content[0].content");
+		});
+
+		it("names the allowed heading levels", async () => {
+			const api = fakeWorkflowsApi();
+			const heading = { attrs: { level: 4 }, content: [], type: "heading" };
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: {
+					controlValues: {
+						body: { content: [heading], type: "doc" },
+						editorType: "block",
+						subject: "Hello",
+					},
+					type: "email",
+				},
+				stepId: "email-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"expected one of 1|2|3 at content.controlValues.body.content[0].attrs.level",
+			);
+		});
+
+		it("explains the request body format when it is neither a string nor key-value pairs", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "add_workflow_step", {
+				step: {
+					controlValues: { body: { id: 1 }, method: "POST", url: "https://example.com" },
+					name: "Notify",
+					type: "http_request",
+				},
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"Invalid request body: expected a JSON string such as",
+			);
+			expect(textOf(result)).toContain("at step.controlValues.body");
+		});
+
 		it("rejects a raw HTTP body on a method that does not send one", async () => {
 			const api = fakeWorkflowsApi();
 
@@ -252,6 +433,21 @@ describe("workflow step tools", () => {
 			expect(api.puts).toHaveLength(0);
 			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
 		});
+
+		it("points trigger and custom step content to update_workflow", async () => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "update_workflow_step_content", {
+				content: { controlValues: {}, type: "custom" },
+				stepId: "chat-step",
+				workflowId: "welcome",
+			});
+
+			expect(api.requests).toHaveLength(0);
+			expect(textOf(result)).toContain(
+				"edit trigger and custom steps with update_workflow at content.type",
+			);
+		});
 	});
 
 	describe("update_workflow_step_conditions", () => {
@@ -272,16 +468,21 @@ describe("workflow step tools", () => {
 			});
 		});
 
-		it("removes the skip condition when skip is omitted", async () => {
+		it.each([
+			["omitted", {}],
+			["null", { skip: null }],
+		])("removes the skip condition when skip is %s", async (_label, args) => {
 			const workflow = workflowResponseFixture();
 			Object.assign(workflow.steps[0].controlValues, { skip: { "==": [1, 1] } });
 			const api = fakeWorkflowsApi(workflow);
 
-			await callTool(await client(), "update_workflow_step_conditions", {
+			const result = await callTool(await client(), "update_workflow_step_conditions", {
+				...args,
 				stepId: "in-app-step",
 				workflowId: "welcome",
 			});
 
+			expect(result.isError).toBeFalsy();
 			expect(api.puts[0].body!.steps[0].controlValues).not.toHaveProperty("skip");
 		});
 
@@ -296,6 +497,25 @@ describe("workflow step tools", () => {
 				});
 
 				expect(result.isError).toBe(true);
+			}
+			expect(api.requests).toHaveLength(0);
+		});
+
+		it("explains the condition format when the condition matches none of its forms", async () => {
+			const api = fakeWorkflowsApi();
+
+			for (const skip of [
+				{ "===": [{ var: "payload.tier" }, "gold"] },
+				{ and: [{ var: "payload.x" }] },
+			]) {
+				const result = await callTool(await client(), "update_workflow_step_conditions", {
+					skip,
+					stepId: "in-app-step",
+					workflowId: "welcome",
+				});
+
+				expect(textOf(result)).toContain("Invalid skip condition: expected one comparison");
+				expect(textOf(result)).toContain("at skip");
 			}
 			expect(api.requests).toHaveLength(0);
 		});
@@ -495,6 +715,21 @@ describe("workflow step tools", () => {
 			expect(result.isError).toBe(true);
 			expect(textOf(result)).toContain("Must name a property");
 			expect(textOf(result)).toContain(`at ${path}`);
+			expect(api.requests).toHaveLength(0);
+		});
+
+		it.each([
+			["an enum without its values", { name: "tier", type: "enum" }, "enumValues"],
+			["an array without its item type", { name: "tags", type: "array" }, "arrayItemsType"],
+		])("reports %s at the missing field", async (_label, property, field) => {
+			const api = fakeWorkflowsApi();
+
+			const result = await callTool(await client(), "update_workflow_payload_schema", {
+				addProperties: [property],
+				workflowId: "welcome",
+			});
+
+			expect(textOf(result)).toContain(`at addProperties[0].${field}`);
 			expect(api.requests).toHaveLength(0);
 		});
 

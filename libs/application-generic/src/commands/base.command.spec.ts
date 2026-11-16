@@ -1,7 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDefined, IsEmail, IsNotEmpty, ValidateNested } from 'class-validator';
 
-import { BaseCommand } from './base.command';
+import { BaseCommand, CommandValidationException } from './base.command';
 
 export class TestCommand extends BaseCommand {
   @IsDefined()
@@ -52,5 +53,80 @@ describe('BaseCommand', () => {
 
     expect(res instanceof TestCommand).toBeTruthy();
     expect(res).toEqual(obj);
+  });
+
+  describe('skipDeepTransform', () => {
+    class NestedChild {
+      @IsDefined()
+      name: string;
+    }
+
+    class DeepCommand extends BaseCommand {
+      @IsDefined()
+      job: { step: { name: string } };
+    }
+
+    class ShallowCommand extends BaseCommand {
+      protected static readonly skipDeepTransform = true;
+
+      @IsDefined()
+      job: { step: { name: string } };
+    }
+
+    class ShallowChildCommand extends ShallowCommand {
+      @IsDefined()
+      extra: string;
+    }
+
+    class ShallowWithTypeCommand extends BaseCommand {
+      protected static readonly skipDeepTransform = true;
+
+      @ValidateNested()
+      @Type(() => NestedChild)
+      child: NestedChild;
+    }
+
+    it('deep-copies nested objects by default', () => {
+      const job = { step: { name: 'a' } };
+      const res = DeepCommand.create({ job });
+
+      expect(res.job).toEqual(job);
+      expect(res.job).not.toBe(job);
+      expect(res.job.step).not.toBe(job.step);
+    });
+
+    it('keeps nested references when opted in', () => {
+      const job = { step: { name: 'a' } };
+      const res = ShallowCommand.create({ job });
+
+      expect(res).toBeInstanceOf(ShallowCommand);
+      expect(res.job).toBe(job);
+    });
+
+    it('still validates when opted in', () => {
+      expect(() => ShallowCommand.create({ job: undefined as unknown as ShallowCommand['job'] })).toThrow(
+        CommandValidationException
+      );
+    });
+
+    it('is inherited by subclasses', () => {
+      const job = { step: { name: 'a' } };
+      const res = ShallowChildCommand.create({ job, extra: 'x' });
+
+      expect(res).toBeInstanceOf(ShallowChildCommand);
+      expect(res.job).toBe(job);
+      expect(() => ShallowChildCommand.create({ job } as ShallowChildCommand)).toThrow(CommandValidationException);
+    });
+
+    it('falls back to the deep path when the class uses class-transformer decorators', () => {
+      const child = { name: 'a' };
+      const res = ShallowWithTypeCommand.create({ child } as ShallowWithTypeCommand);
+
+      expect(res.child).toBeInstanceOf(NestedChild);
+      expect(res.child).not.toBe(child);
+      expect(() => ShallowWithTypeCommand.create({ child: {} } as ShallowWithTypeCommand)).toThrow(
+        CommandValidationException
+      );
+    });
   });
 });

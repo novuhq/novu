@@ -49,6 +49,50 @@ describe('ContactHandleService', () => {
     return { author: { userId: '42', userName: 'x', fullName: 'x' }, raw: { chat: { id: 42 }, from } };
   }
 
+  describe('on WhatsApp', () => {
+    const whatsAppConfig = {
+      ...telegramConfig,
+      platform: AgentPlatformEnum.WHATSAPP,
+      integrationIdentifier: 'whatsapp-main',
+    };
+
+    it('keeps the profile name on the number’s endpoint, found by the number in E.164', async () => {
+      const { service, channelEndpointRepository } = setup({ endpoint: { phoneNumber: '+15550100199' } });
+
+      await service.refresh({
+        config: whatsAppConfig as never,
+        subscriberId: 'ada',
+        platformUserId: '15550100199',
+        message: { author: { userId: '15550100199', userName: 'Ada', fullName: 'Ada Lovelace' } } as never,
+      });
+
+      expect(channelEndpointRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        integrationIdentifier: 'whatsapp-main',
+        subscriberId: 'ada',
+        type: ENDPOINT_TYPES.PHONE,
+        'endpoint.phoneNumber': '+15550100199',
+      });
+      expect(channelEndpointRepository.update.firstCall.args[1]).to.deep.equal({
+        $set: { 'endpoint.displayName': 'Ada Lovelace' },
+      });
+    });
+
+    it('keeps no name when WhatsApp only sent the number', async () => {
+      const { service, channelEndpointRepository } = setup({ endpoint: { phoneNumber: '+15550100199' } });
+
+      await service.refresh({
+        config: whatsAppConfig as never,
+        subscriberId: 'ada',
+        platformUserId: '+15550100199',
+        message: { author: { userId: '15550100199', userName: '15550100199', fullName: '+1 555 010 0199' } } as never,
+      });
+
+      expect(channelEndpointRepository.update.called).to.equal(false);
+    });
+  });
+
   describe('on Telegram', () => {
     it("keeps the username and name from the person's message on their chat's endpoint", async () => {
       const { service, channelEndpointRepository } = setup();

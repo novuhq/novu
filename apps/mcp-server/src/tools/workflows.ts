@@ -17,28 +17,12 @@ import {
 	type WorkflowStep,
 } from "../utils/workflow-schemas";
 import { WorkflowValidationUtils } from "../utils/workflow-validation";
-import { registerWorkflowStepTools } from "./workflow-steps";
+import { registerWorkflowStepTools, STEP_SCHEMA_HINT } from "./workflow-steps";
 
 const AGENT_ASSIGNMENT_GUIDE = [
 	'To assign an agent: call get_agents, then pass agent: { identifier: "<slug>" } (not Mongo _id).',
 	"Pass agent: null to unassign. Omit agent on update to leave the current assignment unchanged.",
 ].join(" ");
-
-const STEP_TYPE_GUIDE = [
-	"Supported step types (set via `type` discriminator on each step):",
-	"- in_app: subject + body",
-	"- email: discriminated by editorType — 'block' (body = Maily TipTap JSON) or 'html' (body = HTML string)",
-	"- sms: body (keep under 160 chars)",
-	"- push: subject + body",
-	"- chat: body",
-	"- delay: discriminated by type — 'regular' (amount + unit), 'timed' (cron) or 'dynamic' (dynamicKey)",
-	"- digest: discriminated by type — 'regular' (amount + unit + optional digestKey) or 'timed' (cron + optional digestKey)",
-	"- throttle: discriminated by type — 'fixed' (amount + unit + threshold) or 'dynamic' (dynamicKey + threshold)",
-	"- http_request: method + url + optional headers/body key-value pairs",
-	"- trigger / custom: passthrough",
-	"Always use {{payload.variableName}} syntax (NOT {{variableName}}) for dynamic content.",
-	'Skip conditions are JSONLogic objects on `controlValues.skip`, e.g. { "==": [{ "var": "subscriber.isOnline" }, true] }.',
-].join("\n");
 
 export function registerWorkflowTools(server: McpServer, accessors: ToolAccessors) {
 	// Get all workflows - simple GET endpoint
@@ -74,7 +58,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 
 	// Create workflow - complex validation and POST
 	ToolFactory.createTool(server, accessors, {
-		description: `Create a new workflow in Novu with comprehensive configuration including steps, preferences, and validation.\n\n${AGENT_ASSIGNMENT_GUIDE}\n\n${STEP_TYPE_GUIDE}`,
+		description: `Create a new workflow in Novu with comprehensive configuration including steps, preferences, and validation.\n\n${AGENT_ASSIGNMENT_GUIDE}\n\n${STEP_SCHEMA_HINT}`,
 		handler: async (input, context) => {
 			const resolvedPayloadSchema = resolvePayloadSchema(input);
 			const steps = input.steps ?? [];
@@ -121,7 +105,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 
 	// Update workflow - complex validation and PUT
 	ToolFactory.createTool(server, accessors, {
-		description: `Update an existing workflow in Novu with comprehensive configuration including steps, preferences, and validation.\n\n${AGENT_ASSIGNMENT_GUIDE}\n\n${STEP_TYPE_GUIDE}`,
+		description: `Update an existing workflow in Novu with comprehensive configuration including steps, preferences, and validation.\n\n${AGENT_ASSIGNMENT_GUIDE}\n\n${STEP_SCHEMA_HINT}`,
 		handler: async (input, context) => {
 			console.log(`Updating workflow "${input.workflowId}" with name "${input.name}"`);
 

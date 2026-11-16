@@ -104,7 +104,7 @@ How requests map to a Novu environment depends on how you authenticate:
 - **OAuth** — the token is bound to your **organization**, and the Novu API
   defaults to the **Development** environment.
 
-For OAuth sessions, every tool accepts an optional `environmentId` parameter to
+For OAuth sessions, every tool except `whoami` and `get_step_schema` accepts an optional `environmentId` parameter to
 target a specific environment (forwarded to the Novu API as the
 `Novu-Environment-Id` header). Call `get_environments` first to list your
 environments, then pass the `_id` of the one you want — for example, to inspect
@@ -186,6 +186,7 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_workflow` | Get a workflow's full definition, steps, and payload schema |
 | `create_workflow` | Create a workflow with steps, payload schema, preferences, and optional agent assignment |
 | `update_workflow` | Replace a workflow's definition (full update) |
+| `get_step_schema` | Get one step type's full `controlValues` JSON Schema and a valid example (read-only, no API call) |
 | `add_workflow_step` | Append a step to a workflow |
 | `insert_workflow_step` | Insert a step after another step |
 | `update_workflow_step_content` | Replace one step's content (control values), keyed on step type |
@@ -204,6 +205,10 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `delete_integration` | Delete an integration |
 
 `add_workflow_step`, `insert_workflow_step`, `update_workflow_step_content`, `update_workflow_step_conditions` and `update_workflow_metadata` take an optional `addPayloadProperties` list that declares payload properties in the same save, as `update_workflow_payload_schema`'s `addProperties` does. Payload property names are relative to the trigger payload (`orderId` for `{{payload.orderId}}`); one leading `payload.` is ignored, so `payload.orderId` names the same property.
+
+The tools that write steps advertise `controlValues` as a free-form object with a short per-step-type guide, which keeps `tools/list` small enough for clients that cap schema sizes. Every call is still validated against the full per-type schema, and `get_step_schema` returns that schema (including every Maily email-body node) on demand.
+
+Before adding or changing a tool or a tool schema, read [`AGENTS.md`](./AGENTS.md) and the [`nv-mcp-server-tools`](../../.agents/skills/nv-mcp-server-tools/SKILL.md) skill. `pnpm tools:report` prints every tool's size against the budgets that `test/tool-schemas.spec.ts` enforces.
 
 ## 💻 Local Development
 

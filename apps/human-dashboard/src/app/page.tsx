@@ -10,7 +10,6 @@ import { HomeArtwork } from '@/components/home/home-artwork';
 import { HowItWorks } from '@/components/home/how-it-works';
 import { InstallTabs } from '@/components/home/install-tabs';
 import { SiteStructuredData } from '@/components/seo/site-structured-data';
-import { ProductHuntBanner } from '@/components/site/product-hunt-banner';
 import {
   HOME_CONTACTS,
   HOME_CONTACTS_DESCRIPTION,
@@ -70,7 +69,6 @@ export default function HomePage() {
       <HomeArtwork />
       <main className="home-document">
         <header className="home-introduction">
-          <ProductHuntBanner tone="paper" />
           <div className="home-human-banner">
             <AsciiRule />
             <p>

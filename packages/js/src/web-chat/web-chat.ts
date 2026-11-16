@@ -30,6 +30,8 @@ import type {
   SendActionResult,
   SendMessageArgs,
   SendMessageResult,
+  StopArgs,
+  StopResult,
   WebChatChange,
   WebChatMessagesUpdated,
   WebChatPagination,
@@ -69,6 +71,8 @@ export class WebChat extends BaseModule {
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
+  /** Metadata of in-flight sends, keyed by idempotency key, so a retry replays the original request. */
+  #pendingMetadata = new Map<string, SendMessageArgs['metadata']>();
   /** Map key means a sync of that conversation is queued or running, so its live envelopes are buffered. */
   #syncQueues = new Map<string, ConversationSyncQueue>();
 
@@ -125,6 +129,7 @@ export class WebChat extends BaseModule {
     }
 
     this.#store.clear();
+    this.#pendingMetadata.clear();
     this.#syncQueues.clear();
     this.#runtimes.clear();
   }
@@ -197,6 +202,7 @@ export class WebChat extends BaseModule {
         messages: AgentMessage[];
         key: string;
         isRunning: boolean;
+        isStopping: boolean;
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
@@ -221,6 +227,7 @@ export class WebChat extends BaseModule {
       messages: entry.messages,
       key: entry.key,
       isRunning: entry.isRunning,
+      isStopping: entry.isStopping,
       typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
@@ -305,6 +312,60 @@ export class WebChat extends BaseModule {
         });
       }
     );
+  }
+
+  /**
+   * @internal Prefer {@link AgentConversationRuntime.stop}.
+   * Asks the server to stop the active agent turn of this conversation. Safe to call when nothing runs.
+   */
+  async stop(args: StopArgs): Result<StopResult, NovuError | WebChatPlanLimitError> {
+    return this.callWithSession<StopResult, NovuError | WebChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      // A Stop while the first message still creates the conversation is meant for the turn that message starts.
+      if (entry && !entry.conversationId) {
+        await entry.pendingCreate;
+      }
+      // Same for a message sent to an existing conversation: cancelling before it reaches the server finds nothing to stop.
+      if (entry?.pendingSends?.size) {
+        await Promise.all(entry.pendingSends);
+      }
+
+      const conversationId = entry?.conversationId;
+      if (!entry || !conversationId) {
+        return {
+          error: new NovuError('Cannot stop without a conversation id', new Error('missing conversation id')),
+        };
+      }
+
+      if (entry.isRunning) {
+        this.#store.setStopping(entry, true);
+      }
+
+      try {
+        const { status } = await this.#webChatService.cancelRun({
+          agentId: args.agentId,
+          conversationId,
+          agentHash: args.agentHash,
+        });
+
+        if (status === 'idle') {
+          this.#store.settleIdleRun(entry);
+        }
+
+        // The aborted `run-finish` can arrive before the HTTP ack, or not at all after a socket drop; catch up like resume paths.
+        this.#requestCatchUp();
+
+        return { data: { status } };
+      } catch (error) {
+        this.#store.setStopping(entry, false);
+
+        if (error instanceof WebChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to stop the agent', error) };
+      }
+    });
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.load}. */
@@ -442,6 +503,9 @@ export class WebChat extends BaseModule {
 
       const idempotencyKey = createMessageIdempotencyKey();
       const optimisticId = this.#store.appendSending(entry, args.text, idempotencyKey);
+      if (args.metadata) {
+        this.#pendingMetadata.set(idempotencyKey, args.metadata);
+      }
 
       return this.#deliverOutboundMessage(entry, {
         agentId: args.agentId,
@@ -520,6 +584,7 @@ export class WebChat extends BaseModule {
         text,
         conversationId: entry.conversationId ?? args.conversationId,
         agentHash: args.agentHash,
+        metadata: this.#pendingMetadata.get(message.idempotencyKey),
         optimisticId: args.messageId,
         idempotencyKey: message.idempotencyKey,
       });
@@ -555,6 +620,7 @@ export class WebChat extends BaseModule {
           conversationId: data.identifier,
           idempotencyKey: args.idempotencyKey,
         });
+        this.#pendingMetadata.delete(args.idempotencyKey);
 
         this.#requestCatchUp();
 
@@ -601,6 +667,9 @@ export class WebChat extends BaseModule {
           error: new NovuError(missingConversationMessage, new Error('missing conversation id')),
         };
       }
+
+      // Before the request: the turn it starts can stream its reply before the HTTP ack.
+      this.#store.markActed(entry);
 
       try {
         const result = await run(entry, conversationId);
@@ -746,6 +815,7 @@ export class WebChat extends BaseModule {
         key: entry.key,
         messages: entry.messages,
         isRunning: entry.isRunning,
+        isStopping: entry.isStopping,
         typing: entry.typing,
         status: entry.status,
         hasMore: entry.olderCursor != null,

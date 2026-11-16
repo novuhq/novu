@@ -27,12 +27,12 @@ When the user mentions a specific test or feature:
 
 **For tests in `src/` directory:**
 ```bash
-pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'src/**/<name-of-the-test>.e2e{,-ee}.ts'
+pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require @novu/testing/swc-register --exit --file e2e/setup.ts 'src/**/<name-of-the-test>.e2e{,-ee}.ts'
 ```
 
 **For tests in `e2e/enterprise/` directory:**
 ```bash
-pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'e2e/enterprise/**/<name-of-the-test>.e2e.ts'
+pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require @novu/testing/swc-register --exit --file e2e/setup.ts 'e2e/enterprise/**/<name-of-the-test>.e2e.ts'
 ```
 
 Replace `<name-of-the-test>` with the actual test filename (without extension).
@@ -42,17 +42,19 @@ Replace `<name-of-the-test>` with the actual test filename (without extension).
 **Running trigger-event-preferences test (in src/):**
 ```bash
 # Found: apps/api/src/app/events/e2e/trigger-event-preferences.e2e.ts
-pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'src/**/trigger-event-preferences.e2e{,-ee}.ts'
+pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require @novu/testing/swc-register --exit --file e2e/setup.ts 'src/**/trigger-event-preferences.e2e{,-ee}.ts'
 ```
 
 **Running enterprise billing test:**
 ```bash
 # Found: apps/api/e2e/enterprise/billing/billing.e2e.ts
-pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require ./swc-register.js --exit --file e2e/setup.ts 'e2e/enterprise/**/billing.e2e.ts'
+pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true NODE_OPTIONS=--max_old_space_size=8192 mocha --timeout 30000 --retries 3 --grep '#novu-v2' --require @novu/testing/swc-register --exit --file e2e/setup.ts 'e2e/enterprise/**/billing.e2e.ts'
 ```
 
 ## Important Notes
 
 - Always run commands from `apps/api` directory
 - For specific tests, use the full mocha command (not pnpm script) to target the exact test file
+- If loading fails with `Cannot find module ... from src/metadata.ts`, run `pnpm build:metadata` in `apps/api`. The file is generated and gitignored; CI builds it before tests.
+- Specs that trigger a workflow and wait for job completion time out unless a worker is consuming the test queue. Start one in another terminal with `pnpm --filter @novu/worker start:test` (CI does the same with `NODE_ENV=test`). Specs that seed messages directly don't need it.
 - Report test results clearly to the user

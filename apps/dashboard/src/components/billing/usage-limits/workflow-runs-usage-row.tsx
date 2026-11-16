@@ -86,7 +86,7 @@ export function WorkflowRunsUsageRow({ view }: WorkflowRunsUsageRowProps) {
         <span className="text-text-soft">
           {usage.allowanceOverride !== null
             ? `${formatCompactNumber(usage.allowanceOverride)} usage alert cap`
-            : `${formatCompactNumber(usage.included)} included`}
+            : `${formatCompactNumber(usage.displayedIncluded)} included`}
           {usage.onDemandLimit !== null && ` · ${formatCompactNumber(usage.onDemandLimit)} on-demand`}
           {canEdit && (
             <>

@@ -1,537 +1,518 @@
 /**
  * Maily TipTap JSON Schema for AI Generation.
  *
- * Factory functions return fresh Zod instances on each call so that
- * `zod-to-json-schema` does not hoist nested schemas into shared `$defs`
- * (some MCP clients reject deeply nested or duplicated `$ref` chains).
+ * `get_step_schema` lists a node that repeats once, named after its `type`. A
+ * repeating union or attrs object has no `type`, so it needs a `title` meta;
+ * without one it is inlined at every position.
  *
  * Keep in sync with the Novu Maily renderer node/mark properties.
  */
 import { z } from "zod";
 
-function createMailyMarkSchema() {
-	return z.object({
-		type: z.enum(["bold", "italic", "underline", "strike", "code"]),
-	});
-}
+/** How to build a block email body, for models that only see it on demand. */
+export const MAILY_BODY_GUIDE = [
+	'A block email body is a Maily (TipTap) JSON object, not a string: { "type": "doc", "content": [blocks] }.',
+	"Top-level blocks: paragraph, heading, button, image, logo, linkCard, spacer, horizontalRule, htmlCodeBlock, footer, blockquote, bulletList, orderedList, section, columns and repeat.",
+	"paragraph, heading and footer hold inline nodes: text { text, marks? }, variable, hardBreak, button and inlineImage. Marks are bold, italic, underline, strike, code, textStyle { attrs: { color } } and link { attrs: { href } }.",
+	"blockquote and listItem hold paragraphs, bulletList and orderedList hold listItems, and htmlCodeBlock holds text nodes.",
+	"A section holds paragraph, heading, button, image, inlineImage, logo, linkCard, spacer, horizontalRule, footer, repeat, columns and sections. columns holds column nodes. A column, a repeat and a section inside a section hold only paragraph, heading, button, image, inlineImage, logo, linkCard, spacer and horizontalRule.",
+	'Insert a variable as a variable node: { "type": "variable", "attrs": { "id": "subscriber.firstName" } }.',
+	"Required: variable attrs.id, button attrs.text and attrs.url, heading attrs.level (1, 2 or 3), spacer attrs.height, image, inlineImage and logo attrs.src, linkCard attrs.title and attrs.link, link attrs.href, repeat attrs.each, and content (an array, or null) on blockquote, bulletList, orderedList, listItem, section, column, repeat and htmlCodeBlock. Leave out the other attributes you don't set; they get the dashboard editor's defaults.",
+	'An attribute bound to a variable (with isUrlVariable, isSrcVariable, isTextVariable or isExternalLinkVariable true) takes a bare name such as "payload.url", never "{{ payload.url }}". Inside a repeat (attrs.each: "payload.items", or "steps.<digestStepId>.events" for digested events), refer to item fields by their full path, e.g. variable attrs.id "payload.items.name"; aliasFor is optional.',
+].join("\n");
 
-function createMailyTextStyleMarkSchema() {
-	return z.object({
-		attrs: z.object({
-			color: z.string().nullable().describe("Text color in hex format"),
-		}),
-		type: z.enum(["textStyle"]),
-	});
-}
+const DIMENSION_ERROR = 'Expected a number or a string such as "auto"';
 
-function createMailyLinkMarkSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			class: z.string().nullable().optional(),
-			href: z
-				.string()
-				.describe(
-					'Link URL. When isUrlVariable is true, must be a bare variable name without curly braces, e.g. "payload.link" — never "{{ payload.link }}"',
-				),
-			isUrlVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "href" is a variable reference. The "href" value must then be a bare variable name without {{ }}',
-				),
-			rel: z.string().nullable(),
-			target: z.enum(["_blank", "_self"]).nullable(),
-		}),
-		type: z.enum(["link"]),
-	});
-}
+const mailyMarkSchema = z.object({
+	type: z.enum(["bold", "italic", "underline", "strike", "code"]),
+});
 
-function createMailyTextNodeSchema() {
-	return z.object({
-		marks: z
-			.array(
-				z.discriminatedUnion("type", [
-					createMailyMarkSchema(),
-					createMailyTextStyleMarkSchema(),
-					createMailyLinkMarkSchema(),
-				]),
-			)
-			.nullish(),
-		text: z.string(),
-		type: z.enum(["text"]),
-	});
-}
+const mailyTextStyleMarkSchema = z.object({
+	attrs: z.object({
+		color: z.string().nullable().default(null).describe("Text color in hex format"),
+	}),
+	type: z.enum(["textStyle"]),
+});
 
-function createMailyVariableNodeSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			fallback: z.string().nullable(),
-			id: z
-				.string()
-				.describe("Variable name like subscriber.firstName or payload.companyName"),
-			label: z.string().nullable(),
-			required: z.boolean().nullable(),
-		}),
-		type: z.enum(["variable"]),
-	});
-}
+const mailyLinkMarkSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		class: z.string().nullable().optional(),
+		href: z
+			.string()
+			.describe(
+				'Link URL. When isUrlVariable is true, must be a bare variable name without curly braces, e.g. "payload.link" — never "{{ payload.link }}"',
+			),
+		isUrlVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "href" is a variable reference. The "href" value must then be a bare variable name without {{ }}',
+			),
+		rel: z.string().nullable().default(null),
+		target: z.enum(["_blank", "_self"]).nullable().default(null),
+	}),
+	type: z.enum(["link"]),
+});
 
-function createMailyHardBreakSchema() {
-	return z.object({
-		type: z.enum(["hardBreak"]),
-	});
-}
+const mailyTextNodeSchema = z.object({
+	marks: z
+		.array(
+			z.discriminatedUnion("type", [
+				mailyMarkSchema,
+				mailyTextStyleMarkSchema,
+				mailyLinkMarkSchema,
+			]),
+		)
+		.nullish(),
+	text: z.string(),
+	type: z.enum(["text"]),
+});
 
-function createMailyButtonSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			alignment: z.enum(["left", "center", "right"]).nullable(),
-			borderRadius: z.enum(["smooth", "sharp", "round"]).nullable(),
-			buttonColor: z.string().nullable().describe("Hex color like #000000"),
-			isTextVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "text" is a variable reference. The "text" value must then be a bare variable name without {{ }}',
-				),
-			isUrlVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "url" is a variable reference. The "url" value must then be a bare variable name without {{ }}',
-				),
-			paddingBottom: z.number().nullable(),
-			paddingLeft: z.number().nullable(),
-			paddingRight: z.number().nullable(),
-			paddingTop: z.number().nullable(),
-			showIfKey: z.string().nullable(),
-			text: z
-				.string()
-				.describe(
-					'Button label text. When isTextVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl"',
-				),
-			textColor: z.string().nullable().describe("Hex color like #ffffff"),
-			url: z
-				.string()
-				.nullable()
-				.describe(
-					'Button link URL. When isUrlVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl" — never "{{ payload.actionUrl }}"',
-				),
-			variant: z.enum(["filled", "outline"]).nullable(),
-			width: z.string().nullable(),
-		}),
-		type: z.enum(["button"]),
-	});
-}
+const mailyVariableNodeSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		fallback: z.string().nullable().default(null),
+		id: z.string().describe("Variable name like subscriber.firstName or payload.companyName"),
+		label: z.string().nullable().default(null),
+		required: z.boolean().nullable().default(null),
+	}),
+	type: z.enum(["variable"]),
+});
 
-function createMailyInlineContentSchema() {
-	return z.discriminatedUnion("type", [
-		createMailyTextNodeSchema(),
-		createMailyVariableNodeSchema(),
-		createMailyHardBreakSchema(),
-		createMailyButtonSchema(),
-		createMailyInlineImageSchema(),
-	]);
-}
+const mailyHardBreakSchema = z.object({
+	type: z.enum(["hardBreak"]),
+});
 
-function createMailyParagraphSchema() {
-	return z.object({
-		attrs: z
-			.object({
-				showIfKey: z.string().nullable(),
-				textAlign: z.enum(["left", "center", "right"]).nullable(),
-			})
-			.nullable(),
-		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
-		type: z.enum(["paragraph"]),
-	});
-}
+const mailyButtonSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		alignment: z.enum(["left", "center", "right"]).nullable().default("left"),
+		borderRadius: z.enum(["smooth", "sharp", "round"]).nullable().default("smooth"),
+		buttonColor: z.string().nullable().default("#000000").describe("Hex color like #000000"),
+		isTextVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "text" is a variable reference. The "text" value must then be a bare variable name without {{ }}',
+			),
+		isUrlVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "url" is a variable reference. The "url" value must then be a bare variable name without {{ }}',
+			),
+		paddingBottom: z.number().nullable().default(10),
+		paddingLeft: z.number().nullable().default(32),
+		paddingRight: z.number().nullable().default(32),
+		paddingTop: z.number().nullable().default(10),
+		showIfKey: z.string().nullable().default(null),
+		text: z
+			.string()
+			.describe(
+				'Button label text. When isTextVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl"',
+			),
+		textColor: z.string().nullable().default("#ffffff").describe("Hex color like #ffffff"),
+		url: z
+			.string()
+			.nullable()
+			.describe(
+				'Button link URL. When isUrlVariable is true, must be a bare variable name without curly braces, e.g. "payload.actionUrl" — never "{{ payload.actionUrl }}"',
+			),
+		variant: z.enum(["filled", "outline"]).nullable().default("filled"),
+		width: z.string().nullable().default("auto"),
+	}),
+	type: z.enum(["button"]),
+});
 
-function createMailyHeadingSchema() {
-	return z.object({
-		attrs: z.object({
-			level: z
-				.union([z.literal(1), z.literal(2), z.literal(3)])
-				.describe("Heading level: 1 for main title, 2 for section, 3 for subsection"),
-			showIfKey: z.string().nullable(),
-			textAlign: z.enum(["left", "center", "right"]).nullable(),
-		}),
-		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
-		type: z.enum(["heading"]),
-	});
-}
+const mailySpacerSchema = z.object({
+	attrs: z.object({
+		height: z.number().describe("Height in pixels, typically 8, 16, 24, or 32"),
+		showIfKey: z.string().nullable().default(null),
+	}),
+	type: z.enum(["spacer"]),
+});
 
-function createMailySpacerSchema() {
-	return z.object({
-		attrs: z.object({
-			height: z.number().describe("Height in pixels, typically 8, 16, 24, or 32"),
-			showIfKey: z.string().nullable(),
-		}),
-		type: z.enum(["spacer"]),
-	});
-}
-
-function createMailyDividerSchema() {
-	return z.object({
-		attrs: z
-			.object({
-				marginBottom: z.number().nullable(),
-				marginTop: z.number().nullable(),
-				showIfKey: z.string().nullable().optional(),
-			})
-			.nullable(),
-		type: z.enum(["horizontalRule"]),
-	});
-}
-
-function createMailyImageSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			alignment: z.enum(["left", "center", "right"]).nullable(),
-			alt: z.string().nullable().describe("Alt text for accessibility"),
-			aspectRatio: z.union([z.number(), z.string()]).nullable().optional(),
-			borderRadius: z.number().nullable(),
-			externalLink: z
-				.string()
-				.nullable()
-				.describe(
-					"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
-				),
-			height: z
-				.union([z.number(), z.string()])
-				.nullable()
-				.describe('Height in pixels, or "auto"'),
-			isExternalLinkVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
-				),
-			isSrcVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
-				),
-			lockAspectRatio: z.boolean().nullable().optional(),
-			showIfKey: z.string().nullable(),
-			src: z
-				.string()
-				.describe(
-					'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
-				),
-			title: z.string().nullable(),
-			width: z
-				.union([z.number(), z.string()])
-				.nullable()
-				.describe('Width in pixels, or "auto"'),
-		}),
-		type: z.enum(["image"]),
-	});
-}
-
-function createMailyInlineImageSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			alt: z.string().nullable(),
-			externalLink: z
-				.string()
-				.nullable()
-				.describe(
-					"Optional link URL. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
-				),
-			height: z.number().nullable(),
-			isExternalLinkVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
-				),
-			isSrcVariable: z
-				.boolean()
-				.nullable()
-				.describe(
-					'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
-				),
+const mailyDividerSchema = z.object({
+	attrs: z
+		.object({
+			marginBottom: z.number().nullable().default(10),
+			marginTop: z.number().nullable().default(10),
 			showIfKey: z.string().nullable().optional(),
-			src: z
-				.string()
-				.describe(
-					'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
-				),
-			title: z.string().nullable(),
-			width: z.number().nullable(),
-		}),
-		type: z.enum(["inlineImage"]),
-	});
-}
-
-function createMailyLogoSchema() {
-	return z.object({
-		attrs: z.object({
-			aliasFor: z
-				.string()
-				.nullable()
-				.describe(
-					"Alias for the variable name like payload.items.variableName. Required only when variable is used inside the repeat node.",
-				),
-			alignment: z.enum(["left", "center", "right"]).nullable(),
-			alt: z.string().nullable(),
-			isSrcVariable: z.boolean().nullable(),
-			showIfKey: z.string().nullable(),
-			size: z
-				.enum(["sm", "md", "lg"])
-				.nullable()
-				.describe("Logo size: sm=40px, md=48px, lg=64px"),
-			src: z.string().describe("Logo image URL"),
-			title: z.string().nullable(),
-		}),
-		type: z.enum(["logo"]),
-	});
-}
-
-function createMailyFooterSchema() {
-	return z.object({
-		attrs: z
-			.object({
-				"maily-component": z.string().nullable().optional(),
-				showIfKey: z.string().nullable().optional(),
-				textAlign: z.enum(["left", "center", "right"]).nullable(),
-			})
-			.nullable(),
-		content: z.array(createMailyInlineContentSchema()).nullable().optional(),
-		type: z.enum(["footer"]),
-	});
-}
-
-function createMailyBlockquoteSchema() {
-	return z.object({
-		content: z.array(createMailyParagraphSchema()).nullable(),
-		type: z.enum(["blockquote"]),
-	});
-}
-
-function createMailyListItemSchema() {
-	return z.object({
-		content: z.array(createMailyParagraphSchema()).nullable(),
-		type: z.enum(["listItem"]),
-	});
-}
-
-function createMailyOrderedListSchema() {
-	return z.object({
-		content: z.array(createMailyListItemSchema()).nullable(),
-		type: z.enum(["orderedList"]),
-	});
-}
-
-function createMailyBulletListSchema() {
-	return z.object({
-		content: z.array(createMailyListItemSchema()).nullable(),
-		type: z.enum(["bulletList"]),
-	});
-}
-
-function createMailyLinkCardSchema() {
-	return z.object({
-		attrs: z.object({
-			badgeText: z.string().nullable().describe("Badge text overlay"),
-			description: z.string().nullable().describe("Card description"),
-			image: z.string().nullable().describe("Card image URL"),
-			link: z.string().describe("Card link URL"),
-			linkTitle: z.string().nullable().describe("Link text displayed"),
-			subTitle: z.string().nullable(),
-			title: z.string().describe("Card title"),
-		}),
-		type: z.enum(["linkCard"]),
-	});
-}
-
-function createMailyLeafNodeSchema() {
-	return z.discriminatedUnion("type", [
-		createMailyLinkCardSchema(),
-		createMailyDividerSchema(),
-		createMailySpacerSchema(),
-		createMailyButtonSchema(),
-		createMailyImageSchema(),
-		createMailyInlineImageSchema(),
-		createMailyParagraphSchema(),
-		createMailyHeadingSchema(),
-		createMailyLogoSchema(),
-	]);
-}
-
-function createMailySectionAttrsSchema() {
-	return z
-		.object({
-			align: z.enum(["left", "center", "right"]).nullable(),
-			background: z.string().nullable().optional(),
-			backgroundColor: z.string().nullable(),
-			borderColor: z.string().nullable(),
-			borderRadius: z.number().nullable(),
-			borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable().optional(),
-			borderWidth: z.number().nullable(),
-			marginBottom: z.number().nullable(),
-			marginLeft: z.number().nullable(),
-			marginRight: z.number().nullable(),
-			marginTop: z.number().nullable(),
-			paddingBottom: z.number().nullable(),
-			paddingLeft: z.number().nullable(),
-			paddingRight: z.number().nullable(),
-			paddingTop: z.number().nullable(),
-			showIfKey: z.string().nullable(),
-			textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
 		})
-		.nullable();
-}
+		.nullable()
+		.prefault({}),
+	type: z.enum(["horizontalRule"]),
+});
 
-function createMailyRepeatAttrsSchema() {
-	return z
+const mailyImageSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		alignment: z.enum(["left", "center", "right"]).nullable().default("center"),
+		alt: z.string().nullable().default(null).describe("Alt text for accessibility"),
+		aspectRatio: z
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
+			.nullable()
+			.optional(),
+		borderRadius: z.number().nullable().default(0),
+		externalLink: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional link when image is clicked. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
+			),
+		height: z
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
+			.nullable()
+			.default("auto")
+			.describe('Height in pixels, or "auto"'),
+		isExternalLinkVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
+			),
+		isSrcVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
+			),
+		lockAspectRatio: z.boolean().nullable().optional(),
+		showIfKey: z.string().nullable().default(null),
+		src: z
+			.string()
+			.describe(
+				'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
+			),
+		title: z.string().nullable().default(null),
+		width: z
+			.union([z.number(), z.string()], { error: DIMENSION_ERROR })
+			.nullable()
+			.default("auto")
+			.describe('Width in pixels, or "auto"'),
+	}),
+	type: z.enum(["image"]),
+});
+
+const mailyInlineImageSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		alt: z.string().nullable().default(null),
+		externalLink: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional link URL. When isExternalLinkVariable is true, must be a bare variable name without curly braces",
+			),
+		height: z.number().nullable().default(20),
+		isExternalLinkVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "externalLink" is a variable reference. The "externalLink" value must then be a bare variable name without {{ }}',
+			),
+		isSrcVariable: z
+			.boolean()
+			.nullable()
+			.default(false)
+			.describe(
+				'Set true when "src" is a variable reference. The "src" value must then be a bare variable name without {{ }}',
+			),
+		showIfKey: z.string().nullable().optional(),
+		src: z
+			.string()
+			.describe(
+				'Image source URL. When isSrcVariable is true, must be a bare variable name without curly braces, e.g. "payload.imageUrl"',
+			),
+		title: z.string().nullable().default(null),
+		width: z.number().nullable().default(20),
+	}),
+	type: z.enum(["inlineImage"]),
+});
+
+const mailyInlineContentSchema = z
+	.discriminatedUnion("type", [
+		mailyTextNodeSchema,
+		mailyVariableNodeSchema,
+		mailyHardBreakSchema,
+		mailyButtonSchema,
+		mailyInlineImageSchema,
+	])
+	.meta({ title: "inlineNode" });
+
+const mailyParagraphSchema = z.object({
+	attrs: z
 		.object({
-			each: z.string().nullable().describe("Variable name for the array to iterate over"),
-			isUpdatingKey: z.boolean().nullable(),
-			iterations: z.number().nullable().describe("Number of iterations (0 = all)"),
-			showIfKey: z.string().nullable(),
+			showIfKey: z.string().nullable().default(null),
+			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
 		})
-		.nullable();
-}
+		.nullable()
+		.prefault({}),
+	content: z.array(mailyInlineContentSchema).nullable().optional(),
+	type: z.enum(["paragraph"]),
+});
 
-function createMailyRepeatSchema() {
-	return z.object({
-		attrs: createMailyRepeatAttrsSchema(),
-		content: z.array(createMailyLeafNodeSchema()).nullable(),
-		type: z.enum(["repeat"]),
-	});
-}
+const mailyHeadingSchema = z.object({
+	attrs: z.object({
+		level: z
+			.literal([1, 2, 3])
+			.describe("Heading level: 1 for main title, 2 for section, 3 for subsection"),
+		showIfKey: z.string().nullable().default(null),
+		textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
+	}),
+	content: z.array(mailyInlineContentSchema).nullable().optional(),
+	type: z.enum(["heading"]),
+});
 
-function createMailyColumnSchema() {
-	return z.object({
-		attrs: z
-			.object({
-				columnId: z.string().nullable(),
-				verticalAlign: z.enum(["top", "middle", "bottom"]).nullable(),
-				width: z
-					.union([z.number(), z.string()])
-					.nullable()
-					.describe('Width in percent of the row, or "auto" to share the row equally'),
-			})
-			.nullable(),
-		content: z.array(createMailyLeafNodeSchema()).nullable(),
-		type: z.enum(["column"]),
-	});
-}
+const mailyLogoSchema = z.object({
+	attrs: z.object({
+		aliasFor: z
+			.string()
+			.nullable()
+			.default(null)
+			.describe(
+				"Optional alias for an item field inside a repeat node, e.g. payload.items.name; the full path in the field itself works without it.",
+			),
+		alignment: z.enum(["left", "center", "right"]).nullable().default("left"),
+		alt: z.string().nullable().default(null),
+		isSrcVariable: z.boolean().nullable().default(false),
+		showIfKey: z.string().nullable().default(null),
+		size: z
+			.enum(["sm", "md", "lg"])
+			.nullable()
+			.default("sm")
+			.describe("Logo size: sm=40px, md=48px, lg=64px"),
+		src: z.string().describe("Logo image URL"),
+		title: z.string().nullable().default(null),
+	}),
+	type: z.enum(["logo"]),
+});
+
+const mailyFooterSchema = z.object({
+	attrs: z
+		.object({
+			"maily-component": z.string().nullable().optional(),
+			showIfKey: z.string().nullable().optional(),
+			textAlign: z.enum(["left", "center", "right"]).nullable().default(null),
+		})
+		.nullable()
+		.prefault({}),
+	content: z.array(mailyInlineContentSchema).nullable().optional(),
+	type: z.enum(["footer"]),
+});
+
+const mailyBlockquoteSchema = z.object({
+	content: z.array(mailyParagraphSchema).nullable(),
+	type: z.enum(["blockquote"]),
+});
+
+const mailyListItemSchema = z.object({
+	content: z.array(mailyParagraphSchema).nullable(),
+	type: z.enum(["listItem"]),
+});
+
+const mailyOrderedListSchema = z.object({
+	content: z.array(mailyListItemSchema).nullable(),
+	type: z.enum(["orderedList"]),
+});
+
+const mailyBulletListSchema = z.object({
+	content: z.array(mailyListItemSchema).nullable(),
+	type: z.enum(["bulletList"]),
+});
+
+const mailyLinkCardSchema = z.object({
+	attrs: z.object({
+		badgeText: z.string().nullable().default(null).describe("Badge text overlay"),
+		description: z.string().nullable().default(null).describe("Card description"),
+		image: z.string().nullable().default(null).describe("Card image URL"),
+		link: z.string().describe("Card link URL"),
+		linkTitle: z.string().nullable().default(null).describe("Link text displayed"),
+		subTitle: z.string().nullable().default(null),
+		title: z.string().describe("Card title"),
+	}),
+	type: z.enum(["linkCard"]),
+});
+
+const mailyLeafNodeSchema = z
+	.discriminatedUnion("type", [
+		mailyLinkCardSchema,
+		mailyDividerSchema,
+		mailySpacerSchema,
+		mailyButtonSchema,
+		mailyImageSchema,
+		mailyInlineImageSchema,
+		mailyParagraphSchema,
+		mailyHeadingSchema,
+		mailyLogoSchema,
+	])
+	.meta({ title: "leafBlock" });
+
+const mailySectionAttrsSchema = z
+	.object({
+		align: z.enum(["left", "center", "right"]).nullable().default("left"),
+		background: z.string().nullable().optional(),
+		backgroundColor: z.string().nullable().default("#f7f7f7"),
+		borderColor: z.string().nullable().default("#e2e2e2"),
+		borderRadius: z.number().nullable().default(6),
+		borderStyle: z.enum(["solid", "dashed", "dotted"]).nullable().optional(),
+		borderWidth: z.number().nullable().default(0),
+		marginBottom: z.number().nullable().default(10),
+		marginLeft: z.number().nullable().default(0),
+		marginRight: z.number().nullable().default(0),
+		marginTop: z.number().nullable().default(0),
+		paddingBottom: z.number().nullable().default(8),
+		paddingLeft: z.number().nullable().default(8),
+		paddingRight: z.number().nullable().default(8),
+		paddingTop: z.number().nullable().default(8),
+		showIfKey: z.string().nullable().default(null),
+		textAlign: z.enum(["left", "center", "right"]).nullable().optional(),
+	})
+	.nullable()
+	.prefault({})
+	.meta({ title: "sectionAttrs" });
+
+const mailyRepeatAttrsSchema = z
+	.object({
+		each: z.string().nullable().describe("Variable name for the array to iterate over"),
+		isUpdatingKey: z.boolean().nullable().default(false),
+		iterations: z.number().nullable().default(0).describe("Number of iterations (0 = all)"),
+		showIfKey: z.string().nullable().default(null),
+	})
+	.nullable();
+
+const mailyRepeatSchema = z.object({
+	attrs: mailyRepeatAttrsSchema,
+	content: z.array(mailyLeafNodeSchema).nullable(),
+	type: z.enum(["repeat"]),
+});
+
+const mailyColumnSchema = z.object({
+	attrs: z
+		.object({
+			columnId: z.string().nullable().default(null),
+			verticalAlign: z.enum(["top", "middle", "bottom"]).nullable().default("top"),
+			width: z
+				.union([z.number(), z.string()], { error: DIMENSION_ERROR })
+				.nullable()
+				.default("auto")
+				.describe('Width in percent of the row, or "auto" to share the row equally'),
+		})
+		.nullable()
+		.prefault({}),
+	content: z.array(mailyLeafNodeSchema).nullable(),
+	type: z.enum(["column"]),
+});
 
 /** A row of columns side by side; each column holds the blocks a repeat holds. */
-function createMailyColumnsSchema() {
-	return z.object({
-		attrs: z
-			.object({
-				gap: z.number().nullable().describe("Space between the columns in pixels"),
-				marginBottom: z.number().nullable(),
-				showIfKey: z.string().nullable(),
-			})
-			.nullable(),
-		content: z.array(createMailyColumnSchema()).describe("The columns, left to right"),
-		type: z.enum(["columns"]),
-	});
-}
+const mailyColumnsSchema = z.object({
+	attrs: z
+		.object({
+			gap: z.number().nullable().default(8).describe("Space between the columns in pixels"),
+			marginBottom: z.number().nullable().default(10),
+			showIfKey: z.string().nullable().default(null),
+		})
+		.nullable()
+		.prefault({}),
+	content: z.array(mailyColumnSchema).describe("The columns, left to right"),
+	type: z.enum(["columns"]),
+});
 
 /** A section inside a section, as the dashboard's card blocks nest them. */
-function createMailyInnerSectionSchema() {
-	return z.object({
-		attrs: createMailySectionAttrsSchema(),
-		content: z.array(createMailyLeafNodeSchema()).nullable(),
-		type: z.enum(["section"]),
-	});
-}
+const mailyInnerSectionSchema = z.object({
+	attrs: mailySectionAttrsSchema,
+	content: z.array(mailyLeafNodeSchema).nullable(),
+	type: z.enum(["section"]),
+});
 
-function createMailySectionContentSchema() {
-	return z.discriminatedUnion("type", [
-		createMailyParagraphSchema(),
-		createMailyHeadingSchema(),
-		createMailyButtonSchema(),
-		createMailySpacerSchema(),
-		createMailyDividerSchema(),
-		createMailyImageSchema(),
-		createMailyInlineImageSchema(),
-		createMailyLogoSchema(),
-		createMailyLinkCardSchema(),
-		createMailyFooterSchema(),
-		createMailyRepeatSchema(),
-		createMailyColumnsSchema(),
-		createMailyInnerSectionSchema(),
-	]);
-}
+const mailySectionContentSchema = z.discriminatedUnion("type", [
+	mailyParagraphSchema,
+	mailyHeadingSchema,
+	mailyButtonSchema,
+	mailySpacerSchema,
+	mailyDividerSchema,
+	mailyImageSchema,
+	mailyInlineImageSchema,
+	mailyLogoSchema,
+	mailyLinkCardSchema,
+	mailyFooterSchema,
+	mailyRepeatSchema,
+	mailyColumnsSchema,
+	mailyInnerSectionSchema,
+]);
 
-function createMailySectionSchema() {
-	return z.object({
-		attrs: createMailySectionAttrsSchema(),
-		content: z.array(createMailySectionContentSchema()).nullable(),
-		type: z.enum(["section"]),
-	});
-}
+const mailySectionSchema = z.object({
+	attrs: mailySectionAttrsSchema,
+	content: z.array(mailySectionContentSchema).nullable(),
+	type: z.enum(["section"]),
+});
 
-function createMailyHtmlCodeBlockSchema() {
-	return z.object({
-		content: z.array(createMailyTextNodeSchema()).nullable(),
-		type: z.enum(["htmlCodeBlock"]),
-	});
-}
+const mailyHtmlCodeBlockSchema = z.object({
+	content: z.array(mailyTextNodeSchema).nullable(),
+	type: z.enum(["htmlCodeBlock"]),
+});
 
-function createMailyNodeSchema() {
-	return z.discriminatedUnion("type", [
-		createMailyParagraphSchema(),
-		createMailyHeadingSchema(),
-		createMailyButtonSchema(),
-		createMailySpacerSchema(),
-		createMailyDividerSchema(),
-		createMailyImageSchema(),
-		createMailyLogoSchema(),
-		createMailyLinkCardSchema(),
-		createMailyHtmlCodeBlockSchema(),
-		createMailyFooterSchema(),
-		createMailyBlockquoteSchema(),
-		createMailyOrderedListSchema(),
-		createMailyBulletListSchema(),
-		createMailySectionSchema(),
-		createMailyColumnsSchema(),
-		createMailyRepeatSchema(),
-	]);
-}
+const mailyNodeSchema = z.discriminatedUnion("type", [
+	mailyParagraphSchema,
+	mailyHeadingSchema,
+	mailyButtonSchema,
+	mailySpacerSchema,
+	mailyDividerSchema,
+	mailyImageSchema,
+	mailyLogoSchema,
+	mailyLinkCardSchema,
+	mailyHtmlCodeBlockSchema,
+	mailyFooterSchema,
+	mailyBlockquoteSchema,
+	mailyOrderedListSchema,
+	mailyBulletListSchema,
+	mailySectionSchema,
+	mailyColumnsSchema,
+	mailyRepeatSchema,
+]);
 
 export const mailyBodySchema = z.object({
 	content: z
-		.array(createMailyNodeSchema())
+		.array(mailyNodeSchema)
 		.describe("Array of content nodes that make up the email body"),
 	type: z.enum(["doc"]).describe('Document type, always "doc"'),
 });

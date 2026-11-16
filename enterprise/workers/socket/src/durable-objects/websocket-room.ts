@@ -1,12 +1,36 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { IConnectionMetadata, IEnv } from '../types';
 
+type ReportedPresence = 'online' | 'offline';
+
+interface IPendingOffline {
+  userId: string;
+  environmentId: string;
+  jwtToken: string;
+}
+
+interface INotifyResult {
+  ok: boolean;
+  /** false for 4xx responses (e.g. expired token) where retrying cannot succeed */
+  retryable: boolean;
+}
+
 /**
  * WebSocket Room Durable Object with Hibernation Support
  * Manages WebSocket connections for subscribers with JWT authentication
+ *
+ * Rooms are keyed by `${environmentId}:${userId}`, so each room tracks one subscriber's presence.
+ * Presence is reported to the API only when it actually changes:
+ * - online is sent once, not for every extra tab or reconnect
+ * - offline is delayed by OFFLINE_DEBOUNCE_MS so page reloads and short network drops send nothing
  */
 export class WebSocketRoom extends DurableObject<IEnv> {
   private static readonly MAX_CONNECTIONS = 100;
+  private static readonly OFFLINE_DEBOUNCE_MS = 30_000;
+  // Keeps blockConcurrencyWhile well under its 30s limit if the API hangs
+  private static readonly NOTIFY_TIMEOUT_MS = 5_000;
+  private static readonly REPORTED_PRESENCE_KEY = 'reportedPresence';
+  private static readonly PENDING_OFFLINE_KEY = 'pendingOffline';
 
   /**
    * Constructor - called when DO is instantiated or wakes from hibernation
@@ -71,7 +95,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
     // Use waitUntil to allow hibernation without waiting for API call
     this.ctx.waitUntil(
-      this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken).catch((error) =>
+      this.reportOnline(userId, environmentId, jwtToken).catch((error) =>
         console.error('Failed to notify subscriber online state:', error)
       )
     );
@@ -102,10 +126,65 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     const metadata = this.getConnectionMetadata(ws);
 
     if (metadata) {
-      this.handleSubscriberDisconnection(metadata);
+      await this.handleSubscriberDisconnection(ws, metadata);
     }
 
     // No need to delete from connectionTokens - using serializeAttachment instead
+  }
+
+  /**
+   * Fires OFFLINE_DEBOUNCE_MS after the subscriber's last socket closed, unless a reconnect cancelled it
+   */
+  async alarm(): Promise<void> {
+    // Never throw inside blockConcurrencyWhile: that resets the object and drops every socket
+    const retry = await this.ctx.blockConcurrencyWhile(async () => {
+      const pending = await this.ctx.storage.get<IPendingOffline>(WebSocketRoom.PENDING_OFFLINE_KEY);
+
+      if (!pending) {
+        return false;
+      }
+
+      if (this.getActiveConnectionsForUser(pending.userId) > 0) {
+        await this.ctx.storage.delete(WebSocketRoom.PENDING_OFFLINE_KEY);
+
+        return false;
+      }
+
+      const reported = await this.ctx.storage.get<ReportedPresence>(WebSocketRoom.REPORTED_PRESENCE_KEY);
+
+      if (reported !== 'offline') {
+        /*
+         * The API may apply the offline write even when the call fails (lost response, timeout),
+         * so the stored state is unknown until it succeeds. Clearing it makes the next connect
+         * report online instead of trusting a stale 'online', and a retry still reports offline.
+         */
+        await this.ctx.storage.delete(WebSocketRoom.REPORTED_PRESENCE_KEY);
+
+        const result = await this.notifySubscriberOnlineState(
+          pending.userId,
+          pending.environmentId,
+          false,
+          pending.jwtToken
+        );
+
+        if (!result.ok && result.retryable) {
+          return true;
+        }
+
+        if (result.ok) {
+          await this.ctx.storage.put<ReportedPresence>(WebSocketRoom.REPORTED_PRESENCE_KEY, 'offline');
+        }
+      }
+
+      await this.ctx.storage.delete(WebSocketRoom.PENDING_OFFLINE_KEY);
+
+      return false;
+    });
+
+    if (retry) {
+      // A failed alarm is retried by the runtime with exponential backoff
+      throw new Error('Failed to report subscriber offline state, retrying');
+    }
   }
 
   /**
@@ -183,27 +262,54 @@ export class WebSocketRoom extends DurableObject<IEnv> {
   }
 
   /**
+   * Report online once per presence change: cancels a pending offline and skips the API call
+   * when online was already reported (extra tabs, reconnects within the debounce window)
+   */
+  private async reportOnline(userId: string, environmentId: string, jwtToken: string): Promise<void> {
+    // Serialized with alarm() so an in-flight offline report cannot land after this online one
+    await this.ctx.blockConcurrencyWhile(async () => {
+      const pending = await this.ctx.storage.get<IPendingOffline>(WebSocketRoom.PENDING_OFFLINE_KEY);
+
+      if (pending) {
+        await this.ctx.storage.deleteAlarm();
+        await this.ctx.storage.delete(WebSocketRoom.PENDING_OFFLINE_KEY);
+      }
+
+      const reported = await this.ctx.storage.get<ReportedPresence>(WebSocketRoom.REPORTED_PRESENCE_KEY);
+
+      if (reported === 'online') {
+        return;
+      }
+
+      const result = await this.notifySubscriberOnlineState(userId, environmentId, true, jwtToken);
+
+      if (result.ok) {
+        await this.ctx.storage.put<ReportedPresence>(WebSocketRoom.REPORTED_PRESENCE_KEY, 'online');
+      }
+    });
+  }
+
+  /**
    * Notify the API about subscriber online state changes
    */
   private async notifySubscriberOnlineState(
     subscriberId: string,
     environmentId: string,
     isOnline: boolean,
-    organizationId?: string,
-    jwtToken?: string
-  ): Promise<void> {
+    jwtToken: string
+  ): Promise<INotifyResult> {
     const apiUrl = this.env.API_URL;
 
     if (!apiUrl) {
       console.warn('API_URL not configured, skipping online state notification');
 
-      return;
+      return { ok: false, retryable: false };
     }
 
     if (!jwtToken) {
       console.warn('JWT token not available, skipping online state notification');
 
-      return;
+      return { ok: false, retryable: false };
     }
 
     try {
@@ -217,16 +323,22 @@ export class WebSocketRoom extends DurableObject<IEnv> {
           subscriberId,
           environmentId,
           isOnline,
-          organizationId,
           timestamp: Date.now(),
         }),
+        signal: AbortSignal.timeout(WebSocketRoom.NOTIFY_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         console.error(`Failed to notify API about subscriber online state: ${response.status} ${response.statusText}`);
+
+        return { ok: false, retryable: response.status >= 500 || response.status === 429 };
       }
+
+      return { ok: true, retryable: false };
     } catch (error) {
       console.error(`Error notifying API about subscriber online state:`, error);
+
+      return { ok: false, retryable: true };
     }
   }
 
@@ -264,23 +376,27 @@ export class WebSocketRoom extends DurableObject<IEnv> {
     };
   }
 
-  private handleSubscriberDisconnection(metadata: IConnectionMetadata): void {
-    const activeConnections = this.getActiveConnectionsForUser(metadata.userId);
+  /**
+   * Schedule the offline report instead of sending it, so a quick reconnect cancels it.
+   * Counts the remaining sockets without the closing one, whether or not the runtime still lists it.
+   */
+  private async handleSubscriberDisconnection(closingWs: WebSocket, metadata: IConnectionMetadata): Promise<void> {
+    const remainingConnections = this.ctx
+      .getWebSockets(`user:${metadata.userId}`)
+      .filter((socket) => socket !== closingWs).length;
 
-    const remainingConnections = activeConnections - 1;
-
-    if (remainingConnections <= 0) {
-      // Use waitUntil to allow hibernation without waiting for API call
-      this.ctx.waitUntil(
-        this.notifySubscriberOnlineState(
-          metadata.userId,
-          metadata.environmentId,
-          false,
-          undefined,
-          metadata.jwtToken
-        ).catch((error) => console.error('Failed to notify subscriber offline state:', error))
-      );
+    if (remainingConnections > 0) {
+      return;
     }
+
+    const pending: IPendingOffline = {
+      userId: metadata.userId,
+      environmentId: metadata.environmentId,
+      jwtToken: metadata.jwtToken,
+    };
+
+    await this.ctx.storage.put(WebSocketRoom.PENDING_OFFLINE_KEY, pending);
+    await this.ctx.storage.setAlarm(Date.now() + WebSocketRoom.OFFLINE_DEBOUNCE_MS);
   }
 
   private extractContextKeysFromHeader(request: Request): string[] {

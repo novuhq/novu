@@ -15,6 +15,7 @@ import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { SharedModule } from '../shared/shared.module';
 import { IntegrationTelegramWebhookController } from '../telegram-linking/integration-telegram-webhook.controller';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
@@ -52,6 +53,7 @@ const PROVIDERS = [
   providers: [
     ...USE_CASES,
     WhatsAppSignupLinkTokenService,
+    AgentInboxFeaturesService,
     CommunityOrganizationRepository,
     CommunityUserRepository,
     IntegrationRepository,

@@ -5,12 +5,11 @@ import type { Request, Response } from 'express';
 import { NovuCopilotBridgeClient } from './novu-copilot-bridge.client';
 
 /**
- * In-API `@novu/framework` bridge for the Novu-hosted NovuCopilot agent.
+ * Deprecated alias of the `/v1/bridge/novu` bridge that serves Novu's own agents.
  *
- * Reachable at `<global prefix>/novu/bridge` (e.g. `/v1/novu/bridge`); the
- * copilot's `AgentEntity.bridgeUrl` must point here so `BridgeExecutorService` can dispatch inbound
- * chat turns to it. Follows the workflow-bridge pattern ({@link NovuBridgeController}) — a thin
- * controller delegating to a client that resolves the environment secret and runs the framework
+ * Reachable at `<global prefix>/novu/bridge` (e.g. `/v1/novu/bridge`) for agent rows whose
+ * `AgentEntity.bridgeUrl` still points here. Follows the workflow-bridge pattern
+ * ({@link NovuBridgeController}) — a thin controller delegating to a client that runs the framework
  * handler.
  */
 @Controller('/novu/bridge')

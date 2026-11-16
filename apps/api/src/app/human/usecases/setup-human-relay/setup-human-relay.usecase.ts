@@ -23,7 +23,9 @@ import { HUMAN_RELAY_DEFAULT_NAME } from '../../../agents/human-relay/human-rela
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../../agents/shared/util/email-normalization';
 import type { SetupHumanRelayResponseDto } from '../../dtos/setup-human-relay.dto';
 import { trackAgentInboxChannelConnected, trackAgentInboxCreated } from '../../services/agent-inbox-analytics';
+import { agentLookOf } from '../../services/agent-look';
 import { HumanAgentIdentityService } from '../../services/human-agent-identity.service';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { syncSubscriberEmail } from '../../services/sync-subscriber-email';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
@@ -52,13 +54,15 @@ export class SetupHumanRelay {
     private readonly humanAgentIdentity: HumanAgentIdentityService,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly logger: PinoLogger,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: SetupHumanRelayCommand): Promise<SetupHumanRelayResponseDto> {
+    await this.channelGate.assertViaEnabled(command.defaultVia, command);
     const identifier = command.agentIdentifier ?? DEFAULT_HUMAN_RELAY_IDENTIFIER;
 
     const agent = await this.ensureRelayAgent(command, identifier);
@@ -89,6 +93,8 @@ export class SetupHumanRelay {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
+      // Its look goes along so the CLI's mascot can be the agent's own from here on.
+      look: agentLookOf(agent),
       subscriberId,
       ...inbox,
     };
@@ -141,6 +147,7 @@ export class SetupHumanRelay {
       // Unknown senders auto-provision so the setup QR link flow can bind the
       // human's chat before any subscriber mapping exists.
       behavior: { subscriberAccess: AgentSubscriberAccessEnum.OPEN },
+      ...(command.look ? { look: command.look } : {}),
       creationSource: 'cli',
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -260,7 +267,11 @@ export class SetupHumanRelay {
   private trackNewInbox(command: SetupHumanRelayCommand, agent: AgentEntity): void {
     const owner = { userId: command.userId, organizationId: command.organizationId };
 
-    trackAgentInboxCreated(this.analyticsService, owner, { agentId: agent._id, source: command.analyticsSource });
+    trackAgentInboxCreated(this.analyticsService, owner, {
+      agentId: agent._id,
+      source: command.analyticsSource,
+      look: agentLookOf(agent),
+    });
     trackAgentInboxChannelConnected(this.analyticsService, owner, {
       agentId: agent._id,
       channel: HumanChannelViaEnum.EMAIL,

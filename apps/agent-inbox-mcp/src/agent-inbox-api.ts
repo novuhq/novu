@@ -9,7 +9,9 @@ export class AgentInboxApiError extends Error {
     /** The API's own code when it sends one, such as `inbox_address_taken`. */
     readonly code?: string,
     /** A nearby free handle when a chosen address was taken. */
-    readonly suggestion?: string
+    readonly suggestion?: string,
+    /** The rest of the API's answer, such as which channels still reach a person WhatsApp refused. */
+    readonly details?: Record<string, unknown>
   ) {
     super(message);
   }
@@ -88,12 +90,7 @@ export function createAgentInboxApi(account: Account, host: HostId | null = null
     } | null;
 
     if (!response.ok) {
-      throw new AgentInboxApiError(
-        response.status,
-        readMessage(json?.message) ?? `The Agent Inbox API answered ${response.status}.`,
-        typeof json?.code === 'string' ? json.code : undefined,
-        typeof json?.suggestion === 'string' ? json.suggestion : undefined
-      );
+      throw errorFrom(response.status, json);
     }
 
     if (!unwrap) {
@@ -109,6 +106,17 @@ export function createAgentInboxApi(account: Account, host: HostId | null = null
     getRaw: (path, query, timeoutMs) => send('GET', `${path}${toQueryString(query)}`, undefined, timeoutMs, false),
     post: (path, body, timeoutMs) => send('POST', path, body, timeoutMs, true),
   };
+}
+
+/** The API's refusal, with its own words, its code and the rest of what it said. */
+function errorFrom(status: number, json: Record<string, unknown> | null): AgentInboxApiError {
+  return new AgentInboxApiError(
+    status,
+    readMessage(json?.message) ?? `The Agent Inbox API answered ${status}.`,
+    typeof json?.code === 'string' ? json.code : undefined,
+    typeof json?.suggestion === 'string' ? json.suggestion : undefined,
+    json && typeof json === 'object' ? json : undefined
+  );
 }
 
 function readMessage(message: unknown): string | undefined {

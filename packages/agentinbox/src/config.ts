@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { HostId } from './host';
+import type { MascotLook } from './mascot/look';
 
 export type ChannelPlatform = 'telegram' | 'slack' | 'email' | string;
 
@@ -30,6 +31,11 @@ export interface CliConfig {
    * an agent listening by it, so it stays whatever writes the config anew (see `saveConfig`).
    */
   computerId?: string;
+  /**
+   * How the agent this computer acts as looks, as the API last answered it: its mascot's body and colour. A
+   * command's screen opens with the mascot in it, before the command has asked the API anything.
+   */
+  look?: MascotLook;
 }
 
 /**
@@ -45,7 +51,7 @@ export const DEFAULT_RELAY_AGENT_IDENTIFIER = 'human-relay';
 /** How people run the CLI. Every hint and error that names a command starts with it. */
 export const CLI_COMMAND = 'npx @agentinbox/cli';
 
-export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
+export const SUPPORTED_CHANNELS = ['telegram', 'slack', 'whatsapp', 'email'] as const;
 
 export const NOT_SET_UP_MESSAGE = `No inbox set up yet. Ask your operator to run: ${CLI_COMMAND} setup (or set INBOX_SECRET_KEY + INBOX_TO).`;
 

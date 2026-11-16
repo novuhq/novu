@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import Axios from 'axios';
 
+import { type MascotLook, mascotPictureUrl } from '../human/services/agent-picture-url';
 import { resolveHumanDashboardBaseUrl } from '../shared/helpers/resolve-human-dashboard-base-url';
 import { buildTelegramBotApiUrl } from './telegram-webhook.utils';
 
@@ -24,6 +25,11 @@ export type TelegramBotProfileFields = {
    * goes only on a bot with no photo at all, so a photo set in BotFather stays.
    */
   picture?: { storageKey: string; contentType: string } | null | 'default-if-none';
+  /**
+   * The look the agent's mascots show (`AgentInboxFeaturesService.mascotLookOf`). Where the default picture would
+   * go, the mascot in this look goes instead; without it, the default picture, the mascot as it always was.
+   */
+  mascot?: MascotLook | null;
 };
 
 interface TelegramApiResponse<Result = true> {
@@ -48,7 +54,7 @@ export class TelegramBotProfile {
     this.logger.setContext(this.constructor.name);
   }
 
-  async apply(botToken: string, { name, description, picture }: TelegramBotProfileFields): Promise<void> {
+  async apply(botToken: string, { name, description, picture, mascot }: TelegramBotProfileFields): Promise<void> {
     const calls: Array<[method: string, body: Record<string, string>]> = [];
 
     if (name?.trim()) {
@@ -63,11 +69,15 @@ export class TelegramBotProfile {
 
     await Promise.all([
       ...calls.map(([method, body]) => this.call(botToken, method, body)),
-      this.applyPicture(botToken, picture),
+      this.applyPicture(botToken, picture, mascot),
     ]);
   }
 
-  private async applyPicture(botToken: string, picture: TelegramBotProfileFields['picture']): Promise<void> {
+  private async applyPicture(
+    botToken: string,
+    picture: TelegramBotProfileFields['picture'],
+    mascot: TelegramBotProfileFields['mascot']
+  ): Promise<void> {
     if (picture === undefined) {
       return;
     }
@@ -82,7 +92,7 @@ export class TelegramBotProfile {
     }
 
     try {
-      const { file, contentType } = await this.readPicture(picture);
+      const { file, contentType } = await this.readPicture(picture, mascot);
       const form = new FormData();
       form.append('photo', JSON.stringify({ type: 'static', photo: 'attach://picture' }));
       form.append('picture', new Blob([new Uint8Array(file)], { type: contentType }), 'picture');
@@ -129,17 +139,25 @@ export class TelegramBotProfile {
     return photos.total_count === 0;
   }
 
-  /** The agent's own picture, or the default one from the Agent Inbox dashboard. */
+  /**
+   * The agent's own picture, or one from the Agent Inbox dashboard: its mascot in the look its mascots show, else
+   * the default picture.
+   */
   private async readPicture(
-    picture: Exclude<TelegramBotProfileFields['picture'], undefined>
+    picture: Exclude<TelegramBotProfileFields['picture'], undefined>,
+    mascot: TelegramBotProfileFields['mascot']
   ): Promise<{ file: Buffer; contentType: string }> {
     if (picture && picture !== 'default-if-none') {
       return { file: await this.storageService.getFile(picture.storageKey), contentType: picture.contentType };
     }
 
+    const address = mascot
+      ? mascotPictureUrl(mascot, 'jpg')
+      : `${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.jpg`;
+
     // Unlike the calls to Telegram this one follows redirects: with no address set it asks agentinbox.md,
     // which sends everyone to www, and it carries no token.
-    const response = await fetch(`${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.jpg`, {
+    const response = await fetch(address, {
       signal: AbortSignal.timeout(DEFAULT_PICTURE_TIMEOUT_MS),
     });
 

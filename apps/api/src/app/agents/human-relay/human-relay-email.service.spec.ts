@@ -9,8 +9,15 @@ const scope = {
   recipientAddress: 'maya@acme.co',
 };
 
-function setUp(
-  options: { agent?: unknown; operatorId?: string | null; contacts?: unknown[]; people?: unknown[] } = {}
+function build(
+  options: {
+    agent?: unknown;
+    operatorId?: string | null;
+    contacts?: unknown[];
+    people?: unknown[];
+    /** The look the agent's mascots show; none while they show as they always have. */
+    look?: { shape: string; color: string } | null;
+  } = {}
 ) {
   const agents = {
     findOne: sinon.stub().resolves('agent' in options ? options.agent : { _id: 'agent-1', name: 'Atlas' }),
@@ -30,7 +37,20 @@ function setUp(
     findForAgent: sinon.stub().resolves('operatorId' in options ? options.operatorId : 'op'),
   };
 
-  return new HumanRelayEmailService(agents as never, subscribers as never, contacts as never, operators as never);
+  const features = { mascotLookOf: sinon.stub().resolves(options.look ?? null) };
+  const service = new HumanRelayEmailService(
+    agents as never,
+    subscribers as never,
+    contacts as never,
+    operators as never,
+    features as never
+  );
+
+  return { service, features };
+}
+
+function setUp(options: Parameters<typeof build>[0] = {}) {
+  return build(options).service;
 }
 
 describe('HumanRelayEmailService', () => {
@@ -67,6 +87,27 @@ describe('HumanRelayEmailService', () => {
     const { sender } = await service.findParties(scope);
 
     expect(sender.pictureUrl).to.equal('https://agentinbox.md/api/v1/agent-pictures/env-1/agent-1/v1');
+  });
+
+  it('shows the mascot in the agent’s look once its mascots show it', async () => {
+    const { service, features } = build({ look: { shape: 'drop', color: 'coral' } });
+
+    const { sender } = await service.findParties(scope);
+
+    expect(sender.pictureUrl).to.equal('https://agentinbox.md/brand/mascot/drop-coral.png');
+    expect(features.mascotLookOf.firstCall.args[0]).to.include({ _id: 'agent-1' });
+  });
+
+  it('never asks for the look of an agent that has a picture', async () => {
+    const { service, features } = build({
+      agent: { _id: 'agent-1', _environmentId: 'env-1', name: 'Atlas', picture: { storageKey: 'k', version: 'v1' } },
+      look: { shape: 'drop', color: 'coral' },
+    });
+
+    const { sender } = await service.findParties(scope);
+
+    expect(sender.pictureUrl).to.equal('https://agentinbox.md/api/v1/agent-pictures/env-1/agent-1/v1');
+    expect(features.mascotLookOf.called).to.equal(false);
   });
 
   it('leaves out the placeholder name', async () => {

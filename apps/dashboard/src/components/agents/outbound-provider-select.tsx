@@ -64,7 +64,6 @@ function buildOutboundItems(allIntegrations: IIntegration[] | undefined): Outbou
   const integrationsByProvider = new Map<string, IIntegration[]>();
   for (const i of allIntegrations ?? []) {
     if (i.channel !== ChannelTypeEnum.EMAIL) continue;
-    if (EXCLUDED_OUTBOUND_PROVIDERS.has(i.providerId)) continue;
     const list = integrationsByProvider.get(i.providerId) ?? [];
     list.push(i);
     integrationsByProvider.set(i.providerId, list);

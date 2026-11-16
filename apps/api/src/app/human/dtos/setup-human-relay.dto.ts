@@ -1,17 +1,20 @@
 import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AGENT_NAME_MAX_LENGTH, HumanChannelViaEnum } from '@novu/shared';
-import { Transform, type TransformFnParams } from 'class-transformer';
+import { Transform, type TransformFnParams, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+import { AgentLookDto, SetupAgentLookDto } from './human-agent-look.dto';
 
 /** As long as a Telegram bot's description may be, the longest of the places it is shown. */
 export const AGENT_DESCRIPTION_MAX_LENGTH = 512;
@@ -118,6 +121,23 @@ export class SetupHumanRelayRequestDto {
   @IsOptional()
   @IsEnum(HumanChannelViaEnum)
   defaultVia?: HumanChannelViaEnum;
+
+  /**
+   * The look picked for the agent while it is made: its mascot's shape and colour, and its card's art. The
+   * dashboard's server sends the one its operator picked in the onboarding. A host may send one too, and it is
+   * taken where looks are on, with an account or without one (`GET /human/inbox-address` says so), and ignored
+   * elsewhere.
+   */
+  @ApiPropertyOptional({
+    type: SetupAgentLookDto,
+    description:
+      'The look of a new agent: its mascot’s shape and colour. Only a new agent takes it, and only where looks are on; an agent that exists keeps its own. A part left out is the original look’s.',
+  })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => SetupAgentLookDto)
+  look?: SetupAgentLookDto;
 }
 
 export class SetupHumanRelayResponseDto {
@@ -129,6 +149,9 @@ export class SetupHumanRelayResponseDto {
 
   @ApiProperty({ description: 'What the relay agent is called.' })
   agentName: string;
+
+  @ApiProperty({ type: AgentLookDto, description: 'How the agent looks, for the mascot on the CLI’s screen.' })
+  look: AgentLookDto;
 
   @ApiProperty()
   subscriberId: string;
@@ -146,4 +169,10 @@ export class SetupHumanRelayResponseDto {
 export class HumanOperatorResponseDto {
   @ApiPropertyOptional({ description: 'subscriberId of the account owner’s contact. Missing before any setup.' })
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    type: AgentLookDto,
+    description: 'The agent’s look, for the CLI’s mascot. Missing before any setup has made the agent.',
+  })
+  agentLook?: AgentLookDto;
 }

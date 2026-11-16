@@ -30,7 +30,7 @@
       "type": "node",
       "request": "launch",
       "args": ["${workspaceFolder}/apps/worker/src/main.ts"],
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "runtimeArgs": ["--nolazy", "-r", "@novu/testing/swc-register", "-r", "tsconfig-paths/register"],
       "sourceMaps": true,
       "protocol": "inspector",
       "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],

@@ -34,4 +34,16 @@ export class WorkflowComparatorAdapter implements IBaseComparator<NotificationTe
       otherDiffs,
     };
   }
+
+  async compareNewResourceTranslations(
+    sourceResource: NotificationTemplateEntity,
+    targetEnvironmentId: string,
+    userContext: UserSessionData
+  ): Promise<IResourceDiff[]> {
+    return this.workflowComparator.getNewWorkflowLocalizationDiffs(
+      sourceResource,
+      targetEnvironmentId,
+      userContext._id
+    );
+  }
 }

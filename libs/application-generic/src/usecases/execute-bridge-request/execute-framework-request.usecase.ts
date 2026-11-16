@@ -9,6 +9,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
+import { decryptApiKey } from '../../encryption';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -58,9 +59,11 @@ export class ExecuteFrameworkRequest {
   async execute<T extends PostActionEnum | GetActionEnum>(
     command: ExecuteBridgeRequestCommand
   ): Promise<ExecuteBridgeRequestDto<T>> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
+    const environment =
+      command.environment ??
+      (await this.environmentRepository.findOne({
+        _id: command.environmentId,
+      }));
 
     if (!environment) {
       throw new NotFoundException(`Environment ${command.environmentId} not found`);
@@ -183,11 +186,14 @@ export class ExecuteFrameworkRequest {
 
   @Instrument()
   private async buildRequestSignature(command: ExecuteBridgeRequestCommand) {
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({
-        environmentId: command.environmentId,
-      })
-    );
+    const encryptedSecretKey = command.environment?.apiKeys?.[0]?.key;
+    const secretKey = encryptedSecretKey
+      ? decryptApiKey(encryptedSecretKey)
+      : await this.getDecryptedSecretKey.execute(
+          GetDecryptedSecretKeyCommand.create({
+            environmentId: command.environmentId,
+          })
+        );
 
     return buildNovuSignatureHeader(secretKey, command.event || {});
   }

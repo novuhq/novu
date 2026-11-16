@@ -1,5 +1,5 @@
 import { EnvironmentCommand } from '@novu/application-generic';
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsOptional } from 'class-validator';
 
 import { WebhookTypes } from '../../interfaces/webhook.interface';
 
@@ -8,8 +8,14 @@ export class WebhookCommand extends EnvironmentCommand {
   providerOrIntegrationId: string;
 
   @IsDefined()
-  body: any;
+  body: unknown;
 
   @IsDefined()
   type: WebhookTypes;
+
+  @IsOptional()
+  headers?: Record<string, string>;
+
+  @IsOptional()
+  rawBody?: Buffer;
 }

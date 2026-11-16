@@ -1,6 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { AgentIntegrationRepository, type AgentPicture, AgentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  type AgentEntity,
+  AgentIntegrationRepository,
+  type AgentPicture,
+  AgentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   ChatProviderIdEnum,
   SLACK_AGENT_BOT_EVENTS,
@@ -9,7 +15,8 @@ import {
 } from '@novu/shared';
 import axios, { AxiosError } from 'axios';
 import { humanRelayProfile } from '../../../agents/human-relay/human-relay-identity';
-import { agentPictureOrDefaultUrl } from '../../../human/services/agent-picture-url';
+import { AgentInboxFeaturesService } from '../../../human/services/agent-inbox-features.service';
+import { agentPictureOrDefaultUrl, type MascotLook } from '../../../human/services/agent-picture-url';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
 import { SlackQuickSetupCommand } from './slack-quick-setup.command';
 
@@ -54,6 +61,7 @@ export class SlackQuickSetup {
     private integrationRepository: IntegrationRepository,
     private agentIntegrationRepository: AgentIntegrationRepository,
     private agentRepository: AgentRepository,
+    private agentInboxFeatures: AgentInboxFeaturesService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(SlackQuickSetup.name);
@@ -112,7 +120,11 @@ export class SlackQuickSetup {
     this.logger.info(`Slack quick setup: credentials saved for integrationId=${command.integrationId}`);
 
     if (agent?.runtime === 'human_relay') {
-      await this.setAppIcon(command, slackResponse.app_id, agent.picture);
+      // Only an agent with no picture of its own shows its mascot, so only then is its look asked for.
+      const look = agent.picture?.storageKey
+        ? null
+        : await this.agentInboxFeatures.mascotLookOf({ _organizationId: command.organizationId, look: agent.look });
+      await this.setAppIcon(command, slackResponse.app_id, agent.picture, look);
     }
 
     return {};
@@ -168,10 +180,10 @@ export class SlackQuickSetup {
 
   private async findAgent(
     command: SlackQuickSetupCommand
-  ): Promise<{ runtime?: string; description?: string; picture?: AgentPicture } | null> {
+  ): Promise<Pick<AgentEntity, 'runtime' | 'description' | 'picture' | 'look'> | null> {
     return this.agentRepository.findOne(
       { _id: command.agentId, _environmentId: command.environmentId, _organizationId: command.organizationId },
-      ['runtime', 'description', 'picture']
+      ['runtime', 'description', 'picture', 'look']
     );
   }
 
@@ -279,13 +291,22 @@ export class SlackQuickSetup {
   }
 
   /**
-   * Gives a Human agent's new app its picture, or the default one. The token that can do this is at hand only
-   * now, so there is one try, and a failure is only logged: the app works without an icon. Slack doesn't say
+   * Gives a Human agent's new app its picture, else its mascot in the look its mascots show, else the default
+   * picture. The token that can do this is at hand only now, so there is one try, and a failure is only logged:
+   * the app works without an icon. That is also why an app keeps the icon it was made with. Slack doesn't say
    * whether it takes this kind of token here, and a picture under 512px comes back as `invalid_icon_size`.
    */
-  private async setAppIcon(command: SlackQuickSetupCommand, appId: string, picture?: AgentPicture): Promise<void> {
+  private async setAppIcon(
+    command: SlackQuickSetupCommand,
+    appId: string,
+    picture: AgentPicture | undefined,
+    look: MascotLook | null
+  ): Promise<void> {
     try {
-      const url = agentPictureOrDefaultUrl({ _id: command.agentId, _environmentId: command.environmentId, picture });
+      const url = agentPictureOrDefaultUrl(
+        { _id: command.agentId, _environmentId: command.environmentId, picture },
+        look
+      );
       const params = new URLSearchParams({ token: command.configToken, app_id: appId, url });
 
       const { data } = await axios.post<SlackIconSetResponse>(this.SLACK_ICON_SET_URL, params.toString(), {

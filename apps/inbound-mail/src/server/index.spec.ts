@@ -173,4 +173,15 @@ describe('Mailin SMTP DATA handler — queue persistence', () => {
     const after = listTmpFiles().filter((name) => !before.has(name));
     expect(after, `temp files leaked on success path: ${after.join(', ')}`).to.deep.equal([]);
   });
+
+  it('queues the domains behind the DKIM and SPF verdicts, so consumers can check them against From', async () => {
+    const add = sinon.stub(InboundParseQueueService.prototype, 'add').resolves(undefined as never);
+
+    await sendInboundMessage();
+
+    // The test message has no DKIM signature, and its MAIL FROM is sender@example.com.
+    const [job] = add.firstCall.args as unknown as [{ data: Record<string, unknown> }];
+    expect(job.data).to.include({ dkim: 'failed', spfDomain: 'example.com' });
+    expect(job.data.dkimDomains).to.deep.equal([]);
+  });
 });

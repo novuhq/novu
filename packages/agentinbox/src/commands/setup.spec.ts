@@ -41,6 +41,7 @@ vi.mock('../cli-io', () => ({
   success: vi.fn(),
   warn: vi.fn(),
   promptLine: vi.fn(),
+  promptPick: vi.fn(),
   promptSecret: vi.fn(),
 }));
 

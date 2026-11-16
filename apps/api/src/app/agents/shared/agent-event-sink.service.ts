@@ -893,6 +893,8 @@ export class AgentEventSink {
       return;
     }
 
+    this.logger.error({ runId, sessionId: context.sessionId, code: event.code }, `Agent run failed: ${event.message}`);
+
     const error = new Error(event.message);
 
     if (event.code) {

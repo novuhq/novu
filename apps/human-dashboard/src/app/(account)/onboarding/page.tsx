@@ -5,10 +5,11 @@ import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { Toaster } from '@/components/ui/toast';
 import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
-import { loadOnboardingView, noteOnboardingStarted } from '@/lib/human-onboarding';
+import { loadOnboardingView, loadSayHiView, loadSetupProgress, noteOnboardingStarted } from '@/lib/human-onboarding';
 import { ONBOARDING_CONNECT_PARAM, ONBOARDING_PATH, onboardingConnectPath } from '@/lib/onboarding';
 
-import { OnboardingFlow } from './onboarding-flow';
+import { Aside, OnboardingFlow } from './onboarding-flow';
+import { SayHiOnboarding } from './say-hi-onboarding';
 
 export const metadata: Metadata = {
   title: 'Set up your agent',
@@ -32,6 +33,26 @@ export default async function OnboardingPage(props: PageProps<'/onboarding'>) {
   const account = await requireHumanAccount({
     returnTo: connectHost ? onboardingConnectPath(connectHost) : ONBOARDING_PATH,
   });
+
+  // The onboarding where the agent says hi with its card, for the accounts that have it.
+  if ((await loadSetupProgress(account)).features.newOnboarding) {
+    const sayHi = await loadSayHiView(account);
+    if (!sayHi) {
+      redirect(DASHBOARD_HOME);
+    }
+
+    if (sayHi.step === 'name') {
+      await noteOnboardingStarted();
+    }
+
+    return (
+      <>
+        <SayHiOnboarding view={sayHi} initialHost={connectHost} aside={<Aside email={sayHi.operator.email} />} />
+        <Toaster />
+      </>
+    );
+  }
+
   const view = await loadOnboardingView(account);
   if (!view) {
     redirect(DASHBOARD_HOME);

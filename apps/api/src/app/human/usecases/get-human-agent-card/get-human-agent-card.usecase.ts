@@ -16,6 +16,8 @@ import {
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { HumanAgentCardResult } from '../../dtos/human-agent-card.dto';
+import { AgentInboxFeaturesService } from '../../services/agent-inbox-features.service';
+import { agentLookOf } from '../../services/agent-look';
 import { agentPictureUrl } from '../../services/agent-picture-url';
 import { HumanOperatorService } from '../../services/human-operator.service';
 import { HumanTelegramBotService } from '../../services/human-telegram-bot.service';
@@ -37,6 +39,7 @@ const AGENT_FIELDS = [
   'reach',
   'pausedAt',
   'picture',
+  'look',
   'createdAt',
 ] as const;
 
@@ -58,7 +61,8 @@ export class GetHumanAgentCard {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly agentRepository: AgentRepository,
     private readonly operatorService: HumanOperatorService,
-    private readonly telegramBot: HumanTelegramBotService
+    private readonly telegramBot: HumanTelegramBotService,
+    private readonly features: AgentInboxFeaturesService
   ) {}
 
   async execute(command: GetHumanAgentCardCommand): Promise<HumanAgentCardResult> {
@@ -69,13 +73,14 @@ export class GetHumanAgentCard {
       throw new NotFoundException({ code: CARD_NOT_AVAILABLE, message: 'This card isn’t available.' });
     }
 
-    const [operator, telegramBotUsername] = await Promise.all([
+    const [operator, telegramBotUsername, newCard] = await Promise.all([
       this.operatorService.cardNameFor({
         environmentId: agent._environmentId,
         organizationId: agent._organizationId,
         agentId: agent._id,
       }),
       this.telegramBot.usernameFor(agent),
+      this.features.isNewOnboardingEnabled(agent._organizationId),
     ]);
     const pictureUrl = agentPictureUrl(agent);
     const nameFromHandle = inbox.keyedSlug ?? handle;
@@ -89,6 +94,8 @@ export class GetHumanAgentCard {
       createdAt: agent.createdAt,
       address: `${handle}@${resolveAgentInboxDomain(inbox.integration.credentials)}`,
       ...(telegramBotUsername ? { telegramBotUsername } : {}),
+      look: agentLookOf(agent),
+      newCard,
     };
   }
 

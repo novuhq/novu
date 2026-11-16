@@ -136,10 +136,20 @@ export interface EmailWebhookPayload {
    * Sender-authentication verdicts computed by the inbound-mail service
    * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,
    * consumers that resolve a sender identity from it MUST treat the address as
-   * untrusted unless both verdicts are `'pass'`. Optional for backward
-   * compatibility with payloads produced before this field existed — a missing
-   * verdict must be treated as unverified (fail closed).
+   * untrusted unless both verdicts are `'pass'` and one of the domains below
+   * is the address's domain. Optional for backward compatibility with payloads
+   * produced before this field existed — a missing verdict must be treated as
+   * unverified (fail closed).
    */
   dkim?: string;
   spf?: string;
+  /**
+   * The domains the verdicts vouch for: the d= domains whose DKIM signatures
+   * verified, and the MAIL FROM domain SPF checked (null without one). Anyone
+   * can pass both checks for a domain they own while writing someone else's
+   * address in `From`, so a pass counts only when one of these is the `From`
+   * domain (alignment, as in DMARC). Missing on payloads produced before them.
+   */
+  dkimDomains?: string[];
+  spfDomain?: string | null;
 }

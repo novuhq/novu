@@ -19,7 +19,8 @@ export function getSidebarPlanCardVariant(
     return 'free_usage';
   }
 
-  if (pausedPlan === 'paid') {
+  // A paused trial lands here while the Stripe webhook lags and the subscription no longer reports the trial.
+  if (pausedPlan === 'paid' || pausedPlan === 'trial') {
     return 'paused_usage';
   }
 

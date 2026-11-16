@@ -370,6 +370,30 @@ describe('NovuRequestHandler', () => {
     });
   });
 
+  describe('agent events header', () => {
+    it('lists the agent events the bridge handles, onAbort included, so Novu sends no older bridge onAbort', async () => {
+      const handler = new NovuRequestHandler({
+        frameworkName: 'test-framework',
+        client: new Client({ secretKey: 'some-secret-key', strictAuthentication: false }),
+        workflows: [],
+        handler: () => ({
+          body: () => ({}),
+          headers: () => null,
+          method: () => 'GET',
+          url: () => new URL(`http://localhost/api/novu?${HttpQueryKeysEnum.ACTION}=${GetActionEnum.DISCOVER}`),
+          transformResponse: (res: IActionResponse<string>) => res,
+        }),
+      }).createHandler();
+
+      const response = await handler();
+
+      expect(response.status).toBe(HttpStatusEnum.OK);
+      expect(response.headers[HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS].split(',')).toEqual(
+        expect.arrayContaining(['onMessage', 'onAction', 'onResolve', 'onAbort'])
+      );
+    });
+  });
+
   describe('timingSafeEqual', () => {
     it('returns true for identical strings', () => {
       expect(timingSafeEqual('deadbeef', 'deadbeef')).toBe(true);

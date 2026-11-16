@@ -5,10 +5,10 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
 import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { AgentLookProvider, AgentMascot } from '@/components/ui/agent-look';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import {
@@ -21,6 +21,7 @@ import {
   InviteRequestError,
   setInviteDefaultChannel,
 } from '@/lib/invite-api';
+import { mascotLookOf } from '@/lib/look';
 import { cn } from '@/lib/utils';
 
 import { AppIcon } from './app-icon';
@@ -29,6 +30,7 @@ const APP_LABELS: Record<InviteChannelVia, string> = {
   email: 'Email',
   telegram: 'Telegram',
   slack: 'Slack',
+  whatsapp: 'WhatsApp',
 };
 
 type InactiveReason = 'expired' | 'declined' | 'invalid';
@@ -75,7 +77,11 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
     );
   }
 
-  return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
+  return (
+    <AgentLookProvider look={mascotLookOf(state.status.agentLook)}>
+      <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />
+    </AgentLookProvider>
+  );
 }
 
 function followConnectResult(
@@ -85,7 +91,8 @@ function followConnectResult(
     stillHere: () => boolean;
     tab: Window | null;
     onEmailSent: (retryAfterSeconds: number) => void;
-    onTelegram: (url: string) => void;
+    /** Telegram and WhatsApp hand back a link to open on the next card, not in a tab. */
+    onChatLink: (via: 'telegram' | 'whatsapp', url: string) => void;
   }
 ): void {
   if ('via' in result && result.via === 'email') {
@@ -98,10 +105,10 @@ function followConnectResult(
     return;
   }
 
-  if (via === 'telegram') {
+  if (via === 'telegram' || via === 'whatsapp') {
     // Only when they are still where they asked for it: going back meanwhile is the newer choice.
     if (actions.stillHere()) {
-      actions.onTelegram(result.url);
+      actions.onChatLink(via, result.url);
     }
 
     return;
@@ -127,6 +134,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
   const [inactiveReason, setInactiveReason] = useState<InactiveReason | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [telegramLink, setTelegramLink] = useState<string | null>(null);
+  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
   const [view, setView] = useState<InviteView>('channels');
   const [connectingVia, setConnectingVia] = useState<InviteChannelVia | null>(null);
   const [defaultingVia, setDefaultingVia] = useState<InviteChannelVia | null>(null);
@@ -207,9 +215,13 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
           setEmailCooldownUntil(Date.now() + retryAfterSeconds * 1000);
           onChanged();
         },
-        onTelegram: (url) => {
-          setTelegramLink(url);
-          setView('telegram');
+        onChatLink: (chat, url) => {
+          if (chat === 'telegram') {
+            setTelegramLink(url);
+          } else {
+            setWhatsappLink(url);
+          }
+          setView(chat);
         },
       });
     } catch (error) {
@@ -284,6 +296,7 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
     stepsFor,
     telegramLink,
     telegramBot,
+    whatsappLink,
     busy,
     slackStarted,
     emailCooldownUntil,
@@ -324,10 +337,10 @@ function ActiveInvite({ apiUrl, token, status, onChanged }: ActiveInviteProps) {
                   return;
                 }
 
-                // Telegram needs its link before there is anything to show; Slack mints its
-                // link on the next card, inside the click that opens the tab.
-                if (channel.via === 'telegram') {
-                  void handleConnect('telegram');
+                // Telegram and WhatsApp need their link before there is anything to show; Slack
+                // mints its link on the next card, inside the click that opens the tab.
+                if (channel.via === 'telegram' || channel.via === 'whatsapp') {
+                  void handleConnect(channel.via);
                 } else {
                   setErrorMessage(null);
                   setView(channel.via);
@@ -379,6 +392,7 @@ function connectingStep({
   stepsFor,
   telegramLink,
   telegramBot,
+  whatsappLink,
   busy,
   slackStarted,
   emailCooldownUntil,
@@ -391,6 +405,7 @@ function connectingStep({
   stepsFor: InviteChannelVia | undefined;
   telegramLink: string | null;
   telegramBot: string | undefined;
+  whatsappLink: string | null;
   busy: boolean;
   slackStarted: boolean;
   emailCooldownUntil: number | null;
@@ -438,6 +453,19 @@ function connectingStep({
           Choose another way
         </Button>
       </InviteCard>
+    );
+  }
+
+  if (stepsFor === 'whatsapp' && whatsappLink) {
+    return (
+      <WhatsAppSteps
+        status={status}
+        url={whatsappLink}
+        busy={busy}
+        error={error}
+        onConnect={onConnect}
+        onBack={onBack}
+      />
     );
   }
 
@@ -563,6 +591,93 @@ function ChannelRow({
 }
 
 /** The deep link as a code to scan, on a light tile with the Telegram mark in the middle. */
+/**
+ * Sending the code from WhatsApp proves the number is theirs, the way pressing Start does on Telegram. The link
+ * opens WhatsApp with the code typed in; the code is shown too, for someone who has to type it.
+ */
+function WhatsAppSteps({
+  status,
+  url,
+  busy,
+  error,
+  onConnect,
+  onBack,
+}: {
+  status: ActiveInviteStatus;
+  url: string;
+  busy: boolean;
+  error: ReactNode;
+  onConnect: (via: InviteChannelVia) => void;
+  onBack: () => void;
+}) {
+  const code = whatsAppCodeOf(url);
+
+  return (
+    <InviteCard step="whatsapp">
+      <InviterLine name={status.inviterName} agentPictureUrl={status.agentPictureUrl} />
+      <AppIcon via="whatsapp" size="large" />
+      <StepTitle>Send the code on WhatsApp</StepTitle>
+      <CardText>This proves the number is yours, so {status.agentName} can message you there.</CardText>
+
+      <div className="flex items-center gap-4">
+        <div className="relative hidden shrink-0 rounded-lg bg-foreground p-2 sm:block">
+          <QRCode
+            value={url}
+            size={80}
+            level="Q"
+            bgColor="#ebe2d6"
+            fgColor="#0a0908"
+            aria-label="QR code that opens WhatsApp with your code"
+          />
+          <AppIcon via="whatsapp" className="absolute top-1/2 left-1/2 size-6 -translate-1/2 ring-2 ring-foreground" />
+        </div>
+        <div className="flex min-w-0 flex-col items-start gap-2">
+          <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClassName('primary')}>
+            <ArrowUpRight aria-hidden="true" className="size-3.5" />
+            Open in WhatsApp
+          </a>
+          {code && (
+            <p className="text-xs leading-4 text-muted">
+              Or send <span className="font-mono text-secondary">{code}</span> yourself
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <WaitingLine>Waiting for your message…</WaitingLine>
+        <p className="text-xs leading-4 text-muted">
+          The code works for 10 minutes.{' '}
+          <button
+            type="button"
+            className="cursor-pointer rounded-sm text-secondary underline underline-offset-4 transition-colors duration-150 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+            disabled={busy}
+            onClick={() => onConnect('whatsapp')}
+          >
+            Get a new one
+          </button>
+        </p>
+      </div>
+
+      {error}
+      <Button variant="secondary" className={cn(SMALL_BUTTON, 'self-start')} onClick={onBack}>
+        Choose another way
+      </Button>
+    </InviteCard>
+  );
+}
+
+/** The code inside a wa.me link's pre-filled message, `BCDF-GHJK`. */
+function whatsAppCodeOf(url: string): string | undefined {
+  try {
+    const text = new URL(url).searchParams.get('text') ?? '';
+
+    return /[A-Z]{4}-[A-Z]{4}/.exec(text)?.[0];
+  } catch {
+    return undefined;
+  }
+}
+
 function TelegramQrCode({ url, bot }: { url: string; bot?: string }) {
   return (
     <div className="relative hidden shrink-0 rounded-lg bg-foreground p-2 sm:block">
@@ -598,7 +713,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
 
   return (
     <>
-      <MascotFace art="waiting" mood="happy" className="size-35" />
+      <AgentMascot art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         You&apos;re in{firstName && ', '}
         {firstName && <Accent>{firstName}</Accent>}
@@ -874,6 +989,8 @@ function channelDescription(channel: InviteChannel, telegramBot?: string): strin
       return telegramBot ? `Chat with @${telegramBot}` : 'Chat in Telegram';
     case 'slack':
       return 'Message it in Slack';
+    case 'whatsapp':
+      return 'Message it on WhatsApp';
     case 'email':
       if (channel.status === 'pending') {
         return channel.address ? `Check your inbox at ${channel.address}` : 'Check your inbox for a confirmation link';

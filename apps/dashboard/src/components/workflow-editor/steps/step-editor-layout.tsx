@@ -4,14 +4,13 @@ import {
   AiWorkflowSuggestion,
   ContentIssueEnum,
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   PermissionsEnum,
   ResourceOriginEnum,
   StepResponseDto,
   StepTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { FC, SVGProps, useMemo, useState } from 'react';
+import { ComponentProps, FC, SVGProps, useMemo, useState } from 'react';
 import { IconType } from 'react-icons';
 import {
   RiCodeBlock,
@@ -27,6 +26,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import {
+  type EditorCopilotMode,
+  useCopilotWebChatSidebar,
+  useWorkflowEditorCopilot,
+} from '@/components/copilot-web-chat';
 import { Code2 } from '@/components/icons/code-2';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
@@ -38,7 +42,7 @@ import { PreviewContextContainer } from '@/components/workflow-editor/steps/cont
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { HttpRequestTestProvider } from '@/components/workflow-editor/steps/http-request/http-request-test-provider';
-import { CopilotSidebar } from '@/components/workflow-editor/steps/layout/copilot-sidebar';
+import { CopilotSidebar, CopilotSidebarSkeleton } from '@/components/workflow-editor/steps/layout/copilot-sidebar';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -52,10 +56,8 @@ import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-ut
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { TranslationStatus } from '@/components/workflow-editor/translation-status';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
@@ -120,17 +122,50 @@ function DisconnectResolverButton({ step }: { step: StepResponseDto }) {
   );
 }
 
+type SidebarCopilot = Pick<
+  ComponentProps<typeof CopilotSidebar>,
+  'copilotContent' | 'headerActions' | 'isGenerating' | 'isRevealPending'
+>;
+
+/** What the sidebar shows for each mode; `null` when the step editor has no Copilot sidebar. */
+function getSidebarCopilot(
+  copilotMode: EditorCopilotMode | null,
+  { legacy, webChat }: { legacy: SidebarCopilot; webChat: SidebarCopilot }
+): SidebarCopilot | null {
+  switch (copilotMode) {
+    case 'legacy':
+      return legacy;
+    case 'web-chat-sidebar':
+      return webChat;
+    case 'pending-legacy':
+    case 'pending-web-chat-sidebar':
+      return { copilotContent: <CopilotSidebarSkeleton /> };
+    case 'web-chat-popover':
+    case 'pending-web-chat-popover':
+    case null:
+      return null;
+    default: {
+      const unhandled: never = copilotMode;
+
+      return unhandled;
+    }
+  }
+}
+
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
     useStepEditor();
   const stepResolverHint = useStepResolverHint();
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
-  const { currentEnvironment } = useEnvironment();
   const { onBlur } = useSaveForm();
-  const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
-  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
-  const showCopilot = isAiEnabled && isDevEnvironment && !isExternalWorkflow;
+  const copilotMode = useWorkflowEditorCopilot({
+    workflowId: workflow?._id,
+    workflowLabel: workflow?.workflowId,
+    stepId: step.stepId,
+    stepLabel: step.stepId,
+    onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
+  });
 
   const editorTitle = getEditorTitle(step.type);
   const isInlineResolverStep =
@@ -207,6 +242,7 @@ function StepEditorContent() {
 
     return suggestions;
   }, [step]);
+  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode, suggestions: newChatSuggestions });
 
   const aiChatConfig = useMemo(
     () => ({
@@ -331,53 +367,60 @@ function StepEditorContent() {
     </>
   );
 
-  if (showCopilot) {
+  const testWorkflowDrawer = (
+    <TestWorkflowDrawer
+      isOpen={isTestDrawerOpen}
+      onOpenChange={setIsTestDrawerOpen}
+      testData={testData}
+      initialPayload={currentPayload}
+    />
+  );
+
+  const sidebarCopilot = getSidebarCopilot(copilotMode, {
+    legacy: {
+      copilotContent: (
+        <AiChatProvider config={aiChatConfig}>
+          <NovuCopilotPanel hideHeader />
+        </AiChatProvider>
+      ),
+    },
+    webChat: webChatSidebar,
+  });
+
+  if (!sidebarCopilot) {
     return (
-      <>
-        <CopilotSidebar
-          copilotContent={
-            <AiChatProvider config={aiChatConfig}>
-              <NovuCopilotPanel hideHeader />
-            </AiChatProvider>
-          }
-          previewContent={previewContent}
-          testWorkflowButton={testWorkflowButton}
-          autoSaveId="step-editor-copilot-layout"
-          hideCollapseButton
-          maxSize="40%"
-        >
-          <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
-        </CopilotSidebar>
-        <TestWorkflowDrawer
-          isOpen={isTestDrawerOpen}
-          onOpenChange={setIsTestDrawerOpen}
-          testData={testData}
-          initialPayload={currentPayload}
-        />
-      </>
+      <ResizableLayout autoSaveId="step-editor-main-layout">
+        <ResizableLayout.ContextPanel defaultSize="27%" minSize="27%" maxSize="80%">
+          <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
+            {testWorkflowButton}
+          </PanelHeader>
+          {previewContent}
+        </ResizableLayout.ContextPanel>
+
+        <ResizableLayout.Handle />
+
+        <ResizableLayout.MainContentPanel>{mainContent}</ResizableLayout.MainContentPanel>
+
+        {testWorkflowDrawer}
+      </ResizableLayout>
     );
   }
 
+  // One element for every mode, so resolving the mode or falling back to legacy only swaps the Copilot content.
   return (
-    <ResizableLayout autoSaveId="step-editor-main-layout">
-      <ResizableLayout.ContextPanel defaultSize="27%" minSize="27%" maxSize="80%">
-        <PanelHeader icon={RiCodeBlock} title="Preview sandbox" className="py-2">
-          {testWorkflowButton}
-        </PanelHeader>
-        {previewContent}
-      </ResizableLayout.ContextPanel>
-
-      <ResizableLayout.Handle />
-
-      <ResizableLayout.MainContentPanel>{mainContent}</ResizableLayout.MainContentPanel>
-
-      <TestWorkflowDrawer
-        isOpen={isTestDrawerOpen}
-        onOpenChange={setIsTestDrawerOpen}
-        testData={testData}
-        initialPayload={currentPayload}
-      />
-    </ResizableLayout>
+    <>
+      <CopilotSidebar
+        {...sidebarCopilot}
+        previewContent={previewContent}
+        testWorkflowButton={testWorkflowButton}
+        autoSaveId="step-editor-copilot-layout"
+        hideCollapseButton
+        maxSize="40%"
+      >
+        <div className="flex h-full min-w-0 flex-1 flex-col">{mainContent}</div>
+      </CopilotSidebar>
+      {testWorkflowDrawer}
+    </>
   );
 }
 

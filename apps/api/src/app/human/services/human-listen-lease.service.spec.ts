@@ -250,16 +250,25 @@ describe('HumanListenLeaseService', () => {
     expect((error as ForbiddenException).getResponse()).to.include({ code: AGENT_PAUSED });
   });
 
-  it('says where the agent is listening and whether it is paused, in one look', async () => {
+  it('says where the agent is listening and whether it is paused, in one look, with the agent’s look', async () => {
     const held = await service.take(scope, agent, macbook, false);
-    expect(await service.status(scope, agent)).to.deep.equal({ listening: held.listening, paused: false });
+    const look = { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } };
+    expect(await service.status(scope, agent)).to.deep.equal({ listening: held.listening, paused: false, look });
 
     await agentRepository.update(
       { _id: agent._id, _environmentId: scope.environmentId, _organizationId: scope.organizationId },
       { $set: { pausedAt: new Date().toISOString() } }
     );
 
-    expect(await service.status(scope, agent)).to.deep.equal({ listening: held.listening, paused: true });
+    expect(await service.status(scope, agent)).to.deep.equal({ listening: held.listening, paused: true, look });
+
+    const picked = { shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 7 } } as const;
+    await agentRepository.update(
+      { _id: agent._id, _environmentId: scope.environmentId, _organizationId: scope.organizationId },
+      { $set: { look: picked } }
+    );
+
+    expect((await service.status(scope, agent)).look).to.deep.equal(picked);
   });
 
   describe('liveListening', () => {

@@ -209,6 +209,19 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(payload.spf).to.equal('failed');
   });
 
+  it('forwards the domains the verdicts vouch for, so the agent can check them against from', () => {
+    const payload = usecase.previewAgentMailPayload({
+      ...baseMail,
+      dkim: 'pass',
+      spf: 'pass',
+      dkimDomains: ['example.com'],
+      spfDomain: 'em123.example.com',
+    });
+
+    expect(payload.dkimDomains).to.deep.equal(['example.com']);
+    expect(payload.spfDomain).to.equal('em123.example.com');
+  });
+
   it('includes core mail metadata regardless of attachment shape', () => {
     const payload = usecase.previewAgentMailPayload({
       ...baseMail,
