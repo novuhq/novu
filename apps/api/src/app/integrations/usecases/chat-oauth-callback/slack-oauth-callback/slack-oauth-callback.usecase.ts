@@ -12,7 +12,6 @@ import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   ChannelTypeEnum,
-  ContextRepository,
   EnvironmentRepository,
   ICredentialsEntity,
   IntegrationEntity,
@@ -20,6 +19,10 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
+import {
+  assertCanReconnectChannelConnection,
+  resolveCallerContextKeys,
+} from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
@@ -49,7 +52,6 @@ export class SlackOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private channelConnectionRepository: ChannelConnectionRepository,
-    private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
     private updateChannelConnection: UpdateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
@@ -234,30 +236,13 @@ export class SlackOauthCallback {
     );
   }
 
-  private async resolveContextKeys(stateData: StateData): Promise<string[]> {
-    // A session-validated context arrives pre-resolved as trusted keys.
-    if (stateData.contextKeys?.length) {
-      return stateData.contextKeys;
-    }
-
-    if (!stateData.context) {
-      return [];
-    }
-
-    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-      stateData.environmentId,
-      stateData.organizationId,
-      stateData.context
-    );
-
-    return contexts.map((context) => context.key);
-  }
-
   private async findExistingConnection(
     stateData: StateData,
     integration: IntegrationEntity,
     subscriberId: string | undefined
   ): Promise<ChannelConnectionEntity | null> {
+    const contextKeys = resolveCallerContextKeys(stateData);
+
     if (stateData.identifier) {
       const connectionByIdentifier = await this.channelConnectionRepository.findOne({
         identifier: stateData.identifier,
@@ -266,11 +251,15 @@ export class SlackOauthCallback {
       });
 
       if (connectionByIdentifier) {
+        assertCanReconnectChannelConnection(connectionByIdentifier, {
+          subscriberId: stateData.subscriberId,
+          contextKeys,
+        });
+
         return connectionByIdentifier;
       }
     }
 
-    const contextKeys = await this.resolveContextKeys(stateData);
     const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
 
     return await this.channelConnectionRepository.findOne({

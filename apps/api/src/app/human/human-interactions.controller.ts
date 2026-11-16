@@ -22,6 +22,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
+import type { AgentLook } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
@@ -76,6 +77,8 @@ import {
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
+import { AgentInboxFeaturesService } from './services/agent-inbox-features.service';
+import { lookToMake } from './services/agent-look';
 import {
   AGENT_PICTURE_FIELD,
   AGENT_PICTURE_MAX_BYTES,
@@ -158,7 +161,8 @@ export class HumanInteractionsController {
     private readonly inboxAddresses: AgentInboxAddressService,
     private readonly hostStatus: HumanHostStatusService,
     private readonly setContactListenToUsecase: SetContactListenTo,
-    private readonly showHumanAgentCardUsecase: ShowHumanAgentCard
+    private readonly showHumanAgentCardUsecase: ShowHumanAgentCard,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   @Post('/interactions')
@@ -379,13 +383,24 @@ export class HumanInteractionsController {
   /**
    * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
    * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
+   *
+   * It is what a host asks before it makes an agent, so it also says whether that agent can be given a look:
+   * the CLI and the MCP server ask for a shape and a colour only then.
    */
   @Get('/inbox-address')
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  checkInboxAddress(@Query() query: CheckInboxAddressQueryDto): Promise<CheckInboxAddressResponseDto> {
-    return this.inboxAddresses.check(query.handle, query.email);
+  async checkInboxAddress(
+    @UserSession() user: UserSessionData,
+    @Query() query: CheckInboxAddressQueryDto
+  ): Promise<CheckInboxAddressResponseDto> {
+    const [address, canPickLook] = await Promise.all([
+      this.inboxAddresses.check(query.handle, query.email),
+      this.agentInboxFeatures.areLooksOn(user.organizationId),
+    ]);
+
+    return { ...address, canPickLook };
   }
 
   @Post('/setup')
@@ -419,8 +434,7 @@ export class HumanInteractionsController {
         lastName: body.lastName,
         defaultVia: body.defaultVia,
         analyticsSource: readAnalyticsSource(analyticsSource),
-        // The operator picks the look on the dashboard; a host setting up the agent leaves the original one.
-        look: body.look && carriesHumanDashboardSecret(headers) ? body.look : undefined,
+        look: await this.lookOfNewAgent(body, user.organizationId, headers),
       })
     );
 
@@ -603,6 +617,24 @@ export class HumanInteractionsController {
     assertHasAccount(user);
 
     return this.humanAgentPicture.describe(await this.humanAgentPicture.remove(relayOf(user, query.agentIdentifier)));
+  }
+
+  /**
+   * The look a new agent is made with. The dashboard's server sends the one its operator picked in the
+   * onboarding. A host, such as the CLI or the MCP server, may pick one too where looks are on, with an account
+   * or without one; elsewhere its look is left out, and the agent has the original one.
+   */
+  private async lookOfNewAgent(
+    body: SetupHumanRelayRequestDto,
+    organizationId: string,
+    headers: Record<string, unknown>
+  ): Promise<AgentLook | undefined> {
+    const look = lookToMake(body.look);
+    if (!look || carriesHumanDashboardSecret(headers)) {
+      return look;
+    }
+
+    return (await this.agentInboxFeatures.areLooksOn(organizationId)) ? look : undefined;
   }
 
   /**

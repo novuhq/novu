@@ -16,18 +16,33 @@ import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
 const typed = vi.hoisted(() => [] as string[]);
 
 /** How the API says the agent looks, in the answers that carry it. None, as an API from before looks answers. */
-const looks = vi.hoisted(() => ({ setup: undefined as unknown, operator: undefined as unknown }));
+const looks = vi.hoisted(() => ({
+  setup: undefined as unknown,
+  operator: undefined as unknown,
+  /** Whether the API says, with an address it checks, that a new agent can be given a look. */
+  canBePicked: false,
+}));
 
 // A terminal's readline: it writes the question and echoes the answer as it is typed. An answer can start out
-// filled in, which Enter then takes.
+// filled in, which Enter then takes. Arrows (`→→`) are keys pressed before Enter, not an answer: they move a pick.
 vi.mock('node:readline', () => {
-  const createInterface = ({ output }: { output: NodeJS.WritableStream }) => {
+  const arrows: Record<string, string> = { '←': 'left', '→': 'right', '↑': 'up', '↓': 'down' };
+  const createInterface = ({ input, output }: { input: NodeJS.ReadableStream; output: NodeJS.WritableStream }) => {
     let filledIn = '';
 
     return {
       question: (question: string, answer: (text: string) => void) => {
         queueMicrotask(() => {
           const text = typed.shift() || filledIn;
+          if (text && [...text].every((key) => key in arrows)) {
+            for (const key of text) {
+              input.emit('keypress', undefined, { name: arrows[key] });
+            }
+            answer('');
+
+            return;
+          }
+
           output.write(`${question}${text}\n`);
           answer(text);
         });
@@ -87,6 +102,7 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
     handle,
     available: true,
     domain: 'agentinbox.md',
+    ...(looks.canBePicked ? { canPickLook: true } : {}),
   })),
   requestAddressVerification: vi.fn(async () => ({
     address: 'a***@example.com',
@@ -166,6 +182,29 @@ const run = {
   },
   keylessSetupUnnamed: async () => {
     loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com' });
+  },
+  /** `--agent-shape` and `--agent-color`, with an API that takes the look. */
+  setupWithLookPassed: async () => {
+    loadConfig.mockReturnValue(null);
+    looks.setup = DROP_IN_CORAL;
+    await setupCommand(undefined, {
+      email: 'ada@example.com',
+      agentName: 'Atlas',
+      agentShape: 'drop',
+      agentColor: 'coral',
+    });
+  },
+  /** The same options, with an API that leaves the look out: looks aren't on for this setup. */
+  setupWithLookNotTaken: async () => {
+    loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas', agentShape: 'drop' });
+  },
+  /** A person at a terminal, with an API that says a new agent can be given a look. */
+  setupAskingForLook: async () => {
+    loadConfig.mockReturnValue(null);
+    looks.canBePicked = true;
+    looks.setup = DROP_IN_CORAL;
     await setupCommand(undefined, { email: 'ada@example.com' });
   },
   keylessSetupStops: async () => {
@@ -298,6 +337,7 @@ async function printed(scenario: keyof typeof run, kind: Streams = 'pipe', size:
   loadConfig.mockReset().mockReturnValue(null);
   looks.setup = undefined;
   looks.operator = undefined;
+  looks.canBePicked = false;
   isEmailVerified.mockReset().mockResolvedValue(false);
   waitForVerifiedEmail.mockReset().mockResolvedValue(undefined);
   waitForEndpoint.mockReset().mockResolvedValue(undefined);
@@ -400,6 +440,26 @@ describe('without a terminal', () => {
       "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
+  });
+
+  it('sends the shape and the colour passed for a new agent, and says nothing more when the API takes them', async () => {
+    const output = await printed('setupWithLookPassed');
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(output.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+    expect(output.stdout).not.toContain('has the original one');
+    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ look: DROP }));
+  });
+
+  it('says the agent has the original look where the API left the passed one out', async () => {
+    const output = await printed('setupWithLookNotTaken');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain("• Looks aren't available here yet, so your agent has the original one.");
   });
 
   it('refuses to set up a new agent with no name', async () => {
@@ -799,6 +859,45 @@ describe('on a terminal', () => {
     );
     expect(leftOnScreen(shown)).toContain("your agent's name: atlas prime");
     expect(leftOnScreen(shown)).toContain("your agent's address: atlas-prime@agentinbox.md");
+  });
+
+  it('asks for the shape and the colour after the address, where the API says a look can be picked', async () => {
+    // Two keys to the right of the orb is the drop, and two to the right of ember is coral.
+    typed.push('Ada', 'Lovelace', 'Atlas', '', '→→', '→→');
+    const shown = await printed('setupAskingForLook', 'terminal', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+    expect(leftOnScreen(shown)).toContain('shape: drop');
+    expect(leftOnScreen(shown)).toContain('color: coral');
+    // The mascot ends up in the look that was picked.
+    expect(shown.stdout.lastIndexOf(toneOf('coral', 5))).toBeGreaterThan(shown.stdout.lastIndexOf(toneOf('ember', 4)));
+  });
+
+  it('names the shapes and the colours for one to be typed, where no screen is drawn to pick them on', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas', '', 'drop', '3');
+    const shown = await printed('setupAskingForLook', 'stdout', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(shown.stdout).toContain('Shape (orb, pebble, drop, bean, peek or mochi) [orb]: drop');
+    expect(shown.stdout).toContain('Color (ember, marigold, coral, paprika, peach or bone) [ember]: 3');
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+  });
+
+  it('asks nothing about the look where the API doesn’t say one can be picked', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas', '');
+    const shown = await printed('keylessSetupUnnamed', 'terminal', { typing: true });
+
+    expect(shown.exitCode).toBe(0);
+    expect(leftOnScreen(shown)).not.toContain('shape:');
   });
 
   it('stops where the answer is no, as before', async () => {

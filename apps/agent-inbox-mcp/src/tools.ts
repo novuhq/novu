@@ -28,7 +28,7 @@ import {
   waitForAnswer,
 } from './interactions';
 import { resolveEmailRecipients } from './recipients';
-import { AGENT_NAME_MAX_LENGTH, inboxSetup } from './setup';
+import { AGENT_NAME_MAX_LENGTH, inboxSetup, LOOK_COLORS, MASCOT_BODIES } from './setup';
 
 type ToolResult = {
   content: Array<{ type: 'text'; text: string }>;
@@ -270,7 +270,7 @@ export function registerTools(
     {
       title: 'Set up the agent inbox',
       description:
-        'Create the agent and its email inbox, or report how far setup got. Call with no arguments to see status and a suggested owner email. Ask the user for an agent name and address before creating; pass agent_name and handle together. Pass email only after the user confirms the address — a confirmation link goes out, and a later call with no arguments says whether they opened it. A name never changes an existing agent, and a handle never moves an existing mailbox; pass handle alone to finish a mailbox that was not created. This tool does not replace an email that is already confirmed.',
+        'Create the agent and its email inbox, or report how far setup got. Call with no arguments to see status and a suggested owner email. Ask the user for an agent name and address before creating; pass agent_name and handle together. When that status says a look can be picked, you may also ask which shape and color the agent’s mascot should have and pass shape and color with them; both are optional and neither can be changed later. Pass email only after the user confirms the address — a confirmation link goes out, and a later call with no arguments says whether they opened it. A name never changes an existing agent, a handle never moves an existing mailbox, and an existing agent keeps its look; pass handle alone to finish a mailbox that was not created. This tool does not replace an email that is already confirmed.',
       inputSchema: {
         agent_name: z
           .string()
@@ -295,6 +295,18 @@ export function registerTools(
           .optional()
           .describe(
             "The owner's email to confirm. Confirm the suggested address from a no-argument call with the user before passing it."
+          ),
+        shape: z
+          .enum(MASCOT_BODIES)
+          .optional()
+          .describe(
+            'The shape of a new agent’s mascot, when the user picked one: orb is a round ball (the default), pebble a wide, slightly tilted stone, drop a teardrop with its point up, bean a bean leaning to one side, peek a big round face peeking in from a corner, mochi a soft, wide oval. Only taken while creating, with agent_name and handle.'
+          ),
+        color: z
+          .enum(LOOK_COLORS)
+          .optional()
+          .describe(
+            'The colour of a new agent’s mascot, when the user picked one: ember is orange (the default), marigold yellow, coral a soft pink-red, paprika red, peach a pale peach, bone cream. Only taken while creating, with agent_name and handle.'
           ),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },

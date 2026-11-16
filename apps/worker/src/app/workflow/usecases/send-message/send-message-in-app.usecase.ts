@@ -31,6 +31,7 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { sanitizeInAppContent } from './sanitize-in-app-content';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
@@ -132,7 +133,7 @@ export class SendMessageInApp extends SendMessageBase {
           }),
           i18nInstance
         );
-        content = compiled.content;
+        content = sanitizeInAppContent(compiled.content);
 
         step.template = withCompiledCta(step.template, compiled);
       }
