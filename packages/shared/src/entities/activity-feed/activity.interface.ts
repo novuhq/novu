@@ -22,7 +22,7 @@ export interface IActivity {
     subscriberId: string;
   };
   payload: Record<string, unknown>;
-  /** Trigger overrides of the run, also present when it has no jobs. */
+  /** Trigger overrides of the run, as stored on its notification; also present when it has no jobs. */
   overrides?: Record<string, unknown>;
   tags: string[];
   createdAt: string;

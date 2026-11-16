@@ -16,14 +16,21 @@ describe('mapFeedItemToDto', () => {
     expect(dto.overrides).to.deep.equal(overrides);
   });
 
-  it('falls back to the first job overrides for runs stored before overrides moved to the notification', () => {
-    const overrides = { email: { to: 'legacy@example.com' } };
+  it('never takes run-level overrides from a job', () => {
     const entity = {
       _id: 'notification-id',
-      jobs: [{ _id: 'job-id', type: StepTypeEnum.EMAIL, executionDetails: [], step: { _id: 'step-id' }, overrides }],
+      jobs: [
+        {
+          _id: 'job-id',
+          type: StepTypeEnum.EMAIL,
+          executionDetails: [],
+          step: { _id: 'step-id' },
+          overrides: { email: { to: 'job@example.com' } },
+        },
+      ],
     } as unknown as NotificationFeedItemEntity;
 
-    expect(mapFeedItemToDto(entity).overrides).to.deep.equal(overrides);
+    expect(mapFeedItemToDto(entity).overrides).to.equal(undefined);
   });
 
   it('maps nested step filter groups in filter children without throwing', () => {

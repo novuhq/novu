@@ -60,10 +60,8 @@ export const ActivityHeader = ({
     : {};
 
   const resentPayload = activity?.payload ? { ...activity.payload, ...resentMetadata } : resentMetadata;
-  // Run-level overrides survive a run whose steps are not readable yet; jobs only carry them for older APIs.
-  const resentOverrides = (activity?.overrides ?? activity?.jobs?.[0]?.overrides) as
-    | Record<string, unknown>
-    | undefined;
+  // The run's overrides as stored on its notification; present even when its steps are not readable yet.
+  const resentOverrides = activity?.overrides;
   const workflowExists = !!activity?.template;
 
   const { mutate: handleResend, isPending } = useMutation({
