@@ -75,7 +75,7 @@ describe('SubscriberTokenSigner', () => {
     it('keeps the derived kid stable across releases', () => {
       const token = signLogin(signerWith({ JWT_SECRET: 'kid-stability-vector' }));
 
-      expect(headerOf(token)?.kid).to.equal(DERIVED_KID_FOR_TEST_SECRET);
+      expect(headerOf(token)?.kid).to.equal(INDEPENDENTLY_COMPUTED_KID);
     });
 
     it('rejects tokens signed by a deployment with another JWT_SECRET', () => {
@@ -207,5 +207,4 @@ describe('SubscriberTokenSigner', () => {
   });
 });
 
-/* Computed outside Node (Python HKDF, OpenSSL point, RFC 7638 thumbprint) from the derivation spec. */
-const DERIVED_KID_FOR_TEST_SECRET = 'cORdWRGUTFGDv1JNHSHzWHZCNBplz73ht913Kj7sLTQ';
+const INDEPENDENTLY_COMPUTED_KID = 'cORdWRGUTFGDv1JNHSHzWHZCNBplz73ht913Kj7sLTQ';

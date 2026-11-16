@@ -17,7 +17,6 @@ interface SubscriberTokenKeys {
 }
 
 const ALGORITHM = 'ES256';
-/* Changing this changes every self-hosted key, which invalidates every live token. */
 const JWT_SECRET_DERIVATION_INFO = 'novu subscriber token signing key v1';
 const P256_ORDER = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n;
 
@@ -43,7 +42,6 @@ function deriveKeyFromSecret(secret: string): KeyObject {
   });
 }
 
-/** Error messages name the entry by position only, so key material never reaches logs. */
 function parseConfiguredKeys(configured: string): KeyObject[] {
   return configured.split(',').map((entry, index) => {
     const position = index + 1;
@@ -62,7 +60,7 @@ function parseConfiguredKeys(configured: string): KeyObject[] {
   });
 }
 
-/** RFC 7638 JWK thumbprint, so the same key always gets the same `kid` on every pod. */
+/** RFC 7638 JWK thumbprint. */
 function thumbprint(publicKey: KeyObject): string {
   const { crv, kty, x, y } = publicKey.export({ format: 'jwk' });
 
@@ -83,11 +81,6 @@ function loadKeys(configured: string | undefined, jwtSecret: string): Subscriber
   };
 }
 
-/**
- * Signs and verifies subscriber tokens with Novu's own ES256 key set, shared by every environment.
- * `SUBSCRIBER_TOKEN_SIGNING_KEYS` lists the keys: the first one signs, every one verifies.
- * When it is unset, a single key is derived from `JWT_SECRET`, so every API pod agrees with no storage.
- */
 @Injectable()
 export class SubscriberTokenSigner {
   private readonly keys = loadKeys(process.env.SUBSCRIBER_TOKEN_SIGNING_KEYS, `${process.env.JWT_SECRET}`);
@@ -102,7 +95,6 @@ export class SubscriberTokenSigner {
     });
   }
 
-  /** Throws `TokenExpiredError` for an expired token and `JsonWebTokenError` for any other rejection. */
   verify(type: SubscriberTokenType, token: string): JwtPayload {
     const header = jwt.decode(token, { complete: true })?.header;
     if (header?.typ !== type) {
