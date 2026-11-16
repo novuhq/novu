@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-const TTL_SECONDS = 35 * 24 * 60 * 60;
+const RETENTION_DAYS = 35;
+const TTL_SECONDS = RETENTION_DAYS * 24 * 60 * 60;
 const MAX_CLIENTS = 100;
 const OTHER_CLIENT = 'other';
-const MAX_DAYS = 35;
+const FIELD_SEPARATOR = '|';
 
 /**
  * The cap check and both writes must be one script so two writers at the
- * 100-client cap cannot both add a new client.
+ * 100-client cap cannot both add a new client. Fallback labels skip the cap so
+ * junk headers cannot push them into `other`.
  */
 const RECORD_SCRIPT = `
 local client = ARGV[1]
@@ -16,8 +18,11 @@ local field = ARGV[2]
 local overflow = ARGV[3]
 local maxClients = tonumber(ARGV[4])
 local ttl = tonumber(ARGV[5])
-if redis.call('SISMEMBER', KEYS[2], client) == 1 or redis.call('SCARD', KEYS[2]) < maxClients then
-  redis.call('SADD', KEYS[2], client)
+local capped = ARGV[6] == '1'
+if not capped or redis.call('SISMEMBER', KEYS[2], client) == 1 or redis.call('SCARD', KEYS[2]) < maxClients then
+  if capped then
+    redis.call('SADD', KEYS[2], client)
+  end
   redis.call('HINCRBY', KEYS[1], field, 1)
 else
   redis.call('HINCRBY', KEYS[1], overflow, 1)
@@ -27,15 +32,24 @@ redis.call('EXPIRE', KEYS[2], ttl)
 return 1
 `;
 
-const SESSION_CLIENT_RE = /^@novu\/([a-z0-9-]+)@(\d{1,4})\.(\d{1,4})\.(\d{1,4})(?:[-+].*)?$/;
+const SESSION_CLIENT_RE = /^@novu\/([a-z0-9-]{1,32})@(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})(?:[-+].*)?$/;
 
 export enum SubscriberSessionAuthMethodEnum {
   HMAC = 'hmac',
   NONE = 'none',
 }
 
-export const UNKNOWN_SESSION_CLIENT = 'unknown';
-export const LEGACY_WIDGET_SESSION_CLIENT = 'legacy-widget';
+export enum SubscriberSessionSourceEnum {
+  INBOX = 'inbox',
+  LEGACY_WIDGET = 'legacy-widget',
+}
+
+const FALLBACK_CLIENT: Record<SubscriberSessionSourceEnum, string> = {
+  [SubscriberSessionSourceEnum.INBOX]: 'unknown',
+  [SubscriberSessionSourceEnum.LEGACY_WIDGET]: 'legacy-widget',
+};
+
+const AUTH_METHODS = new Set<string>(Object.values(SubscriberSessionAuthMethodEnum));
 
 export interface SubscriberSessionAuthCount {
   authMethod: SubscriberSessionAuthMethodEnum;
@@ -43,17 +57,11 @@ export interface SubscriberSessionAuthCount {
   count: number;
 }
 
-export function parseSessionClient(clientVersionHeader?: string): string | undefined {
-  if (!clientVersionHeader) {
-    return undefined;
-  }
-
-  const match = SESSION_CLIENT_RE.exec(clientVersionHeader);
-  if (!match) {
-    return undefined;
-  }
-
-  return `@novu/${match[1]}@${match[2]}.${match[3]}.${match[4]}`;
+export interface RecordSubscriberSessionParams {
+  environmentId: string;
+  hmacValid: boolean;
+  clientVersion?: string;
+  source: SubscriberSessionSourceEnum;
 }
 
 @Injectable()
@@ -65,62 +73,98 @@ export class SubscriberSessionAuthStatsService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async record(params: {
-    environmentId: string;
-    authMethod: SubscriberSessionAuthMethodEnum;
-    client: string;
-  }): Promise<void> {
+  async record(params: RecordSubscriberSessionParams): Promise<void> {
     if (!this.cacheService.cacheEnabled()) {
       return;
     }
 
+    const authMethod = params.hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE;
+    const parsedClient = parseSessionClient(params.clientVersion);
+    const client = parsedClient ?? FALLBACK_CLIENT[params.source];
+
     try {
       const now = new Date();
-      const field = `${params.authMethod}|${params.client}`;
-      const overflow = `${params.authMethod}|${OTHER_CLIENT}`;
 
       await this.cacheService.eval(
         RECORD_SCRIPT,
         [dayKey(params.environmentId, now), clientsKey(params.environmentId, now)],
-        [params.client, field, overflow, MAX_CLIENTS, TTL_SECONDS]
+        [
+          client,
+          encodeField(authMethod, client),
+          encodeField(authMethod, OTHER_CLIENT),
+          MAX_CLIENTS,
+          TTL_SECONDS,
+          parsedClient ? '1' : '0',
+        ]
       );
     } catch (err) {
       this.logger.warn(
-        { err, environmentId: params.environmentId, authMethod: params.authMethod, client: params.client },
+        { err, environmentId: params.environmentId, authMethod, client },
         'Failed to record subscriber session auth stats'
       );
     }
   }
 
-  async countLastDays(environmentId: string, days: number): Promise<SubscriberSessionAuthCount[]> {
+  /** `null` means the counts are unavailable, which callers must not read as zero sessions. */
+  async countLastDays(environmentId: string, days: number): Promise<SubscriberSessionAuthCount[] | null> {
     const client = this.cacheService.client;
     if (!client || !this.cacheService.cacheEnabled()) {
-      return [];
+      return null;
     }
 
-    const window = Math.min(MAX_DAYS, Math.max(1, Math.trunc(days) || 1));
+    const window = Math.min(RETENTION_DAYS, Math.max(1, Math.trunc(days) || 1));
     const now = new Date();
     const keys = Array.from({ length: window }, (_, index) => dayKey(environmentId, utcDayOffset(now, index)));
 
-    const hashes = await Promise.all(keys.map((key) => client.hgetall(key)));
-    const totals = new Map<string, number>();
+    let hashes: Record<string, string>[];
+    try {
+      hashes = await Promise.all(keys.map((key) => client.hgetall(key)));
+    } catch (err) {
+      this.logger.warn({ err, environmentId }, 'Failed to read subscriber session auth stats');
 
+      return null;
+    }
+
+    const totals = new Map<string, number>();
     for (const hash of hashes) {
       for (const [field, count] of Object.entries(hash)) {
         totals.set(field, (totals.get(field) ?? 0) + Number(count));
       }
     }
 
-    return [...totals.entries()].map(([field, count]) => {
-      const separator = field.indexOf('|');
+    return [...totals.entries()].flatMap(([field, count]) => {
+      const decoded = decodeField(field);
 
-      return {
-        authMethod: field.slice(0, separator) as SubscriberSessionAuthMethodEnum,
-        client: field.slice(separator + 1),
-        count,
-      };
+      return decoded ? [{ ...decoded, count }] : [];
     });
   }
+}
+
+function parseSessionClient(clientVersionHeader?: string): string | undefined {
+  const match = clientVersionHeader ? SESSION_CLIENT_RE.exec(clientVersionHeader) : null;
+  if (!match) {
+    return undefined;
+  }
+
+  return `@novu/${match[1]}@${match[2]}.${match[3]}.${match[4]}`;
+}
+
+function encodeField(authMethod: SubscriberSessionAuthMethodEnum, client: string): string {
+  return `${authMethod}${FIELD_SEPARATOR}${client}`;
+}
+
+function decodeField(field: string): Omit<SubscriberSessionAuthCount, 'count'> | undefined {
+  const separator = field.indexOf(FIELD_SEPARATOR);
+  const authMethod = field.slice(0, separator);
+  if (separator < 0 || !isAuthMethod(authMethod)) {
+    return undefined;
+  }
+
+  return { authMethod, client: field.slice(separator + 1) };
+}
+
+function isAuthMethod(value: string): value is SubscriberSessionAuthMethodEnum {
+  return AUTH_METHODS.has(value);
 }
 
 function dayKey(environmentId: string, now: Date): string {

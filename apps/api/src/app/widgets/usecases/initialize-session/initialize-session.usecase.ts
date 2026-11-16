@@ -13,10 +13,8 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import {
-  LEGACY_WIDGET_SESSION_CLIENT,
-  parseSessionClient,
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
@@ -90,8 +88,9 @@ export class InitializeSession {
 
     void this.subscriberSessionAuthStatsService.record({
       environmentId: environment._id,
-      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
-      client: parseSessionClient(command.clientVersion) ?? LEGACY_WIDGET_SESSION_CLIENT,
+      hmacValid,
+      clientVersion: command.clientVersion,
+      source: SubscriberSessionSourceEnum.LEGACY_WIDGET,
     });
 
     return {

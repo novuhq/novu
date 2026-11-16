@@ -6,7 +6,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../auth/services/auth.service';
 import {
-  LEGACY_WIDGET_SESSION_CLIENT,
   SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
 } from '../../shared/services/subscriber-session-auth-stats.service';
@@ -91,7 +90,6 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     await session.initialize({ noWidgetSession: true });
     await setHmacConfig(session);
 
-    const stats = testServer.getService(SubscriberSessionAuthStatsService);
     const secretKey = session.environment.apiKeys[0].key;
     const hmacHash = createHash(secretKey, subscriberId);
 
@@ -101,15 +99,8 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     const invalid = await initWidgetSession(subscriberId, session, 'invalid-hash');
     expect(invalid.body.message).to.contain('Please provide a valid HMAC hash');
 
-    const counts = await stats.countLastDays(session.environment._id, 1);
-
-    expect(counts).to.have.lengthOf(1);
-    expect(counts).to.have.deep.members([
-      {
-        authMethod: SubscriberSessionAuthMethodEnum.HMAC,
-        client: LEGACY_WIDGET_SESSION_CLIENT,
-        count: 1,
-      },
+    expect(await widgetSessionCounts(session.environment._id)).to.deep.equal([
+      { authMethod: SubscriberSessionAuthMethodEnum.HMAC, client: 'legacy-widget', count: 1 },
     ]);
   });
 
@@ -118,7 +109,6 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     await session.initialize({ noWidgetSession: true });
     await setHmacConfig(session);
 
-    const stats = testServer.getService(SubscriberSessionAuthStatsService);
     const hmacHash = createHash(session.environment.apiKeys[0].key, subscriberId);
     const tokenStub = sinon
       .stub(testServer.getService(AuthService), 'getSubscriberWidgetToken')
@@ -131,7 +121,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
       tokenStub.restore();
     }
 
-    expect(await stats.countLastDays(session.environment._id, 1)).to.deep.equal([]);
+    expect(await widgetSessionCounts(session.environment._id)).to.deep.equal([]);
   });
 
   it('should fail the test with invalid secret key', async () => {
@@ -162,6 +152,15 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
    * });
    */
 });
+
+async function widgetSessionCounts(environmentId: string) {
+  const counts = await testServer.getService(SubscriberSessionAuthStatsService).countLastDays(environmentId, 2);
+  if (!counts) {
+    throw new Error('Subscriber session stats are unavailable');
+  }
+
+  return counts;
+}
 
 async function initWidgetSession(subscriberIdentifier: string, session, hmacHash?: string | null) {
   return await session.testAgent.post('/v1/widgets/session/initialize').send({

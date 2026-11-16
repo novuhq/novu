@@ -67,10 +67,8 @@ import { GetOrganizationSettings } from '../../../organization/usecases/get-orga
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import {
-  parseSessionClient,
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
-  UNKNOWN_SESSION_CLIENT,
+  SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
@@ -296,11 +294,16 @@ export class Session {
       );
     }
 
-    void this.subscriberSessionAuthStatsService.record({
-      environmentId: environment._id,
-      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
-      client: parseSessionClient(command.clientVersion) ?? UNKNOWN_SESSION_CLIENT,
-    });
+    // An empty FRONT_BASE_URL builds a regex that matches every origin, which would drop all customer sessions.
+    const isDashboardSession = Boolean(process.env.FRONT_BASE_URL) && isOriginFromNovu;
+    if (!isDashboardSession) {
+      void this.subscriberSessionAuthStatsService.record({
+        environmentId: environment._id,
+        hmacValid,
+        clientVersion: command.clientVersion,
+        source: SubscriberSessionSourceEnum.INBOX,
+      });
+    }
 
     return {
       applicationIdentifier: environment.identifier,
