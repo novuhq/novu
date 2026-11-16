@@ -49,6 +49,7 @@ describe('WhatsAppBindInbound', () => {
     const outboundGateway = { replyOnThread: sinon.stub().resolves() };
     const logger = { setContext: sinon.stub(), warn: sinon.stub(), error: sinon.stub() };
     const featureFlags = { getFlag: sinon.stub().resolves(enabled) };
+    const heldRelease = { release: sinon.stub().resolves() };
     const service = new WhatsAppBindInbound(
       codes as never,
       bindWhatsAppNumber as never,
@@ -57,7 +58,8 @@ describe('WhatsAppBindInbound', () => {
       outboundGateway as never,
       logger as never,
       operatorWindow as never,
-      featureFlags as never
+      featureFlags as never,
+      heldRelease as never
     );
 
     return {
@@ -68,6 +70,7 @@ describe('WhatsAppBindInbound', () => {
       contactHandles,
       outboundGateway,
       channelEndpointRepository,
+      heldRelease,
     };
   }
 
@@ -104,6 +107,42 @@ describe('WhatsAppBindInbound', () => {
     expect(await send(service, 'Connect me to ada: BCDF-GHJK')).to.equal(false);
     expect(codes.consume.called).to.equal(false);
     expect(outboundGateway.replyOnThread.called).to.equal(false);
+  });
+
+  it('sends what was held for a connected contact who writes only a code, as nothing else would', async () => {
+    const proved = {
+      type: 'phone',
+      providerId: 'whatsapp-business',
+      subscriberId: 'ada',
+      endpoint: { phoneNumber: '+15550100199', provedAt: '2026-11-01T10:00:00.000Z' },
+    };
+    const { service, heldRelease } = setup({ consumed: { status: 'missing' }, bound: proved });
+
+    expect(await send(service, 'BCDF-GHJK')).to.equal(true);
+
+    expect(heldRelease.release.calledOnce).to.equal(true);
+    expect(heldRelease.release.firstCall.args[0]).to.deep.include({
+      agentId: 'agent1',
+      subscriberId: 'ada',
+      platformUserId: '15550100199',
+    });
+  });
+
+  it('leaves the release to the message that goes on, and releases nothing for a number nobody proved', async () => {
+    const withMore = setup();
+    const context = { skipped: [message('first question')], totalSinceLastHandler: 2 };
+    await withMore.service.tryConsume(
+      'agent1',
+      CONFIG as never,
+      {} as never,
+      message('BCDF-GHJK') as never,
+      context as never
+    );
+    const stranger = setup({ consumed: { status: 'missing' } });
+    await send(stranger.service, 'BCDF-GHJK');
+
+    expect(withMore.heldRelease.release.called).to.equal(false);
+    expect(stranger.heldRelease.release.called).to.equal(false);
   });
 
   it('lets an ordinary message through untouched', async () => {

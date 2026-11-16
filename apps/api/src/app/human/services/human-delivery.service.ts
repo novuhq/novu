@@ -350,17 +350,20 @@ export class HumanDeliveryService {
     return endpoints.some((endpoint) => platformUserIdOf(endpoint) === waId);
   }
 
-  /** The approved first-message template on the WhatsApp integration a conversation is on, if there is one. */
+  /**
+   * The approved first-message template on the WhatsApp integration a conversation is on, if there is one. Only
+   * while that integration is still linked to the agent: a disconnected channel must not send a template that Meta
+   * charges for and whose reply could never release what it stood in for.
+   */
   async approvedFirstMessageOn(params: {
     environmentId: string;
     organizationId: string;
+    agentId: string;
     integrationId: string;
   }): Promise<{ templateName: string; body: string } | undefined> {
-    const integration = await this.integrationRepository.findOne({
-      _id: params.integrationId,
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-    });
+    const integration = (await this.findLinkedIntegrations(params)).find(
+      (candidate) => String(candidate._id) === String(params.integrationId)
+    );
 
     return integration ? this.approvedFirstMessage([integration], integration.identifier) : undefined;
   }
@@ -1069,6 +1072,12 @@ export class HumanDeliveryService {
     via: HumanChannelViaEnum,
     integrationIdentifier: string
   ): ReachableHumanTarget | null {
+    // Only a number proved with a code reaches someone on WhatsApp. The channel-endpoints API takes any endpoint
+    // type on any integration, so a chat or user id written onto a WhatsApp one is never taken for a number.
+    if (via === HumanChannelViaEnum.WHATSAPP && !provedWhatsAppNumberOf(endpoint)) {
+      return null;
+    }
+
     const platformUserId = platformUserIdOf(endpoint);
 
     if (!platformUserId) {

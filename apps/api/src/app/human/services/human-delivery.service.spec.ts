@@ -1022,6 +1022,44 @@ describe('HumanDeliveryService on WhatsApp', () => {
     });
   });
 
+  it('never takes another kind of endpoint written onto the WhatsApp integration for a number', async () => {
+    const { service, channelEndpointRepository } = setup(true, [whatsApp]);
+    Object.assign(channelEndpointRepository, {
+      find: async () => [
+        {
+          type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+          endpoint: { chatId: '15559999999' },
+          createdAt: new Date().toISOString(),
+        },
+        {
+          type: ENDPOINT_TYPES.SLACK_USER,
+          endpoint: { userId: '15558888888' },
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+
+    const result = await service
+      .resolveChannel({ ...params, via: HumanChannelViaEnum.WHATSAPP })
+      .catch((err: unknown) => err);
+
+    expect(result).to.be.instanceOf(Error);
+  });
+
+  it('offers the first message for a thread only while its WhatsApp is still linked to the agent', async () => {
+    const linked = setup(true, [whatsApp], { open: false }, 'agentinbox_first_message');
+    const unlinked = setup(true, [], { open: false }, 'agentinbox_first_message');
+    const on = {
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentId: params.agentId,
+      integrationId: String((whatsApp as { _id: string })._id),
+    };
+
+    expect(await linked.service.approvedFirstMessageOn(on)).to.include({ templateName: 'agentinbox_first_message' });
+    expect(await unlinked.service.approvedFirstMessageOn(on)).to.equal(undefined);
+  });
+
   it('reaches the proved number behind an older one without proof, connected when it was proved', async () => {
     const { service, channelEndpointRepository } = setup(true);
     Object.assign(channelEndpointRepository, {

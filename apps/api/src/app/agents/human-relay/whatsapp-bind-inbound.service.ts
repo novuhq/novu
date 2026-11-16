@@ -7,7 +7,7 @@ import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.serv
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../shared/errors/capture-agent-sentry';
-import { toCanonicalE164Phone } from '../shared/util/phone-normalization';
+import { normalizePhoneForMeta, toCanonicalE164Phone } from '../shared/util/phone-normalization';
 import { BindWhatsAppNumber } from './bind-whatsapp-number.service';
 import { ContactHandleService } from './contact-handle.service';
 import {
@@ -16,6 +16,7 @@ import {
   WhatsAppBindCodeService,
   WhatsAppOperatorWindowService,
 } from './whatsapp-bind-code.service';
+import { WhatsAppHeldRelease } from './whatsapp-held-release.service';
 import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_LAST_CODE_AT_FIELD } from './whatsapp-number-proof';
 
 export const WHATSAPP_BIND_SUCCESS_REPLY = "You're connected. This agent will reach you here on WhatsApp.";
@@ -43,7 +44,8 @@ export class WhatsAppBindInbound {
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger,
     private readonly operatorWindow: WhatsAppOperatorWindowService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly heldRelease: WhatsAppHeldRelease
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -92,7 +94,32 @@ export class WhatsAppBindInbound {
       messageContext.skipped = ordinary;
     }
 
+    // With nothing else to go on, nothing else releases what waited for them, and a code opens the window too.
+    if (!latest) {
+      await this.releaseHeld(agentId, config, withCode);
+    }
+
     return latest;
+  }
+
+  /** Sends what was held for whoever this number is connected to, as an ordinary message from them would. */
+  private async releaseHeld(agentId: string, config: ResolvedAgentConfig, message: Message): Promise<void> {
+    try {
+      const phoneNumber = toCanonicalE164Phone(message.author?.userId ?? '');
+      const endpoint = phoneNumber ? await this.boundEndpoint(config, phoneNumber) : null;
+      if (!phoneNumber || !endpoint?.subscriberId) {
+        return;
+      }
+
+      await this.heldRelease.release({
+        agentId,
+        config,
+        subscriberId: endpoint.subscriberId,
+        platformUserId: normalizePhoneForMeta(phoneNumber),
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Could not send what was held on WhatsApp after a code`);
+    }
   }
 
   /**
@@ -199,6 +226,11 @@ export class WhatsAppBindInbound {
   }
 
   private async isBound(config: ResolvedAgentConfig, phoneNumber: string): Promise<boolean> {
+    return Boolean(await this.boundEndpoint(config, phoneNumber));
+  }
+
+  /** The endpoint that proved this number on the integration, or null when nobody did. */
+  private async boundEndpoint(config: ResolvedAgentConfig, phoneNumber: string) {
     const existing = await this.channelEndpointRepository.findByPlatformIdentity({
       _environmentId: config.environmentId,
       _organizationId: config.organizationId,
@@ -208,7 +240,7 @@ export class WhatsAppBindInbound {
       endpointValue: phoneNumber,
     });
 
-    return Boolean(provedWhatsAppNumberOf(existing));
+    return provedWhatsAppNumberOf(existing) ? existing : null;
   }
 
   /** The answer is a reply to their own message, so it is always inside WhatsApp's 24-hour window. */

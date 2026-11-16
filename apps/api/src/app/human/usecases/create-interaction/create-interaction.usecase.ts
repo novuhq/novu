@@ -880,6 +880,7 @@ export class CreateInteraction {
     ) {
       const approved = await this.deliveryService.approvedFirstMessageOn({
         ...scope,
+        agentId: agent._id,
         integrationId: String(channel._integrationId),
       });
       if (approved) {
