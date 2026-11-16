@@ -61,7 +61,7 @@ export class WhatsAppFirstMessageService {
   /**
    * The stored state, read from Meta again while a submission is under review and the last read is over a minute
    * old. Once the review is over, the approved template in use is read again every quarter of an hour, as Meta can
-   * stop it afterwards. A failed read keeps what was stored.
+   * stop it afterwards, and so is one Meta paused, as it lifts a pause by itself. A failed read keeps what was stored.
    */
   async read(integration: IntegrationEntity): Promise<FirstMessageState | undefined> {
     const credentials = decryptCredentials(integration.credentials ?? {});
@@ -70,12 +70,15 @@ export class WhatsAppFirstMessageService {
       return stored;
     }
 
-    if (!UNDER_REVIEW.has(stored.status)) {
+    const underReview = UNDER_REVIEW.has(stored.status);
+    if (!underReview && stored.status !== 'PAUSED') {
       return this.recheckApproved(integration, credentials, stored);
     }
 
+    // A pause is read again like a review, only less often: approved again, the template is used again.
     const checkedAt = Date.parse(credentials.whatsappTemplateCheckedAt ?? '');
-    if (Number.isFinite(checkedAt) && Date.now() - checkedAt < RECHECK_AFTER_MS) {
+    const recheckAfter = underReview ? RECHECK_AFTER_MS : RECHECK_APPROVED_AFTER_MS;
+    if (Number.isFinite(checkedAt) && Date.now() - checkedAt < recheckAfter) {
       return stored;
     }
 
@@ -131,7 +134,9 @@ export class WhatsAppFirstMessageService {
   }
 
   /**
-   * Whether Meta still approves the template sends use. One it has paused or disabled stops being used: sends fall back to refusing with the closed window, and the dashboard shows where it stands.
+   * Whether Meta still approves the template sends use, when it is also the latest submission: its status then says
+   * where it stands, and a pause is read again until Meta lifts it. An older approval kept in use beside a newer
+   * edit is left alone, as nothing here could bring it back. One Meta has paused or disabled stops being used: sends fall back to refusing with the closed window, and the dashboard shows where it stands.
    */
   private async recheckApproved(
     integration: IntegrationEntity,
@@ -143,6 +148,7 @@ export class WhatsAppFirstMessageService {
     const { apiToken, businessAccountId } = credentials;
     if (
       !approved ||
+      credentials.whatsappTemplateName !== approved.name ||
       !apiToken ||
       !businessAccountId ||
       (Number.isFinite(checkedAt) && Date.now() - checkedAt < RECHECK_APPROVED_AFTER_MS)
@@ -166,27 +172,28 @@ export class WhatsAppFirstMessageService {
         return stored;
       }
 
-      const isLatest = credentials.whatsappTemplateName === approved.name;
       await this.integrationRepository.update(
         {
           _id: integration._id,
           _environmentId: integration._environmentId,
           _organizationId: integration._organizationId,
-          // Only while it is still the one in use: a newer approval saved meanwhile stays.
+          // Only while it is still both the latest submission and the one in use: an edit sent for review
+          // meanwhile keeps its own status, and the approval it still sends with.
+          'credentials.whatsappTemplateName': approved.name,
           'credentials.whatsappTemplateApprovedName': approved.name,
         },
         {
           $set: {
             'credentials.whatsappTemplateApprovedName': '',
             'credentials.whatsappTemplateApprovedBody': '',
-            ...(isLatest ? { 'credentials.whatsappTemplateStatus': status } : {}),
+            'credentials.whatsappTemplateStatus': status,
           },
         }
       );
 
       const { approved: _stopped, ...rest } = stored;
 
-      return isLatest ? { ...rest, status } : rest;
+      return { ...rest, status };
     } catch (error) {
       this.logger.warn({ err: error, integrationId: integration._id }, 'Could not read the WhatsApp template status');
 

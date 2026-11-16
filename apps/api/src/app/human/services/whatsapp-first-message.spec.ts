@@ -321,6 +321,8 @@ describe('WhatsApp first message', () => {
         const [where, change] = integrationRepository.update.lastCall.args;
         expect(where).to.include({ _environmentId: 'env1', _organizationId: 'org1' });
         expect(where['credentials.whatsappTemplateApprovedName']).to.equal('agentinbox_first_message');
+        // Guarded by the latest submission too, so an edit sent for review meanwhile never takes this status.
+        expect(where['credentials.whatsappTemplateName']).to.equal('agentinbox_first_message');
         expect(change.$set).to.deep.equal({
           'credentials.whatsappTemplateApprovedName': '',
           'credentials.whatsappTemplateApprovedBody': '',
@@ -336,6 +338,57 @@ describe('WhatsApp first message', () => {
         const silent = setup(approved);
         request.resolves({ statusCode: 200, body: { data: [] } });
         expect((await silent.service.read(silent.integration))?.approved?.name).to.equal('agentinbox_first_message');
+      });
+
+      it('is used again once Meta lifts the pause', async () => {
+        const { service, integration, integrationRepository } = setup({
+          whatsappTemplateName: 'agentinbox_first_message',
+          whatsappTemplateStatus: 'PAUSED',
+          whatsappTemplateBody: DEFAULT_FIRST_MESSAGE,
+          whatsappTemplateCheckedAt: new Date(Date.now() - 20 * 60_000).toISOString(),
+        });
+        request.resolves(metaSays('APPROVED'));
+
+        expect(await service.read(integration)).to.deep.equal({
+          status: 'APPROVED',
+          body: DEFAULT_FIRST_MESSAGE,
+          approved: { name: 'agentinbox_first_message', body: DEFAULT_FIRST_MESSAGE },
+        });
+        expect(integrationRepository.update.lastCall.args[1].$set).to.include({
+          'credentials.whatsappTemplateStatus': 'APPROVED',
+          'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
+        });
+      });
+
+      it('reads a pause again at most once a quarter of an hour, and never a disabled one', async () => {
+        const paused = setup({
+          whatsappTemplateName: 'agentinbox_first_message',
+          whatsappTemplateStatus: 'PAUSED',
+          whatsappTemplateBody: DEFAULT_FIRST_MESSAGE,
+          whatsappTemplateCheckedAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+        });
+        const disabled = setup({
+          whatsappTemplateName: 'agentinbox_first_message',
+          whatsappTemplateStatus: 'DISABLED',
+          whatsappTemplateBody: DEFAULT_FIRST_MESSAGE,
+        });
+
+        expect((await paused.service.read(paused.integration))?.status).to.equal('PAUSED');
+        expect((await disabled.service.read(disabled.integration))?.status).to.equal('DISABLED');
+        expect(request.called).to.equal(false);
+      });
+
+      it('leaves an older approval alone while a newer edit is the latest submission', async () => {
+        const { service, integration, integrationRepository } = setup({
+          ...approved,
+          whatsappTemplateName: 'agentinbox_first_message_2',
+          whatsappTemplateStatus: 'REJECTED',
+          whatsappTemplateBody: 'New words from {{agent_name}} here.',
+        });
+
+        expect((await service.read(integration))?.approved?.name).to.equal('agentinbox_first_message');
+        expect(request.called).to.equal(false);
+        expect(integrationRepository.update.called).to.equal(false);
       });
 
       it('asks Meta at most once a quarter of an hour', async () => {
