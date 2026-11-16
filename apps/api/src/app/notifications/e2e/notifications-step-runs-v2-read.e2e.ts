@@ -20,6 +20,8 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { ActivityNotificationJobResponseDto, ActivityNotificationResponseDto } from '../dtos/activities-response.dto';
 
 const READ_FLAG = 'IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED';
+/** Cloud reads execution details from traces only; the flag-off read must do the same to compare them. */
+const PRODUCTION_READ_FLAGS = ['IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED', 'IS_TRACE_LOGS_READ_ENABLED'] as const;
 const IN_FLIGHT_STATUSES = [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING, JobStatusEnum.DELAYED];
 
 /*
@@ -32,11 +34,26 @@ describe('Activity feed read without jobs - GET /v1/notifications #novu-v2', () 
   let subscriber: SubscriberEntity;
   let novuClient: Novu;
   let originalReadFlag: string | undefined;
+  const originalProductionReadFlags: Record<string, string | undefined> = {};
   const jobRepository = new JobRepository();
   const notificationRepository = new NotificationRepository();
 
   before(() => {
     originalReadFlag = process.env[READ_FLAG];
+    for (const flag of PRODUCTION_READ_FLAGS) {
+      originalProductionReadFlags[flag] = process.env[flag];
+      process.env[flag] = 'true';
+    }
+  });
+
+  after(() => {
+    for (const flag of PRODUCTION_READ_FLAGS) {
+      if (originalProductionReadFlags[flag] === undefined) {
+        delete process.env[flag];
+      } else {
+        process.env[flag] = originalProductionReadFlags[flag];
+      }
+    }
   });
 
   afterEach(() => {
@@ -118,75 +135,64 @@ describe('Activity feed read without jobs - GET /v1/notifications #novu-v2', () 
 
   const allTerminal = (jobs: JobEntity[]) => jobs.every((job) => !IN_FLIGHT_STATUSES.includes(job.status));
 
-  function statusesById(jobs: ActivityNotificationJobResponseDto[] = []): Record<string, string> {
-    return Object.fromEntries(
-      jobs.map((job) => [job._id, job.status]).sort(([left], [right]) => left.localeCompare(right))
-    );
-  }
-
   function withoutJobs(notification: ActivityNotificationResponseDto) {
     const { jobs: _jobs, ...rest } = notification;
 
     return rest;
   }
 
-  function withoutEvents(digest: ActivityNotificationJobResponseDto['digest']) {
-    if (!digest) {
-      return digest;
-    }
-
-    const { events: _events, ...rest } = digest;
-
-    return rest;
-  }
-
   /** Everything the jobs collection returned that step_runs_v2, the workflow and traces must reproduce. */
-  function expectJobsToMatch(
-    v1Jobs: ActivityNotificationJobResponseDto[],
-    v2Jobs: ActivityNotificationJobResponseDto[]
-  ) {
-    expect(v2Jobs.map((job) => job._id)).to.deep.equal(v1Jobs.map((job) => job._id));
+  /**
+   * Everything the flag-off read returns for a job, except two documented differences:
+   * - `step` is reduced to the identity step_runs_v2 records (id, name, type), so only that part is compared;
+   * - `payload` is never set: Cloud runs payload dedup, so jobs carry none, but the test worker runs without it.
+   */
+  function comparableJob(job: ActivityNotificationJobResponseDto) {
+    const { step, payload: _payload, ...rest } = job;
 
-    v1Jobs.forEach((v1Job, index) => {
-      const v2Job = v2Jobs[index];
-
-      const pickCompared = (job: ActivityNotificationJobResponseDto) => ({
-        type: job.type,
-        status: job.status,
-        providerId: job.providerId,
-        scheduleExtensionsCount: job.scheduleExtensionsCount,
-      });
-      expect(pickCompared(v2Job)).to.deep.equal(pickCompared(v1Job));
-      expect(v2Job.overrides).to.deep.equal(v1Job.overrides);
-      expect(withoutEvents(v2Job.digest)).to.deep.equal(withoutEvents(v1Job.digest));
-      expect(v2Job.digest?.events?.length ?? 0).to.equal(v1Job.digest?.events?.length ?? 0);
-      expect(v2Job.step._id).to.equal(v1Job.step._id);
-      expect(v2Job.step._templateId).to.equal(v1Job.step._templateId);
-      expect(v2Job.step.filters).to.deep.equal(v1Job.step.filters);
-      if (v1Job.payload) {
-        expect(v2Job.payload).to.deep.equal(v1Job.payload);
-      }
-    });
+    return { ...rest, step: { _id: step._id, name: step.name, active: step.active, type: step.template?.type } };
   }
 
-  /** Polls the v2 read until its step statuses catch up with the jobs, then compares both responses in full. */
+  function comparableJobs(jobs: ActivityNotificationJobResponseDto[] = []) {
+    return jobs.map(comparableJob);
+  }
+
+  function expectJobsToMatch(
+    v1Jobs: ActivityNotificationJobResponseDto[] = [],
+    v2Jobs: ActivityNotificationJobResponseDto[] = []
+  ) {
+    expect(comparableJobs(v2Jobs)).to.deep.equal(comparableJobs(v1Jobs));
+    for (const v2Job of v2Jobs) {
+      expect(v2Job.payload).to.equal(undefined);
+    }
+  }
+
+  /** Polls until the v2 read catches up with jobs and traces written asynchronously, then compares both in full. */
   async function expectParity(transactionIds: string[]) {
     const notifications = await notificationRepository.find({
       _environmentId: session.environment._id,
       transactionId: { $in: transactionIds },
     });
-    const deadline = Date.now() + 10000;
+    const query = { transactionId: transactionIds, limit: 50 };
+    const deadline = Date.now() + 15000;
     let v1Details: ActivityNotificationResponseDto[] = [];
     let v2Details: ActivityNotificationResponseDto[] = [];
+    let v1List = await listNotifications(query, false);
+    let v2List = await listNotifications(query, true);
 
     do {
       v1Details = await Promise.all(notifications.map((notification) => getNotification(notification._id, false)));
       v2Details = await Promise.all(notifications.map((notification) => getNotification(notification._id, true)));
+      v1List = await listNotifications(query, false);
+      v2List = await listNotifications(query, true);
 
-      const isMatching = v1Details.every(
-        (v1Detail, index) =>
-          JSON.stringify(statusesById(v1Detail.jobs)) === JSON.stringify(statusesById(v2Details[index].jobs))
-      );
+      const isMatching =
+        v1Details.every(
+          (v1Detail, index) =>
+            JSON.stringify(comparableJobs(v1Detail.jobs)) === JSON.stringify(comparableJobs(v2Details[index].jobs))
+        ) &&
+        JSON.stringify(v1List.data.map((item) => comparableJobs(item.jobs))) ===
+          JSON.stringify(v2List.data.map((item) => comparableJobs(item.jobs)));
       if (isMatching) {
         break;
       }
@@ -196,15 +202,13 @@ describe('Activity feed read without jobs - GET /v1/notifications #novu-v2', () 
 
     v1Details.forEach((v1Detail, index) => {
       expect(withoutJobs(v2Details[index])).to.deep.equal(withoutJobs(v1Detail));
-      expectJobsToMatch(v1Detail.jobs ?? [], v2Details[index].jobs ?? []);
+      expectJobsToMatch(v1Detail.jobs, v2Details[index].jobs);
     });
 
-    const query = { transactionId: transactionIds, limit: 50 };
-    const [v1List, v2List] = [await listNotifications(query, false), await listNotifications(query, true)];
     expect(v2List.data.map(withoutJobs)).to.deep.equal(v1List.data.map(withoutJobs));
     expect({ ...v2List, data: undefined }).to.deep.equal({ ...v1List, data: undefined });
     v1List.data.forEach((v1Item, index) => {
-      expectJobsToMatch(v1Item.jobs ?? [], v2List.data[index].jobs ?? []);
+      expectJobsToMatch(v1Item.jobs, v2List.data[index].jobs);
     });
 
     return { v1Details, v2Details };
@@ -228,7 +232,7 @@ describe('Activity feed read without jobs - GET /v1/notifications #novu-v2', () 
     const { v2Details } = await expectParity([transactionId]);
     const v2Jobs = v2Details[0].jobs ?? [];
     expect(v2Jobs.map((job) => job.type)).to.deep.equal([StepTypeEnum.IN_APP, StepTypeEnum.EMAIL]);
-    expect(v2Jobs.every((job) => job.payload?.foo === 'bar')).to.equal(true);
+    expect(v2Details[0].payload).to.deep.include({ foo: 'bar' });
     expect(v2Jobs.every((job) => job.step.template?.type === job.type)).to.equal(true);
 
     const deadline = Date.now() + 10000;

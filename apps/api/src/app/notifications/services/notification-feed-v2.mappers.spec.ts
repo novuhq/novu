@@ -1,10 +1,14 @@
 import { StepRunV2ReadRow } from '@novu/application-generic';
-import { NotificationStepEntity } from '@novu/dal';
-import { DigestTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  DigestTypeEnum,
+  DigestUnitEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import {
   groupStepRunsByWorkflowRunId,
-  indexWorkflowSteps,
   mapStepRunToJob,
   parseDigestEvents,
   parseDigestMetadata,
@@ -36,8 +40,6 @@ function buildStepRow(overrides: Partial<StepRunV2ReadRow> = {}): StepRunV2ReadR
 
 function buildContext(overrides: Partial<StepRunJobContext> = {}): StepRunJobContext {
   return {
-    notification: { payload: { foo: 'bar' } },
-    workflowStepsById: new Map(),
     tracesByStepRunId: new Map(),
     digestEventsByStepRunId: new Map(),
     ...overrides,
@@ -46,61 +48,29 @@ function buildContext(overrides: Partial<StepRunJobContext> = {}): StepRunJobCon
 
 describe('notification feed v2 mappers', () => {
   describe('mapStepRunToJob', () => {
-    it('maps the step run onto the job shape with the workflow step and the notification payload', () => {
-      const workflowStep: NotificationStepEntity = {
-        _id: 'step-1',
-        _templateId: 'message-template-1',
-        name: 'Renamed since',
-        stepId: 'renamed-since',
-        active: true,
-        filters: [],
-      };
-
-      const job = mapStepRunToJob(
-        buildStepRow({ schedule_extensions_count: 2 }),
-        buildContext({ workflowStepsById: new Map([['step-1', workflowStep]]) })
-      );
+    it('maps the step run onto the job shape with the recorded step identity and no payload', () => {
+      const job = mapStepRunToJob(buildStepRow({ schedule_extensions_count: 2 }), buildContext());
 
       expect(job).to.deep.equal({
         _id: 'job-1',
         type: 'in_app',
         status: 'completed',
         providerId: 'novu',
-        // The name and identifier the step ran with, recorded on the row, win over later workflow edits.
-        step: { ...workflowStep, name: 'In-App Step', stepId: 'in-app-step' },
-        payload: { foo: 'bar' },
+        step: {
+          _id: 'step-1',
+          _templateId: '',
+          stepId: 'in-app-step',
+          name: 'In-App Step',
+          active: true,
+          filters: [],
+          template: { type: StepTypeEnum.IN_APP },
+        },
+        payload: undefined,
         digest: undefined,
         scheduleExtensionsCount: 2,
         createdAt: '2026-11-05T10:00:00.000Z',
         updatedAt: '2026-11-05T10:00:01.000Z',
         executionDetails: [],
-      });
-    });
-
-    it('keeps the workflow step name when the row recorded none', () => {
-      const workflowStep: NotificationStepEntity = {
-        _id: 'step-1',
-        _templateId: 'message-template-1',
-        name: 'Current',
-      };
-
-      const job = mapStepRunToJob(
-        buildStepRow({ step_name: '', step_identifier: '' }),
-        buildContext({ workflowStepsById: new Map([['step-1', workflowStep]]) })
-      );
-
-      expect(job.step).to.deep.equal(workflowStep);
-    });
-
-    it('falls back to the step identity recorded on the row when the workflow no longer has the step', () => {
-      const job = mapStepRunToJob(buildStepRow(), buildContext());
-
-      expect(job.step).to.deep.equal({
-        _id: 'step-1',
-        _templateId: '',
-        stepId: 'in-app-step',
-        name: 'In-App Step',
-        filters: [],
       });
     });
 
@@ -122,7 +92,7 @@ describe('notification feed v2 mappers', () => {
       expect(job.digest).to.deep.equal({ ...metadata, events });
     });
 
-    it('maps traces to execution details with the step provider', () => {
+    it('maps traces to execution details like the ClickHouse-only read, without a provider', () => {
       const job = mapStepRunToJob(
         buildStepRow(),
         buildContext({
@@ -148,7 +118,7 @@ describe('notification feed v2 mappers', () => {
         {
           _id: 'trace-1',
           _jobId: 'job-1',
-          providerId: 'novu',
+          providerId: undefined,
           detail: 'Message failed',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -158,18 +128,6 @@ describe('notification feed v2 mappers', () => {
           raw: '{"error":true}',
         },
       ]);
-    });
-  });
-
-  describe('indexWorkflowSteps', () => {
-    it('indexes steps and their variants by id', () => {
-      const variant: NotificationStepEntity = { _id: 'variant-1', _templateId: 'message-template-2' };
-      const step: NotificationStepEntity = { _id: 'step-1', _templateId: 'message-template-1', variants: [variant] };
-
-      const index = indexWorkflowSteps([{ _id: 'workflow-1', steps: [step] }]);
-
-      expect(index.get('step-1')).to.equal(step);
-      expect(index.get('variant-1')).to.equal(variant);
     });
   });
 

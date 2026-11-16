@@ -9,18 +9,11 @@ import {
   Trace,
   TraceLogRepository,
 } from '@novu/application-generic';
-import {
-  NotificationFeedFilters,
-  NotificationFeedItemEntity,
-  NotificationRepository,
-  NotificationStepEntity,
-  NotificationTemplateRepository,
-} from '@novu/dal';
+import { NotificationFeedFilters, NotificationFeedItemEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import {
   groupStepRunsByWorkflowRunId,
-  indexWorkflowSteps,
   mapStepRunToJob,
   parseDigestEvents,
   StepTraceFetchResult,
@@ -54,14 +47,13 @@ export type GetFeedItemV2Params = ReadScope & { notificationId: string };
 
 /**
  * Reads the `/v1/notifications` activity feed without the jobs collection: notifications (with their subscriber
- * and workflow) from Mongo, steps from ClickHouse `step_runs_v2`, and execution details and digest events from
- * traces. Used when IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED is on.
+ * and workflow) from Mongo, steps with their `job.step` snapshot from ClickHouse `step_runs_v2`, and execution
+ * details and digest events from traces. Used when IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED is on.
  */
 @Injectable()
 export class NotificationFeedV2Reader {
   constructor(
     private notificationRepository: NotificationRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private stepRunV2Repository: StepRunV2Repository,
     private traceLogRepository: TraceLogRepository,
     private metricsService: MetricsService,
@@ -110,10 +102,7 @@ export class NotificationFeedV2Reader {
     }
 
     const oldestCreatedAt = this.findOldestCreatedAt(notifications);
-    const [stepRuns, workflowStepsById] = await Promise.all([
-      this.findStepRuns(scope.environmentId, notifications, oldestCreatedAt),
-      this.findWorkflowSteps(scope.environmentId, notifications),
-    ]);
+    const stepRuns = await this.findStepRuns(scope.environmentId, notifications, oldestCreatedAt);
     this.recordMissingStepRuns(notifications, stepRuns);
 
     // The jobs populate never returned trigger jobs.
@@ -135,7 +124,7 @@ export class NotificationFeedV2Reader {
     return notifications.map((notification) => ({
       ...notification,
       jobs: (stepRunsByNotificationId.get(notification._id) ?? []).map((row) =>
-        mapStepRunToJob(row, { notification, workflowStepsById, tracesByStepRunId, digestEventsByStepRunId })
+        mapStepRunToJob(row, { tracesByStepRunId, digestEventsByStepRunId })
       ),
     }));
   }
@@ -200,25 +189,6 @@ export class NotificationFeedV2Reader {
     }
 
     return (await Promise.all(batches.map(read))).flat();
-  }
-
-  private async findWorkflowSteps(
-    environmentId: string,
-    notifications: NotificationFeedItemEntity[]
-  ): Promise<Map<string, NotificationStepEntity>> {
-    const workflowIds = Array.from(
-      new Set(notifications.map((notification) => notification._templateId).filter(Boolean))
-    );
-
-    try {
-      const workflows = await this.notificationTemplateRepository.findStepsByIds(environmentId, workflowIds);
-
-      return indexWorkflowSteps(workflows);
-    } catch (error) {
-      this.logger.warn({ err: error, workflowIds }, 'Failed to get workflow steps for notifications');
-
-      return new Map();
-    }
   }
 
   private async findExecutionDetails(

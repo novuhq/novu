@@ -55,7 +55,6 @@ function buildStepRow(overrides: Partial<StepRunV2ReadRow> = {}): StepRunV2ReadR
 
 describe('NotificationFeedV2Reader', () => {
   let notificationRepository: { getFeedWithoutJobs: sinon.SinonStub; findNotificationMetadataOnly: sinon.SinonStub };
-  let notificationTemplateRepository: { findStepsByIds: sinon.SinonStub };
   let stepRunV2Repository: { findByWorkflowRunIds: sinon.SinonStub };
   let traceLogRepository: { find: sinon.SinonStub };
   let metricsService: { recordMetric: sinon.SinonStub };
@@ -66,16 +65,12 @@ describe('NotificationFeedV2Reader', () => {
       getFeedWithoutJobs: sinon.stub().resolves([]),
       findNotificationMetadataOnly: sinon.stub().resolves(null),
     };
-    notificationTemplateRepository = {
-      findStepsByIds: sinon.stub().resolves([{ _id: TEMPLATE_ID, steps: [{ _id: 'step-1', name: 'In-App' }] }]),
-    };
     stepRunV2Repository = { findByWorkflowRunIds: sinon.stub().resolves([]) };
     traceLogRepository = { find: sinon.stub().resolves({ data: [] }) };
     metricsService = { recordMetric: sinon.stub() };
 
     reader = new NotificationFeedV2Reader(
       notificationRepository as never,
-      notificationTemplateRepository as never,
       stepRunV2Repository as never,
       traceLogRepository as never,
       metricsService as never,
@@ -107,14 +102,18 @@ describe('NotificationFeedV2Reader', () => {
       offset: 0,
     });
     expect(stepRunV2Repository.findByWorkflowRunIds.calledOnce).to.equal(true);
-    expect(notificationTemplateRepository.findStepsByIds.calledOnceWithExactly(ENVIRONMENT_ID, [TEMPLATE_ID])).to.equal(
-      true
-    );
     expect(feedItem.jobs.map((job) => job._id)).to.deep.equal(['job-1']);
     expect(feedItem.jobs[0]).to.deep.include({
       status: 'completed',
-      payload: { foo: 'bar' },
-      step: { _id: 'step-1', name: 'In-App', stepId: 'in-app' },
+      step: {
+        _id: 'step-1',
+        _templateId: '',
+        stepId: 'in-app',
+        name: 'In-App',
+        active: true,
+        filters: [],
+        template: { type: 'in_app' },
+      },
     });
     expect(metricsService.recordMetric.called).to.equal(false);
   });

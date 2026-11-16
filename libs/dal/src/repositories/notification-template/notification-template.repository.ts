@@ -469,28 +469,6 @@ export class NotificationTemplateRepository extends BaseRepository<
     return await this.notificationTemplate.delete({ _id: query._id, _environmentId: query._environmentId });
   }
 
-  /**
-   * Steps of the given workflows with their message templates, including soft-deleted workflows so that
-   * runs of a deleted workflow still resolve their steps. Not lean: the activity feed serializes steps with
-   * their virtuals (e.g. filter `id`), as it did when they came from job snapshots.
-   */
-  async findStepsByIds(
-    environmentId: string,
-    ids: string[]
-  ): Promise<Pick<NotificationTemplateEntity, '_id' | 'steps'>[]> {
-    if (ids.length === 0) {
-      return [];
-    }
-
-    const items = await this.notificationTemplate
-      .findWithDeleted({ _environmentId: environmentId, _id: { $in: ids } }, { _id: 1, steps: 1 })
-      .populate('steps.template')
-      .populate('steps.variants.template')
-      .read('secondaryPreferred');
-
-    return this.mapEntities(items);
-  }
-
   async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {
     const res: NotificationTemplateEntity = await this.notificationTemplate.findDeleted(query);
 

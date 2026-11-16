@@ -1,12 +1,5 @@
 import { StepRunV2ReadRow, Trace } from '@novu/application-generic';
-import {
-  ExecutionDetailFeedItem,
-  JobFeedItem,
-  JobStatusEnum,
-  NotificationFeedItemEntity,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
-} from '@novu/dal';
+import { ExecutionDetailFeedItem, JobFeedItem, JobStatusEnum, NotificationStepEntity } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -44,25 +37,6 @@ export function groupStepRunsByWorkflowRunId(rows: StepRunV2ReadRow[]): Map<stri
   }
 
   return grouped;
-}
-
-/** Workflow steps and their variants by step `_id`, which is what `step_runs_v2.step_id` holds. */
-export function indexWorkflowSteps(
-  workflows: Pick<NotificationTemplateEntity, '_id' | 'steps'>[]
-): Map<string, NotificationStepEntity> {
-  const stepsById = new Map<string, NotificationStepEntity>();
-
-  for (const workflow of workflows) {
-    for (const step of workflow.steps ?? []) {
-      for (const candidate of [step, ...(step.variants ?? [])]) {
-        if (candidate._id) {
-          stepsById.set(String(candidate._id), candidate);
-        }
-      }
-    }
-  }
-
-  return stepsById;
 }
 
 /** Digest events are logged as the JSON array on the `digest_triggered` trace. */
@@ -119,12 +93,15 @@ function mapTraceStatus(traceStatus: string): ExecutionDetailsStatusEnum {
   }
 }
 
-/** Traces carry no retry, test or source information; the ClickHouse execution details paths use these defaults. */
-export function mapTraceToExecutionDetail(trace: StepTraceFetchResult, providerId: string): ExecutionDetailFeedItem {
+/**
+ * Same mapping as the ClickHouse-only execution details read of `/v1/notifications`: traces carry no retry, test or
+ * source information, and that read leaves the provider unset.
+ */
+export function mapTraceToExecutionDetail(trace: StepTraceFetchResult): ExecutionDetailFeedItem {
   return {
     _id: trace.id,
     _jobId: trace.entity_id,
-    providerId: providerId || undefined,
+    providerId: undefined,
     detail: trace.title,
     source: ExecutionDetailsSourceEnum.INTERNAL,
     status: mapTraceStatus(trace.status),
@@ -136,30 +113,20 @@ export function mapTraceToExecutionDetail(trace: StepTraceFetchResult, providerI
   };
 }
 
-/** Steps removed from their workflow keep the identity `step_runs_v2` recorded for them. */
-function buildStepFromRow(row: StepRunV2ReadRow): NotificationStepEntity {
+/**
+ * The step identity recorded on the row. Without the jobs collection the activity feed returns this reduced step:
+ * the step's configuration (filters, metadata, control values, message template) is not part of it.
+ */
+function buildStep(row: StepRunV2ReadRow): NotificationStepEntity {
   return {
     _id: row.step_id || undefined,
     _templateId: '',
     stepId: row.step_identifier || undefined,
     name: row.step_name || undefined,
+    // Jobs are only created for active steps.
+    active: true,
     filters: [],
-  };
-}
-
-/**
- * Filters and message template come from the workflow, which only keeps its current version. The name and
- * identifier the step ran with are recorded on the row, so they win over later edits to the workflow.
- */
-function resolveStep(row: StepRunV2ReadRow, workflowStep: NotificationStepEntity | undefined): NotificationStepEntity {
-  if (!workflowStep) {
-    return buildStepFromRow(row);
-  }
-
-  return {
-    ...workflowStep,
-    ...(row.step_name && { name: row.step_name }),
-    ...(row.step_identifier && { stepId: row.step_identifier }),
+    template: { type: row.step_type as StepTypeEnum } as NotificationStepEntity['template'],
   };
 }
 
@@ -174,15 +141,13 @@ function buildDigest(row: StepRunV2ReadRow, digestEvents?: Record<string, unknow
 }
 
 export type StepRunJobContext = {
-  notification: Pick<NotificationFeedItemEntity, 'payload'>;
-  workflowStepsById: Map<string, NotificationStepEntity>;
   tracesByStepRunId: Map<string, StepTraceFetchResult[]>;
   digestEventsByStepRunId: Map<string, Record<string, unknown>[]>;
 };
 
 /**
  * Builds the job the activity feed used to populate from Mongo. Overrides are left unset so the DTO mapper
- * resolves them from the notification, and the payload is the notification's trigger payload.
+ * resolves them from the notification. The payload is left unset too: under payload dedup jobs carry none.
  */
 export function mapStepRunToJob(row: StepRunV2ReadRow, context: StepRunJobContext): JobFeedItem {
   return {
@@ -190,15 +155,16 @@ export function mapStepRunToJob(row: StepRunV2ReadRow, context: StepRunJobContex
     type: row.step_type as StepTypeEnum,
     status: row.status as JobStatusEnum,
     providerId: row.provider_id || undefined,
-    step: resolveStep(row, context.workflowStepsById.get(row.step_id)),
-    payload: context.notification.payload,
+    step: buildStep(row),
+    // Under payload dedup jobs carry no payload; the run's payload is on the notification.
+    payload: undefined,
     digest: buildDigest(row, context.digestEventsByStepRunId.get(row.step_run_id)),
     // Jobs carry no count until their schedule is first extended; the row stores that as 0.
     scheduleExtensionsCount: Number(row.schedule_extensions_count) || undefined,
     createdAt: parseClickHouseDateTime(row.created_at).toISOString(),
     updatedAt: parseClickHouseDateTime(row.updated_at).toISOString(),
     executionDetails: (context.tracesByStepRunId.get(row.step_run_id) ?? []).map((trace) =>
-      mapTraceToExecutionDetail(trace, row.provider_id)
+      mapTraceToExecutionDetail(trace)
     ),
   };
 }
