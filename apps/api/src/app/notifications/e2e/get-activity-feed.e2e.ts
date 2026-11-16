@@ -63,6 +63,24 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(activity.channels).to.include.oneOf(Object.keys(ChannelTypeEnum).map((i) => ChannelTypeEnum[i]));
   });
 
+  it('should list notifications when the subscriber has no phone number', async () => {
+    await novuClient.subscribers.patch({ phone: null }, subscriberId);
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriberId,
+      payload: { firstName: 'Test' },
+    });
+
+    await session.waitForJobCompletion(template._id);
+    const body = await novuClient.notifications.list({ page: 0, subscriberIds: [subscriberId] });
+    const activity = body.result.data[0];
+
+    expect(body.result.data.length).to.equal(1);
+    expect(activity?.subscriber?.subscriberId).to.equal(subscriberId);
+    expect(activity?.subscriber?.phone).to.equal(null);
+  });
+
   it('should filter by channel', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,

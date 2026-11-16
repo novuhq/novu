@@ -181,6 +181,23 @@ describe('SetupHumanRelay', () => {
     expect(create.firstCall.args[0]).to.include({ name: 'Deploy bot', description: 'Ships the app.' });
   });
 
+  it('answers how the agent looks, for the mascot on the CLI’s screen', async () => {
+    const { usecase, agentRepository } = setup();
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 7 } };
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay', look });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal(look);
+
+    // An agent nobody picked a look for has the original one.
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal({
+      shape: 'orb',
+      color: 'ember',
+      art: { kind: 'rays', seed: 0 },
+    });
+  });
+
   it('calls a new relay agent "Agent" until it is named', async () => {
     const { usecase, agentRepository } = setup();
     agentRepository.findOne.resolves(null);
@@ -587,11 +604,13 @@ describe('SetupHumanRelay analytics', () => {
     }
   });
 
-  function setup(provisioned: { provisionedNewLink: boolean; response?: unknown }) {
+  function setup(provisioned: { provisionedNewLink: boolean; response?: unknown }, look?: Record<string, unknown>) {
     const analyticsService = { track: sinon.stub() };
     const usecase = new SetupHumanRelay(
       {
-        findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+        findOne: sinon
+          .stub()
+          .resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay', ...(look ? { look } : {}) }),
       } as never,
       { findOne: sinon.stub().resolves({ subscriberId: 'alice' }), update: sinon.stub() } as never,
       { setDefaultVia: sinon.stub(), setDeclaredAddress: sinon.stub() } as never,
@@ -617,9 +636,26 @@ describe('SetupHumanRelay analytics', () => {
     await usecase.execute(SetupHumanRelayCommand.create({ ...base, analyticsSource: 'cli' }));
 
     expect(analyticsService.track.args).to.deep.equal([
-      [AGENT_INBOX_EVENTS.INBOX_CREATED, 'user1', { _organization: 'org1', agentId: 'relay1', source: 'cli' }],
+      [
+        AGENT_INBOX_EVENTS.INBOX_CREATED,
+        'user1',
+        // Nobody picked a look: the agent has the original one.
+        { _organization: 'org1', agentId: 'relay1', source: 'cli', shape: 'orb', color: 'ember', art: 'rays' },
+      ],
       [AGENT_INBOX_EVENTS.CHANNEL_CONNECTED, 'user1', { _organization: 'org1', agentId: 'relay1', channel: 'email' }],
     ]);
+  });
+
+  it('counts the look the operator picked with the new inbox', async () => {
+    const { usecase, analyticsService } = setup(newInbox, {
+      shape: 'mochi',
+      color: 'coral',
+      art: { kind: 'sparkles', seed: 9 },
+    });
+
+    await usecase.execute(SetupHumanRelayCommand.create({ ...base, analyticsSource: 'dashboard' }));
+
+    expect(analyticsService.track.firstCall.args[2]).to.include({ shape: 'mochi', color: 'coral', art: 'sparkles' });
   });
 
   it('says a request without a source came from the API', async () => {

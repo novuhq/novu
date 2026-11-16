@@ -17,6 +17,7 @@ import type { ChannelRow } from '@/lib/human-channels-overview';
 import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
+import type { AgentLook } from '@/lib/look';
 import { firstMessageBadge } from '@/lib/whatsapp-first-message';
 
 import { AgentSettingsCard } from './agent-settings';
@@ -35,6 +36,8 @@ export type ConfigureAgent = {
   pictureUrl?: string;
   createdAt?: string;
   active: boolean;
+  /** Its mascot's body and colour and its card's art. */
+  look: AgentLook;
 };
 
 type ConfigureViewProps = {
@@ -64,6 +67,8 @@ type ConfigureViewProps = {
   connectedTools: ToolId[];
   /** The SETTINGS block: who can reach the agent, acknowledging, the pause. `null` when they couldn't be read. */
   settings: AgentSettings | null;
+  /** The new agent card in place of the ID card, for the accounts that have it (the onboarding's flag). */
+  newCard: boolean;
 };
 
 /**
@@ -88,6 +93,7 @@ export function ConfigureView({
   mcpUrl,
   connectedTools,
   settings,
+  newCard,
 }: ConfigureViewProps) {
   const [openDrawer, setOpenDrawer] = useState<ChannelVia | null>(initialDrawer);
   const [sharing, setSharing] = useState(false);
@@ -132,6 +138,8 @@ export function ConfigureView({
           telegram={connected('telegram') ? { bot: telegramBot ? `@${telegramBot}` : null } : null}
           slack={slack && (joinDefined([slack.appName, slack.workspace], ' · ') || 'Connected')}
           onShare={() => setSharing(true)}
+          look={agent.look}
+          newCard={newCard}
         />
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-5">

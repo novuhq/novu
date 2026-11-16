@@ -85,6 +85,8 @@ export type StubBackendsOptions = {
   operator?: { subscriberId?: string } | null;
   /** Override GET /v1/inbox-address. */
   inboxAddressCheck?: StubAddressCheck;
+  /** Looks can be picked for this account: the address check says so, and setup takes a look from a host. */
+  looksCanBePicked?: boolean;
   /** Clerk /oauth/userinfo email for the good-token user. */
   userEmail?: string;
   /** Error body for POST /v1/setup when set. */
@@ -192,6 +194,7 @@ function isStubBackendsOptions(options: StubBackendsOptions | Partial<Interactio
     'channels' in options ||
     'operator' in options ||
     'inboxAddressCheck' in options ||
+    'looksCanBePicked' in options ||
     'userEmail' in options ||
     'setupError' in options ||
     'channelsError' in options ||
@@ -366,6 +369,7 @@ type SetupStubState = {
   channels: StubChannelLink[];
   operator: { subscriberId?: string } | null;
   inboxAddressCheck?: StubAddressCheck;
+  looksCanBePicked?: boolean;
   setupError?: { status: number; code?: string; message: string; suggestion?: string };
   channelsError?: { status: number; message: string };
   contactsById: Record<string, StubContact>;
@@ -394,7 +398,7 @@ function answerSetup(url: string, method: string, body: unknown, state: SetupStu
   }
 
   if (path === '/v1/inbox-address' && method === 'GET') {
-    return answerInboxAddress(url, state.inboxAddressCheck);
+    return answerInboxAddress(url, state.inboxAddressCheck, state.looksCanBePicked === true);
   }
 
   if (path === '/v1/setup' && method === 'POST') {
@@ -404,11 +408,11 @@ function answerSetup(url: string, method: string, body: unknown, state: SetupStu
   return null;
 }
 
-function answerInboxAddress(url: string, check: StubAddressCheck | undefined): Response {
+function answerInboxAddress(url: string, check: StubAddressCheck | undefined, canPickLook: boolean): Response {
   const handle = new URL(url).searchParams.get('handle') ?? '';
   const resolved = check ?? { handle, available: true, domain: 'agentinbox.md' };
 
-  return reply({ data: { ...resolved, handle: resolved.handle || handle } });
+  return reply({ data: { ...resolved, handle: resolved.handle || handle, canPickLook } });
 }
 
 function answerCreateSetup(body: unknown, state: SetupStubState): Response {
@@ -423,7 +427,15 @@ function answerCreateSetup(body: unknown, state: SetupStubState): Response {
     );
   }
 
-  const posted = body as { agentName?: string; inboxHandle?: string } | undefined;
+  const posted = body as
+    | { agentName?: string; inboxHandle?: string; look?: { shape?: string; color?: string } }
+    | undefined;
+  // As the API does: a host's look is taken only where looks can be picked, and what it left out is the original's.
+  const look = {
+    shape: (state.looksCanBePicked && posted?.look?.shape) || 'orb',
+    color: (state.looksCanBePicked && posted?.look?.color) || 'ember',
+    art: { kind: 'rays', seed: 0 },
+  };
   const handle = posted?.inboxHandle ?? 'atlas';
   const name = posted?.agentName?.trim() || state.agent?.name || 'Atlas';
   const operatorId = state.operator?.subscriberId ?? 'operator_1';
@@ -442,6 +454,7 @@ function answerCreateSetup(body: unknown, state: SetupStubState): Response {
       agentId: 'agent_1',
       agentIdentifier: 'human-relay',
       agentName: name,
+      look,
       subscriberId: 'operator_1',
       emailAddress: `${handle}@agentinbox.md`,
     },
@@ -750,6 +763,31 @@ function answerOneContact(contact: StubContact | undefined): Response {
   });
 }
 
+/** The agent's card, as the Dashboard API shows it to a host: a 404 before the agent exists. */
+function answerCard(url: string, method: string, setupState: { agent: StubAgent | null }): Response | null {
+  if (method !== 'POST' || url !== `${AGENT_INBOX_API}/v1/agent/card`) {
+    return null;
+  }
+  if (!setupState.agent) {
+    return reply({ message: 'There is no agent yet. Run `npx @agentinbox/cli setup` first.' }, 404);
+  }
+
+  const name = setupState.agent.name ?? 'Atlas';
+
+  return reply({
+    data: {
+      greeting: `Hi Ada, I’m ${name}. I have my own inbox now. Here’s my card, so people can email or message me directly.`,
+      name,
+      handle: 'atlas',
+      address: 'atlas@agentinbox.md',
+      url: 'https://agentinbox.md/p/atlas',
+      look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+      operatorFirstName: 'Ada',
+      firstShown: true,
+    },
+  });
+}
+
 /**
  * Answers the calls the Worker makes: Clerk for who the token is, the Novu API for the account's key, and the
  * Dashboard API for everything else. A call anywhere else gets a 500, so a tool that strays fails its test.
@@ -785,6 +823,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       ] satisfies StubChannelLink[]),
     operator: opts.operator === undefined ? { subscriberId: 'operator_1' } : opts.operator,
     inboxAddressCheck: opts.inboxAddressCheck,
+    looksCanBePicked: opts.looksCanBePicked,
     setupError: opts.setupError,
     channelsError: opts.channelsError,
     contactsById,
@@ -820,6 +859,7 @@ export function stubBackends(options: StubBackendsOptions | Partial<Interaction>
       return (
         answerAuth(url, method, headers, body, accounts, opts.userEmail, opts.accountCreateStatus) ??
         answerSetup(url, method, body, setupState) ??
+        answerCard(url, method, setupState) ??
         answerChannels(url, method, body, setupState, channelState) ??
         answerInbox(url, method, inboxPage, inboxThread, inboxActionThread) ??
         answerContacts(url, method, contactPages, contactsById, body, opts.replacesVerifiedAddress === true) ??

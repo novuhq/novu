@@ -15,6 +15,7 @@ describe('GetHumanInviteStatus', () => {
     subscriber = { firstName: 'Alice', lastName: 'Chen' } as object | null,
     operator = { firstName: 'Dima', lastName: 'Grossman' } as object | null,
     operatorId = 'dima' as string | null,
+    look = null as { shape: string; color: string } | null,
   } = {}) {
     const inviteTokens = { peek: sinon.stub().resolves(invite) };
     const deliveryService = {
@@ -40,12 +41,14 @@ describe('GetHumanInviteStatus', () => {
     subscriberRepository.findOne.withArgs(sinon.match({ subscriberId: 'alice' })).resolves(subscriber);
     subscriberRepository.findOne.withArgs(sinon.match({ subscriberId: 'dima' })).resolves(operator);
     const operatorService = { findForAgent: sinon.stub().resolves(operatorId) };
+    const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(look) };
     const usecase = new GetHumanInviteStatus(
       inviteTokens as never,
       deliveryService as never,
       agentRepository as never,
       subscriberRepository as never,
-      operatorService as never
+      operatorService as never,
+      agentInboxFeatures as never
     );
 
     return { usecase, inviteTokens, agentRepository };
@@ -67,6 +70,13 @@ describe('GetHumanInviteStatus', () => {
         { via: HumanChannelViaEnum.SLACK, connected: false, isDefault: false, status: 'unverified' },
       ],
     });
+  });
+
+  it('hands the page the agent’s look once its mascots show it, and nothing before', async () => {
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'rays', seed: 0 } };
+
+    expect(await setup({ look }).usecase.execute(command)).to.deep.include({ agentLook: look });
+    expect(await setup().usecase.execute(command)).to.not.have.property('agentLook');
   });
 
   it('falls back to the subscriberId when the invitee has no name', async () => {

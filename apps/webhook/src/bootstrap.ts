@@ -6,7 +6,11 @@ import { getErrorInterceptor, Logger } from '@novu/application-generic';
 import { AppModule } from './app.module';
 
 export async function bootstrap(): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    // Keeps the unparsed request body on `req.rawBody` for provider signature verification.
+    rawBody: true,
+  });
 
   app.useLogger(app.get(Logger));
   app.flushLogs();

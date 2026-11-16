@@ -7,7 +7,10 @@ import {
   setupRelay,
 } from '../../api/agent-inbox';
 import { type ApiClient, ApiError } from '../../api/client';
+import { info } from '../../cli-io';
+import type { MascotLook } from '../../mascot/look';
 import type { AskNote } from '../../screen/screen';
+import { chooseLook, passedLook } from './look';
 import type { SetupOptions } from './operator';
 import { defaultSetupIo, type SetupIo } from './prompts';
 
@@ -45,28 +48,42 @@ export function toHandle(name: string): string {
     .replace(/-+$/, '');
 }
 
+/** The address of a new agent, and whether the API said, while a person picked it, that the agent can be given a look. */
+type NewAddress = { handle?: string; canPickLook?: boolean };
+
 /**
- * What a new agent is called and where people reach it, which nothing changes afterwards: the name is required,
- * and the address comes from it unless the person picks another. `--agent-name` and `--agent-handle` answer
- * for them. Without a terminal the name has to be passed, and the API works the address out from it.
- * An agent that already exists has both, so nothing is asked. A passed address still goes along: it finishes
- * an agent whose inbox was never made, and the API ignores it for one that has its inbox.
+ * What a new agent is called, where people reach it and how it looks, which nothing changes afterwards: the
+ * name is required, the address comes from it unless the person picks another, and the look is the round orange
+ * mascot unless they pick one. `--agent-name`, `--agent-handle`, `--agent-shape` and `--agent-color` answer for
+ * them. Without a terminal the name has to be passed, and the API works the address out from it.
+ * An agent that already exists has all three, so nothing is asked. A passed address still goes along: it
+ * finishes an agent whose inbox was never made, and the API ignores it for one that has its inbox.
  */
 export async function resolveNewAgent(
   client: ApiClient,
   agentIdentifier: string,
-  options: Pick<SetupOptions, 'agentName' | 'agentHandle'>,
+  options: Pick<SetupOptions, 'agentName' | 'agentHandle' | 'agentShape' | 'agentColor'>,
   operatorEmail: string | undefined,
   io: SetupIo = defaultSetupIo
-): Promise<{ agentName?: string; inboxHandle?: string }> {
+): Promise<{ agentName?: string; inboxHandle?: string; look?: Partial<MascotLook> }> {
+  // Read before anything is asked or made: a shape or a colour there is none of stops the setup here.
+  const passed = passedLook(options);
+
   if (await findRelayAgent(client, agentIdentifier)) {
+    if (passed) {
+      info("Your agent keeps the look it has: a look can't be changed once the agent is made.");
+    }
+
     return options.agentHandle === undefined ? {} : { inboxHandle: parseHandle(options.agentHandle) };
   }
 
   const agentName = await resolveAgentName(options, io);
-  const inboxHandle = await resolveAgentHandle(client, agentName, options, operatorEmail, io);
+  const address = await resolveAgentHandle(client, agentName, options, operatorEmail, io);
+  // The look is asked for right after the address, where the API said a new agent can be given one. Whoever
+  // passed the address is asked nothing more, and says the look with `--agent-shape` and `--agent-color`.
+  const look = passed ?? (address.canPickLook ? await chooseLook(io) : undefined);
 
-  return { agentName, ...(inboxHandle ? { inboxHandle } : {}) };
+  return { agentName, ...(address.handle ? { inboxHandle: address.handle } : {}), ...(look ? { look } : {}) };
 }
 
 async function resolveAgentName(options: Pick<SetupOptions, 'agentName'>, io: SetupIo): Promise<string> {
@@ -105,12 +122,12 @@ async function resolveAgentHandle(
   options: Pick<SetupOptions, 'agentHandle'>,
   operatorEmail: string | undefined,
   io: SetupIo
-): Promise<string | undefined> {
+): Promise<NewAddress> {
   if (options.agentHandle !== undefined) {
-    return parseHandle(options.agentHandle);
+    return { handle: parseHandle(options.agentHandle) };
   }
 
-  return io.isTTY ? chooseHandle(client, agentName, operatorEmail, io) : undefined;
+  return io.isTTY ? chooseHandle(client, agentName, operatorEmail, io) : {};
 }
 
 function parseHandle(raw: string): string {
@@ -131,14 +148,16 @@ async function chooseHandle(
   agentName: string,
   operatorEmail: string | undefined,
   io: SetupIo
-): Promise<string | undefined> {
+): Promise<NewAddress> {
   const check = (handle?: string) => checkInboxAddress(client, handle, operatorEmail);
   const fromName = toHandle(agentName);
   // Without an answer there is nothing to offer, and setting up has the last word on the address anyway.
   const first = await check(fromName || undefined).catch(() => undefined);
   if (!first) {
-    return undefined;
+    return {};
   }
+
+  const canPickLook = first.canPickLook === true;
 
   const suffix = `@${first.domain}`;
   let offered = first.available ? first.handle : (first.suggestion ?? '');
@@ -171,7 +190,7 @@ async function chooseHandle(
 
     const result = await check(handle).catch(() => undefined);
     if (!result || result.available) {
-      return handle;
+      return { handle, canPickLook };
     }
 
     io.write(`${pc.yellow(`${handle} is taken.`)}\n`);

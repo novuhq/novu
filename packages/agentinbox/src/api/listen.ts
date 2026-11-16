@@ -34,6 +34,8 @@ export interface LeaseStatus {
   listening: Listening | null;
   /** Paused on agentinbox.md: no computer takes the lease or starts a host until it is resumed. */
   paused: boolean;
+  /** How the agent looks (see `lookOf`). Missing from an API from before it was answered here. */
+  look?: unknown;
 }
 
 /** Another computer holds a live lease. The error carries the holder as `listening`. */
@@ -115,7 +117,11 @@ export async function getLease(client: ApiClient, agentIdentifier?: string): Pro
   });
   const status = unwrap<Partial<LeaseStatus>>(res.data);
 
-  return { listening: status.listening ?? null, paused: status.paused === true };
+  return {
+    listening: status.listening ?? null,
+    paused: status.paused === true,
+    ...(status.look === undefined ? {} : { look: status.look }),
+  };
 }
 
 /**

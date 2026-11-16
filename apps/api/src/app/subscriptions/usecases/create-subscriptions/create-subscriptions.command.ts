@@ -1,7 +1,16 @@
 import { IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDefined,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { GroupPreferenceFilterDto } from '../../../shared/dtos/subscriptions/create-subscriptions.dto';
 
@@ -35,6 +44,10 @@ export class CreateSubscriptionsCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  renameExistingTopic?: boolean;
 
   @IsArray()
   @IsOptional()

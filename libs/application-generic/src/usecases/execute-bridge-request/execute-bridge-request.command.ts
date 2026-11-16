@@ -1,3 +1,4 @@
+import type { EnvironmentEntity } from '@novu/dal';
 import {
   CodeResult,
   DiscoverOutput,
@@ -60,6 +61,13 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
   @IsOptional()
   @IsBoolean()
   enforceSsrfProtection?: boolean;
+
+  /**
+   * The environment, when the caller already loaded it. Saves the environment
+   * read and the secret key read on every bridge call. Omitted, it is fetched.
+   */
+  @IsOptional()
+  environment?: Pick<EnvironmentEntity, '_id' | 'name' | 'type' | 'bridge' | 'echo' | 'apiKeys'>;
 }
 
 // will generate the output type based on the action

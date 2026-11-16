@@ -6,9 +6,9 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { useConnectionPoll } from '@/components/channels/setup-parts';
 import { HostPicker } from '@/components/connect/host-picker';
 import { HostPanel } from '@/components/connect/host-steps';
+import { AgentMascot } from '@/components/ui/agent-look';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { useCodeWatch } from '@/hooks/use-code-watch';
 import { useHostConnectCode } from '@/hooks/use-connect-code';
 import { useHostBaseline } from '@/hooks/use-host-baseline';
@@ -244,7 +244,7 @@ function Connected({ handle, agent }: { handle: string; agent: HostId | null }) 
 
   return (
     <div className="flex flex-col items-center gap-3.5 py-10 text-center">
-      <MascotFace art="waiting" mood="happy" className="size-40" />
+      <AgentMascot art="waiting" mood="happy" className="size-40" />
       <h3 className="text-base leading-6 font-medium text-foreground">
         {name ?? 'Your agent'} is now {handle}
       </h3>

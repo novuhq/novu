@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { cardCommand } from './commands/card';
 import { channelAddCommand, channelDefaultCommand, channelListCommand } from './commands/channels';
 import { connectCommand } from './commands/connect';
 import { contactsCommand } from './commands/contacts';
@@ -18,7 +19,7 @@ program
   .name(CLI_COMMAND)
   .description(
     'An inbox for your agent. People write to it on Telegram, Slack, WhatsApp or email; it reads, asks and answers.\n\n' +
-      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. This computer: setup, login, connect, listen.\n\n' +
+      'Conversations: list, show, read, resolve, send, reply. Contacts and channels: `contact <action>`, `channel <action>`. Your agent: card. This computer: setup, login, connect, listen.\n\n' +
       'Exit codes: 0 answered/approved · 10 denied · 11 timed out (the answer shows up in the conversation) · 12 expired/canceled · 1 error'
   )
   .version(version);
@@ -197,6 +198,15 @@ channel
   .description('Set the channel used when a message goes to you')
   .action(channelDefaultCommand);
 
+// --- the agent ---
+
+program
+  .command('card')
+  .option('--json', 'print the card as JSON')
+  .option('--api-url <url>', 'API URL override')
+  .description('Your agent says hi and shows its card: its name, address and link, with a QR code to scan')
+  .action(cardCommand);
+
 // --- setup, login, connect ---
 
 program
@@ -218,6 +228,14 @@ program
   )
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
+  .option(
+    '--agent-shape <shape>',
+    "a new agent's mascot: orb, pebble, drop, bean, peek or mochi (default: orb). It can't be changed later"
+  )
+  .option(
+    '--agent-color <color>',
+    "its colour: ember, marigold, coral, paprika, peach or bone (default: ember). It can't be changed later"
+  )
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .description('Create your agent inbox, then optionally connect Telegram, Slack or WhatsApp')
   // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.

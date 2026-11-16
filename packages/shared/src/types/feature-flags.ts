@@ -59,6 +59,13 @@ export enum FeatureFlagsKeysEnum {
 
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
+  /**
+   * Organization-scoped, read by the legacy webhook service (`apps/webhook`): verifies the provider signature
+   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. On by default; set it to `false`
+   * for an organization (or the `IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED=false` env var when self-hosted
+   * without LaunchDarkly) to skip verification.
+   */
+  IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED = 'IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
@@ -268,6 +275,14 @@ export enum FeatureFlagsKeysEnum {
    * for an organization or segment. Self-hosted deployments ignore this flag and use the system ceiling.
    */
   IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED = 'IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED',
+  /**
+   * Organization-scoped, for Agent Inbox accounts (their backing organization): the onboarding where the operator
+   * names their agent and picks its look, connects a host, and the agent then says hi with its card; and that new
+   * card on the agent's public page, on Configure and in its link preview. Off keeps today's onboarding and card.
+   * Create the boolean in LaunchDarkly for cloud, or set `IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED=true` for the API
+   * when self-hosted or local.
+   */
+  IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',

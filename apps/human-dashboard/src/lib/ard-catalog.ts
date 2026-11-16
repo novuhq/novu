@@ -30,6 +30,7 @@ const MCP_PROTOCOL_VERSION = '2025-06-18';
  * server after it connects; these are only so a registry can filter without connecting.
  */
 const MCP_TOOLS = [
+  'agent_card',
   'inbox_setup',
   'channel_add',
   'inbox_send',

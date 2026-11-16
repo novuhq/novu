@@ -14,7 +14,7 @@ import {
   RegisteredBox,
   StateAnswer,
 } from '../shared/contracts.ts';
-import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
+import { apiOrigin, appOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds in base's
@@ -262,6 +262,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     await logRestore(current);
     console.log(`box: ${origin}`);
     console.log(`api: ${apiOrigin(box)}`);
+    console.log(`app: ${appOrigin(box)}`);
     console.log(`mailpit: ${origin}/mail`);
 
     return 0;

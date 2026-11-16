@@ -37,6 +37,7 @@ describe('HumanVerificationEmailSender', () => {
       { findOne: sinon.stub().resolves(null) } as never,
       { findForAgent: sinon.stub().resolves(null) } as never,
       { beginSend: sinon.stub().resolves({ accept: sinon.stub(), release: sinon.stub().resolves() }) } as never,
+      { mascotLookOf: sinon.stub().resolves({ shape: 'drop', color: 'coral' }) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never
     );
 
@@ -58,6 +59,8 @@ describe('HumanVerificationEmailSender', () => {
     const mail = handlerSend.firstCall.args[0];
 
     expect(mail.html).to.include('https://agentinbox.md/verify/tok123');
+    // The agent has no picture, so the email shows its mascot in its look.
+    expect(mail.html).to.include('https://agentinbox.md/brand/mascot/drop-coral.png');
     expect(mail.text).to.include('Confirm email: https://agentinbox.md/verify/tok123');
   });
 });

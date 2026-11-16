@@ -182,7 +182,15 @@ overrides:
   # the previous `<1.4.0` floor so transitive consumers (@nestjs/jwt, selfsigned,
   # webpack-dev-server, verdaccio, @puppeteer/*, msal-node, mongodb-connection-string-url)
   # pick up the fix.
-  node-forge@<1.4.1: ^1.4.1
+  # GHSA-6889-vf6x-f3g5 (low) Ed25519 signature verification accepts small-order
+  # public keys, GHSA-w4xr-hqv8-ch44 (moderate) TLS client crash on an
+  # unsupported ServerHello compression method, GHSA-6cv4-p8m7-4r25 (moderate)
+  # ReDoS in forge.http response header and cookie trimming, and
+  # GHSA-j8rw-jp99-435v (moderate) TLS client crash on a handshake record
+  # received without a session. All four are patched in 1.4.3 (patch bump
+  # within the 1.4.x line). Widen the previous `<1.4.1` floor so transitive
+  # consumers pick up the fix.
+  node-forge@<1.4.3: ^1.4.3
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
@@ -208,9 +216,13 @@ overrides:
   # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
   # on 16.4.1+.
   next@<16.4.1: ^16.4.1
-  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
-  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
-  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
+  # GHSA-474x-hrwr-fgx4 (low): fast-xml-parser quadratic CPU consumption
+  # scanning unterminated stop-node tags. Patched in 5.12.0 (minor bump within
+  # the 5.x line). Consolidate the previous `>=4.0.0 <5.0.0`, `>=5.0.0 <5.7.3`,
+  # and `>=5.9.3 <5.10.1` overrides into a single blanket floor since no fix
+  # was backported to earlier majors and transitive 5.10.x / 5.11.x
+  # resolutions (via @aws-sdk/*, @smithy/*, mailparser) need the bump.
+  fast-xml-parser@<5.12.0: ^5.12.0
   # GHSA-c475-qrg2-pj4r: basic-ftp SSRF via `./` prefixed paths in list()
   # bypassing the loopback / private-IP guard. Patched in 6.2.1. Widen the
   # override from the previous 5.3.1 floor so the transitive `get-uri` >
@@ -218,7 +230,15 @@ overrides:
   # the 6.x line. basic-ftp 6.0 removed the deprecated `Client.list()` string
   # overload and tightened TypeScript signatures, but `get-uri` only calls
   # `Client.access()` + `Client.downloadTo()`, which are unchanged.
-  basic-ftp@<6.2.1: ^6.2.1
+  # GHSA-4xjp-22g4-fmrf (moderate): uncaught `TypeError` in the MLSD
+  # directory-listing parser via a `__proto__` fact name causes
+  # `Client.list()` to crash the Node.js process (DoS). Patched in 6.2.4.
+  # GHSA-3hrq-5c38-xwg2 (moderate): uncaught exception crashes the Node.js
+  # process when a password (or resumed-download path) contains CR/LF.
+  # Patched in 6.2.3. Widen the previous `<6.2.1` floor to `<6.2.4` so the
+  # same transitive chain picks up the 6.2.4+ fix; the 6.2.x line is a pure
+  # patch series with no further API changes.
+  basic-ftp@<6.2.4: ^6.2.4
   # GHSA-ch52-4w7c-c8xp: http-cache-semantics max-stale handling can disclose
   # cross-user cached responses. Patched in 4.2.1. Transitive via got >
   # cacheable-request across build tooling.
@@ -457,16 +477,35 @@ overrides:
   # in 4.13.5; stay on the 4.x line (patch bump within 4.x).
   # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
   # middleware on static paths. Patched in 4.13.11.
-  hono@<4.13.11: ^4.13.11
+  # GHSA-4m76-xfj5-7975 (moderate): `mount()` / `app.mount()` forwards a path
+  # that bypasses middleware scoped inside the mount prefix.
+  # GHSA-h7mg-cq63-vhpq (moderate): RegExpRouter skips wildcard middleware
+  # for some route sets and for paths with an encoded line terminator.
+  # GHSA-46wx-v44x-9hh2 (moderate): `csrf()` does not check requests sent by
+  # hyperlink auditing (`text/ping`).
+  # GHSA-4h7h-rv7c-7m2v (moderate): `validator('form')` skips validation for
+  # `multipart/form-data` requests with extra parameters. All four are
+  # patched in 4.13.16 (patch bump within the 4.13.x line). Widen the previous
+  # `<4.13.11` floor so transitive consumers (packages/framework,
+  # enterprise/workers/socket, @modelcontextprotocol/sdk, @hono/node-server)
+  # pick up the fix.
+  hono@<4.13.16: ^4.13.16
   # GHSA-rmxm-3fg6-px4f (moderate): @hono/node-server 1.19.10 - 2.1.2 passes
   # the full request URL (including query string) to the Node.js HTTP response
   # body-less code path, enabling response-splitting / request-smuggling-like
   # confusion when a malicious URL is reflected into the response status line.
-  # Patched in 2.1.3 (patch bump within the 2.x line). Widen the previous
-  # <2.0.5 floor so transitive consumers (apps/api > emulate, apps/agent-inbox-mcp
-  # > @modelcontextprotocol/sdk, playground/web-chat, packages/novu, enterprise
-  # workers) land on the fix.
-  '@hono/node-server@<2.1.3': ^2.1.3
+  # Patched in 2.1.3 (patch bump within the 2.x line).
+  # GHSA-qv5m-9pm6-hqp3 (moderate): unhandled `ECONNRESET` on the socket
+  # during an asynchronous WebSocket upgrade crashes the Node.js process.
+  # GHSA-jpvv-r467-5p4w (moderate): backslash in the request path is parsed
+  # as a path separator, bypassing path-based access control at a reverse
+  # proxy. Both patched in 2.1.6 (patch bump within the 2.1.x line). Widen
+  # the previous `<2.1.3` floor so transitive consumers (apps/api > emulate,
+  # apps/agent-inbox-mcp > @modelcontextprotocol/sdk, apps/mcp-server >
+  # @modelcontextprotocol/sdk, playground/web-chat, packages/novu >
+  # @anthropic-ai/claude-agent-sdk, enterprise/workers/thalamus-observer >
+  # agents) land on the fix.
+  '@hono/node-server@<2.1.6': ^2.1.6
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
@@ -482,7 +521,17 @@ overrides:
   # apps/agent-inbox-mcp > @modelcontextprotocol/sdk > express-rate-limit)
   # pick up the fix.
   ip-address@<10.7.4: ^10.7.4
-  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  # GHSA-pcrw-h46h-c93h (critical): mongoose Model.$where search-injection
+  # that can be abused when user input reaches `$where`. Patched in 8.24.3.
+  # GHSA-gg4r-jv3p-qx3c (high) / GHSA-8332-j7wj-wjw4 (high) /
+  # GHSA-wr5m-5jph-8m96 (moderate) / GHSA-6972-9mcm-vhwj (moderate): additional
+  # search / prototype-pollution / NoSQL-injection advisories in mongoose
+  # Model and Query APIs. All patched in 8.24.7 (patch bump within the 8.24.x
+  # line). Widen the previous `<8.24.1` floor so transitive consumers
+  # (@nestjs/terminus across apps/api, apps/worker, apps/webhook, apps/ws)
+  # and the enterprise auth package pick up the fix. enterprise/packages/auth
+  # declares `mongoose: ^8.22.1`, which semver-allows 8.24.x.
+  mongoose@>=8.0.0 <8.24.8: ^8.24.8
   newrelic: 13.19.2
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
@@ -538,8 +587,11 @@ overrides:
   # `meta http-equiv=refresh` URLs. Patched in 2.18.0.
   sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
-  better-auth@<1.6.13: ^1.6.23
-  '@better-auth/sso@<1.6.13': ^1.6.23
+  # GHSA-965c-763c-88jm (critical): OAuth state accepted as a Magic Link token.
+  # Patched only in 1.7.7+ (no 1.6.x backport). Novu does not enable the
+  # Magic Link plugin, but the floor keeps every resolution on a patched release.
+  better-auth@<1.7.7: ^1.7.19
+  '@better-auth/sso@<1.7.7': ^1.7.19
   # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
   # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)

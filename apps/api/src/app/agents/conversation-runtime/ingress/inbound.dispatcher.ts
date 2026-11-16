@@ -8,6 +8,7 @@ import { WhatsAppFirstMessageStatus } from '../../human-relay/whatsapp-first-mes
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../../shared/util/express-to-web-request';
 import { ChatInstanceRegistry, InboundCallbacks, platformAdapterKey } from './chat-instance.registry';
+import { isSlackAppUninstalledBody, SlackAppUninstallIngress } from './slack-app-uninstall.ingress';
 
 /**
  * Thrown by `InboundDispatcher.processEmailAction` when a failure is provably pre-dispatch —
@@ -34,7 +35,8 @@ export class InboundDispatcher {
     private readonly logger: PinoLogger,
     private readonly registry: ChatInstanceRegistry,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly whatsAppFirstMessageStatus: WhatsAppFirstMessageStatus
+    private readonly whatsAppFirstMessageStatus: WhatsAppFirstMessageStatus,
+    private readonly slackAppUninstall: SlackAppUninstallIngress
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -50,6 +52,15 @@ export class InboundDispatcher {
     res: ExpressResponse,
     options: { source: AgentConfigResolveSource }
   ) {
+    // Resolving needs an active agent and a usable bot token, and an uninstalled workspace has neither.
+    if (options.source === 'webhook_message' && isSlackAppUninstalledBody(req.body)) {
+      if (await this.slackAppUninstall.handle(agentId, integrationIdentifier, req)) {
+        res.status(200).json({});
+
+        return;
+      }
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
       source: options.source,
     });
