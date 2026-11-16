@@ -76,27 +76,29 @@ export class WhatsAppFirstMessageService {
     }
 
     // A pause is read again like a review, only less often: approved again, the template is used again.
-    const checkedAt = Date.parse(credentials.whatsappTemplateCheckedAt ?? '');
+    const checkedAt = Date.parse(credentials.agentInboxWhatsappTemplateCheckedAt ?? '');
     const recheckAfter = underReview ? RECHECK_AFTER_MS : RECHECK_APPROVED_AFTER_MS;
     if (Number.isFinite(checkedAt) && Date.now() - checkedAt < recheckAfter) {
       return stored;
     }
 
-    const { apiToken, businessAccountId, whatsappTemplateName } = credentials;
-    if (!apiToken || !businessAccountId || !whatsappTemplateName) {
+    const { apiToken, businessAccountId, agentInboxWhatsappTemplateName } = credentials;
+    if (!apiToken || !businessAccountId || !agentInboxWhatsappTemplateName) {
       return stored;
     }
 
     // Noted before asking, so while Meta can't be reached every read and send doesn't ask again and wait on it.
-    await this.save(integration, { whatsappTemplateCheckedAt: new Date().toISOString() }, whatsappTemplateName).catch(
-      () => undefined
-    );
+    await this.save(
+      integration,
+      { agentInboxWhatsappTemplateCheckedAt: new Date().toISOString() },
+      agentInboxWhatsappTemplateName
+    ).catch(() => undefined);
 
     try {
       const found = await findMessageTemplate({
         accessToken: apiToken,
         wabaId: businessAccountId,
-        name: whatsappTemplateName,
+        name: agentInboxWhatsappTemplateName,
         timeoutMs: STATUS_TIMEOUT_MS,
       });
       if (found.error || !found.template?.status) {
@@ -109,13 +111,16 @@ export class WhatsAppFirstMessageService {
       await this.save(
         integration,
         {
-          whatsappTemplateStatus: status,
-          whatsappTemplateRejectedReason: rejectedReason ?? '',
+          agentInboxWhatsappTemplateStatus: status,
+          agentInboxWhatsappTemplateRejectedReason: rejectedReason ?? '',
           ...(status === 'APPROVED'
-            ? { whatsappTemplateApprovedName: whatsappTemplateName, whatsappTemplateApprovedBody: stored.body }
+            ? {
+                agentInboxWhatsappTemplateApprovedName: agentInboxWhatsappTemplateName,
+                agentInboxWhatsappTemplateApprovedBody: stored.body,
+              }
             : {}),
         },
-        whatsappTemplateName
+        agentInboxWhatsappTemplateName
       );
 
       const { rejectedReason: _previous, ...rest } = stored;
@@ -124,7 +129,7 @@ export class WhatsAppFirstMessageService {
         ...rest,
         status,
         ...(rejectedReason ? { rejectedReason } : {}),
-        ...(status === 'APPROVED' ? { approved: { name: whatsappTemplateName, body: stored.body } } : {}),
+        ...(status === 'APPROVED' ? { approved: { name: agentInboxWhatsappTemplateName, body: stored.body } } : {}),
       };
     } catch (error) {
       this.logger.warn({ err: error, integrationId: integration._id }, 'Could not read the WhatsApp template status');
@@ -144,11 +149,11 @@ export class WhatsAppFirstMessageService {
     stored: FirstMessageState
   ): Promise<FirstMessageState> {
     const { approved } = stored;
-    const checkedAt = Date.parse(credentials.whatsappTemplateCheckedAt ?? '');
+    const checkedAt = Date.parse(credentials.agentInboxWhatsappTemplateCheckedAt ?? '');
     const { apiToken, businessAccountId } = credentials;
     if (
       !approved ||
-      credentials.whatsappTemplateName !== approved.name ||
+      credentials.agentInboxWhatsappTemplateName !== approved.name ||
       !apiToken ||
       !businessAccountId ||
       (Number.isFinite(checkedAt) && Date.now() - checkedAt < RECHECK_APPROVED_AFTER_MS)
@@ -157,7 +162,9 @@ export class WhatsAppFirstMessageService {
     }
 
     // Noted before asking, as for a review: while Meta can't be reached, reads and sends don't each wait on it.
-    await this.save(integration, { whatsappTemplateCheckedAt: new Date().toISOString() }).catch(() => undefined);
+    await this.save(integration, { agentInboxWhatsappTemplateCheckedAt: new Date().toISOString() }).catch(
+      () => undefined
+    );
 
     try {
       const found = await findMessageTemplate({
@@ -179,14 +186,14 @@ export class WhatsAppFirstMessageService {
           _organizationId: integration._organizationId,
           // Only while it is still both the latest submission and the one in use: an edit sent for review
           // meanwhile keeps its own status, and the approval it still sends with.
-          'credentials.whatsappTemplateName': approved.name,
-          'credentials.whatsappTemplateApprovedName': approved.name,
+          'credentials.agentInboxWhatsappTemplateName': approved.name,
+          'credentials.agentInboxWhatsappTemplateApprovedName': approved.name,
         },
         {
           $set: {
-            'credentials.whatsappTemplateApprovedName': '',
-            'credentials.whatsappTemplateApprovedBody': '',
-            'credentials.whatsappTemplateStatus': status,
+            'credentials.agentInboxWhatsappTemplateApprovedName': '',
+            'credentials.agentInboxWhatsappTemplateApprovedBody': '',
+            'credentials.agentInboxWhatsappTemplateStatus': status,
           },
         }
       );
@@ -218,7 +225,7 @@ export class WhatsAppFirstMessageService {
     }
 
     const access = { accessToken: apiToken, wabaId: businessAccountId };
-    let name = nextFirstMessageName(credentials.whatsappTemplateName);
+    let name = nextFirstMessageName(credentials.agentInboxWhatsappTemplateName);
     let created = await this.create(access, name, body);
     // Another submission may have taken the name first, with other words: this text goes under the next one.
     if (created.taken) {
@@ -238,14 +245,14 @@ export class WhatsAppFirstMessageService {
       ...(stored?.approved ? { approved: stored.approved } : {}),
     };
     await this.save(integration, {
-      whatsappTemplateName: name,
-      whatsappTemplateId: id,
-      whatsappTemplateStatus: state.status,
-      whatsappTemplateBody: body,
-      whatsappTemplateRejectedReason: '',
-      whatsappTemplateCheckedAt: new Date().toISOString(),
+      agentInboxWhatsappTemplateName: name,
+      agentInboxWhatsappTemplateId: id,
+      agentInboxWhatsappTemplateStatus: state.status,
+      agentInboxWhatsappTemplateBody: body,
+      agentInboxWhatsappTemplateRejectedReason: '',
+      agentInboxWhatsappTemplateCheckedAt: new Date().toISOString(),
       ...(state.status === 'APPROVED'
-        ? { whatsappTemplateApprovedName: name, whatsappTemplateApprovedBody: body }
+        ? { agentInboxWhatsappTemplateApprovedName: name, agentInboxWhatsappTemplateApprovedBody: body }
         : {}),
     });
 
@@ -304,7 +311,7 @@ export class WhatsAppFirstMessageService {
         _id: integration._id,
         _environmentId: integration._environmentId,
         _organizationId: integration._organizationId,
-        ...(onlyFor ? { 'credentials.whatsappTemplateName': onlyFor } : {}),
+        ...(onlyFor ? { 'credentials.agentInboxWhatsappTemplateName': onlyFor } : {}),
       },
       { $set }
     );
@@ -312,15 +319,15 @@ export class WhatsAppFirstMessageService {
 }
 
 function stateOf(credentials: ICredentials): FirstMessageState | undefined {
-  const status = credentials.whatsappTemplateStatus;
-  const body = credentials.whatsappTemplateBody;
+  const status = credentials.agentInboxWhatsappTemplateStatus;
+  const body = credentials.agentInboxWhatsappTemplateBody;
   if (!status || !body) {
     return undefined;
   }
 
-  const approvedName = credentials.whatsappTemplateApprovedName;
-  const approvedBody = credentials.whatsappTemplateApprovedBody;
-  const rejectedReason = presentReason(credentials.whatsappTemplateRejectedReason);
+  const approvedName = credentials.agentInboxWhatsappTemplateApprovedName;
+  const approvedBody = credentials.agentInboxWhatsappTemplateApprovedBody;
+  const rejectedReason = presentReason(credentials.agentInboxWhatsappTemplateRejectedReason);
 
   return {
     status,

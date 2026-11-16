@@ -211,11 +211,12 @@ describe('Agent Inbox WhatsApp delivery #novu-v2', () => {
         { _id: whatsApp!._id, _environmentId: session.environment._id, _organizationId: session.organization._id },
         {
           $set: {
-            'credentials.whatsappTemplateName': 'agentinbox_first_message',
-            'credentials.whatsappTemplateStatus': 'APPROVED',
-            'credentials.whatsappTemplateBody': 'You have a message from {{agent_name}}. Reply here to view it.',
-            'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
-            'credentials.whatsappTemplateApprovedBody':
+            'credentials.agentInboxWhatsappTemplateName': 'agentinbox_first_message',
+            'credentials.agentInboxWhatsappTemplateStatus': 'APPROVED',
+            'credentials.agentInboxWhatsappTemplateBody':
+              'You have a message from {{agent_name}}. Reply here to view it.',
+            'credentials.agentInboxWhatsappTemplateApprovedName': 'agentinbox_first_message',
+            'credentials.agentInboxWhatsappTemplateApprovedBody':
               'You have a message from {{agent_name}}. Reply here to view it.',
           },
         }

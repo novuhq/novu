@@ -322,11 +322,11 @@ describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
     const body = 'You have a message from {{agent_name}}. Reply here to view it.';
     await integrationRepository.update({ ...scope, identifier: whatsAppIdentifier } as never, {
       $set: {
-        'credentials.whatsappTemplateName': 'agentinbox_first_message',
-        'credentials.whatsappTemplateStatus': 'APPROVED',
-        'credentials.whatsappTemplateBody': body,
-        'credentials.whatsappTemplateApprovedName': 'agentinbox_first_message',
-        'credentials.whatsappTemplateApprovedBody': body,
+        'credentials.agentInboxWhatsappTemplateName': 'agentinbox_first_message',
+        'credentials.agentInboxWhatsappTemplateStatus': 'APPROVED',
+        'credentials.agentInboxWhatsappTemplateBody': body,
+        'credentials.agentInboxWhatsappTemplateApprovedName': 'agentinbox_first_message',
+        'credentials.agentInboxWhatsappTemplateApprovedBody': body,
       },
     });
     const request = sinon

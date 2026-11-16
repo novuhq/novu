@@ -11,14 +11,14 @@ export const VIEW_MESSAGE_BUTTON = 'View message';
 
 /** The first message's state on the integration's credentials, emptied: read back as no first message at all. */
 export const CLEARED_FIRST_MESSAGE = {
-  whatsappTemplateName: '',
-  whatsappTemplateId: '',
-  whatsappTemplateStatus: '',
-  whatsappTemplateBody: '',
-  whatsappTemplateRejectedReason: '',
-  whatsappTemplateCheckedAt: '',
-  whatsappTemplateApprovedName: '',
-  whatsappTemplateApprovedBody: '',
+  agentInboxWhatsappTemplateName: '',
+  agentInboxWhatsappTemplateId: '',
+  agentInboxWhatsappTemplateStatus: '',
+  agentInboxWhatsappTemplateBody: '',
+  agentInboxWhatsappTemplateRejectedReason: '',
+  agentInboxWhatsappTemplateCheckedAt: '',
+  agentInboxWhatsappTemplateApprovedName: '',
+  agentInboxWhatsappTemplateApprovedBody: '',
 };
 export const FIRST_MESSAGE_MAX_LENGTH = 1024;
 /** What Meta's review sees in place of the variable. */

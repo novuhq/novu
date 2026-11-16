@@ -135,7 +135,10 @@ describe('ConnectHumanWhatsAppKeys', () => {
   });
 
   it('forgets the first message approved on another business account, and keeps one on the same account', async () => {
-    const approved = { whatsappTemplateStatus: 'APPROVED', whatsappTemplateApprovedName: 'agentinbox_first_message' };
+    const approved = {
+      agentInboxWhatsappTemplateStatus: 'APPROVED',
+      agentInboxWhatsappTemplateApprovedName: 'agentinbox_first_message',
+    };
     const moved = setup({ credentials: { businessAccountId: 'waba-old', ...approved } });
     const same = setup({ credentials: { businessAccountId: 'waba-1', ...approved } });
 
@@ -143,10 +146,12 @@ describe('ConnectHumanWhatsAppKeys', () => {
     await same.usecase.execute(command);
 
     expect(moved.updateIntegration.execute.firstCall.args[0].credentials).to.include({
-      whatsappTemplateStatus: '',
-      whatsappTemplateApprovedName: '',
+      agentInboxWhatsappTemplateStatus: '',
+      agentInboxWhatsappTemplateApprovedName: '',
     });
-    expect(same.updateIntegration.execute.firstCall.args[0].credentials).to.not.have.property('whatsappTemplateStatus');
+    expect(same.updateIntegration.execute.firstCall.args[0].credentials).to.not.have.property(
+      'agentInboxWhatsappTemplateStatus'
+    );
   });
 
   it('hands back the callback URL and verify token when Meta didn’t take the webhook', async () => {

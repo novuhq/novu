@@ -78,15 +78,15 @@ export interface ICredentials {
    * so the agent can write first outside the 24-hour window. Name, Meta id, Meta's review status and reason, the
    * body with its `{{agent_name}}` variable, and when the status was last read from Meta. None are secrets.
    */
-  whatsappTemplateName?: string;
-  whatsappTemplateId?: string;
-  whatsappTemplateStatus?: string;
-  whatsappTemplateBody?: string;
-  whatsappTemplateRejectedReason?: string;
-  whatsappTemplateCheckedAt?: string;
+  agentInboxWhatsappTemplateName?: string;
+  agentInboxWhatsappTemplateId?: string;
+  agentInboxWhatsappTemplateStatus?: string;
+  agentInboxWhatsappTemplateBody?: string;
+  agentInboxWhatsappTemplateRejectedReason?: string;
+  agentInboxWhatsappTemplateCheckedAt?: string;
   /** The last version Meta approved, which sends use while a later edit is under review. */
-  whatsappTemplateApprovedName?: string;
-  whatsappTemplateApprovedBody?: string;
+  agentInboxWhatsappTemplateApprovedName?: string;
+  agentInboxWhatsappTemplateApprovedBody?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**
