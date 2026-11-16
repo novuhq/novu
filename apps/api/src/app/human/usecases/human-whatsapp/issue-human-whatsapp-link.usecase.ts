@@ -2,10 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { decryptCredentials, InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
-import {
-  WhatsAppBindCodeService,
-  WhatsAppOperatorWindowService,
-} from '../../../agents/human-relay/whatsapp-bind-code.service';
+import { WhatsAppBindCodeService } from '../../../agents/human-relay/whatsapp-bind-code.service';
 import { normalizePhoneForMeta } from '../../../agents/shared/util/phone-normalization';
 import { hasWhatsAppSendCredentials } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { HumanChannelGate } from '../../services/human-channel-gate.service';
@@ -19,18 +16,13 @@ export type IssueHumanWhatsAppLinkParams = {
   subscriberId: string;
   /** The relay's WhatsApp channel to bind on. Without it, its active one. */
   integrationIdentifier?: string;
-  /**
-   * `operator`: the operator's own setup, where any message from their phone binds within the window it opens.
-   * `code` (the default): a contact's invite, where only the code binds.
-   */
-  proof?: 'code' | 'operator';
 };
 
 export type HumanWhatsAppLink = {
   /** `https://wa.me/<business number>?text=<the code>`: opens WhatsApp with the message ready to send. */
   url: string;
-  /** The code as the message carries it, `BCDF-GHJK`, for typing by hand. None for the operator's own setup. */
-  code?: string;
+  /** The code as the message carries it, `BCDF-GHJK`, for typing by hand. */
+  code: string;
   expiresAt: string;
 };
 
@@ -43,7 +35,6 @@ export class IssueHumanWhatsAppLink {
   constructor(
     private readonly channelGate: HumanChannelGate,
     private readonly codes: WhatsAppBindCodeService,
-    private readonly operatorWindow: WhatsAppOperatorWindowService,
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository
@@ -88,12 +79,6 @@ export class IssueHumanWhatsAppLink {
       agentIdentifier: agent.identifier,
       subscriberId: params.subscriberId,
     };
-
-    if (params.proof === 'operator') {
-      const { expiresAt } = await this.operatorWindow.open(payload);
-
-      return { url: `https://wa.me/${businessNumber}?text=${encodeURIComponent('Hi')}`, expiresAt };
-    }
 
     const { code, expiresAt } = await this.codes.issue(payload);
     const text = `Connect my WhatsApp: ${code}`;

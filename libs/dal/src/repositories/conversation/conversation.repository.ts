@@ -252,6 +252,33 @@ export class ConversationRepository extends BaseRepositoryV2<
     return result.modified;
   }
 
+  /**
+   * Takes a subscriber out of the direct threads with one platform user on one integration, such as a WhatsApp
+   * number that someone else has just proved theirs. The thread stays, for whoever writes from it next. Returns the
+   * number of conversations changed.
+   */
+  async removeSubscriberFromPlatformUserThreads(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    /** The user's id as the thread id ends with it, after the last `:`. */
+    platformUserId: string;
+    subscriberId: string;
+  }): Promise<number> {
+    const endsWithUser = new RegExp(`:${params.platformUserId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: { $elemMatch: { _integrationId: params.integrationId, platformThreadId: endsWithUser } },
+        participants: { $elemMatch: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } },
+      },
+      { $pull: { participants: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } } }
+    );
+
+    return result.modified;
+  }
+
   async touchActivity(
     environmentId: string,
     organizationId: string,

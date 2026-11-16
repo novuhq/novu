@@ -29,8 +29,6 @@ const SENDING_CREDENTIALS = {
 };
 /** A contact's invite link: the code is what binds their number. */
 const WA_ME_LINK = /^https:\/\/wa\.me\/15550100199\?text=Connect%20my%20WhatsApp%3A%20[B-Z]{4}-[B-Z]{4}$/;
-/** The operator's own link: no code, any message from their phone binds while the setup waits for it. */
-const OPERATOR_WA_ME_LINK = 'https://wa.me/15550100199?text=Hi';
 
 /**
  * The operator's own WhatsApp Business account, connected from agentinbox.md with the Facebook button. Only
@@ -212,14 +210,14 @@ describe('Agent Inbox WhatsApp setup #novu-v2', () => {
       expect(JSON.stringify(res.body)).to.not.contain('e2e-app-secret');
     });
 
-    it('hands the operator a wa.me link with a hello and no code, for their own number', async () => {
+    it('hands the operator a wa.me link that carries a one-time code, as only that message binds their number', async () => {
       await linkWhatsApp(SENDING_CREDENTIALS);
 
       const res = await asDashboard('post', '/v1/human/agent/whatsapp/link').send({});
 
       expect(res.status).to.equal(200, JSON.stringify(res.body));
-      expect(res.body.data.url).to.equal(OPERATOR_WA_ME_LINK);
-      expect(res.body.data).to.not.have.property('code');
+      expect(res.body.data.url).to.match(WA_ME_LINK);
+      expect(res.body.data.code).to.match(/^[B-Z]{4}-[B-Z]{4}$/);
       expect(Date.parse(res.body.data.expiresAt)).to.be.greaterThan(Date.now());
     });
 

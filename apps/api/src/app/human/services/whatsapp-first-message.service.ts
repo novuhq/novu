@@ -31,6 +31,8 @@ export type FirstMessageState = {
 
 /** How long a stored PENDING status stands before it's read from Meta again. */
 const RECHECK_AFTER_MS = 60_000;
+/** Meta can pause or disable a template it approved, so the one in use is read again this often. */
+const RECHECK_APPROVED_AFTER_MS = 15 * 60_000;
 /** A status read happens on page loads and sends, so it never waits long on Meta. */
 const STATUS_TIMEOUT_MS = 3_000;
 const UNDER_REVIEW = new Set(['PENDING', 'IN_APPEAL']);
@@ -58,13 +60,18 @@ export class WhatsAppFirstMessageService {
 
   /**
    * The stored state, read from Meta again while a submission is under review and the last read is over a minute
-   * old. A failed read keeps what was stored.
+   * old. Once the review is over, the approved template in use is read again every quarter of an hour, as Meta can
+   * stop it afterwards. A failed read keeps what was stored.
    */
   async read(integration: IntegrationEntity): Promise<FirstMessageState | undefined> {
     const credentials = decryptCredentials(integration.credentials ?? {});
     const stored = stateOf(credentials);
-    if (!stored || !UNDER_REVIEW.has(stored.status)) {
+    if (!stored) {
       return stored;
+    }
+
+    if (!UNDER_REVIEW.has(stored.status)) {
+      return this.recheckApproved(integration, credentials, stored);
     }
 
     const checkedAt = Date.parse(credentials.whatsappTemplateCheckedAt ?? '');
@@ -116,6 +123,70 @@ export class WhatsAppFirstMessageService {
         ...(rejectedReason ? { rejectedReason } : {}),
         ...(status === 'APPROVED' ? { approved: { name: whatsappTemplateName, body: stored.body } } : {}),
       };
+    } catch (error) {
+      this.logger.warn({ err: error, integrationId: integration._id }, 'Could not read the WhatsApp template status');
+
+      return stored;
+    }
+  }
+
+  /**
+   * Whether Meta still approves the template sends use. One it has paused or disabled stops being used: sends fall back to refusing with the closed window, and the dashboard shows where it stands.
+   */
+  private async recheckApproved(
+    integration: IntegrationEntity,
+    credentials: ICredentials,
+    stored: FirstMessageState
+  ): Promise<FirstMessageState> {
+    const { approved } = stored;
+    const checkedAt = Date.parse(credentials.whatsappTemplateCheckedAt ?? '');
+    const { apiToken, businessAccountId } = credentials;
+    if (
+      !approved ||
+      !apiToken ||
+      !businessAccountId ||
+      (Number.isFinite(checkedAt) && Date.now() - checkedAt < RECHECK_APPROVED_AFTER_MS)
+    ) {
+      return stored;
+    }
+
+    // Noted before asking, as for a review: while Meta can't be reached, reads and sends don't each wait on it.
+    await this.save(integration, { whatsappTemplateCheckedAt: new Date().toISOString() }).catch(() => undefined);
+
+    try {
+      const found = await findMessageTemplate({
+        accessToken: apiToken,
+        wabaId: businessAccountId,
+        name: approved.name,
+        timeoutMs: STATUS_TIMEOUT_MS,
+      });
+      // Only Meta's own word stops it: an answer without the template, or without a status, changes nothing.
+      const status = found.template?.status;
+      if (found.error || !status || status === 'APPROVED') {
+        return stored;
+      }
+
+      const isLatest = credentials.whatsappTemplateName === approved.name;
+      await this.integrationRepository.update(
+        {
+          _id: integration._id,
+          _environmentId: integration._environmentId,
+          _organizationId: integration._organizationId,
+          // Only while it is still the one in use: a newer approval saved meanwhile stays.
+          'credentials.whatsappTemplateApprovedName': approved.name,
+        },
+        {
+          $set: {
+            'credentials.whatsappTemplateApprovedName': '',
+            'credentials.whatsappTemplateApprovedBody': '',
+            ...(isLatest ? { 'credentials.whatsappTemplateStatus': status } : {}),
+          },
+        }
+      );
+
+      const { approved: _stopped, ...rest } = stored;
+
+      return isLatest ? { ...rest, status } : rest;
     } catch (error) {
       this.logger.warn({ err: error, integrationId: integration._id }, 'Could not read the WhatsApp template status');
 

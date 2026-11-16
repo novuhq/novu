@@ -14,7 +14,6 @@ import {
   extractWhatsAppBindCode,
   type WhatsAppBindCodePayload,
   WhatsAppBindCodeService,
-  WhatsAppOperatorWindowService,
 } from './whatsapp-bind-code.service';
 import { WhatsAppHeldRelease } from './whatsapp-held-release.service';
 import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_LAST_CODE_AT_FIELD } from './whatsapp-number-proof';
@@ -43,7 +42,6 @@ export class WhatsAppBindInbound {
     private readonly contactHandles: ContactHandleService,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger,
-    private readonly operatorWindow: WhatsAppOperatorWindowService,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly heldRelease: WhatsAppHeldRelease
   ) {
@@ -69,8 +67,7 @@ export class WhatsAppBindInbound {
     const burst = [...(messageContext?.skipped ?? []), message];
     const withCode = burst.find((inbound) => extractWhatsAppBindCode(inbound.text));
     if (!withCode) {
-      // A hello that connected the operator is used up here, like a code.
-      return (await this.tryOperatorHello(agentId, config, thread, message)) ? null : message;
+      return message;
     }
 
     // WhatsApp turned off for the organization binds nothing: the message goes on as any other would.
@@ -114,38 +111,6 @@ export class WhatsAppBindInbound {
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Could not send what was held on WhatsApp after a code`);
     }
-  }
-
-  /**
-   * The operator's own setup needs no code: while the window the "Say hi on WhatsApp" step opened lasts, the first
-   * message from a number that isn't connected yet binds it as the operator. A number already connected, a contact
-   * writing in, goes on to the inbox as usual and leaves the window open. Like a code, the hello is answered here and
-   * never reaches the inbox.
-   */
-  private async tryOperatorHello(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    thread: Thread,
-    message: Message
-  ): Promise<boolean> {
-    // The flag is read only while a window is open, so an ordinary message costs no flag read. Off binds nobody.
-    if (!(await this.operatorWindow.isOpen(config.integrationId)) || !(await this.isWhatsAppEnabled(config))) {
-      return false;
-    }
-
-    const phoneNumber = toCanonicalE164Phone(message.author?.userId ?? '');
-    if (!phoneNumber || (await this.isBound(config, phoneNumber))) {
-      return false;
-    }
-
-    const payload = await this.operatorWindow.take(config.integrationId);
-    if (!payload) {
-      return false;
-    }
-
-    await this.reply(thread, await this.bindNumber(agentId, config, message, payload, phoneNumber), agentId);
-
-    return true;
   }
 
   private async bind(agentId: string, config: ResolvedAgentConfig, message: Message, code: string): Promise<string> {

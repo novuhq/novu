@@ -299,6 +299,56 @@ describe('WhatsApp first message', () => {
       expect(request.called).to.equal(false);
     });
 
+    describe('an approved template Meta stops afterwards', () => {
+      const approved = {
+        whatsappTemplateName: 'agentinbox_first_message',
+        whatsappTemplateStatus: 'APPROVED',
+        whatsappTemplateBody: DEFAULT_FIRST_MESSAGE,
+        whatsappTemplateApprovedName: 'agentinbox_first_message',
+        whatsappTemplateApprovedBody: DEFAULT_FIRST_MESSAGE,
+      };
+      const metaSays = (status: string) => ({
+        statusCode: 200,
+        body: { data: [{ id: 'tpl1', name: 'agentinbox_first_message', status }] },
+      });
+
+      it('stops being used once Meta pauses it, and shows where it stands', async () => {
+        const { service, integration, integrationRepository } = setup(approved);
+        request.resolves(metaSays('PAUSED'));
+
+        expect(await service.read(integration)).to.deep.equal({ status: 'PAUSED', body: DEFAULT_FIRST_MESSAGE });
+
+        const [where, change] = integrationRepository.update.lastCall.args;
+        expect(where).to.include({ _environmentId: 'env1', _organizationId: 'org1' });
+        expect(where['credentials.whatsappTemplateApprovedName']).to.equal('agentinbox_first_message');
+        expect(change.$set).to.deep.equal({
+          'credentials.whatsappTemplateApprovedName': '',
+          'credentials.whatsappTemplateApprovedBody': '',
+          'credentials.whatsappTemplateStatus': 'PAUSED',
+        });
+      });
+
+      it('keeps one Meta still approves, and one Meta’s answer says nothing about', async () => {
+        const still = setup(approved);
+        request.resolves(metaSays('APPROVED'));
+        expect((await still.service.read(still.integration))?.approved?.name).to.equal('agentinbox_first_message');
+
+        const silent = setup(approved);
+        request.resolves({ statusCode: 200, body: { data: [] } });
+        expect((await silent.service.read(silent.integration))?.approved?.name).to.equal('agentinbox_first_message');
+      });
+
+      it('asks Meta at most once a quarter of an hour', async () => {
+        const { service, integration } = setup({
+          ...approved,
+          whatsappTemplateCheckedAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+        });
+
+        expect((await service.read(integration))?.status).to.equal('APPROVED');
+        expect(request.called).to.equal(false);
+      });
+    });
+
     it('keeps the stored status when Meta can’t be read', async () => {
       const { service, integration } = setup({
         whatsappTemplateName: 'agentinbox_first_message',

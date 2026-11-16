@@ -81,8 +81,8 @@ export class HumanWhatsAppLinkResponseDto {
   @ApiProperty({ description: 'Opens WhatsApp at the business number with a message ready to send.' })
   url: string;
 
-  @ApiPropertyOptional({ description: 'A code, `BCDF-GHJK`, when the link carries one. None for the operator.' })
-  code?: string;
+  @ApiProperty({ description: 'The one-time code the link carries, `BCDF-GHJK`, for typing by hand.' })
+  code: string;
 
   @ApiProperty({ description: 'When the window for the operator’s first message closes.' })
   expiresAt: string;

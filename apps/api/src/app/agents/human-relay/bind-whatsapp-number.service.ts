@@ -3,6 +3,7 @@ import {
   AgentIntegrationRepository,
   AgentRepository,
   ChannelEndpointRepository,
+  ConversationRepository,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -10,6 +11,7 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { CONTACT_HANDLE_FIELDS } from '../../human/services/contact-handle';
+import { normalizePhoneForMeta } from '../shared/util/phone-normalization';
 import type { WhatsAppBindCodePayload } from './whatsapp-bind-code.service';
 import { provedWhatsAppNumberOf, WHATSAPP_NUMBER_PROVED_AT_FIELD } from './whatsapp-number-proof';
 
@@ -36,7 +38,8 @@ export class BindWhatsAppNumber {
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly createChannelEndpoint: CreateChannelEndpoint
+    private readonly createChannelEndpoint: CreateChannelEndpoint,
+    private readonly conversationRepository: ConversationRepository
   ) {}
 
   /** `phoneNumber` is the sender's number in E.164, as WhatsApp reported it. */
@@ -88,6 +91,20 @@ export class BindWhatsAppNumber {
         $set: { subscriberId: subscriber.subscriberId, ...proof },
         ...(ownedAlready ? {} : { $unset: HANDLE_UNSET }),
       });
+
+      if (!ownedAlready) {
+        // The number's conversation still names its old owner, who would be asked what its new owner then answers.
+        // Not worth failing the bind over: the number has moved either way.
+        await this.conversationRepository
+          .removeSubscriberFromPlatformUserThreads({
+            environmentId: payload.environmentId,
+            organizationId: payload.organizationId,
+            integrationId: String(integration._id),
+            platformUserId: normalizePhoneForMeta(phoneNumber),
+            subscriberId: existing.subscriberId,
+          })
+          .catch(() => undefined);
+      }
 
       return { created: true, subscriberId: subscriber.subscriberId };
     }

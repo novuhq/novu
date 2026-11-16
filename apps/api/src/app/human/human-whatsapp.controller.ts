@@ -162,8 +162,8 @@ export class HumanWhatsAppController {
     };
     const { subscriberId } = await this.humanOperator.require(scope);
 
-    // The operator's own number: any message from it binds while the window this opens lasts. Invites keep codes.
-    return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId, proof: 'operator' });
+    // Only the message that carries the code binds: a plain hello would bind whoever wrote to the number first.
+    return this.issueHumanWhatsAppLinkUsecase.execute({ ...scope, subscriberId });
   }
 
   /**

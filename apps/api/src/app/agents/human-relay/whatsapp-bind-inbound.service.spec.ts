@@ -32,14 +32,9 @@ describe('WhatsAppBindInbound', () => {
   function setup({
     consumed = { status: 'consumed', payload: PAYLOAD } as unknown,
     bound = null as unknown,
-    windowOpen = false,
     enabled = true,
   } = {}) {
     const codes = { consume: sinon.stub().resolves(consumed) };
-    const operatorWindow = {
-      isOpen: sinon.stub().resolves(windowOpen),
-      take: sinon.stub().resolves(windowOpen ? PAYLOAD : null),
-    };
     const bindWhatsAppNumber = { execute: sinon.stub().resolves({ created: true, subscriberId: 'ada' }) };
     const channelEndpointRepository = {
       findByPlatformIdentity: sinon.stub().resolves(bound),
@@ -57,7 +52,6 @@ describe('WhatsAppBindInbound', () => {
       contactHandles as never,
       outboundGateway as never,
       logger as never,
-      operatorWindow as never,
       featureFlags as never,
       heldRelease as never
     );
@@ -65,7 +59,6 @@ describe('WhatsAppBindInbound', () => {
     return {
       service,
       codes,
-      operatorWindow,
       bindWhatsAppNumber,
       contactHandles,
       outboundGateway,
@@ -145,12 +138,13 @@ describe('WhatsAppBindInbound', () => {
     expect(stranger.heldRelease.release.called).to.equal(false);
   });
 
-  it('binds no operator from a hello once WhatsApp is turned off, and leaves their window as it was', async () => {
-    const { service, operatorWindow, bindWhatsAppNumber } = setup({ windowOpen: true, enabled: false });
+  it('binds nobody from a plain hello: only the message that carries the code does', async () => {
+    const { service, codes, bindWhatsAppNumber, outboundGateway } = setup();
 
     expect(await send(service, 'Hi')).to.equal(false);
-    expect(operatorWindow.take.called).to.equal(false);
+    expect(codes.consume.called).to.equal(false);
     expect(bindWhatsAppNumber.execute.called).to.equal(false);
+    expect(outboundGateway.replyOnThread.called).to.equal(false);
   });
 
   it('lets an ordinary message through untouched', async () => {
@@ -159,41 +153,6 @@ describe('WhatsAppBindInbound', () => {
     expect(await send(service, 'yes, go ahead')).to.equal(false);
     expect(codes.consume.called).to.equal(false);
     expect(outboundGateway.replyOnThread.called).to.equal(false);
-  });
-
-  it('binds the operator’s first message without a code while their setup waits for it', async () => {
-    const { service, codes, operatorWindow, bindWhatsAppNumber, outboundGateway } = setup({ windowOpen: true });
-
-    expect(await send(service, 'Hi')).to.equal(true);
-
-    expect(codes.consume.called).to.equal(false);
-    expect(operatorWindow.take.firstCall.args).to.deep.equal(['integration1']);
-    expect(bindWhatsAppNumber.execute.firstCall.args).to.deep.equal([PAYLOAD, '+15550100199']);
-    expect(replied(outboundGateway)).to.equal(WHATSAPP_BIND_SUCCESS_REPLY);
-  });
-
-  it('lets a number that is already connected through, and keeps the operator’s window open', async () => {
-    const { service, operatorWindow, bindWhatsAppNumber } = setup({
-      windowOpen: true,
-      bound: {
-        _id: 'endpoint1',
-        type: 'phone',
-        providerId: 'whatsapp-business',
-        endpoint: { phoneNumber: '+15550100199', provedAt: '2026-11-01T10:00:00.000Z' },
-      },
-    });
-
-    expect(await send(service, 'any news?')).to.equal(false);
-    expect(operatorWindow.take.called).to.equal(false);
-    expect(bindWhatsAppNumber.execute.called).to.equal(false);
-  });
-
-  it('binds nothing without a code when no setup waits for the operator', async () => {
-    const { service, operatorWindow, bindWhatsAppNumber } = setup();
-
-    expect(await send(service, 'Hi')).to.equal(false);
-    expect(operatorWindow.take.called).to.equal(false);
-    expect(bindWhatsAppNumber.execute.called).to.equal(false);
   });
 
   it('only listens on the relay’s WhatsApp', async () => {

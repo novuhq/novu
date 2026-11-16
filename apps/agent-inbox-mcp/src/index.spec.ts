@@ -882,7 +882,7 @@ describe('a message waiting on a WhatsApp reply', () => {
     });
 
     expect(text).toContain(
-      "So alice wasn't asked to reply; this goes out only if they write first. Tell the user, with any link Meta gave, so they can fix it, then send again."
+      "So alice wasn't asked to reply; this goes out only if they write first. Tell the user, with any link Meta gave, so they can fix it. Don't send it again: this one still waits and goes out when they write, so a second send would reach them twice."
     );
     expect(text).not.toContain('so they got your first message');
   });

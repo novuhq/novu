@@ -34,13 +34,15 @@ describe('BindWhatsAppNumber', () => {
       update: sinon.stub().resolves({ matched: 1, modified: 1 }),
     };
     const createChannelEndpoint = { execute: sinon.stub().resolves({ _id: 'endpoint1' }) };
+    const conversationRepository = { removeSubscriberFromPlatformUserThreads: sinon.stub().resolves(1) };
     const usecase = new BindWhatsAppNumber(
       agentRepository as never,
       agentIntegrationRepository as never,
       integrationRepository as never,
       subscriberRepository as never,
       channelEndpointRepository as never,
-      createChannelEndpoint as never
+      createChannelEndpoint as never,
+      conversationRepository as never
     );
 
     return {
@@ -49,6 +51,7 @@ describe('BindWhatsAppNumber', () => {
       agentIntegrationRepository,
       channelEndpointRepository,
       createChannelEndpoint,
+      conversationRepository,
     };
   }
 
@@ -139,6 +142,19 @@ describe('BindWhatsAppNumber', () => {
     });
     expect(channelEndpointRepository.delete.called).to.equal(false);
     expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('takes the old owner out of the number’s conversation when it moves, and nobody when it doesn’t', async () => {
+    const moved = setup({ existing: { _id: 'endpoint0', subscriberId: 'grace', ...PROVED } });
+    const kept = setup({ existing: { _id: 'endpoint0', subscriberId: 'ada', type: PROVED.type, endpoint: {} } });
+
+    await moved.usecase.execute(PAYLOAD, NUMBER);
+    await kept.usecase.execute(PAYLOAD, NUMBER).catch(() => undefined);
+
+    const [removed] = moved.conversationRepository.removeSubscriberFromPlatformUserThreads.firstCall.args;
+    expect(removed).to.include({ environmentId: 'env1', organizationId: 'org1', subscriberId: 'grace' });
+    expect(removed.platformUserId).to.equal(NUMBER.replace(/\D/g, ''));
+    expect(kept.conversationRepository.removeSubscriberFromPlatformUserThreads.called).to.equal(false);
   });
 
   it('keeps the proof off a number that changed while it was being bound', async () => {

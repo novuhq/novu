@@ -83,7 +83,7 @@ const BY_HAND_STEPS = 2;
  * The drawer that sets WhatsApp up. Before anything is connected it opens on the prompt for the operator's own
  * agent, which runs `channel add whatsapp` (or `channel_add`) and hands back the link to this drawer; the steps
  * for doing it by hand fold out under it. By hand, the operator connects their own WhatsApp Business account with
- * Meta's Facebook button, then connects their own number by sending it any message from a wa.me link. The Configure
+ * Meta's Facebook button, then connects their own number by sending it the coded message from a wa.me link. The Configure
  * page's channels open it, and so does the last step of the onboarding.
  */
 export function WhatsAppSetup({
@@ -116,7 +116,7 @@ export function WhatsAppSetup({
     const result = await issueWhatsAppLinkAction().catch(() => null);
     if (result?.ok) {
       liveLink.current = {
-        link: { url: result.url, expiresAt: result.expiresAt },
+        link: { url: result.url, code: result.code, expiresAt: result.expiresAt },
         businessNumber,
       };
     } else {
@@ -462,8 +462,9 @@ function OwnNumberSteps({
 }
 
 /**
- * The business number to write to, the wa.me link with a hello ready to send, and a QR code to open it on a phone.
- * No code: while this step waits, the first message from a number that isn't connected yet binds it as the operator's.
+ * The business number to write to, the wa.me link with the message ready to send, and a QR code to open it on a
+ * phone. The message carries a one-time code, and only it connects the operator's number: a plain hello from anyone
+ * who wrote to the business number first would otherwise be taken for the operator.
  */
 function SendCode({
   handle,
@@ -484,8 +485,14 @@ function SendCode({
     <div className="flex flex-wrap items-center gap-4.5">
       <div className="flex min-w-0 flex-1 basis-60 flex-col gap-2.5">
         <p className="text-[13px] leading-4.5 text-secondary">
-          From your own phone, send any message to {handle}’s new number.
+          From your own phone, send {handle}’s new number the message WhatsApp opens with. It carries a one-time code
+          that connects your number, so send it as it is.
         </p>
+        {link.code && (
+          <p className="text-xs leading-4 text-muted">
+            Typing it yourself? Send <span className="font-mono text-secondary">{link.code}</span> to that number.
+          </p>
+        )}
         {businessNumber && <CopyField value={businessNumber} label={`Copy ${handle}’s WhatsApp number`} />}
         <a
           href={link.url}
