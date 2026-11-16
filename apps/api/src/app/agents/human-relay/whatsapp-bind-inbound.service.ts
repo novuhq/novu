@@ -74,13 +74,7 @@ export class WhatsAppBindInbound {
     }
 
     // WhatsApp turned off for the organization binds nothing: the message goes on as any other would.
-    const enabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_INBOX_WHATSAPP_ENABLED,
-      defaultValue: false,
-      organization: { _id: config.organizationId },
-      environment: { _id: config.environmentId },
-    });
-    if (!enabled) {
+    if (!(await this.isWhatsAppEnabled(config))) {
       return message;
     }
 
@@ -134,7 +128,8 @@ export class WhatsAppBindInbound {
     thread: Thread,
     message: Message
   ): Promise<boolean> {
-    if (!(await this.operatorWindow.isOpen(config.integrationId))) {
+    // The flag is read only while a window is open, so an ordinary message costs no flag read. Off binds nobody.
+    if (!(await this.operatorWindow.isOpen(config.integrationId)) || !(await this.isWhatsAppEnabled(config))) {
       return false;
     }
 
@@ -223,6 +218,15 @@ export class WhatsAppBindInbound {
     } catch (err) {
       this.logger.warn(err, 'Could not keep when a WhatsApp number last wrote a code');
     }
+  }
+
+  private async isWhatsAppEnabled(config: ResolvedAgentConfig): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INBOX_WHATSAPP_ENABLED,
+      defaultValue: false,
+      organization: { _id: config.organizationId },
+      environment: { _id: config.environmentId },
+    });
   }
 
   private async isBound(config: ResolvedAgentConfig, phoneNumber: string): Promise<boolean> {

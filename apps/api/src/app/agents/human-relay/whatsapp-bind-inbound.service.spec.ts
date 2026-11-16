@@ -145,6 +145,14 @@ describe('WhatsAppBindInbound', () => {
     expect(stranger.heldRelease.release.called).to.equal(false);
   });
 
+  it('binds no operator from a hello once WhatsApp is turned off, and leaves their window as it was', async () => {
+    const { service, operatorWindow, bindWhatsAppNumber } = setup({ windowOpen: true, enabled: false });
+
+    expect(await send(service, 'Hi')).to.equal(false);
+    expect(operatorWindow.take.called).to.equal(false);
+    expect(bindWhatsAppNumber.execute.called).to.equal(false);
+  });
+
   it('lets an ordinary message through untouched', async () => {
     const { service, codes, outboundGateway } = setup();
 
