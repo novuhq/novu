@@ -21,7 +21,8 @@ export type FirstMessage = {
   approvedBody?: string;
 };
 
-const VARIABLE = /\{\{\s*([^{}]*?)\s*\}\}/g;
+/** The name is trimmed after the match: spaces matched by the pattern itself would make it backtrack. */
+const VARIABLE = /\{\{([^{}]*)\}\}/g;
 
 /** Why Meta would turn this down, or null when it can go. */
 export function firstMessageProblem(body: string): string | null {
@@ -34,7 +35,7 @@ export function firstMessageProblem(body: string): string | null {
     return `Keep the message to ${FIRST_MESSAGE_MAX_LENGTH} characters.`;
   }
 
-  const variables = [...text.matchAll(VARIABLE)].map((match) => match[1]);
+  const variables = [...text.matchAll(VARIABLE)].map((match) => match[1].trim());
   if (variables.some((name) => name !== AGENT_NAME_VARIABLE)) {
     return `The only variable the message can have is ${AGENT_NAME_TOKEN}.`;
   }

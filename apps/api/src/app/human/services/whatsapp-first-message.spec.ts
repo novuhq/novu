@@ -7,6 +7,7 @@ import {
   fillFirstMessage,
   firstMessageProblem,
   nextFirstMessageName,
+  usesAgentName,
 } from './whatsapp-first-message';
 import { FirstMessageSubmitError, WhatsAppFirstMessageService } from './whatsapp-first-message.service';
 
@@ -18,6 +19,15 @@ describe('WhatsApp first message', () => {
 
     it('takes a message without the agent’s name', () => {
       expect(firstMessageProblem('You have a new message. Reply here to read it.')).to.equal(null);
+    });
+
+    it('takes the variable with spaces inside its braces, and reads a long run of them at once', () => {
+      expect(firstMessageProblem('A message from {{ agent_name }} for you.')).to.equal(null);
+      expect(usesAgentName('A message from {{ agent_name }} for you.')).to.equal(true);
+
+      const started = Date.now();
+      expect(usesAgentName(`${'{{'.repeat(2000)}${' '.repeat(200_000)}`)).to.equal(false);
+      expect(Date.now() - started).to.be.lessThan(500);
     });
 
     it('turns down what Meta would', () => {

@@ -24,7 +24,12 @@ export const FIRST_MESSAGE_MAX_LENGTH = 1024;
 /** What Meta's review sees in place of the variable. */
 export const AGENT_NAME_EXAMPLE = 'Atlas';
 
-const VARIABLE = /\{\{\s*([^{}]*?)\s*\}\}/g;
+/** The name is trimmed after the match: spaces matched by the pattern itself would make it backtrack. */
+const VARIABLE = /\{\{([^{}]*)\}\}/g;
+
+function variablesOf(text: string): string[] {
+  return [...text.matchAll(VARIABLE)].map((match) => match[1].trim());
+}
 
 /** Why Meta would turn this body down before it gets there, or null when it can go. */
 export function firstMessageProblem(body: string): string | null {
@@ -37,7 +42,7 @@ export function firstMessageProblem(body: string): string | null {
     return `Keep the message to ${FIRST_MESSAGE_MAX_LENGTH} characters.`;
   }
 
-  const variables = [...text.matchAll(VARIABLE)].map((match) => match[1]);
+  const variables = variablesOf(text);
   if (variables.some((name) => name !== AGENT_NAME_VARIABLE)) {
     return `The only variable the message can have is {{${AGENT_NAME_VARIABLE}}}.`;
   }
@@ -82,5 +87,5 @@ export function nextFirstMessageName(current: string | undefined): string {
 
 /** Whether the message has the agent's name in it, so a send passes the name and Meta's review needs an example. */
 export function usesAgentName(body: string): boolean {
-  return [...body.matchAll(VARIABLE)].some((match) => match[1] === AGENT_NAME_VARIABLE);
+  return variablesOf(body).includes(AGENT_NAME_VARIABLE);
 }
