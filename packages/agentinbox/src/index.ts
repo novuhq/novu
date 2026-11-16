@@ -226,6 +226,14 @@ program
   )
   .option('--agent-description <text>', 'a line about what your agent does, shown with its name')
   .option('--agent-picture <file-or-url>', 'your agent’s picture: a JPEG or PNG of up to 2 MB (needs `login`)')
+  .option(
+    '--agent-shape <shape>',
+    "a new agent's mascot: orb, pebble, drop, bean, peek or mochi (default: orb). It can't be changed later"
+  )
+  .option(
+    '--agent-color <color>',
+    "its colour: ember, marigold, coral, paprika, peach or bone (default: ember). It can't be changed later"
+  )
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
   .description('Create your agent inbox, then optionally connect Telegram or Slack')
   // Not `.action(setupCommand)`: commander's own last argument would be taken for the name on the screen.

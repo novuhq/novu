@@ -179,6 +179,23 @@ describe('SetupHumanRelay', () => {
     expect(create.firstCall.args[0]).to.include({ name: 'Deploy bot', description: 'Ships the app.' });
   });
 
+  it('answers how the agent looks, for the mascot on the CLI’s screen', async () => {
+    const { usecase, agentRepository } = setup();
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 7 } };
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay', look });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal(look);
+
+    // An agent nobody picked a look for has the original one.
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal({
+      shape: 'orb',
+      color: 'ember',
+      art: { kind: 'rays', seed: 0 },
+    });
+  });
+
   it('calls a new relay agent "Agent" until it is named', async () => {
     const { usecase, agentRepository } = setup();
     agentRepository.findOne.resolves(null);

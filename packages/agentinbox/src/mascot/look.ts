@@ -15,6 +15,12 @@ export const LOOK_COLORS = ['ember', 'marigold', 'coral', 'paprika', 'peach', 'b
 
 export type LookColor = (typeof LOOK_COLORS)[number];
 
+/** As much of an agent's look as the terminal draws: its mascot's body and colour. Its card's art is the page's. */
+export interface MascotLook {
+  shape: MascotBody;
+  color: LookColor;
+}
+
 /** Where a body ends around its middle, in sphere radii; see the dashboard's `BodyOutline`. */
 export interface BodyOutline {
   dx: number;
@@ -66,6 +72,31 @@ export function outlineRadius(outline: BodyOutline, angle: number): number {
   }
 
   return radius;
+}
+
+/**
+ * A body on its way from `from` to `to`: every measure `share` of the way there, as the dashboard's `mixOutlines`
+ * has it. At 0 and 1 it is exactly the one at that end, so a finished bend draws the body itself.
+ */
+export function mixOutlines(from: BodyOutline, to: BodyOutline, share: number): BodyOutline {
+  if (share <= 0) {
+    return from;
+  }
+  if (share >= 1) {
+    return to;
+  }
+
+  const terms = Math.max(from.a.length, to.a.length);
+  const mix = (a: number, b: number) => a + (b - a) * share;
+  const at = (list: readonly number[], k: number) => list[k] ?? 0;
+
+  return {
+    dx: mix(from.dx, to.dx),
+    dy: mix(from.dy, to.dy),
+    a: Array.from({ length: terms }, (_, k) => mix(at(from.a, k), at(to.a, k))),
+    b: Array.from({ length: terms }, (_, k) => mix(at(from.b, k), at(to.b, k))),
+    face: { x: mix(from.face.x, to.face.x), y: mix(from.face.y, to.face.y) },
+  };
 }
 
 /** The design's six tones of each colour, darkest first, and whether the eyes on it are light or dark. */
@@ -197,7 +228,8 @@ export function terminalPalette(color: LookColor): TerminalPalette {
   };
 }
 
-function mixRgb(from: Rgb, to: Rgb, share: number): Rgb {
+/** The same colour `share` of the way from one to the other. */
+export function mixRgb(from: Rgb, to: Rgb, share: number): Rgb {
   return [
     Math.round(from[0] + (to[0] - from[0]) * share),
     Math.round(from[1] + (to[1] - from[1]) * share),
@@ -213,4 +245,21 @@ export function isMascotBody(value: unknown): value is MascotBody {
 /** Whether `value` is one of the colours, as the API answers it. */
 export function isLookColor(value: unknown): value is LookColor {
   return (LOOK_COLORS as readonly unknown[]).includes(value);
+}
+
+/**
+ * The mascot's body and colour from a look as the API answers it, or as the config keeps it. None for an answer
+ * without a look, as an older API's is, and for a body or colour this CLI doesn't know yet: the orb in ember.
+ */
+export function lookOf(answer: unknown): MascotLook | undefined {
+  const look = (answer && typeof answer === 'object' ? answer : {}) as { shape?: unknown; color?: unknown };
+  const body = look.shape;
+  const color = look.color;
+
+  return isMascotBody(body) && isLookColor(color) ? { shape: body, color } : undefined;
+}
+
+/** Whether two looks draw the same mascot. No look is the orb in ember. */
+export function sameLook(a: MascotLook | undefined, b: MascotLook | undefined): boolean {
+  return (a?.shape ?? 'orb') === (b?.shape ?? 'orb') && (a?.color ?? 'ember') === (b?.color ?? 'ember');
 }

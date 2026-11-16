@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { agentLookOf, cardShownOf, ORIGINAL_AGENT_LOOK } from './agent-look';
+import { agentLookOf, cardShownOf, lookToMake, ORIGINAL_AGENT_LOOK } from './agent-look';
 
 describe('agentLookOf', () => {
   it('reads the look the operator picked', () => {
@@ -28,6 +28,35 @@ describe('agentLookOf', () => {
     look.art.seed = 7;
 
     expect(ORIGINAL_AGENT_LOOK.art.seed).to.equal(0);
+  });
+});
+
+describe('lookToMake', () => {
+  it('takes the whole look the dashboard sends', () => {
+    const look = { shape: 'bean', color: 'marigold', art: { kind: 'waves', seed: 42 } } as const;
+
+    expect(lookToMake(look)).to.deep.equal(look);
+  });
+
+  it('fills what a host left out with the original look’s', () => {
+    expect(lookToMake({ shape: 'drop', color: 'coral' })).to.deep.equal({
+      shape: 'drop',
+      color: 'coral',
+      art: { kind: 'rays', seed: 0 },
+    });
+    expect(lookToMake({ shape: 'drop' })).to.include({ shape: 'drop', color: 'ember' });
+    expect(lookToMake({ color: 'bone' })).to.include({ shape: 'orb', color: 'bone' });
+  });
+
+  it('makes no look where none was asked for, so the agent has none of its own', () => {
+    expect(lookToMake(undefined)).to.equal(undefined);
+    expect(lookToMake({})).to.equal(undefined);
+  });
+
+  it('hands out a copy of the original art, so nobody can change the original look', () => {
+    const made = lookToMake({ shape: 'drop' });
+
+    expect(made?.art).to.not.equal(ORIGINAL_AGENT_LOOK.art);
   });
 });
 

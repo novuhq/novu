@@ -35,18 +35,8 @@ export class GetNovuProviderCredentials {
         defaultValue: false,
       });
 
-      if (
-        integration.providerId === EmailProviderIdEnum.Novu &&
-        integration.recipientEmail &&
-        isTestProviderLimitsEnabled
-      ) {
-        const user = await this.userRepository.findById(integration.userId);
-
-        if (user?.email && user?.email !== integration.recipientEmail) {
-          throw new ForbiddenException(
-            `Recipient email (${integration.recipientEmail}) does not match the current logged-in user. Novu test provider can only be used to send emails to the current logged-in user. Connect your own email provider to send emails to other addresses.`
-          );
-        }
+      if (integration.providerId === EmailProviderIdEnum.Novu) {
+        await this.assertSharedProviderRecipient(integration, isTestProviderLimitsEnabled);
       }
 
       const limit = await this.calculateLimitNovuIntegration.execute({
@@ -101,4 +91,27 @@ export class GetNovuProviderCredentials {
       `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`
     );
   }
+
+  private async assertSharedProviderRecipient(
+    integration: GetNovuProviderCredentialsCommand,
+    isTestProviderLimitsEnabled: boolean
+  ) {
+    if (!integration.recipientEmail || (!integration.requireRecipientMatch && !isTestProviderLimitsEnabled)) {
+      return;
+    }
+
+    const user = await this.userRepository.findById(integration.userId);
+    const emailsMatch = Boolean(user?.email) && user?.email === integration.recipientEmail;
+    const rejectRecipient = integration.requireRecipientMatch
+      ? !emailsMatch
+      : Boolean(user?.email) && user?.email !== integration.recipientEmail;
+
+    if (rejectRecipient) {
+      throw new ForbiddenException(sharedProviderRecipientMismatch(integration.recipientEmail));
+    }
+  }
+}
+
+function sharedProviderRecipientMismatch(recipientEmail: string): string {
+  return `Recipient email (${recipientEmail}) does not match the current logged-in user. Novu test provider can only be used to send emails to the current logged-in user. Connect your own email provider to send emails to other addresses.`;
 }

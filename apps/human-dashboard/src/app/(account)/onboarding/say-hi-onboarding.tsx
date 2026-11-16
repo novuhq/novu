@@ -12,6 +12,7 @@ import { NameScreen } from '@/components/say-hi/name-screen';
 import { ProgressDots } from '@/components/say-hi/parts';
 import { SaidHiScreen } from '@/components/say-hi/said-hi-screen';
 import { SayHiScreen } from '@/components/say-hi/say-hi-screen';
+import { AgentLookProvider } from '@/components/ui/agent-look';
 import { StatusPoll } from '@/components/ui/status-poll';
 import { DEFAULT_HOST, type HostId } from '@/lib/hosts';
 import type { SayHiView } from '@/lib/human-onboarding';
@@ -86,7 +87,10 @@ export function SayHiOnboarding({ view, initialHost, aside }: SayHiOnboardingPro
             )}
             {step === 'host' && view.agent && <HostScreen agent={view.agent} host={host} onHostChange={setHost} />}
             {step === 'connect' && view.agent && (
-              <ConnectScreen view={view} agent={view.agent} host={host} onHostChange={setHost} />
+              // The connect box draws the agent's mascot once a host is in, as it does on Configure.
+              <AgentLookProvider look={look}>
+                <ConnectScreen view={view} agent={view.agent} host={host} onHostChange={setHost} />
+              </AgentLookProvider>
             )}
             {step === 'say-hi' && view.agent && <SayHiScreen view={view} agent={view.agent} pickedHost={host} />}
             {step === 'said-hi' && view.agent && <SaidHiScreen view={view} agent={view.agent} pickedHost={host} />}

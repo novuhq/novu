@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { dismissDoneBannerAction } from '@/app/(account)/onboarding/actions';
 import { FoldAwayButton, FoldsAway } from '@/components/dashboard/folds-away';
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
+import { AgentMascot } from '@/components/ui/agent-look';
 import { buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { ONBOARDING_PATH, ONBOARDING_STEPS, type OnboardingStep } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
 
@@ -112,7 +112,7 @@ export function SetupDoneBanner({ handle }: { handle: string }) {
     <FoldsAway action={dismissDoneBannerAction}>
       <section className="dither-side flex animate-rise-in flex-wrap items-center gap-3 rounded-lg border border-border-strong bg-subtle px-3.5 py-3 [--dither-opacity:0.75] motion-reduce:animate-none">
         {/* An icon here, not a character: it doesn't follow the pointer. */}
-        <MascotFace art="idle" mood="happy" still className="size-7" />
+        <AgentMascot art="idle" mood="happy" still className="size-7" />
         <div className="flex min-w-56 flex-1 flex-col gap-px">
           <h2 className="text-[13px] leading-4.5 font-medium text-foreground">{handle} is set up</h2>
           <p className="text-xs leading-4 text-secondary">

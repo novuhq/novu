@@ -5,10 +5,10 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 
 import { AgentAvatar } from '@/components/ui/agent-avatar';
+import { AgentLookProvider, AgentMascot } from '@/components/ui/agent-look';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/input';
-import { MascotFace } from '@/components/ui/mascot-face';
 import { useInviteStatus } from '@/hooks/use-invite-status';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import {
@@ -21,6 +21,7 @@ import {
   InviteRequestError,
   setInviteDefaultChannel,
 } from '@/lib/invite-api';
+import { mascotLookOf } from '@/lib/look';
 import { cn } from '@/lib/utils';
 
 import { AppIcon } from './app-icon';
@@ -75,7 +76,11 @@ export function InvitePage({ apiUrl, token }: { apiUrl: string; token: string })
     );
   }
 
-  return <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />;
+  return (
+    <AgentLookProvider look={mascotLookOf(state.status.agentLook)}>
+      <ActiveInvite apiUrl={apiUrl} token={token} status={state.status} onChanged={() => void refresh()} />
+    </AgentLookProvider>
+  );
 }
 
 function followConnectResult(
@@ -598,7 +603,7 @@ function DoneCard({ agentName, inviteeName, via, isDefault, telegramBot, onBack 
 
   return (
     <>
-      <MascotFace art="waiting" mood="happy" className="size-35" />
+      <AgentMascot art="waiting" mood="happy" className="size-35" />
       <h1 className="text-2xl leading-7.5 tracking-[-0.02em]">
         You&apos;re in{firstName && ', '}
         {firstName && <Accent>{firstName}</Accent>}

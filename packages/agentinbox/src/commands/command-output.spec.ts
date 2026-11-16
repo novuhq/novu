@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { ApiError } from '../api/client';
 import type { CliConfig } from '../config';
 import { HOST_MARKER_VARIABLES } from '../host';
+import { terminalPalette } from '../mascot/look';
 import { setOpenedScreen } from '../screen/opened';
 import { stripEscapes } from '../screen/terminal';
 import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
@@ -14,16 +15,34 @@ import { VirtualTerminal } from '../screen/virtual-terminal.fixture';
 /** What a person types at the prompts, in turn. */
 const typed = vi.hoisted(() => [] as string[]);
 
+/** How the API says the agent looks, in the answers that carry it. None, as an API from before looks answers. */
+const looks = vi.hoisted(() => ({
+  setup: undefined as unknown,
+  operator: undefined as unknown,
+  /** Whether the API says, with an address it checks, that a new agent can be given a look. */
+  canBePicked: false,
+}));
+
 // A terminal's readline: it writes the question and echoes the answer as it is typed. An answer can start out
-// filled in, which Enter then takes.
+// filled in, which Enter then takes. Arrows (`→→`) are keys pressed before Enter, not an answer: they move a pick.
 vi.mock('node:readline', () => {
-  const createInterface = ({ output }: { output: NodeJS.WritableStream }) => {
+  const arrows: Record<string, string> = { '←': 'left', '→': 'right', '↑': 'up', '↓': 'down' };
+  const createInterface = ({ input, output }: { input: NodeJS.ReadableStream; output: NodeJS.WritableStream }) => {
     let filledIn = '';
 
     return {
       question: (question: string, answer: (text: string) => void) => {
         queueMicrotask(() => {
           const text = typed.shift() || filledIn;
+          if (text && [...text].every((key) => key in arrows)) {
+            for (const key of text) {
+              input.emit('keypress', undefined, { name: arrows[key] });
+            }
+            answer('');
+
+            return;
+          }
+
           output.write(`${question}${text}\n`);
           answer(text);
         });
@@ -75,6 +94,7 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
     agentIdentifier: 'human-relay',
     agentName: 'Atlas',
     subscriberId: input.subscriberId,
+    ...(looks.setup ? { look: looks.setup } : {}),
   })),
   // An agent exists once a setup was saved on this computer.
   findRelayAgent: vi.fn(async () => (loadConfig() ? { agentId: 'agent_1', name: 'Atlas' } : null)),
@@ -82,6 +102,7 @@ vi.mock('../api/agent-inbox', async (importOriginal) => ({
     handle,
     available: true,
     domain: 'agentinbox.md',
+    ...(looks.canBePicked ? { canPickLook: true } : {}),
   })),
   requestAddressVerification: vi.fn(async () => ({
     address: 'a***@example.com',
@@ -96,6 +117,11 @@ vi.mock('../api/login', () => ({
   getKeylessClaimToken: vi.fn(async () => null),
   hasSubscriber: vi.fn(async () => true),
   findOperator: (...args: unknown[]) => findOperator(...args),
+  // The account's whole answer, whose contact is what `findOperator` gives.
+  readOperator: async (...args: unknown[]) => ({
+    subscriberId: await findOperator(...args),
+    ...(looks.operator ? { agentLook: looks.operator } : {}),
+  }),
 }));
 
 vi.mock('../api/connect', () => ({
@@ -140,6 +166,14 @@ const keylessConfig: CliConfig = {
   subscriberId: 'ada',
 };
 
+/** A look as the API answers it, the card's art included, and as much of it as the CLI keeps. */
+const DROP_IN_CORAL = { shape: 'drop', color: 'coral', art: { kind: 'waves', seed: 7 } };
+const DROP = { shape: 'drop', color: 'coral' };
+
+/** How a tone of the mascot is written on a terminal with 24-bit colour: one that only the mascot is drawn in. */
+const toneOf = (color: 'ember' | 'coral' | 'bone', level: number) =>
+  `38;2;${terminalPalette(color).dark[level - 1].join(';')}m`;
+
 /** The commands as the tests run them, each with the answers its story needs. */
 const run = {
   keylessSetup: async () => {
@@ -148,6 +182,29 @@ const run = {
   },
   keylessSetupUnnamed: async () => {
     loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com' });
+  },
+  /** `--agent-shape` and `--agent-color`, with an API that takes the look. */
+  setupWithLookPassed: async () => {
+    loadConfig.mockReturnValue(null);
+    looks.setup = DROP_IN_CORAL;
+    await setupCommand(undefined, {
+      email: 'ada@example.com',
+      agentName: 'Atlas',
+      agentShape: 'drop',
+      agentColor: 'coral',
+    });
+  },
+  /** The same options, with an API that leaves the look out: looks aren't on for this setup. */
+  setupWithLookNotTaken: async () => {
+    loadConfig.mockReturnValue(null);
+    await setupCommand(undefined, { email: 'ada@example.com', agentName: 'Atlas', agentShape: 'drop' });
+  },
+  /** A person at a terminal, with an API that says a new agent can be given a look. */
+  setupAskingForLook: async () => {
+    loadConfig.mockReturnValue(null);
+    looks.canBePicked = true;
+    looks.setup = DROP_IN_CORAL;
     await setupCommand(undefined, { email: 'ada@example.com' });
   },
   keylessSetupStops: async () => {
@@ -186,6 +243,28 @@ const run = {
   },
   connect: async () => {
     await connectCommand('atlas', { code: 'BCDF-GHJK' });
+  },
+  connectAgentWithLook: async () => {
+    connectWithCode.mockResolvedValue({
+      apiKey: 'sk_account',
+      environmentId: 'env_1',
+      agent: { identifier: 'human-relay', name: 'Atlas', handle: 'atlas', look: DROP_IN_CORAL },
+    });
+    await connectCommand('atlas', { code: 'BCDF-GHJK' });
+  },
+  loginAgentWithLook: async () => {
+    findOperator.mockResolvedValue('ada_owner');
+    looks.operator = DROP_IN_CORAL;
+    await loginCommand({});
+  },
+  setupAgentWithLook: async () => {
+    loadConfig.mockReturnValue(accountConfig);
+    looks.setup = DROP_IN_CORAL;
+    await setupCommand('telegram', {});
+  },
+  setupWithSavedLook: async () => {
+    loadConfig.mockReturnValue({ ...accountConfig, look: { shape: 'bean', color: 'bone' } });
+    await setupCommand('telegram', {});
   },
   connectOverSetup: async () => {
     loadConfig.mockReturnValue(accountConfig);
@@ -256,6 +335,9 @@ async function printed(scenario: keyof typeof run, kind: Streams = 'pipe', size:
   streamsAre(kind, size);
 
   loadConfig.mockReset().mockReturnValue(null);
+  looks.setup = undefined;
+  looks.operator = undefined;
+  looks.canBePicked = false;
   isEmailVerified.mockReset().mockResolvedValue(false);
   waitForVerifiedEmail.mockReset().mockResolvedValue(undefined);
   waitForEndpoint.mockReset().mockResolvedValue(undefined);
@@ -358,6 +440,26 @@ describe('without a terminal', () => {
       "Waiting for you to confirm your email (Ctrl-C detaches; resume with: npx @agentinbox/cli setup email)
       "
     `);
+  });
+
+  it('sends the shape and the colour passed for a new agent, and says nothing more when the API takes them', async () => {
+    const output = await printed('setupWithLookPassed');
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(output.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+    expect(output.stdout).not.toContain('has the original one');
+    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ look: DROP }));
+  });
+
+  it('says the agent has the original look where the API left the passed one out', async () => {
+    const output = await printed('setupWithLookNotTaken');
+
+    expect(output.exitCode).toBe(0);
+    expect(output.stdout).toContain("• Looks aren't available here yet, so your agent has the original one.");
   });
 
   it('refuses to set up a new agent with no name', async () => {
@@ -570,6 +672,24 @@ function shownWhileRunning(output: { stdout: string }): string {
   return words(output.stdout);
 }
 
+describe('whatever the agent looks like', () => {
+  it('prints byte for byte what it printed before, where there is no screen', async () => {
+    for (const [scenario, withLook] of [
+      ['connect', 'connectAgentWithLook'],
+      ['login', 'loginAgentWithLook'],
+      ['telegramSetup', 'setupAgentWithLook'],
+      ['telegramSetup', 'setupWithSavedLook'],
+    ] as const) {
+      const before = await printed(scenario);
+      const now = await printed(withLook);
+
+      expect(now.stdout).toBe(before.stdout);
+      expect(now.stderr).toBe(before.stderr);
+      expect(now.exitCode).toBe(before.exitCode);
+    }
+  });
+});
+
 describe('on a terminal', () => {
   beforeEach(() => {
     // The still faces: nothing waits for the mascot's eyes, so the runs are as quick as without a screen.
@@ -666,6 +786,29 @@ describe('on a terminal', () => {
     expect(plain.stderr).toContain('This code expired. (410)');
   });
 
+  it('opens as the orb in ember, and leaves the mascot in the agent’s look once the API has said it', async () => {
+    for (const scenario of ['connectAgentWithLook', 'loginAgentWithLook', 'setupAgentWithLook'] as const) {
+      const shown = await printed(scenario, 'terminal');
+
+      expect(shown.exitCode).toBe(0);
+      expect(shown.stdout).toContain(toneOf('ember', 4));
+      expect(shown.stdout.lastIndexOf(toneOf('coral', 5))).toBeGreaterThan(
+        shown.stdout.lastIndexOf(toneOf('ember', 4))
+      );
+      // Kept for the next command's screen to open in.
+      expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ look: DROP }));
+    }
+  });
+
+  it('opens in the look saved for the agent, and keeps it when an API from before looks says nothing', async () => {
+    const shown = await printed('setupWithSavedLook', 'terminal');
+
+    expect(shown.exitCode).toBe(0);
+    expect(shown.stdout).toContain(toneOf('bone', 5));
+    expect(shown.stdout).not.toContain(toneOf('ember', 4));
+    expect(saveConfig).toHaveBeenLastCalledWith(expect.objectContaining({ look: { shape: 'bean', color: 'bone' } }));
+  });
+
   it('draws the mascot in braille, hides the cursor while it draws, and shows it again at the end', async () => {
     for (const scenario of ['connect', 'expiredCode'] as const) {
       const shown = await printed(scenario, 'terminal');
@@ -716,6 +859,45 @@ describe('on a terminal', () => {
     );
     expect(leftOnScreen(shown)).toContain("your agent's name: atlas prime");
     expect(leftOnScreen(shown)).toContain("your agent's address: atlas-prime@agentinbox.md");
+  });
+
+  it('asks for the shape and the colour after the address, where the API says a look can be picked', async () => {
+    // Two keys to the right of the orb is the drop, and two to the right of ember is coral.
+    typed.push('Ada', 'Lovelace', 'Atlas', '', '→→', '→→');
+    const shown = await printed('setupAskingForLook', 'terminal', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+    expect(leftOnScreen(shown)).toContain('shape: drop');
+    expect(leftOnScreen(shown)).toContain('color: coral');
+    // The mascot ends up in the look that was picked.
+    expect(shown.stdout.lastIndexOf(toneOf('coral', 5))).toBeGreaterThan(shown.stdout.lastIndexOf(toneOf('ember', 4)));
+  });
+
+  it('names the shapes and the colours for one to be typed, where no screen is drawn to pick them on', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas', '', 'drop', '3');
+    const shown = await printed('setupAskingForLook', 'stdout', { typing: true });
+    const { setupRelay } = await import('../api/agent-inbox');
+
+    expect(shown.exitCode).toBe(0);
+    expect(shown.stdout).toContain('Shape (orb, pebble, drop, bean, peek or mochi) [orb]: drop');
+    expect(shown.stdout).toContain('Color (ember, marigold, coral, paprika, peach or bone) [ember]: 3');
+    expect(vi.mocked(setupRelay)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ agentName: 'Atlas', look: { shape: 'drop', color: 'coral' } })
+    );
+  });
+
+  it('asks nothing about the look where the API doesn’t say one can be picked', async () => {
+    typed.push('Ada', 'Lovelace', 'Atlas', '');
+    const shown = await printed('keylessSetupUnnamed', 'terminal', { typing: true });
+
+    expect(shown.exitCode).toBe(0);
+    expect(leftOnScreen(shown)).not.toContain('shape:');
   });
 
   it('stops where the answer is no, as before', async () => {

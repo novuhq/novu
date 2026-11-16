@@ -137,7 +137,13 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect(res.body.data).to.deep.equal({
         apiKey: session.apiKey,
         environmentId: session.environment._id,
-        agent: { identifier: 'human-relay', name: res.body.data.agent.name, handle },
+        // Its look goes along for the CLI's mascot: the original one, as nobody picked another.
+        agent: {
+          identifier: 'human-relay',
+          name: res.body.data.agent.name,
+          handle,
+          look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+        },
         host: 'general',
       });
 

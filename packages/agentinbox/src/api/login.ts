@@ -92,24 +92,35 @@ export async function hasSubscriber(client: ApiClient, subscriberId: string): Pr
   }
 }
 
-/**
- * The contact the account behind `client` has for its owner: made by `npx @agentinbox/cli setup` on any computer, or on
- * the Agent Inbox dashboard. Undefined when the account has none yet. APIs from before it was recorded answer 404.
- */
-export async function findOperator(client: ApiClient): Promise<string | undefined> {
-  try {
-    const res = await client.axios.get<{ data?: { subscriberId?: string } } | { subscriberId?: string }>(
-      '/v1/operator'
-    );
+/** What the account answers about its owner, and about the agent that works for them. */
+export interface OperatorAnswer {
+  /** The contact the account has for its owner. Missing when it has none yet. */
+  subscriberId?: string;
+  /** How the account's agent looks (see `lookOf`). Missing while it has no agent, and from an API before looks. */
+  agentLook?: unknown;
+}
 
-    return unwrap(res.data)?.subscriberId || undefined;
+/** The account behind `client`, as `GET /v1/operator` answers it. APIs from before the operator was recorded answer 404. */
+export async function readOperator(client: ApiClient): Promise<OperatorAnswer> {
+  try {
+    const res = await client.axios.get<{ data?: OperatorAnswer } | OperatorAnswer>('/v1/operator');
+
+    return unwrap(res.data) ?? {};
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return undefined;
+      return {};
     }
 
     throw err;
   }
+}
+
+/**
+ * The contact the account behind `client` has for its owner: made by `npx @agentinbox/cli setup` on any computer, or on
+ * the Agent Inbox dashboard. Undefined when the account has none yet.
+ */
+export async function findOperator(client: ApiClient): Promise<string | undefined> {
+  return (await readOperator(client)).subscriberId || undefined;
 }
 
 function readCode(body: unknown): string | undefined {

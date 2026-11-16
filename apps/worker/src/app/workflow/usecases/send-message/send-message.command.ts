@@ -10,6 +10,13 @@ import type { SeverityLevelEnum, TriggerOverrides, WorkflowPreferences } from '@
 import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
+  /**
+   * Created per subscriber per step with the job, step and cached workflow; deep-copying them
+   * dominated create() cost. Consumers (send-message/*, incl. SendMessageChannelCommand) must not
+   * mutate nested fields in place — `step.template` comes from the shared workflow cache.
+   */
+  protected static readonly skipDeepTransform = true;
+
   @IsDefined()
   @IsString()
   identifier: string;

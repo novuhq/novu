@@ -33,7 +33,7 @@ The email address an agent has on agentinbox.md, such as sid@agentinbox.md, whic
 _Avoid_: email, mailbox
 
 **Mascot**:
-The drawn face an agent shows wherever it has no picture its operator uploaded.
+The drawn face an agent shows wherever it has no picture its operator uploaded, always in that agent's look: on agentinbox.md, in a terminal and on each channel. Where no agent is in view, such as on the home page or before an operator signs in, it is Agent Inbox's own face and keeps the original look.
 _Avoid_: avatar, blob
 
 **Look**:
