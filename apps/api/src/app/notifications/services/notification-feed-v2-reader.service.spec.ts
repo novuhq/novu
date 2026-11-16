@@ -103,7 +103,10 @@ describe('NotificationFeedV2Reader', () => {
     expect(stepRunV2Repository.findByWorkflowRunIds.firstCall.args[0]).to.deep.include({
       environmentId: ENVIRONMENT_ID,
       workflowRunIds: [NOTIFICATION_ID],
+      limit: 1000,
+      offset: 0,
     });
+    expect(stepRunV2Repository.findByWorkflowRunIds.calledOnce).to.equal(true);
     expect(notificationTemplateRepository.findStepsByIds.calledOnceWithExactly(ENVIRONMENT_ID, [TEMPLATE_ID])).to.equal(
       true
     );
@@ -111,7 +114,7 @@ describe('NotificationFeedV2Reader', () => {
     expect(feedItem.jobs[0]).to.deep.include({
       status: 'completed',
       payload: { foo: 'bar' },
-      step: { _id: 'step-1', name: 'In-App' },
+      step: { _id: 'step-1', name: 'In-App', stepId: 'in-app' },
     });
     expect(metricsService.recordMetric.called).to.equal(false);
   });
@@ -179,6 +182,36 @@ describe('NotificationFeedV2Reader', () => {
     expect(notificationRepository.findNotificationMetadataOnly.called).to.equal(false);
 
     expect(await reader.getFeedItem({ ...scope, notificationId: NOTIFICATION_ID })).to.equal(null);
+  });
+
+  it('pages through step rows until a read returns less than a full page', async () => {
+    const fullPage = Array.from({ length: 1000 }, (_, index) =>
+      buildStepRow({ step_run_id: `job-${String(index).padStart(4, '0')}` })
+    );
+    notificationRepository.findNotificationMetadataOnly.resolves(buildNotification());
+    stepRunV2Repository.findByWorkflowRunIds.onFirstCall().resolves(fullPage);
+    stepRunV2Repository.findByWorkflowRunIds
+      .onSecondCall()
+      .resolves([buildStepRow({ step_run_id: 'job-0999' }), buildStepRow({ step_run_id: 'job-1000' })]);
+
+    const feedItem = await reader.getFeedItem({ ...scope, notificationId: NOTIFICATION_ID });
+
+    expect(stepRunV2Repository.findByWorkflowRunIds.secondCall.args[0].offset).to.equal(1000);
+    expect(feedItem?.jobs).to.have.length(1001);
+  });
+
+  it('splits trace reads so every step run fits within one read', async () => {
+    notificationRepository.findNotificationMetadataOnly.resolves(buildNotification());
+    stepRunV2Repository.findByWorkflowRunIds.resolves(
+      Array.from({ length: 45 }, (_, index) => buildStepRow({ step_run_id: `job-${index}` }))
+    );
+
+    await reader.getFeedItem({ ...scope, notificationId: NOTIFICATION_ID });
+
+    expect(traceLogRepository.find.callCount).to.equal(3);
+    for (const call of traceLogRepository.find.getCalls()) {
+      expect(call.args[0].limit).to.equal(1000);
+    }
   });
 
   it('never reads step_runs_v2 for an empty page', async () => {

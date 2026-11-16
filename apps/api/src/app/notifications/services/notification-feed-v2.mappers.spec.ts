@@ -50,7 +50,8 @@ describe('notification feed v2 mappers', () => {
       const workflowStep: NotificationStepEntity = {
         _id: 'step-1',
         _templateId: 'message-template-1',
-        name: 'Current name',
+        name: 'Renamed since',
+        stepId: 'renamed-since',
         active: true,
         filters: [],
       };
@@ -65,7 +66,8 @@ describe('notification feed v2 mappers', () => {
         type: 'in_app',
         status: 'completed',
         providerId: 'novu',
-        step: workflowStep,
+        // The name and identifier the step ran with, recorded on the row, win over later workflow edits.
+        step: { ...workflowStep, name: 'In-App Step', stepId: 'in-app-step' },
         payload: { foo: 'bar' },
         digest: undefined,
         scheduleExtensionsCount: 2,
@@ -73,6 +75,21 @@ describe('notification feed v2 mappers', () => {
         updatedAt: '2026-11-05T10:00:01.000Z',
         executionDetails: [],
       });
+    });
+
+    it('keeps the workflow step name when the row recorded none', () => {
+      const workflowStep: NotificationStepEntity = {
+        _id: 'step-1',
+        _templateId: 'message-template-1',
+        name: 'Current',
+      };
+
+      const job = mapStepRunToJob(
+        buildStepRow({ step_name: '', step_identifier: '' }),
+        buildContext({ workflowStepsById: new Map([['step-1', workflowStep]]) })
+      );
+
+      expect(job.step).to.deep.equal(workflowStep);
     });
 
     it('falls back to the step identity recorded on the row when the workflow no longer has the step', () => {

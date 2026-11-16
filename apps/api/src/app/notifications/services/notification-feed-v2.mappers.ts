@@ -147,6 +147,22 @@ function buildStepFromRow(row: StepRunV2ReadRow): NotificationStepEntity {
   };
 }
 
+/**
+ * Filters and message template come from the workflow, which only keeps its current version. The name and
+ * identifier the step ran with are recorded on the row, so they win over later edits to the workflow.
+ */
+function resolveStep(row: StepRunV2ReadRow, workflowStep: NotificationStepEntity | undefined): NotificationStepEntity {
+  if (!workflowStep) {
+    return buildStepFromRow(row);
+  }
+
+  return {
+    ...workflowStep,
+    ...(row.step_name && { name: row.step_name }),
+    ...(row.step_identifier && { stepId: row.step_identifier }),
+  };
+}
+
 function buildDigest(row: StepRunV2ReadRow, digestEvents?: Record<string, unknown>[]): DigestMetadata | undefined {
   const metadata = parseDigestMetadata(row.digest_metadata);
 
@@ -174,7 +190,7 @@ export function mapStepRunToJob(row: StepRunV2ReadRow, context: StepRunJobContex
     type: row.step_type as StepTypeEnum,
     status: row.status as JobStatusEnum,
     providerId: row.provider_id || undefined,
-    step: context.workflowStepsById.get(row.step_id) ?? buildStepFromRow(row),
+    step: resolveStep(row, context.workflowStepsById.get(row.step_id)),
     payload: context.notification.payload,
     digest: buildDigest(row, context.digestEventsByStepRunId.get(row.step_run_id)),
     // Jobs carry no count until their schedule is first extended; the row stores that as 0.

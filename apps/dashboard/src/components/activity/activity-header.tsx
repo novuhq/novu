@@ -60,7 +60,10 @@ export const ActivityHeader = ({
     : {};
 
   const resentPayload = activity?.payload ? { ...activity.payload, ...resentMetadata } : resentMetadata;
-  const resentOverrides = activity?.jobs?.[0]?.overrides as Record<string, unknown> | undefined;
+  // Run-level overrides survive a run whose steps are not readable yet; jobs only carry them for older APIs.
+  const resentOverrides = (activity?.overrides ?? activity?.jobs?.[0]?.overrides) as
+    | Record<string, unknown>
+    | undefined;
   const workflowExists = !!activity?.template;
 
   const { mutate: handleResend, isPending } = useMutation({

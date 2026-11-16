@@ -435,6 +435,13 @@ export class ActivityNotificationResponseDto {
   payload?: Record<string, unknown>; // Added to align with NotificationEntity
 
   @ApiPropertyOptional({
+    description: 'Trigger overrides of the notification, as passed to the original workflow trigger',
+    type: 'object',
+    additionalProperties: true,
+  })
+  overrides?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
     description: 'Tags associated with the notification',
     type: [String],
   })
