@@ -17,6 +17,7 @@ import {
   NotificationPayloadService,
   PinoLogger,
   StepRunRepository,
+  StepRunV2Writer,
   StepTemplateHydrationService,
   StepTemplateHydrationStatus,
   StorageHelperService,
@@ -85,7 +86,8 @@ export class RunJob {
     private featureFlagsService: FeatureFlagsService,
     private executeBridgeJob: ExecuteBridgeJob,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private notificationPayloadService: NotificationPayloadService
+    private notificationPayloadService: NotificationPayloadService,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -113,6 +115,7 @@ export class RunJob {
       await this.stepRunRepository.create(job, {
         status: JobStatusEnum.CANCELED,
       });
+      this.stepRunV2Writer.write(job);
 
       // Update workflow run delivery lifecycle after job cancellation
       await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.COMPLETED, undefined, null);
@@ -141,6 +144,7 @@ export class RunJob {
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.RUNNING,
     });
+    this.stepRunV2Writer.write(claimed);
 
     nr.addCustomAttributes({
       transactionId: job.transactionId,
@@ -263,11 +267,16 @@ export class RunJob {
           "The step was skipped as it fell outside the subscriber's schedule"
         );
 
-        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED);
+        const outsideScheduleCanceledJob = await this.jobRepository.updateStatus(
+          job._environmentId,
+          job._id,
+          JobStatusEnum.CANCELED
+        );
 
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });
+        this.stepRunV2Writer.write(outsideScheduleCanceledJob);
 
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
@@ -347,16 +356,21 @@ export class RunJob {
       job = sendMessageResult.job ?? job;
 
       if (sendMessageResult.status === 'success') {
-        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+        const completedJob = await this.jobRepository.updateStatus(
+          job._environmentId,
+          job._id,
+          JobStatusEnum.COMPLETED
+        );
 
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.COMPLETED,
         });
+        this.stepRunV2Writer.write(completedJob);
 
         // Update workflow run delivery lifecycle after successful step completion
         await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
       } else if (sendMessageResult.status === 'failed') {
-        await this.jobRepository.update(
+        const failedJob = await this.jobRepository.findOneAndUpdate(
           {
             _environmentId: job._environmentId,
             _id: job._id,
@@ -366,7 +380,8 @@ export class RunJob {
               status: JobStatusEnum.FAILED,
               error: sendMessageResult.errorMessage,
             },
-          }
+          },
+          { new: true }
         );
 
         await this.stepRunRepository.create(job, {
@@ -374,6 +389,7 @@ export class RunJob {
           errorCode: 'send_message_failed',
           errorMessage: sendMessageResult.errorMessage,
         });
+        this.stepRunV2Writer.write(failedJob);
 
         // Update delivery lifecycle only — use PROCESSING so the workflow status trace
         // is not emitted here. The finally block handles the single COMPLETED emission.
@@ -391,6 +407,7 @@ export class RunJob {
 
             if (cancelledJobs.length > 0) {
               await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              this.writeCanceledJobs(cancelledJobs);
               await this.createCanceledExecutionDetails(cancelledJobs);
             }
           } catch (cancellationError: unknown) {
@@ -401,7 +418,7 @@ export class RunJob {
           }
         }
       } else if (sendMessageResult.status === SendMessageStatus.SKIPPED) {
-        await this.jobRepository.updateStatus(
+        const skippedSendJob = await this.jobRepository.updateStatus(
           job._environmentId,
           job._id,
           JobStatusEnum.CANCELED,
@@ -410,6 +427,7 @@ export class RunJob {
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });
+        this.stepRunV2Writer.write(skippedSendJob);
 
         // Update workflow run delivery lifecycle after step skip/cancellation
         await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
@@ -433,6 +451,7 @@ export class RunJob {
 
           if (cancelledJobs.length > 0) {
             await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+            this.writeCanceledJobs(cancelledJobs);
             await this.createCanceledExecutionDetails(cancelledJobs);
           }
         } catch (cancellationError: unknown) {
@@ -448,7 +467,8 @@ export class RunJob {
       }
 
       if (this.shouldBackoff(error)) {
-        await this.jobRepository.releaseRunningClaim(job._environmentId, job._id);
+        const releasedJob = await this.jobRepository.releaseRunningClaim(job._environmentId, job._id);
+        this.stepRunV2Writer.write(releasedJob);
       }
       throw caughtError;
     } finally {
@@ -522,15 +542,20 @@ export class RunJob {
       return;
     }
 
-    const strandedChild =
-      (await this.jobRepository.findOne(
-        {
-          _environmentId: job._environmentId,
-          _parentId: job._id,
-          status: JobStatusEnum.PENDING,
-        },
-        '_id'
-      )) ?? (await this.jobRepository.releaseStaleQueuedChildToPending(job._environmentId, job._id));
+    const pendingChild = await this.jobRepository.findOne(
+      {
+        _environmentId: job._environmentId,
+        _parentId: job._id,
+        status: JobStatusEnum.PENDING,
+      },
+      '_id'
+    );
+    const releasedChild = pendingChild
+      ? null
+      : await this.jobRepository.releaseStaleQueuedChildToPending(job._environmentId, job._id);
+    this.stepRunV2Writer.write(releasedChild);
+
+    const strandedChild = pendingChild ?? releasedChild;
     if (!strandedChild) {
       return;
     }
@@ -636,6 +661,7 @@ export class RunJob {
         }
 
         nextJob = await this.jobRepository.claimNextChildAsQueued(currentJob._environmentId, currentJob._id);
+        this.stepRunV2Writer.write(nextJob);
 
         if (!nextJob) {
           if (!hasCurrentJobError) {
@@ -673,18 +699,20 @@ export class RunJob {
         });
 
         if (addJobResult.stepStatus === JobStatusEnum.SKIPPED) {
-          await this.jobRepository.updateOne(
+          const skippedJob = await this.jobRepository.findOneAndUpdate(
             {
               _id: nextJob._id,
               _environmentId: nextJob._environmentId,
               _organizationId: nextJob._organizationId,
             },
-            { $set: { status: JobStatusEnum.SKIPPED } }
+            { $set: { status: JobStatusEnum.SKIPPED } },
+            { new: true }
           );
 
           await this.stepRunRepository.create(nextJob, {
             status: JobStatusEnum.SKIPPED,
           });
+          this.stepRunV2Writer.write(skippedJob);
 
           await this.createExecutionDetails.execute(
             CreateExecutionDetailsCommand.create({
@@ -771,6 +799,7 @@ export class RunJob {
 
             if (cancelledJobs.length > 0) {
               await this.stepRunRepository.createMany(cancelledJobs, { status: JobStatusEnum.CANCELED });
+              this.writeCanceledJobs(cancelledJobs);
               await this.createCanceledExecutionDetails(cancelledJobs);
             }
           } catch (cancellationError: unknown) {
@@ -817,6 +846,16 @@ export class RunJob {
         'Failed to delete the attachments of a finished workflow chain'
       );
     }
+  }
+
+  private writeCanceledJobs(cancelledJobs: JobEntity[]): void {
+    const [firstJob] = cancelledJobs;
+
+    this.stepRunV2Writer.writeByIds({
+      environmentId: firstJob._environmentId,
+      organizationId: firstJob._organizationId,
+      jobIds: cancelledJobs.map((cancelledJob) => cancelledJob._id),
+    });
   }
 
   private async createCanceledExecutionDetails(cancelledJobs: JobEntity[]): Promise<void> {
@@ -1165,6 +1204,7 @@ export class RunJob {
         $set: {
           scheduleExtensionsCount: currentExtensions + 1,
           status: JobStatusEnum.DELAYED,
+          waitUntil: nextAvailableTime.toISOString(),
         },
       }
     );
@@ -1181,6 +1221,7 @@ export class RunJob {
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
+    this.stepRunV2Writer.write(updatedJob);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

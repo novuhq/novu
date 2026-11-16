@@ -71,6 +71,10 @@ export class JobEntity {
    * used to track the number of times a step has been extended to the next available time in the subscriber schedule
    */
   scheduleExtensionsCount?: number;
+  /**
+   * Resolved end of the current delay, digest window or snooze, set when the job is deferred.
+   */
+  waitUntil?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<
