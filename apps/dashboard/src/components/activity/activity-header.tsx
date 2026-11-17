@@ -60,8 +60,13 @@ export const ActivityHeader = ({
     : {};
 
   const resentPayload = activity?.payload ? { ...activity.payload, ...resentMetadata } : resentMetadata;
-  // The run's overrides as stored on its notification; present even when its steps are not readable yet.
-  const resentOverrides = activity?.overrides;
+  /*
+   * The run's overrides as stored on its notification; present even when its steps are not readable yet.
+   * Runs triggered before overrides moved onto the notification keep them only on their jobs, so fall back
+   * to the first job until those runs are backfilled or age out.
+   */
+  const resentOverrides =
+    activity?.overrides ?? (activity?.jobs?.[0]?.overrides as Record<string, unknown> | undefined);
   const workflowExists = !!activity?.template;
 
   const { mutate: handleResend, isPending } = useMutation({
