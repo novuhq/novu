@@ -108,7 +108,6 @@ describe('Agent Reply - long Telegram reply #novu-v2', () => {
       expect(text.length).to.be.at.most(TELEGRAM_MESSAGE_LIMIT);
     }
 
-    // Every paragraph arrives once, in order: nothing is cut off at the limit.
     const delivered = sent.join('\n');
     const positions = paragraphs.map((p) => delivered.indexOf(p.slice(0, 'Paragraph 00'.length)));
     expect(positions).to.not.include(-1);
