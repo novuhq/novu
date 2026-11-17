@@ -55,7 +55,7 @@ type ConfigureViewProps = {
   /** What the Slack app is called until the operator names it. */
   slackAppName: string;
   /** What the operator hands their own agent in each chat app's drawer. */
-  channelPrompts: Record<'telegram' | 'slack' | 'whatsapp', string>;
+  channelPrompts: Record<'telegram' | 'slack', string>;
   /** Whether a host reads the agent's mail, or `null` when that couldn't be read: it then reads as not connected. */
   hostStatus: HostStatus | null;
   /** When the server rendered the page, so "2m ago" starts out as the server said it. */
@@ -191,9 +191,6 @@ export function ConfigureView({
           setup={whatsappSetup}
           handle={agent.handle}
           agentName={slackAppName}
-          prompt={channelPrompts.whatsapp}
-          // Opened from the link the agent handed over, the operator is here to do the steps, not to copy the prompt.
-          startWithSteps={initialDrawer === 'whatsapp'}
           {...drawerProps('whatsapp')}
         />
       )}

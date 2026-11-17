@@ -13,8 +13,6 @@ import {
 } from '@/app/(account)/(dashboard)/channels/actions';
 import { ComingSoonLogo } from '@/components/channels/coming-soon-logo';
 import {
-  AgentPromptCard,
-  AgentPromptOption,
   DRAWER_FOOTER,
   DRAWER_HEADER,
   FieldError,
@@ -65,39 +63,19 @@ type WhatsAppSetupProps = {
   handle: string;
   /** The agent's name, for the preview of its first message. Falls back to `handle`. */
   agentName?: string;
-  /** What the operator hands their own agent, so it runs the setup with them. */
-  prompt: string;
-  /**
-   * Opens on the steps rather than on the prompt: the drawer was opened from the link the operator's agent handed
-   * over (`?setup=whatsapp`), so the agent is already on it.
-   */
-  startWithSteps?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-/** Connect the business account, then say hi from your own WhatsApp. The first message comes after, on its own. */
-const BY_HAND_STEPS = 2;
-
 /**
- * The drawer that sets WhatsApp up. Before anything is connected it opens on the prompt for the operator's own
- * agent, which runs `channel add whatsapp` (or `channel_add`) and hands back the link to this drawer; the steps
- * for doing it by hand fold out under it. By hand, the operator connects their own WhatsApp Business account with
- * Meta's Facebook button, then connects their own number by sending it the coded message from a wa.me link. The Configure
- * page's channels open it, and so does the last step of the onboarding.
+ * The drawer that sets WhatsApp up. The operator connects their own WhatsApp Business account with Meta's Facebook
+ * button, or with API keys from their own Meta app, then connects their own number by sending it the coded message
+ * from a wa.me link. The Configure page's channels open it, and so does the last step of the onboarding; the link
+ * that `channel add whatsapp` (or `channel_add`) hands the operator's agent opens it too.
  */
-export function WhatsAppSetup({
-  setup,
-  handle,
-  agentName = handle,
-  prompt,
-  startWithSteps = false,
-  open,
-  onOpenChange,
-}: WhatsAppSetupProps) {
+export function WhatsAppSetup({ setup, handle, agentName = handle, open, onOpenChange }: WhatsAppSetupProps) {
   const router = useRouter();
   const [state, setState] = useState<DrawerState>(drawerStateOf(setup));
-  const [byHand, setByHand] = useState(startWithSteps);
   // The steps for keys from the operator's own Meta app, instead of the Facebook button.
   const [withKeys, setWithKeys] = useState(false);
   const [error, setError] = useState<string>();
@@ -172,22 +150,9 @@ export function WhatsAppSetup({
   useEffect(() => {
     if (open) {
       setError(undefined);
-      setByHand(startWithSteps);
       setWithKeys(startsWithKeys(setup));
     }
-  }, [open, startWithSteps]);
-
-  // Nothing is connected yet and the prompt is on screen: once the operator's agent got them through Meta's
-  // signup (on this page, maybe in another tab), the drawer moves on to the steps that are left by itself.
-  const view = viewOf(state, byHand);
-  const agentPoll = useConnectionPoll({
-    waiting: open && view === 'prompt',
-    check: readSetupPastConnect,
-    onConnected: (next) => {
-      show(next);
-      router.refresh();
-    },
-  });
+  }, [open]);
 
   // WhatsApp tells the API when the operator's message arrives; the drawer asks until that shows up.
   const { waitedTooLong, keepWaiting } = useConnectionPoll({
@@ -276,16 +241,7 @@ export function WhatsAppSetup({
             WhatsApp can’t be connected here yet. Nothing was changed.
           </p>
         )}
-        <AgentWay
-          view={view}
-          prompt={prompt}
-          // From the agent's link the agent is already on it; once a number is linked, the steps are what's left.
-          offerAlongsideSteps={state.step === 'connect' && !startWithSteps && !withKeys}
-          waitedTooLong={agentPoll.waitedTooLong}
-          onKeepWaiting={agentPoll.keepWaiting}
-          onShowSteps={() => setByHand(true)}
-        />
-        {view === 'steps' && keys && (
+        {keys && (
           <Stepper>
             <WhatsAppKeysSteps
               state={keys.state}
@@ -300,7 +256,7 @@ export function WhatsAppSetup({
             />
           </Stepper>
         )}
-        {view === 'steps' && isSetupStep(state) && !withKeys && (
+        {isSetupStep(state) && !withKeys && (
           <Stepper>
             <MetaStep
               handle={handle}
@@ -380,33 +336,6 @@ function keysViewOf(
 
 function isSetupStep(state: DrawerState): state is SetupStepState {
   return state.step === 'connect' || state.step === 'verify' || state.step === 'connected';
-}
-
-type AgentWayProps = {
-  view: 'prompt' | 'steps' | null;
-  prompt: string;
-  /** Whether the steps keep the prompt above them, for an operator who changed their mind. */
-  offerAlongsideSteps: boolean;
-  waitedTooLong: boolean;
-  onKeepWaiting: () => void;
-  onShowSteps: () => void;
-};
-
-/** The operator's agent as the way in: the whole drawer while the steps are folded away, a card above them after. */
-function AgentWay({ view, prompt, offerAlongsideSteps, waitedTooLong, onKeepWaiting, onShowSteps }: AgentWayProps) {
-  if (view === 'prompt') {
-    return (
-      <AgentPromptCard
-        prompt={prompt}
-        stepCount={BY_HAND_STEPS}
-        waitedTooLong={waitedTooLong}
-        onKeepWaiting={onKeepWaiting}
-        onShowSteps={onShowSteps}
-      />
-    );
-  }
-
-  return view === 'steps' && offerAlongsideSteps ? <AgentPromptOption prompt={prompt} /> : null;
 }
 
 /**
@@ -638,29 +567,6 @@ function SignupError({ message }: { message: string }) {
       <FieldError>{message}</FieldError>
     </p>
   );
-}
-
-/**
- * What the drawer's body shows once the setup was read: the prompt for the operator's agent while nothing is
- * connected and the steps are folded away, the steps otherwise.
- */
-function viewOf(state: DrawerState, byHand: boolean): 'prompt' | 'steps' | null {
-  if (state.step === 'keys-only') {
-    return 'steps';
-  }
-
-  if (state.step === 'connect') {
-    return byHand ? 'steps' : 'prompt';
-  }
-
-  return state.step === 'verify' || state.step === 'connected' ? 'steps' : null;
-}
-
-/** The setup, once the business account is connected: what the prompt view waits for. */
-async function readSetupPastConnect(): Promise<WhatsAppSetupState | null> {
-  const next = await loadWhatsAppSetupAction();
-
-  return next.step === 'verify' || next.step === 'connected' ? next : null;
 }
 
 function drawerStateOf(setup: WhatsAppSetupState): DrawerState {
