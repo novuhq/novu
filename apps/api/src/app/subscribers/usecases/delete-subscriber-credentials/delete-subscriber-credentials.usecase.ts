@@ -29,12 +29,6 @@ export class DeleteSubscriberCredentials {
       command.providerId,
       foundSubscriber._id
     );
-
-    this.analyticsService.mixpanelTrack('Delete Subscriber Credentials - [Subscribers]', '', {
-      providerId: command.providerId,
-      _organization: command.organizationId,
-      _subscriberId: foundSubscriber._id,
-    });
   }
 
   private async deleteSubscriberCredentialsOfOneProvider(

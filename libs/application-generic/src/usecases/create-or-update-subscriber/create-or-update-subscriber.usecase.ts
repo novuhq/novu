@@ -98,18 +98,6 @@ export class CreateOrUpdateSubscriberUseCase {
     return existingSubscriber;
   }
 
-  private publishSubscriberCreatedEvent(command: CreateOrUpdateSubscriberCommand) {
-    this.analyticsService.mixpanelTrack('Subscriber Created', '', {
-      _organization: command.organizationId,
-      hasEmail: !!command.email,
-      hasPhone: !!command.phone,
-      hasAvatar: !!command.avatar,
-      hasLocale: !!command.locale,
-      hasData: !!command.data,
-      hasCredentials: !!command.channels,
-    });
-  }
-
   private async updateCredentials(command: CreateOrUpdateSubscriberCommand) {
     for (const channel of command.channels) {
       await this.updateSubscriberChannel.execute(
@@ -148,8 +136,6 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       timezone: command.timezone,
     });
-    this.publishSubscriberCreatedEvent(command);
-
     return createdSubscriber;
   }
 

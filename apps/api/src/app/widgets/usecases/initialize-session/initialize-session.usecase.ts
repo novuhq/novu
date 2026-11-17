@@ -78,12 +78,6 @@ export class InitializeSession {
       })
     );
 
-    this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriber._id,
-    });
-
     const token = await this.authService.getSubscriberWidgetToken(subscriber, []);
 
     void this.subscriberSessionAuthStatsService.record({

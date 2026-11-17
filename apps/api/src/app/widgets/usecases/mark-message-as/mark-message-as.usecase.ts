@@ -158,14 +158,6 @@ export class MarkMessageAs {
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
     this.updateSocketCount(subscriber, marked);
-
-    for (const message of messages) {
-      this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {

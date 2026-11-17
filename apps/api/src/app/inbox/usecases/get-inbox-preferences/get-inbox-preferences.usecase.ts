@@ -10,7 +10,6 @@ import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
-import { AnalyticsEventsEnum } from '../../utils';
 import { stripHiddenPreferenceChannels } from '../../utils/strip-hidden-preference-channels';
 import { InboxPreference } from '../../utils/types';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
@@ -94,13 +93,6 @@ export class GetInboxPreferences {
       if (!bCreatedAt) return -1;
 
       return new Date(aCreatedAt).getTime() - new Date(bCreatedAt).getTime();
-    });
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
-      _organization: command.organizationId,
-      subscriberId: command.subscriberId,
-      workflowSize: sortedWorkflowPreferences.length,
-      tags: command.tags || [],
     });
 
     return [updatedGlobalPreference, ...sortedWorkflowPreferences];

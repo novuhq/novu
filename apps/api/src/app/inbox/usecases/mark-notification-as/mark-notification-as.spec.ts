@@ -5,7 +5,6 @@ import { ChannelCTATypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
-import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
 import { MarkManyNotificationsAsCommand } from '../mark-many-notifications-as/mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -141,18 +140,6 @@ describe('MarkNotificationAs', () => {
 
     await updateNotification.execute(command);
 
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
-    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
-      AnalyticsEventsEnum.MARK_NOTIFICATION_AS,
-      '',
-      {
-        _organization: command.organizationId,
-        _subscriber: mockSubscriber._id,
-        _notification: command.notificationId,
-        read: command.read,
-        archived: command.archived,
-        snoozedUntil: command.snoozedUntil,
-      },
-    ]);
+    expect(analyticsServiceMock.mixpanelTrack.called).to.be.false;
   });
 });
