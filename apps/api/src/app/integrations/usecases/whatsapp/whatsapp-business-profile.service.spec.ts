@@ -193,6 +193,22 @@ describe('WhatsAppBusinessProfile', () => {
     expect(body.description).to.have.length(512);
   });
 
+  it('cuts at whole characters, never through an emoji', async () => {
+    await profile.apply(NUMBER, { description: `${'x'.repeat(138)}😀😀` });
+
+    const body = callsTo('whatsapp_business_profile')[0].body as { about: string };
+    expect(body.about).to.equal(`${'x'.repeat(138)}😀`);
+  });
+
+  it("uploads through Novu's app with only its app ID set, as on a server that does no signups", async () => {
+    delete process.env.NOVU_WHATSAPP_CONFIG_ID;
+    delete process.env.NOVU_WHATSAPP_APP_SECRET;
+
+    await profile.apply(NUMBER, { picture: OWN_PICTURE });
+
+    expect(callsTo('uploads')[0].url.pathname).to.contain(`/${NOVU_APP_ID}/uploads`);
+  });
+
   it('calls Meta for nothing when there is nothing to change', async () => {
     await profile.apply(NUMBER, {});
 

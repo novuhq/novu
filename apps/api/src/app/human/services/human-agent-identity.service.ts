@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { decryptCredentials } from '@novu/application-generic';
-import { AgentEntity, AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AgentEntity,
+  AgentIntegrationRepository,
+  AgentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { SyncAgentEmailSenderName } from '../../agents/email/sync-agent-email-sender-name.service';
 import { WhatsAppBusinessProfile } from '../../integrations/usecases/whatsapp/whatsapp-business-profile.service';
@@ -86,8 +92,10 @@ export class HumanAgentIdentityService {
         providerId: { $in: [ChatProviderIdEnum.Telegram, ChatProviderIdEnum.WhatsAppBusiness] },
         ...scope,
       },
-      'providerId credentials'
+      '_id providerId credentials'
     );
+
+    const sharedNumbers = await this.whatsAppNumbersSharedWithOthers(agent, integrations);
 
     await Promise.all(
       integrations.map((integration) => {
@@ -98,8 +106,9 @@ export class HumanAgentIdentityService {
           const accessToken = credentials.apiToken;
           const phoneNumberId = credentials.phoneNumberIdentification;
 
-          // A number not connected yet gets its profile when the signup finishes.
-          return accessToken && phoneNumberId
+          // A number not connected yet gets its profile when the signup finishes. A number other agents speak
+          // through too keeps the profile it has: one agent's change shouldn't show up as another's.
+          return accessToken && phoneNumberId && !sharedNumbers.has(String(integration._id))
             ? this.whatsAppBusinessProfile.apply(
                 { accessToken, phoneNumberId, isNovuManaged: Boolean(credentials.isNovuManaged) },
                 profile
@@ -113,5 +122,30 @@ export class HumanAgentIdentityService {
         return botToken ? this.telegramBotProfile.apply(botToken, changes) : undefined;
       })
     );
+  }
+
+  /** The WhatsApp integrations among these that another agent is linked to as well. */
+  private async whatsAppNumbersSharedWithOthers(
+    agent: AgentEntity,
+    integrations: Pick<IntegrationEntity, '_id' | 'providerId'>[]
+  ): Promise<Set<string>> {
+    const ids = integrations
+      .filter((integration) => integration.providerId === ChatProviderIdEnum.WhatsAppBusiness)
+      .map((integration) => integration._id);
+    if (ids.length === 0) {
+      return new Set();
+    }
+
+    const otherLinks = await this.agentIntegrationRepository.find(
+      {
+        _integrationId: { $in: ids },
+        _agentId: { $ne: agent._id },
+        _environmentId: agent._environmentId,
+        _organizationId: agent._organizationId,
+      },
+      ['_integrationId']
+    );
+
+    return new Set(otherLinks.map((link) => String(link._integrationId)));
   }
 }

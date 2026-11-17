@@ -3,7 +3,7 @@ import { PinoLogger, StorageService } from '@novu/application-generic';
 
 import type { MascotLook } from '../../../human/services/agent-picture-url';
 import { type AgentProfilePicture, readAgentProfilePicture } from '../../../human/services/agent-profile-picture';
-import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
+import { resolveWhatsAppAppId } from './whatsapp-credentials.utils';
 import {
   extractMetaError,
   getTokenAppId,
@@ -53,9 +53,9 @@ export class WhatsAppBusinessProfile {
 
     if (description !== undefined) {
       const text = description.trim();
-      profile.description = text.slice(0, DESCRIPTION_MAX_LENGTH);
+      profile.description = cut(text, DESCRIPTION_MAX_LENGTH);
       if (text) {
-        profile.about = text.slice(0, ABOUT_MAX_LENGTH);
+        profile.about = cut(text, ABOUT_MAX_LENGTH);
       }
     }
 
@@ -164,13 +164,20 @@ export class WhatsAppBusinessProfile {
 
   private async appIdOf(number: WhatsAppBusinessNumber): Promise<string | undefined> {
     if (number.isNovuManaged) {
-      return getNovuWhatsAppPlatformConfig()?.appId;
+      return resolveWhatsAppAppId({ isNovuManaged: true });
     }
 
     const response = await getTokenAppId(number.accessToken);
 
     return response.statusCode < 400 && typeof response.body?.id === 'string' ? response.body.id : undefined;
   }
+}
+
+/** The text cut to at most `length` characters, never through the middle of an emoji. */
+function cut(text: string, length: number): string {
+  const characters = Array.from(text);
+
+  return characters.length > length ? characters.slice(0, length).join('') : text;
 }
 
 /** What went wrong, fit for a log: an error's message must never carry the access token. */

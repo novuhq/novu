@@ -14,7 +14,15 @@ describe('HumanAgentIdentityService', () => {
 
   function setup() {
     const agentRepository = { updateOne: sinon.stub().resolves() };
-    const agentIntegrationRepository = { find: sinon.stub().resolves([{ _integrationId: 'tg1' }]) };
+    /** The links of other agents to the integrations asked about: none unless a test says so. */
+    const otherAgentLinks: { _integrationId: string }[] = [];
+    const agentIntegrationRepository = {
+      find: sinon
+        .stub()
+        .callsFake(async (query: { _agentId: unknown }) =>
+          typeof query._agentId === 'object' ? otherAgentLinks : [{ _integrationId: 'tg1' }]
+        ),
+    };
     const integrationRepository = {
       find: sinon
         .stub()
@@ -34,6 +42,7 @@ describe('HumanAgentIdentityService', () => {
 
     return {
       service,
+      otherAgentLinks,
       agentRepository,
       integrationRepository,
       syncAgentEmailSenderName,
@@ -107,6 +116,7 @@ describe('HumanAgentIdentityService', () => {
     const { service, integrationRepository, telegramBotProfile, whatsAppBusinessProfile } = setup();
     integrationRepository.find.resolves([
       {
+        _id: 'wa1',
         providerId: ChatProviderIdEnum.WhatsAppBusiness,
         credentials: { apiToken: 'meta-token', phoneNumberIdentification: 'phone1', isNovuManaged: true },
       },
@@ -125,6 +135,22 @@ describe('HumanAgentIdentityService', () => {
   it('leaves a WhatsApp integration alone until its number is connected', async () => {
     const { service, integrationRepository, whatsAppBusinessProfile } = setup();
     integrationRepository.find.resolves([{ providerId: ChatProviderIdEnum.WhatsAppBusiness, credentials: {} }]);
+
+    await service.updateChannelProfiles(agent as never, { description: 'Ships it.' });
+
+    expect(whatsAppBusinessProfile.apply.called).to.equal(false);
+  });
+
+  it('leaves alone a WhatsApp number another agent speaks through too', async () => {
+    const { service, integrationRepository, otherAgentLinks, whatsAppBusinessProfile } = setup();
+    integrationRepository.find.resolves([
+      {
+        _id: 'wa1',
+        providerId: ChatProviderIdEnum.WhatsAppBusiness,
+        credentials: { apiToken: 'meta-token', phoneNumberIdentification: 'phone1' },
+      },
+    ]);
+    otherAgentLinks.push({ _integrationId: 'wa1' });
 
     await service.updateChannelProfiles(agent as never, { description: 'Ships it.' });
 

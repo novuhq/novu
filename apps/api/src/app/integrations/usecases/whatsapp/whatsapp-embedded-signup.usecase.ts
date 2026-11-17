@@ -131,7 +131,7 @@ export class WhatsAppEmbeddedSignup {
 
     const phoneRegistrationWarning = await this.registerNumber(accessToken, phoneNumberId, integration._id);
 
-    await this.applyRelayProfile(agent, command.organizationId, { accessToken, phoneNumberId, isNovuManaged: true });
+    await this.applyRelayProfile(agent, integration._id, command, { accessToken, phoneNumberId, isNovuManaged: true });
 
     const webhookResult = await this.configureWhatsAppWebhook.execute(
       ConfigureWhatsAppWebhookCommand.create({
@@ -372,24 +372,50 @@ export class WhatsAppEmbeddedSignup {
    * picture, a number that has no photo yet takes the agent's mascot, in the look its mascots show. Never fails the
    * signup: the profile is not needed to deliver a message.
    */
+  /**
+   * Puts a relay agent's photo and description on the number it was just connected to. The credentials are saved
+   * by now, so nothing here may fail the signup: a failure is logged and the signup goes on.
+   */
   private async applyRelayProfile(
     agent: ResolvedWhatsAppAgentIntegration['agent'],
-    organizationId: string,
+    integrationId: string,
+    command: WhatsAppEmbeddedSignupCommand,
     number: { accessToken: string; phoneNumberId: string; isNovuManaged: boolean }
   ): Promise<void> {
     if (agent.runtime !== 'human_relay') {
       return;
     }
 
-    const picture = agent.picture?.storageKey ? agent.picture : undefined;
-    const mascot = picture
-      ? null
-      : await this.agentInboxFeatures.mascotLookOf({ _organizationId: organizationId, look: agent.look });
+    try {
+      // A number other agents speak through too keeps the profile it has.
+      const otherAgent = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: integrationId,
+          _agentId: { $ne: agent._id },
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id']
+      );
+      if (otherAgent) {
+        return;
+      }
 
-    await this.businessProfile.apply(number, {
-      description: humanRelayProfile({ description: agent.description }).description,
-      picture: picture ?? 'default-if-none',
-      mascot,
-    });
+      const picture = agent.picture?.storageKey ? agent.picture : undefined;
+      const mascot = picture
+        ? null
+        : await this.agentInboxFeatures.mascotLookOf({ _organizationId: command.organizationId, look: agent.look });
+
+      await this.businessProfile.apply(number, {
+        description: humanRelayProfile({ description: agent.description }).description,
+        picture: picture ?? 'default-if-none',
+        mascot,
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), integrationId },
+        'WhatsApp embedded signup: could not set the business profile of the number.'
+      );
+    }
   }
 }
