@@ -349,7 +349,6 @@ async function retire(box: string): Promise<void> {
 
 async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {}): Promise<string> {
   const file = `/data/logs/apply-${sha.slice(0, 12)}.log`;
-  const boxState = (text: string) => decode(BoxState, text, '`box state`');
   log(`applying ${sha}; the box logs it to ${file}`);
   await cloud.runOutput(detached([...BOX_CLI, 'apply', sha, ...(baseline ? ['--baseline'] : [])], file), {
     github: true,
@@ -362,7 +361,7 @@ async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {})
         await cloud.runOutput(['sh', '-c', `${BOX_CLI.join(' ')} state && tail -n 1 "$0"`, file])
       ).split('\n');
       lastSeen = Date.now();
-      const still = boxState(stateLine).lock?.command === 'apply';
+      const still = decode(BoxState, stateLine, '`box state`').lock?.command === 'apply';
       if (still) log(`still applying: ${last.join(' ').slice(0, 200)}`);
 
       return still;
@@ -386,7 +385,7 @@ async function apply(cloud: CloudTarget, sha: string, { baseline = false } = {})
   });
   const output = await cloud.runOutput(['cat', file]);
   console.log(output);
-  const { baked, applied, applying: unfinished } = boxState(await cloud.boxOutput(['state']));
+  const { baked, applied, applying: unfinished } = await cloud.boxState();
   if ((baseline ? baked?.sha : applied?.head) !== sha || unfinished)
     throw new ApplyFailed(
       output.match(/ERROR: .*$/gm)?.at(-1) ?? `the apply ended without applying ${sha.slice(0, 10)}`,
@@ -473,7 +472,7 @@ async function refresh(): Promise<number> {
   }
   let tooOld: string | null = null;
   try {
-    const { baked, applied, applying } = decode(BoxState, await base.boxOutput(['state']), '`box state`');
+    const { baked, applied, applying } = await base.boxState();
     if (!baked) throw new Error(`${base.name} isn't baked`);
     const hours = (Date.now() - Date.parse(baked.at)) / 3_600_000;
     tooOld = hours > REBAKE_HOURS ? `${base.name} was baked ${Math.round(hours)} hours ago` : null;
@@ -505,7 +504,7 @@ async function full(): Promise<number> {
   const box = target(NIGHTLY_BOX);
   await box.delete();
   await box.up({ fromBase: true });
-  const { baked, applied } = decode(BoxState, await box.boxOutput(['state']), '`box state`');
+  const { baked, applied } = await box.boxState();
   const commitSha = applied?.head ?? baked?.sha;
   log(`${NIGHTLY_BOX} runs next at ${commitSha ?? 'an unknown commit'}`);
   const start: TesterArmyStart = { suite: 'full', ...(commitSha && { commitSha }) };
