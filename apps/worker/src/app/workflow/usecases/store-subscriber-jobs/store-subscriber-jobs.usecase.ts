@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  buildStepRunTraceFromJob,
   BulkCreateExecutionDetails,
+  buildStepRunTraceFromJob,
   InstrumentUsecase,
   mapEventTypeToTitle,
   StepRunRepository,
+  StepRunV2Writer,
   TraceLogRepository,
 } from '@novu/application-generic';
 import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
@@ -19,7 +20,8 @@ export class StoreSubscriberJobs {
     private jobRepository: JobRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails,
     private stepRunRepository: StepRunRepository,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    private stepRunV2Writer: StepRunV2Writer
   ) {}
 
   @InstrumentUsecase()
@@ -35,6 +37,7 @@ export class StoreSubscriberJobs {
     }
 
     await this.stepRunRepository.createMany(storedJobs, { status: JobStatusEnum.QUEUED });
+    this.stepRunV2Writer.writeMany(storedJobs);
 
     await this.emitStepCreatedTraces(storedJobs);
 
@@ -69,10 +72,7 @@ export class StoreSubscriberJobs {
         )
       );
     } catch (error) {
-      Logger.error(
-        { err: error, jobIds: storedJobs.map((job) => job._id) },
-        'Failed to emit step_created traces'
-      );
+      Logger.error({ err: error, jobIds: storedJobs.map((job) => job._id) }, 'Failed to emit step_created traces');
     }
   }
 }

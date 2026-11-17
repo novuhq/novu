@@ -91,6 +91,14 @@ export enum FeatureFlagsKeysEnum {
   IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED = 'IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED',
   IS_STEP_RUN_LOGS_READ_ENABLED = 'IS_STEP_RUN_LOGS_READ_ENABLED',
   IS_STEP_RUN_LOGS_WRITE_ENABLED = 'IS_STEP_RUN_LOGS_WRITE_ENABLED',
+  /** Per-environment write of every job status change to ClickHouse `step_runs_v2`. Cloud only, default false. */
+  IS_STEP_RUNS_V2_WRITE_ENABLED = 'IS_STEP_RUNS_V2_WRITE_ENABLED',
+  /**
+   * Per-environment read of `GET /v1/notifications` and `GET /v1/notifications/:id` without the jobs
+   * collection: notifications from Mongo, steps from ClickHouse `step_runs_v2`, execution details and digest
+   * events from traces. Needs IS_STEP_RUNS_V2_WRITE_ENABLED on for the runs it reads. Default false.
+   */
+  IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED = 'IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED',
   IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED',
   IS_WORKFLOW_RUN_LOGS_READ_ENABLED = 'IS_WORKFLOW_RUN_LOGS_READ_ENABLED',
   IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED = 'IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED',
@@ -139,6 +147,12 @@ export enum FeatureFlagsKeysEnum {
    * LaunchDarkly for cloud, or set `IS_AGENT_HUMAN_HITL_ENABLED` when self-hosted.
    */
   IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
+  /**
+   * Offer WhatsApp as an Agent Inbox channel (the `whatsapp` human via). Off means absent from
+   * channel lists, invite pages and via validation. Create the boolean in LaunchDarkly for cloud,
+   * or set `IS_AGENT_INBOX_WHATSAPP_ENABLED` when self-hosted.
+   */
+  IS_AGENT_INBOX_WHATSAPP_ENABLED = 'IS_AGENT_INBOX_WHATSAPP_ENABLED',
   /**
    * Enable the Web Chat channel (subscriber `/v1/web-chat/*`, useWebChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
@@ -213,6 +227,16 @@ export enum FeatureFlagsKeysEnum {
    * self-hosted.
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
+  /**
+   * Stop duplicating the trigger overrides onto every job. Overrides are always
+   * persisted once on the parent notification; when enabled, new jobs no longer
+   * persist `overrides` and readers resolve them from the notification via
+   * `_notificationId`. Read paths handle both shapes regardless of this flag, so
+   * it can be toggled off at any time (forward-only, no data migration). Create
+   * the boolean in LaunchDarkly for cloud, or set `IS_OVERRIDES_DEDUP_ENABLED`
+   * when self-hosted.
+   */
+  IS_OVERRIDES_DEDUP_ENABLED = 'IS_OVERRIDES_DEDUP_ENABLED',
   /**
    * Trace step condition evaluation in the activity feed regardless of outcome:
    * a "step conditions matched" detail when conditions pass, and a "step was

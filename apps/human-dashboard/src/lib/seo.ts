@@ -72,6 +72,16 @@ export const SITE_PAGES = {
       alt: 'Agent Inbox connects your AI agent to Email, Slack, Telegram and iMessage inbox for AI agents',
     },
   },
+  pricing: {
+    path: '/pricing',
+    title: 'Agent Inbox pricing | Hobby, Pro and Enterprise',
+    description:
+      'Compare Agent Inbox plans: start free with Hobby, get Pro for $10/month, or choose Enterprise. Pricing by active conversation across email, Telegram and Slack.',
+    image: {
+      path: '/sapien/opengraph-image.jpg',
+      alt: 'Agent Inbox connects your AI agent to email, Telegram and Slack.',
+    },
+  },
 } as const;
 
 export type SitePage = keyof typeof SITE_PAGES;

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
 
@@ -13,4 +13,8 @@ export class GetNovuProviderCredentialsCommand extends EnvironmentWithUserComman
   @IsOptional()
   @IsString()
   recipientEmail?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  requireRecipientMatch?: boolean;
 }

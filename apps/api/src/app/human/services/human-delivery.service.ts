@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { resolvePublishedAgentInboxAddress } from '@novu/application-generic';
+import { decryptCredentials, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
+  AgentRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
   type HumanContactChannelAddresses,
   HumanContactRepository,
   HumanInteractionEntity,
+  HumanInteractionRepository,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
@@ -19,17 +21,47 @@ import {
   type HumanContactChannelStatus,
 } from '@novu/shared';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
+import { buildHumanOpenActionId } from '../../agents/human-relay/human-action-id';
 import { buildPendingDeliveryContent } from '../../agents/human-relay/human-card.builder';
+import { HUMAN_RELAY_DEFAULT_NAME } from '../../agents/human-relay/human-relay-identity';
+import {
+  provedWhatsAppNumberOf,
+  whatsAppNumberLastCodeAtOf,
+  whatsAppNumberProvedAtOf,
+  whatsAppNumberProvedOnOf,
+} from '../../agents/human-relay/whatsapp-number-proof';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
+import { AgentInactiveException } from '../../agents/shared/errors/agent-inactive.exception';
+import { normalizePhoneForMeta } from '../../agents/shared/util/phone-normalization';
+import {
+  extractMetaError,
+  sendNamedWhatsAppTemplate,
+} from '../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import { KeylessEmailGateService } from '../../keyless/keyless-email-gate.service';
 import { type ContactHandle, describeContactHandle, readContactHandle } from './contact-handle';
+import { HumanChannelGate } from './human-channel-gate.service';
 import { VIA_PROVIDER_IDS, viaForProviderId } from './human-channel-via';
 import { maskEmail } from './mask-email';
+import {
+  WHATSAPP_MAX_REPLY_BUTTONS,
+  WHATSAPP_TOO_MANY_BUTTONS,
+  WHATSAPP_WINDOW_CLOSED,
+  WhatsAppUndeliverableException,
+  type WhatsAppUnfit,
+} from './whatsapp-delivery.errors';
+import { AGENT_NAME_VARIABLE, FIRST_MESSAGE_LANGUAGE, usesAgentName } from './whatsapp-first-message';
+import { WhatsAppFirstMessageService } from './whatsapp-first-message.service';
+import { type WhatsAppWindow, WhatsAppWindowService } from './whatsapp-window.service';
 
 export interface ResolvedHumanTarget {
   platform: string;
   platformUserId: string;
   integrationIdentifier: string;
+  /**
+   * WhatsApp only: their 24-hour window is closed, so this approved template goes out instead and the message is
+   * held until they reply.
+   */
+  firstMessage?: { templateName: string; body: string };
 }
 
 /** A channel the human can receive on right now. */
@@ -39,14 +71,25 @@ export interface ReachableHumanTarget extends ResolvedHumanTarget {
   connectedAt?: string;
   /** How they show on that chat app, as far as it is known. Absent for email. */
   handle?: ContactHandle;
+  /** WhatsApp only, where it was read: whether its 24-hour window lets a message through right now. */
+  window?: WhatsAppWindow;
+  /** WhatsApp only: when the number last sent a code message, which is never stored but opened a window. */
+  lastCodeAt?: string;
+  /** WhatsApp only: the business number's Meta id that proof and code went to, when it was kept. */
+  provedOn?: string;
 }
 
 /** Apps a human can connect themselves from the invite page. */
-export type HumanInviteVia = HumanChannelViaEnum.TELEGRAM | HumanChannelViaEnum.SLACK | HumanChannelViaEnum.EMAIL;
+export type HumanInviteVia =
+  | HumanChannelViaEnum.TELEGRAM
+  | HumanChannelViaEnum.SLACK
+  | HumanChannelViaEnum.WHATSAPP
+  | HumanChannelViaEnum.EMAIL;
 
 const INVITE_VIAS: readonly HumanChannelViaEnum[] = [
   HumanChannelViaEnum.TELEGRAM,
   HumanChannelViaEnum.SLACK,
+  HumanChannelViaEnum.WHATSAPP,
   HumanChannelViaEnum.EMAIL,
 ];
 
@@ -101,8 +144,9 @@ function toResolvedTarget({
   platform,
   platformUserId,
   integrationIdentifier,
+  firstMessage,
 }: ReachableHumanTarget): ResolvedHumanTarget {
-  return { platform, platformUserId, integrationIdentifier };
+  return { platform, platformUserId, integrationIdentifier, ...(firstMessage ? { firstMessage } : {}) };
 }
 
 function relativeAge(iso: string): string {
@@ -145,7 +189,12 @@ export class HumanDeliveryService {
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly outboundGateway: OutboundGateway,
-    private readonly keylessEmailGate: KeylessEmailGateService
+    private readonly keylessEmailGate: KeylessEmailGateService,
+    private readonly channelGate: HumanChannelGate,
+    private readonly whatsAppWindow: WhatsAppWindowService,
+    private readonly firstMessage: WhatsAppFirstMessageService,
+    private readonly agentRepository: AgentRepository,
+    private readonly humanInteractionRepository: HumanInteractionRepository
   ) {}
 
   async resolveChannel(params: {
@@ -159,6 +208,11 @@ export class HumanDeliveryService {
      * here. Contact-id sends omit it. Not a reachability signal.
      */
     explicitEmail?: string;
+    /**
+     * Buttons on the card being sent. WhatsApp shows at most three, so above that a WhatsApp target is skipped,
+     * or refused when it was asked for or is all that is left.
+     */
+    buttons?: number;
   }): Promise<ResolvedHumanTarget> {
     const explicitEmail = params.explicitEmail;
     if (explicitEmail) {
@@ -204,8 +258,10 @@ export class HumanDeliveryService {
       );
     }
 
-    if (params.via || deliverable.length === 1) {
-      return toResolvedTarget(deliverable[0]);
+    const usable = await this.withoutUnfitWhatsApp(params, deliverable, integrations);
+
+    if (params.via || usable.length === 1) {
+      return toResolvedTarget(usable[0]);
     }
 
     const contact = await this.humanContactRepository.findContact(
@@ -214,7 +270,210 @@ export class HumanDeliveryService {
       params.subscriberId
     );
 
-    return toResolvedTarget(pickDefaultTarget(deliverable, contact?.defaultVia) ?? deliverable[0]);
+    return toResolvedTarget(pickDefaultTarget(usable, contact?.defaultVia) ?? usable[0]);
+  }
+
+  /**
+   * Drops a WhatsApp target that can't carry this send: its 24-hour window is shut, or the card has more buttons
+   * than WhatsApp shows. When WhatsApp was asked for, or nothing else is left, the send is refused instead, with the
+   * person's other channels that still work. Never empty when it returns.
+   */
+  private async withoutUnfitWhatsApp(
+    params: { environmentId: string; organizationId: string; agentId: string; subscriberId: string; buttons?: number },
+    targets: ReachableHumanTarget[],
+    integrations: IntegrationEntity[]
+  ): Promise<ReachableHumanTarget[]> {
+    const fits: ReachableHumanTarget[] = [];
+    const windowClosed: ReachableHumanTarget[] = [];
+    let refused: WhatsAppUnfit | undefined;
+
+    for (const target of targets) {
+      const unfit = await this.whatsAppUnfit(params, target, integrations);
+      if (unfit) {
+        refused ??= unfit;
+        if (unfit.reason === WHATSAPP_WINDOW_CLOSED) {
+          windowClosed.push(target);
+        }
+      } else {
+        fits.push(target);
+      }
+    }
+
+    if (!refused || fits.length > 0) {
+      return fits;
+    }
+
+    // Only a closed window is waited out: the approved first message goes out now, and the message when they reply.
+    for (const target of windowClosed) {
+      const firstMessage = await this.approvedFirstMessage(integrations, target.integrationIdentifier);
+      if (firstMessage) {
+        return [{ ...target, firstMessage }];
+      }
+    }
+
+    throw new WhatsAppUndeliverableException(
+      params.subscriberId,
+      refused,
+      await this.otherReachableVias(params, integrations)
+    );
+  }
+
+  /**
+   * Whether a WhatsApp conversation's number is still one the contact proved. A number can move to someone else, who
+   * proves it with a code; the conversation still names the old contact, so holding a reply for them would send the
+   * first message to the new owner and the reply, later, to the old contact's other number.
+   */
+  async isWhatsAppNumberOf(params: {
+    environmentId: string;
+    organizationId: string;
+    subscriberId: string;
+    integrationId: string;
+    platformThreadId: string;
+  }): Promise<boolean> {
+    const integration = await this.integrationRepository.findOne(
+      { _id: params.integrationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
+      'identifier'
+    );
+    if (!integration) {
+      return false;
+    }
+
+    const waId = params.platformThreadId.split(':').pop();
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        subscriberId: params.subscriberId,
+        integrationIdentifier: integration.identifier,
+        type: ENDPOINT_TYPES.PHONE,
+      },
+      ''
+    );
+
+    return endpoints.some((endpoint) => platformUserIdOf(endpoint) === waId);
+  }
+
+  /**
+   * The approved first-message template on the WhatsApp integration a conversation is on, if there is one. Only
+   * while that integration is still linked to the agent: a disconnected channel must not send a template that Meta
+   * charges for and whose reply could never release what it stood in for.
+   */
+  async approvedFirstMessageOn(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    integrationId: string;
+  }): Promise<{ templateName: string; body: string } | undefined> {
+    const integration = (await this.findLinkedIntegrations(params)).find(
+      (candidate) => String(candidate._id) === String(params.integrationId)
+    );
+
+    return integration ? this.approvedFirstMessage([integration], integration.identifier) : undefined;
+  }
+
+  /** The approved first-message template on this WhatsApp integration, if there is one. */
+  async approvedFirstMessage(
+    integrations: IntegrationEntity[],
+    integrationIdentifier: string
+  ): Promise<{ templateName: string; body: string } | undefined> {
+    const integration = integrations.find((candidate) => candidate.identifier === integrationIdentifier);
+    const approved = integration ? (await this.firstMessage.read(integration))?.approved : undefined;
+
+    return approved ? { templateName: approved.name, body: approved.body } : undefined;
+  }
+
+  /**
+   * Why an existing WhatsApp thread can't take this send, or `null` when it can: the same window and button checks
+   * as a new send, for the person the thread is with. Their code messages count toward the window like any other.
+   */
+  async whatsAppThreadUnfit(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    /** The contact the thread is with, when known. */
+    subscriberId?: string;
+    integrationId: string;
+    platformThreadId: string;
+    buttons?: number;
+  }): Promise<WhatsAppUnfit | null> {
+    const integration = (await this.findLinkedIntegrations(params)).find(
+      (candidate) => String(candidate._id) === String(params.integrationId)
+    );
+    const waId = params.platformThreadId.split(':').pop() ?? '';
+    const endpoint =
+      integration && params.subscriberId
+        ? (
+            await this.channelEndpointRepository.find(
+              {
+                _environmentId: params.environmentId,
+                _organizationId: params.organizationId,
+                subscriberId: params.subscriberId,
+                integrationIdentifier: integration.identifier,
+                type: ENDPOINT_TYPES.PHONE,
+              },
+              ''
+            )
+          ).find((candidate) => platformUserIdOf(candidate) === waId)
+        : undefined;
+
+    return this.whatsAppUnfit(
+      params,
+      {
+        via: HumanChannelViaEnum.WHATSAPP,
+        platformUserId: waId,
+        integrationIdentifier: integration?.identifier ?? '',
+        ...(endpoint
+          ? { lastCodeAt: whatsAppNumberLastCodeAtOf(endpoint), provedOn: whatsAppNumberProvedOnOf(endpoint) }
+          : {}),
+      },
+      integration ? [integration] : []
+    );
+  }
+
+  /** Why WhatsApp can't carry this send to the target, or `null` when it can (or the target isn't WhatsApp). */
+  async whatsAppUnfit(
+    params: { environmentId: string; organizationId: string; buttons?: number },
+    target: Pick<
+      ReachableHumanTarget,
+      'via' | 'platformUserId' | 'integrationIdentifier' | 'connectedAt' | 'lastCodeAt' | 'provedOn'
+    >,
+    integrations: IntegrationEntity[]
+  ): Promise<WhatsAppUnfit | null> {
+    if (target.via !== HumanChannelViaEnum.WHATSAPP) {
+      return null;
+    }
+
+    if ((params.buttons ?? 0) > WHATSAPP_MAX_REPLY_BUTTONS) {
+      return { reason: WHATSAPP_TOO_MANY_BUTTONS, buttons: params.buttons ?? 0 };
+    }
+
+    const integration = integrations.find((candidate) => candidate.identifier === target.integrationIdentifier);
+    if (!integration) {
+      return { reason: WHATSAPP_WINDOW_CLOSED };
+    }
+
+    // A WhatsApp target is connected when its number was proved, and that code message opened a window too.
+    const window = await this.whatsAppWindow.describe(params, integration, {
+      waId: target.platformUserId,
+      provedAt: target.lastCodeAt ?? target.connectedAt,
+      ...(target.provedOn ? { provedOn: target.provedOn } : {}),
+    });
+
+    return window.open ? null : { reason: WHATSAPP_WINDOW_CLOSED, windowClosedAt: window.closesAt };
+  }
+
+  /** The person's channels other than WhatsApp that reach them right now, for a refused WhatsApp send to name. */
+  async otherReachableVias(
+    params: { environmentId: string; organizationId: string; agentId: string; subscriberId: string },
+    integrations?: IntegrationEntity[]
+  ): Promise<HumanChannelViaEnum[]> {
+    const linked = integrations ?? (await this.findLinkedIntegrations(params));
+    const others = linked.filter(
+      (integration) => viaForProviderId(integration.providerId) !== HumanChannelViaEnum.WHATSAPP
+    );
+    const reachable = await this.findReachableTargets(params, others);
+
+    return [...new Set([...reachable].sort(byConnection).map((target) => target.via))];
   }
 
   /**
@@ -479,7 +738,53 @@ export class HumanDeliveryService {
       });
     }
 
+    await this.attachWhatsAppWindows(
+      params,
+      integrations,
+      [...result.values()].flatMap(({ targets }) => targets)
+    );
+
     return result;
+  }
+
+  /**
+   * Fills in each WhatsApp target's 24-hour window, so a list can say before a send whether WhatsApp can be
+   * written to right now. One read per business number, however many people are on it.
+   */
+  private async attachWhatsAppWindows(
+    scope: { environmentId: string; organizationId: string },
+    integrations: IntegrationEntity[],
+    targets: ReachableHumanTarget[]
+  ): Promise<void> {
+    const byIntegration = new Map<string, ReachableHumanTarget[]>();
+    for (const target of targets) {
+      if (target.via === HumanChannelViaEnum.WHATSAPP) {
+        byIntegration.set(target.integrationIdentifier, [
+          ...(byIntegration.get(target.integrationIdentifier) ?? []),
+          target,
+        ]);
+      }
+    }
+
+    for (const [identifier, onIntegration] of byIntegration) {
+      const integration = integrations.find((candidate) => candidate.identifier === identifier);
+      if (!integration) {
+        continue;
+      }
+
+      const windows = await this.whatsAppWindow.describeMany(
+        scope,
+        integration,
+        onIntegration.map((target) => ({
+          waId: target.platformUserId,
+          provedAt: target.lastCodeAt ?? target.connectedAt,
+          ...(target.provedOn ? { provedOn: target.provedOn } : {}),
+        }))
+      );
+      for (const target of onIntegration) {
+        target.window = windows.get(target.platformUserId);
+      }
+    }
   }
 
   /** Same rules as {@link tryResolveTarget}, over rows that were loaded up front. */
@@ -505,11 +810,15 @@ export class HumanDeliveryService {
         continue;
       }
 
-      const endpoint = endpoints.find(
-        (candidate) =>
-          candidate.subscriberId === subscriberId && candidate.integrationIdentifier === integration.identifier
+      // The first of their endpoints that reaches them: an older one without proof never hides a proved number.
+      const target = this.firstTarget(
+        endpoints.filter(
+          (candidate) =>
+            candidate.subscriberId === subscriberId && candidate.integrationIdentifier === integration.identifier
+        ),
+        via,
+        integration.identifier
       );
-      const target = endpoint ? this.toTarget(endpoint, via, integration.identifier) : null;
 
       if (target) {
         targets.push(target);
@@ -522,9 +831,100 @@ export class HumanDeliveryService {
   /** Delivers the pending message and returns the platform refs for stamping. */
   async deliver(
     interaction: HumanInteractionEntity,
-    target: ResolvedHumanTarget
-  ): Promise<{ platformMessageId: string; platformThreadId: string }> {
+    target: ResolvedHumanTarget,
+    /** Who this delivery is for, when the interaction names several. */
+    subscriberId = interaction.subscriberIds[0] ?? 'this person'
+  ): Promise<{ platformMessageId: string; platformThreadId: string; held?: boolean }> {
+    if (target.firstMessage) {
+      return { ...(await this.sendFirstMessage(interaction, target, target.firstMessage, subscriberId)), held: true };
+    }
+
     return this.deliverContent(interaction._agentId, target, buildPendingDeliveryContent(interaction));
+  }
+
+  /**
+   * Sends the approved first-message template in place of the message, with the agent's name in it and a button
+   * that comes back as this interaction. A failure is a refusal for the closed window, with Meta's reason.
+   *
+   * The hold is saved before the template goes out, so a reply or a tap can't arrive before there is something
+   * to release, and it is taken back when the template never went.
+   */
+  private async sendFirstMessage(
+    interaction: HumanInteractionEntity,
+    target: ResolvedHumanTarget,
+    firstMessage: { templateName: string; body: string },
+    subscriberId: string
+  ): Promise<{ platformMessageId: string; platformThreadId: string }> {
+    const scope = { _environmentId: interaction._environmentId, _organizationId: interaction._organizationId };
+    const [integration, agent] = await Promise.all([
+      this.integrationRepository.findOne({ ...scope, identifier: target.integrationIdentifier }),
+      this.agentRepository.findOne({ ...scope, _id: interaction._agentId }, ['name', 'active']),
+    ]);
+    // The template goes straight to Meta, past the gateway that turns a disabled agent away.
+    if (agent?.active === false) {
+      throw new AgentInactiveException(interaction._agentId);
+    }
+
+    const credentials = decryptCredentials(integration?.credentials ?? {});
+    const refuse = async (failure: string) =>
+      new WhatsAppUndeliverableException(
+        subscriberId,
+        { reason: WHATSAPP_WINDOW_CLOSED, firstMessageFailure: failure },
+        await this.otherReachableVias({
+          environmentId: interaction._environmentId,
+          organizationId: interaction._organizationId,
+          agentId: interaction._agentId,
+          subscriberId,
+        }).catch(() => [])
+      );
+
+    if (!credentials.apiToken || !credentials.phoneNumberIdentification) {
+      throw await refuse("The first message couldn't go out: connect WhatsApp again on agentinbox.md.");
+    }
+
+    const platformThreadId = `whatsapp:${credentials.phoneNumberIdentification}:${target.platformUserId}`;
+    const hold = { subscriberId, integrationIdentifier: target.integrationIdentifier };
+    await this.humanInteractionRepository.addHold(interaction._environmentId, interaction._id, {
+      ...hold,
+      platformThreadId,
+      heldAt: new Date().toISOString(),
+    });
+    const dropHold = () =>
+      this.humanInteractionRepository
+        .removeHold(interaction._environmentId, interaction._id, hold)
+        .catch(() => undefined);
+
+    // The name agentinbox.md shows for an agent that was never named, so the preview there matches.
+    const agentName = agent?.name && agent.name !== HUMAN_RELAY_DEFAULT_NAME ? agent.name : 'Inbox agent';
+    const sent = await sendNamedWhatsAppTemplate({
+      accessToken: credentials.apiToken,
+      phoneNumberId: credentials.phoneNumberIdentification,
+      to: target.platformUserId,
+      templateName: firstMessage.templateName,
+      languageCode: FIRST_MESSAGE_LANGUAGE,
+      // Only a message with the agent's name in it takes the name: Meta refuses a parameter it has no place for.
+      bodyParameters: usesAgentName(firstMessage.body) ? { [AGENT_NAME_VARIABLE]: agentName } : {},
+      // A tap comes back as this interaction, so it releases what was held for them.
+      quickReplyPayloads: [buildHumanOpenActionId(interaction.identifier)],
+    }).catch(async (err) => {
+      await dropHold();
+
+      throw err;
+    });
+    const error = extractMetaError(sent.body);
+    const messageId = sent.body.messages?.[0]?.id;
+    if (error || sent.statusCode >= 400 || !messageId) {
+      await dropHold();
+
+      throw await refuse(describeFirstMessageFailure(error?.code, error?.message));
+    }
+
+    // It went out, so failing to note its id must not fail the send: only a later delivery failure would go unnamed.
+    await this.humanInteractionRepository
+      .setHoldTemplateMessageId(interaction._environmentId, interaction._id, hold, messageId)
+      .catch(() => undefined);
+
+    return { platformMessageId: messageId, platformThreadId };
   }
 
   /** One-off DM of arbitrary content (e.g. the keyless sign-up CTA) to an already-resolved target. */
@@ -584,11 +984,14 @@ export class HumanDeliveryService {
       return [];
     }
 
-    return this.integrationRepository.find({
+    const integrations = await this.integrationRepository.find({
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
       _id: { $in: links.map((link) => link._integrationId) },
     });
+
+    // Every list, invite page and resolution reads through here, so a gated channel is absent everywhere at once.
+    return this.channelGate.filterIntegrations(integrations, params);
   }
 
   private async findReachableTargets(
@@ -641,18 +1044,34 @@ export class HumanDeliveryService {
       };
     }
 
-    const endpoint = await this.channelEndpointRepository.findOne({
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      subscriberId: params.subscriberId,
-      integrationIdentifier: integration.identifier,
-    });
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        subscriberId: params.subscriberId,
+        integrationIdentifier: integration.identifier,
+      },
+      '',
+      { sort: { _id: 1 } }
+    );
 
-    if (!endpoint) {
-      return null;
+    return this.firstTarget(endpoints, via, integration.identifier);
+  }
+
+  /** The oldest endpoint that reaches the person, skipping any that can't (a WhatsApp number without proof). */
+  private firstTarget(
+    endpoints: ChannelEndpointEntity[],
+    via: HumanChannelViaEnum,
+    integrationIdentifier: string
+  ): ReachableHumanTarget | null {
+    for (const endpoint of endpoints) {
+      const target = this.toTarget(endpoint, via, integrationIdentifier);
+      if (target) {
+        return target;
+      }
     }
 
-    return this.toTarget(endpoint, via, integration.identifier);
+    return null;
   }
 
   private toTarget(
@@ -660,6 +1079,12 @@ export class HumanDeliveryService {
     via: HumanChannelViaEnum,
     integrationIdentifier: string
   ): ReachableHumanTarget | null {
+    // Only a number proved with a code reaches someone on WhatsApp. The channel-endpoints API takes any endpoint
+    // type on any integration, so a chat or user id written onto a WhatsApp one is never taken for a number.
+    if (via === HumanChannelViaEnum.WHATSAPP && !provedWhatsAppNumberOf(endpoint)) {
+      return null;
+    }
+
     const platformUserId = platformUserIdOf(endpoint);
 
     if (!platformUserId) {
@@ -667,13 +1092,18 @@ export class HumanDeliveryService {
     }
 
     const handle = readContactHandle(endpoint.endpoint);
+    const lastCodeAt = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberLastCodeAtOf(endpoint) : undefined;
+    const provedOn = endpoint.type === ENDPOINT_TYPES.PHONE ? whatsAppNumberProvedOnOf(endpoint) : undefined;
 
     return {
       via,
       platform: via,
       platformUserId,
       integrationIdentifier,
-      connectedAt: endpoint.createdAt,
+      // A WhatsApp number connected when it was proved, which can be later than the endpoint when it moved owners.
+      connectedAt: (endpoint.type === ENDPOINT_TYPES.PHONE && whatsAppNumberProvedAtOf(endpoint)) || endpoint.createdAt,
+      ...(lastCodeAt ? { lastCodeAt } : {}),
+      ...(provedOn ? { provedOn } : {}),
       ...(Object.keys(handle).length > 0 ? { handle } : {}),
     };
   }
@@ -763,7 +1193,34 @@ function platformUserIdOf(endpoint: ChannelEndpointEntity): string | undefined {
       return (endpoint.endpoint as { userId: string }).userId;
     case ENDPOINT_TYPES.SLACK_CHANNEL:
       return (endpoint.endpoint as { channelId: string }).channelId;
+    // Only a number someone proved with a wa.me code: a `phone` endpoint on WhatsApp Business that carries the
+    // proof. The channel-endpoints API writes `phone` endpoints too, for SMS and on any integration, and those
+    // can't carry it, so they never count as WhatsApp.
+    // Addressed by wa_id, the number's digits: that is how WhatsApp names the person, and how the threads of
+    // their own messages are keyed, so a DM and their reply land in the same conversation.
+    case ENDPOINT_TYPES.PHONE: {
+      const phoneNumber = provedWhatsAppNumberOf(endpoint);
+
+      return phoneNumber ? normalizePhoneForMeta(phoneNumber) : undefined;
+    }
     default:
       return undefined;
   }
+}
+
+/** Meta's reason a first message didn't go out, in words the operator can act on. */
+function describeFirstMessageFailure(code: number | undefined, message: string | undefined): string {
+  if (code === 131042) {
+    return "Meta couldn't send the first message: add a payment method to your WhatsApp Business account.";
+  }
+
+  if (code === 132000 || code === 132001 || code === 132005 || code === 132015 || code === 132016) {
+    return "Meta couldn't send the first message: it is paused or no longer approved. Check it on agentinbox.md.";
+  }
+
+  if (code === 190 || code === 463) {
+    return "Meta couldn't send the first message: connect WhatsApp again on agentinbox.md.";
+  }
+
+  return `Meta couldn't send the first message${message ? `: ${message}` : ''}.`;
 }

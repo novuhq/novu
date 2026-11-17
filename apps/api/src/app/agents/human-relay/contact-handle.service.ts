@@ -13,11 +13,13 @@ import {
   slackWorkspaceDomainOfAction,
   slackWorkspaceDomainOfUrl,
   telegramHandleOf,
+  whatsAppHandleOf,
 } from '../../human/services/contact-handle';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { isAgentProvisionedSubscriber } from '../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { toCanonicalE164Phone } from '../shared/util/phone-normalization';
 import { asRecord } from '../shared/util/raw-record';
 import { extractSlackTeamId } from '../shared/util/workspace-id';
 
@@ -27,6 +29,8 @@ const SLACK_LOOKUP_TIMEOUT_MS = 5_000;
 const HANDLE_ENDPOINTS = {
   [AgentPlatformEnum.TELEGRAM]: { type: ENDPOINT_TYPES.TELEGRAM_CHAT, identityField: 'chatId' },
   [AgentPlatformEnum.SLACK]: { type: ENDPOINT_TYPES.SLACK_USER, identityField: 'userId' },
+  // Bound by a wa.me code on the relay's WhatsApp Business integration, keyed by the number in E.164.
+  [AgentPlatformEnum.WHATSAPP]: { type: ENDPOINT_TYPES.PHONE, identityField: 'phoneNumber' },
 } as const;
 
 /** Who wrote or pressed a button, and what the platform sent with it. */
@@ -35,7 +39,7 @@ export type ContactHandleSource = {
   subscriberId?: string | null;
   /** The subscriber who wrote, when known: one an agent made up for an unknown sender is a stranger. */
   subscriber?: Pick<SubscriberEntity, 'data'> | null;
-  /** Their Telegram chat id or Slack user id. */
+  /** Their Telegram chat id, Slack user id, or WhatsApp number (digits as WhatsApp sends them, or E.164). */
   platformUserId?: string;
   /** What they wrote, when they wrote. */
   message?: Message | null;
@@ -70,7 +74,11 @@ export class ContactHandleService {
   }
 
   async refresh(source: ContactHandleSource): Promise<void> {
-    const { config, subscriberId, platformUserId } = source;
+    const { config, subscriberId } = source;
+    const platformUserId =
+      config.platform === AgentPlatformEnum.WHATSAPP && source.platformUserId
+        ? (toCanonicalE164Phone(source.platformUserId) ?? undefined)
+        : source.platformUserId;
     const target = HANDLE_ENDPOINTS[config.platform as keyof typeof HANDLE_ENDPOINTS];
 
     if (!config.isHumanRelay || !target || !subscriberId || !platformUserId) {
@@ -100,10 +108,7 @@ export class ContactHandleService {
       }
 
       const stored = readContactHandle(endpoint.endpoint);
-      const next =
-        config.platform === AgentPlatformEnum.TELEGRAM
-          ? telegramHandleOf(asRecord(source.message?.raw)?.from ?? asRecord(source.actionRaw)?.from)
-          : await this.slackHandle(source, platformUserId, stored);
+      const next = await this.handleOf(source, platformUserId, stored);
       const update = next ? contactHandleUpdate(stored, next) : null;
 
       if (update) {
@@ -117,6 +122,21 @@ export class ContactHandleService {
         { err: err instanceof Error ? err.message : String(err), platform: config.platform },
         'Could not keep the contact’s handle; the message goes on without it'
       );
+    }
+  }
+
+  private async handleOf(
+    source: ContactHandleSource,
+    platformUserId: string,
+    stored: ContactHandle
+  ): Promise<ContactHandle | undefined> {
+    switch (source.config.platform) {
+      case AgentPlatformEnum.TELEGRAM:
+        return telegramHandleOf(asRecord(source.message?.raw)?.from ?? asRecord(source.actionRaw)?.from);
+      case AgentPlatformEnum.WHATSAPP:
+        return whatsAppHandleOf(source.message?.author, platformUserId);
+      default:
+        return this.slackHandle(source, platformUserId, stored);
     }
   }
 

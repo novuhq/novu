@@ -14,7 +14,7 @@
     "test-ee": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit 'src/**/*.spec.ts'"
   },
   "dependencies": {
-    "@better-auth/sso": "^1.6.23",
+    "@better-auth/sso": "^1.7.19",
     "@clerk/backend": "^3.4.11",
     "@clerk/express": "^2.1.19",
     "@novu/application-generic": "workspace:*",
@@ -22,8 +22,8 @@
     "@novu/providers": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
-    "better-auth": "^1.6.23",
-    "better-call": "^1.3.7",
+    "better-auth": "^1.7.19",
+    "better-call": "^1.4.5",
     "passport-custom": "^1.1.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",

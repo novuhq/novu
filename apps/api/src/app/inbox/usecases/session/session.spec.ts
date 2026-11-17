@@ -35,6 +35,7 @@ import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { SubscriberSessionAuthStatsService } from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
@@ -90,6 +91,7 @@ describe('Session', () => {
   let getSubscriberSchedule: sinon.SinonStubbedInstance<GetSubscriberSchedule>;
   let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
   let keylessAbuseGuard: sinon.SinonStubbedInstance<KeylessAbuseGuardService>;
+  let subscriberSessionAuthStatsService: sinon.SinonStubbedInstance<SubscriberSessionAuthStatsService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -116,6 +118,7 @@ describe('Session', () => {
     getSubscriberSchedule = sinon.createStubInstance(GetSubscriberSchedule);
     updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
     keylessAbuseGuard = sinon.createStubInstance(KeylessAbuseGuardService);
+    subscriberSessionAuthStatsService = sinon.createStubInstance(SubscriberSessionAuthStatsService);
 
     session = new Session(
       environmentRepository as any,
@@ -141,7 +144,8 @@ describe('Session', () => {
       featureFlagsService as any,
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any,
-      keylessAbuseGuard as any
+      keylessAbuseGuard as any,
+      subscriberSessionAuthStatsService as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);

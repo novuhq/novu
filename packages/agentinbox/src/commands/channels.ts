@@ -51,7 +51,7 @@ export function toChannelRows(contact: Contact | undefined, savedDefault: string
 
 export function renderChannels(rows: ChannelRow[], savedDefault: string | undefined): string {
   if (rows.length === 0) {
-    return `No channels connected yet. Connect one with: ${pc.bold('npx @agentinbox/cli channel add <telegram|slack|email>')}\n`;
+    return `No channels connected yet. Connect one with: ${pc.bold('npx @agentinbox/cli channel add <telegram|slack|whatsapp|email>')}\n`;
   }
 
   const width = Math.max(...rows.map((row) => row.channel.length));

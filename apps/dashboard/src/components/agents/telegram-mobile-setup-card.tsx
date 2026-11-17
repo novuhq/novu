@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiFileCopyLine, RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { requestTelegramMobileLink, type TelegramMobileLink } from '@/api/agents';
 import { type IntegrationStoreTelegramMobileLink, requestIntegrationStoreTelegramMobileLink } from '@/api/integrations';
 import { Button } from '@/components/primitives/button';
