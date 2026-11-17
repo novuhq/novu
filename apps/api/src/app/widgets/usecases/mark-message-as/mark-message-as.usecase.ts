@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
@@ -33,7 +32,6 @@ export class MarkMessageAs {
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,

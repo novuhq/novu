@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -14,7 +13,6 @@ export class MarkNotificationAs {
   constructor(
     private markManyNotificationsAs: MarkManyNotificationsAs,
     private getSubscriber: GetSubscriber,
-    private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository
   ) {}
 

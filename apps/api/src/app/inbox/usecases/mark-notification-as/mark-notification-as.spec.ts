@@ -1,5 +1,4 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { ChannelCTATypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -32,19 +31,16 @@ describe('MarkNotificationAs', () => {
   let updateNotification: MarkNotificationAs;
   let markManyNotificationsAsMock: sinon.SinonStubbedInstance<MarkManyNotificationsAs>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
 
   beforeEach(() => {
     markManyNotificationsAsMock = sinon.createStubInstance(MarkManyNotificationsAs);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
 
     updateNotification = new MarkNotificationAs(
       markManyNotificationsAsMock as any,
       getSubscriberMock as any,
-      analyticsServiceMock as any,
       messageRepositoryMock as any
     );
   });
@@ -123,23 +119,5 @@ describe('MarkNotificationAs', () => {
       }),
     ]);
     expect(mapToDto(updatedMessageMock)).to.deep.equal(updatedMessage);
-  });
-
-  it('should send the analytics', async () => {
-    const command: MarkNotificationAsCommand = {
-      environmentId: '6447aff3d89122e250412c23',
-      organizationId: '6447aff3d89122e250412c1d',
-      subscriberId: '6447aff5d89122e250412c79',
-      notificationId: mockMessage._id,
-      read: true,
-    };
-
-    getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOneForInbox.onFirstCall().resolves(mockMessage);
-    messageRepositoryMock.findOneForInbox.onSecondCall().resolves(mockMessage);
-
-    await updateNotification.execute(command);
-
-    expect(analyticsServiceMock.mixpanelTrack.called).to.be.false;
   });
 });

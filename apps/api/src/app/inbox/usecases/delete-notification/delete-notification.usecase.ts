@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -12,7 +11,6 @@ export class DeleteNotification {
   constructor(
     private deleteManyNotifications: DeleteManyNotifications,
     private getSubscriber: GetSubscriber,
-    private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository
   ) {}
 

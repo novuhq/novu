@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   InstrumentUsecase,
@@ -27,7 +26,6 @@ export class InitializeSession {
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService,
     private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
   ) {}
 

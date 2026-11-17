@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import {
@@ -18,7 +18,6 @@ import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 export class GetInboxPreferences {
   constructor(
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
-    private analyticsService: AnalyticsService,
     private getSubscriberPreference: GetSubscriberPreference,
     private subscriberRepository: SubscriberRepository
   ) {}

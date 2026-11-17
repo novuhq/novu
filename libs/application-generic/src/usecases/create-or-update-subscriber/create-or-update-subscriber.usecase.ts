@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 import { InstrumentUsecase } from '../../instrumentation';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
@@ -13,8 +13,7 @@ export class CreateOrUpdateSubscriberUseCase {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private updateSubscriberUseCase: UpdateSubscriber,
-    private updateSubscriberChannel: UpdateSubscriberChannel,
-    private analyticsService: AnalyticsService
+    private updateSubscriberChannel: UpdateSubscriberChannel
   ) {}
 
   @RetryOnError('MongoServerError', {
