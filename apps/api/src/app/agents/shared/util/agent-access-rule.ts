@@ -14,7 +14,6 @@ export type AgentAccessRuleVerdict =
   | { outcome: 'denied' }
   | { outcome: 'error'; reason: string };
 
-// The rule is loaded with the agent on every inbound event, and MongoDB rejects documents nested over 100 levels.
 const ACCESS_RULE_MAX_BYTES = 16 * 1024;
 const ACCESS_RULE_MAX_DEPTH = 32;
 
@@ -54,14 +53,13 @@ function isNestedDeeperThan(node: unknown, levels: number): boolean {
   return Object.values(node).some((child) => isNestedDeeperThan(child, levels - 1));
 }
 
-// Novu's global `==` and `!=` coerce through Number and Date, so "globex-1" would equal "acme-1".
-const STRICT_EQUALITY: Record<string, string> = { '==': '===', '!=': '!==' };
+const STRICT_FOR_COERCING_EQUALITY: Record<string, string> = { '==': '===', '!=': '!==' };
 
 type AccessRuleNode = string | number | boolean | null | AccessRuleNode[] | { [operator: string]: AccessRuleNode };
 
-function withStrictEquality(node: AccessRuleNode): AccessRuleNode {
+function withoutCoercingEquality(node: AccessRuleNode): AccessRuleNode {
   if (Array.isArray(node)) {
-    return node.map(withStrictEquality);
+    return node.map(withoutCoercingEquality);
   }
 
   if (node === null || typeof node !== 'object') {
@@ -69,7 +67,10 @@ function withStrictEquality(node: AccessRuleNode): AccessRuleNode {
   }
 
   return Object.fromEntries(
-    Object.entries(node).map(([operator, args]) => [STRICT_EQUALITY[operator] ?? operator, withStrictEquality(args)])
+    Object.entries(node).map(([operator, args]) => [
+      STRICT_FOR_COERCING_EQUALITY[operator] ?? operator,
+      withoutCoercingEquality(args),
+    ])
   );
 }
 
@@ -113,7 +114,7 @@ export function evaluateAgentAccessRule(
   }
 
   const { result, error } = evaluateRules(
-    withStrictEquality(rule as AccessRuleNode) as RulesLogic<AdditionalOperation>,
+    withoutCoercingEquality(rule as AccessRuleNode) as RulesLogic<AdditionalOperation>,
     projectEvaluationData(data),
     true
   );
@@ -121,7 +122,6 @@ export function evaluateAgentAccessRule(
     return { outcome: 'error', reason: String(error) };
   }
 
-  // json-logic treats [] as falsy; JS does not.
   if (jsonLogic.truthy(result)) {
     return { outcome: 'allowed' };
   }

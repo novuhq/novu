@@ -82,7 +82,6 @@ export type AgentBehavior = {
    * `restricted`. Always present on persisted agents.
    */
   subscriberAccess: AgentSubscriberAccess;
-  /** Present only when `subscriberAccess === 'rule'`. */
   accessRule?: Record<string, unknown>;
   /**
    * Shared-room reply policy. Absent on GET is treated as `auto_reply`.

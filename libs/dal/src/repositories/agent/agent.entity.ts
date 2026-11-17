@@ -22,9 +22,6 @@ export interface AgentBehavior {
    * to restricted. Always persisted (backfilled for legacy rows).
    */
   subscriberAccess: AgentSubscriberAccessEnum;
-  /**
-   * Present only when `subscriberAccess === 'rule'`.
-   */
   accessRule?: AgentAccessRule;
   /**
    * Shared-room reply policy. Absent on legacy rows is treated as `auto_reply`.
