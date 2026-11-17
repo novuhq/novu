@@ -20,8 +20,9 @@ export async function postUnresolvedSubscriberAccessReply(params: {
   ) => Promise<unknown>;
   getPrimaryChannel: (conversation: ConversationEntity) => ConversationChannel;
   emailSenderUnverified?: boolean;
+  accessRuleRefused?: boolean;
 }): Promise<void> {
-  const { turn, logger, replyOnThread, getPrimaryChannel, emailSenderUnverified } = params;
+  const { turn, logger, replyOnThread, getPrimaryChannel, emailSenderUnverified, accessRuleRefused } = params;
   const resolution = turn.subscriberResolution;
 
   logger.warn(
@@ -38,7 +39,9 @@ export async function postUnresolvedSubscriberAccessReply(params: {
       err: resolution?.outcome === 'error' ? resolution.err : undefined,
       emailSenderUnverified: emailSenderUnverified || undefined,
     },
-    'Unresolved subscriber — replying with access message instead of dispatching'
+    accessRuleRefused
+      ? 'Subscriber access rule refused inbound message — replying with access message instead of dispatching'
+      : 'Unresolved subscriber — replying with access message instead of dispatching'
   );
 
   const reply = buildUnresolvedSubscriberAccessReply({
@@ -46,6 +49,7 @@ export async function postUnresolvedSubscriberAccessReply(params: {
     senderEmail: turn.message?.author?.userId,
     resolutionOutcome: resolution?.outcome,
     emailSenderUnverified,
+    accessRuleRefused,
   });
 
   applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);

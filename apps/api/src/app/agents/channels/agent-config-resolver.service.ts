@@ -18,6 +18,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  type AgentAccessRule,
   type AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentSubscriberAccessEnum,
@@ -97,12 +98,14 @@ export interface ResolvedAgentConfig {
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   /**
-   * Whether unknown senders are auto-provisioned as subscribers (`open`) or
-   * gated (`restricted`). Resolved from persisted `agent.behavior.subscriberAccess`.
+   * Whether unknown senders are auto-provisioned as subscribers (`open`),
+   * gated (`restricted`), or admitted only when `accessRule` matches (`rule`).
+   * Resolved from persisted `agent.behavior.subscriberAccess`.
    * Legacy rows missing the field (pre-migration self-hosted) fall back to `open`
    * so inbound webhooks keep working until the backfill migration runs.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  accessRule?: AgentAccessRule;
   replyPolicy: AgentReplyPolicyEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
@@ -377,6 +380,7 @@ export class AgentConfigResolver {
         this.logger
       ),
       subscriberAccess: agent.behavior?.subscriberAccess ?? AgentSubscriberAccessEnum.OPEN,
+      accessRule: agent.behavior?.accessRule,
       replyPolicy: agent.behavior?.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,

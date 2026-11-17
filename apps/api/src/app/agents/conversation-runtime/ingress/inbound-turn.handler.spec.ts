@@ -293,6 +293,9 @@ describe('AgentInboundHandler', () => {
     const whatsAppBindInbound = {
       tryConsume: sinon.stub().callsFake(async (_agentId, _config, _thread, message) => message),
     };
+    const featureFlagsService = {
+      getFlag: sinon.stub().resolves(true),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -320,7 +323,8 @@ describe('AgentInboundHandler', () => {
       keylessEmailGate as any,
       contactHandles as any,
       whatsAppBindInbound as any,
-      { release: sinon.stub().resolves() } as any
+      { release: sinon.stub().resolves() } as any,
+      featureFlagsService as any
     );
 
     return {
@@ -328,6 +332,7 @@ describe('AgentInboundHandler', () => {
       logger,
       connectionContextResolver,
       replyApprovalInterceptor,
+      featureFlagsService,
       humanInteractionInbound,
       humanRelayRuntime,
       attachmentStorage,
@@ -2981,6 +2986,7 @@ describe('AgentInboundHandler', () => {
       id: 'thread1',
       channelId: 'channel1',
       isDM: false,
+      post: sinon.stub().resolves({ id: 'reply', threadId: 'thread1' }),
     };
   }
 
@@ -3662,6 +3668,143 @@ describe('AgentInboundHandler', () => {
       await deleteWithoutAuthor(handler);
 
       expect(conversationService.deleteInboundMessage.called).to.equal(false);
+    });
+  });
+
+  describe('rule-mode admission', () => {
+    const denyRuleConfig = {
+      ...config,
+      subscriberAccess: AgentSubscriberAccessEnum.RULE,
+      accessRule: { '==': [{ var: 'subscriber.data.tier' }, 'gold'] },
+    };
+
+    function makeMentionOnlyThread() {
+      return {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+    }
+
+    it('does not run approval, HITL, or dispatch when rule mode denies ON_MESSAGE', async () => {
+      const { handler, replyApprovalInterceptor, humanInteractionInbound, bridgeExecutor } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handle(
+        'agent1',
+        denyRuleConfig as any,
+        { id: 'thread1', channelId: 'C1', isDM: true, post: sinon.stub().resolves({ id: 'r1' }) } as any,
+        {
+          id: 'msg-1',
+          text: 'hello',
+          author: { userId: 'U1', fullName: 'Ada', isBot: false },
+          isMention: true,
+          attachments: [],
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(replyApprovalInterceptor.tryHandleAsApprovalReply.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    for (const { isMention, refuses } of [
+      { isMention: true, refuses: true },
+      { isMention: false, refuses: false },
+    ]) {
+      it(`${refuses ? 'refuses' : 'stays silent on'} a denied ${isMention ? 'mention' : 'unmentioned answer to a pending ask'} in a shared thread`, async () => {
+        const { handler, outboundGateway, humanInteractionInbound } = makeHandler({
+          ...makeResolvedSubscriberOverrides('sub1'),
+          subscriberFindById: sinon.stub().resolves({
+            _id: 'subscriber-mongo-1',
+            subscriberId: 'sub1',
+            data: { tier: 'silver' },
+          }),
+        });
+        humanInteractionInbound.hasPendingConversationAsk.resolves(true);
+        const mentionOnlyConfig = { ...denyRuleConfig, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+        await handler.handle(
+          'agent1',
+          mentionOnlyConfig as any,
+          makeMentionOnlyThread() as any,
+          {
+            id: 'msg-1',
+            text: 'side chat',
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention,
+            attachments: [],
+          } as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(humanInteractionInbound.tryHandleMessage.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.called).to.equal(refuses);
+      });
+    }
+
+    it('does not record action accept or dispatch when rule mode denies ON_ACTION', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        denyRuleConfig as any,
+        makeActionThread() as any,
+        { id: 'topic-billing', value: 'yes' } as any,
+        'user1'
+      );
+
+      expect(conversationService.persistInboundActionAccept.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleAction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('does not dispatch ON_MESSAGE_DELETED when rule mode denies the delete', async () => {
+      const { handler, bridgeExecutor } = makeHandler({
+        history: [{ platformMessageId: 'msg-1', content: 'secret', senderId: 'sub1' }],
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        denyRuleConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'secret',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
     });
   });
 });

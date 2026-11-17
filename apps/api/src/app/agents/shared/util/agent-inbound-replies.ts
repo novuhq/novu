@@ -5,6 +5,9 @@ import type { SubscriberResolutionOutcome } from '../types/subscriber-resolution
 export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
   "We couldn't match your identity to a known user, so this agent can't reply yet. Sign in or link your account in the app that owns this agent, then try again.";
 
+export const SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY =
+  "You don't have access to this agent. Contact the team that owns it if you think this is a mistake.";
+
 /**
  * Shown when resolution itself broke rather than the sender being unknown —
  * blaming the sender's identity for an internal failure would be misleading.
@@ -36,7 +39,12 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   senderEmail?: string;
   resolutionOutcome?: SubscriberResolutionOutcome;
   emailSenderUnverified?: boolean;
+  accessRuleRefused?: boolean;
 }): string {
+  if (params.accessRuleRefused) {
+    return SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY;
+  }
+
   // On `error` the sender's identity was never actually rejected, so the
   // access-denied copy would be wrong. (`resolved` never reaches this gate —
   // the inbound handler reclassifies resolved-but-unloadable records as

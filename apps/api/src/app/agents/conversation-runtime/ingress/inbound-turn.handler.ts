@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { isValidActionIdempotencyKey, type WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import {
   AgentIntegrationRepository,
@@ -63,6 +63,7 @@ import {
   isAgentProvisionedSubscriber,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { admitByAccessRule } from '../reply/admit-by-access-rule';
 import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -360,7 +361,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly contactHandles: ContactHandleService,
     private readonly whatsAppBindInbound: WhatsAppBindInbound,
-    private readonly whatsAppHeldRelease: WhatsAppHeldRelease
+    private readonly whatsAppHeldRelease: WhatsAppHeldRelease,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -924,11 +926,11 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
-      config,
-      message.raw,
-      message.author?.userId
-    );
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -939,6 +941,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: resolution,
       message,
       event,
@@ -949,6 +952,37 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
       unseenThreadMessages,
     };
+
+    const mentionGateArgs = {
+      agentId,
+      config,
+      thread,
+      message,
+      event,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      mentionContext,
+      mentionBotUserId,
+      participantsSnapshot,
+    };
+
+    const admission = await admitByAccessRule({
+      turn,
+      logger: this.logger,
+      outboundGateway: this.outboundGateway,
+      conversationService: this.conversationService,
+      featureFlagsService: this.featureFlagsService,
+      emailSenderUnverified: !isVerifiedEmailSender,
+    });
+
+    if (!admission.admitted) {
+      if (!(await this.maybeStopOnMentionGate(mentionGateArgs))) {
+        await admission.refuse();
+      }
+
+      return;
+    }
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
     // answered by texting back YES / NO — consume before the subscriber-access
@@ -964,21 +998,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    if (
-      await this.maybeStopOnMentionGate({
-        agentId,
-        config,
-        thread,
-        message,
-        event,
-        conversation,
-        platformThreadId,
-        subscriberId,
-        mentionContext,
-        mentionBotUserId,
-        participantsSnapshot,
-      })
-    ) {
+    if (await this.maybeStopOnMentionGate(mentionGateArgs)) {
       return;
     }
 
@@ -2193,11 +2213,11 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
-      config,
-      params.raw,
-      params.platformUserId
-    );
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(config, params.raw, params.platformUserId);
     const runtime = this.runtimeResolver.resolve(agent);
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
@@ -2225,6 +2245,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: resolution,
       message: params.turnMessage !== undefined ? params.turnMessage : message,
       previousMessage: params.previousMessage,
@@ -2237,6 +2258,20 @@ export class AgentInboundHandler implements OnModuleInit {
       reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    const admission = await admitByAccessRule({
+      turn,
+      logger: this.logger,
+      outboundGateway: this.outboundGateway,
+      conversationService: this.conversationService,
+      featureFlagsService: this.featureFlagsService,
+    });
+
+    if (!admission.admitted) {
+      await admission.refuse();
+
+      return;
+    }
 
     if (
       event === AgentEventEnum.ON_REACTION &&
@@ -2382,15 +2417,14 @@ export class AgentInboundHandler implements OnModuleInit {
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
     const identifier = this.readActionIdempotencyKey(rawEvent);
-    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
-      config,
-      rawEvent,
-      userId
-    );
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(config, rawEvent, userId);
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -2401,6 +2435,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
@@ -2411,6 +2446,22 @@ export class AgentInboundHandler implements OnModuleInit {
       actionRaw: rawEvent,
       workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    const admission = await admitByAccessRule({
+      turn,
+      logger: this.logger,
+      outboundGateway: this.outboundGateway,
+      conversationService: this.conversationService,
+      featureFlagsService: this.featureFlagsService,
+    });
+
+    if (!admission.admitted) {
+      await admission.refuse();
+
+      return;
+    }
+
+    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     if (await this.humanConversationInbound.tryHandleAction(turn)) {
       return;

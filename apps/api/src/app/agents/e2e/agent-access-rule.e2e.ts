@@ -1,19 +1,73 @@
-import { AgentRepository } from '@novu/dal';
+import { createContextHash, createHash } from '@novu/application-generic';
+import { AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, type ContextPayload, InAppProviderIdEnum } from '@novu/shared';
+import { testServer } from '@novu/testing';
 import { expect } from 'chai';
-import { AgentTestContext, setupAgentTestContext } from './helpers/agent-test-setup';
+import sinon from 'sinon';
+import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { AgentInboundHandler } from '../conversation-runtime/ingress/inbound-turn.handler';
+import {
+  type AgentExecutionParams,
+  BridgeExecutorService,
+} from '../conversation-runtime/runtime/bridge-executor.service';
+import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import {
+  SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
+  UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+} from '../shared/util/agent-inbound-replies';
+import {
+  AgentTestContext,
+  activityRepository,
+  conversationRepository,
+  seedChannelEndpoint,
+  setupAgentTestContext,
+} from './helpers/agent-test-setup';
+
+const POLL_TIMEOUT_MS = 10_000;
+const POLL_INTERVAL_MS = 50;
+const SETTLE_MS = 300;
+
+async function pollFor<T>(fn: () => T | null | undefined | Promise<T | null | undefined>): Promise<T> {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let lastError: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      const result = await fn();
+      if (result) return result;
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `pollFor timed out after ${POLL_TIMEOUT_MS}ms${lastError ? `; last error: ${(lastError as Error).message}` : ''}`
+  );
+}
 
 const agentRepository = new AgentRepository();
+const integrationRepository = new IntegrationRepository();
+const subscriberRepository = new SubscriberRepository();
 
 const PAID_PLAN_RULE = { in: [{ var: 'context.tenant.data.plan' }, ['pro', 'enterprise']] };
 
+function blockListRule(agentIdentifier: string) {
+  return { '!': { in: [agentIdentifier, { var: 'subscriber.data.blockedAgents' }] } };
+}
+
 describe('Agent access rule #novu-v2', () => {
   let ctx: AgentTestContext;
+  let bridgeCalls: AgentExecutionParams[];
 
   before(() => {
+    process.env.IS_AGENT_WEB_CHAT_ENABLED = 'true';
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
   });
 
   after(() => {
+    delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
     delete process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
     delete process.env.IS_SUBSCRIBER_TOKENS_ENABLED;
   });
@@ -21,6 +75,16 @@ describe('Agent access rule #novu-v2', () => {
   beforeEach(async () => {
     process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'true';
     ctx = await setupAgentTestContext();
+
+    bridgeCalls = [];
+    const bridgeExecutor = testServer.getService(BridgeExecutorService);
+    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
+      bridgeCalls.push(params);
+    });
+  });
+
+  afterEach(() => {
+    sinon.restore();
   });
 
   function patchBehavior(behavior: Record<string, unknown>) {
@@ -117,6 +181,302 @@ describe('Agent access rule #novu-v2', () => {
 
       expect(res.status).to.equal(403);
       expect((await storedBehavior())?.subscriberAccess).to.equal('open');
+    });
+  });
+
+  describe('Web Chat', () => {
+    async function linkWebChat() {
+      const res = await ctx.session.testAgent.post(`/v1/agents/${ctx.agentIdentifier}/integrations`).send({
+        providerId: ChatProviderIdEnum.NovuWebChat,
+      });
+      expect(res.status).to.equal(201);
+    }
+
+    async function enforceInboxHmac() {
+      await integrationRepository.update(
+        {
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          providerId: InAppProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.IN_APP,
+        },
+        { $set: { 'credentials.hmac': true } }
+      );
+    }
+
+    async function openSession(context?: ContextPayload) {
+      const secretKey = ctx.session.environment.apiKeys[0].key;
+      const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+        applicationIdentifier: ctx.session.environment.identifier,
+        subscriberId: ctx.session.subscriberId,
+        subscriberHash: createHash(secretKey, ctx.session.subscriberId),
+        ...(context ? { context, contextHash: createContextHash(secretKey, context) } : {}),
+      });
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+      return res.body.data.token as string;
+    }
+
+    async function send(token: string, text: string, conversationIdentifier?: string) {
+      const res = await ctx.session.testAgent
+        .post('/v1/web-chat/conversations')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ agentId: ctx.agentIdentifier, text, ...(conversationIdentifier ? { conversationIdentifier } : {}) });
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+      return res.body.data.identifier as string;
+    }
+
+    async function conversationId(identifier: string) {
+      const conversation = await pollFor(() =>
+        conversationRepository.findOne({ identifier, _environmentId: ctx.session.environment._id }, '_id')
+      );
+
+      return conversation._id;
+    }
+
+    async function waitForRefusal(identifier: string) {
+      const _conversationId = await conversationId(identifier);
+
+      return pollFor(() =>
+        activityRepository.findOne(
+          {
+            _environmentId: ctx.session.environment._id,
+            _conversationId,
+            content: SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
+          },
+          '_id'
+        )
+      );
+    }
+
+    async function waitForBridgeCalls(count: number) {
+      await pollFor(() => bridgeCalls.length >= count);
+      await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+      expect(bridgeCalls.length).to.equal(count);
+    }
+
+    it('lets a paying tenant talk to the agent and refuses its next message after the tenant downgrades', async () => {
+      await linkWebChat();
+      await enforceInboxHmac();
+      const tenantId = `acme-${Date.now()}`;
+      await setRule(PAID_PLAN_RULE);
+      const token = await openSession({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+
+      const identifier = await send(token, 'Hi, I am on Pro');
+      await waitForBridgeCalls(1);
+      expect(bridgeCalls[0].context).to.deep.include({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+
+      const downgrade = await ctx.session.testAgent
+        .patch(`/v2/contexts/tenant/${tenantId}`)
+        .send({ data: { plan: 'free' } });
+      expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+
+      await send(token, 'Still there?', identifier);
+      await waitForRefusal(identifier);
+      await waitForBridgeCalls(1);
+    });
+
+    it('refuses an unsigned session whose tenant the agent cannot trust', async () => {
+      await linkWebChat();
+      await setRule(PAID_PLAN_RULE);
+      const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+        applicationIdentifier: ctx.session.environment.identifier,
+        subscriberId: ctx.session.subscriberId,
+        context: { tenant: { id: `forged-${Date.now()}`, data: { plan: 'enterprise' } } },
+      });
+      expect(res.status).to.equal(201);
+
+      const identifier = await send(res.body.data.token, 'Let me in');
+
+      await waitForRefusal(identifier);
+      await waitForBridgeCalls(0);
+    });
+
+    it('lets in a subscriber with no block list and refuses the next message once the agent is blocked', async () => {
+      await linkWebChat();
+      await setRule(blockListRule(ctx.agentIdentifier));
+      const token = await openSession();
+
+      const identifier = await send(token, 'First message');
+      await waitForBridgeCalls(1);
+
+      const blocked = await ctx.session.testAgent
+        .patch(`/v2/subscribers/${ctx.session.subscriberId}`)
+        .send({ data: { blockedAgents: [ctx.agentIdentifier] } });
+      expect(blocked.status, JSON.stringify(blocked.body)).to.equal(200);
+
+      await send(token, 'Second message', identifier);
+      await waitForRefusal(identifier);
+      await waitForBridgeCalls(1);
+    });
+
+    it('refuses a previously allowed sender after the subscriber tokens flag is turned off at runtime', async () => {
+      await linkWebChat();
+      await enforceInboxHmac();
+      await setRule(PAID_PLAN_RULE);
+      const token = await openSession({ tenant: { id: `flag-off-${Date.now()}`, data: { plan: 'pro' } } });
+
+      const identifier = await send(token, 'Allowed while flag is on');
+      await waitForBridgeCalls(1);
+
+      process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
+
+      await send(token, 'Blocked after flag off', identifier);
+      await waitForRefusal(identifier);
+      await waitForBridgeCalls(1);
+    });
+
+    it('refuses every message when the stored rule cannot be evaluated', async () => {
+      await linkWebChat();
+      await agentRepository.update(
+        { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
+        { $set: { 'behavior.subscriberAccess': 'rule', 'behavior.accessRule': { log: 'not allowed' } } }
+      );
+      const token = await openSession();
+
+      const identifier = await send(token, 'Hello');
+
+      await waitForRefusal(identifier);
+      await waitForBridgeCalls(0);
+    });
+  });
+
+  describe('Slack', () => {
+    let replies: string[];
+
+    beforeEach(() => {
+      replies = [];
+      sinon.stub(testServer.getService(OutboundGateway), 'replyOnThread').callsFake(async (_thread, msg) => {
+        replies.push((msg as { markdown: string }).markdown);
+
+        return undefined as never;
+      });
+    });
+
+    function thread(id: string) {
+      return {
+        id,
+        channelId: 'C_ACCESS_RULE',
+        isDM: true,
+        startTyping: async () => {},
+        subscribe: async () => {},
+        unsubscribe: async () => {},
+        post: async () => ({}),
+        toJSON: () => ({ id, platform: 'slack', channelId: 'C_ACCESS_RULE' }),
+      };
+    }
+
+    async function sendSlack(threadId: string, userId: string, text: string) {
+      const config = await testServer.getService(AgentConfigResolver).resolve(ctx.agentId, ctx.integrationIdentifier);
+      const message = {
+        id: `msg-${Date.now()}-${Math.random()}`,
+        text,
+        author: { userId, fullName: 'Slack User', userName: 'slackuser', isBot: false },
+        isMention: true,
+        metadata: { dateSent: new Date() },
+      };
+
+      await testServer
+        .getService(AgentInboundHandler)
+        .handle(ctx.agentId, config, thread(threadId) as never, message as never, AgentEventEnum.ON_MESSAGE);
+
+      return message;
+    }
+
+    async function clickSlack(threadId: string, userId: string) {
+      const config = await testServer.getService(AgentConfigResolver).resolve(ctx.agentId, ctx.integrationIdentifier);
+
+      await testServer
+        .getService(AgentInboundHandler)
+        .handleAction(
+          ctx.agentId,
+          config,
+          thread(threadId) as never,
+          { id: 'issue-refund', value: 'order-42' },
+          userId
+        );
+    }
+
+    async function reactSlack(threadId: string, userId: string, message: Awaited<ReturnType<typeof sendSlack>>) {
+      const config = await testServer.getService(AgentConfigResolver).resolve(ctx.agentId, ctx.integrationIdentifier);
+
+      await testServer.getService(AgentInboundHandler).handleReaction(ctx.agentId, config, {
+        emoji: {
+          name: 'thumbs_up',
+          toJSON: () => '{{emoji:thumbs_up}}',
+          toString: () => '{{emoji:thumbs_up}}',
+        } as never,
+        added: true,
+        messageId: message.id,
+        message: message as never,
+        thread: thread(threadId) as never,
+        user: { userId },
+      });
+    }
+
+    it('applies the rule to button clicks and reactions, refusing the click with a reply and the reaction silently', async () => {
+      const subscriberId = `slack-rule-events-${Date.now()}`;
+      await subscriberRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        subscriberId,
+        data: { tier: 'gold' },
+      });
+      await seedChannelEndpoint(ctx, 'U_RULE_EVENTS', subscriberId);
+      await setRule({ '==': [{ var: 'subscriber.data.tier' }, 'gold'] });
+      const threadId = `D_RULE_EVENTS_${Date.now()}`;
+
+      const message = await sendSlack(threadId, 'U_RULE_EVENTS', 'hello');
+      await clickSlack(threadId, 'U_RULE_EVENTS');
+      await reactSlack(threadId, 'U_RULE_EVENTS', message);
+      expect(bridgeCalls.map((call) => call.event)).to.deep.equal(['onMessage', 'onAction', 'onReaction']);
+      expect(replies).to.deep.equal([]);
+
+      await subscriberRepository.update(
+        { _environmentId: ctx.session.environment._id, subscriberId },
+        { $set: { 'data.tier': 'silver' } }
+      );
+
+      await clickSlack(threadId, 'U_RULE_EVENTS');
+      await reactSlack(threadId, 'U_RULE_EVENTS', message);
+      expect(bridgeCalls).to.have.length(3);
+      expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
+    });
+
+    it('applies the rule to a linked Slack user on every message as their subscriber data changes', async () => {
+      const subscriberId = `slack-rule-${Date.now()}`;
+      await subscriberRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        subscriberId,
+        data: { tier: 'gold' },
+      });
+      await seedChannelEndpoint(ctx, 'U_RULE_LINKED', subscriberId);
+      await setRule({ '==': [{ var: 'subscriber.data.tier' }, 'gold'] });
+      const threadId = `D_RULE_${Date.now()}`;
+
+      await sendSlack(threadId, 'U_RULE_LINKED', 'hello');
+      expect(bridgeCalls).to.have.length(1);
+      expect(replies).to.deep.equal([]);
+
+      await subscriberRepository.update(
+        { _environmentId: ctx.session.environment._id, subscriberId },
+        { $set: { 'data.tier': 'silver' } }
+      );
+
+      await sendSlack(threadId, 'U_RULE_LINKED', 'hello again');
+      expect(bridgeCalls).to.have.length(1);
+      expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
+    });
+
+    it('refuses an unknown Slack sender like restricted access does, without creating a subscriber', async () => {
+      await setRule({ '!': { in: [ctx.agentIdentifier, { var: 'subscriber.data.blockedAgents' }] } });
+
+      await sendSlack(`D_RULE_UNKNOWN_${Date.now()}`, 'U_RULE_STRANGER', 'who are you');
+
+      expect(bridgeCalls).to.have.length(0);
+      expect(replies).to.deep.equal([UNRESOLVED_SUBSCRIBER_ACCESS_REPLY]);
     });
   });
 });
