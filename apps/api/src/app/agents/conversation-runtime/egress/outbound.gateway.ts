@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
@@ -346,7 +346,7 @@ export class OutboundGateway {
         return null;
       }
 
-      throw err;
+      rethrowTelegramPostError(thread.id.split(':')[0] ?? '', err);
     }
 
     if (opts?.persist) {
@@ -415,7 +415,7 @@ export class OutboundGateway {
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
-    ).catch(toDeliveryError);
+    ).catch((err) => rethrowTelegramPostError(platform, err));
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -674,7 +674,7 @@ export class OutboundGateway {
       const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
 
       return dmThread.post(postArg);
-    }).catch(toDeliveryError);
+    }).catch((err) => rethrowTelegramPostError(config.platform, err));
 
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
@@ -1223,4 +1223,23 @@ export class OutboundGateway {
 
     return msg.card ?? (msg as AdapterPostableMessage);
   }
+}
+
+/**
+ * A split Telegram post can throw after earlier parts are already in the chat.
+ * The agent event outbox retries 408, 429, and every 5xx, and that retry would
+ * send those parts again. 409 is still a delivery failure, and the outbox does not retry it.
+ */
+function rethrowTelegramPostError(platform: string, err: unknown): never {
+  if (platform === AgentPlatformEnum.TELEGRAM && err instanceof Error && err.name === 'AdapterRateLimitError') {
+    throw new HttpException(
+      {
+        error: 'delivery_failed',
+        message: err.message,
+      },
+      HttpStatus.CONFLICT
+    );
+  }
+
+  toDeliveryError(err);
 }

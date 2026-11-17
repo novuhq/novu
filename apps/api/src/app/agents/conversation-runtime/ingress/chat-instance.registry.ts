@@ -498,6 +498,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           botToken: credentials.apiToken,
           secretToken: credentials.token,
           mode: 'webhook',
+          // Over-limit text goes out as consecutive messages. The default truncates at
+          // Telegram's limit and drops the tail of a long agent reply.
+          longMessages: 'split',
         });
 
         if (config.isHumanRelay) {
