@@ -1837,7 +1837,10 @@ export class AgentInboundHandler implements OnModuleInit {
           })),
         }
       : undefined;
-    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
+    const editedAt =
+      message.metadata?.editedAt instanceof Date && !Number.isNaN(message.metadata.editedAt.getTime())
+        ? message.metadata.editedAt.toISOString()
+        : new Date().toISOString();
 
     if (message.id) {
       await this.conversationService.updateInboundMessage({
@@ -2541,17 +2544,6 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
-}
-
-function readPlatformEditedAt(message: Message): string | undefined {
-  const raw = message.raw;
-  if (!raw || typeof raw !== 'object') {
-    return undefined;
-  }
-
-  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
-
-  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
 }
 
 function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {
