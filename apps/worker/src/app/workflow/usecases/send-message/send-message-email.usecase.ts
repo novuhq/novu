@@ -53,7 +53,12 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
+import {
+  combineProviderOverrides,
+  dispatchWebhooksInBackground,
+  mergeTriggerProviderOverrides,
+  SendMessageBase,
+} from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -249,13 +254,14 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      const i18nInstance = await this.initiateTranslations(
-        command.environmentId,
-        command.organizationId,
-        subscriber?.locale
-      );
-
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber?.locale
+        );
+
         ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
           CompileEmailTemplateCommand.create({
             environmentId: command.environmentId,
@@ -636,17 +642,20 @@ export class SendMessageEmail extends SendMessageBase {
         ),
       });
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId, {
-            providerResponseId: result.id,
-          }),
+      dispatchWebhooksInBackground(this.sendWebhookMessage, [
+        {
+          eventType: WebhookEventEnum.MESSAGE_SENT,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId, {
+              providerResponseId: result.id,
+            }),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
         },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+      ]);
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
@@ -700,18 +709,21 @@ export class SendMessageEmail extends SendMessageBase {
        */
       const providerError = error?.isAxiosError && error.response ? error.response : error;
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_FAILED,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId),
-          error: {
-            message: providerError.message || providerError.name || 'Error while sending email with provider',
+      dispatchWebhooksInBackground(this.sendWebhookMessage, [
+        {
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              message: providerError.message || providerError.name || 'Error while sending email with provider',
+            },
           },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
         },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+      ]);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

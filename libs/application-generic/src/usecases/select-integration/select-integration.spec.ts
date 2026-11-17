@@ -565,3 +565,147 @@ describe('select integration', () => {
     expect(matchedRules?.matchedConditions).toEqual({ type: 'rules', value: dualFormatIntegration.rules });
   });
 });
+
+describe('select integration from the cached channel list', () => {
+  const integrationRepository: IntegrationRepository = new IntegrationRepository();
+  const cacheGetMock = vi.fn((_store: string, _key: string, fetchFn: () => Promise<unknown>) => fetchFn());
+
+  const buildUseCase = () =>
+    new SelectIntegration(
+      integrationRepository,
+      {} as never,
+      new TenantRepository(),
+      { execute: vi.fn().mockResolvedValue({}) } as never,
+      { getFlag: vi.fn().mockResolvedValue(false) } as never,
+      { get: cacheGetMock } as never
+    );
+
+  const select = (overrides: Partial<SelectIntegrationCommand> = {}) =>
+    buildUseCase().execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.SMS,
+        environmentId: 'environmentId',
+        organizationId: 'organizationId',
+        userId: 'userId',
+        filterData: {},
+        useCache: true,
+        ...overrides,
+      })
+    );
+
+  const integration = (fields: Partial<IntegrationEntity> & { createdAt?: string }): IntegrationEntity =>
+    ({ ...testIntegration, channel: ChannelTypeEnum.SMS, primary: false, ...fields }) as IntegrationEntity;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('loads the channel integrations with one query and no findOne', async () => {
+    findMock.mockReturnValue([integration({ _id: 'primary', identifier: 'primary', primary: true })]);
+
+    const result = await select();
+
+    expect(result?.integration.identifier).toEqual('primary');
+    expect(findOneMock).not.toHaveBeenCalled();
+    expect(findMock).toHaveBeenCalledTimes(1);
+    expect(findMock).toHaveBeenCalledWith(
+      {
+        _organizationId: 'organizationId',
+        _environmentId: 'environmentId',
+        channel: ChannelTypeEnum.SMS,
+        active: true,
+      },
+      '',
+      { sort: { createdAt: -1 } }
+    );
+    expect(cacheGetMock).toHaveBeenCalledWith(
+      'channel-integrations',
+      'organizationId:environmentId:sms',
+      expect.any(Function),
+      { environmentId: 'environmentId', organizationId: 'organizationId' }
+    );
+  });
+
+  it('picks the primary integration, not the newest non-primary one', async () => {
+    findMock.mockReturnValue([
+      integration({ _id: 'newest', identifier: 'newest' }),
+      integration({ _id: 'primary', identifier: 'primary', primary: true }),
+    ]);
+
+    const result = await select();
+
+    expect(result?.integration.identifier).toEqual('primary');
+  });
+
+  it('picks the newest integration for channels without a primary', async () => {
+    findMock.mockReturnValue([
+      integration({ _id: 'newest', identifier: 'newest', channel: ChannelTypeEnum.PUSH }),
+      integration({ _id: 'older', identifier: 'older', channel: ChannelTypeEnum.PUSH }),
+    ]);
+
+    const result = await select({ channelType: ChannelTypeEnum.PUSH });
+
+    expect(result?.integration.identifier).toEqual('newest');
+  });
+
+  it('selects by identifier among all active integrations', async () => {
+    findMock.mockReturnValue([
+      integration({ _id: 'primary', identifier: 'primary', primary: true }),
+      integration({
+        _id: 'override',
+        identifier: 'override',
+        rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] },
+      }),
+    ]);
+
+    const result = await select({ identifier: 'override', filterData: { subscriber: { locale: 'de' } } });
+
+    expect(result?.integration.identifier).toEqual('override');
+    expect(result?.matchedConditions).toBeUndefined();
+  });
+
+  it('returns undefined when the identifier is not active', async () => {
+    findMock.mockReturnValue([integration({ _id: 'primary', identifier: 'primary', primary: true })]);
+
+    const result = await select({ identifier: 'missing' });
+
+    expect(result).toBeUndefined();
+  });
+
+  it('selects the first matching conditioned integration by priority then newest', async () => {
+    const rules = { '==': [{ var: 'subscriber.locale' }, 'fr'] };
+    findMock.mockReturnValue([
+      integration({ _id: 'primary', identifier: 'primary', primary: true }),
+      integration({ _id: 'low', identifier: 'low', priority: 1, rules, createdAt: '2026-03-01' }),
+      integration({ _id: 'high-old', identifier: 'high-old', priority: 5, rules, createdAt: '2026-01-01' }),
+      integration({ _id: 'high-new', identifier: 'high-new', priority: 5, rules, createdAt: '2026-02-01' }),
+    ]);
+
+    const result = await select({ filterData: { subscriber: { locale: 'fr' } } });
+
+    expect(result?.integration.identifier).toEqual('high-new');
+    expect(result?.matchedConditions).toEqual({ type: 'rules', value: rules });
+  });
+
+  it('falls back to the primary when no conditioned integration matches', async () => {
+    findMock.mockReturnValue([
+      integration({ _id: 'primary', identifier: 'primary', primary: true }),
+      integration({ _id: 'fr', identifier: 'fr', priority: 5, rules: { '==': [{ var: 'subscriber.locale' }, 'fr'] } }),
+    ]);
+
+    const result = await select({ filterData: { subscriber: { locale: 'de' } } });
+
+    expect(result?.integration.identifier).toEqual('primary');
+  });
+
+  it('decrypts a copy so the cached entity keeps its stored credentials', async () => {
+    const cached = integration({ _id: 'primary', identifier: 'primary', primary: true });
+    const storedCredentials = cached.credentials;
+    findMock.mockReturnValue([cached]);
+
+    const result = await select();
+
+    expect(result?.integration).not.toBe(cached);
+    expect(cached.credentials).toBe(storedCredentials);
+  });
+});
