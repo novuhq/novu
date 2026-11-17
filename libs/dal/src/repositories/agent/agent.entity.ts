@@ -1,4 +1,5 @@
 import type {
+  AgentAccessRule,
   AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentRuntime,
@@ -16,10 +17,15 @@ export interface AgentBehavior {
   /**
    * Whether the agent accepts inbound messages from senders not yet linked to a
    * subscriber, across all channels. `open` auto-provisions unknown senders;
-   * `restricted` rejects them. Managed create defaults to open; self-hosted
-   * create defaults to restricted. Always persisted (backfilled for legacy rows).
+   * `restricted` rejects them; `rule` requires a known subscriber and a matching
+   * `accessRule`. Managed create defaults to open; self-hosted create defaults
+   * to restricted. Always persisted (backfilled for legacy rows).
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  /**
+   * Present only when `subscriberAccess === 'rule'`.
+   */
+  accessRule?: AgentAccessRule;
   /**
    * Shared-room reply policy. Absent on legacy rows is treated as `auto_reply`.
    */
