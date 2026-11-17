@@ -45,9 +45,6 @@ function buildInput(overrides: Partial<UploadSkillInput> = {}): UploadSkillInput
 }
 
 function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark'): APIError {
-  // Construct an `APIError` whose embedded body matches the actual Anthropic
-  // shape we want to detect. The string form is mirrored into the top-level
-  // `message` so either side of `isDuplicateDisplayTitleError` matches.
   const body = {
     type: 'error',
     error: {
@@ -56,7 +53,7 @@ function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark
     },
   };
 
-  return new APIError(400, body, JSON.stringify(body), undefined as unknown as Headers);
+  return new APIError(400, body, 'constructor fallback', new Headers());
 }
 
 interface MockClient {
@@ -317,8 +314,6 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
     it('surfaces a non-duplicate 400 from create directly without a fallback lookup', async () => {
       mockClient.beta.skills.list.mockReturnValue(asPagedAsyncIterable([]));
-      // Same APIError shape used in the existing e2e mapping test (see
-      // `provider errors` describe in `upload-custom-skill.e2e.ts`).
       const otherBody = {
         type: 'error',
         error: { type: 'invalid_request_error', message: 'Skill name mismatch' },
