@@ -1,4 +1,4 @@
-import { ContextPayload, ISubscriberPayload } from '@novu/shared';
+import { ContextPayload, EnvironmentId, ISubscriberPayload, SubscriberId } from '@novu/shared';
 
 export enum SubscriberTokenScopeEnum {
   CHANNELS_SHARED = 'channels:shared',
@@ -7,11 +7,9 @@ export enum SubscriberTokenScopeEnum {
 export type SubscriberLoginProfile = Omit<ISubscriberPayload, 'channels'>;
 
 export type SubscriberLoginClaims = {
-  /** Environment `_id` the token was minted for. */
-  iss: string;
+  iss: EnvironmentId;
   aud: 'novu';
-  /** The customer's `subscriberId`. */
-  sub: string;
+  sub: SubscriberId;
   context?: ContextPayload;
   subscriber?: SubscriberLoginProfile;
   scope: SubscriberTokenScopeEnum[];
