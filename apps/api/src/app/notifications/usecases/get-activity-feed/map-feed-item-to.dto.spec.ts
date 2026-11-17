@@ -5,6 +5,35 @@ import { expect } from 'chai';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
 describe('mapFeedItemToDto', () => {
+  it('returns run-level overrides from the notification, also when it has no jobs', () => {
+    const overrides = { email: { to: 'override@example.com' } };
+
+    const dto = mapFeedItemToDto({
+      _id: 'notification-id',
+      overrides,
+      jobs: [],
+    } as unknown as NotificationFeedItemEntity);
+
+    expect(dto.overrides).to.deep.equal(overrides);
+  });
+
+  it('never takes run-level overrides from a job', () => {
+    const entity = {
+      _id: 'notification-id',
+      jobs: [
+        {
+          _id: 'job-id',
+          type: StepTypeEnum.EMAIL,
+          executionDetails: [],
+          step: { _id: 'step-id' },
+          overrides: { email: { to: 'job@example.com' } },
+        },
+      ],
+    } as unknown as NotificationFeedItemEntity;
+
+    expect(mapFeedItemToDto(entity).overrides).to.equal(undefined);
+  });
+
   it('maps nested step filter groups in filter children without throwing', () => {
     const entity = {
       _id: 'notification-id',
@@ -157,6 +186,48 @@ describe('mapFeedItemToDto', () => {
     expect((filters![0].children[0] as { field?: string }).field).to.equal('plan');
     expect(filters![1].value).to.equal(FieldLogicalOperatorEnum.OR);
     expect(filters![1].children[0].on).to.equal(FilterPartTypeEnum.PAYLOAD);
+  });
+
+  describe('job overrides', () => {
+    function buildEntity(jobOverrides: Record<string, unknown> | undefined, notificationOverrides?: object) {
+      return {
+        _id: 'notification-id',
+        overrides: notificationOverrides,
+        jobs: [
+          {
+            _id: 'job-id',
+            type: StepTypeEnum.EMAIL,
+            status: 'completed',
+            executionDetails: [],
+            step: { _id: 'step-id', active: true },
+            overrides: jobOverrides,
+          },
+        ],
+      } as unknown as NotificationFeedItemEntity;
+    }
+
+    it('returns the job overrides when the job carries them', () => {
+      const dto = mapFeedItemToDto(
+        buildEntity(
+          { email: { toRecipient: 'job@example.com' } },
+          { email: { toRecipient: 'notification@example.com' } }
+        )
+      );
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({ email: { toRecipient: 'job@example.com' } });
+    });
+
+    it('falls back to the notification overrides for overrides-dedup jobs', () => {
+      const dto = mapFeedItemToDto(buildEntity(undefined, { email: { toRecipient: 'notification@example.com' } }));
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({ email: { toRecipient: 'notification@example.com' } });
+    });
+
+    it('returns an empty object when neither carries overrides', () => {
+      const dto = mapFeedItemToDto(buildEntity(undefined));
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({});
+    });
   });
 
   it('keeps a null subscriber phone on the activity response', () => {

@@ -18,7 +18,7 @@ type ActivityPanelDrawerProps = {
 export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDrawerProps>((props, ref) => {
   const { activityId, onActivitySelect } = props;
   const isOpen = !!activityId;
-  const { activity, isPending, error } = usePullActivity(activityId);
+  const { activity, isPending, isPlaceholderData, error } = usePullActivity(activityId);
 
   function handleTransactionIdChange(_newTransactionId: string, activityId: string) {
     onActivitySelect(activityId);
@@ -60,6 +60,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
               <ActivityHeader
                 className="h-12 py-3"
                 activity={activity}
+                isPlaceholder={isPlaceholderData}
                 onTransactionIdChange={handleTransactionIdChange}
                 onClose={() => onActivitySelect('')}
               />

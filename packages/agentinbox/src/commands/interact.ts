@@ -15,6 +15,7 @@ import { answerHint, EXIT_TIMEOUT, emitResult, fail, interactionJson, SetupStill
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 import { isEmailAddress, resolveEmailContact } from './email-contact';
+import { describeWhatsAppRefusal } from './whatsapp-refusal';
 
 export interface SendOptions {
   to?: string;
@@ -208,12 +209,21 @@ export async function runSend(words: string[], options: SendOptions, conversatio
       process.stderr.write(`warning: delivered to some recipients but failed for: ${created.failedTo.join(', ')}\n`);
     }
 
+    if (created.heldFor?.length) {
+      process.stderr.write(
+        `note: WhatsApp's 24-hour window was closed for ${created.heldFor.join(', ')}, so they got your first message asking them to reply; this goes out as soon as they do.\n`
+      );
+    }
+
     if (!options.json) {
       reportConversations(created, conversation !== undefined);
     }
 
     if (kind === 'tell' || options.async) {
-      process.exit(emitResult(created, Boolean(options.json)));
+      // Not waiting for an answer, so look briefly for Meta saying the first message never arrived. What it read is
+      // what is printed: a read can hand over an answer, which is then marked read.
+      const latest = await checkFirstMessageReports(client, created);
+      process.exit(emitResult(latest, Boolean(options.json)));
     }
 
     process.exit(await waitForResolution(client, created, options));
@@ -347,9 +357,13 @@ export async function waitForResolution(
   );
 
   let current = interaction;
+  const toldFailed = new Set<string>();
 
   try {
     while (current.status === 'pending') {
+      // Meta can fail the first message after taking it; nobody was asked to reply, so say so once.
+      warnFirstMessageFailures(current, toldFailed);
+
       if (Date.now() >= deadline) {
         stopIndicator();
         if (options.json) {
@@ -546,6 +560,11 @@ export function handleError(err: unknown): never {
     fail(formatKeylessCapMessage(keylessCap));
   }
 
+  const whatsAppRefusal = describeWhatsAppRefusal(err);
+  if (whatsAppRefusal) {
+    fail(whatsAppRefusal);
+  }
+
   if (err instanceof ApiError) {
     fail(err.status ? `${err.message} (${err.status})` : err.message);
   }
@@ -556,4 +575,56 @@ export function handleError(err: unknown): never {
   }
 
   fail(err instanceof Error ? err.message : String(err));
+}
+
+/** Meta reports a first message it took but couldn't deliver a second or two after the send. */
+const FIRST_MESSAGE_REPORT_MS = 6_000;
+const FIRST_MESSAGE_CHECK_MS = 1_500;
+
+/**
+ * After a send held for a WhatsApp reply, looks again for up to six seconds of wall-clock time, each read capped to
+ * what is left, until every held person's report is in or it settles. Warns once per failure and returns the last
+ * read, with the conversations the send landed in.
+ */
+async function checkFirstMessageReports(client: ApiClient, created: Interaction): Promise<Interaction> {
+  if (!created.heldFor?.length) {
+    return created;
+  }
+
+  const deadline = Date.now() + FIRST_MESSAGE_REPORT_MS;
+  const told = new Set<string>();
+  let latest = created;
+  while (Date.now() + FIRST_MESSAGE_CHECK_MS < deadline) {
+    await sleep(FIRST_MESSAGE_CHECK_MS);
+    latest =
+      (await getInteraction(client, created.id, { timeoutMs: Math.max(1, deadline - Date.now()) }).catch(() => null)) ??
+      latest;
+    warnFirstMessageFailures(latest, told);
+    if (latest.status !== 'pending' || everyHeldFailed(latest)) {
+      break;
+    }
+  }
+
+  // A read leaves out who the send failed for: that is only on the create response.
+  const read = keepConversations(latest, created);
+
+  return created.failedTo?.length && !read.failedTo?.length ? { ...read, failedTo: created.failedTo } : read;
+}
+
+function warnFirstMessageFailures(interaction: Interaction, told: Set<string>): void {
+  for (const { subscriberId, reason } of interaction.firstMessageFailed ?? []) {
+    if (!told.has(subscriberId)) {
+      told.add(subscriberId);
+      process.stderr.write(
+        `warning: ${reason} ${subscriberId} wasn't asked to reply; this goes out only if they write first.\n`
+      );
+    }
+  }
+}
+
+/** Every held person's first message failed: no more reports are coming. */
+function everyHeldFailed(interaction: Interaction): boolean {
+  const failed = new Set((interaction.firstMessageFailed ?? []).map((failure) => failure.subscriberId));
+
+  return (interaction.heldFor ?? []).every((subscriberId) => failed.has(subscriberId));
 }

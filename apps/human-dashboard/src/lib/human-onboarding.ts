@@ -19,13 +19,14 @@ import {
   type RelayAgent,
 } from './human-agent-api';
 import { requestForAccount } from './human-api-key';
-import { listChannels } from './human-channels-api';
-import { loadChannelsOverview } from './human-channels-overview';
+import { type Channel, listChannels } from './human-channels-api';
+import { loadChannelsOverview, withinTime } from './human-channels-overview';
 import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
 import { listSignIns, readMcpUrl, type SignIn } from './human-tools-api';
+import { readWhatsAppSetup, type WhatsAppSetupState } from './human-whatsapp-setup';
 import {
   activityIsAfter,
   humanMessageAfter,
@@ -378,7 +379,7 @@ export async function loadSetupSummary(
     step,
     agent: describeAgentIdentity(agent, state, origin, channels.emailAddress),
     waiting: waiting ?? 0,
-    secondChannelConnected: channels.telegram || channels.slack,
+    secondChannelConnected: channels.telegram || channels.slack || channels.whatsapp,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
     checklist: { done: Object.keys(state.checklist?.done ?? {}), hidden: state.checklist?.hidden === true },
@@ -405,7 +406,7 @@ export type OnboardingView = {
   mcpUrl: string | null;
   /** The apps that signed in through the MCP server since the agent was made, which step 3's picker ticks. */
   connectedTools: ToolId[];
-  channels: { telegram: boolean; slack: boolean };
+  channels: { telegram: boolean; slack: boolean; whatsapp: boolean };
   /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
   channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
@@ -421,10 +422,12 @@ export type OnboardingChannelSetup = {
   /** How far each setup got, so its drawer opens where it was left. `unknown` when it couldn't be read. */
   telegram: TelegramSetupState;
   slack: SlackSetupState;
+  /** `hidden` while WhatsApp isn't offered to this account: step 4 then has no WhatsApp row. */
+  whatsapp: WhatsAppSetupState;
   /** What the Slack app is called until the operator names it. */
   slackAppName: string;
   /** What the operator hands their own agent in each drawer. */
-  prompts: Record<'telegram' | 'slack', string>;
+  prompts: Record<'telegram' | 'slack' | 'whatsapp', string>;
 };
 
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
@@ -441,7 +444,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         countWaitingMessages(account),
         step === 'reach' ? loadChannelSetups(account) : null,
       ])
-    : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
+    : [{ telegram: false, slack: false, whatsapp: false, emailAddress: undefined }, 0, null];
   const mcpUrl = readMcpUrl();
   const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
   // Only an app that signed in since the agent was made is ticked; one that did would have moved the steps on.
@@ -480,7 +483,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     apiUrl,
     mcpUrl,
     connectedTools,
-    channels: { telegram: channels.telegram, slack: channels.slack },
+    channels: { telegram: channels.telegram, slack: channels.slack, whatsapp: channels.whatsapp },
     channelSetup:
       agent && identity && setups
         ? {
@@ -489,6 +492,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
             prompts: {
               telegram: buildChannelPrompt({ apiUrl }, 'telegram', identity.handle),
               slack: buildChannelPrompt({ apiUrl }, 'slack', identity.handle),
+              whatsapp: buildChannelPrompt({ apiUrl }, 'whatsapp', identity.handle),
             },
           }
         : null,
@@ -588,15 +592,18 @@ async function readInboxMailDomain(account: HumanAccount): Promise<string> {
  * The Telegram and Slack setups, read as the Configure page reads them. They are a detail of step 4: when
  * they can't be read, the drawers find out for themselves once they open.
  */
-async function loadChannelSetups(account: HumanAccount): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack'>> {
+async function loadChannelSetups(
+  account: HumanAccount
+): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack' | 'whatsapp'>> {
   try {
-    const { telegramSetup, slackSetup } = await loadChannelsOverview(account);
+    const { telegramSetup, slackSetup, whatsappSetup } = await loadChannelsOverview(account);
 
-    return { telegram: telegramSetup, slack: slackSetup };
+    return { telegram: telegramSetup, slack: slackSetup, whatsapp: whatsappSetup };
   } catch (error) {
     console.error('Failed to read the channel setups for the onboarding', error);
 
-    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' } };
+    // WhatsApp is behind a flag, so it stays out unless the API said it's there.
+    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' }, whatsapp: { step: 'hidden' } };
   }
 }
 
@@ -609,14 +616,28 @@ async function loadChannelFacts(account: HumanAccount) {
     return {
       telegram: connected('telegram'),
       slack: connected('slack'),
+      whatsapp: await isWhatsAppConnected(account, channels),
       emailAddress: channels.find((channel) => channel.via === 'email' && channel.active)?.address,
     };
   } catch (error) {
     // The channels are a detail of these screens: without them the agent still shows, as not set up.
     console.error('Failed to load the channels for the onboarding', error);
 
-    return { telegram: false, slack: false, emailAddress: undefined };
+    return { telegram: false, slack: false, whatsapp: false, emailAddress: undefined };
   }
+}
+
+/**
+ * WhatsApp counts as connected once the operator's own number is bound to the business number, as its
+ * Configure row shows it, which the channel list can't tell. Only asked when the relay has a WhatsApp channel at all.
+ */
+async function isWhatsAppConnected(account: HumanAccount, channels: Channel[]): Promise<boolean> {
+  if (!channels.some((channel) => channel.via === 'whatsapp' && channel.active)) {
+    return false;
+  }
+
+  // A detail of these pages: capped like the other setup reads, so a slow answer never holds the page up.
+  return (await withinTime(readWhatsAppSetup(account))).step === 'connected';
 }
 
 /** How many messages wait for a host: the unread threads of the inbox. */

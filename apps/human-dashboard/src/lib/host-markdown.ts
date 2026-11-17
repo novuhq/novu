@@ -73,7 +73,7 @@ function commandSections(host: CommandHost): string[] {
       `3. \`${NPX_CLI} login\` prints a link and a code, then waits up to an hour, so run it the same way. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account. If it stops before they approve, run it again for a new code.`,
       `4. \`${skillsLine}\`, then \`${NPX_CLI} list\`.${host.afterCommands ? ` ${host.afterCommands}` : ''}`,
     ].join('\n'),
-    `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
+    `Never ask for a Telegram bot token, a Slack token or WhatsApp credentials: \`${NPX_CLI} channel add telegram\` (or \`slack\`, or \`whatsapp\`) prints a link where your operator finishes in their browser. When ${runner} won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
     ...listenSections(host),
   ];
 }
@@ -173,7 +173,7 @@ function chatAppSections(host: ChatApp): string[] {
     ...(host.settings ? [`Where to start: ${host.settings.url}`] : []),
     '## Once it’s connected',
     `Your tools are \`inbox_list\`, \`inbox_send\` and the rest. When the account has no agent yet, they say so: call \`inbox_setup\` to create it, after asking your operator what to call the agent, which address it gets and which email to confirm. See [the agentinbox-mcp skill](${SKILL_FOLDER_URL}/agentinbox-mcp/SKILL.md).`,
-    'To add Telegram or Slack, call `channel_add` when your operator asks, and show them the link it returns in your chat, never through `inbox_send` or `inbox_reply`. Never ask for a bot token or a Slack token.',
+    'To add Telegram, Slack or WhatsApp, call `channel_add` when your operator asks, and show them the link it returns in your chat, never through `inbox_send` or `inbox_reply`. Never ask for a bot token, a Slack token or WhatsApp credentials.',
   ];
 }
 

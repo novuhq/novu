@@ -33,6 +33,8 @@ import {
   RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
+  StepRunV2Repository,
+  StepRunV2Writer,
   StepTemplateHydrationService,
   StorageHelperService,
   storageService,
@@ -113,10 +115,12 @@ const ANALYTICS_PROVIDERS = [
   // Repositories
   TraceLogRepository,
   StepRunRepository,
+  StepRunV2Repository,
   WorkflowRunRepository,
   RequestLogRepository,
 
   // Services
+  StepRunV2Writer,
   clickHouseService,
   clickHouseBatchService,
   WorkflowRunService,

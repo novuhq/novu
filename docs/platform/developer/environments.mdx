@@ -97,6 +97,17 @@ You can also publish programmatically with the [Publish resources to target envi
 
 Publishing happens at the workflow level. There is no per-step publish action.
 
+### Delete a workflow from Production
+
+Production is view-only for workflows, so you can't delete a workflow there directly. To remove a workflow from Production:
+
+1. In the **Development** environment, [delete the workflow](/platform/workflow/create-a-workflow#delete-a-workflow).
+2. Click **Publish changes** and select **Production**.
+3. Review the changes. The summary lists the deleted workflow as a removal.
+4. Click the publish button. Novu removes the workflow from Production.
+
+After the workflow is removed from Production, triggers that reference its `workflowId` in Production fail with a `workflow not found` error.
+
 ## Frequently asked questions
 
 Frequently asked questions related to managing environments:
