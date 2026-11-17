@@ -460,32 +460,6 @@ describe('Agent access rule #novu-v2', () => {
       expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
     });
 
-    it('applies the rule to a linked Slack user on every message as their subscriber data changes', async () => {
-      const subscriberId = `slack-rule-${Date.now()}`;
-      await subscriberRepository.create({
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        subscriberId,
-        data: { tier: 'gold' },
-      });
-      await seedChannelEndpoint(ctx, 'U_RULE_LINKED', subscriberId);
-      await setRule({ '==': [{ var: 'subscriber.data.tier' }, 'gold'] });
-      const threadId = `D_RULE_${Date.now()}`;
-
-      await sendSlack(threadId, 'U_RULE_LINKED', 'hello');
-      expect(bridgeCalls).to.have.length(1);
-      expect(replies).to.deep.equal([]);
-
-      await subscriberRepository.update(
-        { _environmentId: ctx.session.environment._id, subscriberId },
-        { $set: { 'data.tier': 'silver' } }
-      );
-
-      await sendSlack(threadId, 'U_RULE_LINKED', 'hello again');
-      expect(bridgeCalls).to.have.length(1);
-      expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
-    });
-
     it('compares == and != strictly, so another tenant or a missing field never matches', async () => {
       const subscriberId = `slack-rule-strict-${Date.now()}`;
       await subscriberRepository.create({

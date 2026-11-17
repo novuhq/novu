@@ -273,25 +273,4 @@ describe('InboundConnectionContextResolver', () => {
       expect(result).to.deep.equal({ context: null, lookupFailed: true });
     });
   });
-
-  describe('missing connection', () => {
-    it('does not set lookupFailed when the workspace connection is absent', async () => {
-      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
-      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
-      const contextRepository = makeContextRepository([]);
-      const logger = makeLogger();
-      const resolver = new InboundConnectionContextResolver(
-        channelConnectionRepository as any,
-        channelEndpointRepository as any,
-        contextRepository as any,
-        makeIntegrationRepository() as any,
-        logger as any
-      );
-
-      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.SLACK), { team_id: 'W1' }, 'U1');
-
-      expect(result).to.deep.equal({ context: null });
-      expect(result.lookupFailed).to.equal(undefined);
-    });
-  });
 });

@@ -3778,8 +3778,8 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not dispatch ON_MESSAGE_DELETED when rule mode denies the delete', async () => {
-      const { handler, bridgeExecutor } = makeHandler({
+    it('does not dispatch or reply to ON_MESSAGE_DELETED when rule mode denies the delete', async () => {
+      const { handler, bridgeExecutor, outboundGateway } = makeHandler({
         history: [{ platformMessageId: 'msg-1', content: 'secret', senderId: 'sub1' }],
         subscriberFindById: sinon.stub().resolves({
           _id: 'subscriber-mongo-1',
@@ -3805,6 +3805,7 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
   });
 });
