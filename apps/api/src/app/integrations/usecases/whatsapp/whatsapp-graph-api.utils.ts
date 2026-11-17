@@ -475,3 +475,99 @@ export async function sendNamedWhatsAppTemplate(args: {
     { timeoutMs: args.timeoutMs }
   );
 }
+
+export type WhatsAppBusinessProfileResponse = {
+  data?: Array<{ about?: string; description?: string; profile_picture_url?: string }>;
+} & MetaErrorBody;
+
+export type UpdateWhatsAppBusinessProfileBody = {
+  about?: string;
+  description?: string;
+  profile_picture_handle?: string;
+};
+
+/** The profile people see on the business number: its about text, description and photo. */
+export async function getWhatsAppBusinessProfile(
+  accessToken: string,
+  phoneNumberId: string
+): Promise<{ body: WhatsAppBusinessProfileResponse; statusCode: number }> {
+  return metaGraphGet<WhatsAppBusinessProfileResponse>(
+    `/${encodeURIComponent(phoneNumberId)}/whatsapp_business_profile`,
+    accessToken,
+    { searchParams: { fields: 'about,description,profile_picture_url' } }
+  );
+}
+
+export async function updateWhatsAppBusinessProfile(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  profile: UpdateWhatsAppBusinessProfileBody;
+}): Promise<{ body: { success?: boolean } & MetaErrorBody; statusCode: number }> {
+  return metaGraphPostJson<{ success?: boolean } & MetaErrorBody>(
+    `/${encodeURIComponent(args.phoneNumberId)}/whatsapp_business_profile`,
+    args.accessToken,
+    { messaging_product: 'whatsapp', ...args.profile }
+  );
+}
+
+/** The Meta app a token was issued for. A token made with someone's own app uploads through that app. */
+export async function getTokenAppId(
+  accessToken: string
+): Promise<{ body: { id?: string } & MetaErrorBody; statusCode: number }> {
+  return metaGraphGet<{ id?: string } & MetaErrorBody>('/app', accessToken, { searchParams: { fields: 'id' } });
+}
+
+/**
+ * Uploads a file through Meta's Resumable Upload API and returns its handle, which a business profile takes as
+ * `profile_picture_handle`. The token goes in the `Authorization: OAuth` header on both calls, never in the URL.
+ */
+export async function uploadFileToMeta(args: {
+  accessToken: string;
+  appId: string;
+  file: Buffer;
+  contentType: string;
+  fileName: string;
+  timeoutMs?: number;
+}): Promise<{ handle?: string; error?: MetaErrorSummary; statusCode: number }> {
+  const timeoutMs = args.timeoutMs ?? 15_000;
+  const headers = { Authorization: `OAuth ${args.accessToken}` };
+
+  const startUrl = new URL(`${META_GRAPH_API_BASE}/${encodeURIComponent(args.appId)}/uploads`);
+  startUrl.searchParams.set('file_name', args.fileName);
+  startUrl.searchParams.set('file_length', String(args.file.length));
+  startUrl.searchParams.set('file_type', args.contentType);
+
+  const start = await safeOutboundJsonRequest<{ id?: string } & MetaErrorBody>({
+    url: startUrl,
+    method: 'POST',
+    timeoutMs,
+    headers,
+  });
+  const sessionId = typeof start.body?.id === 'string' ? start.body.id : undefined;
+
+  if (start.statusCode >= 400 || !sessionId) {
+    return {
+      error: extractMetaError(start.body) ?? { message: 'Meta did not start the upload.' },
+      statusCode: start.statusCode,
+    };
+  }
+
+  // The session id looks like `upload:<id>`: the colon belongs in the path as it is.
+  const upload = await safeOutboundJsonRequest<{ h?: string } & MetaErrorBody>({
+    url: new URL(`${META_GRAPH_API_BASE}/${sessionId}`),
+    method: 'POST',
+    timeoutMs,
+    headers: { ...headers, file_offset: '0' },
+    body: args.file,
+  });
+  const handle = typeof upload.body?.h === 'string' ? upload.body.h : undefined;
+
+  if (upload.statusCode >= 400 || !handle) {
+    return {
+      error: extractMetaError(upload.body) ?? { message: 'Meta did not accept the uploaded file.' },
+      statusCode: upload.statusCode,
+    };
+  }
+
+  return { handle, statusCode: upload.statusCode };
+}

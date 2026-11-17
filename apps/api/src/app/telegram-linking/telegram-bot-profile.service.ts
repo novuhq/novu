@@ -2,14 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import Axios from 'axios';
 
-import { type MascotLook, mascotPictureUrl } from '../human/services/agent-picture-url';
-import { resolveHumanDashboardBaseUrl } from '../shared/helpers/resolve-human-dashboard-base-url';
+import type { MascotLook } from '../human/services/agent-picture-url';
+import { type AgentProfilePicture, readAgentProfilePicture } from '../human/services/agent-profile-picture';
 import { buildTelegramBotApiUrl } from './telegram-webhook.utils';
 
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
-
-/** A small file on the Agent Inbox dashboard: a setup doesn't wait long for something this optional. */
-const DEFAULT_PICTURE_TIMEOUT_MS = 5_000;
 
 /** Telegram's own limits for a bot's name, its description and the short one on its profile. */
 const BOT_NAME_MAX_LENGTH = 64;
@@ -24,7 +21,7 @@ export type TelegramBotProfileFields = {
    * and the default one goes there instead. `'default-if-none'` is for an agent with no picture: the default one
    * goes only on a bot with no photo at all, so a photo set in BotFather stays.
    */
-  picture?: { storageKey: string; contentType: string } | null | 'default-if-none';
+  picture?: AgentProfilePicture;
   /**
    * The look the agent's mascots show (`AgentInboxFeaturesService.mascotLookOf`). Where the default picture would
    * go, the mascot in this look goes instead; without it, the default picture, the mascot as it always was.
@@ -92,7 +89,7 @@ export class TelegramBotProfile {
     }
 
     try {
-      const { file, contentType } = await this.readPicture(picture, mascot);
+      const { file, contentType } = await readAgentProfilePicture(this.storageService, picture, mascot);
       const form = new FormData();
       form.append('photo', JSON.stringify({ type: 'static', photo: 'attach://picture' }));
       form.append('picture', new Blob([new Uint8Array(file)], { type: contentType }), 'picture');
@@ -137,35 +134,6 @@ export class TelegramBotProfile {
     }
 
     return photos.total_count === 0;
-  }
-
-  /**
-   * The agent's own picture, or one from the Agent Inbox dashboard: its mascot in the look its mascots show, else
-   * the default picture.
-   */
-  private async readPicture(
-    picture: Exclude<TelegramBotProfileFields['picture'], undefined>,
-    mascot: TelegramBotProfileFields['mascot']
-  ): Promise<{ file: Buffer; contentType: string }> {
-    if (picture && picture !== 'default-if-none') {
-      return { file: await this.storageService.getFile(picture.storageKey), contentType: picture.contentType };
-    }
-
-    const address = mascot
-      ? mascotPictureUrl(mascot, 'jpg')
-      : `${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.jpg`;
-
-    // Unlike the calls to Telegram this one follows redirects: with no address set it asks agentinbox.md,
-    // which sends everyone to www, and it carries no token.
-    const response = await fetch(address, {
-      signal: AbortSignal.timeout(DEFAULT_PICTURE_TIMEOUT_MS),
-    });
-
-    if (!response.ok) {
-      throw new Error(`The default picture answered with status ${response.status}.`);
-    }
-
-    return { file: Buffer.from(await response.arrayBuffer()), contentType: 'image/jpeg' };
   }
 
   private async call<Result = true>(
