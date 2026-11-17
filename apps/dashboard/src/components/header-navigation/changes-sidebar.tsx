@@ -35,9 +35,6 @@ type ChangesSidebarProps = {
   onNavigate: (nodeKey: string) => void;
 };
 
-// Steps open onto each changed step. The other sections stay one row, matching the changes tree.
-const EXPANDED_BY_DEFAULT_SECTIONS = new Set<ChangeSection['key']>(['steps']);
-
 function sectionMapKey(groupType: ChangeGroupType, rowId: string): string {
   return `${groupType}:${rowId}`;
 }
@@ -105,10 +102,11 @@ export function ChangesSidebar({
     });
   }, [groups, resourceSelection]);
 
-  const isNodeExpanded = (key: string, expandedByDefault: boolean) => expandedNodes[key] ?? expandedByDefault;
+  // Every resource and section starts closed, matching the cards on the right.
+  const isNodeExpanded = (key: string) => expandedNodes[key] ?? false;
 
-  const toggleNode = (key: string, expandedByDefault: boolean) => {
-    setExpandedNodes((prev) => ({ ...prev, [key]: !(prev[key] ?? expandedByDefault) }));
+  const toggleNode = (key: string) => {
+    setExpandedNodes((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const selectNode = (nodeKey: string, navigateTo: string) => {
@@ -164,8 +162,7 @@ export function ChangesSidebar({
               {isGroupExpanded &&
                 visibleRows.map((row) => {
                   const sections = sectionsByRowId.get(sectionMapKey(group.type, row.id)) ?? [];
-                  // A workflow's sections match the card on the right, so the tree opens onto them.
-                  const isRowExpanded = sections.length > 0 && isNodeExpanded(row.id, true);
+                  const isRowExpanded = sections.length > 0 && isNodeExpanded(row.id);
                   const selected = resourceSelection[row.id]?.selected ?? false;
 
                   return (
@@ -181,11 +178,11 @@ export function ChangesSidebar({
                         isExpandable={sections.length > 0}
                         isExpanded={isRowExpanded}
                         onToggle={() => onToggleResource(row.id)}
-                        onToggleExpanded={() => toggleNode(row.id, true)}
+                        onToggleExpanded={() => toggleNode(row.id)}
                         onFocusRequired={focusRequiredResource}
                         onPoint={(ids) => setPointedIds(ids)}
                         onSelect={() => {
-                          if (sections.length > 0 && !isRowExpanded) toggleNode(row.id, true);
+                          if (sections.length > 0 && !isRowExpanded) toggleNode(row.id);
                           selectNode(row.id, changeNodeKey(row.id));
                         }}
                       />
@@ -194,8 +191,7 @@ export function ChangesSidebar({
                         sections.map((section) => {
                           const sectionKey = changeNodeKey(row.id, section.key);
                           const items = section.items ?? [];
-                          const expandedByDefault = EXPANDED_BY_DEFAULT_SECTIONS.has(section.key);
-                          const isSectionExpanded = items.length > 0 && isNodeExpanded(sectionKey, expandedByDefault);
+                          const isSectionExpanded = items.length > 0 && isNodeExpanded(sectionKey);
 
                           return (
                             <div key={section.key} className="flex flex-col gap-0.5">
@@ -205,7 +201,7 @@ export function ChangesSidebar({
                                 isActive={activeNodeKey === sectionKey}
                                 isExpandable={items.length > 0}
                                 isExpanded={isSectionExpanded}
-                                onToggleExpanded={() => toggleNode(sectionKey, expandedByDefault)}
+                                onToggleExpanded={() => toggleNode(sectionKey)}
                                 onSelect={() => selectNode(sectionKey, sectionKey)}
                               />
 
