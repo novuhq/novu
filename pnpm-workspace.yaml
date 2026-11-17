@@ -212,10 +212,13 @@ overrides:
   # Optimization API when SVG files are used, and GHSA-673q-mjm6-r5xr
   # (critical): unauthenticated RCE in `use cache` functions returning typed
   # arrays, plus GHSA-p3m5-59mp-jv5r (high) content-disclosure. All three are
-  # patched in 16.4.1; widen the override from <16.3.8 so transitive consumers
-  # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
-  # on 16.4.1+.
-  next@<16.4.1: ^16.4.1
+  # patched in 16.4.1.
+  # GHSA-mfr8-8qww-v76h (moderate): Next.js information disclosure across
+  # root params when a `use cache` function is called through
+  # `unstable_cache()` (affects >=16.3.0 <=16.4.4). Patched in 16.4.5; widen
+  # the override from <16.4.1 so transitive consumers (better-auth,
+  # @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land on 16.4.5+.
+  next@<16.4.5: ^16.4.5
   # GHSA-474x-hrwr-fgx4 (low): fast-xml-parser quadratic CPU consumption
   # scanning unterminated stop-node tags. Patched in 5.12.0 (minor bump within
   # the 5.x line). Consolidate the previous `>=4.0.0 <5.0.0`, `>=5.0.0 <5.7.3`,

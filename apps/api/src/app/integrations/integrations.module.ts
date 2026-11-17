@@ -24,6 +24,7 @@ import { IntegrationsMobileConfigurePublicController } from './integrations-mobi
 import { IntegrationsPublicController } from './integrations-public.controller';
 import { IntegrationsWhatsAppSignupPublicController } from './integrations-whatsapp-signup-public.controller';
 import { USE_CASES } from './usecases';
+import { WhatsAppBusinessProfile } from './usecases/whatsapp/whatsapp-business-profile.service';
 import { WhatsAppSignupLinkTokenService } from './whatsapp-signup-link-token.service';
 
 const PROVIDERS = [
@@ -53,6 +54,7 @@ const PROVIDERS = [
   providers: [
     ...USE_CASES,
     WhatsAppSignupLinkTokenService,
+    WhatsAppBusinessProfile,
     AgentInboxFeaturesService,
     CommunityOrganizationRepository,
     CommunityUserRepository,
@@ -63,6 +65,6 @@ const PROVIDERS = [
     UpdateSubscriber,
     UpdateSubscriberChannel,
   ],
-  exports: [...USE_CASES],
+  exports: [...USE_CASES, WhatsAppBusinessProfile],
 })
 export class IntegrationModule {}

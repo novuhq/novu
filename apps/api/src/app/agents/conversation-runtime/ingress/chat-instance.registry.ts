@@ -498,6 +498,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           botToken: credentials.apiToken,
           secretToken: credentials.token,
           mode: 'webhook',
+          longMessages: 'split',
         });
 
         if (config.isHumanRelay) {

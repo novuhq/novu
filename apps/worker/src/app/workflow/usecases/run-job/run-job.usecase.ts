@@ -101,7 +101,8 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
+    let job =
+      command.job ?? (await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId }));
     if (!job) {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }

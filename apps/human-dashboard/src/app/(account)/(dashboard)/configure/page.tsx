@@ -96,7 +96,6 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
         channelPrompts={{
           telegram: buildChannelPrompt(context, 'telegram', handle),
           slack: buildChannelPrompt(context, 'slack', handle),
-          whatsapp: buildChannelPrompt(context, 'whatsapp', handle),
         }}
         hostStatus={hostStatus}
         renderedAt={new Date().toISOString()}
