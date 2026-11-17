@@ -41,7 +41,7 @@ type AgentScope = { environmentId: string; organizationId: string; agentIdentifi
 
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
- * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
+ * public too), and set on the agent's Telegram bots and WhatsApp business numbers. A Slack app takes it as its icon when it's created, and
  * after that the icon can only be changed in Slack. An agent with no picture shows its mascot in those places.
  */
 @Injectable()
@@ -118,7 +118,7 @@ export class HumanAgentPictureService {
       await this.deleteFile(agent.picture.storageKey);
     }
 
-    await this.humanAgentIdentity.updateTelegramBots(agent, { picture });
+    await this.humanAgentIdentity.updateChannelProfiles(agent, { picture });
 
     return { ...agent, picture };
   }
@@ -135,7 +135,7 @@ export class HumanAgentPictureService {
     );
     await this.deleteFile(agent.picture.storageKey);
     // Its bots go back to its mascot, in the look its mascots show.
-    await this.humanAgentIdentity.updateTelegramBots(agent, {
+    await this.humanAgentIdentity.updateChannelProfiles(agent, {
       picture: null,
       mascot: await this.agentInboxFeatures.mascotLookOf(agent),
     });
