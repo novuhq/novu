@@ -41,6 +41,18 @@ export const HUMAN_CONTACT_STATUSES = ['joined', 'invite_sent'] as const;
 /** `joined` once the agent can reach the contact on at least one channel; `invite_sent` until then. */
 export type HumanContactStatus = (typeof HUMAN_CONTACT_STATUSES)[number];
 
+/** Whether WhatsApp's 24-hour window lets a message through to the contact right now. */
+export class HumanContactWhatsAppWindowDto {
+  @ApiProperty({ description: 'True while a message can be sent: within 24 hours of the contact’s last message.' })
+  open: boolean;
+
+  @ApiPropertyOptional({ description: 'ISO timestamp of the contact’s last message to the business number.' })
+  lastMessageAt?: string;
+
+  @ApiPropertyOptional({ description: 'ISO timestamp when the window shuts, or shut.' })
+  closesAt?: string;
+}
+
 export class HumanContactChannelDto {
   @ApiProperty({ enum: HumanChannelViaEnum })
   via: HumanChannelViaEnum;
@@ -66,6 +78,14 @@ export class HumanContactChannelDto {
     description: 'The Slack workspace the contact is in, such as `acme.slack.com`. Slack only, once known.',
   })
   workspace?: string;
+
+  @ApiPropertyOptional({
+    type: HumanContactWhatsAppWindowDto,
+    description:
+      'WhatsApp only: whether a message can reach the contact right now. Outside it, a send on WhatsApp is refused ' +
+      'with `whatsapp_window_closed` until they write again.',
+  })
+  window?: HumanContactWhatsAppWindowDto;
 
   @ApiProperty({ description: 'Whether this is the channel used when an interaction doesn’t pass `via`.' })
   isDefault: boolean;

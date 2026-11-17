@@ -16,11 +16,26 @@ export const INBOX_TAB_LABELS: Record<InboxTab, string> = {
 };
 
 /** The channels the filter offers, in its order. */
-export const INBOX_CHANNELS = ['email', 'telegram', 'slack'] as const;
+export const INBOX_CHANNELS = ['email', 'telegram', 'slack', 'whatsapp'] as const;
 
 export type InboxChannel = (typeof INBOX_CHANNELS)[number];
 
-const CHANNEL_NAMES: Record<InboxChannel, string> = { email: 'Email', telegram: 'Telegram', slack: 'Slack' };
+const CHANNEL_NAMES: Record<InboxChannel, string> = {
+  email: 'Email',
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+};
+
+/**
+ * The channels the filter menu lists. WhatsApp is behind a flag, so it shows only where the inbox already has a
+ * WhatsApp thread, or while the page is filtered to it.
+ */
+export function menuChannels(counts: Partial<Record<string, number>>, current?: string): InboxChannel[] {
+  return INBOX_CHANNELS.filter(
+    (channel) => channel !== 'whatsapp' || (counts.whatsapp ?? 0) > 0 || current === 'whatsapp'
+  );
+}
 
 /** What the page lists: one tab, optionally narrowed to a channel and a search. */
 export type InboxView = {

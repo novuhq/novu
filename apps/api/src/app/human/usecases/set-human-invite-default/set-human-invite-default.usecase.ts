@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { HumanContactRepository } from '@novu/dal';
 import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService, type HumanInviteVia } from '../../services/human-delivery.service';
 import { HumanInviteTokenService } from '../../services/human-invite-token.service';
 import { SetHumanInviteDefaultCommand } from './set-human-invite-default.command';
@@ -11,11 +12,13 @@ export class SetHumanInviteDefault {
   constructor(
     private readonly inviteTokens: HumanInviteTokenService,
     private readonly deliveryService: HumanDeliveryService,
-    private readonly humanContactRepository: HumanContactRepository
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   async execute(command: SetHumanInviteDefaultCommand): Promise<{ defaultVia: HumanInviteVia }> {
     const { payload } = await this.inviteTokens.requireActive(command.token);
+    await this.channelGate.assertViaEnabled(command.via, { organizationId: payload.org, environmentId: payload.env });
     const appName = HUMAN_INVITE_APP_NAMES[command.via];
 
     const channels = await this.deliveryService.describeInviteChannels({

@@ -24,10 +24,11 @@ type RunJobTestDouble = {
   ) => Promise<void>;
   jobRepository: {
     claimNextChildAsQueued: sinon.SinonStub;
-    updateOne: sinon.SinonStub;
+    findOneAndUpdate: sinon.SinonStub;
     findOne: sinon.SinonStub;
     cancelPendingJobs: sinon.SinonStub;
   };
+  stepRunV2Writer: { write: sinon.SinonStub; writeByIds: sinon.SinonStub };
   addJobUsecase: { execute: sinon.SinonStub };
   setJobAsFailed: { execute: sinon.SinonStub };
   storageHelperService: StorageHelperService;
@@ -44,10 +45,15 @@ function buildUsecase(sandbox: sinon.SinonSandbox): RunJobTestDouble {
   const usecase = Object.create(RunJob.prototype) as RunJobTestDouble;
   usecase.jobRepository = {
     claimNextChildAsQueued: sandbox.stub(),
-    updateOne: sandbox.stub().resolves(),
+    findOneAndUpdate: sandbox.stub().callsFake(async (query: Partial<JobEntity>) => query),
     findOne: sandbox.stub().resolves(null),
     cancelPendingJobs: sandbox.stub().resolves([]),
   };
+  /*
+   * Must be stubbed: `tryQueueNextJobs` calls it right after claiming a child, and a
+   * TypeError there lands in the loop's catch, which re-claims the same child forever.
+   */
+  usecase.stepRunV2Writer = { write: sandbox.stub(), writeByIds: sandbox.stub() };
   usecase.addJobUsecase = { execute: sandbox.stub() };
   usecase.setJobAsFailed = { execute: sandbox.stub().resolves() };
   usecase.workflowRunService = { updateDeliveryLifecycle: sandbox.stub().resolves() };

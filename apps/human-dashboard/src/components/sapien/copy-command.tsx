@@ -8,9 +8,20 @@ export type CopyCommandProps = {
   label: string;
   /** "default" shows a labelled Copy button; "icon" shows an icon-only copy button. */
   variant?: 'default' | 'icon';
+  /** Neutral, single-line field used inside landing-page cards. The full value is always copied. */
+  appearance?: 'default' | 'surface';
+  /** Show the `$` shell prompt. Off for text that isn't a shell command, such as an address or a prompt. */
+  prompt?: boolean;
   className?: string;
 };
-export function CopyCommand({ command, label, variant = 'default', className = '' }: CopyCommandProps) {
+export function CopyCommand({
+  command,
+  label,
+  variant = 'default',
+  appearance = 'default',
+  prompt = true,
+  className = '',
+}: CopyCommandProps) {
   const { state, copy } = useClipboard(command);
   const icon = variant === 'icon';
   // Below 360px the 15px command no longer fits beside the icon button, so it
@@ -25,16 +36,25 @@ export function CopyCommand({ command, label, variant = 'default', className = '
       <div
         className={cn(
           'flex min-h-10 min-w-0 items-center gap-2 rounded-lg border border-accent/40 bg-black py-px pl-[11px]',
-          icon ? 'pr-0.5' : 'pr-px'
+          icon ? 'pr-0.5' : 'pr-px',
+          appearance === 'surface' && 'border-sapien-border bg-sapien-border'
         )}
       >
-        <span
-          aria-hidden="true"
-          className="-translate-y-px font-sapien-mono text-[15px] leading-[22px] text-accent max-[359px]:text-sm"
+        {prompt && (
+          <span
+            aria-hidden="true"
+            className="-translate-y-px font-sapien-mono text-[15px] leading-[22px] text-accent max-[359px]:text-sm"
+          >
+            $
+          </span>
+        )}
+        <code
+          title={appearance === 'surface' ? command : undefined}
+          className={cn(
+            'min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-pre-line select-text max-[359px]:text-sm',
+            appearance === 'surface' && state !== 'error' && 'truncate whitespace-nowrap'
+          )}
         >
-          $
-        </span>
-        <code className="min-w-0 flex-1 -translate-y-px font-sapien-mono text-[15px] leading-[22px] tracking-tight [overflow-wrap:anywhere] whitespace-normal select-text max-[359px]:text-sm">
           {command}
         </code>
         {icon ? (
@@ -44,7 +64,11 @@ export function CopyCommand({ command, label, variant = 'default', className = '
             aria-label="Copy command"
             aria-disabled={state === 'pending'}
             aria-busy={state === 'pending'}
-            className="-ml-1 grid size-7 shrink-0 cursor-pointer place-items-center rounded-md text-accent transition-colors duration-150 hover:bg-accent/10 motion-reduce:transition-none"
+            className={cn(
+              '-ml-1 grid size-7 shrink-0 cursor-pointer place-items-center rounded-md text-accent transition-colors duration-150 hover:bg-accent/10 motion-reduce:transition-none',
+              appearance === 'surface' &&
+                'size-10 text-sapien-foreground/50 hover:bg-sapien-surface hover:text-sapien-foreground'
+            )}
           >
             {state === 'success' ? <CheckIcon /> : <CopyIcon />}
           </button>

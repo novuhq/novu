@@ -24,8 +24,9 @@ export type DeliveryLifecycleState = {
 export class JobEntity {
   _id: string;
   identifier: string;
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, the trigger payload is user-defined JSON
   payload: any;
-  overrides: TriggerOverrides;
+  overrides?: TriggerOverrides;
   /**
    * Trigger-selected agent ObjectId. Omitted inherits the workflow agent; null opts out.
    */
@@ -51,11 +52,13 @@ export class JobEntity {
    */
   awaitingEnqueue?: boolean;
   deliveryLifecycleState?: DeliveryLifecycleState;
+  // biome-ignore lint/suspicious/noExplicitAny: stored as Schema.Types.Mixed, holds whatever the failing step threw
   error?: any;
   createdAt: string;
   updatedAt: string;
   _templateId: string;
   digest?: IWorkflowStepMetadata & {
+    // biome-ignore lint/suspicious/noExplicitAny: digested trigger payloads (or payload refs), user-defined JSON
     events?: any[];
   };
   type?: StepTypeEnum;
@@ -68,6 +71,10 @@ export class JobEntity {
    * used to track the number of times a step has been extended to the next available time in the subscriber schedule
    */
   scheduleExtensionsCount?: number;
+  /**
+   * Resolved end of the current delay, digest window or snooze, set when the job is deferred.
+   */
+  waitUntil?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<

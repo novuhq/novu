@@ -67,6 +67,19 @@ export class InteractionResponseDto {
   })
   answerReadAt?: string;
 
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Who it hasn’t reached yet: their WhatsApp window was closed, so they got the account’s first message instead. It goes out when they reply.',
+  })
+  heldFor?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Who Meta reported the WhatsApp first message undelivered for, and why. It stays waiting, and goes out if they write first.',
+  })
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
+
   @ApiProperty()
   expiresAt: string;
 
@@ -80,6 +93,10 @@ export function toInteractionResponse(
   threads?: InteractionThreadDto[]
 ): InteractionResponseDto {
   const primary = primaryHumanInteractionDelivery(entity);
+  const heldFor = entity.held?.map((hold) => hold.subscriberId) ?? [];
+  const firstMessageFailed = (entity.held ?? []).flatMap((hold) =>
+    hold.failure ? [{ subscriberId: hold.subscriberId, reason: hold.failure.message }] : []
+  );
 
   return {
     id: entity.identifier,
@@ -88,12 +105,14 @@ export function toInteractionResponse(
     content: entity.content,
     from: entity.fromLabel,
     to: humanInteractionRecipientIds(entity),
-    integrationIdentifier: primary?.integrationIdentifier ?? '',
-    platform: primary?.platform ?? '',
+    integrationIdentifier: primary?.integrationIdentifier ?? entity.held?.[0]?.integrationIdentifier ?? '',
+    platform: primary?.platform ?? (heldFor.length ? 'whatsapp' : ''),
     response: entity.response,
     ...(failedSubscriberIds && failedSubscriberIds.length > 0 ? { failedTo: failedSubscriberIds } : {}),
     ...(threads && threads.length > 0 ? { threads } : {}),
     ...(entity.answerReadAt ? { answerReadAt: entity.answerReadAt } : {}),
+    ...(heldFor.length ? { heldFor } : {}),
+    ...(firstMessageFailed.length ? { firstMessageFailed } : {}),
     expiresAt: entity.expiresAt,
     createdAt: entity.createdAt,
   };

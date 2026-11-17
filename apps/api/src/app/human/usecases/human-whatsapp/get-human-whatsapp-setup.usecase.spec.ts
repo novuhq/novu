@@ -1,0 +1,239 @@
+import { encryptCredentials } from '@novu/application-generic';
+import { ChatProviderIdEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
+import { GetHumanWhatsAppSetupCommand } from './get-human-whatsapp-setup.command';
+import { GetHumanWhatsAppSetup } from './get-human-whatsapp-setup.usecase';
+
+const PLATFORM_ENV = ['NOVU_WHATSAPP_APP_ID', 'NOVU_WHATSAPP_APP_SECRET', 'NOVU_WHATSAPP_CONFIG_ID'] as const;
+
+describe('GetHumanWhatsAppSetup', () => {
+  const saved: Partial<Record<(typeof PLATFORM_ENV)[number], string | undefined>> = {};
+
+  beforeEach(() => {
+    for (const key of PLATFORM_ENV) {
+      saved[key] = process.env[key];
+    }
+    process.env.NOVU_WHATSAPP_APP_ID = 'app-1';
+    process.env.NOVU_WHATSAPP_APP_SECRET = 'app-secret';
+    process.env.NOVU_WHATSAPP_CONFIG_ID = 'config-1';
+  });
+
+  afterEach(() => {
+    for (const key of PLATFORM_ENV) {
+      if (saved[key] === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = saved[key];
+      }
+    }
+  });
+
+  const command = GetHumanWhatsAppSetupCommand.create({
+    environmentId: 'env1',
+    organizationId: 'org1',
+    userId: 'user1',
+    agentIdentifier: 'human-relay',
+  });
+
+  function setup(options: {
+    whatsAppEnabled: boolean;
+    available?: { available: boolean; reason?: 'feature_disabled' | 'missing_platform_config' };
+    credentials?: Record<string, unknown>;
+    operatorEndpoints?: Array<Record<string, unknown>>;
+    firstMessage?: Record<string, unknown>;
+  }) {
+    const availability = { execute: sinon.stub().resolves(options.available ?? { available: true }) };
+    const agentRepository = {
+      findOne: sinon.stub().resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' }),
+    };
+    const agentIntegrationRepository = { find: sinon.stub().resolves([{ _integrationId: 'int-wa' }]) };
+    const integrationRepository = {
+      find: sinon.stub().resolves(
+        options.credentials
+          ? [
+              {
+                _id: 'int-wa',
+                identifier: 'whatsapp-main',
+                providerId: ChatProviderIdEnum.WhatsAppBusiness,
+                credentials: encryptCredentials(options.credentials as never),
+              },
+            ]
+          : []
+      ),
+    };
+    const channelEndpointRepository = { find: sinon.stub().resolves(options.operatorEndpoints ?? []) };
+    const humanOperator = { find: sinon.stub().resolves('ada') };
+    const usecase = new GetHumanWhatsAppSetup(
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(options.whatsAppEnabled) } as never),
+      availability as never,
+      agentRepository as never,
+      agentIntegrationRepository as never,
+      integrationRepository as never,
+      channelEndpointRepository as never,
+      humanOperator as never,
+      { read: sinon.stub().resolves(options.firstMessage) } as never
+    );
+
+    return { usecase, availability, integrationRepository, channelEndpointRepository };
+  }
+
+  it('hides WhatsApp entirely while the flag is off, without asking anything else', async () => {
+    const { usecase, availability, integrationRepository } = setup({ whatsAppEnabled: false });
+
+    expect(await usecase.execute(command)).to.deep.equal({ enabled: false, available: false, connected: false });
+    expect(availability.execute.called).to.equal(false);
+    expect(integrationRepository.find.called).to.equal(false);
+  });
+
+  it('says why Embedded Signup cannot run, without the Meta ids', async () => {
+    const { usecase } = setup({
+      whatsAppEnabled: true,
+      available: { available: false, reason: 'missing_platform_config' },
+    });
+
+    expect(await usecase.execute(command)).to.deep.equal({
+      enabled: true,
+      available: false,
+      reason: 'missing_platform_config',
+      connected: false,
+      businessConnected: false,
+      operatorNumberBound: false,
+    });
+  });
+
+  it('hands the public Meta ids to the Facebook button before anything is linked', async () => {
+    const { usecase } = setup({ whatsAppEnabled: true });
+
+    expect(await usecase.execute(command)).to.deep.equal({
+      enabled: true,
+      available: true,
+      appId: 'app-1',
+      configId: 'config-1',
+      connected: false,
+      businessConnected: false,
+      operatorNumberBound: false,
+    });
+  });
+
+  const CREDENTIALS = {
+    apiToken: 'EAAG-secret-token',
+    phoneNumberIdentification: '1234',
+    businessAccountId: 'waba-1',
+    from: '+1 555-123-4567',
+    isNovuManaged: true,
+  };
+
+  it('reads a linked business number as one step short until the operator proves their own number', async () => {
+    const { usecase } = setup({ whatsAppEnabled: true, credentials: CREDENTIALS });
+
+    const result = await usecase.execute(command);
+
+    expect(result).to.include({
+      connected: false,
+      businessConnected: true,
+      operatorNumberBound: false,
+      displayPhoneNumber: '+1 555-123-4567',
+    });
+    expect(JSON.stringify(result)).to.not.contain('EAAG-secret-token');
+    expect(JSON.stringify(result)).to.not.contain('app-secret');
+  });
+
+  it('reads WhatsApp as connected once the operator’s own number is bound on the business number', async () => {
+    const { usecase, channelEndpointRepository } = setup({
+      whatsAppEnabled: true,
+      credentials: CREDENTIALS,
+      operatorEndpoints: [
+        // Written through the channel-endpoints API: no proof, so it doesn't count.
+        { type: 'phone', providerId: ChatProviderIdEnum.WhatsAppBusiness, endpoint: { phoneNumber: '+15550100100' } },
+        {
+          type: 'phone',
+          providerId: ChatProviderIdEnum.WhatsAppBusiness,
+          endpoint: { phoneNumber: '+15550100199', provedAt: '2026-11-01T10:00:00.000Z' },
+        },
+      ],
+    });
+
+    expect(await usecase.execute(command)).to.include({
+      connected: true,
+      businessConnected: true,
+      operatorNumberBound: true,
+      operatorPhoneNumber: '+15550100199',
+    });
+    expect(channelEndpointRepository.find.firstCall.args[0]).to.deep.equal({
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      integrationIdentifier: 'whatsapp-main',
+      subscriberId: 'ada',
+      type: 'phone',
+    });
+  });
+
+  it('does not read a number written without a code as the operator’s', async () => {
+    const { usecase } = setup({
+      whatsAppEnabled: true,
+      credentials: CREDENTIALS,
+      operatorEndpoints: [
+        { type: 'phone', providerId: ChatProviderIdEnum.WhatsAppBusiness, endpoint: { phoneNumber: '+15550100100' } },
+      ],
+    });
+
+    expect(await usecase.execute(command)).to.include({ connected: false, operatorNumberBound: false });
+  });
+
+  it('does not read a WhatsApp integration without a token as connected', async () => {
+    const { usecase } = setup({ whatsAppEnabled: true, credentials: { token: 'verify-token' } });
+
+    expect(await usecase.execute(command)).to.include({ connected: false });
+  });
+
+  describe('a webhook still to add for keys from the operator’s own Meta app', () => {
+    const OWN_APP = {
+      apiToken: 'EAAG-own',
+      phoneNumberIdentification: 'phone-1',
+      businessAccountId: 'waba-1',
+      from: '+1 555-010-0199',
+      isNovuManaged: false,
+      token: 'verify-123',
+    };
+    let apiRoot: string | undefined;
+
+    beforeEach(() => {
+      apiRoot = process.env.AGENT_API_HOSTNAME;
+      process.env.AGENT_API_HOSTNAME = 'https://api.example.com';
+    });
+
+    afterEach(() => {
+      if (apiRoot === undefined) {
+        delete process.env.AGENT_API_HOSTNAME;
+      } else {
+        process.env.AGENT_API_HOSTNAME = apiRoot;
+      }
+    });
+
+    const fromDashboard = GetHumanWhatsAppSetupCommand.create({ ...command, fromDashboard: true } as never);
+
+    it('hands the callback URL and verify token to the operator’s dashboard until their number connects', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: OWN_APP });
+
+      expect((await usecase.execute(fromDashboard)).webhook).to.deep.equal({
+        configured: false,
+        callbackUrl: 'https://api.example.com/v1/agents/relay1/webhook/whatsapp-main',
+        verifyToken: 'verify-123',
+      });
+    });
+
+    it('never hands the verify token to a host holding the same key', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: OWN_APP });
+
+      expect(await usecase.execute(command)).to.not.have.property('webhook');
+    });
+
+    it('has nothing to add for Novu’s own app', async () => {
+      const { usecase } = setup({ whatsAppEnabled: true, credentials: { ...OWN_APP, isNovuManaged: true } });
+
+      expect(await usecase.execute(fromDashboard)).to.not.have.property('webhook');
+    });
+  });
+});

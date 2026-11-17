@@ -1,6 +1,6 @@
 ---
 title: "Contacts"
-description: "List the people your agent can reach, and invite someone new onto Telegram, Slack, or email."
+description: "List the people your agent can reach, and invite someone new onto Telegram, Slack, WhatsApp, or email."
 ---
 
 A contact is anyone the agent can reach with `--to`, including you. `contact list` marks you with `self: true`. MCP marks you `(you)`.
@@ -28,7 +28,7 @@ npx @agentinbox/cli contact invite bob --via telegram --name "Bob" --async
 npx @agentinbox/cli contact invite carol@acme.com --name "Carol Diaz"
 ```
 
-`--via telegram` or `--via slack` skips the page and prints that channel's link. It works for minutes, and that channel becomes their default. `--async` prints the link and returns.
+`--via telegram`, `--via slack`, or `--via whatsapp` skips the page and prints that channel's link. It works for minutes, and that channel becomes their default. `--async` prints the link and returns.
 
 Passing an email address invites them on email. The contact id comes from the address (`carol@acme.com` becomes `carol`, with a short suffix when `carol` is taken). They must click **Confirm email** before a send that names their contact id can use that address.
 

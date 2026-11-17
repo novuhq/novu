@@ -14,6 +14,28 @@ const humanInteractionDeliverySchema = new Schema(
   { _id: false }
 );
 
+const humanInteractionHoldSchema = new Schema(
+  {
+    subscriberId: { type: Schema.Types.String, required: true },
+    integrationIdentifier: { type: Schema.Types.String, required: true },
+    platformThreadId: { type: Schema.Types.String, required: true },
+    templateMessageId: { type: Schema.Types.String },
+    heldAt: { type: Schema.Types.String, required: true },
+    claimedAt: { type: Schema.Types.String },
+    failure: {
+      type: new Schema(
+        {
+          code: { type: Schema.Types.Number },
+          message: { type: Schema.Types.String, required: true },
+          at: { type: Schema.Types.String, required: true },
+        },
+        { _id: false }
+      ),
+    },
+  },
+  { _id: false }
+);
+
 const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
   {
     identifier: {
@@ -54,6 +76,10 @@ const humanInteractionSchema = new Schema<HumanInteractionDBModel>(
     },
     deliveries: {
       type: [humanInteractionDeliverySchema],
+      default: undefined,
+    },
+    held: {
+      type: [humanInteractionHoldSchema],
       default: undefined,
     },
     _conversationId: {
@@ -100,6 +126,12 @@ humanInteractionSchema.index({ _environmentId: 1, requestId: 1 }, { sparse: true
 humanInteractionSchema.index({ _environmentId: 1, subscriberIds: 1, status: 1, createdAt: -1 });
 // Exact reply-to correlation by delivered card message id.
 humanInteractionSchema.index({ _environmentId: 1, 'deliveries.platformMessageId': 1 });
+
+// Matching Meta's delivery report for a first message back to what it stands in for.
+humanInteractionSchema.index({ _environmentId: 1, 'held.templateMessageId': 1 }, { sparse: true });
+
+// Releasing what was held for someone when they write to the agent on WhatsApp.
+humanInteractionSchema.index({ _environmentId: 1, 'held.subscriberId': 1, status: 1 }, { sparse: true });
 // Conversation-scoped pending-ask correlation for framework HITL.
 humanInteractionSchema.index({ _environmentId: 1, _conversationId: 1, status: 1, kind: 1, createdAt: -1 });
 // Expiry sweeps (lazy today, proactive later).

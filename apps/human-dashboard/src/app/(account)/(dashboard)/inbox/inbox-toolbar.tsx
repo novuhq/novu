@@ -8,13 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import {
   channelName,
   formatInboxCount,
-  INBOX_CHANNELS,
   INBOX_SEARCH_MAX_LENGTH,
   INBOX_TAB_LABELS,
   INBOX_TABS,
   type InboxCounts,
   type InboxTab,
   type InboxView,
+  menuChannels,
 } from '@/lib/inbox';
 import { cn } from '@/lib/utils';
 
@@ -191,7 +191,7 @@ function ChannelMenu({ view, counts, onChange }: InboxToolbarProps) {
             label="All channels"
             count={formatInboxCount(counts.channels.all ?? 0, counts.capped)}
           />
-          {INBOX_CHANNELS.map((channel) => (
+          {menuChannels(counts.channels, view.channel).map((channel) => (
             <ChannelItem
               key={channel}
               value={channel}

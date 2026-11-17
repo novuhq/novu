@@ -15,7 +15,6 @@ import { isHostId } from '@/lib/hosts';
 import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
-import type { ChannelVia } from '@/lib/human-channels-api';
 import { loadChannelsOverview } from '@/lib/human-channels-overview';
 import { loadHostStatus } from '@/lib/human-hosts-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
@@ -61,17 +60,18 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
   const progress = await requireSetUpAgent(account, connectHost);
   const { agent } = progress;
   const mcpUrl = readMcpUrl();
-  const [setup, connectedTools, { rows, telegramSetup, slackSetup }, hostStatus, features] = await Promise.all([
-    loadSetupSummary(account, progress),
-    mcpUrl ? listConnectedTools(account) : [],
-    loadChannelsOverview(account),
-    loadHostStatus(account),
-    loadFeatures(account),
-  ]);
+  const [setup, connectedTools, { rows, telegramSetup, slackSetup, whatsappSetup }, hostStatus, features] =
+    await Promise.all([
+      loadSetupSummary(account, progress),
+      mcpUrl ? listConnectedTools(account) : [],
+      loadChannelsOverview(account),
+      loadHostStatus(account),
+      loadFeatures(account),
+    ]);
 
   const context: PromptContext = { apiUrl: await readApiUrl() };
   const { handle } = setup.agent;
-  // With Telegram or Slack connected the setup is done, and there is nothing left to wait for.
+  // With Telegram, Slack or WhatsApp connected the setup is done, and there is nothing left to wait for.
   const settingUp = !rows.some((row) => row.via !== 'email' && row.connected);
   const status = describeAgentStatus(agent.id, rows);
 
@@ -91,6 +91,7 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
         channels={rows}
         telegramSetup={telegramSetup}
         slackSetup={slackSetup}
+        whatsappSetup={whatsappSetup}
         slackAppName={agentDisplayName(agent)}
         channelPrompts={{
           telegram: buildChannelPrompt(context, 'telegram', handle),
@@ -110,6 +111,6 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
 }
 
 /** The channel whose drawer a link asked for, when it names one this page has a drawer for. */
-function readDrawerParam(value: string | string[] | undefined): ChannelVia | null {
-  return value === 'email' || value === 'telegram' || value === 'slack' ? value : null;
+function readDrawerParam(value: string | string[] | undefined): Parameters<typeof configureChannelPath>[0] | null {
+  return value === 'email' || value === 'telegram' || value === 'slack' || value === 'whatsapp' ? value : null;
 }
