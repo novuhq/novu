@@ -6,7 +6,7 @@ export enum SubscriberTokenScopeEnum {
 
 export type SubscriberLoginProfile = Omit<ISubscriberPayload, 'channels'>;
 
-export interface SubscriberLoginClaims {
+export type SubscriberLoginClaims = {
   /** Environment `_id` the token was minted for. */
   iss: string;
   aud: 'novu';
@@ -16,4 +16,4 @@ export interface SubscriberLoginClaims {
   subscriber?: SubscriberLoginProfile;
   scope: SubscriberTokenScopeEnum[];
   jti: string;
-}
+};

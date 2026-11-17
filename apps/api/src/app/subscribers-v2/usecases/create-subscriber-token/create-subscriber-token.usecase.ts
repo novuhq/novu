@@ -42,7 +42,7 @@ export class CreateSubscriberToken {
 
     const token = this.novuTokens.sign(
       'subscriberLogin',
-      { ...claims },
+      claims,
       command.expiresIn ?? TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds
     );
     const { exp } = jwt.decode(token) as { exp: number };
