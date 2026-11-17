@@ -16,18 +16,6 @@ describe('buildChannelPrompt', () => {
     expect(prompt).not.toMatch(/paste/i);
   });
 
-  it('gives WhatsApp the design’s words and leaves the steps to setup.md', () => {
-    expect(buildChannelPrompt(CONTEXT, 'whatsapp', 'atlas')).toBe(
-      'Turn on WhatsApp Business for atlas. Read agentinbox.md/setup.md, then run inbox channel add whatsapp. Send me the Meta link to connect my business account and number. Done when a message I send on WhatsApp shows up in atlas’s inbox.'
-    );
-  });
-
-  it('sends a local site’s agent to that site’s own setup.md', () => {
-    const prompt = buildChannelPrompt({ apiUrl: 'http://localhost:4300/api' }, 'whatsapp', 'atlas');
-
-    expect(prompt).toContain('Read http://localhost:4300/setup.md, then run inbox channel add whatsapp.');
-  });
-
   it('names the API when it is not the one the CLI goes to by itself', () => {
     const prompt = buildChannelPrompt({ apiUrl: 'https://staging.agentinbox.md/api' }, 'telegram', 'atlas');
 

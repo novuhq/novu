@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, ChevronDown, RefreshCw, TriangleAlert } from 'lucide-react';
+import { Bot, RefreshCw, TriangleAlert } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState, useTransition } from 'react';
 
 import { ChannelIcon } from '@/components/channels/channel-icon';
@@ -232,82 +232,6 @@ export function AgentPromptOption({ prompt }: { prompt: string }) {
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
         or do it yourself
         <span aria-hidden="true" className="h-px flex-1 bg-border" />
-      </p>
-    </>
-  );
-}
-
-type AgentPromptCardProps = {
-  prompt: string;
-  /** How many steps doing it by hand takes, for the line that shows them. */
-  stepCount: number;
-  /** Set once the drawer stopped asking on its own; the line then offers to ask again. */
-  waitedTooLong: boolean;
-  onKeepWaiting: () => void;
-  onShowSteps: () => void;
-};
-
-/**
- * A drawer's setup when the operator's own agent is the way in: the prompt to copy, the line saying the drawer
- * moves on by itself once the agent got going, and the steps for doing it by hand folded away under it.
- */
-export function AgentPromptCard({
-  prompt,
-  stepCount,
-  waitedTooLong,
-  onKeepWaiting,
-  onShowSteps,
-}: AgentPromptCardProps) {
-  return (
-    <>
-      <section className="flex flex-col gap-3.5 rounded-[10px] border border-border bg-subtle px-4.5 pt-4.5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent/14">
-            <Bot className="size-3.5 text-accent" />
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h3 className="text-[13px] leading-4.5 font-medium text-foreground">Copy this to your agent</h3>
-            <p className="text-xs leading-4 text-secondary">It turns this on and asks you for anything it needs.</p>
-          </div>
-          <CopyButton value={prompt} label="Copy prompt" variant="primary" className={SMALL_BUTTON}>
-            Copy prompt
-          </CopyButton>
-        </div>
-        <p className="rounded-md border border-border-strong bg-background px-2.5 py-2 font-mono text-[11px] leading-4 text-default">
-          {prompt}
-        </p>
-        <div aria-live="polite" className="flex items-center gap-2 border-t border-border pt-3 text-xs">
-          <span
-            aria-hidden="true"
-            className={cn(
-              'size-[7px] shrink-0 rounded-full bg-accent',
-              !waitedTooLong && 'animate-pulse motion-reduce:animate-none'
-            )}
-          />
-          <span className="text-foreground">Waiting for your agent</span>
-          {waitedTooLong ? (
-            <button
-              type="button"
-              onClick={onKeepWaiting}
-              className="ml-auto cursor-pointer text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
-            >
-              Check again
-            </button>
-          ) : (
-            <span className="ml-auto text-muted">This updates on its own</span>
-          )}
-        </div>
-      </section>
-      <p className="flex items-center justify-center gap-1.5 pt-1 text-xs">
-        <span className="text-muted">Rather do it by hand?</span>
-        <button
-          type="button"
-          onClick={onShowSteps}
-          className="flex cursor-pointer items-center gap-1.5 text-secondary transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
-        >
-          Show the {stepCount} steps
-          <ChevronDown aria-hidden="true" className="size-3" />
-        </button>
       </p>
     </>
   );

@@ -427,7 +427,7 @@ export type OnboardingChannelSetup = {
   /** What the Slack app is called until the operator names it. */
   slackAppName: string;
   /** What the operator hands their own agent in each drawer. */
-  prompts: Record<'telegram' | 'slack' | 'whatsapp', string>;
+  prompts: Record<'telegram' | 'slack', string>;
 };
 
 /** What the onboarding page renders. `null` once there is nothing left to walk the operator through. */
@@ -492,7 +492,6 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
             prompts: {
               telegram: buildChannelPrompt({ apiUrl }, 'telegram', identity.handle),
               slack: buildChannelPrompt({ apiUrl }, 'slack', identity.handle),
-              whatsapp: buildChannelPrompt({ apiUrl }, 'whatsapp', identity.handle),
             },
           }
         : null,
