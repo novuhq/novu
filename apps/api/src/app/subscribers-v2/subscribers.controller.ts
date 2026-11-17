@@ -11,6 +11,7 @@ import {
   Post,
   Query,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
@@ -57,6 +58,7 @@ import { UpdateAllNotifications } from '../inbox/usecases/update-all-notificatio
 import { UpdateNotificationActionCommand } from '../inbox/usecases/update-notification-action/update-notification-action.command';
 import { UpdateNotificationAction } from '../inbox/usecases/update-notification-action/update-notification-action.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -463,6 +465,7 @@ export class SubscribersController {
 
   @Post('/:subscriberId/tokens')
   @ExternalApiAccessible()
+  @ExcludeFromIdempotency()
   @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
   @ApiOperation({
     summary: 'Create a subscriber login token',
@@ -478,7 +481,8 @@ export class SubscribersController {
   async createSubscriberToken(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: CreateSubscriberTokenRequestDto
+    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    body: CreateSubscriberTokenRequestDto
   ): Promise<CreateSubscriberTokenResponseDto> {
     return await this.createSubscriberTokenUsecase.execute(
       CreateSubscriberTokenCommand.create({

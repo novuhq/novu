@@ -85,6 +85,33 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     expect(verifyClaims(first.body.data.token).jti).not.to.equal(verifyClaims(second.body.data.token).jti);
   });
 
+  it('should sign only the known profile fields', async () => {
+    const res = await mint('sub-alice', {
+      subscriber: { firstName: 'Alice', subscriberId: 'sub-mallory', channels: [], isOnline: true },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(verifyClaims(res.body.data.token).subscriber).to.deep.equal({ firstName: 'Alice' });
+  });
+
+  it('should mint a fresh token on every call with the same idempotency key', async () => {
+    const previousIdempotency = process.env.IS_API_IDEMPOTENCY_ENABLED;
+    process.env.IS_API_IDEMPOTENCY_ENABLED = 'true';
+    try {
+      const first = await mint('sub-retry', {}).set('idempotency-key', 'token-retry');
+      const second = await mint('sub-retry', {}).set('idempotency-key', 'token-retry');
+
+      expect(second.headers['idempotency-replay']).to.equal(undefined);
+      expect(verifyClaims(first.body.data.token).jti).not.to.equal(verifyClaims(second.body.data.token).jti);
+    } finally {
+      if (previousIdempotency === undefined) {
+        delete process.env.IS_API_IDEMPOTENCY_ENABLED;
+      } else {
+        process.env.IS_API_IDEMPOTENCY_ENABLED = previousIdempotency;
+      }
+    }
+  });
+
   it('should not create the subscriber', async () => {
     const res = await mint('sub-never-created', { subscriber: { firstName: 'Ghost' } });
 
