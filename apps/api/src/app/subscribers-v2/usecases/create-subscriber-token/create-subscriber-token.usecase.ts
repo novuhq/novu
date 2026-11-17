@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import jwt from 'jsonwebtoken';
 import { NovuTokens, TOKEN_KINDS } from '../../../shared/services/novu-tokens.service';
 import { SubscriberLoginClaims } from '../../../shared/services/subscriber-login-token';
 import { CreateSubscriberTokenResponseDto } from '../../dtos/create-subscriber-token-response.dto';
@@ -40,13 +39,12 @@ export class CreateSubscriberToken {
       jti: randomUUID(),
     };
 
-    const token = this.novuTokens.sign(
+    const signed = this.novuTokens.sign(
       'subscriberLogin',
       claims,
       command.expiresIn ?? TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds
     );
-    const { exp } = jwt.decode(token) as { exp: number };
-    const expiresAt = new Date(exp * 1000).toISOString();
+    const expiresAt = signed.expiresAt.toISOString();
 
     this.logger.info(
       {
@@ -60,6 +58,6 @@ export class CreateSubscriberToken {
       'Subscriber login token created'
     );
 
-    return { token, expiresAt };
+    return { token: signed.token, expiresAt };
   }
 }

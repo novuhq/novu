@@ -38,7 +38,7 @@ function payloadOf(token: string) {
 }
 
 function signLogin(tokens: NovuTokens, claims: Record<string, unknown> = { sub: 'subscriber-1' }): string {
-  return tokens.sign('subscriberLogin', claims, 3600);
+  return tokens.sign('subscriberLogin', claims, 3600).token;
 }
 
 function nowSeconds(): number {
@@ -190,11 +190,16 @@ describe('NovuTokens', () => {
     it('sets iat and exp itself, ignoring timestamps in the claims', () => {
       const tokens = tokensWith({ JWT_SECRET: 'secret-a' });
       const future = nowSeconds() + YEAR_SECONDS;
-      const token = tokens.sign('subscriberLogin', { sub: 'subscriber-1', iat: future, exp: future, nbf: future }, 60);
+      const { token, expiresAt } = tokens.sign(
+        'subscriberLogin',
+        { sub: 'subscriber-1', iat: future, exp: future, nbf: future },
+        60
+      );
       const payload = payloadOf(token);
 
       expect(payload?.iat).to.be.closeTo(nowSeconds(), 5);
       expect(payload?.exp).to.equal((payload?.iat ?? 0) + 60);
+      expect(expiresAt.getTime()).to.equal((payload?.exp ?? 0) * 1000);
       expect(payload).to.not.have.property('nbf');
       expect(tokens.verify('subscriberLogin', token).ok).to.equal(true);
     });

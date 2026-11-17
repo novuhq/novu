@@ -17,6 +17,11 @@ export type TokenKind = keyof typeof TOKEN_KINDS;
 
 export type TokenVerification = { ok: true; claims: JwtPayload } | { ok: false; reason: 'expired' | 'invalid' };
 
+export interface SignedToken {
+  token: string;
+  expiresAt: Date;
+}
+
 interface SigningKey {
   kid: string;
   privateKey: KeyObject;
@@ -104,7 +109,7 @@ function loadKeys(configured: string | undefined, jwtSecret: string): TokenKeys 
 export class NovuTokens {
   private readonly keys = loadKeys(process.env.NOVU_TOKEN_SIGNING_KEYS, `${process.env.JWT_SECRET}`);
 
-  sign(kind: TokenKind, claims: Record<string, unknown>, expiresInSeconds: number): string {
+  sign(kind: TokenKind, claims: Record<string, unknown>, expiresInSeconds: number): SignedToken {
     const { typ, maxLifetimeSeconds } = TOKEN_KINDS[kind];
     if (!(expiresInSeconds > 0 && expiresInSeconds <= maxLifetimeSeconds)) {
       throw new Error(`A ${kind} token must expire within 1 to ${maxLifetimeSeconds} seconds.`);
@@ -113,11 +118,14 @@ export class NovuTokens {
     const { iat: _iat, exp: _exp, nbf: _nbf, ...payload } = claims;
     const { kid, privateKey } = this.keys.signing;
 
-    return jwt.sign(payload, privateKey, {
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + expiresInSeconds;
+    const token = jwt.sign({ ...payload, iat, exp }, privateKey, {
       algorithm: ALGORITHM,
       header: { alg: ALGORITHM, typ, kid },
-      expiresIn: expiresInSeconds,
     });
+
+    return { token, expiresAt: new Date(exp * 1000) };
   }
 
   verify(kind: TokenKind, token: string): TokenVerification {
