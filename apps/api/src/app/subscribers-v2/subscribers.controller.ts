@@ -73,6 +73,8 @@ import { ListSubscriberSubscriptionsUseCase } from '../topics-v2/usecases/list-s
 import { BulkUpdateSubscriberPreferencesDto } from './dtos/bulk-update-subscriber-preferences.dto';
 import { ContextKeysQueryDto } from './dtos/context-keys-query.dto';
 import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
+import { CreateSubscriberTokenRequestDto } from './dtos/create-subscriber-token.dto';
+import { CreateSubscriberTokenResponseDto } from './dtos/create-subscriber-token-response.dto';
 import { GetSubscriberNotificationsCountQueryDto } from './dtos/get-subscriber-notifications-count-query.dto';
 import { GetSubscriberNotificationsCountResponseDto } from './dtos/get-subscriber-notifications-count-response.dto';
 import { GetSubscriberNotificationsQueryDto } from './dtos/get-subscriber-notifications-query.dto';
@@ -89,6 +91,8 @@ import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
 import { SnoozeSubscriberNotificationDto } from './dtos/snooze-subscriber-notification.dto';
 import { SubscriberGlobalPreferenceDto } from './dtos/subscriber-global-preference.dto';
 import { UpdateAllSubscriberNotificationsDto } from './dtos/update-all-subscriber-notifications.dto';
+import { CreateSubscriberTokenCommand } from './usecases/create-subscriber-token/create-subscriber-token.command';
+import { CreateSubscriberToken } from './usecases/create-subscriber-token/create-subscriber-token.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber/get-subscriber.command';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
@@ -132,7 +136,8 @@ export class SubscribersController {
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
     private updateAllNotificationsUsecase: UpdateAllNotifications,
     private deleteAllNotificationsUsecase: DeleteAllNotifications,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private createSubscriberTokenUsecase: CreateSubscriberToken
   ) {}
 
   @Get('')
@@ -452,6 +457,38 @@ export class SubscribersController {
         orderDirection: query.orderDirection === DirectionEnum.ASC ? 1 : -1,
         orderBy: query.orderBy || '_id',
         includeCursor: query.includeCursor,
+      })
+    );
+  }
+
+  @Post('/:subscriberId/tokens')
+  @ExternalApiAccessible()
+  @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
+  @ApiOperation({
+    summary: 'Create a subscriber login token',
+    description: `Create a short-lived, Novu-signed login token for the subscriber identified by **subscriberId**.
+    Call it from your backend with your secret key, then pass the token to the browser, which exchanges it for an Inbox session.
+    Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.`,
+  })
+  @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
+  @ApiResponse(CreateSubscriberTokenResponseDto, 201)
+  @SdkGroupName('Subscribers.Tokens')
+  @SdkMethodName('create')
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
+  async createSubscriberToken(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: CreateSubscriberTokenRequestDto
+  ): Promise<CreateSubscriberTokenResponseDto> {
+    return await this.createSubscriberTokenUsecase.execute(
+      CreateSubscriberTokenCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        context: body.context,
+        subscriber: body.subscriber,
+        scope: body.scope,
+        expiresIn: body.expiresIn,
       })
     );
   }
