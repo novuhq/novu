@@ -28,7 +28,6 @@ export interface UpdateInboundMessageParams {
   content: string;
   richContent?: Record<string, unknown>;
   hasPlatformAttachments?: boolean;
-  /** Platform edit timestamp when the channel provides one (Slack `edited.ts`). */
   editedAt?: string;
   environmentId: string;
   organizationId: string;
