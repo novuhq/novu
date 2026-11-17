@@ -21,6 +21,7 @@ import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import {
   SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
   UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+  UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
 } from '../shared/util/agent-inbound-replies';
 import {
   AgentTestContext,
@@ -251,23 +252,19 @@ describe('Agent access rule #novu-v2', () => {
 
     async function conversationId(identifier: string) {
       const conversation = await pollFor(() =>
-        conversationRepository.findOne({ identifier, _environmentId: ctx.session.environment._id }, '_id')
+        conversationRepository.findOne({ identifier, _environmentId: ctx.session.environment._id }, { _id: 1 })
       );
 
       return conversation._id;
     }
 
-    async function waitForRefusal(identifier: string) {
+    async function waitForRefusal(identifier: string, reply = SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY) {
       const _conversationId = await conversationId(identifier);
 
       return pollFor(() =>
         activityRepository.findOne(
-          {
-            _environmentId: ctx.session.environment._id,
-            _conversationId,
-            content: SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
-          },
-          '_id'
+          { _environmentId: ctx.session.environment._id, _conversationId, content: reply },
+          { _id: 1 }
         )
       );
     }
@@ -345,7 +342,7 @@ describe('Agent access rule #novu-v2', () => {
       process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
 
       await send(token, 'Blocked after flag off', identifier);
-      await waitForRefusal(identifier);
+      await waitForRefusal(identifier, UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
       await waitForBridgeCalls(1);
     });
 
@@ -359,7 +356,7 @@ describe('Agent access rule #novu-v2', () => {
 
       const identifier = await send(token, 'Hello');
 
-      await waitForRefusal(identifier);
+      await waitForRefusal(identifier, UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
       await waitForBridgeCalls(0);
     });
   });

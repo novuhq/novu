@@ -29,6 +29,10 @@ function makeConfig(overrides: Partial<ResolvedAgentConfig> = {}): ResolvedAgent
   } as ResolvedAgentConfig;
 }
 
+function makeSubscriber(tier: string): ConversationTurn['subscriber'] {
+  return { subscriberId: 'sub-1', data: { tier } } as unknown as ConversationTurn['subscriber'];
+}
+
 function makeTurn(overrides: Partial<ConversationTurn> = {}): ConversationTurn {
   return {
     agentId: 'agent-mongo-1',
@@ -38,21 +42,21 @@ function makeTurn(overrides: Partial<ConversationTurn> = {}): ConversationTurn {
       _id: 'conv-1',
       channels: [{ platform: 'slack', platformThreadId: 't1' }],
     } as ConversationTurn['conversation'],
-    subscriber: { subscriberId: 'sub-1', data: { tier: 'silver' } } as ConversationTurn['subscriber'],
+    subscriber: makeSubscriber('silver'),
     context: null,
     subscriberResolution: { outcome: 'resolved', subscriberId: 'sub-1' },
     message: {
       id: 'msg-1',
       text: 'hello',
       author: { userId: 'U1', fullName: 'Ada', userName: 'ada', isBot: false },
-    },
+    } as unknown as ConversationTurn['message'],
     event: AgentEventEnum.ON_MESSAGE,
     thread: {
       id: 'thread-1',
       channelId: 'C1',
       isDM: true,
       post: sinon.stub().resolves({ id: 'reply-1', threadId: 'thread-1' }),
-    } as ConversationTurn['thread'],
+    } as unknown as ConversationTurn['thread'],
     platformThreadId: 'thread-1',
     ...overrides,
   };
@@ -91,7 +95,7 @@ describe('admitByAccessRule', () => {
     const reply = await refuseAndReply(
       makeTurn({
         contextLookupFailed: true,
-        subscriber: { subscriberId: 'sub-1', data: { tier: 'gold' } } as ConversationTurn['subscriber'],
+        subscriber: makeSubscriber('gold'),
       })
     );
 
