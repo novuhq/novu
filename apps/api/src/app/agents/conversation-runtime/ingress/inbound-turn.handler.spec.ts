@@ -3372,6 +3372,52 @@ describe('AgentInboundHandler', () => {
       expect(params.previousMessage.text).to.equal('where is order 1234?');
     });
 
+    it('records one editedAt for a redelivered Teams edit', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const teamsConfig = { ...config, platform: AgentPlatformEnum.TEAMS, integrationIdentifier: 'teams-main' };
+      const editedAt = new Date('2026-11-17T07:00:00.000Z');
+      const message = {
+        id: 'msg-1',
+        text: 'updated in teams',
+        author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+        metadata: { dateSent: new Date('2026-11-17T06:00:00.000Z'), edited: true, editedAt },
+        raw: { channelData: { eventType: 'editMessage' } },
+      };
+      const thread = { id: 'teams:19:thread1', isDM: true };
+
+      await handler.handleMessageUpdated('agent1', teamsConfig as any, thread as any, message as any);
+      await handler.handleMessageUpdated('agent1', teamsConfig as any, thread as any, message as any);
+
+      expect(conversationService.updateInboundMessage.callCount).to.equal(2);
+      expect(conversationService.updateInboundMessage.firstCall.args[0].editedAt).to.equal('2026-11-17T07:00:00.000Z');
+      expect(conversationService.updateInboundMessage.secondCall.args[0].editedAt).to.equal('2026-11-17T07:00:00.000Z');
+      expect(bridgeExecutor.execute.callCount).to.equal(2);
+      expect(bridgeExecutor.execute.firstCall.args[0].deliveryRevision).to.equal('2026-11-17T07:00:00.000Z');
+      expect(bridgeExecutor.execute.secondCall.args[0].deliveryRevision).to.equal('2026-11-17T07:00:00.000Z');
+    });
+
+    it('keys a Slack edit by the ISO time of metadata.editedAt, not raw edited.ts', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const slackEditedTs = '1794900667.000400';
+      const editedAt = new Date(Number.parseFloat(slackEditedTs) * 1000);
+      const message = {
+        id: 'msg-1',
+        text: 'updated in slack',
+        author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+        metadata: { dateSent: new Date('2026-11-17T06:00:00.000Z'), edited: true, editedAt },
+        raw: { edited: { ts: slackEditedTs } },
+      };
+
+      await handler.handleMessageUpdated('agent1', config as any, { id: 'thread1', isDM: true } as any, message as any);
+      await handler.handleMessageUpdated('agent1', config as any, { id: 'thread1', isDM: true } as any, message as any);
+
+      expect(conversationService.updateInboundMessage.firstCall.args[0].editedAt).to.equal('2026-11-17T07:31:07.000Z');
+      expect(conversationService.updateInboundMessage.secondCall.args[0].editedAt).to.equal('2026-11-17T07:31:07.000Z');
+      expect(conversationService.updateInboundMessage.firstCall.args[0].editedAt).to.not.equal(slackEditedTs);
+      expect(bridgeExecutor.execute.firstCall.args[0].deliveryRevision).to.equal('2026-11-17T07:31:07.000Z');
+      expect(bridgeExecutor.execute.secondCall.args[0].deliveryRevision).to.equal('2026-11-17T07:31:07.000Z');
+    });
+
     it('persists an edit but skips dispatch when the plan gate blocks', async () => {
       const { handler, conversationService, bridgeExecutor, planLimitGate } = makeHandler();
       planLimitGate.maybeBlock.resolves(true);
