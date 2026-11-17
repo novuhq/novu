@@ -165,7 +165,7 @@ export const envValidators = {
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
-  SUBSCRIBER_TOKEN_SIGNING_KEYS: str({ default: undefined }),
+  NOVU_TOKEN_SIGNING_KEYS: str({ default: undefined }),
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
