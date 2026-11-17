@@ -39,12 +39,7 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   senderEmail?: string;
   resolutionOutcome?: SubscriberResolutionOutcome;
   emailSenderUnverified?: boolean;
-  accessRuleRefused?: boolean;
 }): string {
-  if (params.accessRuleRefused) {
-    return SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY;
-  }
-
   // On `error` the sender's identity was never actually rejected, so the
   // access-denied copy would be wrong. (`resolved` never reaches this gate —
   // the inbound handler reclassifies resolved-but-unloadable records as

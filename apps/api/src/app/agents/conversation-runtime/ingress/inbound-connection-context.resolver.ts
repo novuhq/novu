@@ -79,11 +79,14 @@ export class InboundConnectionContextResolver {
    * @param rawEvent Raw inbound platform payload — used for workspace-scoped platforms.
    * @param platformUserId The sender's platform identity (e.g. Telegram `chat.id`) — used for
    *   endpoint-scoped platforms.
+   * @param storedWorkspaceId The workspace id captured on the conversation — used when the payload
+   *   carries none (Slack reaction and delete events).
    */
   async resolve(
     config: ResolvedAgentConfig,
     rawEvent: unknown,
-    platformUserId?: string | null
+    platformUserId?: string | null,
+    storedWorkspaceId?: string
   ): Promise<ResolvedInboundContext> {
     if (config.platform === AgentPlatformEnum.WEB_CHAT) {
       return this.resolveBySessionContextKeys(config, rawEvent);
@@ -92,7 +95,11 @@ export class InboundConnectionContextResolver {
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
-      return this.resolveByWorkspaceAndEndpoint(config, extractWorkspaceId(rawEvent), platformUserId ?? null);
+      return this.resolveByWorkspaceAndEndpoint(
+        config,
+        extractWorkspaceId(rawEvent) ?? storedWorkspaceId ?? null,
+        platformUserId ?? null
+      );
     }
 
     return this.resolveByEndpoint(config, platformUserId ?? null);

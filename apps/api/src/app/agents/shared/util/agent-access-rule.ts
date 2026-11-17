@@ -27,10 +27,12 @@ export function getAgentAccessRuleIssues(rule: unknown): string[] {
   }
 
   if (isNestedDeeperThan(rule, ACCESS_RULE_MAX_DEPTH)) {
-    return [`Access rule must be nested at most ${ACCESS_RULE_MAX_DEPTH} levels deep`];
+    return [`Access rule objects and arrays must be nested at most ${ACCESS_RULE_MAX_DEPTH} levels deep`];
   }
 
-  const issues = getIntegrationRulesIssues(rule, INTEGRATION_CONDITION_NAMESPACES);
+  const issues = getIntegrationRulesIssues(rule, INTEGRATION_CONDITION_NAMESPACES).map((issue) =>
+    issue === 'Invalid integration conditions' ? 'Invalid access rule' : issue
+  );
 
   for (const field of extractFieldsFromRules(rule as RulesLogic<AdditionalOperation>)) {
     if (!isAccessRuleField(field)) {
@@ -131,7 +133,10 @@ export function evaluateAgentAccessRule(
 
 type AccessRuleSubscriber = Pick<SubscriberEntity, (typeof ACCESS_RULE_SUBSCRIBER_FIELDS)[number]>;
 
-type AccessRuleContextValue = { id: string; data?: Record<string, unknown> };
+interface AccessRuleContextValue {
+  id: string;
+  data?: Record<string, unknown>;
+}
 
 function projectEvaluationData(data: {
   subscriber: SubscriberEntity;

@@ -36,8 +36,8 @@ export class AgentBehaviorDto {
       '"open" on managed agents auto-creates a lightweight subscriber so the agent can reply; ' +
       'on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. ' +
       '"restricted" rejects unknown senders with a managed denial reply (any runtime). ' +
-      '"rule" requires a known subscriber and accessRule must evaluate truthy; unknown senders are refused like restricted; ' +
-      'an invalid rule or evaluation error refuses the message; a missing field evaluates as JSON Logic says. ' +
+      '"rule" requires a known subscriber and accessRule must evaluate truthy for every message, edit, delete, click and reaction; ' +
+      'unknown senders, an invalid rule and an evaluation error are refused; a missing field evaluates as JSON Logic says. ' +
       'Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; ' +
       'self-hosted create defaults to "restricted".',
   })
@@ -50,9 +50,9 @@ export class AgentBehaviorDto {
     additionalProperties: true,
     description:
       'JSON Logic rule evaluated over subscriber.* and context.* when subscriberAccess is "rule". ' +
-      'Present only when subscriberAccess is "rule". Unknown senders are refused like restricted. ' +
-      'A missing field evaluates as JSON Logic says. "==" and "!=" compare strictly, without type coercion. ' +
-      'At most 16 KB and 32 levels deep.',
+      'Present only when subscriberAccess is "rule". A missing field evaluates as JSON Logic says, ' +
+      'so `null` is less than any positive number. "==" and "!=" compare strictly, without type coercion. ' +
+      'At most 16 KB, with objects and arrays nested at most 32 levels deep.',
     example: { in: [{ var: 'context.tenant.data.plan' }, ['pro', 'enterprise']] },
   })
   @ValidateIf((_, value) => value !== undefined)

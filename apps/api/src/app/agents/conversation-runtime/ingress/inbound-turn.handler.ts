@@ -63,7 +63,7 @@ import {
   isAgentProvisionedSubscriber,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
-import { admitByAccessRule } from '../reply/admit-by-access-rule';
+import { admitByAccessRule, postAccessRuleRefusal } from '../reply/admit-by-access-rule';
 import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -953,34 +953,13 @@ export class AgentInboundHandler implements OnModuleInit {
       unseenThreadMessages,
     };
 
-    const mentionGateArgs = {
-      agentId,
-      config,
-      thread,
-      message,
-      event,
-      conversation,
-      platformThreadId,
-      subscriberId,
-      mentionContext,
-      mentionBotUserId,
-      participantsSnapshot,
-    };
-
-    const admission = await admitByAccessRule({
-      turn,
-      logger: this.logger,
-      outboundGateway: this.outboundGateway,
-      conversationService: this.conversationService,
-      featureFlagsService: this.featureFlagsService,
-      emailSenderUnverified: !isVerifiedEmailSender,
-    });
-
-    if (!admission.admitted) {
-      if (!(await this.maybeStopOnMentionGate(mentionGateArgs))) {
-        await admission.refuse();
-      }
-
+    // An unmentioned message in a shared thread stays silent, so a refused sender learns nothing there.
+    if (
+      await this.refusedByAccessRule(turn, {
+        emailSenderUnverified: !isVerifiedEmailSender,
+        silent: requiresExplicitMention(thread, message, mentionContext),
+      })
+    ) {
       return;
     }
 
@@ -998,7 +977,21 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    if (await this.maybeStopOnMentionGate(mentionGateArgs)) {
+    if (
+      await this.maybeStopOnMentionGate({
+        agentId,
+        config,
+        thread,
+        message,
+        event,
+        conversation,
+        platformThreadId,
+        subscriberId,
+        mentionContext,
+        mentionBotUserId,
+        participantsSnapshot,
+      })
+    ) {
       return;
     }
 
@@ -1025,6 +1018,31 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /** Rule-mode admission. Replies to a refused sender unless `silent` or the event is a reaction or delete. */
+  private async refusedByAccessRule(
+    turn: ConversationTurn,
+    opts: { emailSenderUnverified?: boolean; silent?: boolean } = {}
+  ): Promise<boolean> {
+    const admission = await admitByAccessRule(turn, {
+      logger: this.logger,
+      featureFlagsService: this.featureFlagsService,
+    });
+    if (admission.admitted) {
+      return false;
+    }
+
+    if (!opts.silent) {
+      await postAccessRuleRefusal(turn, admission.refusal, {
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: opts.emailSenderUnverified,
+      });
+    }
+
+    return true;
   }
 
   /**
@@ -1947,15 +1965,18 @@ export class AgentInboundHandler implements OnModuleInit {
     const thread = eventToThread(event, conversation);
 
     const platformUserId = previousAuthor?.userId ?? current?.senderId;
-    const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
 
-    // Contacts only: a stranger can't change the inbox by deleting a message either. With no author on the
-    // event, the stored message says who sent it: its `senderId` is a subscriber id, not a platform user id.
-    const senderSubscriberId = previousAuthor?.userId
-      ? getResolvedSubscriberId(resolution)
-      : current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER
-        ? current.senderId
-        : null;
+    // With no author on the event, the stored message says who sent it: its `senderId` is a subscriber id, not a
+    // platform user id.
+    const storedSenderSubscriberId =
+      current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER ? current.senderId : null;
+    const resolution: SubscriberResolution | undefined =
+      !previousAuthor?.userId && storedSenderSubscriberId
+        ? { outcome: 'resolved', subscriberId: storedSenderSubscriberId }
+        : await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
+
+    // Contacts only: a stranger can't change the inbox by deleting a message either.
+    const senderSubscriberId = previousAuthor?.userId ? getResolvedSubscriberId(resolution) : storedSenderSubscriberId;
     if (await this.isKeptOutOfAgentInbox(agentId, config, senderSubscriberId)) {
       return;
     }
@@ -2217,7 +2238,12 @@ export class AgentInboundHandler implements OnModuleInit {
       context,
       bridgeUrl: bridgeUrlOverride,
       lookupFailed: contextLookupFailed,
-    } = await this.connectionContextResolver.resolve(config, params.raw, params.platformUserId);
+    } = await this.connectionContextResolver.resolve(
+      config,
+      params.raw,
+      params.platformUserId,
+      this.conversationService.getPrimaryChannel(conversation).workspace?.id
+    );
     const runtime = this.runtimeResolver.resolve(agent);
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
@@ -2259,17 +2285,7 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    const admission = await admitByAccessRule({
-      turn,
-      logger: this.logger,
-      outboundGateway: this.outboundGateway,
-      conversationService: this.conversationService,
-      featureFlagsService: this.featureFlagsService,
-    });
-
-    if (!admission.admitted) {
-      await admission.refuse();
-
+    if (await this.refusedByAccessRule(turn)) {
       return;
     }
 
@@ -2447,17 +2463,7 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    const admission = await admitByAccessRule({
-      turn,
-      logger: this.logger,
-      outboundGateway: this.outboundGateway,
-      conversationService: this.conversationService,
-      featureFlagsService: this.featureFlagsService,
-    });
-
-    if (!admission.admitted) {
-      await admission.refuse();
-
+    if (await this.refusedByAccessRule(turn)) {
       return;
     }
 

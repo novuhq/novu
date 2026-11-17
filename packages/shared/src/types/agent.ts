@@ -10,9 +10,9 @@
  *   agent can reply; on custom-code / self-hosted agents, the turn is forwarded
  *   to the bridge with a null subscriber. Managed agent create defaults to open.
  *   Abuse mitigation is the customer's responsibility in this mode.
- * - `rule`: a known subscriber AND `accessRule` must evaluate truthy. Unknown
- *   senders are refused like `restricted`. Invalid rules and evaluation errors
- *   fail closed.
+ * - `rule`: a known subscriber AND `accessRule` must evaluate truthy, for every
+ *   message, edit, delete, click and reaction. Unknown senders, invalid rules and
+ *   evaluation errors are refused.
  *
  * Always persisted on agents (create sets it; legacy rows were backfilled).
  */

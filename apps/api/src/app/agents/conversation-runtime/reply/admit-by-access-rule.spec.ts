@@ -4,9 +4,12 @@ import sinon from 'sinon';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY } from '../../shared/util/agent-inbound-replies';
+import {
+  SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
+  UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
+} from '../../shared/util/agent-inbound-replies';
 import type { ConversationTurn } from '../runtime/conversation-turn';
-import { admitByAccessRule } from './admit-by-access-rule';
+import { admitByAccessRule, postAccessRuleRefusal } from './admit-by-access-rule';
 
 function makeConfig(overrides: Partial<ResolvedAgentConfig> = {}): ResolvedAgentConfig {
   return {
@@ -73,35 +76,39 @@ describe('admitByAccessRule', () => {
     sinon.restore();
   });
 
-  it('admits keyless email demos in rule mode', async () => {
-    const turn = makeTurn({ config: makeConfig({ platform: AgentPlatformEnum.EMAIL, isKeyless: true }) });
+  async function refuseAndReply(turn: ConversationTurn) {
+    const deps = makeDeps();
+    const admission = await admitByAccessRule(turn, deps);
+    expect(admission.admitted).to.equal(false);
+    if (!admission.admitted) {
+      await postAccessRuleRefusal(turn, admission.refusal, deps);
+    }
 
-    expect((await admitByAccessRule({ turn, ...makeDeps() })).admitted).to.equal(true);
+    return deps.outboundGateway.replyOnThread.firstCall?.args[1]?.markdown;
+  }
+
+  it('tells a subscriber the rule allows to try again when the context lookup failed', async () => {
+    const reply = await refuseAndReply(
+      makeTurn({
+        contextLookupFailed: true,
+        subscriber: { subscriberId: 'sub-1', data: { tier: 'gold' } } as ConversationTurn['subscriber'],
+      })
+    );
+
+    expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
   });
 
-  it('refuses a subscriber the rule allows when the context lookup failed', async () => {
-    const turn = makeTurn({
-      contextLookupFailed: true,
-      subscriber: { subscriberId: 'sub-1', data: { tier: 'gold' } } as ConversationTurn['subscriber'],
-    });
+  it('refuses a keyless email demo whose subscriber the rule denies', async () => {
+    const reply = await refuseAndReply(
+      makeTurn({ config: makeConfig({ platform: AgentPlatformEnum.EMAIL, isKeyless: true }) })
+    );
 
-    expect((await admitByAccessRule({ turn, ...makeDeps() })).admitted).to.equal(false);
+    expect(reply).to.equal(SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY);
   });
 
   it('replies to a refused edit', async () => {
-    const deps = makeDeps();
-    const admission = await admitByAccessRule({
-      turn: makeTurn({ event: AgentEventEnum.ON_MESSAGE_UPDATED }),
-      ...deps,
-    });
+    const reply = await refuseAndReply(makeTurn({ event: AgentEventEnum.ON_MESSAGE_UPDATED }));
 
-    expect(admission.admitted).to.equal(false);
-    if (!admission.admitted) {
-      await admission.refuse();
-    }
-
-    expect(deps.outboundGateway.replyOnThread.firstCall.args[1]).to.deep.include({
-      markdown: SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
-    });
+    expect(reply).to.equal(SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY);
   });
 });

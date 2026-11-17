@@ -1,5 +1,11 @@
 import { createContextHash, createHash } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import {
+  AgentRepository,
+  ChannelConnectionRepository,
+  ContextRepository,
+  IntegrationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, type ContextPayload, InAppProviderIdEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
@@ -391,6 +397,7 @@ describe('Agent access rule #novu-v2', () => {
         author: { userId, fullName: 'Slack User', userName: 'slackuser', isBot: false },
         isMention: true,
         metadata: { dateSent: new Date() },
+        raw: { type: 'message', team: 'W_TEAM', user: userId, text },
       };
 
       await testServer
@@ -428,6 +435,7 @@ describe('Agent access rule #novu-v2', () => {
         message: message as never,
         thread: thread(threadId) as never,
         user: { userId },
+        raw: { type: 'reaction_added', user: userId, reaction: 'thumbsup', item: { type: 'message', ts: message.id } },
       });
     }
 
@@ -458,6 +466,43 @@ describe('Agent access rule #novu-v2', () => {
       await reactSlack(threadId, 'U_RULE_EVENTS', message);
       expect(bridgeCalls).to.have.length(3);
       expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
+    });
+
+    it('applies a workspace tenant rule to reactions, whose Slack payload carries no workspace id', async () => {
+      const tenantId = `acme-slack-${Date.now()}`;
+      await new ContextRepository().create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        type: 'tenant',
+        id: tenantId,
+        key: `tenant:${tenantId}`,
+        data: { plan: 'pro' },
+      });
+      await new ChannelConnectionRepository().update(
+        {
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          integrationIdentifier: ctx.integrationIdentifier,
+          'workspace.id': 'W_TEAM',
+        },
+        { $set: { contextKeys: [`tenant:${tenantId}`] } }
+      );
+      const subscriberId = `slack-rule-tenant-${Date.now()}`;
+      await subscriberRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        subscriberId,
+      });
+      await seedChannelEndpoint(ctx, 'U_RULE_TENANT', subscriberId);
+      await setRule(PAID_PLAN_RULE);
+      const threadId = `D_RULE_TENANT_${Date.now()}`;
+
+      const message = await sendSlack(threadId, 'U_RULE_TENANT', 'hello');
+      await reactSlack(threadId, 'U_RULE_TENANT', message);
+
+      expect(bridgeCalls.map((call) => call.event)).to.deep.equal(['onMessage', 'onReaction']);
+      expect(bridgeCalls[1].context).to.deep.include({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+      expect(replies).to.deep.equal([]);
     });
 
     it('compares == and != strictly, so another tenant or a missing field never matches', async () => {

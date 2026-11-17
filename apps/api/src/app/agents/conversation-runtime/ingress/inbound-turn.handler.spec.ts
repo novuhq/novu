@@ -1012,6 +1012,32 @@ describe('AgentInboundHandler', () => {
         expect(bridgeExecutor.execute.called).to.equal(false);
       });
 
+      it('stays in the thread and only refuses a newcomer the access rule denies', async () => {
+        const { handler, bridgeExecutor, outboundGateway } = makeHandler({
+          ...makeResolvedSubscriberOverrides('sub2'),
+          subscriberFindById: sinon.stub().resolves({ _id: 'subscriber-mongo-2', subscriberId: 'sub2', data: {} }),
+        });
+        const thread = makeNestedThread();
+        const ruleConfig = {
+          ...smartConfig,
+          subscriberAccess: AgentSubscriberAccessEnum.RULE,
+          accessRule: { '==': [{ var: 'subscriber.data.tier' }, 'gold'] },
+        };
+
+        await handler.handle(
+          'agent1',
+          ruleConfig as any,
+          thread as any,
+          makeFollowUp({ isMention: true }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
       it('still answers a newcomer who mentioned the agent, alongside the notice', async () => {
         const { handler, bridgeExecutor } = makeHandler(makeResolvedSubscriberOverrides('sub2'));
         const thread = makeNestedThread();

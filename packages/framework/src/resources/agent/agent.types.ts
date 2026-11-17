@@ -531,8 +531,8 @@ export interface ToolApprovalConfig {
  * - `open`: anyone may talk to the agent (unknown senders are auto-provisioned).
  * - `restricted`: only authenticated, linked subscribers proceed; unlinked authors
  *   are shown an auth CTA and short-circuited.
- * - `rule`: a known subscriber must also match the agent's access rule; unknown
- *   senders are refused like `restricted`. Enforced server-side.
+ * - `rule`: only a known subscriber who matches the agent's access rule may send
+ *   messages, edits, deletes, clicks or reactions. Enforced server-side.
  */
 export type AgentSubscriberAccess = 'open' | 'restricted' | 'rule';
 
