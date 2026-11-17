@@ -65,21 +65,12 @@ export function truncateWithEllipsis(value: string, max: number): string {
 }
 
 /**
- * Anthropic's SDK formats `APIError.message` as `"<status> <raw-json-body>"`
- * (e.g. `400 {"type":"error","error":{"message":"…"}}`), which is unreadable
- * when surfaced to end users. The SDK also exposes the parsed response body on
- * `error.error`, so we prefer the upstream `error.message` field and fall back
- * to the raw message only when the structured body is missing.
+ * `APIError.message` is `"<status> <raw-json-body>"`. `apiMessage` is the
+ * provider's `error.message`, which is the string shown to users. Fall back
+ * to `message` when the body has no provider text.
  */
 export function extractApiErrorMessage(err: APIError): string {
-  const body = err.error as { error?: { message?: unknown } } | undefined;
-  const providerMessage = body?.error?.message;
-
-  if (typeof providerMessage === 'string' && providerMessage.trim().length > 0) {
-    return providerMessage.trim();
-  }
-
-  return err.message;
+  return err.apiMessage?.trim() || err.message;
 }
 
 /**
@@ -185,31 +176,16 @@ export function isTransient(err: unknown): boolean {
  * True when Anthropic rejects `beta.skills.create` because another custom
  * skill in the same environment already uses the requested `display_title`.
  *
- * Detection is by substring because the SDK only surfaces the upstream message
- * as a string — there is no structured error code. Both the top-level
- * `err.message` (which embeds the JSON body) and the parsed `err.error`
- * payload are checked so we tolerate either shape.
+ * 1.6.0 still has no `error_code` for a duplicate display title, so this
+ * matches the message. `apiMessage` is the provider text. When the body has
+ * none, `message` still embeds the raw JSON.
  */
 export function isDuplicateDisplayTitleError(err: unknown): boolean {
   if (!(err instanceof APIError) || err.status !== 400) {
     return false;
   }
 
-  const directMessage = err.message ?? '';
-  const errorBody = err.error;
-  const serializedBody = errorBody ? safeStringify(errorBody) : '';
-
-  return (
-    /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody)
-  );
-}
-
-function safeStringify(value: unknown): string {
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return '';
-  }
+  return /reuse an existing display_title/i.test(err.apiMessage ?? err.message);
 }
 
 export type AgentToolParam = NonNullable<AgentCreateParams['tools']>[number];

@@ -45,9 +45,8 @@ function buildInput(overrides: Partial<UploadSkillInput> = {}): UploadSkillInput
 }
 
 function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark'): APIError {
-  // Construct an `APIError` whose embedded body matches the actual Anthropic
-  // shape we want to detect. The string form is mirrored into the top-level
-  // `message` so either side of `isDuplicateDisplayTitleError` matches.
+  // `apiMessage` comes from `body.error.message`. The third argument is not
+  // that text. The SDK copies the body into `Error.message` as `400 <json>`.
   const body = {
     type: 'error',
     error: {
@@ -56,7 +55,7 @@ function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark
     },
   };
 
-  return new APIError(400, body, JSON.stringify(body), undefined as unknown as Headers);
+  return new APIError(400, body, 'constructor fallback', new Headers());
 }
 
 interface MockClient {
