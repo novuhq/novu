@@ -39,7 +39,7 @@ export class CreateSubscriberTokenRequestDto {
   scope?: SubscriberTokenScopeEnum[];
 
   @ApiPropertyOptional({
-    type: Number,
+    type: 'integer',
     minimum: 1,
     maximum: MAX_EXPIRES_IN_SECONDS,
     default: MAX_EXPIRES_IN_SECONDS,
