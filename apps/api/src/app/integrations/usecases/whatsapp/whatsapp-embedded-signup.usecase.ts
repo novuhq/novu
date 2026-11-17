@@ -4,10 +4,16 @@ import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } fr
 import { FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { ConfigureWhatsAppWebhookCommand } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
+import { humanRelayProfile } from '../../../agents/human-relay/human-relay-identity';
+import { AgentInboxFeaturesService } from '../../../human/services/agent-inbox-features.service';
 import type { WhatsAppEmbeddedSignupResponseDto } from '../../dtos/whatsapp-embedded-signup.dto';
 import { UpdateIntegrationCommand } from '../update-integration/update-integration.command';
 import { UpdateIntegration } from '../update-integration/update-integration.usecase';
-import { resolveWhatsAppAgentIntegration } from './resolve-whatsapp-agent-integration.utils';
+import {
+  type ResolvedWhatsAppAgentIntegration,
+  resolveWhatsAppAgentIntegration,
+} from './resolve-whatsapp-agent-integration.utils';
+import { WhatsAppBusinessProfile } from './whatsapp-business-profile.service';
 import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
 import { WhatsAppEmbeddedSignupCommand } from './whatsapp-embedded-signup.command';
 import {
@@ -29,6 +35,8 @@ export class WhatsAppEmbeddedSignup {
     private readonly integrationRepository: IntegrationRepository,
     private readonly updateIntegration: UpdateIntegration,
     private readonly configureWhatsAppWebhook: ConfigureWhatsAppWebhook,
+    private readonly businessProfile: WhatsAppBusinessProfile,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -62,7 +70,7 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const { integration } = await resolveWhatsAppAgentIntegration({
+    const { agent, integration } = await resolveWhatsAppAgentIntegration({
       agentRepository: this.agentRepository,
       integrationRepository: this.integrationRepository,
       agentIntegrationRepository: this.agentIntegrationRepository,
@@ -72,12 +80,110 @@ export class WhatsAppEmbeddedSignup {
       integrationIdentifier: command.integrationIdentifier,
     });
 
+    const exchanged = await this.exchangeCode(platformConfig, command.code, integration._id);
+    if (typeof exchanged !== 'string') {
+      return exchanged;
+    }
+    const accessToken = exchanged;
+
+    const phoneNumberId = command.phoneNumberId.trim();
+    const wabaId = command.wabaId.trim();
+
+    if (!phoneNumberId || !wabaId) {
+      throw new BadRequestException('phoneNumberId and wabaId must be non-empty values.');
+    }
+
+    const existingCredentials = integration.credentials ? decryptCredentials(integration.credentials) : undefined;
+
+    const verified = await this.verifyNumber(accessToken, phoneNumberId, wabaId, integration._id);
+    if ('success' in verified) {
+      return verified;
+    }
+    const { businessDisplayPhone } = verified;
+
+    const nextCredentials: ICredentials = {
+      ...(existingCredentials ?? {}),
+      apiToken: accessToken,
+      phoneNumberIdentification: phoneNumberId,
+      businessAccountId: wabaId,
+      isNovuManaged: true,
+    };
+    delete nextCredentials.secretKey;
+
+    if (businessDisplayPhone) {
+      nextCredentials.from = businessDisplayPhone;
+    } else {
+      delete nextCredentials.from;
+    }
+
+    await this.updateIntegration.execute(
+      UpdateIntegrationCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userEnvironmentId: command.environmentId,
+        integrationId: integration._id,
+        credentials: nextCredentials,
+        check: false,
+        allowNovuManagedWhatsAppCredentials: true,
+      })
+    );
+
+    const phoneRegistrationWarning = await this.registerNumber(accessToken, phoneNumberId, integration._id);
+
+    await this.applyRelayProfile(agent, command.organizationId, { accessToken, phoneNumberId, isNovuManaged: true });
+
+    const webhookResult = await this.configureWhatsAppWebhook.execute(
+      ConfigureWhatsAppWebhookCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+      })
+    );
+
+    if (!webhookResult.success) {
+      return {
+        success: false,
+        integrationId: integration._id,
+        integrationIdentifier: integration.identifier,
+        callbackUrl: webhookResult.callbackUrl,
+        wabaId,
+        phoneRegistrationWarning,
+        error: {
+          code: 'webhook_configuration_failed',
+          message:
+            webhookResult.reason?.message ??
+            'Credentials were saved, but Novu could not register the webhook with Meta automatically.',
+        },
+        webhookReason: webhookResult.reason,
+      };
+    }
+
+    return {
+      success: true,
+      integrationId: integration._id,
+      integrationIdentifier: integration.identifier,
+      callbackUrl: webhookResult.callbackUrl,
+      wabaId,
+      displayPhoneNumber: businessDisplayPhone,
+      phoneRegistrationWarning,
+    };
+  }
+
+  /** Swaps the Embedded Signup code for the business's access token, or answers with why that failed. */
+  private async exchangeCode(
+    platformConfig: { appId: string; appSecret: string },
+    code: string,
+    integrationId: string
+  ): Promise<string | WhatsAppEmbeddedSignupResponseDto> {
     let accessToken: string;
     try {
       const exchange = await exchangeEmbeddedSignupCodeForToken({
         appId: platformConfig.appId,
         appSecret: platformConfig.appSecret,
-        code: command.code,
+        code: code,
       });
       const exchangeError = extractMetaError(exchange.body);
       accessToken = typeof exchange.body.access_token === 'string' ? exchange.body.access_token.trim() : '';
@@ -85,7 +191,7 @@ export class WhatsAppEmbeddedSignup {
       if (exchangeError || exchange.statusCode >= 400 || !accessToken) {
         this.logger.warn(
           {
-            integrationId: integration._id,
+            integrationId: integrationId,
             statusCode: exchange.statusCode,
             metaError: exchangeError,
           },
@@ -101,7 +207,7 @@ export class WhatsAppEmbeddedSignup {
         };
       }
     } catch (err) {
-      this.logger.warn({ err, integrationId: integration._id }, 'WhatsApp embedded signup: token exchange call failed');
+      this.logger.warn({ err, integrationId: integrationId }, 'WhatsApp embedded signup: token exchange call failed');
 
       return {
         success: false,
@@ -112,15 +218,19 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const phoneNumberId = command.phoneNumberId.trim();
-    const wabaId = command.wabaId.trim();
+    return accessToken;
+  }
 
-    if (!phoneNumberId || !wabaId) {
-      throw new BadRequestException('phoneNumberId and wabaId must be non-empty values.');
-    }
-
-    const existingCredentials = integration.credentials ? decryptCredentials(integration.credentials) : undefined;
-
+  /**
+   * Checks with Meta that the number exists and belongs to the business account, and returns its display number,
+   * or answers with why the check failed.
+   */
+  private async verifyNumber(
+    accessToken: string,
+    phoneNumberId: string,
+    wabaId: string,
+    integrationId: string
+  ): Promise<{ businessDisplayPhone: string | undefined } | WhatsAppEmbeddedSignupResponseDto> {
     let businessDisplayPhone: string | undefined;
     try {
       const phoneDetails = await getPhoneNumberDetails(accessToken, phoneNumberId);
@@ -142,7 +252,7 @@ export class WhatsAppEmbeddedSignup {
       businessDisplayPhone = details.display_phone_number?.trim() || undefined;
     } catch (err) {
       this.logger.warn(
-        { err, integrationId: integration._id, phoneNumberId },
+        { err, integrationId: integrationId, phoneNumberId },
         'WhatsApp embedded signup: phone number lookup failed'
       );
 
@@ -197,7 +307,7 @@ export class WhatsAppEmbeddedSignup {
       }
     } catch (err) {
       this.logger.warn(
-        { err, integrationId: integration._id, wabaId, phoneNumberId },
+        { err, integrationId: integrationId, wabaId, phoneNumberId },
         'WhatsApp embedded signup: WABA phone lookup failed'
       );
 
@@ -210,34 +320,15 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const nextCredentials: ICredentials = {
-      ...(existingCredentials ?? {}),
-      apiToken: accessToken,
-      phoneNumberIdentification: phoneNumberId,
-      businessAccountId: wabaId,
-      isNovuManaged: true,
-    };
-    delete nextCredentials.secretKey;
+    return { businessDisplayPhone };
+  }
 
-    if (businessDisplayPhone) {
-      nextCredentials.from = businessDisplayPhone;
-    } else {
-      delete nextCredentials.from;
-    }
-
-    await this.updateIntegration.execute(
-      UpdateIntegrationCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userEnvironmentId: command.environmentId,
-        integrationId: integration._id,
-        credentials: nextCredentials,
-        check: false,
-        allowNovuManagedWhatsAppCredentials: true,
-      })
-    );
-
+  /** Registers the number for the Cloud API. Best-effort: returns a warning to show, never fails the signup. */
+  private async registerNumber(
+    accessToken: string,
+    phoneNumberId: string,
+    integrationId: string
+  ): Promise<string | undefined> {
     let phoneRegistrationWarning: string | undefined;
     try {
       const pin = generateWhatsAppRegistrationPin();
@@ -255,7 +346,7 @@ export class WhatsAppEmbeddedSignup {
 
         this.logger.warn(
           {
-            integrationId: integration._id,
+            integrationId: integrationId,
             phoneNumberId,
             statusCode: registration.statusCode,
             metaError: registrationError,
@@ -268,47 +359,37 @@ export class WhatsAppEmbeddedSignup {
         'Could not register the phone number with Meta automatically. You may need to register it manually before sending messages.';
 
       this.logger.warn(
-        { err, integrationId: integration._id, phoneNumberId: command.phoneNumberId },
+        { err, integrationId: integrationId, phoneNumberId: phoneNumberId },
         'WhatsApp embedded signup: phone registration call failed (best-effort)'
       );
     }
 
-    const webhookResult = await this.configureWhatsAppWebhook.execute(
-      ConfigureWhatsAppWebhookCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        agentIdentifier: command.agentIdentifier,
-        integrationIdentifier: command.integrationIdentifier,
-      })
-    );
+    return phoneRegistrationWarning;
+  }
 
-    if (!webhookResult.success) {
-      return {
-        success: false,
-        integrationId: integration._id,
-        integrationIdentifier: integration.identifier,
-        callbackUrl: webhookResult.callbackUrl,
-        wabaId,
-        phoneRegistrationWarning,
-        error: {
-          code: 'webhook_configuration_failed',
-          message:
-            webhookResult.reason?.message ??
-            'Credentials were saved, but Novu could not register the webhook with Meta automatically.',
-        },
-        webhookReason: webhookResult.reason,
-      };
+  /**
+   * A relay agent speaks as itself, so the number takes the description and picture its operator gave it. With no
+   * picture, a number that has no photo yet takes the agent's mascot, in the look its mascots show. Never fails the
+   * signup: the profile is not needed to deliver a message.
+   */
+  private async applyRelayProfile(
+    agent: ResolvedWhatsAppAgentIntegration['agent'],
+    organizationId: string,
+    number: { accessToken: string; phoneNumberId: string; isNovuManaged: boolean }
+  ): Promise<void> {
+    if (agent.runtime !== 'human_relay') {
+      return;
     }
 
-    return {
-      success: true,
-      integrationId: integration._id,
-      integrationIdentifier: integration.identifier,
-      callbackUrl: webhookResult.callbackUrl,
-      wabaId,
-      displayPhoneNumber: businessDisplayPhone,
-      phoneRegistrationWarning,
-    };
+    const picture = agent.picture?.storageKey ? agent.picture : undefined;
+    const mascot = picture
+      ? null
+      : await this.agentInboxFeatures.mascotLookOf({ _organizationId: organizationId, look: agent.look });
+
+    await this.businessProfile.apply(number, {
+      description: humanRelayProfile({ description: agent.description }).description,
+      picture: picture ?? 'default-if-none',
+      mascot,
+    });
   }
 }

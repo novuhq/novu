@@ -3,6 +3,7 @@ import { decryptCredentials } from '@novu/application-generic';
 import { AgentEntity, AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { SyncAgentEmailSenderName } from '../../agents/email/sync-agent-email-sender-name.service';
+import { WhatsAppBusinessProfile } from '../../integrations/usecases/whatsapp/whatsapp-business-profile.service';
 import { TelegramBotProfile, type TelegramBotProfileFields } from '../../telegram-linking/telegram-bot-profile.service';
 
 export type HumanAgentIdentity = {
@@ -14,8 +15,9 @@ export type HumanAgentIdentity = {
 
 /**
  * Who a relay agent is to the people it talks to: its name and its description. Saving a change here
- * also carries it to where people see it, which is the sender of its emails and its Telegram bots. The
- * invite and approve pages read the agent itself, so they follow on their own.
+ * also carries it to where people see it, which is the sender of its emails, its Telegram bots and the
+ * profile of its WhatsApp business numbers. The invite and approve pages read the agent itself, so they
+ * follow on their own.
  *
  * A Slack app can't be renamed from here: Slack only lets the token that made the app change it.
  */
@@ -26,7 +28,8 @@ export class HumanAgentIdentityService {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly syncAgentEmailSenderName: SyncAgentEmailSenderName,
-    private readonly telegramBotProfile: TelegramBotProfile
+    private readonly telegramBotProfile: TelegramBotProfile,
+    private readonly whatsAppBusinessProfile: WhatsAppBusinessProfile
   ) {}
 
   /**
@@ -48,7 +51,7 @@ export class HumanAgentIdentityService {
       );
     }
 
-    await this.updateTelegramBots(agent, changes);
+    await this.updateChannelProfiles(agent, changes);
 
     const scope = { _environmentId: agent._environmentId, _organizationId: agent._organizationId };
     await this.agentRepository.updateOne({ _id: agent._id, ...scope }, { $set: changes });
@@ -66,22 +69,45 @@ export class HumanAgentIdentityService {
     };
   }
 
-  /** Carries a change to every Telegram bot the agent speaks through. */
-  async updateTelegramBots(agent: AgentEntity, changes: TelegramBotProfileFields): Promise<void> {
+  /**
+   * Carries a change to every Telegram bot and WhatsApp business number the agent speaks through. A WhatsApp
+   * number takes no name: Meta reviews every display name change.
+   */
+  async updateChannelProfiles(agent: AgentEntity, changes: TelegramBotProfileFields): Promise<void> {
     const scope = { _environmentId: agent._environmentId, _organizationId: agent._organizationId };
     const links = await this.agentIntegrationRepository.find({ _agentId: agent._id, ...scope }, ['_integrationId']);
     if (links.length === 0) {
       return;
     }
 
-    const bots = await this.integrationRepository.find(
-      { _id: { $in: links.map((link) => link._integrationId) }, providerId: ChatProviderIdEnum.Telegram, ...scope },
-      'credentials'
+    const integrations = await this.integrationRepository.find(
+      {
+        _id: { $in: links.map((link) => link._integrationId) },
+        providerId: { $in: [ChatProviderIdEnum.Telegram, ChatProviderIdEnum.WhatsAppBusiness] },
+        ...scope,
+      },
+      'providerId credentials'
     );
 
     await Promise.all(
-      bots.map((bot) => {
-        const botToken = decryptCredentials(bot.credentials ?? {}).apiToken;
+      integrations.map((integration) => {
+        const credentials = decryptCredentials(integration.credentials ?? {});
+
+        if (integration.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          const { name: _name, ...profile } = changes;
+          const accessToken = credentials.apiToken;
+          const phoneNumberId = credentials.phoneNumberIdentification;
+
+          // A number not connected yet gets its profile when the signup finishes.
+          return accessToken && phoneNumberId
+            ? this.whatsAppBusinessProfile.apply(
+                { accessToken, phoneNumberId, isNovuManaged: Boolean(credentials.isNovuManaged) },
+                profile
+              )
+            : undefined;
+        }
+
+        const botToken = credentials.apiToken;
 
         // A bot without a token yet gets its profile when the token is saved.
         return botToken ? this.telegramBotProfile.apply(botToken, changes) : undefined;
