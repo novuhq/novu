@@ -24,6 +24,7 @@ export function buildChannelPrompt(context: PromptContext, via: 'telegram' | 'sl
   const api = apiUrlFlag(context);
   const command = `${CLI} channel add ${via}${api}`;
   const login = `If Agent Inbox isn't logged in on this computer yet, first run ${CLI} login${api} and wait until I approve it in my browser.`;
+
   const [channel, token] = via === 'telegram' ? ['Telegram', 'a bot token'] : ['Slack', 'a Slack token'];
 
   return `Set up ${channel} for ${handle}. ${login} Then run ${command} and give me the link it prints. If you can't run commands but have the channel_add tool, call it and give me the link it returns. I finish on that page, so never ask me for ${token}.`;

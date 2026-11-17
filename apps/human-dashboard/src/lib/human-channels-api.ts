@@ -4,11 +4,12 @@ import type { HumanAccount } from './human-account';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { HumanApiError, isHumanApiNotFound } from './human-api-error';
 import { requestForAccount, requestPageForAccount } from './human-api-key';
+import type { FirstMessage } from './whatsapp-first-message';
 
 /** The most links the API returns at once; a relay has a handful. */
 const CHANNELS_LIMIT = 100;
 
-export type ChannelVia = 'telegram' | 'slack' | 'email';
+export type ChannelVia = 'telegram' | 'slack' | 'whatsapp' | 'email';
 
 export type Channel = {
   identifier: string;
@@ -46,13 +47,21 @@ type AgentIntegrationLink = {
   hasChannelEndpoints?: boolean;
 };
 
-type Integration = { _id: string; identifier: string; name?: string; providerId: string; channel?: string };
+type Integration = {
+  _id: string;
+  identifier: string;
+  name?: string;
+  providerId: string;
+  channel?: string;
+  active?: boolean;
+};
 
 /** The bot of a Telegram channel, and the link that opens it and presses Start for one contact. */
 export type TelegramStartLink = { botUsername: string; url: string };
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const SLACK_PROVIDER_ID = 'slack';
+const WHATSAPP_PROVIDER_ID = 'whatsapp-business';
 
 /** The name a channel gets when the operator doesn't pick one, same as `setup`. */
 const DEFAULT_CHANNEL_NAME = 'Agent';
@@ -63,7 +72,12 @@ const RETRY_MS = 1000;
 const TEST_MESSAGE =
   'You’re connected. Agents can now reach you here. Try `npx @agentinbox/cli send approve "Deploy to production?"` in your terminal.';
 
-const CHANNEL_LABELS: Record<ChannelVia, string> = { telegram: 'Telegram', slack: 'Slack', email: 'Email' };
+const CHANNEL_LABELS: Record<ChannelVia, string> = {
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+};
 
 /** The channels connected to the operator's relay agent. */
 export async function listChannels(account: HumanAccount): Promise<Channel[]> {
@@ -161,13 +175,110 @@ export function ensureSlackChannel(account: HumanAccount, name: string): Promise
   return ensureChatChannel(account, 'slack', SLACK_PROVIDER_ID, name);
 }
 
+/**
+ * The relay's WhatsApp channel, made and linked to the relay when it has none. It has no credentials until
+ * the operator finishes the Facebook flow, which fills them in through `connectWhatsApp`.
+ */
+export async function ensureWhatsAppChannel(account: HumanAccount): Promise<string> {
+  // Only an active integration is reused: the signup only lands on active ones, and one that was turned off is
+  // left as it is rather than switched back on.
+  return (
+    await ensureChatChannel(account, 'whatsapp', WHATSAPP_PROVIDER_ID, DEFAULT_CHANNEL_NAME, { onlyActive: true })
+  ).identifier;
+}
+
+/** What Meta's Embedded Signup handed the Facebook button: the code and the account and number it is for. */
+export type WhatsAppSignup = { code: string; wabaId: string; phoneNumberId: string };
+
+export type WhatsAppSignupResult = {
+  success: boolean;
+  displayPhoneNumber?: string;
+  phoneRegistrationWarning?: string;
+  error?: { code: string; message: string };
+};
+
+/**
+ * Finishes Embedded Signup on the relay's WhatsApp channel: the API trades the code with Meta, checks the
+ * number belongs to the account, saves it and points Meta's webhook at the agent. The code never reaches
+ * the browser twice; it goes from the button to here to the API.
+ */
+export function connectWhatsApp(
+  account: HumanAccount,
+  integrationIdentifier: string,
+  signup: WhatsAppSignup
+): Promise<WhatsAppSignupResult> {
+  return requestForAccount<WhatsAppSignupResult>(account, '/v1/human/agent/whatsapp/embedded-signup', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, integrationIdentifier, ...signup },
+  });
+}
+
+/** What the operator types in from their own Meta app, instead of the Facebook button. */
+export type WhatsAppKeys = { accessToken: string; phoneNumberId: string; businessAccountId: string; appSecret: string };
+
+/** Where Meta sends the number's messages: set for the operator, or the two values for them to add in Meta. */
+export type WhatsAppWebhook = { configured: boolean; callbackUrl: string; verifyToken?: string; reason?: string };
+
+export type WhatsAppKeysResult = {
+  success: boolean;
+  displayPhoneNumber?: string;
+  webhook?: WhatsAppWebhook;
+  error?: { code: string; message: string };
+};
+
+/**
+ * Connects the relay's WhatsApp channel with keys from the operator's own Meta app: the API checks them with Meta,
+ * saves them encrypted and sets the webhook when Meta lets it. The keys go from the drawer's form to here to the API,
+ * and are kept nowhere on the way.
+ */
+export function connectWhatsAppWithKeys(
+  account: HumanAccount,
+  integrationIdentifier: string,
+  keys: WhatsAppKeys
+): Promise<WhatsAppKeysResult> {
+  return requestForAccount<WhatsAppKeysResult>(account, '/v1/human/agent/whatsapp/keys', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, integrationIdentifier, ...keys },
+  });
+}
+
+/** A wa.me link to the business number with a one-time code typed in, and the code for typing by hand. */
+/**
+ * A wa.me link to the business number with a hello ready to send. For the operator's own number there is no code:
+ * the first message from a new number binds it while `expiresAt` hasn't passed.
+ */
+export type WhatsAppLink = { url: string; code?: string; expiresAt: string };
+
+/**
+ * A new wa.me link with a code for the operator's own WhatsApp number. Sending it from WhatsApp binds that
+ * number to the business number, the way pressing Start does on Telegram. A code works for ten minutes.
+ */
+export function issueWhatsAppLink(account: HumanAccount): Promise<WhatsAppLink> {
+  return requestForAccount<WhatsAppLink>(account, '/v1/human/agent/whatsapp/link', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER },
+  });
+}
+
+/**
+ * Sends the operator's first message to Meta for review, as a template on their own WhatsApp Business account.
+ * Agents send it when someone's 24-hour window has closed, and what they sent follows when the person replies.
+ */
+export function submitWhatsAppFirstMessage(account: HumanAccount, body: string): Promise<FirstMessage> {
+  return requestForAccount<FirstMessage>(account, '/v1/human/agent/whatsapp/first-message', {
+    method: 'POST',
+    body: { agentIdentifier: RELAY_AGENT_IDENTIFIER, body },
+  });
+}
+
 type LinkedChannel = { identifier: string; id: string; name?: string };
 
 async function ensureChatChannel(
   account: HumanAccount,
   via: ChannelVia,
   providerId: string,
-  name = DEFAULT_CHANNEL_NAME
+  name = DEFAULT_CHANNEL_NAME,
+  { onlyActive = false }: { onlyActive?: boolean } = {}
 ): Promise<LinkedChannel> {
   const linked = (await listChannels(account)).find((channel) => channel.via === via && channel.active);
   if (linked) {
@@ -176,7 +287,10 @@ async function ensureChatChannel(
 
   const integrations = await requestForAccount<Integration[]>(account, '/v1/integrations');
   const existing = (Array.isArray(integrations) ? integrations : []).find(
-    (integration) => integration.providerId === providerId && integration.channel === 'chat'
+    (integration) =>
+      integration.providerId === providerId &&
+      integration.channel === 'chat' &&
+      (!onlyActive || integration.active !== false)
   );
   const integration =
     existing ??
@@ -334,6 +448,7 @@ export async function issueTelegramStartLink(
 function channelVia(providerId: string, channel?: string): ChannelVia | undefined {
   if (providerId.includes('telegram')) return 'telegram';
   if (providerId.includes('slack')) return 'slack';
+  if (providerId === WHATSAPP_PROVIDER_ID) return 'whatsapp';
   if (channel === 'email') return 'email';
 
   return undefined;

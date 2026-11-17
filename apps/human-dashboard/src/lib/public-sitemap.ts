@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { agentPagePairs, CHANNEL_IDS } from '@/data/channel-pages';
 
 import { HOST_IDS, hostPath } from './hosts';
 import { SITE_ORIGIN, SITE_PAGES, type SitePage } from './seo';
@@ -20,6 +21,8 @@ function detailsFor(page: SitePage): SitemapDetails {
       return { changeFrequency: 'weekly', priority: 1 };
     case 'sapien':
       return { changeFrequency: 'weekly', priority: 0.8 };
+    case 'pricing':
+      return { changeFrequency: 'monthly', priority: 0.7 };
     default: {
       const exhaustive: never = page;
 
@@ -52,5 +55,17 @@ export function publicSitemap(lastModified = new Date()): MetadataRoute.Sitemap 
     ...HOST_DETAILS,
   }));
 
-  return [...pages, ...hosts];
+  const channels = CHANNEL_IDS.map((id) => ({
+    url: `${SITE_ORIGIN}/${id}`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+  const agentChannels = agentPagePairs().map(({ channel, agent }) => ({
+    url: `${SITE_ORIGIN}/${channel}/${agent}`,
+    lastModified,
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+  return [...pages, ...hosts, ...channels, ...agentChannels];
 }

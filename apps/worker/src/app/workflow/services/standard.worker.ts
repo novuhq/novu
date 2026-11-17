@@ -10,6 +10,7 @@ import {
   PinoLogger,
   SqsService,
   StandardWorkerService,
+  StepRunV2Writer,
   Store,
   storage,
   UnrecoverableError,
@@ -46,7 +47,8 @@ export class StandardWorker extends StandardWorkerService {
     private jobRepository: JobRepository,
     sqsService: SqsService,
     logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
@@ -218,7 +220,7 @@ export class StandardWorker extends StandardWorkerService {
        * The job might have been cancelled in the pipeline (e.g., by a digest or delay step)
        * In such cases, we only update jobs that are in RUNNING status to COMPLETED, preserving other final statuses
        */
-      await this.jobRepository.updateOne(
+      const completedJob = await this.jobRepository.findOneAndUpdate(
         {
           _environmentId: minimalData.environmentId,
           _id: minimalData.jobId,
@@ -228,8 +230,10 @@ export class StandardWorker extends StandardWorkerService {
           $set: {
             status: JobStatusEnum.COMPLETED,
           },
-        }
+        },
+        { new: true }
       );
+      this.stepRunV2Writer.write(completedJob);
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }

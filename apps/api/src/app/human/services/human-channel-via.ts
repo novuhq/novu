@@ -4,6 +4,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, HumanChannelViaEnum } from '@n
 export const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
   [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
   [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
+  [HumanChannelViaEnum.WHATSAPP]: [ChatProviderIdEnum.WhatsAppBusiness],
   [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.AgentEmailInbox],
 };
 
