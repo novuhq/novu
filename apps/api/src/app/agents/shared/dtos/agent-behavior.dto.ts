@@ -51,7 +51,8 @@ export class AgentBehaviorDto {
     description:
       'JSON Logic rule evaluated over subscriber.* and context.* when subscriberAccess is "rule". ' +
       'Present only when subscriberAccess is "rule". Unknown senders are refused like restricted. ' +
-      'A missing field evaluates as JSON Logic says.',
+      'A missing field evaluates as JSON Logic says. "==" and "!=" compare strictly, without type coercion. ' +
+      'At most 16 KB and 32 levels deep.',
     example: { in: [{ var: 'context.tenant.data.plan' }, ['pro', 'enterprise']] },
   })
   @ValidateIf((_, value) => value !== undefined)

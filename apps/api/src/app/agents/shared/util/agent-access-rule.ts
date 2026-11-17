@@ -14,9 +14,21 @@ export type AgentAccessRuleVerdict =
   | { outcome: 'denied' }
   | { outcome: 'error'; reason: string };
 
+// The rule is loaded with the agent on every inbound event, and MongoDB rejects documents nested over 100 levels.
+const ACCESS_RULE_MAX_BYTES = 16 * 1024;
+const ACCESS_RULE_MAX_DEPTH = 32;
+
 export function getAgentAccessRuleIssues(rule: unknown): string[] {
   if (!hasIntegrationRules(rule)) {
     return ['Access rule must be a non-empty JSON Logic object'];
+  }
+
+  if (Buffer.byteLength(JSON.stringify(rule), 'utf8') > ACCESS_RULE_MAX_BYTES) {
+    return [`Access rule must be at most ${ACCESS_RULE_MAX_BYTES / 1024} KB`];
+  }
+
+  if (isNestedDeeperThan(rule, ACCESS_RULE_MAX_DEPTH)) {
+    return [`Access rule must be nested at most ${ACCESS_RULE_MAX_DEPTH} levels deep`];
   }
 
   const issues = getIntegrationRulesIssues(rule, INTEGRATION_CONDITION_NAMESPACES);
@@ -28,6 +40,37 @@ export function getAgentAccessRuleIssues(rule: unknown): string[] {
   }
 
   return issues;
+}
+
+function isNestedDeeperThan(node: unknown, levels: number): boolean {
+  if (node === null || typeof node !== 'object') {
+    return false;
+  }
+
+  if (levels === 0) {
+    return true;
+  }
+
+  return Object.values(node).some((child) => isNestedDeeperThan(child, levels - 1));
+}
+
+// Novu's global `==` and `!=` coerce through Number and Date, so "globex-1" would equal "acme-1".
+const STRICT_EQUALITY: Record<string, string> = { '==': '===', '!=': '!==' };
+
+type AccessRuleNode = string | number | boolean | null | AccessRuleNode[] | { [operator: string]: AccessRuleNode };
+
+function withStrictEquality(node: AccessRuleNode): AccessRuleNode {
+  if (Array.isArray(node)) {
+    return node.map(withStrictEquality);
+  }
+
+  if (node === null || typeof node !== 'object') {
+    return node;
+  }
+
+  return Object.fromEntries(
+    Object.entries(node).map(([operator, args]) => [STRICT_EQUALITY[operator] ?? operator, withStrictEquality(args)])
+  );
 }
 
 const ACCESS_RULE_SUBSCRIBER_FIELDS = [
@@ -69,7 +112,11 @@ export function evaluateAgentAccessRule(
     return { outcome: 'error', reason: issues.join('; ') };
   }
 
-  const { result, error } = evaluateRules(rule as RulesLogic<AdditionalOperation>, projectEvaluationData(data), true);
+  const { result, error } = evaluateRules(
+    withStrictEquality(rule as AccessRuleNode) as RulesLogic<AdditionalOperation>,
+    projectEvaluationData(data),
+    true
+  );
   if (error) {
     return { outcome: 'error', reason: String(error) };
   }

@@ -163,6 +163,22 @@ describe('Agent access rule #novu-v2', () => {
       expect((await storedBehavior())?.subscriberAccess).to.equal('open');
     });
 
+    it('rejects rules too large or too deeply nested to load on every inbound event', async () => {
+      const tenantIds = Array.from({ length: 2000 }, (_, i) => `tenant-${i}`);
+      let deepRule: Record<string, unknown> = { notNull: { var: 'subscriber.email' } };
+      for (let level = 0; level < 40; level++) {
+        deepRule = { '!': deepRule };
+      }
+
+      for (const accessRule of [{ in: [{ var: 'context.tenant.id' }, tenantIds] }, deepRule]) {
+        const res = await patchBehavior({ subscriberAccess: 'rule', accessRule });
+
+        expect(res.status, JSON.stringify(res.body).slice(0, 300)).to.equal(400);
+      }
+
+      expect((await storedBehavior())?.subscriberAccess).to.equal('open');
+    });
+
     it('accepts an unrelated update on an agent whose stored rule no longer validates', async () => {
       await agentRepository.update(
         { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
@@ -468,6 +484,39 @@ describe('Agent access rule #novu-v2', () => {
       await sendSlack(threadId, 'U_RULE_LINKED', 'hello again');
       expect(bridgeCalls).to.have.length(1);
       expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
+    });
+
+    it('compares == and != strictly, so another tenant or a missing field never matches', async () => {
+      const subscriberId = `slack-rule-strict-${Date.now()}`;
+      await subscriberRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        subscriberId,
+        data: { tenant: 'acme-1' },
+      });
+      await seedChannelEndpoint(ctx, 'U_RULE_STRICT', subscriberId);
+      await setRule({
+        and: [
+          { '==': [{ var: 'subscriber.data.tenant' }, 'acme-1'] },
+          { '!=': [{ var: 'subscriber.data.banned' }, true] },
+        ],
+      });
+      const threadId = `D_RULE_STRICT_${Date.now()}`;
+
+      await sendSlack(threadId, 'U_RULE_STRICT', 'hello');
+      expect(bridgeCalls).to.have.length(1);
+
+      await subscriberRepository.update(
+        { _environmentId: ctx.session.environment._id, subscriberId },
+        { $set: { 'data.tenant': 'globex-1' } }
+      );
+      await sendSlack(threadId, 'U_RULE_STRICT', 'hello from another tenant');
+      expect(bridgeCalls).to.have.length(1);
+
+      await setRule({ '==': [{ var: 'subscriber.data.banned' }, false] });
+      await sendSlack(threadId, 'U_RULE_STRICT', 'hello without a banned field');
+      expect(bridgeCalls).to.have.length(1);
+      expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY, SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
     });
 
     it('refuses an unknown Slack sender like restricted access does, without creating a subscriber', async () => {
