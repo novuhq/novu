@@ -27,7 +27,7 @@ describe('HumanAgentPictureService', () => {
       deleteFile: sinon.stub().resolves(),
       getFile: sinon.stub().resolves(PNG),
     };
-    const humanAgentIdentity = { updateTelegramBots: sinon.stub().resolves() };
+    const humanAgentIdentity = { updateChannelProfiles: sinon.stub().resolves() };
     const humanOperator = {
       cardNameFor: sinon.stub().resolves({ operatorName: 'Ada L.', operatorFirstName: 'Ada' }),
     };
@@ -74,7 +74,7 @@ describe('HumanAgentPictureService', () => {
     expect(key).to.match(new RegExp(`^org1/${ENV}/agents/${AGENT}/picture-[0-9a-f]{16}\\.png$`));
     expect(contentType).to.equal('image/png');
     expect(agentRepository.updateOne.firstCall.args[1].$set.picture.storageKey).to.equal(key);
-    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1].picture.storageKey).to.equal(key);
+    expect(humanAgentIdentity.updateChannelProfiles.firstCall.args[1].picture.storageKey).to.equal(key);
     expect(service.describe(agent).pictureUrl).to.contain(`/agent-pictures/${ENV}/${AGENT}/`);
   });
 
@@ -111,7 +111,7 @@ describe('HumanAgentPictureService', () => {
 
     expect(agentRepository.updateOne.firstCall.args[1]).to.deep.equal({ $unset: { picture: 1 } });
     expect(storageService.deleteFile.firstCall.args[0]).to.equal('old-key');
-    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1]).to.deep.equal({ picture: null, mascot: null });
+    expect(humanAgentIdentity.updateChannelProfiles.firstCall.args[1]).to.deep.equal({ picture: null, mascot: null });
   });
 
   it('puts the mascot in the agent’s look on its bots once its picture is gone', async () => {
@@ -122,7 +122,7 @@ describe('HumanAgentPictureService', () => {
 
     await service.remove(scope);
 
-    expect(humanAgentIdentity.updateTelegramBots.firstCall.args[1]).to.deep.equal({
+    expect(humanAgentIdentity.updateChannelProfiles.firstCall.args[1]).to.deep.equal({
       picture: null,
       mascot: { shape: 'drop', color: 'coral' },
     });
