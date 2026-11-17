@@ -45,8 +45,6 @@ function buildInput(overrides: Partial<UploadSkillInput> = {}): UploadSkillInput
 }
 
 function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark'): APIError {
-  // `apiMessage` comes from `body.error.message`. The third argument is not
-  // that text. The SDK copies the body into `Error.message` as `400 <json>`.
   const body = {
     type: 'error',
     error: {
@@ -316,8 +314,6 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
     it('surfaces a non-duplicate 400 from create directly without a fallback lookup', async () => {
       mockClient.beta.skills.list.mockReturnValue(asPagedAsyncIterable([]));
-      // Same APIError shape used in the existing e2e mapping test (see
-      // `provider errors` describe in `upload-custom-skill.e2e.ts`).
       const otherBody = {
         type: 'error',
         error: { type: 'invalid_request_error', message: 'Skill name mismatch' },

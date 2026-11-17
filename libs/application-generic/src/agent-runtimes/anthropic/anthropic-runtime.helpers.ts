@@ -65,9 +65,7 @@ export function truncateWithEllipsis(value: string, max: number): string {
 }
 
 /**
- * `APIError.message` is `"<status> <raw-json-body>"`. `apiMessage` is the
- * provider's `error.message`, which is the string shown to users. Fall back
- * to `message` when the body has no provider text.
+ * `APIError.message` is `"<status> <raw-json-body>"`.
  */
 export function extractApiErrorMessage(err: APIError): string {
   return err.apiMessage?.trim() || err.message;
@@ -176,9 +174,8 @@ export function isTransient(err: unknown): boolean {
  * True when Anthropic rejects `beta.skills.create` because another custom
  * skill in the same environment already uses the requested `display_title`.
  *
- * 1.6.0 still has no `error_code` for a duplicate display title, so this
- * matches the message. `apiMessage` is the provider text. When the body has
- * none, `message` still embeds the raw JSON.
+ * There is no `error_code` for a duplicate display title, so this matches
+ * the message.
  */
 export function isDuplicateDisplayTitleError(err: unknown): boolean {
   if (!(err instanceof APIError) || err.status !== 400) {
