@@ -274,9 +274,7 @@ export abstract class SendMessageBase extends SendMessageType {
     recipientEmail?: string;
     filterData: IntegrationFilterData;
   }): Promise<IntegrationSelectionResult | undefined> {
-    const selection = await this.selectIntegration.execute(
-      SelectIntegrationCommand.create({ ...params, useCache: true })
-    );
+    const selection = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
     if (!selection) {
       return;

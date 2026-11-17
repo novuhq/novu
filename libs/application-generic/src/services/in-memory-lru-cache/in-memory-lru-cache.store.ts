@@ -1,10 +1,4 @@
-import type {
-  EnvironmentEntity,
-  IntegrationEntity,
-  NotificationTemplateEntity,
-  OrganizationEntity,
-  PreferencesEntity,
-} from '@novu/dal';
+import type { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, PreferencesEntity } from '@novu/dal';
 import {
   INTERNAL_AUTH_TOKEN_TTL_SECONDS,
   type MemberRoleEnum,
@@ -27,7 +21,6 @@ export enum InMemoryLRUCacheStore {
   ACTIVE_WORKFLOWS = 'active-workflows',
   WORKFLOW_PREFERENCES = 'workflow-preferences',
   INTERNAL_AUTH_MEMBERSHIP = 'internal-auth-membership',
-  CHANNEL_INTEGRATIONS = 'channel-integrations',
 }
 
 export interface InternalAuthMembership {
@@ -43,8 +36,6 @@ export type ApiKeyUserCacheData = UserSessionData | null;
 export type ActiveWorkflowsCacheData = NotificationTemplateEntity[];
 export type WorkflowPreferencesCacheData = [PreferencesEntity | null, PreferencesEntity | null];
 export type InternalAuthMembershipCacheData = InternalAuthMembership | null;
-/** Active integrations of one channel, credentials still encrypted. */
-export type ChannelIntegrationsCacheData = IntegrationEntity[];
 
 export type CacheStoreDataTypeMap = {
   [InMemoryLRUCacheStore.WORKFLOW]: WorkflowCacheData;
@@ -56,7 +47,6 @@ export type CacheStoreDataTypeMap = {
   [InMemoryLRUCacheStore.ACTIVE_WORKFLOWS]: ActiveWorkflowsCacheData;
   [InMemoryLRUCacheStore.WORKFLOW_PREFERENCES]: WorkflowPreferencesCacheData;
   [InMemoryLRUCacheStore.INTERNAL_AUTH_MEMBERSHIP]: InternalAuthMembershipCacheData;
-  [InMemoryLRUCacheStore.CHANNEL_INTEGRATIONS]: ChannelIntegrationsCacheData;
 };
 
 export type StoreConfig = {
@@ -113,11 +103,5 @@ export const STORE_CONFIGS: Record<InMemoryLRUCacheStore, StoreConfig> = {
     // A membership revoked in Clerk must stop authorizing internal calls within a minute and within one token lifetime.
     ttl: Math.min(ONE_MINUTE_MS, INTERNAL_AUTH_TOKEN_TTL_SECONDS * MS_PER_SECOND),
     featureFlagComponent: 'internal-auth-membership',
-  },
-  [InMemoryLRUCacheStore.CHANNEL_INTEGRATIONS]: {
-    max: 1000,
-    // Integration edits (disable, primary switch, credential rotation) reach workers within this window.
-    ttl: THIRTY_SECONDS_MS,
-    featureFlagComponent: 'channel-integrations',
   },
 };

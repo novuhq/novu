@@ -32,12 +32,4 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
 
   @IsOptional()
   userId?: string;
-
-  /**
-   * Read the channel's active integrations from the in-memory LRU cache (flag-gated). Meant for the
-   * worker hot path, where a selection per subscriber per step otherwise costs two queries; leave it
-   * off where an integration edit must apply immediately (e.g. dashboard test sends).
-   */
-  @IsOptional()
-  useCache?: boolean;
 }
