@@ -1,10 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
-import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
 import { MarkManyNotificationsAsCommand } from '../mark-many-notifications-as/mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -15,7 +13,6 @@ export class MarkNotificationAs {
   constructor(
     private markManyNotificationsAs: MarkManyNotificationsAs,
     private getSubscriber: GetSubscriber,
-    private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository
   ) {}
 
@@ -51,15 +48,6 @@ export class MarkNotificationAs {
         contextKeys: command.contextKeys,
       })
     );
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.MARK_NOTIFICATION_AS, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      _notification: command.notificationId,
-      read: command.read,
-      archived: command.archived,
-      snoozedUntil: command.snoozedUntil,
-    });
 
     const updatedMessage = await this.messageRepository.findOneForInbox({
       _environmentId: command.environmentId,

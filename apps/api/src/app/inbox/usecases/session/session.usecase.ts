@@ -196,14 +196,6 @@ export class Session {
       })
     );
 
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriberEntity._id,
-      origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
-      context: contextKeys,
-    });
-
     const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
