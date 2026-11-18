@@ -28,6 +28,7 @@ import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { TableIntegration } from '../types';
+import { IntegrationCardActions } from './integration-card-actions';
 import { EnvironmentStack } from './integration-environment-filter';
 import { ProviderIcon } from './provider-icon';
 import { getDemoIntegrationTooltipMessage, isDemoIntegration } from './utils/helpers';
@@ -104,7 +105,11 @@ export function IntegrationGroupCard({ items, provider, onClick }: IntegrationGr
         'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]',
         'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_8px_0_rgba(0,0,0,0.1)]'
       )}
-      onClick={handleOpen}
+      onClick={(event) => {
+        // Menus, pickers and dialogs render in portals but still bubble React events here.
+        if (event.target instanceof Node && !event.currentTarget.contains(event.target)) return;
+        handleOpen();
+      }}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
         if (event.key === 'Enter' || event.key === ' ') {
@@ -134,6 +139,7 @@ export function IntegrationGroupCard({ items, provider, onClick }: IntegrationGr
 
           {supportsPrimary && <PrimaryStarButton items={items} provider={provider} name={integration.name} />}
           <IntegrationStatusBadge status={status} items={items} />
+          <IntegrationCardActions items={items} selected={selected} onEdit={openItem} />
         </div>
 
         <div className="flex">
