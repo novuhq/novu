@@ -28,7 +28,7 @@ Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills
 
 - A Novu Cloud account
 - OAuth access, or a [Novu Cloud API key](https://dashboard.novu.co/settings/api-keys)
-- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, Grok, VS Code, Codex, or similar
+- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, Grok, VS Code, Codex, Copilot CLI, Devin Desktop, Antigravity, or similar
 
 ## Endpoints
 
@@ -160,6 +160,71 @@ To use an API key instead of OAuth, set it in an environment variable and point 
 url = "https://mcp.novu.co/"
 bearer_token_env_var = "NOVU_API_KEY"
 ```
+
+  </Tab>
+
+  <Tab title="Copilot CLI">
+
+Add the server from your terminal:
+
+```bash
+copilot mcp add --transport http novu https://mcp.novu.co/
+```
+
+Or run `/mcp add` inside a Copilot CLI session, fill in the name and URL, and press **Ctrl+S** to save. The server is saved to `~/.copilot/mcp-config.json`.
+
+Copilot CLI opens your browser to sign in to Novu the first time it connects. To sign in again later, run `/mcp auth novu`.
+
+  </Tab>
+
+  <Tab title="Devin Desktop">
+
+Devin Desktop was formerly Windsurf. Add the server, then sign in:
+
+```bash
+devin mcp add novu --url https://mcp.novu.co/
+```
+
+```bash
+devin mcp login novu
+```
+
+To add it by hand instead, put this in `~/.config/devin/mcp_config.json` (all projects) or `.devin/mcp_config.json` (one project):
+
+```json
+{
+  "mcpServers": {
+    "novu": {
+      "url": "https://mcp.novu.co/",
+      "transport": "http"
+    }
+  }
+}
+```
+
+If the server later shows **Needs authentication**, open **Customize** → **MCPs** and select **Authenticate**.
+
+  </Tab>
+
+  <Tab title="Antigravity">
+
+Add the server to `~/.gemini/config/mcp_config.json`, which the Antigravity app, IDE, and CLI all read. For a single workspace, use `.agents/mcp_config.json` instead. In the IDE, you can open this file from **…** → **MCP Servers** → **Manage MCP Servers** → **View raw config**.
+
+```json
+{
+  "mcpServers": {
+    "novu": {
+      "serverUrl": "https://mcp.novu.co/"
+    }
+  }
+}
+```
+
+To sign in, open **Customizations** → **Installed** → **MCP Servers** in the Antigravity app and select **Authenticate** next to `novu`. Sign in to Novu in your browser, paste the authorization code back into Antigravity, and select **Submit**.
+
+<Note>
+  Gemini CLI was replaced by Antigravity CLI on June 18, 2026, for unpaid and Google One users. If you still use Gemini CLI, run `gemini mcp add --transport http novu https://mcp.novu.co/`, then `/mcp auth novu` to sign in.
+</Note>
 
   </Tab>
 
