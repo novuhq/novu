@@ -647,6 +647,7 @@ export class SendMessageEmail extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
@@ -712,6 +713,7 @@ export class SendMessageEmail extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(

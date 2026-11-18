@@ -18,6 +18,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
     };
 
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
 
     const usecase = new SendMessageSms(
       {} as never,
@@ -28,7 +29,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
       {} as never,
       {} as never,
       {} as never,
-      { execute: sinon.stub().resolves(undefined) } as never
+      sendWebhookMessage as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -47,7 +48,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
     const sendStub = sinon.stub().resolves({ id: 'provider_msg_1' });
     sinon.stub(SmsFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
-    return { usecase, messageRepository, sendStub, createExecutionDetails, initiateTranslations };
+    return { usecase, messageRepository, sendStub, createExecutionDetails, sendWebhookMessage, initiateTranslations };
   }
 
   function buildCommand(
@@ -120,6 +121,20 @@ describe('SendMessageSms - trigger provider overrides', () => {
     await usecase.execute(buildCommand({}));
 
     expect(initiateTranslations.called).to.equal(false);
+  });
+
+  it('passes the loaded environment to the message.sent webhook so it is not read again', async () => {
+    const { usecase, sendWebhookMessage } = buildUsecase();
+    const environment = { _id: 'env_1', webhookAppId: 'app_1' };
+    const command = buildCommand({});
+    command.environment = environment as never;
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(sendWebhookMessage.execute.calledOnce).to.equal(true);
+    expect(sendWebhookMessage.execute.firstCall.args[0].eventType).to.equal('message.sent');
+    expect(sendWebhookMessage.execute.firstCall.args[0].environment).to.equal(environment);
   });
 
   it('applies legacy channel and flat provider overrides', async () => {

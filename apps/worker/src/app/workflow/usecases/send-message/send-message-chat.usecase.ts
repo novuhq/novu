@@ -1207,6 +1207,7 @@ export class SendMessageChat extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return {
@@ -1256,6 +1257,7 @@ export class SendMessageChat extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return {

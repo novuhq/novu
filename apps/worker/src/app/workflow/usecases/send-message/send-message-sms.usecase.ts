@@ -373,6 +373,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return {
@@ -399,6 +400,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(

@@ -634,6 +634,7 @@ export class SendMessagePush extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return { success: true, error: undefined };
@@ -720,6 +721,7 @@ export class SendMessagePush extends SendMessageBase {
           },
           organizationId: command.organizationId,
           environmentId: command.environmentId,
+          environment: command.environment,
         });
       } catch (err) {
         Logger.error(
