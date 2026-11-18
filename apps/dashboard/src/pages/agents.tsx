@@ -21,7 +21,6 @@ import {
   SiWhatsapp,
   SiZoom,
 } from 'react-icons/si';
-import { Navigate } from 'react-router-dom';
 import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
@@ -38,10 +37,9 @@ import { Separator } from '@/components/primitives/separator';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
-import { IS_CLOUD, IS_EU, IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD, IS_SELF_HOSTED } from '@/config';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -421,11 +419,6 @@ export function AgentsPage() {
   useEffect(() => {
     track(TelemetryEvent.AGENTS_PAGE_VISITED);
   }, [track]);
-
-  // Agents are hard-disabled in the EU region.
-  if (IS_EU) {
-    return <Navigate to={ROUTES.ROOT} replace />;
-  }
 
   return (
     <>
