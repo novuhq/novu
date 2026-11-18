@@ -55,7 +55,7 @@ import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
 } from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
-import { combineProviderOverrides, dispatchWebhooksInBackground, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -1194,23 +1194,20 @@ export class SendMessageChat extends SendMessageBase {
       }
     );
 
-    dispatchWebhooksInBackground(this.sendWebhookMessage, [
-      {
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId, {
-            providerResponseId: result.id,
-            // for backwards compatibility
-            webhookUrl: channelData.type === ENDPOINT_TYPES.WEBHOOK ? channelData.endpoint.url : undefined,
-            channelData: redactedChannelData,
-          }),
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        environment: command.environment,
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_SENT,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, command.subscriberId, {
+          providerResponseId: result.id,
+          // for backwards compatibility
+          webhookUrl: channelData.type === ENDPOINT_TYPES.WEBHOOK ? channelData.endpoint.url : undefined,
+          channelData: redactedChannelData,
+        }),
       },
-    ]);
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
     return {
       status: SendMessageStatus.SUCCESS,
@@ -1246,23 +1243,20 @@ export class SendMessageChat extends SendMessageBase {
       }
     );
 
-    dispatchWebhooksInBackground(this.sendWebhookMessage, [
-      {
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId, {
-            channelData: redactedChannelData,
-          }),
-          error: {
-            message: this.getErrorMessage(error) || 'Error while sending chat with provider',
-          },
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_SENT,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, command.subscriberId, {
+          channelData: redactedChannelData,
+        }),
+        error: {
+          message: this.getErrorMessage(error) || 'Error while sending chat with provider',
         },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        environment: command.environment,
       },
-    ]);
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
     return {
       status: SendMessageStatus.FAILED,
