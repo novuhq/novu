@@ -130,7 +130,9 @@ export function namesKey(text: string): boolean {
 export function commandNames(command: string, names: readonly string[]): boolean {
   const unquoted = command.replace(/["'\\]/g, '');
 
-  return names.some((name) => new RegExp(`(^|[\\s=:/])${name.replace(/\./g, '\\.')}($|[\\s/])`).test(unquoted));
+  return names.some((name) =>
+    new RegExp(`(^|[\\s=:/])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[\\s/])`).test(unquoted)
+  );
 }
 
 /** Whether a path is one of these files or folders of the project, or in one of them. */
