@@ -80,16 +80,16 @@ When a field is an array of objects — for example, the events collected by a [
 
 First, choose how many items must match:
 
-| Operator     | Matches when                                    |
-| ------------ | ----------------------------------------------- |
-| `any item`   | At least one item in the array matches the rule |
-| `every item` | Every item in the array matches the rule        |
-| `no item`    | No item in the array matches the rule           |
+| Operator     | Matches when                                                                         |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `any item`   | At least one item in the array matches the rule                                     |
+| `every item` | Every item in the array matches the rule, and the array contains at least one item  |
+| `no item`    | No item in the array matches the rule                                                |
 
 Then define the rule that each item is tested against:
 
 - **Item property**: the path to a property on each array item. It is resolved relative to the item, not the root data (for example, `payload.status`).
-- **Comparison**: `has value`, `equals`, `does not equal`, `less than`, `less than or equal to`, `greater than`, or `greater than or equal to`. `has value` only checks that the property is present on the item, so it needs no value.
+- **Comparison**: `has value`, `equals`, `does not equal`, `less than`, `less than or equal to`, `greater than`, or `greater than or equal to`. `has value` needs no comparison value. A property set to `false`, `0`, or `""` does not match, even when that property is present.
 - **Value**: the value to compare the item property against. Not required for `has value`.
 
 For example, to run a step only when at least one digested event was already read, add a condition on `steps.<digest-step-id>.events` with the **any item** operator, where the item property `payload.status` **equals** `read`.
