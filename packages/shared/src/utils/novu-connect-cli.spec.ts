@@ -24,9 +24,19 @@ describe('novu-connect-cli', () => {
     expect(buildNovuConnectStagingHint(NOVU_STAGING_API_URL)).toBe('Use `npx novu@rc` and pass `--region staging`.');
   });
 
-  it('keeps --api-url for EU and local', () => {
+  it('uses latest and --region eu on EU', () => {
     expect(getNovuConnectPackageTag('https://eu.api.novu.co')).toBe('latest');
-    expect(getNovuConnectTargetFlags('https://eu.api.novu.co')).toEqual(['--api-url https://eu.api.novu.co']);
+    expect(getNovuConnectTargetFlags('https://eu.api.novu.co')).toEqual(['--region eu']);
+    expect(getNovuConnectTargetFlags('https://eu.api.novu.co/')).toEqual(['--region eu']);
+    expect(
+      getNovuConnectTargetFlags({
+        apiUrl: 'https://eu.api.novu.co',
+        connectDashboardUrl: 'https://eu.dashboard.novu.co',
+      })
+    ).toEqual(['--region eu']);
+  });
+
+  it('keeps --api-url for local', () => {
     expect(getNovuConnectTargetFlags('http://localhost:3000')).toEqual(['--api-url http://localhost:3000']);
   });
 
