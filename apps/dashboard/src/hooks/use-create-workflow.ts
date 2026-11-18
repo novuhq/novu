@@ -18,6 +18,8 @@ interface UseCreateWorkflowOptions {
 
 export type WorkflowLimitError = {
   limit: number;
+  /** `plan` (402) is lifted by upgrading; `system` (409) is a custom cap only the Novu team can raise. */
+  limitSource: 'plan' | 'system';
 };
 
 /**
@@ -35,8 +37,12 @@ export function parseWorkflowLimitError(error: unknown): WorkflowLimitError | nu
     return null;
   }
 
-  if (error.status === 402 || error.status === 409) {
-    return { limit: rawLimit };
+  if (error.status === 402) {
+    return { limit: rawLimit, limitSource: 'plan' };
+  }
+
+  if (error.status === 409) {
+    return { limit: rawLimit, limitSource: 'system' };
   }
 
   return null;

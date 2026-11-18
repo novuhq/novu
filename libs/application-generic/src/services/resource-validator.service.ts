@@ -61,6 +61,9 @@ export const MIN_VALIDATION_LIMITS = {
   DEFER_DURATION_MS: DAY_IN_MS,
 } as const;
 
+/* Tiers whose active workflow count is capped by the plan's workflow limit */
+const ACTIVE_WORKFLOW_LIMITED_TIERS: ApiServiceLevelEnum[] = [ApiServiceLevelEnum.FREE, ApiServiceLevelEnum.PRO];
+
 @Injectable()
 export class ResourceValidatorService {
   constructor(
@@ -109,9 +112,66 @@ export class ResourceValidatorService {
 
     const environment = await this.getEnvironment(environmentId);
     const organization = await this.getOrganization(environment._organizationId);
+    const { limit, limitSource } = await this.resolveWorkflowLimit(environment, organization);
+
+    if (workflowsCount >= limit) {
+      throwPlanLimitExceeded({
+        resource: 'workflows',
+        limitSource,
+        limit,
+        currentCount: workflowsCount,
+      });
+    }
+  }
+
+  /**
+   * Blocks activating a workflow when the environment already has as many active workflows
+   * as the plan allows. Only enforced for Free and Pro organizations on Novu Cloud.
+   * Call it only when a workflow goes from inactive to active.
+   */
+  async validateActiveWorkflowLimit(environmentId: string, workflowId: string): Promise<void> {
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return;
+    }
+
+    const activeWorkflowsCount = await this.notificationTemplateRepository.count({
+      _environmentId: environmentId,
+      _id: { $ne: workflowId },
+      active: true,
+      'triggers.identifier': { $nin: DEMO_WORKFLOWS_IDENTIFIER },
+    });
+
+    if (activeWorkflowsCount < MIN_VALIDATION_LIMITS.WORKFLOWS) {
+      return;
+    }
+
+    const environment = await this.getEnvironment(environmentId);
+    const organization = await this.getOrganization(environment._organizationId);
+    const tier = organization.apiServiceLevel || ApiServiceLevelEnum.FREE;
+
+    if (!ACTIVE_WORKFLOW_LIMITED_TIERS.includes(tier)) {
+      return;
+    }
+
+    const { limit, limitSource } = await this.resolveWorkflowLimit(environment, organization);
+
+    if (activeWorkflowsCount >= limit) {
+      throwPlanLimitExceeded({
+        resource: 'active workflows',
+        limitSource,
+        limit,
+        currentCount: activeWorkflowsCount,
+        planMessage:
+          `Your plan includes up to ${limit} active workflow${limit === 1 ? '' : 's'}. ` +
+          'Upgrade your plan to activate more workflows, or pause another workflow first.',
+      });
+    }
+  }
+
+  private async resolveWorkflowLimit(environment: EnvironmentEntity, organization: OrganizationEntity) {
     const tierLimitOverride = await this.getWorkflowTierLimitOverride(environment, organization);
 
-    const { limit, limitSource } = await resolveTierLimit({
+    return resolveTierLimit({
       featureFlagsService: this.featureFlagService,
       flagKey: FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER,
       systemDefault: SYSTEM_LIMITS.WORKFLOWS,
@@ -122,15 +182,6 @@ export class ResourceValidatorService {
       organization,
       tierLimitOverride,
     });
-
-    if (workflowsCount >= limit) {
-      throwPlanLimitExceeded({
-        resource: 'workflows',
-        limitSource,
-        limit,
-        currentCount: workflowsCount,
-      });
-    }
   }
 
   /**
