@@ -97,6 +97,7 @@ export enum EmailProviderIdEnum {
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
+  Bird = 'bird-email',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
   NovuAgent = 'novu-email-agent',
@@ -146,6 +147,7 @@ export enum SmsProviderIdEnum {
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
   RuachSms = 'ruach-sms',
+  Bird = 'bird-sms',
 }
 
 export enum ChatProviderIdEnum {

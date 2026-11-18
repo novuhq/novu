@@ -30,4 +30,5 @@ export const emailProviderSchemas = {
   sendinblue: genericProviderSchemas,
   ses: genericProviderSchemas,
   sparkpost: genericProviderSchemas,
+  'bird-email': genericProviderSchemas,
 } as const satisfies Record<EmailProviderIdEnum, { output: JsonSchema }>;
