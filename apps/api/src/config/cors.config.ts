@@ -48,6 +48,10 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (ALLOWED_ORIGINS_REGEX.test(requestOrigin)) {
       corsOptions.origin.push(requestOrigin);
     }
+    // better-auth trusts DASHBOARD_URL too, so a dashboard served from it must pass CORS as well.
+    if (requestOrigin && requestOrigin === dashboardOrigin() && !corsOptions.origin.includes(requestOrigin)) {
+      corsOptions.origin.push(requestOrigin);
+    }
     if (
       isHumanSetupRoute(req.url) &&
       HUMAN_SITE_ORIGINS.includes(requestOrigin) &&
@@ -108,6 +112,18 @@ function isBlueprintRoute(url: string): boolean {
 /** The public invite / verify page endpoints; authenticated create routes are excluded. */
 function isHumanInviteRoute(url: string): boolean {
   return url.startsWith('/v1/human/invites/') || url.startsWith('/v1/human/verify');
+}
+
+function dashboardOrigin(): string | undefined {
+  if (!process.env.DASHBOARD_URL) {
+    return undefined;
+  }
+
+  try {
+    return new URL(process.env.DASHBOARD_URL).origin;
+  } catch {
+    return undefined;
+  }
 }
 
 function humanDashboardOrigin(): string | undefined {
