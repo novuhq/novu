@@ -118,6 +118,7 @@ const agentSchema = new Schema<AgentDBModel>(
         enum: Object.values(AgentSubscriberAccessEnum),
         required: true,
       },
+      accessRule: Schema.Types.Mixed,
       replyPolicy: {
         type: Schema.Types.String,
         enum: Object.values(AgentReplyPolicyEnum),
