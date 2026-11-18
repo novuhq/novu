@@ -38,6 +38,7 @@ import {
   withAccount,
   within,
 } from './host-program';
+import { contactConfigContent, contactSessionRules, readOpenCodeFolder } from './opencode-folder';
 
 /** OpenCode's own install command for macOS and Linux, as its docs give it. */
 const INSTALL_COMMAND = 'curl -fsSL https://opencode.ai/install | bash';
@@ -46,8 +47,15 @@ const SETUP_DOCS_URL = 'https://opencode.ai/docs';
 
 export const OPENCODE_MISSING_HELP = `OpenCode isn’t installed on this computer, or isn’t on its PATH. Install it with \`${INSTALL_COMMAND}\` (or see ${SETUP_DOCS_URL}), then run this again.`;
 
-/** How long OpenCode may take to start its server and open the session, before it counts as stuck. */
-const OPEN_TIMEOUT_MS = 60_000;
+/**
+ * How long OpenCode may take to start its server and open the session, before it counts as stuck. OpenCode 2 sets up
+ * the folder on its first request, watching every folder above it and starting its plugins, which took it close to a
+ * minute on a busy Mac.
+ */
+const OPEN_TIMEOUT_MS = 120_000;
+
+/** How long the start waits to ask again while OpenCode still sets up the folder. */
+const SETTING_UP_RETRY_MS = 1_000;
 
 /** How long the check waits for each of OpenCode's commands. */
 const CHECK_TIMEOUT_MS = 30_000;
@@ -196,6 +204,8 @@ export interface Rule {
  *   experimental); without it, MCP tools are plain tools again. And on OpenCode 1 subagents
  *   (`task`): there a subagent keeps only the session's denies, so it would run commands without asking. OpenCode 2's
  *   keep the session's rules.
+ *
+ * A contact's session works by the folder's own rules instead (`opencode-folder.ts`).
  */
 export function sessionRules(major: 1 | 2, agentRules: readonly Rule[]): Rule[] {
   return [
@@ -518,6 +528,14 @@ class HttpError extends Error {
   ) {
     super(message);
   }
+}
+
+/**
+ * How OpenCode answers while it still sets up the folder: a 503 ("Location plugins did not finish activating"), or
+ * nothing before the request's own time runs out. Either way it goes on setting it up, so asking again gets there.
+ */
+function stillSettingUp(err: unknown): boolean {
+  return (err instanceof HttpError && err.status === 503) || (err instanceof Error && err.name === 'TimeoutError');
 }
 
 /** What differs between OpenCode 1's API and OpenCode 2's, besides how messages become turns. */
@@ -1484,8 +1502,13 @@ class OpenCodeSession implements HostSession {
       this.base = await this.serve(api);
       await this.listen(api);
       const call = this.call;
-      const [agentRules] = await Promise.all([api.agentRules(call), this.listMcpServers()]);
-      const rules = sessionRules(api.major, agentRules);
+      // One question at a time while OpenCode starts: asked its agents and its MCP servers together, OpenCode 2.2 can
+      // take a minute over both and answer neither in time; one after the other, it answers both in seconds.
+      const agentRules = await this.onceSetUp(() => api.agentRules(call));
+      await this.listMcpServers();
+      const rules = this.options.contact
+        ? contactSessionRules(api.major, readOpenCodeFolder(this.options.project, api.major))
+        : sessionRules(api.major, agentRules);
       if (resume) {
         await api.resume(call, resume, rules);
       }
@@ -1508,6 +1531,20 @@ class OpenCodeSession implements HostSession {
       return false;
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  /** Asks OpenCode its first question again while it still sets up the folder, until the start's own time runs out. */
+  private async onceSetUp<T>(ask: () => Promise<T>): Promise<T> {
+    for (;;) {
+      try {
+        return await ask();
+      } catch (err) {
+        if (this.gone || this.closing || !stillSettingUp(err)) {
+          throw err;
+        }
+      }
+      await delay(SETTING_UP_RETRY_MS);
     }
   }
 
@@ -1556,10 +1593,17 @@ class OpenCodeSession implements HostSession {
     const env = Object.fromEntries(
       Object.entries(programEnv(this.options.env ?? process.env)).filter(([name]) => !SERVER_VARIABLES.includes(name))
     );
+    const { contact } = this.options;
     // OpenCode 1 lets its tools see the password too: a command that would use it asks the operator first, as any does.
+    // A contact's run gets its own conversation tools as an MCP server of the settings OpenCode takes from its
+    // environment.
     const child = spawn(this.options.program.command, [...this.options.program.args, ...api.serve], {
       cwd: this.options.project,
-      env: { ...env, [api.passwordVariable]: this.password },
+      env: {
+        ...env,
+        [api.passwordVariable]: this.password,
+        ...(contact ? { OPENCODE_CONFIG_CONTENT: contactConfigContent(api.major, contact.tools, env) } : {}),
+      },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     this.child = child;

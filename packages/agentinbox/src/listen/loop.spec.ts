@@ -1,5 +1,5 @@
 import { getEventListeners } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,7 @@ import { connectionChangedMessage, KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
 const FAKE_CODEX = fileURLToPath(new URL('./fake-codex.fixture.mjs', import.meta.url));
 const FAKE_OPENCODE = fileURLToPath(new URL('./fake-opencode.fixture.mjs', import.meta.url));
+const FAKE_CODEX_HOOK = fileURLToPath(new URL('./fake-codex-hook.fixture.mjs', import.meta.url));
 
 /** The hosts the loop is tried with: each adapter, with the fake of its host. */
 const HOSTS = {
@@ -147,6 +148,8 @@ async function start(
       timing: { ...FAST, ...timing },
       log: (line) => logs.push(line),
       signal: controller.signal,
+      // The listener's check of a contact's tool calls, as Codex runs it: a stand-in.
+      contactCheck: () => ({ command: process.execPath, args: [FAKE_CODEX_HOOK] }),
       ...loopOptions,
     });
   };
@@ -156,7 +159,15 @@ async function start(
       return readFileSync(join(dir, 'host.log'), 'utf8')
         .trim()
         .split('\n')
-        .map((line) => JSON.parse(line) as { event: string; argv: string[]; cwd: string })
+        .map(
+          (line) =>
+            JSON.parse(line) as {
+              event: string;
+              argv: string[];
+              cwd: string;
+              configContent?: Record<string, Record<string, unknown>>;
+            }
+        )
         .filter((entry) => entry.event === 'start');
     } catch {
       return [];
@@ -465,7 +476,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     // Planted by the agent, say, which edits the project without asking.
     mkdirSync(join(dir, 'node_modules', '@agentinbox', 'cli'), { recursive: true });
 
-    api.deliver({ text: 'reply-myself', from: { id: 'ben', name: 'Ben', isOperator: false } });
+    api.deliver({ text: 'reply-myself' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('I replied myself; all good.'));
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
@@ -565,8 +576,14 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   it('asks the operator before a command its settings don’t allow, and passes the Allow back', async () => {
-    const { api } = await start();
+    const { api, dir } = await start();
     api.decide = () => 'approved';
+    // A contact's run asks only what the folder's own settings say to ask.
+    mkdirSync(join(dir, '.claude'));
+    writeFileSync(
+      join(dir, '.claude', 'settings.json'),
+      JSON.stringify({ permissions: { ask: ['Bash(npm publish)'] } })
+    );
 
     api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
 
@@ -1185,13 +1202,15 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   });
 
   describe('a question the agent puts to someone outside its conversation too', () => {
-    const BOB = { id: 'bob', name: 'Bob', isOperator: false };
     const CAROL = { id: 'carol', name: 'Carol', isOperator: false };
 
-    /** Bob's message starts the host, which asks Bob and Carol "Ship it?" once the operator allows it. */
+    /**
+     * The operator's message in their own conversation starts the host, which asks Bob and Carol "Ship it?" once the
+     * operator allows it. A contact's run can't ask anyone else (`a contact’s run`).
+     */
     async function askBobAndCarol(api: FakeApi, words: string): Promise<string> {
       api.decide = (interaction) => (interaction.card.title === 'Ship it?' ? undefined : 'approved');
-      api.deliver({ text: words, conversationId: 'conv_bob', from: BOB });
+      api.deliver({ text: words, conversationId: 'conv_ada' });
       let id: string | undefined;
       await eventually(() => {
         id = api.interactions.find((interaction) => interaction.card.title === 'Ship it?')?.id;
@@ -1204,19 +1223,21 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
     it('goes on with the session that asked when the answer comes back, and starts nothing for whoever gave it', async () => {
       const { api, starts, logs } = await start();
       const ship = await askBobAndCarol(api, 'ask-others:bob,carol');
-      await eventually(() => expect(logs).toContain('conv_bob: done.'));
+      await eventually(() => expect(logs).toContain('conv_ada: done.'));
 
-      // Carol presses in her own chat; the answer comes back to Bob's conversation, where it was asked.
+      // Carol presses in her own chat; the answer comes back to the operator's conversation, where it was asked.
       api.answer(ship, 'approved', false, CAROL);
 
-      await eventually(() => expect(api.sentInto('conv_bob')).toContain('Echo: Approved'));
+      await eventually(() => expect(api.sentInto('conv_ada')).toContain('Echo: Approved'));
       const [first, second] = starts();
       expect(second.argv).toContain('--resume');
       expect(second.argv).toContain(first.argv[first.argv.indexOf('--session-id') + 1]);
+      // A contact's answer alone goes on with the operator's session as the operator's.
+      expect(second.argv).not.toContain('--settings');
       expect(starts()).toHaveLength(2);
       expect(logs.filter((line) => line.startsWith('Started'))).toEqual([
-        'Started Claude Code for conv_bob (Bob).',
-        expect.stringMatching(/^Started Claude Code for conv_bob \(Carol\), going on with session /),
+        'Started Claude Code for conv_ada (you).',
+        expect.stringMatching(/^Started Claude Code for conv_ada \(Carol\), going on with session /),
       ]);
     });
 
@@ -1245,13 +1266,203 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
 
       api.answer(ship, 'approved', false, CAROL);
 
-      await eventually(() => expect(logs).toContain('conv_bob: done.'));
+      await eventually(() => expect(logs).toContain('conv_ada: done.'));
       await pause(400);
       // The command read the answer, and nothing else got it: no new message in the run, no run after it.
       expect(api.interactions.find((interaction) => interaction.id === ship)?.answerReadAt).toBeDefined();
       expect(starts()).toHaveLength(1);
       // The card is the agent's own reply in the conversation, so its last words don't follow it.
-      expect(api.sentInto('conv_bob')).toEqual(['Ship it?']);
+      expect(api.sentInto('conv_ada')).toEqual(['Ship it?']);
+    });
+  });
+
+  describe('a contact’s run', () => {
+    const BEN = { id: 'ben', name: 'Ben', isOperator: false };
+    const REFUSED =
+      'Not allowed: PreToolUse:Bash hook error: This folder’s settings don’t allow it in a contact’s conversation, so don’t look for another way.';
+    const folder = (dir: string, permissions: Record<string, string[]>) => {
+      mkdirSync(join(dir, '.claude'), { recursive: true });
+      writeFileSync(join(dir, '.claude', 'settings.json'), JSON.stringify({ permissions }));
+    };
+
+    it('refuses what the folder’s settings don’t allow, without asking the operator', async () => {
+      const { api, logs } = await start();
+
+      api.deliver({ text: 'ask:npx @agentinbox/cli contact list', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain(REFUSED));
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      expect(logs).toContainEqual(
+        expect.stringMatching(
+          /^conv_1: refused, as this folder’s settings don’t allow it: `npx @agentinbox\/cli contact list`/
+        )
+      );
+    });
+
+    it('refuses what Claude Code would run by itself, and runs what the folder’s settings allow, Agent Inbox too', async () => {
+      const { api, dir } = await start();
+      folder(dir, { allow: ['Bash(npx @agentinbox/cli invite:*)'] });
+
+      api.deliver({ text: 'allowed:echo hi', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain(REFUSED));
+      api.deliver({ text: 'ask:npx @agentinbox/cli invite anna@example.com', from: BEN });
+
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContain('Ran npx @agentinbox/cli invite anna@example.com.')
+      );
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    });
+
+    it('asks the operator what the folder’s settings say to ask, and goes by them, not by the operator’s own', async () => {
+      const { api, dir } = await start();
+      api.decide = () => 'approved';
+      folder(dir, { ask: ['Bash(npm publish)'] });
+      // Where Claude Code keeps the operator's own "don't ask again" answers: not the folder's to give.
+      writeFileSync(
+        join(dir, '.claude', 'settings.local.json'),
+        JSON.stringify({ permissions: { allow: ['Bash(git push)'] } })
+      );
+
+      api.deliver({ text: 'allowed:git push', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain(REFUSED));
+      api.deliver({ text: 'allowed:npm publish', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish, which its settings allow.'));
+      const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+      expect(question?.to).toBe('ada');
+      expect(question?.card.body).toMatch(/^For Ben’s message on Telegram: “allowed:npm publish”/);
+    });
+
+    it('reads and resolves its own conversation, and resolves it after its reply, not before', async () => {
+      const { api, logs } = await start();
+
+      api.deliver({ text: 'mcp:mcp__this_conversation__resolve', from: BEN });
+
+      await eventually(() => expect(logs).toContain('conv_1: resolved, as the agent asked.'));
+      expect(api.sentInto('conv_1')).toContain('Used mcp__this_conversation__resolve.');
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      const reply = api.calls.findIndex((call) => call.path === '/v1/inbox/messages' && call.body.thread === 'conv_1');
+      const resolve = api.calls.findIndex((call) => call.path === '/v1/inbox/conv_1/resolve');
+      expect(reply).toBeGreaterThanOrEqual(0);
+      expect(resolve).toBeGreaterThan(reply);
+    });
+
+    it('starts with only what the folder gives it, and takes a group as a contact’s, even when the operator writes there', async () => {
+      const { api, starts, dir } = await start();
+      folder(dir, { allow: ['WebFetch(domain:docs.example.com)', 'mcp__docs__search'] });
+      writeFileSync(
+        join(dir, '.mcp.json'),
+        JSON.stringify({ mcpServers: { docs: { command: 'docs-mcp' }, other: { command: 'other-mcp' } } })
+      );
+
+      api.deliver({ text: 'hi', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi'));
+      api.deliver({ text: 'hi', conversationId: 'conv_ada' });
+      await eventually(() => expect(api.sentInto('conv_ada')).toContain('Echo: hi'));
+      api.deliver({ text: 'hi', conversationId: 'conv_group', isDirectMessage: false });
+      await eventually(() => expect(api.sentInto('conv_group')).toContain('Echo: hi'));
+
+      const [ben, ada, group] = starts();
+      for (const [run, conversationId] of [
+        [ben, 'conv_1'],
+        [group, 'conv_group'],
+      ] as const) {
+        expect(run.argv).toEqual(
+          expect.arrayContaining([
+            '--setting-sources',
+            'project',
+            '--tools',
+            'AskUserQuestion,WebFetch',
+            '--strict-mcp-config',
+            '--permission-mode',
+            'default',
+          ])
+        );
+        const servers = JSON.parse(run.argv[run.argv.indexOf('--mcp-config') + 1]).mcpServers;
+        expect(Object.keys(servers)).toEqual(['docs', 'this_conversation']);
+        expect(servers.this_conversation.args).toEqual(
+          expect.arrayContaining(['conversation-tools', '--conversation', conversationId])
+        );
+      }
+      expect(ada.argv).not.toContain('--setting-sources');
+      expect(ada.argv).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']));
+    });
+
+    it('gives the run up when Claude Code doesn’t take the check', async () => {
+      vi.stubEnv('FAKE_CLAUDE_INITIALIZE', 'error');
+      const { api, logs } = await start();
+
+      api.deliver({ text: 'hello', from: BEN });
+
+      await eventually(() =>
+        expect(logs).toContain(
+          'conv_1: Claude Code didn’t take the listener’s check for a contact’s conversation: Hooks are off here.'
+        )
+      );
+      expect(api.sentInto('conv_1')).not.toContain('Echo: hello');
+    });
+  });
+
+  describe('a full-access contact’s run', () => {
+    const CAROL = { id: 'carol', name: 'Carol', isOperator: false, fullAccess: true };
+
+    it('starts as the operator’s own run would, and asks Carol, in her chat, what its settings don’t allow', async () => {
+      const { api, starts, logs } = await start();
+      api.decide = () => 'approved';
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
+      const [run] = starts();
+      expect(run.argv).not.toContain('--setting-sources');
+      expect(run.argv).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']));
+      const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+      expect(question?.to).toBeUndefined();
+      expect(question?.thread).toBe('conv_1');
+      expect(question?.card.body).toContain('for your message.');
+      expect(question?.card.body).not.toContain('For Carol');
+      expect(logs).toContainEqual(expect.stringMatching(/^conv_1: asked Carol to allow: /));
+    });
+
+    it('tells the host when Carol says no, by her name', async () => {
+      const { api } = await start();
+      api.decide = () => 'denied';
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Carol said no.'));
+    });
+
+    it('is a contact’s run again once the switch is off, in a fresh session', async () => {
+      const { api, starts, logs } = await start();
+
+      api.deliver({ text: 'hi', from: CAROL });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi'));
+      api.deliver({ text: 'hi again', from: { ...CAROL, fullAccess: false } });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi again'));
+
+      const [first, second] = starts();
+      expect(first.argv).not.toContain('--setting-sources');
+      expect(second.argv).toEqual(expect.arrayContaining(['--setting-sources', 'project']));
+      // What the full-access session read stays out of the contact's run.
+      expect(second.argv).not.toContain('--resume');
+      expect(logs).toContain('conv_1: full access was turned off, so the session starts fresh.');
+    });
+
+    it('starts a fresh session when full access is turned on, and goes on with it while it stays on', async () => {
+      const { api, starts, logs } = await start();
+
+      api.deliver({ text: 'hi', from: { ...CAROL, fullAccess: false } });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi'));
+      api.deliver({ text: 'hi with full access', from: CAROL });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi with full access'));
+      api.deliver({ text: 'and again', from: CAROL });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: and again'));
+
+      const [, second, third] = starts();
+      expect(second.argv).not.toContain('--resume');
+      expect(logs).toContain('conv_1: full access was turned on, so the session starts fresh.');
+      expect(third.argv).toContain('--resume');
     });
   });
 
@@ -1407,7 +1618,7 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     const { api } = await start({}, {}, undefined, codexOnly);
     api.decide = () => 'approved';
 
-    api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
+    api.deliver({ text: 'ask:npm publish' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (accept).'));
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
@@ -1461,6 +1672,82 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     await eventually(() =>
       expect(api.sentInto('conv_operator')).toContain('Codex couldn’t answer in conv_1: You have hit your usage limit.')
     );
+  });
+
+  describe('a contact’s run', () => {
+    const BEN = { id: 'ben', name: 'Ben', isOperator: false };
+    const rules = (dir: string, lines: string[]) => {
+      mkdirSync(join(dir, '.codex', 'rules'), { recursive: true });
+      writeFileSync(join(dir, '.codex', 'rules', 'default.rules'), lines.join('\n'));
+    };
+
+    it('refuses what the folder’s Codex settings don’t allow, without asking the operator', async () => {
+      const { api, logs } = await start({}, {}, undefined, codexOnly);
+
+      api.deliver({ text: 'ask:npx @agentinbox/cli contact list', from: BEN });
+
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContain(
+          'Blocked: Refused: `npx @agentinbox/cli contact list`, as no rule in the folder’s Codex settings allows it. In a contact’s conversation only what this folder’s settings allow works, so don’t look for another way.'
+        )
+      );
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      expect(logs).toContain(
+        'conv_1: refused, as this folder’s settings don’t allow it: `npx @agentinbox/cli contact list` (no rule in the folder’s Codex settings allows it)'
+      );
+    });
+
+    it('runs what a rule allows, Agent Inbox too, and asks the operator what a rule says to ask', async () => {
+      vi.stubEnv('FAKE_HOOK_ALLOW', '^(npx|npm) ');
+      const { api, dir } = await start({}, {}, undefined, codexOnly);
+      api.decide = () => 'approved';
+      rules(dir, [
+        'prefix_rule(pattern = ["npx", "@agentinbox/cli", "invite"], decision = "allow")',
+        'prefix_rule(pattern = ["npm", "publish"], decision = "prompt")',
+      ]);
+
+      api.deliver({ text: 'ask:npx @agentinbox/cli invite anna@example.com', from: BEN });
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContain('Ran npx @agentinbox/cli invite anna@example.com (accept).')
+      );
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      api.deliver({ text: 'ask:npm publish', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (accept).'));
+      const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+      expect(question?.to).toBe('ada');
+      expect(question?.card.title).toBe('Codex wants to run `npm publish`');
+      expect(question?.card.body).toMatch(/^For Ben’s message on Telegram: “ask:npm publish”/);
+    });
+
+    it('resolves its own conversation with its own tools, after its reply', async () => {
+      const { api, logs } = await start({}, {}, undefined, codexOnly);
+
+      api.deliver({ text: 'call:this_conversation.resolve', from: BEN });
+
+      await eventually(() => expect(logs).toContain('conv_1: resolved, as the agent asked.'));
+      expect(api.sentInto('conv_1')).toContain('Called resolve of this_conversation.');
+      const reply = api.calls.findIndex((call) => call.path === '/v1/inbox/messages' && call.body.thread === 'conv_1');
+      const resolve = api.calls.findIndex((call) => call.path === '/v1/inbox/conv_1/resolve');
+      expect(reply).toBeGreaterThanOrEqual(0);
+      expect(resolve).toBeGreaterThan(reply);
+    });
+
+    it('gives the run up when Codex doesn’t take the check', async () => {
+      vi.stubEnv('FAKE_CODEX_HOOKS_UNTRUSTED', '1');
+      const { api, logs } = await start({}, {}, undefined, codexOnly);
+
+      api.deliver({ text: 'hello', from: BEN });
+
+      await eventually(() =>
+        expect(logs).toContainEqual(
+          expect.stringContaining(
+            'Codex didn’t take the listener’s check for a contact’s conversation: it is untrusted.'
+          )
+        )
+      );
+      expect(api.sentInto('conv_1')).not.toContain('Echo: hello');
+    });
   });
 });
 
@@ -1550,7 +1837,7 @@ describe.each([
     const { api } = await start({}, {}, undefined, opencodeOnly);
     api.decide = () => 'approved';
 
-    api.deliver({ text: 'ask:npm publish', from: { id: 'ben', name: 'Ben', isOperator: false } });
+    api.deliver({ text: 'ask:npm publish' });
 
     await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (once).'));
     const question = api.interactions.find((interaction) => interaction.kind === 'approve');
@@ -1616,5 +1903,80 @@ describe.each([
         'OpenCode couldn’t answer in conv_1: You have hit your usage limit.'
       )
     );
+  });
+
+  describe('a contact’s run', () => {
+    const BEN = { id: 'ben', name: 'Ben', isOperator: false };
+    const shell = major === 1 ? 'bash' : 'shell';
+    /** The folder's own OpenCode settings, as OpenCode 1 writes them; OpenCode 2 reads them too. */
+    const settings = (dir: string, permission: Record<string, unknown>) =>
+      writeFileSync(join(dir, 'opencode.jsonc'), `// The folder's own.\n${JSON.stringify({ permission })}\n`);
+
+    it('refuses what the folder’s settings don’t allow, whatever the operator’s own allow, without asking anyone', async () => {
+      vi.stubEnv(
+        'FAKE_OPENCODE_AGENT_RULES',
+        JSON.stringify([
+          { name: '*', pattern: '*', effect: 'allow' },
+          { name: shell, pattern: 'npx @agentinbox/cli*', effect: 'allow' },
+        ])
+      );
+      const { api } = await start({}, {}, undefined, opencodeOnly);
+
+      api.deliver({ text: 'ask:npx @agentinbox/cli contact list', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed (denied by the rules).'));
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+    });
+
+    it('runs what the folder’s settings allow, Agent Inbox too, and asks the operator what they say to ask', async () => {
+      const { api, dir } = await start({}, {}, undefined, opencodeOnly);
+      api.decide = () => 'approved';
+      settings(dir, { bash: { 'npx @agentinbox/cli invite *': 'allow', 'npm publish': 'ask' } });
+
+      api.deliver({ text: 'ask:npx @agentinbox/cli invite anna@example.com', from: BEN });
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContain('Ran npx @agentinbox/cli invite anna@example.com (rules).')
+      );
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      api.deliver({ text: 'ask:npm publish', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish (once).'));
+      const question = api.interactions.find((interaction) => interaction.kind === 'approve');
+      expect(question?.to).toBe('ada');
+      expect(question?.card.body).toMatch(/^For Ben’s message on Telegram: “ask:npm publish”/);
+    });
+
+    it('loads the folder’s skills without a rule, and reads only what a rule allows', async () => {
+      const { api, dir } = await start({}, {}, undefined, opencodeOnly);
+      mkdirSync(join(dir, '.opencode', 'skills', 'hello'), { recursive: true });
+      writeFileSync(join(dir, '.opencode', 'skills', 'hello', 'SKILL.md'), '---\nname: hello\n---\nSay hello.\n');
+      settings(dir, { read: { 'docs/*': 'allow' } });
+
+      api.deliver({ text: 'skill:hello', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Loaded the hello skill (rules).'));
+      api.deliver({ text: 'read:docs/a.md', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Read docs/a.md (rules).'));
+      api.deliver({ text: 'read:.env', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed (denied by the rules).'));
+    });
+
+    it('gets its own conversation tools, and resolves its conversation after its reply', async () => {
+      const { api, logs, starts } = await start({}, {}, undefined, opencodeOnly);
+
+      api.deliver({ text: 'call:this_conversation_resolve', from: BEN });
+
+      await eventually(() => expect(logs).toContain('conv_1: resolved, as the agent asked.'));
+      expect(api.sentInto('conv_1')).toContain('Called this_conversation_resolve (rules).');
+      const reply = api.calls.findIndex((call) => call.path === '/v1/inbox/messages' && call.body.thread === 'conv_1');
+      const resolve = api.calls.findIndex((call) => call.path === '/v1/inbox/conv_1/resolve');
+      expect(resolve).toBeGreaterThan(reply);
+      const mcp = starts()[0]?.configContent?.mcp ?? {};
+      const servers = major === 1 ? mcp : (mcp.servers as Record<string, unknown>);
+      expect(servers.this_conversation).toMatchObject({
+        type: 'local',
+        command: expect.arrayContaining(['conversation-tools', '--conversation', 'conv_1']),
+      });
+    });
   });
 });

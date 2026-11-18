@@ -4,7 +4,9 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
+import { type ClaudeFolder, claudeToolsFor, decideForContact, readClaudeFolder } from './claude-folder';
 import { shortPath } from './computer';
+import { CONVERSATION_TOOLS_SERVER } from './conversation-tools';
 import type {
   HostAdapter,
   HostAnswer,
@@ -25,6 +27,7 @@ import {
   describeMcpCall,
   executable,
   hostOf,
+  isRecord,
   onPath,
   programEnv,
   sentence,
@@ -105,6 +108,12 @@ export const claudeCode: HostAdapter = {
   open: (options, handlers) => new ClaudeCodeSession(options, handlers),
 };
 
+/** The listener's own check before each tool call of a contact's run: a `PreToolUse` hook it answers itself. */
+export const CONTACT_CHECK = 'agentinbox_contact_check';
+
+/** How long Claude Code may take to take that check before the run is given up: it doesn't go on without it. */
+const CHECK_TAKEN_MS = 30_000;
+
 /**
  * The flags of a session the listener starts, as Claude Code 2.1.310 takes them:
  * - `-p` with `--input-format` and `--output-format stream-json`, which needs `--verbose`.
@@ -114,11 +123,23 @@ export const claudeCode: HostAdapter = {
  *   user's and the project's settings allow; anything else asks. Named on purpose, so the operator's own
  *   default mode (`auto`, say) never decides for a run.
  * - `--session-id` names a new session, so its id is known before it starts; `--resume` goes on with one.
+ * - A contact's run has only what the folder's own settings give it (`claude-folder.ts`):
+ *   - `--setting-sources project` reads the folder's `.claude/settings.json` alone: not the operator's settings
+ *     (with their plugins and skills), and not `.claude/settings.local.json`, where Claude Code keeps the
+ *     operator's own "don't ask again" answers;
+ *   - `--tools` names the built-in tools a rule allows or asks for, and nothing else;
+ *   - `--strict-mcp-config` with `--mcp-config` starts the run's conversation tools and the folder's MCP servers
+ *     that a rule names, and no others;
+ *   - `--permission-mode default`, as the listener's own check decides every call;
+ *   - `--settings` denies the key's folder, unless a rule names it.
  */
 export function claudeArgs(
-  options: Pick<OpenOptions, 'instructions'> & { sessionId: string; resume: boolean }
+  options: Pick<OpenOptions, 'instructions' | 'contact'> & { sessionId: string; resume: boolean; folder?: ClaudeFolder }
 ): string[] {
+  const contact = options.contact && options.folder ? contactArgs(options.contact, options.folder) : undefined;
+
   return [
+    ...(contact ?? []),
     '-p',
     '--input-format',
     'stream-json',
@@ -126,7 +147,7 @@ export function claudeArgs(
     'stream-json',
     '--verbose',
     '--permission-mode',
-    'acceptEdits',
+    contact ? 'default' : 'acceptEdits',
     '--permission-prompts',
     'host',
     '--permission-prompt-tool',
@@ -135,6 +156,32 @@ export function claudeArgs(
     options.instructions,
     options.resume ? '--resume' : '--session-id',
     options.sessionId,
+  ];
+}
+
+/** The flags that keep a contact's run to what the folder's own settings give it. */
+function contactArgs(contact: NonNullable<OpenOptions['contact']>, folder: ClaudeFolder): string[] {
+  const namesKey = [...folder.allow, ...folder.ask].some((rule) => /\.agentinbox\b/i.test(rule.specifier ?? ''));
+
+  return [
+    '--setting-sources',
+    'project',
+    '--tools',
+    claudeToolsFor(folder).join(','),
+    '--strict-mcp-config',
+    '--mcp-config',
+    JSON.stringify({
+      mcpServers: {
+        ...folder.mcpServers,
+        [CONVERSATION_TOOLS_SERVER]: { type: 'stdio', command: contact.tools.command, args: contact.tools.args },
+      },
+    }),
+    ...(namesKey
+      ? []
+      : [
+          '--settings',
+          JSON.stringify({ permissions: { deny: ['Read(~/.agentinbox/**)', 'Edit(~/.agentinbox/**)'] } }),
+        ]),
   ];
 }
 
@@ -250,8 +297,12 @@ type Line = {
   type?: string;
   subtype?: string;
   request_id?: string;
-  request?: CanUseToolRequest & { subtype?: string };
-  response?: { request_id?: string };
+  /**
+   * A `can_use_tool` question, or a `hook_callback`: then `callback_id` is the hook's, and `input` what Claude Code
+   * gives a hook (`hook_event_name`, `tool_name`, `tool_input`).
+   */
+  request?: CanUseToolRequest & { subtype?: string; callback_id?: string };
+  response?: { request_id?: string; subtype?: string; error?: string };
   message?: { content?: unknown };
   command_uuid?: string;
   state?: string;
@@ -298,6 +349,12 @@ class ClaudeCodeSession implements HostSession {
   /** Questions it waits on, by request id. */
   private readonly asking = new Map<string, AbortController>();
   private readonly controlAnswers = new Map<string, () => void>();
+  /** In a contact's run: the request that hands Claude Code the listener's check. */
+  private readonly checkRequestId: string | undefined;
+  /** A contact's run: what the folder's own settings give it, which the listener's check holds every call to. */
+  private readonly folder: ClaudeFolder | undefined;
+  /** In a contact's run, the messages wait here until Claude Code has taken the check: none runs without it. */
+  private held: object[] | undefined;
   private stopping = false;
   private closing = false;
   private gone = false;
@@ -306,13 +363,26 @@ class ClaudeCodeSession implements HostSession {
   constructor(options: OpenOptions, handlers: SessionHandlers) {
     this.handlers = handlers;
     this.id = options.resume ?? randomUUID();
+    this.folder = options.contact ? readClaudeFolder(options.project) : undefined;
+    const env = sessionEnv(options.env ?? process.env);
     this.child = spawn(
       options.program.command,
       [
         ...options.program.args,
-        ...claudeArgs({ instructions: options.instructions, sessionId: this.id, resume: Boolean(options.resume) }),
+        ...claudeArgs({
+          instructions: options.instructions,
+          contact: options.contact,
+          folder: this.folder,
+          sessionId: this.id,
+          resume: Boolean(options.resume),
+        }),
       ],
-      { cwd: options.project, env: sessionEnv(options.env ?? process.env), stdio: ['pipe', 'pipe', 'pipe'] }
+      {
+        cwd: options.project,
+        // The operator's memory of their own work is theirs: a contact's run goes without it.
+        env: this.folder ? { ...env, CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1' } : env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }
     );
     this.exited = new Promise((resolve) => {
       this.child.once('exit', (code, signal) => {
@@ -329,6 +399,27 @@ class ClaudeCodeSession implements HostSession {
       this.stderr = `${this.stderr}${chunk.toString()}`.slice(-4000);
     });
     createInterface({ input: this.child.stdout }).on('line', (line) => this.read(line));
+
+    this.checkRequestId = options.contact ? `initialize_${randomUUID()}` : undefined;
+    if (this.checkRequestId) {
+      // A contact's run: before any message, every tool call is checked here first against the folder's own
+      // settings (`answerHook`), since Claude Code runs some without any rule. It is what the Agent SDK sends.
+      this.held = [];
+      this.write({
+        type: 'control_request',
+        request_id: this.checkRequestId,
+        request: {
+          subtype: 'initialize',
+          hooks: { PreToolUse: [{ matcher: null, hookCallbackIds: [CONTACT_CHECK] }] },
+        },
+      });
+      const timer = setTimeout(() => {
+        if (this.held) {
+          this.lose('Claude Code didn’t take the listener’s check for a contact’s conversation in time.', false);
+        }
+      }, CHECK_TAKEN_MS);
+      timer.unref();
+    }
   }
 
   send(input: SessionInput): boolean {
@@ -339,15 +430,38 @@ class ClaudeCodeSession implements HostSession {
     const uuid = randomUUID();
     this.inputs.set(uuid, input.id);
     // Without a priority, Claude Code reads it as soon as the tools it is running finish, in the same turn.
-    this.write({
+    const message = {
       type: 'user',
       message: { role: 'user', content: input.text },
       parent_tool_use_id: null,
       session_id: '',
       uuid,
-    });
+    };
+    if (this.held) {
+      this.held.push(message);
+    } else {
+      this.write(message);
+    }
 
     return true;
+  }
+
+  /** Claude Code answered the request that hands it the check: the messages go in, or the run is given up. */
+  private checkTaken(response: NonNullable<Line['response']>): void {
+    if (response.subtype === 'error') {
+      this.lose(
+        `Claude Code didn’t take the listener’s check for a contact’s conversation: ${response.error ?? 'no reason given'}`,
+        false
+      );
+
+      return;
+    }
+
+    const held = this.held ?? [];
+    this.held = undefined;
+    for (const message of held) {
+      this.write(message);
+    }
   }
 
   async interrupt(): Promise<void> {
@@ -466,7 +580,9 @@ class ClaudeCodeSession implements HostSession {
         }
         break;
       case 'control_response':
-        if (line.response?.request_id) {
+        if (line.response?.request_id && line.response.request_id === this.checkRequestId) {
+          this.checkTaken(line.response);
+        } else if (line.response?.request_id) {
           this.controlAnswers.get(line.response.request_id)?.();
           this.controlAnswers.delete(line.response.request_id);
         }
@@ -533,8 +649,15 @@ class ClaudeCodeSession implements HostSession {
       return;
     }
 
+    if (line.request?.subtype === 'hook_callback' && line.request.callback_id === CONTACT_CHECK) {
+      this.answerHook(requestId, line.request);
+
+      return;
+    }
+
     if (line.request?.subtype !== 'can_use_tool') {
-      // Nothing else is set up (no hooks, no SDK MCP servers), so nothing else should come; say so rather than hang.
+      // Nothing else is set up (no other hooks, no SDK MCP servers), so nothing else should come; say so rather
+      // than hang.
       this.write({
         type: 'control_response',
         response: {
@@ -550,6 +673,47 @@ class ClaudeCodeSession implements HostSession {
     void (line.request.tool_name === 'AskUserQuestion'
       ? this.question(requestId, line.request)
       : this.permission(requestId, line.request));
+  }
+
+  /**
+   * The listener's check before a tool call of a contact's run, by the folder's own settings (`claude-folder.ts`):
+   * what they allow runs, what they ask for goes to the operator, and the rest is refused before it runs, whatever
+   * Claude Code would do by itself. A check that fails refuses.
+   */
+  private answerHook(requestId: string, request: NonNullable<Line['request']>): void {
+    const input = request.input ?? {};
+    const tool = stringOf(input.tool_name) ?? '';
+    const toolInput = isRecord(input.tool_input) ? input.tool_input : {};
+    let decision: 'allow' | 'ask' | 'deny' | undefined;
+    let why = 'This folder’s settings don’t allow it in a contact’s conversation, so don’t look for another way.';
+    if (input.hook_event_name === 'PreToolUse') {
+      try {
+        decision = this.folder ? decideForContact(this.folder, tool, toolInput) : 'deny';
+      } catch (err) {
+        decision = 'deny';
+        why = `The listener couldn’t check this (${err instanceof Error ? err.message : String(err)}), so it doesn’t run.`;
+      }
+      if (decision === 'deny') {
+        this.handlers.refused(subjectOf({ tool_name: tool, input: toolInput }), why);
+      }
+    }
+
+    this.write({
+      type: 'control_response',
+      response: {
+        subtype: 'success',
+        request_id: requestId,
+        response: decision
+          ? {
+              hookSpecificOutput: {
+                hookEventName: 'PreToolUse',
+                permissionDecision: decision,
+                ...(decision === 'deny' ? { permissionDecisionReason: why } : {}),
+              },
+            }
+          : {},
+      },
+    });
   }
 
   /** Runs one of its questions past the core, and answers Claude Code unless it withdrew the question. */
@@ -584,6 +748,11 @@ class ClaudeCodeSession implements HostSession {
     return this.withQuestion(requestId, async (signal) => {
       if (this.stopping) {
         return { behavior: 'deny', message: 'The run was stopped.' };
+      }
+      // A contact's run asks the operator only what the folder's settings don't refuse: Claude Code may still ask
+      // about something they allow, such as its own files, and then the operator decides.
+      if (this.folder && decideForContact(this.folder, request.tool_name ?? '', input) === 'deny') {
+        return { behavior: 'deny', message: 'This folder’s settings don’t allow it in a contact’s conversation.' };
       }
 
       const answer = await this.handlers.askPermission(question, signal);
@@ -663,6 +832,9 @@ export function subjectOf(request: CanUseToolRequest): PermissionQuestion['subje
     const [server, name] = mcpName(tool);
 
     return { kind: 'mcp', server, tool: name, input };
+  }
+  if (tool === 'Skill') {
+    return { kind: 'skill', name: stringOf(input.skill) ?? stringOf(input.command) ?? '' };
   }
   if (tool) {
     return { kind: 'tool', name: tool };

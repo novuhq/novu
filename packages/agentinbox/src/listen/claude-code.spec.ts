@@ -111,6 +111,7 @@ function open(
         return options.question ? options.question(question) : undefined;
       },
       lost: (error, sessionGone) => told.lost.push({ error, sessionGone }),
+      refused: () => undefined,
     }
   );
   const turn = () =>
@@ -147,6 +148,69 @@ describe('claudeArgs', () => {
     ]);
   });
 
+  it('gives a contact’s run only what the folder’s own settings give it, and its conversation tools', () => {
+    const contact = {
+      conversationId: 'conv_1',
+      tools: { command: 'node', args: ['cli.js', 'conversation-tools'] },
+      check: { command: 'node', args: ['cli.js', 'contact-check', '--host', 'claude-code'] },
+    };
+    const folder = {
+      project: '/work/app',
+      allow: [{ tool: 'Bash', specifier: 'npm test' }, { tool: 'mcp__docs__search' }],
+      ask: [{ tool: 'WebFetch' }],
+      deny: [],
+      skills: ['refunds'],
+      mcpServers: { docs: { command: 'docs-mcp' } },
+    };
+    const args = claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder });
+
+    expect(args.slice(0, 7)).toEqual([
+      '--setting-sources',
+      'project',
+      '--tools',
+      'AskUserQuestion,Bash,WebFetch,Skill',
+      '--strict-mcp-config',
+      '--mcp-config',
+      JSON.stringify({
+        mcpServers: {
+          docs: { command: 'docs-mcp' },
+          this_conversation: { type: 'stdio', command: 'node', args: ['cli.js', 'conversation-tools'] },
+        },
+      }),
+    ]);
+    // The key's folder stays closed, as no rule names it.
+    expect(args.slice(7, 9)).toEqual([
+      '--settings',
+      JSON.stringify({ permissions: { deny: ['Read(~/.agentinbox/**)', 'Edit(~/.agentinbox/**)'] } }),
+    ]);
+    expect(args).toEqual(expect.arrayContaining(['--permission-mode', 'default']));
+
+    const operator = claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false });
+    expect(operator).not.toContain('--settings');
+    expect(operator).not.toContain('--setting-sources');
+    expect(operator).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']));
+  });
+
+  it('leaves the key’s folder to a contact’s run when a rule names it', () => {
+    const contact = {
+      conversationId: 'conv_1',
+      tools: { command: 'node', args: [] },
+      check: { command: 'node', args: [] },
+    };
+    const folder = {
+      project: '/work/app',
+      allow: [{ tool: 'Read', specifier: '~/.agentinbox/**' }],
+      ask: [],
+      deny: [],
+      skills: [],
+      mcpServers: {},
+    };
+
+    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder })).not.toContain(
+      '--settings'
+    );
+  });
+
   it('goes on with a session it is given', () => {
     expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: true }).slice(-2)).toEqual([
       '--resume',
@@ -170,6 +234,10 @@ describe('describeAction and subjectOf', () => {
     const notes = join(homedir(), 'notes', 'todo.md');
     expect(describeAction({ tool_name: 'Edit', input: { file_path: notes } })).toBe('edit ~/notes/todo.md');
     expect(subjectOf({ tool_name: 'Edit', input: { file_path: notes } })).toEqual({ kind: 'files', paths: [notes] });
+    expect(subjectOf({ tool_name: 'Skill', input: { skill: 'agentinbox:agentinbox' } })).toEqual({
+      kind: 'skill',
+      name: 'agentinbox:agentinbox',
+    });
     expect(describeAction({ tool_name: 'WebFetch', input: { url: 'https://example.com/a' } })).toBe(
       'fetch https://example.com/a'
     );

@@ -10,10 +10,11 @@ import { AGENT_DOMAIN } from './onboarding';
  *
  * The first way is the one the box opens on. A coding agent with a second way in opens on it, and its sign-in
  * connects it: its plugin (Claude Code, Codex), which brings the skills and the inbox tools in one install, or
- * the MCP server in its own config (Cursor, OpenCode). Any other host that runs commands opens on them: one
- * paste, no sign-in, and the code connects it to this agent straight away. Hermes has the MCP server in its
- * config after them: it often runs on a server, with no browser there to sign in with. A chat app opens on
- * adding the server, which is how it connects at all.
+ * the MCP server in its own config (Cursor, OpenCode). Hermes and OpenClaw open on Agent Inbox's own plugin for
+ * their gateway, which the one-time code connects, with the MCP server in their config after it; their CLI
+ * still connects them, but the box leaves it out. Any other host that runs commands opens on them: one paste,
+ * no sign-in, and the code connects it to this agent straight away. A chat app opens on adding the server,
+ * which is how it connects at all.
  */
 
 export type HostWay = 'cli' | 'plugin' | 'mcp' | 'connector' | 'prompt';
@@ -21,6 +22,10 @@ export type HostWay = 'cli' | 'plugin' | 'mcp' | 'connector' | 'prompt';
 export function waysOf(host: Host): HostWay[] {
   if (host.group === 'chat') {
     return host.addsServerWhenAsked ? ['prompt'] : ['connector', 'prompt'];
+  }
+
+  if (host.plugin) {
+    return host.alternative?.kind === 'mcp-config' ? ['plugin', 'mcp'] : ['plugin'];
   }
 
   if (!host.alternative) {
@@ -31,6 +36,24 @@ export function waysOf(host: Host): HostWay[] {
 
   // An agent on a computer of its own keeps its commands first: they need no browser there, its sign-in does.
   return host.runsIn === 'computer' ? ['cli', second] : [second, 'cli'];
+}
+
+/**
+ * Whether a way's commands carry the one-time code: the CLI's, and Agent Inbox's own plugin for a host's gateway
+ * (Hermes, OpenClaw). The other ways sign in in the browser instead.
+ */
+export function usesCode(host: Host, way: HostWay): boolean {
+  return host.group === 'commands' && (way === 'cli' || (way === 'plugin' && host.plugin !== undefined));
+}
+
+/** The commands of a way that carries the code (`usesCode`), with the agent and the code in them. */
+export function codeScript(host: CommandHost, way: HostWay, details: ConnectDetails): Script {
+  return way === 'plugin' && host.plugin ? hostPluginScript(host, details) : cliScript(host, details);
+}
+
+/** Where a way's commands that carry the code run, and how long the code lasts. */
+export function codeCaption(host: CommandHost, way: HostWay): string {
+  return way === 'plugin' && host.plugin ? hostPluginCaption(host) : cliCaption(host);
 }
 
 /** A way's tab, in the words its host uses: Claude adds a custom connector, ChatGPT a plugin. */
@@ -123,6 +146,41 @@ export function cliCaption(host: CommandHost): string {
     host.runsIn === 'computer' ? `on the computer ${host.name} runs on` : `where ${hostSubject(host)} works`;
 
   return `Run it ${where}. The code works once and expires in 10 min.`;
+}
+
+/**
+ * Agent Inbox's own plugin for a host's gateway (Hermes, OpenClaw): it installs, the code connects it, and the
+ * gateway restarts to load it. The button copies the three together: none of them asks anything, `setup` because
+ * of its `--yes`. An agent gets the install it can run with nobody to answer (`agentInstall`).
+ */
+export function hostPluginScript(
+  host: CommandHost,
+  details: ConnectDetails,
+  reader: 'person' | 'agent' = 'person'
+): Script {
+  const plugin = host.plugin;
+  if (!plugin) {
+    return { lines: [], copy: '' };
+  }
+
+  const install = reader === 'agent' ? (plugin.agentInstall ?? plugin.install) : plugin.install;
+  const setup = plugin.setup(details);
+  const lines: ScriptLine[] = [
+    { kind: 'note', text: `1. Install the Agent Inbox plugin for ${host.name}` },
+    { kind: 'command', text: install, prompt: '$' },
+    { kind: 'gap' },
+    { kind: 'note', text: `2. Connect it to ${details.handle}` },
+    { kind: 'command', text: setup, prompt: '$' },
+    { kind: 'gap' },
+    { kind: 'note', text: '3. Restart the gateway, so messages to the agent reach it' },
+    { kind: 'command', text: plugin.restart, prompt: '$' },
+  ];
+
+  return { lines, copy: [install, setup, plugin.restart].join('\n') };
+}
+
+export function hostPluginCaption(host: CommandHost): string {
+  return `Run them on the computer ${host.name} runs on. The code works once and expires in 10 min.`;
 }
 
 /**

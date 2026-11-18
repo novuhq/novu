@@ -99,13 +99,13 @@ import { RemoveContact } from './usecases/remove-contact/remove-contact.usecase'
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { ResolveInboxThread } from './usecases/resolve-inbox-thread/resolve-inbox-thread.usecase';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
-import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 import { SetHumanInviteDefault } from './usecases/set-human-invite-default/set-human-invite-default.usecase';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
 import { ShowListenTyping } from './usecases/show-listen-typing/show-listen-typing.usecase';
 import { TakeListenLease } from './usecases/take-listen-lease/take-listen-lease.usecase';
+import { UpdateContact } from './usecases/update-contact/update-contact.usecase';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 import { VerifyAddress } from './usecases/verify-address/verify-address.usecase';
 import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-for-listen-messages.usecase';
@@ -230,7 +230,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     ReleaseListenLease,
     WaitForListenMessages,
     ShowListenTyping,
-    SetContactListenTo,
+    UpdateContact,
   ],
 })
 export class HumanModule {}

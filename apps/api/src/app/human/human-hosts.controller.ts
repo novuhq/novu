@@ -32,7 +32,13 @@ import {
   CreateConnectCodeRequestDto,
   type HumanHostStatusResponseDto,
 } from './dtos/human-host.dto';
-import { AGENT_INBOX_HOST_HEADER, HumanHostStatusService, readHostId } from './services/human-host-status.service';
+import {
+  AGENT_INBOX_HOST_HEADER,
+  AGENT_INBOX_VIA_HEADER,
+  HumanHostStatusService,
+  readHostId,
+  readHostVia,
+} from './services/human-host-status.service';
 import { HumanInboxService } from './services/human-inbox.service';
 import { ConnectHostCommand } from './usecases/connect-host/connect-host.command';
 import { ConnectHost } from './usecases/connect-host/connect-host.usecase';
@@ -124,8 +130,8 @@ export class HumanHostsController {
 }
 
 /**
- * Public: `agentinbox connect` trades a one-time code for the key of the agent's account. The code is the
- * only credential. Each one works once, and each network can send only so many wrong codes at a time.
+ * Public: `agentinbox connect`, or a host's own plugin, trades a one-time code for the key of the agent's
+ * account. The code is the only credential. Each one works once, and each network can send only so many wrong codes at a time.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -140,7 +146,8 @@ export class HumanConnectPublicController {
   connect(
     @Body() body: ConnectHostRequestDto,
     @Req() request: Request,
-    @Headers(AGENT_INBOX_HOST_HEADER) host?: string
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string
   ): Promise<ConnectHostResponseDto> {
     return this.connectHostUsecase.execute(
       ConnectHostCommand.create({
@@ -148,6 +155,7 @@ export class HumanConnectPublicController {
         code: body.code,
         clientIp: getClientIp(request) ?? undefined,
         host: readHostId(host),
+        via: readHostVia(via),
       })
     );
   }

@@ -32,7 +32,9 @@ import { encodeListenCursor, INVALID_LISTEN_CURSOR } from '../services/listen-cu
 import {
   CONTACT_IS_OPERATOR,
   CONTACT_IS_STRANGER,
-} from '../usecases/set-contact-listen-to/set-contact-listen-to.usecase';
+  CONTACT_NOT_LISTENED_TO,
+  NOTHING_TO_CHANGE,
+} from '../usecases/update-contact/update-contact.usecase';
 
 const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
@@ -283,6 +285,10 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
 
   function setListenTo(contactId: string, listenTo: boolean) {
     return asDashboard('patch', `/v1/human/contacts/${contactId}`).send({ listenTo });
+  }
+
+  function setFullAccess(contactId: string, fullAccess: boolean) {
+    return asDashboard('patch', `/v1/human/contacts/${contactId}`).send({ fullAccess });
   }
 
   async function hostStatus(): Promise<Record<string, any>> {
@@ -598,6 +604,34 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect(next.status).to.equal(200, JSON.stringify(next.body));
       expect(next.body.data).to.deep.equal([]);
       expect(next.body.next).to.be.a('string');
+    });
+
+    it('says which contacts have full access, as the switch is when it reads', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+      const carolId = await addContact('Carol', CAROL_CHAT_ID);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+      expect((await setListenTo(carolId, true)).status).to.equal(200);
+      expect((await setFullAccess(bobId, true)).status).to.equal(200);
+      await holdLease(MACBOOK);
+      const cursor = await startCursor();
+
+      await write('from Ada');
+      await write('from Bob', BOB_CHAT_ID);
+      await write('from Carol', CAROL_CHAT_ID);
+      const page = await readAfter(cursor);
+
+      expect(page.data.map((message) => message.from)).to.deep.equal([
+        { id: operatorId, name: 'Ada', isOperator: true },
+        { id: bobId, name: 'Bob', isOperator: false, fullAccess: true },
+        { id: carolId, name: 'Carol', isOperator: false },
+      ]);
+
+      // Turned off, the next message from Bob comes without it.
+      expect((await setFullAccess(bobId, false)).status).to.equal(200);
+      await write('Bob again', BOB_CHAT_ID);
+      expect((await readAfter(page.next)).data.map((message) => message.from)).to.deep.equal([
+        { id: bobId, name: 'Bob', isOperator: false },
+      ]);
     });
 
     it('never lets a stranger start a host, even one the API made a contact row for', async () => {
@@ -918,12 +952,20 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       const before = await readAfter(cursor);
       expect(before.data).to.deep.equal([]);
 
-      expect((await setListenTo(bobId, true)).body.data).to.deep.equal({ id: bobId, listenTo: true });
+      expect((await setListenTo(bobId, true)).body.data).to.deep.equal({
+        id: bobId,
+        listenTo: true,
+        fullAccess: false,
+      });
       await write('after the switch', BOB_CHAT_ID);
       const on = await readAfter(before.next);
       expect(on.data.map((message) => message.text)).to.deep.equal(['after the switch']);
 
-      expect((await setListenTo(bobId, false)).body.data).to.deep.equal({ id: bobId, listenTo: false });
+      expect((await setListenTo(bobId, false)).body.data).to.deep.equal({
+        id: bobId,
+        listenTo: false,
+        fullAccess: false,
+      });
       await write('switched off again', BOB_CHAT_ID);
       expect((await readAfter(on.next)).data).to.deep.equal([]);
     });
@@ -1056,7 +1098,7 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
 
       const res = await setListenTo(bobId, true);
       expect(res.status).to.equal(200, JSON.stringify(res.body));
-      expect(res.body.data).to.deep.equal({ id: bobId, listenTo: true });
+      expect(res.body.data).to.deep.equal({ id: bobId, listenTo: true, fullAccess: false });
 
       const after = await listContacts();
       expect(after.get(bobId)).to.include({ listenTo: true });
@@ -1107,6 +1149,98 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       const setupRes = await session.testAgent.post('/v1/human/setup').send({ subscriberId: bobId, firstName: 'Bob' });
       expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
       expect((await listContacts()).get(bobId)).to.include({ listenTo: false });
+    });
+  });
+
+  describe('full access: the contact switch under "Listen to"', () => {
+    async function listContacts(): Promise<Map<string, Record<string, any>>> {
+      const res = await asDashboard('get', '/v1/human/contacts');
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+      return new Map((res.body.data as Array<Record<string, any>>).map((contact) => [contact.id as string, contact]));
+    }
+
+    it('is off until the operator turns it on, only while the agent listens to them, and always on for the operator', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+      const carolId = await addContact('Carol', CAROL_CHAT_ID);
+
+      const before = await listContacts();
+      expect(before.get(operatorId)).to.include({ isOperator: true, fullAccess: true });
+      expect(before.get(bobId)).to.include({ fullAccess: false });
+
+      // Not listened to yet: refused, and nothing changes.
+      expectRefused(await setFullAccess(bobId, true), 400, CONTACT_NOT_LISTENED_TO);
+      expect((await listContacts()).get(bobId)).to.include({ listenTo: false, fullAccess: false });
+
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+      const res = await setFullAccess(bobId, true);
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect(res.body.data).to.deep.equal({ id: bobId, listenTo: true, fullAccess: true });
+
+      const after = await listContacts();
+      expect(after.get(bobId)).to.include({ listenTo: true, fullAccess: true });
+      expect(after.get(carolId)).to.include({ listenTo: false, fullAccess: false });
+
+      // The CLI's single-contact read says so too.
+      expect((await asHost('get', `/v1/human/contacts/${bobId}`)).body.data).to.include({
+        listenTo: true,
+        fullAccess: true,
+      });
+      expect((await asHost('get', `/v1/human/contacts/${operatorId}`)).body.data.fullAccess).to.equal(true);
+      expect((await asHost('get', `/v1/human/contacts/${carolId}`)).body.data.fullAccess).to.equal(false);
+
+      // Both switches at once, in one change.
+      const both = await asDashboard('patch', `/v1/human/contacts/${carolId}`).send({
+        listenTo: true,
+        fullAccess: true,
+      });
+      expect(both.status).to.equal(200, JSON.stringify(both.body));
+      expect(both.body.data).to.deep.equal({ id: carolId, listenTo: true, fullAccess: true });
+    });
+
+    it('goes off with "Listen to", and stays off when "Listen to" comes back', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+      expect((await setFullAccess(bobId, true)).status).to.equal(200);
+
+      expect((await setListenTo(bobId, false)).body.data).to.deep.equal({
+        id: bobId,
+        listenTo: false,
+        fullAccess: false,
+      });
+      expect((await setListenTo(bobId, true)).body.data).to.deep.equal({
+        id: bobId,
+        listenTo: true,
+        fullAccess: false,
+      });
+      expect((await listContacts()).get(bobId)).to.include({ listenTo: true, fullAccess: false });
+    });
+
+    it('can only be set by the operator, on the dashboard', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+
+      const byHost = await asHost('patch', `/v1/human/contacts/${bobId}`).send({ fullAccess: true });
+      expectRefused(byHost, 403, DASHBOARD_ONLY);
+      expect(byHost.body.message).to.contain('who has full access');
+
+      expect((await listContacts()).get(bobId)).to.include({ fullAccess: false });
+    });
+
+    it('has no switch for the operator, a stranger or a change that names none', async () => {
+      const bobId = await addContact('Bob', BOB_CHAT_ID);
+
+      expectRefused(await setFullAccess(operatorId, true), 400, CONTACT_IS_OPERATOR);
+      expect((await setFullAccess('nobody-here', true)).status).to.equal(404);
+      expectRefused(await asDashboard('patch', `/v1/human/contacts/${bobId}`).send({}), 400, NOTHING_TO_CHANGE);
+      expectRefused(
+        await asDashboard('patch', `/v1/human/contacts/${bobId}`).send({ listenTo: false, fullAccess: true }),
+        400,
+        CONTACT_NOT_LISTENED_TO
+      );
+      expect((await asDashboard('patch', `/v1/human/contacts/${bobId}`).send({ fullAccess: 'yes' })).status).to.equal(
+        422
+      );
     });
   });
 });

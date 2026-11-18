@@ -1,13 +1,18 @@
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class SetContactListenToCommand extends EnvironmentWithUserCommand {
+export class UpdateContactCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
   subscriberId: string;
 
+  @IsOptional()
   @IsBoolean()
-  listenTo: boolean;
+  listenTo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  fullAccess?: boolean;
 
   @IsOptional()
   @IsString()

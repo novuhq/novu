@@ -199,6 +199,14 @@ export class HumanContactDto {
   })
   listenTo: boolean;
 
+  @ApiProperty({
+    description:
+      'Whether their messages start the agent’s hosts with everything the operator’s get, and the hosts ask them, ' +
+      'not the operator, before doing what needs an OK. Always true for the operator; for anyone else, only while ' +
+      'the agent listens to them and the operator turned it on, on agentinbox.md.',
+  })
+  fullAccess: boolean;
+
   @ApiPropertyOptional({
     type: HumanContactInviteDto,
     description: 'The newest invite link that still works. Absent when none was sent, or it expired or was declined.',
@@ -220,14 +228,28 @@ export class ListContactsResponseDto {
   next: string | null;
 }
 
-/** What the operator changes about a contact on the dashboard. A host can't: it holds the same key. */
+/**
+ * What the operator changes about a contact on the dashboard, one switch or both. A host can't: it holds the same
+ * key.
+ */
 export class UpdateContactRequestDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
-      'Whether the agent listens to them. It always listens to the operator, so their own row has no switch.',
+      'Whether the agent listens to them. It always listens to the operator, so their own row has no switch. ' +
+      'Turning it off turns `fullAccess` off too.',
   })
+  @IsOptional()
   @IsBoolean()
-  listenTo: boolean;
+  listenTo?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether their messages start the agent’s hosts with everything the operator’s get, the hosts asking them, ' +
+      'not the operator. It only turns on while the agent listens to them (400 `contact_not_listened_to`).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  fullAccess?: boolean;
 
   @ApiPropertyOptional({ description: 'Relay agent the switch is for. Defaults to `human-relay`.' })
   @IsOptional()
@@ -243,6 +265,9 @@ export class UpdateContactResponseDto {
 
   @ApiProperty({ description: 'Whether the agent listens to them now.' })
   listenTo: boolean;
+
+  @ApiProperty({ description: 'Whether they have full access now.' })
+  fullAccess: boolean;
 }
 
 export class RemoveContactResponseDto {
