@@ -135,7 +135,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     const token = this.extractToken(connection);
 
     if (!token || token === 'null') {
-      Logger.warn(`No token was found during counnection process for ${connection.id}`, LOG_CONTEXT);
+      Logger.warn(`No token was found during connection process for ${connection.id}`, LOG_CONTEXT);
 
       return this.disconnect(connection);
     }
