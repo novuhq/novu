@@ -190,24 +190,29 @@ const ENVIRONMENT_TYPE_ORDER: Record<string, number> = {
  */
 function groupAcrossEnvironments(integrations: IIntegration[], environments: IEnvironment[]) {
   const environmentIndex = new Map(environments.map((env, index) => [env._id, index]));
-  const groups = new Map<string, EnvironmentIntegration[]>();
+  // Each provider + name holds a list of cards, so duplicates never share a key with another name.
+  const cardsByName = new Map<string, EnvironmentIntegration[][]>();
 
   for (const integration of integrations) {
     const environment = environments.find((env) => env._id === integration._environmentId);
     if (!environment) continue;
 
-    const baseKey = `${integration.providerId}::${integration.name}`;
-    let key = baseKey;
-    for (let copy = 1; groups.get(key)?.some((item) => item.environment._id === environment._id); copy++) {
-      key = `${baseKey}::${copy}`;
+    const key = JSON.stringify([integration.providerId, integration.name]);
+    const cards = cardsByName.get(key) ?? [];
+    const card = cards.find((items) => !items.some((item) => item.environment._id === environment._id));
+
+    if (card) {
+      card.push({ integration, environment });
+    } else {
+      cards.push([{ integration, environment }]);
     }
 
-    const group = groups.get(key) ?? [];
-    group.push({ integration, environment });
-    groups.set(key, group);
+    cardsByName.set(key, cards);
   }
 
-  for (const group of groups.values()) {
+  const groups = [...cardsByName.values()].flat();
+
+  for (const group of groups) {
     group.sort(
       (a, b) =>
         (ENVIRONMENT_TYPE_ORDER[a.environment.type ?? ''] ?? 2) -
@@ -216,7 +221,7 @@ function groupAcrossEnvironments(integrations: IIntegration[], environments: IEn
     );
   }
 
-  return [...groups.values()];
+  return groups;
 }
 
 /** Phone glyph from the integration store design (notch on top, home bar below). */

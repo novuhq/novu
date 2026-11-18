@@ -73,7 +73,8 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
   const queryClient = useQueryClient();
   const { integrations = [] } = useFetchIntegrations();
   const [pendingDelete, setPendingDelete] = useState<EnvironmentIntegration | null>(null);
-  const [pendingPrimary, setPendingPrimary] = useState<EnvironmentIntegration | null>(null);
+  // Setting primary clears an integration's routing conditions; this holds the action awaiting that confirmation.
+  const [conditionsLossAction, setConditionsLossAction] = useState<{ run: () => void } | null>(null);
   const [pendingPause, setPendingPause] = useState<EnvironmentIntegration | null>(null);
 
   const canWrite = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
@@ -94,6 +95,7 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
     );
 
   const invalidate = () => {
+    setConditionsLossAction(null);
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
   };
@@ -128,15 +130,19 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
     onSuccess: (_, item) =>
       showSuccessToast(`${item.integration.name} is now the primary integration in ${item.environment.name}.`),
     onError: (_, item) => showErrorToast(`Couldn't make ${item.integration.name} primary in ${item.environment.name}.`),
-    onSettled: () => {
-      setPendingPrimary(null);
-      invalidate();
-    },
+    onSettled: invalidate,
   });
 
-  // Setting primary clears routing conditions, so confirm first when there are some.
+  /** Runs `run`, after confirming first when the integration about to become primary has conditions. */
+  const confirmConditionsLoss = (newPrimary: IIntegration | undefined, run: () => void) =>
+    newPrimary && hasRoutingConditions(newPrimary) ? setConditionsLossAction({ run }) : run();
+
   const requestPrimary = (item: EnvironmentIntegration) =>
-    hasRoutingConditions(item.integration) ? setPendingPrimary(item) : makePrimary(item);
+    confirmConditionsLoss(item.integration, () => makePrimary(item));
+
+  /** A replacement primary picked while pausing or deleting the current one. */
+  const replacement = (item: EnvironmentIntegration, newPrimaryId?: string) =>
+    newPrimaryId ? otherActiveIn(item).find((other) => other._id === newPrimaryId) : undefined;
 
   // Pausing the primary leaves the channel without one, so pick its replacement first when there is one.
   const requestPause = (item: EnvironmentIntegration) =>
@@ -269,16 +275,20 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
         <DeleteIntegrationModal
           isOpen
           onOpenChange={(open) => !open && setPendingDelete(null)}
-          onConfirm={(newPrimaryId) => remove({ item: pendingDelete, newPrimaryId })}
+          onConfirm={(newPrimaryId) =>
+            confirmConditionsLoss(replacement(pendingDelete, newPrimaryId), () =>
+              remove({ item: pendingDelete, newPrimaryId })
+            )
+          }
           isPrimary={pendingDelete.integration.primary}
           otherIntegrations={otherActiveIn(pendingDelete)}
         />
       )}
 
       <ConfirmationModal
-        open={!!pendingPrimary}
-        onOpenChange={(open) => !open && setPendingPrimary(null)}
-        onConfirm={() => pendingPrimary && makePrimary(pendingPrimary)}
+        open={!!conditionsLossAction}
+        onOpenChange={(open) => !open && setConditionsLossAction(null)}
+        onConfirm={() => conditionsLossAction?.run()}
         title="Remove conditions?"
         description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
         confirmButtonText="Remove conditions"
@@ -288,7 +298,11 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
         <SelectPrimaryIntegrationModal
           isOpen
           onOpenChange={(open) => !open && setPendingPause(null)}
-          onConfirm={(newPrimaryId) => setActive({ item: pendingPause, active: false, newPrimaryId })}
+          onConfirm={(newPrimaryId) =>
+            confirmConditionsLoss(replacement(pendingPause, newPrimaryId), () =>
+              setActive({ item: pendingPause, active: false, newPrimaryId })
+            )
+          }
           otherIntegrations={otherActiveIn(pendingPause)}
           mode="select"
         />
