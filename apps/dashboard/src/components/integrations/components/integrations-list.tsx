@@ -1,4 +1,10 @@
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, isAgentInboxProvider, providers as novuProviders } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  type IIntegration,
+  isAgentInboxProvider,
+  providers as novuProviders,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -137,7 +143,7 @@ export function IntegrationsList({
 
           return acc;
         },
-        {} as Record<ChannelTypeEnum, typeof integrations>
+        {} as Record<ChannelTypeEnum, IIntegration[]>
       );
   }, [integrations, isToolChannelEnabled, searchQuery, environmentId, availableIntegrations]);
 
