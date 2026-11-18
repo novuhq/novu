@@ -58,6 +58,32 @@ describe('serializePushProviderError', () => {
     expect(parsed.message).to.equal('boom');
     expect(parsed.name).to.equal('Error');
   });
+
+  it('keeps message and name next to own fields such as code', () => {
+    const error = Object.assign(new Error('Sending message failed due to "Device unregistered."'), {
+      code: 'messaging/registration-token-not-registered',
+    });
+
+    expect(JSON.parse(serializePushProviderError(error))).to.deep.equal({
+      name: 'Error',
+      message: 'Sending message failed due to "Device unregistered."',
+      code: 'messaging/registration-token-not-registered',
+    });
+  });
+
+  it("prefers an error's own toJSON output (e.g. AxiosError)", () => {
+    class ToJsonError extends Error {
+      toJSON() {
+        return { message: 'from toJSON', status: 502 };
+      }
+    }
+
+    expect(JSON.parse(serializePushProviderError(new ToJsonError('raw')))).to.deep.equal({
+      name: 'Error',
+      message: 'from toJSON',
+      status: 502,
+    });
+  });
 });
 
 describe('SendMessagePush - provider content overrides', () => {

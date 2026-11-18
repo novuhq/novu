@@ -85,12 +85,17 @@ export function isSubscriberError(errorMessage: string): boolean {
 export function serializePushProviderError(error: unknown): string {
   const serialized = safeJsonStringify(error);
 
-  if (serialized !== '{}') {
-    return serialized;
+  if (error instanceof Error) {
+    // `message` and `name` are non-enumerable, so JSON drops them whenever the error has other own fields (e.g. `code`).
+    const parsed = JSON.parse(serialized);
+
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return JSON.stringify({ name: error.name, message: error.message, ...parsed });
+    }
   }
 
-  if (error instanceof Error) {
-    return JSON.stringify({ message: error.message, name: error.name });
+  if (serialized !== '{}') {
+    return serialized;
   }
 
   return JSON.stringify({ message: String(error ?? '') });
