@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues, getDefaultOnTlsOptions } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
 
@@ -52,11 +52,10 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
     keepAlive: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE),
     family: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
     keyPrefix: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX),
-    tls: (process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
-      ? {
-          servername: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
-        }
-      : {},
+    tls: getDefaultOnTlsOptions(
+      process.env.MEMORY_DB_CLUSTER_SERVICE_TLS,
+      convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST)
+    ),
   };
 
   const { host } = redisClusterConfig;
