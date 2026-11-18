@@ -57,6 +57,7 @@ describe("the Novu MCP server tools", () => {
 			  "move_workflow_step",
 			  "remove_workflow_step",
 			  "set_primary_integration",
+			  "submit_feedback",
 			  "trigger_workflow",
 			  "update_agent",
 			  "update_subscriber",
