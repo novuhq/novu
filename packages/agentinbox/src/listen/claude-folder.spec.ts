@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -32,11 +33,11 @@ afterEach(() => {
 function folder(permissions: { allow?: string[]; ask?: string[]; deny?: string[] }): ClaudeFolder {
   writeFileSync(join(project, '.claude', 'settings.json'), JSON.stringify({ permissions }));
 
-  return readClaudeFolder(project);
+  return readClaudeFolder(project, home);
 }
 
 const decide = (given: ClaudeFolder, tool: string, input: Record<string, unknown>) =>
-  decideForContact(given, tool, input, home);
+  decideForContact(given, tool, input);
 
 describe('readClaudeFolder', () => {
   it('reads the folder’s shared settings only, its skills, and the MCP servers a rule names', () => {
@@ -101,6 +102,7 @@ describe('parseRule and claudeToolsFor', () => {
       deny: [{ tool: 'WebFetch' }],
       skills: [],
       mcpServers: {},
+      guard: { home, places: [], links: [] },
     };
 
     expect(claudeToolsFor(given)).toEqual(['AskUserQuestion', 'Read', 'Glob', 'Grep', 'LS', 'NotebookRead', 'Bash']);
@@ -173,7 +175,7 @@ describe('decideForContact', () => {
     expect(decide(every, 'Bash', { command: 'echo `whoami`' })).toBe('deny');
   });
 
-  it('keeps the key’s folder closed to rules that don’t name it, commands and files alike', () => {
+  it('keeps the key closed, whatever a rule names, commands and files alike', () => {
     const broad = folder({ allow: ['Bash', 'Bash(cat:*)', 'Read'] });
     const key = join(home, '.agentinbox', 'config.json');
 
@@ -186,9 +188,51 @@ describe('decideForContact', () => {
     expect(decide(broad, 'Grep', { pattern: 'secret', path: home })).toBe('deny');
     expect(decide(broad, 'Read', { file_path: join(project, 'notes.txt') })).toBe('allow');
 
+    // Not even a rule that names it opens it: only full access does.
     const named = folder({ allow: ['Read(~/.agentinbox/**)', 'Bash(cat ~/.agentinbox/config.json)'] });
-    expect(decide(named, 'Read', { file_path: key })).toBe('allow');
-    expect(decide(named, 'Bash', { command: 'cat ~/.agentinbox/config.json' })).toBe('allow');
+    expect(decide(named, 'Read', { file_path: key })).toBe('deny');
+    expect(decide(named, 'Bash', { command: 'cat ~/.agentinbox/config.json' })).toBe('deny');
+  });
+
+  it('keeps the key closed through the links a command names, from where Claude Code’s shell is', () => {
+    const given = folder({ allow: ['Bash(cat:*)', 'Bash(grep:*)'] });
+    mkdirSync(join(project, 'docs'));
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'inbox'));
+    writeFileSync(join(project, 'docs', 'a.md'), '');
+
+    expect(decide(given, 'Bash', { command: 'cat docs/a.md' })).toBe('allow');
+    expect(decide(given, 'Bash', { command: 'cat docs/inbox/config.json' })).toBe('deny');
+    expect(decideForContact(given, 'Bash', { command: 'cat inbox/config.json' }, join(project, 'docs'))).toBe('deny');
+    expect(decide(given, 'Bash', { command: `grep -r secretKey ${home}` })).toBe('deny');
+  });
+
+  it('refuses every command, and every search, in a folder whose links git keeps lead to the key', () => {
+    mkdirSync(join(project, 'docs'));
+    writeFileSync(join(project, 'docs', 'a.md'), '');
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'assets'));
+    execFileSync('git', ['init', '-q'], { cwd: project });
+    execFileSync('git', ['add', 'docs'], { cwd: project });
+    const given = folder({ allow: ['Bash(ls:*)', 'Read'] });
+
+    expect(decide(given, 'Bash', { command: 'ls' })).toBe('deny');
+    expect(decide(given, 'Grep', { pattern: 'secretKey', path: project })).toBe('deny');
+    expect(decide(given, 'Read', { file_path: join(project, 'docs', 'a.md') })).toBe('allow');
+    expect(decide(given, 'Read', { file_path: join(project, 'docs', 'assets', 'config.json') })).toBe('deny');
+  });
+
+  it('keeps the file INBOX_CONFIG points the CLI at closed too', () => {
+    writeFileSync(join(project, 'inbox.json'), '{}');
+    writeFileSync(
+      join(project, '.claude', 'settings.json'),
+      JSON.stringify({ permissions: { allow: ['Read', 'Bash(cat:*)'] } })
+    );
+    const given = readClaudeFolder(project, home, join(project, 'inbox.json'));
+
+    expect(decide(given, 'Read', { file_path: join(project, 'inbox.json') })).toBe('deny');
+    expect(decide(given, 'Bash', { command: 'cat inbox.json' })).toBe('deny');
+    expect(decide(given, 'Grep', { pattern: 'secretKey', path: project })).toBe('deny');
+    expect(decide(given, 'Read', { file_path: join(project, 'notes.txt') })).toBe('allow');
+    expect(decide(folder({ allow: ['Read'] }), 'Read', { file_path: join(project, 'inbox.json') })).toBe('allow');
   });
 
   it('follows links before it matches a path, so one out of the folder doesn’t count as in it', () => {
@@ -220,7 +264,7 @@ describe('decideForContact', () => {
 
     expect(decide(given, 'Skill', { skill: 'refunds' })).toBe('deny');
     writeFileSync(join(project, '.claude', 'skills', 'refunds', 'SKILL.md'), '---\nname: refunds\n---\n');
-    const withSkill = readClaudeFolder(project);
+    const withSkill = readClaudeFolder(project, home);
     expect(decide(withSkill, 'Skill', { skill: 'refunds' })).toBe('allow');
     expect(decide(withSkill, 'Skill', { skill: 'release-notes' })).toBe('allow');
     expect(decide(withSkill, 'Skill', { skill: 'update-config' })).toBe('deny');

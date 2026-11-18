@@ -1,7 +1,8 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { dirname, isAbsolute, join, relative, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type { ListenMessage } from '../api/listen';
-import { realPathOf } from './own-replies';
+import { realPathOf, simpleCommandWords } from './own-replies';
 
 /**
  * A contact's run: a run for a conversation with a contact, not the operator's own direct chat with the agent. It
@@ -26,8 +27,8 @@ export type RunLevel = 'operator' | 'contact' | 'fullAccess';
  * - a contact's otherwise: a contact's or a group's message, or a session that was a contact's.
  *
  * Answers come back to the conversation that asked, the operator's too, so a run of answers alone keeps what its
- * session was (`session`), and is a contact's when that isn't known. A full-access session's answers keep it only while
- * they still come from a contact with full access: the switch may have been turned off since.
+ * session was (`session`), and is a contact's when that isn't known. Full access holds only while every message, an
+ * answer too, still comes with it: the switch may have been turned off since.
  */
 export function runLevel(messages: readonly ListenMessage[], session?: RunLevel): RunLevel {
   const written = messages.filter((message) => !message.answersMessageId);
@@ -39,7 +40,7 @@ export function runLevel(messages: readonly ListenMessage[], session?: RunLevel)
     return session ?? 'contact';
   }
 
-  if (byOneWithFullAccess(written)) {
+  if (byOneWithFullAccess(messages)) {
     return 'fullAccess';
   }
 
@@ -102,28 +103,111 @@ export function chainParts(command: string): string[] | undefined {
 
 /** Where the CLI keeps its key, as a run would reach it. */
 export function keyFolder(home: string): string {
-  return realPathOf(join(home, '.agentinbox'));
+  return realTarget(join(home, '.agentinbox'));
 }
 
 /**
- * Whether a command could reach the key: by name, by the variable that points the CLI elsewhere, or by a file name
- * pattern among the home folder's hidden folders, where `~/.agent*` would find it. Words only: a rule that runs
- * any code it is given reaches anything, which the docs say.
+ * What keeps Agent Inbox's key from a contact's run. No rule of the folder's opens it, whatever the rule names: only
+ * full access does, which gets everything the operator's runs get.
  */
-export function commandTouchesKey(command: string, home: string): boolean {
-  const unquoted = command.replace(/["'\\]/g, '');
+export interface KeyGuard {
+  /** The home folder, its links followed: where `~` points. */
+  home: string;
+  /** Where the key is, links followed: the CLI's folder, and the file `INBOX_CONFIG` points the CLI at. */
+  places: string[];
+  /** Where the folder's links that lead to the key, or to a folder that holds it, are, as git keeps them. */
+  links: string[];
+}
+
+/** What keeps the key from a contact's run in a folder, with the key where the CLI finds it (`configFile`). */
+export function keyGuardFor(project: string, home: string, configFile?: string): KeyGuard {
+  const places = [...new Set([keyFolder(home), ...(configFile ? [realTarget(resolve(configFile))] : [])])];
+
+  return { home: realPathOf(home), places, links: keyLinksIn(project, places) };
+}
+
+/**
+ * The links git keeps in the folder that lead to the key, or to a folder that holds it: through one, a path that never
+ * names the key reaches it. A run's own links, and those git doesn't keep, are only caught when a command names them.
+ */
+export function keyLinksIn(project: string, places: readonly string[]): string[] {
+  let listed: string;
+  try {
+    listed = execFileSync('git', ['-C', project, 'ls-files', '--stage', '-z'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      maxBuffer: 512 * 1024 * 1024,
+      timeout: 30_000,
+    });
+  } catch {
+    // Not a git repository, or no git: no links it keeps.
+    return [];
+  }
+
+  const base = realPathOf(project);
+
+  return listed.split('\0').flatMap((entry) => {
+    const tab = entry.indexOf('\t');
+    if (!entry.startsWith('120000 ') || tab < 0) {
+      return [];
+    }
+    const link = join(base, entry.slice(tab + 1));
+    const target = realTarget(link);
+
+    return places.some((place) => within(target, place) || within(place, target)) ? [link] : [];
+  });
+}
+
+/**
+ * Whether a path, its links followed, reaches the key: where it is, or in its folder. A search (`searched`) also
+ * reaches it from a folder that holds it, or holds one of the folder's links to it.
+ */
+export function reachesKey(path: string, guard: KeyGuard, searched = false): boolean {
+  const real = realTarget(path);
 
   return (
-    /\.agentinbox\b/i.test(unquoted) ||
-    /\bINBOX_CONFIG\b/.test(unquoted) ||
-    unquoted.includes(keyFolder(home)) ||
-    /(^|[\s=:/])\.[^\s/]*[*?[{$]/.test(unquoted)
+    guard.places.some((place) => within(real, place) || (searched && within(place, real))) ||
+    (searched && guard.links.some((link) => within(link, real)))
   );
 }
 
-/** Whether words of a rule name the key's folder, so it may open it. */
-export function namesKey(text: string): boolean {
-  return /\.agentinbox\b/i.test(text) || /\bINBOX_CONFIG\b/.test(text);
+/**
+ * Whether a command could reach the key. By its words: the key's name, the variable that points the CLI elsewhere, a
+ * path to where the key is, or a file name pattern among hidden folders, where `~/.agent*` would find it. By the paths
+ * it names (`cwd` for where it runs), their links followed: one that leads to the key, or to a folder that holds it.
+ * And by where it runs: in a folder that holds the key, or one of the folder's links to it, any command could reach it
+ * without naming it (`grep -r`). Words only: a rule that runs any code it is given reaches anything, which the docs
+ * say.
+ */
+export function commandReachesKey(command: string, cwd: string, guard: KeyGuard): boolean {
+  const unquoted = command.replace(/["'\\]/g, '');
+  if (
+    /\.agentinbox\b/i.test(unquoted) ||
+    /\bINBOX_CONFIG\b/.test(unquoted) ||
+    guard.places.some((place) => unquoted.includes(place)) ||
+    /(^|[\s=:/])\.[^\s/]*[*?[{$]/.test(unquoted) ||
+    reachesKey(cwd, guard, true)
+  ) {
+    return true;
+  }
+
+  return (chainParts(command) ?? [command]).some((part) =>
+    (simpleCommandWords(part) ?? []).some((word) =>
+      pathsIn(word).some((path) => reachesKey(expandPath(path, guard.home, cwd), guard, true))
+    )
+  );
+}
+
+/** What of a word could be a path: the word, and what follows `=` in `--file=<path>` or `NAME=<path>`. */
+function pathsIn(word: string): string[] {
+  const equals = word.indexOf('=');
+
+  return [word, ...(equals >= 0 ? [word.slice(equals + 1)] : [])].filter(Boolean);
+}
+
+/** A path as the shell finds it: from the home folder for `~`, else from where it runs. */
+function expandPath(path: string, home: string, cwd: string): string {
+  return path === '~' || path.startsWith('~/') ? join(home, path.slice(1)) : resolve(cwd, path);
 }
 
 /** Whether a command names one of these files or folders, as a word or a path's step. Words only. */

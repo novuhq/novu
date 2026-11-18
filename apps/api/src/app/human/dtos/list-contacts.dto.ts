@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HumanAddressVerificationStateEnum, HumanChannelViaEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 
 export const DEFAULT_CONTACTS_LIMIT = 50;
 export const MAX_CONTACTS_LIMIT = 100;
@@ -230,7 +230,7 @@ export class ListContactsResponseDto {
 
 /**
  * What the operator changes about a contact on the dashboard, one switch or both. A host can't: it holds the same
- * key.
+ * key. A switch left out stays as it is; `null` is no value for one.
  */
 export class UpdateContactRequestDto {
   @ApiPropertyOptional({
@@ -238,7 +238,7 @@ export class UpdateContactRequestDto {
       'Whether the agent listens to them. It always listens to the operator, so their own row has no switch. ' +
       'Turning it off turns `fullAccess` off too.',
   })
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsBoolean()
   listenTo?: boolean;
 
@@ -247,7 +247,7 @@ export class UpdateContactRequestDto {
       'Whether their messages start the agent’s hosts with everything the operator’s get, the hosts asking them, ' +
       'not the operator. It only turns on while the agent listens to them (400 `contact_not_listened_to`).',
   })
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsBoolean()
   fullAccess?: boolean;
 

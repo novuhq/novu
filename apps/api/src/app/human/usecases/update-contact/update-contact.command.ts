@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class UpdateContactCommand extends EnvironmentWithUserCommand {
@@ -6,11 +6,11 @@ export class UpdateContactCommand extends EnvironmentWithUserCommand {
   @IsNotEmpty()
   subscriberId: string;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsBoolean()
   listenTo?: boolean;
 
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsBoolean()
   fullAccess?: boolean;
 

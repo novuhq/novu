@@ -186,7 +186,8 @@ interface ActiveRun {
   lookingUp: boolean;
   /** The conversation's latest message before the host's turn: whatever the agent sent after it is the host's. */
   watermark?: string;
-  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown';
+  /** Why the run stops before its work is done: `access` when a message came with less access than it has. */
+  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown' | 'access';
   /** Nothing more joins: the run is winding down. */
   closing: boolean;
   /** What the turns that failed said. */
@@ -655,6 +656,13 @@ class ListenLoop {
         }
         break;
       }
+      // Full access turned off since the run started: the run stops, and the message waits for a fresh one with less.
+      const level = runLevel([...active.messages, message], active.level);
+      if (level !== active.level) {
+        this.log(`${active.conversationId}: ${levelChange(active.level, level)}, so the run stops for a fresh one.`);
+        void this.stopRun(active, 'access');
+        break;
+      }
       if (!this.sendInto(active, message)) {
         // The run is ending: the message waits for the next one.
         break;
@@ -843,7 +851,8 @@ class ListenLoop {
    * Sets the run's level, and says which kept session it goes on with, if any. The session goes on in the same round
    * (a resolve since then starts a fresh one), and only at the level it was kept at: a contact's session would hold a
    * full-access run to the limits it was told, and a full-access one would show a contact's run what only full access
-   * could read, a key say. When the switch changed since, the run starts a fresh session.
+   * could read, a key say. When the switch changed since, or the session was kept without its level (by a CLI from
+   * before levels, whose runs had the operator's settings), the run starts a fresh session.
    */
   private sessionToResume(active: ActiveRun): string | undefined {
     const kept = this.state.sessions[active.conversationId];
@@ -854,7 +863,7 @@ class ListenLoop {
       return undefined;
     }
 
-    if (keptLevel !== undefined && keptLevel !== active.level) {
+    if (keptLevel !== active.level) {
       this.log(`${active.conversationId}: ${levelChange(keptLevel, active.level)}, so the session starts fresh.`);
 
       return undefined;
@@ -1001,16 +1010,23 @@ class ListenLoop {
     // A turn ran, so the session exists: the conversation's next run in this round goes on with it.
     this.keepSession(active, session.id);
 
+    let delivered = active.replies.then(() => true);
     if (turn.outcome === 'completed' && turn.text) {
       const text = turn.text;
-      active.replies = active.replies.then(() => this.deliver(active, text));
+      delivered = active.replies.then(() => this.deliver(active, text));
+      active.replies = delivered.then(() => undefined);
     } else if (turn.outcome === 'failed') {
       active.failures.push(turn.error ?? 'the turn failed');
     }
     if (active.resolveAsked && turn.outcome === 'completed') {
-      // After its reply: a message into a resolved conversation would open it again.
+      // After its reply, and only once it is out: a message into a resolved conversation would open it again, and an
+      // answer that never went out would leave it resolved with no answer.
       active.resolveAsked = false;
-      active.replies = active.replies.then(() => this.resolveAsAsked(active));
+      active.replies = delivered.then((out) =>
+        out
+          ? this.resolveAsAsked(active)
+          : this.log(`${active.conversationId}: not resolved, as the agent’s reply didn’t go out.`)
+      );
     }
 
     if (active.pending.size === 0 && !active.closing) {
@@ -1109,10 +1125,10 @@ class ListenLoop {
   /**
    * A turn's last words go into the conversation, unless the agent already replied there itself during the
    * turn, as its instructions ask. That is looked at again before each try, so a try that got through without
-   * hearing back isn't posted twice.
+   * hearing back isn't posted twice. Says whether the conversation has its answer.
    */
-  private async deliver(active: ActiveRun, text: string): Promise<void> {
-    await this.keepTrying(`${active.conversationId}: couldn’t reply`, async () => {
+  private async deliver(active: ActiveRun, text: string): Promise<boolean> {
+    return this.keepTrying(`${active.conversationId}: couldn’t reply`, async () => {
       const since = active.watermark;
       const after = await this.messagesAfter(active.conversationId, since);
       active.watermark = after[after.length - 1]?.id ?? since;
@@ -1220,9 +1236,9 @@ class ListenLoop {
   /**
    * Tries a send again while Agent Inbox can't be reached, each wait twice the one before, for as long as
    * `resendForMs`. Anything else ends the trying at once, and is only logged: a refusal, a paused agent, a changed
-   * key, or the program stopping.
+   * key, or the program stopping. Says whether it got through.
    */
-  private async keepTrying(failed: string, attempt: () => Promise<void>): Promise<void> {
+  private async keepTrying(failed: string, attempt: () => Promise<void>): Promise<boolean> {
     const until = Date.now() + this.timing.resendForMs;
     let wait = this.timing.resendAfterMs;
 
@@ -1230,25 +1246,25 @@ class ListenLoop {
       try {
         await attempt();
 
-        return;
+        return true;
       } catch (err) {
         await this.onErrorDuringRun(err);
         const left = until - Date.now();
         if (!isOutage(err) || this.end) {
           this.log(`${failed} (${describeError(err)}).`);
 
-          return;
+          return false;
         }
         if (left <= 0) {
           this.log(`${failed} (${describeError(err)}); gave up after ${spanWords(this.timing.resendForMs / 1000)}.`);
 
-          return;
+          return false;
         }
 
         this.log(`${failed} (${describeError(err)}); trying again in ${spanWords(Math.min(wait, left) / 1000)}.`);
         await this.sleep(Math.min(wait, left));
         if (this.end) {
-          return;
+          return false;
         }
         wait = Math.min(wait * 2, RESEND_MOST_MS);
       }
@@ -1639,6 +1655,9 @@ function permissionAnswer(
 
 /** "Full access was turned on": why a conversation's session ends with a change of level, for the log. */
 function levelChange(from: RunLevel | undefined, to: RunLevel): string {
+  if (from === undefined) {
+    return 'its session was kept by an older version, without what its runs could do';
+  }
   if (to === 'fullAccess') {
     return 'full access was turned on';
   }

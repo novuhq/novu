@@ -11,6 +11,7 @@ import type {
   HostQuestion,
   HostSession,
   OpenOptions,
+  PermissionAnswer,
   PermissionOption,
   PermissionQuestion,
   SessionHandlers,
@@ -38,7 +39,13 @@ import {
   withAccount,
   within,
 } from './host-program';
-import { contactConfigContent, contactSessionRules, readOpenCodeFolder } from './opencode-folder';
+import {
+  contactConfigContent,
+  contactSessionRules,
+  decideOpenCodeCall,
+  type OpenCodeFolder,
+  readOpenCodeFolder,
+} from './opencode-folder';
 
 /** OpenCode's own install command for macOS and Linux, as its docs give it. */
 const INSTALL_COMMAND = 'curl -fsSL https://opencode.ai/install | bash';
@@ -407,6 +414,11 @@ export function sessionScope(always: readonly string[]): string {
   return always.includes('*')
     ? 'Allow for this session lets every request of this kind through until the session ends.'
     : `Allow for this session lets ${always.map((pattern) => `\`${pattern}\``).join(', ')} through until the session ends.`;
+}
+
+/** What the agent of a contact's run is told when the listener refuses a call of its: why, and not to look further. */
+function contactRefusal(why: string): string {
+  return `Refused, as ${why}. In a contact’s conversation only what this folder’s settings allow works, so don’t look for another way.`;
 }
 
 /** The files a request names: the path its tool was given, else what OpenCode asks for. */
@@ -1394,6 +1406,8 @@ class OpenCodeSession implements HostSession {
    */
   private mcpServers: string[] = [];
   private mcpListing: Promise<void> = Promise.resolve();
+  /** In a contact's run, what the folder's own settings allow: the listener decides by it what OpenCode asks. */
+  private folder?: OpenCodeFolder;
   private stopping = false;
   private closing = false;
   private gone = false;
@@ -1506,9 +1520,10 @@ class OpenCodeSession implements HostSession {
       // take a minute over both and answer neither in time; one after the other, it answers both in seconds.
       const agentRules = await this.onceSetUp(() => api.agentRules(call));
       await this.listMcpServers();
-      const rules = this.options.contact
-        ? contactSessionRules(api.major, readOpenCodeFolder(this.options.project, api.major))
-        : sessionRules(api.major, agentRules);
+      this.folder = this.options.contact
+        ? readOpenCodeFolder(this.options.project, api.major, homedir(), (this.options.env ?? process.env).INBOX_CONFIG)
+        : undefined;
+      const rules = this.folder ? contactSessionRules(api.major, this.folder) : sessionRules(api.major, agentRules);
       if (resume) {
         await api.resume(call, resume, rules);
       }
@@ -1744,7 +1759,8 @@ class OpenCodeSession implements HostSession {
   /**
    * Puts a permission OpenCode asks for to the core, and answers OpenCode: `once`, `always` where it lasts only as
    * long as this server (OpenCode 1), or `reject` with the words the core has for the agent. Only a turn running asks;
-   * anything else is a question left over from a turn that stopped, and is denied.
+   * anything else is a question left over from a turn that stopped, and is denied. In a contact's run, what the
+   * folder's settings decide of files and commands (`decideOpenCodeCall`) is answered here, with no card.
    */
   private async onPermission(asked: Asked): Promise<void> {
     const api = this.api;
@@ -1763,7 +1779,8 @@ class OpenCodeSession implements HostSession {
       const answer =
         this.stopping || !this.turns?.working
           ? { optionId: DENY.id }
-          : await this.handlers.askPermission(question, controller.signal);
+          : (this.contactAnswer(api, asked, question) ??
+            (await this.handlers.askPermission(question, controller.signal)));
       if (controller.signal.aborted || this.gone || this.closing) {
         return;
       }
@@ -1780,6 +1797,32 @@ class OpenCodeSession implements HostSession {
     } finally {
       this.asking.delete(asked.id);
     }
+  }
+
+  /**
+   * In a contact's run, what the listener answers itself when OpenCode asks about files and commands, by the folder's
+   * own settings (`decideOpenCodeCall`): allowed, or refused and why. Undefined for what goes to a person.
+   */
+  private contactAnswer(api: OpenCodeApi, asked: Asked, question: PermissionQuestion): PermissionAnswer | undefined {
+    const verdict =
+      this.folder &&
+      decideOpenCodeCall(api.major, this.folder, {
+        name: asked.name,
+        patterns: asked.patterns,
+        input: (asked.callId && this.tools.get(asked.callId)?.input) || {},
+        metadata: asked.metadata,
+      });
+    if (verdict?.decision === 'allow') {
+      return { optionId: ALLOW_ONCE.id };
+    }
+    if (verdict?.decision !== 'deny') {
+      return undefined;
+    }
+
+    const why = verdict.why ?? 'the folder’s settings don’t allow it';
+    this.handlers.refused(question.subject, why);
+
+    return { optionId: DENY.id, message: contactRefusal(why) };
   }
 
   /**

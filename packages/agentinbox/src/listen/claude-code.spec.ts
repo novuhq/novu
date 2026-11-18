@@ -161,6 +161,7 @@ describe('claudeArgs', () => {
       deny: [],
       skills: ['refunds'],
       mcpServers: { docs: { command: 'docs-mcp' } },
+      guard: { home: '/home/ada', places: ['/home/ada/.agentinbox', '/work/app/inbox.json'], links: [] },
     };
     const args = claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder });
 
@@ -178,10 +179,25 @@ describe('claudeArgs', () => {
         },
       }),
     ]);
-    // The key's folder stays closed, as no rule names it.
+    // Where the key is stays closed, the file INBOX_CONFIG points at too.
     expect(args.slice(7, 9)).toEqual([
       '--settings',
-      JSON.stringify({ permissions: { deny: ['Read(~/.agentinbox/**)', 'Edit(~/.agentinbox/**)'] } }),
+      JSON.stringify({
+        permissions: {
+          deny: [
+            'Read(~/.agentinbox/**)',
+            'Edit(~/.agentinbox/**)',
+            'Read(//home/ada/.agentinbox)',
+            'Edit(//home/ada/.agentinbox)',
+            'Read(//home/ada/.agentinbox/**)',
+            'Edit(//home/ada/.agentinbox/**)',
+            'Read(//work/app/inbox.json)',
+            'Edit(//work/app/inbox.json)',
+            'Read(//work/app/inbox.json/**)',
+            'Edit(//work/app/inbox.json/**)',
+          ],
+        },
+      }),
     ]);
     expect(args).toEqual(expect.arrayContaining(['--permission-mode', 'default']));
 
@@ -191,7 +207,7 @@ describe('claudeArgs', () => {
     expect(operator).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']));
   });
 
-  it('leaves the key’s folder to a contact’s run when a rule names it', () => {
+  it('keeps the key’s folder closed to a contact’s run even when a rule names it', () => {
     const contact = {
       conversationId: 'conv_1',
       tools: { command: 'node', args: [] },
@@ -204,9 +220,10 @@ describe('claudeArgs', () => {
       deny: [],
       skills: [],
       mcpServers: {},
+      guard: { home: '/home/ada', places: ['/home/ada/.agentinbox'], links: [] },
     };
 
-    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder })).not.toContain(
+    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder })).toContain(
       '--settings'
     );
   });

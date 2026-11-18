@@ -1,12 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { namesKey } from './contact-guard';
+import { dirname, join, resolve, sep } from 'node:path';
+import { chainParts, commandReachesKey, type Decision, type KeyGuard, keyGuardFor, reachesKey } from './contact-guard';
 import { CONVERSATION_TOOLS_SERVER } from './conversation-tools';
 import type { HostProgram } from './host-adapter';
 import { isRecord, stringOf } from './host-program';
 import type { Rule } from './opencode';
-import { realPathOf } from './own-replies';
+import { realPathOf, simpleCommandWords } from './own-replies';
 
 /**
  * What a contact's run may do in OpenCode: what the folder's own OpenCode settings allow, and nothing else.
@@ -17,10 +17,16 @@ import { realPathOf } from './own-replies';
  * - The session's rules start with everything refused, then the folder's rules, which OpenCode goes by as it does
  *   (the last rule that fits decides): `allow` runs, `ask` sends the operator a card, `deny` refuses. A rule that
  *   names no tool (`"permission": "allow"`, or `*`) doesn't count, nor one for an MCP server that isn't the folder's.
+ * - What the folder's rules allow of reading, editing, searching and commands, OpenCode asks the listener about
+ *   (`decideOpenCodeCall`), which lets it through unless it could reach the key: OpenCode only sees the words of a
+ *   command or a path, never where links lead or what the shell makes of quotes and patterns. As for Claude Code,
+ *   what the shell works out for itself (pipes, variables, command substitution) only a rule for every command
+ *   covers.
  * - The folder's skills need no rule, the person can always be asked a question, and the run's own conversation
  *   tools (`conversation-tools.ts`) always work.
- * - The folder where the CLI keeps its key (`~/.agentinbox`) opens only to a rule that names it, and changing what
- *   decides a run (the folder's OpenCode settings, skills and instructions, or git's own files) is refused.
+ * - Agent Inbox's key (`~/.agentinbox`, or the file `INBOX_CONFIG` points at) stays closed, whatever a rule says
+ *   (`contact-guard.ts`): only full access opens it. Changing what decides a run (the folder's OpenCode settings,
+ *   skills and instructions, or git's own files) is refused.
  */
 export interface OpenCodeFolder {
   project: string;
@@ -30,6 +36,8 @@ export interface OpenCodeFolder {
   skills: string[];
   /** The folder's MCP servers, by name. */
   servers: string[];
+  /** What keeps Agent Inbox's key from the run. */
+  guard: KeyGuard;
 }
 
 /** OpenCode's own permissions; any other name is an MCP server's tool, `<server>_<tool>`. */
@@ -91,8 +99,16 @@ const DECIDING_WORDS = [
   '*.agents*',
 ];
 
-/** Reads what the folder's own OpenCode settings say. Settings that can't be read count as saying nothing. */
-export function readOpenCodeFolder(project: string, major: 1 | 2, home: string = homedir()): OpenCodeFolder {
+/**
+ * Reads what the folder's own OpenCode settings say. Settings that can't be read count as saying nothing. The key is
+ * where the CLI finds it: `configFile` when `INBOX_CONFIG` names one.
+ */
+export function readOpenCodeFolder(
+  project: string,
+  major: 1 | 2,
+  home: string = homedir(),
+  configFile: string | undefined = process.env.INBOX_CONFIG
+): OpenCodeFolder {
   const settings = foldersOf(project, home).flatMap((folder) =>
     SETTINGS.map((file) => readJsonc(join(folder, file))).filter(isRecord)
   );
@@ -104,18 +120,19 @@ export function readOpenCodeFolder(project: string, major: 1 | 2, home: string =
     rules,
     skills: [...new Set(foldersOf(project, home).flatMap(skillsIn))],
     servers: [...new Set(servers)],
+    guard: keyGuardFor(project, home, configFile),
   };
 }
 
 /**
- * The rules a contact's session works by, in place of the operator's: everything refused, then the folder's rules,
- * then what always works, and last what no rule of the folder's turns back on: the key's folder unless a rule names
- * it, what decides a run, Code Mode, and OpenCode 1's subagents (which keep only the session's denies).
+ * The rules a contact's session goes by, in place of the operator's: everything refused, then the folder's rules,
+ * then what always works, and last what no rule of the folder's turns back on: where the key is, what decides a run,
+ * Code Mode, and OpenCode 1's subagents (which keep only the session's denies).
  */
-export function contactSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[] {
-  const shell = major === 1 ? 'bash' : 'shell';
-  const keyNamed = folder.rules.some((rule) => rule.effect !== 'deny' && namesKey(`${rule.name} ${rule.pattern}`));
+export function folderSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[] {
+  const shell = shellOf(major);
   const deny = (name: string, pattern: string): Rule => ({ name, pattern, effect: 'deny' });
+  const keyPatterns = ['*.agentinbox*', ...folder.guard.places.map((place) => `*${place}*`)];
 
   return [
     deny('*', '*'),
@@ -123,19 +140,148 @@ export function contactSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[
     ...folder.skills.map((name): Rule => ({ name: 'skill', pattern: name, effect: 'allow' })),
     ...ALWAYS.map((name): Rule => ({ name, pattern: '*', effect: 'allow' })),
     { name: `${CONVERSATION_TOOLS_SERVER}_*`, pattern: '*', effect: 'allow' },
-    ...(keyNamed
-      ? []
-      : [
-          ...['read', 'edit', 'glob', 'grep', 'list', 'external_directory', shell].map((name) =>
-            deny(name, '*.agentinbox*')
-          ),
-          deny(shell, '*INBOX_CONFIG*'),
-        ]),
+    ...checkedTools(major).flatMap((name) => keyPatterns.map((pattern) => deny(name, pattern))),
+    deny(shell, '*INBOX_CONFIG*'),
     ...[...DECIDING_FILES, ...DECIDING_FOLDERS].map((pattern) => deny('edit', pattern)),
     ...DECIDING_WORDS.map((pattern) => deny(shell, pattern)),
     deny('execute', '*'),
     ...(major === 1 ? [deny('task', '*')] : []),
   ];
+}
+
+/**
+ * The rules OpenCode gets for a contact's session (`folderSessionRules`), except that what they allow of the tools
+ * that reach files and commands asks instead, so that the listener decides it (`decideOpenCodeCall`).
+ */
+export function contactSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[] {
+  const checked = checkedTools(major);
+
+  return folderSessionRules(major, folder).map((rule) =>
+    rule.effect === 'allow' && checked.some((name) => fitsPattern(name, rule.name)) ? { ...rule, effect: 'ask' } : rule
+  );
+}
+
+/** A permission OpenCode asks for in a contact's session, with what its tool was given and what OpenCode said of it. */
+export interface OpenCodeCall {
+  name: string;
+  patterns: string[];
+  input: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * What the listener answers for a contact's session about a tool that reaches files or commands: what the folder's
+ * own rules say (`folderSessionRules`), unless the call could reach the key, or is a command the shell works out for
+ * itself that no rule for every command covers. Undefined for other tools, which OpenCode decides by the rules alone.
+ */
+export function decideOpenCodeCall(
+  major: 1 | 2,
+  folder: OpenCodeFolder,
+  call: OpenCodeCall
+): { decision: Decision; why?: string } | undefined {
+  if (!checkedTools(major).includes(call.name)) {
+    return undefined;
+  }
+
+  const isShell = call.name === shellOf(major);
+  const command = stringOf(call.input.command) ?? stringOf(call.metadata.command) ?? call.patterns.join(' && ');
+  const cwd = resolve(folder.project, stringOf(call.input.workdir) ?? stringOf(call.metadata.workdir) ?? '.');
+  const searched = SEARCHES.includes(call.name);
+  if (
+    isShell
+      ? commandReachesKey(command, cwd, folder.guard)
+      : pathsOf(call, folder).some((path) => reachesKey(path, folder.guard, searched))
+  ) {
+    return { decision: 'deny', why: 'it could reach Agent Inbox’s key' };
+  }
+
+  const rules = folderSessionRules(major, folder);
+  const effect = effectOf(rules, call.name, call.patterns);
+  if (effect === 'deny') {
+    return { decision: 'deny', why: 'the folder’s OpenCode settings don’t allow it' };
+  }
+  if (!isShell || (chainParts(command)?.every((part) => simpleCommandWords(part) !== null) ?? false)) {
+    return { decision: effect };
+  }
+
+  // What the shell works out for itself, as for Claude Code: only a rule for every command covers it.
+  const every = effectOf(rules, call.name, [EVERY_COMMAND]);
+
+  return every === 'deny'
+    ? { decision: 'deny', why: 'only a rule for every command covers what the shell works out for itself' }
+    : { decision: every === 'ask' || effect === 'ask' ? 'ask' : 'allow' };
+}
+
+/**
+ * Whether OpenCode takes `text` as fitting `pattern`, as it matches its rules: `*` stands for anything, `?` for one
+ * character, and a pattern that ends with ` *` fits the words before it alone too (`ls *` fits `ls`).
+ */
+export function fitsPattern(text: string, pattern: string): boolean {
+  let source = pattern
+    .replace(/\\/g, '/')
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '.*')
+    .replace(/\?/g, '.');
+  if (source.endsWith(' .*')) {
+    source = `${source.slice(0, -3)}( .*)?`;
+  }
+
+  return new RegExp(`^${source}$`, 's').test(text.replace(/\\/g, '/'));
+}
+
+/** What rules say about a permission for these patterns, as OpenCode reads them: the last rule that fits each one. */
+export function effectOf(rules: readonly Rule[], name: string, patterns: readonly string[]): Rule['effect'] {
+  const effects = (patterns.length > 0 ? patterns : ['*']).map((pattern) => {
+    for (let at = rules.length - 1; at >= 0; at--) {
+      if (fitsPattern(name, rules[at].name) && fitsPattern(pattern, rules[at].pattern)) {
+        return rules[at].effect;
+      }
+    }
+
+    return 'ask';
+  });
+
+  return effects.includes('deny') ? 'deny' : effects.includes('ask') ? 'ask' : 'allow';
+}
+
+/** A command no rule names: only a rule for every command fits it. */
+const EVERY_COMMAND = '\u0000';
+
+/** The tools that search a folder: everything under it counts as read. */
+const SEARCHES = ['glob', 'grep', 'list'];
+
+/** The tools that reach files and commands, which the listener decides for a contact's session. */
+function checkedTools(major: 1 | 2): string[] {
+  return ['read', 'edit', 'write', 'patch', 'glob', 'grep', 'list', 'lsp', 'external_directory', shellOf(major)];
+}
+
+/**
+ * The paths a call reaches: what its tool was given and what OpenCode said of it, and the paths it asks for. A search
+ * with none given searches the project; a file name pattern that climbs out of it, or starts elsewhere, everything.
+ */
+function pathsOf(call: OpenCodeCall, folder: OpenCodeFolder): string[] {
+  const said = [call.input, call.metadata];
+  const given = said.flatMap((each) =>
+    ['filePath', 'filepath', 'file_path', 'path', 'parentDir'].flatMap((key) => stringOf(each[key]) ?? [])
+  );
+  const folders = said.flatMap((each) =>
+    Array.isArray(each.directories) ? each.directories.filter((one): one is string => typeof one === 'string') : []
+  );
+  const asked = SEARCHES.includes(call.name)
+    ? []
+    : call.patterns.filter((pattern) => pattern !== '*').map((pattern) => pattern.replace(/\/\*$/, ''));
+  const pattern = call.name === 'glob' ? (stringOf(call.input.pattern) ?? '') : '';
+  const escapes = pattern.startsWith('/') || pattern.startsWith('~') || pattern.includes('..');
+  const paths = [...given, ...folders, ...asked, ...(escapes ? [sep] : [])];
+
+  return (paths.length > 0 ? paths : [folder.project]).map((path) =>
+    path === '~' || path.startsWith('~/') ? join(folder.guard.home, path.slice(1)) : resolve(folder.project, path)
+  );
+}
+
+/** The shell's permission as this OpenCode names it. */
+function shellOf(major: 1 | 2): string {
+  return major === 1 ? 'bash' : 'shell';
 }
 
 /**

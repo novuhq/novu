@@ -4,13 +4,13 @@ import { isAbsolute, join, resolve, sep } from 'node:path';
 import {
   chainParts,
   commandNames,
-  commandTouchesKey,
+  commandReachesKey,
   type Decision,
-  keyFolder,
-  namesKey,
+  type KeyGuard,
+  keyGuardFor,
   pathIn,
+  reachesKey,
   realTarget,
-  within,
 } from './contact-guard';
 import { CONVERSATION_TOOLS_SERVER } from './conversation-tools';
 import { isRecord, stringOf } from './host-program';
@@ -26,7 +26,8 @@ import { realPathOf, simpleCommandWords } from './own-replies';
  *   contact a missing rule means no.
  * - The run's own conversation tools (`conversation-tools.ts`) always work, and so does asking the person in the
  *   conversation a question.
- * - The folder where the CLI keeps its key (`~/.agentinbox`) opens only to a rule that names it.
+ * - Agent Inbox's key (`~/.agentinbox`, or the file `INBOX_CONFIG` points at) stays closed, whatever a rule says
+ *   (`contact-guard.ts`): only full access opens it.
  * - Editing what decides a run (the folder's settings, MCP servers, skills and instructions, or git's own files)
  *   always asks the operator, whatever allows it: otherwise a contact could give their next run more.
  */
@@ -47,6 +48,8 @@ export interface ClaudeFolder {
   skills: string[];
   /** The folder's `.mcp.json` servers that a rule names, as `.mcp.json` has them. */
   mcpServers: Record<string, unknown>;
+  /** What keeps Agent Inbox's key from the run. */
+  guard: KeyGuard;
 }
 
 /** The built-in tools a rule for this tool covers: a `Read` rule is for every tool that reads files, and so on. */
@@ -66,8 +69,15 @@ const ALWAYS = ['AskUserQuestion'];
 /** The folder's files that decide what a run does: changing them takes the operator. */
 const DECIDING = ['.claude', '.mcp.json', 'CLAUDE.md', 'CLAUDE.local.md', 'AGENTS.md', '.git'];
 
-/** Reads what the folder's own settings say. Settings that can't be read count as saying nothing. */
-export function readClaudeFolder(project: string): ClaudeFolder {
+/**
+ * Reads what the folder's own settings say. Settings that can't be read count as saying nothing. The key is where the
+ * CLI finds it: `configFile` when `INBOX_CONFIG` names one.
+ */
+export function readClaudeFolder(
+  project: string,
+  home: string = homedir(),
+  configFile: string | undefined = process.env.INBOX_CONFIG
+): ClaudeFolder {
   const settings = readJson(join(project, '.claude', 'settings.json'));
   const permissions = isRecord(settings?.permissions) ? settings.permissions : {};
   const rules = (key: string) =>
@@ -99,6 +109,7 @@ export function readClaudeFolder(project: string): ClaudeFolder {
         ([name]) => named.has(name) && !disabled.has(name) && name !== CONVERSATION_TOOLS_SERVER
       )
     ),
+    guard: keyGuardFor(project, home, configFile),
   };
 }
 
@@ -140,35 +151,40 @@ export function claudeToolsFor(folder: ClaudeFolder): string[] {
   return [...tools];
 }
 
-/** What a contact's run may do about one tool call, by the folder's own rules. */
+/**
+ * What a contact's run may do about one tool call, by the folder's own rules. A command runs where Claude Code's
+ * shell is (`cwd`), the project unless it says another.
+ */
 export function decideForContact(
   folder: ClaudeFolder,
   tool: string,
   input: Record<string, unknown>,
-  home: string = homedir()
+  cwd?: string
 ): Decision {
   if (isConversationTool(tool) || ALWAYS.includes(tool)) {
     return 'allow';
   }
 
-  const place = { project: realPathOf(folder.project), home: realPathOf(home) };
+  const place = { project: realPathOf(folder.project), home: folder.guard.home };
 
   if (SHELL_TOOLS.has(tool)) {
-    return decideCommand(folder, tool, stringOf(input.command) ?? '', place);
+    return decideCommand(folder, tool, stringOf(input.command) ?? '', place, cwd ?? place.project);
   }
 
   const target = targetOf(tool, input, place);
-  const key = touchesKey(target, place);
-  const covers = (rule: ClaudeRule, mayNameKey: boolean) =>
-    covered(rule, tool, input, target, place) && (!key || !mayNameKey || namesKey(rule.specifier ?? ''));
-
-  if (folder.deny.some((rule) => covers(rule, false))) {
+  if (touchesKey(target, folder.guard)) {
     return 'deny';
   }
 
-  const decision: Decision = folder.ask.some((rule) => covers(rule, true))
+  const covers = (rule: ClaudeRule) => covered(rule, tool, input, target, place);
+
+  if (folder.deny.some(covers)) {
+    return 'deny';
+  }
+
+  const decision: Decision = folder.ask.some(covers)
     ? 'ask'
-    : folder.allow.some((rule) => covers(rule, true))
+    : folder.allow.some(covers)
       ? 'allow'
       : tool === 'Skill' && folder.skills.includes(skillName(input))
         ? 'allow'
@@ -204,14 +220,17 @@ interface PlainPart {
  * A command, part by part: a chain joined by `&&` is decided by its parts, and the chain asks when one part asks.
  * Anything the shell would work out for itself (pipes, `;`, redirections, variables, file name patterns, command
  * substitution) only a rule for every command covers: what it would run can't be told from its words. A command
- * that could reach the key is covered only by a rule that names it, and changing what decides a run asks.
+ * that could reach the key is refused, and changing what decides a run asks.
  */
-function decideCommand(folder: ClaudeFolder, tool: string, command: string, place: Place): Decision {
-  const key = commandTouchesKey(command, place.home);
+function decideCommand(folder: ClaudeFolder, tool: string, command: string, place: Place, cwd: string): Decision {
+  if (commandReachesKey(command, expand(cwd, place), folder.guard)) {
+    return 'deny';
+  }
+
   const ofTool = (rules: ClaudeRule[]) => rules.filter((rule) => rule.tool === tool);
   const rules = { deny: ofTool(folder.deny), ask: ofTool(folder.ask), allow: ofTool(folder.allow) };
   const parts = plainParts(command);
-  const decision = parts ? decidePlain(rules, parts, key) : decideShellWork(rules, command, key);
+  const decision = parts ? decidePlain(rules, parts) : decideShellWork(rules, command);
 
   return decision === 'allow' && commandTouchesDeciding(command) ? 'ask' : decision;
 }
@@ -230,18 +249,15 @@ function plainParts(command: string): PlainPart[] | undefined {
   return parts.length > 0 ? parts : undefined;
 }
 
-function decidePlain(rules: CommandRules, parts: PlainPart[], key: boolean): Decision {
-  const names = (rule: ClaudeRule, part: PlainPart) =>
+function decidePlain(rules: CommandRules, parts: PlainPart[]): Decision {
+  const covers = (rule: ClaudeRule, part: PlainPart) =>
     rule.specifier === undefined ||
     matchesCommand(rule.specifier, part.words) ||
     matchesCommand(rule.specifier, part.raw);
-  // A rule for every command never covers the key: only one that names it does.
-  const covers = (rule: ClaudeRule, part: PlainPart) =>
-    rule.specifier === undefined ? !key : names(rule, part) && (!key || namesKey(rule.specifier));
 
   let decision: Decision = 'allow';
   for (const part of parts) {
-    if (rules.deny.some((rule) => names(rule, part))) {
+    if (rules.deny.some((rule) => covers(rule, part))) {
       return 'deny';
     }
     if (rules.ask.some((rule) => covers(rule, part))) {
@@ -255,14 +271,14 @@ function decidePlain(rules: CommandRules, parts: PlainPart[], key: boolean): Dec
 }
 
 /** A command the shell works out for itself: denies are read generously, and only a rule for every command covers it. */
-function decideShellWork(rules: CommandRules, command: string, key: boolean): Decision {
+function decideShellWork(rules: CommandRules, command: string): Decision {
   const raw = command.trim();
   const pieces = [raw, ...raw.split(/&&|\|\||[;&|\n]/).map((piece) => piece.trim())].filter(Boolean);
   const denied = rules.deny.some(
     (rule) => rule.specifier === undefined || pieces.some((piece) => matchesCommand(rule.specifier ?? '', piece))
   );
   // What it builds can't be read, so with denies there is no telling it misses them.
-  if (denied || key || (rules.deny.length > 0 && /`|\$\(/.test(raw))) {
+  if (denied || (rules.deny.length > 0 && /`|\$\(/.test(raw))) {
     return 'deny';
   }
   if (rules.ask.some((rule) => rule.specifier === undefined)) {
@@ -427,11 +443,9 @@ function globPattern(path: string): string {
   return pattern;
 }
 
-/** Whether a call reaches the key: a file in its folder, or a search of a folder it is in. */
-function touchesKey(target: Target, place: Place): boolean {
-  const key = keyFolder(place.home);
-
-  return target.paths.some((path) => within(path, key) || (Boolean(target.searches) && within(key, path)));
+/** Whether a call reaches the key: a file where it is, or a search of a folder that holds it or a link to it. */
+function touchesKey(target: Target, guard: KeyGuard): boolean {
+  return target.paths.some((path) => reachesKey(path, guard, Boolean(target.searches)));
 }
 
 /** Whether a command names one of the folder's files that decide what a run does. Words only. */

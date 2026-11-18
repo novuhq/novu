@@ -268,7 +268,7 @@ async function readFolderFor(
       peer.request<CodexHooksList>('hooks/list', { cwds: [project] }),
     ]);
 
-    return readCodexFolder(project, { read, skills, hooks }, check);
+    return readCodexFolder(project, { read, skills, hooks }, check, homedir(), env.INBOX_CONFIG);
   });
 }
 

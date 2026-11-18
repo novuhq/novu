@@ -92,7 +92,7 @@ interface Harness {
   /** Listens again with what it saved, as after a restart, once it was stopped. */
   restart: () => Promise<LoopEnd>;
   /** Each start of the fake host: its arguments and folder. */
-  starts: () => Array<{ argv: string[]; cwd: string }>;
+  starts: () => Array<{ argv: string[]; cwd: string; configContent?: Record<string, Record<string, unknown>> }>;
 }
 
 let harness: Harness | undefined;
@@ -788,7 +788,12 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
   it('starts a fresh session when the host no longer has the old one', async () => {
     const { api, store, starts } = await start({
       sessions: {
-        conv_1: { sessionId: '11111111-2222-4333-8444-555555555555', round: 0, lastRunAt: new Date().toISOString() },
+        conv_1: {
+          sessionId: '11111111-2222-4333-8444-555555555555',
+          round: 0,
+          lastRunAt: new Date().toISOString(),
+          contact: false,
+        },
       },
     });
 
@@ -1347,6 +1352,36 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       expect(resolve).toBeGreaterThan(reply);
     });
 
+    it('leaves its conversation open when its reply didn’t go out', async () => {
+      const { api, logs } = await start();
+      api.refuseReplies = true;
+
+      api.deliver({ text: 'mcp:mcp__this_conversation__resolve', from: BEN });
+
+      await eventually(() => expect(logs).toContain('conv_1: not resolved, as the agent’s reply didn’t go out.'));
+      expect(api.calls.some((call) => call.path === '/v1/inbox/conv_1/resolve')).toBe(false);
+    });
+
+    it('starts afresh from a session an older version kept without what its runs could do', async () => {
+      const { api, starts, logs } = await start({
+        sessions: {
+          conv_1: {
+            sessionId: '11111111-2222-4333-8444-555555555555',
+            round: 0,
+            lastRunAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      api.deliver({ text: 'hello', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hello'));
+      expect(starts()[0].argv).not.toContain('--resume');
+      expect(logs).toContain(
+        'conv_1: its session was kept by an older version, without what its runs could do, so the session starts fresh.'
+      );
+    });
+
     it('starts with only what the folder gives it, and takes a group as a contact’s, even when the operator writes there', async () => {
       const { api, starts, dir } = await start();
       folder(dir, { allow: ['WebFetch(domain:docs.example.com)', 'mcp__docs__search'] });
@@ -1447,6 +1482,24 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       // What the full-access session read stays out of the contact's run.
       expect(second.argv).not.toContain('--resume');
       expect(logs).toContain('conv_1: full access was turned off, so the session starts fresh.');
+    });
+
+    it('stops its run when a message comes after the switch went off, and takes the message on with less', async () => {
+      const { api, starts, logs } = await start();
+
+      api.deliver({ text: 'sleep:20000', from: CAROL });
+      await eventually(() => expect(starts()).toHaveLength(1));
+      api.deliver({ text: 'hi again', from: { ...CAROL, fullAccess: false } });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: hi again'));
+      expect(api.sentInto('conv_1')).not.toContain('Done sleeping.');
+      expect(api.sentInto('conv_1')).not.toContain(STOPPED_REPLY);
+      const [first, second] = starts();
+      expect(first.argv).not.toContain('--setting-sources');
+      expect(second.argv).toEqual(expect.arrayContaining(['--setting-sources', 'project']));
+      expect(second.argv).not.toContain('--resume');
+      expect(logs).toContain('conv_1: full access was turned off, so the run stops for a fresh one.');
+      expect(logs).toContain('conv_1: stopped (access).');
     });
 
     it('starts a fresh session when full access is turned on, and goes on with it while it stays on', async () => {
@@ -1579,7 +1632,12 @@ describe('runListenLoop with Codex', { timeout: 20_000 }, () => {
     const { api, store } = await start(
       {
         sessions: {
-          conv_1: { sessionId: '019a0000-0000-7000-8000-000000000000', round: 0, lastRunAt: new Date().toISOString() },
+          conv_1: {
+            sessionId: '019a0000-0000-7000-8000-000000000000',
+            round: 0,
+            lastRunAt: new Date().toISOString(),
+            contact: false,
+          },
         },
       },
       {},
@@ -1800,7 +1858,11 @@ describe.each([
 
   it('starts a fresh session when OpenCode no longer has the old one', async () => {
     const { api, store } = await start(
-      { sessions: { conv_1: { sessionId: 'ses_gone', round: 0, lastRunAt: new Date().toISOString() } } },
+      {
+        sessions: {
+          conv_1: { sessionId: 'ses_gone', round: 0, lastRunAt: new Date().toISOString(), contact: false },
+        },
+      },
       {},
       undefined,
       opencodeOnly
@@ -1935,7 +1997,7 @@ describe.each([
 
       api.deliver({ text: 'ask:npx @agentinbox/cli invite anna@example.com', from: BEN });
       await eventually(() =>
-        expect(api.sentInto('conv_1')).toContain('Ran npx @agentinbox/cli invite anna@example.com (rules).')
+        expect(api.sentInto('conv_1')).toContain('Ran npx @agentinbox/cli invite anna@example.com (once).')
       );
       expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
       api.deliver({ text: 'ask:npm publish', from: BEN });
@@ -1955,10 +2017,31 @@ describe.each([
       api.deliver({ text: 'skill:hello', from: BEN });
       await eventually(() => expect(api.sentInto('conv_1')).toContain('Loaded the hello skill (rules).'));
       api.deliver({ text: 'read:docs/a.md', from: BEN });
-      await eventually(() => expect(api.sentInto('conv_1')).toContain('Read docs/a.md (rules).'));
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Read docs/a.md (once).'));
       api.deliver({ text: 'read:.env', from: BEN });
 
       await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed (denied by the rules).'));
+    });
+
+    it('refuses what could reach the key, whatever its words, with no card, and tells the agent why', async () => {
+      const { api, dir, logs } = await start({}, {}, undefined, opencodeOnly);
+      settings(dir, { bash: { 'cat *': 'allow' } });
+
+      api.deliver({ text: "ask:cat ~/.agent''inbox/config.json", from: BEN });
+
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContainEqual(
+          expect.stringMatching(/^Not allowed \(reject\)\. Told: Refused, as it could reach Agent Inbox’s key\./)
+        )
+      );
+      expect(api.interactions.filter((interaction) => interaction.kind === 'approve')).toHaveLength(0);
+      expect(logs).toContainEqual(
+        expect.stringMatching(
+          /^conv_1: refused, as this folder’s settings don’t allow it: .*could reach Agent Inbox’s key/
+        )
+      );
+      api.deliver({ text: 'ask:cat README.md', from: BEN });
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran cat README.md (once).'));
     });
 
     it('gets its own conversation tools, and resolves its conversation after its reply', async () => {

@@ -16,6 +16,7 @@ import {
   refusalOf,
   shellLine,
 } from './codex-folder';
+import { keyGuardFor } from './contact-guard';
 
 const FAKE_CODEX = fileURLToPath(new URL('./fake-codex.fixture.mjs', import.meta.url));
 
@@ -44,6 +45,7 @@ function folder(more: Partial<CodexFolder> = {}): CodexFolder {
     otherSkills: [],
     otherHooks: [],
     features: [],
+    guard: keyGuardFor(join(dir, 'app'), home),
     ...more,
   };
 }
@@ -121,7 +123,8 @@ describe('readCodexFolder', () => {
           ],
         },
       },
-      check
+      check,
+      home
     );
 
     expect(read).toEqual({
@@ -135,6 +138,7 @@ describe('readCodexFolder', () => {
       webSearch: 'live',
       features: ['view_image'],
       instructions: 'Answer in French.',
+      guard: { home, places: [join(home, '.agentinbox')], links: [] },
     });
     expect(hook).toMatchObject({ key: 'ours', currentHash: 'sha256:1' });
   });
@@ -143,7 +147,8 @@ describe('readCodexFolder', () => {
     const { folder: read, hook } = readCodexFolder(
       join(dir, 'app'),
       { read: { config: { mcp_servers: { github: {} } }, layers: null }, skills: {}, hooks: {} },
-      check
+      check,
+      home
     );
 
     expect(read).toEqual({
@@ -155,6 +160,7 @@ describe('readCodexFolder', () => {
       otherSkills: [],
       otherHooks: [],
       features: [],
+      guard: { home, places: [join(home, '.agentinbox')], links: [] },
     });
     expect(hook).toBeUndefined();
   });
@@ -164,17 +170,17 @@ describe('decideCodexTool: commands', () => {
   it('runs what a rule allows, asks what a rule says to ask, and refuses the rest with no card', async () => {
     const check = rules({ 'npm test': 'allow', 'npm publish': 'prompt', rm: 'forbidden' });
 
-    expect(await decideCodexTool(folder(), bash('npm test'), check, home)).toEqual({
+    expect(await decideCodexTool(folder(), bash('npm test'), check)).toEqual({
       decision: 'allow',
       what: '`npm test`',
     });
-    expect((await decideCodexTool(folder(), bash('npm publish --tag next'), check, home)).decision).toBe('ask');
-    expect(await decideCodexTool(folder(), bash('rm -rf build'), check, home)).toEqual({
+    expect((await decideCodexTool(folder(), bash('npm publish --tag next'), check)).decision).toBe('ask');
+    expect(await decideCodexTool(folder(), bash('rm -rf build'), check)).toEqual({
       decision: 'deny',
       what: '`rm -rf build`',
       why: 'a rule in the folder’s Codex settings forbids it',
     });
-    expect(await decideCodexTool(folder(), bash('echo hi'), check, home)).toEqual({
+    expect(await decideCodexTool(folder(), bash('echo hi'), check)).toEqual({
       decision: 'deny',
       what: '`echo hi`',
       why: 'no rule in the folder’s Codex settings allows it',
@@ -184,44 +190,53 @@ describe('decideCodexTool: commands', () => {
   it('decides a chain by its parts, and refuses what the shell works out for itself', async () => {
     const check = rules({ 'npm test': 'allow', 'npm publish': 'prompt' });
 
-    expect((await decideCodexTool(folder(), bash('npm test && npm publish'), check, home)).decision).toBe('ask');
-    expect((await decideCodexTool(folder(), bash('npm test && cat .env'), check, home)).decision).toBe('deny');
+    expect((await decideCodexTool(folder(), bash('npm test && npm publish'), check)).decision).toBe('ask');
+    expect((await decideCodexTool(folder(), bash('npm test && cat .env'), check)).decision).toBe('deny');
     for (const command of ['npm test | tee out', 'npm test; ls', 'npm test > out', 'npm test $FLAGS', 'npm test *']) {
-      expect(await decideCodexTool(folder(), bash(command), check, home)).toMatchObject({
+      expect(await decideCodexTool(folder(), bash(command), check)).toMatchObject({
         decision: 'deny',
         why: 'only plain commands are checked, alone or joined with &&',
       });
     }
   });
 
-  it('opens the key’s folder only to a rule that names it', async () => {
+  it('keeps the key closed, whatever a rule names, through links and in the file INBOX_CONFIG points at', async () => {
     const broad = rules({ cat: 'allow' });
     const naming = rules({ 'cat ~/.agentinbox/config.json': 'allow' });
+    const project = join(dir, 'app');
+    const at = (command: string) => ({ ...bash(command), cwd: project });
+    mkdirSync(join(project, 'docs'));
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'inbox'));
+    writeFileSync(join(project, 'inbox.json'), '{}');
 
-    expect(await decideCodexTool(folder(), bash('cat ~/.agentinbox/config.json'), broad, home)).toMatchObject({
+    expect(await decideCodexTool(folder(), bash('cat ~/.agentinbox/config.json'), broad)).toMatchObject({
       decision: 'deny',
       why: 'it could reach Agent Inbox’s key',
     });
     expect(
-      await decideCodexTool(folder(), bash(`cat ${join(home, '.agentinbox', 'config.json')}`), broad, home)
+      await decideCodexTool(folder(), bash(`cat ${join(home, '.agentinbox', 'config.json')}`), broad)
     ).toMatchObject({
       decision: 'deny',
     });
-    expect((await decideCodexTool(folder(), bash('cat ~/.agentinbox/config.json'), naming, home)).decision).toBe(
-      'allow'
-    );
+    // Not even a rule that names it opens it: only full access does.
+    expect((await decideCodexTool(folder(), bash('cat ~/.agentinbox/config.json'), naming)).decision).toBe('deny');
+    expect(await decideCodexTool(folder(), at('cat docs/inbox/config.json'), broad)).toMatchObject({
+      decision: 'deny',
+      why: 'it could reach Agent Inbox’s key',
+    });
+    expect((await decideCodexTool(folder(), at('cat inbox.json'), broad)).decision).toBe('allow');
+    const custom = folder({ guard: keyGuardFor(project, home, join(project, 'inbox.json')) });
+    expect((await decideCodexTool(custom, at('cat inbox.json'), broad)).decision).toBe('deny');
   });
 
   it('refuses a change to what decides a run, even where a rule allows it, and asks where a rule says to ask', async () => {
     expect(
-      await decideCodexTool(folder(), bash('cp evil.rules .codex/rules/default.rules'), rules({ cp: 'allow' }), home)
+      await decideCodexTool(folder(), bash('cp evil.rules .codex/rules/default.rules'), rules({ cp: 'allow' }))
     ).toMatchObject({ decision: 'deny', why: 'it would change the folder’s own settings or instructions' });
-    expect(
-      (await decideCodexTool(folder(), bash('cp notes.md AGENTS.md'), rules({ cp: 'prompt' }), home)).decision
-    ).toBe('ask');
-    expect((await decideCodexTool(folder(), bash('cat AGENTS.md'), rules({ cat: 'allow' }), home)).decision).toBe(
-      'allow'
+    expect((await decideCodexTool(folder(), bash('cp notes.md AGENTS.md'), rules({ cp: 'prompt' }))).decision).toBe(
+      'ask'
     );
+    expect((await decideCodexTool(folder(), bash('cat AGENTS.md'), rules({ cat: 'allow' }))).decision).toBe('allow');
   });
 
   it('reads the folder’s skills without a rule, and nothing past them', async () => {
@@ -236,7 +251,7 @@ describe('decideCodexTool: commands', () => {
       'head -n 40 .agents/skills/hello/SKILL.md',
       'ls -la .agents/skills/hello',
     ]) {
-      expect((await decideCodexTool(folder(), at(command), none, home)).decision).toBe('allow');
+      expect((await decideCodexTool(folder(), at(command), none)).decision).toBe('allow');
     }
     for (const command of [
       'cat .agents/skills/hello/../../../notes.txt',
@@ -246,7 +261,7 @@ describe('decideCodexTool: commands', () => {
       'python3 .agents/skills/hello/run.py',
       'ls',
     ]) {
-      expect((await decideCodexTool(folder(), at(command), none, home)).decision).toBe('deny');
+      expect((await decideCodexTool(folder(), at(command), none)).decision).toBe('deny');
     }
   });
 });
@@ -259,14 +274,13 @@ describe('decideCodexTool: other tools', () => {
       await decideCodexTool(
         folder(),
         { tool: 'apply_patch', input: { command: '*** Begin Patch\n*** Add File: notes.txt\n+hi\n*** End Patch' } },
-        none,
-        home
+        none
       )
     ).toEqual({ decision: 'deny', what: 'editing notes.txt', why: 'Codex has no rule that allows edits' });
   });
 
   it('lets the run’s own conversation tools and the folder’s MCP servers through, and no others', async () => {
-    const mcp = (tool: string) => decideCodexTool(folder(), { tool, input: {} }, none, home);
+    const mcp = (tool: string) => decideCodexTool(folder(), { tool, input: {} }, none);
 
     expect((await mcp('mcp__this_conversation__read')).decision).toBe('allow');
     expect((await mcp('mcp__docs__search')).decision).toBe('allow');
@@ -276,13 +290,13 @@ describe('decideCodexTool: other tools', () => {
       why: 'that MCP server isn’t the folder’s',
     });
     expect(
-      (await decideCodexTool(folder(), { tool: 'read_mcp_resource', input: { server: 'github' } }, none, home)).decision
+      (await decideCodexTool(folder(), { tool: 'read_mcp_resource', input: { server: 'github' } }, none)).decision
     ).toBe('deny');
   });
 
   it('lets through what only plans or asks the person, and what the folder turns on itself', async () => {
     const tool = (name: string, more: Partial<CodexFolder> = {}) =>
-      decideCodexTool(folder(more), { tool: name, input: {} }, none, home);
+      decideCodexTool(folder(more), { tool: name, input: {} }, none);
 
     expect((await tool('update_plan')).decision).toBe('allow');
     expect((await tool('request_user_input')).decision).toBe('allow');
@@ -308,7 +322,7 @@ describe('codexHookAnswer', () => {
   it('refuses with Codex’s hook answer, and says nothing to let Codex go on', async () => {
     const check = rules({ 'npm test': 'allow', 'npm publish': 'prompt' });
 
-    expect(JSON.parse(await codexHookAnswer(call('echo hi'), env(), check, home))).toEqual({
+    expect(JSON.parse(await codexHookAnswer(call('echo hi'), env(), check))).toEqual({
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
@@ -319,14 +333,14 @@ describe('codexHookAnswer', () => {
         }),
       },
     });
-    expect(await codexHookAnswer(call('npm test'), env(), check, home)).toBe('');
+    expect(await codexHookAnswer(call('npm test'), env(), check)).toBe('');
     // Codex asks the listener itself, which goes by the same rules.
-    expect(await codexHookAnswer(call('npm publish'), env(), check, home)).toBe('');
+    expect(await codexHookAnswer(call('npm publish'), env(), check)).toBe('');
   });
 
   it('refuses whatever it can’t read, or when the listener didn’t say what the folder allows', async () => {
     const reason = async (input: string, given: NodeJS.ProcessEnv) =>
-      JSON.parse(await codexHookAnswer(input, given, rules({ 'npm test': 'allow' }), home)).hookSpecificOutput
+      JSON.parse(await codexHookAnswer(input, given, rules({ 'npm test': 'allow' }))).hookSpecificOutput
         .permissionDecisionReason;
 
     expect(await reason(call('npm test'), {})).toMatch(/^Refused: Bash, as the check didn’t work/);

@@ -1,4 +1,5 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -6,6 +7,10 @@ import type { Rule } from './opencode';
 import {
   contactConfigContent,
   contactSessionRules,
+  decideOpenCodeCall,
+  effectOf,
+  fitsPattern,
+  folderSessionRules,
   type OpenCodeFolder,
   parseJsonc,
   readOpenCodeFolder,
@@ -31,10 +36,7 @@ afterEach(() => {
 
 /** The last rule that fits decides, as OpenCode goes by them. */
 function decide(rules: readonly Rule[], name: string, pattern: string): Rule['effect'] | undefined {
-  const fits = (text: string, wildcard: string) =>
-    new RegExp(`^${wildcard.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`, 's').test(text);
-
-  return rules.findLast((rule) => fits(name, rule.name) && fits(pattern, rule.pattern))?.effect;
+  return effectOf(rules, name, [pattern]);
 }
 
 describe('readOpenCodeFolder', () => {
@@ -70,6 +72,7 @@ describe('readOpenCodeFolder', () => {
       ],
       skills: [],
       servers: ['docs'],
+      guard: { home, places: [join(home, '.agentinbox')], links: [] },
     });
     expect(readOpenCodeFolder(project, 1, home).rules[0]).toEqual({
       name: 'bash',
@@ -116,7 +119,13 @@ describe('readOpenCodeFolder', () => {
   it('says nothing when the folder has no settings of its own, or settings it can’t read', () => {
     writeFileSync(join(project, 'opencode.json'), '{ not json');
 
-    expect(readOpenCodeFolder(project, 2, home)).toEqual({ project, rules: [], skills: [], servers: [] });
+    expect(readOpenCodeFolder(project, 2, home)).toEqual({
+      project,
+      rules: [],
+      skills: [],
+      servers: [],
+      guard: { home, places: [join(home, '.agentinbox')], links: [] },
+    });
   });
 });
 
@@ -128,13 +137,15 @@ describe('contactSessionRules', () => {
       { name: 'edit', pattern: '*', effect: 'allow' },
       { name: 'read', pattern: '*', effect: 'allow' },
       { name: 'shell', pattern: 'npm publish', effect: 'ask' },
+      { name: 'webfetch', pattern: 'https://docs.example.com/*', effect: 'allow' },
     ],
     skills: ['hello'],
     servers: [],
+    guard: { home: '/Users/ada', places: ['/Users/ada/.agentinbox', '/work/app/inbox.json'], links: [] },
   };
 
   it('refuses everything the folder’s rules don’t allow, and goes by them', () => {
-    const rules = contactSessionRules(2, folder);
+    const rules = folderSessionRules(2, folder);
 
     expect(rules[0]).toEqual({ name: '*', pattern: '*', effect: 'deny' });
     expect(decide(rules, 'shell', 'git status')).toBe('allow');
@@ -142,6 +153,16 @@ describe('contactSessionRules', () => {
     expect(decide(rules, 'shell', 'rm -rf build')).toBe('deny');
     expect(decide(rules, 'webfetch', 'https://example.com')).toBe('deny');
     expect(decide(rules, 'github_create_issue', '*')).toBe('deny');
+  });
+
+  it('has OpenCode ask the listener about the files and commands the folder allows, and nothing else', () => {
+    const rules = contactSessionRules(2, folder);
+
+    expect(decide(rules, 'shell', 'git status')).toBe('ask');
+    expect(decide(rules, 'read', 'src/index.ts')).toBe('ask');
+    expect(decide(rules, 'edit', 'src/index.ts')).toBe('ask');
+    expect(decide(rules, 'shell', 'rm -rf build')).toBe('deny');
+    expect(decide(rules, 'webfetch', 'https://docs.example.com/a')).toBe('allow');
   });
 
   it('lets the folder’s skills, questions to the person and its own conversation tools through', () => {
@@ -154,21 +175,28 @@ describe('contactSessionRules', () => {
     expect(decide(rules, 'this_conversation_resolve', '*')).toBe('allow');
   });
 
-  it('keeps the key’s folder closed to rules that don’t name it', () => {
+  it('keeps the key closed, whatever a rule names, and the file INBOX_CONFIG points at too', () => {
     const rules = contactSessionRules(2, folder);
 
     expect(decide(rules, 'read', '/Users/ada/.agentinbox/config.json')).toBe('deny');
+    expect(decide(rules, 'read', '/work/app/inbox.json')).toBe('deny');
     expect(decide(rules, 'shell', 'git show HEAD:../.agentinbox/config.json')).toBe('deny');
     expect(decide(rules, 'shell', 'git config --get INBOX_CONFIG')).toBe('deny');
+    // Not even a rule that names it opens it, nor one for something else in its folder.
     const naming = contactSessionRules(2, {
       ...folder,
-      rules: [{ name: 'read', pattern: '/Users/ada/.agentinbox/*', effect: 'allow' }],
+      rules: [
+        { name: 'read', pattern: '*', effect: 'allow' },
+        { name: 'read', pattern: '/Users/ada/.agentinbox/*', effect: 'allow' },
+        { name: 'read', pattern: '/Users/ada/.agentinbox/notes.txt', effect: 'ask' },
+      ],
     });
-    expect(decide(naming, 'read', '/Users/ada/.agentinbox/config.json')).toBe('allow');
+    expect(decide(naming, 'read', '/Users/ada/.agentinbox/config.json')).toBe('deny');
+    expect(decide(naming, 'read', '/Users/ada/.agentinbox/notes.txt')).toBe('deny');
   });
 
   it('refuses changes to what decides a run, whatever allows them', () => {
-    const rules = contactSessionRules(2, folder);
+    const rules = folderSessionRules(2, folder);
 
     for (const path of ['opencode.json', '/work/app/.opencode/agents/x.md', 'AGENTS.md', '.git/hooks/pre-commit']) {
       expect(decide(rules, 'edit', path)).toBe('deny');
@@ -182,6 +210,131 @@ describe('contactSessionRules', () => {
     expect(decide(contactSessionRules(2, folder), 'execute', '*')).toBe('deny');
     expect(decide(contactSessionRules(1, folder), 'task', '*')).toBe('deny');
     expect(decide(contactSessionRules(1, folder), 'bash', '/x/.agentinbox/key')).toBe('deny');
+  });
+});
+
+describe('fitsPattern', () => {
+  it('matches as OpenCode matches its rules', () => {
+    expect(fitsPattern('git status', 'git *')).toBe(true);
+    // A pattern that ends with ` *` fits the words before it alone too.
+    expect(fitsPattern('ls', 'ls *')).toBe(true);
+    expect(fitsPattern('ls -la', 'ls *')).toBe(true);
+    expect(fitsPattern('lsof -i', 'ls *')).toBe(false);
+    expect(fitsPattern('a.txt', '?.txt')).toBe(true);
+    expect(fitsPattern('ab.txt', '?.txt')).toBe(false);
+    expect(fitsPattern('src\\a.ts', 'src/*')).toBe(true);
+    expect(fitsPattern('read', 're(a)d')).toBe(false);
+  });
+});
+
+describe('decideOpenCodeCall', () => {
+  const shell = (command: string) => ({ name: 'shell', patterns: [command], input: { command }, metadata: {} });
+  const tool = (name: string, input: Record<string, unknown>, patterns: string[] = []) => ({
+    name,
+    patterns,
+    input,
+    metadata: {},
+  });
+  let folder: OpenCodeFolder;
+
+  beforeEach(() => {
+    mkdirSync(join(home, '.agentinbox'), { recursive: true });
+    writeFileSync(join(home, '.agentinbox', 'config.json'), '{}');
+    mkdirSync(join(project, 'docs'));
+    writeFileSync(join(project, 'docs', 'a.md'), '');
+    writeFileSync(
+      join(project, 'opencode.json'),
+      JSON.stringify({
+        permission: {
+          read: 'allow',
+          glob: 'allow',
+          grep: 'allow',
+          external_directory: 'allow',
+          bash: { 'cat *': 'allow', 'git *': 'allow', 'npm publish': 'ask' },
+        },
+      })
+    );
+    folder = readOpenCodeFolder(project, 2, home);
+  });
+
+  it('lets through what the folder’s rules allow, and asks or refuses as they say', () => {
+    expect(decideOpenCodeCall(2, folder, shell('cat docs/a.md'))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, folder, shell('git status && cat docs/a.md'))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, folder, shell('npm publish'))).toEqual({ decision: 'ask' });
+    expect(decideOpenCodeCall(2, folder, shell('rm -rf build'))).toEqual({
+      decision: 'deny',
+      why: 'the folder’s OpenCode settings don’t allow it',
+    });
+    const readme = join(project, 'docs', 'a.md');
+    expect(decideOpenCodeCall(2, folder, tool('read', { filePath: readme }, [readme]))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, folder, tool('grep', { pattern: 'TODO' }, ['TODO']))).toEqual({ decision: 'allow' });
+    // What OpenCode decides by its rules alone.
+    expect(decideOpenCodeCall(2, folder, tool('webfetch', {}, ['https://example.com']))).toBeUndefined();
+  });
+
+  it('keeps the key closed, whatever a command’s words, quotes, patterns or links say', () => {
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'inbox'));
+    for (const command of [
+      'cat ~/.agentinbox/config.json',
+      "cat ~/.agent''inbox/config.json",
+      'cat ~/.agent*/config.json',
+      'cat docs/inbox/config.json',
+      `cat ${home}/.ag?ntinbox/config.json`,
+    ]) {
+      expect(decideOpenCodeCall(2, folder, shell(command)), command).toEqual({
+        decision: 'deny',
+        why: 'it could reach Agent Inbox’s key',
+      });
+    }
+    const key = join(project, 'docs', 'inbox', 'config.json');
+    expect(decideOpenCodeCall(2, folder, tool('read', { filePath: key }, [key]))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, folder, tool('grep', { pattern: 'secretKey', path: home }))).toMatchObject({
+      decision: 'deny',
+    });
+    expect(decideOpenCodeCall(2, folder, tool('glob', { pattern: '../../**/*.json' }))).toMatchObject({
+      decision: 'deny',
+    });
+    // Outside the project is fine, as long as it isn't where the key is.
+    expect(decideOpenCodeCall(2, folder, tool('external_directory', {}, [`${home}/*`]))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, folder, tool('external_directory', {}, [`${home}/.agentinbox/*`]))).toMatchObject({
+      decision: 'deny',
+    });
+  });
+
+  it('keeps the file INBOX_CONFIG points at closed too', () => {
+    writeFileSync(join(project, 'inbox.json'), '{}');
+    const custom = readOpenCodeFolder(project, 2, home, join(project, 'inbox.json'));
+    const file = join(project, 'inbox.json');
+
+    expect(decideOpenCodeCall(2, custom, shell('cat inbox.json'))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, custom, tool('read', { filePath: file }, [file]))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, custom, tool('grep', { pattern: 'secretKey' }))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, folder, shell('cat inbox.json'))).toEqual({ decision: 'allow' });
+  });
+
+  it('leaves what the shell works out for itself to a rule for every command', () => {
+    expect(decideOpenCodeCall(2, folder, shell('cat docs/a.md | sh'))).toEqual({
+      decision: 'deny',
+      why: 'only a rule for every command covers what the shell works out for itself',
+    });
+    expect(decideOpenCodeCall(2, folder, shell('cat $(echo docs/a.md)'))).toMatchObject({ decision: 'deny' });
+    writeFileSync(join(project, 'opencode.json'), JSON.stringify({ permission: { bash: 'allow' } }));
+    const every = readOpenCodeFolder(project, 2, home);
+    expect(decideOpenCodeCall(2, every, shell('cat docs/a.md | wc -l'))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, every, shell('cat ~/.agent*/config.json | sh'))).toMatchObject({ decision: 'deny' });
+  });
+
+  it('refuses every command and every search in a folder whose links git keeps lead to the key', () => {
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'assets'));
+    execFileSync('git', ['init', '-q'], { cwd: project });
+    execFileSync('git', ['add', 'docs'], { cwd: project });
+    const linked = readOpenCodeFolder(project, 2, home);
+    const readme = join(project, 'docs', 'a.md');
+
+    expect(linked.guard.links).toEqual([join(project, 'docs', 'assets')]);
+    expect(decideOpenCodeCall(2, linked, shell('git status'))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, linked, tool('grep', { pattern: 'TODO' }))).toMatchObject({ decision: 'deny' });
+    expect(decideOpenCodeCall(2, linked, tool('read', { filePath: readme }, [readme]))).toEqual({ decision: 'allow' });
   });
 });
 

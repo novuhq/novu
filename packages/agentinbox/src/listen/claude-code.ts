@@ -131,7 +131,7 @@ const CHECK_TAKEN_MS = 30_000;
  *   - `--strict-mcp-config` with `--mcp-config` starts the run's conversation tools and the folder's MCP servers
  *     that a rule names, and no others;
  *   - `--permission-mode default`, as the listener's own check decides every call;
- *   - `--settings` denies the key's folder, unless a rule names it.
+ *   - `--settings` denies reading and editing where the key is, whatever a rule says.
  */
 export function claudeArgs(
   options: Pick<OpenOptions, 'instructions' | 'contact'> & { sessionId: string; resume: boolean; folder?: ClaudeFolder }
@@ -161,7 +161,11 @@ export function claudeArgs(
 
 /** The flags that keep a contact's run to what the folder's own settings give it. */
 function contactArgs(contact: NonNullable<OpenOptions['contact']>, folder: ClaudeFolder): string[] {
-  const namesKey = [...folder.allow, ...folder.ask].some((rule) => /\.agentinbox\b/i.test(rule.specifier ?? ''));
+  // Where the key is, as Claude Code's own rules write a path: `~/` from home, `//` from the root.
+  const keyRules = [
+    '~/.agentinbox/**',
+    ...folder.guard.places.flatMap((place) => [`/${place}`, `/${place}/**`]),
+  ].flatMap((path) => [`Read(${path})`, `Edit(${path})`]);
 
   return [
     '--setting-sources',
@@ -176,12 +180,8 @@ function contactArgs(contact: NonNullable<OpenOptions['contact']>, folder: Claud
         [CONVERSATION_TOOLS_SERVER]: { type: 'stdio', command: contact.tools.command, args: contact.tools.args },
       },
     }),
-    ...(namesKey
-      ? []
-      : [
-          '--settings',
-          JSON.stringify({ permissions: { deny: ['Read(~/.agentinbox/**)', 'Edit(~/.agentinbox/**)'] } }),
-        ]),
+    '--settings',
+    JSON.stringify({ permissions: { deny: keyRules } }),
   ];
 }
 
@@ -363,7 +363,9 @@ class ClaudeCodeSession implements HostSession {
   constructor(options: OpenOptions, handlers: SessionHandlers) {
     this.handlers = handlers;
     this.id = options.resume ?? randomUUID();
-    this.folder = options.contact ? readClaudeFolder(options.project) : undefined;
+    this.folder = options.contact
+      ? readClaudeFolder(options.project, homedir(), (options.env ?? process.env).INBOX_CONFIG)
+      : undefined;
     const env = sessionEnv(options.env ?? process.env);
     this.child = spawn(
       options.program.command,
@@ -688,7 +690,7 @@ class ClaudeCodeSession implements HostSession {
     let why = 'This folder’s settings don’t allow it in a contact’s conversation, so don’t look for another way.';
     if (input.hook_event_name === 'PreToolUse') {
       try {
-        decision = this.folder ? decideForContact(this.folder, tool, toolInput) : 'deny';
+        decision = this.folder ? decideForContact(this.folder, tool, toolInput, stringOf(input.cwd)) : 'deny';
       } catch (err) {
         decision = 'deny';
         why = `The listener couldn’t check this (${err instanceof Error ? err.message : String(err)}), so it doesn’t run.`;

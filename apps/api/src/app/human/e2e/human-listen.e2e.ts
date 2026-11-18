@@ -1241,6 +1241,13 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await asDashboard('patch', `/v1/human/contacts/${bobId}`).send({ fullAccess: 'yes' })).status).to.equal(
         422
       );
+      // `null` is no switch's value, not even off: nothing changes.
+      expect((await setListenTo(bobId, true)).status).to.equal(200);
+      for (const body of [{ listenTo: null }, { fullAccess: null }, { listenTo: true, fullAccess: null }]) {
+        const res = await asDashboard('patch', `/v1/human/contacts/${bobId}`).send(body);
+        expect(res.status).to.equal(422, JSON.stringify(res.body));
+      }
+      expect((await listContacts()).get(bobId)).to.include({ listenTo: true, fullAccess: false });
     });
   });
 });

@@ -5,9 +5,10 @@ import { basename, dirname, join, resolve } from 'node:path';
 import {
   chainParts,
   commandNames,
-  commandTouchesKey,
+  commandReachesKey,
   type Decision,
-  namesKey,
+  type KeyGuard,
+  keyGuardFor,
   realTarget,
   within,
 } from './contact-guard';
@@ -27,7 +28,8 @@ import { realPathOf, simpleCommandWords } from './own-replies';
  * - The folder's skills are only instructions: reading them needs no rule. Running their scripts does.
  * - The folder's MCP servers stay, as its settings have them, and so do its web search and the tools it turns on
  *   itself. The run's own conversation tools (`conversation-tools.ts`) always work.
- * - The folder where the CLI keeps its key (`~/.agentinbox`) opens only to a rule that names it.
+ * - Agent Inbox's key (`~/.agentinbox`, or the file `INBOX_CONFIG` points at) stays closed, whatever a rule says
+ *   (`contact-guard.ts`): only full access opens it.
  * - A command its rules allow that would change what decides a run (the folder's `.codex`, `.agents`, `AGENTS.md`, or
  *   git's own files) is refused: Codex runs what its rules allow without asking, and its check can't ask either.
  *
@@ -54,6 +56,8 @@ export interface CodexFolder {
   features: string[];
   /** The folder's own developer instructions. */
   instructions?: string;
+  /** What keeps Agent Inbox's key from the run. */
+  guard: KeyGuard;
 }
 
 /**
@@ -145,12 +149,15 @@ export interface CodexHook {
 
 /**
  * What the folder's own settings say, as Codex reads them for the folder (`read`, `skills`, `hooks`), and the
- * listener's hook among the hooks (`check`, its command), which the run trusts by its hash.
+ * listener's hook among the hooks (`check`, its command), which the run trusts by its hash. The key is where the CLI
+ * finds it: `configFile` when `INBOX_CONFIG` names one.
  */
 export function readCodexFolder(
   project: string,
   lists: { read: CodexConfigRead; skills: CodexSkillsList; hooks: CodexHooksList },
-  check: string
+  check: string,
+  home: string = homedir(),
+  configFile: string | undefined = process.env.INBOX_CONFIG
 ): { folder: CodexFolder; hook?: CodexHook } {
   // The project's layers that Codex loads, the one nearest the folder first, as Codex lists them.
   const layers = (lists.read.layers ?? []).flatMap((layer) =>
@@ -188,6 +195,7 @@ export function readCodexFolder(
         layers.some(({ config }) => isRecord(config.features) && config.features[name] === true)
       ),
       ...(instructions ? { instructions } : {}),
+      guard: keyGuardFor(project, home, configFile),
     },
     ...(hook ? { hook } : {}),
   };
@@ -270,17 +278,12 @@ export interface Verdict {
 }
 
 /** What a contact's run may do about one tool call, by the folder's own Codex settings. */
-export async function decideCodexTool(
-  folder: CodexFolder,
-  call: CodexCall,
-  check: RuleCheck,
-  home: string = homedir()
-): Promise<Verdict> {
+export async function decideCodexTool(folder: CodexFolder, call: CodexCall, check: RuleCheck): Promise<Verdict> {
   const cwd = call.cwd || folder.project;
   if (SHELL_TOOLS.has(call.tool)) {
     const command = commandOf(call.input);
 
-    return decideCommand(folder, command, cwd, check, realPathOf(home));
+    return decideCommand(folder, command, cwd, check);
   }
   if (call.tool === 'apply_patch') {
     return { decision: 'deny', what: editsOf(call.input), why: 'Codex has no rule that allows edits' };
@@ -314,26 +317,23 @@ export async function decideCodexTool(
 /**
  * A command, part by part: a chain joined by `&&` is decided by its parts, and asks when one part asks. Anything the
  * shell would work out for itself (pipes, `;`, redirections, variables, file name patterns) is refused: what it would
- * run can't be told from its words.
+ * run can't be told from its words. So is a command that could reach the key, whatever a rule says.
  */
-async function decideCommand(
-  folder: CodexFolder,
-  command: string,
-  cwd: string,
-  check: RuleCheck,
-  home: string
-): Promise<Verdict> {
+async function decideCommand(folder: CodexFolder, command: string, cwd: string, check: RuleCheck): Promise<Verdict> {
   const what = `\`${clip(command.replace(/\s+/g, ' ').trim(), 200)}\``;
   const refuse = (why: string): Verdict => ({ decision: 'deny', what, why });
   const parts = chainParts(command)?.map((raw) => ({ raw, words: simpleCommandWords(raw) }));
   if (!parts || parts.some((part) => !part.words)) {
     return refuse('only plain commands are checked, alone or joined with &&');
   }
+  if (commandReachesKey(command, cwd, folder.guard)) {
+    return refuse('it could reach Agent Inbox’s key');
+  }
 
   let decision: Decision = 'allow';
   for (const { raw, words } of parts) {
     const read = plainRead(words ?? []);
-    if (read && read.length > 0 && read.every((path) => inSkills(path, folder, cwd, home))) {
+    if (read && read.length > 0 && read.every((path) => inSkills(path, folder, cwd))) {
       continue;
     }
     const match = await check(words ?? []);
@@ -342,9 +342,6 @@ async function decideCommand(
     }
     if (!match.decision) {
       return refuse('no rule in the folder’s Codex settings allows it');
-    }
-    if (commandTouchesKey(raw, home) && !match.prefixes.some((prefix) => prefix.some(namesKey))) {
-      return refuse('it could reach Agent Inbox’s key');
     }
     if (!read && match.decision === 'allow' && commandNames(raw, DECIDING)) {
       return refuse('it would change the folder’s own settings or instructions');
@@ -396,8 +393,8 @@ function sedPrints(words: string[]): string[] | undefined {
 }
 
 /** Whether a path a command reads is in one of the folder's skills, its links followed. */
-function inSkills(path: string, folder: CodexFolder, cwd: string, home: string): boolean {
-  const full = path === '~' || path.startsWith('~/') ? join(home, path.slice(1)) : resolve(cwd, path);
+function inSkills(path: string, folder: CodexFolder, cwd: string): boolean {
+  const full = path === '~' || path.startsWith('~/') ? join(folder.guard.home, path.slice(1)) : resolve(cwd, path);
   const real = realTarget(full);
 
   return folder.skills.some((skill) => within(real, realPathOf(skill)));
@@ -479,12 +476,7 @@ export function readRefusal(text: string): { what: string; why: string } | undef
  * What the hook answers Codex about one tool call (`input`, as Codex gives it): a refusal, or nothing, which lets
  * Codex go on as the folder's settings say. Anything it can't read, or a check that fails, is a refusal.
  */
-export async function codexHookAnswer(
-  input: string,
-  env: NodeJS.ProcessEnv,
-  check?: RuleCheck,
-  home: string = homedir()
-): Promise<string> {
+export async function codexHookAnswer(input: string, env: NodeJS.ProcessEnv, check?: RuleCheck): Promise<string> {
   let what = 'this tool call';
   try {
     const call = JSON.parse(input) as { tool_name?: unknown; tool_input?: unknown; cwd?: unknown };
@@ -500,8 +492,7 @@ export async function codexHookAnswer(
         input: isRecord(call.tool_input) ? call.tool_input : {},
         ...(stringOf(call.cwd) ? { cwd: stringOf(call.cwd) } : {}),
       },
-      check ?? execPolicyCheck(given.codex, given.folder.rules, env),
-      home
+      check ?? execPolicyCheck(given.codex, given.folder.rules, env)
     );
 
     return verdict.decision === 'deny' ? hookDeny(refusalOf(verdict)) : '';
