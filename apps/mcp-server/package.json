@@ -1,5 +1,6 @@
 {
 	"dependencies": {
+		"@clerk/mcp-tools": "^0.9.0",
 		"@modelcontextprotocol/sdk": "^1.31.0",
 		"agents": "^0.21.0",
 		"zod": "^4.6.6"

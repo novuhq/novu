@@ -96,17 +96,16 @@ export class MarkMessageAsByMark {
 
   private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {
     this.updateSocketCount(subscriber, markAs);
-    const analyticMessage =
-      command.__source === 'notification_center'
-        ? `Mark as ${markAs} - [Notification Center]`
-        : `Mark as ${markAs} - [API]`;
 
-    for (const message of messages) {
-      this.analyticsService.mixpanelTrack(analyticMessage, '', {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
+    // "[Notification Center]" analytics event removed; the "[API]" one is kept
+    if (command.__source !== 'notification_center') {
+      for (const message of messages) {
+        this.analyticsService.mixpanelTrack(`Mark as ${markAs} - [API]`, '', {
+          _subscriber: message._subscriberId,
+          _organization: command.organizationId,
+          _template: message._templateId,
+        });
+      }
     }
   }
 

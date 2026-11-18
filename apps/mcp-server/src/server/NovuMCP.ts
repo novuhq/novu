@@ -11,6 +11,7 @@ import { registerPreferenceTools } from "../tools/preferences";
 import { registerSubscriberTools } from "../tools/subscribers";
 import { registerWorkflowTools } from "../tools/workflows";
 import type { ToolAccessors } from "../utils/tool-accessors";
+import { FEEDBACK_SERVER_INFO, registerFeedbackTool } from "./feedback";
 
 /**
  * Per-session credentials handed off by the worker via `ctx.props` (the
@@ -26,10 +27,7 @@ export type NovuProps = {
 };
 
 export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
-	server = new McpServer({
-		name: "Novu MCP Server",
-		version: "1.0.0",
-	});
+	server = new McpServer(FEEDBACK_SERVER_INFO);
 
 	async init() {
 		console.log("Novu MCP Server initializing...");
@@ -63,5 +61,6 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 		registerNotificationTools(this.server, accessors);
 		registerPreferenceTools(this.server, accessors);
 		registerIntegrationTools(this.server, accessors);
+		registerFeedbackTool(this.server, this.env.CLERK_SECRET_KEY);
 	}
 }

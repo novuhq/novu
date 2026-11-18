@@ -121,7 +121,6 @@ type MessageContext = {
    * resolved once from the bridge output. Its absence keeps the legacy plain-text `content` path.
    */
   card?: CardElement;
-  i18nInstance: unknown;
   assignedAgentId: string | null;
 };
 
@@ -255,12 +254,6 @@ export class SendMessageChat extends SendMessageBase {
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
-
     const template = await this.processVariants(command);
 
     if (template) {
@@ -273,6 +266,12 @@ export class SendMessageChat extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -286,7 +285,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, card, i18nInstance, assignedAgentId };
+    return { command, step, content, card, assignedAgentId };
   }
 
   /**
@@ -1208,6 +1207,7 @@ export class SendMessageChat extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return {
@@ -1257,6 +1257,7 @@ export class SendMessageChat extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return {

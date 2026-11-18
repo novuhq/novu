@@ -249,13 +249,14 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      const i18nInstance = await this.initiateTranslations(
-        command.environmentId,
-        command.organizationId,
-        subscriber?.locale
-      );
-
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber?.locale
+        );
+
         ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
           CompileEmailTemplateCommand.create({
             environmentId: command.environmentId,
@@ -646,6 +647,7 @@ export class SendMessageEmail extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
@@ -711,6 +713,7 @@ export class SendMessageEmail extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(

@@ -1,6 +1,6 @@
 ---
 title: Novu MCP Server
-description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
+description: Connect Cursor, Claude, ChatGPT, Grok, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
 ---
 
 The Novu MCP Server exposes Novu's notification and agent infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, agents, conversations, and delivery activity from natural-language prompts.
@@ -28,7 +28,7 @@ Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills
 
 - A Novu Cloud account
 - OAuth access, or a [Novu Cloud API key](https://dashboard.novu.co/settings/api-keys)
-- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
+- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, Grok, VS Code, Codex, Copilot CLI, Devin Desktop, Antigravity, or similar
 
 ## Endpoints
 
@@ -48,7 +48,7 @@ Connecting with **OAuth** is recommended - you don't copy or paste a key; your c
 <Tabs>
   <Tab title="Cursor">
 
-Open **Cursor Settings** → **Tools & Integrations** → **New MCP Server**, and add:
+Add the server to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
 
 ```json
 {
@@ -60,13 +60,13 @@ Open **Cursor Settings** → **Tools & Integrations** → **New MCP Server**, an
 }
 ```
 
-Save the file. Cursor will prompt you to sign in to Novu the first time it calls a tool.
+Save the file, then open the MCP server list in Cursor's settings and select **Connect** (or **Needs login**) next to `novu` to sign in to Novu.
 
   </Tab>
 
   <Tab title="VS Code">
 
-Add to `.vscode/mcp.json` (or your user MCP settings):
+Run **MCP: Add Server** from the Command Palette, choose **HTTP**, and enter the MCP URL for your region. Or add it to `.vscode/mcp.json` yourself (run **MCP: Open User Configuration** to add it for every workspace):
 
 ```json
 {
@@ -79,61 +79,152 @@ Add to `.vscode/mcp.json` (or your user MCP settings):
 }
 ```
 
-Reload VS Code and approve the sign-in prompt when it appears.
+Start the server and approve the sign-in prompt when it appears. VS Code opens a browser window to sign in to Novu.
 
   </Tab>
 
   <Tab title="Claude Code">
 
+Add the server, then sign in:
+
 ```bash
 claude mcp add --transport http novu https://mcp.novu.co/
 ```
 
-Then run `/mcp` inside Claude Code to sign in.
+```bash
+claude mcp login novu
+```
+
+`claude mcp login` opens your browser to sign in to Novu. On a remote or headless machine, add `--no-browser` and paste the redirect URL back when prompted. You can also run `/mcp` inside Claude Code and choose `novu` to sign in.
+
+Add `--scope user` to the `add` command to make the server available in all your projects.
 
   </Tab>
 
   <Tab title="ChatGPT">
 
-Add Novu as a custom connector using the MCP URL for your region, and choose **OAuth** as the connection mechanism. ChatGPT will prompt you to sign in to Novu.
+1. In ChatGPT on the web, open **Settings** → **Apps** → **Advanced settings** and turn on **Developer mode**. On Business, Enterprise, and Edu workspaces, an admin may need to allow it first.
+2. Select **Create app**, give it a name, and enter the MCP URL for your region.
+3. Choose **OAuth** as the authentication method, create the app, and sign in to Novu when prompted.
 
   </Tab>
 
   <Tab title="Claude Desktop">
 
-Claude Desktop doesn't yet support remote OAuth, so connect with an API key through the [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) proxy (requires Node.js 18+):
+Add Novu as a custom connector. It works the same way in Claude Desktop and on claude.ai:
 
-```json
-{
-  "mcpServers": {
-    "novu": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.novu.co/",
-        "--header",
-        "Authorization:Bearer your-novu-api-key"
-      ]
-    }
-  }
-}
-```
+1. Open **Customize** → **Connectors**, select **+ Add**, then **Add custom connector**.
+2. Name it `Novu`, enter the MCP URL for your region, and select **Continue**.
+3. Leave authentication on OAuth, select **Add**, and sign in to Novu.
+4. In a chat, open the **+** menu → **Connectors** and turn Novu on.
+
+On Team and Enterprise plans, an Owner adds the connector under **Organization settings** → **Connectors**, and members then select **Connect** on it.
+
+  </Tab>
+
+  <Tab title="Grok">
+
+**On grok.com:**
+
+1. Go to [grok.com/connectors](https://grok.com/connectors), select **New Connector**, then **Custom**.
+2. Enter the MCP URL for your region and sign in to Novu when prompted.
+
+On Grok Business and Enterprise, a team admin adds the connector first. Team members then connect their own Novu account.
+
+**In Grok Bot:**
+
+1. Open **Connect apps** from the sidebar and choose **Add a custom connector**.
+2. Name it `Novu`, set **Type** to **Remote HTTPS**, enter the MCP URL for your region, and select **Add plugin**.
+3. When the Bot asks you to **Authorize**, sign in to Novu in your browser. Then type `@` in a chat and pick Novu to use it.
 
   </Tab>
 
   <Tab title="Codex">
 
-Codex connects with an API key today:
+Add the server, then sign in:
 
 ```bash
-export NOVU_API_KEY="your-novu-api-key"
+codex mcp add novu --url https://mcp.novu.co/
 ```
+
+```bash
+codex mcp login novu
+```
+
+This writes the server to `~/.codex/config.toml`. Run `codex mcp list` or `/mcp` in the TUI to confirm it's connected. In the Codex desktop app or IDE extension, open **Settings** → **MCP servers** and select **Authenticate** instead.
+
+To use an API key instead of OAuth, set it in an environment variable and point `bearer_token_env_var` at it in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.novu]
 url = "https://mcp.novu.co/"
 bearer_token_env_var = "NOVU_API_KEY"
 ```
+
+  </Tab>
+
+  <Tab title="Copilot CLI">
+
+Add the server from your terminal:
+
+```bash
+copilot mcp add --transport http novu https://mcp.novu.co/
+```
+
+Or run `/mcp add` inside a Copilot CLI session, fill in the name and URL, and press **Ctrl+S** to save. The server is saved to `~/.copilot/mcp-config.json`.
+
+Copilot CLI opens your browser to sign in to Novu the first time it connects. To sign in again later, run `/mcp auth novu`.
+
+  </Tab>
+
+  <Tab title="Devin Desktop">
+
+Devin Desktop was formerly Windsurf. Add the server, then sign in:
+
+```bash
+devin mcp add novu --url https://mcp.novu.co/
+```
+
+```bash
+devin mcp login novu
+```
+
+To add it by hand instead, put this in `~/.config/devin/mcp_config.json` (all projects) or `.devin/mcp_config.json` (one project):
+
+```json
+{
+  "mcpServers": {
+    "novu": {
+      "url": "https://mcp.novu.co/",
+      "transport": "http"
+    }
+  }
+}
+```
+
+If the server later shows **Needs authentication**, open **Customize** → **MCPs** and select **Authenticate**.
+
+  </Tab>
+
+  <Tab title="Antigravity">
+
+Add the server to `~/.gemini/config/mcp_config.json`, which the Antigravity app, IDE, and CLI all read. For a single workspace, use `.agents/mcp_config.json` instead. In the IDE, you can open this file from **…** → **MCP Servers** → **Manage MCP Servers** → **View raw config**.
+
+```json
+{
+  "mcpServers": {
+    "novu": {
+      "serverUrl": "https://mcp.novu.co/"
+    }
+  }
+}
+```
+
+To sign in, open **Customizations** → **Installed** → **MCP Servers** in the Antigravity app and select **Authenticate** next to `novu`. Sign in to Novu in your browser, paste the authorization code back into Antigravity, and select **Submit**.
+
+<Note>
+  Gemini CLI was replaced by Antigravity CLI on June 18, 2026, for unpaid and Google One users. If you still use Gemini CLI, run `gemini mcp add --transport http novu https://mcp.novu.co/`, then `/mcp auth novu` to sign in.
+</Note>
 
   </Tab>
 
@@ -178,7 +269,7 @@ Presenting an API key skips the OAuth sign-in entirely. A key is bound to a sing
 
 ## Environments
 
-OAuth sessions are scoped to your organization and default to the **Development** environment. To act on a different environment (for example, Production), call `get_environments` and pass the environment's `_id` as the optional `environmentId` parameter on any tool except `whoami` and `get_step_schema`.
+OAuth sessions are scoped to your organization and default to the **Development** environment. To act on a different environment (for example, Production), call `get_environments` and pass the environment's `_id` as the optional `environmentId` parameter on any tool except `whoami`, `get_step_schema` and `submit_feedback`.
 
 API keys are already bound to one environment, so `environmentId` has no effect on API key sessions.
 
@@ -279,9 +370,10 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `get_active_integrations` | List active integrations |
 | Integrations | `delete_integration` | Delete an integration |
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
+| Feedback | `submit_feedback` | Report a missing, broken, or confusing tool to the Novu team. Your assistant may send a report without asking you first; it describes the task and what went wrong, and recognized credentials are removed before it is stored |
 
 <Note>
-  Every tool except `whoami` and `get_step_schema` accepts an optional `environmentId` parameter - see [Environments](#environments). Use `update_workflow` to replace a workflow's full definition, or the `*_workflow_step`, `update_workflow_payload_schema`, and `update_workflow_metadata` tools to make focused edits without resending the whole workflow. Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
+  Every tool except `whoami`, `get_step_schema` and `submit_feedback` accepts an optional `environmentId` parameter - see [Environments](#environments). Use `update_workflow` to replace a workflow's full definition, or the `*_workflow_step`, `update_workflow_payload_schema`, and `update_workflow_metadata` tools to make focused edits without resending the whole workflow. Agent tools use the agent's identifier (slug), not the Mongo `_id`. Conversation tools on this MCP server require Novu Cloud. Self-hosted Enterprise can still use Conversations in the dashboard and API, but not through `mcp.novu.co`.
 </Note>
 
 ## Use multiple MCP servers
@@ -328,7 +420,7 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Accordion>
 
   <Accordion title="Still not connecting">
-    Restart your AI assistant after config changes. For Claude Code, run `claude mcp list`. For Codex, run `/mcp` in the TUI. For Claude Desktop, confirm Node.js is installed.
+    Restart your AI assistant after config changes. For Claude Code, run `claude mcp list`, then `claude mcp login novu` if it shows the server needs authentication. For Codex, run `codex mcp list` or `/mcp` in the TUI, then `codex mcp login novu` if needed. For Claude Desktop, check that the Novu connector is turned on for the chat.
   </Accordion>
 </AccordionGroup>
 

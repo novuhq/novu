@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NOVU_STAGING_API_URL } from './novu-connect-cli';
 import {
   buildOnboardingAgentPrompt,
   buildWebChatPrompt,
@@ -6,7 +7,6 @@ import {
   buildWebChatTuiCommandForDisplay,
   resolveWebChatConnectRuntime,
 } from './web-chat-connect-prompt';
-import { NOVU_STAGING_API_URL } from './novu-connect-cli';
 
 describe('web-chat-connect-prompt', () => {
   it('uses latest TUI command on US Cloud', () => {
@@ -19,9 +19,9 @@ describe('web-chat-connect-prompt', () => {
     );
   });
 
-  it('keeps --api-url for EU and local TUI commands', () => {
+  it('uses --region eu for EU and --api-url for local TUI commands', () => {
     expect(buildWebChatTuiCommand('https://eu.api.novu.co')).toBe(
-      'npx novu@latest connect --channel web-chat --api-url https://eu.api.novu.co'
+      'npx novu@latest connect --channel web-chat --region eu'
     );
     expect(buildWebChatTuiCommand('http://localhost:3000')).toBe(
       'npx novu@rc connect --channel web-chat --api-url http://localhost:3000'

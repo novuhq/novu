@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 import { InstrumentUsecase } from '../../instrumentation';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
@@ -13,8 +13,7 @@ export class CreateOrUpdateSubscriberUseCase {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private updateSubscriberUseCase: UpdateSubscriber,
-    private updateSubscriberChannel: UpdateSubscriberChannel,
-    private analyticsService: AnalyticsService
+    private updateSubscriberChannel: UpdateSubscriberChannel
   ) {}
 
   @RetryOnError('MongoServerError', {
@@ -98,18 +97,6 @@ export class CreateOrUpdateSubscriberUseCase {
     return existingSubscriber;
   }
 
-  private publishSubscriberCreatedEvent(command: CreateOrUpdateSubscriberCommand) {
-    this.analyticsService.mixpanelTrack('Subscriber Created', '', {
-      _organization: command.organizationId,
-      hasEmail: !!command.email,
-      hasPhone: !!command.phone,
-      hasAvatar: !!command.avatar,
-      hasLocale: !!command.locale,
-      hasData: !!command.data,
-      hasCredentials: !!command.channels,
-    });
-  }
-
   private async updateCredentials(command: CreateOrUpdateSubscriberCommand) {
     for (const channel of command.channels) {
       await this.updateSubscriberChannel.execute(
@@ -148,8 +135,6 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       timezone: command.timezone,
     });
-    this.publishSubscriberCreatedEvent(command);
-
     return createdSubscriber;
   }
 

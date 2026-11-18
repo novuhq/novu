@@ -1,4 +1,3 @@
-import { AnalyticsService } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -62,19 +61,16 @@ const mockedGlobalPreferences = {
 describe('GetInboxPreferences', () => {
   let getInboxPreferences: GetInboxPreferences;
 
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberPreference>;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
   beforeEach(() => {
     getSubscriberPreferenceMock = sinon.createStubInstance(GetSubscriberPreference);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
 
     getInboxPreferences = new GetInboxPreferences(
       getSubscriberGlobalPreferenceMock as any,
-      analyticsServiceMock as any,
       getSubscriberPreferenceMock as any,
       subscriberRepositoryMock as any
     );
