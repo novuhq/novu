@@ -85,15 +85,6 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     expect(verifyClaims(first.body.data.token).jti).not.to.equal(verifyClaims(second.body.data.token).jti);
   });
 
-  it('should sign only the known profile fields', async () => {
-    const res = await mint('sub-alice', {
-      subscriber: { firstName: 'Alice', subscriberId: 'sub-mallory', channels: [], isOnline: true },
-    });
-
-    expect(res.status).to.equal(201);
-    expect(verifyClaims(res.body.data.token).subscriber).to.deep.equal({ firstName: 'Alice' });
-  });
-
   it('should mint a fresh token on every call with the same idempotency key', async () => {
     const previousIdempotency = process.env.IS_API_IDEMPOTENCY_ENABLED;
     process.env.IS_API_IDEMPOTENCY_ENABLED = 'true';
@@ -131,6 +122,14 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     ['a duplicate scope', 'scope', { scope: ['channels:shared', 'channels:shared'] }],
     ['a context with more than five keys', 'contexts', { context: { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e', f: 'f' } }],
     ['an invalid profile email', 'subscriber.email', { subscriber: { email: 'not-an-email' } }],
+    [
+      'a subscriberId inside the profile',
+      'subscriberId',
+      { subscriber: { firstName: 'Alice', subscriberId: 'sub-mallory' } },
+    ],
+    ['channels inside the profile', 'channels', { subscriber: { firstName: 'Alice', channels: [] } }],
+    ['a topic before topic grants exist', 'topic', { topic: 'ticket:1' }],
+    ['a misspelled field', 'expiresin', { expiresin: 600 }],
   ];
 
   for (const [name, field, body] of invalidBodies) {

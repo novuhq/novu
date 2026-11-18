@@ -481,7 +481,14 @@ export class SubscribersController {
   async createSubscriberToken(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
-    @Body(new ValidationPipe({ transform: true, whitelist: true, forbidUnknownValues: false }))
+    @Body(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        forbidUnknownValues: false,
+      })
+    )
     body: CreateSubscriberTokenRequestDto
   ): Promise<CreateSubscriberTokenResponseDto> {
     return await this.createSubscriberTokenUsecase.execute(
