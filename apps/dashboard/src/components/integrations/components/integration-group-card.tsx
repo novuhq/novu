@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { RiArrowRightSLine, RiLockStarLine, RiStarFill, RiStarLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { setAsPrimaryIntegration } from '@/api/integrations';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge } from '@/components/primitives/badge';
 import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
@@ -31,7 +32,7 @@ import { TableIntegration } from '../types';
 import { IntegrationCardActions } from './integration-card-actions';
 import { EnvironmentStack } from './integration-environment-filter';
 import { ProviderIcon } from './provider-icon';
-import { getDemoIntegrationTooltipMessage, isDemoIntegration } from './utils/helpers';
+import { getDemoIntegrationTooltipMessage, hasRoutingConditions, isDemoIntegration } from './utils/helpers';
 
 export type EnvironmentIntegration = {
   integration: IIntegration;
@@ -43,6 +44,8 @@ type CardStatus = 'active' | 'setup' | 'disabled';
 type IntegrationGroupCardProps = {
   /** The same provider + name across one or more environments, development first. */
   items: EnvironmentIntegration[];
+  /** The entries the environment filter shows; they drive the status, star and footer. Defaults to `items`. */
+  filteredItems?: EnvironmentIntegration[];
   provider: IProviderConfig;
   onClick: (item: TableIntegration) => void;
 };
@@ -60,14 +63,14 @@ function getCardStatus(items: EnvironmentIntegration[], integration: IIntegratio
 }
 
 /** Installed provider, grouped across the environments it is set up in. */
-export function IntegrationGroupCard({ items, provider, onClick }: IntegrationGroupCardProps) {
+export function IntegrationGroupCard({ items, filteredItems = items, provider, onClick }: IntegrationGroupCardProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
 
   // Open the integration in the sidebar's environment when the card has one there, otherwise the first.
-  const selected = items.find((item) => item.environment._id === currentEnvironment?._id) ?? items[0];
+  const selected = filteredItems.find((item) => item.environment._id === currentEnvironment?._id) ?? filteredItems[0];
   const { integration, environment } = selected;
-  const status = getCardStatus(items, integration);
+  const status = getCardStatus(filteredItems, integration);
   const isDisabled = status === 'disabled';
   const supportsPrimary = !!integration.channel && CHANNELS_WITH_PRIMARY.includes(integration.channel);
 
@@ -137,8 +140,8 @@ export function IntegrationGroupCard({ items, provider, onClick }: IntegrationGr
             <IntegrationTitleTags integration={integration} provider={provider} />
           </div>
 
-          {supportsPrimary && <PrimaryStarButton items={items} provider={provider} name={integration.name} />}
-          <IntegrationStatusBadge status={status} items={items} />
+          {supportsPrimary && <PrimaryStarButton items={filteredItems} provider={provider} name={integration.name} />}
+          <IntegrationStatusBadge status={status} items={filteredItems} />
           <IntegrationCardActions items={items} selected={selected} onEdit={openItem} />
         </div>
 
@@ -157,9 +160,9 @@ export function IntegrationGroupCard({ items, provider, onClick }: IntegrationGr
           </span>
         ) : (
           <div className={cn('flex min-w-0 items-center gap-2', isDisabled && '[&>*:first-child]:opacity-50')}>
-            <EnvironmentStack environments={items.map((item) => item.environment)} />
+            <EnvironmentStack environments={filteredItems.map((item) => item.environment)} />
             <span className="text-label-xs text-text-sub truncate">
-              {items.length === 1 ? environment.name : `${items.length} environments`}
+              {filteredItems.length === 1 ? environment.name : `${filteredItems.length} environments`}
             </span>
           </div>
         )}
@@ -273,9 +276,7 @@ function ManageEnvironmentPicker({
 function IntegrationTitleTags({ integration, provider }: { integration: IIntegration; provider: IProviderConfig }) {
   const { subscription } = useFetchSubscription();
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const hasRules =
-    (integration.rules && Object.keys(integration.rules).length > 0) ||
-    (integration.conditions && integration.conditions.length > 0);
+  const hasRules = hasRoutingConditions(integration);
 
   return (
     <>
@@ -324,6 +325,8 @@ function PrimaryStarButton({
   const queryClient = useQueryClient();
   const canSetPrimary = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const isPrimary = items.every((item) => item.integration.primary);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const losesConditions = items.some((item) => !item.integration.primary && hasRoutingConditions(item.integration));
 
   const { mutate: setPrimary, isPending } = useMutation({
     mutationFn: () =>
@@ -334,7 +337,10 @@ function PrimaryStarButton({
       ),
     onSuccess: () => showSuccessToast(`${name} is now the primary ${provider.channel} integration.`),
     onError: () => showErrorToast(`Couldn't make ${name} the primary integration.`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] }),
+    onSettled: () => {
+      setIsConfirmOpen(false);
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
+    },
   });
 
   let tooltip = 'Set as primary';
@@ -342,16 +348,48 @@ function PrimaryStarButton({
   else if (!canSetPrimary) tooltip = "Your role can't change the primary integration";
 
   return (
+    <>
+      <PrimaryStarIcon
+        isPrimary={isPrimary}
+        disabled={isPrimary || !canSetPrimary || isPending}
+        tooltip={tooltip}
+        onClick={() => (losesConditions ? setIsConfirmOpen(true) : setPrimary())}
+      />
+      <ConfirmationModal
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        onConfirm={() => setPrimary()}
+        isLoading={isPending}
+        title="Remove conditions?"
+        description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
+        confirmButtonText="Remove conditions"
+      />
+    </>
+  );
+}
+
+function PrimaryStarIcon({
+  isPrimary,
+  disabled,
+  tooltip,
+  onClick,
+}: {
+  isPrimary: boolean;
+  disabled: boolean;
+  tooltip: string;
+  onClick: () => void;
+}) {
+  return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           className="flex size-6 shrink-0 items-center justify-center rounded-md disabled:cursor-default"
-          disabled={isPrimary || !canSetPrimary || isPending}
+          disabled={disabled}
           aria-label={isPrimary ? 'Primary integration' : 'Set as primary integration'}
           onClick={(event) => {
             event.stopPropagation();
-            setPrimary();
+            onClick();
           }}
         >
           {isPrimary ? (

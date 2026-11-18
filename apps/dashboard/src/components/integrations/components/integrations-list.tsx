@@ -108,11 +108,18 @@ export function IntegrationsList({
       );
     };
 
-    return integrations
+    // The environment filter is applied per card in IntegrationChannelGroup, so each card still knows
+    // every environment it is connected in. Here it only drops channels with nothing to show.
+    const visible = integrations
       ?.filter((i) => !isAgentInboxProvider(i.providerId))
       .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
-      .filter((i) => !environmentId || i._environmentId === environmentId)
-      .filter(matchesSearch)
+      .filter(matchesSearch);
+    const channelsInEnvironment = new Set(
+      visible?.filter((i) => !environmentId || i._environmentId === environmentId).map((i) => i.channel)
+    );
+
+    return visible
+      ?.filter((i) => channelsInEnvironment.has(i.channel))
       .reduce(
         (acc, integration) => {
           const { channel } = integration;
@@ -165,6 +172,7 @@ export function IntegrationsList({
           onItemClick={onItemClick}
           excludeIntegrationIds={excludeIntegrationIds}
           variant={variant}
+          environmentId={environmentId}
         />
       ))}
     </div>

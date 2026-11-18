@@ -1,3 +1,4 @@
+import type { IIntegration } from '@novu/shared';
 import {
   AgentRuntimeProviderIdEnum,
   ChatProviderIdEnum,
@@ -89,4 +90,12 @@ export function cleanCredentials(credentials: Record<string, unknown>): Record<s
   }
 
   return cleaned;
+}
+
+/** Primary integrations can't have routing conditions; making one primary removes them. */
+export function hasRoutingConditions(integration: IIntegration) {
+  return (
+    (!!integration.rules && Object.keys(integration.rules).length > 0) ||
+    (!!integration.conditions && integration.conditions.length > 0)
+  );
 }

@@ -35,6 +35,8 @@ type IntegrationChannelGroupProps = {
   onItemClick: (item: TableIntegration) => void;
   excludeIntegrationIds?: string[];
   variant?: IntegrationChannelGroupVariant;
+  /** Show only cards connected in this environment; omitted shows every card. */
+  environmentId?: string;
 };
 
 export function IntegrationChannelGroup({
@@ -45,21 +47,29 @@ export function IntegrationChannelGroup({
   onItemClick,
   excludeIntegrationIds,
   variant = 'default',
+  environmentId,
 }: IntegrationChannelGroupProps) {
   const exclude = excludeIntegrationIds ? new Set(excludeIntegrationIds) : null;
   const visibleIntegrations = exclude
     ? integrations.filter((integration) => !exclude.has(integration._id))
     : integrations;
 
+  // Each card keeps every environment it is connected in (for the picker and menu); `filtered` is
+  // what the environment filter shows (status, star, footer).
   const groups = useMemo(
-    () => groupAcrossEnvironments(visibleIntegrations, environments ?? []),
-    [visibleIntegrations, environments]
+    () =>
+      groupAcrossEnvironments(visibleIntegrations, environments ?? []).flatMap((items) => {
+        const filtered = environmentId ? items.filter((item) => item.environment._id === environmentId) : items;
+
+        return filtered.length > 0 ? [{ items, filtered }] : [];
+      }),
+    [visibleIntegrations, environments, environmentId]
   );
   const [isExpanded, setIsExpanded] = useState(false);
   const isCollapsible = groups.length > COLLAPSED_CARD_COUNT;
   const shownGroups = isCollapsible && !isExpanded ? groups.slice(0, COLLAPSED_CARD_COUNT) : groups;
 
-  if (visibleIntegrations.length === 0) {
+  if (visibleIntegrations.length === 0 || (variant === 'default' && groups.length === 0)) {
     return null;
   }
 
@@ -98,7 +108,7 @@ export function IntegrationChannelGroup({
                 />
               );
             })
-          : shownGroups.map((items) => {
+          : shownGroups.map(({ items, filtered }) => {
               const provider = providers.find((p) => p.id === items[0].integration.providerId);
               if (!provider) return null;
 
@@ -106,6 +116,7 @@ export function IntegrationChannelGroup({
                 <IntegrationGroupCard
                   key={items[0].integration._id}
                   items={items}
+                  filteredItems={filtered}
                   provider={provider}
                   onClick={onItemClick}
                 />
@@ -114,7 +125,7 @@ export function IntegrationChannelGroup({
       </div>
       {variant === 'default' && isCollapsible && (
         <ShowMoreDivider
-          hiddenGroups={groups.slice(COLLAPSED_CARD_COUNT)}
+          hiddenGroups={groups.slice(COLLAPSED_CARD_COUNT).map(({ items }) => items)}
           providers={providers}
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded((expanded) => !expanded)}
@@ -174,7 +185,8 @@ const ENVIRONMENT_TYPE_ORDER: Record<string, number> = {
 
 /**
  * One card per provider + name: the same integration set up in several environments
- * shows once, with its environments listed development first.
+ * shows once, with its environments listed development first. A card holds at most one
+ * integration per environment; same-name duplicates in one environment get cards of their own.
  */
 function groupAcrossEnvironments(integrations: IIntegration[], environments: IEnvironment[]) {
   const environmentIndex = new Map(environments.map((env, index) => [env._id, index]));
@@ -184,7 +196,12 @@ function groupAcrossEnvironments(integrations: IIntegration[], environments: IEn
     const environment = environments.find((env) => env._id === integration._environmentId);
     if (!environment) continue;
 
-    const key = `${integration.providerId}::${integration.name}`;
+    const baseKey = `${integration.providerId}::${integration.name}`;
+    let key = baseKey;
+    for (let copy = 1; groups.get(key)?.some((item) => item.environment._id === environment._id); copy++) {
+      key = `${baseKey}::${copy}`;
+    }
+
     const group = groups.get(key) ?? [];
     group.push({ integration, environment });
     groups.set(key, group);

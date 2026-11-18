@@ -18,6 +18,7 @@ import {
 } from 'react-icons/ri';
 import { put } from '@/api/api.client';
 import { deleteIntegration, setAsPrimaryIntegration } from '@/api/integrations';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,8 @@ import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import type { EnvironmentIntegration } from './integration-group-card';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
+import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
+import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
 
 const MENU_CLASS =
   'bg-bg-weak min-w-[220px] rounded-xl border-0 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
@@ -70,11 +73,25 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
   const queryClient = useQueryClient();
   const { integrations = [] } = useFetchIntegrations();
   const [pendingDelete, setPendingDelete] = useState<EnvironmentIntegration | null>(null);
+  const [pendingPrimary, setPendingPrimary] = useState<EnvironmentIntegration | null>(null);
+  const [pendingPause, setPendingPause] = useState<EnvironmentIntegration | null>(null);
 
   const canWrite = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const { integration } = selected;
   const supportsPrimary = !!integration.channel && CHANNELS_WITH_PRIMARY.includes(integration.channel);
   const isEmail = integration.channel === ChannelTypeEnum.EMAIL;
+  // Same rule as the settings sheet: Inbox and Novu's demo providers can't be deleted.
+  const canDelete = integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
+
+  /** Other active integrations on the same channel in the item's environment: candidates to take over as primary. */
+  const otherActiveIn = (item: EnvironmentIntegration) =>
+    integrations.filter(
+      (other) =>
+        other._id !== item.integration._id &&
+        other.channel === item.integration.channel &&
+        other.active &&
+        other._environmentId === item.environment._id
+    );
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
@@ -82,13 +99,28 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
   };
 
   const { mutate: setActive } = useMutation({
-    mutationFn: ({ item, active }: { item: EnvironmentIntegration; active: boolean }) =>
-      setIntegrationActive(item.integration._id, active, item.environment),
+    mutationFn: async ({
+      item,
+      active,
+      newPrimaryId,
+    }: {
+      item: EnvironmentIntegration;
+      active: boolean;
+      newPrimaryId?: string;
+    }) => {
+      // Hand primary over first, so the channel keeps a primary while this one is paused.
+      if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, item.environment);
+
+      return setIntegrationActive(item.integration._id, active, item.environment);
+    },
     onSuccess: (_, { item, active }) =>
       showSuccessToast(`${item.integration.name} is ${active ? 'active' : 'paused'} in ${item.environment.name}.`),
     onError: (_, { item, active }) =>
       showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${item.integration.name} in ${item.environment.name}.`),
-    onSettled: invalidate,
+    onSettled: () => {
+      setPendingPause(null);
+      invalidate();
+    },
   });
 
   const { mutate: makePrimary } = useMutation({
@@ -96,8 +128,21 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
     onSuccess: (_, item) =>
       showSuccessToast(`${item.integration.name} is now the primary integration in ${item.environment.name}.`),
     onError: (_, item) => showErrorToast(`Couldn't make ${item.integration.name} primary in ${item.environment.name}.`),
-    onSettled: invalidate,
+    onSettled: () => {
+      setPendingPrimary(null);
+      invalidate();
+    },
   });
+
+  // Setting primary clears routing conditions, so confirm first when there are some.
+  const requestPrimary = (item: EnvironmentIntegration) =>
+    hasRoutingConditions(item.integration) ? setPendingPrimary(item) : makePrimary(item);
+
+  // Pausing the primary leaves the channel without one, so pick its replacement first when there is one.
+  const requestPause = (item: EnvironmentIntegration) =>
+    supportsPrimary && item.integration.primary && otherActiveIn(item).length > 0
+      ? setPendingPause(item)
+      : setActive({ item, active: false });
 
   const { mutate: remove } = useMutation({
     mutationFn: async ({ item, newPrimaryId }: { item: EnvironmentIntegration; newPrimaryId?: string }) => {
@@ -183,7 +228,7 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
               label="Make primary"
               targets={primaryCandidates}
               askForEnvironment={askForEnvironment}
-              onSelect={makePrimary}
+              onSelect={requestPrimary}
             />
           )}
           {canWrite && (
@@ -193,7 +238,7 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
                 label="Pause"
                 targets={activeItems}
                 askForEnvironment={askForEnvironment}
-                onSelect={(item) => setActive({ item, active: false })}
+                onSelect={requestPause}
               />
               <EnvironmentAction
                 icon={RiShutDownLine}
@@ -202,15 +247,19 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
                 askForEnvironment={askForEnvironment}
                 onSelect={(item) => setActive({ item, active: true })}
               />
-              <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
-              <EnvironmentAction
-                icon={RiDeleteBin2Line}
-                label="Delete"
-                targets={items}
-                askForEnvironment={askForEnvironment}
-                onSelect={setPendingDelete}
-                className="text-error-base focus:text-error-base data-[state=open]:text-error-base"
-              />
+              {canDelete && (
+                <>
+                  <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
+                  <EnvironmentAction
+                    icon={RiDeleteBin2Line}
+                    label="Delete"
+                    targets={items}
+                    askForEnvironment={askForEnvironment}
+                    onSelect={setPendingDelete}
+                    className="text-error-base focus:text-error-base data-[state=open]:text-error-base"
+                  />
+                </>
+              )}
             </>
           )}
         </DropdownMenuContent>
@@ -222,13 +271,26 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
           onOpenChange={(open) => !open && setPendingDelete(null)}
           onConfirm={(newPrimaryId) => remove({ item: pendingDelete, newPrimaryId })}
           isPrimary={pendingDelete.integration.primary}
-          otherIntegrations={integrations.filter(
-            (other) =>
-              other._id !== pendingDelete.integration._id &&
-              other.channel === pendingDelete.integration.channel &&
-              other.active &&
-              other._environmentId === pendingDelete.environment._id
-          )}
+          otherIntegrations={otherActiveIn(pendingDelete)}
+        />
+      )}
+
+      <ConfirmationModal
+        open={!!pendingPrimary}
+        onOpenChange={(open) => !open && setPendingPrimary(null)}
+        onConfirm={() => pendingPrimary && makePrimary(pendingPrimary)}
+        title="Remove conditions?"
+        description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
+        confirmButtonText="Remove conditions"
+      />
+
+      {pendingPause && (
+        <SelectPrimaryIntegrationModal
+          isOpen
+          onOpenChange={(open) => !open && setPendingPause(null)}
+          onConfirm={(newPrimaryId) => setActive({ item: pendingPause, active: false, newPrimaryId })}
+          otherIntegrations={otherActiveIn(pendingPause)}
+          mode="select"
         />
       )}
     </>
