@@ -135,7 +135,15 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
           <button
             type="button"
             aria-label="Integration actions"
-            className="text-text-sub flex size-7 shrink-0 items-center justify-center rounded-md bg-[#f4f4f5] opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+            // Collapsed to nothing until hover; -ml-3 cancels the row's gap so the status badge sits flush
+            // right, then the button grows in and slides the star and status left.
+            className={cn(
+              'text-text-sub -ml-3 flex h-7 w-0 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#f4f4f5] opacity-0',
+              'transition-[width,margin,opacity] duration-200 ease-out',
+              'group-hover:ml-0 group-hover:w-7 group-hover:opacity-100',
+              'focus-visible:ml-0 focus-visible:w-7 focus-visible:opacity-100',
+              'data-[state=open]:ml-0 data-[state=open]:w-7 data-[state=open]:opacity-100'
+            )}
             onClick={(event) => event.stopPropagation()}
           >
             <RiMoreFill className="size-4" />
