@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
@@ -28,6 +28,7 @@ export type CreateIntegrationSidebarProps = {
 export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarProps) {
   const navigate = useNavigate();
   const { providerId } = useParams();
+  const [searchParams] = useSearchParams();
 
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
@@ -218,6 +219,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 integrationsByChannel={integrationsByChannel}
                 searchQuery={searchQuery}
                 onIntegrationSelect={onIntegrationSelect}
+                defaultChannel={searchParams.get('channel')}
               />
             </div>
           </div>

@@ -1,4 +1,10 @@
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, isAgentInboxProvider, providers as novuProviders } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  type IIntegration,
+  isAgentInboxProvider,
+  providers as novuProviders,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -14,6 +20,10 @@ type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;
   excludeIntegrationIds?: string[];
   variant?: IntegrationsListVariant;
+  /** Case-insensitive match on the integration name or provider name. */
+  searchQuery?: string;
+  /** Only show integrations in this environment; omit for all environments. */
+  environmentId?: string;
 };
 
 function IntegrationCardSkeleton() {
@@ -80,16 +90,42 @@ function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsLi
   );
 }
 
-export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
+export function IntegrationsList({
+  onItemClick,
+  excludeIntegrationIds,
+  variant = 'default',
+  searchQuery = '',
+  environmentId,
+}: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
-    return integrations
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = (integration: NonNullable<typeof integrations>[number]) => {
+      if (!query) return true;
+
+      const providerName = availableIntegrations.find((p) => p.id === integration.providerId)?.displayName ?? '';
+
+      return [integration.name, providerName, integration.identifier].some((field) =>
+        field?.toLowerCase().includes(query)
+      );
+    };
+
+    // The environment filter is applied per card in IntegrationChannelGroup, so each card still knows
+    // every environment it is connected in. Here it only drops channels with nothing to show.
+    const visible = integrations
       ?.filter((i) => !isAgentInboxProvider(i.providerId))
       .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
+      .filter(matchesSearch);
+    const channelsInEnvironment = new Set(
+      visible?.filter((i) => !environmentId || i._environmentId === environmentId).map((i) => i.channel)
+    );
+
+    return visible
+      ?.filter((i) => channelsInEnvironment.has(i.channel))
       .reduce(
         (acc, integration) => {
           const { channel } = integration;
@@ -107,15 +143,25 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
 
           return acc;
         },
-        {} as Record<ChannelTypeEnum, typeof integrations>
+        {} as Record<ChannelTypeEnum, IIntegration[]>
       );
-  }, [integrations, isToolChannelEnabled]);
+  }, [integrations, isToolChannelEnabled, searchQuery, environmentId, availableIntegrations]);
 
   if (isLoading || !currentEnvironment) {
     return (
       <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
         <IntegrationChannelGroupSkeleton variant={variant} />
         {variant === 'default' ? <IntegrationChannelGroupSkeleton variant={variant} /> : null}
+      </div>
+    );
+  }
+
+  const hasActiveFilter = !!searchQuery.trim() || !!environmentId;
+
+  if (hasActiveFilter && Object.keys(groupedIntegrations || {}).length === 0) {
+    return (
+      <div className="text-text-soft text-paragraph-sm flex min-h-[200px] items-center justify-center text-center">
+        No integrations match your filters.
       </div>
     );
   }
@@ -132,6 +178,7 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
           onItemClick={onItemClick}
           excludeIntegrationIds={excludeIntegrationIds}
           variant={variant}
+          environmentId={environmentId}
         />
       ))}
     </div>

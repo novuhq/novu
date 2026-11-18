@@ -10,9 +10,16 @@ type ChannelTabsProps = {
   integrationsByChannel: Record<string, IProviderConfig[]>;
   searchQuery: string;
   onIntegrationSelect: (integrationId: string) => void;
+  /** Tab to open on; falls back to the first channel when it isn't one of the tabs. */
+  defaultChannel?: string | null;
 };
 
-export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationSelect }: ChannelTabsProps) {
+export function ChannelTabs({
+  integrationsByChannel,
+  searchQuery,
+  onIntegrationSelect,
+  defaultChannel,
+}: ChannelTabsProps) {
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const channels = useMemo(
     () =>
@@ -34,7 +41,10 @@ export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationS
   }
 
   return (
-    <Tabs defaultValue={channels[0]} className="flex h-full flex-col">
+    <Tabs
+      defaultValue={channels.find((channel) => channel === defaultChannel) ?? channels[0]}
+      className="flex h-full flex-col"
+    >
       <TabsList variant="regular" className="bg-background sticky top-0 z-10 gap-6 border-t-0 px-3!">
         {channels.map((channel) => (
           <TabsTrigger key={channel} value={channel} variant="regular" className="px-0! py-3!" size="lg">
