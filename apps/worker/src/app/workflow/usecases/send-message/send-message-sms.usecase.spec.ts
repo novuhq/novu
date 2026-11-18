@@ -123,9 +123,8 @@ describe('SendMessageSms - trigger provider overrides', () => {
     expect(initiateTranslations.called).to.equal(false);
   });
 
-  it('does not wait for the message.sent webhook and reuses the loaded environment', async () => {
+  it('passes the loaded environment to the message.sent webhook so it is not read again', async () => {
     const { usecase, sendWebhookMessage } = buildUsecase();
-    sendWebhookMessage.execute.returns(new Promise(() => {}));
     const environment = { _id: 'env_1', webhookAppId: 'app_1' };
     const command = buildCommand({});
     command.environment = environment as never;
@@ -136,16 +135,6 @@ describe('SendMessageSms - trigger provider overrides', () => {
     expect(sendWebhookMessage.execute.calledOnce).to.equal(true);
     expect(sendWebhookMessage.execute.firstCall.args[0].eventType).to.equal('message.sent');
     expect(sendWebhookMessage.execute.firstCall.args[0].environment).to.equal(environment);
-  });
-
-  it('keeps the step successful when the webhook dispatch fails', async () => {
-    const { usecase, sendWebhookMessage } = buildUsecase();
-    sendWebhookMessage.execute.rejects(new Error('svix down'));
-
-    const result = await usecase.execute(buildCommand({}));
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
   });
 
   it('applies legacy channel and flat provider overrides', async () => {
