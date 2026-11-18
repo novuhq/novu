@@ -61,6 +61,9 @@ const LOG_CONTEXT = 'SendMessagePush';
 export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
   'NotRegistered',
   'InvalidRegistration',
+  'registration-token-not-registered',
+  'invalid-registration-token',
+  'Device unregistered',
   'MismatchSenderId',
   'Unregistered',
   'BadDeviceToken',
@@ -583,13 +586,15 @@ export class SendMessagePush extends SendMessageBase {
     step: IPushOptions['step'],
     bridgeProviderData: Record<string, unknown>
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
+    let pushHandler: IPushHandler | undefined;
+
     try {
       Logger.log(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Sending push notification for jobId ${command.jobId}`,
         LOG_CONTEXT
       );
-      const pushHandler = this.getIntegrationHandler(integration);
+      pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
       Logger.debug(
@@ -676,8 +681,9 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       try {
-        const pushHandler = this.getIntegrationHandler(integration);
-        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+        // Reuse the send's handler: building another one re-creates the provider client (a Firebase app for FCM).
+        const handler = pushHandler ?? this.getIntegrationHandler(integration);
+        const isTokenInvalid = handler?.isTokenInvalid?.(e.message || e.toString());
 
         if (isTokenInvalid) {
           Logger.log(
