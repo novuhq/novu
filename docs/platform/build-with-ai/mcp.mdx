@@ -1,6 +1,6 @@
 ---
 title: Novu MCP Server
-description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
+description: Connect Cursor, Claude, ChatGPT, Grok, and other AI tools to the Novu MCP server to manage notifications, workflows, subscribers, agents, and conversations using natural language.
 ---
 
 The Novu MCP Server exposes Novu's notification and agent infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, agents, conversations, and delivery activity from natural-language prompts.
@@ -28,7 +28,7 @@ Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills
 
 - A Novu Cloud account
 - OAuth access, or a [Novu Cloud API key](https://dashboard.novu.co/settings/api-keys)
-- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
+- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, Grok, VS Code, Codex, or similar
 
 ## Endpoints
 
@@ -119,6 +119,23 @@ Add Novu as a custom connector. It works the same way in Claude Desktop and on c
 4. In a chat, open the **+** menu → **Connectors** and turn Novu on.
 
 On Team and Enterprise plans, an Owner adds the connector under **Organization settings** → **Connectors**, and members then select **Connect** on it.
+
+  </Tab>
+
+  <Tab title="Grok">
+
+**On grok.com:**
+
+1. Go to [grok.com/connectors](https://grok.com/connectors), select **New Connector**, then **Custom**.
+2. Enter the MCP URL for your region and sign in to Novu when prompted.
+
+On Grok Business and Enterprise, a team admin adds the connector first. Team members then connect their own Novu account.
+
+**In Grok Bot:**
+
+1. Open **Connect apps** from the sidebar and choose **Add a custom connector**.
+2. Name it `Novu`, set **Type** to **Remote HTTPS**, enter the MCP URL for your region, and select **Add plugin**.
+3. When the Bot asks you to **Authorize**, sign in to Novu in your browser. Then type `@` in a chat and pick Novu to use it.
 
   </Tab>
 
