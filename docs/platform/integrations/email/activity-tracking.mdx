@@ -18,7 +18,7 @@ Activity tracking gives you visibility into what happens to notifications after 
 When your provider emits an event (for example, an email delivered or bounced), Novu:
 - Receives the event via **provider delivery webhooks** (sometimes called inbound webhooks in the dashboard).
 - Create step-run trace, so the event is visible in the activity feed.
-- Forwards supported events to outbound webhooks if they are enabled in your project.
+- Forwards the statuses listed under [Activity tracking](/platform/developer/webhooks/event-types#activity-tracking) to outbound webhooks, when webhooks are enabled.
 - Enriches the workflow-run lifecycle with engagement and delivery data, which empowers analytics and workflow variables.
 
 With activity tracking enabled, you get a full picture of the workflow-run lifecycle, not just that a message was “sent,” but whether it reached the recipient, was opened, or engaged with. This closes the feedback loop and allows you to build more reliable notification experiences.
@@ -73,7 +73,7 @@ Provider delivery webhook events are normalized into a consistent set of Novu ev
 
 ## Supported providers and events
 
-Novu currently supports inbound webhooks for several email providers. Each provider sends events in its own format, which Novu normalizes into a consistent set of internal statuses. These normalized statuses are used in the activity feed, step-run traces, and outbound webhook forwarding.
+Novu currently supports inbound webhooks for several email providers. Each provider sends events in its own format, which Novu normalizes into a consistent set of internal statuses. These statuses are written to the activity feed and step-run traces. A subset is forwarded to outbound webhooks. See [Activity tracking](/platform/developer/webhooks/event-types#activity-tracking).
 
 Events not listed in the tables below are ignored.
 
@@ -133,18 +133,10 @@ Once provider delivery webhooks are configured, Novu will start processing event
 
 The Activity Feed provides the most direct view of the notification lifecycle. After a notification is sent, you will see new status updates such as Delivered, Opened, and Clicked appear in the timeline as they are received from your provider. This gives you a complete, real-time picture of subscriber engagement for each notification.
 
-### Outbound webhooks integration
+### Outbound webhooks
 
-Provider delivery webhooks don’t just update Novu internally - they can also trigger [outbound webhooks](/platform/developer/webhooks/webhooks), allowing you to send normalized events to your own systems in real time. This makes it possible to extend Novu’s notification lifecycle into your existing infrastructure.
+Provider events are normalized to a Novu status, written to the activity feed, and, when [outbound webhooks](/platform/developer/webhooks/webhooks) are enabled, sent as a `message.*` event for the statuses that have a mapping.
 
-How it works:
+`clicked`, `delayed`, `complaint`, and `unsubscribed` are not sent as webhooks. `clicked` still sets `read` and `seen` on the message. `bounced`, `rejected`, `blocked`, and `dropped` are sent as `message.failed`.
 
-1. A provider emits an event (for example, delivered).
-2. Novu receives and normalizes the event (for example, → delivered).
-3. Novu updates its internal message entity and step-run trace.
-4. If outbound webhooks are enabled, Novu forwards the normalized event to your configured outbound webhook endpoint.
-
-This is useful in a number of use cases including:
-- Internal logging: Forward all events into your organization’s centralized logging pipeline.
-- Custom analytics: Combine Novu’s lifecycle data with your own metrics to measure engagement and delivery performance.
-- Workflow triggers: Kick off custom business logic when specific events occur (for example, flagging accounts with high bounce rates).
+The full mapping, including which fields on `data.object` stay unchanged, is in [Activity tracking](/platform/developer/webhooks/event-types#activity-tracking).
