@@ -2,7 +2,7 @@ import { getAzureCacheForRedisClusterProviderConfig } from './azure-cache-for-re
 import { getElasticacheClusterProviderConfig } from './elasticache-cluster-provider';
 import { getMemoryDbClusterProviderConfig } from './memory-db-cluster-provider';
 import { getRedisProviderConfig } from './redis-provider';
-import { getDefaultOnTlsOptions, isTlsFlagEnabled } from './variable-mappers';
+import { getDefaultOnTlsOptions, isTlsFlagEnabled, parseTlsFlagEnvValue } from './variable-mappers';
 
 const DISABLED_VALUES = ['false', 'FALSE', ' False ', '0', 'no', 'off'];
 const ENABLED_VALUES = ['true', 'TRUE', '1', 'yes', 'on'];
@@ -35,6 +35,23 @@ describe('TLS flags', () => {
 
     it.each(DISABLED_VALUES)('turns TLS off for %s', (value) => {
       expect(getDefaultOnTlsOptions(value, 'cache.internal')).toBeUndefined();
+    });
+  });
+
+  describe('parseTlsFlagEnvValue', () => {
+    it.each([...ENABLED_VALUES, ...DISABLED_VALUES, '', 'undefined', 'null'])('accepts %s', (value) => {
+      expect(parseTlsFlagEnvValue(value)).toBe(value);
+    });
+
+    it.each(['{"servername":"redis.internal"}', '"tls"', '2'])(
+      'still accepts JSON the old validator took: %s',
+      (value) => {
+        expect(parseTlsFlagEnvValue(value)).toBe(value);
+      }
+    );
+
+    it.each(['flase', 'ture', 'enabled'])('rejects %s', (value) => {
+      expect(() => parseTlsFlagEnvValue(value)).toThrow('Expected a boolean flag');
     });
   });
 

@@ -1,10 +1,14 @@
 import {
   assertQueueBackendConfig,
   createThrowingEnvReporter,
+  parseTlsFlagEnvValue,
   requiresStandaloneRedis,
 } from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, makeValidator, num, port, str, ValidatorSpec } from 'envalid';
+
+// Accepts the same values the Redis providers parse (true/false, 1/0, yes/no, on/off).
+const tlsFlag = makeValidator(parseTlsFlagEnvValue);
 
 export function validateEnv() {
   const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('ws') });
@@ -40,7 +44,7 @@ export const envValidators = {
         REDIS_HOST: str({ default: undefined }),
         REDIS_PORT: str({ default: undefined }),
       }),
-  REDIS_TLS: json({ default: undefined }),
+  REDIS_TLS: tlsFlag({ default: undefined }),
   IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
   REDIS_CLUSTER_SERVICE_HOST: str({ default: undefined }),
   REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
