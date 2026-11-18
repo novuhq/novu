@@ -5,6 +5,7 @@ interface __BaseEnv_Env {
 	NOVU_API_URL: string;
 	NOVU_REGION: string;
 	CLERK_OAUTH_ISSUER: string;
+	CLERK_SECRET_KEY?: string;
 	MCP_OAUTH_CLIENT_ID_CURSOR?: string;
 	MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
 }
@@ -17,6 +18,7 @@ declare namespace Cloudflare {
 		NOVU_API_URL: string;
 		NOVU_REGION: string;
 		CLERK_OAUTH_ISSUER: string;
+		CLERK_SECRET_KEY?: string;
 		MCP_OAUTH_CLIENT_ID_CURSOR?: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
 	}
@@ -24,6 +26,7 @@ declare namespace Cloudflare {
 		NOVU_API_URL: string;
 		NOVU_REGION: string;
 		CLERK_OAUTH_ISSUER: string;
+		CLERK_SECRET_KEY?: string;
 		MCP_OAUTH_CLIENT_ID_CURSOR?: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
 	}
@@ -31,6 +34,7 @@ declare namespace Cloudflare {
 		NOVU_API_URL: string;
 		NOVU_REGION: string;
 		CLERK_OAUTH_ISSUER: string;
+		CLERK_SECRET_KEY?: string;
 		MCP_OAUTH_CLIENT_ID_CURSOR?: string;
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").NovuMCP>;
 	}

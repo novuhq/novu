@@ -124,11 +124,13 @@ export class ExecuteBridgeJob {
 
     const { subscriber, actor, payload: originalPayload, context, env } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
-    const state = await this.generateState(command);
-
-    const controlValuesResult = isStateful
-      ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
-      : { controls: command.job.step.controlVariables, stepResolverHash: undefined };
+    // Independent reads: the parent-job chain and the step's control values.
+    const [state, controlValuesResult] = await Promise.all([
+      this.generateState(command),
+      isStateful
+        ? this.findControlValues(command, workflow as NotificationTemplateEntity)
+        : { controls: command.job.step.controlVariables, stepResolverHash: undefined },
+    ]);
     const variablesStores = controlValuesResult.controls;
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
@@ -280,26 +282,21 @@ export class ExecuteBridgeJob {
 
   private async generateStateForJob(job: JobEntity, environmentId: string): Promise<State[]> {
     const previousJobs: State[] = [];
-    let theJob = (await this.jobRepository.findOne({
-      _id: job._parentId,
-      _environmentId: environmentId,
-    })) as JobEntity;
+    let parentId = job._parentId;
 
-    if (theJob) {
-      const jobState = await this.mapState(theJob);
-      previousJobs.push(jobState);
-    }
-
-    while (theJob) {
-      theJob = (await this.jobRepository.findOne({
-        _id: theJob._parentId,
+    // The chain ends at the trigger job, which has no parent: stop there instead of querying for it.
+    while (parentId) {
+      const parentJob = await this.jobRepository.findOne({
+        _id: parentId,
         _environmentId: environmentId,
-      })) as JobEntity;
+      });
 
-      if (theJob) {
-        const jobState = await this.mapState(theJob);
-        previousJobs.push(jobState);
+      if (!parentJob) {
+        break;
       }
+
+      previousJobs.push(await this.mapState(parentJob));
+      parentId = parentJob._parentId;
     }
 
     return previousJobs;

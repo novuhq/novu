@@ -104,7 +104,7 @@ How requests map to a Novu environment depends on how you authenticate:
 - **OAuth** — the token is bound to your **organization**, and the Novu API
   defaults to the **Development** environment.
 
-For OAuth sessions, every tool except `whoami` and `get_step_schema` accepts an optional `environmentId` parameter to
+For OAuth sessions, every tool except `whoami`, `get_step_schema` and `submit_feedback` accepts an optional `environmentId` parameter to
 target a specific environment (forwarded to the Novu API as the
 `Novu-Environment-Id` header). Call `get_environments` first to list your
 environments, then pass the `_id` of the one you want — for example, to inspect
@@ -198,6 +198,7 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `delete_workflow` | Delete a workflow (irreversible) |
 | `trigger_workflow` | Trigger a workflow for a subscriber with a custom payload |
 | `bulk_trigger_workflow` | Trigger several workflows in one call |
+| `submit_feedback` | Report a missing, broken or confusing tool to the Novu team (hosted only; registered when `CLERK_SECRET_KEY` is set) |
 | `cancel_triggered_event` | Cancel a pending (delayed or digested) event by `transactionId` |
 | `get_integrations` | List configured provider integrations across channels |
 | `get_active_integrations` | List only the active integrations |
@@ -252,6 +253,10 @@ Configuration is read from `.dev.vars` (gitignored) — copy
 - `NOVU_REGION` — the display label surfaced by `whoami`.
 - `CLERK_OAUTH_ISSUER` — the Clerk authorization server for OAuth. Leave empty to
   disable OAuth entirely and run API-key-only (the self-hosted mode).
+- `CLERK_SECRET_KEY` — secret key of the Clerk instance that stores agent feedback.
+  When set, the server registers Clerk's `submit_feedback` tool and reports show in
+  that instance's Clerk Dashboard. Leave empty to omit the tool. In deployed
+  environments set it with `wrangler secret put CLERK_SECRET_KEY --env <us|eu|staging>`.
 
 For local development against a **self-hosted Novu API** on `http://localhost:3000`,
 set `NOVU_API_URL="http://localhost:3000"` in `.dev.vars` and use your instance's

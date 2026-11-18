@@ -13,3 +13,7 @@ NOVU_REGION="local"
 # (API-key-only mode — the self-hosted story). Set it to a Clerk authorization
 # server your Novu API trusts to exercise the OAuth flow locally.
 CLERK_OAUTH_ISSUER=""
+
+# Secret key of the Clerk instance that stores agent feedback. When set, the
+# server registers Clerk's `submit_feedback` tool; leave empty to omit it.
+CLERK_SECRET_KEY=""
