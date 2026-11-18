@@ -23,6 +23,28 @@ export function WorkflowLimitUpgradeDialog({ error, onClose, action = 'create' }
 
   const workflowsLabel = error.limit === 1 ? 'workflow' : 'workflows';
 
+  if (action === 'activate' && error.limitSource === 'system') {
+    return (
+      <PlanLimitUpgradeDialog
+        open
+        onOpenChange={handleOpenChange}
+        title="You've reached your active workflow limit"
+        description={
+          <>
+            Your organization can have up to{' '}
+            <span className="font-medium">
+              {error.limit} active {workflowsLabel}
+            </span>
+            . Reach out to the Novu team to increase this limit, or pause another workflow first.
+          </>
+        }
+        primaryCta="contact-support"
+        telemetrySource="workflows-active-system-limit-dialog"
+        utmCampaign="workflows_active_system_limit"
+      />
+    );
+  }
+
   if (action === 'activate') {
     return (
       <PlanLimitUpgradeDialog
