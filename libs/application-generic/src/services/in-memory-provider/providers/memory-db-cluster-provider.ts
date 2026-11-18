@@ -92,23 +92,24 @@ export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | un
 
   const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
 
-  const redisOptions: any = {
+  if (username && !password) {
+    throw new Error('MemoryDB misconfiguration: username provided without password');
+  }
+
+  if (username) {
+    Logger.log('Configuring MemoryDB with ACL authentication');
+  } else if (password) {
+    Logger.log('Configuring MemoryDB with legacy password-only authentication');
+  }
+
+  const redisOptions = {
     maxRetriesPerRequest: null,
     tls,
     connectTimeout,
     skipVersionCheck,
+    ...(username && { username }),
+    ...(password && { password }),
   };
-
-  if (username && password) {
-    redisOptions.username = username;
-    redisOptions.password = password;
-    Logger.log('Configuring MemoryDB with ACL authentication');
-  } else if (password) {
-    redisOptions.password = password;
-    Logger.log('Configuring MemoryDB with legacy password-only authentication');
-  } else if (username) {
-    throw new Error('MemoryDB misconfiguration: username provided without password');
-  }
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
