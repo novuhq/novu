@@ -14,6 +14,10 @@ type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;
   excludeIntegrationIds?: string[];
   variant?: IntegrationsListVariant;
+  /** Case-insensitive match on the integration name or provider name. */
+  searchQuery?: string;
+  /** Only show integrations in this environment; omit for all environments. */
+  environmentId?: string;
 };
 
 function IntegrationCardSkeleton() {
@@ -80,16 +84,35 @@ function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsLi
   );
 }
 
-export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
+export function IntegrationsList({
+  onItemClick,
+  excludeIntegrationIds,
+  variant = 'default',
+  searchQuery = '',
+  environmentId,
+}: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = (integration: NonNullable<typeof integrations>[number]) => {
+      if (!query) return true;
+
+      const providerName = availableIntegrations.find((p) => p.id === integration.providerId)?.displayName ?? '';
+
+      return [integration.name, providerName, integration.identifier].some((field) =>
+        field?.toLowerCase().includes(query)
+      );
+    };
+
     return integrations
       ?.filter((i) => !isAgentInboxProvider(i.providerId))
       .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
+      .filter((i) => !environmentId || i._environmentId === environmentId)
+      .filter(matchesSearch)
       .reduce(
         (acc, integration) => {
           const { channel } = integration;
@@ -109,13 +132,23 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
         },
         {} as Record<ChannelTypeEnum, typeof integrations>
       );
-  }, [integrations, isToolChannelEnabled]);
+  }, [integrations, isToolChannelEnabled, searchQuery, environmentId, availableIntegrations]);
 
   if (isLoading || !currentEnvironment) {
     return (
       <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
         <IntegrationChannelGroupSkeleton variant={variant} />
         {variant === 'default' ? <IntegrationChannelGroupSkeleton variant={variant} /> : null}
+      </div>
+    );
+  }
+
+  const hasActiveFilter = !!searchQuery.trim() || !!environmentId;
+
+  if (hasActiveFilter && Object.keys(groupedIntegrations || {}).length === 0) {
+    return (
+      <div className="text-text-soft text-paragraph-sm flex min-h-[200px] items-center justify-center text-center">
+        No integrations match your filters.
       </div>
     );
   }
