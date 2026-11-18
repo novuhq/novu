@@ -3,11 +3,12 @@ import { inspect } from 'node:util';
 import { expect } from 'chai';
 import jwt from 'jsonwebtoken';
 
-import { NovuTokens, TOKEN_KINDS } from './novu-tokens.service';
+import { NovuTokens, SubscriberLoginClaims, TOKEN_KINDS } from './novu-tokens.service';
 
 const ENV_KEYS = ['JWT_SECRET', 'NOVU_TOKEN_SIGNING_KEYS'] as const;
 const LOGIN_TYP = TOKEN_KINDS.subscriberLogin.typ;
 const YEAR_SECONDS = 365 * 24 * 60 * 60;
+const LOGIN_CLAIMS: SubscriberLoginClaims = { iss: 'env-1', aud: 'novu', sub: 'subscriber-1', scope: [], jti: 'jti-1' };
 
 function generateP256Pem(): string {
   return generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey.export({
@@ -37,7 +38,7 @@ function payloadOf(token: string) {
   return jwt.decode(token, { json: true });
 }
 
-function signLogin(tokens: NovuTokens, claims: Record<string, unknown> = { sub: 'subscriber-1' }): string {
+function signLogin(tokens: NovuTokens, claims: SubscriberLoginClaims = LOGIN_CLAIMS): string {
   return tokens.sign('subscriberLogin', claims, 3600).token;
 }
 
@@ -67,7 +68,7 @@ describe('NovuTokens', () => {
   describe('key derived from JWT_SECRET', () => {
     it('signs ES256 tokens with a kid and the kind typ, and verifies them', () => {
       const tokens = tokensWith({ JWT_SECRET: 'secret-a' });
-      const token = signLogin(tokens, { sub: 'subscriber-1', iss: 'env-1' });
+      const token = signLogin(tokens);
 
       expect(headerOf(token)).to.include({ alg: 'ES256', typ: 'novu-subscriber-login+jwt' });
       expect(headerOf(token)?.kid).to.be.a('string').that.is.not.empty;
@@ -190,11 +191,8 @@ describe('NovuTokens', () => {
     it('sets iat and exp itself, ignoring timestamps in the claims', () => {
       const tokens = tokensWith({ JWT_SECRET: 'secret-a' });
       const future = nowSeconds() + YEAR_SECONDS;
-      const { token, expiresAt } = tokens.sign(
-        'subscriberLogin',
-        { sub: 'subscriber-1', iat: future, exp: future, nbf: future },
-        60
-      );
+      const claimsWithTimestamps = { ...LOGIN_CLAIMS, iat: future, exp: future, nbf: future };
+      const { token, expiresAt } = tokens.sign('subscriberLogin', claimsWithTimestamps, 60);
       const payload = payloadOf(token);
 
       expect(payload?.iat).to.be.closeTo(nowSeconds(), 5);
@@ -209,9 +207,7 @@ describe('NovuTokens', () => {
       const max = TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds;
 
       for (const lifetime of [max + 1, 0, -10]) {
-        expect(() => tokens.sign('subscriberLogin', { sub: 'subscriber-1' }, lifetime), `${lifetime}`).to.throw(
-          'subscriberLogin'
-        );
+        expect(() => tokens.sign('subscriberLogin', LOGIN_CLAIMS, lifetime), `${lifetime}`).to.throw('subscriberLogin');
       }
     });
   });

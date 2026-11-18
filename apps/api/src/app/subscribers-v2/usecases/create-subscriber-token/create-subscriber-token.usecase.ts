@@ -2,8 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { NovuTokens, TOKEN_KINDS } from '../../../shared/services/novu-tokens.service';
-import { SubscriberLoginClaims } from '../../../shared/services/subscriber-login-token';
+import { NovuTokens, SubscriberLoginClaims, TOKEN_KINDS } from '../../../shared/services/novu-tokens.service';
 import { CreateSubscriberTokenResponseDto } from '../../dtos/create-subscriber-token-response.dto';
 import { CreateSubscriberTokenCommand } from './create-subscriber-token.command';
 
@@ -28,13 +27,14 @@ export class CreateSubscriberToken {
       throw new NotFoundException();
     }
 
-    const scope = command.scope ?? [];
+    const { context, subscriber, expiresIn } = command.request;
+    const scope = command.request.scope ?? [];
     const claims: SubscriberLoginClaims = {
       iss: command.environmentId,
       aud: 'novu',
       sub: command.subscriberId,
-      ...(command.context && { context: command.context }),
-      ...(command.subscriber && { subscriber: command.subscriber }),
+      ...(context && { context }),
+      ...(subscriber && { subscriber }),
       scope,
       jti: randomUUID(),
     };
@@ -42,7 +42,7 @@ export class CreateSubscriberToken {
     const signed = this.novuTokens.sign(
       'subscriberLogin',
       claims,
-      command.expiresIn ?? TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds
+      expiresIn ?? TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds
     );
     const expiresAt = signed.expiresAt.toISOString();
 

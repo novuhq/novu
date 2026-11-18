@@ -496,10 +496,7 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
-        context: body.context,
-        subscriber: body.subscriber,
-        scope: body.scope,
-        expiresIn: body.expiresIn,
+        request: body,
       })
     );
   }

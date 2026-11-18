@@ -4,8 +4,7 @@ import { ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayUnique, IsArray, IsEnum, IsInt, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { BaseSubscriberFieldsDto } from '../../shared/dtos/base-subscriber-fields.dto';
-import { TOKEN_KINDS } from '../../shared/services/novu-tokens.service';
-import { SubscriberTokenScopeEnum } from '../../shared/services/subscriber-login-token';
+import { SubscriberTokenScopeEnum, TOKEN_KINDS } from '../../shared/services/novu-tokens.service';
 
 const MAX_EXPIRES_IN_SECONDS = TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds;
 

@@ -1,18 +1,11 @@
-import { ContextPayload } from '@novu/shared';
-import { IsDefined, IsString } from 'class-validator';
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { SubscriberLoginProfile, SubscriberTokenScopeEnum } from '../../../shared/services/subscriber-login-token';
+import { Type } from 'class-transformer';
+import { IsDefined, ValidateNested } from 'class-validator';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { CreateSubscriberTokenRequestDto } from '../../dtos/create-subscriber-token.dto';
 
-export class CreateSubscriberTokenCommand extends EnvironmentCommand {
-  @IsString()
+export class CreateSubscriberTokenCommand extends EnvironmentWithSubscriber {
   @IsDefined()
-  subscriberId: string;
-
-  context?: ContextPayload;
-
-  subscriber?: SubscriberLoginProfile;
-
-  scope?: SubscriberTokenScopeEnum[];
-
-  expiresIn?: number;
+  @ValidateNested()
+  @Type(() => CreateSubscriberTokenRequestDto)
+  readonly request: CreateSubscriberTokenRequestDto;
 }
