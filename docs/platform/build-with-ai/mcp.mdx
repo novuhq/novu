@@ -48,7 +48,7 @@ Connecting with **OAuth** is recommended - you don't copy or paste a key; your c
 <Tabs>
   <Tab title="Cursor">
 
-Open **Cursor Settings** → **Tools & Integrations** → **New MCP Server**, and add:
+Add the server to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
 
 ```json
 {
@@ -60,13 +60,13 @@ Open **Cursor Settings** → **Tools & Integrations** → **New MCP Server**, an
 }
 ```
 
-Save the file. Cursor will prompt you to sign in to Novu the first time it calls a tool.
+Save the file, then open the MCP server list in Cursor's settings and select **Connect** (or **Needs login**) next to `novu` to sign in to Novu.
 
   </Tab>
 
   <Tab title="VS Code">
 
-Add to `.vscode/mcp.json` (or your user MCP settings):
+Run **MCP: Add Server** from the Command Palette, choose **HTTP**, and enter the MCP URL for your region. Or add it to `.vscode/mcp.json` yourself (run **MCP: Open User Configuration** to add it for every workspace):
 
 ```json
 {
@@ -79,55 +79,64 @@ Add to `.vscode/mcp.json` (or your user MCP settings):
 }
 ```
 
-Reload VS Code and approve the sign-in prompt when it appears.
+Start the server and approve the sign-in prompt when it appears. VS Code opens a browser window to sign in to Novu.
 
   </Tab>
 
   <Tab title="Claude Code">
 
+Add the server, then sign in:
+
 ```bash
 claude mcp add --transport http novu https://mcp.novu.co/
 ```
 
-Then run `/mcp` inside Claude Code to sign in.
+```bash
+claude mcp login novu
+```
+
+`claude mcp login` opens your browser to sign in to Novu. On a remote or headless machine, add `--no-browser` and paste the redirect URL back when prompted. You can also run `/mcp` inside Claude Code and choose `novu` to sign in.
+
+Add `--scope user` to the `add` command to make the server available in all your projects.
 
   </Tab>
 
   <Tab title="ChatGPT">
 
-Add Novu as a custom connector using the MCP URL for your region, and choose **OAuth** as the connection mechanism. ChatGPT will prompt you to sign in to Novu.
+1. In ChatGPT on the web, open **Settings** → **Apps** → **Advanced settings** and turn on **Developer mode**. On Business, Enterprise, and Edu workspaces, an admin may need to allow it first.
+2. Select **Create app**, give it a name, and enter the MCP URL for your region.
+3. Choose **OAuth** as the authentication method, create the app, and sign in to Novu when prompted.
 
   </Tab>
 
   <Tab title="Claude Desktop">
 
-Claude Desktop doesn't yet support remote OAuth, so connect with an API key through the [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) proxy (requires Node.js 18+):
+Add Novu as a custom connector. It works the same way in Claude Desktop and on claude.ai:
 
-```json
-{
-  "mcpServers": {
-    "novu": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp.novu.co/",
-        "--header",
-        "Authorization:Bearer your-novu-api-key"
-      ]
-    }
-  }
-}
-```
+1. Open **Customize** → **Connectors**, select **+ Add**, then **Add custom connector**.
+2. Name it `Novu`, enter the MCP URL for your region, and select **Continue**.
+3. Leave authentication on OAuth, select **Add**, and sign in to Novu.
+4. In a chat, open the **+** menu → **Connectors** and turn Novu on.
+
+On Team and Enterprise plans, an Owner adds the connector under **Organization settings** → **Connectors**, and members then select **Connect** on it.
 
   </Tab>
 
   <Tab title="Codex">
 
-Codex connects with an API key today:
+Add the server, then sign in:
 
 ```bash
-export NOVU_API_KEY="your-novu-api-key"
+codex mcp add novu --url https://mcp.novu.co/
 ```
+
+```bash
+codex mcp login novu
+```
+
+This writes the server to `~/.codex/config.toml`. Run `codex mcp list` or `/mcp` in the TUI to confirm it's connected. In the Codex desktop app or IDE extension, open **Settings** → **MCP servers** and select **Authenticate** instead.
+
+To use an API key instead of OAuth, set it in an environment variable and point `bearer_token_env_var` at it in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.novu]
@@ -329,7 +338,7 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Accordion>
 
   <Accordion title="Still not connecting">
-    Restart your AI assistant after config changes. For Claude Code, run `claude mcp list`. For Codex, run `/mcp` in the TUI. For Claude Desktop, confirm Node.js is installed.
+    Restart your AI assistant after config changes. For Claude Code, run `claude mcp list`, then `claude mcp login novu` if it shows the server needs authentication. For Codex, run `codex mcp list` or `/mcp` in the TUI, then `codex mcp login novu` if needed. For Claude Desktop, check that the Novu connector is turned on for the chat.
   </Accordion>
 </AccordionGroup>
 
