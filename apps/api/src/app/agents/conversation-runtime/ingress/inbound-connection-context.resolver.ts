@@ -32,9 +32,11 @@ function toContextValue(context: ContextEntity): AgentContextValue {
 export interface ResolvedInboundContext {
   context: AgentContextPayload | null;
   bridgeUrl?: string;
+  lookupFailed?: true;
 }
 
 const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
+const FAILED_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null, lookupFailed: true };
 
 /**
  * Resolves the connect-time context bound to an inbound chat so a Novu-hosted multi-tenant agent
@@ -77,11 +79,14 @@ export class InboundConnectionContextResolver {
    * @param rawEvent Raw inbound platform payload — used for workspace-scoped platforms.
    * @param platformUserId The sender's platform identity (e.g. Telegram `chat.id`) — used for
    *   endpoint-scoped platforms.
+   * @param storedWorkspaceId The workspace id captured on the conversation — used when the payload
+   *   carries none (Slack reaction and delete events).
    */
   async resolve(
     config: ResolvedAgentConfig,
     rawEvent: unknown,
-    platformUserId?: string | null
+    platformUserId?: string | null,
+    storedWorkspaceId?: string
   ): Promise<ResolvedInboundContext> {
     if (config.platform === AgentPlatformEnum.WEB_CHAT) {
       return this.resolveBySessionContextKeys(config, rawEvent);
@@ -90,7 +95,11 @@ export class InboundConnectionContextResolver {
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
-      return this.resolveByWorkspaceAndEndpoint(config, extractWorkspaceId(rawEvent), platformUserId ?? null);
+      return this.resolveByWorkspaceAndEndpoint(
+        config,
+        extractWorkspaceId(rawEvent) ?? storedWorkspaceId ?? null,
+        platformUserId ?? null
+      );
     }
 
     return this.resolveByEndpoint(config, platformUserId ?? null);
@@ -130,7 +139,7 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'session' });
 
-      return EMPTY_RESOLVED_CONTEXT;
+      return FAILED_RESOLVED_CONTEXT;
     }
   }
 
@@ -167,7 +176,10 @@ export class InboundConnectionContextResolver {
     platformUserId: string | null
   ): Promise<ResolvedInboundContext> {
     // Resolve the workspace connection first so the per-user endpoint lookup can be scoped to it.
-    const connection = await this.findWorkspaceConnection(config, workspaceId);
+    const { connection, lookupFailed: connectionLookupFailed } = await this.findWorkspaceConnection(
+      config,
+      workspaceId
+    );
 
     const [workspaceResult, endpointResult] = await Promise.all([
       this.buildWorkspaceContext(config, connection, workspaceId),
@@ -178,9 +190,10 @@ export class InboundConnectionContextResolver {
         ? this.resolveByEndpoint(config, platformUserId, connection.identifier)
         : Promise.resolve(EMPTY_RESOLVED_CONTEXT),
     ]);
+    const lookupFailed = connectionLookupFailed || workspaceResult.lookupFailed || endpointResult.lookupFailed;
 
     if (!workspaceResult.context && !endpointResult.context) {
-      return EMPTY_RESOLVED_CONTEXT;
+      return lookupFailed ? FAILED_RESOLVED_CONTEXT : EMPTY_RESOLVED_CONTEXT;
     }
 
     return {
@@ -188,28 +201,31 @@ export class InboundConnectionContextResolver {
       // The verified per-user endpoint context takes precedence over the workspace hint, so its
       // bridge URL override wins on conflict; the workspace override is the fallback.
       bridgeUrl: endpointResult.bridgeUrl ?? workspaceResult.bridgeUrl,
+      ...(lookupFailed && { lookupFailed }),
     };
   }
 
   private async findWorkspaceConnection(
     config: ResolvedAgentConfig,
     workspaceId: string | null
-  ): Promise<ChannelConnectionEntity | null> {
+  ): Promise<{ connection: ChannelConnectionEntity | null; lookupFailed?: true }> {
     if (!workspaceId) {
-      return null;
+      return { connection: null };
     }
 
     try {
-      return await this.channelConnectionRepository.findOne({
+      const connection = await this.channelConnectionRepository.findOne({
         _environmentId: config.environmentId,
         _organizationId: config.organizationId,
         integrationIdentifier: config.integrationIdentifier,
         'workspace.id': workspaceId,
       });
+
+      return { connection };
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return null;
+      return { connection: null, lookupFailed: true as const };
     }
   }
 
@@ -227,7 +243,7 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return EMPTY_RESOLVED_CONTEXT;
+      return FAILED_RESOLVED_CONTEXT;
     }
   }
 
@@ -262,7 +278,7 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'endpoint', platformUserId });
 
-      return EMPTY_RESOLVED_CONTEXT;
+      return FAILED_RESOLVED_CONTEXT;
     }
   }
 

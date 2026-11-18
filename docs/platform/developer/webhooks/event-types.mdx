@@ -145,6 +145,8 @@ Each attachment has the following fields.
 - `message.unread`: This webhook is triggered when a message is unread or marked as unread by the subscriber. The payload contains the details of the event.
 - `message.unsnoozed`: This webhook is triggered when a message is unsnoozed by a subscriber. The payload contains the details of the event.
 
+Email and push activity-tracking events use these same `message.*` types. The status mapping is in [Activity tracking](#activity-tracking).
+
 ### Message payload
 
 All message events share the same `data.object` shape.
@@ -235,6 +237,50 @@ All message events share the same `data.object` shape.
   }
 }
 ```
+
+### Activity tracking
+
+[Email activity tracking](/platform/integrations/email/activity-tracking) and [push activity tracking](/platform/integrations/push/push-activity-tracking) are delivered as `message.*` webhooks with the [message payload](#message-payload).
+
+Novu also sends `message.sent` when it hands the message to the provider, and `message.failed` when that handoff fails. Those events are independent of activity tracking. Email activity tracking sends `message.sent` again when the normalized status is `sent`. Resend (`email.sent`) and Amazon SES (`Send`) report that status. SendGrid and Mailgun do not.
+
+<Note>
+  `data.object` is the message record loaded when the event arrived. `seen`, `read`, `deliveredAt`, and `status` still hold the values from before this event. Use `type` as the activity signal.
+</Note>
+
+#### Email
+
+Email activity tracking is available on Novu Cloud and Enterprise self-hosted. Provider events are normalized to the statuses in [Event semantics](/platform/integrations/email/activity-tracking#event-semantics-in-novu), then mapped:
+
+| Novu status | Webhook event |
+| --- | --- |
+| `sent` | `message.sent` |
+| `delivered` | `message.delivered` |
+| `opened` | `message.seen` |
+| `bounced` | `message.failed` |
+| `rejected` | `message.failed` |
+| `blocked` | `message.failed` |
+| `dropped` | `message.failed` |
+| `clicked` | No webhook |
+| `delayed` | No webhook |
+| `complaint` | No webhook |
+| `unsubscribed` | No webhook |
+
+`clicked` is written to the activity feed and sets `read` and `seen` on the message. `delayed`, `complaint`, and `unsubscribed` are written to the activity feed and leave the message unchanged. `bounced`, `rejected`, `blocked`, and `dropped` send `message.failed` and leave `status` on the message unchanged. The activity feed keeps the specific status. Any other normalized status, including `spam` and `deferred`, is not sent as a webhook.
+
+#### Push
+
+Push events are the `eventType` values forwarded to the [activity track API](/api-reference/activity/track-activity-and-engagement-events). Novu matches the event when `eventId` is the `__nvMessageId` from the notification. See [Push activity tracking](/platform/integrations/push/push-activity-tracking).
+
+| `eventType` | Webhook event |
+| --- | --- |
+| `delivered` | `message.delivered` |
+| `opened` | `message.seen` |
+| `clicked` | `message.read` |
+| `dismissed` | `message.read` |
+| `failed` | `message.failed` |
+
+`clicked` and `dismissed` both send `message.read`.
 
 ## Preference event
 

@@ -12,7 +12,6 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
-  CommunityOrganizationRepository,
   EnvironmentEntity,
   JobEntity,
   JobRepository,
@@ -159,7 +158,6 @@ describe('Standard Worker', () => {
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
-    const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
     // Same singleton RunJob was injected with, so stubbing it here reaches the use case.
     stepRunRepository = moduleRef.get<StepRunRepository>(StepRunRepository);
@@ -171,7 +169,6 @@ describe('Standard Worker', () => {
       setJobAsFailed,
       webhookFilterBackoffStrategy,
       workflowInMemoryProviderService,
-      organizationRepository,
       jobRepository,
       mockSqsService,
       mockLogger,

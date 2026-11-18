@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
 
@@ -7,8 +7,7 @@ import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credenti
 export class DeleteSubscriberCredentials {
   constructor(
     private invalidateCache: InvalidateCacheService,
-    private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: DeleteSubscriberCredentialsCommand): Promise<void> {
@@ -29,12 +28,6 @@ export class DeleteSubscriberCredentials {
       command.providerId,
       foundSubscriber._id
     );
-
-    this.analyticsService.mixpanelTrack('Delete Subscriber Credentials - [Subscribers]', '', {
-      providerId: command.providerId,
-      _organization: command.organizationId,
-      _subscriberId: foundSubscriber._id,
-    });
   }
 
   private async deleteSubscriberCredentialsOfOneProvider(

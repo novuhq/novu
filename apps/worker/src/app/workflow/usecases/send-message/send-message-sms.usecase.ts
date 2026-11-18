@@ -88,11 +88,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
 
     if (template) {
       step.template = template;
@@ -103,6 +98,12 @@ export class SendMessageSms extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -372,6 +373,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return {
@@ -398,6 +400,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(

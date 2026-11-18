@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
-import { AnalyticsEventsEnum } from '../../utils';
 import { DeleteManyNotificationsCommand } from '../delete-many-notifications/delete-many-notifications.command';
 import { DeleteManyNotifications } from '../delete-many-notifications/delete-many-notifications.usecase';
 import { DeleteNotificationCommand } from './delete-notification.command';
@@ -13,7 +11,6 @@ export class DeleteNotification {
   constructor(
     private deleteManyNotifications: DeleteManyNotifications,
     private getSubscriber: GetSubscriber,
-    private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository
   ) {}
 
@@ -46,11 +43,5 @@ export class DeleteNotification {
         contextKeys: command.contextKeys,
       })
     );
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.DELETE_NOTIFICATION, '', {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      _notification: command.notificationId,
-    });
   }
 }

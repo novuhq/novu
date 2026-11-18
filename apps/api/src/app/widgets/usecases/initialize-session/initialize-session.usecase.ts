@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   InstrumentUsecase,
@@ -27,7 +26,6 @@ export class InitializeSession {
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService,
     private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
   ) {}
 
@@ -77,12 +75,6 @@ export class InitializeSession {
         allowUpdate: hmacValid,
       })
     );
-
-    this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriber._id,
-    });
 
     const token = await this.authService.getSubscriberWidgetToken(subscriber, []);
 

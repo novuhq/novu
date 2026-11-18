@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import {
@@ -10,7 +10,6 @@ import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
-import { AnalyticsEventsEnum } from '../../utils';
 import { stripHiddenPreferenceChannels } from '../../utils/strip-hidden-preference-channels';
 import { InboxPreference } from '../../utils/types';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
@@ -19,7 +18,6 @@ import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 export class GetInboxPreferences {
   constructor(
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
-    private analyticsService: AnalyticsService,
     private getSubscriberPreference: GetSubscriberPreference,
     private subscriberRepository: SubscriberRepository
   ) {}
@@ -94,13 +92,6 @@ export class GetInboxPreferences {
       if (!bCreatedAt) return -1;
 
       return new Date(aCreatedAt).getTime() - new Date(bCreatedAt).getTime();
-    });
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
-      _organization: command.organizationId,
-      subscriberId: command.subscriberId,
-      workflowSize: sortedWorkflowPreferences.length,
-      tags: command.tags || [],
     });
 
     return [updatedGlobalPreference, ...sortedWorkflowPreferences];
