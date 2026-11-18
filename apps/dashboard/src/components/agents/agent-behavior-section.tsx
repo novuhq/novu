@@ -24,15 +24,24 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
 const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
+const ACCESS_RULE_READ_ONLY_TOOLTIP =
+  'This agent uses an access rule, managed through the API. Changing access here would delete the rule.';
 
 type BehaviorSwitchProps = {
   checked: boolean;
   disabled?: boolean;
   readOnly: boolean;
+  readOnlyTooltip?: string;
   onCheckedChange: (checked: boolean) => void;
 };
 
-function BehaviorSwitch({ checked, disabled, readOnly, onCheckedChange }: BehaviorSwitchProps) {
+function BehaviorSwitch({
+  checked,
+  disabled,
+  readOnly,
+  readOnlyTooltip = PROD_READ_ONLY_TOOLTIP,
+  onCheckedChange,
+}: BehaviorSwitchProps) {
   if (readOnly) {
     return (
       <Tooltip>
@@ -41,7 +50,7 @@ function BehaviorSwitch({ checked, disabled, readOnly, onCheckedChange }: Behavi
             <Switch checked={checked} disabled />
           </span>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+        <TooltipContent className="max-w-xs">{readOnlyTooltip}</TooltipContent>
       </Tooltip>
     );
   }
@@ -244,6 +253,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const reactionOnResolved =
     agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
   const subscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
+  const hasAccessRule = agent.behavior?.subscriberAccess === 'rule';
   const replyPolicy = agent.behavior?.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY;
 
   const { mutate, isPending } = useMutation({
@@ -321,7 +331,8 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             <BehaviorSwitch
               checked={subscriberAccessOpen}
               disabled={isPending}
-              readOnly={readOnly}
+              readOnly={readOnly || hasAccessRule}
+              readOnlyTooltip={hasAccessRule ? ACCESS_RULE_READ_ONLY_TOOLTIP : undefined}
               onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
             />
           </ToggleRow>

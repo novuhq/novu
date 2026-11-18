@@ -52,7 +52,7 @@ import {
   type ResolvedPushRoute,
   resolvePushRoute,
 } from './fcm-routing-overrides';
-import { dispatchWebhooksInBackground, SendMessageBase } from './send-message.base';
+import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -623,21 +623,19 @@ export class SendMessagePush extends SendMessageBase {
         })
       );
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId, {
-              providerResponseId: result.id,
-              deviceToken,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+            deviceToken,
+          }),
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       return { success: true, error: undefined };
     } catch (e) {
@@ -708,25 +706,23 @@ export class SendMessagePush extends SendMessageBase {
           }
         }
 
-        dispatchWebhooksInBackground(this.sendWebhookMessage, [
-          {
-            eventType: WebhookEventEnum.MESSAGE_FAILED,
-            objectType: WebhookObjectTypeEnum.MESSAGE,
-            payload: {
-              object: messageWebhookMapper(message, command.subscriberId),
-              error: {
-                push: {
-                  reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
-                  deviceToken: deviceToken,
-                },
-                message: e.message || e.name || 'Error while sending push with provider',
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              push: {
+                reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
+                deviceToken: deviceToken,
               },
+              message: e.message || e.name || 'Error while sending push with provider',
             },
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-            environment: command.environment,
           },
-        ]);
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
+        });
       } catch (err) {
         Logger.error(
           { jobId: command.jobId },
