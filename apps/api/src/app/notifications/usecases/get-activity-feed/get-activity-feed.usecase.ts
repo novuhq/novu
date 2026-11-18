@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import {
   ExecutionDetailFeedItem,
+  NotificationFeedFilters,
   NotificationFeedItemEntity,
   NotificationRepository,
   SubscriberRepository,
@@ -17,6 +18,7 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKey
 import { subDays } from 'date-fns';
 import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
+import { NotificationFeedV2Reader } from '../../services/notification-feed-v2-reader.service';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
@@ -33,6 +35,7 @@ export class GetActivityFeed {
     private activityRetentionService: ActivityRetentionService,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
+    private notificationFeedV2Reader: NotificationFeedV2Reader,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -98,30 +101,52 @@ export class GetActivityFeed {
     command: GetActivityFeedCommand,
     subscriberIds?: string[]
   ): Promise<NotificationFeedItemEntity[]> {
+    const filters: NotificationFeedFilters = {
+      channels: command.channels,
+      templates: command.templates,
+      subscriberIds: subscriberIds || [],
+      transactionId: command.transactionId,
+      topicKey: command.topicKey,
+      subscriptionId: command.subscriptionId,
+      after: command.after,
+      before: command.before,
+      severity: command.severity,
+      contextKeys: command.contextKeys,
+    };
+    const skip = command.page * command.limit;
+    const flagContext = {
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      environment: { _id: command.environmentId },
+    };
+
+    const isStepRunsV2ReadEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED,
+      defaultValue: false,
+      ...flagContext,
+    });
+
+    if (isStepRunsV2ReadEnabled) {
+      return this.notificationFeedV2Reader.getFeed({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        filters,
+        skip,
+        limit: command.limit,
+      });
+    }
+
     const notifications = await this.notificationRepository.getFeed(
       command.environmentId,
-      {
-        channels: command.channels,
-        templates: command.templates,
-        subscriberIds: subscriberIds || [],
-        transactionId: command.transactionId,
-        topicKey: command.topicKey,
-        subscriptionId: command.subscriptionId,
-        after: command.after,
-        before: command.before,
-        severity: command.severity,
-        contextKeys: command.contextKeys,
-      },
-      command.page * command.limit,
+      filters,
+      skip,
       command.limit
     );
 
     const isClickHouseOnlyEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED,
       defaultValue: false,
-      organization: { _id: command.organizationId },
-      user: { _id: command.userId },
-      environment: { _id: command.environmentId },
+      ...flagContext,
     });
 
     if (isClickHouseOnlyEnabled) {

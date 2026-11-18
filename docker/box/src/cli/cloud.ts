@@ -1,8 +1,11 @@
 import fs from 'node:fs';
+import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
 import { log } from '../node/main.ts';
 import { poll } from '../node/poll.ts';
+import { stopping } from '../node/process.ts';
 import {
+  BoxState,
   BoxStatus,
   DeletedBox,
   DoctorReport,
@@ -14,7 +17,8 @@ import {
   RegisteredBox,
   StateAnswer,
 } from '../shared/contracts.ts';
-import { apiOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
+import { messageOf } from '../shared/errors.ts';
+import { apiOrigin, appOrigin, BOX_CLI, boxOrigin, HOST, isBoxName } from '../shared/names.ts';
 import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec, type Token } from './cloud-http.ts';
 
 // A first bake takes 13 to 16 minutes on Cloudflare, a wake about 35 s. A snapshot restores in seconds in base's
@@ -22,6 +26,8 @@ import { boxFetch, type FetchInit, failUnlessOk, hostBoxes, hostExists, readExec
 // for the worst case: a restore that hangs (RESTORE_MS, 8 minutes), stopping it (up to 3.5 minutes measured, so 4), a
 // cold retry (6) and the boot (1).
 const READY_WITHIN_SECONDS = { baking: 25 * 60, waking: RESTORE_MS / 1000 + 11 * 60, running: 5 * 60 };
+
+const STATE_ATTEMPTS = 3;
 
 interface Exec {
   readonly cmd: ReadonlyArray<string>;
@@ -79,6 +85,8 @@ export interface CloudTarget {
   readonly ready: () => Promise<void>;
   readonly box: (args: ReadonlyArray<string>, options?: BoxCall) => Promise<number>;
   readonly boxOutput: (args: ReadonlyArray<string>, options?: BoxCall) => Promise<string>;
+  // `box state` in the box. It only reads, so a dropped connection is tried again.
+  readonly boxState: () => Promise<BoxState>;
   readonly exec: (cmd: ReadonlyArray<string>) => Promise<number>;
   readonly put: (file: string, path: string) => Promise<void>;
   readonly state: () => Promise<BoxStatus | null>;
@@ -132,6 +140,23 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     if (exitCode !== 0) throw new Error(`${body.cmd.join(' ')} exited with ${exitCode}: ${output.slice(-500)}`);
 
     return output.trim();
+  };
+
+  // A box that just woke dropped one connection (`fetch failed`) right after it answered its doctor.
+  const boxState = async (): Promise<BoxState> => {
+    for (let attempt = 1; ; attempt++) {
+      let text: string;
+      try {
+        text = await collected({ cmd: [...BOX_CLI, 'state'] });
+      } catch (error) {
+        if (attempt === STATE_ATTEMPTS) throw error;
+        log(`${box}: reading its state failed (${messageOf(error)}); trying again`);
+        await sleep(5000, undefined, { signal: stopping.signal });
+        continue;
+      }
+
+      return decode(BoxState, text, `${box} \`box state\``);
+    }
   };
 
   const startingSnapshot = async (
@@ -262,6 +287,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     await logRestore(current);
     console.log(`box: ${origin}`);
     console.log(`api: ${apiOrigin(box)}`);
+    console.log(`app: ${appOrigin(box)}`);
     console.log(`mailpit: ${origin}/mail`);
 
     return 0;
@@ -311,6 +337,7 @@ export function cloudTarget(options: CloudOptions): CloudTarget {
     state,
     box: (args, { github = false } = {}) => streamed({ cmd: [...BOX_CLI, ...args], github }),
     boxOutput: (args, { github = false } = {}) => collected({ cmd: [...BOX_CLI, ...args], github }),
+    boxState,
     runOutput: (cmd, { github = false } = {}) => collected({ cmd, github }),
     exec: (cmd) => streamed({ cmd, cwd: '/data/novu' }),
     put: async (file, path) => {

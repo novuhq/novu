@@ -28,6 +28,19 @@ const TERMINAL_EVENTS: DeliveryLifecycleEventType[] = [
   'workflow_run_delivery_interacted',
 ];
 
+export interface NotificationFeedFilters {
+  channels?: ChannelTypeEnum[] | null;
+  templates?: string[] | null;
+  subscriberIds?: string[];
+  transactionId?: string[];
+  topicKey?: string;
+  subscriptionId?: string;
+  severity?: SeverityLevelEnum[] | null;
+  after?: string;
+  before?: string;
+  contextKeys?: string[];
+}
+
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
   NotificationEntity,
@@ -46,21 +59,43 @@ export class NotificationRepository extends BaseRepository<
 
   async getFeed(
     environmentId: string,
-    query: {
-      channels?: ChannelTypeEnum[] | null;
-      templates?: string[] | null;
-      subscriberIds?: string[];
-      transactionId?: string[];
-      topicKey?: string;
-      subscriptionId?: string;
-      severity?: SeverityLevelEnum[] | null;
-      after?: string;
-      before?: string;
-      contextKeys?: string[];
-    } = {},
+    query: NotificationFeedFilters = {},
     skip = 0,
     limit = 10
   ): Promise<NotificationFeedItemEntity[]> {
+    const requestQuery = this.buildFeedQuery(environmentId, query);
+
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
+      .read('secondaryPreferred')
+      .skip(skip)
+      .limit(limit)
+      .sort('-createdAt');
+
+    return this.toFeedItems(response);
+  }
+
+  /**
+   * The activity feed page without the jobs populate: notification fields plus the subscriber and workflow.
+   * Steps are read from ClickHouse `step_runs_v2` by the caller.
+   */
+  async getFeedWithoutJobs(
+    environmentId: string,
+    query: NotificationFeedFilters = {},
+    skip = 0,
+    limit = 10
+  ): Promise<NotificationFeedItemEntity[]> {
+    const requestQuery = this.buildFeedQuery(environmentId, query);
+
+    const response = await this.populateNotificationMetadataOnly(this.MongooseModel.find(requestQuery))
+      .read('secondaryPreferred')
+      .skip(skip)
+      .limit(limit)
+      .sort('-createdAt');
+
+    return this.toFeedItems(response).map((item) => ({ ...item, jobs: [] }));
+  }
+
+  private buildFeedQuery(environmentId: string, query: NotificationFeedFilters): FilterQuery<NotificationDBModel> {
     const requestQuery: FilterQuery<NotificationDBModel> = {
       _environmentId: environmentId,
     };
@@ -79,27 +114,14 @@ export class NotificationRepository extends BaseRepository<
       requestQuery['topics.preferenceEvaluation.subscriptionIdentifier'] = query.subscriptionId;
     }
 
-    const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
-    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
-
-    if (query.severity && query.severity?.length > 0) {
-      if (query.severity.includes(SeverityLevelEnum.NONE)) {
-        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
-      } else {
-        requestQuery.severity = { $in: query.severity };
-      }
+    const includesNoSeverity = Boolean(query.severity?.includes(SeverityLevelEnum.NONE));
+    if (query.severity?.length && !includesNoSeverity) {
+      requestQuery.severity = { $in: query.severity };
     }
 
-    if (query.after || query.before) {
-      requestQuery.createdAt = {};
-
-      if (query.after) {
-        requestQuery.createdAt.$gte = query.after;
-      }
-
-      if (query.before) {
-        requestQuery.createdAt.$lte = query.before;
-      }
+    const createdAtRange = this.buildCreatedAtRange(query.after, query.before);
+    if (createdAtRange) {
+      requestQuery.createdAt = createdAtRange;
     }
 
     if (query?.templates) {
@@ -125,21 +147,34 @@ export class NotificationRepository extends BaseRepository<
       requestQuery.$and = [...(requestQuery.$and ?? []), contextQuery];
     }
 
-    // combine all $or conditions properly
-    if (severityCondition.length > 0) {
-      orConditions.push({ $or: severityCondition });
-    }
-    if (orConditions.length > 0) {
-      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
+    if (query.severity?.length && includesNoSeverity) {
+      requestQuery.$and = [
+        ...(requestQuery.$and ?? []),
+        { $or: [{ severity: { $exists: false } }, { severity: { $in: query.severity } }] },
+      ];
     }
 
-    const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
-      .read('secondaryPreferred')
-      .skip(skip)
-      .limit(limit)
-      .sort('-createdAt');
+    return requestQuery;
+  }
 
-    return this.mapEntities(response) as unknown as NotificationFeedItemEntity[];
+  private buildCreatedAtRange(after?: string, before?: string): { $gte?: string; $lte?: string } | undefined {
+    if (!after && !before) {
+      return undefined;
+    }
+
+    return {
+      ...(after && { $gte: after }),
+      ...(before && { $lte: before }),
+    };
+  }
+
+  /** NotificationEntity has no class-transformer metadata, so a JSON copy is what mapEntity would return. */
+  private toFeedItem(populatedNotification: unknown): NotificationFeedItemEntity {
+    return JSON.parse(JSON.stringify(populatedNotification));
+  }
+
+  private toFeedItems(populatedNotifications: unknown): NotificationFeedItemEntity[] {
+    return JSON.parse(JSON.stringify(populatedNotifications));
   }
 
   public async getFeedItem(
@@ -153,9 +188,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
-      await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId)
-    ) as unknown as NotificationFeedItemEntity;
+    return this.toFeedItem(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId));
   }
 
   public async findMetadataForTraces(
@@ -169,9 +202,9 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
+    return this.toFeedItem(
       await this.populateFeedWithoutExecutionDetails(this.MongooseModel.findOne(requestQuery), _environmentId)
-    ) as unknown as NotificationFeedItemEntity;
+    );
   }
 
   public async findNotificationMetadataOnly(
@@ -185,9 +218,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(
-      await this.populateNotificationMetadataOnly(this.MongooseModel.findOne(requestQuery))
-    ) as unknown as NotificationFeedItemEntity;
+    return this.toFeedItem(await this.populateNotificationMetadataOnly(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {

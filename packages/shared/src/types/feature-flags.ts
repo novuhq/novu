@@ -59,6 +59,13 @@ export enum FeatureFlagsKeysEnum {
 
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
+  /**
+   * Organization-scoped, read by the legacy webhook service (`apps/webhook`): verifies the provider signature
+   * (`handler.verifySignature`) before processing email/SMS delivery callbacks. On by default; set it to `false`
+   * for an organization (or the `IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED=false` env var when self-hosted
+   * without LaunchDarkly) to skip verification.
+   */
+  IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED = 'IS_LEGACY_WEBHOOK_SIGNATURE_VERIFICATION_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
@@ -84,6 +91,14 @@ export enum FeatureFlagsKeysEnum {
   IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED = 'IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED',
   IS_STEP_RUN_LOGS_READ_ENABLED = 'IS_STEP_RUN_LOGS_READ_ENABLED',
   IS_STEP_RUN_LOGS_WRITE_ENABLED = 'IS_STEP_RUN_LOGS_WRITE_ENABLED',
+  /** Per-environment write of every job status change to ClickHouse `step_runs_v2`. Cloud only, default false. */
+  IS_STEP_RUNS_V2_WRITE_ENABLED = 'IS_STEP_RUNS_V2_WRITE_ENABLED',
+  /**
+   * Per-environment read of `GET /v1/notifications` and `GET /v1/notifications/:id` without the jobs
+   * collection: notifications from Mongo, steps from ClickHouse `step_runs_v2`, execution details and digest
+   * events from traces. Needs IS_STEP_RUNS_V2_WRITE_ENABLED on for the runs it reads. Default false.
+   */
+  IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED = 'IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED',
   IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED',
   IS_WORKFLOW_RUN_LOGS_READ_ENABLED = 'IS_WORKFLOW_RUN_LOGS_READ_ENABLED',
   IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED = 'IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED',
@@ -132,6 +147,12 @@ export enum FeatureFlagsKeysEnum {
    * LaunchDarkly for cloud, or set `IS_AGENT_HUMAN_HITL_ENABLED` when self-hosted.
    */
   IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
+  /**
+   * Offer WhatsApp as an Agent Inbox channel (the `whatsapp` human via). Off means absent from
+   * channel lists, invite pages and via validation. Create the boolean in LaunchDarkly for cloud,
+   * or set `IS_AGENT_INBOX_WHATSAPP_ENABLED` when self-hosted.
+   */
+  IS_AGENT_INBOX_WHATSAPP_ENABLED = 'IS_AGENT_INBOX_WHATSAPP_ENABLED',
   /**
    * Enable the Web Chat channel (subscriber `/v1/web-chat/*`, useWebChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
@@ -214,6 +235,16 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
+   * Stop duplicating the trigger overrides onto every job. Overrides are always
+   * persisted once on the parent notification; when enabled, new jobs no longer
+   * persist `overrides` and readers resolve them from the notification via
+   * `_notificationId`. Read paths handle both shapes regardless of this flag, so
+   * it can be toggled off at any time (forward-only, no data migration). Create
+   * the boolean in LaunchDarkly for cloud, or set `IS_OVERRIDES_DEDUP_ENABLED`
+   * when self-hosted.
+   */
+  IS_OVERRIDES_DEDUP_ENABLED = 'IS_OVERRIDES_DEDUP_ENABLED',
+  /**
    * Trace step condition evaluation in the activity feed regardless of outcome:
    * a "step conditions matched" detail when conditions pass, and a "step was
    * skipped based on steps conditions" detail when they do not (v2 skip
@@ -277,6 +308,12 @@ export enum FeatureFlagsKeysEnum {
    * when self-hosted or local.
    */
   IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED = 'IS_AGENT_INBOX_NEW_ONBOARDING_ENABLED',
+  /**
+   * Organization-scoped: short-lived subscriber tokens signed by Novu (ES256) for the browser components, accepted
+   * alongside `subscriberHash`. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_SUBSCRIBER_TOKENS_ENABLED=true` for the API when self-hosted. Default off.
+   */
+  IS_SUBSCRIBER_TOKENS_ENABLED = 'IS_SUBSCRIBER_TOKENS_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',

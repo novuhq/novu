@@ -1,9 +1,16 @@
 import { NotFoundException } from '@nestjs/common';
-import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  type AgentEntity,
+  AgentIntegrationRepository,
+  AgentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 export interface ResolvedWhatsAppAgentIntegration {
-  agent: { _id: string; identifier: string; name: string };
+  agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'> &
+    Partial<Pick<AgentEntity, '_organizationId' | 'runtime' | 'description' | 'picture' | 'look'>>;
   integration: IntegrationEntity;
 }
 
@@ -51,7 +58,8 @@ export async function resolveWhatsAppAgentIntegration(params: {
       _environmentId: environmentId,
       _organizationId: organizationId,
     },
-    ['_id', 'identifier', 'name']
+    // The rest is what a relay agent puts on its business profile.
+    ['_id', 'identifier', 'name', '_organizationId', 'runtime', 'description', 'picture', 'look']
   );
 
   if (!agent) {

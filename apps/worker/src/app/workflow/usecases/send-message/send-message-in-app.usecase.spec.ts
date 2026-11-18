@@ -105,6 +105,8 @@ describe('SendMessageInApp - webhook environment reuse', () => {
     const command = buildCommand();
 
     const result = await usecase.execute(command);
+    // Webhooks are dispatched in the background, in order; let the chain settle.
+    await new Promise((resolve) => setImmediate(resolve));
 
     expect(result.status).to.equal('success');
     expect(sendWebhookMessage.execute.callCount).to.equal(2);

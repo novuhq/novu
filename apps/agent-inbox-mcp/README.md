@@ -9,7 +9,7 @@ It is a Cloudflare Worker and is for Novu Cloud only: it needs the Agent Inbox C
 | Tool | What it does |
 | --- | --- |
 | `inbox_setup` | Creates the agent and its email inbox, sends the owner's confirmation link, or reports how far setup got. |
-| `channel_add` | Takes the owner's Telegram or Slack to its next step, usually a link they finish in their own browser. |
+| `channel_add` | Takes the owner's Telegram, Slack or WhatsApp to its next step, usually a link they finish in their own browser. |
 | `inbox_send` | Starts a conversation. Without a `kind` it is a plain message; `ask`, `approve` or `choose` waits for the answer. |
 | `inbox_reply` | Sends into an existing conversation, with the same kinds and card options. |
 | `inbox_wait` | Keeps waiting for an answer that had not come yet. |
@@ -25,6 +25,10 @@ Someone who connects the MCP before finishing agentinbox.md uses `inbox_setup`: 
 `channel_add` adds Telegram or Slack the way `channel add` does in the CLI, without the wait: it finds or creates the integration, links it to the agent, returns the one next step and ends. That step is a link: the `/connect` setup page while there is no bot or app, then the bot's `/start` link or Slack's install link. The person finishes it in their own browser, and the next call picks up where things stand. It takes no bot token or App Configuration Token, although the CLI has flags for them: the setup page collects them, so they stay out of chat transcripts and host logs.
 
 Whoever opens one of those links connects as the owner, and a message in the inbox can ask the model for one. The tool's description and result tell the model to act only when the user in the chat asks, and to show the link there, never through `inbox_send` or `inbox_reply`. That is guidance for the model, not a lock.
+
+WhatsApp has no link this server can make: Meta's signup runs in the browser on agentinbox.md, and so does the code that proves the owner's number. So `channel_add` with `whatsapp` reads `GET /v1/channels/whatsapp`, says how far setup got (business number, then the owner's own number), and points at the signed-in `/configure?setup=whatsapp` page until both are done. It says WhatsApp isn't available while the account has it off.
+
+When WhatsApp refuses a send, because the person last wrote more than 24 hours ago or the card has more than 3 buttons, `inbox_send` and `inbox_reply` say why and name a channel that still reaches the person as a `via` to send with, or `contact_invite` when there is none.
 
 An agent can end up with two integrations for a channel when two first calls overlap, and the person may finish either, so each call looks at all of them.
 
@@ -47,7 +51,7 @@ Every request stands alone: nothing is kept between calls, so any instance can a
 
 ## Where calls go
 
-- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/setup`, `/v1/inbox-address` and `/v1/agent` for onboarding, `/v1/channels` for Telegram and Slack, `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
+- Every tool calls the Agent Inbox Dashboard API (`AGENT_INBOX_API_URL`, the dashboard's `/api`) with the account's key, as the CLI does: `/v1/setup`, `/v1/inbox-address` and `/v1/agent` for onboarding, `/v1/channels` for Telegram, Slack and WhatsApp, `/v1/inbox` and `/v1/inbox/messages` for conversations and messages, `/v1/contacts` for contacts, invites and verifications, and `/v1/operator` for the account's owner. The dashboard forwards each call to the Novu API.
 - Opening an account and reading its key are the calls that go straight to the Novu API (`NOVU_API_URL`), with the dashboard's secret: `POST /v1/human/accounts` when the sign-in has no account yet, then `GET /v1/human/accounts/:id/secret-key`. The Dashboard API doesn't offer either.
 
 ## Which tools are connected

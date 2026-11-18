@@ -2,6 +2,7 @@ import type { HumanContactChannelAddresses } from '@novu/dal';
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { SetupHumanRelayCommand } from './setup-human-relay.command';
 import { SetupHumanRelay } from './setup-human-relay.usecase';
 
@@ -42,7 +43,8 @@ describe('SetupHumanRelay', () => {
       humanAgentIdentity as never,
       findOrCreateNovuEmail as never,
       logger as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return {
@@ -179,6 +181,23 @@ describe('SetupHumanRelay', () => {
     expect(create.firstCall.args[0]).to.include({ name: 'Deploy bot', description: 'Ships the app.' });
   });
 
+  it('answers how the agent looks, for the mascot on the CLI’s screen', async () => {
+    const { usecase, agentRepository } = setup();
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 7 } };
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay', look });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal(look);
+
+    // An agent nobody picked a look for has the original one.
+    agentRepository.findOne.resolves({ _id: 'relay1', identifier: 'human-relay', runtime: 'human_relay' });
+
+    expect((await usecase.execute(SetupHumanRelayCommand.create(base))).look).to.deep.equal({
+      shape: 'orb',
+      color: 'ember',
+      art: { kind: 'rays', seed: 0 },
+    });
+  });
+
   it('calls a new relay agent "Agent" until it is named', async () => {
     const { usecase, agentRepository } = setup();
     agentRepository.findOne.resolves(null);
@@ -293,7 +312,8 @@ describe('SetupHumanRelay sign-in email', () => {
       { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
       { execute: sinon.stub().resolves({ provisionedNewLink: false }) } as never,
       logger as never,
-      { track: sinon.stub() } as never
+      { track: sinon.stub() } as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, email, humanContactRepository, subscriberRepository, logger };
@@ -598,7 +618,8 @@ describe('SetupHumanRelay analytics', () => {
       { apply: sinon.stub().callsFake(async (agent: unknown) => agent) } as never,
       { execute: sinon.stub().resolves(provisioned) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(false) } as never)
     );
 
     return { usecase, analyticsService };

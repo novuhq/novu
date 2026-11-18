@@ -3,6 +3,7 @@ import {
   buildHumanApproveActionId,
   buildHumanDenyActionId,
   buildHumanDisambiguationActionId,
+  buildHumanOpenActionId,
   buildHumanOptionActionId,
   parseHumanActionId,
 } from './human-action-id';
@@ -52,5 +53,12 @@ describe('human action id grammar', () => {
     expect(parseHumanActionId('human:hi_x:unknown')).to.equal(null);
     expect(parseHumanActionId('human:hi_x:opt:')).to.equal(null);
     expect(parseHumanActionId('human:pick:')).to.equal(null);
+  });
+
+  it('reads the View message tap on the WhatsApp first message as open, which answers nothing', () => {
+    expect(parseHumanActionId(buildHumanOpenActionId('hi_abc123'))).to.deep.equal({
+      type: 'open',
+      identifier: 'hi_abc123',
+    });
   });
 });

@@ -2,8 +2,8 @@ import { Plus, Send } from 'lucide-react';
 import Link from 'next/link';
 
 import { CONFIGURE_PATH } from '@/components/dashboard/nav';
+import { AgentMascot } from '@/components/ui/agent-look';
 import { buttonClassName } from '@/components/ui/button';
-import { MascotFace } from '@/components/ui/mascot-face';
 
 type InboxEmptyProps = {
   /** What the agent is called in a sentence: its address without the domain. */
@@ -20,7 +20,7 @@ type InboxEmptyProps = {
 export function InboxEmpty({ handle, address, listening }: InboxEmptyProps) {
   return (
     <section className="flex flex-col items-center gap-3.5 rounded-[10px] border border-border bg-background px-10 py-14">
-      <MascotFace art="waiting" className="size-35" />
+      <AgentMascot art="waiting" className="size-35" />
       <h2 className="text-base leading-5.5 font-medium text-foreground">Your agent’s inbox is empty</h2>
       <p className="w-115 max-w-full text-center text-[13px] leading-[19px] text-secondary">
         Messages to {handle} on any channel land here.

@@ -1,6 +1,6 @@
 {
   "name": "@agentinbox/cli",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Agent Inbox: an inbox for your agent. People write to it on Telegram, Slack or email; it reads, asks and answers, and blocks until someone replies.",
   "main": "dist/src/index.js",
   "publishConfig": {
@@ -36,7 +36,8 @@
   "author": "Novu Team <engineering@novu.co>",
   "license": "MIT",
   "bin": {
-    "agentinbox": "./dist/src/index.js"
+    "agentinbox": "./dist/src/index.js",
+    "inbox": "./dist/src/index.js"
   },
   "dependencies": {
     "axios": "^1.6.8",

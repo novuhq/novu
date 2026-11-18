@@ -40,7 +40,9 @@ async function send(url: string, { method = 'GET', body }: FetchInit, token: Tok
 
   return fetch(url, { method, headers, ...(body !== undefined && { body }), signal: stopping.signal }).catch(
     (error: Error) => {
-      throw new Error(`${url}: ${error.message}`);
+      // Node's `fetch failed` keeps the reason (a reset, timeout or DNS error) in `cause`.
+      const cause = error.cause instanceof Error ? ` (${error.cause.message})` : '';
+      throw new Error(`${url}: ${error.message}${cause}`, { cause: error });
     }
   );
 }

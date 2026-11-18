@@ -3,14 +3,11 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
+import { toJsonPlain } from '../to-entity';
 import { PreferencesDBModel, PreferencesEntity } from './preferences.entity';
 import { Preferences } from './preferences.schema';
 
 type PreferencesQuery = FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds;
-
-function toPlainPreference(data: unknown): unknown {
-  return JSON.parse(JSON.stringify(data));
-}
 
 export class PreferencesRepository extends BaseRepository<PreferencesDBModel, PreferencesEntity, EnforceEnvOrOrgIds> {
   private preferences: SoftDeleteModel;
@@ -40,9 +37,9 @@ export class PreferencesRepository extends BaseRepository<PreferencesDBModel, Pr
   /**
    * Hot-path reads for preference computation (e.g. the v2 /preferences endpoint).
    *
-   * Skips the `class-transformer` `plainToInstance` pass. `PreferencesEntity` declares no
-   * class-transformer decorators, so the JSON round-trip alone is behavior-identical for all
-   * downstream consumers while removing the dominant synchronous CPU cost under high concurrency.
+   * Skips the `class-transformer` `plainToInstance` pass and returns plain objects. `PreferencesEntity`
+   * declares no class-transformer decorators, so a JSON-equivalent copy (`toJsonPlain`) is
+   * behavior-identical for all downstream consumers while removing the dominant synchronous CPU cost.
    *
    * Both methods use `.lean()` (matching the base `find` path). The base `findOne` hydrates
    * via `.toObject()` and exposes the `id` virtual, but preference computation only reads
@@ -57,7 +54,7 @@ export class PreferencesRepository extends BaseRepository<PreferencesDBModel, Pr
       .lean()
       .exec();
 
-    return toPlainPreference(data) as PreferencesEntity[];
+    return toJsonPlain<PreferencesEntity[]>(data);
   }
 
   async findOneForComputation(
@@ -73,6 +70,6 @@ export class PreferencesRepository extends BaseRepository<PreferencesDBModel, Pr
       return null;
     }
 
-    return toPlainPreference(data) as PreferencesEntity;
+    return toJsonPlain<PreferencesEntity>(data);
   }
 }

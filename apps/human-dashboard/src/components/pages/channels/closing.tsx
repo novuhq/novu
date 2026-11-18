@@ -1,0 +1,126 @@
+import Image from 'next/image';
+import Link from 'next/link';
+import { Fragment } from 'react';
+
+import { DisplayAccent } from '@/components/sapien/section-eyebrow';
+import { SectionFrame } from '@/components/sapien/section-frame';
+import {
+  AGENTS,
+  type AgentId,
+  agentPage,
+  CHANNELS,
+  type ChannelId,
+  channelResources,
+  otherAgentChannels,
+  setupCommand,
+} from '@/data/channel-pages';
+
+import { cn } from '@/lib/utils';
+
+import { AgentCards } from './agent-grid';
+import { LandingActions } from './shared';
+
+export function ChannelClosing({ channel, agent }: { channel: ChannelId; agent?: AgentId }) {
+  const related = agent ? otherAgentChannels(channel, agent) : [];
+  return (
+    <SectionFrame
+      anchor="get-started"
+      auditId="get-started"
+      className={cn('flex flex-col gap-22 px-4 py-20 md:px-8 md:py-30', !agent && 'mb-0')}
+    >
+      <div className="grid items-center gap-12 md:grid-cols-2 lg:grid-cols-[420px_360px] lg:justify-between lg:gap-x-0">
+        <div>
+          <h2 className="flex flex-col gap-2 text-[34px] leading-[1.125] tracking-[-0.04em] md:text-[40px]">
+            <span>Give your agent</span>
+            <span className="flex flex-wrap items-baseline gap-x-3 md:h-[47px] lg:flex-nowrap">
+              <span className="whitespace-nowrap">{CHANNELS[channel].ctaNoun}.</span>
+              <DisplayAccent className="text-[44px] leading-none [text-box-edge:cap_alphabetic] [text-box-trim:trim-both] md:text-[56px]">
+                Today
+              </DisplayAccent>
+            </span>
+          </h2>
+          <p className="mt-3.5 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/70">
+            Free for 100 conversations a month. No credit card required.
+          </p>
+          <div className="mt-8">
+            <LandingActions
+              channel={channel}
+              agent={agent}
+              command={agent ? agentPage(channel, agent).cta : setupCommand(channel)}
+              stacked
+            />
+          </div>
+        </div>
+        <div className="relative mx-auto flex h-65.5 w-full max-w-90 items-center overflow-hidden rounded-[14px] border border-sapien-surface bg-black">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-[83px] -left-[33px] h-[282px] w-[278px] rounded-full bg-accent opacity-10 blur-[66px]"
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-[159px] -bottom-[173px] h-[282px] w-[278px] rounded-full bg-accent opacity-10 blur-[66px]"
+          />
+          <Image
+            src="/images/landing/cta-chat.png"
+            alt="An agent completes customer conversations and receives a reply."
+            width={719}
+            height={309}
+            className="relative h-auto w-full"
+            unoptimized
+          />
+        </div>
+      </div>
+      {agent ? (
+        <div className="min-w-0">
+          <AgentCards channel={channel} exclude={agent} />
+          <p className="mt-7 flex flex-wrap gap-4 font-sapien-mono text-[13px] leading-none tracking-tight text-sapien-foreground/50">
+            {related.length > 0 ? (
+              <>
+                <span>{AGENTS[agent].name} on other channels:</span>
+                <span>
+                  {related.map((id, index) => (
+                    <Fragment key={id}>
+                      {index > 0 && ' · '}
+                      <Link href={`/${id}/${agent}`} className="text-accent hover:underline">
+                        {CHANNELS[id].name}
+                      </Link>
+                    </Fragment>
+                  ))}
+                </span>
+              </>
+            ) : (
+              <Link href={`/${channel}`} className="text-accent hover:underline">
+                All {CHANNELS[channel].name} features →
+              </Link>
+            )}
+          </p>
+        </div>
+      ) : null}
+    </SectionFrame>
+  );
+}
+
+export function ChannelResources({ channel }: { channel: ChannelId }) {
+  const items = channelResources(channel);
+  return (
+    <SectionFrame anchor="resources" auditId="resources" className="pb-20">
+      <div className="grid sm:grid-cols-2 md:grid-cols-4">
+        {items.map((item) => (
+          <Link
+            key={item.title}
+            href={item.href}
+            className="flex min-h-53.25 flex-col border-b border-r border-sapien-border p-6 last:border-r-0 hover:bg-sapien-border/30"
+          >
+            <span className="font-sapien-mono text-[10px] leading-none tracking-[0.08em] text-accent">
+              {item.label}
+            </span>
+            <h3 className="mt-4.5 text-lg leading-[23px] tracking-tight">{item.title}</h3>
+            <p className="mt-2 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/50">
+              {item.description}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </SectionFrame>
+  );
+}

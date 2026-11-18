@@ -14,6 +14,7 @@ import {
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import {
@@ -222,6 +223,29 @@ export function mergeTriggerProviderOverrides(
     ...(providerId ? overrides?.providers?.[providerId] || {} : {}),
     ...(providerId && stepId ? overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {}),
   };
+}
+
+type WebhookMessageCommand = Parameters<SendWebhookMessage['execute']>[0];
+
+/**
+ * Outbound webhooks report a delivery outcome that is already final, so the job does not
+ * wait on the Svix round trip (~300ms+). Commands are sent in order, so e.g. `message.sent`
+ * is still dispatched before `message.delivered`. Pass `environment` on each command so
+ * SendWebhookMessage does not read it from the database again.
+ */
+export function dispatchWebhooksInBackground(
+  sendWebhookMessage: SendWebhookMessage,
+  commands: WebhookMessageCommand[]
+): void {
+  const dispatch = async () => {
+    for (const command of commands) {
+      await sendWebhookMessage.execute(command);
+    }
+  };
+
+  dispatch().catch((error) => {
+    Logger.error(error, 'Failed to dispatch outbound webhook', SendMessageBase.name);
+  });
 }
 
 export abstract class SendMessageBase extends SendMessageType {

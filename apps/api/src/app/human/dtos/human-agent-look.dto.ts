@@ -13,7 +13,7 @@ import {
   type AgentMascotBody,
 } from '@novu/dal';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsObject, Max, Min, ValidateNested } from 'class-validator';
+import { IsIn, IsInt, IsObject, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 
 /** The dotted drawing across the top of an agent card: a kind of drawing, and the seed that draws one of them. */
 export class AgentCardArtDto {
@@ -53,6 +53,35 @@ export class AgentLookDto {
   @ValidateNested()
   @Type(() => AgentCardArtDto)
   art: AgentCardArtDto;
+}
+
+/**
+ * The look asked for when an agent is made. The dashboard sends all of it; a host, such as the CLI or the MCP
+ * server, sends the shape, the colour or both. Whatever is left out is the original look's.
+ */
+export class SetupAgentLookDto {
+  @ApiPropertyOptional({
+    enum: [...AGENT_MASCOT_BODIES],
+    description: 'The mascot’s shape. Left out, it is `orb`, the original, round one.',
+  })
+  @IsOptional()
+  @IsIn(AGENT_MASCOT_BODIES)
+  shape?: AgentMascotBody;
+
+  @ApiPropertyOptional({
+    enum: [...AGENT_LOOK_COLORS],
+    description: 'The colour of the mascot and the card’s art. Left out, it is `ember`, the original orange.',
+  })
+  @IsOptional()
+  @IsIn(AGENT_LOOK_COLORS)
+  color?: AgentLookColor;
+
+  @ApiPropertyOptional({ type: AgentCardArtDto, description: 'The card’s art. Left out, it is the original rays.' })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => AgentCardArtDto)
+  art?: AgentCardArtDto;
 }
 
 /** The first time a host showed the agent's card. */

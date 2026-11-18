@@ -1,4 +1,4 @@
-import type { AgentEntity } from '@novu/dal';
+import type { AgentEntity, AgentLook } from '@novu/dal';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 
 /** Where anyone can load the agent's picture, or nothing when it has none. */
@@ -18,7 +18,28 @@ export function agentPictureUrl(agent: Pick<AgentEntity, '_id' | '_environmentId
   return `${(process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '')}/v1/human/agent-pictures/${path}`;
 }
 
-/** The picture an email, its confirmation page or a new Slack app shows: an agent with no picture gets the default. */
-export function agentPictureOrDefaultUrl(agent: Pick<AgentEntity, '_id' | '_environmentId' | 'picture'>): string {
-  return agentPictureUrl(agent) ?? `${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.png`;
+/** The part of a look a mascot is drawn from. */
+export type MascotLook = Pick<AgentLook, 'shape' | 'color'>;
+
+/**
+ * The picture of the mascot in this look, as a channel shows it. The Agent Inbox dashboard draws one for every
+ * shape and colour: a PNG for an email and a Slack app, a JPEG for a Telegram bot, which takes nothing else.
+ */
+export function mascotPictureUrl(look: MascotLook, format: 'png' | 'jpg' = 'png'): string {
+  return `${resolveHumanDashboardBaseUrl()}/brand/mascot/${look.shape}-${look.color}.${format}`;
+}
+
+/**
+ * The picture an email, its confirmation page or a new Slack app shows. An agent with no picture of its own gets
+ * its mascot in `look`, the look its mascots show (`AgentInboxFeaturesService.mascotLookOf`), and without one the
+ * default picture, the mascot as it always was.
+ */
+export function agentPictureOrDefaultUrl(
+  agent: Pick<AgentEntity, '_id' | '_environmentId' | 'picture'>,
+  look?: MascotLook | null
+): string {
+  return (
+    agentPictureUrl(agent) ??
+    (look ? mascotPictureUrl(look) : `${resolveHumanDashboardBaseUrl()}/brand/agent-avatar.png`)
+  );
 }

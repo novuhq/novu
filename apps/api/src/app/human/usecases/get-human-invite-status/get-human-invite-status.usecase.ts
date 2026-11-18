@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentRepository, SubscriberRepository } from '@novu/dal';
 import type { HumanInviteStatusResult } from '../../dtos/human-invite.dto';
+import { AgentInboxFeaturesService } from '../../services/agent-inbox-features.service';
 import { agentPictureUrl } from '../../services/agent-picture-url';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import {
@@ -20,7 +21,8 @@ export class GetHumanInviteStatus {
     private readonly deliveryService: HumanDeliveryService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly operatorService: HumanOperatorService
+    private readonly operatorService: HumanOperatorService,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   async execute(command: GetHumanInviteStatusCommand): Promise<HumanInviteStatusResult> {
@@ -38,14 +40,14 @@ export class GetHumanInviteStatus {
     const { payload } = invite;
     const agent = await this.agentRepository.findOne(
       { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
-      ['name', 'picture']
+      ['name', 'picture', 'look', '_organizationId']
     );
 
     if (!agent) {
       return { valid: false, reason: 'invalid' };
     }
 
-    const [channels, subscriber, inviterName] = await Promise.all([
+    const [channels, subscriber, inviterName, agentLook] = await Promise.all([
       this.deliveryService.describeInviteChannels({
         environmentId: payload.env,
         organizationId: payload.org,
@@ -57,6 +59,7 @@ export class GetHumanInviteStatus {
         'firstName lastName'
       ),
       this.findInviterName(payload),
+      this.agentInboxFeatures.mascotLookOf(agent),
     ]);
     const displayName = fullName(subscriber);
     const pictureUrl = agentPictureUrl({ _id: payload.agentId, _environmentId: payload.env, picture: agent.picture });
@@ -65,6 +68,7 @@ export class GetHumanInviteStatus {
       valid: true,
       agentName: agent.name,
       ...(pictureUrl ? { agentPictureUrl: pictureUrl } : {}),
+      ...(agentLook ? { agentLook } : {}),
       ...(inviterName ? { inviterName } : {}),
       inviteeName: displayName || payload.subscriberId,
       expiresAt: invite.expiresAt,

@@ -18,6 +18,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
     };
 
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
 
     const usecase = new SendMessageSms(
       {} as never,
@@ -28,7 +29,7 @@ describe('SendMessageSms - trigger provider overrides', () => {
       {} as never,
       {} as never,
       {} as never,
-      { execute: sinon.stub().resolves(undefined) } as never
+      sendWebhookMessage as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -40,14 +41,14 @@ describe('SendMessageSms - trigger provider overrides', () => {
       },
     });
     sinon.stub(usecase as never, 'processVariants').resolves(undefined);
-    sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
+    const initiateTranslations = sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
     sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
     sinon.stub(usecase as never, 'storeContent').returns(false);
 
     const sendStub = sinon.stub().resolves({ id: 'provider_msg_1' });
     sinon.stub(SmsFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
-    return { usecase, messageRepository, sendStub, createExecutionDetails };
+    return { usecase, messageRepository, sendStub, createExecutionDetails, sendWebhookMessage, initiateTranslations };
   }
 
   function buildCommand(
@@ -112,6 +113,39 @@ describe('SendMessageSms - trigger provider overrides', () => {
     expect(sendStub.firstCall.args[0].to).to.equal('+15555555555');
     expect(sendStub.firstCall.args[0].from).to.equal('+10000000000');
     expect(sendStub.firstCall.args[0].customData).to.deep.equal({});
+  });
+
+  it('does not load translations when the bridge already rendered the content', async () => {
+    const { usecase, initiateTranslations } = buildUsecase();
+
+    await usecase.execute(buildCommand({}));
+
+    expect(initiateTranslations.called).to.equal(false);
+  });
+
+  it('does not wait for the message.sent webhook and reuses the loaded environment', async () => {
+    const { usecase, sendWebhookMessage } = buildUsecase();
+    sendWebhookMessage.execute.returns(new Promise(() => {}));
+    const environment = { _id: 'env_1', webhookAppId: 'app_1' };
+    const command = buildCommand({});
+    command.environment = environment as never;
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(sendWebhookMessage.execute.calledOnce).to.equal(true);
+    expect(sendWebhookMessage.execute.firstCall.args[0].eventType).to.equal('message.sent');
+    expect(sendWebhookMessage.execute.firstCall.args[0].environment).to.equal(environment);
+  });
+
+  it('keeps the step successful when the webhook dispatch fails', async () => {
+    const { usecase, sendWebhookMessage } = buildUsecase();
+    sendWebhookMessage.execute.rejects(new Error('svix down'));
+
+    const result = await usecase.execute(buildCommand({}));
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
   });
 
   it('applies legacy channel and flat provider overrides', async () => {

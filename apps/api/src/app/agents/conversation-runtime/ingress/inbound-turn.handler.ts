@@ -33,6 +33,8 @@ import { TelegramStartCodeService } from '../../../telegram-linking/telegram-sta
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
+import { WhatsAppBindInbound } from '../../human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppHeldRelease } from '../../human-relay/whatsapp-held-release.service';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -356,7 +358,9 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly keylessEmailGate: KeylessEmailGateService,
-    private readonly contactHandles: ContactHandleService
+    private readonly contactHandles: ContactHandleService,
+    private readonly whatsAppBindInbound: WhatsAppBindInbound,
+    private readonly whatsAppHeldRelease: WhatsAppHeldRelease
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -378,11 +382,18 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    message: Message,
+    received: Message,
     event: AgentEventEnum,
     messageContext?: MessageContext
   ): Promise<void> {
-    if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
+    if (await this.consumeTelegramStartLink(agentId, config, thread, received, messageContext)) {
+      return;
+    }
+
+    // A code from a wa.me link binds the sender's WhatsApp number to an Agent Inbox contact, like `/start` above.
+    // What they wrote around the code goes on without it.
+    const message = await this.whatsAppBindInbound.tryConsume(agentId, config, thread, received, messageContext);
+    if (!message) {
       return;
     }
 
@@ -519,7 +530,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    await this.dispatchInboundTurn({
+    await this.dispatchThenReleaseHeld({
       agentId,
       config,
       thread,
@@ -807,6 +818,27 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
       throw err;
+    }
+  }
+
+  /**
+   * Their message opened the WhatsApp window, so what waited for it goes out after it is handled. Only after their
+   * words were read: they wrote them before they saw it, so they never answer it.
+   */
+  private async dispatchThenReleaseHeld(
+    args: Parameters<AgentInboundHandler['dispatchInboundTurn']>[0]
+  ): Promise<void> {
+    try {
+      await this.dispatchInboundTurn(args);
+    } finally {
+      await this.whatsAppHeldRelease
+        .release({
+          agentId: args.agentId,
+          config: args.config,
+          subscriberId: args.subscriberId,
+          platformUserId: args.platformThreadId.split(':').pop() ?? '',
+        })
+        .catch((err) => this.logger.warn({ err, agentId: args.agentId }, 'Could not send what was held on WhatsApp'));
     }
   }
 
@@ -1298,6 +1330,8 @@ export class AgentInboundHandler implements OnModuleInit {
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
         agentIdentifier: config.agentIdentifier,
+        // A relay's WhatsApp senders are its contacts only by a number they proved, never by a profile phone.
+        isHumanRelay: config.isHumanRelay,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
@@ -1803,7 +1837,10 @@ export class AgentInboundHandler implements OnModuleInit {
           })),
         }
       : undefined;
-    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
+    const editedAt =
+      message.metadata?.editedAt instanceof Date && !Number.isNaN(message.metadata.editedAt.getTime())
+        ? message.metadata.editedAt.toISOString()
+        : new Date().toISOString();
 
     if (message.id) {
       await this.conversationService.updateInboundMessage({
@@ -2294,6 +2331,15 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
+    // Tapping "View message" on the WhatsApp first message opens the window: what waited goes out now.
+    await this.whatsAppHeldRelease.release({
+      agentId,
+      config,
+      subscriberId,
+      platformUserId: userId,
+      conversationId: conversation._id,
+    });
+
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
@@ -2498,17 +2544,6 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
-}
-
-function readPlatformEditedAt(message: Message): string | undefined {
-  const raw = message.raw;
-  if (!raw || typeof raw !== 'object') {
-    return undefined;
-  }
-
-  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
-
-  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
 }
 
 function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {

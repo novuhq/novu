@@ -7,7 +7,7 @@ import {
   type ConnectCodeStatus,
 } from '../services/human-connect-code.service';
 import { HumanAgentQueryDto } from './human-agent.dto';
-import { AgentCardShownDto } from './human-agent-look.dto';
+import { AgentCardShownDto, type AgentLookDto } from './human-agent-look.dto';
 import { ListeningDto } from './human-listen.dto';
 
 export class CreateConnectCodeRequestDto extends HumanAgentQueryDto {
@@ -102,8 +102,8 @@ export class ConnectHostResponseDto {
   @ApiProperty()
   environmentId: string;
 
-  @ApiProperty({ description: 'The agent the host acts as from now on.' })
-  agent: { identifier: string; name: string; handle: string };
+  @ApiProperty({ description: 'The agent the host acts as from now on, with its look for the CLI’s mascot.' })
+  agent: { identifier: string; name: string; handle: string; look: AgentLookDto };
 
   @ApiProperty({
     enum: [...AGENT_HOST_IDS],

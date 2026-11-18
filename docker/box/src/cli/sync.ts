@@ -4,7 +4,6 @@ import { join, resolve } from 'node:path';
 import { gitIdentity, mergedTree } from '../node/git.ts';
 import { log } from '../node/main.ts';
 import { exitCode, output, type RunOptions } from '../node/process.ts';
-import { BoxState, decode } from '../shared/contracts.ts';
 import type { CloudTarget } from './cloud.ts';
 
 const BUNDLE_IN_BOX = '/data/run/sync.bundle';
@@ -17,7 +16,7 @@ export async function sync(target: CloudTarget, { full }: { readonly full: boole
   await target.ready();
   const root = await output('git', ['rev-parse', '--show-toplevel']);
   const git: Git = (args, options = {}) => output('git', args, { cwd: root, ...options });
-  const { baked } = decode(BoxState, await target.boxOutput(['state']), "the box's state");
+  const { baked } = await target.boxState();
   if (!baked) throw new Error(`${target.name} isn't baked`);
   if ((await exitCode('git', ['cat-file', '-e', `${baked.sha}^{commit}`], { cwd: root, stdio: 'ignore' })) !== 0) {
     log(`fetching the box's baked commit ${baked.sha.slice(0, 10)}`);
