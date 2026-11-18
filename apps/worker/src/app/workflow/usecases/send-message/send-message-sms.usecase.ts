@@ -28,7 +28,12 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
+import {
+  combineProviderOverrides,
+  dispatchWebhooksInBackground,
+  mergeTriggerProviderOverrides,
+  SendMessageBase,
+} from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -88,11 +93,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
 
     if (template) {
       step.template = template;
@@ -103,6 +103,12 @@ export class SendMessageSms extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -362,17 +368,20 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId, {
-            providerResponseId: result.id,
-          }),
+      dispatchWebhooksInBackground(this.sendWebhookMessage, [
+        {
+          eventType: WebhookEventEnum.MESSAGE_SENT,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId, {
+              providerResponseId: result.id,
+            }),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
         },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+      ]);
 
       return {
         status: SendMessageStatus.SUCCESS,
@@ -387,18 +396,21 @@ export class SendMessageSms extends SendMessageBase {
         e
       );
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_FAILED,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, command.subscriberId),
-          error: {
-            message: e.message || e.name || 'Error while sending sms with provider',
+      dispatchWebhooksInBackground(this.sendWebhookMessage, [
+        {
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              message: e.message || e.name || 'Error while sending sms with provider',
+            },
           },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
         },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+      ]);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

@@ -32,7 +32,7 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { sanitizeInAppContent } from './sanitize-in-app-content';
-import { SendMessageBase } from './send-message.base';
+import { dispatchWebhooksInBackground, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -299,8 +299,7 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    await this.sendWebhookMessage.execute({
-      eventType: WebhookEventEnum.MESSAGE_SENT,
+    const webhookMessage = {
       objectType: WebhookObjectTypeEnum.MESSAGE,
       payload: {
         object: messageWebhookMapper(message, command.subscriberId, {
@@ -310,20 +309,12 @@ export class SendMessageInApp extends SendMessageBase {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       environment: command.environment,
-    });
+    };
 
-    await this.sendWebhookMessage.execute({
-      eventType: WebhookEventEnum.MESSAGE_DELIVERED,
-      objectType: WebhookObjectTypeEnum.MESSAGE,
-      payload: {
-        object: messageWebhookMapper(message, command.subscriberId, {
-          providerResponseId: message._id,
-        }),
-      },
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      environment: command.environment,
-    });
+    dispatchWebhooksInBackground(this.sendWebhookMessage, [
+      { ...webhookMessage, eventType: WebhookEventEnum.MESSAGE_SENT },
+      { ...webhookMessage, eventType: WebhookEventEnum.MESSAGE_DELIVERED },
+    ]);
 
     return {
       status: SendMessageStatus.SUCCESS,
