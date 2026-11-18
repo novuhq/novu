@@ -217,8 +217,5 @@ export const envValidators = {
   ...(['local', 'test'].includes(processEnv.NODE_ENV) && {
     NEW_RELIC_APP_NAME: str({ default: '' }),
     NEW_RELIC_LICENSE_KEY: str({ default: '' }),
-    REDIS_CACHE_SERVICE_HOST: str(),
-    REDIS_CACHE_SERVICE_PORT: str(),
-    REDIS_CACHE_PASSWORD: str(),
   }),
 } satisfies Record<string, ValidatorSpec<unknown>>;
