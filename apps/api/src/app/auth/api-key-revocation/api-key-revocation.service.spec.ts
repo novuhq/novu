@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { expect } from 'chai';
+import newrelic from 'newrelic';
 import sinon from 'sinon';
 import { REVOKED_API_KEY_MESSAGE, TRIGGER_ONLY_API_KEY_MESSAGE } from './api-key-revocation.policy';
 import { ApiKeyRevocationService } from './api-key-revocation.service';
@@ -174,6 +175,77 @@ describe('ApiKeyRevocationService', () => {
 
     expect(environmentRepository.findOne.calledOnce).to.equal(true);
     expect(environmentRepository.findOne.firstCall.args[2]).to.deep.equal({ readPreference: 'primary' });
+  });
+
+  describe('what New Relic is told about a call', () => {
+    let addCustomAttributes: sinon.SinonStub;
+
+    beforeEach(() => {
+      addCustomAttributes = sinon.stub(newrelic, 'addCustomAttributes');
+    });
+
+    afterEach(() => {
+      addCustomAttributes.restore();
+    });
+
+    it('names an old key by the start of its hash and its age, never by the key', async () => {
+      const { apiKey, stored } = createOldKey();
+      const { service } = setup(flag('warn'), [stored]);
+
+      await service.assertRequestAllowed(callWith(apiKey, 'GET', '/v1/subscribers'));
+
+      expect(addCustomAttributes.calledOnce).to.equal(true);
+      expect(addCustomAttributes.firstCall.args[0]).to.deep.equal({
+        apiKeyRequiresRotation: true,
+        apiKeyRevocationBlocked: false,
+        apiKeyRevocationMode: 'warn',
+        apiKeyFingerprint: stored.hash.slice(0, 12),
+        apiKeyCreatedAt: new Date(Number.parseInt(stored._id.slice(0, 8), 16) * 1000).toISOString(),
+      });
+
+      const reported = JSON.stringify(addCustomAttributes.firstCall.args[0]);
+
+      expect(reported).to.not.include(apiKey);
+      expect(reported).to.not.include(stored.hash);
+    });
+
+    it('marks a rejected call as blocked', async () => {
+      const { apiKey, stored } = createOldKey();
+      const { service } = setup(flag('block_except_allowed'), [stored]);
+
+      await rejectionOf(service.assertRequestAllowed(callWith(apiKey, 'GET', '/v1/subscribers')));
+
+      expect(addCustomAttributes.firstCall.args[0]).to.deep.include({
+        apiKeyRevocationBlocked: true,
+        apiKeyRevocationMode: 'block_except_allowed',
+      });
+    });
+
+    it('still names a key that is no longer stored, without an age', async () => {
+      const { apiKey, stored } = createOldKey();
+      const { service } = setup(flag('warn'), []);
+
+      await service.assertRequestAllowed(callWith(apiKey, 'GET', '/v1/subscribers'));
+
+      expect(addCustomAttributes.firstCall.args[0]).to.deep.equal({
+        apiKeyRequiresRotation: true,
+        apiKeyRevocationBlocked: false,
+        apiKeyRevocationMode: 'warn',
+        apiKeyFingerprint: stored.hash.slice(0, 12),
+      });
+    });
+
+    it('says nothing about a key created after the cutoff, or while the policy is off', async () => {
+      const newKey = createNewKey();
+      const oldKey = createOldKey();
+
+      await setup(flag('block_all'), [newKey.stored]).service.assertRequestAllowed(
+        callWith(newKey.apiKey, 'GET', '/v1/subscribers')
+      );
+      await setup('', [oldKey.stored]).service.assertRequestAllowed(callWith(oldKey.apiKey, 'GET', '/v1/subscribers'));
+
+      expect(addCustomAttributes.called).to.equal(false);
+    });
   });
 
   it('logs a flag value it cannot use and lets calls through', async () => {

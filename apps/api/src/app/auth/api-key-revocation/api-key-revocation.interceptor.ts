@@ -1,6 +1,8 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
+import { getClientIp } from 'request-ip';
 import { Observable } from 'rxjs';
+import { addNewRelicApiKeyRequestAttributes } from '../services/passport/newrelic.util';
 import { ApiKeyRevocationService } from './api-key-revocation.service';
 
 type ApiKeyRequest = {
@@ -32,6 +34,12 @@ export class ApiKeyRevocationInterceptor implements NestInterceptor {
       return next.handle();
     }
 
+    // Recorded for every secret key, old or new, so the callers of a key that has to be replaced can be told apart.
+    addNewRelicApiKeyRequestAttributes({
+      clientIp: readClientIp(request),
+      clientCountry: readHeader(request, 'cf-ipcountry'),
+    });
+
     await this.apiKeyRevocationService.assertRequestAllowed({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
@@ -42,4 +50,20 @@ export class ApiKeyRevocationInterceptor implements NestInterceptor {
 
     return next.handle();
   }
+}
+
+/**
+ * The address Cloudflare saw the call come from, which the caller cannot set. The other forwarding headers can be
+ * sent by the caller, so they are only read where Cloudflare is not in front of the API.
+ */
+function readClientIp(request: ApiKeyRequest): string | undefined {
+  return (
+    readHeader(request, 'cf-connecting-ip') ?? getClientIp(request as Parameters<typeof getClientIp>[0]) ?? undefined
+  );
+}
+
+function readHeader(request: ApiKeyRequest, name: string): string | undefined {
+  const value = request.headers?.[name];
+
+  return typeof value === 'string' && value ? value : undefined;
 }
