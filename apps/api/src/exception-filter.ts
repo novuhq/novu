@@ -44,20 +44,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     await this.createAnalyticsLog(ctx, request, statusCode, errorDto);
 
-    /*
-     * A response that has already started cannot be replaced. Writing to it again throws
-     * from this async method, which surfaces as an unhandled rejection and takes the
-     * whole process down (see the `unhandledRejection` handler in bootstrap.ts).
-     */
-    if (response.headersSent) {
-      this.logger.warn(
-        { err: exception, error: errorDto },
-        `Exception raised after the response was sent, skipping the error response: statusCode=${statusCode}`
-      );
-
-      return;
-    }
-
     response.status(statusCode).json(finalResponse);
   }
 
