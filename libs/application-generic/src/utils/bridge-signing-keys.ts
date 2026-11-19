@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 import { LRUCache } from 'lru-cache';
 
 /**
@@ -12,7 +12,7 @@ import { LRUCache } from 'lru-cache';
  * that worked is remembered per bridge, so later requests put it first
  * straight away.
  *
- * Only a SHA-256 fingerprint of the key is kept, and a fingerprint is used only
+ * Only an HMAC fingerprint of the key is kept, and a fingerprint is used only
  * while it still matches an active key. Deleting or regenerating a key needs no
  * invalidation: the stale fingerprint never matches again.
  *
@@ -30,8 +30,14 @@ const acceptedKeyFingerprints = new LRUCache<string, string>({
   ttl: ACCEPTED_KEY_TTL_MS,
 });
 
+const FINGERPRINT_LABEL = 'novu-bridge-accepted-signing-key';
+
+/**
+ * Identifies a key without storing it: an HMAC of a fixed label keyed with the
+ * secret, the same operation used to sign bridge requests.
+ */
 function fingerprint(secretKey: string): string {
-  return createHash('sha256').update(secretKey).digest('hex');
+  return createHmac('sha256', secretKey).update(FINGERPRINT_LABEL).digest('hex');
 }
 
 /**
