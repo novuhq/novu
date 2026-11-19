@@ -59,13 +59,13 @@ ${headersBlock}${bodyBlock}
 ## Signature verification
 
 Every request from Novu includes a \`novu-signature\` header to prove authenticity.
-Format: \`t=<timestamp>,v1=<signature>\`
+Format: \`t=<timestamp>,v1=<signature>\`. During a secret key rotation the header contains one \`v1\` per active key.
 
 To verify:
-1. Parse the header: split on \`,\`, extract \`t\` (timestamp) and \`v1\` (HMAC)
+1. Parse the header: split on \`,\`, extract \`t\` (timestamp) and every \`v1\` (HMAC)
 2. Build the signed string: \`\${timestamp}.\${JSON.stringify(requestBody)}\`
 3. Compute HMAC-SHA256 of that string using your Novu secret key
-4. Compare (constant-time) your computed HMAC against the \`v1\` value
+4. Compare (constant-time) your computed HMAC against each \`v1\` value. Accept the request when any one matches.
 5. Optionally reject requests where the timestamp is more than 5 minutes old${schemaSection}
 
 ## What to generate

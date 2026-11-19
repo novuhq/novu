@@ -111,7 +111,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     const { skip: _skip, ...controlValuesWithoutSkip } = controlValues;
 
-    const secretKey = await this.getDecryptedSecretKey.execute(
+    const secretKeys = await this.getDecryptedSecretKey.executeAll(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.environmentId })
     );
 
@@ -233,7 +233,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     // check. The connect-time DNS guard and redirect re-validation happen
     // inside HttpClientService when enforceSsrfProtection is enabled.
     const signatureHeaders = {
-      'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
+      'novu-signature': buildNovuSignatureHeader(secretKeys, hasBody ? bodyObject : {}),
     };
     const mergedHeaders = { ...headersRecord, ...signatureHeaders };
 

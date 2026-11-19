@@ -29,6 +29,15 @@ export type ClientOptions = {
   secretKey?: string;
 
   /**
+   * Extra secret keys that may verify `novu-signature` during a rolling rotation.
+   *
+   * Novu includes one `v1` signature per active environment key. `secretKey` is
+   * always accepted as well. A bridge configured with any one of those keys
+   * accepts the request.
+   */
+  secretKeys?: string[];
+
+  /**
    * Explicitly use HMAC signature verification.
    * Setting this to `false` will enable Novu to communicate with your Bridge API
    * without requiring a valid HMAC signature.

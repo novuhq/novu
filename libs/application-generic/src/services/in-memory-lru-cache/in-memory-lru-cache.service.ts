@@ -59,16 +59,16 @@ export class InMemoryLRUCacheService {
       // A shared `getMany()` batch had no value for this key — fall through to our own fetch.
     }
 
-    const fetchPromise = fetchFn()
+    const fetchPromise: Promise<CacheStoreDataTypeMap[TStore]> = fetchFn()
       .then((result) => {
-        if (result !== null && result !== undefined) {
+        if (result !== null && result !== undefined && this.isCurrentFetch(store, effectiveKey, fetchPromise)) {
           store.cache.set(effectiveKey, result);
         }
 
         return result;
       })
       .finally(() => {
-        store.inflightRequests.delete(effectiveKey);
+        this.releaseFetch(store, effectiveKey, fetchPromise);
       });
 
     store.inflightRequests.set(effectiveKey, fetchPromise);
@@ -133,17 +133,17 @@ export class InMemoryLRUCacheService {
       for (const key of missingKeys) {
         const effectiveKey = this.resolveKey(key, opts?.cacheVariant);
 
-        const perKeyPromise = batchPromise
+        const perKeyPromise: Promise<CacheStoreDataTypeMap[TStore] | undefined> = batchPromise
           .then((fetched) => {
             const value = fetched.get(key);
-            if (value !== null && value !== undefined) {
+            if (value !== null && value !== undefined && this.isCurrentFetch(store, effectiveKey, perKeyPromise)) {
               store.cache.set(effectiveKey, value);
             }
 
             return value;
           })
           .finally(() => {
-            store.inflightRequests.delete(effectiveKey);
+            this.releaseFetch(store, effectiveKey, perKeyPromise);
           });
 
         store.inflightRequests.set(effectiveKey, perKeyPromise);
@@ -183,9 +183,24 @@ export class InMemoryLRUCacheService {
       return;
     }
 
+    const matches = (cacheKey: string) => cacheKey === key || cacheKey.startsWith(`${key}:v:`);
+
     for (const cacheKey of store.cache.keys()) {
-      if (cacheKey === key || cacheKey.startsWith(`${key}:v:`)) {
+      if (matches(cacheKey)) {
         store.cache.delete(cacheKey);
+      }
+    }
+
+    /*
+     * A fetch that started before the invalidation may still be running and
+     * would write the value it read back into the cache when it settles.
+     * Dropping its registration makes it stale: `isCurrentFetch` then stops it
+     * from caching, so a revoked API key or deleted secret key cannot be
+     * re-cached. Callers already waiting on that fetch still get its result.
+     */
+    for (const cacheKey of store.inflightRequests.keys()) {
+      if (matches(cacheKey)) {
+        store.inflightRequests.delete(cacheKey);
       }
     }
   }
@@ -205,6 +220,18 @@ export class InMemoryLRUCacheService {
   ): void {
     const store = this.getOrCreateStore<CacheStoreDataTypeMap[TStore]>(storeName);
     store.cache.set(key, value);
+  }
+
+  /** False once `invalidate()` or `invalidateAll()` dropped this fetch, or a newer one replaced it. */
+  private isCurrentFetch<T>(store: EntityStore<T>, effectiveKey: string, fetch: Promise<T | undefined>): boolean {
+    return store.inflightRequests.get(effectiveKey) === fetch;
+  }
+
+  /** Removes the in-flight registration only when it still belongs to this fetch. */
+  private releaseFetch<T>(store: EntityStore<T>, effectiveKey: string, fetch: Promise<T | undefined>): void {
+    if (this.isCurrentFetch(store, effectiveKey, fetch)) {
+      store.inflightRequests.delete(effectiveKey);
+    }
   }
 
   private resolveKey(key: string, cacheVariant?: string): string {
