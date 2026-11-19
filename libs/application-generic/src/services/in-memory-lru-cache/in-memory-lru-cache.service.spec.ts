@@ -461,6 +461,94 @@ describe('InMemoryLRUCacheService', () => {
     });
   });
 
+  describe('invalidate during an in-flight fetch', () => {
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      const promise = new Promise<T>((res) => {
+        resolve = res;
+      });
+
+      return { promise, resolve };
+    }
+
+    it('does not cache a value read before the invalidation', async () => {
+      const staleRead = deferred<unknown>();
+      const staleFetch = vi.fn().mockReturnValue(staleRead.promise);
+      const freshFetch = vi.fn().mockResolvedValue(['current-key']);
+
+      const pending = service.get(InMemoryLRUCacheStore.VALIDATOR, 'revoked', staleFetch);
+      await vi.waitFor(() => expect(staleFetch).toHaveBeenCalledTimes(1));
+
+      service.invalidate(InMemoryLRUCacheStore.VALIDATOR, 'revoked');
+      staleRead.resolve(['revoked-key']);
+
+      // The caller that was already waiting still gets what its fetch read.
+      await expect(pending).resolves.toEqual(['revoked-key']);
+      expect(service.getIfCached(InMemoryLRUCacheStore.VALIDATOR, 'revoked')).toBeUndefined();
+
+      await expect(service.get(InMemoryLRUCacheStore.VALIDATOR, 'revoked', freshFetch)).resolves.toEqual([
+        'current-key',
+      ]);
+      expect(freshFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not let the stale fetch disturb a newer fetch for the same key', async () => {
+      const staleRead = deferred<unknown>();
+      const freshRead = deferred<unknown>();
+      const staleFetch = vi.fn().mockReturnValue(staleRead.promise);
+      const freshFetch = vi.fn().mockReturnValue(freshRead.promise);
+
+      const stalePending = service.get(InMemoryLRUCacheStore.VALIDATOR, 'rotating', staleFetch);
+      await vi.waitFor(() => expect(staleFetch).toHaveBeenCalledTimes(1));
+
+      service.invalidate(InMemoryLRUCacheStore.VALIDATOR, 'rotating');
+
+      const freshPending = service.get(InMemoryLRUCacheStore.VALIDATOR, 'rotating', freshFetch);
+      await vi.waitFor(() => expect(freshFetch).toHaveBeenCalledTimes(1));
+
+      staleRead.resolve(['old-key']);
+      await stalePending;
+      freshRead.resolve(['new-key']);
+      await freshPending;
+
+      expect(service.getIfCached(InMemoryLRUCacheStore.VALIDATOR, 'rotating')).toEqual(['new-key']);
+    });
+
+    it('applies to getMany fetches', async () => {
+      const staleRead = deferred<Map<string, unknown>>();
+      const staleFetch = vi.fn().mockReturnValue(staleRead.promise);
+
+      const pending = service.getMany(InMemoryLRUCacheStore.VALIDATOR, ['batch-a', 'batch-b'], staleFetch);
+      await vi.waitFor(() => expect(staleFetch).toHaveBeenCalledTimes(1));
+
+      service.invalidate(InMemoryLRUCacheStore.VALIDATOR, 'batch-a');
+      staleRead.resolve(
+        new Map<string, unknown>([
+          ['batch-a', 'stale'],
+          ['batch-b', 'kept'],
+        ])
+      );
+      await pending;
+
+      expect(service.getIfCached(InMemoryLRUCacheStore.VALIDATOR, 'batch-a')).toBeUndefined();
+      expect(service.getIfCached(InMemoryLRUCacheStore.VALIDATOR, 'batch-b')).toEqual('kept');
+    });
+
+    it('does not cache a value read before invalidateAll', async () => {
+      const staleRead = deferred<unknown>();
+      const staleFetch = vi.fn().mockReturnValue(staleRead.promise);
+
+      const pending = service.get(InMemoryLRUCacheStore.VALIDATOR, 'cleared', staleFetch);
+      await vi.waitFor(() => expect(staleFetch).toHaveBeenCalledTimes(1));
+
+      service.invalidateAll(InMemoryLRUCacheStore.VALIDATOR);
+      staleRead.resolve(['stale']);
+      await pending;
+
+      expect(service.getIfCached(InMemoryLRUCacheStore.VALIDATOR, 'cleared')).toBeUndefined();
+    });
+  });
+
   describe('invalidateAll', () => {
     it('should clear entire store', async () => {
       featureFlagsService.getFlag.mockResolvedValue(true);

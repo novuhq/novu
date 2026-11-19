@@ -49,6 +49,16 @@ The **Secret Keys** card on the API Keys page lists every active key with per-ke
 2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
 3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
 
+Bridge requests and HTTP request steps are signed with every active secret key. The `novu-signature` header contains one `v1` value per key. A bridge accepts the request when any `v1` matches the secret key it is configured with, so an application can move to the new key before the original key is deleted. An endpoint that verifies the header itself must accept a match on any `v1`, not only the first one.
+
+A bridge built with `@novu/framework` or `@novu/chat-sdk-adapter` can move to the new key on any SDK version. Older versions check only the first `v1`. When such a bridge rejects a request because it already uses the new key, Novu sends the request again with the new key's signature first and keeps that order for later requests to the same bridge. Novu does not resend HTTP request steps. Their header always has the original key's signature first, so an endpoint that checks only the first `v1` must keep the original key until that key is deleted.
+
+Novu can't tell which key your bridge or endpoint verifies with. Before you delete the original key, confirm that every application, bridge and endpoint uses the new key.
+
+<Warning>
+If a secret key leaked, rotate right away. Novu keeps signing with the leaked key, and the key keeps authenticating API requests, until you delete it. Generate the new key, move your applications to it, then delete the leaked key. After the deletion, Novu can still accept the leaked key for up to one minute while caches expire.
+</Warning>
+
 ## API URLs
 
 The following hostnames are used to connect to the Novu cloud platform.
