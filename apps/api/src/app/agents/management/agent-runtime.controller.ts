@@ -19,7 +19,6 @@ import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import type { Request } from 'express';
-import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
@@ -33,6 +32,7 @@ import {
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
 import { SdkGroupName } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
+import { getClientIp } from '../../shared/utils/client-ip';
 import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GetMcpConnectionStatusCommand } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.command';
@@ -172,7 +172,7 @@ export class AgentRuntimeController {
     // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
     command.signal = abortController.signal;
     if (user.scheme === ApiAuthSchemeEnum.KEYLESS) {
-      command.clientIp = getClientIp(request) ?? undefined;
+      command.clientIp = getClientIp(request);
     }
 
     try {

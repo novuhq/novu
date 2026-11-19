@@ -73,6 +73,7 @@ import { ApiKeyRevocationService } from '../auth/api-key-revocation/api-key-revo
 import { ActivityRetentionService } from './services/activity-retention.service';
 import { NovuTokens } from './services/novu-tokens.service';
 import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
+import { getClientIp } from './utils/client-ip';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -198,6 +199,8 @@ const IMPORTS = [
       serviceName: packageJson.name,
       version: packageJson.version,
       silent: !!process.env.CI,
+      // cfRay is the join key into Cloudflare's own logs for the same request.
+      customProps: (req) => ({ clientIp: getClientIp(req), cfRay: req.headers['cf-ray'] }),
     })
   ),
 ];
