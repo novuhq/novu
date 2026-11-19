@@ -28,7 +28,15 @@ export function Faq({ items = FAQ_ITEMS }: { items?: readonly FaqItem[] }) {
   );
 }
 
-export function FaqRow({ item, variant = 'default' }: { item: FaqItem; variant?: 'default' | 'landing' }) {
+export function FaqRow({
+  item,
+  variant = 'default',
+  highlightOpen = variant === 'default',
+}: {
+  item: FaqItem;
+  variant?: 'default' | 'landing';
+  highlightOpen?: boolean;
+}) {
   return (
     <details
       open={item.defaultOpen}
@@ -48,7 +56,7 @@ export function FaqRow({ item, variant = 'default' }: { item: FaqItem; variant?:
           aria-hidden="true"
           className={cn(
             'absolute top-[23px] left-0 h-6 w-1 rounded-[1px] bg-sapien-foreground transition-colors duration-150 group-open:bg-accent motion-reduce:transition-none',
-            variant === 'landing' && 'group-open:bg-sapien-foreground'
+            !highlightOpen && 'group-open:bg-sapien-foreground'
           )}
         />
         <span className="pt-px md:pt-0">{item.question}</span>

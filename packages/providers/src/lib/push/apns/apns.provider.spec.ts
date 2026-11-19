@@ -1,5 +1,5 @@
 import apn from '@parse/node-apn';
-import { expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { APNSPushProvider } from './apns.provider';
 
 test('should trigger apns library correctly', async () => {
@@ -300,4 +300,31 @@ test('should throw connection error when APNs response is missing', async () => 
   await expect(provider.sendMessage(sendMessageOptions)).rejects.toThrow(
     'device-1 failed for reason: apn write aborted'
   );
+});
+
+describe('isTokenInvalid', () => {
+  vi.spyOn(apn, 'Provider').mockImplementation(function () {
+    return { send: vi.fn(), shutdown: () => {} };
+  });
+
+  const provider = new APNSPushProvider({
+    key: 'key',
+    keyId: 'keyId',
+    teamId: 'teamId',
+    bundleId: 'bundleId',
+    production: true,
+  });
+
+  test('treats Unregistered as an invalid token', () => {
+    expect(provider.isTokenInvalid('device-1 failed for reason: Unregistered')).toBe(true);
+  });
+
+  test.each([
+    'device-1 failed for reason: BadDeviceToken',
+    'device-1 failed for reason: DeviceTokenNotForTopic',
+    'device-1 failed for reason: apn write aborted',
+    '',
+  ])('does not treat "%s" as an invalid token', (message) => {
+    expect(provider.isTokenInvalid(message)).toBe(false);
+  });
 });

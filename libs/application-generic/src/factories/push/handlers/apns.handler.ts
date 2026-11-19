@@ -19,4 +19,8 @@ export class APNSHandler extends BasePushHandler {
       production: credentials.secure ?? false,
     });
   }
+
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.provider.isTokenInvalid(errorMessage);
+  }
 }

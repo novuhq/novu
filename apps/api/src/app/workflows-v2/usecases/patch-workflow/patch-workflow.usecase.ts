@@ -8,6 +8,7 @@ import {
   Instrument,
   InstrumentUsecase,
   PinoLogger,
+  ResourceValidatorService,
   resolveStepControlSchemas,
   SendWebhookMessage,
   WorkflowResponseDto,
@@ -27,7 +28,8 @@ export class PatchWorkflowUsecase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private moduleRef: ModuleRef,
     private logger: PinoLogger,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private resourceValidatorService: ResourceValidatorService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -35,6 +37,13 @@ export class PatchWorkflowUsecase {
   @InstrumentUsecase()
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
+
+    if (command.active === true && !persistedWorkflow.active) {
+      await this.resourceValidatorService.validateActiveWorkflowLimit(
+        command.user.environmentId,
+        persistedWorkflow._id
+      );
+    }
 
     const transientWorkflow = this.patchWorkflowFields(persistedWorkflow, command);
 

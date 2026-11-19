@@ -338,6 +338,16 @@ messageSchema.index({
  */
 messageSchema.index({ createdAt: 1 });
 
+/*
+ * Path: apps/api/src/app/messages/usecases/get-messages/get-messages.usecase.ts
+ * Context: execute()
+ * Query: find({ _environmentId, channel? }).sort({ createdAt: -1 })
+ *
+ * Environment-wide GET /v1/messages (no subscriberId) otherwise walks the
+ * global createdAt index or sorts the whole environment in memory.
+ */
+messageSchema.index({ _environmentId: 1, createdAt: -1 });
+
 /**
  * todo: remove deleted field after all the soft deletes are removed task nv-5688
  */

@@ -47,6 +47,7 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
   const upsertControlValuesUseCase = { execute: vi.fn() };
   const analyticsService = { mixpanelTrack: vi.fn(), track: vi.fn() };
   const sendWebhookMessage = { execute: vi.fn() };
+  const resourceValidatorService = { validateActiveWorkflowLimit: vi.fn() };
   let usecase: UpsertWorkflowUseCase;
 
   beforeEach(() => {
@@ -71,7 +72,8 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
       {},
       analyticsService,
       { warn: vi.fn() } as unknown as PinoLogger,
-      sendWebhookMessage
+      sendWebhookMessage,
+      resourceValidatorService
     );
   });
 
@@ -267,5 +269,59 @@ describe('UpsertWorkflowUseCase integration overrides', () => {
       ([command]) => command.level === ControlValuesLevelEnum.STEP_CONTROLS
     );
     expect(stepControlsUpsert?.[0].newControlValues).toEqual({ body: 'hello' });
+  });
+
+  describe('active workflow limit', () => {
+    const upsertWithActive = (active: boolean | undefined) =>
+      usecase.execute({
+        user,
+        workflowIdOrInternalId: WORKFLOW_ID,
+        workflowDto: {
+          name: 'Alerts',
+          origin: ResourceOriginEnum.NOVU_CLOUD,
+          active,
+          steps: [{ _id: STEP_TEMPLATE_ID, name: 'Tool', type: StepTypeEnum.TOOL }],
+        },
+      } as UpsertWorkflowCommand);
+
+    it('checks the limit when a paused workflow is activated', async () => {
+      getWorkflowByIdsUseCase.execute.mockResolvedValue({ ...existingWorkflow, active: false });
+
+      await upsertWithActive(true);
+
+      expect(resourceValidatorService.validateActiveWorkflowLimit).toHaveBeenCalledWith('env-id', WORKFLOW_ID);
+    });
+
+    it('checks the limit when a paused workflow is updated without an active flag, since that activates it', async () => {
+      getWorkflowByIdsUseCase.execute.mockResolvedValue({ ...existingWorkflow, active: false });
+
+      await upsertWithActive(undefined);
+
+      expect(resourceValidatorService.validateActiveWorkflowLimit).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not check the limit when the workflow is already active', async () => {
+      getWorkflowByIdsUseCase.execute.mockResolvedValue({ ...existingWorkflow, active: true });
+
+      await upsertWithActive(true);
+
+      expect(resourceValidatorService.validateActiveWorkflowLimit).not.toHaveBeenCalled();
+    });
+
+    it('does not check the limit when the workflow stays paused', async () => {
+      getWorkflowByIdsUseCase.execute.mockResolvedValue({ ...existingWorkflow, active: false });
+
+      await upsertWithActive(false);
+
+      expect(resourceValidatorService.validateActiveWorkflowLimit).not.toHaveBeenCalled();
+    });
+
+    it('does not save the workflow when the limit rejects the activation', async () => {
+      getWorkflowByIdsUseCase.execute.mockResolvedValue({ ...existingWorkflow, active: false });
+      resourceValidatorService.validateActiveWorkflowLimit.mockRejectedValue(new Error('limit reached'));
+
+      await expect(upsertWithActive(true)).rejects.toThrow('limit reached');
+      expect(updateWorkflowV0Usecase.execute).not.toHaveBeenCalled();
+    });
   });
 });
