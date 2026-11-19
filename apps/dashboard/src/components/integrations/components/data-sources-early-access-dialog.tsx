@@ -190,6 +190,7 @@ export function DataSourcesEarlyAccessDialog({ open, onOpenChange }: DataSources
                         </TagIcon>
                         <span className="text-label-xs font-medium leading-4">{source.label}</span>
                         <DismissButton
+                          type="button"
                           className="mx-0 -mr-px ml-0.5 size-4 shrink-0"
                           onClick={(event) => {
                             event.stopPropagation();
