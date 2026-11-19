@@ -7,6 +7,7 @@ import { addNewRelicApiKeyRevocationAttributes } from '../services/passport/newr
 import {
   ApiKeyRevocationModeEnum,
   ApiKeyRevocationPolicy,
+  canSignWithApiKey,
   evaluateApiKeyRequest,
   getApiKeyCreatedAt,
   getRevokedApiKeyMessage,
@@ -74,6 +75,27 @@ export class ApiKeyRevocationService {
   /** Whether a key stored on the environment was created before the cutoff and has to be replaced. */
   isRotationRequired(policy: ApiKeyRevocationPolicy, apiKey: IApiKey): boolean {
     return requiresRotation(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id));
+  }
+
+  /**
+   * The environment's stored (encrypted) keys whose subscriber and context hashes still count. In `block_all` a key
+   * created before the cutoff is left out, so a leaked key can no longer open an Inbox or update a subscriber
+   * through it.
+   */
+  async getSigningKeys({
+    organizationId,
+    environmentId,
+    apiKeys,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    apiKeys: IApiKey[];
+  }): Promise<string[]> {
+    const policy = await this.getPolicy({ organizationId, environmentId });
+
+    return apiKeys
+      .filter((apiKey) => canSignWithApiKey(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id)))
+      .map((apiKey) => apiKey.key);
   }
 
   /** Throws when the policy revokes the key the request was authenticated with, for this route. */

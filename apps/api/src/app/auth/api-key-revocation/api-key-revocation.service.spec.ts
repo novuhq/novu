@@ -199,4 +199,48 @@ describe('ApiKeyRevocationService', () => {
       expect(service.isRotationRequired(off, oldStored)).to.equal(false);
     });
   });
+
+  describe('getSigningKeys', () => {
+    const createKeys = () => [
+      { ...createOldKey().stored, key: 'old-encrypted-key' },
+      { ...createNewKey().stored, key: 'new-encrypted-key' },
+    ];
+
+    it('leaves out the keys created before the cutoff in block_all mode', async () => {
+      const { service } = setup(flag('block_all'), []);
+
+      const signingKeys = await service.getSigningKeys({
+        organizationId: 'org-id',
+        environmentId: 'env-id',
+        apiKeys: createKeys(),
+      });
+
+      expect(signingKeys).to.deep.equal(['new-encrypted-key']);
+    });
+
+    it('keeps every key in the other modes', async () => {
+      for (const flagValue of ['', flag('warn'), flag('block_except_allowed')]) {
+        const { service } = setup(flagValue, []);
+
+        const signingKeys = await service.getSigningKeys({
+          organizationId: 'org-id',
+          environmentId: 'env-id',
+          apiKeys: createKeys(),
+        });
+
+        expect(signingKeys, JSON.stringify(flagValue)).to.deep.equal(['old-encrypted-key', 'new-encrypted-key']);
+      }
+    });
+
+    it('reads the flag for the organization and environment of the keys', async () => {
+      const { service, featureFlagsService } = setup(flag('block_all'), []);
+
+      await service.getSigningKeys({ organizationId: 'org-id', environmentId: 'env-id', apiKeys: [] });
+
+      expect(featureFlagsService.getFlag.firstCall.args[0]).to.deep.include({
+        organization: { _id: 'org-id' },
+        environment: { _id: 'env-id' },
+      });
+    });
+  });
 });
