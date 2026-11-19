@@ -90,6 +90,9 @@ export function writeStoredConversationId(scope: string | undefined, conversatio
   }
 }
 
+/** DOM id of the popover, so the launcher can tell when the focus sits in it while it animates out. */
+export const COPILOT_POPOVER_ID = 'copilot-popover';
+
 export type LauncherState = 'idle' | 'working' | 'ready' | 'error' | 'off';
 
 export function deriveLauncherState(input: {
