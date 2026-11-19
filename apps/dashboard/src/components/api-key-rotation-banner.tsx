@@ -23,8 +23,9 @@ export function ApiKeyRotationBanner() {
   /*
    * The permission check lets every member read the keys until it knows otherwise: before the plan loads it assumes
    * the free plan, and before LaunchDarkly identifies the organization the role-based access flag still has the
-   * value of the anonymous or previous organization. Asking earlier would get members without access a 403 and an
-   * error toast on every page.
+   * value of the anonymous or previous organization. Waiting for both spares members without access a 403. The
+   * request stays silent for what still slips through, such as an identification that failed, so this notice never
+   * puts an error toast on a page.
    */
   const { isLoading: isSubscriptionLoading } = useFetchSubscription();
   const isLaunchDarklyIdentified = useLaunchDarklyIdentified();
@@ -32,6 +33,7 @@ export function ApiKeyRotationBanner() {
   const apiKeysQuery = useFetchApiKeys({
     enabled: canReadApiKeys && !isSubscriptionLoading && isLaunchDarklyIdentified,
     staleTime: API_KEYS_STALE_TIME_MS,
+    showError: false,
   });
   const requiresRotation = apiKeysQuery.data?.data?.some((apiKey) => apiKey.requiresRotation) ?? false;
   const environmentSlug = currentEnvironment?.slug;
