@@ -8,7 +8,7 @@ import { AGENTS, type AgentId, CHANNELS } from '@/data/channel-pages';
 import { type ExampleMessage, USE_CASE_GROUPS } from '@/data/use-cases';
 import { cn } from '@/lib/utils';
 
-import { AgentLogoStack } from './agent-logo-stack';
+import { AgentLogoStack, UseCaseAgentMark } from './agent-logo-stack';
 import { UseCaseFilters } from './listing-filters';
 import styles from './use-cases.module.css';
 
@@ -64,7 +64,7 @@ function UseCaseRow({ example }: { example: UseCase }) {
         </ul>
         <div className="mt-5 border-t border-sapien-border pt-4">
           <p className="font-sapien-mono text-[11px] leading-none text-sapien-foreground/50">Works with</p>
-          <ul className="mt-2.5 flex flex-wrap gap-1">
+          <ul className="mt-2.5 flex flex-wrap gap-x-1.5 gap-y-2">
             {(example.agents ?? ['any-agent']).map((id) => (
               <AgentChip key={id} id={id} />
             ))}
@@ -93,8 +93,8 @@ const chipClass =
 
 function AgentChip({ id }: { id: AgentId }) {
   return (
-    <li className={chipClass}>
-      {id === 'any-agent' ? <AgentLogoStack /> : <LandingMark name={id} size={14} />}
+    <li className={cn(chipClass, 'pl-1')}>
+      {id === 'any-agent' ? <AgentLogoStack /> : <UseCaseAgentMark id={id} />}
       {AGENTS[id].name}
     </li>
   );
@@ -102,7 +102,7 @@ function AgentChip({ id }: { id: AgentId }) {
 
 export function ExampleScene({ example, walkthrough = false }: { example: UseCase; walkthrough?: boolean }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-2xl border border-sapien-surface bg-black">
+    <div className={cn('min-w-0', !walkthrough && 'overflow-hidden rounded-2xl border border-sapien-surface bg-black')}>
       {!walkthrough && (
         <div className="relative flex items-center border-b border-sapien-surface px-3.5 py-3">
           <span className={cn(chipClass, 'min-h-6.5 px-1.5')}>
@@ -113,10 +113,11 @@ export function ExampleScene({ example, walkthrough = false }: { example: UseCas
       )}
       <div
         className={cn(
-          'flex flex-col gap-2.5 p-4.5',
-          example.glow === 'right' && styles.glowRight,
-          example.glow === 'center' && styles.glowCenter,
-          !example.glow && styles.glowLeft
+          'flex flex-col',
+          walkthrough ? 'gap-3' : 'gap-2.5 p-4.5',
+          !walkthrough && example.glow === 'right' && styles.glowRight,
+          !walkthrough && example.glow === 'center' && styles.glowCenter,
+          !walkthrough && !example.glow && styles.glowLeft
         )}
       >
         {example.incoming && <HumanBubble message={example.incoming} />}
@@ -139,6 +140,7 @@ export function ExampleScene({ example, walkthrough = false }: { example: UseCas
                 key={label}
                 className={cn(
                   'grid min-h-8 place-items-center rounded-lg bg-sapien-surface px-1.5 py-1.5 text-center text-sm leading-4',
+                  walkthrough && 'min-h-9',
                   label === example.selected && 'bg-sapien-foreground font-medium text-black'
                 )}
               >

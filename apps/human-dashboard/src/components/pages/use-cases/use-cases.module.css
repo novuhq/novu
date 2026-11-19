@@ -20,10 +20,12 @@
 .heroDither::before {
   content: "";
   position: absolute;
-  top: -223px;
+  /* Seven 148.75px strips cover the artwork when this cell spans the whole grid. */
+  top: 376px;
   left: 0;
   width: 595px;
-  height: 595px;
+  height: 1041.25px;
   background: url("/images/use-cases/hero-dither.svg") 0 0 repeat-y;
+  transform-origin: top left;
   transform: rotate(-90deg);
 }

@@ -11,6 +11,7 @@ import { CHANNELS } from '@/data/channel-pages';
 import { SETUP_COMMAND } from '@/data/sapien';
 import { USE_CASE_GROUPS } from '@/data/use-cases';
 import { MCP_URL } from '@/lib/hosts';
+import { cn } from '@/lib/utils';
 
 import { AgentLogoStack } from './agent-logo-stack';
 import { ExampleScene } from './listing';
@@ -110,7 +111,7 @@ export function UseCaseSetup() {
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="min-w-0 flex-1 self-start rounded-[20px] border border-sapien-surface bg-[#191715] bg-[url(/images/use-cases/stepper-dots.svg)] bg-top p-3 sm:p-6">
+          <div className="grid w-full min-w-0 flex-1 content-center rounded-[20px] border border-sapien-surface bg-[#191715] bg-[url(/images/use-cases/stepper-dots.svg)] bg-cover bg-top bg-no-repeat p-3 sm:p-6 md:min-h-70 md:w-auto md:self-start">
             {steps.map(({ id, panel }) => (
               <TabsContent key={id} value={id}>
                 {panel}
@@ -176,32 +177,54 @@ function ConnectPanel() {
 }
 
 function ChannelsPanel() {
+  const rows = [
+    { name: 'email', href: '/email', label: CHANNELS.email.name },
+    { name: 'telegram', href: '/telegram', label: CHANNELS.telegram.name },
+    { name: 'slack', href: '/slack', label: CHANNELS.slack.name },
+    { name: 'invite', href: '/contacts', label: 'Invite your team' },
+  ] as const;
+
   return (
-    <div className="space-y-2">
-      {(['email', 'telegram', 'slack'] as const).map((channel) => (
-        <Link
-          key={channel}
-          href={`/${channel}`}
-          className="flex min-h-11 items-center gap-2.5 rounded-lg border border-sapien-surface bg-black px-3 text-sm hover:border-accent/40 hover:text-accent"
-        >
-          <LandingMark name={channel} size={16} />
-          {CHANNELS[channel].name}
-          {channel === 'email' && (
-            <span className="ml-auto text-accent">
-              <Image src="/images/use-cases/hero-check.svg" width={18} height={18} alt="" unoptimized />
-              <span className="sr-only">Ready to use</span>
-            </span>
-          )}
-        </Link>
-      ))}
-      <Link
-        href="/contacts"
-        className="flex min-h-11 items-center gap-2.5 rounded-lg border border-sapien-surface bg-black px-3 text-sm hover:border-accent/40 hover:text-accent"
-      >
-        <Image src="/images/use-cases/invite.svg" width={18} height={18} alt="" unoptimized />
-        Invite your team
-      </Link>
-    </div>
+    <ul className="mx-auto grid w-full max-w-64 gap-3">
+      {rows.map(({ name, href, label }) => {
+        const ready = name === 'email';
+
+        return (
+          <li key={name}>
+            <Link
+              href={href}
+              className={cn(
+                'flex min-h-10 items-center gap-3 rounded-lg border border-sapien-raised bg-black px-3.5 py-1.5 font-sapien-mono text-[15px] leading-[18px] tracking-tight text-sapien-foreground/70 hover:border-accent hover:text-sapien-foreground focus-visible:outline-2 focus-visible:outline-accent',
+                ready && 'border-accent/40 text-sapien-foreground/90'
+              )}
+            >
+              {name === 'invite' ? (
+                <Image
+                  src="/images/use-cases/step-invite.svg"
+                  width={18}
+                  height={18}
+                  alt=""
+                  className="shrink-0"
+                  unoptimized
+                />
+              ) : (
+                <LandingMark name={name} size={18} />
+              )}
+              <span className="min-w-0 flex-1">{label}</span>
+              <Image
+                src={ready ? '/images/use-cases/hero-check.svg' : '/images/use-cases/step-add.svg'}
+                width={18}
+                height={18}
+                className="shrink-0"
+                alt=""
+                unoptimized
+              />
+              {ready && <span className="sr-only">Ready to use</span>}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -209,16 +232,15 @@ function MessagesPanel() {
   const [approvals] = USE_CASE_GROUPS[0].cases;
 
   return (
-    <div className="rounded-[10px] border border-sapien-surface bg-black p-2">
-      <ul className="flex flex-wrap gap-1.5 px-2 pt-1 pb-3 font-sapien-mono text-[11px]">
+    <div className="p-3">
+      <ul className="mb-3 flex flex-wrap gap-1.5 font-sapien-mono text-xs leading-3 tracking-tight">
         {['ask', 'approve', 'choose', 'tell'].map((kind) => (
           <li
             key={kind}
-            className={
-              kind === 'approve'
-                ? 'rounded-md bg-sapien-foreground px-2.5 py-1 text-black'
-                : 'rounded-md border border-sapien-surface px-2.5 py-1 text-sapien-foreground/70'
-            }
+            className={cn(
+              'rounded-lg border border-sapien-surface bg-[#0a0908] px-2.5 py-[7px] text-accent/60',
+              kind === 'approve' && 'border-accent/50 bg-transparent text-accent'
+            )}
           >
             {kind}
           </li>
