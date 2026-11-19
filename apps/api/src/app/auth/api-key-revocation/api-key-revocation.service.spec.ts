@@ -39,7 +39,7 @@ function setup(flagValue: unknown, storedKeys: StoredKey[]) {
       return storedKeys.some((stored) => stored.hash === hash) ? { apiKeys: storedKeys } : null;
     }),
   };
-  const logger = { setContext: sinon.stub(), error: sinon.stub() };
+  const logger = { setContext: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
   const service = new ApiKeyRevocationService(
     featureFlagsService as never,
     environmentRepository as never,
@@ -129,11 +129,38 @@ describe('ApiKeyRevocationService', () => {
     expect((error as UnauthorizedException).message).to.equal(REVOKED_API_KEY_MESSAGE);
   });
 
-  it('never limits a key created after the cutoff', async () => {
+  it('never limits or logs a key created after the cutoff', async () => {
     const { apiKey, stored } = createNewKey();
-    const { service } = setup(flag('block_all'), [stored]);
+    const { service, logger } = setup(flag('block_all'), [stored]);
 
     await service.assertRequestAllowed(callWith(apiKey, 'GET', '/v1/subscribers'));
+
+    expect(logger.warn.called).to.equal(false);
+  });
+
+  it('logs a call made with an old key once per route and outcome, with the New Relic flags', async () => {
+    const { apiKey, stored } = createOldKey();
+    const { service, logger } = setup(flag('block_except_allowed'), [stored]);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await rejectionOf(service.assertRequestAllowed(callWith(apiKey, 'GET', '/v1/subscribers')));
+      await service.assertRequestAllowed(callWith(apiKey, 'POST', '/v1/events/trigger'));
+    }
+
+    expect(logger.warn.callCount).to.equal(2);
+    expect(logger.warn.firstCall.args[0]).to.deep.equal({
+      apiKeyRequiresRotation: true,
+      apiKeyRevocationBlocked: true,
+      apiKeyRevocationMode: 'block_except_allowed',
+      organizationId: 'org-id',
+      environmentId: 'env-id',
+      route: 'GET /v1/subscribers',
+    });
+    expect(logger.warn.secondCall.args[0]).to.deep.include({
+      apiKeyRequiresRotation: true,
+      apiKeyRevocationBlocked: false,
+      route: 'POST /v1/events/trigger',
+    });
   });
 
   it('lets an old key through in warn mode', async () => {
