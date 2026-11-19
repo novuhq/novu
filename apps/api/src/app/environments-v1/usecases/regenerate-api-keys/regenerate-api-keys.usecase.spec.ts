@@ -19,11 +19,15 @@ describe('RegenerateApiKeys', () => {
     };
     const generateUniqueApiKey = { execute: sinon.stub().resolves('new_secret') };
     const inMemoryLRUCacheService = { invalidate: sinon.stub() };
+    const apiKeyRevocationService = {
+      getPolicy: sinon.stub().resolves({ mode: 'off' }),
+      isRotationRequired: sinon.stub().returns(false),
+    };
 
     const useCase = new RegenerateApiKeys(
       environmentRepository as never,
       generateUniqueApiKey as never,
-      new GetApiKeys(environmentRepository as never),
+      new GetApiKeys(environmentRepository as never, apiKeyRevocationService as never),
       inMemoryLRUCacheService as never
     );
 

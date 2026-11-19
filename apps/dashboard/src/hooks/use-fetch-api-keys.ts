@@ -4,7 +4,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { QueryKeys } from '@/utils/query-keys';
 import { createApiKey, deleteApiKey, getApiKeys, regenerateApiKeys } from '../api/environments';
 
-export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) => {
+export const useFetchApiKeys = ({ enabled = true, staleTime }: { enabled?: boolean; staleTime?: number } = {}) => {
   const { currentEnvironment } = useEnvironment();
 
   const query = useQuery<{ data: IApiKey[] }>({
@@ -12,6 +12,7 @@ export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) 
     queryFn: async () =>
       await getApiKeys({ environment: requireEnvironment(currentEnvironment, 'No environment selected') }),
     enabled: !!currentEnvironment?._id && enabled,
+    staleTime,
   });
 
   return query;
