@@ -76,7 +76,11 @@ Novu can't tell which key your bridge or endpoint verifies with. Before you dele
 
 ### Regenerate all keys
 
-Regenerating replaces every secret key in the environment at once, including a second key created for rolling rotation. Update your applications before you regenerate when you can.
+Regenerating creates a new random secret key and replaces every key in the environment with it, including a second key created for rolling rotation. The new key exists only after that replacement, so applications cannot be updated to it beforehand.
+
+<Warning>
+Requests that use a replaced key fail until your applications send the new key. Prepare for that interruption, then copy the new key and update your applications immediately. Use [rolling rotation](#rolling-rotation) when requests must keep succeeding through the change.
+</Warning>
 
 1. On the **Secret Keys** card, click the regenerate icon next to the key.
 
