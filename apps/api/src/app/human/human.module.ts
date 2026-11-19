@@ -18,6 +18,7 @@ import { AuthModule } from '../auth/auth.module';
 import { CliAuthModule } from '../cli-auth/cli-auth.module';
 import { ConnectModule } from '../connect/connect.module';
 import { GenerateUniqueApiKey } from '../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { GetApiKeys } from '../environments-v1/usecases/get-api-keys/get-api-keys.usecase';
 import { RegenerateApiKeys } from '../environments-v1/usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
@@ -185,6 +186,7 @@ import { WaitForListenMessages } from './usecases/wait-for-listen-messages/wait-
     ClaimForHumanAccount,
     GetBackingSecretKey,
     GenerateUniqueApiKey,
+    GetApiKeys,
     RegenerateApiKeys,
     RegenerateBackingSecretKey,
     DeleteHumanAccount,

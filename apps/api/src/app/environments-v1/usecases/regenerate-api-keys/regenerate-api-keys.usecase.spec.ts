@@ -4,15 +4,17 @@ import { createHash } from 'crypto';
 import sinon from 'sinon';
 import { getBridgeSecretKeysCacheKey } from '../../bridge-secret-keys-cache';
 import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
+import { GetApiKeys } from '../get-api-keys/get-api-keys.usecase';
 import { RegenerateApiKeys } from './regenerate-api-keys.usecase';
 
 describe('RegenerateApiKeys', () => {
   const environmentId = 'env_1';
   const legacyKey = 'legacy_secret_without_stored_hash';
 
-  function setup({ environment }: { environment: unknown }) {
+  function setup({ environment }: { environment: { apiKeys: unknown[] } | null }) {
     const environmentRepository = {
       findOne: sinon.stub().resolves(environment),
+      getApiKeys: sinon.stub().resolves(environment?.apiKeys ?? []),
       updateApiKey: sinon.stub().resolves([{ _userId: 'user_1', key: encryptApiKey('new_secret'), hash: 'new_hash' }]),
     };
     const generateUniqueApiKey = { execute: sinon.stub().resolves('new_secret') };
@@ -21,6 +23,7 @@ describe('RegenerateApiKeys', () => {
     const useCase = new RegenerateApiKeys(
       environmentRepository as never,
       generateUniqueApiKey as never,
+      new GetApiKeys(environmentRepository as never),
       inMemoryLRUCacheService as never
     );
 
@@ -38,7 +41,6 @@ describe('RegenerateApiKeys', () => {
   it('invalidates the auth cache for every replaced key and the bridge secret keys cache', async () => {
     const { useCase, inMemoryLRUCacheService } = setup({
       environment: {
-        _id: environmentId,
         apiKeys: [{ key: encryptApiKey('old_secret'), hash: 'old_hash' }, { key: encryptApiKey(legacyKey) }],
       },
     });
