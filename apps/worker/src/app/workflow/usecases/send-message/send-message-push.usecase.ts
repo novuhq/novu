@@ -61,6 +61,9 @@ const LOG_CONTEXT = 'SendMessagePush';
 export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
   'NotRegistered',
   'InvalidRegistration',
+  'registration-token-not-registered',
+  'invalid-registration-token',
+  'Device unregistered',
   'MismatchSenderId',
   'Unregistered',
   'BadDeviceToken',
@@ -82,12 +85,17 @@ export function isSubscriberError(errorMessage: string): boolean {
 export function serializePushProviderError(error: unknown): string {
   const serialized = safeJsonStringify(error);
 
-  if (serialized !== '{}') {
-    return serialized;
+  if (error instanceof Error) {
+    // `message` and `name` are non-enumerable, so JSON drops them whenever the error has other own fields (e.g. `code`).
+    const parsed = JSON.parse(serialized);
+
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return JSON.stringify({ name: error.name, message: error.message, ...parsed });
+    }
   }
 
-  if (error instanceof Error) {
-    return JSON.stringify({ message: error.message, name: error.name });
+  if (serialized !== '{}') {
+    return serialized;
   }
 
   return JSON.stringify({ message: String(error ?? '') });
@@ -152,11 +160,6 @@ export class SendMessagePush extends SendMessageBase {
     const { subscriber, step: stepData } = command.compileContext;
 
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
 
     if (template) {
       step.template = template;
@@ -168,6 +171,12 @@ export class SendMessagePush extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template?.content as string,
@@ -582,13 +591,15 @@ export class SendMessagePush extends SendMessageBase {
     step: IPushOptions['step'],
     bridgeProviderData: Record<string, unknown>
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
+    let pushHandler: IPushHandler | undefined;
+
     try {
       Logger.log(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Sending push notification for jobId ${command.jobId}`,
         LOG_CONTEXT
       );
-      const pushHandler = this.getIntegrationHandler(integration);
+      pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
       Logger.debug(
@@ -633,6 +644,7 @@ export class SendMessagePush extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return { success: true, error: undefined };
@@ -674,8 +686,9 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       try {
-        const pushHandler = this.getIntegrationHandler(integration);
-        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+        // Reuse the send's handler: building another one re-creates the provider client (a Firebase app for FCM).
+        const handler = pushHandler ?? this.getIntegrationHandler(integration);
+        const isTokenInvalid = handler?.isTokenInvalid?.(e.message || e.toString());
 
         if (isTokenInvalid) {
           Logger.log(
@@ -719,6 +732,7 @@ export class SendMessagePush extends SendMessageBase {
           },
           organizationId: command.organizationId,
           environmentId: command.environmentId,
+          environment: command.environment,
         });
       } catch (err) {
         Logger.error(

@@ -203,6 +203,20 @@ function InternalConditionsEditor({
     [fieldDataMap, enhancedVariables]
   );
 
+  const getArrayItemPaths = useCallback(
+    (fieldName: string) => {
+      if (!enhancedVariables) return [];
+
+      // Array item properties are exposed by the schema parser as `<array>.0.<property>`
+      const itemPrefix = `${fieldName}.0.`;
+
+      return enhancedVariables
+        .filter((variable) => variable.name.startsWith(itemPrefix))
+        .map((variable) => variable.name.slice(itemPrefix.length));
+    },
+    [enhancedVariables]
+  );
+
   const context = useMemo(
     () => ({
       variables,
@@ -210,9 +224,10 @@ function InternalConditionsEditor({
       saveForm,
       getPlaceholder,
       getHelpText,
+      getArrayItemPaths,
       valueInput,
     }),
-    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText, valueInput]
+    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText, getArrayItemPaths, valueInput]
   );
 
   return (
@@ -242,6 +257,7 @@ export type ConditionsEditorContext = {
     fieldName: string,
     operator: string
   ) => { title: string; description: string; examples: string[]; notes?: string[] };
+  getArrayItemPaths?: (fieldName: string) => string[];
   valueInput?: ConditionsValueInput;
 };
 

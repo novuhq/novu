@@ -101,6 +101,11 @@ export class GetWorkflowRunResponseBaseDto {
   @IsOptional()
   @IsArray()
   topics?: TopicResponseDto[];
+
+  @ApiPropertyOptional({ description: 'Workflow run whose active digest this run was merged into' })
+  @IsOptional()
+  @IsString()
+  digestedWorkflowRunId?: string;
 }
 
 export enum ReportTypeEnum {

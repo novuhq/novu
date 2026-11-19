@@ -62,6 +62,13 @@ export interface Interaction {
   };
   failedTo?: string[];
   /**
+   * Who it hasn't reached yet: their WhatsApp window was closed, so they got the account's first message instead.
+   * It goes out when they reply.
+   */
+  heldFor?: string[];
+  /** Who Meta reported the first message undelivered for, and why. It still goes out if they write first. */
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
+  /**
    * On create: the conversation each message landed in, and how many messages in it were unread.
    * The API calls them threads; the CLI prints them as `conversations`.
    */
@@ -154,9 +161,14 @@ export async function createInteraction(client: ApiClient, input: CreateInteract
   return unwrap(res.data);
 }
 
-export async function getInteraction(client: ApiClient, id: string): Promise<Interaction> {
+export async function getInteraction(
+  client: ApiClient,
+  id: string,
+  options: { timeoutMs?: number } = {}
+): Promise<Interaction> {
   const res = await client.axios.get<{ data?: Interaction } | Interaction>(
-    `/v1/inbox/messages/${encodeURIComponent(id)}`
+    `/v1/inbox/messages/${encodeURIComponent(id)}`,
+    options.timeoutMs ? { timeout: options.timeoutMs } : undefined
   );
 
   return unwrap(res.data);
@@ -206,7 +218,7 @@ export async function setupRelay(
     firstName?: string;
     lastName?: string;
     /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
-    defaultVia?: 'telegram' | 'slack' | 'email';
+    defaultVia?: 'telegram' | 'slack' | 'whatsapp' | 'email';
     /**
      * The look of a new agent: its mascot's shape, colour or both. The API takes it where a look can be picked
      * (`InboxAddressCheck.canPickLook`) and leaves the original one elsewhere, and for an agent that exists.
@@ -293,7 +305,7 @@ export async function setRelayAgentPicture(
 }
 
 export interface InviteChannel {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
   integrationIdentifier: string;
   connected: boolean;
 }
@@ -304,6 +316,29 @@ export interface Invite {
   /** ISO timestamp after which the invite link stops working. */
   expiresAt: string;
   channels: InviteChannel[];
+}
+
+/**
+ * Starts connecting one channel from an invite, as the invite page does. For WhatsApp it is a wa.me link with a
+ * one-time code: sending the prefilled message from their own WhatsApp binds that number.
+ */
+export async function connectInviteChannel(
+  client: ApiClient,
+  input: { token: string; via: InviteChannel['via'] }
+): Promise<{ url: string }> {
+  const res = await client.axios.post<{ data?: { url: string } } | { url: string }>('/v1/invites/connect', input);
+
+  return unwrap(res.data);
+}
+
+/** The token at the end of an invite page link, `…/invite/<token>`. */
+export function inviteTokenOf(url: string): string {
+  const token = new URL(url).pathname.split('/').filter(Boolean).pop();
+  if (!token) {
+    throw new Error(`The invite link ${url} has no token.`);
+  }
+
+  return token;
 }
 
 export async function createInvite(
@@ -318,7 +353,7 @@ export async function createInvite(
 export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
 
 export type ContactChannel = {
-  via: 'telegram' | 'slack' | 'email';
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
   status: ContactChannelStatus;
   address?: string;
   verifiedAt?: string;
@@ -330,6 +365,8 @@ export type ContactChannel = {
   connectedAt?: string;
   /** On a contact from the list: whether a message that names no channel goes here. */
   isDefault?: boolean;
+  /** WhatsApp only: the agent can write only within 24 hours of the person's last message. */
+  window?: { open: boolean; lastMessageAt?: string; closesAt?: string };
 };
 
 /** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */

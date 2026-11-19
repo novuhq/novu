@@ -45,6 +45,7 @@ import type {
   InboxThreadState,
 } from '../dtos/human-inbox.dto';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../usecases/setup-human-relay/setup-human-relay.usecase';
+import { HumanChannelGate } from './human-channel-gate.service';
 import { HumanDeliveryService } from './human-delivery.service';
 import { readHumanContentActions } from './human-interaction-lifecycle';
 
@@ -101,9 +102,6 @@ type InboxPage = { data: ConversationEntity[]; next: string | null };
 
 const PREVIEW_MAX_LENGTH = 200;
 
-/** The channels the inbox page always offers, also while no thread is on them. */
-const INBOX_CHANNELS: readonly string[] = Object.values(HumanChannelViaEnum);
-
 /**
  * The Human inbox: the conversations of a `human_relay` agent, read as threads an agent pulls,
  * answers and closes. Read state is a per-conversation cursor (`lastReadAt`).
@@ -117,7 +115,8 @@ export class HumanInboxService {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly humanInteractionRepository: HumanInteractionRepository,
-    private readonly deliveryService: HumanDeliveryService
+    private readonly deliveryService: HumanDeliveryService,
+    private readonly channelGate: HumanChannelGate
   ) {}
 
   async resolveRelayAgent(scope: InboxScope, agentIdentifier?: string): Promise<InboxRelayAgent> {
@@ -377,7 +376,9 @@ export class HumanInboxService {
   ): Promise<InboxCountsResponseDto> {
     const tabs: Record<InboxTab, number> = { all: 0, unread: 0, waiting: 0, resolved: 0 };
     const channels: InboxCountsResponseDto['channels'] = { all: 0 };
-    for (const channel of INBOX_CHANNELS) {
+    // The channels the inbox page always offers, also while no thread is on them.
+    const enabledVias: string[] = await this.channelGate.enabledVias(scope);
+    for (const channel of enabledVias) {
       channels[channel] = 0;
     }
 
@@ -406,7 +407,10 @@ export class HumanInboxService {
 
       if (isInTab(state, filters.tab ?? 'all')) {
         channels.all += 1;
-        channels[channel] = (channels[channel] ?? 0) + 1;
+        // A thread left on a channel that was turned off still counts, but never brings the channel back.
+        if (channel !== HumanChannelViaEnum.WHATSAPP || enabledVias.includes(channel)) {
+          channels[channel] = (channels[channel] ?? 0) + 1;
+        }
       }
     }
 
@@ -767,7 +771,7 @@ function peopleOf(conversation: ConversationEntity, people: InboxPeople): InboxP
     ...subscriberIdsOf(conversation).map(
       (subscriberId): InboxPersonDto => people.get(subscriberId) ?? { id: subscriberId, kind: 'stranger' }
     ),
-    ...platformUserIdsOf(conversation).map((id): InboxPersonDto => ({ id, kind: 'stranger' })),
+    ...platformUserIdsOf(conversation).map((id): InboxPersonDto => ({ id, kind: 'stranger', ...strangerNameOf(id) })),
   ];
 }
 
@@ -981,7 +985,7 @@ function presentationOf(
     text: 'message',
   };
 
-  return { channel, style, label: `${capitalize(channel)} ${words[style]}` };
+  return { channel, style, label: `${channelName(channel)} ${words[style]}` };
 }
 
 function presentationStyleOf(kind: HumanInteractionKindEnum, hasCardContent: boolean): InboxCardPresentationStyle {
@@ -1017,7 +1021,7 @@ function cardStateOf(interaction: HumanInteractionEntity, channel: string, peopl
 
   return {
     status,
-    label: settledLabel(status, { name, optionLabel, channel: capitalize(channel) }),
+    label: settledLabel(status, { name, optionLabel, channel: channelName(channel) }),
     ...(name ? { respondedBy: { ...(responderId ? { id: responderId } : {}), name } } : {}),
     ...(response?.respondedAt ? { respondedAt: response.respondedAt } : {}),
     ...(response?.optionId ? { optionId: response.optionId } : {}),
@@ -1061,6 +1065,28 @@ function optionLabelOf(interaction: HumanInteractionEntity, optionId: string): s
   ];
 
   return choices.find((choice) => choice.id === optionId)?.label;
+}
+
+/** How a channel is named in a sentence or a label: "WhatsApp", not "Whatsapp". */
+const CHANNEL_NAMES: Record<string, string> = {
+  telegram: 'Telegram',
+  slack: 'Slack',
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+};
+
+function channelName(channel: string): string {
+  return CHANNEL_NAMES[channel] ?? capitalize(channel);
+}
+
+/**
+ * Someone who wrote without being a contact is known only by the app's id for them. On WhatsApp that is their
+ * number, `whatsapp:15551234567`, shown as `+15551234567`; elsewhere the id stays as it is.
+ */
+function strangerNameOf(id: string): { name?: string } {
+  const digits = id.startsWith('whatsapp:') ? id.slice('whatsapp:'.length) : undefined;
+
+  return digits && /^\d{6,15}$/.test(digits) ? { name: `+${digits}` } : {};
 }
 
 function capitalize(text: string): string {

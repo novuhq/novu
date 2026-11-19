@@ -20,7 +20,16 @@ const HOST_MARKDOWN = `${HOST_PAGE}\\.md`;
  * host's Markdown also answers at its own address (`/claude-code/index.md`), behind the rewrite.
  * `noindexPaths` widens this to every route on staging (`SITE_NOINDEX`), preview, and development.
  */
-const WEBSITE_PATHS = ['/', '/sapien', '/index.md', '/llms.txt', HOST_PAGE, HOST_MARKDOWN, `${HOST_PAGE}/index.md`];
+const WEBSITE_PATHS = [
+  '/',
+  '/sapien',
+  '/use-cases',
+  '/index.md',
+  '/llms.txt',
+  HOST_PAGE,
+  HOST_MARKDOWN,
+  `${HOST_PAGE}/index.md`,
+];
 const NOINDEX_SCOPE = noindexPaths();
 
 const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow' };

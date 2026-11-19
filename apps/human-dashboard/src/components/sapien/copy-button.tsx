@@ -1,5 +1,7 @@
 'use client';
 
+import { Check, Copy } from 'lucide-react';
+
 import { useClipboard } from '@/hooks/use-clipboard';
 import { cn } from '@/lib/utils';
 
@@ -7,6 +9,7 @@ export type CopyButtonProps = {
   text: string;
   children: string;
   copiedLabel?: string;
+  variant?: 'text' | 'icon' | 'icon-and-text';
   successMessage?: string;
   errorMessage?: string;
   /** When copying fails, also show `text` to select by hand: for text the page doesn't show, such as a prompt. */
@@ -17,6 +20,7 @@ export function CopyButton({
   text,
   children,
   copiedLabel = 'Copied',
+  variant = 'text',
   successMessage = 'Copied to clipboard',
   errorMessage = "Couldn't copy. Select the text and copy it manually.",
   showTextOnError = false,
@@ -32,7 +36,15 @@ export function CopyButton({
         aria-busy={state === 'pending'}
         className={cn('cursor-pointer transition-colors duration-150 motion-reduce:transition-none', className)}
       >
-        {state === 'success' ? copiedLabel : children}
+        {variant !== 'text' &&
+          (state === 'success' ? (
+            <Check aria-hidden="true" className="size-3.5 shrink-0" />
+          ) : (
+            <Copy aria-hidden="true" className="size-3.5 shrink-0" />
+          ))}
+        <span className={variant === 'icon' ? 'sr-only' : undefined}>
+          {state === 'success' ? copiedLabel : children}
+        </span>
       </button>
       {/* biome-ignore lint/a11y/useSemanticElements: an <output> is for the result of a form, not a copy notice */}
       <p

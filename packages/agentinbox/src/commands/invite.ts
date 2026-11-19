@@ -1,6 +1,14 @@
 import pc from 'picocolors';
-import { createInvite, getContact, requestAddressVerification, setupRelay } from '../api/agent-inbox';
-import { type ApiClient } from '../api/client';
+import {
+  connectInviteChannel,
+  createInvite,
+  getContact,
+  inviteTokenOf,
+  requestAddressVerification,
+  setupRelay,
+} from '../api/agent-inbox';
+import { type ApiClient, ApiError } from '../api/client';
+import { errorCode } from '../api/listen';
 import { type AgentIntegrationLink, hasChannelEndpoint, listAgentIntegrations } from '../api/setup';
 import { info, promptLine } from '../cli-io';
 import { CLI_COMMAND } from '../config';
@@ -31,7 +39,7 @@ export interface InviteOptions {
 }
 
 /** Channels the invite page can offer when the relay has them linked. */
-const INVITE_PAGE_CHANNELS: readonly ChannelName[] = ['telegram', 'slack', 'email'];
+const INVITE_PAGE_CHANNELS: readonly ChannelName[] = ['telegram', 'slack', 'whatsapp', 'email'];
 
 /**
  * `--name "Alice Chen"` → `{ firstName: 'Alice', lastName: 'Chen' }`; a single
@@ -145,6 +153,10 @@ export async function runInvite(contactArg: string, inviteOptions: InviteOptions
       await setupRelay(client, { subscriberId: contactId, agentIdentifier, ...name, defaultVia: via });
       result = await inviteSlack(client, contactId, agentIdentifier, linked.integration.identifier, options);
       break;
+    case 'whatsapp':
+      await setupRelay(client, { subscriberId: contactId, agentIdentifier, ...name, defaultVia: via });
+      result = await inviteWhatsApp(client, contactId, agentIdentifier, options);
+      break;
     default: {
       const exhaustive: never = via;
       throw new Error(`Unhandled channel: ${exhaustive}`);
@@ -191,14 +203,17 @@ async function inviteViaPage(
   });
 
   if (offeredChannels.length === 0) {
-    throw new Error(`No Telegram, Slack, or Email channel is connected yet. Run \`${CLI_COMMAND} setup\` first.`);
+    throw new Error(
+      `No Telegram, Slack, WhatsApp, or Email channel is connected yet. Run \`${CLI_COMMAND} setup\` first.`
+    );
   }
 
   const alreadyLinked: ChannelName[] = [];
   for (const channel of offeredChannels) {
-    if (channel.via === 'email') {
-      if (await isEmailVerified(client, contactId, agentIdentifier)) {
-        alreadyLinked.push('email');
+    // A WhatsApp number counts only once proved with a code, which the contact's channel status says.
+    if (channel.via === 'email' || channel.via === 'whatsapp') {
+      if (await isVerifiedOn(client, contactId, agentIdentifier, channel.via)) {
+        alreadyLinked.push(channel.via);
       }
     } else if (await hasChannelEndpoint(client, channel.integrationIdentifier, contactId)) {
       alreadyLinked.push(channel.via);
@@ -344,6 +359,71 @@ async function inviteSlack(
   return { contactId, linkedOn: ['slack'], alreadyLinked: false, url: authorizeUrl };
 }
 
+/** How long a wa.me code works; the API mints a new one on every invite. */
+const WHATSAPP_CODE_MINUTES = 10;
+
+/**
+ * WhatsApp is linked by the number itself: the contact sends a one-time code from their own WhatsApp to the
+ * business number, through a wa.me link with the message prefilled, and the number that sent it is theirs.
+ */
+async function inviteWhatsApp(
+  client: ApiClient,
+  contactId: string,
+  agentIdentifier: string,
+  options: InviteOptions
+): Promise<InviteResult> {
+  if (await isVerifiedOn(client, contactId, agentIdentifier, 'whatsapp')) {
+    info(`${contactId} is already linked on WhatsApp.`);
+
+    return { contactId, linkedOn: ['whatsapp'], alreadyLinked: true };
+  }
+
+  const invite = await createInvite(client, { subscriberId: contactId, agentIdentifier });
+  let url: string;
+  try {
+    ({ url } = await connectInviteChannel(client, { token: inviteTokenOf(invite.url), via: 'whatsapp' }));
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 409 && errorCode(err) === 'channel_already_connected') {
+      info(`${contactId} is already linked on WhatsApp.`);
+
+      return { contactId, linkedOn: ['whatsapp'], alreadyLinked: true };
+    }
+    throw err;
+  }
+
+  printInviteUrl(
+    contactId,
+    'whatsapp',
+    url,
+    `Scan this QR (or open the link) on their phone and send the prefilled message in WhatsApp`
+  );
+  process.stdout.write(`\n${renderQR(url)}\n`);
+  info(`The code in it works for ${WHATSAPP_CODE_MINUTES} minutes; the number that sends it is the one we'll use.`);
+
+  if (options.async) {
+    return { contactId, linkedOn: [], alreadyLinked: false, url };
+  }
+
+  const stopIndicator = startWaitIndicator(
+    `Waiting for ${contactId} to send the code on WhatsApp`,
+    `Ctrl-C detaches; resume with: ${CLI_COMMAND} contact invite ${contactId} --via whatsapp`
+  );
+  try {
+    await waitForVerifiedChannels(
+      client,
+      contactId,
+      agentIdentifier,
+      ['whatsapp'],
+      `${contactId} send the code on WhatsApp`,
+      `Re-run \`${CLI_COMMAND} contact invite ${contactId} --via whatsapp\` for a fresh code.`
+    );
+  } finally {
+    stopIndicator();
+  }
+
+  return { contactId, linkedOn: ['whatsapp'], alreadyLinked: false, url };
+}
+
 async function inviteEmail(
   client: ApiClient,
   contactId: string,
@@ -401,11 +481,16 @@ async function inviteEmail(
   return { contactId, linkedOn: ['email'], alreadyLinked: false };
 }
 
-async function isEmailVerified(client: ApiClient, contactId: string, agentIdentifier: string): Promise<boolean> {
+async function isVerifiedOn(
+  client: ApiClient,
+  contactId: string,
+  agentIdentifier: string,
+  via: 'email' | 'whatsapp'
+): Promise<boolean> {
   try {
     const contact = await getContact(client, contactId, agentIdentifier);
 
-    return contact.channels?.some((channel) => channel.via === 'email' && channel.status === 'verified') ?? false;
+    return contact.channels?.some((channel) => channel.via === via && channel.status === 'verified') ?? false;
   } catch {
     return false;
   }

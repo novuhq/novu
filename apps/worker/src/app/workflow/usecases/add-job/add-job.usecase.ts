@@ -9,6 +9,7 @@ import {
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobOverrides,
   getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
@@ -27,6 +28,7 @@ import {
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
+  StepRunV2Writer,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
   WorkflowRunStatusEnum,
@@ -115,7 +117,8 @@ export class AddJob {
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
     private notificationRepository: NotificationRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -153,6 +156,9 @@ export class AddJob {
     // when the job doesn't carry one, so delay/throttle/digest key resolution
     // below keeps working. A present job.payload is authoritative.
     job.payload = getEffectiveJobPayload(job, notification);
+    // Overrides-dedup: same rule for trigger overrides, which delay and digest
+    // durations read (`overrides.delay`).
+    job.overrides = getEffectiveJobOverrides(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
@@ -211,6 +217,7 @@ export class AddJob {
     };
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing deferred-job (digest/delay) orchestration is outside this change
   private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
@@ -369,10 +376,15 @@ export class AddJob {
       throw new Error('Defer duration limit exceeded');
     }
 
-    const updatedJob = await this.jobRepository.findOne({
-      _id: job._id,
-      _environmentId: job._environmentId,
-    });
+    const jobQuery = { _id: job._id, _environmentId: job._environmentId };
+    const updatedJob =
+      delay > 0
+        ? await this.jobRepository.findOneAndUpdate(
+            jobQuery,
+            { $set: { waitUntil: (bridgeDelayAmountDate ?? new Date(Date.now() + delay)).toISOString() } },
+            { new: true }
+          )
+        : await this.jobRepository.findOne(jobQuery);
 
     if (!updatedJob) {
       throw new Error(`Job with id ${job._id} not found`);
@@ -381,6 +393,7 @@ export class AddJob {
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
+    this.stepRunV2Writer.write(updatedJob);
 
     await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
@@ -431,11 +444,12 @@ export class AddJob {
     const { job } = command;
 
     this.logger.trace(`Updating status to queued for job ${job._id}`);
-    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
+    const queuedJob = await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.QUEUED,
     });
+    this.stepRunV2Writer.write(queuedJob);
 
     await this.queueJob({ job, delay: 0, untilDate: null });
 
@@ -579,7 +593,7 @@ export class AddJob {
       })
     );
 
-    await this.jobRepository.updateOne(
+    const failedJob = await this.jobRepository.findOneAndUpdate(
       { _id: job._id, _environmentId: command.environmentId },
       {
         $set: {
@@ -590,12 +604,14 @@ export class AddJob {
             stack: error.stack,
           },
         },
-      }
+      },
+      { new: true }
     );
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.FAILED,
     });
+    this.stepRunV2Writer.write(failedJob);
 
     return {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
@@ -737,7 +753,7 @@ export class AddJob {
     if (isDynamicOutput(outputs)) {
       metadata = {
         type: DelayTypeEnum.DYNAMIC,
-        dynamicKey: (outputs as unknown as { dynamicKey: string }).dynamicKey,
+        dynamicKey: (outputs as { dynamicKey?: string }).dynamicKey,
       } as IDelayDynamicMetadata;
 
       await this.jobRepository.updateOne(
@@ -1044,7 +1060,7 @@ export class AddJob {
       `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`
     );
 
-    await this.jobRepository.updateOne(
+    const throttledJob = await this.jobRepository.findOneAndUpdate(
       { _id: job._id, _environmentId: command.environmentId },
       {
         $set: {
@@ -1056,12 +1072,14 @@ export class AddJob {
             throttledUntil: throttleResult.throttledUntil,
           },
         },
-      }
+      },
+      { new: true }
     );
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.SKIPPED,
     });
+    this.stepRunV2Writer.write(throttledJob);
 
     const childJobsUpdated = await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.SKIPPED, job._id);
 
@@ -1069,6 +1087,7 @@ export class AddJob {
       await this.stepRunRepository.createMany(childJobsUpdated, {
         status: JobStatusEnum.SKIPPED,
       });
+      this.stepRunV2Writer.writeMany(childJobsUpdated);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

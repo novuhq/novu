@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { isValidActionIdempotencyKey, type WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import {
   AgentIntegrationRepository,
@@ -33,6 +33,8 @@ import { TelegramStartCodeService } from '../../../telegram-linking/telegram-sta
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { ContactHandleService } from '../../human-relay/contact-handle.service';
 import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
+import { WhatsAppBindInbound } from '../../human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppHeldRelease } from '../../human-relay/whatsapp-held-release.service';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -61,6 +63,7 @@ import {
   isAgentProvisionedSubscriber,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { admitByAccessRule, postAccessRuleRefusal } from '../reply/admit-by-access-rule';
 import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -356,7 +359,10 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly humanConversationInbound: HumanConversationInboundInterceptor,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly keylessEmailGate: KeylessEmailGateService,
-    private readonly contactHandles: ContactHandleService
+    private readonly contactHandles: ContactHandleService,
+    private readonly whatsAppBindInbound: WhatsAppBindInbound,
+    private readonly whatsAppHeldRelease: WhatsAppHeldRelease,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -378,11 +384,18 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    message: Message,
+    received: Message,
     event: AgentEventEnum,
     messageContext?: MessageContext
   ): Promise<void> {
-    if (await this.consumeTelegramStartLink(agentId, config, thread, message, messageContext)) {
+    if (await this.consumeTelegramStartLink(agentId, config, thread, received, messageContext)) {
+      return;
+    }
+
+    // A code from a wa.me link binds the sender's WhatsApp number to an Agent Inbox contact, like `/start` above.
+    // What they wrote around the code goes on without it.
+    const message = await this.whatsAppBindInbound.tryConsume(agentId, config, thread, received, messageContext);
+    if (!message) {
       return;
     }
 
@@ -519,7 +532,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    await this.dispatchInboundTurn({
+    await this.dispatchThenReleaseHeld({
       agentId,
       config,
       thread,
@@ -810,6 +823,27 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  /**
+   * Their message opened the WhatsApp window, so what waited for it goes out after it is handled. Only after their
+   * words were read: they wrote them before they saw it, so they never answer it.
+   */
+  private async dispatchThenReleaseHeld(
+    args: Parameters<AgentInboundHandler['dispatchInboundTurn']>[0]
+  ): Promise<void> {
+    try {
+      await this.dispatchInboundTurn(args);
+    } finally {
+      await this.whatsAppHeldRelease
+        .release({
+          agentId: args.agentId,
+          config: args.config,
+          subscriberId: args.subscriberId,
+          platformUserId: args.platformThreadId.split(':').pop() ?? '',
+        })
+        .catch((err) => this.logger.warn({ err, agentId: args.agentId }, 'Could not send what was held on WhatsApp'));
+    }
+  }
+
   private async dispatchInboundTurn(args: {
     agentId: string;
     config: ResolvedAgentConfig;
@@ -892,11 +926,11 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
-      config,
-      message.raw,
-      message.author?.userId
-    );
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -907,6 +941,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: resolution,
       message,
       event,
@@ -917,6 +952,16 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
       unseenThreadMessages,
     };
+
+    // An unmentioned message in a shared thread stays silent, so a refused sender learns nothing there.
+    if (
+      await this.refusedByAccessRule(turn, {
+        emailSenderUnverified: !isVerifiedEmailSender,
+        silent: requiresExplicitMention(thread, message, mentionContext),
+      })
+    ) {
+      return;
+    }
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
     // answered by texting back YES / NO — consume before the subscriber-access
@@ -973,6 +1018,31 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     await runtime.dispatch(turn);
+  }
+
+  /** Rule-mode admission. Replies to a refused sender unless `silent` or the event is a reaction or delete. */
+  private async refusedByAccessRule(
+    turn: ConversationTurn,
+    opts: { emailSenderUnverified?: boolean; silent?: boolean } = {}
+  ): Promise<boolean> {
+    const admission = await admitByAccessRule(turn, {
+      logger: this.logger,
+      featureFlagsService: this.featureFlagsService,
+    });
+    if (admission.admitted) {
+      return false;
+    }
+
+    if (!opts.silent) {
+      await postAccessRuleRefusal(turn, admission.refusal, {
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: opts.emailSenderUnverified,
+      });
+    }
+
+    return true;
   }
 
   /**
@@ -1298,6 +1368,8 @@ export class AgentInboundHandler implements OnModuleInit {
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
         agentIdentifier: config.agentIdentifier,
+        // A relay's WhatsApp senders are its contacts only by a number they proved, never by a profile phone.
+        isHumanRelay: config.isHumanRelay,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
@@ -1803,7 +1875,10 @@ export class AgentInboundHandler implements OnModuleInit {
           })),
         }
       : undefined;
-    const editedAt = readPlatformEditedAt(message) ?? new Date().toISOString();
+    const editedAt =
+      message.metadata?.editedAt instanceof Date && !Number.isNaN(message.metadata.editedAt.getTime())
+        ? message.metadata.editedAt.toISOString()
+        : new Date().toISOString();
 
     if (message.id) {
       await this.conversationService.updateInboundMessage({
@@ -1890,15 +1965,18 @@ export class AgentInboundHandler implements OnModuleInit {
     const thread = eventToThread(event, conversation);
 
     const platformUserId = previousAuthor?.userId ?? current?.senderId;
-    const resolution = await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
 
-    // Contacts only: a stranger can't change the inbox by deleting a message either. With no author on the
-    // event, the stored message says who sent it: its `senderId` is a subscriber id, not a platform user id.
-    const senderSubscriberId = previousAuthor?.userId
-      ? getResolvedSubscriberId(resolution)
-      : current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER
-        ? current.senderId
-        : null;
+    // With no author on the event, the stored message says who sent it: its `senderId` is a subscriber id, not a
+    // platform user id.
+    const storedSenderSubscriberId =
+      current?.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER ? current.senderId : null;
+    const resolution: SubscriberResolution | undefined =
+      !previousAuthor?.userId && storedSenderSubscriberId
+        ? { outcome: 'resolved', subscriberId: storedSenderSubscriberId }
+        : await this.resolveEventSubscriber(agentId, config, platformUserId, 'message-deleted');
+
+    // Contacts only: a stranger can't change the inbox by deleting a message either.
+    const senderSubscriberId = previousAuthor?.userId ? getResolvedSubscriberId(resolution) : storedSenderSubscriberId;
     if (await this.isKeptOutOfAgentInbox(agentId, config, senderSubscriberId)) {
       return;
     }
@@ -2156,10 +2234,15 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(
       config,
       params.raw,
-      params.platformUserId
+      params.platformUserId,
+      this.conversationService.getPrimaryChannel(conversation).workspace?.id
     );
     const runtime = this.runtimeResolver.resolve(agent);
     const workflowOriginResolution = await this.workflowOriginService.resolve({
@@ -2188,6 +2271,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: resolution,
       message: params.turnMessage !== undefined ? params.turnMessage : message,
       previousMessage: params.previousMessage,
@@ -2200,6 +2284,10 @@ export class AgentInboundHandler implements OnModuleInit {
       reaction: params.reaction,
       workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    if (await this.refusedByAccessRule(turn)) {
+      return;
+    }
 
     if (
       event === AgentEventEnum.ON_REACTION &&
@@ -2294,6 +2382,15 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
+    // Tapping "View message" on the WhatsApp first message opens the window: what waited goes out now.
+    await this.whatsAppHeldRelease.release({
+      agentId,
+      config,
+      subscriberId,
+      platformUserId: userId,
+      conversationId: conversation._id,
+    });
+
     const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
@@ -2336,15 +2433,14 @@ export class AgentInboundHandler implements OnModuleInit {
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
     const identifier = this.readActionIdempotencyKey(rawEvent);
-    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
-      config,
-      rawEvent,
-      userId
-    );
+    const {
+      context,
+      bridgeUrl: bridgeUrlOverride,
+      lookupFailed: contextLookupFailed,
+    } = await this.connectionContextResolver.resolve(config, rawEvent, userId);
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -2355,6 +2451,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       context,
       bridgeUrlOverride,
+      contextLookupFailed,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
@@ -2365,6 +2462,12 @@ export class AgentInboundHandler implements OnModuleInit {
       actionRaw: rawEvent,
       workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    if (await this.refusedByAccessRule(turn)) {
+      return;
+    }
+
+    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     if (await this.humanConversationInbound.tryHandleAction(turn)) {
       return;
@@ -2498,17 +2601,6 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
   }
-}
-
-function readPlatformEditedAt(message: Message): string | undefined {
-  const raw = message.raw;
-  if (!raw || typeof raw !== 'object') {
-    return undefined;
-  }
-
-  const editedTs = (raw as { edited?: { ts?: unknown } }).edited?.ts;
-
-  return typeof editedTs === 'string' && editedTs.length > 0 ? editedTs : undefined;
 }
 
 function eventToThread(event: MessageDeletedEvent, conversation: ConversationEntity): Thread {

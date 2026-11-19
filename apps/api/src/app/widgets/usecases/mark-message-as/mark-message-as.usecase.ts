@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
@@ -33,7 +32,6 @@ export class MarkMessageAs {
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
@@ -158,14 +156,6 @@ export class MarkMessageAs {
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
     this.updateSocketCount(subscriber, marked);
-
-    for (const message of messages) {
-      this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {

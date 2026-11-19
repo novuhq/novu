@@ -74,6 +74,26 @@ This structure allows you to model both simple checks and complex branching logi
   Existing step conditions are unchanged. Saved `equals`, `is null`, and other operators keep the same result until
   you add an **is empty** or **is not empty** rule.
 
+## Array and collection conditions
+
+When a field is an array of objects — for example, the events collected by a [Digest](/platform/workflow/add-and-configure-steps/configure-action-steps/digest) step — you can evaluate a rule against the items inside that array instead of comparing the field as a whole.
+
+First, choose how many items must match:
+
+| Operator     | Matches when                                                                         |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `any item`   | At least one item in the array matches the rule                                     |
+| `every item` | Every item in the array matches the rule, and the array contains at least one item  |
+| `no item`    | No item in the array matches the rule                                                |
+
+Then define the rule that each item is tested against:
+
+- **Item property**: the path to a property on each array item. It is resolved relative to the item, not the root data (for example, `payload.status`).
+- **Comparison**: `has value`, `equals`, `does not equal`, `less than`, `less than or equal to`, `greater than`, or `greater than or equal to`. `has value` needs no comparison value. A property set to `false`, `0`, or `""` does not match, even when that property is present.
+- **Value**: the value to compare the item property against. Not required for `has value`.
+
+For example, to run a step only when at least one digested event was already read, add a condition on `steps.<digest-step-id>.events` with the **any item** operator, where the item property `payload.status` **equals** `read`.
+
 ## Data used for step conditions
 
 Step conditions can evaluate data from several sources. Choose the source that best represents the decision you’re trying to make.

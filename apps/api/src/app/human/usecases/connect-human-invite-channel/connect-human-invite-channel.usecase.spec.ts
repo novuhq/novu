@@ -1,12 +1,21 @@
-import { BadGatewayException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AGENT_INBOX_EVENTS, HumanChannelViaEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
 import { ConnectHumanInviteChannel } from './connect-human-invite-channel.usecase';
 
 describe('ConnectHumanInviteChannel', () => {
-  function setup(channels: Array<{ via: HumanChannelViaEnum; integrationIdentifier: string; connected: boolean }>) {
+  function setup(
+    channels: Array<{ via: HumanChannelViaEnum; integrationIdentifier: string; connected: boolean }>,
+    whatsAppEnabled = false
+  ) {
     const inviteTokens = {
       requireActive: sinon.stub().resolves({
         payload: { env: 'env1', org: 'org1', agentId: 'relay1', subscriberId: 'alice' },
@@ -33,6 +42,14 @@ describe('ConnectHumanInviteChannel', () => {
     };
     const environmentRepository = { findOne: sinon.stub().resolves({ apiKeys: [{ _userId: 'owner1' }] }) };
     const analyticsService = { track: sinon.stub() };
+    const issueHumanWhatsAppLink = {
+      execute: sinon.stub().resolves({
+        url: 'https://wa.me/15550100199?text=Connect%20my%20WhatsApp%3A%20BCDF-GHJK',
+        code: 'BCDF-GHJK',
+        expiresAt: '',
+      }),
+    };
+    const agentRepository = { findOne: sinon.stub().resolves({ identifier: 'human-relay' }) };
     const usecase = new ConnectHumanInviteChannel(
       inviteTokens as never,
       deliveryService as never,
@@ -40,11 +57,16 @@ describe('ConnectHumanInviteChannel', () => {
       generateConnectOauthUrl as never,
       requestAddressVerification as never,
       environmentRepository as never,
-      analyticsService as never
+      analyticsService as never,
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never),
+      issueHumanWhatsAppLink as never,
+      agentRepository as never
     );
 
     return {
       usecase,
+      issueHumanWhatsAppLink,
+      agentRepository,
       issueTelegramSubscriberLink,
       generateConnectOauthUrl,
       requestAddressVerification,
@@ -60,6 +82,46 @@ describe('ConnectHumanInviteChannel', () => {
     { via: HumanChannelViaEnum.TELEGRAM, integrationIdentifier: 'tg', connected: false },
     { via: HumanChannelViaEnum.SLACK, integrationIdentifier: 'slack', connected: false },
   ];
+
+  it('hands out a wa.me link with a code for the invited contact, instead of a Slack link', async () => {
+    const { usecase, generateConnectOauthUrl, issueHumanWhatsAppLink, agentRepository } = setup(
+      [{ via: HumanChannelViaEnum.WHATSAPP, integrationIdentifier: 'wa', connected: false }],
+      true
+    );
+
+    const result = await usecase.execute(
+      ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
+    );
+
+    expect(result).to.deep.equal({ url: 'https://wa.me/15550100199?text=Connect%20my%20WhatsApp%3A%20BCDF-GHJK' });
+    expect(agentRepository.findOne.firstCall.args[0]).to.deep.equal({
+      _id: 'relay1',
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+    });
+    expect(issueHumanWhatsAppLink.execute.firstCall.args[0]).to.deep.equal({
+      environmentId: 'env1',
+      organizationId: 'org1',
+      agentIdentifier: 'human-relay',
+      subscriberId: 'alice',
+      integrationIdentifier: 'wa',
+    });
+    expect(generateConnectOauthUrl.execute.called).to.equal(false);
+  });
+
+  it('rejects WhatsApp as an unknown channel while the flag is off', async () => {
+    const { usecase } = setup([{ via: HumanChannelViaEnum.WHATSAPP, integrationIdentifier: 'wa', connected: false }]);
+
+    try {
+      await usecase.execute(
+        ConnectHumanInviteChannelCommand.create({ token: 'T'.repeat(32), via: HumanChannelViaEnum.WHATSAPP })
+      );
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(UnprocessableEntityException);
+      expect((err as UnprocessableEntityException).message).to.contain('Unknown channel "whatsapp"');
+    }
+  });
 
   it('mints a fresh Telegram deep link for the invited subscriber', async () => {
     const { usecase, issueTelegramSubscriberLink } = setup(both);

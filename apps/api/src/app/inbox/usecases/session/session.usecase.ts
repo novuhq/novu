@@ -66,6 +66,10 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import {
+  SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
@@ -113,7 +117,8 @@ export class Session {
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
     private updatePreferencesUsecase: UpdatePreferences,
-    private keylessAbuseGuard: KeylessAbuseGuardService
+    private keylessAbuseGuard: KeylessAbuseGuardService,
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -146,6 +151,11 @@ export class Session {
     const { integration: inAppIntegration } = selection;
 
     const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+    const hmacValid = isHmacValidForAnyKey(
+      environmentApiKeys,
+      subscriber.subscriberId,
+      command.requestData.subscriberHash
+    );
 
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
@@ -182,21 +192,9 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
-        allowUpdate: isHmacValidForAnyKey(
-          environmentApiKeys,
-          subscriber.subscriberId,
-          command.requestData.subscriberHash
-        ),
+        allowUpdate: hmacValid,
       })
     );
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriberEntity._id,
-      origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
-      context: contextKeys,
-    });
 
     const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
@@ -286,6 +284,17 @@ export class Session {
           },
         }
       );
+    }
+
+    // An empty FRONT_BASE_URL builds a regex that matches every origin, which would drop all customer sessions.
+    const isDashboardSession = Boolean(process.env.FRONT_BASE_URL) && isOriginFromNovu;
+    if (!isDashboardSession) {
+      void this.subscriberSessionAuthStatsService.record({
+        environmentId: environment._id,
+        hmacValid,
+        clientVersion: command.clientVersion,
+        source: SubscriberSessionSourceEnum.INBOX,
+      });
     }
 
     return {

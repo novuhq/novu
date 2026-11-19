@@ -20,11 +20,14 @@ import {
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
+  MetricsModule,
   NotificationPayloadService,
   QueuesModule,
   RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
+  StepRunV2Repository,
+  StepRunV2Writer,
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
@@ -67,6 +70,8 @@ import {
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
 import { ActivityRetentionService } from './services/activity-retention.service';
+import { NovuTokens } from './services/novu-tokens.service';
+import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -139,6 +144,7 @@ const ANALYTICS_PROVIDERS = [
   RequestLogRepository,
   TraceLogRepository,
   StepRunRepository,
+  StepRunV2Repository,
   WorkflowRunRepository,
   WorkflowRunCountRepository,
   TraceRollupRepository,
@@ -146,11 +152,13 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   clickHouseService,
+  StepRunV2Writer,
 ];
 
 const PROVIDERS = [
   ActivityRetentionService,
   AgentEmailInboxQuotaService,
+  SubscriberSessionAuthStatsService,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
@@ -162,6 +170,7 @@ const PROVIDERS = [
   InvalidateCacheService,
   NotificationPayloadService,
   storageService,
+  NovuTokens,
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
@@ -174,6 +183,7 @@ const PROVIDERS = [
 ];
 
 const IMPORTS = [
+  MetricsModule,
   QueuesModule.forRoot([
     JobTopicNameEnum.WEB_SOCKETS,
     JobTopicNameEnum.WORKFLOW,

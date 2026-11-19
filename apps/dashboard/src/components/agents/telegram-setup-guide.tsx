@@ -2,7 +2,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiKey2Line, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import type { AgentResponse, TelegramSubscriberLink } from '@/api/agents';
 import {
   configureTelegramAgentWebhook,

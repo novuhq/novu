@@ -531,8 +531,10 @@ export interface ToolApprovalConfig {
  * - `open`: anyone may talk to the agent (unknown senders are auto-provisioned).
  * - `restricted`: only authenticated, linked subscribers proceed; unlinked authors
  *   are shown an auth CTA and short-circuited.
+ * - `rule`: only a known subscriber who matches the agent's access rule may send
+ *   messages, edits, deletes, clicks or reactions. Enforced server-side.
  */
-export type AgentSubscriberAccess = 'open' | 'restricted';
+export type AgentSubscriberAccess = 'open' | 'restricted' | 'rule';
 
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
 export interface ToolApprovalDecision {
@@ -1037,7 +1039,7 @@ export interface AgentBridgeRequest {
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
   /**
-   * Effective subscriber-access policy for this agent (`open` | `restricted`),
+   * Effective subscriber-access policy for this agent (`open` | `restricted` | `rule`),
    * resolved server-side. Drives the framework's built-in auth gate: on a
    * `restricted` agent an unlinked author is short-circuited with an auth CTA
    * before any handler runs. Optional on the wire for backward compatibility;

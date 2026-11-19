@@ -65,6 +65,7 @@ export interface GetWorkflowRunsDto {
   critical: boolean;
   contextKeys?: string[];
   topics?: { _topicId: string; topicKey: string }[];
+  digestedWorkflowRunId?: string;
 }
 
 export type GetWorkflowRunResponse = GetWorkflowRunsDto & {
@@ -92,12 +93,14 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
     _environmentId: workflowRun.environmentId,
     _organizationId: workflowRun.organizationId,
     _subscriberId: workflowRun.internalSubscriberId,
+    _digestedNotificationId: workflowRun.digestedWorkflowRunId,
     transactionId: workflowRun.transactionId,
     channels: [], // Not available in workflow runs, empty array for compatibility
     to: {
       subscriberId: workflowRun.subscriberId || workflowRun.internalSubscriberId,
     },
     payload: 'payload' in workflowRun ? workflowRun.payload : {},
+    overrides: 'overrides' in workflowRun ? resolvedOverrides : undefined,
     tags: [], // Not available in workflow runs, empty array for compatibility
     createdAt: workflowRun.createdAt,
     updatedAt: workflowRun.updatedAt,

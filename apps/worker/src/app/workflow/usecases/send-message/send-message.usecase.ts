@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  AnalyticsService,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -11,7 +10,6 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   ICompileContext,
-  IConditionsFilterResponse,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -35,15 +33,11 @@ import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
-  DigestTypeEnum,
   EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IDigestRegularMetadata,
-  IDigestTimedMetadata,
   IPreferenceChannels,
   PreferencesTypeEnum,
-  ResourceTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { getCachedEnvironment } from '../../../shared/utils';
@@ -83,7 +77,6 @@ export class SendMessage {
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private analyticsService: AnalyticsService,
     private contextRepository: ContextRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
@@ -110,10 +103,6 @@ export class SendMessage {
      */
     const channelPreference = await this.evaluateChannelPreference(command, subscriber);
     if (!channelPreference.result) {
-      if (!command.payload?.$on_boarding_trigger) {
-        this.sendProcessStepEvent(command, undefined, null, false, isBridgeExecutedWorkflow(command));
-      }
-
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
@@ -153,9 +142,6 @@ export class SendMessage {
     }
 
     const stepCondition = await this.evaluateStepCondition(command, variables);
-    if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(command, isBridgeSkipped, stepCondition, true, !!bridgeResponse?.outputs);
-    }
 
     if (!stepCondition?.passed || isBridgeSkipped) {
       return {
@@ -283,64 +269,6 @@ export class SendMessage {
     }
 
     return stepCondition;
-  }
-
-  private sendProcessStepEvent(
-    command: SendMessageCommand,
-    isBridgeSkipped: boolean | undefined,
-    filterResult: IConditionsFilterResponse | null,
-    preferredResult: boolean | null,
-    isBridgeWorkflow: boolean
-  ) {
-    const usedFilters = filterResult?.conditions?.reduce(ConditionsFilter.sumFilters, {
-      filters: [],
-      failedFilters: [],
-      passedFilters: [],
-    });
-
-    const { digest } = command.job;
-    let timedInfo: Record<string, unknown> = {};
-
-    if (digest && 'type' in digest && digest.type === DigestTypeEnum.TIMED) {
-      const timedDigest = digest as IDigestTimedMetadata;
-      if (timedDigest.timed) {
-        timedInfo = {
-          digestAtTime: timedDigest.timed.atTime,
-          digestWeekDays: timedDigest.timed.weekDays,
-          digestMonthDays: timedDigest.timed.monthDays,
-          digestOrdinal: timedDigest.timed.ordinal,
-          digestOrdinalValue: timedDigest.timed.ordinalValue,
-        };
-      }
-    }
-
-    /**
-     * userId is empty string due to mixpanel hot shard events.
-     * This is intentional, so that mixpanel can automatically reshard it.
-     */
-    this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-      workflowType: isBridgeWorkflow ? ResourceTypeEnum.BRIDGE : ResourceTypeEnum.REGULAR,
-      _template: command.job._templateId,
-      _organization: command.organizationId,
-      _environment: command.environmentId,
-      _subscriber: command.job?._subscriberId,
-      provider: command.job?.providerId,
-      delay: command.job?.delay,
-      jobType: command.job?.type,
-      digestType: digest && 'type' in digest ? digest.type : undefined,
-      digestEventsCount: digest?.events?.length,
-      digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
-      digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
-      digestBackoff:
-        (digest && 'type' in digest && digest.type === DigestTypeEnum.BACKOFF) ||
-        (digest as IDigestRegularMetadata)?.backoff === true,
-      ...timedInfo,
-      filterPassed: filterResult?.passed,
-      preferencesPassed: preferredResult,
-      isBridgeSkipped,
-      ...(usedFilters || {}),
-      source: command.payload?.__source || 'api',
-    });
   }
 
   @Instrument()
@@ -645,21 +573,6 @@ export class SendMessage {
 
     return tenant;
   }
-}
-
-/**
- * Whether ExecuteBridgeJob would have produced bridge outputs for this step: stateless
- * bridge-URL jobs, or stateful workflows of the bridge/echo type. Keeps the analytics
- * `workflowType` stable for steps skipped before the bridge call.
- */
-function isBridgeExecutedWorkflow(command: SendMessageCommand): boolean {
-  if (command.job.step.bridgeUrl) {
-    return true;
-  }
-
-  const workflowType = command.workflow?.type;
-
-  return workflowType === ResourceTypeEnum.BRIDGE || workflowType === ResourceTypeEnum.ECHO;
 }
 
 function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
