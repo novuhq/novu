@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import {
   ApiKeyRevocationModeEnum,
   ApiKeyRevocationPolicy,
+  canSignWithApiKey,
   DEFAULT_ALLOWED_ROUTES,
   evaluateApiKeyRequest,
   getApiKeyCreatedAt,
@@ -207,6 +208,26 @@ describe('API key revocation policy', () => {
     it('treats a key without a known creation time as created before the cutoff', () => {
       expect(requiresRotation(blockAll, null)).to.equal(true);
       expect(evaluateApiKeyRequest(blockAll, null, 'POST', '/v1/events/trigger').blocked).to.equal(true);
+    });
+  });
+
+  describe('canSignWithApiKey', () => {
+    it('keeps every key signing outside block_all mode', () => {
+      for (const mode of ['off', 'warn', 'block_except_allowed']) {
+        const policy = policyFor({ mode, keysCreatedBefore: CUTOFF });
+
+        expect(canSignWithApiKey(policy, BEFORE_CUTOFF), mode).to.equal(true);
+        expect(canSignWithApiKey(policy, null), mode).to.equal(true);
+      }
+    });
+
+    it('stops keys created before the cutoff from signing in block_all mode', () => {
+      const blockAll = policyFor({ mode: 'block_all', keysCreatedBefore: CUTOFF });
+
+      expect(canSignWithApiKey(blockAll, BEFORE_CUTOFF)).to.equal(false);
+      expect(canSignWithApiKey(blockAll, null)).to.equal(false);
+      expect(canSignWithApiKey(blockAll, AFTER_CUTOFF)).to.equal(true);
+      expect(canSignWithApiKey(blockAll, new Date(CUTOFF))).to.equal(true);
     });
   });
 
