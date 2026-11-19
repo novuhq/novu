@@ -11,13 +11,13 @@ import {
 } from '@nestjs/common';
 
 import { APP_FILTER } from '@nestjs/core';
+import { env, TracingModule } from '@novu/application-generic';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
-import { TracingModule } from '@novu/application-generic';
+import packageJson from '../package.json';
 import { HealthModule } from './app/health/health.module';
 import { SharedModule } from './app/shared/shared.module';
 import { TelemetryModule } from './app/telemetry/telemetry.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
-import packageJson from '../package.json';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
@@ -29,7 +29,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
 
 const providers: Provider[] = [];
 
-if (process.env.SENTRY_DSN) {
+if (env.SENTRY_DSN) {
   modules.unshift(SentryModule.forRoot());
   providers.unshift({
     provide: APP_FILTER,

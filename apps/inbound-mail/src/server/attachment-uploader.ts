@@ -1,5 +1,6 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { env } from '@novu/application-generic';
 import pino from 'pino';
 
 const logger = pino();
@@ -90,8 +91,8 @@ interface SerializedBuffer {
 
 function buildS3Client(): S3Client {
   return new S3Client({
-    region: process.env.S3_REGION,
-    endpoint: process.env.S3_LOCAL_STACK || undefined,
+    region: env.S3_REGION,
+    endpoint: env.S3_LOCAL_STACK || undefined,
     forcePathStyle: true,
   });
 }
@@ -114,9 +115,9 @@ function buildStorageKey(messageId: string, filename: string, index: number): st
 }
 
 function getTtlSeconds(): number {
-  const configured = parseInt(process.env.INBOUND_ATTACHMENT_URL_TTL_SECONDS || '', 10);
+  const configured = env.INBOUND_ATTACHMENT_URL_TTL_SECONDS;
 
-  if (!Number.isNaN(configured) && configured > 0) {
+  if (configured !== undefined && configured > 0) {
     return Math.min(configured, MAX_PRESIGNED_URL_TTL_SECONDS);
   }
 
@@ -347,7 +348,7 @@ export async function uploadAttachmentsToS3(
     return { mode: 's3', uploaded: [], failedCount: 0, retriableFailedCount: 0 };
   }
 
-  const bucket = process.env.S3_BUCKET_NAME;
+  const bucket = env.S3_BUCKET_NAME;
 
   if (!bucket) {
     logger.info(
@@ -396,7 +397,7 @@ export async function uploadAttachmentsToS3(
    * surface as a real failure so the SMTP layer can emit a 451 and the sending
    * MTA retries delivery once S3 recovers.
    */
-  const failOnUploadError = process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true';
+  const failOnUploadError = env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR;
 
   const results = await Promise.all(
     attachments.map(async (attachment, index): Promise<AttachmentAttempt> => {

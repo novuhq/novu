@@ -17,6 +17,7 @@ import {
   ExecuteBridgeRequest,
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,
+  env,
   featureFlagsService,
   GetDecryptedSecretKey,
   GetTenant,
@@ -99,7 +100,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    const mongoUrl = process.env.MONGO_URL;
+    const mongoUrl = env.MONGO_URL;
 
     if (!mongoUrl) {
       throw new Error('MONGO_URL is required to connect the worker to MongoDB');

@@ -4,6 +4,7 @@ import {
   AnalyticsService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
+  env,
   LoggerModule,
   QueuesModule,
   WebSocketsInMemoryProviderService,
@@ -20,7 +21,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    await service.connect(String(process.env.MONGO_URL));
+    await service.connect(String(env.MONGO_URL));
 
     return service;
   },
@@ -29,7 +30,7 @@ const dalService = {
 const analyticsService = {
   provide: AnalyticsService,
   useFactory: async () => {
-    const service = new AnalyticsService(process.env.SEGMENT_TOKEN, 500);
+    const service = new AnalyticsService(env.SEGMENT_TOKEN, 500);
     await service.initialize();
 
     return service;
@@ -55,7 +56,7 @@ const PROVIDERS = [
     ),
     QueuesModule.forRoot([JobTopicNameEnum.WEB_SOCKETS]),
     JwtModule.register({
-      secretOrKeyProvider: () => process.env.JWT_SECRET as string,
+      secretOrKeyProvider: () => env.JWT_SECRET as string,
       signOptions: {
         expiresIn: 360000,
       },

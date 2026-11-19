@@ -11,6 +11,7 @@ import {
   PinoLogger,
   RequestLogRepository,
   toNovuTlsServerOptions,
+  warnDeprecatedEnv,
 } from '@novu/application-generic';
 
 import bodyParser from 'body-parser';
@@ -42,6 +43,7 @@ const extendedBodySizeRoutes = [
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
 validateEnv();
+warnDeprecatedEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;
   tlsConfig?: NovuTlsConfig;

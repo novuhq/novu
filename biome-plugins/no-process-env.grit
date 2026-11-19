@@ -1,0 +1,5 @@
+language js(typescript)
+
+`process.env` as $env where {
+  register_diagnostic(span=$env, message="Read environment variables with `env` from @novu/application-generic. Declare new ones, with a description, type and default, in libs/application-generic/src/config/env.schema.ts.", severity="error")
+}

@@ -2,9 +2,6 @@ import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 import { expect } from 'chai';
 import { getRequiredWorkerTopics, parseActiveWorkers } from './worker-topics';
 
-const envWithQueueBackend = (queueBackend: QueueBackend) =>
-  ({ QUEUE_BACKEND: queueBackend }) as unknown as NodeJS.ProcessEnv;
-
 describe('worker topics', () => {
   describe('parseActiveWorkers', () => {
     it('should accept the BullMQ-only metrics worker alongside SQS workers', () => {
@@ -15,25 +12,23 @@ describe('worker topics', () => {
     });
 
     it('should accept a process that only runs the metrics worker while BullMQ is enabled', () => {
-      expect(parseActiveWorkers('metric-active-jobs', envWithQueueBackend(QueueBackend.BULLMQ))).to.deep.equal([
+      expect(parseActiveWorkers('metric-active-jobs', QueueBackend.BULLMQ)).to.deep.equal([
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
       ]);
-      expect(parseActiveWorkers('metric-active-jobs', envWithQueueBackend(QueueBackend.SQS_BULLMQ))).to.deep.equal([
+      expect(parseActiveWorkers('metric-active-jobs', QueueBackend.SQS_BULLMQ)).to.deep.equal([
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
       ]);
     });
 
     it('should keep an SQS worker when metrics is also listed and BullMQ is retired', () => {
-      expect(parseActiveWorkers('standard,metric-active-jobs', envWithQueueBackend(QueueBackend.SQS))).to.deep.equal([
+      expect(parseActiveWorkers('standard,metric-active-jobs', QueueBackend.SQS)).to.deep.equal([
         JobTopicNameEnum.STANDARD,
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
       ]);
     });
 
     it('should reject a metrics-only process once BullMQ is retired', () => {
-      expect(() => parseActiveWorkers('metric-active-jobs', envWithQueueBackend(QueueBackend.SQS))).to.throw(
-        'would start with no worker'
-      );
+      expect(() => parseActiveWorkers('metric-active-jobs', QueueBackend.SQS)).to.throw('would start with no worker');
     });
 
     it('should reject a name that is not a worker', () => {

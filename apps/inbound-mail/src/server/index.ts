@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { buildEnvelopeRequestSource } from '@novu/application-generic';
+import { buildEnvelopeRequestSource, env } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -336,11 +336,7 @@ class Mailin extends events.EventEmitter {
                        * retrying them would create an infinite 451 loop. Inline-mode
                        * processing reports retriableFailedCount=0, so it is skipped too.
                        */
-                      if (
-                        mode === 's3' &&
-                        retriableFailedCount > 0 &&
-                        process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true'
-                      ) {
+                      if (mode === 's3' && retriableFailedCount > 0 && env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR) {
                         const error: Error & { responseCode?: number } = new Error(
                           `Attachment upload failed: ${retriableFailedCount} attachment(s) could not be stored`
                         );

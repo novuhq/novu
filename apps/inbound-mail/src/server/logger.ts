@@ -1,7 +1,8 @@
+import { env } from '@novu/application-generic';
 import pino from 'pino';
 
 const logger = pino<'verbose'>({
-  level: process.env.LOG_LEVEL ?? 'info',
+  level: env.LOG_LEVEL,
   customLevels: { verbose: 25 },
   base: { service: '@novu/inbound-mail' },
 });

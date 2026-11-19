@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
+  env,
   getInboundParseMailWorkerOptions,
   IInboundParseDataDto,
   INBOUND_PARSE_RETRY_POLICY,
@@ -28,9 +29,9 @@ const LOG_CONTEXT = 'InboundParseQueueService';
  * shared policy, which is what the redrive policy should be set to.
  */
 function getMaxReceiveCount(): number {
-  const configured = Number(process.env.SQS_INBOUND_PARSE_MAX_RECEIVE_COUNT);
+  const configured = env.SQS_INBOUND_PARSE_MAX_RECEIVE_COUNT;
 
-  return Number.isFinite(configured) && configured > 0 ? configured : INBOUND_PARSE_RETRY_POLICY.attempts;
+  return configured !== undefined && configured > 0 ? configured : INBOUND_PARSE_RETRY_POLICY.attempts;
 }
 
 @Injectable()

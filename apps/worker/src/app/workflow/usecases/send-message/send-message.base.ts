@@ -6,6 +6,7 @@ import {
   CreateExecutionDetailsCommand,
   createProviderSelectedMessage,
   DetailEnum,
+  env,
   GetNovuProviderCredentials,
   Instrument,
   type IntegrationFilterData,
@@ -293,7 +294,7 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   protected storeContent(): boolean {
-    return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+    return this.channelType === ChannelTypeEnum.IN_APP || env.STORE_NOTIFICATION_CONTENT;
   }
 
   /**
@@ -414,7 +415,7 @@ export abstract class SendMessageBase extends SendMessageType {
   @Instrument()
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new PlatformException('Translation module is not loaded');
         }

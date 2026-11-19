@@ -6,6 +6,7 @@ import {
   CreateNotificationJobsCommand,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  env,
   FeatureFlagsService,
   GetPreferences,
   GetPreferencesCommand,
@@ -156,7 +157,7 @@ export class SubscriberJobBound {
         timezone: subscriber?.timezone,
         data: subscriber?.data,
         channels: subscriber?.channels,
-        activeWorkerName: process.env.ACTIVE_WORKER,
+        activeWorkerName: env.ACTIVE_WORKER,
       })
     );
 

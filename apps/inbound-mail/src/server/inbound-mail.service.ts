@@ -1,5 +1,6 @@
 import {
   ClickHouseService,
+  env,
   FeatureFlagsService,
   InboundMailRequestLogger,
   InboundMailTenantResolver,
@@ -57,7 +58,7 @@ export class InboundMailService {
    * be reached.
    */
   private async initializeAnalytics(): Promise<void> {
-    if (process.env.IS_ANALYTICS_LOGS_ENABLED !== 'true' || process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED !== 'true') {
+    if (!env.IS_ANALYTICS_LOGS_ENABLED || !env.IS_INBOUND_ANALYTICS_LOGS_ENABLED) {
       logger.info(
         { context: 'InboundMailService' },
         'Inbound mail request analytics is disabled — skipping ClickHouse / DAL initialization'
@@ -79,9 +80,9 @@ export class InboundMailService {
       const traceLogRepository = new TraceLogRepository(this.clickHouseService, pinoLogger, featureFlagsService);
 
       let domainRepository: DomainRepository | undefined;
-      if (process.env.MONGO_URL) {
+      if (env.MONGO_URL) {
         this.dalService = new DalService();
-        await this.dalService.connect(process.env.MONGO_URL);
+        await this.dalService.connect(env.MONGO_URL);
         domainRepository = new DomainRepository();
       } else {
         logger.warn(
