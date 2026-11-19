@@ -30,6 +30,12 @@ const keyCreatedAtCache = new LRUCache<string, { createdAt: Date | null }>({ max
  */
 const parsedPolicyCache = new LRUCache<string, ApiKeyRevocationPolicy>({ max: 100, ttl: 60 * 1000 });
 
+/*
+ * How much of a key's hash is reported with a call made with an old key: 48 bits tell every key apart without
+ * handing the monitoring service the value the API looks keys up by.
+ */
+const API_KEY_FINGERPRINT_LENGTH = 12;
+
 type RevocationRequest = {
   organizationId: string;
   environmentId: string;
@@ -98,7 +104,12 @@ export class ApiKeyRevocationService {
       return;
     }
 
-    addNewRelicApiKeyRevocationAttributes({ blocked: evaluation.blocked });
+    addNewRelicApiKeyRevocationAttributes({
+      blocked: evaluation.blocked,
+      mode: policy.mode,
+      fingerprint: apiKeyHash?.slice(0, API_KEY_FINGERPRINT_LENGTH),
+      keyCreatedAt,
+    });
 
     if (evaluation.blocked) {
       throw new UnauthorizedException(getRevokedApiKeyMessage(policy));
