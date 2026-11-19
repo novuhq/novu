@@ -41,6 +41,8 @@ export type ParsedApiKeyRevocationPolicy = {
 const MODES: ReadonlySet<string> = new Set(Object.values(ApiKeyRevocationModeEnum));
 const ROUTE_ENTRY = /^([A-Za-z]+)\s+(\/\S*)$/;
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
+// `YYYY-MM-DDTHH:mm`, optional seconds and milliseconds, always in UTC.
+const UTC_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?Z$/;
 const API_KEY_HEADER_PREFIX = `${ApiAuthSchemeEnum.API_KEY} `;
 
 export const REVOKED_API_KEY_MESSAGE =
@@ -189,10 +191,10 @@ function readFlagObject(raw: unknown): Read<Record<string, unknown> | null> {
 }
 
 function readCutoff(keysCreatedBefore: unknown, now: Date): Read<Date> {
-  const cutoff = typeof keysCreatedBefore === 'string' ? new Date(keysCreatedBefore) : undefined;
+  const cutoff = parseUtcDateTime(keysCreatedBefore);
 
-  if (!cutoff || Number.isNaN(cutoff.getTime())) {
-    return { problem: '"keysCreatedBefore" must be an ISO date, such as "2026-11-19T00:00:00.000Z"' };
+  if (!cutoff) {
+    return { problem: '"keysCreatedBefore" must be a UTC date and time, such as "2026-11-19T13:00:00.000Z"' };
   }
 
   // A cutoff still ahead would also limit the new keys created to replace the old ones.
@@ -201,6 +203,32 @@ function readCutoff(keysCreatedBefore: unknown, now: Date): Read<Date> {
   }
 
   return { value: cutoff };
+}
+
+/**
+ * `null` unless the value is a UTC date and time that exists. `new Date` rolls impossible days over instead of
+ * rejecting them (February 30 becomes March 2), so the parsed parts have to match the written ones.
+ */
+function parseUtcDateTime(value: unknown): Date | null {
+  const match = typeof value === 'string' ? UTC_DATE_TIME.exec(value) : null;
+
+  if (!match) {
+    return null;
+  }
+
+  const [text, year, month, day, hour, minute, second = '0'] = match;
+  const date = new Date(text);
+  const written = [year, month, day, hour, minute, second].map(Number);
+  const parsed = [
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds(),
+  ];
+
+  return parsed.every((part, index) => part === written[index]) ? date : null;
 }
 
 /** The event trigger routes when none are listed. Entries it cannot read are skipped and reported. */

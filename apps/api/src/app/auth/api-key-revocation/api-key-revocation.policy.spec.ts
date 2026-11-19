@@ -53,6 +53,12 @@ describe('API key revocation policy', () => {
       expect(policy.mode !== ApiKeyRevocationModeEnum.OFF && policy.keysCreatedBefore.toISOString()).to.equal(CUTOFF);
     });
 
+    it('reads a UTC cutoff without seconds or milliseconds', () => {
+      const policy = policyFor({ mode: 'block_all', keysCreatedBefore: '2026-11-19T06:00Z' });
+
+      expect(policy.mode !== ApiKeyRevocationModeEnum.OFF && policy.keysCreatedBefore.toISOString()).to.equal(CUTOFF);
+    });
+
     it('reads a string holding JSON, as string flags and environment variables send it', () => {
       const policy = policyFor(JSON.stringify({ mode: 'block_all', keysCreatedBefore: CUTOFF }));
 
@@ -64,8 +70,12 @@ describe('API key revocation policy', () => {
         ['{not json', 'not valid JSON'],
         [['block_all'], 'not a JSON object'],
         [{ mode: 'block_everything', keysCreatedBefore: CUTOFF }, '"mode" must be one of'],
-        [{ mode: 'block_all' }, '"keysCreatedBefore" must be an ISO date'],
-        [{ mode: 'block_all', keysCreatedBefore: 'yesterday' }, '"keysCreatedBefore" must be an ISO date'],
+        [{ mode: 'block_all' }, '"keysCreatedBefore" must be a UTC date and time'],
+        [{ mode: 'block_all', keysCreatedBefore: 'yesterday' }, '"keysCreatedBefore" must be a UTC date and time'],
+        [{ mode: 'block_all', keysCreatedBefore: '2026-02-30T00:00:00.000Z' }, 'must be a UTC date and time'],
+        [{ mode: 'block_all', keysCreatedBefore: '2026-11-19T24:00:00.000Z' }, 'must be a UTC date and time'],
+        [{ mode: 'block_all', keysCreatedBefore: '2026-11-19' }, 'must be a UTC date and time'],
+        [{ mode: 'block_all', keysCreatedBefore: '2026-11-19T06:00:00+02:00' }, 'must be a UTC date and time'],
         [{ mode: 'block_all', keysCreatedBefore: '2026-11-20T00:00:00.000Z' }, 'is in the future'],
       ];
 

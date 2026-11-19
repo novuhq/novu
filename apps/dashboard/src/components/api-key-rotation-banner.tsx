@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LinkButton } from '@/components/primitives/button-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -18,8 +19,16 @@ export function ApiKeyRotationBanner() {
   const navigate = useNavigate();
   const has = useHasPermission();
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
+  /*
+   * Until the plan loads, the permission check falls back to the free plan, where every member may read the keys.
+   * Asking before then would get members without access a 403 and an error toast on every page.
+   */
+  const { isLoading: isSubscriptionLoading } = useFetchSubscription();
   const { currentEnvironment } = useEnvironment();
-  const apiKeysQuery = useFetchApiKeys({ enabled: canReadApiKeys, staleTime: API_KEYS_STALE_TIME_MS });
+  const apiKeysQuery = useFetchApiKeys({
+    enabled: canReadApiKeys && !isSubscriptionLoading,
+    staleTime: API_KEYS_STALE_TIME_MS,
+  });
   const requiresRotation = apiKeysQuery.data?.data?.some((apiKey) => apiKey.requiresRotation) ?? false;
   const environmentSlug = currentEnvironment?.slug;
 

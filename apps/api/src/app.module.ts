@@ -15,7 +15,6 @@ import { NovuAgentsBridgeModule } from './app/agents/novu-agents-bridge/novu-age
 import { NovuInternalBridgeClient } from './app/agents/novu-agents-bridge/novu-internal-bridge.client';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { ApiKeyRevocationInterceptor } from './app/auth/api-key-revocation/api-key-revocation.interceptor';
-import { ApiKeyRevocationService } from './app/auth/api-key-revocation/api-key-revocation.service';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { BridgeModule } from './app/bridge/bridge.module';
@@ -197,7 +196,6 @@ const providers: Provider[] = [
     provide: APP_GUARD,
     useClass: AnalyticsLogsGuard,
   },
-  ApiKeyRevocationService,
   // First, so a revoked key is rejected before rate limits, idempotency or any handler run.
   {
     provide: APP_INTERCEPTOR,
