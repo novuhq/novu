@@ -6,7 +6,7 @@ import {
   PermissionsEnum,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { type ComponentType, type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import {
   RiDeleteBin2Line,
   RiEditBoxLine,
@@ -24,19 +24,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
-import type { EnvironmentIntegration } from './integration-group-card';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
@@ -44,125 +40,99 @@ import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
 const MENU_CLASS =
   'bg-bg-weak min-w-[220px] rounded-xl border-0 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
 const ITEM_CLASS =
-  'text-text-sub focus:text-text-strong data-[state=open]:text-text-strong h-7 gap-2 rounded px-2 py-0 text-[13px] leading-[1.1] focus:bg-[#f4f4f5] data-[state=open]:bg-[#f4f4f5] [&>svg]:size-[15px]';
+  'text-text-sub focus:text-text-strong h-7 gap-2 rounded px-2 py-0 text-[13px] leading-[1.1] focus:bg-[#f4f4f5] [&>svg]:size-[15px]';
 
-type IconComponent = ComponentType<{ className?: string }>;
-
-/**
- * Pauses or resumes an integration. Sends only `active`, so credentials and settings stay as they
- * are; the API picks a new primary when the primary is paused.
- */
+/** Pauses or resumes an integration. Sends only `active`, so credentials and settings stay as they are. */
 function setIntegrationActive(integrationId: string, active: boolean, environment: IEnvironment) {
   return put<IIntegration>(`/integrations/${integrationId}`, { body: { active }, environment });
 }
 
 type IntegrationCardActionsProps = {
-  /** The card's integration across its environments, development first. */
-  items: EnvironmentIntegration[];
-  /** The integration the card shows (its identifier is the one on the card). */
-  selected: EnvironmentIntegration;
-  onEdit: (item: EnvironmentIntegration) => void;
+  /** An integration in the current environment. */
+  integration: IIntegration;
+  onEdit: () => void;
 };
 
-/**
- * The card's "…" menu. On a card that spans several environments, every action that changes one
- * integration first asks which environment, in a submenu.
- */
-export function IntegrationCardActions({ items, selected, onEdit }: IntegrationCardActionsProps) {
+/** The card's "…" menu: quick actions on the integration, in the current environment. */
+export function IntegrationCardActions({ integration, onEdit }: IntegrationCardActionsProps) {
   const has = useHasPermission();
   const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
   const { integrations = [] } = useFetchIntegrations();
-  const [pendingDelete, setPendingDelete] = useState<EnvironmentIntegration | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isPauseOpen, setIsPauseOpen] = useState(false);
   // Setting primary clears an integration's routing conditions; this holds the action awaiting that confirmation.
   const [conditionsLossAction, setConditionsLossAction] = useState<{ run: () => void } | null>(null);
-  const [pendingPause, setPendingPause] = useState<EnvironmentIntegration | null>(null);
 
-  const canWrite = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
-  const { integration } = selected;
+  const canWrite = has({ permission: PermissionsEnum.INTEGRATION_WRITE }) && !!currentEnvironment;
   const supportsPrimary = !!integration.channel && CHANNELS_WITH_PRIMARY.includes(integration.channel);
   const isEmail = integration.channel === ChannelTypeEnum.EMAIL;
   // Same rule as the settings sheet: Inbox and Novu's demo providers can't be deleted.
   const canDelete = integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
 
-  /** Other active integrations on the same channel in the item's environment: candidates to take over as primary. */
-  const otherActiveIn = (item: EnvironmentIntegration) =>
-    integrations.filter(
-      (other) =>
-        other._id !== item.integration._id &&
-        other.channel === item.integration.channel &&
-        other.active &&
-        other._environmentId === item.environment._id
-    );
+  /** Other active integrations on the channel: candidates to take over as primary. */
+  const otherActive = integrations.filter(
+    (other) =>
+      other._id !== integration._id &&
+      other.channel === integration.channel &&
+      other.active &&
+      other._environmentId === integration._environmentId
+  );
 
-  const invalidate = () => {
+  const settle = () => {
     setConditionsLossAction(null);
+    setIsDeleteOpen(false);
+    setIsPauseOpen(false);
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
   };
 
   const { mutate: setActive } = useMutation({
-    mutationFn: async ({
-      item,
-      active,
-      newPrimaryId,
-    }: {
-      item: EnvironmentIntegration;
-      active: boolean;
-      newPrimaryId?: string;
-    }) => {
+    mutationFn: async ({ active, newPrimaryId }: { active: boolean; newPrimaryId?: string }) => {
+      if (!currentEnvironment) throw new Error('No environment selected');
       // Hand primary over first, so the channel keeps a primary while this one is paused.
-      if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, item.environment);
+      if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, currentEnvironment);
 
-      return setIntegrationActive(item.integration._id, active, item.environment);
+      return setIntegrationActive(integration._id, active, currentEnvironment);
     },
-    onSuccess: (_, { item, active }) =>
-      showSuccessToast(`${item.integration.name} is ${active ? 'active' : 'paused'} in ${item.environment.name}.`),
-    onError: (_, { item, active }) =>
-      showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${item.integration.name} in ${item.environment.name}.`),
-    onSettled: () => {
-      setPendingPause(null);
-      invalidate();
-    },
+    onSuccess: (_, { active }) => showSuccessToast(`${integration.name} is ${active ? 'active' : 'paused'}.`),
+    onError: (_, { active }) => showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${integration.name}.`),
+    onSettled: settle,
   });
 
   const { mutate: makePrimary } = useMutation({
-    mutationFn: (item: EnvironmentIntegration) => setAsPrimaryIntegration(item.integration._id, item.environment),
-    onSuccess: (_, item) =>
-      showSuccessToast(`${item.integration.name} is now the primary integration in ${item.environment.name}.`),
-    onError: (_, item) => showErrorToast(`Couldn't make ${item.integration.name} primary in ${item.environment.name}.`),
-    onSettled: invalidate,
+    mutationFn: async () => {
+      if (!currentEnvironment) throw new Error('No environment selected');
+
+      return setAsPrimaryIntegration(integration._id, currentEnvironment);
+    },
+    onSuccess: () => showSuccessToast(`${integration.name} is now the primary integration.`),
+    onError: () => showErrorToast(`Couldn't make ${integration.name} the primary integration.`),
+    onSettled: settle,
+  });
+
+  const { mutate: remove } = useMutation({
+    mutationFn: async (newPrimaryId?: string) => {
+      if (!currentEnvironment) throw new Error('No environment selected');
+      if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, currentEnvironment);
+
+      return deleteIntegration({ id: integration._id, environment: currentEnvironment });
+    },
+    onSuccess: () => showSuccessToast(`${integration.name} was deleted.`),
+    onError: () => showErrorToast(`Couldn't delete ${integration.name}.`),
+    onSettled: settle,
   });
 
   /** Runs `run`, after confirming first when the integration about to become primary has conditions. */
   const confirmConditionsLoss = (newPrimary: IIntegration | undefined, run: () => void) =>
     newPrimary && hasRoutingConditions(newPrimary) ? setConditionsLossAction({ run }) : run();
-
-  const requestPrimary = (item: EnvironmentIntegration) =>
-    confirmConditionsLoss(item.integration, () => makePrimary(item));
-
-  /** A replacement primary picked while pausing or deleting the current one. */
-  const replacement = (item: EnvironmentIntegration, newPrimaryId?: string) =>
-    newPrimaryId ? otherActiveIn(item).find((other) => other._id === newPrimaryId) : undefined;
+  const findReplacement = (newPrimaryId?: string) => otherActive.find((other) => other._id === newPrimaryId);
 
   // Pausing the primary leaves the channel without one, so pick its replacement first when there is one.
-  const requestPause = (item: EnvironmentIntegration) =>
-    supportsPrimary && item.integration.primary && otherActiveIn(item).length > 0
-      ? setPendingPause(item)
-      : setActive({ item, active: false });
-
-  const { mutate: remove } = useMutation({
-    mutationFn: async ({ item, newPrimaryId }: { item: EnvironmentIntegration; newPrimaryId?: string }) => {
-      if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, item.environment);
-
-      return deleteIntegration({ id: item.integration._id, environment: item.environment });
-    },
-    onSuccess: (_, { item }) => showSuccessToast(`${item.integration.name} was deleted from ${item.environment.name}.`),
-    onError: (_, { item }) => showErrorToast(`Couldn't delete ${item.integration.name} from ${item.environment.name}.`),
-    onSettled: () => {
-      setPendingDelete(null);
-      invalidate();
-    },
-  });
+  const requestPause = () =>
+    supportsPrimary && integration.primary && otherActive.length > 0
+      ? setIsPauseOpen(true)
+      : setActive({ active: false });
 
   const copyIdentifier = async () => {
     try {
@@ -173,12 +143,6 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
     }
   };
 
-  // Several environments always ask which one, so the action never lands somewhere unexpected.
-  const askForEnvironment = items.length > 1;
-  const activeItems = items.filter((item) => item.integration.active);
-  const pausedItems = items.filter((item) => !item.integration.active);
-  const primaryCandidates = items.filter((item) => item.integration.active && !item.integration.primary);
-
   return (
     <>
       <DropdownMenu modal={false}>
@@ -186,8 +150,8 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
           <button
             type="button"
             aria-label="Integration actions"
-            // Collapsed to nothing until hover; -ml-3 cancels the row's gap so the status badge sits flush
-            // right, then the button grows in and slides the star and status left.
+            // Collapsed to nothing until hover; -ml-3 cancels the row's gap so the star sits flush right,
+            // then the button grows in and slides the star left.
             className={cn(
               'text-text-sub -ml-3 flex h-7 w-0 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#f4f4f5] opacity-0',
               'transition-[width,margin,opacity] duration-200 ease-out',
@@ -201,14 +165,10 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className={MENU_CLASS}>
-          <EnvironmentAction
-            icon={RiEditBoxLine}
-            label="Edit configuration"
-            targets={items}
-            askForEnvironment={askForEnvironment}
-            onSelect={onEdit}
-            className="text-text-strong"
-          />
+          <DropdownMenuItem className={cn(ITEM_CLASS, 'text-text-strong')} onSelect={onEdit}>
+            <RiEditBoxLine />
+            Edit configuration
+          </DropdownMenuItem>
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -228,60 +188,56 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
             Copy identifier
           </DropdownMenuItem>
 
-          {canWrite && supportsPrimary && (
-            <EnvironmentAction
-              icon={RiStarLine}
-              label="Make primary"
-              targets={primaryCandidates}
-              askForEnvironment={askForEnvironment}
-              onSelect={requestPrimary}
-            />
+          {canWrite && supportsPrimary && integration.active && !integration.primary && (
+            <DropdownMenuItem
+              className={ITEM_CLASS}
+              onSelect={() => confirmConditionsLoss(integration, () => makePrimary())}
+            >
+              <RiStarLine />
+              Make primary
+            </DropdownMenuItem>
           )}
           {canWrite && (
+            <DropdownMenuItem
+              className={ITEM_CLASS}
+              onSelect={() => (integration.active ? requestPause() : setActive({ active: true }))}
+            >
+              <RiShutDownLine />
+              {integration.active ? 'Pause' : 'Resume'}
+            </DropdownMenuItem>
+          )}
+          {canWrite && canDelete && (
             <>
-              <EnvironmentAction
-                icon={RiShutDownLine}
-                label="Pause"
-                targets={activeItems}
-                askForEnvironment={askForEnvironment}
-                onSelect={requestPause}
-              />
-              <EnvironmentAction
-                icon={RiShutDownLine}
-                label="Resume"
-                targets={pausedItems}
-                askForEnvironment={askForEnvironment}
-                onSelect={(item) => setActive({ item, active: true })}
-              />
-              {canDelete && (
-                <>
-                  <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
-                  <EnvironmentAction
-                    icon={RiDeleteBin2Line}
-                    label="Delete"
-                    targets={items}
-                    askForEnvironment={askForEnvironment}
-                    onSelect={setPendingDelete}
-                    className="text-error-base focus:text-error-base data-[state=open]:text-error-base"
-                  />
-                </>
-              )}
+              <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
+              <DropdownMenuItem
+                className={cn(ITEM_CLASS, 'text-error-base focus:text-error-base')}
+                onSelect={() => setIsDeleteOpen(true)}
+              >
+                <RiDeleteBin2Line />
+                Delete
+              </DropdownMenuItem>
             </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {pendingDelete && (
-        <DeleteIntegrationModal
+      <DeleteIntegrationModal
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={(newPrimaryId) => confirmConditionsLoss(findReplacement(newPrimaryId), () => remove(newPrimaryId))}
+        isPrimary={integration.primary}
+        otherIntegrations={otherActive}
+      />
+
+      {isPauseOpen && (
+        <SelectPrimaryIntegrationModal
           isOpen
-          onOpenChange={(open) => !open && setPendingDelete(null)}
+          onOpenChange={setIsPauseOpen}
           onConfirm={(newPrimaryId) =>
-            confirmConditionsLoss(replacement(pendingDelete, newPrimaryId), () =>
-              remove({ item: pendingDelete, newPrimaryId })
-            )
+            confirmConditionsLoss(findReplacement(newPrimaryId), () => setActive({ active: false, newPrimaryId }))
           }
-          isPrimary={pendingDelete.integration.primary}
-          otherIntegrations={otherActiveIn(pendingDelete)}
+          otherIntegrations={otherActive}
+          mode="select"
         />
       )}
 
@@ -293,65 +249,6 @@ export function IntegrationCardActions({ items, selected, onEdit }: IntegrationC
         description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
         confirmButtonText="Remove conditions"
       />
-
-      {pendingPause && (
-        <SelectPrimaryIntegrationModal
-          isOpen
-          onOpenChange={(open) => !open && setPendingPause(null)}
-          onConfirm={(newPrimaryId) =>
-            confirmConditionsLoss(replacement(pendingPause, newPrimaryId), () =>
-              setActive({ item: pendingPause, active: false, newPrimaryId })
-            )
-          }
-          otherIntegrations={otherActiveIn(pendingPause)}
-          mode="select"
-        />
-      )}
     </>
-  );
-}
-
-/** One menu item, or a submenu of environments when the card spans several. */
-function EnvironmentAction({
-  icon: Icon,
-  label,
-  targets,
-  askForEnvironment,
-  onSelect,
-  className,
-}: {
-  icon: IconComponent;
-  label: ReactNode;
-  targets: EnvironmentIntegration[];
-  askForEnvironment: boolean;
-  onSelect: (item: EnvironmentIntegration) => void;
-  className?: string;
-}) {
-  if (targets.length === 0) return null;
-
-  if (!askForEnvironment) {
-    return (
-      <DropdownMenuItem className={cn(ITEM_CLASS, className)} onSelect={() => onSelect(targets[0])}>
-        <Icon />
-        {label}
-      </DropdownMenuItem>
-    );
-  }
-
-  return (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger className={cn(ITEM_CLASS, '[&>svg:last-child]:text-text-soft', className)}>
-        <Icon />
-        {label}
-      </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className={cn(MENU_CLASS, 'min-w-[180px]')} sideOffset={6}>
-        {targets.map((item) => (
-          <DropdownMenuItem key={item.environment._id} className={ITEM_CLASS} onSelect={() => onSelect(item)}>
-            <EnvironmentBranchIcon size="xs" environment={item.environment} className="rounded-[3px]" />
-            <span className="truncate">{item.environment.name}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
   );
 }

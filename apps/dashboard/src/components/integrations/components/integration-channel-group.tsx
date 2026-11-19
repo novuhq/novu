@@ -1,12 +1,5 @@
-import {
-  ChannelTypeEnum,
-  EnvironmentTypeEnum,
-  IEnvironment,
-  IIntegration,
-  IProviderConfig,
-  PermissionsEnum,
-} from '@novu/shared';
-import { type ComponentType, useMemo, useState } from 'react';
+import { ChannelTypeEnum, IEnvironment, IIntegration, IProviderConfig, PermissionsEnum } from '@novu/shared';
+import { type ComponentType, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
@@ -18,7 +11,7 @@ import { cn } from '@/utils/ui';
 import { TableIntegration } from '../types';
 import { INTEGRATION_CHANNELS } from '../utils/channels';
 import { IntegrationCard } from './integration-card';
-import { type EnvironmentIntegration, IntegrationGroupCard } from './integration-group-card';
+import { IntegrationStoreCard } from './integration-store-card';
 import { ProviderIcon } from './provider-icon';
 
 /** Two rows of four; the rest sit behind "Show N more". */
@@ -35,8 +28,6 @@ type IntegrationChannelGroupProps = {
   onItemClick: (item: TableIntegration) => void;
   excludeIntegrationIds?: string[];
   variant?: IntegrationChannelGroupVariant;
-  /** Show only cards connected in this environment; omitted shows every card. */
-  environmentId?: string;
 };
 
 export function IntegrationChannelGroup({
@@ -47,29 +38,18 @@ export function IntegrationChannelGroup({
   onItemClick,
   excludeIntegrationIds,
   variant = 'default',
-  environmentId,
 }: IntegrationChannelGroupProps) {
   const exclude = excludeIntegrationIds ? new Set(excludeIntegrationIds) : null;
   const visibleIntegrations = exclude
     ? integrations.filter((integration) => !exclude.has(integration._id))
     : integrations;
 
-  // Each card keeps every environment it is connected in (for the picker and menu); `filtered` is
-  // what the environment filter shows (status, star, footer).
-  const groups = useMemo(
-    () =>
-      groupAcrossEnvironments(visibleIntegrations, environments ?? []).flatMap((items) => {
-        const filtered = environmentId ? items.filter((item) => item.environment._id === environmentId) : items;
-
-        return filtered.length > 0 ? [{ items, filtered }] : [];
-      }),
-    [visibleIntegrations, environments, environmentId]
-  );
   const [isExpanded, setIsExpanded] = useState(false);
-  const isCollapsible = groups.length > COLLAPSED_CARD_COUNT;
-  const shownGroups = isCollapsible && !isExpanded ? groups.slice(0, COLLAPSED_CARD_COUNT) : groups;
+  const isCollapsible = visibleIntegrations.length > COLLAPSED_CARD_COUNT;
+  const shownIntegrations =
+    isCollapsible && !isExpanded ? visibleIntegrations.slice(0, COLLAPSED_CARD_COUNT) : visibleIntegrations;
 
-  if (visibleIntegrations.length === 0 || (variant === 'default' && groups.length === 0)) {
+  if (visibleIntegrations.length === 0) {
     return null;
   }
 
@@ -80,7 +60,7 @@ export function IntegrationChannelGroup({
           {CHANNEL_TYPE_TO_STRING[channel]}
         </h2>
       ) : (
-        <ChannelSectionHeader channel={channel} count={groups.length} />
+        <ChannelSectionHeader channel={channel} count={visibleIntegrations.length} />
       )}
       <div
         className={cn(
@@ -104,19 +84,17 @@ export function IntegrationChannelGroup({
                   provider={provider}
                   environment={environment}
                   onClick={onItemClick}
-                  variant={variant}
                 />
               );
             })
-          : shownGroups.map(({ items, filtered }) => {
-              const provider = providers.find((p) => p.id === items[0].integration.providerId);
+          : shownIntegrations.map((integration) => {
+              const provider = providers.find((p) => p.id === integration.providerId);
               if (!provider) return null;
 
               return (
-                <IntegrationGroupCard
-                  key={items[0].integration._id}
-                  items={items}
-                  filteredItems={filtered}
+                <IntegrationStoreCard
+                  key={integration._id}
+                  integration={integration}
                   provider={provider}
                   onClick={onItemClick}
                 />
@@ -125,7 +103,7 @@ export function IntegrationChannelGroup({
       </div>
       {variant === 'default' && isCollapsible && (
         <ShowMoreDivider
-          hiddenGroups={groups.slice(COLLAPSED_CARD_COUNT).map(({ items }) => items)}
+          hiddenIntegrations={visibleIntegrations.slice(COLLAPSED_CARD_COUNT)}
           providers={providers}
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded((expanded) => !expanded)}
@@ -136,20 +114,20 @@ export function IntegrationChannelGroup({
 }
 
 function ShowMoreDivider({
-  hiddenGroups,
+  hiddenIntegrations,
   providers,
   isExpanded,
   onToggle,
 }: {
-  hiddenGroups: EnvironmentIntegration[][];
+  hiddenIntegrations: IIntegration[];
   providers: IProviderConfig[];
   isExpanded: boolean;
   onToggle: () => void;
 }) {
-  const previews = hiddenGroups.slice(0, PREVIEW_LOGO_COUNT).flatMap((items) => {
-    const provider = providers.find((p) => p.id === items[0].integration.providerId);
+  const previews = hiddenIntegrations.slice(0, PREVIEW_LOGO_COUNT).flatMap((integration) => {
+    const provider = providers.find((p) => p.id === integration.providerId);
 
-    return provider ? [{ key: items[0].integration._id, provider }] : [];
+    return provider ? [{ key: integration._id, provider }] : [];
   });
 
   return (
@@ -170,58 +148,12 @@ function ShowMoreDivider({
               <ProviderIcon providerId={provider.id} providerDisplayName={provider.displayName} className="size-2.5" />
             </span>
           ))}
-        {isExpanded ? 'Show less' : `Show ${hiddenGroups.length} more`}
+        {isExpanded ? 'Show less' : `Show ${hiddenIntegrations.length} more`}
         {isExpanded ? <RiArrowUpSLine className="size-[15px]" /> : <RiArrowDownSLine className="size-[15px]" />}
       </button>
       <div className="bg-stroke-soft h-px flex-1" />
     </div>
   );
-}
-
-const ENVIRONMENT_TYPE_ORDER: Record<string, number> = {
-  [EnvironmentTypeEnum.DEV]: 0,
-  [EnvironmentTypeEnum.PROD]: 1,
-};
-
-/**
- * One card per provider + name: the same integration set up in several environments
- * shows once, with its environments listed development first. A card holds at most one
- * integration per environment; same-name duplicates in one environment get cards of their own.
- */
-function groupAcrossEnvironments(integrations: IIntegration[], environments: IEnvironment[]) {
-  const environmentIndex = new Map(environments.map((env, index) => [env._id, index]));
-  // Each provider + name holds a list of cards, so duplicates never share a key with another name.
-  const cardsByName = new Map<string, EnvironmentIntegration[][]>();
-
-  for (const integration of integrations) {
-    const environment = environments.find((env) => env._id === integration._environmentId);
-    if (!environment) continue;
-
-    const key = JSON.stringify([integration.providerId, integration.name]);
-    const cards = cardsByName.get(key) ?? [];
-    const card = cards.find((items) => !items.some((item) => item.environment._id === environment._id));
-
-    if (card) {
-      card.push({ integration, environment });
-    } else {
-      cards.push([{ integration, environment }]);
-    }
-
-    cardsByName.set(key, cards);
-  }
-
-  const groups = [...cardsByName.values()].flat();
-
-  for (const group of groups) {
-    group.sort(
-      (a, b) =>
-        (ENVIRONMENT_TYPE_ORDER[a.environment.type ?? ''] ?? 2) -
-          (ENVIRONMENT_TYPE_ORDER[b.environment.type ?? ''] ?? 2) ||
-        (environmentIndex.get(a.environment._id) ?? 0) - (environmentIndex.get(b.environment._id) ?? 0)
-    );
-  }
-
-  return groups;
 }
 
 /** Phone glyph from the integration store design (notch on top, home bar below). */
