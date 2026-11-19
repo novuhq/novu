@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 
+import { ApiKeyRevocationService } from '../auth/api-key-revocation/api-key-revocation.service';
 import { AuthModule } from '../auth/auth.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { LayoutsV1Module } from '../layouts-v1/layouts-v1.module';
@@ -19,7 +20,7 @@ import { USE_CASES } from './usecases';
     NovuBridgeModule,
   ],
   controllers: [EnvironmentsControllerV1],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, ApiKeyRevocationService],
   exports: [...USE_CASES],
 })
 export class EnvironmentsModuleV1 {}
