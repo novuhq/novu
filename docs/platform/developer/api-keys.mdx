@@ -51,6 +51,14 @@ The **Secret Keys** card on the API Keys page lists every active key with per-ke
 
 Bridge requests and HTTP request steps are signed with every active secret key. The `novu-signature` header contains one `v1` value per key, and the original key's signature stays first. A bridge accepts the request when any `v1` matches the secret key it is configured with, so an application can move to the new key before the original key is deleted. An endpoint that verifies the header itself must accept a match on any `v1`, not only the first one.
 
+Moving a bridge to the new key before deleting the original needs a version of `@novu/framework` that checks every `v1`. Older versions check only the first `v1`, which is the original key's signature, so a bridge on an older version must keep the original key until that key is deleted.
+
+Novu can't tell which key your bridge or endpoint verifies with. Before you delete the original key, confirm that every application, bridge and endpoint uses the new key.
+
+<Warning>
+If a secret key leaked, rotate right away. Novu keeps signing with the leaked key, and the key keeps authenticating API requests, until you delete it. Generate the new key, move your applications to it, then delete the leaked key. After the deletion, Novu can still accept the leaked key for up to one minute while caches expire.
+</Warning>
+
 ## API URLs
 
 The following hostnames are used to connect to the Novu cloud platform.

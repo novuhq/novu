@@ -57,6 +57,11 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
       ...(maxKeysCount !== undefined && { [`apiKeys.${maxKeysCount - 1}`]: { $exists: false } }),
     };
 
+    /*
+     * Append, never prepend. Bridge requests carry one `v1` signature per key in
+     * array order, and verifiers that only read the first `v1` rely on the
+     * original key staying at index 0 during a rotation.
+     */
     const { matched } = await this.update(query, {
       $push: {
         apiKeys: {

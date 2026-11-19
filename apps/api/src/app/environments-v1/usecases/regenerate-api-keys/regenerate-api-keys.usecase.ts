@@ -1,8 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { decryptApiKey, encryptApiKey } from '@novu/application-generic';
+import {
+  decryptApiKey,
+  encryptApiKey,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
+} from '@novu/application-generic';
 
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { createHash } from 'crypto';
+import { getBridgeSecretKeysCacheKey } from '../../bridge-secret-keys-cache';
 import { ApiKeyDto } from '../../dtos/api-key.dto';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
@@ -11,7 +17,8 @@ import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
 export class RegenerateApiKeys {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private generateUniqueApiKey: GenerateUniqueApiKey
+    private generateUniqueApiKey: GenerateUniqueApiKey,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   async execute(command: GetApiKeysCommand): Promise<ApiKeyDto[]> {
@@ -32,6 +39,8 @@ export class RegenerateApiKeys {
       hashedApiKey
     );
 
+    this.invalidateReplacedKeys(command.environmentId, environment.apiKeys ?? []);
+
     return environments.map((item) => {
       return {
         _userId: item._userId,
@@ -39,5 +48,30 @@ export class RegenerateApiKeys {
         hash: item.hash,
       };
     });
+  }
+
+  /**
+   * Regenerate replaces every key at once. Without this, this instance keeps
+   * authenticating the old keys and verifying bridge requests against them
+   * until the cache entries expire, while Novu already signs with the new key
+   * only. Other instances converge via the stores' short TTLs.
+   */
+  private invalidateReplacedKeys(environmentId: string, replacedKeys: IApiKey[]): void {
+    for (const apiKey of replacedKeys) {
+      this.inMemoryLRUCacheService.invalidate(InMemoryLRUCacheStore.API_KEY_USER, this.getKeyHash(apiKey));
+    }
+
+    this.inMemoryLRUCacheService.invalidate(
+      InMemoryLRUCacheStore.VALIDATOR,
+      getBridgeSecretKeysCacheKey(environmentId)
+    );
+  }
+
+  private getKeyHash(apiKey: IApiKey): string {
+    if (apiKey.hash) {
+      return apiKey.hash;
+    }
+
+    return createHash('sha256').update(decryptApiKey(apiKey.key)).digest('hex');
   }
 }
