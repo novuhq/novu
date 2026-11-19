@@ -7,10 +7,11 @@ import { createHmac } from 'crypto';
  * Build a `novu-signature` header.
  *
  * Header format: `t=<unix-ms>,v1=<hmac>[,v1=<hmac>...]`.
- * One `v1` is produced per secret key, in the order given. The original key
- * stays first so verifiers that only read the first signature keep working.
- * Verifiers that check every `v1` accept a bridge that has moved to a newer
- * key while the original key is still active.
+ * One `v1` is produced per secret key, in the order given. Callers pass the
+ * original key first so verifiers that only read the first signature keep
+ * working. Bridge callers put another key first once a bridge has rejected the
+ * original key's signature (see `bridge-signing-keys.ts`). Verifiers that
+ * check every `v1` accept any order.
  */
 export function buildNovuSignatureHeader(secretKey: string | readonly string[], payload: unknown): string {
   const secretKeys = typeof secretKey === 'string' ? [secretKey] : [...secretKey];

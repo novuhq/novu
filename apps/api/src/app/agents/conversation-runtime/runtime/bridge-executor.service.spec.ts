@@ -1,4 +1,9 @@
+import { createHmac } from 'node:crypto';
+import { Readable } from 'node:stream';
+import { bridgeSigningScope, clearAcceptedSigningKeys } from '@novu/application-generic';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
+import * as ssrfUrlValidation from '@novu/shared/utils/ssrf-url-validation';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -432,6 +437,123 @@ describe('BridgeExecutorService', () => {
 
       expect(logger.warn.calledOnce).to.equal(true);
       expect(logger.error.called).to.equal(false);
+    });
+  });
+
+  describe('fireWithRetries during a secret key rotation', () => {
+    const bridgeUrl = 'https://93.184.216.34/api/novu';
+    const payload = { deliveryId: 'conv-1:message-id', event: 'onMessage' } as any;
+    let requestStub: sinon.SinonStub;
+    let resolveStub: sinon.SinonStub;
+
+    function firstSignatureMatches(header: string, secretKey: string): boolean {
+      const parts = header.split(',');
+      const timestamp = parts.find((part) => part.startsWith('t='))?.slice(2);
+      const firstV1 = parts.find((part) => part.startsWith('v1='))?.slice(3);
+      const expected = createHmac('sha256', secretKey)
+        .update(`${timestamp}.${JSON.stringify(payload)}`)
+        .digest('hex');
+
+      return firstV1 === expected;
+    }
+
+    function respond(statusCode: number, body?: unknown) {
+      return {
+        statusCode,
+        statusMessage: statusCode === 200 ? 'OK' : 'Unauthorized',
+        headers: { 'content-type': 'application/json' },
+        body: Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]),
+      };
+    }
+
+    /** A bridge on an older SDK: checks only the first `v1`, plain 401 on a mismatch. */
+    function bridgeOnKey(bridgeKey: string) {
+      requestStub.callsFake(async (options: { headers: Record<string, string> }) =>
+        firstSignatureMatches(options.headers[HttpHeaderKeysEnum.NOVU_SIGNATURE], bridgeKey)
+          ? respond(200, { ok: true })
+          : respond(401)
+      );
+    }
+
+    function firstKeysSent(): string[] {
+      return requestStub.getCalls().map((call) => {
+        const header = call.args[0].headers[HttpHeaderKeysEnum.NOVU_SIGNATURE];
+
+        return firstSignatureMatches(header, 'original-key') ? 'original-key' : 'rotated-key';
+      });
+    }
+
+    beforeEach(() => {
+      clearAcceptedSigningKeys();
+      requestStub = sinon.stub(safeOutboundHttp, 'safeOutboundStreamRequest');
+      resolveStub = sinon.stub(ssrfUrlValidation, 'resolvePublicAddresses').resolves(['93.184.216.34'] as any);
+    });
+
+    afterEach(() => {
+      requestStub.restore();
+      resolveStub.restore();
+    });
+
+    function fire(keys: string[]) {
+      const { service } = makeService();
+      sinon.stub(service as any, 'delay').resolves();
+
+      return (service as any).fireWithRetries(
+        bridgeUrl,
+        payload,
+        keys,
+        bridgeSigningScope('env-1', bridgeUrl),
+        'agent-1',
+        false
+      );
+    }
+
+    it('puts the other key first on the retry after a 401 and remembers it', async () => {
+      bridgeOnKey('rotated-key');
+
+      const response = await fire(['original-key', 'rotated-key']);
+
+      expect(response.statusCode).to.equal(200);
+      expect(firstKeysSent()).to.deep.equal(['original-key', 'rotated-key']);
+
+      requestStub.resetHistory();
+      await fire(['original-key', 'rotated-key']);
+
+      expect(firstKeysSent()).to.deep.equal(['rotated-key']);
+    });
+
+    it('sends one request when the bridge accepts the first signature', async () => {
+      bridgeOnKey('original-key');
+
+      await fire(['original-key', 'rotated-key']);
+
+      expect(requestStub.callCount).to.equal(1);
+    });
+
+    it('keeps the same number of attempts when no key is accepted', async () => {
+      bridgeOnKey('unknown-key');
+
+      let thrown: unknown;
+      try {
+        await fire(['original-key', 'rotated-key']);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).to.be.instanceOf(Error);
+      expect(requestStub.callCount).to.equal(3);
+    });
+
+    it('keeps the key order on failures other than 401', async () => {
+      requestStub.callsFake(async () => respond(503));
+
+      try {
+        await fire(['original-key', 'rotated-key']);
+      } catch {
+        // expected
+      }
+
+      expect(firstKeysSent()).to.deep.equal(['original-key', 'original-key', 'original-key']);
     });
   });
 

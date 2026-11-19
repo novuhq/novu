@@ -2,11 +2,15 @@ import { isIP } from 'node:net';
 import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
+  bridgeSigningScope,
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   isNovuTlsEnabled,
+  nextSigningKeyOrder,
+  orderSigningKeys,
   PinoLogger,
+  rememberAcceptedSigningKey,
 } from '@novu/application-generic';
 import type { WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
@@ -235,11 +239,12 @@ export class BridgeExecutorService {
       })
     );
     const payload = await this.buildPayload(params);
+    const signingKeys = orderSigningKeys(bridgeSigningScope(params.config.environmentId, bridgeUrl), secretKeys);
 
     return {
       bridgeUrl,
       payload,
-      signatureHeader: buildNovuSignatureHeader(secretKeys, payload),
+      signatureHeader: buildNovuSignatureHeader(signingKeys, payload),
     };
   }
 
@@ -274,7 +279,9 @@ export class BridgeExecutorService {
         });
       }
 
-      this.fireWithRetries(bridgeUrl, payload, secretKeys, agentIdentifier, !!onEventStream)
+      const signingScope = bridgeSigningScope(config.environmentId, bridgeUrl);
+
+      this.fireWithRetries(bridgeUrl, payload, secretKeys, signingScope, agentIdentifier, !!onEventStream)
         .then((response) => {
           if (stoppable && bridgeHandlesOnAbort(response.headers)) {
             void this.turnAbortStore.markBridgeHandlesOnAbort(conversationId, payload.deliveryId);
@@ -328,29 +335,21 @@ export class BridgeExecutorService {
     url: string,
     payload: AgentBridgeRequest,
     secretKeys: readonly string[],
+    signingScope: string,
     agentIdentifier: string,
     streamReply: boolean
   ): Promise<SafeOutboundStreamResponse> {
     let lastError: Error | undefined;
     const accept = streamReply ? 'text/event-stream, application/json' : 'application/json';
+    let signingKeys = orderSigningKeys(signingScope, secretKeys);
+    let keyOrderChanged = false;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
-      // safeOutboundStreamRequest call performs the connect-time DNS guard and
-      // re-validates every redirect target.
-      try {
-        assertSafeOutboundUrl(url);
-        await resolvePublicAddresses(new URL(url).hostname);
-      } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
-        }
-        throw err;
-      }
+      await this.assertBridgeUrlIsSafe(url);
 
       // HMAC is computed and attached only after the destination has been
       // validated, so a blocked URL never sees the signed payload.
-      const signatureHeader = buildNovuSignatureHeader(secretKeys, payload);
+      const signatureHeader = buildNovuSignatureHeader(signingKeys, payload);
 
       try {
         const response = await safeOutboundStreamRequest({
@@ -371,6 +370,10 @@ export class BridgeExecutorService {
         });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
+          if (keyOrderChanged) {
+            rememberAcceptedSigningKey(signingScope, signingKeys[0]);
+          }
+
           return response;
         }
 
@@ -379,6 +382,17 @@ export class BridgeExecutorService {
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
         );
+
+        /*
+         * During a key rotation a bridge on an older SDK verifies only the first
+         * `v1` and answers 401 when it already uses the other key. The retry that
+         * follows anyway puts another active key first. A 401 means the bridge
+         * did not process the request, so this adds no request and no risk.
+         */
+        if (response.statusCode === 401 && signingKeys.length > 1) {
+          signingKeys = nextSigningKeyOrder(signingKeys);
+          keyOrderChanged = true;
+        }
       } catch (err) {
         lastError = this.retryableError(err, streamReply);
         this.logger.warn(
@@ -392,6 +406,23 @@ export class BridgeExecutorService {
     }
 
     throw lastError ?? new Error('Bridge call failed');
+  }
+
+  /**
+   * Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
+   * safeOutboundStreamRequest call performs the connect-time DNS guard and
+   * re-validates every redirect target.
+   */
+  private async assertBridgeUrlIsSafe(url: string): Promise<void> {
+    try {
+      assertSafeOutboundUrl(url);
+      await resolvePublicAddresses(new URL(url).hostname);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   private retryableError(err: unknown, streamReply: boolean): Error {
