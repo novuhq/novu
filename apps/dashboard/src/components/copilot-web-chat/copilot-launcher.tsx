@@ -5,7 +5,7 @@ import { IconCmd, Kbd } from '@/components/primitives/kbd';
 import { cn } from '@/utils/ui';
 import { DotGrid } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { deriveLauncherState, type LauncherState } from './copilot-web-chat-utils';
+import { COPILOT_POPOVER_ID, deriveLauncherState, type LauncherState } from './copilot-web-chat-utils';
 
 function LauncherStatus({ state }: { state: LauncherState }) {
   switch (state) {
@@ -62,10 +62,12 @@ export function CopilotLauncher() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(isOpen);
 
-  // The popover unmounts on close; when it held the focus, the page would otherwise drop it to the body.
+  // The popover unmounts once its exit animation ends; when it held the focus, the page would otherwise drop it to the body.
   useEffect(() => {
     const focused = document.activeElement;
-    if (wasOpenRef.current && !isOpen && (!focused || focused === document.body)) buttonRef.current?.focus();
+    const isFocusLeaving =
+      !focused || focused === document.body || !!document.getElementById(COPILOT_POPOVER_ID)?.contains(focused);
+    if (wasOpenRef.current && !isOpen && isFocusLeaving) buttonRef.current?.focus();
     wasOpenRef.current = isOpen;
   }, [isOpen]);
 
