@@ -22,8 +22,6 @@ type IntegrationsListProps = {
   variant?: IntegrationsListVariant;
   /** Case-insensitive match on the integration name or provider name. */
   searchQuery?: string;
-  /** Only show integrations in this environment; omit for all environments. */
-  environmentId?: string;
 };
 
 function IntegrationCardSkeleton() {
@@ -95,7 +93,6 @@ export function IntegrationsList({
   excludeIntegrationIds,
   variant = 'default',
   searchQuery = '',
-  environmentId,
 }: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
@@ -114,38 +111,34 @@ export function IntegrationsList({
       );
     };
 
-    // The environment filter is applied per card in IntegrationChannelGroup, so each card still knows
-    // every environment it is connected in. Here it only drops channels with nothing to show.
-    const visible = integrations
-      ?.filter((i) => !isAgentInboxProvider(i.providerId))
-      .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
-      .filter(matchesSearch);
-    const channelsInEnvironment = new Set(
-      visible?.filter((i) => !environmentId || i._environmentId === environmentId).map((i) => i.channel)
-    );
+    return (
+      integrations
+        ?.filter((i) => !isAgentInboxProvider(i.providerId))
+        .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
+        // The store shows the environment picked in the sidebar; the connect sheet keeps every environment.
+        .filter((i) => variant !== 'default' || i._environmentId === currentEnvironment?._id)
+        .filter(matchesSearch)
+        .reduce(
+          (acc, integration) => {
+            const { channel } = integration;
 
-    return visible
-      ?.filter((i) => channelsInEnvironment.has(i.channel))
-      .reduce(
-        (acc, integration) => {
-          const { channel } = integration;
+            // Skip integrations without a channel (e.g. agent-runtime integrations).
+            if (!channel) {
+              return acc;
+            }
 
-          // Skip integrations without a channel (e.g. agent-runtime integrations).
-          if (!channel) {
+            if (!acc[channel]) {
+              acc[channel] = [];
+            }
+
+            acc[channel].push(integration);
+
             return acc;
-          }
-
-          if (!acc[channel]) {
-            acc[channel] = [];
-          }
-
-          acc[channel].push(integration);
-
-          return acc;
-        },
-        {} as Record<ChannelTypeEnum, IIntegration[]>
-      );
-  }, [integrations, isToolChannelEnabled, searchQuery, environmentId, availableIntegrations]);
+          },
+          {} as Record<ChannelTypeEnum, IIntegration[]>
+        )
+    );
+  }, [integrations, isToolChannelEnabled, searchQuery, availableIntegrations, variant, currentEnvironment?._id]);
 
   if (isLoading || !currentEnvironment) {
     return (
@@ -156,7 +149,7 @@ export function IntegrationsList({
     );
   }
 
-  const hasActiveFilter = !!searchQuery.trim() || !!environmentId;
+  const hasActiveFilter = !!searchQuery.trim();
 
   if (hasActiveFilter && Object.keys(groupedIntegrations || {}).length === 0) {
     return (
@@ -178,7 +171,6 @@ export function IntegrationsList({
           onItemClick={onItemClick}
           excludeIntegrationIds={excludeIntegrationIds}
           variant={variant}
-          environmentId={environmentId}
         />
       ))}
     </div>

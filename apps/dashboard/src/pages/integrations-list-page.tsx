@@ -4,13 +4,8 @@ import { RiAddLine } from 'react-icons/ri';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { DashboardLayout } from '../components/dashboard-layout';
-import {
-  ALL_ENVIRONMENTS,
-  IntegrationEnvironmentFilter,
-} from '../components/integrations/components/integration-environment-filter';
 import { IntegrationSearchInput } from '../components/integrations/components/integration-search-input';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
@@ -24,11 +19,7 @@ const INTEGRATION_STORE_TABS = [
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
-  const { currentEnvironment, environments = [] } = useEnvironment();
   const [searchQuery, setSearchQuery] = useState('');
-  // null follows the environment picked in the sidebar until the user chooses one here.
-  const [selectedEnvironment, setSelectedEnvironment] = useState<string | null>(null);
-  const environmentFilter = selectedEnvironment ?? currentEnvironment?._id ?? ALL_ENVIRONMENTS;
 
   const onItemClick = (item: TableIntegration) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: item.integrationId }));
@@ -57,11 +48,6 @@ export function IntegrationsListPage() {
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
             <IntegrationSearchInput value={searchQuery} onChange={setSearchQuery} />
-            <IntegrationEnvironmentFilter
-              environments={environments}
-              value={environmentFilter}
-              onChange={setSelectedEnvironment}
-            />
             <PermissionButton
               permission={PermissionsEnum.INTEGRATION_WRITE}
               size="xs"
@@ -75,11 +61,7 @@ export function IntegrationsListPage() {
           </div>
         </div>
         <TabsContent value="channels" className="mt-0! p-2.5">
-          <IntegrationsList
-            onItemClick={onItemClick}
-            searchQuery={searchQuery}
-            environmentId={environmentFilter === ALL_ENVIRONMENTS ? undefined : environmentFilter}
-          />
+          <IntegrationsList onItemClick={onItemClick} searchQuery={searchQuery} />
         </TabsContent>
         {INTEGRATION_STORE_TABS.filter((tab) => tab.value !== 'channels').map((tab) => (
           <TabsContent key={tab.value} value={tab.value} className="mt-0! p-2.5">
