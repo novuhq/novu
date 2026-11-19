@@ -58,6 +58,25 @@ class SubscribersTestController {
   }
 }
 
+@Controller('agents')
+@UseGuards(ApiKeySessionGuard)
+class AgentsTestController {
+  @Post('/events/ingest')
+  ingest() {
+    return { accepted: true };
+  }
+
+  @Post('/:agentId/reply')
+  reply() {
+    return { delivered: true };
+  }
+
+  @Get('/:identifier')
+  get() {
+    return {};
+  }
+}
+
 /*
  * Boots Nest with the URI versioning `bootstrap.ts` uses, so the allowed routes are checked against the route
  * patterns Express really reports, with and without an API context path.
@@ -93,7 +112,7 @@ describe('API key revocation in a Nest app', () => {
         );
 
         const moduleRef = await Test.createTestingModule({
-          controllers: [EventsTestController, SubscribersTestController],
+          controllers: [EventsTestController, SubscribersTestController, AgentsTestController],
           providers: [
             ApiKeySessionGuard,
             { provide: ApiKeyRevocationService, useValue: service },
@@ -128,12 +147,23 @@ describe('API key revocation in a Nest app', () => {
         expect(response.status).to.equal(200);
       });
 
-      it('rejects an old key everywhere else', async () => {
-        const response = await call('GET', 'v1/subscribers');
-        const body = (await response.json()) as { message?: string };
+      it('lets an old key send agent replies', async () => {
+        const responses = await Promise.all([
+          call('POST', 'v1/agents/events/ingest'),
+          call('POST', 'v1/agents/support-agent/reply'),
+        ]);
 
-        expect(response.status).to.equal(401);
-        expect(body.message).to.equal(TRIGGER_ONLY_API_KEY_MESSAGE);
+        expect(responses.map((response) => response.status)).to.deep.equal([201, 201]);
+      });
+
+      it('rejects an old key everywhere else', async () => {
+        for (const path of ['v1/subscribers', 'v1/agents/support-agent']) {
+          const response = await call('GET', path);
+          const body = (await response.json()) as { message?: string };
+
+          expect(response.status, path).to.equal(401);
+          expect(body.message, path).to.equal(TRIGGER_ONLY_API_KEY_MESSAGE);
+        }
       });
     });
   }

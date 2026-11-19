@@ -168,7 +168,7 @@ describe('API key revocation policy', () => {
       });
     });
 
-    it('keeps the trigger routes and blocks everything else in block_except_allowed mode', () => {
+    it('keeps the trigger and agent reply routes and blocks everything else in block_except_allowed mode', () => {
       const allowed: Array<[string, string]> = [
         ['POST', '/v1/events/trigger'],
         ['post', '/v1/events/trigger/bulk'],
@@ -176,6 +176,8 @@ describe('API key revocation policy', () => {
         ['DELETE', '/v1/events/trigger/:transactionId'],
         ['POST', '/api/v1/events/trigger'],
         ['POST', '/v1/events/trigger/'],
+        ['POST', '/v1/agents/events/ingest'],
+        ['POST', '/v1/agents/:agentId/reply'],
       ];
       const blocked: Array<[string, string]> = [
         ['GET', '/v1/subscribers'],
@@ -183,6 +185,8 @@ describe('API key revocation policy', () => {
         ['GET', '/v1/events/trigger'],
         ['POST', '/v1/events/test/email'],
         ['GET', '/v2/subscribers/:subscriberId'],
+        ['POST', '/v1/agents'],
+        ['PATCH', '/v1/agents/:identifier'],
       ];
 
       for (const [method, path] of allowed) {

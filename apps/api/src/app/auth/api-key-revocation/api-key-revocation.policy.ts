@@ -10,18 +10,28 @@ export enum ApiKeyRevocationModeEnum {
   OFF = 'off',
   /** Every call still works, and the dashboard asks for the key to be replaced. */
   WARN = 'warn',
-  /** Only the allowed routes keep working (the event trigger routes by default). Every other call is rejected. */
+  /**
+   * Only the allowed routes keep working (the event trigger and agent reply routes by default). Every other call is
+   * rejected.
+   */
   BLOCK_EXCEPT_ALLOWED = 'block_except_allowed',
   /** Every call is rejected. */
   BLOCK_ALL = 'block_all',
 }
 
-/** What a key limited by `block_except_allowed` can still do when the flag lists no routes: send and cancel events. */
+/**
+ * What a key limited by `block_except_allowed` can still do when the flag lists no routes: send and cancel events,
+ * and reply as an agent. Agents built with `@novu/framework` call the agent routes with the same secret key, so
+ * without them those agents would stop answering.
+ */
 export const DEFAULT_ALLOWED_ROUTES: readonly string[] = [
   'POST /v1/events/trigger',
   'POST /v1/events/trigger/bulk',
   'POST /v1/events/trigger/broadcast',
   'DELETE /v1/events/trigger/:transactionId',
+  'POST /v1/agents/events/ingest',
+  // Deprecated, still used by older `@novu/framework` versions and `sendReply` SDK clients.
+  'POST /v1/agents/:agentId/reply',
 ];
 
 type ActiveMode = Exclude<ApiKeyRevocationModeEnum, ApiKeyRevocationModeEnum.OFF>;
@@ -48,7 +58,7 @@ const API_KEY_HEADER_PREFIX = `${ApiAuthSchemeEnum.API_KEY} `;
 export const REVOKED_API_KEY_MESSAGE =
   'This secret key was revoked. Generate a new secret key on the API Keys page of the Novu dashboard and update your application.';
 export const TRIGGER_ONLY_API_KEY_MESSAGE =
-  'This secret key was revoked and can only trigger workflows until you replace it. Generate a new secret key on the API Keys page of the Novu dashboard and update your application.';
+  'This secret key was revoked and can only trigger workflows and send agent replies until you replace it. Generate a new secret key on the API Keys page of the Novu dashboard and update your application.';
 
 /**
  * Reads the flag value: a JSON object, or a string holding one (LaunchDarkly string flags and environment variables).
@@ -231,14 +241,14 @@ function parseUtcDateTime(value: unknown): Date | null {
   return parsed.every((part, index) => part === written[index]) ? date : null;
 }
 
-/** The event trigger routes when none are listed. Entries it cannot read are skipped and reported. */
+/** The default routes when none are listed. Entries it cannot read are skipped and reported. */
 function readAllowedRoutes(allowedRoutes: unknown, problems: string[]): ReadonlySet<string> {
   if (allowedRoutes === undefined) {
     return new Set(DEFAULT_ALLOWED_ROUTES);
   }
 
   if (!Array.isArray(allowedRoutes)) {
-    problems.push('"allowedRoutes" must be an array of "METHOD /path" strings, using the default trigger routes');
+    problems.push('"allowedRoutes" must be an array of "METHOD /path" strings, using the default routes');
 
     return new Set(DEFAULT_ALLOWED_ROUTES);
   }

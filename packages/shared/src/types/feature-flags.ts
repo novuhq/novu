@@ -323,9 +323,9 @@ export enum FeatureFlagsKeysEnum {
    * cutoff can do, so they can be revoked without deleting them:
    * `{ "mode": "off" | "warn" | "block_except_allowed" | "block_all", "keysCreatedBefore": "<UTC date-time>",
    * "allowedRoutes": ["POST /v1/events/trigger"] }`. `warn` only asks for rotation in the dashboard,
-   * `block_except_allowed` keeps `allowedRoutes` working (the event trigger routes when omitted) and rejects
-   * everything else, `block_all` rejects every call. Keys created at or after `keysCreatedBefore` are never limited.
-   * Missing, invalid or `off` changes nothing. Set it as an environment variable when self-hosted.
+   * `block_except_allowed` keeps `allowedRoutes` working (the event trigger and agent reply routes when omitted) and
+   * rejects everything else, `block_all` rejects every call. Keys created at or after `keysCreatedBefore` are never
+   * limited. Missing, invalid or `off` changes nothing. Set it as an environment variable when self-hosted.
    */
   API_KEY_REVOCATION_POLICY = 'API_KEY_REVOCATION_POLICY',
 
