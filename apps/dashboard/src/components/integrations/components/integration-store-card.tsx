@@ -29,18 +29,14 @@ import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { TableIntegration } from '../types';
 import { IntegrationCardActions } from './integration-card-actions';
 import { ProviderIcon } from './provider-icon';
-import { getDemoIntegrationTooltipMessage, hasRoutingConditions, isDemoIntegration } from './utils/helpers';
+import {
+  CHANNEL_LABELS,
+  getDemoIntegrationTooltipMessage,
+  hasRoutingConditions,
+  isDemoIntegration,
+} from './utils/helpers';
 
 type CardStatus = 'active' | 'setup' | 'inactive';
-
-const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
-  [ChannelTypeEnum.IN_APP]: 'In-app',
-  [ChannelTypeEnum.EMAIL]: 'Email',
-  [ChannelTypeEnum.SMS]: 'SMS',
-  [ChannelTypeEnum.CHAT]: 'Chat',
-  [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.TOOL]: 'Tool',
-};
 
 // Tinted halo + dot, per the design's status/dot.
 const STATUS_DOT: Record<CardStatus, { halo: string; dot: string }> = {
@@ -121,12 +117,7 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
     >
       <div className="flex flex-col gap-3 py-3.5 pl-3.5 pr-3">
         <div className="flex items-start gap-3">
-          <div
-            className={cn(
-              'border-stroke-soft flex size-8 shrink-0 items-center justify-center rounded-lg border bg-[#f4f4f5] bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0)_100%)]',
-              status === 'inactive' && 'opacity-50'
-            )}
-          >
+          <div className="border-stroke-soft flex size-8 shrink-0 items-center justify-center rounded-lg border bg-[#f4f4f5] bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0)_100%)]">
             <ProviderIcon providerId={provider.id} providerDisplayName={provider.displayName} className="size-[19px]" />
           </div>
 
@@ -165,9 +156,10 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
 /** Status dot and line on the left; the one action that fits the status on the right. */
 function CardFooter({ status, integration }: { status: CardStatus; integration: IIntegration }) {
   const updatedAt = getUpdatedAt(integration);
-  let label = 'Inactive';
-  if (status === 'setup') label = 'Setup incomplete';
-  else if (status === 'active') label = updatedAt ? `Updated ${formatDateSimple(updatedAt)}` : 'Active';
+  const updatedLabel = updatedAt ? `Updated ${formatDateSimple(updatedAt)}` : undefined;
+  let label = 'Setup incomplete';
+  if (status === 'inactive') label = 'Paused';
+  else if (status === 'active') label = updatedLabel ?? 'Active';
 
   return (
     <div className="bg-bg-weak border-stroke-soft mt-auto flex h-10 items-center justify-between gap-2 border-t pl-3 pr-2.5">
@@ -175,16 +167,22 @@ function CardFooter({ status, integration }: { status: CardStatus; integration: 
         <StatusDot status={status} />
         <span className="text-label-xs text-text-sub truncate">{label}</span>
       </div>
-      <span
-        className={cn(
-          'text-label-xs text-text-strong flex shrink-0 items-center gap-0.5',
-          // "Finish setup" is the fix, so it always shows; "Manage" only on hover.
-          status !== 'setup' && 'opacity-0 transition-opacity group-focus-visible:opacity-100 group-hover:opacity-100'
-        )}
-      >
-        {status === 'setup' ? 'Finish setup' : 'Manage'}
-        <RiArrowRightSLine className="size-3.5" />
-      </span>
+      {status === 'inactive' ? (
+        // Paused keeps the "Updated …" meta on the right, quieter, in place of an action.
+        updatedLabel && <span className="text-label-xs text-text-sub shrink-0 opacity-70">{updatedLabel}</span>
+      ) : (
+        <span
+          className={cn(
+            'text-label-xs text-text-strong flex shrink-0 items-center gap-0.5',
+            // "Finish setup" is the fix, so it always shows; "Manage" only on hover.
+            status === 'active' &&
+              'opacity-0 transition-opacity group-focus-visible:opacity-100 group-hover:opacity-100'
+          )}
+        >
+          {status === 'setup' ? 'Finish setup' : 'Manage'}
+          <RiArrowRightSLine className="size-3.5" />
+        </span>
+      )}
     </div>
   );
 }

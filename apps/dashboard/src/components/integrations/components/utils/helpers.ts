@@ -1,6 +1,7 @@
 import type { IIntegration } from '@novu/shared';
 import {
   AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
   ChatProviderIdEnum,
   ConfigConfiguration,
   CredentialsKeyEnum,
@@ -8,6 +9,15 @@ import {
   IConfigCredential,
   SmsProviderIdEnum,
 } from '@novu/shared';
+
+export const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
+  [ChannelTypeEnum.IN_APP]: 'In-app',
+  [ChannelTypeEnum.EMAIL]: 'Email',
+  [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.CHAT]: 'Chat',
+  [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.TOOL]: 'Tool',
+};
 
 export function isDemoIntegration(providerId: string) {
   return (

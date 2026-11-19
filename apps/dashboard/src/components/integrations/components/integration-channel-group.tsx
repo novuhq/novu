@@ -185,7 +185,7 @@ const SECTION_LABELS: Record<ChannelTypeEnum, { title: string; noun: string; ste
 };
 
 /** Channel icon, name and card count, with a shortcut to add another provider for the channel. */
-function ChannelSectionHeader({ channel, count }: { channel: ChannelTypeEnum; count: number }) {
+export function ChannelSectionHeader({ channel, count }: { channel: ChannelTypeEnum; count: number }) {
   const navigate = useNavigate();
   const { title, noun, step, color } = SECTION_LABELS[channel];
   const Icon = SECTION_ICON_OVERRIDES[channel] ?? STEP_TYPE_TO_ICON[step];
