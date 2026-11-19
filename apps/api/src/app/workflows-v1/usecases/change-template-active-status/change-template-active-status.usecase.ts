@@ -4,6 +4,7 @@ import {
   CreateChangeCommand,
   computeWorkflowStatus,
   InvalidateCacheService,
+  ResourceValidatorService,
 } from '@novu/application-generic';
 import { ChangeRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
@@ -21,7 +22,8 @@ export class ChangeTemplateActiveStatus {
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
@@ -36,6 +38,10 @@ export class ChangeTemplateActiveStatus {
 
     if (foundTemplate.active === command.active) {
       throw new BadRequestException('You must provide a different status from the current status');
+    }
+
+    if (command.active) {
+      await this.resourceValidatorService.validateActiveWorkflowLimit(command.environmentId, command.templateId);
     }
 
     await this.notificationTemplateRepository.update(

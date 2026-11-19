@@ -241,4 +241,80 @@ describe('ResourceValidatorService workflow limits', () => {
       expect(count.firstCall.args[0]['triggers.identifier'].$nin).to.include('demo-verify-otp');
     });
   });
+
+  describe('active workflow limit', () => {
+    const WORKFLOW_ID = 'workflow-789';
+
+    async function captureActiveLimitError(service: ResourceValidatorService): Promise<HttpException> {
+      try {
+        await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+      } catch (error) {
+        return error as HttpException;
+      }
+
+      throw new Error('expected validateActiveWorkflowLimit to throw');
+    }
+
+    it('counts only other active, non-demo workflows in the environment', async () => {
+      const { service, count } = buildService();
+
+      await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+
+      const query = count.firstCall.args[0];
+      expect(query._environmentId).to.equal(ENVIRONMENT_ID);
+      expect(query.active).to.equal(true);
+      expect(query._id).to.deep.equal({ $ne: WORKFLOW_ID });
+      expect(query['triggers.identifier'].$nin).to.include('demo-verify-otp');
+    });
+
+    it('allows activating while under the free-tier cap', async () => {
+      const { service, count } = buildService();
+      count.resolves(FREE_TIER_MAX_WORKFLOWS - 1);
+
+      await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+    });
+
+    it('blocks activation on the free tier with a 402 and an upgrade message', async () => {
+      const { service, count } = buildService();
+      count.resolves(FREE_TIER_MAX_WORKFLOWS);
+
+      const error = await captureActiveLimitError(service);
+
+      expect(error.getStatus()).to.equal(402);
+      expect(error.getResponse()).to.include({ limit: FREE_TIER_MAX_WORKFLOWS, currentCount: FREE_TIER_MAX_WORKFLOWS });
+      expect((error.getResponse() as { message: string }).message).to.contain('Upgrade your plan');
+    });
+
+    it('blocks activation on the pro tier at 20 active workflows', async () => {
+      const { service, count } = buildService({ organization: { apiServiceLevel: ApiServiceLevelEnum.PRO } });
+      count.resolves(19);
+
+      await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+
+      count.resolves(20);
+      const error = await captureActiveLimitError(service);
+
+      expect(error.getStatus()).to.equal(402);
+      expect(error.getResponse()).to.include({ limit: 20 });
+    });
+
+    for (const tier of [ApiServiceLevelEnum.BUSINESS, ApiServiceLevelEnum.ENTERPRISE, ApiServiceLevelEnum.UNLIMITED]) {
+      it(`does not limit active workflows on the ${tier} tier`, async () => {
+        const { service, count } = buildService({ organization: { apiServiceLevel: tier } });
+        count.resolves(SYSTEM_LIMITS.WORKFLOWS);
+
+        await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+      });
+    }
+
+    it('does not limit active workflows on self-hosted deployments', async () => {
+      process.env.IS_SELF_HOSTED = 'true';
+      const { service, count } = buildService();
+      count.resolves(SYSTEM_LIMITS.WORKFLOWS);
+
+      await service.validateActiveWorkflowLimit(ENVIRONMENT_ID, WORKFLOW_ID);
+
+      expect(count.called).to.equal(false);
+    });
+  });
 });
