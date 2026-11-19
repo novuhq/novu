@@ -69,6 +69,7 @@ import {
 } from '@novu/dal';
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { ApiKeyRevocationService } from '../auth/api-key-revocation/api-key-revocation.service';
 import { ActivityRetentionService } from './services/activity-retention.service';
 import { NovuTokens } from './services/novu-tokens.service';
 import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
@@ -157,6 +158,8 @@ const ANALYTICS_PROVIDERS = [
 
 const PROVIDERS = [
   ActivityRetentionService,
+  // Here rather than in one module: every module that provides `GetApiKeys` needs it.
+  ApiKeyRevocationService,
   AgentEmailInboxQuotaService,
   SubscriberSessionAuthStatsService,
   analyticsService,

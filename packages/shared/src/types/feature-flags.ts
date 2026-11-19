@@ -318,6 +318,16 @@ export enum FeatureFlagsKeysEnum {
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
   USAGE_REPORT_OVERRIDE_EMAIL = 'USAGE_REPORT_OVERRIDE_EMAIL',
+  /**
+   * Organization-scoped JSON (a JSON flag, or a string holding JSON) that limits what secret keys created before a
+   * cutoff can do, so they can be revoked without deleting them:
+   * `{ "mode": "off" | "warn" | "block_except_allowed" | "block_all", "keysCreatedBefore": "<UTC date-time>",
+   * "allowedRoutes": ["POST /v1/events/trigger"] }`. `warn` only asks for rotation in the dashboard,
+   * `block_except_allowed` keeps `allowedRoutes` working (the event trigger and agent reply routes when omitted) and
+   * rejects everything else, `block_all` rejects every call. Keys created at or after `keysCreatedBefore` are never
+   * limited. Missing, invalid or `off` changes nothing. Set it as an environment variable when self-hosted.
+   */
+  API_KEY_REVOCATION_POLICY = 'API_KEY_REVOCATION_POLICY',
 
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
