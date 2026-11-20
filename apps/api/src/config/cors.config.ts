@@ -2,8 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import type { Request } from 'express';
 import { resolveHumanDashboardBaseUrl } from '../app/shared/helpers/resolve-human-dashboard-base-url';
+import { env } from './env';
 
-const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
+const ALLOWED_ORIGINS_REGEX = new RegExp(env.FRONT_BASE_URL || '');
 
 /**
  * The agentinbox.md app (`apps/human-dashboard`). Its `/connect` page calls the
@@ -55,12 +56,12 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     ) {
       corsOptions.origin.push(requestOrigin);
     }
-    if (process.env.WIDGET_BASE_URL) {
-      corsOptions.origin.push(process.env.WIDGET_BASE_URL);
+    if (env.WIDGET_BASE_URL) {
+      corsOptions.origin.push(env.WIDGET_BASE_URL);
     }
     // Enable CORS for the docs
-    if (process.env.DOCS_BASE_URL) {
-      corsOptions.origin.push(process.env.DOCS_BASE_URL);
+    if (env.DOCS_BASE_URL) {
+      corsOptions.origin.push(env.DOCS_BASE_URL);
     }
     // The invite page on the Human dashboard calls the public invite endpoints (token-only, no cookies).
     const humanDashboard = isHumanInviteRoute(req.url) ? humanDashboardOrigin() : undefined;
@@ -123,7 +124,7 @@ function isWebChatRoute(url: string): boolean {
 }
 
 function isDevelopmentEnvironment(): boolean {
-  return ['test', 'local'].includes(process.env.NODE_ENV || '');
+  return ['test', 'local'].includes(env.NODE_ENV || '');
 }
 
 function origin(req: Request): string {

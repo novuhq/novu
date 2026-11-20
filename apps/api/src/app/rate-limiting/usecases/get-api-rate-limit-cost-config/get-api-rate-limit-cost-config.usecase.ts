@@ -22,6 +22,7 @@ export class GetApiRateLimitCostConfig {
     const mergedConfig: IApiRateLimitCost = { ...DEFAULT_API_RATE_LIMIT_COST_CONFIG };
 
     // Read process environment only once for performance
+    // biome-ignore lint/plugin: reads API_RATE_LIMIT_COST_* by computed name, typed by ApiRateLimitCostEnvVarFormat
     const processEnv = process.env;
 
     Object.values(ApiRateLimitCostEnum).forEach((costOption) => {

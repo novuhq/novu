@@ -1,8 +1,9 @@
 import { differenceInHours } from 'date-fns';
+import { env } from '../../../config/env';
 import { KEYLESS_ENVIRONMENT_PREFIX } from './keyless.constants';
 
 const DEFAULT_KEYLESS_RETENTION_HOURS = 24;
-const parsedRetentionHours = Number(process.env.KEYLESS_RETENTION_TIME_IN_HOURS);
+const parsedRetentionHours = Number(env.KEYLESS_RETENTION_TIME_IN_HOURS);
 const KEYLESS_RETENTION_TIME_IN_HOURS =
   Number.isInteger(parsedRetentionHours) && parsedRetentionHours >= 0
     ? parsedRetentionHours

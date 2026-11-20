@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { IUpdateUserProfile } from '@novu/shared';
 import { IsOptional, IsUrl } from 'class-validator';
-
+import { env } from '../../../config/env';
 import { IsImageUrl } from '../../shared/validators/image.validator';
 
-const protocols = process.env.NODE_ENV === 'production' ? ['https'] : ['http', 'https'];
+const protocols = env.NODE_ENV === 'production' ? ['https'] : ['http', 'https'];
 
 export class UpdateProfileRequestDto implements IUpdateUserProfile {
   @ApiProperty()

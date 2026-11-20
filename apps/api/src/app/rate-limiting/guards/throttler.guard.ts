@@ -25,10 +25,8 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { getClientIp } from 'request-ip';
-import {
-  isKeylessApplicationIdentifierHeader,
-  isResolvedKeylessAuthScheme,
-} from '../../shared/utils/auth.utils';
+import { env } from '../../../config/env';
+import { isKeylessApplicationIdentifierHeader, isResolvedKeylessAuthScheme } from '../../shared/utils/auth.utils';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
@@ -130,6 +128,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing throttling decision flow is outside this change.
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const clientIp = getClientIp(req) || undefined;
@@ -337,5 +336,5 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
 function getKeylessCost() {
   // For test environment, we use a higher cost to ensure tests can run without rate limiting issues
-  return process.env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
+  return env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
 }

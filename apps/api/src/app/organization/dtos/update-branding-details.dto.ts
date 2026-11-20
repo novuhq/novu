@@ -1,8 +1,9 @@
 import { IsHexColor, IsOptional, IsString, IsUrl } from 'class-validator';
+import { env } from '../../../config/env';
 import { IsImageUrl } from '../../shared/validators/image.validator';
 
 const environments = ['production', 'test'];
-const protocols = environments.includes(process.env.NODE_ENV || '') ? ['https'] : ['http', 'https'];
+const protocols = environments.includes(env.NODE_ENV || '') ? ['https'] : ['http', 'https'];
 
 export class UpdateBrandingDetailsDto {
   @IsUrl({

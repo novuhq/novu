@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import type { WrapperType } from '../../../shared/wrapper-type';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
@@ -20,7 +21,7 @@ export class PromoteTranslationChange {
 
   async execute(command: PromoteTypeChangeCommand) {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
           throw new BadRequestException('Translation module is not loaded');
         }

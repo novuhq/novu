@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
+import { env } from '../../../config/env';
 
 // Keep in sync with compatibility_date in enterprise/workers/step-resolver/wrangler.jsonc
 const CF_COMPATIBILITY_DATE = '2025-11-18';
@@ -148,10 +149,10 @@ export class CloudflareStepResolverDeployService {
   }
 
   private getConfigOrThrow(): CloudflareDeploymentConfig {
-    const accountId = process.env.STEP_RESOLVER_CF_ACCOUNT_ID;
-    const apiToken = process.env.STEP_RESOLVER_CF_API_TOKEN;
-    const dispatchNamespace = process.env.STEP_RESOLVER_CF_DISPATCH_NAMESPACE;
-    const placementRegion = process.env.STEP_RESOLVER_CF_PLACEMENT_REGION?.trim() || undefined;
+    const accountId = env.STEP_RESOLVER_CF_ACCOUNT_ID;
+    const apiToken = env.STEP_RESOLVER_CF_API_TOKEN;
+    const dispatchNamespace = env.STEP_RESOLVER_CF_DISPATCH_NAMESPACE;
+    const placementRegion = env.STEP_RESOLVER_CF_PLACEMENT_REGION?.trim() || undefined;
 
     if (placementRegion && !PLACEMENT_REGION_PATTERN.test(placementRegion)) {
       throw new ServiceUnavailableException(

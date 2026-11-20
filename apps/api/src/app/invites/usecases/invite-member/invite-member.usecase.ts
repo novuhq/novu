@@ -3,6 +3,7 @@ import { Novu } from '@novu/api';
 import { AnalyticsService, capitalize, createGuid } from '@novu/application-generic';
 import { IAddMemberData, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { InviteMemberCommand } from './invite-member.command';
 
 @Injectable({
@@ -29,10 +30,10 @@ export class InviteMember {
 
     const token = createGuid();
 
-    if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
-      const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
+    if (env.NOVU_API_KEY && (env.NODE_ENV === 'dev' || env.NODE_ENV === 'production')) {
+      const novu = new Novu({ security: { secretKey: env.NOVU_API_KEY } });
       await novu.trigger({
-        workflowId: process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn',
+        workflowId: env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION,
         to: [
           {
             subscriberId: command.email,
@@ -44,7 +45,7 @@ export class InviteMember {
           inviteeName: capitalize(command.email.split('@')[0]),
           organizationName: capitalize(organization.name),
           inviterName: capitalize(inviterUser.firstName ?? ''),
-          acceptInviteUrl: `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/auth/invitation/${token}`,
+          acceptInviteUrl: `${env.DASHBOARD_URL || env.FRONT_BASE_URL}/auth/invitation/${token}`,
         },
       });
     }

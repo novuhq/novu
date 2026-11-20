@@ -15,9 +15,21 @@ export const envSchema = {
   ACTIVE_WORKER: {
     description: 'Name of the running worker process, passed along on subscriber upserts.',
   },
+  API_ROOT_URL: {
+    description: 'Public api URL, used in webhook, OAuth callback and asset links.',
+  },
+  CI: {
+    description: 'Set by CI runners. Any non-empty value marks a CI run.',
+  },
   CI_EE_TEST: {
     type: 'boolean',
     description: 'Loads enterprise modules in CI test runs, as if NOVU_ENTERPRISE were true.',
+  },
+  DASHBOARD_URL: {
+    description: 'Dashboard URL used in links. Falls back to FRONT_BASE_URL.',
+  },
+  ELASTICACHE_CLUSTER_SERVICE_HOST: {
+    description: 'ElastiCache cluster host for the cache, set together with ELASTICACHE_CLUSTER_SERVICE_PORT.',
   },
   ENABLE_OTEL: {
     type: 'boolean',
@@ -26,6 +38,9 @@ export const envSchema = {
   FLEET_NAME: {
     default: 'default',
     description: 'Deployment name attached to worker metrics.',
+  },
+  FRONT_BASE_URL: {
+    description: 'Legacy dashboard URL. Allowed by CORS, and used in links while DASHBOARD_URL is unset.',
   },
   /** @deprecated Use IS_IN_MEMORY_CLUSTER_MODE_ENABLED. */
   IN_MEMORY_CLUSTER_MODE_ENABLED: {
@@ -65,6 +80,9 @@ export const envSchema = {
   NODE_ENV: {
     description: 'Runtime environment: local, dev, test, ci or production. Also picks the .env file to load.',
   },
+  NOVU_EMAIL_INTEGRATION_API_KEY: {
+    description: 'API key behind the built-in Novu email provider. Unset makes that provider unavailable.',
+  },
   NOVU_ENTERPRISE: {
     description:
       'Turns on enterprise features when "true". Kept as a string: telemetry treats only an explicit "false" as community.',
@@ -72,6 +90,10 @@ export const envSchema = {
   NOVU_MANAGED_SERVICE: {
     type: 'boolean',
     description: 'Marks Novu Cloud infrastructure, which turns on managed-only metrics.',
+  },
+  NOVU_REGION: {
+    description:
+      'Deployment region. Also the AWS region for SQS, EventBridge and Secrets Manager when AWS_REGION is unset.',
   },
   PORT: {
     description: 'Port the service listens on: HTTP for api, worker and ws, SMTP for inbound-mail.',

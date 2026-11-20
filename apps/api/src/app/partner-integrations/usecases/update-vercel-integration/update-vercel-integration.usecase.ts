@@ -9,6 +9,7 @@ import {
   OrganizationRepository,
 } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
+import { env } from '../../../../config/env';
 import { Sync } from '../../../bridge/usecases/sync';
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 
@@ -78,12 +79,12 @@ export class UpdateVercelIntegration {
       const organizationIds = Object.keys(orgIdsToProjectIds);
       const environments = await this.getEnvironments(organizationIds);
 
-      for (const env of environments) {
-        const projectIds = orgIdsToProjectIds[env._organizationId];
+      for (const environment of environments) {
+        const projectIds = orgIdsToProjectIds[environment._organizationId];
         await this.setEnvVariablesOnProjects({
-          name: env.name,
-          applicationIdentifier: env.identifier,
-          privateKey: decryptApiKey(env.apiKeys[0].key),
+          name: environment.name,
+          applicationIdentifier: environment.identifier,
+          privateKey: decryptApiKey(environment.apiKeys[0].key),
           projectIds,
           teamId: configuration.teamId,
           token: configuration.accessToken,
@@ -91,12 +92,12 @@ export class UpdateVercelIntegration {
 
         try {
           await this.updateBridgeUrl(
-            env._id,
-            env.name,
+            environment._id,
+            environment.name,
             projectIds[0],
             configuration.accessToken,
             configuration.teamId,
-            env._organizationId
+            environment._organizationId
           );
         } catch (error) {
           this.logger.error({ err: error }, 'Error updating bridge url');
@@ -123,7 +124,7 @@ export class UpdateVercelIntegration {
   ) {
     try {
       const getDomainsResponse = await lastValueFrom(
-        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectId}?teamId=${teamId}`, {
+        this.httpService.get(`${env.VERCEL_BASE_URL}/v9/projects/${projectId}?teamId=${teamId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
@@ -246,7 +247,7 @@ export class UpdateVercelIntegration {
 
         await lastValueFrom(
           this.httpService.post(
-            `${process.env.VERCEL_BASE_URL}/v10/projects/${projectId}/env?${queryParams.toString()}`,
+            `${env.VERCEL_BASE_URL}/v10/projects/${projectId}/env?${queryParams.toString()}`,
             [variable],
             { headers }
           )
@@ -292,12 +293,13 @@ export class UpdateVercelIntegration {
     projectIds: string[]
   ): Promise<ProjectDetails[]> {
     const response = await lastValueFrom(
-      this.httpService.get(`${process.env.VERCEL_BASE_URL}/v4/projects${teamId ? `?teamId=${teamId}` : ''}`, {
+      this.httpService.get(`${env.VERCEL_BASE_URL}/v4/projects${teamId ? `?teamId=${teamId}` : ''}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       })
     );
+    // biome-ignore lint/suspicious/noExplicitAny: Existing Vercel response typing is outside this change.
     const vercelProjects = response.data.projects as any[];
     const filteredVercelProjects = vercelProjects.filter((project) => projectIds.includes(project.id));
 
@@ -356,7 +358,7 @@ export class UpdateVercelIntegration {
 
     const vercelLinkedProjects = await this.getVercelLinkedProjects(token, teamId, allOldProjectIds);
 
-    const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
+    const projectApiUrl = `${env.VERCEL_BASE_URL}/v9/projects`;
 
     await Promise.all(
       vercelLinkedProjects.map((detail) => {

@@ -69,6 +69,7 @@ import {
 } from '@novu/dal';
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { env } from '../../config/env';
 import { ActivityRetentionService } from './services/activity-retention.service';
 import { NovuTokens } from './services/novu-tokens.service';
 import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
@@ -133,7 +134,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    await service.connect(process.env.MONGO_URL || '.');
+    await service.connect(env.MONGO_URL || '.');
 
     return service;
   },
@@ -194,12 +195,12 @@ const IMPORTS = [
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
       version: packageJson.version,
-      silent: !!process.env.CI,
+      silent: !!env.CI,
     })
   ),
 ];
 
-if (process.env.NODE_ENV === 'test') {
+if (env.NODE_ENV === 'test') {
   /**
    * This is here only because of the tests. These providers are available at AppModule level,
    * but since in tests we are often importing just the SharedModule and not the entire AppModule
@@ -211,7 +212,7 @@ if (process.env.NODE_ENV === 'test') {
   PROVIDERS.push(...getDynamicAuthProviders());
   IMPORTS.push(
     JwtModule.register({
-      secret: `${process.env.JWT_SECRET}`,
+      secret: `${env.JWT_SECRET}`,
       signOptions: {
         expiresIn: 360000,
       },

@@ -30,6 +30,7 @@ import {
   type McpServer,
   type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
+import { env } from '../../../../../config/env';
 import { trackAgentMcpOAuthCreated } from '../../../shared/analytics/agent-analytics';
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import {
@@ -63,7 +64,7 @@ type ResolvedOAuthConfig =
 
 const NOVU_MCP_CLIENT_NAME = 'Novu';
 const DEFAULT_SOFTWARE_ID = 'novu-mcp-client';
-const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
+const SOFTWARE_VERSION = env.NOVU_API_VERSION;
 
 /**
  * Build the provider authorize URL for a `subscriber`-scoped MCP
@@ -673,7 +674,7 @@ export class GenerateMcpOAuthUrl {
   }> {
     const { asMetadata, oauthConfig, scopes, redirectUri } = args;
     const { client_uri: clientUri, logo_uri: logoUri } = resolveDcrClientMetadataUris(
-      (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '')
+      (env.DASHBOARD_URL ?? env.FRONT_BASE_URL)?.replace(/\/$/, '')
     );
     // Confidential client = we will receive a `client_secret` back. Web apps
     // (`application_type: 'web'`) always run server-side; only `native`

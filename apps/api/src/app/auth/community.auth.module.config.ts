@@ -5,6 +5,7 @@ import { FeatureFlagsService, featureFlagsService } from '@novu/application-gene
 import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import passport from 'passport';
+import { env } from '../../config/env';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { SharedModule } from '../shared/shared.module';
 import { UserModule } from '../user/user.module';
@@ -20,7 +21,7 @@ import { USE_CASES } from './usecases';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
-if (process.env.GITHUB_OAUTH_CLIENT_ID) {
+if (env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
 }
 
@@ -30,7 +31,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       defaultStrategy: PassportStrategyEnum.JWT,
     }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: env.JWT_SECRET,
       signOptions: {
         expiresIn: 360000,
       },
@@ -76,7 +77,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
 }
 
 export function configure(consumer: MiddlewareConsumer) {
-  if (process.env.GITHUB_OAUTH_CLIENT_ID) {
+  if (env.GITHUB_OAUTH_CLIENT_ID) {
     consumer
       .apply(
         passport.authenticate(AuthProviderEnum.GITHUB, {

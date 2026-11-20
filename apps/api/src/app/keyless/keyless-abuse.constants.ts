@@ -1,3 +1,5 @@
+import { env } from '../../config/env';
+
 export function parsePositiveIntEnv(raw: string | undefined, fallback: number): number {
   if (raw == null || raw.trim() === '') {
     return fallback;
@@ -12,17 +14,11 @@ export function parsePositiveIntEnv(raw: string | undefined, fallback: number): 
   return parsed;
 }
 
-export const KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY = parsePositiveIntEnv(
-  process.env.KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY,
-  15
-);
+export const KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY = parsePositiveIntEnv(env.KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY, 15);
 
-export const KEYLESS_GENERATE_CAP_PER_IP_PER_DAY = parsePositiveIntEnv(
-  process.env.KEYLESS_GENERATE_CAP_PER_IP_PER_DAY,
-  5
-);
+export const KEYLESS_GENERATE_CAP_PER_IP_PER_DAY = parsePositiveIntEnv(env.KEYLESS_GENERATE_CAP_PER_IP_PER_DAY, 5);
 
-export const KEYLESS_MAX_AGENTS_PER_ENV = parsePositiveIntEnv(process.env.KEYLESS_MAX_AGENTS_PER_ENV, 2);
+export const KEYLESS_MAX_AGENTS_PER_ENV = parsePositiveIntEnv(env.KEYLESS_MAX_AGENTS_PER_ENV, 2);
 
 /**
  * How many `@novu/human` interactions a keyless environment may create before
@@ -32,7 +28,7 @@ export const KEYLESS_MAX_AGENTS_PER_ENV = parsePositiveIntEnv(process.env.KEYLES
 export const KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT = 5;
 
 export function resolveKeylessHumanInteractionCap(): number {
-  return parsePositiveIntEnv(process.env.KEYLESS_HUMAN_INTERACTION_CAP, KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT);
+  return parsePositiveIntEnv(env.KEYLESS_HUMAN_INTERACTION_CAP, KEYLESS_HUMAN_INTERACTION_CAP_DEFAULT);
 }
 
 export const KEYLESS_DAILY_COUNTER_TTL_SECONDS = 86_400;

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OrganizationRepository, UserRepository } from '@novu/dal';
 import { uiComponent } from '@team-plain/typescript-sdk';
 import { differenceInDays } from 'date-fns';
+import { env } from '../../../config/env';
 import { PlainCardsCommand } from './plain-cards.command';
 
 @Injectable()
@@ -11,7 +12,7 @@ export class PlainCardsUsecase {
     private userRepository: UserRepository
   ) {}
   async fetchCustomerDetails(command: PlainCardsCommand) {
-    const key = `customer-details-${process.env.NOVU_REGION}`;
+    const key = `customer-details-${env.NOVU_REGION}`;
     if (!command?.customer?.externalId) {
       return {
         data: {},

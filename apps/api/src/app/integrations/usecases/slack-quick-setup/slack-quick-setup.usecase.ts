@@ -14,6 +14,7 @@ import {
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
 import axios, { AxiosError } from 'axios';
+import { env } from '../../../../config/env';
 import { humanRelayProfile } from '../../../agents/human-relay/human-relay-identity';
 import { AgentInboxFeaturesService } from '../../../human/services/agent-inbox-features.service';
 import { agentPictureOrDefaultUrl, type MascotLook } from '../../../human/services/agent-picture-url';
@@ -217,10 +218,7 @@ export class SlackQuickSetup {
     // over the standard `API_ROOT_URL` so a tunnelled API can be addressed
     // without rewriting the regular root URL. Matches the convention already
     // used by the Telegram and WhatsApp webhook configurators.
-    const apiBaseUrl = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
-      /\/$/,
-      ''
-    );
+    const apiBaseUrl = (env.AGENT_API_HOSTNAME ?? env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
     const oauthCallbackUrl = `${apiBaseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
     const displayName = this.sanitizeBotDisplayName(botName, nameFallback);
 

@@ -19,6 +19,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 
 @Injectable()
@@ -51,6 +52,7 @@ export class DeleteWorkflowUseCase {
       eventType: WebhookEventEnum.WORKFLOW_DELETED,
       objectType: WebhookObjectTypeEnum.WORKFLOW,
       payload: {
+        // biome-ignore lint/plugin: Existing webhook payload typing is outside this change.
         object: workflowEntity as unknown as Record<string, unknown>,
       },
       organizationId: command.organizationId,
@@ -122,8 +124,8 @@ export class DeleteWorkflowUseCase {
   }
 
   private async deleteTranslationGroup(command: DeleteWorkflowCommand, session: ClientSession) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

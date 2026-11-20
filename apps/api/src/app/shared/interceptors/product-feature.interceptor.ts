@@ -17,6 +17,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { Observable } from 'rxjs';
+import { env } from '../../../config/env';
 
 @Injectable()
 export class ProductFeatureInterceptor implements NestInterceptor {
@@ -25,7 +26,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
     private organizationRepository: CommunityOrganizationRepository
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const handler = context.getHandler();
     const classRef = context.getClass();
     const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
@@ -43,7 +44,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
       throw new UnauthorizedException();
     }
 
-    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && process.env.IS_SELF_HOSTED === 'true') {
+    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && env.IS_SELF_HOSTED) {
       return next.handle();
     }
 

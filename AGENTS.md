@@ -27,8 +27,8 @@ Backend variables are declared once and read through a typed `env` accessor. Eac
 - Read: in an app, `import { env } from '<relative path>/config/env'`; in `libs/application-generic`, its own `env`. Then `env.MY_VAR`. An undeclared name does not compile.
 - Add: a sorted key with a `description`, in the app's `config/env.ts` if only that app reads it, otherwise in the shared schema. Redeclaring a shared key in an app does not compile; when shared code starts reading an app key, move it to the shared schema. Put `type: 'number' | 'boolean'` and `default` in the declaration instead of parsing or falling back at the call site. If a service cannot start without it, also require it in that app's `config/env.validators.ts`.
 - Deprecate: `deprecated: 'Use NEW_VAR instead.'` plus a `/** @deprecated */` JSDoc on the key. Boot warns while it is set. Delete the key once nothing reads it.
-- Migrate: when you touch a `process.env` read, move it to `env`. `biome-plugins/no-process-env.grit` blocks `process.env` in the folders listed in its `biome.json` override; add a folder there once it is clean.
-- Keep `process.env` in dotenv loaders (`config/env.config.ts`), envalid validators, APM preloads (`instrument.ts`, `newrelic.ts`), `libs/dal` (it sits below application-generic) and tests (`env.X` reads values tests set on `process.env`).
+- Lint: `biome-plugins/no-process-env.grit` blocks `process.env` in the four apps' `src`. `libs/application-generic` still reads `process.env`; when you touch a read there, move it to `env`, and add the folder to the plugin's `biome.json` override once it is clean.
+- Keep `process.env` in dotenv loaders (`config/env.config.ts`), envalid validators, APM preloads (`instrument.ts`, `newrelic.ts`), `libs/dal` (it sits below application-generic) and tests (`env.X` reads values tests set on `process.env`). A family of variables read by a computed name, such as `API_RATE_LIMIT_*`, also keeps `process.env`, with `// biome-ignore lint/plugin: <why>` at the read.
 
 ## AI Boundaries
 

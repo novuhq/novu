@@ -4,6 +4,7 @@ import { ChannelEndpointRepository, type SubscriberEntity } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { WebClient } from '@slack/web-api';
 import type { Message } from 'chat';
+import { env } from '../../../config/env';
 import {
   type ContactHandle,
   contactHandleUpdate,
@@ -207,7 +208,7 @@ export class ContactHandleService {
       timeout: SLACK_LOOKUP_TIMEOUT_MS,
       retryConfig: { retries: 0 },
       rejectRateLimitedCalls: true,
-      ...(process.env.SLACK_API_URL ? { slackApiUrl: process.env.SLACK_API_URL } : {}),
+      ...(env.SLACK_API_URL ? { slackApiUrl: env.SLACK_API_URL } : {}),
     });
   }
 }

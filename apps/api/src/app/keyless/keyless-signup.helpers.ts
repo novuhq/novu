@@ -1,8 +1,9 @@
 import type { CardElement } from 'chat';
+import { env } from '../../config/env';
 import { buildHumanDashboardUrl } from '../shared/helpers/resolve-human-dashboard-base-url';
 
 export function resolveConnectClaimBaseUrl(): string {
-  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+  for (const candidate of [env.DASHBOARD_URL, env.FRONT_BASE_URL]) {
     const trimmed = candidate?.trim();
 
     // Some deployments store CORS-style regex patterns in these vars; skip them for URL building.
@@ -22,7 +23,7 @@ export function buildConnectClaimUrl(token: string): string {
 
 /** `human login` is approved on the Human dashboard, so it only works where one is configured. */
 export function isHumanBrowserLoginAvailable(): boolean {
-  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
+  return Boolean(env.HUMAN_DASHBOARD_URL?.trim());
 }
 
 /**
@@ -30,7 +31,7 @@ export function isHumanBrowserLoginAvailable(): boolean {
  * and on the dashboard otherwise (self-hosted, or before the website is live).
  */
 export function buildHumanClaimUrl(token: string): string {
-  if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
+  if (!env.HUMAN_DASHBOARD_URL?.trim()) {
     return buildConnectClaimUrl(token);
   }
 

@@ -13,6 +13,7 @@ import {
 import { type ContentPart, type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
+import { env } from '../../../config/env';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import {
@@ -359,7 +360,7 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private initWebhookHandler(): WebhookHandler | undefined {
-    const secret = process.env.THALAMUS_WEBHOOK_SECRET;
+    const secret = env.THALAMUS_WEBHOOK_SECRET;
     if (!secret) return undefined;
 
     return createWebhookHandler({

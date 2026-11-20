@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { env } from '../../../config/env';
 
 const DAY_TTL_BUFFER_SECONDS = 60 * 60;
 const MONTH_TTL_BUFFER_SECONDS = 24 * 60 * 60;
@@ -120,7 +121,7 @@ export class HumanMessageQuotaService {
   }
 
   private async reserve(organizationId: string, count: number): Promise<HumanMessageReservation> {
-    if (count <= 0 || process.env.IS_SELF_HOSTED === 'true') {
+    if (count <= 0 || env.IS_SELF_HOSTED) {
       return { organizationId, remaining: 0, unlimited: true };
     }
 

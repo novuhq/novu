@@ -5,6 +5,7 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import type http from 'http';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { env } from '../../../../config/env';
 import { AuthService } from '../auth.service';
 import { addNewRelicTraceAttributes } from './newrelic.util';
 
@@ -16,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: env.JWT_SECRET,
       passReqToCallback: true,
     });
   }

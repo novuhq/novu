@@ -11,6 +11,7 @@ import { PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-
 import { UserSessionData } from '@novu/shared';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { env } from '../../../config/env';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 import { buildLog } from '../utils/mappers';
 
@@ -48,6 +49,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const globalHandler = context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
     const handlerMetadata = this.reflector.get(LOG_ANALYTICS_KEY, context.getHandler());
     const handler = context.getHandler();
+    // biome-ignore lint/suspicious/noExplicitAny: Existing handler metadata lookup is outside this change.
     const customDecorator = handler && (handler as any)._analyticsStrategy;
 
     this.logger.debug(`Analytics logs globalHandler strategy: ${globalHandler}`);
@@ -57,7 +59,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     return globalHandler || handlerMetadata || customDecorator;
   }
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const shouldRun = await this.shouldRun(context);
 
     this.logger.debug(`Analytics logs should run LOG_ANALYTICS_KEY: ${shouldRun}`);
@@ -105,11 +107,9 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
     if (!shouldLog) return false;
 
-    const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
+    const isEnabled = env.IS_ANALYTICS_LOGS_ENABLED;
 
-    this.logger.debug(
-      `Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${process.env.IS_ANALYTICS_LOGS_ENABLED}, isEnabled: ${isEnabled}`
-    );
+    this.logger.debug(`Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${isEnabled}`);
 
     if (!isEnabled) return false;
 
@@ -124,7 +124,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const strategy = this.getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {
-      const eventResponse = (res as any).data as TriggerEventResponseDto;
+      const eventResponse = (res as { data: TriggerEventResponseDto }).data;
 
       if (eventResponse.transactionId) {
         return {
@@ -135,7 +135,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     }
 
     if (strategy === AnalyticsStrategyEnum.EVENTS_BULK) {
-      const bulkEventResponse = (res as any).data as TriggerEventResponseDto[];
+      const bulkEventResponse = (res as { data: TriggerEventResponseDto[] }).data;
 
       if (Array.isArray(bulkEventResponse)) {
         const transactionIds = bulkEventResponse

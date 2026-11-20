@@ -13,6 +13,7 @@ import {
 import { IEmailBlock, IMessageCTA, MessageTemplateContentType, UserSessionData } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
+import { env } from '../../config/env';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { TRANSLATIONS_SERVICE } from '../shared/constants';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -36,7 +37,7 @@ export class ContentTemplatesController {
     @UserSession() user: UserSessionData,
     @Body('content') content: string | IEmailBlock[],
     @Body('contentType') contentType: MessageTemplateContentType,
-    @Body('payload') payload: any,
+    @Body('payload') payload: Record<string, unknown>,
     @Body('subject') subject: string,
     @Body('layoutId') layoutId: string,
     @Body('locale') locale?: string
@@ -63,7 +64,7 @@ export class ContentTemplatesController {
   public async previewInApp(
     @UserSession() user: UserSessionData,
     @Body('content') content: string,
-    @Body('payload') payload: any,
+    @Body('payload') payload: Record<string, unknown>,
     @Body('cta') cta: IMessageCTA,
     @Body('locale') locale?: string
   ) {
@@ -87,7 +88,7 @@ export class ContentTemplatesController {
   public async previewSms(
     @UserSession() user: UserSessionData,
     @Body('content') content: string,
-    @Body('payload') payload: any,
+    @Body('payload') payload: Record<string, unknown>,
     @Body('locale') locale?: string
   ) {
     const i18nInstance = await this.initiateTranslations(user.environmentId, user.organizationId, locale);
@@ -109,7 +110,7 @@ export class ContentTemplatesController {
   public async previewChat(
     @UserSession() user: UserSessionData,
     @Body('content') content: string,
-    @Body('payload') payload: any,
+    @Body('payload') payload: Record<string, unknown>,
     @Body('locale') locale?: string
   ) {
     const i18nInstance = await this.initiateTranslations(user.environmentId, user.organizationId, locale);
@@ -132,7 +133,7 @@ export class ContentTemplatesController {
     @UserSession() user: UserSessionData,
     @Body('content') content: string,
     @Body('title') title: string,
-    @Body('payload') payload: any,
+    @Body('payload') payload: Record<string, unknown>,
     @Body('locale') locale?: string
   ) {
     const i18nInstance = await this.initiateTranslations(user.environmentId, user.organizationId, locale);
@@ -153,7 +154,7 @@ export class ContentTemplatesController {
 
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new BadRequestException('Translation module is not loaded');
         }

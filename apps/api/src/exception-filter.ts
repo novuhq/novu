@@ -9,6 +9,7 @@ import { Response } from 'express';
 import { ZodError } from 'zod';
 import { RequestWithReqId } from './app/shared/middleware/request-id.middleware';
 import { buildLog } from './app/shared/utils/mappers';
+import { env } from './config/env';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
 
 const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
@@ -100,7 +101,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Check if the analytics metadata was set by the guard (AnalyticsLogsGuard)
     if (req._shouldLogAnalytics !== true) return false;
 
-    const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
+    const isEnabled = env.IS_ANALYTICS_LOGS_ENABLED;
 
     return isEnabled;
   }
@@ -249,7 +250,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private getUuid(exception: unknown) {
-    if (process.env.SENTRY_DSN) {
+    if (env.SENTRY_DSN) {
       try {
         return captureException(exception);
       } catch (e) {

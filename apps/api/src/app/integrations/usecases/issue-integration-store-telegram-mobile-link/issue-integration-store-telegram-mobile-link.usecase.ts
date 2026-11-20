@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
+import { env } from '../../../../config/env';
 import { TelegramMobileLinkTokenService } from '../../../telegram-linking/telegram-mobile-link-token.service';
 import { IssueIntegrationStoreTelegramMobileLinkCommand } from './issue-integration-store-telegram-mobile-link.command';
 
@@ -41,7 +41,7 @@ export class IssueIntegrationStoreTelegramMobileLink {
   }
 
   private buildMobileUrl(token: string): string {
-    const base = (process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL || '').replace(/\/$/, '');
+    const base = (env.DASHBOARD_URL || env.FRONT_BASE_URL || '').replace(/\/$/, '');
 
     return `${base}${MOBILE_PATH}/${token}`;
   }

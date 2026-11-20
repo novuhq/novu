@@ -2,6 +2,7 @@ import { createECDH, createHash, createPrivateKey, createPublicKey, hkdfSync, Ke
 import { Injectable } from '@nestjs/common';
 import { ContextPayload, EnvironmentId, ISubscriberPayload, SubscriberId } from '@novu/shared';
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
+import { env } from '../../../config/env';
 
 type TokenTyp = `novu-${string}-${string}+jwt`;
 
@@ -128,7 +129,7 @@ function loadKeys(configured: string | undefined, jwtSecret: string): TokenKeys 
 
 @Injectable()
 export class NovuTokens {
-  private readonly keys = loadKeys(process.env.NOVU_TOKEN_SIGNING_KEYS, `${process.env.JWT_SECRET}`);
+  private readonly keys = loadKeys(env.NOVU_TOKEN_SIGNING_KEYS, `${env.JWT_SECRET}`);
 
   sign<K extends TokenKind>(kind: K, claims: TokenClaims[K], expiresInSeconds: number): SignedToken {
     const { typ, maxLifetimeSeconds } = TOKEN_KINDS[kind];

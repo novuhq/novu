@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { SendWebhookMessage, SvixProviderService } from '@novu/application-generic';
+import { env } from '../../config/env';
 import { NoopSendWebhookMessage } from '../inbox/usecases/noop-send-webhook-message.usecase';
 import { SharedModule } from '../shared/shared.module';
 import { OutboundWebhooksController } from './outbound-webhooks.controller';
@@ -13,7 +14,7 @@ const cachedOutboundWebhooksRootModule: Partial<Record<'enterprise' | 'community
 
 export const OutboundWebhooksModule = {
   forRoot(): DynamicModule {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
     const cacheKey = isEnterprise ? 'enterprise' : 'community';
     const hit = cachedOutboundWebhooksRootModule[cacheKey];
 

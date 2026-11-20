@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { UploadSkillFile } from '@novu/application-generic';
 import { Parser } from 'tar';
+import { env } from '../../../../config/env';
 
 export type ParsedGithubUrl = {
   owner: string;
@@ -230,7 +231,7 @@ function truncateWithEllipsis(value: string, max: number): string {
  * line of defense.
  */
 function buildGithubHeaders(): HeadersInit {
-  const token = process.env.GITHUB_API_TOKEN?.trim();
+  const token = env.GITHUB_API_TOKEN?.trim();
 
   return {
     'User-Agent': 'novu-agents-skill-uploader',
@@ -298,7 +299,7 @@ let warnedAboutMissingToken = false;
 
 function maybeWarnMissingToken(): void {
   if (warnedAboutMissingToken) return;
-  if (process.env.GITHUB_API_TOKEN?.trim()) return;
+  if (env.GITHUB_API_TOKEN?.trim()) return;
   warnedAboutMissingToken = true;
   // eslint-disable-next-line no-console -- bundle util is plain TS, no logger injected
   console.warn(
@@ -411,6 +412,7 @@ async function streamTarballToParser(parsed: ParsedGithubUrl, onEntry: (ctx: Ent
 
     const parser = new Parser();
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing tar entry filtering is outside this change.
     parser.on('entry', (entry: TarEntry) => {
       if (aborted) {
         entry.resume();
@@ -626,6 +628,7 @@ type RawTarEntry = {
  * Throws `Error` with user-facing messages on validation failures — callers
  * should wrap in `BadRequestException`.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing bundle fetch and validation is outside this change.
 export async function fetchAndDiscoverSkillBundles(
   parsed: ParsedGithubUrl,
   basenames: string[]
@@ -772,6 +775,7 @@ function findDeepestBundleRoot(entryPath: string, sortedRoots: string[]): string
   return deepest;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing basename matching is outside this change.
 function filterByBasenames(discovered: DiscoveredSkillBundle[], basenames: string[]): DiscoveredSkillBundle[] {
   const basenameToPaths = new Map<string, string[]>();
 

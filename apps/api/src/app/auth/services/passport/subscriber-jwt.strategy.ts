@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ApiAuthSchemeEnum, ISubscriberJwt } from '@novu/shared';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { env } from '../../../../config/env';
 import { SubscriberSession } from '../../../shared/framework/user.decorator';
 import { AuthService } from '../auth.service';
 
@@ -10,7 +11,7 @@ export class JwtSubscriberStrategy extends PassportStrategy(Strategy, 'subscribe
   constructor(private readonly authService: AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: env.JWT_SECRET,
     });
   }
 

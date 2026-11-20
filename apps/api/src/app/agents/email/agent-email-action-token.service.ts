@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
+import { env } from '../../../config/env';
 import { resolveHumanDashboardBaseUrl } from '../../shared/helpers/resolve-human-dashboard-base-url';
 import {
   buildOpaqueStorageKey,
@@ -108,7 +109,7 @@ export class AgentEmailActionTokenService {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    this.ttlSeconds = parseTtlFromEnv(process.env.AGENT_EMAIL_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
+    this.ttlSeconds = parseTtlFromEnv(env.AGENT_EMAIL_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
   }
 
   /**
@@ -139,7 +140,7 @@ export class AgentEmailActionTokenService {
    * with `API_ROOT_URL=http://127.0.0.1:3000`.
    */
   private resolveApiBaseUrl(): string {
-    const baseRaw = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    const baseRaw = (env.API_ROOT_URL ?? '').replace(/\/$/, '');
     if (!baseRaw) {
       throw new Error('API_ROOT_URL is not configured — cannot build email action URL');
     }
@@ -176,7 +177,7 @@ export class AgentEmailActionTokenService {
    * `/email-action`, so the address bar never shows the API. An API without the site serves it itself.
    */
   private resolveAgentInboxPageUrl(): string {
-    if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
+    if (!env.HUMAN_DASHBOARD_URL?.trim()) {
       return `${this.resolveApiBaseUrl()}/v1/human/email-actions`;
     }
 

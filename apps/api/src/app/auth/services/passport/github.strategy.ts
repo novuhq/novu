@@ -3,15 +3,16 @@ import { PassportStrategy } from '@nestjs/passport';
 import { AuthProviderEnum } from '@novu/shared';
 import githubPassport from 'passport-github2';
 import { Metadata, StateStoreStoreCallback } from 'passport-oauth2';
+import { env } from '../../../../config/env';
 import { AuthService } from '../auth.service';
 
 @Injectable()
 export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'github') {
   constructor(private authService: AuthService) {
     super({
-      clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
-      clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
-      callbackURL: `${process.env.API_ROOT_URL}/v1/auth/github/callback`,
+      clientID: env.GITHUB_OAUTH_CLIENT_ID,
+      clientSecret: env.GITHUB_OAUTH_CLIENT_SECRET,
+      callbackURL: `${env.API_ROOT_URL}/v1/auth/github/callback`,
       scope: ['user:email'],
       passReqToCallback: true,
       store: {

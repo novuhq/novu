@@ -31,6 +31,7 @@ import {
   SsrfBlockedError,
 } from '@novu/shared/utils/ssrf-url-validation';
 import type { Message, Root } from 'chat';
+import { env } from '../../../../config/env';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -90,7 +91,7 @@ function isLoopbackHttpsUrl(rawUrl: string): boolean {
  * operator's CA is trusted deployment-wide, so the downgrade is skipped.
  */
 function resolveAgentReplyApiOrigin(): string {
-  const port = process.env.PORT || '3000';
+  const port = env.PORT || '3000';
   const tlsEnabled = isNovuTlsEnabled();
   const localOrigin = tlsEnabled ? `https://localhost:${port}` : `http://localhost:${port}`;
 
@@ -101,7 +102,7 @@ function resolveAgentReplyApiOrigin(): string {
     return localOrigin;
   }
 
-  if (process.env.AGENT_API_HOSTNAME?.trim()) {
+  if (env.AGENT_API_HOSTNAME?.trim()) {
     return rootUrl;
   }
 

@@ -22,7 +22,7 @@ import { RequestIdMiddleware } from './app/shared/middleware/request-id.middlewa
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
-import { warnDeprecatedEnv } from './config/env';
+import { env, warnDeprecatedEnv } from './config/env';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
@@ -72,7 +72,7 @@ export async function bootstrap(
   // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
   const nestOptions: Record<string, boolean> = { bodyParser: false, abortOnError: false };
 
-  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+  if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
     rawBodyBuffer = agentRawBodyBuffer;
     nestOptions.rawBody = true;
   }
@@ -189,12 +189,12 @@ export async function bootstrap(
     process.exit(1);
   });
 
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(env.PORT || 3000);
 
   app.enableShutdownHooks();
 
   logger.info(
-    `Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT} over ${
+    `Started application in NODE_ENV=${env.NODE_ENV} on port ${env.PORT} over ${
       bootstrapOptions?.tlsConfig ? 'https' : 'http'
     }.`
   );

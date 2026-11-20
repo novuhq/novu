@@ -1,6 +1,6 @@
 import { getMcpIconUrl, MCP_SERVERS } from '@novu/shared';
 import type { Block } from '@slack/types';
-
+import { env } from '../../../../config/env';
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum, requiresShortConnectUrl } from '../../shared/enums/agent-platform.enum';
@@ -39,7 +39,7 @@ type BuildConnectCardParams = {
 };
 
 function resolveDashboardBaseUrl(): string {
-  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+  for (const candidate of [env.DASHBOARD_URL, env.FRONT_BASE_URL]) {
     const trimmed = candidate?.trim();
 
     if (!trimmed || trimmed.startsWith('^')) {

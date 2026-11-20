@@ -1,6 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsBoolean, ValidateNested } from 'class-validator';
+import { env } from '../../../config/env';
 
 /**
  * @deprecated Use an updated preference structure.
@@ -101,7 +102,7 @@ export class PreferencesDto {
 }
 
 // Optional: Runtime deprecation warning
-if (process.env.NODE_ENV !== 'production' && !process.env.CI) {
+if (env.NODE_ENV !== 'production' && !env.CI) {
   console.warn(
     'DEPRECATION WARNING: PreferencesDto and related classes are deprecated ' +
       'and will be removed in future versions. Please migrate to the new preferences structure.'

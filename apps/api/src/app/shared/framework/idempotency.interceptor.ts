@@ -22,6 +22,7 @@ import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/
 import { createHash } from 'crypto';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { env } from '../../../config/env';
 import { isInternalAuthScheme } from '../utils/auth.utils';
 import { EXCLUDE_FROM_IDEMPOTENCY } from './exclude-from-idempotency';
 import { restoreCachedHttpException, serializeCachedHttpError } from './idempotency-http-error';
@@ -151,7 +152,6 @@ export class IdempotencyInterceptor implements NestInterceptor {
       this.logger.error(message);
       throw new InternalServerErrorException(message);
     }
-    const env = process.env.NODE_ENV;
     /*
      * An API key is the organization's own client, but Internal tokens act for different members of
      * the same organization, so one member's key must never replay another member's response.
@@ -161,7 +161,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
       ? `${user.organizationId}:internal:${user._id}`
       : user.organizationId;
 
-    return `${env}-${scope}-${this.getIdempotencyKey(context)}`;
+    return `${env.NODE_ENV}-${scope}-${this.getIdempotencyKey(context)}`;
   }
 
   async setCache(

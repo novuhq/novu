@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ISubscriberJwt } from '@novu/shared';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { env } from '../../config/env';
 
 export const SUBSCRIBER_JWT_STATELESS_STRATEGY = 'subscriberJwtStateless';
 
@@ -21,7 +22,7 @@ export class SubscriberJwtStatelessStrategy extends PassportStrategy(Strategy, S
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: env.JWT_SECRET,
     });
   }
 

@@ -36,6 +36,7 @@ import {
   TriggerRecipientsPayload,
 } from '@novu/shared';
 import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
+import { env } from '../../../../config/env';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -419,7 +420,7 @@ export class ParseEventRequest {
       );
     }
 
-    const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    const dashboardBaseUrl = env.DASHBOARD_URL || env.FRONT_BASE_URL;
     let activityFeedLink: string | undefined;
     if (isClickHouseConfigured() && dashboardBaseUrl) {
       const isHttpLogsPageEnabled = await this.featureFlagService.getFlag({

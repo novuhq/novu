@@ -24,6 +24,7 @@ import {
   isHumanChromeContent,
   mintHumanOptions,
 } from '@novu/shared';
+import { env } from '../../../config/env';
 import { parseHumanActionId } from '../../agents/human-relay/human-action-id';
 import { isWhatsAppUndeliverable } from './whatsapp-delivery.errors';
 
@@ -67,7 +68,7 @@ export interface HumanDeliveryTarget {
 }
 
 export function resolveHumanPendingCap(): number {
-  const parsed = Number(process.env.HUMAN_PENDING_CAP);
+  const parsed = Number(env.HUMAN_PENDING_CAP);
 
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PENDING_CAP;
 }

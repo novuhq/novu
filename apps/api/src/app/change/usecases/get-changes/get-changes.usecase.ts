@@ -11,6 +11,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { TRANSLATIONS_SERVICE } from '../../../shared/constants';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
@@ -52,6 +53,7 @@ export class GetChanges {
     );
 
     const changes = await changeItems.reduce(async (prev, change) => {
+      // biome-ignore lint/suspicious/noExplicitAny: Existing change list typing is outside this change.
       const list: any[] = await prev;
       let item: Record<string, unknown> | IViewEntity = {};
       if (change.type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE) {
@@ -151,7 +153,7 @@ export class GetChanges {
     environmentId: string
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new BadRequestException('Translation module is not loaded');
         }
@@ -175,7 +177,7 @@ export class GetChanges {
     environmentId: string
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
           throw new BadRequestException('Translation module is not loaded');
         }

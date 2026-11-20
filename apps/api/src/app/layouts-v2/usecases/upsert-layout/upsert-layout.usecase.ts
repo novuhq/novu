@@ -23,6 +23,7 @@ import {
   ResourceTypeEnum,
   slugify,
 } from '@novu/shared';
+import { env } from '../../../../config/env';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
@@ -82,6 +83,7 @@ export class UpsertLayout {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
+          // biome-ignore lint/style/noNonNullAssertion: Existing V0 layout id typing is outside this change.
           layoutId: existingLayout._id!,
           name: command.layoutDto.name,
           type: existingLayout.type ?? ResourceTypeEnum.BRIDGE,
@@ -115,6 +117,7 @@ export class UpsertLayout {
 
     await this.toggleTranslationsForLayout(command, upsertedLayout);
 
+    // biome-ignore lint/style/noNonNullAssertion: Existing V0 layout id typing is outside this change.
     await this.upsertControlValues(command, upsertedLayout._id!);
 
     return await this.getLayoutUseCase.execute(
@@ -203,6 +206,7 @@ export class UpsertLayout {
         environmentId: command.environmentId,
         layoutId,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        // biome-ignore lint/plugin: Existing control values typing is outside this change.
         newControlValues: controlValues as unknown as Record<string, unknown>,
       })
     );
@@ -217,8 +221,8 @@ export class UpsertLayout {
   }
 
   private async toggleTranslationsForLayout(command: UpsertLayoutCommand, layoutDto: LayoutDtoV0) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

@@ -20,6 +20,7 @@ import {
   ContextPayload,
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
+import { env } from '../../../../../config/env';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureSubscriberProvisioned } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
@@ -89,6 +90,7 @@ export class GenerateSlackOauthUrl {
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
+    // biome-ignore lint/style/noNonNullAssertion: Existing client id handling is outside this change.
     return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
   }
 
@@ -257,7 +259,7 @@ export class GenerateSlackOauthUrl {
     // (see slack-quick-setup.usecase.ts). When AGENT_API_HOSTNAME is set
     // (typically a tunnel URL for local dev), both sides resolve to the
     // tunnel; otherwise both fall back to API_ROOT_URL.
-    const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    const rootUrl = env.AGENT_API_HOSTNAME ?? env.API_ROOT_URL;
     if (!rootUrl) {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
     }

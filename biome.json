@@ -473,6 +473,7 @@
     },
     {
       "includes": [
+        "apps/api/src/**/*.ts",
         "apps/inbound-mail/src/**/*.ts",
         "apps/worker/src/**/*.ts",
         "apps/ws/src/**/*.ts",
@@ -480,7 +481,11 @@
         "!**/config/env.config.ts",
         "!**/config/env.validators.ts",
         "!**/instrument.ts",
-        "!**/newrelic.ts"
+        "!**/newrelic.ts",
+        "!**/*.spec.ts",
+        "!**/*.e2e.ts",
+        "!**/*.e2e-ee.ts",
+        "!**/e2e/**"
       ],
       "plugins": ["./biome-plugins/no-process-env.grit"]
     },

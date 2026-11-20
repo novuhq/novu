@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
+import { env } from '../../../../../config/env';
 
 const PHOTON_API_TIMEOUT_MS = 10_000;
-const DEFAULT_SPECTRUM_URL = 'https://spectrum.photon.codes';
 const NORMALIZED_EVENTS_SCHEMA_VERSION = 'normalized-events.v1';
 
 export interface PhotonWebhookClientCredentials {
@@ -37,7 +37,7 @@ interface PhotonEnvelope<T> {
 }
 
 function spectrumUrl(): string {
-  return (process.env.PHOTON_SPECTRUM_URL ?? DEFAULT_SPECTRUM_URL).replace(/\/$/, '');
+  return env.PHOTON_SPECTRUM_URL.replace(/\/$/, '');
 }
 
 function buildClient(credentials: PhotonWebhookClientCredentials): AxiosInstance {

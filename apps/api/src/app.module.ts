@@ -70,10 +70,11 @@ import { WidgetsModule } from './app/widgets/widgets.module';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { WorkflowModule } from './app/workflows-v2/workflow.module';
+import { env } from './config/env';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+  if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
       modules.push(require('@novu/ee-translation')?.TranslationModule);
@@ -116,8 +117,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const enterpriseQuotaThrottlerInterceptor =
-  (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
-  require('@novu/ee-billing')?.QuotaThrottlerInterceptor
+  (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) && require('@novu/ee-billing')?.QuotaThrottlerInterceptor
     ? [
         {
           provide: APP_INTERCEPTOR,
@@ -184,7 +184,7 @@ const enterpriseModules = enterpriseImports();
 if (!isClerkEnabled()) {
   const communityModules = [InvitesModule];
   baseModules.push(...communityModules);
-} else if (process.env.IS_SELF_HOSTED !== 'true') {
+} else if (!env.IS_SELF_HOSTED) {
   baseModules.push(PartnerIntegrationsModule);
 }
 
@@ -215,15 +215,15 @@ const providers: Provider[] = [
   cacheService,
 ];
 
-if (process.env.SENTRY_DSN) {
+if (env.SENTRY_DSN) {
   modules.unshift(SentryModule.forRoot());
 }
 
-if (process.env.SEGMENT_TOKEN) {
+if (env.SEGMENT_TOKEN) {
   modules.push(AnalyticsModule);
 }
 
-if (process.env.NODE_ENV === 'test') {
+if (env.NODE_ENV === 'test') {
   modules.push(TestingModule);
 }
 
@@ -231,11 +231,9 @@ const novuBridgeModule = NovuModule.register(
   {
     apiPath: '/bridge/novu',
     client: new Client({
-      secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
+      secretKey: env.NOVU_INTERNAL_SECRET_KEY,
       strictAuthentication:
-        process.env.NODE_ENV === 'production' ||
-        process.env.NODE_ENV === 'dev' ||
-        process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true',
+        env.NODE_ENV === 'production' || env.NODE_ENV === 'dev' || env.NOVU_STRICT_AUTHENTICATION_ENABLED,
     }),
     controllerDecorators: [ApiExcludeController()],
     workflows: [usageLimitsWorkflow, usageReportWorkflow],
