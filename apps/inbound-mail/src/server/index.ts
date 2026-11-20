@@ -13,6 +13,7 @@ import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
 import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
+import { env } from '../config/env';
 
 import { extractEmailDomain } from './address-utils';
 import { uploadAttachmentsToS3 } from './attachment-uploader';
@@ -336,11 +337,7 @@ class Mailin extends events.EventEmitter {
                        * retrying them would create an infinite 451 loop. Inline-mode
                        * processing reports retriableFailedCount=0, so it is skipped too.
                        */
-                      if (
-                        mode === 's3' &&
-                        retriableFailedCount > 0 &&
-                        process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true'
-                      ) {
+                      if (mode === 's3' && retriableFailedCount > 0 && env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR) {
                         const error: Error & { responseCode?: number } = new Error(
                           `Attachment upload failed: ${retriableFailedCount} attachment(s) could not be stored`
                         );

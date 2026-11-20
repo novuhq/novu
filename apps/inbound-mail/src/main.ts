@@ -16,15 +16,16 @@ void runWithHydratedSecrets(async () => {
   const { validateEnv } = await import('./config/env.validators');
   validateEnv();
 
+  const { env, warnDeprecatedEnv } = await import('./config/env');
+  warnDeprecatedEnv();
+
   const { default: mailin } = await import('./server/index');
   const { default: logger } = await import('./server/logger');
-
-  const { env } = process;
 
   mailin.start(
     {
       port: env.PORT || 25,
-      host: env.HOST || '0.0.0.0',
+      host: env.HOST,
       disableDkim: env.disableDkim,
       disableSpf: env.disableSpf,
       disableSpamScore: env.disableSpamScore,

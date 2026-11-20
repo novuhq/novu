@@ -2,9 +2,11 @@ import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { IDestroy } from '@novu/application-generic';
-import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { MessageRepository } from '@novu/dal';
+import { ChannelTypeEnum, ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { instrument } from '@socket.io/admin-ui';
 import { Server, Socket } from 'socket.io';
+import { env } from '../config/env';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
@@ -167,7 +169,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  async sendMessage(userId: string, event: string, data: any, contextKeys: string[]) {
+  async sendMessage(userId: string, event: string, data: unknown, contextKeys: string[]) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);
 
@@ -213,7 +215,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     return messageContextKeys.every((key) => inboxContextKeys.includes(key));
   }
 
-  async sendUnreadCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+  async sendUnreadCountToAllConnections(userId: string, environmentId: string, messageRepository: MessageRepository) {
     if (!this.server) {
       Logger.error('No server available to send unread count', LOG_CONTEXT);
 
@@ -232,7 +234,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           messageRepository.getCount(
             environmentId,
             userId,
-            'in_app',
+            ChannelTypeEnum.IN_APP,
             { read: false },
             { limit: 101 },
             contextKeys,
@@ -242,7 +244,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
           messageRepository.getCountBySeverity(
             environmentId,
             userId,
-            'in_app',
+            ChannelTypeEnum.IN_APP,
             { read: false, snoozed: false },
             { limit: 99 },
             contextKeys
@@ -286,7 +288,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     }
   }
 
-  async sendUnseenCountToAllConnections(userId: string, environmentId: string, messageRepository: any) {
+  async sendUnseenCountToAllConnections(userId: string, environmentId: string, messageRepository: MessageRepository) {
     if (!this.server) {
       Logger.error('No server available to send unseen count', LOG_CONTEXT);
 
@@ -304,7 +306,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
         const unseenCount = await messageRepository.getCount(
           environmentId,
           userId,
-          'in_app',
+          ChannelTypeEnum.IN_APP,
           { seen: false },
           { limit: 101 },
           contextKeys,
@@ -363,15 +365,15 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   afterInit() {
-    if (!!process.env.SOCKET_IO_ADMIN_USERNAME && !!process.env.SOCKET_IO_ADMIN_PASSWORD_HASH) {
+    if (!!env.SOCKET_IO_ADMIN_USERNAME && !!env.SOCKET_IO_ADMIN_PASSWORD_HASH) {
       // For more information on how to use the admin UI, see https://socket.io/docs/v4/admin-ui/
       instrument(this.server, {
         auth: {
           type: 'basic',
-          username: process.env.SOCKET_IO_ADMIN_USERNAME,
-          password: process.env.SOCKET_IO_ADMIN_PASSWORD_HASH,
+          username: env.SOCKET_IO_ADMIN_USERNAME,
+          password: env.SOCKET_IO_ADMIN_PASSWORD_HASH,
         },
-        mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+        mode: env.NODE_ENV === 'production' ? 'production' : 'development',
         namespaceName: '/admin',
       });
     }

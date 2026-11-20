@@ -22,6 +22,7 @@ import { RequestIdMiddleware } from './app/shared/middleware/request-id.middlewa
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+import { warnDeprecatedEnv } from './config/env';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
@@ -42,6 +43,7 @@ const extendedBodySizeRoutes = [
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
 validateEnv();
+warnDeprecatedEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;
   tlsConfig?: NovuTlsConfig;

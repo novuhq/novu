@@ -14,11 +14,13 @@ import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
+import { env, warnDeprecatedEnv } from './config/env';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
+warnDeprecatedEnv();
 
 export async function bootstrap(tlsConfig?: NovuTlsConfig): Promise<INestApplication> {
   // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
@@ -77,12 +79,10 @@ export async function bootstrap(tlsConfig?: NovuTlsConfig): Promise<INestApplica
 
   await startAppInfra(app);
 
-  await app.listen(process.env.PORT as string);
+  await app.listen(env.PORT as string);
 
   Logger.log(
-    `[@novu/worker]: Listening for NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT} over ${
-      tlsConfig ? 'https' : 'http'
-    }`
+    `[@novu/worker]: Listening for NODE_ENV=${env.NODE_ENV} on port ${env.PORT} over ${tlsConfig ? 'https' : 'http'}`
   );
 
   return app;

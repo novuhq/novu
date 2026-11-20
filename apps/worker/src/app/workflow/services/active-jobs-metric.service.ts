@@ -7,6 +7,7 @@ import {
   WorkerOptions,
 } from '@novu/application-generic';
 import { CronExpressionEnum } from '@novu/shared';
+import { env } from '../../../config/env';
 
 const nr = require('newrelic');
 
@@ -21,9 +22,7 @@ export class ActiveJobsMetricService {
     public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService,
     private metricsService: MetricsService
   ) {
-    const hasMetricsBackend =
-      (process.env.NOVU_MANAGED_SERVICE === 'true' && !!process.env.NEW_RELIC_LICENSE_KEY) ||
-      process.env.ENABLE_OTEL === 'true';
+    const hasMetricsBackend = (env.NOVU_MANAGED_SERVICE && !!env.NEW_RELIC_LICENSE_KEY) || env.ENABLE_OTEL;
 
     if (hasMetricsBackend) {
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
@@ -92,7 +91,7 @@ export class ActiveJobsMetricService {
   private getWorkerProcessor() {
     return async () => {
       Logger.debug('metric job started', LOG_CONTEXT);
-      const deploymentName = process.env.FLEET_NAME ?? 'default';
+      const deploymentName = env.FLEET_NAME;
       let fatalError: unknown;
 
       for (const queueService of this.tokenList) {

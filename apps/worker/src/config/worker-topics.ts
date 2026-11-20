@@ -1,4 +1,5 @@
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
+import { env } from './env';
 
 /**
  * Queues each worker produces to, on top of the topic it consumes.
@@ -56,7 +57,10 @@ function isAcceptedActiveWorker(value: string): value is JobTopicNameEnum {
  * `metric-active-jobs` is not treated as "run every worker". That same list is
  * rejected once BullMQ is retired: nothing would be left to run.
  */
-export function parseActiveWorkers(raw: string | undefined, env: NodeJS.ProcessEnv = process.env): JobTopicNameEnum[] {
+export function parseActiveWorkers(
+  raw: string | undefined,
+  queueBackend: string | undefined = env.QUEUE_BACKEND
+): JobTopicNameEnum[] {
   const workers = (raw ?? '')
     .split(',')
     .map((entry) => entry.trim())
@@ -71,7 +75,7 @@ export function parseActiveWorkers(raw: string | undefined, env: NodeJS.ProcessE
       return entry;
     });
 
-  assertBullMqWorkersCanRun(workers, env);
+  assertBullMqWorkersCanRun(workers, queueBackend);
 
   return workers;
 }
@@ -82,8 +86,8 @@ export function parseActiveWorkers(raw: string | undefined, env: NodeJS.ProcessE
  * A list that also names an SQS worker still starts that worker; the metrics
  * entry is ignored because there are no BullMQ counters left to read.
  */
-function assertBullMqWorkersCanRun(workers: JobTopicNameEnum[], env: NodeJS.ProcessEnv): void {
-  const bullMqRetired = env.QUEUE_BACKEND?.trim() === QueueBackend.SQS;
+function assertBullMqWorkersCanRun(workers: JobTopicNameEnum[], queueBackend: string | undefined): void {
+  const bullMqRetired = queueBackend?.trim() === QueueBackend.SQS;
   const hasSqsWorker = workers.some((topic) => !BULLMQ_ONLY_WORKER_TOPICS.includes(topic));
 
   if (!bullMqRetired || workers.length === 0 || hasSqsWorker) {
@@ -96,7 +100,7 @@ function assertBullMqWorkersCanRun(workers: JobTopicNameEnum[], env: NodeJS.Proc
   );
 }
 
-export const workersToProcess: JobTopicNameEnum[] = parseActiveWorkers(process.env.ACTIVE_WORKERS, process.env);
+export const workersToProcess: JobTopicNameEnum[] = parseActiveWorkers(env.ACTIVE_WORKERS);
 
 /**
  * Every SQS topic this worker process touches: the ones its active workers

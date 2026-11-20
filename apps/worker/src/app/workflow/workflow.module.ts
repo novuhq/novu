@@ -1,4 +1,4 @@
-import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
+import { DynamicModule, FactoryProvider, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
   AttachmentRehydrator,
@@ -19,6 +19,7 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  INovuWorker,
   InboundDomainRouteDelivery,
   InMemoryProviderService,
   MsTeamsTokenService,
@@ -55,6 +56,7 @@ import {
   PreferencesRepository,
 } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { env } from '../../config/env';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { SharedModule } from '../shared/shared.module';
 import {
@@ -95,7 +97,7 @@ import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-j
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
       Logger.log('Importing enterprise modules', 'EnterpriseImport');
       if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
         Logger.log('Importing enterprise translations module', 'EnterpriseImport');
@@ -135,7 +137,7 @@ const REPOSITORIES = [
 const webhookProvider: Provider = {
   provide: SendWebhookMessage,
   useClass: (() => {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
 
     if (isEnterprise) {
       Logger.log('Using enterprise SendWebhookMessage provider', 'EnterpriseProvider');
@@ -150,11 +152,11 @@ const webhookProvider: Provider = {
 const svixProvider: Provider = {
   provide: 'SVIX_CLIENT',
   useFactory: () => {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
 
     if (isEnterprise) {
       Logger.log('Using enterprise SvixProviderService provider', 'EnterpriseProvider');
-      const apiKey = process.env.SVIX_API_KEY;
+      const apiKey = env.SVIX_API_KEY;
       if (!apiKey) {
         return null;
       }
@@ -234,11 +236,9 @@ const USE_CASES = [
 ];
 
 const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, RotatingConnectionTokenService];
-const activeWorkersToken: any = {
+const activeWorkersToken: FactoryProvider<INovuWorker[]> = {
   provide: 'ACTIVE_WORKERS',
-  useFactory: (...args: any[]) => {
-    return args;
-  },
+  useFactory: (...workers: INovuWorker[]) => workers,
   inject: ACTIVE_WORKERS,
 };
 

@@ -45,6 +45,7 @@ import {
 } from '@novu/shared';
 import type { RulesLogic } from 'json-logic-js';
 import jsonLogic from 'json-logic-js';
+import { env } from '../../../../config/env';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -156,7 +157,7 @@ export class SubscriberJobBound {
         timezone: subscriber?.timezone,
         data: subscriber?.data,
         channels: subscriber?.channels,
-        activeWorkerName: process.env.ACTIVE_WORKER,
+        activeWorkerName: env.ACTIVE_WORKER,
       })
     );
 
