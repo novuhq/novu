@@ -54,6 +54,7 @@ import {
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
 } from './dtos/human-invite.dto';
+import type { HumanMessageUsageResponseDto } from './dtos/human-message-usage.dto';
 import {
   ChangeOperatorEmailRequestDto,
   SetOperatorDefaultChannelRequestDto,
@@ -92,6 +93,7 @@ import {
   readHostId,
   readHostVia,
 } from './services/human-host-status.service';
+import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -162,7 +164,8 @@ export class HumanInteractionsController {
     private readonly hostStatus: HumanHostStatusService,
     private readonly updateContactUsecase: UpdateContact,
     private readonly showHumanAgentCardUsecase: ShowHumanAgentCard,
-    private readonly agentInboxFeatures: AgentInboxFeaturesService
+    private readonly agentInboxFeatures: AgentInboxFeaturesService,
+    private readonly messageQuota: HumanMessageQuotaService
   ) {}
 
   @Post('/interactions')
@@ -406,6 +409,19 @@ export class HumanInteractionsController {
     ]);
 
     return { ...address, canPickLook };
+  }
+
+  /**
+   * How many messages the account's agents sent to people today and this month, out of how many they may, as the
+   * dashboard shows it. Both are `null` where nothing is counted: self-hosted, or without the cache.
+   */
+  @Get('/message-usage')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  async getMessageUsage(@UserSession() user: UserSessionData): Promise<HumanMessageUsageResponseDto> {
+    const usage = await this.messageQuota.usage(user.organizationId);
+
+    return { daily: usage?.daily ?? null, monthly: usage?.monthly ?? null };
   }
 
   @Post('/setup')

@@ -249,6 +249,12 @@ To claim this setup and send email, run: npx @agentinbox/cli login
 This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
 ```
 
+```text
+Human message daily limit reached (50). Resets at 2026-11-21T00:00:00.000Z. (429)
+```
+
+The account has sent all the messages it may send today, or this month with `monthly`: nothing reaches anyone until the time it gives. Stop retrying. Agent Inbox has already told the operator, once, on their channel. Messages people send still come in.
+
 A missing channel endpoint tells you to `contact invite` that person. Do not invent a contact id.
 
 ## Your own API

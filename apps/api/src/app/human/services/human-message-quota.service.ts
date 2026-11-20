@@ -49,15 +49,34 @@ end
 return 1
 `;
 
+/**
+ * The operator hears that the account ran out of messages once per window, when its last credit is spent. The
+ * notice's own key sits next to the window's counter, in the same Redis Cluster slot.
+ */
+const CLAIM_NOTICE_SCRIPT = `
+local used = tonumber(redis.call('GET', KEYS[1]) or '0')
+if used < tonumber(ARGV[1]) then
+  return 0
+end
+if redis.call('SET', KEYS[2], '1', 'NX', 'EX', tonumber(ARGV[2])) then
+  return 1
+end
+return 0
+`;
+
 export type HumanMessageCap = 'daily' | 'monthly';
 
 export class HumanMessageQuotaExceededException extends HttpException {
-  constructor(cap: HumanMessageCap, limit: number, retryAfterSeconds: number, resetsAt: string) {
-    const window = cap === 'daily' ? 'daily' : 'monthly';
+  constructor(
+    readonly cap: HumanMessageCap,
+    readonly limit: number,
+    retryAfterSeconds: number,
+    readonly resetsAt: string
+  ) {
     super(
       {
         code: cap === 'daily' ? 'human_message_daily_cap' : 'human_message_monthly_cap',
-        message: `Human message ${window} limit reached (${limit}). Resets at ${resetsAt}.`,
+        message: `Human message ${cap} limit reached (${limit}). Resets at ${resetsAt}.`,
         retryAfterSeconds,
         cap,
       },
@@ -65,6 +84,11 @@ export class HumanMessageQuotaExceededException extends HttpException {
     );
   }
 }
+
+/** How much of one window the account has used, and when the window starts over. */
+export type HumanMessageWindowUsage = { used: number; limit: number; resetsAt: string };
+
+export type HumanMessageUsage = { daily: HumanMessageWindowUsage; monthly: HumanMessageWindowUsage };
 
 interface HumanMessageReservation {
   organizationId: string;
@@ -117,6 +141,67 @@ export class HumanMessageQuotaService {
       },
       release: () => this.releaseRemaining(reservation),
     };
+  }
+
+  /**
+   * Whether this refusal is the one that tells the operator: every credit of the window is spent, and nobody was
+   * told yet. A send to several people can be refused while a few credits remain; that isn't the limit yet.
+   */
+  async claimLimitNotice(organizationId: string, refusal: HumanMessageQuotaExceededException): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) {
+      return false;
+    }
+
+    const now = new Date();
+    const keys = humanMessageQuotaKeys(organizationId, now);
+    const daily = refusal.cap === 'daily';
+    const counter = daily ? keys.daily : keys.monthly;
+    const ttl = daily
+      ? secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS
+      : secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS;
+
+    try {
+      const claimed = await this.cacheService.eval<number>(
+        CLAIM_NOTICE_SCRIPT,
+        [counter, `${counter}:notice`],
+        [refusal.limit, ttl]
+      );
+
+      return claimed === 1;
+    } catch (err) {
+      this.logger.warn({ err, organizationId }, 'Failed to claim the message limit notice');
+
+      return false;
+    }
+  }
+
+  /**
+   * How much of today's and this month's messages the account has used, as the dashboard shows it. `null` where
+   * nothing is counted: self-hosted, or without the cache.
+   */
+  async usage(organizationId: string): Promise<HumanMessageUsage | null> {
+    if (process.env.IS_SELF_HOSTED === 'true' || !this.cacheService.cacheEnabled()) {
+      return null;
+    }
+
+    const now = new Date();
+    const keys = humanMessageQuotaKeys(organizationId, now);
+
+    try {
+      const [limits, [daily, monthly]] = await Promise.all([
+        this.limitsFor(organizationId),
+        this.cacheService.mget([keys.daily, keys.monthly]),
+      ]);
+
+      return {
+        daily: { used: Number(daily ?? 0), limit: limits.daily, resetsAt: nextUtcDay(now).toISOString() },
+        monthly: { used: Number(monthly ?? 0), limit: limits.monthly, resetsAt: nextUtcMonth(now).toISOString() },
+      };
+    } catch (err) {
+      this.logger.warn({ err, organizationId }, 'Failed to read the message usage');
+
+      return null;
+    }
   }
 
   private async reserve(organizationId: string, count: number): Promise<HumanMessageReservation> {
