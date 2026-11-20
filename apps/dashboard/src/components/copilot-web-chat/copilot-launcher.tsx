@@ -98,7 +98,7 @@ export function CopilotLauncher() {
       aria-expanded={isOpen}
       aria-keyshortcuts={isOpen || isOff ? undefined : 'Meta+J Control+J'}
       className={cn(
-        'fixed bottom-4 right-4 z-40 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out',
+        'fixed bottom-4 right-4 z-40 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
         isOpen ? 'pl-2.5' : 'pl-3',
         isOff
           ? 'cursor-not-allowed bg-bg-weak'
