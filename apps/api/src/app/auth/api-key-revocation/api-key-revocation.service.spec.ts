@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { REVOKED_API_KEY_MESSAGE, TRIGGER_ONLY_API_KEY_MESSAGE } from './api-key-revocation.policy';
@@ -30,8 +31,14 @@ function createKey(createdAt: Date): { apiKey: string; stored: StoredKey } {
   };
 }
 
-function setup(flagValue: unknown, storedKeys: StoredKey[]) {
-  const featureFlagsService = { getFlag: sinon.stub().resolves(flagValue) };
+function setup(flagValue: unknown, storedKeys: StoredKey[], { isHmacBlockEnabled = false } = {}) {
+  const featureFlagsService = {
+    getFlag: sinon
+      .stub()
+      .callsFake(async ({ key }: { key: string }) =>
+        key === FeatureFlagsKeysEnum.IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED ? isHmacBlockEnabled : flagValue
+      ),
+  };
   const environmentRepository = {
     findOne: sinon.stub().callsFake(async (query: Record<string, string>) => {
       const hash = query['apiKeys.hash'];
@@ -245,7 +252,7 @@ describe('ApiKeyRevocationService', () => {
       expect(signingKeys).to.deep.equal(['new-encrypted-key']);
     });
 
-    it('keeps every key in the other modes', async () => {
+    it('keeps every key in the other modes while the HMAC block is off', async () => {
       for (const flagValue of ['', flag('warn'), flag('block_except_allowed')]) {
         const { service } = setup(flagValue, []);
 
@@ -259,15 +266,43 @@ describe('ApiKeyRevocationService', () => {
       }
     });
 
-    it('reads the flag for the organization and environment of the keys', async () => {
+    it('leaves out the keys created before the cutoff in block_except_allowed while the HMAC block is on', async () => {
+      const { service } = setup(flag('block_except_allowed'), [], { isHmacBlockEnabled: true });
+
+      const signingKeys = await service.getSigningKeys({
+        organizationId: 'org-id',
+        environmentId: 'env-id',
+        apiKeys: createKeys(),
+      });
+
+      expect(signingKeys).to.deep.equal(['new-encrypted-key']);
+    });
+
+    it('keeps every key while the policy is off or in warn mode, even with the HMAC block on', async () => {
+      for (const flagValue of ['', flag('warn')]) {
+        const { service } = setup(flagValue, [], { isHmacBlockEnabled: true });
+
+        const signingKeys = await service.getSigningKeys({
+          organizationId: 'org-id',
+          environmentId: 'env-id',
+          apiKeys: createKeys(),
+        });
+
+        expect(signingKeys, JSON.stringify(flagValue)).to.deep.equal(['old-encrypted-key', 'new-encrypted-key']);
+      }
+    });
+
+    it('reads both flags for the organization and environment of the keys', async () => {
       const { service, featureFlagsService } = setup(flag('block_all'), []);
 
       await service.getSigningKeys({ organizationId: 'org-id', environmentId: 'env-id', apiKeys: [] });
 
-      expect(featureFlagsService.getFlag.firstCall.args[0]).to.deep.include({
-        organization: { _id: 'org-id' },
-        environment: { _id: 'env-id' },
-      });
+      const context = { organization: { _id: 'org-id' }, environment: { _id: 'env-id' }, component: 'api' };
+
+      expect(featureFlagsService.getFlag.getCalls().map((call) => call.args[0])).to.have.deep.members([
+        { key: FeatureFlagsKeysEnum.API_KEY_REVOCATION_POLICY, defaultValue: '', ...context },
+        { key: FeatureFlagsKeysEnum.IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED, defaultValue: false, ...context },
+      ]);
     });
   });
 });

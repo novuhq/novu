@@ -12,7 +12,8 @@ export enum ApiKeyRevocationModeEnum {
   WARN = 'warn',
   /**
    * Only the allowed routes keep working (the event trigger and agent reply routes by default). Every other call is
-   * rejected.
+   * rejected. The key keeps signing subscriber and context hashes unless `IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED`
+   * is on.
    */
   BLOCK_EXCEPT_ALLOWED = 'block_except_allowed',
   /** Every call is rejected, and the key no longer signs subscriber and context hashes. */
@@ -129,11 +130,20 @@ export function requiresRotation(policy: ApiKeyRevocationPolicy, keyCreatedAt: D
 /**
  * Whether a key's signatures still count: the subscriber and context hashes behind Inbox and notification center
  * sessions, chat connect links and web chat. These never send the key itself, so the route check cannot see them.
- * Only `block_all` takes signing away from keys created before the cutoff; the other modes keep end users' inboxes
- * working until the key is replaced.
+ * `block_all` takes signing away from keys created before the cutoff, and so does `block_except_allowed` while
+ * `IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED` is on. Otherwise end users' inboxes keep working until the key is
+ * replaced.
  */
-export function canSignWithApiKey(policy: ApiKeyRevocationPolicy, keyCreatedAt: Date | null): boolean {
-  return policy.mode !== ApiKeyRevocationModeEnum.BLOCK_ALL || !requiresRotation(policy, keyCreatedAt);
+export function canSignWithApiKey(
+  policy: ApiKeyRevocationPolicy,
+  keyCreatedAt: Date | null,
+  isHmacBlockEnabled: boolean
+): boolean {
+  const takesSigningAway =
+    policy.mode === ApiKeyRevocationModeEnum.BLOCK_ALL ||
+    (policy.mode === ApiKeyRevocationModeEnum.BLOCK_EXCEPT_ALLOWED && isHmacBlockEnabled);
+
+  return !takesSigningAway || !requiresRotation(policy, keyCreatedAt);
 }
 
 export function evaluateApiKeyRequest(
