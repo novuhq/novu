@@ -80,6 +80,14 @@ export async function extractStepSchemas(filePath: string): Promise<ExtractedSch
 function toJsonSchema(schema: unknown): Record<string, unknown> | undefined {
   if (!schema || typeof schema !== 'object') return undefined;
 
+  if (isZodV4Schema(schema)) {
+    try {
+      return zodV4ToJsonSchema(schema);
+    } catch {
+      return undefined;
+    }
+  }
+
   if (isZodSchema(schema)) {
     try {
       return zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0], {
@@ -109,4 +117,47 @@ function isZodSchema(value: unknown): boolean {
     typeof v['parse'] === 'function' ||
     typeof v['safeParse'] === 'function'
   );
+}
+
+type ZodV4Schema = {
+  _zod: unknown;
+  toJSONSchema: (params: Record<string, unknown>) => Record<string, unknown>;
+};
+
+// `zod-to-json-schema` only understands Zod v3 schemas and returns an empty schema for Zod v4 ones
+// (`zod@4`, or the `zod/v4` subpath of `zod@3.25`), so those use Zod's own converter.
+function isZodV4Schema(value: unknown): value is ZodV4Schema {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_zod' in value &&
+    typeof (value as { toJSONSchema?: unknown }).toJSONSchema === 'function'
+  );
+}
+
+// Keeps the output aligned with `zod-to-json-schema` for v3 schemas: draft-07, `.default()` fields
+// optional, and `additionalProperties: false` on objects that strip unknown keys.
+function zodV4ToJsonSchema(schema: ZodV4Schema): Record<string, unknown> {
+  return schema.toJSONSchema({
+    target: 'draft-7',
+    io: 'input',
+    unrepresentable: 'any',
+    override: ({
+      zodSchema,
+      jsonSchema,
+    }: {
+      zodSchema: { _zod: { def: { type: string; catchall?: unknown } } };
+      jsonSchema: Record<string, unknown>;
+    }) => {
+      const { def } = zodSchema._zod;
+      if (def.type === 'object' && def.catchall === undefined && jsonSchema.additionalProperties === undefined) {
+        jsonSchema.additionalProperties = false;
+      }
+      // Zod v4 emits `oneOf` for discriminated unions where `zod-to-json-schema` emitted `anyOf`.
+      if (def.type === 'union' && jsonSchema.oneOf !== undefined && jsonSchema.anyOf === undefined) {
+        jsonSchema.anyOf = jsonSchema.oneOf;
+        delete jsonSchema.oneOf;
+      }
+    },
+  });
 }
