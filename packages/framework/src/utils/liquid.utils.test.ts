@@ -9,6 +9,31 @@ describe('createLiquidEngine', () => {
     expect(engine).toBeInstanceOf(Liquid);
   });
 
+  describe('file tags', () => {
+    // package.json exists in the test cwd, so a disk-backed engine would return its contents.
+    const fileTemplates = [
+      "{% render 'package.json' %}",
+      "{% include 'package.json' %}",
+      "{% layout 'package.json' %}",
+      "{% assign f = 'package' | append: '.json' %}{% render f %}",
+      `{% render '${process.cwd()}/package.json' %}`,
+      "{% render 'constructor' %}",
+    ];
+
+    it.each(fileTemplates)('should not read files from disk for %s', async (template) => {
+      const engine = createLiquidEngine();
+
+      await expect(engine.parseAndRender(template, {})).rejects.toThrow(/ENOENT/);
+      expect(() => engine.parseAndRenderSync(template, {})).toThrow(/ENOENT/);
+    });
+
+    it('should not let options re-enable filesystem access', async () => {
+      const engine = createLiquidEngine({ root: [process.cwd()], partials: [process.cwd()] });
+
+      await expect(engine.parseAndRender("{% render 'package.json' %}", {})).rejects.toThrow(/ENOENT/);
+    });
+  });
+
   it('should register the default json filter', async () => {
     const engine = createLiquidEngine();
     const template = '{{ data | json }}';
