@@ -14,6 +14,7 @@ export const emailProviderSchemas = {
   nodemailer: nodemailerProviderSchemas,
   emailjs: genericProviderSchemas,
   'email-webhook': genericProviderSchemas,
+  groundmail: genericProviderSchemas,
   'infobip-email': genericProviderSchemas,
   mailersend: genericProviderSchemas,
   mailgun: mailgunProviderSchemas,

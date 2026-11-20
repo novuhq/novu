@@ -137,7 +137,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 Expand a channel below to browse supported providers.
 
 <details>
-<summary><strong>💌 Email</strong> (20 providers)</summary>
+<summary><strong>💌 Email</strong> (21 providers)</summary>
 
 | Provider |
 | --- |
@@ -148,6 +148,7 @@ Expand a channel below to browse supported providers.
 | [Custom SMTP](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/nodemailer) |
 | [Email Webhook](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/email-webhook) |
 | [Email.js](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/emailjs) |
+| [Groundmail](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/groundmail) |
 | [Infobip](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/infobip) |
 | [MailerSend](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailersend) |
 | [Mailgun](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/mailgun) |

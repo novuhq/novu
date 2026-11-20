@@ -91,6 +91,7 @@ export enum EmailProviderIdEnum {
   Infobip = 'infobip-email',
   Resend = 'resend',
   Plunk = 'plunk',
+  Groundmail = 'groundmail',
   MailerSend = 'mailersend',
   Mailtrap = 'mailtrap',
   Clickatell = 'clickatell',
