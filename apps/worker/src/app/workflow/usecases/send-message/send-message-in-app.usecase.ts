@@ -17,7 +17,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
-import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { InAppOutput } from '@novu/framework/internal';
 import {
   ActorTypeEnum,
@@ -31,6 +31,7 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { sanitizeInAppContent } from './sanitize-in-app-content';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
@@ -71,17 +72,15 @@ export class SendMessageInApp extends SendMessageBase {
       message: 'Sending In App',
     });
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.IN_APP,
       userId: command.userId,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -99,6 +98,8 @@ export class SendMessageInApp extends SendMessageBase {
       };
     }
 
+    const { integration } = selection;
+    await this.sendSelectedIntegrationExecution(command.job, selection);
     const { step } = command;
     if (!step.template) throw new PlatformException('Template not found');
 
@@ -132,15 +133,9 @@ export class SendMessageInApp extends SendMessageBase {
           }),
           i18nInstance
         );
-        content = compiled.content;
+        content = sanitizeInAppContent(compiled.content);
 
-        if (step.template.cta?.data?.url) {
-          step.template.cta.data.url = compiled.url;
-        }
-
-        if (step.template.cta?.action?.buttons) {
-          step.template.cta.action.buttons = compiled.ctaButtons;
-        }
+        step.template = withCompiledCta(step.template, compiled);
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -334,4 +329,28 @@ export class SendMessageInApp extends SendMessageBase {
       status: SendMessageStatus.SUCCESS,
     };
   }
+}
+
+/**
+ * Copy-on-write: `step.template` can be the cached workflow's template object (in-memory LRU), so
+ * the subscriber's compiled CTA must never be written into it in place — it would leak to the next
+ * subscriber of that workflow.
+ */
+function withCompiledCta(
+  template: MessageTemplateEntity,
+  compiled: Pick<Awaited<ReturnType<CompileInAppTemplate['execute']>>, 'url' | 'ctaButtons'>
+): MessageTemplateEntity {
+  const { cta } = template;
+  if (!cta?.data?.url && !cta?.action?.buttons) {
+    return template;
+  }
+
+  return {
+    ...template,
+    cta: {
+      ...cta,
+      ...(cta.data?.url ? { data: { ...cta.data, url: compiled.url } } : {}),
+      ...(cta.action?.buttons ? { action: { ...cta.action, buttons: compiled.ctaButtons } } : {}),
+    },
+  };
 }

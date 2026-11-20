@@ -1,8 +1,10 @@
-import { getPackageFolders } from './get-packages-folder.mjs';
-import spawn from 'cross-spawn';
-import { fileURLToPath } from 'url';
-import path from 'path';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import spawn from 'cross-spawn';
+import { getPackageFolders } from './get-packages-folder.mjs';
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
@@ -92,7 +94,7 @@ function getAffectedCommandResult(str) {
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
-  const cachePath = taskName + baseBranch.replace('/', '').replace('/', '') + '-contain-task-cache.json';
+  const cachePath = `${taskName + baseBranch.replace('/', '').replace('/', '')}-contain-task-cache.json`;
 
   const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
@@ -115,15 +117,47 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
   // console.log("nx output:\n" + affectedCommandResult)
 
   // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
-  const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
+  let result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
+
+  // Nx maps the `.source` submodule pointer to no project, so a bump of it, which is how most enterprise changes
+  // reach this repo, would otherwise affect nothing.
+  if (isEnterpriseSourceChanged(baseBranch)) {
+    result = [...new Set([...result, ...(await enterpriseProjectsContainingTask(taskName))])];
+  }
 
   writeFileSync(cachePath, JSON.stringify(result));
 
   return result;
 }
 
+function git(...args) {
+  return execFileSync('git', args, {
+    cwd: ROOT_PATH,
+    encoding: ENCODING_TYPE,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  }).trim();
+}
+
+function isEnterpriseSourceChanged(baseBranch) {
+  // Same range Nx diffs: from the merge base of the base branch and NX_HEAD (or HEAD), falling back to the base branch
+  // itself when the shallow CI clone doesn't reach the merge base.
+  const head = process.env.NX_HEAD || 'HEAD';
+  let from = baseBranch;
+  try {
+    from = git('merge-base', baseBranch, head);
+  } catch {}
+
+  return git('diff', '--name-only', from, head, '--', '.source').length > 0;
+}
+
+async function enterpriseProjectsContainingTask(taskName) {
+  const commandResult = await pnpmRun('nx', 'show', 'projects', '--withTarget', taskName, '--json');
+
+  return JSON.parse(getAffectedCommandResult(commandResult)).filter((project) => project.startsWith('@novu/ee-'));
+}
+
 async function allProjectsContainingTask(taskName) {
-  const cachePath = taskName + '-all-contain-task-cache.json';
+  const cachePath = `${taskName}-all-contain-task-cache.json`;
 
   const isCacheExists = existsSync(cachePath);
   if (isCacheExists) {
@@ -159,6 +193,7 @@ async function printAffectedProjectsContainingTask() {
     BASE_BRANCH_NAME === ALL_FLAG
       ? await allProjectsContainingTask(TASK_NAME)
       : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
+  const allProjects = projects;
 
   const foundProviders = projects.filter((project) => providers.includes(project));
   if (foundProviders.length) {
@@ -181,6 +216,8 @@ async function printAffectedProjectsContainingTask() {
     console.log(JSON.stringify(foundPackages));
   } else if (GROUP === 'libs') {
     console.log(JSON.stringify(foundLibs));
+  } else if (GROUP === 'all') {
+    console.log(JSON.stringify(allProjects));
   } else {
     console.log(JSON.stringify(projects));
   }

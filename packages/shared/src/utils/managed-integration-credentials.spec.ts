@@ -68,7 +68,7 @@ describe('buildVerifyFingerprint', () => {
       buildVerifyFingerprint(AgentRuntimeProviderIdEnum.AnthropicAws, {
         apiKey: 'key',
       })
-    ).toBe(':key');
+    ).toBe('::key');
   });
 });
 

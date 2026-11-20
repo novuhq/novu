@@ -267,9 +267,8 @@ describe('SyncAgentToEnvironment usecase', () => {
       agentRepo.findOne.onFirstCall().resolves(sourceAgent);
       agentRepo.findOne.onSecondCall().resolves(targetAgent);
       agentIntegrationRepo.find.onFirstCall().resolves([]);
-      integrationRepo.find.onFirstCall().resolves([]);
       agentIntegrationRepo.find.onSecondCall().resolves([manualLink]);
-      integrationRepo.find.onSecondCall().resolves([manualIntegration]);
+      integrationRepo.find.onFirstCall().resolves([manualIntegration]);
 
       await buildUsecase().execute(baseCommand());
 

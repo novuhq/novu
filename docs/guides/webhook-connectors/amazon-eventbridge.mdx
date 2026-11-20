@@ -1,0 +1,193 @@
+---
+title: 'Send webhook events to Amazon EventBridge'
+description: 'Configure the Amazon EventBridge webhook connector to publish Novu events to an event bus, including the batch transformation contract, detail type behavior, and rule matching.'
+sidebarTitle: 'Amazon EventBridge'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import WebhookBatchInput from "/snippets/webhook-batch-input.mdx";
+
+The Amazon EventBridge connector publishes selected Novu webhook events to an EventBridge event bus. Novu delivers events in batches, and every event in a batch is sent to the bus as a separate entry. Use this connector to route Novu events with EventBridge rules to targets such as Lambda functions, Step Functions state machines, or queues, without hosting an HTTP receiver.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An existing event bus in the AWS account and region you want to publish to, or the default bus
+- An AWS access key ID and secret access key for a principal that can put events on that bus
+- Permission to manage webhook endpoints in the Novu environment you are configuring
+- A rule and target on the bus, or CloudWatch Logs as a target, so you can observe delivered events
+
+### Required AWS permission
+
+Batches are delivered with the `PutEvents` API, which is authorized by the `events:PutEvents` action on the destination bus. Additional permissions may be required by your own setup, for example KMS key permissions when the bus uses encryption with a customer managed key, or permissions needed to satisfy an organizational policy, service control policy, or resource policy condition.
+
+Novu configures this connector through the embedded webhook portal. The portal collects the bus name and credentials and does not create the bus, create rules, or evaluate an IAM policy document for you.
+
+## Configuration
+
+These are the fields collected for the Amazon EventBridge connector.
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Event bus name** | Yes | Name or ARN of the event bus that receives the events. |
+| **Detail type** | No | Free-form string with a maximum of 128 characters, used as the `detail-type` of each event. Defaults to `application/json`. |
+| **Region** | Yes | AWS region that hosts the event bus. |
+| **Access key ID** | Yes | AWS access key ID used to authenticate. |
+| **Secret access key** | Yes | AWS secret access key paired with the access key ID. |
+| **Transformation** | Yes | JavaScript that shapes the `detail` body of each event. |
+
+There is no webhook URL field for this connector, and no custom endpoint field. Delivery targets the bus through the AWS EventBridge API.
+
+## Event envelope
+
+Each published event uses the following envelope:
+
+| Envelope field | Value |
+| --- | --- |
+| `source` | Set automatically by the delivery system and not configurable in the transformation. The documented form is `svix-webhooks-<app_id>`, where the application id is internal to your Novu environment. |
+| `detail-type` | The configured **Detail type**, or `application/json` when left empty. |
+| `detail` | One string from the transformation's `payloads` array. |
+
+Write EventBridge rules that match on `source` and `detail-type`. Because the `source` value contains an internal application id, send a test event first and read the exact `source` from the received event before you pin a rule to it. If you want a stable, human-readable discriminator, set **Detail type** and match on that.
+
+## Transformation contract
+
+The handler receives a batch and returns the event details to publish.
+
+<WebhookBatchInput />
+
+The handler must return:
+
+```ts
+{
+  payloads: string[];
+}
+```
+
+Each string in `payloads` becomes the `detail` of one EventBridge event. The default template serializes each event to a JSON string:
+
+```js
+function handler(input) {
+  const payloads = input.events.map((event) => JSON.stringify(event));
+
+  return {
+    payloads,
+  };
+}
+```
+
+With the default template, two events produce two `detail` bodies:
+
+```json
+{"payload":{"email":"joe@enterprise.io"},"eventType":"user.created"}
+```
+
+```json
+{"payload":{"id":12,"timestamp":"2025-07-21T14:23:17.861Z"},"eventType":"user.login"}
+```
+
+### Novu example
+
+This example keeps the Novu event type at the top level of `detail`, so rules can match on it with a content filter even though `detail-type` is a single configured value for the endpoint.
+
+```js
+function handler(input) {
+  const payloads = input.events.map((event) =>
+    JSON.stringify({
+      eventType: event.eventType,
+      payload: event.payload,
+    })
+  );
+
+  return {
+    payloads,
+  };
+}
+```
+
+Entries in `payloads` must be strings. Returning objects instead of strings does not match the contract, so serialize with `JSON.stringify` before returning. The number of strings you return controls how many events are put on the bus, so you can filter a batch by returning fewer entries.
+
+### Batching and limits
+
+EventBridge accepts at most 10 entries per request, so larger batches are automatically split across multiple `PutEvents` calls. Do not assume a specific endpoint batch size or wait interval. Design rules and targets to handle each event independently, because entries from the same Novu batch can be delivered in separate requests.
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the event bus
+
+Create the bus or choose the default bus, and add a rule with an observable target so you can inspect delivered events. A CloudWatch Logs target is convenient for the first test.
+  </Step>
+
+  <Step>
+## Create credentials
+
+Create an access key for a principal that can perform `events:PutEvents` on the bus. If the bus is encrypted with a customer managed key, confirm the credentials can use that key.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Amazon EventBridge" />
+
+  <Step>
+## Enter connection details
+
+Enter **Event bus name**, **Region**, **Access key ID**, and **Secret access key**. Set **Detail type** if you want a stable value to match in rules, and keep it within 128 characters.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided template and send a test before customizing. Keep every entry in `payloads` a serialized string, and include any field your rules need to filter on inside `detail`.
+  </Step>
+
+  <Step>
+## Select event types
+
+Select the [event types](/platform/developer/webhooks/event-types) you want to publish. Only selected event types reach the endpoint and its transformation, so start with one event type when validating a new bus.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint, open **Testing**, and send an example for a subscribed event type. Confirm the attempt succeeded in **Logs**, then inspect the rule target and compare the received `detail` with the logged transformation output.
+  </Step>
+
+  <Step>
+## Finalize the rule pattern
+
+Using the received event, record the exact `source` and `detail-type` values and narrow your rule pattern to them. Add content filters on `detail` fields if one endpoint carries several Novu event types.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+Check the following in AWS after a successful test:
+
+- The rule target received the event, for example a new CloudWatch Logs entry appeared.
+- `detail-type` matches your configured value, or `application/json` when you left it empty.
+- `detail` parses as JSON and contains the fields your targets expect.
+- Event counts grow per returned `payloads` entry rather than per delivered batch.
+
+An event bus with no matching rule accepts the event and delivers it nowhere, so always verify through a rule target.
+
+## Troubleshooting
+
+- **Access denied on delivery**: The credentials cannot perform `events:PutEvents` on this bus. Check the identity policy, the bus resource policy, and any condition that restricts the caller.
+- **The bus is not found**: Confirm the bus name or ARN is exact, and that the configured region hosts that bus. A bus in another region will not receive the events.
+- **Delivery succeeds but no target runs**: No rule matched. Compare your rule pattern with the actual `source` and `detail-type` on a received event, and remember `source` contains an internal application id.
+- **All events look the same to rules**: `detail-type` is a single configured value per endpoint. Add a discriminator such as the event type inside `detail` and match with a content filter.
+- **Detail type is rejected**: Keep the value within the 128 character maximum.
+- **Targets cannot parse the detail**: Confirm each `payloads` entry is a serialized JSON string rather than an object.
+- **Some event types never arrive**: Review the endpoint's selected event types, and test each event type separately from the **Testing** tab.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix Amazon EventBridge endpoints](https://docs.svix.com/advanced-endpoints/eventbridge)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Amazon EventBridge documentation](https://docs.aws.amazon.com/eventbridge/)

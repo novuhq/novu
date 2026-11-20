@@ -6,7 +6,7 @@ import { EmailHeaderLogoWithCoverImage } from '@/components/icons/email-header-l
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
-export const createFooterPlainText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
+const createFooterPlainText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -49,9 +49,7 @@ export const createFooterPlainText: (props: { track: ReturnType<typeof useTeleme
   };
 };
 
-export const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -113,9 +111,7 @@ export const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof
   };
 };
 
-export const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -290,9 +286,7 @@ export const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof 
   };
 };
 
-export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {

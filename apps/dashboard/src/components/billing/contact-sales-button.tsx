@@ -1,15 +1,26 @@
 import { getCalApi } from '@calcom/embed-react';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useEffect } from 'react';
-import { Button } from '@/components/primitives/button';
+import { Button, type ButtonProps } from '@/components/primitives/button';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 
-interface ContactSalesButtonProps {
-  className?: string;
-}
+type ContactSalesButtonProps = Pick<
+  ButtonProps,
+  'className' | 'variant' | 'mode' | 'size' | 'trailingIcon' | 'children'
+> & {
+  utmCampaign?: string;
+};
 
-export function ContactSalesButton({ className }: ContactSalesButtonProps) {
+export function ContactSalesButton({
+  className,
+  utmCampaign = 'billing_page',
+  variant = 'secondary',
+  mode = 'lighter',
+  size = 'xs',
+  trailingIcon,
+  children = 'Contact sales',
+}: ContactSalesButtonProps) {
   const track = useTelemetry();
 
   useEffect(() => {
@@ -22,22 +33,29 @@ export function ContactSalesButton({ className }: ContactSalesButtonProps) {
   const handleContactSales = () => {
     track(TelemetryEvent.BILLING_CONTACT_SALES_CLICKED, {
       intendedPlan: ApiServiceLevelEnum.ENTERPRISE,
-      source: 'billing_page',
+      source: utmCampaign,
     });
   };
 
   return (
     <Button
-      mode="lighter"
-      variant="secondary"
-      size="xs"
+      type="button"
+      mode={mode}
+      variant={variant}
+      size={size}
+      trailingIcon={trailingIcon}
       className={className}
       data-cal-namespace="novu-meeting"
       data-cal-link="team/novu/novu-meeting"
-      data-cal-config='{"layout":"month_view"}'
+      data-cal-config={JSON.stringify({
+        layout: 'month_view',
+        utm_source: 'dashboard',
+        utm_medium: 'billing',
+        utm_campaign: utmCampaign,
+      })}
       onClick={handleContactSales}
     >
-      Contact sales
+      {children}
     </Button>
   );
 }

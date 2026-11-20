@@ -1,0 +1,107 @@
+---
+title: 'Google Workspace directory sync'
+sidebarTitle: 'Google Workspace'
+description: 'Sync Google Workspace users into Novu with a read-only service account and domain-wide delegation. This path does not use SCIM.'
+---
+
+import DirectorySyncPauseAndRemove from "/snippets/directory-sync-pause-and-remove.mdx";
+
+<Note>
+  Directory sync is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). It sits under SSO on **Settings** > **Organization** > **Security**, which the organization **Owner** sees after we enable self-serve. Shared offboarding behavior is on [Directory sync](/platform/account/directory-sync). The SAML app comes from [Google Workspace SSO](/platform/account/sso/google-workspace).
+</Note>
+
+Google Workspace has no SCIM endpoint and no bearer token. Novu reads the directory with a Google Cloud service account, about every five minutes. The read includes users and groups in the Workspace domain. Only users whose email is on a verified domain for the SSO connection are provisioned into the organization.
+
+You need a Google Cloud project and a Workspace Super Administrator for the delegation step. The SAML app and this service account are separate. Turning on the SAML app does not sync the directory.
+
+## Before you start
+
+- The [Google Workspace SSO](/platform/account/sso/google-workspace) connection exists. It does not have to be activated. People can be synced before they can sign in through SAML.
+- The Workspace domain you care about is verified on that connection.
+- Access to a Google Cloud project where you can enable APIs and create service accounts.
+- A Workspace Super Administrator, to grant domain-wide delegation.
+
+There is no token to copy. You upload a JSON key and the email of a Workspace admin.
+
+## Create the service account
+
+<Steps>
+  <Step title="Enable the Admin SDK API">
+    In the [Google Cloud console](https://console.cloud.google.com), select or create a project. Under **APIs & Services**, enable the **Admin SDK API**. The service account cannot read the directory until this API is enabled on that project.
+  </Step>
+  <Step title="Create a service account and a JSON key">
+    Go to **IAM & Admin** > **Service Accounts** and select **Create service account**. No project roles are required. Do not grant this account an editor or admin role on the project. It does not need one.
+
+    Open the service account, then **Keys** > **Add key** > **Create new key** > **JSON**. Download the file and store it somewhere you can delete later. Copy the service account's **Unique ID**. Google also calls this the client ID. You need it for domain-wide delegation. It is not the service account email address.
+  </Step>
+  <Step title="Grant domain-wide delegation">
+    This step requires a Workspace Super Administrator. In the [Google Admin console](https://admin.google.com), go to **Security** > **Access and data control** > **API controls** > **Domain-wide delegation**. Select **Add new**, paste the service account client ID, and grant only these scopes:
+
+    ```text
+    https://www.googleapis.com/auth/admin.directory.user.readonly
+    https://www.googleapis.com/auth/admin.directory.group.readonly
+    ```
+
+    The scopes are read-only. They cannot create, suspend, or delete Workspace users. If either scope is missing, or the client ID is the service account email instead of the Unique ID, the upload in Novu fails before anything is stored.
+  </Step>
+  <Step title="Upload the key in Novu">
+    On the Security tab, select **Upload JSON key**. Enter the email address of a Workspace admin that the service account should impersonate while reading the directory. That person has to be a Workspace admin. The Super Administrator who granted delegation can be that address, or it can be another admin.
+
+    Novu checks the credentials against the directory before storing them. A missing scope, the wrong client ID, or an admin email that cannot read the directory fails here, not on the first scheduled sync. A successful check is what turns the directory on. There is no second activate step.
+  </Step>
+</Steps>
+
+## What happens to the key
+
+- After upload, the key cannot be viewed or downloaded from Novu.
+- Uploading a replacement destroys the stored copy. It does not revoke the key in Google Cloud. Delete the old key under the service account's **Keys** tab if it may have leaked.
+- Removing the directory also destroys the stored copy. Delete the key in Google Cloud as well if you are retiring the service account. See below for what removal does to membership.
+- The directory cannot be activated again until a key is stored.
+
+## What gets synced
+
+Google users map the same way as SCIM users. The primary email is used for both the identifier and the email address. You do not configure an `emails` attribute.
+
+| Directory field | Novu user field |
+| --- | --- |
+| Primary email | Username and email address |
+| Given name | First name |
+| Family name | Last name |
+
+Suspending or archiving a user in Workspace deprovisions them on a following sync. Their Novu sessions are revoked. The Novu account is not deleted.
+
+Groups are read with the directory. They do not change Novu roles from the Security tab. Ask us if you want a Google group to set Owner, Admin, Author, or Viewer. Only direct membership would count.
+
+Users whose email is not on a verified domain are not provisioned, even though the service account can see them.
+
+## Test the sync
+
+On the test step there is nothing to push from the Admin console. The step shows a directory sync row with the last result, and **Sync now**. **Sync now** reads the directory immediately instead of waiting up to five minutes.
+
+**Complete** closes the wizard. The directory is already active if the key was accepted.
+
+The scheduled read continues about every five minutes after that. **Edit** on the Security tab is where you replace the JSON key or run another sync.
+
+## When someone leaves
+
+Suspend or archive them in Workspace, or remove them from the directory, then use **Sync now** if you do not want to wait for the next poll.
+
+If they were also invited from **Settings** > **Team**, that membership stays after the directory deprovisions them. Remove it by hand.
+
+<DirectorySyncPauseAndRemove />
+
+## If the upload or the sync fails
+
+<AccordionGroup>
+  <Accordion title="Upload JSON key is rejected">
+    Confirm the Admin SDK API is enabled, the delegation client ID is the service account **Unique ID**, both read-only scopes are granted, and the impersonated email is a Workspace admin. Novu validates this before it stores the key, so the error on this step is the configuration, not a later sync.
+  </Accordion>
+  <Accordion title="Sync now succeeds and a user is missing">
+    Their primary email is not on a verified domain for the SSO connection, or they are suspended or archived. The service account reads the whole Workspace domain. Novu only provisions the verified domains.
+  </Accordion>
+  <Accordion title="A suspended user can still open Novu">
+    Run **Sync now**, or wait for the five-minute poll. Then check **Settings** > **Team** for an invitation membership that directory sync does not remove.
+  </Accordion>
+</AccordionGroup>
+
+Email [support@novu.co](mailto:support@novu.co) if the key is rejected and the four checks above are in place. Include the Workspace domain and whether delegation was added with the Unique ID.

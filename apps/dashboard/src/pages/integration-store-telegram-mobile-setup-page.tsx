@@ -101,8 +101,8 @@ function SetupForm({ token }: SetupFormProps) {
           Finish setting up your Telegram bot
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
-          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and add the Telegram
-          integration to your Novu environment: nothing else to fill in.
+          Create a Telegram bot with BotFather, then paste the confirmation message here: we&apos;ll detect the bot
+          token and add the Telegram integration to your Novu environment.
         </p>
       </div>
 
@@ -110,6 +110,22 @@ function SetupForm({ token }: SetupFormProps) {
         <label htmlFor="bot-message" className="text-label-xs text-text-strong font-medium">
           BotFather confirmation message
         </label>
+        <ol className="text-text-soft text-label-xs ml-4 list-decimal space-y-1 leading-4">
+          <li>
+            Open{' '}
+            <a
+              href="https://t.me/botfather"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-strong underline"
+            >
+              @BotFather
+            </a>{' '}
+            in Telegram
+          </li>
+          <li>Send /newbot and pick a name and a username for your bot</li>
+          <li>Copy the whole reply that starts with &quot;Done!&quot; and paste it below</li>
+        </ol>
         <Textarea
           id="bot-message"
           simple

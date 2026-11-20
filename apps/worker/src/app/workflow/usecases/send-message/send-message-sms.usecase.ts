@@ -28,9 +28,16 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+
+type SmsMessageOverrides = {
+  to?: string;
+  from?: string;
+  content?: string;
+  customData?: Record<string, unknown>;
+};
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -62,15 +69,13 @@ export class SendMessageSms extends SendMessageBase {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
-    const integration = await this.getIntegration({
+    const selection = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
-      filterData: {
-        tenant: command.job.tenant,
-      },
+      filterData: this.getIntegrationFilterData(command),
     });
 
     addBreadcrumb({
@@ -83,11 +88,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
 
     if (template) {
       step.template = template;
@@ -98,6 +98,12 @@ export class SendMessageSms extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -119,9 +125,7 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    const phone = command.payload.phone || subscriber.phone;
-
-    if (!integration) {
+    if (!selection) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -146,12 +150,21 @@ export class SendMessageSms extends SendMessageBase {
       };
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const { integration } = selection;
 
-    const overrides = {
-      ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
-      ...(command.overrides[integration?.providerId] || {}),
-    };
+    // Conditions or an integration override can send through a different provider
+    // than the one snapshotted onto the job. message_sent traces read job.providerId.
+    command.job.providerId = integration.providerId;
+
+    await this.sendSelectedIntegrationExecution(command.job, selection);
+
+    const overrides = mergeTriggerProviderOverrides(
+      command.overrides,
+      integration?.channel,
+      integration?.providerId,
+      command.step.stepId
+    ) as SmsMessageOverrides;
+    const phone = resolveSmsDestination(overrides.to, command.payload.phone, subscriber.phone);
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -299,10 +312,10 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageChannelCommand,
-    overrides: Record<string, any> = {}
+    overrides: SmsMessageOverrides = {}
   ): Promise<SendMessageResult> {
     try {
-      const bridgeBody = command.bridgeData?.outputs.body;
+      const bridgeBody = (command.bridgeData?.outputs as SmsOutput | undefined)?.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
@@ -311,16 +324,13 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: overrides.to || phone,
+        to: phone,
         from: overrides.from || integration.credentials.from,
         content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
-        bridgeProviderData: combineProviderOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
+        bridgeProviderData: omitBlankSmsDestination(
+          combineProviderOverrides(command.bridgeData, command.overrides, command.step.stepId, integration.providerId)
         ),
       });
 
@@ -363,6 +373,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return {
@@ -389,6 +400,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(
@@ -411,10 +423,65 @@ export class SendMessageSms extends SendMessageBase {
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity, _senderName?: string) {
     return {
       ...integration,
       providerId: integration.providerId,
     };
   }
+}
+
+function resolveSmsDestination(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (isSmsDestination(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Provider SDKs merge this object over the resolved recipient. A blank `to` would replace the
+ * subscriber or payload phone that `resolveSmsDestination` already chose.
+ */
+function omitBlankSmsDestination(providerData: Record<string, unknown>): Record<string, unknown> {
+  const withoutTopLevelTo = isBlankString(providerData.to) ? withoutKey(providerData, 'to') : providerData;
+  const passthrough = withoutTopLevelTo._passthrough;
+
+  if (!isRecord(passthrough)) {
+    return withoutTopLevelTo;
+  }
+
+  const body = passthrough.body;
+
+  if (!isRecord(body) || !isBlankString(body.to)) {
+    return withoutTopLevelTo;
+  }
+
+  return {
+    ...withoutTopLevelTo,
+    _passthrough: {
+      ...passthrough,
+      body: withoutKey(body, 'to'),
+    },
+  };
+}
+
+function isSmsDestination(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isBlankString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length === 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutKey(record: Record<string, unknown>, key: string): Record<string, unknown> {
+  const { [key]: _removed, ...rest } = record;
+
+  return rest;
 }

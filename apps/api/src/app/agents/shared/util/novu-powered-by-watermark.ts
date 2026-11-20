@@ -1,5 +1,4 @@
-import type { CardElement } from 'chat';
-import { AgentPlatformEnum, supportsMarkdownLinks } from '../enums/agent-platform.enum';
+import { supportsMarkdownLinks } from '../enums/agent-platform.enum';
 import { buildAttributedNovuUrl } from './novu-attribution-url';
 
 export const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
@@ -10,17 +9,10 @@ const NOVU_POWERED_WATERMARK_MARKER = '\u200B';
 
 const ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `Powered by [Novu](${NOVU_AGENT_POWERED_URL}`;
 
+// Previous Slack card path used mrkdwn (`<url|Novu>`). Keep detecting it so we don't double-stamp.
 const SLACK_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `Powered by <${NOVU_AGENT_POWERED_URL}`;
 
 const LEGACY_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `[${NOVU_AGENT_POWERED_WATERMARK_TEXT}](${NOVU_AGENT_POWERED_URL}`;
-
-function formatPoweredByLink(label: string, url: string, platform: string): string {
-  if (platform === AgentPlatformEnum.SLACK) {
-    return `<${url}|${label}>`;
-  }
-
-  return `[${label}](${url})`;
-}
 
 export function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
   if (!supportsMarkdownLinks(platform)) {
@@ -29,19 +21,13 @@ export function buildPoweredByWatermark(agentIdentifier: string, platform: strin
 
   const url = buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform);
 
-  return `Powered by ${formatPoweredByLink('Novu', url, platform)}`;
+  return `_Powered by [Novu](${url})_`;
 }
 
-export function buildBrandedMarkdownReply(markdown: string, agentIdentifier: string, platform: string): CardElement {
+export function appendPoweredByWatermark(markdown: string, agentIdentifier: string, platform: string): string {
   const watermark = buildPoweredByWatermark(agentIdentifier, platform);
 
-  return {
-    type: 'card',
-    children: [
-      { type: 'text', content: markdown },
-      { type: 'text', content: watermark, style: 'muted' },
-    ],
-  };
+  return `${markdown}\n\n${watermark}`;
 }
 
 export function contentHasPoweredByWatermark(markdown: string): boolean {

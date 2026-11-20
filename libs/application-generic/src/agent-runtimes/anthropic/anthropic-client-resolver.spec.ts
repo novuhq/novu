@@ -1,17 +1,16 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-
-import { AnthropicClientResolver } from './anthropic-client-resolver';
 import * as AnthropicAwsClientModule from './anthropic-aws-client';
+import { AnthropicClientResolver } from './anthropic-client-resolver';
 import * as AnthropicCloudClientModule from './anthropic-cloud-client';
 
 describe('AnthropicClientResolver', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('creates a cloud client from the api key', async () => {
     const cloudClient = { messages: {} };
-    jest.spyOn(AnthropicCloudClientModule, 'createAnthropicCloudClient').mockReturnValue(cloudClient as never);
+    vi.spyOn(AnthropicCloudClientModule, 'createAnthropicCloudClient').mockReturnValue(cloudClient as never);
 
     const resolver = new AnthropicClientResolver(AgentRuntimeProviderIdEnum.Anthropic, 'sk-ant-test');
     const client = await resolver.getClient();
@@ -22,7 +21,7 @@ describe('AnthropicClientResolver', () => {
 
   it('creates an AWS client from pre-resolved credentials', async () => {
     const awsClient = { messages: {} };
-    jest.spyOn(AnthropicAwsClientModule, 'createAnthropicAwsClient').mockResolvedValue(awsClient as never);
+    vi.spyOn(AnthropicAwsClientModule, 'createAnthropicAwsClient').mockResolvedValue(awsClient as never);
 
     const resolver = new AnthropicClientResolver(AgentRuntimeProviderIdEnum.AnthropicAws, undefined, {
       region: 'us-east-1',
@@ -42,7 +41,7 @@ describe('AnthropicClientResolver', () => {
 
   it('overrides AWS credentials from validate input', async () => {
     const awsClient = { messages: {} };
-    jest.spyOn(AnthropicAwsClientModule, 'createAnthropicAwsClient').mockResolvedValue(awsClient as never);
+    vi.spyOn(AnthropicAwsClientModule, 'createAnthropicAwsClient').mockResolvedValue(awsClient as never);
 
     const resolver = new AnthropicClientResolver(AgentRuntimeProviderIdEnum.AnthropicAws, undefined, {
       region: 'us-east-1',

@@ -1,4 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
+
+export class IssueSlackSetupLinkRequestDto {
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Subscriber the Slack install should connect. Omit for dashboard-issued links.',
+  })
+  @IsOptional()
+  @IsString()
+  subscriberId?: string;
+}
 
 export class IssueSlackSetupLinkResponseDto {
   @ApiProperty({ type: String, description: 'Opaque setup token identifying this setup session' })

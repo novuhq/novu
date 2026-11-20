@@ -129,6 +129,7 @@ export enum TelemetryEvent {
   AGENTS_PAGE_VISITED = 'Agents page visited',
   AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited',
   AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard',
+  AGENT_ASSIGNED_TO_WORKFLOW = 'Agent assigned to workflow',
   AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard',
   AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard',
   AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed',

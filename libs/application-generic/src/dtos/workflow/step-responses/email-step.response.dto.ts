@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { EmailControlDto } from '../controls/email-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class EmailControlsMetadataResponseDto extends ControlsMetadataDto {
+class EmailControlsMetadataResponseDto extends ControlsMetadataDto<EmailControlDto> {
   @ApiProperty({
     description: 'Control values specific to Email',
     type: () => EmailControlDto,

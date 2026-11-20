@@ -1,8 +1,14 @@
-import { FeatureFlagsService } from '@novu/application-generic';
-import { AgentEventEnum } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { createHmac } from 'node:crypto';
+import { Readable } from 'node:stream';
+import { bridgeSigningScope, clearAcceptedSigningKeys } from '@novu/application-generic';
+import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
+import * as ssrfUrlValidation from '@novu/shared/utils/ssrf-url-validation';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { esmImport } from '../../shared/util/esm-import';
+import { resolveInboundReplyTo } from '../ingress/workflow-origin.helpers';
 import { BridgeExecutorService } from './bridge-executor.service';
 
 describe('BridgeExecutorService', () => {
@@ -16,35 +22,24 @@ describe('BridgeExecutorService', () => {
     };
   }
 
-  function makeFeatureFlagsService(isEventProtocolEnabled = false) {
-    return {
-      getFlag: sinon.stub().callsFake(async ({ key }: { key: string }) => {
-        if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
-          return isEventProtocolEnabled;
-        }
-
-        return false;
-      }),
-    };
-  }
-
-  function makeService(
-    overrides: { isEventProtocolEnabled?: boolean; attachmentStorage?: Record<string, unknown> } = {}
-  ) {
+  function makeService(overrides: { attachmentStorage?: { signRead: sinon.SinonStub } } = {}) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
-    const activityLedger = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
-    const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
+    const conversationService = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
+    const turnAbortStore = {
+      setActiveTurn: sinon.stub().resolves(),
+      markBridgeHandlesOnAbort: sinon.stub().resolves(),
+    };
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      activityLedger as any,
-      featureFlagsService as unknown as FeatureFlagsService
+      conversationService as any,
+      turnAbortStore as any
     );
 
-    return { service, logger, attachmentStorage, activityLedger, featureFlagsService };
+    return { service, logger, attachmentStorage, conversationService, turnAbortStore };
   }
 
   function makeExecutionParams() {
@@ -98,27 +93,467 @@ describe('BridgeExecutorService', () => {
     };
   }
 
+  describe('resolveBridgeUrl', () => {
+    function resolve(
+      config: Record<string, unknown>,
+      bridgeUrlOverride?: string
+    ): { url: string | null; logger: ReturnType<typeof makeLogger> } {
+      const { service, logger } = makeService();
+      const url = (service as any).resolveBridgeUrl(config, 'agent-1', AgentEventEnum.ON_MESSAGE, bridgeUrlOverride);
+
+      return { url, logger };
+    }
+
+    it('uses the agent default bridge URL when no override or dev bridge is set', () => {
+      const { url } = resolve({ bridgeUrl: 'https://agent-default.example.com/api/novu' });
+
+      expect(url).to.be.a('string');
+      const parsed = new URL(url as string);
+      expect(parsed.origin + parsed.pathname).to.equal('https://agent-default.example.com/api/novu');
+      expect(parsed.searchParams.get('action')).to.equal('agent-event');
+      expect(parsed.searchParams.get('agentId')).to.equal('agent-1');
+    });
+
+    it('prefers the per-context override over the agent default', () => {
+      const { url, logger } = resolve(
+        { bridgeUrl: 'https://agent-default.example.com/api/novu' },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('tenant-acme.example.com');
+      expect(logger.info.calledOnce, 'logs when an override is applied').to.equal(true);
+    });
+
+    it('prefers the active dev bridge over the context override', () => {
+      const { url } = resolve(
+        {
+          bridgeUrl: 'https://agent-default.example.com/api/novu',
+          devBridgeActive: true,
+          devBridgeUrl: 'https://dev.example.com/api/novu',
+        },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('dev.example.com');
+    });
+
+    it('falls back to the context override when a dev bridge URL exists but is inactive', () => {
+      const { url } = resolve(
+        {
+          bridgeUrl: 'https://agent-default.example.com/api/novu',
+          devBridgeActive: false,
+          devBridgeUrl: 'https://dev.example.com/api/novu',
+        },
+        'https://tenant-acme.example.com/api/novu'
+      );
+
+      expect(new URL(url as string).host).to.equal('tenant-acme.example.com');
+    });
+
+    it('returns null when neither an override nor an agent bridge URL is configured', () => {
+      const { url, logger } = resolve({});
+
+      expect(url).to.equal(null);
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
   describe('buildPayload', () => {
-    it('should include eventsUrl when the agent event protocol flag is enabled', async () => {
-      const { service, featureFlagsService } = makeService({ isEventProtocolEnabled: true });
+    it('should include eventsUrl on every bridge payload', async () => {
+      const { service } = makeService();
 
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
       expect(payload.eventsUrl).to.match(/\/v1\/agents\/events\/ingest$/);
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
-      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
+      expect(payload.eventsUrl.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
         payload.replyUrl.replace(/\/v1\/agents\/agent-1\/reply$/, '')
       );
-      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
     });
 
-    it('should omit eventsUrl when the agent event protocol flag is disabled', async () => {
-      const { service } = makeService({ isEventProtocolEnabled: false });
+    describe('reply origin scheme', () => {
+      let originalEnv: NodeJS.ProcessEnv;
+
+      beforeEach(() => {
+        originalEnv = { ...process.env };
+        delete process.env.AGENT_API_HOSTNAME;
+        delete process.env.NOVU_TLS_ENABLED;
+        process.env.PORT = '3000';
+        process.env.API_ROOT_URL = 'https://api.novu.localhost';
+      });
+
+      afterEach(() => {
+        process.env = originalEnv;
+      });
+
+      async function replyOrigin() {
+        const { service } = makeService();
+        const payload = await (service as any).buildPayload(makeExecutionParams());
+
+        return payload.replyUrl.replace('/v1/agents/agent-1/reply', '');
+      }
+
+      it('downgrades a loopback HTTPS root URL to plain HTTP when TLS is off', async () => {
+        expect(await replyOrigin()).to.equal('http://localhost:3000');
+      });
+
+      it('keeps the HTTPS origin when TLS is on, since there is no plain-HTTP port to reach', async () => {
+        process.env.NOVU_TLS_ENABLED = 'true';
+
+        expect(await replyOrigin()).to.equal('https://api.novu.localhost');
+      });
+
+      it('still honours an explicit AGENT_API_HOSTNAME when TLS is on', async () => {
+        process.env.NOVU_TLS_ENABLED = 'true';
+        process.env.AGENT_API_HOSTNAME = 'https://agents.example.com';
+
+        expect(await replyOrigin()).to.equal('https://agents.example.com');
+      });
+    });
+
+    it('forwards the stopped turn on onAbort and keys its delivery by that turn', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1', platformMessageId: 'msg-1' },
+      });
+
+      expect(payload.abortedTurn).to.deep.equal({ turnId: 'conv-1:msg-1', platformMessageId: 'msg-1' });
+      expect(payload.deliveryId).to.equal(`conv-1:${AgentEventEnum.ON_ABORT}:conv-1:msg-1`);
+    });
+
+    it("keeps Novu's own record of the stopped turn off the wire", async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1', bridgeHandlesOnAbort: true },
+      });
+
+      expect(payload.abortedTurn).to.deep.equal({ turnId: 'conv-1:msg-1' });
+    });
+
+    it('sends no abortedTurn on other events', async () => {
+      const { service } = makeService();
 
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
-      expect(payload).to.not.have.property('eventsUrl');
-      expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
+      expect(payload).not.to.have.property('abortedTurn');
+    });
+
+    it('should map workflowOrigin onto notification for the bridge wire', async () => {
+      const { service } = makeService();
+      const workflowOrigin = {
+        data: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-shipped',
+          messageId: 'msg-1',
+          platformMessageId: 'wamid.abc',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          body: 'Your order ORD-1 shipped',
+          payload: { orderId: 'ORD-1' },
+          jobId: 'job-1',
+        },
+        source: 'existing' as const,
+      };
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        workflowOrigin,
+      });
+
+      expect(payload.notification).to.deep.equal({
+        id: 'notif-1',
+        workflowId: 'order-shipped',
+        messageId: 'msg-1',
+        platformMessageId: 'wamid.abc',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        body: 'Your order ORD-1 shipped',
+        payload: { orderId: 'ORD-1' },
+      });
+    });
+
+    it('should send notification null when no workflow origin is present', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload.notification).to.equal(null);
+    });
+
+    it('should map WhatsApp quote-reply onto message.replyTo', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.WHATSAPP,
+        },
+        platformThreadId: 'whatsapp:+15551234567',
+        message: {
+          ...makeMessage(),
+          raw: {
+            message: {
+              context: { id: 'wamid.quoted' },
+            },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: 'wamid.quoted' });
+    });
+
+    it('should map Telegram quote-reply with chat-scoped message id', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        config: {
+          ...makeExecutionParams().config,
+          platform: AgentPlatformEnum.TELEGRAM,
+        },
+        platformThreadId: 'telegram:777042',
+        message: {
+          ...makeMessage(),
+          raw: {
+            reply_to_message: { message_id: 42 },
+          },
+        },
+      });
+
+      expect(payload.message?.replyTo).to.deep.equal({ messageId: '777042:42' });
+    });
+
+    it('should omit Telegram replyTo when chat id cannot be resolved', () => {
+      const replyTo = resolveInboundReplyTo(
+        AgentPlatformEnum.TELEGRAM,
+        {
+          id: 'msg-1',
+          text: 'reply',
+          author: makeMessage().author,
+          raw: { reply_to_message: { message_id: 42 } },
+        } as any,
+        'whatsapp:+15551234567'
+      );
+
+      expect(replyTo).to.equal(undefined);
+    });
+  });
+
+  describe('execute', () => {
+    const handlesOnAbortHeaders = {
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: 'onMessage,onMessageUpdated,onAction,onResolve,onAbort',
+    };
+
+    function stubDelivery(service: BridgeExecutorService, headers: Record<string, string> = {}) {
+      (service as any).getDecryptedSecretKey = {
+        execute: sinon.stub().resolves('secret'),
+        executeAll: sinon.stub().resolves(['secret']),
+      };
+      sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
+      sinon.stub(service as any, 'fireWithRetries').resolves({ headers, body: { resume: sinon.stub() } });
+    }
+
+    function flushDelivery(): Promise<void> {
+      return new Promise((resolve) => {
+        setImmediate(resolve);
+      });
+    }
+
+    it('records the turn as the conversation active turn before calling the bridge', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service);
+
+      await service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+
+      expect(
+        turnAbortStore.setActiveTurn.calledOnceWith('conv-1', {
+          turnId: 'conv-1:message-id',
+          platformMessageId: 'message-id',
+        })
+      ).to.equal(true);
+    });
+
+    it('never records onResolve or onAbort as the active turn', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service, handlesOnAbortHeaders);
+
+      await service.execute({ ...makeExecutionParams(), event: AgentEventEnum.ON_RESOLVE } as any);
+      await service.execute({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1' },
+      } as any);
+      await flushDelivery();
+
+      expect(turnAbortStore.setActiveTurn.called).to.equal(false);
+      expect(turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
+    });
+
+    it('flags the active turn once the bridge answers listing onAbort among the events it handles', async () => {
+      const { service, turnAbortStore } = makeService();
+      stubDelivery(service, handlesOnAbortHeaders);
+
+      await service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await flushDelivery();
+
+      expect(turnAbortStore.markBridgeHandlesOnAbort.calledOnceWith('conv-1', 'conv-1:message-id')).to.equal(true);
+    });
+
+    it('leaves the turn unflagged for a bridge on a framework that predates onAbort', async () => {
+      const withoutHeader = makeService();
+      stubDelivery(withoutHeader.service);
+      const withoutOnAbort = makeService();
+      stubDelivery(withoutOnAbort.service, { [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: 'onMessage,onAction' });
+
+      await withoutHeader.service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await withoutOnAbort.service.execute({ ...makeExecutionParams(), message: makeMessage() } as any);
+      await flushDelivery();
+
+      expect(withoutHeader.turnAbortStore.setActiveTurn.calledOnce).to.equal(true);
+      expect(withoutHeader.turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
+      expect(withoutOnAbort.turnAbortStore.markBridgeHandlesOnAbort.called).to.equal(false);
+    });
+
+    it('logs a bridge that fails to take onAbort as a warning, since the turn it follows is already stopped', async () => {
+      const { service, logger } = makeService();
+      (service as any).getDecryptedSecretKey = {
+        execute: sinon.stub().resolves('secret'),
+        executeAll: sinon.stub().resolves(['secret']),
+      };
+      sinon.stub(service as any, 'resolveBridgeUrl').returns('https://bridge.example.com');
+      sinon.stub(service as any, 'fireWithRetries').rejects(new Error('Bridge returned 503: Service Unavailable'));
+
+      await service.execute({
+        ...makeExecutionParams(),
+        event: AgentEventEnum.ON_ABORT,
+        abortedTurn: { turnId: 'conv-1:msg-1' },
+      } as any);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.error.called).to.equal(false);
+    });
+  });
+
+  describe('fireWithRetries during a secret key rotation', () => {
+    const bridgeUrl = 'https://93.184.216.34/api/novu';
+    const payload = { deliveryId: 'conv-1:message-id', event: 'onMessage' } as any;
+    let requestStub: sinon.SinonStub;
+    let resolveStub: sinon.SinonStub;
+
+    function firstSignatureMatches(header: string, secretKey: string): boolean {
+      const parts = header.split(',');
+      const timestamp = parts.find((part) => part.startsWith('t='))?.slice(2);
+      const firstV1 = parts.find((part) => part.startsWith('v1='))?.slice(3);
+      const expected = createHmac('sha256', secretKey)
+        .update(`${timestamp}.${JSON.stringify(payload)}`)
+        .digest('hex');
+
+      return firstV1 === expected;
+    }
+
+    function respond(statusCode: number, body?: unknown) {
+      return {
+        statusCode,
+        statusMessage: statusCode === 200 ? 'OK' : 'Unauthorized',
+        headers: { 'content-type': 'application/json' },
+        body: Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]),
+      };
+    }
+
+    /** A bridge on an older SDK: checks only the first `v1`, plain 401 on a mismatch. */
+    function bridgeOnKey(bridgeKey: string) {
+      requestStub.callsFake(async (options: { headers: Record<string, string> }) =>
+        firstSignatureMatches(options.headers[HttpHeaderKeysEnum.NOVU_SIGNATURE], bridgeKey)
+          ? respond(200, { ok: true })
+          : respond(401)
+      );
+    }
+
+    function firstKeysSent(): string[] {
+      return requestStub.getCalls().map((call) => {
+        const header = call.args[0].headers[HttpHeaderKeysEnum.NOVU_SIGNATURE];
+
+        return firstSignatureMatches(header, 'original-key') ? 'original-key' : 'rotated-key';
+      });
+    }
+
+    beforeEach(() => {
+      clearAcceptedSigningKeys();
+      requestStub = sinon.stub(safeOutboundHttp, 'safeOutboundStreamRequest');
+      resolveStub = sinon.stub(ssrfUrlValidation, 'resolvePublicAddresses').resolves(['93.184.216.34'] as any);
+    });
+
+    afterEach(() => {
+      requestStub.restore();
+      resolveStub.restore();
+    });
+
+    function fire(keys: string[]) {
+      const { service } = makeService();
+      sinon.stub(service as any, 'delay').resolves();
+
+      return (service as any).fireWithRetries(
+        bridgeUrl,
+        payload,
+        keys,
+        bridgeSigningScope('env-1', bridgeUrl),
+        'agent-1',
+        false
+      );
+    }
+
+    it('puts the other key first on the retry after a 401 and remembers it', async () => {
+      bridgeOnKey('rotated-key');
+
+      const response = await fire(['original-key', 'rotated-key']);
+
+      expect(response.statusCode).to.equal(200);
+      expect(firstKeysSent()).to.deep.equal(['original-key', 'rotated-key']);
+
+      requestStub.resetHistory();
+      await fire(['original-key', 'rotated-key']);
+
+      expect(firstKeysSent()).to.deep.equal(['rotated-key']);
+    });
+
+    it('sends one request when the bridge accepts the first signature', async () => {
+      bridgeOnKey('original-key');
+
+      await fire(['original-key', 'rotated-key']);
+
+      expect(requestStub.callCount).to.equal(1);
+    });
+
+    it('keeps the same number of attempts when no key is accepted', async () => {
+      bridgeOnKey('unknown-key');
+
+      let thrown: unknown;
+      try {
+        await fire(['original-key', 'rotated-key']);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).to.be.instanceOf(Error);
+      expect(requestStub.callCount).to.equal(3);
+    });
+
+    it('keeps the key order on failures other than 401', async () => {
+      requestStub.callsFake(async () => respond(503));
+
+      try {
+        await fire(['original-key', 'rotated-key']);
+      } catch {
+        // expected
+      }
+
+      expect(firstKeysSent()).to.deep.equal(['original-key', 'original-key', 'original-key']);
     });
   });
 
@@ -258,6 +693,73 @@ describe('BridgeExecutorService', () => {
   });
 
   describe('mapMessage', () => {
+    /** Real `@chat-adapter/slack` parsing; only the Slack `users.info` lookup is stubbed. */
+    async function parseSlackEvent(event: Record<string, unknown>) {
+      const { SlackAdapter } = await esmImport('@chat-adapter/slack');
+      const adapter = new SlackAdapter({ signingSecret: 'test-secret', botToken: 'xoxb-test', botUserId: 'UBOT' });
+      sinon
+        .stub(adapter, 'lookupUser')
+        .callsFake(async (userId: string) => ({ displayName: userId, realName: userId }));
+
+      return adapter.parseSlackMessage({ channel: 'C1', ts: '1767225600.000100', ...event }, 'slack:C1:');
+    }
+
+    it('should flag Slackbot notices from USLACK as system messages without an email', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'USLACK', text: 'Reminder: standup in 5 minutes' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.author.isSystem).to.equal(true);
+      expect(mapped.author).to.not.have.property('email');
+    });
+
+    it('should omit markdown for plain prose so the brain never reads Markdown escapes', async () => {
+      const { service } = makeService();
+      const message = await parseSlackEvent({ user: 'UALICE', text: 'run deploy_prod_eu at 5 * 3 minutes [draft]' });
+
+      const mapped = await (service as any).mapMessage(message);
+
+      expect(mapped.text).to.equal('run deploy_prod_eu at 5 * 3 minutes [draft]');
+      expect(mapped).to.not.have.property('markdown');
+    });
+
+    it('should send plain text only when the formatted AST cannot be rendered', async () => {
+      const { service, logger } = makeService();
+
+      const mapped = await (service as any).mapMessage({
+        ...makeMessage(),
+        formatted: { type: 'root', children: [{ type: 'not-a-markdown-node' }] },
+      });
+
+      expect(mapped.text).to.equal('hello');
+      expect(mapped).to.not.have.property('markdown');
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+
+    it('should forward web-chat per-message metadata and leave other platforms untouched', async () => {
+      const { service } = makeService();
+      const message = { ...makeMessage(), raw: { metadata: { workflowId: 'wf_1', stepId: 'step_1' } } };
+      const signing = (platform: AgentPlatformEnum) => ({
+        organizationId: 'org',
+        environmentId: 'env',
+        conversationId: 'conv',
+        platform,
+      });
+
+      const webChat = await (service as any).mapMessage(message, undefined, signing(AgentPlatformEnum.WEB_CHAT));
+      const slack = await (service as any).mapMessage(message, undefined, signing(AgentPlatformEnum.SLACK));
+      const empty = await (service as any).mapMessage(
+        { ...makeMessage(), raw: {} },
+        undefined,
+        signing(AgentPlatformEnum.WEB_CHAT)
+      );
+
+      expect(webChat.metadata).to.deep.equal({ workflowId: 'wf_1', stepId: 'step_1' });
+      expect(slack).to.not.have.property('metadata');
+      expect(empty).to.not.have.property('metadata');
+    });
+
     it('should re-sign stored attachments instead of reusing stored urls', async () => {
       const { service, attachmentStorage } = makeService({
         attachmentStorage: { signRead: sinon.stub().resolves('https://fresh-signed/read') },

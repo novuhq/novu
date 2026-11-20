@@ -6,7 +6,7 @@
     "noImplicitAny": true,
     "outDir": "dist",
     "module": "commonjs",
-    "target": "es6",
+    "customConditions": ["require"],
     "esModuleInterop": true,
     "rootDir": "src",
     "types": ["node", "mocha"],

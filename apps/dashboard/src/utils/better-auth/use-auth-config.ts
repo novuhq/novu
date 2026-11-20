@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { BETTER_AUTH_API_URL } from './client';
+import { authClient, BETTER_AUTH_API_URL } from './client';
 
 type AuthConfig = {
   emailPasswordAuthEnabled: boolean;
@@ -15,20 +15,32 @@ const FALLBACK_AUTH_CONFIG: AuthConfig = {
   ssoEnabled: false,
 };
 
-async function fetchAuthConfig(): Promise<AuthConfig> {
-  const response = await fetch(`${BETTER_AUTH_API_URL}/auth-config`, { credentials: 'include' });
+async function fetchAuthConfigPayload(headers?: HeadersInit) {
+  const response = await fetch(`${BETTER_AUTH_API_URL}/auth-config`, { credentials: 'include', headers });
 
   if (!response.ok) {
     throw new Error(`Failed to load auth config (${response.status})`);
   }
 
   const body = await response.json();
-  const payload = body?.data ?? body;
+
+  return body?.data ?? body;
+}
+
+async function fetchAuthConfig(): Promise<AuthConfig> {
+  const payload = await fetchAuthConfigPayload();
 
   return {
     emailPasswordAuthEnabled: payload?.emailPasswordAuthEnabled !== false,
     ssoEnabled: payload?.ssoEnabled === true,
   };
+}
+
+async function fetchCanCreateOrganization(): Promise<boolean> {
+  const token = localStorage.getItem('better-auth-session-token');
+  const payload = await fetchAuthConfigPayload(token ? { Authorization: `Bearer ${token}` } : undefined);
+
+  return payload?.canCreateOrganization !== false;
 }
 
 /**
@@ -44,4 +56,22 @@ export function useAuthConfig(): AuthConfig & { isLoading: boolean } {
   });
 
   return { ...(data ?? FALLBACK_AUTH_CONFIG), isLoading };
+}
+
+/**
+ * Whether the signed-in user may create organizations (`ORGANIZATION_CREATION_POLICY`). Keyed by user
+ * so it never reuses the anonymous answer. Defaults to allowed on failure; the API enforces the policy.
+ */
+export function useCanCreateOrganization(): { canCreateOrganization: boolean; isLoading: boolean } {
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+  const { data, isLoading } = useQuery({
+    queryKey: ['betterAuthConfig', 'canCreateOrganization', userId],
+    queryFn: fetchCanCreateOrganization,
+    enabled: Boolean(userId),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  return { canCreateOrganization: data ?? true, isLoading: Boolean(userId) && isLoading };
 }

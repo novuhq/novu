@@ -14,6 +14,7 @@ describe('ListSubscribersUseCase', () => {
       organizationId: 'org_id',
     } as ListSubscribersCommand['user'],
     limit: 10,
+    orderBy: '_id',
   });
 
   beforeEach(() => {

@@ -1,4 +1,6 @@
 import { ReactNode } from 'react';
+import { ApiKeyRotationBanner } from '@/components/api-key-rotation-banner';
+import { UsageNoticeBanner } from '@/components/billing/usage-limits/usage-notice-banner';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
@@ -24,6 +26,8 @@ export const DashboardLayout = ({
         </div>
       )}
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <ApiKeyRotationBanner />
+        <UsageNoticeBanner />
         <HeaderNavigation
           startItems={headerStartItems}
           hideBridgeUrl={!showBridgeUrl}

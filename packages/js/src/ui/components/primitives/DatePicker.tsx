@@ -1,4 +1,4 @@
-import { Accessor, createContext, createSignal, JSX, splitProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createSignal, JSX, on, Show, splitProps, useContext } from 'solid-js';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useStyle } from '../../helpers';
 import { cn } from '../../helpers/utils';
@@ -397,18 +397,25 @@ export const DatePickerCalendar = (props: DatePickerCalendarProps) => {
     return days;
   };
 
+  // The month shown on open appears with the picker; months the user pages to fade in.
+  const [hasPaged, setHasPaged] = createSignal(false);
+  createEffect(on(viewMonth, () => setHasPaged(true), { defer: true }));
+
   return (
-    <div
-      class={style({
-        key: local.appearanceKey || 'datePickerCalendar',
-        className: cn('nt-grid nt-grid-cols-7 nt-gap-1', local.class),
-      })}
-      onClick={(e) => e.stopPropagation()}
-      {...rest}
-    >
-      {getDaysInMonth().map((date) => {
-        return <DatePickerGridCellTrigger date={date} />;
-      })}
-    </div>
+    <Show keyed when={viewMonth()}>
+      <div
+        class={style({
+          key: local.appearanceKey || 'datePickerCalendar',
+          className: cn('nt-grid nt-grid-cols-7 nt-gap-1 nt-motion-fade', local.class),
+        })}
+        data-animate={hasPaged() ? '' : undefined}
+        onClick={(e) => e.stopPropagation()}
+        {...rest}
+      >
+        {getDaysInMonth().map((date) => {
+          return <DatePickerGridCellTrigger date={date} />;
+        })}
+      </div>
+    </Show>
   );
 };

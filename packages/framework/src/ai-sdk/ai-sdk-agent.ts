@@ -1,13 +1,16 @@
-import { requireRuntimeContext } from '../resources/agent/agent.runtime';
+import { type AgentRuntimeContext, requireRuntimeContext } from '../resources/agent/agent.runtime';
 import type {
   Agent,
   AgentActionContext,
   AgentHandlers,
   AgentMessage,
+  MessageContent,
   ReplyHandle,
+  ReplyStream,
+  ToolApprovalConfig,
 } from '../resources/agent/agent.types';
 import { handleAiSdkResult, isAiSdkResult } from './reply-mapper';
-import type { AiSdkAgentHandlers } from './types';
+import type { AiSdkAgentHandlers, AiSdkResult } from './types';
 
 type AiSdkMessageHandler = AiSdkAgentHandlers['onMessage'];
 
@@ -21,6 +24,31 @@ const RESUME_MESSAGE: AgentMessage = {
 
 function isReplyHandle(value: unknown): value is ReplyHandle {
   return typeof value === 'object' && value !== null && 'messageId' in value && 'platformThreadId' in value;
+}
+
+/**
+ * Deliver a handler's return value: an AI SDK result is handled for automatic delivery; a
+ * `ReplyHandle` means the handler already replied itself; anything else (`MessageContent`,
+ * `ReplyStream`) is sent via `runtime.reply`. Shared by `onToolApproval`'s direct return and the
+ * resume call that follows it. Returns whether an AI SDK result was delivered, so callers can skip
+ * further steps (e.g. auto-resume) exactly as they would for a result returned directly.
+ */
+async function deliverResult(
+  result: MessageContent | ReplyStream | AiSdkResult | ReplyHandle | void,
+  runtime: AgentRuntimeContext,
+  config: ToolApprovalConfig | undefined
+): Promise<boolean> {
+  if (isAiSdkResult(result)) {
+    await handleAiSdkResult(result, runtime, config);
+
+    return true;
+  }
+
+  if (result != null && !isReplyHandle(result)) {
+    await runtime.reply(result);
+  }
+
+  return false;
 }
 
 function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): AiSdkAgentHandlers {
@@ -42,14 +70,12 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
   const userOnToolApproval = typeof h.onToolApproval === 'function';
 
   // The decision is persisted to `ctx.history` by Novu before this turn fires, so
-  // resuming is just re-running `onMessage`: `toModelMessages(ctx.history)` now
+  // resuming is just re-running `onMessage`: `toModelMessages(ctx)` now
   // yields the tool-approval-response and `streamText` continues the tool loop.
   const resume = async (ctx: AgentActionContext): Promise<void> => {
     const runtime = requireRuntimeContext(ctx);
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());
-    if (isAiSdkResult(result)) {
-      await handleAiSdkResult(result, runtime, config);
-    }
+    await deliverResult(result, runtime, config);
   };
 
   const wrappedHandlers: AgentHandlers = {
@@ -68,14 +94,8 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
       const runtime = requireRuntimeContext(ctx);
       if (h.onToolApproval) {
         const result = await h.onToolApproval(decision, ctx);
-        if (isAiSdkResult(result)) {
-          await handleAiSdkResult(result, runtime, config);
-
+        if (await deliverResult(result, runtime, config)) {
           return;
-        }
-
-        if (result != null && !isReplyHandle(result)) {
-          await runtime.reply(result);
         }
       }
 
@@ -85,6 +105,31 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),
+    ...(h.onAbort && { onAbort: h.onAbort }),
+    ...(h.onMessageUpdated && {
+      onMessageUpdated: async (message, ctx) => {
+        const result = await h.onMessageUpdated?.(message, ctx);
+        if (isAiSdkResult(result)) {
+          await handleAiSdkResult(result, requireRuntimeContext(ctx), config);
+
+          return;
+        }
+
+        return result;
+      },
+    }),
+    ...(h.onMessageDeleted && {
+      onMessageDeleted: async (message, ctx) => {
+        const result = await h.onMessageDeleted?.(message, ctx);
+        if (isAiSdkResult(result)) {
+          await handleAiSdkResult(result, requireRuntimeContext(ctx), config);
+
+          return;
+        }
+
+        return result;
+      },
+    }),
     ...(h.onError && { onError: h.onError }),
   };
 

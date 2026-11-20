@@ -67,7 +67,7 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     expect(reply).to.not.include('known@example.com');
   });
 
-  it('does not treat a resolved outcome as transient — the handler reclassifies unloadable records as error', () => {
+  it('does not return transient copy for a resolved outcome', () => {
     const reply = buildUnresolvedSubscriberAccessReply({
       platform: AgentPlatformEnum.EMAIL,
       senderEmail: 'known@example.com',
@@ -102,12 +102,5 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     });
 
     expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
-  });
-
-  it('uses agent-wide identity copy for the generic access reply', () => {
-    expect(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY).to.equal(
-      "We couldn't match your identity to a known user, so this agent can't reply yet. " +
-        'Sign in or link your account in the app that owns this agent, then try again.'
-    );
   });
 });

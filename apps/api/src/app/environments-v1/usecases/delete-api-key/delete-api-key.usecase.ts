@@ -8,6 +8,7 @@ import {
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { createHash } from 'crypto';
+import { getBridgeSecretKeysCacheKey } from '../../bridge-secret-keys-cache';
 import { DeleteApiKeyCommand } from './delete-api-key.command';
 
 @Injectable()
@@ -70,6 +71,15 @@ export class DeleteApiKey {
      * the store's short TTL.
      */
     this.inMemoryLRUCacheService.invalidate(InMemoryLRUCacheStore.API_KEY_USER, command.hash);
+
+    /*
+     * The bridge caches every active secret key per environment. Without this, a deleted key
+     * keeps verifying bridge requests on this instance until the cache entry expires.
+     */
+    this.inMemoryLRUCacheService.invalidate(
+      InMemoryLRUCacheStore.VALIDATOR,
+      getBridgeSecretKeysCacheKey(command.environmentId)
+    );
   }
 
   private getKeyHash(apiKey: IApiKey): string {

@@ -20,7 +20,7 @@ export default function NovuAgentPlayground() {
   const [result, setResult] = useState<SimResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function run(overrides?: { text?: string; event?: SimEvent }) {
+  async function run(overrides?: { text?: string; event?: SimEvent; ongoing?: boolean }) {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -32,7 +32,7 @@ export default function NovuAgentPlayground() {
           text: overrides?.text ?? text,
           platform,
           event: overrides?.event ?? event,
-          ongoing,
+          ongoing: overrides?.ongoing ?? ongoing,
           isDM,
         }),
       });
@@ -118,6 +118,15 @@ export default function NovuAgentPlayground() {
             title="Posts a chat-sdk Card via thread.post(Card(...)) and shows the normalized reply payload"
           >
             🎴 Send a card reply
+          </button>
+          <button
+            type="button"
+            onClick={() => run({ text: 'quote-reply', event: 'onMessage', ongoing: true })}
+            disabled={loading}
+            style={secondaryButtonStyle}
+            title="Uses thread.reply() and shows quoteReply.messageId in the ingest payload"
+          >
+            ↩️ Quote reply
           </button>
         </div>
       </div>

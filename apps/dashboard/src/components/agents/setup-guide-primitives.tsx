@@ -376,6 +376,7 @@ export function ListeningStatus({
   onConnected,
   connectedMessage,
   listeningMessage,
+  listeningTitle,
   inline = false,
 }: {
   agentIdentifier: string;
@@ -383,6 +384,7 @@ export function ListeningStatus({
   onConnected?: () => void;
   connectedMessage: string;
   listeningMessage: string;
+  listeningTitle?: string;
   inline?: boolean;
 }) {
   const { currentEnvironment } = useEnvironment();
@@ -496,6 +498,7 @@ export function ListeningStatus({
         connected={Boolean(connectedAt)}
         connectedMessage={connectedMessage}
         listeningMessage={listeningMessage}
+        listeningTitle={listeningTitle}
         inline={inline}
       />
     </>

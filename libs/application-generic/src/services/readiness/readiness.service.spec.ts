@@ -1,83 +1,68 @@
-import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { FeatureFlagsService } from '../feature-flags';
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
-import { SqsService } from '../sqs';
+import type { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import type { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
 
+/*
+ * The readiness logic is ours; the BullMQ worker and the queue services behind
+ * it would need a live Redis. The worker is replaced with an inert stateful
+ * fake and the queue services with stubs that report ready.
+ */
+vi.mock('bullmq', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('bullmq')>();
+
+  class FakeWorker {
+    private paused = false;
+
+    constructor(
+      public name: string,
+      public processor: unknown,
+      public opts: Record<string, unknown> = {}
+    ) {}
+
+    isPaused = async () => this.paused;
+    isRunning = async () => true;
+    pause = vi.fn(async () => {
+      this.paused = true;
+    });
+    resume = vi.fn(async () => {
+      this.paused = false;
+    });
+    waitUntilReady = vi.fn(async () => undefined);
+    close = vi.fn(async () => undefined);
+  }
+
+  return { ...actual, Worker: FakeWorker };
+});
+
 let readinessService: ReadinessService;
-let standardQueueService: StandardQueueService;
-let workflowQueueService: WorkflowQueueService;
-let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
 
-const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
-} as unknown as FeatureFlagsService;
+const createReadyQueueStub = <T>() => ({ isReady: vi.fn(() => true) }) as unknown as T;
 
-const mockOrganizationRepository = {
-  findOne: jest.fn(),
-} as unknown as CommunityOrganizationRepository;
-
-const mockSqsService = {
-  getQueueUrl: jest.fn(),
-  getProducer: jest.fn(),
-  getClient: jest.fn(),
-} as unknown as SqsService;
-
-const mockLogger = {
-  setContext: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-} as unknown as PinoLogger;
+const createProviderStub = () =>
+  ({
+    providerInUseIsInClusterMode: vi.fn(() => false),
+    getClient: vi.fn(() => ({})),
+    isReady: vi.fn(() => true),
+  }) as unknown as WorkflowInMemoryProviderService;
 
 describe('Readiness Service', () => {
   beforeAll(async () => {
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-
-    standardQueueService = new StandardQueueService(
-      new WorkflowInMemoryProviderService(),
-      mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
+    const standardQueueServiceHealthIndicator = new StandardQueueServiceHealthIndicator(
+      createReadyQueueStub<StandardQueueService>()
     );
-    workflowQueueService = new WorkflowQueueService(
-      new WorkflowInMemoryProviderService(),
-      mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
+    const workflowQueueServiceHealthIndicator = new WorkflowQueueServiceHealthIndicator(
+      createReadyQueueStub<WorkflowQueueService>()
     );
-    subscriberProcessQueueService = new SubscriberProcessQueueService(
-      new WorkflowInMemoryProviderService(),
-      mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
-    );
-
-    await Promise.all([
-      standardQueueService.workflowInMemoryProviderService.initialize(),
-      workflowQueueService.workflowInMemoryProviderService.initialize(),
-      subscriberProcessQueueService.workflowInMemoryProviderService.initialize(),
-    ]);
-
-    const standardQueueServiceHealthIndicator = new StandardQueueServiceHealthIndicator(standardQueueService);
-    const workflowQueueServiceHealthIndicator = new WorkflowQueueServiceHealthIndicator(workflowQueueService);
     const subscriberProcessQueueHealthIndicator = new SubscriberProcessQueueHealthIndicator(
-      subscriberProcessQueueService
+      createReadyQueueStub<SubscriberProcessQueueService>()
     );
 
     readinessService = new ReadinessService([
@@ -88,20 +73,16 @@ describe('Readiness Service', () => {
   });
 
   afterAll(async () => {
-    await standardQueueService.gracefulShutdown();
-    await workflowQueueService.gracefulShutdown();
     await testWorker?.gracefulShutdown();
   });
 
   describe('Set up', () => {
     it('should be able to instantiate it correctly', async () => {
-      expect(Object.keys(readinessService)).toEqual(
-        expect.arrayContaining([
-          'standardQueueServiceHealthIndicator',
-          'workflowQueueServiceHealthIndicator',
-          'subscriberProcessQueueHealthIndicator',
-        ])
-      );
+      expect(readinessService['healthIndicators'].map((indicator) => indicator.constructor)).toEqual([
+        StandardQueueServiceHealthIndicator,
+        WorkflowQueueServiceHealthIndicator,
+        SubscriberProcessQueueHealthIndicator,
+      ]);
 
       const areQueuesEnabled = await readinessService.areQueuesEnabled();
       expect(areQueuesEnabled).toEqual(true);
@@ -125,7 +106,7 @@ describe('Readiness Service', () => {
         };
       };
 
-      testWorker = new StandardWorkerService(new BullMqService(new WorkflowInMemoryProviderService()));
+      testWorker = new StandardWorkerService(new BullMqService(createProviderStub()));
       await testWorker.initWorker(getWorkerProcessor(), getWorkerOptions());
 
       const [initialIsPaused, initialIsRunning] = await Promise.all([testWorker.isPaused(), testWorker.isRunning()]);

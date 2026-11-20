@@ -1,3 +1,4 @@
+import { reportFatalErrorAndExit } from '../../tracing/fatal-exit';
 import { AwsSecretsManagerService } from './aws-secrets-manager.service';
 import { ProcessEnvSecretsService } from './process-env.service';
 import type { ISecretsManagerService } from './types';
@@ -104,7 +105,7 @@ export async function hydrateProcessEnvFromSecrets(): Promise<void> {
 
 /**
  * Shared entrypoint wrapper for every app: hydrate secrets, then start the app,
- * failing closed with `process.exit(1)` on error.
+ * failing closed on error: the error is reported to New Relic, then the process exits with 1.
  *
  * `start` is a thunk so its dynamic `import('./bootstrap')` resolves relative to
  * the calling `main.ts` and no app module is evaluated before `process.env` is hydrated.
@@ -114,7 +115,6 @@ export async function runWithHydratedSecrets(start: () => Promise<unknown>): Pro
     await hydrateProcessEnvFromSecrets();
     await start();
   } catch (error) {
-    console.error('Failed to bootstrap application', error);
-    process.exit(1);
+    await reportFatalErrorAndExit('Failed to bootstrap application', error);
   }
 }

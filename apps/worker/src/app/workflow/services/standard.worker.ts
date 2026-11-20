@@ -3,19 +3,21 @@ import {
   BullMqService,
   FeatureFlagsService,
   getStandardWorkerOptions,
+  ISqsFailureOutcome,
   IStandardDataDto,
   isWebhookFilterSsrfBlockedError,
   Job,
   PinoLogger,
   SqsService,
   StandardWorkerService,
+  StepRunV2Writer,
   Store,
   storage,
   UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
+import { JobRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   HandleLastFailedJob,
@@ -41,37 +43,21 @@ export class StandardWorker extends StandardWorkerService {
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository,
     private jobRepository: JobRepository,
     sqsService: SqsService,
     logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions(), true);
 
-    /*
-     * Shadow copies created during the SQS migration (shadow/live modes) carry
-     * `skipProcessing` and must not touch the job status in the DB: the BullMQ
-     * `completed` event fires even when the processor skipped the job, and
-     * without this guard the shadow would flip a job to COMPLETED while the
-     * real execution on the other backend is still running (or has failed and
-     * is awaiting a retry).
-     */
-    this.bullMqWorker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
-      if (job?.data?.skipProcessing) {
-        return;
-      }
-
+    this.bullMqWorker?.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
 
-    this.bullMqWorker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
-      if (job?.data?.skipProcessing) {
-        return;
-      }
-
+    this.bullMqWorker?.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
 
@@ -87,21 +73,27 @@ export class StandardWorker extends StandardWorkerService {
      *     `createSqsJobAdapter`, so `jobHasFailed` evaluates
      *     `hasReachedMaxAttempts` against the same `DEFAULT_ATTEMPTS`
      *     ceiling used for webhook-filter jobs.
-     *   - Returning `true` re-throws and SQS keeps the message, which
-     *     becomes visible again after the consumer-wide visibility
-     *     timeout (`SQS_DEFAULT_VISIBILITY_TIMEOUT`, env-tunable).
-     *   - Returning `false` acks and SQS deletes the message.
+     *   - Returning `retry: true` re-throws and SQS keeps the message.
+     *   - Returning `retry: false` acks and SQS deletes the message.
      *   - `RedrivePolicy.maxReceiveCount=3` on the standard SQS queue
      *     caps total deliveries to match the `attempts: 3` ceiling for
      *     webhook-filter jobs. Non-webhook-filter failures hit
      *     `hasToBackoff=false` and ack on the first attempt.
      *
-     * Cadence between retries is uniform (the SQS visibility timeout);
-     * tune via env if a longer baseline is needed.
+     * `retryDelayMs` restores the per-attempt cadence BullMQ gets from
+     * `settings.backoffStrategy`, which never applied on the SQS path.
      */
-    this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
-      return await this.jobHasFailed(job, error);
-    });
+    this.setSqsFailedHandler(
+      async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<ISqsFailureOutcome> => {
+        const retry = await this.jobHasFailed(job, error);
+
+        if (!retry) {
+          return { retry: false };
+        }
+
+        return { retry: true, retryDelayMs: await this.resolveSqsRetryDelay(job, error) };
+      }
+    );
 
     this.startSqsConsumer();
   }
@@ -166,57 +158,46 @@ export class StandardWorker extends StandardWorkerService {
         return;
       }
 
-      if (data.skipProcessing) {
-        Logger.log(`Skipping job ${data._id} - skipProcessing flag is set,`, LOG_CONTEXT);
-
-        return;
-      }
       const minimalJobData = this.extractMinimalJobData(data);
-      const organizationExists = await this.organizationExist(data);
-
-      if (!organizationExists) {
-        Logger.verbose(
-          `Organization not found for organizationId ${minimalJobData.organizationId}. Skipping job.`,
-          LOG_CONTEXT
-        );
-
-        return;
-      }
+      // Fetched here so the transaction can be named by job type; RunJob re-fetches when it is missing.
+      const job = await this.jobRepository.findOne({
+        _id: minimalJobData.jobId,
+        _environmentId: minimalJobData.environmentId,
+      });
+      const transactionName = job?.type
+        ? `${ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE}/${job.type}`
+        : ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE;
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
       return await new Promise((resolve, reject) => {
         const _this = this;
 
-        nr.startBackgroundTransaction(
-          ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE,
-          'Trigger Engine',
-          function processTask() {
-            const transaction = nr.getTransaction();
+        nr.startBackgroundTransaction(transactionName, 'Jobs Worker', function processTask() {
+          const transaction = nr.getTransaction();
 
-            storage.run(new Store(PinoLogger.root), () => {
-              _this.runJob
-                .execute(RunJobCommand.create(minimalJobData))
-                .then(resolve)
-                .catch((error) => {
-                  Logger.error(
-                    error,
-                    `Failed to run the job ${minimalJobData.jobId} during worker processing`,
-                    LOG_CONTEXT
-                  );
+          storage.run(new Store(PinoLogger.root), () => {
+            _this.runJob
+              .execute(RunJobCommand.create({ ...minimalJobData, job: job ?? undefined }))
+              .then(resolve)
+              .catch((error) => {
+                Logger.error(
+                  error,
+                  `Failed to run the job ${minimalJobData.jobId} during worker processing`,
+                  LOG_CONTEXT
+                );
 
-                  if (isWebhookFilterSsrfBlockedError(error)) {
-                    return reject(new UnrecoverableError((error as Error).message));
-                  }
+                if (isWebhookFilterSsrfBlockedError(error)) {
+                  return reject(new UnrecoverableError((error as Error).message));
+                }
 
-                  return reject(error);
-                })
-                .finally(() => {
-                  transaction.end();
-                });
-            });
-          }
-        );
+                return reject(error);
+              })
+              .finally(() => {
+                transaction.end();
+              });
+          });
+        });
       });
     };
   }
@@ -232,7 +213,7 @@ export class StandardWorker extends StandardWorkerService {
        * The job might have been cancelled in the pipeline (e.g., by a digest or delay step)
        * In such cases, we only update jobs that are in RUNNING status to COMPLETED, preserving other final statuses
        */
-      await this.jobRepository.updateOne(
+      const completedJob = await this.jobRepository.findOneAndUpdate(
         {
           _environmentId: minimalData.environmentId,
           _id: minimalData.jobId,
@@ -242,8 +223,10 @@ export class StandardWorker extends StandardWorkerService {
           $set: {
             status: JobStatusEnum.COMPLETED,
           },
-        }
+        },
+        { new: true }
       );
+      this.stepRunV2Writer.write(completedJob);
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }
@@ -307,23 +290,47 @@ export class StandardWorker extends StandardWorkerService {
     }
   }
 
+  /**
+   * Resolves the delay before the next attempt, and as a side effect writes the
+   * `WEBHOOK_FILTER_FAILED_RETRY` execution detail into the activity feed.
+   */
+  private async executeBackoffStrategy(attemptsMade: number, eventError: Error, eventJob: Job): Promise<number> {
+    return await this.webhookFilterBackoffStrategy.execute({
+      attemptsMade,
+      environmentId: eventJob?.data?._environmentId,
+      eventError,
+      eventJob,
+      organizationId: eventJob?.data?._organizationId,
+      userId: eventJob?.data?._userId,
+    });
+  }
+
   private getBackoffStrategies = () => {
     return async (attemptsMade: number, type: string, eventError: Error, eventJob: Job): Promise<number> => {
-      return await this.webhookFilterBackoffStrategy.execute({
-        attemptsMade,
-        environmentId: eventJob?.data?._environmentId,
-        eventError,
-        eventJob,
-        organizationId: eventJob?.data?._organizationId,
-        userId: eventJob?.data?._userId,
-      });
+      return await this.executeBackoffStrategy(attemptsMade, eventError, eventJob);
     };
   };
 
-  private async organizationExist(data: IStandardDataDto): Promise<boolean> {
-    const { _organizationId } = data;
-    const organization = await this.organizationRepository.findOne({ _id: _organizationId });
+  /**
+   * The SQS counterpart to `settings.backoffStrategy`, which BullMQ invokes
+   * between retries but which never ran on the SQS path.
+   *
+   * Only reached when `jobHasFailed` returned true, and that requires
+   * `shouldBackoff` - i.e. a retryable webhook filter error - so this matches
+   * BullMQ, where `options.backoff` is set only for webhook-filter steps.
+   */
+  private async resolveSqsRetryDelay(job: Job, error: Error): Promise<number | undefined> {
+    try {
+      return await this.executeBackoffStrategy(job.attemptsMade, error, job);
+    } catch (backoffError) {
+      Logger.error(
+        backoffError,
+        `Failed to resolve the SQS retry delay for job ${job.data?._id}, falling back to the visibility timeout`,
+        LOG_CONTEXT
+      );
 
-    return !!organization;
+      // Undefined, not 0: 0 would mean "retry immediately".
+      return undefined;
+    }
   }
 }

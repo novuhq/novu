@@ -26,6 +26,7 @@ export function safeOutboundJsonSpy({
       statusMessage: 'OK',
       headers,
       body,
+      isJson: true,
     });
   });
 

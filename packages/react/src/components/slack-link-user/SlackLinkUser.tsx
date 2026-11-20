@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultSlackLinkUser, DefaultSlackLinkUserProps } from './DefaultSlackLinkUser';
 
 export type SlackLinkUserProps = DefaultSlackLinkUserProps & Pick<NovuUIOptions, 'container' | 'appearance'>;
 
-const SlackLinkUserInternal = withRenderer<SlackLinkUserProps>((props) => {
+const SlackLinkUserInternal = (props: SlackLinkUserProps) => {
   const { container, appearance, ...defaultProps } = props;
   const novu = useNovu();
 
@@ -23,7 +22,7 @@ const SlackLinkUserInternal = withRenderer<SlackLinkUserProps>((props) => {
       <DefaultSlackLinkUser {...defaultProps} />
     </NovuUI>
   );
-});
+};
 
 SlackLinkUserInternal.displayName = 'SlackLinkUserInternal';
 

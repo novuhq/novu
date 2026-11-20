@@ -1,10 +1,22 @@
+import { createHash } from 'node:crypto';
+import { parseLiquidControlValue } from '@novu/framework/internal';
 import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
-import Ajv, { ErrorObject } from 'ajv';
+import Ajv, { type AnySchema, ErrorObject, type ValidateFunction } from 'ajv';
+import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
+import { LRUCache } from 'lru-cache';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper-service';
 import { buildVariables } from './build-variables';
-import { buildLiquidParser } from './template-parser/liquid-engine';
+import { buildLiquidValidator } from './template-parser/liquid-engine';
+import { isLiquidErrors } from './template-parser/parser-utils';
+
+const liquidValidator = buildLiquidValidator();
+
+const UNSUPPORTED_QUOTES_MESSAGE =
+  'Use single quotes for text inside {{ }} and {% %}. Double quotes (") and backslashes (\\) are not supported';
+
+const stripLiquidPosition = (message: string): string => message.split(/,? line:/)[0];
 
 const getErrorPath = (error: ErrorObject): string => {
   const path = error.instancePath.substring(1);
@@ -90,13 +102,67 @@ export type ControlIssues = {
   controls?: Record<string, RuntimeIssue[]>;
 };
 
-/** Single AJV configuration for every control-value schema check, so issues stay consistent. */
-export const createSchemaValidationAjv = ({ verbose = false }: { verbose?: boolean } = {}): Ajv => {
-  const ajv = new Ajv({ allErrors: true, strict: false, verbose });
+const DRAFT_2020_12_SCHEMA_ID = 'https://json-schema.org/draft/2020-12/schema';
+
+function usesDraft2020Schema(schema: AnySchema): boolean {
+  if (typeof schema !== 'object' || schema === null || !('$schema' in schema)) {
+    return false;
+  }
+
+  const schemaId = (schema as { $schema?: string }).$schema;
+
+  return schemaId === DRAFT_2020_12_SCHEMA_ID || schemaId?.includes('2020-12') === true;
+}
+
+interface SchemaValidationOptions {
+  verbose?: boolean;
+  /** Fill in schema `default`s on the validated value, mutating it. */
+  useDefaults?: boolean;
+}
+
+/** Single AJV configuration for every JSON schema check, so issues stay consistent. */
+export const createSchemaValidationAjv = ({
+  verbose = false,
+  useDefaults = false,
+  schema,
+}: SchemaValidationOptions & { schema?: AnySchema } = {}): Ajv => {
+  const options = { allErrors: true, strict: false, verbose, useDefaults };
+  const ajv = schema && usesDraft2020Schema(schema) ? new Ajv2020(options) : new Ajv(options);
+
   addFormats(ajv);
 
   return ajv;
 };
+
+const compiledSchemaValidators = new LRUCache<string, ValidateFunction>({ max: 5000 });
+
+/**
+ * Returns a compiled validator for `schema`, reusing the one compiled earlier for the same schema
+ * content. Compiling is expensive, so call this instead of compiling per validation.
+ *
+ * Every schema gets its own AJV instance: a shared instance keeps every schema it has compiled
+ * in memory and refuses a second schema that declares an `$id` it has already seen.
+ */
+export const getSchemaValidator = (
+  schema: AnySchema,
+  { useDefaults = false }: Pick<SchemaValidationOptions, 'useDefaults'> = {}
+): ValidateFunction => {
+  const key = createHash('sha256')
+    .update(JSON.stringify([useDefaults, schema]))
+    .digest('hex');
+  let validate = compiledSchemaValidators.get(key);
+
+  if (!validate) {
+    validate = createSchemaValidationAjv({ useDefaults, schema }).compile(schema);
+    compiledSchemaValidators.set(key, validate);
+  }
+
+  return validate;
+};
+
+/** Validator for a workflow `payloadSchema`, shared by save-time checks and trigger-time validation. */
+export const getPayloadSchemaValidator = (schema: AnySchema): ValidateFunction =>
+  getSchemaValidator(schema, { useDefaults: true });
 
 const joinIssuePath = (pathPrefix: string | undefined, errorPath: string | undefined): string | undefined => {
   const segments = [pathPrefix, errorPath].filter((segment): segment is string => Boolean(segment?.trim()));
@@ -182,7 +248,7 @@ export const processControlValuesBySchema = ({
     return {};
   }
 
-  const validate = createSchemaValidationAjv().compile(controlSchema);
+  const validate = getSchemaValidator(controlSchema);
   const isValid = validate(controlValues);
   const errors = validate.errors as null | ErrorObject[];
 
@@ -193,18 +259,34 @@ export const processControlValuesBySchema = ({
   return mapSchemaErrorsToControlIssues(errors, { stepType });
 };
 
-const validateContentCompilation = (controlKey: string, currentValue: unknown): RuntimeIssue | null => {
+/**
+ * Explains a compile failure in terms of what the user typed. When the typed text parses, the
+ * failure comes from the JSON escaping compile adds, which only affects quotes and backslashes.
+ */
+const describeCompilationError = (value: string): string => {
   try {
-    const parserEngine = buildLiquidParser();
-    parserEngine.parse(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue));
+    liquidValidator.parse(value);
+  } catch (error) {
+    const cause = isLiquidErrors(error) ? error.errors[0] : error;
+
+    return cause instanceof Error ? stripLiquidPosition(cause.message) : String(cause);
+  }
+
+  return UNSUPPORTED_QUOTES_MESSAGE;
+};
+
+const validateContentCompilation = (controlKey: string, currentValue: unknown): RuntimeIssue | null => {
+  if (typeof currentValue !== 'string') {
+    return null;
+  }
+
+  try {
+    parseLiquidControlValue(liquidValidator, currentValue);
 
     return null;
-  } catch (error) {
-    // @ts-expect-error - error is unknown
-    const message = error.message ? error.message.split(', line:1')[0] || error.message.split(' line:1')[0] : '';
-
+  } catch {
     return {
-      message: `Content compilation error: ${message}`.trim(),
+      message: `Content compilation error: ${describeCompilationError(currentValue)}`,
       issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
       variableName: controlKey,
     };
@@ -236,8 +318,9 @@ export const processControlValuesByLiquid = ({
       issues.controls = issues.controls || {};
 
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
-        const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
-        const variableName = invalidVariable.name === 'unknown' ? '{{}}' : invalidVariable.name;
+        const message = invalidVariable.message ? stripLiquidPosition(invalidVariable.message) : '';
+        const isSyntaxError = invalidVariable.isParseFailure === true;
+        const variableName = isSyntaxError ? '{{}}' : invalidVariable.name;
 
         if ('filterMessage' in invalidVariable) {
           return {
@@ -248,7 +331,9 @@ export const processControlValuesByLiquid = ({
         }
 
         return {
-          message: `Variable "${variableName}" ${message}`.trim(),
+          message: isSyntaxError
+            ? `Content compilation error: ${message}`
+            : `Variable "${variableName}" ${message}`.trim(),
           issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
           variableName: variableName,
         };

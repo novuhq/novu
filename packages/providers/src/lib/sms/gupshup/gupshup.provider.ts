@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
@@ -9,6 +9,7 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -41,7 +42,7 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
       }),
     }).body;
 
-    const response = await axios.create().post(GupshupSmsProvider.BASE_URL, params);
+    const response = await this.httpClient.post(GupshupSmsProvider.BASE_URL, params);
 
     const body = response.data;
     const result = body.split(' | ');

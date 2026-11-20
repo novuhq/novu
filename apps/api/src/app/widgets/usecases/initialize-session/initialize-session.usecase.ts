@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   InstrumentUsecase,
@@ -10,8 +9,13 @@ import {
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import {
+  SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { InitializeSessionCommand } from './initialize-session.command';
@@ -23,7 +27,8 @@ export class InitializeSession {
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {}
 
   @LogDecorator()
@@ -35,7 +40,7 @@ export class InitializeSession {
       throw new BadRequestException('Please provide a valid app identifier');
     }
 
-    const inAppIntegration = await this.selectIntegration.execute(
+    const selection = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
@@ -45,12 +50,20 @@ export class InitializeSession {
       })
     );
 
-    if (!inAppIntegration) {
+    if (!selection) {
       throw new NotFoundException('In app integration could not be found');
     }
+    const { integration: inAppIntegration } = selection;
 
-    if (inAppIntegration.credentials.hmac) {
-      validateNotificationCenterEncryption(environment, command);
+    const signingKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+    });
+    const hmacValid = isHmacValidForAnyKey(signingKeys, command.subscriberId, command.hmacHash);
+
+    if (inAppIntegration.credentials.hmac && !hmacValid) {
+      throw new BadRequestException('Please provide a valid HMAC hash');
     }
 
     const subscriber = await this.createOrUpdateSubscriberUsecase.execute(
@@ -62,22 +75,21 @@ export class InitializeSession {
         lastName: command.lastName,
         email: command.email,
         phone: command.phone,
-        allowUpdate: isHmacValidForAnyKey(
-          environment.apiKeys.map((apiKey) => apiKey.key),
-          command.subscriberId,
-          command.hmacHash
-        ),
+        allowUpdate: hmacValid,
       })
     );
 
-    this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriber._id,
+    const token = await this.authService.getSubscriberWidgetToken(subscriber, []);
+
+    void this.subscriberSessionAuthStatsService.record({
+      environmentId: environment._id,
+      hmacValid,
+      clientVersion: command.clientVersion,
+      source: SubscriberSessionSourceEnum.LEGACY_WIDGET,
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, []),
+      token,
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,
@@ -85,13 +97,5 @@ export class InitializeSession {
         phone: subscriber.phone,
       },
     };
-  }
-}
-
-function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const apiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
-
-  if (!isHmacValidForAnyKey(apiKeys, command.subscriberId, command.hmacHash)) {
-    throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }

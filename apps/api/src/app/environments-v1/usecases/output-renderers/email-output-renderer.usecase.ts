@@ -6,6 +6,7 @@ import {
   EmailControlType,
   GetLayoutCommand,
   GetLayoutUseCase,
+  getEffectiveJobOverrides,
   InstrumentUsecase,
   LayoutControlType,
   PinoLogger,
@@ -21,6 +22,7 @@ import {
   JobEntity,
   JobRepository,
   LocalizationResourceEnum,
+  NotificationRepository,
   NotificationTemplateEntity,
   OrganizationEntity,
 } from '@novu/dal';
@@ -33,6 +35,7 @@ import {
   ExecutionDetailsStatusEnum,
   LAYOUT_CONTENT_VARIABLE,
   LAYOUT_PREVIEW_EMAIL_STEP,
+  TriggerOverrides,
 } from '@novu/shared';
 import { decodeHTML } from 'entities';
 import { Liquid } from 'liquidjs';
@@ -49,6 +52,13 @@ type TranslationContext = {
   locale: string;
   resourceId: string;
 };
+
+interface TranslatableEmailControls {
+  [key: string]: unknown;
+  subject: string;
+  from?: Pick<NonNullable<EmailControlType['from']>, 'name'>;
+  preheader?: string;
+}
 
 export class EmailOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;
@@ -80,7 +90,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private controlValuesRepository: ControlValuesRepository,
     private getLayoutUseCase: GetLayoutUseCase,
     private jobRepository: JobRepository,
-    private createExecutionDetails: CreateExecutionDetails
+    private createExecutionDetails: CreateExecutionDetails,
+    private notificationRepository: NotificationRepository
   ) {
     super(logger, controlsTranslationService);
     /**
@@ -130,17 +141,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const controlMeta = {
       ...(from && { from }),
       ...(replyTo && { replyTo }),
-      ...(preheader && { preheader }),
+      ...(preheader !== undefined && { preheader }),
       ...(useProviderDefaults !== undefined && { useProviderDefaults }),
     };
 
     if (!body || typeof body !== 'string') {
-      /**
-       * Force type mapping in case undefined control.
-       * This passes responsibility to framework to throw type validation exceptions
-       * rather than handling invalid types here.
-       */
-
       return {
         subject: controlSubject as string,
         body: body as string,
@@ -161,29 +166,52 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     const { _environmentId: environmentId, _organizationId: organizationId, _id: workflowId } = dbWorkflow;
 
-    const workflowTranslationContext = await this.createTranslationContext({
-      environmentId,
-      organizationId,
-      resourceId: workflowId,
-      resourceType: LocalizationResourceEnum.WORKFLOW,
-      locale,
-      organization,
-      resourceEntity: dbWorkflow,
-    });
+    const [translatedControls, workflowTranslationContext] = await Promise.all([
+      this.processTranslations({
+        controls: {
+          subject: controlSubject as string,
+          ...(from?.name !== undefined && { from: { name: from.name } }),
+          ...(preheader !== undefined && { preheader }),
+        },
+        variables: fullPayloadForRender,
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }) as Promise<TranslatableEmailControls>,
+      this.createTranslationContext({
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }),
+    ]);
 
-    // Step 1: Apply translations to subject (already liquid-interpolated)
-    const translatedSubject = await this.processSubjectTranslations(
-      controlSubject as string,
-      fullPayloadForRender,
-      environmentId,
-      organizationId,
-      workflowId,
-      locale,
-      organization,
-      workflowTranslationContext
-    );
+    const translatedSubject = decodeHTML(this.unescapeJsonString(translatedControls.subject));
+    const translatedFromName =
+      translatedControls.from?.name === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.from.name));
+    const translatedPreheader =
+      translatedControls.preheader === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.preheader));
+    const translatedFrom = from ? { ...from, ...(from.name !== undefined && { name: translatedFromName }) } : undefined;
 
-    // Step 2: Process body content (with translations applied before rendering)
+    const translatedControlMeta = {
+      ...(translatedFrom && { from: translatedFrom }),
+      ...(replyTo && { replyTo }),
+      ...(preheader !== undefined && { preheader: translatedPreheader }),
+      ...(useProviderDefaults !== undefined && { useProviderDefaults }),
+    };
+
+    // Process body content with translations applied before rendering
     const renderedHtml = await this.renderWithLayout({
       body,
       stepLayoutId,
@@ -200,17 +228,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       workflowTranslationContext,
     });
 
-    // Step 3: Add Novu branding
+    // Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId, organization);
     const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
-    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, preheader);
+    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, translatedPreheader);
 
-    // Step 4: Sanitize output if needed
+    // Sanitize output if needed
     if (disableOutputSanitization) {
       return {
         subject: translatedSubject,
         body: htmlWithPreheader,
-        ...controlMeta,
+        ...translatedControlMeta,
       };
     }
 
@@ -219,8 +247,43 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     return {
       subject: translatedSubject,
       body: sanitizedBody,
-      ...controlMeta,
+      ...translatedControlMeta,
     };
+  }
+
+  private async findJobWithOverrides(jobId: string | undefined, environmentId: string): Promise<JobEntity | null> {
+    if (!jobId) {
+      return null;
+    }
+
+    const job = await this.jobRepository.findOne({
+      _id: jobId,
+      _environmentId: environmentId,
+    });
+    if (!job) {
+      return null;
+    }
+
+    job.overrides = await this.resolveJobOverrides(job, environmentId);
+
+    return job;
+  }
+
+  /**
+   * Jobs written with overrides dedup on omit `overrides`, and the worker only hydrates them
+   * in memory, so this separate job read must resolve them from the parent notification.
+   */
+  private async resolveJobOverrides(job: JobEntity, environmentId: string): Promise<TriggerOverrides> {
+    if (job.overrides) {
+      return job.overrides;
+    }
+
+    const notification = await this.notificationRepository.findOne(
+      { _id: job._notificationId, _environmentId: environmentId },
+      'overrides'
+    );
+
+    return getEffectiveJobOverrides(job, notification);
   }
 
   private async getOverrideLayoutId({
@@ -290,17 +353,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     layoutIdForPreview?: string;
     workflowTranslationContext?: TranslationContext | null;
   }): Promise<string> {
-    let job: JobEntity | null = null;
-    let overrideLayoutId: string | null | undefined;
-    if (jobId) {
-      job = await this.jobRepository.findOne({
-        _id: jobId,
-        _environmentId: environmentId,
-      });
-      if (job) {
-        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
-      }
-    }
+    const job = await this.findJobWithOverrides(jobId, environmentId);
+    const overrideLayoutId = job ? await this.getOverrideLayoutId({ job, stepId }) : undefined;
 
     const overriddenStepLayoutId = overrideLayoutId || (overrideLayoutId === null ? null : stepLayoutId);
 
@@ -492,38 +546,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     }
   }
 
-  private async processSubjectTranslations(
-    subject: string,
-    variables: FullPayloadForRender,
-    environmentId: string,
-    organizationId: string,
-    workflowId?: string,
-    locale?: string,
-    organization?: OrganizationEntity,
-    translationContext?: TranslationContext | null
-  ): Promise<string> {
-    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
-
-    const translatedSubject = translationContext
-      ? await this.processStringWithContext({
-          context: translationContext,
-          content: subject,
-          variables: unescapedVariables,
-        })
-      : await this.processStringTranslations({
-          content: subject,
-          variables: unescapedVariables,
-          environmentId,
-          organizationId,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
-          locale,
-          organization,
-        });
-
-    return decodeHTML(this.unescapeJsonString(translatedSubject));
-  }
-
   private async processTextTranslations({
     text,
     variables,
@@ -618,7 +640,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       }
     }
 
-    const lastIndex = matches[matches.length - 1].index!;
+    const lastIndex = matches[matches.length - 1].index ?? html.length;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
   }

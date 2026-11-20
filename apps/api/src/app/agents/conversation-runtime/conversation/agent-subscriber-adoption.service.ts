@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentToolTrustRepository,
-  ConversationActivityRepository,
   ConversationRepository,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from '@novu/shared';
+import { AgentConversationService } from './agent-conversation.service';
 
 /**
  * Identity pair for a subscriber involved in an adoption merge. The email
@@ -35,7 +35,7 @@ export interface AdoptionSubscriberRef {
 export class AgentSubscriberAdoptionService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
-    private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly agentToolTrustRepository: AgentToolTrustRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -81,7 +81,7 @@ export class AgentSubscriberAdoptionService {
         toSubscriberId: real.subscriberId,
       });
 
-      const activities = await this.conversationActivityRepository.repointSubscriberSender({
+      const activities = await this.conversationService.repointSubscriberSender({
         environmentId,
         organizationId,
         fromSubscriberId: phantom.subscriberId,

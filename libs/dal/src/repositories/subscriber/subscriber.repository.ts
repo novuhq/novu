@@ -109,7 +109,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
 
     let bulkResponse;
-    let writeErrors: Array<{ err: { index: number; errmsg: string; op?: { subscriberId?: string } } }> = [];
+    let writeErrors: SubscriberWriteError[] = [];
     try {
       bulkResponse = await this.bulkWrite(bulkWriteOps);
     } catch (e: unknown) {
@@ -118,9 +118,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           throw new DalException(e.message);
         }
         bulkResponse = e.result;
-        writeErrors = e.writeErrors as Array<{
-          err: { index: number; errmsg: string; op?: { subscriberId?: string } };
-        }>;
+        writeErrors = e.writeErrors;
       } else {
         throw new DalException('An unknown error occurred');
       }
@@ -185,7 +183,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     emails: string[] = [],
     search?: string
   ): Promise<string[]> {
-    const filters: any = [];
+    const filters: SubscriberSearchClause[] = [];
 
     if (emails?.length) {
       filters.push({
@@ -297,16 +295,10 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         $and: [
           {
             ...(query.email && {
-              email: {
-                $regex: regExpEscape(query.email),
-                $options: 'i',
-              },
+              email: query.email,
             }),
             ...(query.phone && {
-              phone: {
-                $regex: regExpEscape(query.phone),
-                $options: 'i',
-              },
+              phone: query.phone,
             }),
             ...(query.subscriberId && {
               subscriberId: query.subscriberId,
@@ -372,6 +364,22 @@ function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }
 
-function isErrorWithWriteErrors(e: unknown): e is { writeErrors?: any; message?: string; result?: any } {
+type SubscriberSearchClause =
+  | { email: { $in: string[] } }
+  | { subscriberId: { $in: string[] } }
+  | { email: { $regex: string; $options: 'i' } }
+  | { subscriberId: { $eq: string } };
+
+type SubscriberWriteError = {
+  err: { index: number; errmsg: string; op?: { subscriberId?: string } };
+};
+
+type SubscriberBulkWriteResult = {
+  upsertedIds?: Record<string, unknown>;
+};
+
+function isErrorWithWriteErrors(
+  e: unknown
+): e is { writeErrors?: SubscriberWriteError[]; message?: string; result?: SubscriberBulkWriteResult } {
   return typeof e === 'object' && e !== null && 'writeErrors' in e;
 }

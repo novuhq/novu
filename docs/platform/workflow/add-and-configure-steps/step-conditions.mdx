@@ -21,6 +21,10 @@ You configure step conditions from the Workflow Editor.
 
 If the condition evaluates to `true`, the step runs. If it evaluates to `false`, the step is skipped and the workflow continues.
 
+<Note>
+  Integration conditions are a separate control. They choose which provider integration sends the message after the step runs. See [Integration conditions](/platform/integrations/integration-conditions).
+</Note>
+
 ## How the condition builder works
 
 The step condition builder is rule-based and composed of three core elements:
@@ -44,6 +48,8 @@ This structure allows you to model both simple checks and complex branching logi
     | --------------------- | --------------------------------------- | ----------------------------------------------- |
     | `=`                   | Equal to                                | `subscriber.locale = "en-US"`                   |
     | `!=`                  | Not equal to                            | `subscriber.isOnline != true`                   |
+    | `is empty`            | Is an empty string                      | `payload.marketingName is empty`                |
+    | `is not empty`        | Is a non-empty string                   | `payload.marketingName is not empty`            |
     | `<`                   | Less than                               | `payload.totalAmount < 100`                     |
     | `>`                   | Greater than                            | `payload.totalAmount > 100`                     |
     | `<=`                  | Less than or equal to                   | `payload.totalAmount <= 200`                    |
@@ -61,6 +67,33 @@ This structure allows you to model both simple checks and complex branching logi
     | `between`             | Within a range                          | `payload.totalAmount between [50, 200]`         |
     | `not between`         | Outside of a range                      | `payload.totalAmount not between [0, 50]`       |
 
+  **is empty** and **is not empty** are available only for string fields. They check the exact string value, so
+  whitespace-only strings are considered non-empty. Missing fields, `null`, arrays, objects, numbers, and booleans do
+  not match either operator.
+
+  Existing step conditions are unchanged. Saved `equals`, `is null`, and other operators keep the same result until
+  you add an **is empty** or **is not empty** rule.
+
+## Array and collection conditions
+
+When a field is an array of objects — for example, the events collected by a [Digest](/platform/workflow/add-and-configure-steps/configure-action-steps/digest) step — you can evaluate a rule against the items inside that array instead of comparing the field as a whole.
+
+First, choose how many items must match:
+
+| Operator     | Matches when                                                                         |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `any item`   | At least one item in the array matches the rule                                     |
+| `every item` | Every item in the array matches the rule, and the array contains at least one item  |
+| `no item`    | No item in the array matches the rule                                                |
+
+Then define the rule that each item is tested against:
+
+- **Item property**: the path to a property on each array item. It is resolved relative to the item, not the root data (for example, `payload.status`).
+- **Comparison**: `has value`, `equals`, `does not equal`, `less than`, `less than or equal to`, `greater than`, or `greater than or equal to`. `has value` needs no comparison value. A property set to `false`, `0`, or `""` does not match, even when that property is present.
+- **Value**: the value to compare the item property against. Not required for `has value`.
+
+For example, to run a step only when at least one digested event was already read, add a condition on `steps.<digest-step-id>.events` with the **any item** operator, where the item property `payload.status` **equals** `read`.
+
 ## Data used for step conditions
 
 Step conditions can evaluate data from several sources. Choose the source that best represents the decision you’re trying to make.
@@ -70,6 +103,16 @@ Step conditions can evaluate data from several sources. Choose the source that b
 You can apply conditions on subscriber attributes so notifications only go to the right people. For example, send an SMS only when `subscriber.isOnline` is `false` (isOnline is a subscriber attribute that comes from whether the subscriber has an active Inbox session).
 
 For custom fields you store on the subscriber (e.g. plan, preferences), use the full path to the property. For example, use `subscriber.data.subscription_plan` equals `premium` to run a step only for subscribers on the premium plan.
+
+<Warning>
+  Custom properties under `subscriber.data.*` do not have a declared schema. The condition builder therefore treats
+  them as strings, even when a subscriber profile currently stores a number or boolean. Numeric operators such as
+  `<`, `>`, `between`, and `not between` are not available for these properties.
+
+  When you need typed comparisons, include the value in the workflow payload, declare its number or boolean type in
+  the [payload schema](/platform/workflow/configure-workflow#payload-schema), and create the condition against that
+  `payload.*` field.
+</Warning>
 
 <Note>
   To learn more about Subscribers model, refer to the [Subscribers documentation](/platform/concepts/subscribers)
@@ -109,14 +152,24 @@ The following workflow variables are available:
 
 ### Previous step result
 
-For workflows involving sequential steps, conditions can also depend on the outcome of a previous step. For example, if the prior step was an in-app notification, then the condition could check:
+For workflows involving sequential steps, conditions can also depend on the outcome of a previous step. If the prior step was an in-app notification, the condition can check:
 
-- `steps.in-app-step.seen`
-- `steps.in-app-step.read`
-- `steps.in-app-step.lastSeenDate`
-- `steps.in-app-step.lastReadDate`
+- `steps.<in-app-step-id>.seen`
+- `steps.<in-app-step-id>.read`
+- `steps.<in-app-step-id>.lastSeenDate`
+- `steps.<in-app-step-id>.lastReadDate`
 
-This can be used for follow-up notifications. For instance, send an email only if the in-app notification was not read within 24 hours.
+The step id is the identifier of that in-app step.
+
+#### Skip the email when the in-app notification was read
+
+You can skip the email if the in-app notification was read:
+
+1. Add an In-App step, then a [Delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay), then an Email step.
+2. On the Email step, open **Step conditions**.
+3. Require `steps.<in-app-step-id>.read` to be false.
+
+A common follow-up waits 24 hours on the Delay step, then sends the email only when the in-app message is still unread. If the condition does not match, the Activity Feed marks the email step **Skipped** and records that it was skipped by conditions. Novu continues with any step after that email step.
 
 ### Context
 

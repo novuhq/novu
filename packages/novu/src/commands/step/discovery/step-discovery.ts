@@ -27,6 +27,7 @@ const METHOD_NAME_TO_TYPE: Record<string, string> = {
   chat: 'chat',
   push: 'push',
   inApp: 'in_app',
+  tool: 'tool',
   delay: 'delay',
   digest: 'digest',
   throttle: 'throttle',

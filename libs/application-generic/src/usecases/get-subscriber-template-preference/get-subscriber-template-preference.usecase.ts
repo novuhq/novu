@@ -42,6 +42,10 @@ export class GetSubscriberTemplatePreference {
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
+    if (!command.template) {
+      throw new BadRequestException('Template is required');
+    }
+
     const subscriber: Pick<SubscriberEntity, '_id'> | null = command.subscriber ?? (await this.getSubscriber(command));
 
     const initialChannels = await this.getChannels(command);
@@ -94,6 +98,7 @@ export class GetSubscriberTemplatePreference {
       subscriberId,
       templateId: command.template._id,
       contextKeys: command.contextKeys,
+      subscriberGlobalPreference: command.subscriberGlobalPreference,
     });
 
     if (!subscriberWorkflowPreference) {
@@ -189,6 +194,7 @@ export class GetSubscriberTemplatePreference {
       );
 
       return [
+        // biome-ignore lint/plugin: Existing step-type to channel-type cast is outside this change.
         ...new Set(messageTemplates.map((messageTemplate) => messageTemplate.type) as unknown as ChannelTypeEnum[]),
       ];
     }
@@ -204,6 +210,7 @@ export class GetSubscriberTemplatePreference {
         return list;
       }, []);
 
+    // biome-ignore lint/plugin: Existing step-type to channel-type cast is outside this change.
     return channels as unknown as ChannelTypeEnum[];
   }
 

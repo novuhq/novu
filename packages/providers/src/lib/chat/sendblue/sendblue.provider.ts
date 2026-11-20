@@ -6,8 +6,9 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import Axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 import { ISendblueMessageResponse } from './types/sendblue.types';
 
@@ -27,7 +28,7 @@ export class SendblueChatProvider extends BaseProvider implements IChatProvider 
     }
   ) {
     super();
-    this.axiosClient = Axios.create({
+    this.axiosClient = createProviderHttpClient({
       headers: {
         'sb-api-key-id': this.config.apiKey,
         'sb-api-secret-key': this.config.secretKey,

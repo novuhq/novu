@@ -17,9 +17,9 @@ const searchNovuDocs = tool({
 //   npm install @ai-sdk/anthropic     # Anthropic
 //   npm install @ai-sdk/google        # Google
 //
-// import { generateText } from 'ai';
+// import { streamText } from 'ai';
 // import { openai } from '@ai-sdk/openai';
-// import { toModelMessages } from '@novu/framework/ai-sdk';
+// import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -59,16 +59,16 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Uncomment the generateText return below to wire your LLM._\n` +
+      `_This is a demo agent. Uncomment the streamText return below to wire your LLM._\n` +
       `_Once wired, try "how does tool approval work in Novu?" to see the approval flow._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
 
-    // return generateText({
+    // return streamText({
     //   model: openai('gpt-4o-mini'),
     //   instructions: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
-    //   messages: toModelMessages(ctx.history),
+    //   messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),
     //   tools: { searchNovuDocs },
     // });
   },

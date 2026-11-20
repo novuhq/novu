@@ -1,3 +1,22 @@
+## v3.20.0 (2026-11-16)
+
+### 🚀 Features
+
+- **js,react,nextjs:** improved rendering architecture fixes NV-8839 ([#12591](https://github.com/novuhq/novu/pull/12591))
+
+### ❤️ Thank You
+
+- Claude Fable 5.1
+- Paweł Tymczuk @LetItRock
+
+## v3.19.2 (2026-09-07)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.19.1 (2026-08-31)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
 ## v3.19.0 (2026-08-07)
 
 This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.

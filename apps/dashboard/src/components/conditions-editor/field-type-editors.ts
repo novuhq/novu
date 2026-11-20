@@ -1,9 +1,10 @@
 import type { ValueEditorType } from 'react-querybuilder';
 import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
-import { isRelativeDateOperator } from './field-type-operators';
+import { isArrayItemOperator } from './array-item-condition';
+import { isRelativeDateOperator, isValuelessOperator } from './field-type-operators';
 
 export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
-  if (operator === 'null' || operator === 'notNull') {
+  if (isValuelessOperator(operator)) {
     return null;
   }
 
@@ -21,6 +22,10 @@ export function getPlaceholderForField(
   { fieldData }: { fieldData: EnhancedField }
 ): string {
   const { dataType } = fieldData;
+
+  if (isArrayItemOperator(operator)) {
+    return 'item property';
+  }
 
   // Handle between operators with two values
   if (operator === 'between' || operator === 'notBetween') {
@@ -78,153 +83,215 @@ export type HelpTextInfo = {
   examples: string[];
 };
 
+const ARRAY_ITEM_HELP_EXAMPLES = ['payload.channels.email has value', 'payload.status equals read'];
+
+const ARRAY_ITEM_HELP_TEXT = {
+  some: {
+    title: 'Any item matches',
+    description:
+      'Passes when at least one item in the array matches. The property path is relative to each item. Leave the comparison as "has value" to check that the property is set.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+  all: {
+    title: 'Every item matches',
+    description:
+      'Passes when every item in the array matches. Empty arrays do not pass. The property path is relative to each item.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+  none: {
+    title: 'No item matches',
+    description: 'Passes when no item in the array matches. The property path is relative to each item.',
+    examples: ARRAY_ITEM_HELP_EXAMPLES,
+  },
+} satisfies Record<string, HelpTextInfo>;
+
+function getBetweenHelpText(operator: string, dataType: EnhancedField['dataType']): HelpTextInfo {
+  const action = operator === 'between' ? 'between' : 'not between';
+
+  switch (dataType) {
+    case 'number':
+      return {
+        title: `Number ${action}`,
+        description: `Check if the number is ${action} two values (inclusive). Uses two separate input fields. You can also use dynamic values from the payload.`,
+        examples: ['First: 10, Second: 50', 'Dynamic: {{payload.minPrice}}'],
+      };
+    case 'date':
+    case 'datetime':
+      return {
+        title: `Date ${action}`,
+        description: `Check if the date is ${action} two dates. Use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). Uses two separate input fields. You can also use dynamic values from the payload.`,
+        examples: ['First: 2024-01-01T00:00:00Z', 'Dynamic: {{payload.startDate}}'],
+      };
+    default:
+      return {
+        title: `Value ${action}`,
+        description: `Check if the value is ${action} two values. Uses two separate input fields. You can also use dynamic values from the payload.`,
+        examples: ['First: value1, Second: value2', 'Dynamic: {{payload.minValue}}'],
+      };
+  }
+}
+
+const RELATIVE_DATE_HELP_TEXT: Record<string, HelpTextInfo> = {
+  moreThanXAgo: {
+    title: 'More than X time ago',
+    description:
+      'Check if the date occurred more than the specified amount of time ago. Uses current time as reference.',
+    examples: ['5 days ago', '2 hours ago', '1 week ago'],
+  },
+  lessThanXAgo: {
+    title: 'Less than X time ago',
+    description:
+      'Check if the date occurred less than the specified amount of time ago. Uses current time as reference.',
+    examples: ['3 days ago', '30 minutes ago', '6 months ago'],
+  },
+  withinLast: {
+    title: 'Within last X time',
+    description: 'Check if the date occurred within the last specified amount of time. Excludes future dates.',
+    examples: ['within last 7 days', 'within last 24 hours', 'within last 1 year'],
+  },
+  notWithinLast: {
+    title: 'Not within last X time',
+    description: 'Check if the date did NOT occur within the last specified amount of time.',
+    examples: ['not within last 30 days', 'not within last 2 weeks'],
+  },
+  exactlyXAgo: {
+    title: 'Exactly X time ago',
+    description:
+      'Check if the date occurred exactly the specified amount of time ago (with tolerance based on time unit).',
+    examples: ['exactly 1 day ago', 'exactly 2 hours ago'],
+  },
+};
+
+function getInHelpText(operator: string, dataType: EnhancedField['dataType']): HelpTextInfo {
+  const action = operator === 'in' ? 'matches any of' : 'does not match any of';
+
+  switch (dataType) {
+    case 'number':
+      return {
+        title: `Number ${action}`,
+        description: `Check if the number ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
+        examples: ['1, 2, 3, 4', '{{payload.allowedIds}}'],
+      };
+    case 'boolean':
+      return {
+        title: `Boolean ${action}`,
+        description: `Check if the boolean ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
+        examples: ['true, false', '{{payload.isActive}}'],
+      };
+    case 'date':
+    case 'datetime':
+      return {
+        title: `Date ${action}`,
+        description: `Check if the date ${action} the provided dates. Use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). Separate multiple dates with commas. You can also use dynamic values from the payload.`,
+        examples: ['2024-01-01T00:00:00Z, 2024-06-01T12:00:00Z', '{{payload.eventDate}}'],
+      };
+    default:
+      return {
+        title: `Value ${action}`,
+        description: `Check if the value ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
+        examples: ['value1, value2, value3', '{{payload.category}}'],
+      };
+  }
+}
+
+function getStringHelpText(operator: string): HelpTextInfo {
+  switch (operator) {
+    case 'contains':
+      return {
+        title: 'String contains',
+        description:
+          'Check if the string contains the specified text (case-sensitive). You can also use dynamic values from the payload.',
+        examples: ['hello', '{{payload.searchTerm}}'],
+      };
+    case 'doesNotContain':
+      return {
+        title: 'String does not contain',
+        description:
+          'Check if the string does not contain the specified text (case-sensitive). You can also use dynamic values from the payload.',
+        examples: ['spam', '{{payload.blockedWord}}'],
+      };
+    case 'beginsWith':
+      return {
+        title: 'String begins with',
+        description:
+          'Check if the string starts with the specified text (case-sensitive). You can also use dynamic values from the payload.',
+        examples: ['Hello', '{{payload.prefix}}'],
+      };
+    case 'endsWith':
+      return {
+        title: 'String ends with',
+        description:
+          'Check if the string ends with the specified text (case-sensitive). You can also use dynamic values from the payload.',
+        examples: ['.com', '{{payload.domain}}'],
+      };
+    default:
+      return {
+        title: 'String comparison',
+        description:
+          'Compare the string value with the provided text. You can also use dynamic values from the payload.',
+        examples: ['Hello World', '{{payload.message}}'],
+      };
+  }
+}
+
+function getArrayHelpText(operator: string): HelpTextInfo {
+  if (operator === 'contains') {
+    return {
+      title: 'Array contains',
+      description: 'Check if the array contains the specified item. You can also use dynamic values from the payload.',
+      examples: ['item1', '{{payload.requiredTag}}'],
+    };
+  }
+
+  if (operator === 'containsAny') {
+    return {
+      title: 'Array contains any of',
+      description:
+        'Check if the array contains at least one of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
+      examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
+    };
+  }
+
+  if (operator === 'doesNotContainAny') {
+    return {
+      title: 'Array does not contain any of',
+      description:
+        'Check if the array does not contain any of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
+      examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
+    };
+  }
+
+  return {
+    title: 'Array comparison',
+    description:
+      'Compare array values. For multiple items, separate with commas. You can also use dynamic values from the payload.',
+    examples: ['item1, item2', '{{payload.tags}}'],
+  };
+}
+
 export function getHelpTextForField(operator: string, { fieldData }: { fieldData: EnhancedField }): HelpTextInfo {
   const { dataType } = fieldData;
 
-  // Handle between operators
+  if (isArrayItemOperator(operator)) {
+    return ARRAY_ITEM_HELP_TEXT[operator];
+  }
+
   if (operator === 'between' || operator === 'notBetween') {
-    const action = operator === 'between' ? 'between' : 'not between';
-
-    switch (dataType) {
-      case 'number':
-        return {
-          title: `Number ${action}`,
-          description: `Check if the number is ${action} two values (inclusive). Uses two separate input fields. You can also use dynamic values from the payload.`,
-          examples: ['First: 10, Second: 50', 'Dynamic: {{payload.minPrice}}'],
-        };
-      case 'date':
-      case 'datetime':
-        return {
-          title: `Date ${action}`,
-          description: `Check if the date is ${action} two dates. Use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). Uses two separate input fields. You can also use dynamic values from the payload.`,
-          examples: ['First: 2024-01-01T00:00:00Z', 'Dynamic: {{payload.startDate}}'],
-        };
-      default:
-        return {
-          title: `Value ${action}`,
-          description: `Check if the value is ${action} two values. Uses two separate input fields. You can also use dynamic values from the payload.`,
-          examples: ['First: value1, Second: value2', 'Dynamic: {{payload.minValue}}'],
-        };
-    }
+    return getBetweenHelpText(operator, dataType);
   }
 
-  // Handle relative date operators
-  if (operator === 'moreThanXAgo') {
-    return {
-      title: 'More than X time ago',
-      description:
-        'Check if the date occurred more than the specified amount of time ago. Uses current time as reference.',
-      examples: ['5 days ago', '2 hours ago', '1 week ago'],
-    };
+  if (isRelativeDateOperator(operator)) {
+    return RELATIVE_DATE_HELP_TEXT[operator];
   }
 
-  if (operator === 'lessThanXAgo') {
-    return {
-      title: 'Less than X time ago',
-      description:
-        'Check if the date occurred less than the specified amount of time ago. Uses current time as reference.',
-      examples: ['3 days ago', '30 minutes ago', '6 months ago'],
-    };
-  }
-
-  if (operator === 'withinLast') {
-    return {
-      title: 'Within last X time',
-      description: 'Check if the date occurred within the last specified amount of time. Excludes future dates.',
-      examples: ['within last 7 days', 'within last 24 hours', 'within last 1 year'],
-    };
-  }
-
-  if (operator === 'notWithinLast') {
-    return {
-      title: 'Not within last X time',
-      description: 'Check if the date did NOT occur within the last specified amount of time.',
-      examples: ['not within last 30 days', 'not within last 2 weeks'],
-    };
-  }
-
-  if (operator === 'exactlyXAgo') {
-    return {
-      title: 'Exactly X time ago',
-      description:
-        'Check if the date occurred exactly the specified amount of time ago (with tolerance based on time unit).',
-      examples: ['exactly 1 day ago', 'exactly 2 hours ago'],
-    };
-  }
-
-  // Handle in/notIn operators
   if (operator === 'in' || operator === 'notIn') {
-    const action = operator === 'in' ? 'matches any of' : 'does not match any of';
-
-    switch (dataType) {
-      case 'number':
-        return {
-          title: `Number ${action}`,
-          description: `Check if the number ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
-          examples: ['1, 2, 3, 4', '{{payload.allowedIds}}'],
-        };
-      case 'boolean':
-        return {
-          title: `Boolean ${action}`,
-          description: `Check if the boolean ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
-          examples: ['true, false', '{{payload.isActive}}'],
-        };
-      case 'date':
-      case 'datetime':
-        return {
-          title: `Date ${action}`,
-          description: `Check if the date ${action} the provided dates. Use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). Separate multiple dates with commas. You can also use dynamic values from the payload.`,
-          examples: ['2024-01-01T00:00:00Z, 2024-06-01T12:00:00Z', '{{payload.eventDate}}'],
-        };
-      default:
-        return {
-          title: `Value ${action}`,
-          description: `Check if the value ${action} the provided values. Separate multiple values with commas. You can also use dynamic values from the payload.`,
-          examples: ['value1, value2, value3', '{{payload.category}}'],
-        };
-    }
+    return getInHelpText(operator, dataType);
   }
 
   // Single value operators
   switch (dataType) {
     case 'string':
-      switch (operator) {
-        case 'contains':
-          return {
-            title: 'String contains',
-            description:
-              'Check if the string contains the specified text (case-sensitive). You can also use dynamic values from the payload.',
-            examples: ['hello', '{{payload.searchTerm}}'],
-          };
-        case 'doesNotContain':
-          return {
-            title: 'String does not contain',
-            description:
-              'Check if the string does not contain the specified text (case-sensitive). You can also use dynamic values from the payload.',
-            examples: ['spam', '{{payload.blockedWord}}'],
-          };
-        case 'beginsWith':
-          return {
-            title: 'String begins with',
-            description:
-              'Check if the string starts with the specified text (case-sensitive). You can also use dynamic values from the payload.',
-            examples: ['Hello', '{{payload.prefix}}'],
-          };
-        case 'endsWith':
-          return {
-            title: 'String ends with',
-            description:
-              'Check if the string ends with the specified text (case-sensitive). You can also use dynamic values from the payload.',
-            examples: ['.com', '{{payload.domain}}'],
-          };
-        default:
-          return {
-            title: 'String comparison',
-            description:
-              'Compare the string value with the provided text. You can also use dynamic values from the payload.',
-            examples: ['Hello World', '{{payload.message}}'],
-          };
-      }
+      return getStringHelpText(operator);
 
     case 'number':
       return {
@@ -251,39 +318,7 @@ export function getHelpTextForField(operator: string, { fieldData }: { fieldData
       };
 
     case 'array':
-      if (operator === 'contains') {
-        return {
-          title: 'Array contains',
-          description:
-            'Check if the array contains the specified item. You can also use dynamic values from the payload.',
-          examples: ['item1', '{{payload.requiredTag}}'],
-        };
-      }
-
-      if (operator === 'containsAny') {
-        return {
-          title: 'Array contains any of',
-          description:
-            'Check if the array contains at least one of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
-          examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
-        };
-      }
-
-      if (operator === 'doesNotContainAny') {
-        return {
-          title: 'Array does not contain any of',
-          description:
-            'Check if the array does not contain any of the specified items. Separate multiple values with commas. You can also use dynamic values from the payload.',
-          examples: ['tag1, tag2, tag3', '{{subscriber.data.tags}}'],
-        };
-      }
-
-      return {
-        title: 'Array comparison',
-        description:
-          'Compare array values. For multiple items, separate with commas. You can also use dynamic values from the payload.',
-        examples: ['item1, item2', '{{payload.tags}}'],
-      };
+      return getArrayHelpText(operator);
 
     case 'object':
       return {

@@ -1,0 +1,43 @@
+/*
+ * Page-load reveal of the hero illustration, fitted to the designer's video: the
+ * glow is there from the start, the back cards and the card outlines fade in at
+ * ~0.6s, the front card's surface and content follow sharp at ~0.8s, then the
+ * robot arms fade in. `backwards` holds the first keyframe during the delay and
+ * nothing afterwards, so no opacity lingers on a card.
+ *
+ * Each card fades on its own rather than the stack as a whole: an ancestor with
+ * opacity below 1 hides the glow from the back cards' backdrop blur, which then
+ * snapped in when the fade ended.
+ * Skipped entirely under reduced motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .stack > * {
+    animation: fade-in 625ms cubic-bezier(0.5, 0.6, 0.2, 1) 600ms backwards;
+  }
+
+  .stack [data-card-content] {
+    animation: fade-in 440ms cubic-bezier(0.33, 1, 0.68, 1) 775ms backwards;
+  }
+
+  /* Overlay-blended over the not-yet-visible surface, the stroke would read as
+     plain white; it stays faint until the surface comes in. */
+  .stack [data-card-stroke] {
+    animation: stroke-in 360ms ease-in-out 780ms backwards;
+  }
+
+  .arms {
+    animation: fade-in 1200ms cubic-bezier(0.3, 0, 0.2, 1) 1510ms backwards;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes stroke-in {
+  from {
+    opacity: 0.22;
+  }
+}

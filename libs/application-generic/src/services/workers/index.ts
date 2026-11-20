@@ -3,6 +3,7 @@ export { StandardWorkerService } from './standard-worker.service';
 export { SubscriberProcessWorkerService } from './subscriber-process-worker.service';
 export { WebSocketsWorkerService } from './web-sockets-worker.service';
 export {
+  ISqsFailureOutcome,
   SqsCompletedHandler,
   SqsFailedHandler,
   WorkerBaseService,

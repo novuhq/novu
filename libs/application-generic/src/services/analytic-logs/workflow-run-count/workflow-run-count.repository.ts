@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService } from '../clickhouse.service';
+import { toInclusiveUtcDays } from '../inclusive-utc-days';
 import { LogRepository } from '../log.repository';
 import {
   WORKFLOW_RUN_COUNT_ORDER_BY,
@@ -173,22 +174,18 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   }
 
   /**
-   * Platform usage from `workflow_run_count`, filtered to
-   * `event_type = workflow_run_status_processing`.
+   * Processing workflow runs per organization from the daily `workflow_run_count` buckets.
    *
-   * Callers pass a half-open Date range `[startDate, endDate)`. That maps to
-   * inclusive UTC calendar days: `date >= toDate(start) AND date <= toDate(end - 1ms)`,
-   * so a midnight exclusive period end (e.g. Stripe `current_period_end`) does not
-   * pull in the next period's first day.
+   * Counts every UTC day the half-open range `[startDate, endDate)` touches in full:
+   * `date >= toDate(start) AND date <= toDate(end - 1ms)`. A midnight exclusive end (e.g. Stripe
+   * `current_period_end`) does not pull in the next day; with mid-day bounds the first and last day
+   * are still counted in full. Use `TraceLogRepository.getOrganizationWorkflowRunsCount` when the exact range matters.
    */
-  async getPlatformUsageByDateRange(
+  async getPlatformUsageByWholeUtcDays(
     startDate: Date,
-    endDate: Date,
-    organizationId?: string
+    endDate: Date
   ): Promise<Array<{ organization_id: string; count: string }>> {
-    const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
-    const startDay = startDate.toISOString().split('T')[0];
-    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
 
     const query = `
       SELECT
@@ -199,22 +196,77 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
         date >= {startDate:Date}
         AND date <= {endDate:Date}
         AND event_type = 'workflow_run_status_processing'
-        ${organizationFilter}
       GROUP BY organization_id
       ORDER BY organization_id
     `;
 
-    const params: Record<string, unknown> = {
-      startDate: startDay,
-      endDate: endDayInclusive,
-    };
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      count: string;
+    }>({
+      query,
+      params: {
+        startDate: start,
+        endDate: end,
+      },
+    });
 
-    if (organizationId) {
-      params.organizationId = organizationId;
+    return result.data;
+  }
+
+  /**
+   * Same source and whole-UTC-day semantics as `getPlatformUsageByWholeUtcDays`, but one row per
+   * `(organization_id, date)` so callers can sum arbitrary per-org sub-ranges in memory.
+   * `day` is the UTC calendar day as `YYYY-MM-DD`.
+   *
+   * When `minimumOrganizationTotal` is set, only organizations whose `sum(count)` over that same
+   * window is at least the minimum are returned.
+   */
+  async getPlatformDailyUsageByWholeUtcDays(
+    startDate: Date,
+    endDate: Date,
+    minimumOrganizationTotal?: number
+  ): Promise<Array<{ organization_id: string; day: string; count: string }>> {
+    const { start, end } = toInclusiveUtcDays(startDate, endDate);
+    const params: Record<string, unknown> = {
+      startDate: start,
+      endDate: end,
+    };
+    let organizationTotalFilter = '';
+
+    if (minimumOrganizationTotal !== undefined) {
+      organizationTotalFilter = `
+        AND organization_id IN (
+          SELECT organization_id
+          FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+          WHERE
+            date >= {startDate:Date}
+            AND date <= {endDate:Date}
+            AND event_type = 'workflow_run_status_processing'
+          GROUP BY organization_id
+          HAVING sum(count) >= {minimumOrganizationTotal:UInt64}
+        )`;
+      params.minimumOrganizationTotal = minimumOrganizationTotal;
     }
+
+    const query = `
+      SELECT
+        organization_id,
+        toString(date) as day,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+        ${organizationTotalFilter}
+      GROUP BY organization_id, date
+      ORDER BY organization_id, date
+    `;
 
     const result = await this.clickhouseService.query<{
       organization_id: string;
+      day: string;
       count: string;
     }>({
       query,

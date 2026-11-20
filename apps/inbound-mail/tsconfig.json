@@ -2,15 +2,12 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "allowJs": false,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "module": "commonjs",
     "outDir": "./dist",
     "sourceMap": true,
     "strictNullChecks": false,
-    "target": "es2017",
     "types": ["node", "mocha", "chai", "sinon"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

@@ -19,6 +19,7 @@ const topicWithSubscribersProjection = {
     updatedAt: 1,
     key: 1,
     name: 1,
+    data: 1,
     subscribers: '$topicSubscribers.externalSubscriberId',
   },
 };
@@ -38,12 +39,13 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
   }
 
   async createTopic(entity: Omit<TopicEntity, '_id'>): Promise<TopicEntity> {
-    const { key, name, _environmentId, _organizationId } = entity;
+    const { key, name, data, _environmentId, _organizationId } = entity;
 
     return await this.create({
       _environmentId,
       key,
       name,
+      data,
       _organizationId,
     });
   }

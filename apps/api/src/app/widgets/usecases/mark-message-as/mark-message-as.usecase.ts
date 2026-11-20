@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AnalyticsService,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
@@ -17,7 +16,13 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { DeliveryLifecycleStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import {
+  DeliveryLifecycleStatusEnum,
+  sanitizeMessageCta,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WebSocketEventEnum,
+} from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -27,7 +32,6 @@ export class MarkMessageAs {
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
@@ -113,6 +117,10 @@ export class MarkMessageAs {
       }
     }
 
+    for (const message of updatedMessages) {
+      message.cta = sanitizeMessageCta(message.cta);
+    }
+
     return updatedMessages;
   }
 
@@ -148,20 +156,12 @@ export class MarkMessageAs {
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
     this.updateSocketCount(subscriber, marked);
-
-    for (const message of messages) {
-      this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,

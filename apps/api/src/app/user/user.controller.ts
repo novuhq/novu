@@ -1,6 +1,6 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OAuthAccessible, PinoLogger } from '@novu/application-generic';
+import { OAuthAccessible, PinoLogger, SkipPermissionsCheck } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -47,6 +47,11 @@ export class UsersController {
   })
   @OAuthAccessible()
   @ExternalApiAccessible()
+  /*
+   * Returns only the caller's own profile, so every member can read it whatever their role. Without this the
+   * RBAC guard requires every permission, which only the Owner holds, and the MCP server's OAuth probe fails.
+   */
+  @SkipPermissionsCheck()
   async getMyProfile(@UserSession() user: UserSessionData): Promise<UserResponseDto> {
     this.logger.trace('Getting User');
     this.logger.debug(`User id: ${user._id}`);

@@ -1,5 +1,5 @@
 import { ControlValuesRepository, EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, EnvironmentTypeEnum, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateVariablesObject } from '../create-variables-object';
@@ -154,5 +154,148 @@ describe('BuildVariableSchemaUsecase', () => {
 
     const httpStepSchema = schema.properties?.steps?.properties?.[httpStepId];
     expect(httpStepSchema?.properties?.type).to.deep.equal({ type: 'string' });
+  });
+
+  it('loads environment data when no environment context is preloaded', async () => {
+    await usecase.execute(
+      BuildVariableSchemaCommand.create({
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
+        workflow: {
+          _id: 'workflow_id',
+          steps: [],
+        },
+      })
+    );
+
+    expect(environmentVariableRepositoryMock.findByEnvironment.calledOnce).to.equal(true);
+    expect(environmentRepositoryMock.findByIdAndOrganization.calledOnce).to.equal(true);
+  });
+
+  it('uses a preloaded environment context without querying environment data', async () => {
+    const schema = await usecase.execute(
+      BuildVariableSchemaCommand.create({
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
+        workflow: {
+          _id: 'workflow_id',
+          steps: [],
+        },
+        preloadedEnvironmentContext: {
+          rawEnvVars: [{ key: 'API_URL', value: 'https://example.com', isSecret: false }],
+          environment: { name: 'Production', type: EnvironmentTypeEnum.PROD },
+        },
+      })
+    );
+
+    expect(environmentVariableRepositoryMock.findByEnvironment.called).to.equal(false);
+    expect(environmentRepositoryMock.findByIdAndOrganization.called).to.equal(false);
+    expect(schema.properties?.env?.properties?.API_URL).to.deep.equal({
+      type: 'string',
+      description: 'Environment variable: API_URL',
+    });
+    expect(schema.properties?.env?.properties?.name).to.deep.equal({
+      type: 'string',
+      description: 'Environment variable: name',
+    });
+    expect(schema.properties?.env?.properties?.type).to.deep.equal({
+      type: 'string',
+      description: 'Environment variable: type',
+    });
+  });
+
+  it('shares one environment read across concurrent schema builds', async () => {
+    const command = BuildVariableSchemaCommand.create({
+      environmentId: 'env_id',
+      organizationId: 'org_id',
+      userId: 'user_id',
+      workflow: {
+        _id: 'workflow_id',
+        steps: [],
+      },
+    });
+
+    await Promise.all([usecase.execute(command), usecase.execute(command), usecase.execute(command)]);
+
+    expect(environmentVariableRepositoryMock.findByEnvironment.callCount).to.equal(1);
+    expect(environmentRepositoryMock.findByIdAndOrganization.callCount).to.equal(1);
+  });
+
+  it('loads environment data again after the shared read settles', async () => {
+    const command = BuildVariableSchemaCommand.create({
+      environmentId: 'env_id',
+      organizationId: 'org_id',
+      userId: 'user_id',
+      workflow: {
+        _id: 'workflow_id',
+        steps: [],
+      },
+    });
+
+    await usecase.execute(command);
+    await usecase.execute(command);
+
+    expect(environmentVariableRepositoryMock.findByEnvironment.callCount).to.equal(2);
+    expect(environmentRepositoryMock.findByIdAndOrganization.callCount).to.equal(2);
+  });
+
+  it('keeps step control schemas when provider controls are preloaded for the same step', async () => {
+    const httpStepInternalId = 'http-template-id';
+    const httpStepId = 'http-request-step';
+    const responseBodySchema = {
+      type: 'object',
+      properties: {
+        type: { type: 'string' },
+      },
+      additionalProperties: false,
+    };
+
+    const schema = await usecase.execute(
+      BuildVariableSchemaCommand.create({
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
+        stepInternalId: 'push-template-id',
+        workflow: {
+          _id: 'workflow_id',
+          steps: [
+            {
+              _id: httpStepInternalId,
+              _templateId: httpStepInternalId,
+              stepId: httpStepId,
+              template: { type: StepTypeEnum.HTTP_REQUEST },
+            },
+            {
+              _id: 'push-template-id',
+              _templateId: 'push-template-id',
+              stepId: 'push-step',
+              template: { type: StepTypeEnum.PUSH },
+            },
+          ],
+        },
+        preloadedControlValues: [
+          {
+            _stepId: httpStepInternalId,
+            level: ControlValuesLevelEnum.STEP_CONTROLS,
+            controls: {
+              responseBodySchema,
+            },
+          } as any,
+          {
+            _stepId: httpStepInternalId,
+            level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+            controls: {
+              body: 'provider override',
+            },
+          } as any,
+        ],
+      })
+    );
+
+    const httpStepSchema = schema.properties?.steps?.properties?.[httpStepId];
+    expect(httpStepSchema?.properties?.type).to.deep.equal({ type: 'string' });
+    expect(controlValuesRepositoryMock.find.called).to.equal(false);
   });
 });

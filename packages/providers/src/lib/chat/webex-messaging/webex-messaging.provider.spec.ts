@@ -2,6 +2,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/stateless';
 import axios from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { WebexMessagingProvider } from './webex-messaging.provider';
 
 vi.mock('axios');
@@ -32,7 +33,7 @@ describe('WebexMessagingProvider', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
+      timeout: PROVIDER_HTTP_TIMEOUT_MS,
     });
   });
 
@@ -46,7 +47,7 @@ describe('WebexMessagingProvider', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
+      timeout: PROVIDER_HTTP_TIMEOUT_MS,
     });
   });
 

@@ -3,4 +3,5 @@ export enum ControlValuesLevelEnum {
   STEP_CONTROLS = 'step',
   LAYOUT_CONTROLS = 'layout',
   STEP_PROVIDER_CONTROLS = 'step_provider',
+  STEP_INTEGRATION_CONTROLS = 'step_integration',
 }

@@ -27,6 +27,7 @@ const mockResponse = (dedupKey = 'dedup-1') => ({
   statusMessage: 'Accepted',
   headers: {},
   body: { dedup_key: dedupKey, status: 'success', message: 'Event processed' },
+  isJson: true,
 });
 
 const channelData = (routingKey: string, region: 'us' | 'eu' = 'us'): PagerDutyServiceData => ({

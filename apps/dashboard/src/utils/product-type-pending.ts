@@ -23,12 +23,6 @@ export function readProductTypeParam(searchParams?: URLSearchParams): ProductTyp
   return isValidProductType(value) ? value : null;
 }
 
-// Resolves the product type for the current page: the live URL param takes priority, falling back to
-// the value persisted earlier in the session so the choice survives navigation that drops the param.
-function resolveProductType(searchParams?: URLSearchParams): ProductType | null {
-  return readProductTypeParam(searchParams) ?? readPendingProductType();
-}
-
 function storePendingProductType(value: ProductType): void {
   if (typeof window === 'undefined' || !isValidProductType(value)) {
     return;

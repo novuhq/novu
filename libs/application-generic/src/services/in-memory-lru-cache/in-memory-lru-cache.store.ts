@@ -1,11 +1,14 @@
 import type { EnvironmentEntity, NotificationTemplateEntity, OrganizationEntity, PreferencesEntity } from '@novu/dal';
-import type { UserSessionData } from '@novu/shared';
+import {
+  INTERNAL_AUTH_TOKEN_TTL_SECONDS,
+  type MemberRoleEnum,
+  type PermissionsEnum,
+  type UserSessionData,
+} from '@novu/shared';
 
 const MS_PER_SECOND = 1000;
 const THIRTY_SECONDS_MS = MS_PER_SECOND * 30;
 const ONE_MINUTE_MS = MS_PER_SECOND * 60;
-const ONE_HOUR_MS = ONE_MINUTE_MS * 60;
-
 export enum InMemoryLRUCacheStore {
   WORKFLOW = 'workflow',
   ORGANIZATION = 'organization',
@@ -15,16 +18,22 @@ export enum InMemoryLRUCacheStore {
   VALIDATOR = 'validator',
   ACTIVE_WORKFLOWS = 'active-workflows',
   WORKFLOW_PREFERENCES = 'workflow-preferences',
+  INTERNAL_AUTH_MEMBERSHIP = 'internal-auth-membership',
+}
+
+export interface InternalAuthMembership {
+  role: MemberRoleEnum;
+  permissions: PermissionsEnum[];
 }
 
 export type WorkflowCacheData = NotificationTemplateEntity | null;
 export type OrganizationCacheData = OrganizationEntity | null;
-export type EnvironmentCacheData = Pick<EnvironmentEntity, '_id' | 'echo' | 'apiKeys'> | null;
+export type EnvironmentCacheData = EnvironmentEntity | null;
 export type EnvironmentVariablesCacheData = Record<string, string>;
 export type ApiKeyUserCacheData = UserSessionData | null;
-export type ValidatorCacheData = unknown;
 export type ActiveWorkflowsCacheData = NotificationTemplateEntity[];
 export type WorkflowPreferencesCacheData = [PreferencesEntity | null, PreferencesEntity | null];
+export type InternalAuthMembershipCacheData = InternalAuthMembership | null;
 
 export type CacheStoreDataTypeMap = {
   [InMemoryLRUCacheStore.WORKFLOW]: WorkflowCacheData;
@@ -32,9 +41,10 @@ export type CacheStoreDataTypeMap = {
   [InMemoryLRUCacheStore.ENVIRONMENT]: EnvironmentCacheData;
   [InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES]: EnvironmentVariablesCacheData;
   [InMemoryLRUCacheStore.API_KEY_USER]: ApiKeyUserCacheData;
-  [InMemoryLRUCacheStore.VALIDATOR]: ValidatorCacheData;
+  [InMemoryLRUCacheStore.VALIDATOR]: unknown;
   [InMemoryLRUCacheStore.ACTIVE_WORKFLOWS]: ActiveWorkflowsCacheData;
   [InMemoryLRUCacheStore.WORKFLOW_PREFERENCES]: WorkflowPreferencesCacheData;
+  [InMemoryLRUCacheStore.INTERNAL_AUTH_MEMBERSHIP]: InternalAuthMembershipCacheData;
 };
 
 export type StoreConfig = {
@@ -72,7 +82,8 @@ export const STORE_CONFIGS: Record<InMemoryLRUCacheStore, StoreConfig> = {
   },
   [InMemoryLRUCacheStore.VALIDATOR]: {
     max: 5000,
-    ttl: ONE_HOUR_MS,
+    // Key deletions only invalidate the local instance, so other instances must expire within a minute.
+    ttl: ONE_MINUTE_MS,
     featureFlagComponent: 'validator',
     skipFeatureFlag: true,
   },
@@ -85,5 +96,11 @@ export const STORE_CONFIGS: Record<InMemoryLRUCacheStore, StoreConfig> = {
     max: 1000,
     ttl: ONE_MINUTE_MS,
     featureFlagComponent: 'workflow-preferences',
+  },
+  [InMemoryLRUCacheStore.INTERNAL_AUTH_MEMBERSHIP]: {
+    max: 1000,
+    // A membership revoked in Clerk must stop authorizing internal calls within a minute and within one token lifetime.
+    ttl: Math.min(ONE_MINUTE_MS, INTERNAL_AUTH_TOKEN_TTL_SECONDS * MS_PER_SECOND),
+    featureFlagComponent: 'internal-auth-membership',
   },
 };

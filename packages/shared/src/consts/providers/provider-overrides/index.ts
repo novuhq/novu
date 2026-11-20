@@ -11,7 +11,25 @@ import {
 } from './provider-override-registry';
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
+export {
+  layerClaimsExclusiveGroup,
+  type ResolvedExclusiveRouting,
+  type ResolvedRoutingValue,
+  resolveExclusiveRoutingKeys,
+} from './exclusive-routing';
+export { expoOverrideJsonSchema } from './expo-override.schema';
+export {
+  FCM_OVERRIDE_KEYS,
+  FCM_OVERRIDE_SCHEMA_SUBPATH,
+  FCM_PRIMARY_CONTENT_KEY,
+  FCM_ROUTING_KEYS,
+} from './fcm/keys';
 export { grafanaOverrideJsonSchema } from './grafana-override.schema';
+export {
+  packProviderOverrideOutput,
+  type UnpackedProviderOverrideOutput,
+  unpackProviderOverrideOutput,
+} from './integration-overrides-output';
 export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {
   type MergedProviderPreview,
@@ -35,6 +53,8 @@ export {
   getProviderOverrideKeysOnlySchema,
   getProviderOverrideSchema,
   getProviderPrimaryContentKey,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  INTEGRATION_OVERRIDES_RUNTIME_SCHEMA,
   type OverrideChannelType,
   PROVIDER_OVERRIDE_CONFIGS,
   PROVIDER_OVERRIDE_KEYS,
@@ -43,6 +63,8 @@ export {
   PROVIDER_PRIMARY_CONTENT_KEY,
   type ProviderOverrideConfig,
   type ProviderOverrideSeedWhenAbsent,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type PushContentOverrideProviderId,
   supportsContentProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,

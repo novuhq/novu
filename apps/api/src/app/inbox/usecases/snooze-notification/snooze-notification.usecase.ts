@@ -10,10 +10,12 @@ import {
   AnalyticsService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
   getEffectiveJobPayload,
   PinoLogger,
   StandardQueueService,
+  StepRunV2Writer,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -55,7 +57,8 @@ export class SnoozeNotification {
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
     private analyticsService: AnalyticsService,
-    private getSubscriber: GetSubscriber
+    private getSubscriber: GetSubscriber,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -70,10 +73,20 @@ export class SnoozeNotification {
       let snoozedNotification = {} as InboxNotificationDto;
 
       await this.messageRepository.withTransaction(async () => {
-        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
+        scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs, command.snoozeUntil);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.enqueueJob(scheduledJob, snoozeDurationMs);
       });
+      this.stepRunV2Writer.write(scheduledJob);
+
+      /*
+       * Enqueueing has to stay outside the transaction: it is an external call,
+       * and once the snooze outlives the 900s SQS delay cap - which any snooze
+       * measured in hours does - it becomes a CreateSchedule round trip to
+       * EventBridge. Inside the transaction that held the Mongo session, and its
+       * locks, open for the length of an AWS call, and an abort after the call
+       * had succeeded would leave a schedule behind with no job left to wake.
+       */
+      await this.enqueueJob(scheduledJob, snoozeDurationMs);
 
       // fire and forget
       this.createExecutionDetails
@@ -116,6 +129,7 @@ export class SnoozeNotification {
       },
       groupId: job._organizationId,
       options: { delay, attempts: this.RETRY_ATTEMPTS, backoff: { type: 'exponential', delay: 5000 } },
+      deferReason: DeferReasonEnum.SNOOZE,
     });
   }
 
@@ -182,7 +196,11 @@ export class SnoozeNotification {
     return message;
   }
 
-  private async createScheduledUnsnoozeJob(notification: MessageEntity, delay: number): Promise<JobEntity> {
+  private async createScheduledUnsnoozeJob(
+    notification: MessageEntity,
+    delay: number,
+    snoozeUntil: Date
+  ): Promise<JobEntity> {
     const originalJob = await this.jobRepository.findOne({
       _id: notification._jobId,
       _environmentId: notification._environmentId,
@@ -216,6 +234,7 @@ export class SnoozeNotification {
        */
       status: JobStatusEnum.DELAYED,
       delay,
+      waitUntil: snoozeUntil.toISOString(),
       createdAt: Date.now().toString(),
       _id: JobRepository.createObjectId(),
       _parentId: null,

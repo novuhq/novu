@@ -1,10 +1,17 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { assertSafeOutboundUrl, PinoLogger, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { EmailProviderIdEnum, EnvironmentTypeEnum } from '@novu/shared';
-import type { ClientSession } from 'mongoose';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { AgentEntity, AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { AgentSubscriberAccessEnum, EnvironmentTypeEnum } from '@novu/shared';
+import {
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
+import { SyncAgentEmailSenderName } from '../../../email/sync-agent-email-sender-name.service';
+import { assertSubscriberTokensEnabled } from '../../../shared/assert-subscriber-tokens-enabled';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
+import { getAgentAccessRuleIssues } from '../../../shared/util/agent-access-rule';
 import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from '../get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { UpdateAgentCommand } from './update-agent.command';
@@ -14,9 +21,9 @@ export class UpdateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly integrationRepository: IntegrationRepository,
+    private readonly syncAgentEmailSenderName: SyncAgentEmailSenderName,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -26,7 +33,9 @@ export class UpdateAgent {
     const hasBehaviorFields =
       command.behavior?.acknowledgeOnReceived !== undefined ||
       command.behavior?.reactionOnResolved !== undefined ||
-      command.behavior?.subscriberAccess !== undefined;
+      command.behavior?.subscriberAccess !== undefined ||
+      command.behavior?.accessRule !== undefined ||
+      command.behavior?.replyPolicy !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -78,67 +87,36 @@ export class UpdateAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    const $set: Record<string, string | boolean | null> = {};
-
-    if (command.name !== undefined) {
-      $set.name = command.name;
+    if (existing.runtime === 'human_relay') {
+      throw new ForbiddenException('System human-relay agents cannot be modified.');
     }
 
-    if (command.description !== undefined) {
-      $set.description = command.description;
-    }
+    await this.assertAccessRuleUpdate(command, existing);
 
-    if (command.active !== undefined) {
-      $set.active = command.active;
-    }
+    const { $set, $unset } = this.buildUpdateOps(command, existing);
+    const update = Object.keys($unset).length > 0 ? { $set, $unset } : { $set };
 
-    if (hasBehaviorFields) {
-      if (command.behavior!.acknowledgeOnReceived !== undefined) {
-        $set['behavior.acknowledgeOnReceived'] = command.behavior!.acknowledgeOnReceived;
-      }
-      if (command.behavior!.reactionOnResolved !== undefined) {
-        $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
-      }
-      if (command.behavior!.subscriberAccess !== undefined) {
-        $set['behavior.subscriberAccess'] = command.behavior!.subscriberAccess;
-      }
-    }
-
-    if (command.bridgeUrl !== undefined) {
-      $set.bridgeUrl = command.bridgeUrl;
-    }
-
-    if (command.devBridgeUrl !== undefined) {
-      $set.devBridgeUrl = command.devBridgeUrl;
-    }
-
-    if (command.devBridgeActive !== undefined) {
-      $set.devBridgeActive = command.devBridgeActive;
-    }
-
-    const nameChanged = command.name !== undefined && command.name !== existing.name;
+    const newName = command.name;
     const agentQuery = {
       _id: existing._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };
 
-    if (nameChanged) {
+    if (newName !== undefined && newName !== existing.name) {
       await this.agentRepository.withTransaction(async (session) => {
         if (Object.keys($set).length > 0) {
-          await this.agentRepository.update(agentQuery, { $set }, session ? { session } : {});
+          await this.agentRepository.update(agentQuery, update, session ? { session } : {});
         }
 
-        await this.syncNovuAgentSenderName(
-          existing._id,
-          command.environmentId,
-          command.organizationId,
-          command.name!,
+        await this.syncAgentEmailSenderName.execute(
+          { agentId: existing._id, environmentId: command.environmentId, organizationId: command.organizationId },
+          newName,
           session
         );
       });
     } else if (Object.keys($set).length > 0) {
-      await this.agentRepository.updateOne(agentQuery, { $set });
+      await this.agentRepository.updateOne(agentQuery, update);
     }
 
     const updated = await this.agentRepository.findById(
@@ -157,6 +135,93 @@ export class UpdateAgent {
     const runtimeConfig = await this.loadRuntimeConfig(updated, command);
 
     return toAgentResponse(updated, undefined, runtimeConfig);
+  }
+
+  private async assertAccessRuleUpdate(command: UpdateAgentCommand, existing: AgentEntity): Promise<void> {
+    const requestsRuleAccess = command.behavior?.subscriberAccess === AgentSubscriberAccessEnum.RULE;
+    const sendsAccessRule = command.behavior?.accessRule !== undefined;
+
+    if (!requestsRuleAccess && !sendsAccessRule) {
+      return;
+    }
+
+    await assertSubscriberTokensEnabled({
+      featureFlagsService: this.featureFlagsService,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+
+    const effectiveAccess = command.behavior?.subscriberAccess ?? existing.behavior?.subscriberAccess;
+    if (effectiveAccess !== AgentSubscriberAccessEnum.RULE) {
+      throw new BadRequestException('accessRule requires subscriberAccess "rule"');
+    }
+
+    const issues = getAgentAccessRuleIssues(command.behavior?.accessRule ?? existing.behavior?.accessRule);
+    if (issues.length > 0) {
+      throw new BadRequestException(issues.join('; '));
+    }
+  }
+
+  private buildUpdateOps(
+    command: UpdateAgentCommand,
+    existing: AgentEntity
+  ): { $set: Record<string, unknown>; $unset: Record<string, 1> } {
+    const $set: Record<string, unknown> = {};
+    const $unset: Record<string, 1> = {};
+
+    if (command.name !== undefined) {
+      $set.name = command.name;
+    }
+
+    if (command.description !== undefined) {
+      $set.description = command.description;
+    }
+
+    if (command.active !== undefined) {
+      $set.active = command.active;
+    }
+
+    const behavior = command.behavior;
+
+    if (behavior) {
+      if (behavior.acknowledgeOnReceived !== undefined) {
+        $set['behavior.acknowledgeOnReceived'] = behavior.acknowledgeOnReceived;
+      }
+      if (behavior.reactionOnResolved !== undefined) {
+        $set['behavior.reactionOnResolved'] = behavior.reactionOnResolved;
+      }
+      if (behavior.subscriberAccess !== undefined) {
+        $set['behavior.subscriberAccess'] = behavior.subscriberAccess;
+      }
+      if (behavior.accessRule !== undefined) {
+        $set['behavior.accessRule'] = behavior.accessRule;
+      }
+      if (behavior.replyPolicy !== undefined) {
+        $set['behavior.replyPolicy'] = behavior.replyPolicy;
+      }
+    }
+
+    const effectiveAccess = command.behavior?.subscriberAccess ?? existing.behavior?.subscriberAccess;
+    if (
+      existing.behavior?.subscriberAccess === AgentSubscriberAccessEnum.RULE &&
+      effectiveAccess !== AgentSubscriberAccessEnum.RULE
+    ) {
+      $unset['behavior.accessRule'] = 1;
+    }
+
+    if (command.bridgeUrl !== undefined) {
+      $set.bridgeUrl = command.bridgeUrl;
+    }
+
+    if (command.devBridgeUrl !== undefined) {
+      $set.devBridgeUrl = command.devBridgeUrl;
+    }
+
+    if (command.devBridgeActive !== undefined) {
+      $set.devBridgeActive = command.devBridgeActive;
+    }
+
+    return { $set, $unset };
   }
 
   private async loadRuntimeConfig(
@@ -197,40 +262,6 @@ export class UpdateAgent {
     if (environment?.type === EnvironmentTypeEnum.PROD) {
       throw new ForbiddenException(message);
     }
-  }
-
-  private async syncNovuAgentSenderName(
-    agentId: string,
-    environmentId: string,
-    organizationId: string,
-    senderName: string,
-    session: ClientSession | null = null
-  ): Promise<void> {
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agentId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_integrationId'],
-      { session }
-    );
-
-    const integrationIds = links.map((link) => link._integrationId).filter(Boolean);
-    if (integrationIds.length === 0) {
-      return;
-    }
-
-    await this.integrationRepository.update(
-      {
-        _id: { $in: integrationIds } as unknown as string,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      { $set: { 'credentials.senderName': senderName } },
-      session ? { session } : {}
-    );
   }
 
   private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {

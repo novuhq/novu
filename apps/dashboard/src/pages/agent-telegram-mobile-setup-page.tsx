@@ -103,8 +103,8 @@ function SetupForm({ token, agentName }: SetupFormProps) {
           Finish setup for <span className="text-text-strong font-semibold">{agentName}</span>
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
-          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and connect the webhook
-          automatically: nothing else to fill in.
+          Agents reach you through a Telegram bot that only you control. Create it with BotFather, then paste the
+          confirmation message here: we&apos;ll detect the bot token and connect the webhook automatically.
         </p>
       </div>
 
@@ -112,6 +112,22 @@ function SetupForm({ token, agentName }: SetupFormProps) {
         <label htmlFor="bot-message" className="text-label-xs text-text-strong font-medium">
           BotFather confirmation message
         </label>
+        <ol className="text-text-soft text-label-xs ml-4 list-decimal space-y-1 leading-4">
+          <li>
+            Open{' '}
+            <a
+              href="https://t.me/botfather"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-strong underline"
+            >
+              @BotFather
+            </a>{' '}
+            in Telegram
+          </li>
+          <li>Send /newbot and pick a name and a username for your bot</li>
+          <li>Copy the whole reply that starts with &quot;Done!&quot; and paste it below</li>
+        </ol>
         <Textarea
           id="bot-message"
           simple

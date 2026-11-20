@@ -145,6 +145,12 @@ const conversationSchema = new Schema<ConversationDBModel>(
     lastActivityAt: {
       type: Schema.Types.String,
     },
+    lastHumanMessageAt: {
+      type: Schema.Types.String,
+    },
+    lastReadAt: {
+      type: Schema.Types.String,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -167,6 +173,7 @@ conversationSchema.index({ _environmentId: 1, contextKeys: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, _id: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, createdAt: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, lastActivityAt: 1 });
+conversationSchema.index({ _environmentId: 1, _organizationId: 1, _agentId: 1, status: 1, lastHumanMessageAt: 1 });
 
 export const Conversation =
   (mongoose.models.Conversation as mongoose.Model<ConversationDBModel>) ||

@@ -2,10 +2,12 @@ import { UiSchemaGroupEnum } from '@novu/shared';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 export const ThrottleEditor = () => {
   const { step } = useWorkflow();
+  const { isReadOnly } = useStepEditor();
   const { uiSchema } = step?.controls ?? {};
 
   if (!uiSchema || uiSchema?.group !== UiSchemaGroupEnum.THROTTLE) {
@@ -22,7 +24,7 @@ export const ThrottleEditor = () => {
   } = uiSchema.properties ?? {};
 
   return (
-    <div className="flex flex-col">
+    <fieldset className="flex flex-col" disabled={isReadOnly}>
       {(type || amount || unit || dynamicKey) && (
         <>
           <SidebarContent size="lg">
@@ -53,6 +55,6 @@ export const ThrottleEditor = () => {
           <Separator />
         </>
       )}
-    </div>
+    </fieldset>
   );
 };

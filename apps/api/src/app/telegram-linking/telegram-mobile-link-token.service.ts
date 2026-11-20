@@ -3,8 +3,13 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 
 import { SingleUseTokenCache, StoredTokenEntry } from '../shared/services/single-use-link-token.service';
 
-/** Lifetime of an issued mobile setup token (seconds). */
-export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
+/**
+ * Lifetime of an issued setup token (seconds). Creating a bot with BotFather or
+ * generating a Slack App Configuration Token routinely takes longer than the
+ * few minutes a `/start` tap or OAuth install needs, so the setup page gets a
+ * longer single-use window.
+ */
+export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 15 * 60;
 
 /**
  * Accepts both the new alphanumeric-only mint format and legacy base64url
@@ -49,6 +54,8 @@ export interface SlackAgentSetupLinkPayload {
   aid: string;
   /** Integration id (internal Mongo `_id`). */
   iid: string;
+  /** Subscriber the install should connect, when the CLI is driving a human setup. */
+  sid?: string;
 }
 
 type StoredPayload =
@@ -138,6 +145,7 @@ export class TelegramMobileLinkTokenService {
     organizationId: string;
     agentIdentifier: string;
     integrationId: string;
+    subscriberId?: string;
   }): Promise<IssuedTelegramMobileLink> {
     const payload: SlackAgentSetupLinkPayload = {
       kind: 'slack-agent-setup',
@@ -145,6 +153,7 @@ export class TelegramMobileLinkTokenService {
       org: params.organizationId,
       aid: params.agentIdentifier,
       iid: params.integrationId,
+      ...(params.subscriberId ? { sid: params.subscriberId } : {}),
     };
 
     return this.tokens.issue(payload);

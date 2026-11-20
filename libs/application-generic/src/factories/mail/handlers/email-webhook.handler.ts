@@ -12,10 +12,12 @@ export class EmailWebhookHandler extends BaseEmailHandler {
       from: string;
       webhookUrl: string;
       hmacSecretKey?: string;
+      hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
     } = {
       from: credentials.from as string,
       webhookUrl: credentials.webhookUrl as string,
       hmacSecretKey: credentials.secretKey as string,
+      hmacSecretKeyEncoding: credentials.hmacSecretKeyEncoding ?? 'text',
     };
     this.provider = new EmailWebhookProvider(config);
   }

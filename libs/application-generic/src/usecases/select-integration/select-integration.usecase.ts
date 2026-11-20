@@ -1,12 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository, TenantEntity, TenantRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags';
+import {
+  evaluateIntegrationRules,
+  hasIntegrationRules,
+  hasLegacyIntegrationConditions,
+} from '../../utils/integration-conditions';
 import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
 import { SelectIntegrationCommand } from './select-integration.command';
+
+export type MatchedIntegrationConditions =
+  | { type: 'rules'; value: IntegrationEntity['rules'] }
+  | { type: 'legacy'; value: IntegrationEntity['conditions'] };
+
+export interface IntegrationSelectionResult {
+  integration: IntegrationEntity;
+  matchedConditions?: MatchedIntegrationConditions;
+}
 
 @Injectable()
 export class SelectIntegration {
@@ -19,62 +33,37 @@ export class SelectIntegration {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
+  async execute(command: SelectIntegrationCommand): Promise<IntegrationSelectionResult | undefined> {
     const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
       isCrossEnvironmentIntegrationEnabled
     );
+    let matchedConditions: MatchedIntegrationConditions | undefined;
 
-    if (!command.identifier && command.filterData.tenant && command.userId) {
-      const query = this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled);
+    if (!command.identifier) {
+      const integrations = await this.integrationRepository.find(
+        this.getConditionedIntegrationsQuery(command, isCrossEnvironmentIntegrationEnabled),
+        '',
+        { sort: { priority: -1, createdAt: -1 } }
+      );
 
-      const integrations = await this.integrationRepository.find(query);
+      const selectable = integrations.filter((currentIntegration) => !this.isHiddenFromWorkflows(currentIntegration));
 
-      let tenant: TenantEntity | null = null;
-      const commandTenantIdentifier =
-        typeof command.filterData.tenant === 'string'
-          ? command.filterData.tenant
-          : command.filterData.tenant.identifier;
-      if (commandTenantIdentifier) {
-        tenant = await this.tenantRepository.findOne({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          identifier: commandTenantIdentifier,
-        });
-      }
+      if (selectable.length > 0) {
+        const tenant = await this.resolveTenant(command);
 
-      for (const currentIntegration of integrations) {
-        if (!currentIntegration.conditions || currentIntegration.conditions.length === 0) {
-          continue;
-        }
+        for (const currentIntegration of selectable) {
+          const passed = await this.integrationMatchesConditions(command, currentIntegration, tenant);
 
-        const variables = await this.normalizeVariablesUsecase.execute(
-          NormalizeVariablesCommand.create({
-            filters: currentIntegration.conditions || [],
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-            variables: {
-              tenant,
-            },
-          })
-        );
-
-        const { passed } = await this.conditionsFilter.filter(
-          ConditionsFilterCommand.create({
-            filters: currentIntegration.conditions,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-            variables,
-          })
-        );
-
-        if (passed) {
-          integration = currentIntegration;
-          break;
+          if (passed) {
+            integration = currentIntegration;
+            matchedConditions = hasIntegrationRules(currentIntegration.rules)
+              ? { type: 'rules', value: currentIntegration.rules }
+              : { type: 'legacy', value: currentIntegration.conditions };
+            break;
+          }
         }
       }
     }
@@ -83,7 +72,81 @@ export class SelectIntegration {
       return;
     }
 
-    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    const decryptedIntegration = GetDecryptedIntegrations.getDecryptedCredentials(integration);
+
+    return {
+      integration: decryptedIntegration,
+      ...(matchedConditions && { matchedConditions }),
+    };
+  }
+
+  /** Agent Email Inbox is a Human channel. Workflow selection must never return it. */
+  private isHiddenFromWorkflows(integration: IntegrationEntity): boolean {
+    return integration.providerId === EmailProviderIdEnum.AgentEmailInbox;
+  }
+
+  private async resolveTenant(command: SelectIntegrationCommand): Promise<TenantEntity | null> {
+    if (!command.filterData.tenant) {
+      return null;
+    }
+
+    const commandTenantIdentifier =
+      typeof command.filterData.tenant === 'string' ? command.filterData.tenant : command.filterData.tenant.identifier;
+
+    if (!commandTenantIdentifier) {
+      return null;
+    }
+
+    return await this.tenantRepository.findOne({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      identifier: commandTenantIdentifier,
+    });
+  }
+
+  private async integrationMatchesConditions(
+    command: SelectIntegrationCommand,
+    currentIntegration: IntegrationEntity,
+    tenant: TenantEntity | null
+  ): Promise<boolean> {
+    if (hasIntegrationRules(currentIntegration.rules)) {
+      const { result } = evaluateIntegrationRules(currentIntegration.rules, {
+        payload: command.filterData.payload,
+        subscriber: command.filterData.subscriber,
+        context: command.filterData.context,
+        workflow: command.filterData.workflow,
+      });
+
+      return result;
+    }
+
+    if (!hasLegacyIntegrationConditions(currentIntegration.conditions) || !command.userId) {
+      return false;
+    }
+
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: currentIntegration.conditions || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        variables: {
+          tenant,
+        },
+      })
+    );
+
+    const { passed } = await this.conditionsFilter.filter(
+      ConditionsFilterCommand.create({
+        filters: currentIntegration.conditions,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        variables,
+      })
+    );
+
+    return passed;
   }
 
   @Instrument()
@@ -105,9 +168,15 @@ export class SelectIntegration {
         }
       : this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled, isChannelSupportsPrimary);
 
-    return await this.integrationRepository.findOne(query, undefined, {
+    const integration = await this.integrationRepository.findOne(query, undefined, {
       query: { sort: { createdAt: -1 } },
     });
+
+    if (integration && this.isHiddenFromWorkflows(integration)) {
+      return null;
+    }
+
+    return integration;
   }
 
   private async isCrossEnvironmentIntegrationEnabled(command: SelectIntegrationCommand): Promise<boolean> {
@@ -146,5 +215,15 @@ export class SelectIntegration {
     }
 
     return query;
+  }
+
+  private getConditionedIntegrationsQuery(
+    command: SelectIntegrationCommand,
+    isCrossEnvironmentIntegrationEnabled: boolean
+  ): IntegrationQuery {
+    return {
+      ...this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled),
+      $or: [{ rules: { $type: 'object' } }, { 'conditions.0': { $exists: true } }],
+    };
   }
 }

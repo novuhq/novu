@@ -175,7 +175,7 @@ Judge graders (LLM-as-judge) always run alongside deterministic graders.
 
 ## Triage failing scenarios
 
-When a scenario fails, use the Cursor skill `triage-agent-eval-failures` (`.cursor/skills/triage-agent-eval-failures/`) to decide whether the failure is real (playbook regression), a test bug (grader / tape / judge), or flaky (model non-determinism). The skill walks through re-run checks, `RunResult` evidence, and a fix target — playbook vs test scaffolding. Worked examples are in `reference.md` inside that skill directory.
+When a scenario fails, use the agent skill `triage-agent-eval-failures` (`.agents/skills/triage-agent-eval-failures/`) to decide whether the failure is real (playbook regression), a test bug (grader / tape / judge), or flaky (model non-determinism). The skill walks through re-run checks, `RunResult` evidence, and a fix target — playbook vs test scaffolding. Worked examples are in `reference.md` inside that skill directory.
 
 ## Adding a new suite
 

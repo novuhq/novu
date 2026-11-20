@@ -1,11 +1,13 @@
+import { ConflictException } from '@nestjs/common';
 import { GetNovuProviderCredentials } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionRepository,
-  ContextRepository,
   EnvironmentRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointByType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import { createHmac } from 'crypto';
@@ -14,8 +16,11 @@ import { CreateChannelConnection } from '../../../../channel-connections/usecase
 import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.util';
+import { ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 import { SlackOauthCallback } from './slack-oauth-callback.usecase';
+
+type SlackUserEndpoint = ChannelEndpointByType[typeof ENDPOINT_TYPES.SLACK_USER];
 
 const MOCK_ENVIRONMENT_ID = 'env-id-123';
 const MOCK_ORGANIZATION_ID = 'org-id-456';
@@ -69,21 +74,26 @@ function createSlackOauthCallbackHarness() {
   const integrationRepository = sinon.createStubInstance(IntegrationRepository);
   const environmentRepository = sinon.createStubInstance(EnvironmentRepository);
   const channelConnectionRepository = sinon.createStubInstance(ChannelConnectionRepository);
-  const contextRepository = sinon.createStubInstance(ContextRepository);
   const createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
   const updateChannelConnection = sinon.createStubInstance(UpdateChannelConnection);
   const createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
   const getNovuProviderCredentials = sinon.createStubInstance(GetNovuProviderCredentials);
+  const agentIntegrationRepository = sinon.createStubInstance(AgentIntegrationRepository);
+  const agentRepository = sinon.createStubInstance(AgentRepository);
+  agentIntegrationRepository.find.resolves([]);
+  const agentInboxFeatures = { mascotLookOf: sinon.stub().resolves(null) };
 
   const usecase = new SlackOauthCallback(
     integrationRepository as any,
     environmentRepository as any,
     getNovuProviderCredentials as any,
     channelConnectionRepository as any,
-    contextRepository as any,
     createChannelConnection as any,
     updateChannelConnection as any,
-    createChannelEndpoint as any
+    createChannelEndpoint as any,
+    agentIntegrationRepository as any,
+    agentRepository as any,
+    agentInboxFeatures as any
   );
 
   return {
@@ -91,11 +101,13 @@ function createSlackOauthCallbackHarness() {
     integrationRepository,
     environmentRepository,
     channelConnectionRepository,
-    contextRepository,
     createChannelConnection,
     updateChannelConnection,
     createChannelEndpoint,
     getNovuProviderCredentials,
+    agentIntegrationRepository,
+    agentRepository,
+    agentInboxFeatures,
   };
 }
 
@@ -120,7 +132,6 @@ describe('SlackOauthCallback — autoLinkUser', () => {
     harness.integrationRepository.findOne.resolves(buildMockIntegration());
     harness.channelConnectionRepository.findOne.resolves(null);
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
 
     axiosPost = sinon.stub(axios, 'post').resolves({ data: buildSlackAuthResponse() });
 
@@ -156,7 +167,7 @@ describe('SlackOauthCallback — autoLinkUser', () => {
     const endpointArg = harness.createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.SLACK_USER);
-    expect(endpointArg.endpoint.userId).to.equal(MOCK_SLACK_USER_ID);
+    expect((endpointArg.endpoint as SlackUserEndpoint).userId).to.equal(MOCK_SLACK_USER_ID);
   });
 
   it('should create connection but skip endpoint when autoLinkUser=true and subscriberId present but authed_user.id is missing', async () => {
@@ -263,7 +274,6 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
 
     harness.integrationRepository.findOne.resolves(buildMockIntegration());
     harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
-    harness.contextRepository.findOrCreateContextsFromPayload.resolves([]);
 
     sinon.stub(axios, 'post').resolves({
       data: buildSlackAuthResponse({ access_token: MOCK_REFRESHED_ACCESS_TOKEN }),
@@ -283,6 +293,8 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
   it('should update the existing connection token when reconnecting with the same identifier', async () => {
     harness.channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
 
     const state = buildEncodedState({
@@ -303,7 +315,6 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
 
     expect(harness.createChannelConnection.execute.called).to.be.false;
     expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
-    expect(harness.contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     const updateArg = harness.updateChannelConnection.execute.firstCall.args[0];
     expect(updateArg.identifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
@@ -312,9 +323,65 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
     expect(updateArg.workspace.name).to.equal(MOCK_TEAM_NAME);
   });
 
+  const ownershipCases = [
+    {
+      name: "refuses another subscriber's connection",
+      connection: { subscriberId: 'another-subscriber', contextKeys: [] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID },
+      allowed: false,
+    },
+    {
+      name: "refuses a tenant's shared connection when only the raw context claims the tenant",
+      connection: { contextKeys: ['tenant:acme'] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID, contextKeys: ['tenant:globex'], context: { tenant: 'acme' } },
+      allowed: false,
+    },
+    {
+      name: "lets a member of the tenant refresh the tenant's shared connection",
+      connection: { contextKeys: ['tenant:acme'] },
+      caller: { subscriberId: MOCK_SUBSCRIBER_ID, connectionMode: 'subscriber', context: { tenant: 'acme' } },
+      allowed: true,
+    },
+  ];
+
+  for (const { name, connection, caller, allowed } of ownershipCases) {
+    it(`reconnect by identifier ${name}`, async () => {
+      harness.channelConnectionRepository.findOne
+        .onFirstCall()
+        .resolves({ identifier: MOCK_CONNECTION_IDENTIFIER, ...connection } as any);
+
+      const state = buildEncodedState({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.Slack,
+        identifier: MOCK_CONNECTION_IDENTIFIER,
+        ...caller,
+      });
+
+      let error: unknown;
+      try {
+        await harness.usecase.execute(SlackOauthCallbackCommand.create({ providerCode: 'slack-code', state }));
+      } catch (err) {
+        error = err;
+      }
+
+      if (allowed) {
+        expect(error).to.be.undefined;
+        expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
+      } else {
+        expect(error).to.be.instanceOf(ConflictException);
+        expect(harness.updateChannelConnection.execute.called).to.be.false;
+        expect(harness.createChannelConnection.execute.called).to.be.false;
+      }
+    });
+  }
+
   it('should update connection and create endpoint when autoLinkUser=true on reconnect', async () => {
     harness.channelConnectionRepository.findOne.onFirstCall().resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      contextKeys: [],
     } as any);
     harness.updateChannelConnection.execute.resolves({
       identifier: MOCK_CONNECTION_IDENTIFIER,
@@ -344,7 +411,7 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
     const endpointArg = harness.createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.connectionIdentifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
-    expect(endpointArg.endpoint.userId).to.equal(MOCK_SLACK_USER_ID);
+    expect((endpointArg.endpoint as SlackUserEndpoint).userId).to.equal(MOCK_SLACK_USER_ID);
   });
 
   it('should update the existing connection token when reconnecting with the same integration, subscriber, and context', async () => {
@@ -373,5 +440,152 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
     const updateArg = harness.updateChannelConnection.execute.firstCall.args[0];
     expect(updateArg.identifier).to.equal('existing-generated-identifier');
     expect(updateArg.auth.accessToken).to.equal(MOCK_REFRESHED_ACCESS_TOKEN);
+  });
+});
+
+describe('SlackOauthCallback — Agent Inbox result page', () => {
+  let harness: ReturnType<typeof createSlackOauthCallbackHarness>;
+  let originalApiRootUrl: string | undefined;
+  let originalDashboardUrl: string | undefined;
+
+  beforeEach(() => {
+    harness = createSlackOauthCallbackHarness();
+
+    originalApiRootUrl = process.env.API_ROOT_URL;
+    originalDashboardUrl = process.env.HUMAN_DASHBOARD_URL;
+    process.env.API_ROOT_URL = MOCK_API_ROOT_URL;
+    process.env.HUMAN_DASHBOARD_URL = 'https://agentinbox.md';
+
+    harness.environmentRepository.findOne.resolves({
+      _id: MOCK_ENVIRONMENT_ID,
+      apiKeys: [{ key: MOCK_API_KEY }],
+    } as any);
+    harness.integrationRepository.findOne.resolves(buildMockIntegration());
+    harness.channelConnectionRepository.findOne.resolves(null);
+    harness.channelConnectionRepository.buildContextExactMatchQuery.returns({});
+    harness.agentIntegrationRepository.find.resolves([]);
+    harness.createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+
+    sinon.stub(axios, 'post').resolves({ data: buildSlackAuthResponse() });
+  });
+
+  afterEach(() => {
+    sinon.restore();
+    process.env.API_ROOT_URL = originalApiRootUrl;
+    if (originalDashboardUrl === undefined) {
+      delete process.env.HUMAN_DASHBOARD_URL;
+    } else {
+      process.env.HUMAN_DASHBOARD_URL = originalDashboardUrl;
+    }
+  });
+
+  function connectCommand(overrides: Record<string, unknown> = {}) {
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.Slack,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      ...overrides,
+    });
+
+    return SlackOauthCallbackCommand.create({ providerCode: 'slack-code', state });
+  }
+
+  it('sends an Agent Inbox Slack app to the public result page', async () => {
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: {
+          clientId: MOCK_CLIENT_ID,
+          secretKey: MOCK_SECRET_KEY,
+          redirectUrl: 'https://example.com/done',
+        },
+      })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.type).to.equal(ResponseTypeEnum.URL);
+    expect(result.result).to.equal('https://agentinbox.md/connect/slack/result?status=connected');
+  });
+
+  it('puts the agent’s look on the link to the result page once its mascots show it', async () => {
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
+    harness.agentInboxFeatures.mascotLookOf.resolves({ shape: 'drop', color: 'coral' });
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({ credentials: { clientId: MOCK_CLIENT_ID, secretKey: MOCK_SECRET_KEY } })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.result).to.equal(
+      'https://agentinbox.md/connect/slack/result?status=connected&shape=drop&color=coral'
+    );
+  });
+
+  it('keeps the API page for a Slack app that is not an Agent Inbox agent', async () => {
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.type).to.equal(ResponseTypeEnum.HTML);
+    expect(result.result).to.contain('Connection complete');
+  });
+
+  it('keeps a stored redirect for a Slack app that is not an Agent Inbox agent', async () => {
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: { clientId: MOCK_CLIENT_ID, secretKey: MOCK_SECRET_KEY, redirectUrl: 'https://example.com/done' },
+      })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.type).to.equal(ResponseTypeEnum.URL);
+    expect(result.result).to.equal('https://example.com/done');
+  });
+
+  it('sends a shared Slack app to the public result page when any linked agent is Agent Inbox', async () => {
+    harness.agentIntegrationRepository.find.resolves([
+      { _agentId: 'agent-regular' },
+      { _agentId: 'agent-human' },
+    ] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-human' } as any);
+    harness.integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: {
+          clientId: MOCK_CLIENT_ID,
+          secretKey: MOCK_SECRET_KEY,
+          redirectUrl: 'https://example.com/done',
+        },
+      })
+    );
+
+    const result = await harness.usecase.execute(connectCommand());
+
+    expect(result.type).to.equal(ResponseTypeEnum.URL);
+    expect(result.result).to.equal('https://agentinbox.md/connect/slack/result?status=connected');
+    const query = harness.agentRepository.findOne.firstCall.args[0];
+    expect(query.runtime).to.equal('human_relay');
+    expect(query._id.$in).to.deep.equal(['agent-regular', 'agent-human']);
+  });
+
+  it('sends a failed Agent Inbox install to the error result page', async () => {
+    harness.agentIntegrationRepository.find.resolves([{ _agentId: 'agent-1' }] as any);
+    harness.agentRepository.findOne.resolves({ _id: 'agent-1' } as any);
+    const command = connectCommand();
+
+    const redirectUrl = await harness.usecase.resolveHumanRelayErrorRedirect(command.state);
+
+    expect(redirectUrl).to.equal('https://agentinbox.md/connect/slack/result?status=error');
+  });
+
+  it('leaves a failed non-Agent-Inbox install on the existing error path', async () => {
+    const command = connectCommand();
+
+    const redirectUrl = await harness.usecase.resolveHumanRelayErrorRedirect(command.state);
+
+    expect(redirectUrl).to.equal(null);
   });
 });

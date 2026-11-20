@@ -1,15 +1,17 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
 import {
+  EventBridgeSchedulerService,
   FeatureFlagsService,
   JobsOptions,
   PinoLogger,
   SqsService,
   StandardQueueService,
+  StepRunRepository,
+  StepRunV2Writer,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
-  CommunityOrganizationRepository,
   EnvironmentEntity,
   JobEntity,
   JobRepository,
@@ -45,30 +47,37 @@ import { StandardWorker } from './standard.worker';
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
 
-const mockFeatureFlagsService = {
-  getFlag: async () => false,
-} as unknown as FeatureFlagsService;
-
-const mockOrganizationRepository = {
-  findOne: async () => ({ _id: 'mock-org-id', apiServiceLevel: 'free' }),
-} as unknown as CommunityOrganizationRepository;
-
-const mockSqsService = {
+/*
+ * The queue collaborators only have to stay inert here - these suites assert
+ * on job state, not on SQS. They all hold private state, so the stubs can
+ * never be one of them; `Partial<T>` still checks each stub against the real
+ * API.
+ */
+const sqsServiceStub: Partial<SqsService> = {
   getQueueUrl: () => undefined,
   getProducer: () => undefined,
-  getClient: () => ({}) as any,
   isConfigured: () => false,
   send: async () => {},
   sendBulk: async () => {},
-} as unknown as SqsService;
+};
 
-const mockLogger = {
+const loggerStub: Partial<PinoLogger> = {
   setContext: () => {},
   debug: () => {},
   info: () => {},
   warn: () => {},
   error: () => {},
-} as unknown as PinoLogger;
+};
+
+const schedulerServiceStub: Partial<EventBridgeSchedulerService> = {
+  isConfigured: () => false,
+  createDelayedFire: async () => {},
+  deleteSchedule: async () => {},
+};
+
+const mockSqsService = sqsServiceStub as SqsService;
+const mockLogger = loggerStub as PinoLogger;
+const mockSchedulerService = schedulerServiceStub as EventBridgeSchedulerService;
 
 describe('Standard Worker', () => {
   let jobRepository: JobRepository;
@@ -81,6 +90,8 @@ describe('Standard Worker', () => {
   let template: NotificationTemplateEntity;
   let jobsService: JobsService;
   let runJob: RunJob;
+  let stepRunRepository: StepRunRepository;
+  let stepRunV2Writer: StepRunV2Writer;
 
   before(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -95,13 +106,13 @@ describe('Standard Worker', () => {
     const userService = new UserService();
 
     const card = {
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
     };
     const userEntity: Partial<UserEntity> = {
       lastName: card.lastName,
       firstName: card.firstName,
-      email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
+      email: `${card.firstName}_${card.lastName}_${faker.string.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
       password: 'asd#Faf4fd',
@@ -129,9 +140,8 @@ describe('Standard Worker', () => {
     standardQueueService = new StandardQueueService(
       workflowInMemoryProviderService,
       mockSqsService,
-      mockFeatureFlagsService,
-      mockOrganizationRepository,
-      mockLogger
+      mockLogger,
+      mockSchedulerService
     );
     await standardQueueService.queue.obliterate();
   });
@@ -148,8 +158,10 @@ describe('Standard Worker', () => {
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
-    const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
+    // Same singleton RunJob was injected with, so stubbing it here reaches the use case.
+    stepRunRepository = moduleRef.get<StepRunRepository>(StepRunRepository);
+    stepRunV2Writer = moduleRef.get<StepRunV2Writer>(StepRunV2Writer);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
@@ -157,11 +169,11 @@ describe('Standard Worker', () => {
       setJobAsFailed,
       webhookFilterBackoffStrategy,
       workflowInMemoryProviderService,
-      organizationRepository,
       jobRepository,
       mockSqsService,
       mockLogger,
-      featureFlagsService
+      featureFlagsService,
+      stepRunV2Writer
     );
   });
 
@@ -515,6 +527,67 @@ describe('Standard Worker', () => {
       expect(fresh?.status).to.equal(JobStatusEnum.FAILED);
     });
 
+    it('releaseRunningClaim returns the released job only when it was RUNNING', async () => {
+      const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+      const failed = await jobRepository.create(buildJob(JobStatusEnum.FAILED));
+
+      const released = await jobRepository.releaseRunningClaim(running._environmentId, running._id);
+      const notReleased = await jobRepository.releaseRunningClaim(failed._environmentId, failed._id);
+
+      expect(released?.status).to.equal(JobStatusEnum.QUEUED);
+      expect(notReleased).to.equal(null);
+    });
+
+    describe('step_runs_v2 write on completion', () => {
+      let writtenJobs: (JobEntity | null | undefined)[];
+      let originalWrite: StepRunV2Writer['write'];
+
+      beforeEach(() => {
+        writtenJobs = [];
+        originalWrite = stepRunV2Writer.write;
+        stepRunV2Writer.write = (job) => {
+          writtenJobs.push(job);
+        };
+      });
+
+      afterEach(() => {
+        stepRunV2Writer.write = originalWrite;
+      });
+
+      const completeViaWorker = async (job: JobEntity) => {
+        // biome-ignore lint/suspicious/noExplicitAny: jobHasCompleted is the private completion handler under test
+        await (standardWorker as any).jobHasCompleted({
+          data: {
+            _id: job._id,
+            _environmentId: job._environmentId,
+            _organizationId: job._organizationId,
+            _userId: job._userId,
+          },
+        });
+      };
+
+      it('writes the completed job when the RUNNING -> COMPLETED update matched', async () => {
+        const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+
+        await completeViaWorker(running);
+
+        expect(writtenJobs).to.have.length(1);
+        expect(writtenJobs[0]?._id).to.equal(running._id);
+        expect(writtenJobs[0]?.status).to.equal(JobStatusEnum.COMPLETED);
+      });
+
+      it('writes nothing when the job already left RUNNING', async () => {
+        const canceled = await jobRepository.create(buildJob(JobStatusEnum.CANCELED));
+
+        await completeViaWorker(canceled);
+
+        expect(writtenJobs).to.have.length(1);
+        expect(writtenJobs[0]).to.equal(null);
+        const fresh = await jobRepository.findOne({ _id: canceled._id, _environmentId: canceled._environmentId });
+        expect(fresh?.status).to.equal(JobStatusEnum.CANCELED);
+      });
+    });
+
     it('renewRunningClaim keeps a slow-but-healthy execution fenced against redelivery', async () => {
       const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
       await backdateJobClaim(running._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
@@ -549,9 +622,6 @@ describe('Standard Worker', () => {
       }) as typeof originalClearInterval;
 
       // Force the first post-claim operation of RunJob.execute to fail.
-      const stepRunRepository = Reflect.get(runJob, 'stepRunRepository') as {
-        create: (...createArgs: unknown[]) => Promise<unknown>;
-      };
       const originalCreate = stepRunRepository.create;
       stepRunRepository.create = async () => {
         throw new Error('step run persistence failure');

@@ -39,8 +39,7 @@ export class NotificationTemplateRepository extends BaseRepository<
         _environmentId: 1,
         isTranslationEnabled: 1,
       })
-      .populate('updatedBy', '_id firstName lastName externalId')
-      .populate('lastPublishedBy', '_id firstName lastName externalId');
+      .populate('updatedBy', '_id firstName lastName externalId email');
 
     return this.mapEntities(items);
   }
@@ -79,7 +78,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async findByTriggerIdentifierBulk(
     environmentId: string,
     identifiers: string[],
-    options?: { session?: ClientSession | null }
+    options?: { session?: ClientSession | null; includeUpdatedBy?: boolean }
   ): Promise<NotificationTemplateEntity[]>;
 
   async findByTriggerIdentifierBulk<K extends keyof NotificationTemplateEntity>(
@@ -91,9 +90,9 @@ export class NotificationTemplateRepository extends BaseRepository<
   async findByTriggerIdentifierBulk<K extends keyof NotificationTemplateEntity>(
     environmentId: string,
     identifiers: string[],
-    options: { session?: ClientSession | null; select?: K[] } = {}
+    options: { session?: ClientSession | null; select?: K[]; includeUpdatedBy?: boolean } = {}
   ): Promise<NotificationTemplateEntity[] | Pick<NotificationTemplateEntity, K>[]> {
-    const { session, select } = options;
+    const { session, select, includeUpdatedBy } = options;
 
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -104,6 +103,10 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     const baseQuery = this.MongooseModel.find(requestQuery, projection, { session });
     const query = !select || select.includes('steps' as K) ? baseQuery.populate('steps.template') : baseQuery;
+
+    if (includeUpdatedBy) {
+      query.populate('updatedBy');
+    }
 
     const items = await query;
 
@@ -512,7 +515,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(query)
       .populate('steps.template')
       .populate('steps.variants.template')
-      .populate('updatedBy')
+      .populate('updatedBy', '_id firstName lastName externalId email')
       .lean();
 
     return this.mapEntities(items);

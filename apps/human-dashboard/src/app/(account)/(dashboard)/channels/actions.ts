@@ -1,0 +1,567 @@
+'use server';
+
+import { currentUser } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+
+import { type HumanAccount, requireHumanAccount } from '@/lib/human-account';
+import { AGENT_NOT_SET_UP_MESSAGE, getRelayAgent } from '@/lib/human-agent-api';
+import { HumanApiError } from '@/lib/human-api-error';
+import {
+  type ChannelVia,
+  connectWhatsApp,
+  connectWhatsAppWithKeys,
+  createSlackApp,
+  ensureSlackChannel,
+  ensureTelegramChannel,
+  ensureWhatsAppChannel,
+  findSlackWorkspace,
+  hasLinkedChannel,
+  issueSlackInstallUrl,
+  issueTelegramStartLink,
+  issueWhatsAppLink,
+  listChannels,
+  renameChannel,
+  type SlackWorkspace,
+  saveTelegramBotToken,
+  sendTestMessage,
+  submitWhatsAppFirstMessage,
+  type WhatsAppKeys,
+  type WhatsAppLink,
+  type WhatsAppSignup,
+  type WhatsAppWebhook,
+} from '@/lib/human-channels-api';
+import { ensureOperatorContact, ensureRelay, findOperatorContactId } from '@/lib/human-operator';
+import { readSlackSetup, type SlackSetupState } from '@/lib/human-slack-setup';
+import { readTelegramSetup, type TelegramSetupState } from '@/lib/human-telegram-setup';
+import { readWhatsAppSetup, type WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
+import { validateSlackAppName, validateSlackConfigToken } from '@/lib/slack-app';
+import { type FirstMessage, firstMessageProblem } from '@/lib/whatsapp-first-message';
+
+const CHANNELS_PATH = '/configure';
+
+/** What BotFather hands out: the bot's numeric id, a colon, then the secret. */
+const BOT_TOKEN_PATTERN = /^\d+:[\w-]+$/;
+
+/** A token that was just saved can take a moment to be readable. */
+const START_LINK_ATTEMPTS_AFTER_SAVE = 3;
+
+/** So can the credentials of a Slack app that was just created. */
+const INSTALL_URL_ATTEMPTS = 3;
+
+export type SaveTelegramTokenResult =
+  // `startUrl` is empty when the token was saved but the link couldn't be made yet.
+  { ok: true; botUsername: string; startUrl: string } | { ok: false; error: string };
+
+/**
+ * Reads the setup again for a drawer that opened on a page where it couldn't be read. Still `unknown`
+ * when the API or Telegram doesn't answer this time either.
+ */
+export async function loadTelegramSetupAction(): Promise<TelegramSetupState> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+
+  return readTelegramSetup(
+    account,
+    channels.find((channel) => channel.via === 'telegram' && channel.active),
+    contactId
+  );
+}
+
+/**
+ * A fresh "say hi" link. A link stops working after a while, so the drawer swaps it for a new one
+ * when it opens on that step and when the operator asks to keep waiting. `null` when there's nothing to
+ * link yet, or no link could be made just now.
+ */
+export async function refreshTelegramStartLinkAction(): Promise<{ botUsername: string; startUrl: string } | null> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channelIdentifier, contactId] = await Promise.all([
+    findTelegramChannel(account),
+    findOperatorContactId(account),
+  ]);
+  if (!channelIdentifier || !contactId) {
+    return null;
+  }
+
+  try {
+    const link = await issueTelegramStartLink(account, channelIdentifier, contactId);
+
+    return { botUsername: link.botUsername, startUrl: link.url };
+  } catch (error) {
+    if (error instanceof HumanApiError) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+/** Gives the agent its Telegram bot, and returns the link the operator opens to say hi to it. */
+export async function saveTelegramTokenAction(botToken: string): Promise<SaveTelegramTokenResult> {
+  const token = botToken.trim();
+  if (!BOT_TOKEN_PATTERN.test(token)) {
+    return { ok: false, error: INVALID_TOKEN_MESSAGE };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    const contactId = await findOrCreateOperatorContact(account);
+    const channelIdentifier = await ensureTelegramChannel(account);
+    const { botUsername } = await saveTelegramBotToken(account, channelIdentifier, token);
+
+    revalidatePath(CHANNELS_PATH);
+
+    // The token is saved from here on. A link that can't be made right now must not read as a failed
+    // save: the drawer moves on and asks for the link again.
+    const link = await issueTelegramStartLink(account, channelIdentifier, contactId, {
+      attempts: START_LINK_ATTEMPTS_AFTER_SAVE,
+    }).catch((error: unknown) => {
+      console.error('Saved the Telegram bot token, but could not make the start link', error);
+
+      return null;
+    });
+
+    return { ok: true, botUsername: link?.botUsername || botUsername, startUrl: link?.url ?? '' };
+  } catch (error) {
+    console.error('Failed to save the Telegram bot token', error);
+
+    return { ok: false, error: describeSaveError(error) };
+  }
+}
+
+/**
+ * Whether the operator has pressed Start in the bot. The drawer asks while it waits. Another contact
+ * pressing it first doesn't count: the drawer is about the operator's own Telegram, as Slack's is.
+ */
+export async function checkTelegramConnectedAction(): Promise<boolean> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+  const telegram = channels.find((channel) => channel.via === 'telegram' && channel.active && channel.connected);
+  const connected = Boolean(telegram && contactId && (await hasLinkedChannel(account, telegram.identifier, contactId)));
+
+  if (connected) {
+    revalidatePath(CHANNELS_PATH);
+  }
+
+  return connected;
+}
+
+export type CreateSlackAppResult =
+  // `field` is the input the message belongs under.
+  { ok: true } | { ok: false; field: 'name' | 'token'; error: string };
+
+/** Reads the Slack setup again for a drawer that opened on a page where it couldn't be read. */
+export async function loadSlackSetupAction(): Promise<SlackSetupState> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+
+  return readSlackSetup(
+    account,
+    channels.find((channel) => channel.via === 'slack' && channel.active),
+    contactId
+  );
+}
+
+/**
+ * Creates the agent's Slack app under `appName`, in the workspace the App Configuration Token is for.
+ * The token goes to the API for this one call and is kept nowhere. Same steps as `channel add slack`.
+ */
+export async function createSlackAppAction(appName: string, configToken: string): Promise<CreateSlackAppResult> {
+  const name = appName.trim();
+  const token = configToken.trim();
+
+  const nameError = validateSlackAppName(name);
+  if (nameError) {
+    return { ok: false, field: 'name', error: nameError };
+  }
+
+  const tokenError = validateSlackConfigToken(token);
+  if (tokenError) {
+    return { ok: false, field: 'token', error: tokenError };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, field: 'token', error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    const { agentId } = await ensureRelayWithOperator(account);
+    const channel = await ensureSlackChannel(account, name);
+
+    // The app takes its name from the channel, and a channel from an earlier try may have another one.
+    if (channel.name !== name) {
+      await renameChannel(account, channel.id, name);
+    }
+
+    await createSlackApp(account, channel.id, { configToken: token, agentId });
+    revalidatePath(CHANNELS_PATH);
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to create the Slack app', error);
+
+    return { ok: false, field: 'token', error: describeSlackAppError(error) };
+  }
+}
+
+export type ConnectWhatsAppResult =
+  | { ok: true; displayPhoneNumber?: string; warning?: string }
+  | { ok: false; error: string };
+
+export type ConnectWhatsAppKeysResult =
+  | { ok: true; displayPhoneNumber?: string; webhook?: WhatsAppWebhook }
+  | { ok: false; error: string };
+
+/**
+ * Connects the operator's own WhatsApp Business number with keys from a Meta app they set up themselves. The relay
+ * gets its WhatsApp channel first, as with the Facebook button. Meta's reason comes back when it refuses the keys;
+ * the keys themselves never do.
+ */
+export async function connectWhatsAppKeysAction(keys: WhatsAppKeys): Promise<ConnectWhatsAppKeysResult> {
+  const trimmed: WhatsAppKeys = {
+    accessToken: keys.accessToken?.trim() ?? '',
+    phoneNumberId: keys.phoneNumberId?.trim() ?? '',
+    businessAccountId: keys.businessAccountId?.trim() ?? '',
+    appSecret: keys.appSecret?.trim() ?? '',
+  };
+  if (Object.values(trimmed).some((value) => !value)) {
+    return { ok: false, error: 'Fill in all four keys from your Meta app.' };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    await ensureRelayWithOperator(account);
+    const integrationIdentifier = await ensureWhatsAppChannel(account);
+    const result = await connectWhatsAppWithKeys(account, integrationIdentifier, trimmed);
+    revalidatePath(CHANNELS_PATH);
+
+    if (!result.success) {
+      return { ok: false, error: result.error?.message ?? 'Meta didn’t accept these keys. Check them and try again.' };
+    }
+
+    return {
+      ok: true,
+      ...(result.displayPhoneNumber ? { displayPhoneNumber: result.displayPhoneNumber } : {}),
+      ...(result.webhook ? { webhook: result.webhook } : {}),
+    };
+  } catch (error) {
+    console.error('Failed to connect WhatsApp with API keys', error);
+
+    return { ok: false, error: describeWhatsAppError(error) };
+  }
+}
+
+/** Reads the WhatsApp setup again, for a drawer that opened on a page where it couldn't be read. */
+export async function loadWhatsAppSetupAction(): Promise<WhatsAppSetupState> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  return readWhatsAppSetup(account);
+}
+
+export type IssueWhatsAppLinkResult = ({ ok: true } & WhatsAppLink) | { ok: false; error: string };
+
+/** A new wa.me link with a code for the operator's own number, made each time the drawer waits for it. */
+export async function issueWhatsAppLinkAction(): Promise<IssueWhatsAppLinkResult> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    return { ok: true, ...(await issueWhatsAppLink(account)) };
+  } catch (error) {
+    console.error('Failed to make a WhatsApp code', error);
+
+    return { ok: false, error: describeWhatsAppLinkError(error) };
+  }
+}
+
+export type SubmitWhatsAppFirstMessageResult = { ok: true; firstMessage: FirstMessage } | { ok: false; error: string };
+
+/** Sends the operator's first message for outside the 24-hour window to Meta for review. */
+export async function submitWhatsAppFirstMessageAction(body: string): Promise<SubmitWhatsAppFirstMessageResult> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const problem = typeof body === 'string' ? firstMessageProblem(body) : 'Write the message first.';
+  if (problem) {
+    return { ok: false, error: problem };
+  }
+
+  try {
+    const firstMessage = await submitWhatsAppFirstMessage(account, body.trim());
+    revalidatePath(CHANNELS_PATH);
+
+    return { ok: true, firstMessage };
+  } catch (error) {
+    console.error('Failed to send the WhatsApp first message to Meta', error);
+
+    return { ok: false, error: describeFirstMessageError(error) };
+  }
+}
+
+/** Whether the operator's own number got bound, for the drawer waiting on their message. */
+export async function checkWhatsAppConnectedAction(): Promise<WhatsAppSetupState | null> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const setup = await readWhatsAppSetup(account);
+
+  if (setup.step !== 'connected') {
+    return null;
+  }
+
+  revalidatePath(CHANNELS_PATH);
+
+  return setup;
+}
+
+/**
+ * Connects the operator's own WhatsApp Business account with what the Facebook button handed back. The
+ * relay gets its WhatsApp channel first, the way Telegram and Slack do, then the API finishes Meta's
+ * Embedded Signup on it.
+ */
+export async function connectWhatsAppAction(signup: WhatsAppSignup): Promise<ConnectWhatsAppResult> {
+  if (!signup.code?.trim() || !signup.wabaId?.trim() || !signup.phoneNumberId?.trim()) {
+    return { ok: false, error: 'Facebook didn’t finish the setup. Please try again.' };
+  }
+
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+
+  try {
+    if (!(await getRelayAgent(account))) {
+      return { ok: false, error: AGENT_NOT_SET_UP_MESSAGE };
+    }
+
+    await ensureRelayWithOperator(account);
+    // The signup lands on exactly the channel made or found here, never an older one left linked.
+    const integrationIdentifier = await ensureWhatsAppChannel(account);
+    const result = await connectWhatsApp(account, integrationIdentifier, {
+      code: signup.code.trim(),
+      wabaId: signup.wabaId.trim(),
+      phoneNumberId: signup.phoneNumberId.trim(),
+    });
+    revalidatePath(CHANNELS_PATH);
+
+    if (!result.success) {
+      return { ok: false, error: describeWhatsAppFailure(result.error?.code) };
+    }
+
+    return {
+      ok: true,
+      ...(result.displayPhoneNumber ? { displayPhoneNumber: result.displayPhoneNumber } : {}),
+      ...(result.phoneRegistrationWarning ? { warning: result.phoneRegistrationWarning } : {}),
+    };
+  } catch (error) {
+    console.error('Failed to connect WhatsApp', error);
+
+    return { ok: false, error: describeWhatsAppError(error) };
+  }
+}
+
+/**
+ * The Slack page where the operator installs the app. A link works for five minutes, so the drawer asks
+ * for a new one on every click. `null` when there's no app to install yet, or no link could be made.
+ */
+export async function getSlackInstallUrlAction(): Promise<string | null> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channelIdentifier, contactId] = await Promise.all([
+    findChannel(account, 'slack'),
+    findOperatorContactId(account),
+  ]);
+  if (!channelIdentifier || !contactId) {
+    return null;
+  }
+
+  try {
+    return await issueSlackInstallUrl(account, channelIdentifier, contactId, { attempts: INSTALL_URL_ATTEMPTS });
+  } catch (error) {
+    if (error instanceof HumanApiError) {
+      console.error('Could not make the Slack install link', error);
+
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * The workspace the app was installed in, or `null` while the operator hasn't installed and linked it.
+ * The drawer asks while it waits. Another contact linking Slack first doesn't count: the drawer is about
+ * the operator's own Slack.
+ */
+export async function checkSlackConnectedAction(): Promise<SlackWorkspace | null> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const [channels, contactId] = await Promise.all([listChannels(account), findOperatorContactId(account)]);
+  const slack = channels.find((channel) => channel.via === 'slack' && channel.active && channel.connected);
+  if (!slack || !contactId || !(await hasLinkedChannel(account, slack.identifier, contactId))) {
+    return null;
+  }
+
+  revalidatePath(CHANNELS_PATH);
+
+  // The name is a nicety: Slack counts as connected when it can't be read.
+  return (await findSlackWorkspace(account, slack.identifier).catch(() => undefined)) ?? {};
+}
+
+/**
+ * Has the agent send the operator a DM, right after the install, as `channel add slack` does. `false`
+ * when it couldn't be sent; Slack is connected either way.
+ */
+export async function sendSlackTestMessageAction(): Promise<boolean> {
+  const account = await requireHumanAccount({ returnTo: CHANNELS_PATH });
+  const contactId = await findOperatorContactId(account);
+  if (!contactId) {
+    return false;
+  }
+
+  try {
+    await sendTestMessage(account, contactId, 'slack');
+
+    return true;
+  } catch (error) {
+    if (error instanceof HumanApiError) {
+      console.error('Slack is connected, but the test message could not be sent', error);
+
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+const INVALID_TOKEN_MESSAGE = 'Token isn’t valid. Copy it again from BotFather; it’s the line after “Use this token”.';
+
+function findTelegramChannel(account: HumanAccount): Promise<string | undefined> {
+  return findChannel(account, 'telegram');
+}
+
+async function findChannel(account: HumanAccount, via: ChannelVia): Promise<string | undefined> {
+  const channels = await listChannels(account);
+
+  return channels.find((channel) => channel.via === via && channel.active)?.identifier;
+}
+
+/**
+ * The operator's own contact. `setup` makes it with the agent, so this is a lookup; only an agent
+ * that has no operator on record yet gets one here. Callers check that the agent exists first: this must
+ * never be what creates it.
+ */
+async function findOrCreateOperatorContact(account: HumanAccount): Promise<string> {
+  const existing = await findOperatorContactId(account);
+  if (existing) {
+    return existing;
+  }
+
+  const user = await currentUser();
+
+  return ensureOperatorContact(account, { firstName: user?.firstName, lastName: user?.lastName });
+}
+
+/** The relay agent and the operator's contact, for a step that needs the agent's own id too. Same rule: the agent exists already. */
+async function ensureRelayWithOperator(account: HumanAccount): Promise<{ agentId: string; contactId: string }> {
+  if (await findOperatorContactId(account)) {
+    return ensureRelay(account);
+  }
+
+  const user = await currentUser();
+
+  return ensureRelay(account, { firstName: user?.firstName, lastName: user?.lastName });
+}
+
+/** What Slack answers to a token it doesn't take, as the API passes it on. */
+const SLACK_TOKEN_REFUSED = /invalid_token|token_expired|token_revoked|invalid_auth|not_authed|account_inactive/;
+
+function describeSlackAppError(error: unknown): string {
+  if (error instanceof HumanApiError && error.status >= 400 && error.status < 500) {
+    if (SLACK_TOKEN_REFUSED.test(error.message)) {
+      return 'Slack didn’t accept that token. They stop working after 12 hours: generate a new one and paste it again.';
+    }
+
+    if (error.status !== 401 && error.status !== 403) {
+      return error.message;
+    }
+  }
+
+  return 'Something went wrong while creating the app. Please try again.';
+}
+
+/** What went wrong on Meta's side, as the API names it, in words the operator can act on. */
+function describeWhatsAppFailure(code: string | undefined): string {
+  switch (code) {
+    case 'token_exchange_failed':
+      return 'Facebook didn’t accept the sign-in. Please connect again.';
+    case 'meta_validation_failed':
+      return 'That number isn’t part of the WhatsApp Business account you picked. Please connect again and choose it there.';
+    case 'webhook_configuration_failed':
+      return 'Your number is saved, but WhatsApp couldn’t be told to send messages to your agent yet. Please connect again.';
+    case 'missing_platform_config':
+      return 'WhatsApp can’t be connected here yet.';
+    default:
+      return 'Something went wrong while connecting WhatsApp. Please try again.';
+  }
+}
+
+function describeWhatsAppLinkError(error: unknown): string {
+  if (error instanceof HumanApiError) {
+    if (error.code === 'whatsapp_number_unknown') {
+      return 'WhatsApp didn’t say which number is connected. Connect WhatsApp again.';
+    }
+
+    if (error.status === 403 || error.status === 422) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    if (error.status === 404) {
+      return 'Connect your WhatsApp Business number first.';
+    }
+  }
+
+  return 'We couldn’t get WhatsApp ready for your message. Please try again.';
+}
+
+function describeFirstMessageError(error: unknown): string {
+  if (error instanceof HumanApiError && error.status >= 400 && error.status < 500 && error.status !== 401) {
+    if (error.status === 403) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    return error.message;
+  }
+
+  return 'We couldn’t send the message to Meta just now. Please try again.';
+}
+
+function describeWhatsAppError(error: unknown): string {
+  if (error instanceof HumanApiError && error.status >= 400 && error.status < 500) {
+    if (error.status === 403 || error.status === 422) {
+      return 'WhatsApp isn’t available for your account yet.';
+    }
+
+    if (error.status !== 401) {
+      return error.message;
+    }
+  }
+
+  return 'Something went wrong while connecting WhatsApp. Please try again.';
+}
+
+function describeSaveError(error: unknown): string {
+  if (error instanceof HumanApiError) {
+    // The API answers 502 when Telegram doesn't know the token.
+    if (error.status === 502) {
+      return INVALID_TOKEN_MESSAGE;
+    }
+
+    if (error.status >= 400 && error.status < 500 && error.status !== 401 && error.status !== 403) {
+      return error.message;
+    }
+  }
+
+  return 'Something went wrong while saving the token. Please try again.';
+}

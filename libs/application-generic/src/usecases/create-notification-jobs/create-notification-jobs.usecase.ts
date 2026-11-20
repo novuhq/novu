@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   JobEntity,
   JobStatusEnum,
@@ -12,11 +12,13 @@ import {
   FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
+  ResourceEnum,
   SeverityLevelEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
+import { PinoLogger } from '../../logging';
 import {
   TraceLogRepository,
   WorkflowRunRepository,
@@ -24,6 +26,7 @@ import {
   WorkflowRunTraceInput,
 } from '../../services/analytic-logs';
 import { LogRepository } from '../../services/analytic-logs/log.repository';
+import { buildUsageKey, CacheService } from '../../services/cache';
 import { FeatureFlagsService } from '../../services/feature-flags';
 import { type LeanNotificationStep, toLeanStep } from '../../services/step-template-hydration.service';
 import { PlatformException } from '../../utils/exceptions';
@@ -31,7 +34,6 @@ import { getNestedValue } from '../../utils/object';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
-const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 type NotificationStepWithTemplate = NotificationStepEntity & {
   template: NonNullable<NotificationStepEntity['template']>;
@@ -44,8 +46,12 @@ export class CreateNotificationJobs {
     private notificationRepository: NotificationRepository,
     private workflowRunRepository: WorkflowRunRepository,
     private traceLogRepository: TraceLogRepository,
-    private featureFlagsService: FeatureFlagsService
-  ) {}
+    private featureFlagsService: FeatureFlagsService,
+    private cacheService: CacheService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
@@ -67,7 +73,7 @@ export class CreateNotificationJobs {
     if (!notification) {
       const message = 'Notification could not be created';
       const error = new PlatformException(message);
-      Logger.error(error, message, LOG_CONTEXT);
+      this.logger.error({ err: error }, message);
       throw error;
     }
 
@@ -75,13 +81,14 @@ export class CreateNotificationJobs {
 
     const steps = await this.createSteps(command, activeSteps, notification);
 
-    // Both dedup flags shrink what a job persists and are read once here (the
-    // worker's read paths handle either shape, so both are forward-only and safe
-    // to toggle off): payload-dedup drops the per-job trigger payload (resolved
-    // from the notification via `_notificationId`); job-step-dedup persists a
-    // lean step (ids/filters/metadata + a `{ _id, type }` template stub) that
-    // the worker rehydrates from the live workflow at execution time.
-    const [isPayloadDedupEnabled, isJobStepDedupEnabled] = await Promise.all([
+    // The dedup flags shrink what a job persists and are read once here (the
+    // worker's read paths handle either shape, so all are forward-only and safe
+    // to toggle off): payload-dedup drops the per-job trigger payload and
+    // overrides-dedup drops the per-job trigger overrides (both resolved from the
+    // notification via `_notificationId`); job-step-dedup persists a lean step
+    // (ids/filters/metadata + a `{ _id, type }` template stub) that the worker
+    // rehydrates from the live workflow at execution time.
+    const [isPayloadDedupEnabled, isJobStepDedupEnabled, isOverridesDedupEnabled] = await Promise.all([
       this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PAYLOAD_DEDUP_ENABLED,
         organization: { _id: command.organizationId },
@@ -94,21 +101,44 @@ export class CreateNotificationJobs {
         user: { _id: command.userId },
         defaultValue: false,
       }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_OVERRIDES_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
     ]);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
+    const adhocTriggerJob = this.createATriggerJobIfMissing(
+      steps,
+      command,
+      notification,
+      isPayloadDedupEnabled,
+      isOverridesDedupEnabled
+    );
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
 
     for (const step of steps) {
-      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled, isJobStepDedupEnabled));
+      jobs.push(
+        this.buildJobFromStep(
+          step,
+          command,
+          notification,
+          isPayloadDedupEnabled,
+          isJobStepDedupEnabled,
+          isOverridesDedupEnabled
+        )
+      );
     }
 
     return jobs;
   }
 
   private async createNotification(command: CreateNotificationJobsCommand, channels: StepTypeEnum[]) {
+    const hasOverrides = !!command.overrides && Object.keys(command.overrides).length > 0;
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -118,6 +148,7 @@ export class CreateNotificationJobs {
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,
+      ...(hasOverrides && { overrides: command.overrides }),
       channels,
       controls: command.controls,
       tags: command.template.tags,
@@ -196,11 +227,31 @@ export class CreateNotificationJobs {
         ]);
       }
     } catch (error) {
-      console.error(
-        { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
-        'Failed to create workflow run'
-      );
+      this.logger.error({ err: error, notificationId: notification._id }, 'Failed to create workflow run');
       // Don't throw here as we don't want to fail the main notification creation
+    }
+
+    await this.incrementUsageCounter(notification, command);
+  }
+
+  private async incrementUsageCounter(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
+    if (!command.incrementUsageInWorker) {
+      return;
+    }
+
+    try {
+      await this.cacheService.incrIfExistsAtomic(
+        buildUsageKey({ _organizationId: command.organizationId, resourceType: ResourceEnum.EVENTS })
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          notificationId: notification._id,
+          organizationId: command.organizationId,
+        },
+        'Failed to increment usage counter'
+      );
     }
   }
 
@@ -209,7 +260,8 @@ export class CreateNotificationJobs {
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
     isPayloadDedupEnabled: boolean,
-    isJobStepDedupEnabled: boolean
+    isJobStepDedupEnabled: boolean,
+    isOverridesDedupEnabled: boolean
   ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
@@ -217,7 +269,7 @@ export class CreateNotificationJobs {
     return {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
-      overrides: command.overrides,
+      overrides: isOverridesDedupEnabled ? undefined : command.overrides,
       ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
       step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
@@ -290,30 +342,41 @@ export class CreateNotificationJobs {
     command: CreateNotificationJobsCommand,
     isJobStepDedupEnabled: boolean
   ): NotificationStepEntity {
+    const stepExtras: Pick<NotificationStepEntity, 'bridgeUrl' | 'workflowMetadata'> = command.bridgeUrl
+      ? {
+          bridgeUrl: command.bridgeUrl,
+          workflowMetadata: {
+            name: command.template.name,
+            description: command.template.description,
+          },
+        }
+      : {};
+
     if (!isJobStepDedupEnabled) {
       return {
         ...step,
-        ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+        ...stepExtras,
       };
     }
 
     const leanStep: LeanNotificationStep = {
       ...toLeanStep(step),
       ...(step.variants ? { variants: step.variants.map(toLeanStep) } : {}),
-      ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+      ...stepExtras,
     };
 
     // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
     // persist this lean projection and rehydrate the full template at execution
     // time (StepTemplateHydrationService).
-    return leanStep as unknown as NotificationStepEntity;
+    return leanStep as NotificationStepEntity;
   }
 
   private createATriggerJobIfMissing(
     steps: NotificationStepWithTemplate[],
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
-    isPayloadDedupEnabled = false
+    isPayloadDedupEnabled = false,
+    isOverridesDedupEnabled = false
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -324,7 +387,7 @@ export class CreateNotificationJobs {
     return {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
-      overrides: command.overrides,
+      overrides: isOverridesDedupEnabled ? undefined : command.overrides,
       ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
       step: {
@@ -376,9 +439,8 @@ export class CreateNotificationJobs {
       if (step.template) {
         stepsWithTemplates.push(step as NotificationStepWithTemplate);
       } else {
-        Logger.error(
-          `Skipping step with missing template for workflow ${workflowId} (stepId: ${step.stepId}, _templateId: ${step._templateId})`,
-          LOG_CONTEXT
+        this.logger.error(
+          `Skipping step with missing template for workflow ${workflowId} (stepId: ${step.stepId}, _templateId: ${step._templateId})`
         );
       }
     }
@@ -386,7 +448,7 @@ export class CreateNotificationJobs {
     if (activeSteps.length > 0 && stepsWithTemplates.length === 0) {
       const message = `No active steps with templates found for workflow ${workflowId}`;
       const error = new PlatformException(message);
-      Logger.error(error, message, LOG_CONTEXT);
+      this.logger.error({ err: error }, message);
       throw error;
     }
 

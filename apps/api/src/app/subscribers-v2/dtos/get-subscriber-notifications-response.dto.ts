@@ -17,7 +17,7 @@ export class GetSubscriberNotificationsResponseDto {
 
   @ApiProperty({
     description: 'The filter applied to the notifications',
-    type: 'object',
+    type: Object,
   })
   filter: NotificationFilter;
 }

@@ -1,8 +1,11 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  HttpCode,
   HttpException,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -28,10 +31,14 @@ import {
   ListWebChatConversationEventsResponseDto,
 } from './dtos/list-web-chat-conversation-events.dto';
 import {
+  CancelWebChatConversationTurnBodyDto,
+  CancelWebChatConversationTurnResponseDto,
   ListWebChatConversationsQueryDto,
   ListWebChatConversationsResponseDto,
   WebChatConversationMetadataDto,
 } from './dtos/web-chat-conversation.dto';
+import { CancelWebChatConversationTurnCommand } from './usecases/cancel-web-chat-conversation-turn/cancel-web-chat-conversation-turn.command';
+import { CancelWebChatConversationTurn } from './usecases/cancel-web-chat-conversation-turn/cancel-web-chat-conversation-turn.usecase';
 import { GetWebChatConversationCommand } from './usecases/get-web-chat-conversation/get-web-chat-conversation.command';
 import { GetWebChatConversation } from './usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
 import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.command';
@@ -51,7 +58,8 @@ export class WebChatController {
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly listWebChatConversations: ListWebChatConversations,
     private readonly getWebChatConversation: GetWebChatConversation,
-    private readonly listWebChatConversationEvents: ListWebChatConversationEvents
+    private readonly listWebChatConversationEvents: ListWebChatConversationEvents,
+    private readonly cancelWebChatConversationTurn: CancelWebChatConversationTurn
   ) {}
 
   /**
@@ -154,6 +162,27 @@ export class WebChatController {
         conversationIdentifier: identifier,
         before: query.before,
         limit: query.limit ?? 50,
+      })
+    );
+  }
+
+  /** Stops the turn the conversation is running. Idempotent; `idle` when nothing was running. */
+  @Post('/conversations/:identifier/cancel')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('subscriberJwt'), WebChatEnabledGuard)
+  async cancelConversationTurn(
+    @SubscriberSession() subscriberSession: SubscriberSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: CancelWebChatConversationTurnBodyDto
+  ): Promise<CancelWebChatConversationTurnResponseDto> {
+    return this.cancelWebChatConversationTurn.execute(
+      CancelWebChatConversationTurnCommand.create({
+        environmentId: subscriberSession.environmentId,
+        organizationId: subscriberSession.organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
+        conversationIdentifier: identifier,
+        agentIdentifier: body?.agentId?.trim() || undefined,
       })
     );
   }

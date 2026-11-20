@@ -1,19 +1,20 @@
 import { DomainRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
+import type { Mocked } from 'vitest';
 import { InboundMailTenantResolver } from './inbound-mail-tenant.resolver';
 
 describe('InboundMailTenantResolver', () => {
-  let domainRepository: jest.Mocked<Pick<DomainRepository, 'findByName'>>;
-  let pinoLogger: jest.Mocked<PinoLogger>;
+  let domainRepository: Mocked<Pick<DomainRepository, 'findByName'>>;
+  let pinoLogger: Mocked<PinoLogger>;
   let resolver: InboundMailTenantResolver;
 
   beforeEach(() => {
     domainRepository = {
-      findByName: jest.fn(),
+      findByName: vi.fn(),
     } as any;
     pinoLogger = {
-      setContext: jest.fn(),
-      warn: jest.fn(),
+      setContext: vi.fn(),
+      warn: vi.fn(),
     } as any;
     resolver = new InboundMailTenantResolver(domainRepository as unknown as DomainRepository, pinoLogger);
   });

@@ -5,21 +5,21 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   dashboardSanitizeControlValues,
-  EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   enhanceStepsMap,
   InMemoryLRUCacheService,
-  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   NotificationPayloadService,
   PinoLogger,
-  stitchProviderOverridesFromDocs,
+  STEP_OVERRIDE_CONTROL_LEVELS,
+  stitchStepOverridesFromDocs,
   withStitchedProviderOverrides,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   JobEntity,
   JobRepository,
@@ -47,7 +47,12 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
+import { getCachedEnvironment } from '../../../shared/utils';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
+
+export interface ExecuteBridgeJobResult extends ExecuteOutput {
+  sourceControls: Record<string, unknown>;
+}
 
 @Injectable()
 export class ExecuteBridgeJob {
@@ -67,7 +72,8 @@ export class ExecuteBridgeJob {
   }
 
   @InstrumentUsecase()
-  async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing bridge orchestration is outside this change.
+  async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteBridgeJobResult | null> {
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
     const isStateful = !command.job.step.bridgeUrl;
@@ -105,7 +111,8 @@ export class ExecuteBridgeJob {
       throw new Error('Step id is not set');
     }
 
-    const environment = await this.getEnvironment(command.environmentId, command.organizationId);
+    const environment =
+      command.environment ?? (await this.getEnvironment(command.environmentId, command.organizationId));
 
     if (!environment) {
       throw new Error(`Environment id ${command.environmentId} is not found`);
@@ -117,11 +124,13 @@ export class ExecuteBridgeJob {
 
     const { subscriber, actor, payload: originalPayload, context, env } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
-    const state = await this.generateState(command);
-
-    const controlValuesResult = isStateful
-      ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
-      : { controls: command.job.step.controlVariables, stepResolverHash: undefined };
+    // Independent reads: the parent-job chain and the step's control values.
+    const [state, controlValuesResult] = await Promise.all([
+      this.generateState(command),
+      isStateful
+        ? this.findControlValues(command, workflow as NotificationTemplateEntity)
+        : { controls: command.job.step.controlVariables, stepResolverHash: undefined },
+    ]);
     const variablesStores = controlValuesResult.controls;
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
@@ -152,6 +161,7 @@ export class ExecuteBridgeJob {
       event: bridgeEvent,
       job: command.job,
       stepResolverHash,
+      environment,
       searchParams: {
         workflowId,
         stepId,
@@ -159,7 +169,10 @@ export class ExecuteBridgeJob {
       },
     });
 
-    return bridgeResponse;
+    return {
+      ...bridgeResponse,
+      sourceControls: variablesStores ?? {},
+    };
   }
 
   private async findControlValues(
@@ -169,7 +182,7 @@ export class ExecuteBridgeJob {
     controls: Record<string, unknown>;
     stepResolverHash?: string;
   }> {
-    const [controlsEntity, providerDocs] = await Promise.all([
+    const [controlsEntity, overrideDocs] = await Promise.all([
       this.controlValuesRepository.findOne({
         _organizationId: command.organizationId,
         _workflowId: workflow._id,
@@ -181,7 +194,7 @@ export class ExecuteBridgeJob {
         _environmentId: command.environmentId,
         _workflowId: workflow._id,
         _stepId: command.job.step._id,
-        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+        level: { $in: STEP_OVERRIDE_CONTROL_LEVELS },
       }),
     ]);
 
@@ -196,10 +209,10 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
-    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+    const { providerOverrides, integrationOverrides } = stitchStepOverridesFromDocs(overrideDocs);
 
     return {
-      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
+      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides, integrationOverrides),
       stepResolverHash,
     };
   }
@@ -223,6 +236,7 @@ export class ExecuteBridgeJob {
      * carry a base64 string. Runtime consumers of this normalized payload expect that.
      */
     const attachments = payload.attachments.map((attachment) => {
+      // biome-ignore lint/plugin: file is typed Buffer but rehydrated attachments can carry a Uint8Array, so narrow from unknown
       const file: unknown = attachment?.file;
 
       if (Buffer.isBuffer(file)) {
@@ -268,26 +282,21 @@ export class ExecuteBridgeJob {
 
   private async generateStateForJob(job: JobEntity, environmentId: string): Promise<State[]> {
     const previousJobs: State[] = [];
-    let theJob = (await this.jobRepository.findOne({
-      _id: job._parentId,
-      _environmentId: environmentId,
-    })) as JobEntity;
+    let parentId = job._parentId;
 
-    if (theJob) {
-      const jobState = await this.mapState(theJob);
-      previousJobs.push(jobState);
-    }
-
-    while (theJob) {
-      theJob = (await this.jobRepository.findOne({
-        _id: theJob._parentId,
+    // The chain ends at the trigger job, which has no parent: stop there instead of querying for it.
+    while (parentId) {
+      const parentJob = await this.jobRepository.findOne({
+        _id: parentId,
         _environmentId: environmentId,
-      })) as JobEntity;
+      });
 
-      if (theJob) {
-        const jobState = await this.mapState(theJob);
-        previousJobs.push(jobState);
+      if (!parentJob) {
+        break;
       }
+
+      previousJobs.push(await this.mapState(parentJob));
+      parentId = parentJob._parentId;
     }
 
     return previousJobs;
@@ -303,6 +312,7 @@ export class ExecuteBridgeJob {
     environmentId,
     organizationId,
     stepResolverHash,
+    environment,
   }: Omit<ExecuteBridgeRequestCommand, 'processError' | 'action' | 'retriesLimit'> & {
     job: JobEntity;
   }): Promise<ExecuteOutput> {
@@ -315,6 +325,7 @@ export class ExecuteBridgeJob {
       environmentId,
       organizationId,
       stepResolverHash,
+      environment,
       // Re-apply the DNS-pinned SSRF guard on every EXTERNAL bridge EXECUTE
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
@@ -440,24 +451,11 @@ export class ExecuteBridgeJob {
   }
 
   @Instrument()
-  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentCacheData | null> {
-    return this.inMemoryLRUCacheService.get(
-      InMemoryLRUCacheStore.ENVIRONMENT,
-      `${organizationId}:${environmentId}`,
-      () =>
-        this.environmentRepository.findOne(
-          {
-            _id: environmentId,
-            _organizationId: organizationId,
-          },
-          'echo apiKeys _id'
-        ),
-      {
-        environmentId,
-        organizationId,
-        cacheVariant: '_id:apiKeys:echo',
-      }
-    );
+  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentEntity | null> {
+    return getCachedEnvironment(this.inMemoryLRUCacheService, this.environmentRepository, {
+      environmentId,
+      organizationId,
+    });
   }
 }
 

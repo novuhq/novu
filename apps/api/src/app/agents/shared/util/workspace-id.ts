@@ -1,13 +1,6 @@
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import { extractMsTeamsTenantId } from './msteams-activity';
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  return value as Record<string, unknown>;
-}
+import { asRecord } from './raw-record';
 
 function asNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;

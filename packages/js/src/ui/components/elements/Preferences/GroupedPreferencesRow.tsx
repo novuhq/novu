@@ -174,7 +174,7 @@ export const GroupedPreferencesRow = (props: {
               class={style({
                 key: 'preferencesGroupActionsContainerRight__icon',
                 className:
-                  'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+                  'nt-text-foreground-alpha-600 nt-transition-transform nt-duration-base data-[open=true]:nt-rotate-180',
                 context: { preferenceGroup: props.group } satisfies Parameters<
                   InboxAppearanceCallback['preferencesGroupActionsContainerRight__icon']
                 >[0],

@@ -1,6 +1,6 @@
 {
   "name": "@novu/react-native",
-  "version": "3.19.0",
+  "version": "3.20.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React Native SDK for building custom inbox notification experiences",
   "author": "",
@@ -31,19 +31,19 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup && pnpm run check:exports",
+    "build": "tsc --noEmit && tsup && pnpm run check:exports",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "check:exports": "attw --pack .",
     "release:preview": "pnpx pkg-pr-new publish"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
-    "tsup": "^8.2.1",
-    "typescript": "5.6.2"
+    "tsup": "^9.0.0",
+    "typescript": "6.0.3"
   },
   "peerDependencies": {
     "react": ">=17"

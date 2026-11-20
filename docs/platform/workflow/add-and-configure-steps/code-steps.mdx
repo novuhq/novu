@@ -7,10 +7,6 @@ Novu allows you to write step handlers as TypeScript code in your project and pu
 
 You can create both UI-managed steps and code-managed steps within the same workflow.
 
-<Note>
-  Code steps are only supported in the US region. We are working on supporting this in EU region.
-</Note>
-
 ## Supported channels
 
 | Channel | Required Output |
@@ -18,8 +14,22 @@ You can create both UI-managed steps and code-managed steps within the same work
 | Email | `subject`, `body` (HTML string) |
 | SMS | `body` |
 | Push | `subject`, `body` |
-| Chat | `body` |
+| Chat | `body` or `card` (see [Chat step](/framework/typescript/steps/chat)) |
 | In-App | `subject`, `body` (plus optional `avatar`, `primaryAction`, `secondaryAction`, `data`, `redirect`) |
+| Tool | `body` |
+
+Tool steps use the same handler shape as other channels. Return a `body` string; Novu delivers it through a [Tool integration](/platform/integrations/tool/webhook). See the [Tool channel](/framework/tool-channel) guide for provider overrides and skip.
+
+```typescript
+import { step } from '@novu/framework/step-resolver';
+
+export default step.tool(
+  'page-oncall',
+  async (controls, { payload }) => ({
+    body: `Payment failed for order ${payload.orderNumber}: ${payload.reason}`,
+  })
+);
+```
 
 ## Quick Start
 

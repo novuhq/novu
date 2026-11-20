@@ -11,10 +11,12 @@ export interface IConstructIntegrationDto {
   credentials?: ICredentialsDto;
   active?: boolean;
   check?: boolean;
+  /** @deprecated Use `rules` (JSONLogic) instead. */
   conditions?: {
     isNegated?: boolean;
     type?: BuilderFieldType;
     value?: BuilderGroupValues;
     children?: FilterParts[];
   }[];
+  rules?: Record<string, unknown> | null;
 }

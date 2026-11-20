@@ -58,7 +58,7 @@ export const Switch = (props: SwitchProps) => {
         class={style({
           key: 'channelSwitchThumb',
           className: cn(
-            `nt-h-4 nt-w-7 nt-rounded-full nt-bg-neutral-alpha-300 after:nt-absolute after:nt-top-0.5 after:nt-size-3 after:nt-left-0.5 after:nt-rounded-full after:nt-bg-background after:nt-transition-all after:nt-content-[''] nt-transition-all nt-duration-200 after:nt-duration-200 shadow-sm`,
+            `nt-h-4 nt-w-7 nt-rounded-full nt-bg-neutral-alpha-300 after:nt-absolute after:nt-top-0.5 after:nt-size-3 after:nt-left-0.5 after:nt-rounded-full after:nt-bg-background after:nt-transition-all after:nt-content-[''] nt-transition-all nt-duration-base after:nt-duration-base shadow-sm`,
             {
               'nt-bg-primary nt-shadow-none nt-border-neutral-alpha-400 after:nt-translate-x-full after:nt-border-background':
                 isChecked(),

@@ -54,6 +54,7 @@ export async function runCustomCodeProjectSetup(input: CustomCodeSetupInput): Pr
         apiUrl: input.options.apiUrl,
         agentIdentifier: input.agent.identifier,
         silent: false,
+        region: input.options.region,
       }),
   });
 

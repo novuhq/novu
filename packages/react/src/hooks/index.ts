@@ -1,7 +1,7 @@
 export type * from '@novu/js';
-export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
+export { pendingActionKey, PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 export { NovuProvider, useNovu } from './NovuProvider';
-export * from './useAgentChat';
+export * from './useWebChat';
 export * from './useChannelConnection';
 export * from './useChannelConnections';
 export * from './useChannelEndpoint';

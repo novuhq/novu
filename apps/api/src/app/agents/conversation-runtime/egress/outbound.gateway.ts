@@ -3,21 +3,28 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, RawMessage, Thread } from 'chat';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
-import { toDeliveryError } from '../../shared/util/delivery-error.util';
+import { isUnchangedTelegramEditError, toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { appendPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { SLACK_MARKDOWN_TEXT_LIMIT, splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
+import {
+  ChatInstanceRegistry,
+  type ChatWithAdapters,
+  type PlatformAdapters,
+  platformAdapterKey,
+} from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
-import { resolvePlanDeliveryMode } from './plan-live-delivery';
+import { isNativePlanAdapter, resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
 import {
@@ -33,6 +40,9 @@ export type { SlackNativeDelivery } from './slack-native-delivery';
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
+/** What the chat SDK's own thread passes to `adapter.stream`; the adapter alone defaults to 1000ms. */
+const SLACK_STREAM_UPDATE_INTERVAL_MS = 500;
+
 export interface ConversationTarget {
   agentId: string;
   integrationIdentifier: string;
@@ -44,6 +54,11 @@ export interface ConversationTarget {
    * an extra conversation lookup. Falls back to a lookup, then to the first installed workspace.
    */
   workspaceId?: string;
+  /**
+   * Platform identity of the user this delivery answers (a Slack `userId`). Slack streams
+   * natively in a channel only when it is told who the stream is for.
+   */
+  recipientPlatformUserId?: string;
 }
 
 export interface OutboundPersistContext {
@@ -75,6 +90,9 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
+  quoteReply?: { messageId: string };
+  /** Deliver by editing this already posted message (a streamed preview) instead of posting. */
+  replacePlatformMessageId?: string;
 };
 
 /**
@@ -96,7 +114,7 @@ export interface ThreadReplyPersistContext {
 export class OutboundGateway {
   constructor(
     @Inject(forwardRef(() => ChatInstanceRegistry))
-    private readonly registry: ChatInstanceRegistry,
+    private readonly registry: WrapperType<ChatInstanceRegistry>,
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
@@ -117,16 +135,7 @@ export class OutboundGateway {
     // post first, then persist with the delivered message id.
     if (!persist.activityIdentifier) {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
 
       // In-process deliveries (web) report the authoritative message id so the
@@ -166,16 +175,7 @@ export class OutboundGateway {
 
     try {
       const { result: sent, info } = await this.deliveryInfo.collect(() =>
-        this.postToConversation(
-          target.agentId,
-          target.integrationIdentifier,
-          target.platform,
-          target.platformThreadId,
-          msg,
-          options,
-          target.workspaceId,
-          persist.activityIdentifier
-        )
+        this.sendToConversation(target, msg, options, persist.activityIdentifier)
       );
       const platformMessageId = info.messageId ?? sent.messageId;
 
@@ -198,6 +198,81 @@ export class OutboundGateway {
       });
 
       throw err;
+    }
+  }
+
+  private sendToConversation(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    options: OutboundDeliveryOptions | undefined,
+    activityIdentifier: string | undefined
+  ): Promise<SentMessageInfo> {
+    if (options?.replacePlatformMessageId) {
+      return this.replaceMessage(target, msg, options.replacePlatformMessageId, options, activityIdentifier);
+    }
+
+    return this.postToConversation(
+      target.agentId,
+      target.integrationIdentifier,
+      target.platform,
+      target.platformThreadId,
+      msg,
+      options,
+      target.workspaceId,
+      activityIdentifier
+    );
+  }
+
+  /** Edits a streamed preview into the reply. If that edit fails, posts the reply anew so it is never lost. */
+  private async replaceMessage(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    previewMessageId: string,
+    options: OutboundDeliveryOptions,
+    activityIdentifier: string | undefined
+  ): Promise<SentMessageInfo> {
+    // The reply keeps the preview's id, so its reader can tell the preview became the reply.
+    const replaced = { messageId: previewMessageId, platformThreadId: target.platformThreadId };
+    try {
+      await this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        previewMessageId,
+        msg,
+        options,
+        target.workspaceId
+      );
+
+      return replaced;
+    } catch (err) {
+      if (isUnchangedTelegramEditError(err)) {
+        return replaced;
+      }
+
+      this.logger.warn({ err, previewMessageId }, 'Editing a streamed preview failed; posting the reply anew');
+      const sent = await this.postToConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        msg,
+        options,
+        target.workspaceId,
+        activityIdentifier
+      );
+      await this.deleteInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platformThreadId,
+        previewMessageId,
+        target.workspaceId
+      ).catch((deleteErr) =>
+        this.logger.warn({ err: deleteErr, previewMessageId }, 'Failed to delete a stale preview')
+      );
+
+      return sent;
     }
   }
 
@@ -263,9 +338,7 @@ export class OutboundGateway {
     let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      const collected = await this.deliveryInfo.collect(() =>
-        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
-      );
+      const collected = await this.deliveryInfo.collect(() => thread.post(postArg));
       sent = collected.result;
       sequence = collected.info.sequence;
     } catch (err) {
@@ -336,15 +409,103 @@ export class OutboundGateway {
 
     const postArg = this.withPreferredMessageId(
       this.buildAdapterPostableMessage(tokenizedContent, config),
-      chat.getAdapter(config.platform),
+      chat.getAdapter(platformAdapterKey(config.platform)),
       preferredMessageId
     );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.post(postArg)
+      this.deliverThreadMessage(thread, platform, postArg, options?.quoteReply?.messageId)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Shows text while it is generated (chat SDK native streaming, or throttled post + edit).
+   * A preview is not a delivery: nothing is persisted or branded. Replace it through
+   * `deliver()` with `replacePlatformMessageId`, or delete it.
+   */
+  async streamPreview(target: ConversationTarget, chunks: AsyncIterable<string>): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(target.agentId, target.integrationIdentifier);
+    const instanceKey = `${target.agentId}:${target.integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, target.agentId, config.platform, config);
+    const thread = chat.thread(target.platformThreadId);
+
+    const sent = await this.runWithPlatformToken(
+      chat,
+      config,
+      target.agentId,
+      target.platformThreadId,
+      target.workspaceId,
+      async (resolvedWorkspaceId) =>
+        (await this.streamSlackPreview(chat, config, target, resolvedWorkspaceId, chunks)) ?? thread.post(chunks)
+    ).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Slack streams natively only when it knows who the stream is for: in a channel that means the
+   * recipient's user id plus the workspace id (in a DM it infers both). The chat SDK takes those
+   * from the inbound message of the thread it is handling, which a preview — posted by a reader
+   * running outside the inbound turn — has none of, so pass them explicitly.
+   *
+   * Returns null when the preview cannot stream natively; the caller then posts the stream through
+   * the SDK, which renders it as throttled post-and-edit.
+   */
+  private async streamSlackPreview(
+    chat: ChatWithAdapters,
+    config: ResolvedAgentConfig,
+    target: ConversationTarget,
+    workspaceId: string | undefined,
+    chunks: AsyncIterable<string>
+  ): Promise<RawMessage | null> {
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      return null;
+    }
+
+    if (!target.recipientPlatformUserId || !workspaceId) {
+      // Both renderings look alike downstream, so say which input was missing.
+      this.logger.warn(
+        {
+          agentId: target.agentId,
+          platformThreadId: target.platformThreadId,
+          hasRecipientPlatformUserId: Boolean(target.recipientPlatformUserId),
+          hasWorkspaceId: Boolean(workspaceId),
+        },
+        'Slack preview cannot stream natively; falling back to post-and-edit'
+      );
+
+      return null;
+    }
+
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
+
+    return adapter.stream(target.platformThreadId, chunks, {
+      recipientUserId: target.recipientPlatformUserId,
+      recipientTeamId: workspaceId,
+      updateIntervalMs: SLACK_STREAM_UPDATE_INTERVAL_MS,
+    });
+  }
+
+  async setThreadSubscribed(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    subscribed: boolean
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const thread = chat.thread(platformThreadId);
+
+    if (subscribed) {
+      await thread.subscribe();
+
+      return;
+    }
+
+    await thread.unsubscribe();
   }
 
   /**
@@ -362,10 +523,31 @@ export class OutboundGateway {
       return postArg;
     }
 
-    return {
-      ...(postArg as unknown as Record<string, unknown>),
-      messageId: preferredMessageId,
-    } as unknown as AdapterPostableMessage;
+    const envelope = typeof postArg === 'string' ? { markdown: postArg } : postArg;
+
+    return Object.assign({}, envelope, { messageId: preferredMessageId });
+  }
+
+  private async deliverThreadMessage(
+    thread: Thread,
+    platform: string,
+    postArg: AdapterPostableMessage,
+    quoteMessageId?: string
+  ): Promise<{ id: string; threadId: string }> {
+    const messageId = quoteMessageId?.trim();
+    if (messageId) {
+      try {
+        return await thread.reply(messageId, postArg);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'NotImplementedError') {
+          this.logger.debug({ platform }, 'quote-reply not supported by adapter; falling back to post');
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return thread.post(postArg);
   }
 
   async startTypingInConversation(
@@ -416,7 +598,7 @@ export class OutboundGateway {
 
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(config.platform);
+    const adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     // Most platforms have no explicit stop API — indicators expire or clear on
     // post. Adapters with in-process delivery (web) expose `stopTyping`.
@@ -575,7 +757,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.editMessage !== 'function') {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
@@ -608,7 +790,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     if (typeof adapter.deleteMessage !== 'function') {
       return;
     }
@@ -652,9 +834,9 @@ export class OutboundGateway {
       return null;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.postObject!(platformThreadId, 'plan', model)
+        adapter.postObject(platformThreadId, 'plan', model)
       ).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -690,9 +872,9 @@ export class OutboundGateway {
       return;
     }
 
-    if (mode === 'native') {
+    if (isNativePlanAdapter(adapter)) {
       await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-        adapter.editObject!(platformThreadId, platformMessageId, 'plan', model)
+        adapter.editObject(platformThreadId, platformMessageId, 'plan', model)
       ).catch(toDeliveryError);
 
       return;
@@ -717,7 +899,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
 
     return { chat, config, adapter };
   }
@@ -734,7 +916,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.addReaction(platformThreadId, platformMessageId, resolved)
@@ -753,7 +935,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter: Adapter = chat.getAdapter(config.platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(config.platform));
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.removeReaction(platformThreadId, platformMessageId, resolved)
@@ -821,7 +1003,7 @@ export class OutboundGateway {
     agentId: string,
     platformThreadId: string,
     workspaceId: string | undefined,
-    fn: () => Promise<T>
+    fn: (resolvedWorkspaceId?: string) => Promise<T>
   ): Promise<T> {
     if (config.platform !== AgentPlatformEnum.SLACK) {
       return fn();
@@ -838,10 +1020,10 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
 
     if (!token || typeof adapter?.withBotToken !== 'function') {
-      return fn();
+      return fn(resolvedWorkspaceId);
     }
 
-    return adapter.withBotToken(token, fn);
+    return adapter.withBotToken(token, () => fn(resolvedWorkspaceId));
   }
 
   /**
@@ -876,7 +1058,7 @@ export class OutboundGateway {
     platform: AgentPlatformEnum,
     platformUserId: string
   ): Promise<Thread> {
-    const adapter: Adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(platformAdapterKey(platform));
 
     if (typeof adapter.openDM === 'function') {
       const threadId = await adapter.openDM(platformUserId);
@@ -898,13 +1080,9 @@ export class OutboundGateway {
   }
 
   /**
-   * Wraps outbound markdown replies with a muted "Powered by Novu" footnote for
-   * organizations that have not removed Novu branding (free plan). Pro and above
-   * can disable it via the existing `removeNovuBranding` org setting, resolved
-   * once per delivery by `AgentConfigResolver`.
-   *
-   * Only plain markdown replies are branded — cards/action messages are left
-   * untouched.
+   * Appends a "Powered by Novu" markdown footer for orgs that have not removed
+   * Novu branding. Pro and above can disable it via `removeNovuBranding`.
+   * Cards and action messages are left untouched.
    */
   private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
     if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
@@ -915,9 +1093,10 @@ export class OutboundGateway {
       return content;
     }
 
-    const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
-
-    return { ...content, card, markdown: undefined };
+    return {
+      ...content,
+      markdown: appendPoweredByWatermark(content.markdown, branding.agentIdentifier, branding.platform),
+    };
   }
 
   /**
@@ -932,13 +1111,28 @@ export class OutboundGateway {
 
     if (deliveryContent.card) {
       return {
-        card: deliveryContent.card,
+        card:
+          branding.platform === AgentPlatformEnum.SLACK
+            ? splitOversizedSlackText(deliveryContent.card)
+            : deliveryContent.card,
+        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
+      } as AdapterPostableMessage;
+    }
+
+    const markdown = deliveryContent.markdown ?? '';
+
+    if (branding.platform === AgentPlatformEnum.SLACK && markdown.length > SLACK_MARKDOWN_TEXT_LIMIT) {
+      return {
+        card: splitOversizedSlackText({
+          type: 'card',
+          children: [{ type: 'text', content: markdown }],
+        }),
         ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
       } as AdapterPostableMessage;
     }
 
     return {
-      markdown: deliveryContent.markdown ?? '',
+      markdown,
       files: deliveryContent.files,
     } as AdapterPostableMessage;
   }
@@ -967,7 +1161,7 @@ export class OutboundGateway {
   private async buildThreadPostArg(
     msg: OutboundMessage,
     actionTokenBinding?: AgentActionTokenBinding
-  ): Promise<unknown> {
+  ): Promise<AdapterPostableMessage> {
     if (!msg.card || !actionTokenBinding) {
       return this.toThreadPostArg(msg);
     }
@@ -1022,11 +1216,11 @@ export class OutboundGateway {
     return '';
   }
 
-  private toThreadPostArg(msg: OutboundMessage): unknown {
+  private toThreadPostArg(msg: OutboundMessage): AdapterPostableMessage {
     if (msg.markdown && !msg.card) {
       return msg.markdown;
     }
 
-    return msg.card ?? msg;
+    return msg.card ?? (msg as AdapterPostableMessage);
   }
 }

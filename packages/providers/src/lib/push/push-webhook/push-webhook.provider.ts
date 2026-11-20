@@ -5,15 +5,15 @@ import {
   normalizeOutboundHttpUrl,
   SsrfBlockedError,
 } from '@novu/shared/utils/ssrf-url-validation';
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import crypto from 'crypto';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
-export class PushWebhookPushProvider extends BaseProvider implements IPushProvider {
+export class PushWebhookPushProvider extends PushBaseProvider implements IPushProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = PushProviderIdEnum.PushWebhook;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   constructor(
     private config: {

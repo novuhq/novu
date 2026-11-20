@@ -34,6 +34,7 @@ type HtmlEditorProps = {
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   onManageSchemaClick?: (variableName: string) => void;
   skipContainerClick?: boolean;
+  readOnly?: boolean;
 };
 
 const gutterElementClassName =
@@ -59,6 +60,7 @@ export function HtmlEditor({
   isContextEnabled = false,
   digestStepName,
   skipContainerClick = false,
+  readOnly = false,
   className,
   getSchemaPropertyByKey = () => undefined,
   onCreateNewVariable = () => Promise.resolve(),
@@ -182,7 +184,8 @@ export function HtmlEditor({
         <TooltipTrigger
           ref={formatButtonRef}
           onClick={handleFormatClick}
-          className="absolute right-2 top-2 z-10"
+          disabled={readOnly}
+          className="absolute right-2 top-2 z-10 disabled:opacity-50"
           onBlur={(e) => {
             // don't trigger blur as it will result is save form unnecessary request
             e.stopPropagation();
@@ -222,6 +225,7 @@ export function HtmlEditor({
         skipContainerClick={skipContainerClick}
         onManageSchemaClick={onManageSchemaClick}
         onCreateNewVariable={onCreateNewVariable}
+        readOnly={readOnly}
       >
         {children}
       </VariableEditor>

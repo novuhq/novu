@@ -1,5 +1,7 @@
 import type {
+  AgentAccessRule,
   AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
   AgentRuntime,
   AgentSubscriberAccessEnum,
   AgentVisibility,
@@ -15,10 +17,16 @@ export interface AgentBehavior {
   /**
    * Whether the agent accepts inbound messages from senders not yet linked to a
    * subscriber, across all channels. `open` auto-provisions unknown senders;
-   * `restricted` rejects them. Managed create defaults to open; self-hosted
-   * create defaults to restricted. Always persisted (backfilled for legacy rows).
+   * `restricted` rejects them; `rule` requires a known subscriber and a matching
+   * `accessRule`. Managed create defaults to open; self-hosted create defaults
+   * to restricted. Always persisted (backfilled for legacy rows).
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  accessRule?: AgentAccessRule;
+  /**
+   * Shared-room reply policy. Absent on legacy rows is treated as `auto_reply`.
+   */
+  replyPolicy?: AgentReplyPolicyEnum;
 }
 
 export interface ManagedRuntimeConfig {
@@ -32,6 +40,159 @@ export interface ManagedRuntimeConfig {
   managedDefinitionVersion?: number;
 }
 
+/** The agent's own picture, uploaded by its operator and kept in file storage. */
+export interface AgentPicture {
+  storageKey: string;
+  contentType: string;
+  /** Changes with the file, so a new picture gets a new address and an old one can be cached for good. */
+  version: string;
+}
+
+/** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
+export type AgentHostVia = 'cli' | 'mcp';
+
+export const AGENT_HOST_VIAS: readonly AgentHostVia[] = ['cli', 'mcp'];
+
+/**
+ * The hosts Agent Inbox tells apart, by the id the CLI, the MCP server and the dashboard share. `general` is
+ * any other host, and any host that didn't say which one it is.
+ */
+export const AGENT_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+  'general',
+  'claude',
+  'chatgpt',
+  'grok',
+] as const;
+
+export type AgentHostId = (typeof AGENT_HOST_IDS)[number];
+
+/**
+ * The hosts `agentinbox listen` can start on a computer. Chat apps and `general` run nowhere a program on the
+ * operator's computer can start them, so they are never started there.
+ */
+export const LISTEN_HOST_IDS = [
+  'claude-code',
+  'codex',
+  'opencode',
+  'cursor',
+  'hermes',
+  'openclaw',
+] as const satisfies readonly AgentHostId[];
+
+export type ListenHostId = (typeof LISTEN_HOST_IDS)[number];
+
+/**
+ * Where an Agent Inbox agent is listening: the one computer whose `agentinbox listen` is ready to start a host for it.
+ * It is a lease that program renews; once `expiresAt` has passed it counts as no lease at all. The holder is the
+ * computer and the host together: the same computer starting another host is another holder. Every time is an ISO
+ * timestamp.
+ */
+export interface AgentListening {
+  /** The computer holding the lease: a random id its CLI made, of `[A-Za-z0-9_-]`. */
+  computerId: string;
+  /** What the operator calls that computer, e.g. "MacBook". */
+  computerName: string;
+  /** The host it starts there. */
+  host: ListenHostId;
+  /** The folder the host runs in, as the operator reads it, e.g. "~/projects/app". */
+  project?: string;
+  /** When this computer took it. Renewing keeps it; taking it again after it lapsed, or over, starts it anew. */
+  since: string;
+  renewedAt: string;
+  expiresAt: string;
+}
+
+/** When a host, or the hosts that came in one way, connected and last checked. Every time is an ISO timestamp. */
+export interface AgentHostEntry {
+  /** The first time it came in: it used a one-time code, or checked the inbox. */
+  connectedAt?: string;
+  /** The last time it checked the inbox. */
+  lastCheckedAt?: string;
+}
+
+/** One host, on every computer it runs on, whichever way it came in. */
+export interface AgentNamedHostEntry extends AgentHostEntry {
+  /** The way it came in last: when it connected, or when it last checked the inbox. */
+  via?: AgentHostVia;
+}
+
+/** The newest unread conversation a host found the first time any host checked the inbox. */
+export interface AgentHostWaitingMessage {
+  conversationId: string;
+  /** Who wrote in it, as the inbox lists them. */
+  from: string;
+  subject: string;
+  /** When its newest message arrived. */
+  at: string;
+  /** When a host first saw it: in that first check. */
+  seenAt: string;
+}
+
+/** The bodies an Agent Inbox agent's mascot can have: the shape it takes. `orb` is the original, round one. */
+export const AGENT_MASCOT_BODIES = ['orb', 'pebble', 'drop', 'bean', 'peek', 'mochi'] as const;
+
+export type AgentMascotBody = (typeof AGENT_MASCOT_BODIES)[number];
+
+/** The colours of an Agent Inbox agent's mascot and card art. `ember` is the original orange. */
+export const AGENT_LOOK_COLORS = ['ember', 'marigold', 'coral', 'paprika', 'peach', 'bone'] as const;
+
+export type AgentLookColor = (typeof AGENT_LOOK_COLORS)[number];
+
+/** The kinds of dotted drawing across the top of an agent card. */
+export const AGENT_CARD_ART_KINDS = ['rays', 'waves', 'arcs', 'sparkles'] as const;
+
+export type AgentCardArtKind = (typeof AGENT_CARD_ART_KINDS)[number];
+
+/** The largest seed a card's art can have: any whole number from 0 up to it draws one drawing of its kind. */
+export const AGENT_CARD_ART_MAX_SEED = 2_147_483_647;
+
+/**
+ * The look its operator picked for an Agent Inbox agent while setting it up: its mascot's shape and colour, and
+ * the art across the top of its card, which its kind and seed draw the same way wherever the card is shown.
+ */
+export interface AgentLook {
+  shape: AgentMascotBody;
+  color: AgentLookColor;
+  art: { kind: AgentCardArtKind; seed: number };
+}
+
+/** The first time a host showed the agent's card (`agent_card` over MCP, `agentinbox card` in the CLI). */
+export interface AgentCardShown {
+  /** ISO timestamp. */
+  at: string;
+  /** The way the host that showed it came in. Missing when it didn't say. */
+  via?: AgentHostVia;
+  /** The host that showed it. Missing when it didn't say. */
+  host?: AgentHostId;
+}
+
+/** Who can write to an Agent Inbox agent: anyone, or only its contacts. */
+export const AGENT_INBOX_REACHES = ['anyone', 'contacts'] as const;
+
+export type AgentInboxReach = (typeof AGENT_INBOX_REACHES)[number];
+
+/** Which hosts act as an Agent Inbox agent, and when they last checked its inbox. */
+export interface AgentHosts {
+  /** Each host by its id. Two computers with the same host, or one host that came in both ways, share an entry. */
+  byId?: Partial<Record<AgentHostId, AgentNamedHostEntry>>;
+  /**
+   * The hosts that came in through the CLI, and through MCP, from before hosts were told apart: one entry for
+   * each way in, whichever host it was. Only read now, for agents whose hosts haven't come in again since.
+   */
+  cli?: AgentHostEntry;
+  mcp?: AgentHostEntry;
+  /** The first time any host checked the inbox. */
+  firstCheckedAt?: string;
+  /** Missing when nothing unread was waiting at the first check. */
+  waitingMessage?: AgentHostWaitingMessage;
+}
+
 export class AgentEntity {
   _id: string;
 
@@ -40,6 +201,36 @@ export class AgentEntity {
   identifier: string;
 
   description?: string;
+
+  /** Set for Human relay agents only (`human agent update --picture`). */
+  picture?: AgentPicture;
+
+  /**
+   * Set for Human relay agents only, when their operator picked a look while setting them up on the dashboard.
+   * Missing reads as the original look: an orb in ember, with rays.
+   */
+  look?: AgentLook;
+
+  /** Set for Human relay agents only, the first time a host showed the agent's card. */
+  cardShown?: AgentCardShown;
+
+  /** Set for Human relay agents only, once a host has connected or checked the inbox. */
+  hosts?: AgentHosts;
+
+  /**
+   * Set for Human relay agents only, once a computer has kept the agent listening (`agentinbox listen`). It stays
+   * after it lapses, and reads as no lease then.
+   */
+  listening?: AgentListening;
+
+  /** Set for Human relay agents only, once the operator chose on the dashboard. Missing reads as `anyone`. */
+  reach?: AgentInboxReach;
+
+  /**
+   * Set for Human relay agents only, while the operator has paused them on the dashboard (ISO timestamp).
+   * Messages keep arriving, but hosts can't read the inbox or send until the operator resumes the agent.
+   */
+  pausedAt?: string;
 
   active: boolean;
 

@@ -10,6 +10,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentRepository,
   AgentToolTrustRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -18,6 +19,8 @@ import {
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanContactRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   MessageRepository,
@@ -28,12 +31,16 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
+import { HumanOperatorService } from '../human/services/human-operator.service';
+import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
@@ -55,25 +62,46 @@ import { InboundConnectionContextResolver } from './conversation-runtime/ingress
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { SlackAppUninstallIngress } from './conversation-runtime/ingress/slack-app-uninstall.ingress';
+import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { AgentTurnAbortStore } from './conversation-runtime/runtime/agent-turn-abort.store';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
+import { BridgeLiveReplies } from './conversation-runtime/runtime/bridge-live-replies.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
+import { AgentInboxAddressService } from './email/novu-email/agent-inbox-address.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { SyncAgentEmailSenderName } from './email/sync-agent-email-sender-name.service';
+import { BindWhatsAppNumber } from './human-relay/bind-whatsapp-number.service';
+import { ContactHandleService } from './human-relay/contact-handle.service';
+import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanEmailActionsController } from './human-relay/human-email-actions.controller';
+import { HumanInteractionActivityRecorder } from './human-relay/human-interaction-activity.recorder';
+import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
+import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
+import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
+import { HumanRelayEmailService } from './human-relay/human-relay-email.service';
+import { WhatsAppBindCodeService } from './human-relay/whatsapp-bind-code.service';
+import { WhatsAppBindInbound } from './human-relay/whatsapp-bind-inbound.service';
+import { WhatsAppFirstMessageStatus } from './human-relay/whatsapp-first-message-status.service';
+import { WhatsAppHeldRelease } from './human-relay/whatsapp-held-release.service';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer } from './managed-runtime/live-reply-streamer.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { EnsureNovuHumanSkill } from './managed-runtime/novu-human/ensure-novu-human-skill.service';
 import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
@@ -92,6 +120,7 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatAcceptIdempotencyService } from './web-chat/web-chat-accept-idempotency.service';
 import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
 import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
@@ -121,6 +150,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ManagedRuntimeController,
     AgentEventsIngestController,
     AgentEmailActionsController,
+    HumanEmailActionsController,
     AgentsMcpOAuthController,
     WebChatController,
   ],
@@ -138,6 +168,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ConversationActivityRepository,
     IntegrationRepository,
     McpConnectionRepository,
+    AgentRepository,
+    HumanContactRepository,
     MessageRepository,
     SubscriberRepository,
     AgentAttachmentStorage,
@@ -153,15 +185,37 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
+    PhotonDeviceAuthBindingService,
     AgentInboundHandler,
+    WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
+    AgentTurnAbortStore,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
+    BridgeLiveReplies,
     ManagedRuntime,
+    HumanRelayRuntime,
+    HumanRelayEmailService,
+    HumanOperatorService,
+    AgentInboxFeaturesService,
+    ContactHandleService,
+    WhatsAppBindCodeService,
+    BindWhatsAppNumber,
+    WhatsAppBindInbound,
+    WhatsAppHeldRelease,
+    WhatsAppFirstMessageStatus,
+    HumanConversationInboundInterceptor,
+    HumanInteractionInboundService,
+    HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
+    CreateConversationInteraction,
+    HumanInteractionActivityRecorder,
+    HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
+    LiveReplyStreamer,
     AgentEventSink,
     McpConnectionErrorHandler,
     ManagedAgentService,
@@ -170,12 +224,15 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     McpConnectRedirectService,
     AgentMcpDefinitionService,
     AgentRuntimeDefinitionService,
+    EnsureNovuHumanSkill,
     AgentMcpSessionService,
     NovuEmailCleanupService,
+    AgentInboxAddressService,
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
     WebChatPublicationService,
     WebChatSessionVerifier,
+    WebChatAcceptIdempotencyService,
     WebChatResumeAuthorizationService,
     WebChatEventFactory,
     WebChatPlatformDeliveryService,
@@ -185,6 +242,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,
+    SlackAppUninstallIngress,
     InboundConnectionContextResolver,
     FileMaterializer,
     AgentEmailSender,
@@ -205,8 +263,17 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     ChatInstanceRegistry,
     InboundDispatcher,
     OutboundGateway,
+    HumanRelayEmailService,
     ConfirmLinkedAuthCards,
     ConversationActivityLedger,
+    HumanInteractionSettlementService,
+    SyncAgentEmailSenderName,
+    HumanInteractionActivityRecorder,
+    AgentInboxAddressService,
+    NovuEmailProvisioningService,
+    AgentConversationService,
+    CreateConversationInteraction,
+    WhatsAppBindCodeService,
   ],
 })
 export class AgentsModule {}

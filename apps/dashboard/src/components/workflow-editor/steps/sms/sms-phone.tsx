@@ -1,24 +1,20 @@
 import { motion } from 'motion/react';
+import { cn } from '@/utils/ui';
 
-const SmsChatBubble = ({ children }: { children: React.ReactNode }) => (
+/** Fits the visible phone screen under the header. Longer messages scroll inside the bubble. */
+const messageClassName = 'max-h-24 min-h-4 overflow-y-auto whitespace-pre-wrap wrap-break-word text-xs';
+
+const SmsBubble = ({ children, error = false }: { children: React.ReactNode; error?: boolean }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3, ease: 'easeOut' }}
-    className="relative my-1 inline-block max-w-[90%] rounded-2xl bg-[#e9ecef] px-4 py-2 text-sm text-[#2b2b33] before:absolute before:bottom-0 before:left-[-7px] before:h-5 before:w-5 before:rounded-br-[15px] before:bg-[#e9ecef] before:content-[''] after:absolute after:bottom-0 after:left-[-10px] after:h-5 after:w-[10px] after:rounded-br-[10px] after:bg-white after:content-['']"
+    className={cn(
+      "relative my-1 inline-block max-w-[90%] rounded-2xl px-4 py-2 text-sm before:absolute before:bottom-0 before:left-[-7px] before:h-5 before:w-5 before:rounded-br-[15px] before:content-[''] after:absolute after:bottom-0 after:left-[-10px] after:h-5 after:w-[10px] after:rounded-br-[10px] after:bg-white after:content-['']",
+      error ? 'bg-[#FEE4E2] text-[#D92D20] before:bg-[#FEE4E2]' : 'bg-[#e9ecef] text-[#2b2b33] before:bg-[#e9ecef]'
+    )}
   >
-    <div className="line-clamp-4 min-h-4 overflow-hidden whitespace-pre-wrap wrap-break-word text-xs">{children}</div>
-  </motion.div>
-);
-
-const ErrorChatBubble = ({ children }: { children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3, ease: 'easeOut' }}
-    className="relative my-1 inline-block max-w-[90%] rounded-2xl bg-[#FEE4E2] px-4 py-2 text-sm text-[#D92D20] before:absolute before:bottom-0 before:left-[-7px] before:h-5 before:w-5 before:rounded-br-[15px] before:bg-[#FEE4E2] before:content-[''] after:absolute after:bottom-0 after:left-[-10px] after:h-5 after:w-[10px] after:rounded-br-[10px] after:bg-white after:content-['']"
-  >
-    <div className="line-clamp-4 overflow-hidden whitespace-pre-wrap wrap-break-word text-xs">{children}</div>
+    <div className={messageClassName}>{children}</div>
   </motion.div>
 );
 
@@ -48,13 +44,7 @@ export const SmsPhone = ({
 }) => (
   <div className="shadow-xs relative h-60 w-full max-w-72 overflow-hidden">
     <div className="absolute left-[25px] right-[15px] top-[110px]">
-      {isLoading ? (
-        <TypingIndicator />
-      ) : error ? (
-        <ErrorChatBubble>{smsBody}</ErrorChatBubble>
-      ) : (
-        <SmsChatBubble>{smsBody}</SmsChatBubble>
-      )}
+      {isLoading ? <TypingIndicator /> : <SmsBubble error={error}>{smsBody}</SmsBubble>}
     </div>
     <img src="/images/phones/iphone-sms.svg" alt="SMS Phone" />
   </div>

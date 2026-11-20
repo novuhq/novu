@@ -1,11 +1,11 @@
 ---
 title: 'Schedule'
-description: "Learn how subscribers can use the Schedule feature in the Inbox component to control when they receive notifications from email, SMS and push channels."
+description: "Learn how Inbox schedules skip email, SMS, push, and chat outside set hours, and how a Delay step can hold them until the next window."
 ---
 
-The **Schedule** feature in the [`<Inbox />`](/platform/inbox) lets subscribers control when they want to receive notifications from email, SMS, and push channels.
+The **Schedule** feature in the [`<Inbox />`](/platform/inbox) lets subscribers control when they want to receive notifications on email, SMS, push, and chat.
 
-By defining their hours of availability from the [`<Inbox />`](/platform/inbox) UI, subscribers can automatically skip notifications outside of their chosen time range.
+By defining their hours of availability from the [`<Inbox />`](/platform/inbox) UI, subscribers skip those notifications outside the chosen time range. To hold a notification until the next open window instead of skipping it, use **Extend to subscriber’s schedule** on a Delay or Digest step. See [Notifications outside the schedule](#notifications-outside-the-schedule).
 
 <Note>
   If you don't need the Schedule feature, you can hide it from the Inbox component UI using the appearance prop. To learn more, refer to the documentation on [styling the Inbox UI elements](/platform/inbox/configuration/styling#style-the-inbox-ui-elements).
@@ -14,7 +14,7 @@ By defining their hours of availability from the [`<Inbox />`](/platform/inbox) 
 ![Schedule](/images/inbox/schedule.png)
 
 <Note>
-  In-app notifications and notifications from critical workflows are never paused and will always be delivered, regardless of schedule settings.
+  When the workflow reaches an in-app step, that notification is delivered even outside the schedule. Critical workflows are delivered on every channel, including outside the schedule. A Delay or Digest step placed before an in-app step still holds that in-app step until the delay or digest finishes.
 </Note>
 
 ## How scheduling works
@@ -24,15 +24,47 @@ The schedule functionality is based on a clear set of rules controlled by the su
 ### Daily availability
 For any day that the main schedule is active, there will be two possible states:
 
-- **Day is enabled**: If a day is toggled on, then the subscriber must set a time range. Notifications will only be delivered within these hours.
+- **Day is enabled**: If a day is toggled on, then the subscriber must set a time range. Email, SMS, push, and chat send inside those hours. See [Notifications outside the schedule](#notifications-outside-the-schedule) for how to hold a notification that misses the window.
 
-- **Day is disabled**: If a day is toggled off, then the subscriber will not receive any non-critical notifications for that entire day.
+- **Day is disabled**: If a day is toggled off, email, SMS, push, and chat are skipped for that entire day. With **Extend to subscriber’s schedule** on, a Delay or Digest step can hold them until the next enabled day.
 
 ### Automatic timezone handling
 
 The schedule operates in the subscriber's local timezone, detected automatically from their system settings. There is no need for manual configuration.
 
 For example, if a subscriber in Warsaw sets their schedule from 9:00 AM to 5:00 PM, they will receive notifications during those hours in Central European Time (CET).
+
+## Notifications outside the schedule
+
+With the schedule enabled, Novu checks it when a channel step is ready to send.
+
+**Email, SMS, push, and chat** that are ready outside an open window are skipped. Novu does not store them and send them when the window opens. A Friday 6:00 PM email, with Monday–Friday 9:00 AM–5:00 PM enabled, is not delivered on Monday unless a workflow step holds it.
+
+**In-app** notifications are still delivered when the workflow reaches the in-app step, including outside the window. **Critical** workflows are delivered on every channel, including outside the window.
+
+To hold email, SMS, push, or chat until the next window, add a [Delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#extend-to-subscribers-schedule) or [Digest](/platform/workflow/add-and-configure-steps/configure-action-steps/digest#extend-to-subscribers-schedule) step before that channel and turn on **Extend to subscriber’s schedule**. Steps after that Delay or Digest step, including in-app, wait with it. In-app is only exempt from the schedule once the workflow reaches the in-app step.
+
+The schedule is weekly hours. Turn a day off to skip it, including weekends. There is no holiday calendar. If Monday stays on, Monday is a delivery day even when it is a public holiday.
+
+If every day is turned off, there is no window to wait for, and email, SMS, push, and chat are skipped.
+
+### Examples
+
+Schedule: Monday–Friday, 9:00 AM–5:00 PM. A workflow has a 1-hour Delay step, then email.
+
+| Delay finishes | Toggle off | Toggle on |
+| --- | --- | --- |
+| Tuesday 2:00 PM | Email sends at 2:00 PM. | Email sends at 2:00 PM. |
+| Friday 6:00 PM | Email is skipped. | Novu holds the workflow and sends the email Monday at 9:00 AM. |
+| Saturday 10:00 AM | Email is skipped. | Novu holds the workflow and sends the email Monday at 9:00 AM. |
+
+Schedule: Monday only, 9:00 AM–10:00 AM. The delay finishes Monday at 10:01 AM.
+
+With the toggle on, Novu holds the workflow until the next Monday at 9:00 AM, then sends. With the toggle off, the email is skipped at 10:01 AM.
+
+Novu waits once, until the start of the next open window. Friday evening goes directly to Monday morning. That wait is separate from the [delay duration limit on your plan](/platform/developer/limits), so a 1-hour delay that ends Friday evening can still send Monday morning on the Free plan.
+
+Changing the schedule while a step is already waiting does not move that step. Novu checks the updated hours when the chosen time arrives. See [If the subscriber changes the schedule while waiting](/platform/workflow/add-and-configure-steps/configure-action-steps/delay#if-the-subscriber-changes-the-schedule-while-waiting).
 
 ## Manage Schedule
 

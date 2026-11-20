@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
   CachedResponse,
@@ -17,7 +16,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { MessagesStatusEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { MessagesStatusEnum, sanitizeMessageCta, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 import { MessageResponseDto } from '../../dtos/message-response.dto';
 import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
@@ -97,17 +96,16 @@ export class MarkMessageAsByMark {
 
   private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {
     this.updateSocketCount(subscriber, markAs);
-    const analyticMessage =
-      command.__source === 'notification_center'
-        ? `Mark as ${markAs} - [Notification Center]`
-        : `Mark as ${markAs} - [API]`;
 
-    for (const message of messages) {
-      this.analyticsService.mixpanelTrack(analyticMessage, '', {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
+    // "[Notification Center]" analytics event removed; the "[API]" one is kept
+    if (command.__source !== 'notification_center') {
+      for (const message of messages) {
+        this.analyticsService.mixpanelTrack(`Mark as ${markAs} - [API]`, '', {
+          _subscriber: message._subscriberId,
+          _organization: command.organizationId,
+          _template: message._templateId,
+        });
+      }
     }
   }
 
@@ -118,7 +116,7 @@ export class MarkMessageAsByMark {
       return;
     }
 
-    this.webSocketsQueueService.add({
+    void this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
         event: eventMessage,
@@ -175,7 +173,7 @@ function mapMessageEntityToResponseDto(entity: MessageEntity): MessageResponseDt
   responseDto.providerId = entity.providerId;
   responseDto.deviceTokens = entity.deviceTokens;
   responseDto.title = entity.title;
-  responseDto.cta = entity.cta; // Assuming cta can be directly assigned
+  responseDto.cta = sanitizeMessageCta(entity.cta);
   responseDto._feedId = entity._feedId ?? null; // Handle optional _feedId
   responseDto.status = entity.status;
   responseDto.errorId = entity.errorId;

@@ -1,0 +1,6 @@
+language js(typescript)
+
+`function $name($params) { $body }` where {
+  $params <: contains `: unknown`,
+  register_diagnostic(span=$params, severity="error", message="This parameter leaves input unparsed. Accept a named domain type; parse unknown input at its I/O boundary.")
+}

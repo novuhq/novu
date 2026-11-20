@@ -1,7 +1,7 @@
 import type { CloudRegionEnum } from '../dev/enums';
 import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'skip';
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'web-chat' | 'skip';
 
 export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'slack',
@@ -10,8 +10,11 @@ export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'telegram',
   'teams',
   'sendblue',
+  'web-chat',
   'skip',
 ];
+
+export type WebChatSetupMode = 'scaffold' | 'embed' | 'skip';
 
 export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
@@ -60,6 +63,31 @@ export type BridgeRequirement = {
   id: BridgeRequirementId;
   status: BridgeReqStatus;
   detail: string;
+};
+
+export type WebChatConnectOutcome = {
+  mode: WebChatSetupMode;
+  projectDir?: string;
+  scaffolded?: boolean;
+  mergedIntoBridge?: boolean;
+  /** Browser path where Web Chat is served (for example `/` or `/web-chat`). */
+  chatPath?: string;
+  /** Project-local embed prompt file (embed path). */
+  embedPromptFile?: string;
+  /** Env files updated during the embed path. */
+  envPaths?: string[];
+  /** Project already has handler + chat UI wired — skip setup prompt by default. */
+  alreadyWired?: boolean;
+  /** Subscriber id written without a signed-in user; the success summary warns to replace it. */
+  demoSubscriberId?: string;
+  /** API host isn't recognised, so a socket URL couldn't be inferred — caller should warn. */
+  unknownSocketHost?: boolean;
+};
+
+export type ConnectWebChatHandoff = {
+  dashboardUrl: string;
+  embedPrompt: string;
+  embedPromptFile?: string;
 };
 
 export type ChatSdkConnectOutcome = {
@@ -120,6 +148,8 @@ export interface ConnectCommandOptions {
   runtime?: AgentConnectMode;
   /** Use an existing agent-runtime integration instead of creating one. */
   agentIntegrationId?: string;
+  /** Use an existing agent by identifier, skipping the agent picker. */
+  agentIdentifier?: string;
   /** Anthropic API key for `--runtime claude` non-interactive runs. */
   anthropicApiKey?: string;
   /** AWS Claude API key for `--runtime claude-aws` non-interactive runs. */
@@ -176,6 +206,8 @@ export interface ConnectCommandOptions {
   llmAuth?: LlmAuthCliChoice;
   /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
   openaiApiKey?: string;
+  /** Web Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted). */
+  webChatSetup?: WebChatSetupMode;
 }
 
 export interface AgentSummary {

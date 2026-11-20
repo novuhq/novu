@@ -3,8 +3,9 @@ import { langs, loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { createTheme } from '@uiw/codemirror-themes';
 import CodeMirror from '@uiw/react-codemirror';
 import { Eye, EyeOff } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/ui';
+import { applySecretMask, type SecretMask } from './code-block.utils';
 import { CopyToClipboard } from './copy-to-clipboard';
 
 loadLanguage('tsx');
@@ -91,12 +92,8 @@ export interface CodeBlockProps {
   theme?: 'dark' | 'light';
   title?: string;
   className?: string;
-  secretMask?: {
-    line: number;
-    maskStart?: number;
-    maskEnd?: number;
-  }[];
-  actionButtons?: React.ReactNode;
+  secretMask?: SecretMask[];
+  actionButtons?: ReactNode;
 }
 
 /**
@@ -136,6 +133,80 @@ export interface CodeBlockProps {
  *   title="Configuration"
  * />
  */
+function getLanguageExtensions(language: Language) {
+  const languageLoader = languageMap[language];
+
+  if (typeof languageLoader !== 'function') {
+    return [];
+  }
+
+  const languageExtension = languageLoader();
+
+  return languageExtension ? [languageExtension] : [];
+}
+
+function toolbarButtonClassName(theme: 'dark' | 'light') {
+  return cn(
+    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
+    theme === 'light'
+      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+  );
+}
+
+function SecretToggleButton({
+  theme,
+  showSecrets,
+  onToggle,
+}: {
+  theme: 'dark' | 'light';
+  showSecrets: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={toolbarButtonClassName(theme)}
+      title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
+    >
+      {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  );
+}
+
+function CodeBlockToolbar({
+  theme,
+  hasSecrets,
+  showSecrets,
+  onToggleSecrets,
+  actionButtons,
+  code,
+  withCopyClassName,
+}: {
+  theme: 'dark' | 'light';
+  hasSecrets: boolean;
+  showSecrets: boolean;
+  onToggleSecrets: () => void;
+  actionButtons?: ReactNode;
+  code: string;
+  withCopyClassName?: boolean;
+}) {
+  return (
+    <>
+      {hasSecrets && <SecretToggleButton theme={theme} showSecrets={showSecrets} onToggle={onToggleSecrets} />}
+      {actionButtons ?? (
+        <CopyToClipboard
+          content={code}
+          theme={theme}
+          className={withCopyClassName ? toolbarButtonClassName(theme) : undefined}
+          title="Copy code"
+        />
+      )}
+    </>
+  );
+}
+
 export function CodeBlock({
   code,
   language = 'typescript',
@@ -148,31 +219,11 @@ export function CodeBlock({
   const [showSecrets, setShowSecrets] = useState(false);
   const [showGradient, setShowGradient] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sourceCode = code ?? '';
 
-  const hasSecrets = secretMask.length > 0;
+  const hasSecrets = (secretMask?.length ?? 0) > 0;
 
-  const maskedCode = useMemo(() => {
-    if (!hasSecrets || showSecrets) return code;
-
-    const lines = code.split('\n');
-
-    for (const mask of secretMask) {
-      const { line, maskStart, maskEnd } = mask;
-      if (line > lines.length) continue;
-
-      const lineIndex = line - 1;
-      const lineContent = lines[lineIndex];
-
-      if (maskStart !== undefined && maskEnd !== undefined) {
-        lines[lineIndex] =
-          lineContent.substring(0, maskStart) + '•'.repeat(maskEnd - maskStart) + lineContent.substring(maskEnd);
-      } else {
-        lines[lineIndex] = '•'.repeat(lineContent.length);
-      }
-    }
-
-    return lines.join('\n');
-  }, [code, hasSecrets, showSecrets, secretMask]);
+  const maskedCode = useMemo(() => applySecretMask(code, secretMask, showSecrets), [code, showSecrets, secretMask]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -217,6 +268,17 @@ export function CodeBlock({
   }, [maskedCode]);
 
   const showToolbar = hasSecrets || actionButtons === undefined;
+  const toolbar = (
+    <CodeBlockToolbar
+      theme={theme}
+      hasSecrets={hasSecrets}
+      showSecrets={showSecrets}
+      onToggleSecrets={() => setShowSecrets(!showSecrets)}
+      actionButtons={actionButtons}
+      code={sourceCode}
+      withCopyClassName={Boolean(title)}
+    />
+  );
 
   return (
     <div
@@ -234,38 +296,7 @@ export function CodeBlock({
           <span className={cn('text-xs font-medium', theme === 'light' ? 'text-neutral-700' : 'text-neutral-300')}>
             {title}
           </span>
-          {showToolbar && (
-            <div className="ml-auto flex items-center gap-1">
-              {hasSecrets && (
-                <button
-                  type="button"
-                  onClick={() => setShowSecrets(!showSecrets)}
-                  className={cn(
-                    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
-                    theme === 'light'
-                      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
-                  )}
-                  title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
-                >
-                  {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              )}
-              {actionButtons ?? (
-                <CopyToClipboard
-                  content={code}
-                  theme={theme}
-                  className={cn(
-                    'rounded-md p-1.5 transition-all duration-200 active:scale-95',
-                    theme === 'light'
-                      ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
-                  )}
-                  title="Copy code"
-                />
-              )}
-            </div>
-          )}
+          {showToolbar && <div className="ml-auto flex items-center gap-1">{toolbar}</div>}
         </div>
       )}
 
@@ -280,22 +311,7 @@ export function CodeBlock({
               theme === 'light' ? 'border-neutral-200' : 'border-neutral-800/50'
             )}
           >
-            {hasSecrets && (
-              <button
-                type="button"
-                onClick={() => setShowSecrets(!showSecrets)}
-                className={cn(
-                  'rounded-md p-1.5 transition-all duration-200 active:scale-95',
-                  theme === 'light'
-                    ? 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
-                )}
-                title={showSecrets ? 'Hide secrets' : 'Reveal secrets'}
-              >
-                {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            )}
-            {actionButtons ?? <CopyToClipboard content={code} theme={theme} title="Copy code" />}
+            {toolbar}
           </div>
         </div>
       )}
@@ -321,7 +337,7 @@ export function CodeBlock({
           <CodeMirror
             value={maskedCode}
             theme={theme === 'dark' ? darkTheme : lightTheme}
-            extensions={[languageMap[language]()]}
+            extensions={getLanguageExtensions(language)}
             basicSetup={{
               lineNumbers: true,
               highlightActiveLineGutter: false,

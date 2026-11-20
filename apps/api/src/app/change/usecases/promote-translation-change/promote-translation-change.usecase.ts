@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
@@ -10,7 +11,7 @@ import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 export class PromoteTranslationChange {
   constructor(
     private moduleRef: ModuleRef,
-    @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
+    @Inject(forwardRef(() => ApplyChange)) private applyChange: WrapperType<ApplyChange>,
     private changeRepository: ChangeRepository,
     private logger: PinoLogger
   ) {

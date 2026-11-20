@@ -21,6 +21,3 @@ libs/internal-sdk/
 pnpm-lock.yaml
 **/dist/
 **/*.min.js
-
-# Generator templates — not production code
-libs/automation/

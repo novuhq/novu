@@ -1,0 +1,28 @@
+{
+  "name": "@novu/chat-adapter-web-chat",
+  "sourceRoot": "packages/chat-adapter-web-chat/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-web-chat run build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/chat-adapter-web-chat"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-web-chat run test",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": ["type:package"]
+}

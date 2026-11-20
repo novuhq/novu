@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   FeatureFlagsService,
   Instrument,
@@ -8,23 +8,17 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
-  CommunityOrganizationRepository,
   ExecutionDetailFeedItem,
+  NotificationFeedFilters,
   NotificationFeedItemEntity,
   NotificationRepository,
-  OrganizationEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  ApiServiceLevelEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsNumber,
-} from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
+import { NotificationFeedV2Reader } from '../../services/notification-feed-v2-reader.service';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
@@ -38,9 +32,10 @@ export class GetActivityFeed {
   constructor(
     private subscribersRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
-    private organizationRepository: CommunityOrganizationRepository,
+    private activityRetentionService: ActivityRetentionService,
     private traceLogRepository: TraceLogRepository,
     private featureFlagsService: FeatureFlagsService,
+    private notificationFeedV2Reader: NotificationFeedV2Reader,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -49,14 +44,12 @@ export class GetActivityFeed {
   async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     let subscriberIds: string[] | undefined;
 
-    const { after, before } = await this.validateRetentionLimitForTier(
-      command.organizationId,
-      command.after,
-      command.before
-    );
-
-    command.after = after;
-    command.before = before;
+    const retentionRange = await this.activityRetentionService.resolve({
+      organizationId: command.organizationId,
+      after: command.after,
+      before: command.before,
+    });
+    const validatedCommand = { ...command, ...retentionRange };
 
     if (command.search || command.emails?.length || command.subscriberIds?.length) {
       subscriberIds = await this.findSubscribers(command);
@@ -71,7 +64,10 @@ export class GetActivityFeed {
       };
     }
 
-    const notifications: NotificationFeedItemEntity[] = await this.getFeedNotifications(command, subscriberIds);
+    const notifications: NotificationFeedItemEntity[] = await this.getFeedNotifications(
+      validatedCommand,
+      subscriberIds
+    );
 
     const data = notifications.reduce<ActivityNotificationResponseDto[]>((memo, notification) => {
       // TODO: Identify why mongo returns an array of undefined or null values. Is it a data issue?
@@ -90,113 +86,6 @@ export class GetActivityFeed {
     };
   }
 
-  private async validateRetentionLimitForTier(organizationId: string, after?: string, before?: string) {
-    const organization = await this.organizationRepository.findById(organizationId);
-
-    if (!organization) {
-      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const maxRetentionMs = this.getMaxRetentionPeriodByOrganization(organization);
-
-    // For unlimited retention (self-hosted), skip retention validation
-    if (maxRetentionMs === Number.MAX_SAFE_INTEGER) {
-      const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : undefined;
-      const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : undefined;
-
-      // Basic validation for date range if both dates are provided
-      if (effectiveAfterDate && effectiveBeforeDate && effectiveAfterDate > effectiveBeforeDate) {
-        throw new HttpException(
-          'Invalid date range: start date (after) must be earlier than end date (before)',
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      return {
-        after: effectiveAfterDate?.toISOString(),
-        before: effectiveBeforeDate?.toISOString(),
-      };
-    }
-
-    const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
-
-    // If no after date is provided, default to the earliest allowed date
-    const effectiveAfterDate = after ? this.parseAndValidateDate(after, 'after') : earliestAllowedDate;
-    const effectiveBeforeDate = before ? this.parseAndValidateDate(before, 'before') : new Date();
-
-    this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
-
-    return {
-      after: effectiveAfterDate.toISOString(),
-      before: effectiveBeforeDate.toISOString(),
-    };
-  }
-
-  private parseAndValidateDate(dateString: string, parameterName: string): Date {
-    const parsedDate = new Date(dateString);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      throw new HttpException(
-        `Invalid date format for parameter '${parameterName}': ${dateString}. Please provide a valid ISO 8601 date string.`,
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    return parsedDate;
-  }
-
-  private validateDateRange(earliestAllowedDate: Date, afterDate: Date, beforeDate: Date) {
-    if (afterDate > beforeDate) {
-      throw new HttpException(
-        'Invalid date range: start date (after) must be earlier than end date (before)',
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    // add buffer to account for time delay in execution
-    const buffer = 1 * 60 * 60 * 1000; // 1 hour
-    const bufferedEarliestAllowedDate = new Date(earliestAllowedDate.getTime() - buffer);
-
-    if (
-      process.env.NODE_ENV !== 'local' &&
-      (afterDate < bufferedEarliestAllowedDate || beforeDate < bufferedEarliestAllowedDate)
-    ) {
-      throw new HttpException(
-        `Requested date range exceeds your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
-          `Please upgrade your plan to access older activities.`,
-        HttpStatus.PAYMENT_REQUIRED
-      );
-    }
-  }
-
-  /**
-   * Notifications are automatically deleted after a certain period of time
-   * by a background job.
-   *
-   * @see https://github.com/novuhq/cloud-infra/blob/main/scripts/expiredNotification.js#L93
-   */
-  private getMaxRetentionPeriodByOrganization(organization: OrganizationEntity) {
-    // 1. Self-hosted: effectively unlimited, use a large but safe finite window (100 years)
-    if (process.env.IS_SELF_HOSTED === 'true') {
-      return 100 * 365 * 24 * 60 * 60 * 1000; // ~100 years in ms, safe for Date math
-    }
-
-    const { apiServiceLevel, createdAt } = organization;
-
-    // 2. Special case: Free tier orgs created before Feb 28, 2025 get 30 days
-    if (apiServiceLevel === ApiServiceLevelEnum.FREE && new Date(createdAt) < new Date('2025-02-28')) {
-      return 30 * 24 * 60 * 60 * 1000;
-    }
-
-    // 3. Otherwise, use tier-based retention from feature flags
-    return getFeatureForTierAsNumber(
-      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-      apiServiceLevel ?? ApiServiceLevelEnum.FREE,
-      true
-    );
-  }
-
   @Instrument()
   private async findSubscribers(command: GetActivityFeedCommand): Promise<string[]> {
     return await this.subscribersRepository.searchSubscribers(
@@ -212,30 +101,52 @@ export class GetActivityFeed {
     command: GetActivityFeedCommand,
     subscriberIds?: string[]
   ): Promise<NotificationFeedItemEntity[]> {
+    const filters: NotificationFeedFilters = {
+      channels: command.channels,
+      templates: command.templates,
+      subscriberIds: subscriberIds || [],
+      transactionId: command.transactionId,
+      topicKey: command.topicKey,
+      subscriptionId: command.subscriptionId,
+      after: command.after,
+      before: command.before,
+      severity: command.severity,
+      contextKeys: command.contextKeys,
+    };
+    const skip = command.page * command.limit;
+    const flagContext = {
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      environment: { _id: command.environmentId },
+    };
+
+    const isStepRunsV2ReadEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED,
+      defaultValue: false,
+      ...flagContext,
+    });
+
+    if (isStepRunsV2ReadEnabled) {
+      return this.notificationFeedV2Reader.getFeed({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        filters,
+        skip,
+        limit: command.limit,
+      });
+    }
+
     const notifications = await this.notificationRepository.getFeed(
       command.environmentId,
-      {
-        channels: command.channels,
-        templates: command.templates,
-        subscriberIds: subscriberIds || [],
-        transactionId: command.transactionId,
-        topicKey: command.topicKey,
-        subscriptionId: command.subscriptionId,
-        after: command.after,
-        before: command.before,
-        severity: command.severity,
-        contextKeys: command.contextKeys,
-      },
-      command.page * command.limit,
+      filters,
+      skip,
       command.limit
     );
 
     const isClickHouseOnlyEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED,
       defaultValue: false,
-      organization: { _id: command.organizationId },
-      user: { _id: command.userId },
-      environment: { _id: command.environmentId },
+      ...flagContext,
     });
 
     if (isClickHouseOnlyEnabled) {

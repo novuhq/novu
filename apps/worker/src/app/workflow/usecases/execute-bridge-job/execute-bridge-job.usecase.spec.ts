@@ -21,7 +21,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const messageRepository = { findOne: sinon.stub().resolves(null) };
     const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
+      findByIdAndOrganization: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
     const controlValuesRepository = {
       findOne: sinon.stub().resolves(null),
@@ -86,6 +86,35 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     } as never;
   }
 
+  /** Unlike `buildCommand`, the step carries the `_id` and template type that the control-value lookup reads. */
+  function buildStepCommand(templateType: string) {
+    return {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: { stepId: 'step_1', uuid: 'step_1', _id: 'step_tpl_1', template: { type: templateType } },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+  }
+
   afterEach(() => {
     sinon.restore();
   });
@@ -131,7 +160,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
 
     expect(notificationTemplateRepository.findOne.called).to.equal(false);
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
-    expect(result).to.deep.equal({ outputs: {}, options: {} });
+    expect(result).to.deep.equal({ outputs: {}, options: {}, sourceControls: {} });
   });
 
   it('passes actor to the bridge event when provided in variables', async () => {
@@ -250,38 +279,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
 
-    const command = {
-      environmentId: 'env_1',
-      organizationId: 'org_1',
-      userId: 'user_1',
-      identifier: 'wf-identifier',
-      jobId: 'job_1',
-      job: {
-        _id: 'job_1',
-        _templateId: 'tpl_1',
-        _parentId: undefined,
-        _environmentId: 'env_1',
-        _organizationId: 'org_1',
-        step: {
-          stepId: 'step_1',
-          uuid: 'step_1',
-          _id: 'step_tpl_1',
-          template: { type: 'tool' },
-        },
-      },
-      variables: {
-        payload: {},
-        env: { name: 'Development', type: 'dev' },
-      },
-      workflow: {
-        _id: 'tpl_1',
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        triggers: [{ identifier: 'wf-identifier' }],
-      },
-    } as never;
-
-    await usecase.execute(command);
+    await usecase.execute(buildStepCommand('tool'));
 
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
@@ -309,45 +307,69 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
 
-    const command = {
-      environmentId: 'env_1',
-      organizationId: 'org_1',
-      userId: 'user_1',
-      identifier: 'wf-identifier',
-      jobId: 'job_1',
-      job: {
-        _id: 'job_1',
-        _templateId: 'tpl_1',
-        _parentId: undefined,
-        _environmentId: 'env_1',
-        _organizationId: 'org_1',
-        step: {
-          stepId: 'step_1',
-          uuid: 'step_1',
-          _id: 'step_tpl_1',
-          template: { type: 'chat' },
-        },
-      },
-      variables: {
-        payload: {},
-        env: { name: 'Development', type: 'dev' },
-      },
-      workflow: {
-        _id: 'tpl_1',
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        triggers: [{ identifier: 'wf-identifier' }],
-      },
-    } as never;
-
-    await usecase.execute(command);
+    await usecase.execute(buildStepCommand('chat'));
 
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.controls).to.deep.equal({
       body: 'default chat body',
+      editorType: 'text',
       providerOverrides: {
         [ChatProviderIdEnum.Slack]: {
           blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],
+        },
+      },
+    });
+  });
+
+  it('stitches STEP_INTEGRATION_CONTROLS docs into controls.integrationOverrides, apart from providerOverrides', async () => {
+    const { usecase, executeBridgeRequest, controlValuesRepository } = buildUsecase();
+
+    controlValuesRepository.findOne.resolves({
+      controls: { body: 'default alert' },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    controlValuesRepository.find.resolves([
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        controls: { alert_type: 'incident', priority: 'high' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'prod-alerts',
+        controls: { priority: 'critical' },
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier: 'staging-alerts',
+        controls: { priority: 'low' },
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+      },
+    ]);
+
+    await usecase.execute(buildStepCommand('tool'));
+
+    expect(controlValuesRepository.find.calledOnce).to.equal(true);
+    expect(controlValuesRepository.find.firstCall.args[0]).to.deep.equal({
+      _organizationId: 'org_1',
+      _environmentId: 'env_1',
+      _workflowId: 'tpl_1',
+      _stepId: 'step_tpl_1',
+      level: {
+        $in: [ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS, ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS],
+      },
+    });
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default alert',
+      providerOverrides: {
+        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
+      },
+      integrationOverrides: {
+        [ToolProviderIdEnum.Webhook]: {
+          'prod-alerts': { priority: 'critical' },
+          'staging-alerts': { priority: 'low' },
         },
       },
     });
@@ -399,6 +421,47 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
     expect(stepsMap['digest-step'].sentenceSummary).to.equal('');
+  });
+
+  it('walks the parent chain nearest first and stops at the root job without querying for its parent', async () => {
+    const { usecase, jobRepository } = buildUsecase();
+
+    const triggerJob = {
+      _id: 'trigger_job',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'trigger',
+      status: 'completed',
+      step: { stepId: 'trigger-step', uuid: 'trigger-step' },
+    };
+    const emailJob = {
+      _id: 'email_job',
+      _parentId: 'trigger_job',
+      _environmentId: 'env_1',
+      type: 'email',
+      status: 'completed',
+      step: { stepId: 'email-step', uuid: 'email-step' },
+    };
+    jobRepository.findOne.withArgs({ _id: 'email_job', _environmentId: 'env_1' }).resolves(emailJob);
+    jobRepository.findOne.withArgs({ _id: 'trigger_job', _environmentId: 'env_1' }).resolves(triggerJob);
+
+    const state = await (
+      usecase as never as { generateStateForJob: (job: unknown, envId: string) => Promise<{ stepId: string }[]> }
+    ).generateStateForJob({ _id: 'sms_job', _parentId: 'email_job' }, 'env_1');
+
+    expect(state.map((item) => item.stepId)).to.deep.equal(['email-step', 'trigger-step']);
+    expect(jobRepository.findOne.callCount).to.equal(2);
+  });
+
+  it('does not query for a parent when the job is the root of the chain', async () => {
+    const { usecase, jobRepository } = buildUsecase();
+
+    const state = await (
+      usecase as never as { generateStateForJob: (job: unknown, envId: string) => Promise<unknown[]> }
+    ).generateStateForJob({ _id: 'trigger_job', _parentId: undefined }, 'env_1');
+
+    expect(state).to.deep.equal([]);
+    expect(jobRepository.findOne.called).to.equal(false);
   });
 
   it('buildStepsMap keeps the nearest parent output when duplicate stepIds exist', async () => {

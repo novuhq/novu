@@ -3,9 +3,7 @@
     "dockerfile": "Dockerfile",
     "context": "."
   },
-  "repositoryDependencies": [
-    "github.com/novuhq/packages-enterprise"
-  ],
+  "repositoryDependencies": ["github.com/novuhq/packages-enterprise", "github.com/novuhq/thalamus"],
   "install": "bash .cursor/scripts/install.sh",
   "start": "bash .cursor/scripts/start.sh",
   "terminals": [

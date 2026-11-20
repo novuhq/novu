@@ -1,0 +1,31 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame" clip-path="url(#clip0_0_21)">
+<path id="Vector" d="M21 11H3" stroke="#FF5C30" stroke-width="2"/>
+<path id="Vector_2" d="M15 19V15H19" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_3" d="M21.01 21H21" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_4" d="M23.01 23H23" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_5" d="M21 17H23V19" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_6" d="M17 21V23H19" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_7" d="M9 2H15" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_8" d="M9 20H11" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_9" d="M3 14V8" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_10" d="M21 11V8" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_11" d="M7.01001 4H7.00001" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_12" d="M7.01001 18H7.00001" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_13" d="M17.01 4H17" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_14" d="M19.01 6H19" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_15" d="M5.01001 6H5.00001" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_16" d="M10.01 6H10" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_17" d="M14.01 6H14" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_18" d="M10.01 16H10" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_19" d="M12.01 4H12" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_20" d="M5.01001 16H5.00001" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_21" d="M8 8V14" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+<path id="Vector_22" d="M16 8V10" stroke="#FF5C30" stroke-width="2" stroke-linecap="square"/>
+</g>
+<defs>
+<clipPath id="clip0_0_21">
+<rect width="24" height="24" fill="white"/>
+</clipPath>
+</defs>
+</svg>

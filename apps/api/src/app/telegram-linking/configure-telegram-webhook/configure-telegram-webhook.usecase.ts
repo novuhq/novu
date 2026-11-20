@@ -11,7 +11,10 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
+import { humanRelayProfile } from '../../agents/human-relay/human-relay-identity';
+import { AgentInboxFeaturesService } from '../../human/services/agent-inbox-features.service';
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import { TelegramBotProfile } from '../telegram-bot-profile.service';
 import {
   buildAgentTelegramWebhookUrl,
   buildIntegrationTelegramWebhookUrl,
@@ -71,7 +74,9 @@ interface TelegramGetMeResponse {
 export class ConfigureTelegramWebhook {
   constructor(
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentLinkResolver: TelegramAgentLinkResolver
+    private readonly agentLinkResolver: TelegramAgentLinkResolver,
+    private readonly botProfile: TelegramBotProfile,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   async execute(command: ConfigureTelegramWebhookCommand): Promise<TelegramSetWebhookResult> {
@@ -118,19 +123,37 @@ export class ConfigureTelegramWebhook {
       ? [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES]
       : [...TELEGRAM_INTEGRATION_WEBHOOK_ALLOWED_UPDATES];
 
+    // Before the webhook moves, so Telegram refusing the bot here changes nothing.
+    const botUsername = await this.callGetMe(botToken);
+
     await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
 
-    const [, botUsername] = await Promise.all([
-      this.integrationRepository.update(
-        {
-          _id: integration._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { $set: { 'credentials.token': encryptSecret(secretToken) } }
-      ),
-      this.callGetMe(botToken),
-    ]);
+    // A Human agent speaks as itself, so the bot takes the name, description and picture its operator gave it.
+    // With no picture, a bot that has no photo yet takes the agent's mascot, in the look its mascots show.
+    if (agent?.agentRuntime === 'human_relay') {
+      const mascot = agent.agentPicture
+        ? null
+        : await this.agentInboxFeatures.mascotLookOf({
+            _organizationId: command.organizationId,
+            look: agent.agentLook,
+          });
+
+      await this.botProfile.apply(botToken, {
+        ...humanRelayProfile({ name: agent.agentName, description: agent.agentDescription }),
+        picture: agent.agentPicture ?? 'default-if-none',
+        mascot,
+      });
+    }
+
+    // Last, so a failure anywhere above can't leave a saved secret that belongs to a bot the caller then gives up on.
+    await this.integrationRepository.update(
+      {
+        _id: integration._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      { $set: { 'credentials.token': encryptSecret(secretToken) } }
+    );
 
     return { webhookUrl, configuredAt: new Date().toISOString(), botUsername };
   }

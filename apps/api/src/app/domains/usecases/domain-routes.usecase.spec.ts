@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { DirectionEnum, DomainRouteTypeEnum } from '@novu/shared';
+import { ApiAuthSchemeEnum, DirectionEnum, DomainRouteTypeEnum, UserSessionData } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 import { CreateDomainRoute } from './create-domain-route/create-domain-route.usecase';
@@ -37,10 +37,13 @@ const route = {
   updatedAt: new Date().toISOString(),
 };
 
-const user = {
+const user: UserSessionData = {
   _id: USER_ID,
   environmentId: ENVIRONMENT_ID,
   organizationId: ORGANIZATION_ID,
+  roles: [],
+  permissions: [],
+  scheme: ApiAuthSchemeEnum.BEARER,
 };
 
 describe('Domain route usecases', () => {

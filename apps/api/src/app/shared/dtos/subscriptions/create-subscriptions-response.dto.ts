@@ -26,6 +26,15 @@ export class TopicDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Additional custom data associated with the topic',
+    type: Object,
+    additionalProperties: true,
+    example: { category: 'product', priority: 1 },
+  })
+  @IsOptional()
+  data?: Record<string, unknown>;
 }
 
 export class SubscriberDto {
@@ -121,7 +130,6 @@ export class SubscriptionPreferenceDto {
   @ApiPropertyOptional({
     description:
       'Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)',
-    required: false,
     type: 'object',
     additionalProperties: true,
     example: { and: [{ '===': [{ var: 'payload.tier' }, 'premium'] }] },

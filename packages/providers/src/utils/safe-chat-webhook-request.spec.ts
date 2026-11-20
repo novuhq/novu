@@ -26,6 +26,7 @@ test('throws on non-2xx HTTP responses', async () => {
     statusMessage: 'Bad Request',
     headers: {},
     body: { error: 'invalid_payload' },
+    isJson: true,
   });
 
   await expect(

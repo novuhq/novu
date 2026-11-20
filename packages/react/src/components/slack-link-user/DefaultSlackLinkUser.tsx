@@ -1,6 +1,5 @@
 import { SlackLinkUserProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
+import { useMemo } from 'react';
 import { Mounter } from '../Mounter';
 
 export type DefaultSlackLinkUserProps = Pick<
@@ -28,28 +27,20 @@ export const DefaultSlackLinkUser = (props: DefaultSlackLinkUserProps) => {
     linkLabel,
     unlinkLabel,
   } = props;
-  const { novuUI } = useNovuUI();
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'SlackLinkUser',
-        props: {
-          integrationIdentifier,
-          connectionIdentifier,
-          context,
-          onLinkSuccess,
-          onLinkError,
-          onUnlinkSuccess,
-          onUnlinkError,
-          linkLabel,
-          unlinkLabel,
-        },
-        element,
-      });
-    },
+  const mountProps = useMemo(
+    () => ({
+      integrationIdentifier,
+      connectionIdentifier,
+      context,
+      onLinkSuccess,
+      onLinkError,
+      onUnlinkSuccess,
+      onUnlinkError,
+      linkLabel,
+      unlinkLabel,
+    }),
     [
-      novuUI,
       integrationIdentifier,
       connectionIdentifier,
       context,
@@ -62,5 +53,5 @@ export const DefaultSlackLinkUser = (props: DefaultSlackLinkUserProps) => {
     ]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="SlackLinkUser" props={mountProps} />;
 };

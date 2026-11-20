@@ -1,0 +1,276 @@
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
+
+interface FakeContext {
+  type: string;
+  id: string;
+  key: string;
+  data: Record<string, unknown>;
+  bridgeUrl?: string;
+}
+
+function makeLogger() {
+  return {
+    warn: sinon.stub(),
+    error: sinon.stub(),
+    debug: sinon.stub(),
+    info: sinon.stub(),
+    setContext: sinon.stub(),
+  };
+}
+
+function makeConfig(platform: AgentPlatformEnum): ResolvedAgentConfig {
+  return {
+    platform,
+    environmentId: 'env-1',
+    organizationId: 'org-1',
+    integrationIdentifier: 'integration-1',
+  } as unknown as ResolvedAgentConfig;
+}
+
+function makeContext(type: string, id: string, bridgeUrl?: string, data: Record<string, unknown> = {}): FakeContext {
+  return { type, id, key: `${type}:${id}`, data, bridgeUrl };
+}
+
+/**
+ * `findByKeys` is called once per scope with the keys stored on that scope's connection/endpoint,
+ * so route each call to the matching contexts by key.
+ */
+function makeContextRepository(contexts: FakeContext[]) {
+  const byKey = new Map(contexts.map((context) => [context.key, context]));
+
+  return {
+    findByKeys: sinon
+      .stub()
+      .callsFake(async (_env: string, _org: string, keys: string[]) =>
+        keys.map((key) => byKey.get(key)).filter((context): context is FakeContext => !!context)
+      ),
+  };
+}
+
+function makeIntegrationRepository(inAppHmac: boolean[] = [true]) {
+  return { find: sinon.stub().resolves(inAppHmac.map((hmac) => ({ credentials: { hmac } }))) };
+}
+
+describe('InboundConnectionContextResolver', () => {
+  describe('endpoint scope (Telegram)', () => {
+    function build(endpointContextKeys: string[], contexts: FakeContext[]) {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = {
+        findByPlatformIdentity: sinon.stub().resolves({ contextKeys: endpointContextKeys }),
+      };
+      const contextRepository = makeContextRepository(contexts);
+      const logger = makeLogger();
+
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository() as any,
+        logger as any
+      );
+
+      return { resolver, logger };
+    }
+
+    it('returns the bridge URL override from a resolved context', async () => {
+      const { resolver } = build(['tenant:acme'], [makeContext('tenant', 'acme', 'https://acme.example.com/api/novu')]);
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.TELEGRAM), {}, 'chat-1');
+
+      expect(result.context).to.deep.equal({ tenant: 'acme' });
+      expect(result.bridgeUrl).to.equal('https://acme.example.com/api/novu');
+    });
+
+    it('leaves the override undefined when no resolved context sets one', async () => {
+      const { resolver } = build(['tenant:acme'], [makeContext('tenant', 'acme')]);
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.TELEGRAM), {}, 'chat-1');
+
+      expect(result.context).to.deep.equal({ tenant: 'acme' });
+      expect(result.bridgeUrl).to.equal(undefined);
+    });
+
+    it('picks the first override by sorted key and warns when contexts disagree', async () => {
+      const { resolver, logger } = build(
+        ['tenant:acme', 'app:billing'],
+        [
+          makeContext('tenant', 'acme', 'https://acme.example.com/api/novu'),
+          makeContext('app', 'billing', 'https://billing.example.com/api/novu'),
+        ]
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.TELEGRAM), {}, 'chat-1');
+
+      // Sorted by key, `app:billing` < `tenant:acme`, so the app override wins.
+      expect(result.bridgeUrl).to.equal('https://billing.example.com/api/novu');
+      expect(logger.warn.calledOnce, 'warns on conflicting overrides').to.equal(true);
+    });
+
+    it('does not warn when multiple contexts share the same override', async () => {
+      const { resolver, logger } = build(
+        ['tenant:acme', 'app:billing'],
+        [
+          makeContext('tenant', 'acme', 'https://shared.example.com/api/novu'),
+          makeContext('app', 'billing', 'https://shared.example.com/api/novu'),
+        ]
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.TELEGRAM), {}, 'chat-1');
+
+      expect(result.bridgeUrl).to.equal('https://shared.example.com/api/novu');
+      expect(logger.warn.called).to.equal(false);
+    });
+  });
+
+  describe('workspace scope (Slack)', () => {
+    it('lets the per-user endpoint override win over the workspace override', async () => {
+      const channelConnectionRepository = {
+        findOne: sinon.stub().resolves({ identifier: 'conn-1', contextKeys: ['tenant:workspace'] }),
+      };
+      const channelEndpointRepository = {
+        findByPlatformIdentity: sinon.stub().resolves({ contextKeys: ['tenant:user'] }),
+      };
+      const contextRepository = makeContextRepository([
+        makeContext('tenant', 'workspace', 'https://workspace.example.com/api/novu'),
+        makeContext('tenant', 'user', 'https://user.example.com/api/novu'),
+      ]);
+      const logger = makeLogger();
+
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository() as any,
+        logger as any
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.SLACK), { team_id: 'W1' }, 'U1');
+
+      expect(result.bridgeUrl).to.equal('https://user.example.com/api/novu');
+    });
+
+    it('falls back to the workspace override when the endpoint has none', async () => {
+      const channelConnectionRepository = {
+        findOne: sinon.stub().resolves({ identifier: 'conn-1', contextKeys: ['tenant:workspace'] }),
+      };
+      const channelEndpointRepository = {
+        findByPlatformIdentity: sinon.stub().resolves(null),
+      };
+      const contextRepository = makeContextRepository([
+        makeContext('tenant', 'workspace', 'https://workspace.example.com/api/novu'),
+      ]);
+      const logger = makeLogger();
+
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository() as any,
+        logger as any
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.SLACK), { team_id: 'W1' }, 'U1');
+
+      expect(result.bridgeUrl).to.equal('https://workspace.example.com/api/novu');
+    });
+  });
+
+  describe('session scope (web chat)', () => {
+    function build(contexts: FakeContext[], inAppHmac: boolean[] = [true]) {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
+      const contextRepository = makeContextRepository(contexts);
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository(inAppHmac) as any,
+        makeLogger() as any
+      );
+
+      return { resolver, channelConnectionRepository, channelEndpointRepository, contextRepository };
+    }
+
+    it('ignores session contextKeys when the in-app integration does not enforce HMAC', async () => {
+      const { resolver, contextRepository } = build(
+        [makeContext('tenant', 'acme', 'https://acme.example.com/api/novu')],
+        [false]
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: null });
+      expect(contextRepository.findByKeys.called).to.equal(false);
+    });
+
+    it('ignores session contextKeys while any active in-app integration skips HMAC, or none is active', async () => {
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+      const contexts = [makeContext('tenant', 'acme')];
+
+      expect(
+        (await build(contexts, [true, false]).resolver.resolve(config, { contextKeys: ['tenant:acme'] })).context
+      ).to.equal(null);
+      expect((await build(contexts, []).resolver.resolve(config, { contextKeys: ['tenant:acme'] })).context).to.equal(
+        null
+      );
+    });
+
+    it('returns the bridge URL override of a signed session context', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme', 'https://acme.example.com/api/novu')]);
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: { tenant: 'acme' }, bridgeUrl: 'https://acme.example.com/api/novu' });
+    });
+
+    it('resolves the session contextKeys the same way connect-time context resolves', async () => {
+      const { resolver, channelConnectionRepository, channelEndpointRepository } = build([
+        makeContext('tenant', 'acme', undefined, { plan: 'pro' }),
+        makeContext('region', 'eu'),
+      ]);
+
+      const result = await resolver.resolve(
+        makeConfig(AgentPlatformEnum.WEB_CHAT),
+        { contextKeys: ['tenant:acme', 'region:eu'] },
+        'sub-1'
+      );
+
+      expect(result.context).to.deep.equal({ tenant: { id: 'acme', data: { plan: 'pro' } }, region: 'eu' });
+      expect(channelConnectionRepository.findOne.called).to.equal(false);
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+    });
+
+    it('returns an empty context when the session has no contextKeys', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme')]);
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+
+      expect((await resolver.resolve(config, { contextKeys: [] }, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, {}, 'sub-1')).context).to.equal(null);
+      expect((await resolver.resolve(config, undefined, 'sub-1')).context).to.equal(null);
+    });
+
+    it('sets lookupFailed when session context resolution throws', async () => {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
+      const contextRepository = {
+        findByKeys: sinon.stub().rejects(new Error('mongo down')),
+      };
+      const logger = makeLogger();
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository([true]) as any,
+        logger as any
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: null, lookupFailed: true });
+    });
+  });
+});

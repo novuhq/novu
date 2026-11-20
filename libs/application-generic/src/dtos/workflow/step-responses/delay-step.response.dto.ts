@@ -5,7 +5,7 @@ import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { DelayControlDto } from '../controls/delay-control.dto';
 import { StepResponseDto } from '../step.response.dto';
 
-class DelayControlsMetadataResponseDto extends ControlsMetadataDto {
+class DelayControlsMetadataResponseDto extends ControlsMetadataDto<DelayControlDto> {
   @ApiProperty({
     description: 'Control values specific to Delay',
     type: () => DelayControlDto,

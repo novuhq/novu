@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
@@ -55,7 +56,7 @@ import {
   Schedule,
   StepTypeEnum,
 } from '@novu/shared';
-import { createHash } from 'crypto';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
@@ -66,6 +67,10 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import {
+  SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
@@ -113,7 +118,9 @@ export class Session {
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
     private updatePreferencesUsecase: UpdatePreferences,
-    private keylessAbuseGuard: KeylessAbuseGuardService
+    private keylessAbuseGuard: KeylessAbuseGuardService,
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -130,7 +137,7 @@ export class Session {
       throw new BadRequestException('Please provide a valid application identifier');
     }
 
-    const inAppIntegration = await this.selectIntegration.execute(
+    const selection = await this.selectIntegration.execute(
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
@@ -140,11 +147,21 @@ export class Session {
       })
     );
 
-    if (!inAppIntegration) {
+    if (!selection) {
       throw new NotFoundException('The active in-app integration could not be found');
     }
+    const { integration: inAppIntegration } = selection;
 
-    const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+    const environmentApiKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+    });
+    const hmacValid = isHmacValidForAnyKey(
+      environmentApiKeys,
+      subscriber.subscriberId,
+      command.requestData.subscriberHash
+    );
 
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
@@ -181,21 +198,9 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
-        allowUpdate: isHmacValidForAnyKey(
-          environmentApiKeys,
-          subscriber.subscriberId,
-          command.requestData.subscriberHash
-        ),
+        allowUpdate: hmacValid,
       })
     );
-
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-      _subscriber: subscriberEntity._id,
-      origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
-      context: contextKeys,
-    });
 
     const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
@@ -285,6 +290,17 @@ export class Session {
           },
         }
       );
+    }
+
+    // An empty FRONT_BASE_URL builds a regex that matches every origin, which would drop all customer sessions.
+    const isDashboardSession = Boolean(process.env.FRONT_BASE_URL) && isOriginFromNovu;
+    if (!isDashboardSession) {
+      void this.subscriberSessionAuthStatsService.record({
+        environmentId: environment._id,
+        hmacValid,
+        clientVersion: command.clientVersion,
+        source: SubscriberSessionSourceEnum.INBOX,
+      });
     }
 
     return {
@@ -414,9 +430,10 @@ export class Session {
   }
 
   private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto, clientIp?: string): Promise<string> {
-    const isKeylessInitialize = !requestData.applicationIdentifier;
-    const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
-    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(requestData.applicationIdentifier) : false;
+    const { applicationIdentifier } = requestData;
+    const isKeylessInitialize = !applicationIdentifier;
+    const isKeyless = applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
+    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(applicationIdentifier) : false;
 
     if (isKeylessInitialize || isKeylessExpired) {
       await this.keylessAbuseGuard.assertEnvCreationAllowed(clientIp);
@@ -425,7 +442,11 @@ export class Session {
       return environment.identifier;
     }
 
-    return requestData.applicationIdentifier!;
+    if (!applicationIdentifier) {
+      throw new BadRequestException('Application identifier is required');
+    }
+
+    return applicationIdentifier;
   }
 
   private async resolveContexts(
@@ -465,7 +486,12 @@ export class Session {
       throw new BadRequestException('Keyless is not supported in community edition');
     }
 
-    const organization = await this.communityOrganizationRepository.findById(process.env.KEYLESS_ORGANIZATION_ID!);
+    const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
+    if (!keylessOrganizationId) {
+      throw new InternalServerErrorException('Keyless Organization ID is not configured');
+    }
+
+    const organization = await this.communityOrganizationRepository.findById(keylessOrganizationId);
 
     if (!organization) {
       this.logger.error('Keyless Organization not found');
@@ -500,7 +526,12 @@ export class Session {
       );
     }
 
-    const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
+    const keylessUserEmail = process.env.KEYLESS_USER_EMAIL;
+    if (!keylessUserEmail) {
+      throw new InternalServerErrorException('Keyless User email is not configured');
+    }
+
+    const user = await this.communityUserRepository.findByEmail(keylessUserEmail);
 
     if (!user) {
       throw new InternalServerErrorException('Keyless User not found');

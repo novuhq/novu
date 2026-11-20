@@ -1,7 +1,7 @@
 import { CredentialsKeyEnum, type ICredentials } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { RiSmartphoneLine, RiWhatsappFill } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { validateWhatsAppToken } from '@/api/agents';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';

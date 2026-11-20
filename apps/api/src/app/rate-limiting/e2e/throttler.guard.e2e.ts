@@ -284,7 +284,14 @@ describe('API Rate Limiting #novu-v2', () => {
                 for (const { path, count } of requests) {
                   for (let index = 0; index < count; index += 1) {
                     const response = await request(pathPrefix + path);
-                    lastResponse = response;
+
+                    /*
+                     * The bucket refills one token every 200ms while the loop runs, so any late request can
+                     * succeed. Throttled scenarios assert on the last 429 response, not on the last response.
+                     */
+                    if (expectedStatus !== 429 || response.statusCode === 429) {
+                      lastResponse = response;
+                    }
 
                     if (response.statusCode === 429) {
                       throttledResponseCount += 1;

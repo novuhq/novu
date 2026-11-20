@@ -52,6 +52,7 @@ describe('SnoozeNotification', () => {
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
+  let stepRunV2WriterMock: { write: sinon.SinonStub };
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -102,6 +103,7 @@ describe('SnoozeNotification', () => {
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
+    stepRunV2WriterMock = { write: sinon.stub() };
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -128,7 +130,8 @@ describe('SnoozeNotification', () => {
       createExecutionDetailsMock as any,
       markNotificationAsMock as any,
       analyticsServiceMock as any,
-      getSubscriberMock as any
+      getSubscriberMock as any,
+      stepRunV2WriterMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');
@@ -221,6 +224,82 @@ describe('SnoozeNotification', () => {
     expect(markNotificationAsMock.execute.calledOnce).to.be.true;
     expect(standardQueueServiceMock.add.calledOnce).to.be.true;
     expect(createExecutionDetailsMock.execute.called).to.be.true;
+  });
+
+  it('persists the snooze end on the unsnooze job and writes the created job to step_runs_v2', async () => {
+    const command = createCommand(SNOOZE_DURATION.ONE_HOUR);
+
+    await snoozeNotification.execute(command);
+
+    expect(jobRepositoryMock.create.firstCall.args[0].waitUntil).to.equal(command.snoozeUntil.toISOString());
+    expect(stepRunV2WriterMock.write.calledOnceWithExactly(mockJob)).to.be.true;
+  });
+
+  it('does not write to step_runs_v2 when the snooze transaction fails', async () => {
+    const command = createCommand(SNOOZE_DURATION.ONE_HOUR);
+    markNotificationAsMock.execute.rejects(new Error('transaction aborted'));
+
+    try {
+      await snoozeNotification.execute(command);
+      expect.fail('Should have thrown');
+    } catch {
+      expect(stepRunV2WriterMock.write.called).to.be.false;
+    }
+  });
+
+  it('should enqueue the unsnooze job only after the transaction has closed', async () => {
+    const command = createCommand(SNOOZE_DURATION.ONE_DAY);
+    const sequence: string[] = [];
+    let transactionDepth = 0;
+    let transactionDepthAtEnqueue = -1;
+
+    // Mirrors session.withTransaction: the session stays open for the whole callback.
+    // @ts-expect-error Mocking the withTransaction method
+    messageRepositoryMock.withTransaction = sinon.stub().callsFake(async (callback) => {
+      transactionDepth += 1;
+      sequence.push('transaction:begin');
+      try {
+        return await callback();
+      } finally {
+        sequence.push('transaction:end');
+        transactionDepth -= 1;
+      }
+    });
+
+    jobRepositoryMock.create.callsFake(async () => {
+      sequence.push('job:create');
+
+      return mockJob;
+    });
+
+    markNotificationAsMock.execute.callsFake(async () => {
+      sequence.push('notification:snoozed');
+
+      return mockNotification;
+    });
+
+    standardQueueServiceMock.add.callsFake(async () => {
+      transactionDepthAtEnqueue = transactionDepth;
+      sequence.push('queue:add');
+    });
+
+    await snoozeNotification.execute(command);
+
+    /*
+     * Enqueueing is an external call - SQS, or a CreateSchedule round trip to
+     * EventBridge Scheduler for any snooze past the 900s delay cap. Doing it
+     * inside the transaction pins a Mongo connection and its locks for the
+     * length of that call, and an abort afterwards strands the schedule.
+     */
+    expect(standardQueueServiceMock.add.calledOnce).to.be.true;
+    expect(transactionDepthAtEnqueue).to.equal(0);
+    expect(sequence).to.deep.equal([
+      'transaction:begin',
+      'job:create',
+      'notification:snoozed',
+      'transaction:end',
+      'queue:add',
+    ]);
   });
 
   it('should enqueue job with correct parameters', async () => {

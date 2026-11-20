@@ -36,6 +36,7 @@ export class ConfirmToolApproval {
       approved: parsed.approved,
       platform: command.platform,
       platformThreadId: command.platformThreadId,
+      platformUserId: command.platformUserId,
     });
 
     this.deleteApprovalCard(command);

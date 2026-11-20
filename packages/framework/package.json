@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -40,7 +40,7 @@
     "test:watch": "vitest --typecheck --watch",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "build": "cross-env NODE_ENV=production tsup",
+    "build": "tsc --noEmit && cross-env NODE_ENV=production tsup",
     "debug": "NODE_ENV=production tsup --config tsup-debug.config.ts",
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",
@@ -312,11 +312,12 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@novu/agent-event-protocol": "workspace:*",
+    "@novu/stateless": "workspace:*",
     "@langchain/core": "^1.1.44",
     "@nestjs/common": "11.1.27",
-    "@sveltejs/kit": "^1.27.3",
+    "@sveltejs/kit": "^2.70.2",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
     "@types/node": "^22.0.0",
@@ -332,9 +333,9 @@
     "madge": "^8.0.0",
     "next": "^16.2.1",
     "ts-node": "^10.9.2",
-    "tsup": "^8.0.2",
+    "tsup": "^9.0.0",
     "tsx": "4.16.2",
-    "typescript": "5.6.2",
+    "typescript": "6.0.3",
     "vitest": "^4.1.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
@@ -344,13 +345,13 @@
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
     "chalk": "^4.1.2",
-    "chat": "4.33.0",
+    "chat": "4.45.0",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",
     "liquidjs": "^10.27.1",
     "pluralize": "^8.0.0",
-    "sanitize-html": "^2.17.5"
+    "sanitize-html": "^2.18.0"
   },
   "nx": {
     "tags": [

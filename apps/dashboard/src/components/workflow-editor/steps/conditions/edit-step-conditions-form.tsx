@@ -2,20 +2,15 @@ import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ContentIssueEnum, EnvironmentTypeEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  defaultRuleProcessorJsonLogic,
-  formatQuery,
-  generateID,
-  RQBJsonLogic,
-  RuleGroupType,
-  RuleType,
-} from 'react-querybuilder';
+import { formatQuery, generateID, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
+import { getArrayItemConditionIssue, isArrayItemOperator } from '@/components/conditions-editor/array-item-condition';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
-import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
+import { isRelativeDateOperator, isValuelessOperator } from '@/components/conditions-editor/field-type-operators';
 import { Form, FormField } from '@/components/primitives/form/form';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -25,6 +20,7 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   countConditions,
+  customRuleProcessor,
   getUniqueFieldNamespaces,
   getUniqueOperators,
   parseJsonLogicOptions,
@@ -37,53 +33,62 @@ const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
-const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
+const RELATIVE_DATE_UNITS = ['minutes', 'hours', 'days', 'weeks', 'months', 'years'];
 
-function isContainsAnyOperator(operator: string): boolean {
-  return (CONTAINS_ANY_OPERATORS as readonly string[]).includes(operator);
+function getRelativeDateValueIssue(value: string): string | null {
+  try {
+    const parsed = JSON.parse(value);
+
+    if (!parsed || (!parsed.amount && parsed.amount !== 0) || !RELATIVE_DATE_UNITS.includes(parsed.unit)) {
+      return 'Invalid amount or time unit';
+    }
+
+    return null;
+  } catch {
+    return 'Invalid relative date format';
+  }
 }
 
-const customRuleProcessor = (rule: RuleType, options: any) => {
-  if (isRelativeDateOperator(rule.operator)) {
-    try {
-      const parsedValue = JSON.parse(rule.value as string);
+function getRuleValueIssue(operator: string, value: string | null): string | null {
+  if (operator === 'between' || operator === 'notBetween') {
+    const values = value?.split(',').filter((val) => val.trim() !== '');
 
-      if (
-        parsedValue &&
-        (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
-        parsedValue.unit
-      ) {
-        return {
-          [rule.operator]: [{ var: rule.field }, parsedValue],
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to parse relative date value:', rule.value, error);
-    }
+    return !values || values.length !== 2 ? 'Both values are required' : null;
   }
 
-  if (isContainsAnyOperator(rule.operator)) {
-    const trimmedValue = (rule.value as string).trim();
-    const variableMatch = trimmedValue.match(/^\{\{(.+?)\}\}$/);
-
-    if (variableMatch) {
-      return {
-        [rule.operator]: [{ var: rule.field }, { var: variableMatch[1].trim() }],
-      };
-    }
-
-    const values = trimmedValue
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean);
-
-    return {
-      [rule.operator]: [{ var: rule.field }, values],
-    };
+  if (isRelativeDateOperator(operator)) {
+    return value ? getRelativeDateValueIssue(value) : 'Amount and unit are required';
   }
 
-  return defaultRuleProcessorJsonLogic(rule, options);
-};
+  if (isArrayItemOperator(operator)) {
+    return getArrayItemConditionIssue(value);
+  }
+
+  if (!isValuelessOperator(operator) && !value?.trim()) {
+    return 'Value is required';
+  }
+
+  return null;
+}
+
+function hasFieldSuffix(field: string, prefix: string): boolean {
+  return field.startsWith(prefix) && field.length > prefix.length;
+}
+
+function isRuleFieldAllowed(
+  field: string,
+  allowedFields: string[],
+  isAllowedVariableFn: (variable: { name: string }) => boolean
+): boolean {
+  if (allowedFields.includes(field)) return true;
+  if (hasFieldSuffix(field, PAYLOAD_FIELD_PREFIX)) return true;
+  if (hasFieldSuffix(field, SUBSCRIBER_DATA_FIELD_PREFIX)) return true;
+
+  // Context fields use additionalProperties schema pattern instead of explicit properties,
+  // so they don't appear in allowedFields and need validation with isAllowedVariable
+  // Example: 'context.<anything>.id' or 'context.<anything>.data' are valid, but 'context.<anything>.invalid' is not
+  return hasFieldSuffix(field, CONTEXT_FIELD_PREFIX) && isAllowedVariableFn({ name: field });
+}
 
 const getRuleSchema = (
   fields: Array<{ value: string }>,
@@ -99,63 +104,16 @@ const getRuleSchema = (
         value: z.string().nullable(),
       })
       .superRefine(({ field, operator, value }, ctx) => {
-        if (operator === 'between' || operator === 'notBetween') {
-          const values = value?.split(',').filter((val) => val.trim() !== '');
+        const valueIssue = getRuleValueIssue(operator, value);
 
-          if (!values || values.length !== 2) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
-          }
-        } else if (isRelativeDateOperator(operator)) {
-          // Validate relative date values
-          if (!value) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Amount and unit are required', path: ['value'] });
+        if (valueIssue) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: valueIssue, path: ['value'] });
 
-            return;
-          }
-
-          try {
-            const parsed = JSON.parse(value);
-
-            if (
-              !parsed ||
-              (!parsed.amount && parsed.amount !== 0) ||
-              !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)
-            ) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Invalid amount or time unit',
-                path: ['value'],
-              });
-            }
-          } catch {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Invalid relative date format',
-              path: ['value'],
-            });
-          }
-        } else if (operator !== 'null' && operator !== 'notNull') {
-          const trimmedValue = value?.trim();
-
-          if (!trimmedValue || trimmedValue.length === 0) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is required', path: ['value'] });
-          }
+          // A relative date rule without a value skips the field check, as before
+          if (isRelativeDateOperator(operator) && !value) return;
         }
 
-        const isPayloadField = field.startsWith(PAYLOAD_FIELD_PREFIX) && field.length > PAYLOAD_FIELD_PREFIX.length;
-        const isSubscriberDataField =
-          field.startsWith(SUBSCRIBER_DATA_FIELD_PREFIX) && field.length > SUBSCRIBER_DATA_FIELD_PREFIX.length;
-        const isContextField = field.startsWith(CONTEXT_FIELD_PREFIX) && field.length > CONTEXT_FIELD_PREFIX.length;
-
-        // Context fields use additionalProperties schema pattern instead of explicit properties,
-        // so they don't appear in allowedFields and need validation with isAllowedVariable
-        // Example: 'context.<anything>.id' or 'context.<anything>.data' are valid, but 'context.<anything>.invalid' is not
-        const isValidContextField = isContextField ? isAllowedVariableFn({ name: field }) : false;
-
-        const shouldAddError =
-          !allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField && !isValidContextField;
-
-        if (shouldAddError) {
+        if (!isRuleFieldAllowed(field, allowedFields, isAllowedVariableFn)) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
         }
       }),
@@ -242,13 +200,13 @@ export const EditStepConditionsForm = () => {
     mode: 'onSubmit',
     resolver: standardSchemaResolver(getConditionsSchema(fields, isAllowedVariable)),
     defaultValues: {
-      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
+      query: { ...query },
     },
   });
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: {
-      query: query as unknown as z.infer<ReturnType<typeof getConditionsSchema>>['query'],
+      query: { ...query },
     },
     form,
     shouldClientValidate: true,
@@ -256,17 +214,13 @@ export const EditStepConditionsForm = () => {
       if (isReadOnly) return;
       if (!step || !workflow) return;
 
-      const skip = formatQuery(data.query as unknown as RuleGroupType, {
+      const skip = formatQuery(data.query, {
         format: 'jsonlogic',
         ruleProcessor: customRuleProcessor,
       });
       const updateStepData: Partial<StepUpdateDto> = {
-        controlValues: { ...step.controls.values, skip },
+        controlValues: { ...step.controls.values, skip: skip || null },
       };
-
-      if (!skip) {
-        updateStepData.controlValues!.skip = null;
-      }
 
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {
@@ -348,6 +302,7 @@ export const EditStepConditionsForm = () => {
               variables={variables}
               isAllowedVariable={isAllowedVariable}
               enhancedVariables={filteredEnhancedVariables}
+              valueInput={ControlInput}
               disabled={isReadOnly}
             />
           )}

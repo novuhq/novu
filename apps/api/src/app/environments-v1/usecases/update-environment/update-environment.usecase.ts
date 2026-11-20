@@ -1,17 +1,12 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import {
-  assertSafeOutboundUrl,
-  PinoLogger,
-  resolvePublicAddresses,
-  SsrfBlockedError,
-} from '@novu/application-generic';
+import { BadRequestException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import {
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import { UpdateEnvironmentCommand } from './update-environment.command';
 
 @Injectable()

@@ -62,6 +62,11 @@ export class ChatOauthCallback {
     }
   }
 
+  /** Agent Inbox Slack failures land on the public result page. Every other callback keeps its error. */
+  resolveHumanRelayErrorRedirect(state: string): Promise<string | null> {
+    return this.slackOauthCallback.resolveHumanRelayErrorRedirect(state);
+  }
+
   private extractProviderIdFromState(state: string): ChatProviderIdEnum {
     try {
       const preliminaryData = peekOAuthStatePayload<{ providerId?: ChatProviderIdEnum }>(state);

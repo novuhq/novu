@@ -1,0 +1,441 @@
+import { ApiClient, ApiError, unwrap } from './client';
+
+export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
+
+export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
+
+export type InteractionOption = { id: string; label: string };
+
+/** String is shorthand for `{ id: minted opt_N, label }`; structured `{ id, label }` keeps a stable id. */
+export type OptionInput = string | InteractionOption;
+
+export interface InteractionCard {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: InteractionOption[];
+  options?: InteractionOption[];
+}
+
+export type CreateInteractionCard = Omit<InteractionCard, 'extraActions' | 'options'> & {
+  title: string;
+  extraActions?: OptionInput[];
+  options?: OptionInput[];
+};
+
+/** Posted chat card element. Structural subset of `CardElement` in `@novu/shared`. */
+export type InteractionCardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children?: unknown[];
+};
+
+/**
+ * Persisted HITL content returned by the API — either normalized chrome
+ * (`cardChrome`) or a posted chat card element (`card`). Mirrors
+ * `HumanInteractionContent` in `@novu/shared`; kept as a local structural copy
+ * because the CLI cannot depend on `@novu/shared`.
+ */
+export type InteractionContent = { cardChrome: InteractionCard } | { card: InteractionCardElement };
+
+export interface Interaction {
+  id: string;
+  kind: InteractionKind;
+  status: InteractionStatus;
+  content: InteractionContent;
+  from?: string;
+  to: string[];
+  integrationIdentifier: string;
+  platform: string;
+  response?: {
+    type: 'text' | 'option';
+    text?: string;
+    optionId?: string;
+    respondedBy?: string;
+    respondedBySubscriberId?: string;
+    respondedAt: string;
+  };
+  failedTo?: string[];
+  /**
+   * Who it hasn't reached yet: their WhatsApp window was closed, so they got the account's first message instead.
+   * It goes out when they reply.
+   */
+  heldFor?: string[];
+  /** Who Meta reported the first message undelivered for, and why. It still goes out if they write first. */
+  firstMessageFailed?: Array<{ subscriberId: string; reason: string }>;
+  /**
+   * On create: the conversation each message landed in, and how many messages in it were unread.
+   * The API calls them threads; the CLI prints them as `conversations`.
+   */
+  threads?: InteractionConversation[];
+  /**
+   * When the agent first got a person's answer, by asking for the interaction. Not on the read that hands it
+   * over: the listener tells by it whether a command that waited got the answer already.
+   */
+  answerReadAt?: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface InteractionConversation {
+  id: string;
+  unreadBefore: number;
+}
+
+export function isInteractionChrome(content: InteractionContent): content is { cardChrome: InteractionCard } {
+  return 'cardChrome' in content;
+}
+
+export function isInteractionCardElement(content: InteractionContent): content is { card: InteractionCardElement } {
+  return 'card' in content && (content as { card?: { type?: string } }).card?.type === 'card';
+}
+
+function collectCardButtons(node: unknown, into: InteractionOption[] = []): InteractionOption[] {
+  if (Array.isArray(node)) {
+    for (const child of node) collectCardButtons(child, into);
+
+    return into;
+  }
+
+  if (typeof node !== 'object' || node === null) {
+    return into;
+  }
+
+  const record = node as { id?: unknown; label?: unknown; children?: unknown };
+  if (typeof record.id === 'string' && typeof record.label === 'string') {
+    into.push({ id: record.id, label: record.label });
+  }
+
+  if (record.children !== undefined) {
+    collectCardButtons(record.children, into);
+  }
+
+  return into;
+}
+
+/** Title shown in lists — from chrome or the posted card element. */
+export function interactionTitle(interaction: Interaction): string {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.title ?? '';
+  }
+
+  return content.card.title ?? '';
+}
+
+/** Selectable options for `choose` — chrome options, or buttons on a posted card. */
+export function interactionOptions(interaction: Interaction): InteractionOption[] {
+  const { content } = interaction;
+
+  if (isInteractionChrome(content)) {
+    return content.cardChrome.options ?? [];
+  }
+
+  return collectCardButtons(content.card.children);
+}
+
+export interface CreateInteractionInput {
+  kind: InteractionKind;
+  card: CreateInteractionCard;
+  /** Starts a new conversation with each contact; with `thread`, limits who may answer. */
+  to?: string | string[];
+  /** The conversation to send into (the API's name for it is a thread). */
+  thread?: string;
+  /** With `thread` and no `to`: anyone in the conversation may answer. */
+  anyoneMayAnswer?: boolean;
+  via?: string;
+  agentIdentifier?: string;
+  from?: string;
+  ttlSeconds?: number;
+}
+
+export async function createInteraction(client: ApiClient, input: CreateInteractionInput): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>('/v1/inbox/messages', input);
+
+  return unwrap(res.data);
+}
+
+export async function getInteraction(
+  client: ApiClient,
+  id: string,
+  options: { timeoutMs?: number } = {}
+): Promise<Interaction> {
+  const res = await client.axios.get<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}`,
+    options.timeoutMs ? { timeout: options.timeoutMs } : undefined
+  );
+
+  return unwrap(res.data);
+}
+
+/** Withdraws a question that is still open: it can't be answered any more, and shows as canceled. */
+export async function cancelInteraction(client: ApiClient, id: string): Promise<Interaction> {
+  const res = await client.axios.post<{ data?: Interaction } | Interaction>(
+    `/v1/inbox/messages/${encodeURIComponent(id)}/cancel`,
+    {}
+  );
+
+  return unwrap(res.data);
+}
+
+export interface SetupRelayResult {
+  agentId: string;
+  agentIdentifier: string;
+  /** What the relay agent is called. Missing from APIs older than agent names. */
+  agentName?: string;
+  subscriberId: string;
+  /** The mailbox, when this call created one. */
+  emailAddress?: string;
+  /** The mailbox is not the slug of the name, because that handle was taken or could not be one. */
+  emailHandleAdjusted?: boolean;
+  /** How the agent looks (see `lookOf`). Missing from an API from before looks. */
+  look?: unknown;
+}
+
+export async function setupRelay(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    /**
+     * Set up the account owner. The API answers with the operator it has on record, which can differ
+     * from `subscriberId` when the account was first set up elsewhere.
+     */
+    operator?: boolean;
+    agentIdentifier?: string;
+    /** What the relay agent is called from now on. Missing leaves the name it has. */
+    agentName?: string;
+    /** The address before the `@` of a new inbox. Missing works one out from the name. */
+    inboxHandle?: string;
+    /** A line about what the relay agent does. An empty one clears it. */
+    agentDescription?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    /** The inviter's `--via` pick; becomes the contact's default channel unless they chose one themselves. */
+    defaultVia?: 'telegram' | 'slack' | 'whatsapp' | 'email';
+    /**
+     * The look of a new agent: its mascot's shape, colour or both. The API takes it where a look can be picked
+     * (`InboxAddressCheck.canPickLook`) and leaves the original one elsewhere, and for an agent that exists.
+     */
+    look?: { shape?: string; color?: string };
+  }
+): Promise<SetupRelayResult> {
+  const res = await client.axios.post<{ data?: SetupRelayResult } | SetupRelayResult>('/v1/setup', input);
+
+  return unwrap(res.data);
+}
+
+export interface RelayAgent {
+  agentId: string;
+  agentIdentifier: string;
+  name: string;
+  description?: string;
+  /** Where anyone can load the agent's picture. Missing when it has none. */
+  pictureUrl?: string;
+}
+
+/** Names the relay agent a call is about. Left out, the API takes the default one. */
+function agentParams(agentIdentifier: string | undefined): { params?: { agentIdentifier: string } } {
+  return agentIdentifier ? { params: { agentIdentifier } } : {};
+}
+
+/** The relay agent, or `null` before it has been set up. */
+export async function findRelayAgent(client: ApiClient, agentIdentifier?: string): Promise<RelayAgent | null> {
+  try {
+    const res = await client.axios.get<{ data?: RelayAgent } | RelayAgent>('/v1/agent', agentParams(agentIdentifier));
+
+    return unwrap(res.data);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      return null;
+    }
+
+    throw err;
+  }
+}
+
+export interface InboxAddressCheck {
+  handle: string;
+  available: boolean;
+  /** A free address close to a taken one, when there is one. */
+  suggestion?: string;
+  /** The mailbox domain this deployment publishes. */
+  domain: string;
+  /** Whether a new agent made here can be given a look. Missing from an API from before looks could be picked. */
+  canPickLook?: boolean;
+}
+
+/**
+ * Whether an address is free. `operatorEmail` only shapes the free one suggested for a taken address, and
+ * without a handle the answer is only the mailbox domain.
+ */
+export async function checkInboxAddress(
+  client: ApiClient,
+  handle: string | undefined,
+  operatorEmail: string | undefined
+): Promise<InboxAddressCheck> {
+  const res = await client.axios.get<{ data?: InboxAddressCheck } | InboxAddressCheck>('/v1/inbox-address', {
+    params: { ...(handle ? { handle } : {}), ...(operatorEmail ? { email: operatorEmail } : {}) },
+  });
+
+  return unwrap(res.data);
+}
+
+/** Uploads the relay agent's picture: a JPEG or PNG of up to 2 MB. Needs an account (`login`). */
+export async function setRelayAgentPicture(
+  client: ApiClient,
+  picture: { file: Buffer; contentType: string },
+  agentIdentifier?: string
+): Promise<RelayAgent> {
+  const form = new FormData();
+  form.append('picture', new Blob([new Uint8Array(picture.file)], { type: picture.contentType }), 'picture');
+  const res = await client.axios.put<{ data?: RelayAgent } | RelayAgent>(
+    '/v1/agent/picture',
+    form,
+    agentParams(agentIdentifier)
+  );
+
+  return unwrap(res.data);
+}
+
+export interface InviteChannel {
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
+  integrationIdentifier: string;
+  connected: boolean;
+}
+
+/** A shareable invite page where the contact connects any of the relay's chat channels. */
+export interface Invite {
+  url: string;
+  /** ISO timestamp after which the invite link stops working. */
+  expiresAt: string;
+  channels: InviteChannel[];
+}
+
+/**
+ * Starts connecting one channel from an invite, as the invite page does. For WhatsApp it is a wa.me link with a
+ * one-time code: sending the prefilled message from their own WhatsApp binds that number.
+ */
+export async function connectInviteChannel(
+  client: ApiClient,
+  input: { token: string; via: InviteChannel['via'] }
+): Promise<{ url: string }> {
+  const res = await client.axios.post<{ data?: { url: string } } | { url: string }>('/v1/invites/connect', input);
+
+  return unwrap(res.data);
+}
+
+/** The token at the end of an invite page link, `…/invite/<token>`. */
+export function inviteTokenOf(url: string): string {
+  const token = new URL(url).pathname.split('/').filter(Boolean).pop();
+  if (!token) {
+    throw new Error(`The invite link ${url} has no token.`);
+  }
+
+  return token;
+}
+
+export async function createInvite(
+  client: ApiClient,
+  input: { subscriberId: string; agentIdentifier?: string; firstName?: string; lastName?: string }
+): Promise<Invite> {
+  const res = await client.axios.post<{ data?: Invite } | Invite>('/v1/contacts/invites', input);
+
+  return unwrap(res.data);
+}
+
+export type ContactChannelStatus = 'unverified' | 'pending' | 'verified';
+
+export type ContactChannel = {
+  via: 'telegram' | 'slack' | 'whatsapp' | 'email';
+  status: ContactChannelStatus;
+  address?: string;
+  verifiedAt?: string;
+  /** `requestedAt` of the request whose link verified the current address. */
+  verifiedRequestedAt?: string;
+  /** Set while a newer request is still pending. */
+  requestedAt?: string;
+  /** On a contact from the list: when they connected the channel. Absent for email. */
+  connectedAt?: string;
+  /** On a contact from the list: whether a message that names no channel goes here. */
+  isDefault?: boolean;
+  /** WhatsApp only: the agent can write only within 24 hours of the person's last message. */
+  window?: { open: boolean; lastMessageAt?: string; closesAt?: string };
+};
+
+/** A contact is a subscriber in the environment — `id` is the subscriberId `--to` addresses. */
+export interface Contact {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  /** On a contact from the list: their email for this agent, in full, and whether they confirmed it. */
+  emailVerification?: { address: string; status: ContactChannelStatus };
+  phone?: string;
+  data?: Record<string, unknown>;
+  /** Channels the agent can reach the contact on. */
+  channels?: ContactChannel[];
+  /** Channel used when a message to the contact names none. */
+  defaultVia?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactsPage {
+  data: Contact[];
+  next: string | null;
+}
+
+export async function listContacts(
+  client: ApiClient,
+  params: { limit?: number; after?: string; subscriberId?: string; agentIdentifier?: string } = {}
+): Promise<ContactsPage> {
+  const res = await client.axios.get<{ data?: Contact[]; next?: string | null }>('/v1/contacts', { params });
+  const body = res.data;
+
+  return { data: Array.isArray(body?.data) ? body.data : [], next: body?.next ?? null };
+}
+
+export async function getContact(client: ApiClient, subscriberId: string, agentIdentifier?: string): Promise<Contact> {
+  const res = await client.axios.get<{ data?: Contact } | Contact>(`/v1/contacts/${encodeURIComponent(subscriberId)}`, {
+    params: agentIdentifier ? { agentIdentifier } : undefined,
+  });
+
+  // Explicit type arg: `Contact.data` would otherwise make `unwrap` infer the wrong envelope.
+  return unwrap<Contact>(res.data);
+}
+
+export type AddressVerificationResult = {
+  address: string;
+  /** Identifies this request; the contact's email channel reports it as `verifiedRequestedAt` once used. */
+  requestedAt: string;
+  expiresAt: string;
+  retryAfterSeconds: number;
+  /** A different address is already verified and stays deliverable until this one is confirmed. */
+  replacesVerifiedAddress: boolean;
+};
+
+export async function requestAddressVerification(
+  client: ApiClient,
+  input: {
+    subscriberId: string;
+    via: 'email';
+    address: string;
+    agentIdentifier?: string;
+    firstName?: string;
+    lastName?: string;
+  }
+): Promise<AddressVerificationResult> {
+  const res = await client.axios.post<{ data?: AddressVerificationResult } | AddressVerificationResult>(
+    '/v1/contacts/verifications',
+    input
+  );
+
+  return unwrap(res.data);
+}

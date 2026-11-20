@@ -1,6 +1,5 @@
 import { MsTeamsConnectButtonProps } from '@novu/js/ui';
-import { useCallback } from 'react';
-import { useNovuUI } from '../../context/NovuUIContext';
+import { useMemo } from 'react';
 import { Mounter } from '../Mounter';
 
 export type DefaultMsTeamsConnectButtonProps = Pick<
@@ -36,32 +35,24 @@ export const DefaultMsTeamsConnectButton = (props: DefaultMsTeamsConnectButtonPr
     connectLabel,
     connectedLabel,
   } = props;
-  const { novuUI } = useNovuUI();
 
-  const mount = useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'MsTeamsConnectButton',
-        props: {
-          integrationIdentifier,
-          connectionIdentifier,
-          subscriberId,
-          context,
-          scope,
-          connectionMode,
-          autoLinkUser,
-          onConnectSuccess,
-          onConnectError,
-          onDisconnectSuccess,
-          onDisconnectError,
-          connectLabel,
-          connectedLabel,
-        },
-        element,
-      });
-    },
+  const mountProps = useMemo(
+    () => ({
+      integrationIdentifier,
+      connectionIdentifier,
+      subscriberId,
+      context,
+      scope,
+      connectionMode,
+      autoLinkUser,
+      onConnectSuccess,
+      onConnectError,
+      onDisconnectSuccess,
+      onDisconnectError,
+      connectLabel,
+      connectedLabel,
+    }),
     [
-      novuUI,
       integrationIdentifier,
       connectionIdentifier,
       subscriberId,
@@ -78,5 +69,5 @@ export const DefaultMsTeamsConnectButton = (props: DefaultMsTeamsConnectButtonPr
     ]
   );
 
-  return <Mounter mount={mount} />;
+  return <Mounter name="MsTeamsConnectButton" props={mountProps} />;
 };

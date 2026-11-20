@@ -1,0 +1,106 @@
+---
+title: "Security"
+description: "Turn on HMAC for Web Chat before you ship: subscriberHash on NovuProvider, agentHash on useWebChat, and contextHash to pass context to your agent."
+sidebarTitle: Security
+---
+
+HMAC (Hash-based Message Authentication Code) is off by default. Turn it on before you ship. Web Chat can require up to three hashes, controlled by two dashboard toggles.
+
+| Hash | Toggle | Input | Where the client passes it |
+| --- | --- | --- | --- |
+| `subscriberHash` | **Novu In-App** integration | `subscriberId` | `NovuProvider` |
+| `contextHash` | **Novu In-App** integration | `context` | `NovuProvider`, only when you pass `context` |
+| `agentHash` | **Web Chat** integration | agent identifier | `useWebChat` |
+
+All hashes use the environment API secret from [API Keys](https://dashboard.novu.co/api-keys). Compute them on your server. Do not compute them in the browser.
+
+Pass the hashes for the toggles that are on. With **Novu In-App** HMAC on, `subscriberHash` is always required, and `contextHash` is required whenever you pass `context`.
+
+## subscriberHash
+
+`subscriberHash` authenticates the signed-in subscriber. Without it, another person can guess a `subscriberId` and open that subscriber's session, including Web Chat.
+
+If **Security HMAC encryption** is on for **Novu In-App**, pass `subscriberHash` to `NovuProvider`. The hash is `HMAC-SHA256(secretKey, subscriberId)` as a lowercase hex string.
+
+```tsx
+<NovuProvider
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  subscriberHash="YOUR_SUBSCRIBER_HASH"
+>
+  <Chat />
+</NovuProvider>
+```
+
+Generation recipes (Node.js, Python, and more): [Secure your Inbox with HMAC](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+
+## agentHash
+
+`agentHash` authenticates which agent the subscriber can talk to. Without it, a client can send any public agent identifier that is linked to Web Chat.
+
+If **Security HMAC encryption** is on for **Web Chat**:
+
+1. Open [Integrations](https://dashboard.novu.co/integrations).
+2. Select the **Web Chat** integration.
+3. Enable **Security HMAC encryption**.
+4. On your server, compute `HMAC-SHA256(secretKey, agentIdentifier)` as a lowercase hex string.
+5. Pass that value as `agentHash` to `useWebChat`.
+
+```tsx
+useWebChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  agentHash: 'YOUR_AGENT_HASH',
+});
+```
+
+## Context
+
+You can pass a `context` (for example, `tenant`) to `NovuProvider`. Your agent receives it as `ctx.context` on Web Chat turns only when **Security HMAC encryption** is on for **Novu In-App**.
+
+| Novu In-App HMAC | What you pass to `NovuProvider` | `ctx.context` in your agent |
+| --- | --- | --- |
+| On | `context` and `contextHash` | The context |
+| Off | `context` | `null`. The context is not forwarded. |
+
+With HMAC off, any client could send any context, so Novu does not pass it to your agent. With HMAC on, Novu rejects a session whose `contextHash` does not match its `context`.
+
+Before your agent uses the context to scope what it reads and changes:
+
+- **Trust the context `id`, not its `data`.** Novu sends the `data` stored on the context, not the `data` you signed. That stored `data` was written when the context was first created, by your server through the Contexts API or by an earlier session. Look up anything else you need on your server, from the `id`.
+- **Check that the subscriber belongs to that tenant.** A `contextHash` is the same for every subscriber, so a subscriber who has another tenant's hash can reuse it.
+- **Handle both value shapes.** Each context value is either `{ id, data }` or, when it has no `data`, the `id` as a plain string.
+
+```tsx
+<NovuProvider
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  subscriberHash="YOUR_SUBSCRIBER_HASH"
+  context={{ tenant: { id: 'acme' } }}
+  contextHash="YOUR_CONTEXT_HASH"
+>
+  <Chat />
+</NovuProvider>
+```
+
+```ts
+onMessage: async (message, ctx) => {
+  const tenant = ctx.context?.tenant;
+  const tenantId = typeof tenant === 'string' ? tenant : tenant?.id;
+  const subscriberId = ctx.subscriber?.subscriberId;
+
+  // `isTenantMember` is your own lookup.
+  if (!tenantId || !subscriberId || !(await isTenantMember(subscriberId, tenantId))) {
+    await ctx.reply('Please sign in again.');
+
+    return;
+  }
+
+  // Scope reads and writes to `tenantId`.
+},
+```
+
+To compute `contextHash` on your server, see [Secure your Inbox with HMAC](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+
+<Note>
+  Every active **Novu In-App** integration in the environment must have HMAC on. If one does not, `ctx.context` stays `null` on Web Chat.
+</Note>

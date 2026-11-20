@@ -28,7 +28,7 @@ It’s helpful to distinguish between providers and integrations:
 
 You can have multiple integrations for the same provider, for example, using two different SendGrid accounts for staging and production environments. Novu allows you to manage these as separate, named integrations.
 
-Refer to this resource to see the full list of [providerIds used in Novu](https://github.com/novuhq/novu/blob/next/packages/framework/src/shared.ts#L103).
+Refer to this resource to see the full list of [providerIds used in Novu](https://github.com/novuhq/novu/blob/next/packages/shared/src/types/providers.ts).
 
 <Note>
   Novu also lets you use [Trigger Overrides](/platform/integrations/trigger-overrides) to modify the default behavior of a message during workflow trigger, such as overriding the notification title or content, or using a different integration than the primary integration. This works alongside integrations to fine-tune delivery behavior. 
@@ -45,6 +45,8 @@ This separation ensures that test messages don’t accidentally go to production
 Each environment can support multiple active integrations per channel, but only one can be marked as the primary integration for email and SMS channels. However, for push and chat channels, all active integrations are used in parallel to deliver messages. 
 
 The primary integration serves as the default route when a message is sent over that channel unless explicitly overridden. You can update which integration is marked as primary or deactivate an integration entirely.
+
+To choose among multiple active integrations from subscriber or [context](/platform/concepts/contexts) data, see [Integration conditions](/platform/integrations/integration-conditions).
 
 ## Integration credentials
 

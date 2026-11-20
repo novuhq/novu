@@ -112,7 +112,7 @@ export type McpOAuthCatalogEntry =
  *   upstream removes DCR support, `GenerateMcpOAuthUrl` surfaces a
  *   `mcp_no_dcr_support` error on the connection's `lastError`.
  *   Per-provider DCR quirks belong in the API OAuth layer (discovery or
- *   callback token parsing) — see `.cursor/skills/nv-onboard-dcr-mcp/SKILL.md`.
+ *   callback token parsing) — see `.agents/skills/nv-onboard-dcr-mcp/SKILL.md`.
  *
  * - `novu-app` entries — hand-verified probe checklist (no live-probe CI;
  *   onboarding a new entry is the same vetting Anthropic uses for its
@@ -326,7 +326,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.newrelic.com/mcp/',
     category: 'code',
     popular: true,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'pagerduty',
@@ -409,7 +409,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.canva.com/mcp',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'cloudflare',
@@ -1163,6 +1163,15 @@ export const MCP_SERVERS: McpServer[] = [
     category: 'financial-services',
     popular: false,
     oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+  },
+  {
+    id: 'fxmacrodata',
+    name: 'FXMacroData',
+    description: 'Query FX rates, macroeconomic releases, and central bank data from official sources.',
+    url: 'https://mcp.fxmacrodata.com/mcp',
+    category: 'financial-services',
+    popular: false,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'g2',

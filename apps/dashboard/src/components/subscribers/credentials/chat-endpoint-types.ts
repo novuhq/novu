@@ -118,6 +118,7 @@ const SUPPORTED_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption
   [ChatProviderIdEnum.Telegram]: [TELEGRAM_CHAT],
   [ChatProviderIdEnum.Line]: [LINE_USER],
   [ChatProviderIdEnum.Discord]: [WEBHOOK],
+  [ChatProviderIdEnum.GoogleChat]: [WEBHOOK],
   [ChatProviderIdEnum.Mattermost]: [WEBHOOK_WITH_CHANNEL],
   [ChatProviderIdEnum.Ryver]: [WEBHOOK],
   [ChatProviderIdEnum.Zulip]: [WEBHOOK],

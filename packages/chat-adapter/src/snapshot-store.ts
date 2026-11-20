@@ -1,10 +1,10 @@
-import type { AgentConversation, MetadataSignal, Signal, ThreadSnapshot } from './types.js';
+import type { AgentConversation, BridgeJsonObject, MetadataSignal, Signal, ThreadSnapshot } from './types.js';
 
 /** Apply metadata signals to a conversation metadata object (immutable). */
 export function applyMetadataSignals(
-  metadata: Record<string, unknown>,
+  metadata: BridgeJsonObject,
   signals: Signal[]
-): { metadata: Record<string, unknown>; changed: boolean } {
+): { metadata: BridgeJsonObject; changed: boolean } {
   let next = metadata;
   let changed = false;
 
@@ -20,7 +20,7 @@ export function applyMetadataSignals(
   return { metadata: next, changed };
 }
 
-function patchMetadata(metadata: Record<string, unknown>, signal: MetadataSignal): Record<string, unknown> {
+function patchMetadata(metadata: BridgeJsonObject, signal: MetadataSignal): BridgeJsonObject {
   if (signal.action === 'clear') {
     return {};
   }
@@ -59,10 +59,7 @@ export function patchSnapshotResolved(snapshot: ThreadSnapshot): ThreadSnapshot 
   };
 }
 
-function patchConversationMetadata(
-  conversation: AgentConversation,
-  metadata: Record<string, unknown>
-): AgentConversation {
+function patchConversationMetadata(conversation: AgentConversation, metadata: BridgeJsonObject): AgentConversation {
   return {
     ...conversation,
     metadata,

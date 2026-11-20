@@ -82,6 +82,16 @@ export async function startTelegramApiStub(): Promise<TelegramApiStub> {
     const payload = await readJsonBody(req);
     calls.push({ method, payload });
 
+    // The adapter probes the non-standard `sendRichMessage*` extension before
+    // falling back to `sendMessage`. Real Telegram answers 404 — mirror that so
+    // markdown deliveries exercise the production fallback path.
+    if (method.startsWith('sendRichMessage')) {
+      res.writeHead(404, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error_code: 404, description: 'Not Found: method not found' }));
+
+      return;
+    }
+
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify(buildResponse(method, payload)));
   });

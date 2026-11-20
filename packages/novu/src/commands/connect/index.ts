@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
@@ -24,7 +25,14 @@ interface UiBundle {
 const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<unknown>;
 
 async function loadInkUi(): Promise<UiBundle> {
-  const bundlePath = path.join(__dirname, 'ui', 'index.mjs');
+  // The Ink bundle is emitted to dist/src/commands/connect/ui/index.mjs.
+  // `__dirname` is this file's directory under the tsc module layout, but
+  // `dist/src` when running from the bundled CLI entry — try both.
+  const candidates = [
+    path.join(__dirname, 'ui', 'index.mjs'),
+    path.join(__dirname, 'commands', 'connect', 'ui', 'index.mjs'),
+  ];
+  const bundlePath = candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0];
   try {
     const url = pathToFileURL(bundlePath).href;
 

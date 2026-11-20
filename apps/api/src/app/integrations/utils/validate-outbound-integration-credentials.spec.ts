@@ -5,6 +5,20 @@ import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 import { validateOutboundIntegrationCredentials } from './validate-outbound-integration-credentials';
 
+const ORIGINAL_CI_EE_TEST = process.env.CI_EE_TEST;
+const ORIGINAL_SELF_HOSTED = process.env.IS_SELF_HOSTED;
+const ORIGINAL_TEST_ALLOW_IPS = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+
+    return;
+  }
+
+  process.env[name] = value;
+}
+
 async function expectRejection(promise: Promise<void>, messagePart: string): Promise<void> {
   try {
     await promise;
@@ -17,6 +31,10 @@ async function expectRejection(promise: Promise<void>, messagePart: string): Pro
 
 describe('validateOutboundIntegrationCredentials', () => {
   beforeEach(() => {
+    process.env.CI_EE_TEST = 'true';
+    process.env.IS_SELF_HOSTED = 'false';
+    // .env.test allows loopback for e2e fixtures; Cloud never sets this.
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
     stub(dns.promises, 'lookup').callsFake(((hostname: string) => {
       const address = hostname === 'private.example.test' ? '10.0.0.5' : '93.184.216.34';
 
@@ -26,6 +44,9 @@ describe('validateOutboundIntegrationCredentials', () => {
 
   afterEach(() => {
     restore();
+    restoreEnv('CI_EE_TEST', ORIGINAL_CI_EE_TEST);
+    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+    restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_TEST_ALLOW_IPS);
   });
 
   it('should reject an email webhook URL pointing at the cloud metadata endpoint', async () => {
@@ -134,6 +155,80 @@ describe('validateOutboundIntegrationCredentials', () => {
   it('should skip validation when the destination is not set', async () => {
     await validateOutboundIntegrationCredentials(ToolProviderIdEnum.Webhook, {
       webhookUrl: '',
+    });
+  });
+
+  const privateTargetCases = [
+    [EmailProviderIdEnum.Infobip, { baseUrl: 'http://127.0.0.1:3000' }],
+    [EmailProviderIdEnum.Braze, { apiURL: 'http://127.0.0.1:3000' }],
+    [EmailProviderIdEnum.Mailgun, { baseUrl: 'http://127.0.0.1:3000' }],
+    [SmsProviderIdEnum.SmsCentral, { baseUrl: 'http://127.0.0.1:3000' }],
+    [SmsProviderIdEnum.Mobishastra, { baseUrl: 'http://127.0.0.1:3000' }],
+    [SmsProviderIdEnum.Kannel, { host: '127.0.0.1', port: '3000' }],
+    [PushProviderIdEnum.AppIO, { AppIOBaseUrl: 'http://127.0.0.1:3000' }],
+  ] as const;
+
+  for (const [providerId, credentials] of privateTargetCases) {
+    it(`blocks a private ${providerId} target on Cloud`, async () => {
+      let error: Error | undefined;
+
+      try {
+        await validateOutboundIntegrationCredentials(providerId, credentials);
+      } catch (caughtError) {
+        error = caughtError as Error;
+      }
+
+      expect(error?.message).to.match(/blocked|not allowed/i);
+    });
+  }
+
+  it('blocks a private custom SMTP target on Cloud', async () => {
+    let error: Error | undefined;
+
+    try {
+      await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+        host: '127.0.0.1',
+        port: '587',
+      });
+    } catch (caughtError) {
+      error = caughtError as Error;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(error?.message).to.match(/not allowed/i);
+  });
+
+  it('blocks a private custom SMTP target for self-hosted deployments', async () => {
+    process.env.IS_SELF_HOSTED = 'true';
+
+    let error: Error | undefined;
+
+    try {
+      await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+        host: '10.0.0.1',
+        port: '587',
+      });
+    } catch (caughtError) {
+      error = caughtError as Error;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(error?.message).to.match(/not allowed/i);
+  });
+
+  it('allows a public custom SMTP host', async () => {
+    await validateOutboundIntegrationCredentials(EmailProviderIdEnum.CustomSMTP, {
+      host: 'smtp.example.com',
+      port: '587',
+    });
+  });
+
+  it('preserves private Kannel targets for self-hosted deployments', async () => {
+    process.env.IS_SELF_HOSTED = 'true';
+
+    await validateOutboundIntegrationCredentials(SmsProviderIdEnum.Kannel, {
+      host: '10.0.0.1',
+      port: '13013',
     });
   });
 });

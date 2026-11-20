@@ -1,15 +1,24 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   buildAgentSharedInbox,
+  buildAgentVanityInbox,
+  defaultInboxDomainForProvider,
   generateAgentInboxRoutingKey,
+  getAgentInboxSharedDomainOrNull,
+  getConfiguredSharedInboxDomains,
   getSharedAgentDomain,
   isAgentEmailEnabled,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
   isValidAgentInboxRoutingKey,
   parseAgentSharedInboxLocalPart,
+  resolveAgentInboxDomain,
+  resolvePublishedAgentEmailSlug,
+  resolvePublishedAgentInboxAddress,
 } from './agent-shared-inbox';
 
 const ENV_KEY = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+const INBOX_DOMAIN_ENV_KEY = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
 const NOVU_ENTERPRISE_KEY = 'NOVU_ENTERPRISE';
 const IS_SELF_HOSTED_KEY = 'IS_SELF_HOSTED';
 
@@ -230,6 +239,94 @@ describe('agent-shared-inbox helpers', () => {
         expect(() => buildAgentSharedInbox('', 'a1b2c3d4')).toThrow();
       });
     });
+
+    it('uses an explicit domain instead of the Connect domain', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(buildAgentSharedInbox('wine-bot', 'a1b2c3d4', 'agentinbox.md')).toBe('wine-bot-a1b2c3d4@agentinbox.md');
+      });
+    });
+  });
+
+  describe('vanity agent inbox address', () => {
+    it('publishes the handle alone', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(buildAgentVanityInbox('atlas', 'agentinbox.md')).toBe('atlas@agentinbox.md');
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxDomain: 'agentinbox.md',
+          })
+        ).toBe('atlas@agentinbox.md');
+      });
+    });
+
+    it('keeps a routing key in the address', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxRoutingKey: 'a1b2c3d4',
+            inboxDomain: 'agentinbox.md',
+          })
+        ).toBe('atlas-a1b2c3d4@agentinbox.md');
+      });
+    });
+
+    it('does not treat a broken routing key as a vanity address', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false' }, () => {
+        expect(
+          resolvePublishedAgentInboxAddress({
+            emailSlugPrefix: 'atlas',
+            inboxRoutingKey: 'NOT-A-KEY',
+          })
+        ).toBeUndefined();
+      });
+    });
+  });
+
+  describe('agent inbox domain', () => {
+    it('ignores an unset or invalid Agent Inbox domain', () => {
+      withEnv({ [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(getAgentInboxSharedDomainOrNull()).toBeNull();
+      });
+      withEnv({ [INBOX_DOMAIN_ENV_KEY]: 'not a domain' }, () => {
+        expect(getAgentInboxSharedDomainOrNull()).toBeNull();
+      });
+    });
+
+    it('pins Agent Email Inbox to the Agent Inbox domain and everyone else to the Connect domain', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('agentinbox.md');
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.NovuAgent)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('falls Agent Email Inbox back to the Connect domain when the Agent Inbox domain is unset', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(defaultInboxDomainForProvider(EmailProviderIdEnum.AgentEmailInbox)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('keeps a valid stored pin and falls back to the Connect domain otherwise', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(resolveAgentInboxDomain({ inboxDomain: 'AgentInbox.MD' })).toBe('agentinbox.md');
+        expect(resolveAgentInboxDomain({})).toBe('agentconnect.sh');
+        expect(resolveAgentInboxDomain({ inboxDomain: 'not a domain' })).toBe('agentconnect.sh');
+        expect(resolveAgentInboxDomain(undefined)).toBe('agentconnect.sh');
+      });
+    });
+
+    it('lists both configured domains once', () => {
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentinbox.md' }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh', 'agentinbox.md']);
+      });
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh']);
+      });
+      withEnv({ [ENV_KEY]: 'agentconnect.sh', [INBOX_DOMAIN_ENV_KEY]: undefined }, () => {
+        expect(getConfiguredSharedInboxDomains()).toEqual(['agentconnect.sh']);
+      });
+    });
   });
 
   describe('parseAgentSharedInboxLocalPart', () => {
@@ -283,6 +380,28 @@ describe('agent-shared-inbox helpers', () => {
       expect(isValidAgentEmailSlugPrefix('a'.repeat(33))).toBe(false);
       expect(isValidAgentEmailSlugPrefix('has space')).toBe(false);
       expect(isValidAgentEmailSlugPrefix('has.dot')).toBe(false);
+    });
+  });
+
+  describe('resolvePublishedAgentEmailSlug', () => {
+    it('keeps a valid stored prefix', () => {
+      expect(resolvePublishedAgentEmailSlug('custom-slug', { identifier: 'wine-bot', name: 'Wine Bot' })).toBe(
+        'custom-slug'
+      );
+    });
+
+    it('uses the agent name when the stored prefix is missing', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'human-relay', name: 'Vasya' })).toBe('vasya');
+    });
+
+    it('falls back to the identifier when the name is empty', () => {
+      expect(resolvePublishedAgentEmailSlug(undefined, { identifier: 'wine-bot', name: '' })).toBe('wine-bot');
+    });
+
+    it('falls back when the stored prefix is not a valid slug', () => {
+      expect(resolvePublishedAgentEmailSlug('Not A Slug', { identifier: 'wine-bot', name: 'Wine Bot' })).toBe(
+        'wine-bot'
+      );
     });
   });
 });

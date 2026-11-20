@@ -1,13 +1,14 @@
 import { PushProviderIdEnum } from '@novu/shared';
 
-import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { PushBaseProvider } from '../push.base-provider';
 
-export class OneSignalPushProvider extends BaseProvider implements IPushProvider {
+export class OneSignalPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.OneSignal;
-  channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   private axiosInstance: AxiosInstance;
   private apiVersion: string | null = null;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
@@ -24,7 +25,7 @@ export class OneSignalPushProvider extends BaseProvider implements IPushProvider
     super();
     this.apiVersion = config.apiVersion;
 
-    this.axiosInstance = axios.create({
+    this.axiosInstance = createProviderHttpClient({
       baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
   }

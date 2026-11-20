@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
+import { RiInformation2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { TranslationSwitch } from '@/components/translations/translation-switch';
+import { SetupRow } from '@/components/workflow-editor/setup-row';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { LocalizationResourceEnum } from '@/types/translations';
@@ -54,57 +55,17 @@ export function TranslationToggleSection({
   };
 
   if (needsOnboarding) {
-    const handleOnboardingClick = () => {
-      navigate(translationsUrl);
-    };
-
-    const stopRowNavigation = (e: React.SyntheticEvent) => {
-      e.stopPropagation();
-    };
-
     return (
-      <button
-        type="button"
-        onClick={handleOnboardingClick}
+      <SetupRow
+        to={translationsUrl}
+        title="Enable Translations"
+        tooltipContent="When enabled, allows you to create and manage translations for your workflow content across different languages."
+        description="Set up your target locales first to enable translations"
         className={cn(
-          'group flex w-full min-w-0 cursor-pointer flex-col gap-1.5 rounded-none bg-transparent text-left transition-colors hover:bg-bg-weak focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'w-full min-w-0 rounded-none px-3 py-4 transition-colors hover:bg-bg-weak focus-within:outline-hidden focus-within:ring-2 focus-within:ring-stroke-strong focus-within:ring-offset-2 focus-within:ring-offset-background',
           className
         )}
-      >
-        <div className="flex w-full min-w-0 items-center gap-1.5">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="text-label-xs text-text-strong">Enable Translations</span>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  className="inline-flex cursor-help"
-                  onClick={stopRowNavigation}
-                  onPointerDown={stopRowNavigation}
-                  onKeyDown={stopRowNavigation}
-                >
-                  <RiInformation2Line className="size-4 text-text-soft" />
-                </span>
-              </TooltipTrigger>
-              <TooltipPortal>
-                <TooltipContent side="left" hideWhenDetached>
-                  When enabled, allows you to create and manage translations for your workflow content across different
-                  languages.
-                </TooltipContent>
-              </TooltipPortal>
-            </Tooltip>
-          </div>
-
-          <span className="text-text-sub group-hover:text-text-strong inline-flex shrink-0 items-center text-xs font-medium transition-color duration-200 ease-out  group-hover:translate-x-0.5">
-            Setup
-          </span>
-          <RiArrowRightSLine
-            aria-hidden
-            className="arrow-right-hover-animation size-4 shrink-0 transition-transform duration-200 ease-out text-text-sub hover:text-text-strong group-hover:translate-x-0.5"
-          />
-        </div>
-        <span className="text-foreground-400 text-xs">Set up your target locales first to enable translations</span>
-      </button>
+      />
     );
   }
 
@@ -139,7 +100,7 @@ export function TranslationToggleSection({
           <button
             type="button"
             onClick={handleManageTranslationsClick}
-            className="text-foreground-400 text-xs hover:text-foreground-600 cursor-pointer text-left transition-colors"
+            className="text-text-soft hover:text-text-sub text-xs cursor-pointer text-left transition-colors"
           >
             View & manage translations ↗
           </button>

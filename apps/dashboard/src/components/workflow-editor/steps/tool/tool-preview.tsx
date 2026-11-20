@@ -7,19 +7,20 @@ import {
 } from '@novu/shared';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
-import {
-  DEFAULT_CONTENT_SOURCE,
-  type ProviderOverrideOption,
-} from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
+import type { ProviderOverrideOption } from '@/components/workflow-editor/steps/shared/provider-overrides/override-options';
 import {
-  getMergedOverrideHint,
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
+  usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import {
+  DEFAULT_CONTENT_SOURCE,
+  type OverrideContentSource,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
-import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
+import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
+import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 
 type ToolPreviewResult = {
   type: string;
@@ -32,6 +33,23 @@ type ToolPreviewProps = {
 };
 
 const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled tools';
+
+/** The provider-wide webhook payload is shown raw; an integration's is shown merged over it. */
+type ToolPreviewMode =
+  | { kind: 'default' }
+  | { kind: 'override' | 'webhook-provider' | 'webhook-integration'; source: OverrideContentSource };
+
+function getToolPreviewMode(source: OverrideContentSource | undefined): ToolPreviewMode {
+  if (!source) {
+    return { kind: 'default' };
+  }
+
+  if (source.providerId !== ToolProviderIdEnum.Webhook) {
+    return { kind: 'override', source };
+  }
+
+  return { kind: source.kind === 'provider' ? 'webhook-provider' : 'webhook-integration', source };
+}
 
 function formatConnectedPrimaryContentHints(providerOptions: ProviderOverrideOption[]): string {
   return providerOptions
@@ -91,55 +109,30 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const preview = extractToolPreview(previewData);
   const body = preview?.body ?? '';
 
-  const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.TOOL);
   const { selectedSource, previewSource, setPreviewSource } = useContentSource();
-  const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
-  const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
+  const overrideSource = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+  const previewMode = getToolPreviewMode(overrideSource);
 
+  const previewOverrides = usePreviewOverrideValues(preview);
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    providerId: isWebhookPreview ? undefined : activeProviderId,
-    formOverrides: providerOverrides,
-    previewOverrides: preview?.providerOverrides,
+    source: previewMode.kind === 'webhook-provider' ? undefined : overrideSource,
+    formOverrides: overrides,
+    previewOverrides,
   });
-  const webhookPreviewJson = isWebhookPreview
-    ? JSON.stringify(preview?.providerOverrides?.[ToolProviderIdEnum.Webhook] ?? {}, null, 2)
-    : undefined;
 
-  const getHintText = () => {
-    if (!activeProviderId) {
-      const defaultContentMapping = formatConnectedPrimaryContentHints(providerOptions);
+  const getDefaultHintText = () => {
+    const defaultContentMapping = formatConnectedPrimaryContentHints(providerOptions);
 
-      if (!defaultContentMapping) {
-        return 'Delivered to every enabled tool provider.';
-      }
-
-      return `Delivered to every enabled tool provider — ${defaultContentMapping}.`;
+    if (!defaultContentMapping) {
+      return 'Delivered to every enabled tool provider.';
     }
 
-    if (isWebhookPreview) {
-      return 'Each webhook integration merges its own body template beneath this payload.';
-    }
-
-    // Non-webhook providerId always yields an annotated preview object from the hook.
-    return getMergedOverrideHint({
-      hasOverride: annotatedPreview?.hasOverride ?? false,
-      defaultContentKey: annotatedPreview?.defaultContentKey,
-      body,
-      providerId: activeProviderId,
-      displayName: providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? '',
-    });
+    return `Delivered to every enabled tool provider — ${defaultContentMapping}.`;
   };
 
-  const renderPanel = () => {
-    if (webhookPreviewJson !== undefined) {
-      return <pre className={PREVIEW_PANEL_CLASS}>{webhookPreviewJson}</pre>;
-    }
-
-    if (annotatedPreview) {
-      return <AnnotatedOverrideJson {...annotatedPreview} />;
-    }
-
+  const renderDefaultPanel = () => {
     if (!body) {
       return (
         <div className="text-foreground-400 flex min-h-16 items-center justify-center rounded-md border border-dashed border-neutral-100 p-2 text-xs italic">
@@ -151,13 +144,62 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body}</div>;
   };
 
-  let previewLabel = 'Default content';
-  if (activeProviderId) {
-    previewLabel = 'Merged override fields';
-  }
-  if (isWebhookPreview) {
-    previewLabel = 'Rendered override JSON';
-  }
+  const renderPreview = () => {
+    if (isPreviewPending) {
+      return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
+    }
+
+    switch (previewMode.kind) {
+      case 'default':
+        return (
+          <>
+            <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
+              Default content
+            </span>
+            {renderDefaultPanel()}
+            <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">{getDefaultHintText()}</div>
+          </>
+        );
+      case 'webhook-provider': {
+        const webhookPreviewLines = JSON.stringify(
+          preview?.providerOverrides?.[ToolProviderIdEnum.Webhook] ?? {},
+          null,
+          2
+        )
+          .split('\n')
+          .map((json) => ({ json }));
+
+        return (
+          <ResolvedPayloadPreview
+            title="Provider-wide override"
+            lines={webhookPreviewLines}
+            source={previewMode.source}
+            providerOptions={providerOptions}
+            hint="Each webhook integration merges its own body template beneath this payload."
+          />
+        );
+      }
+      case 'webhook-integration':
+      case 'override':
+        return annotatedPreview ? (
+          <ResolvedPayloadPreview
+            lines={annotatedPreview.annotatedLines}
+            source={previewMode.source}
+            providerOptions={providerOptions}
+            hint={
+              previewMode.kind === 'webhook-integration'
+                ? 'This integration merges its own body template beneath this payload.'
+                : undefined
+            }
+          />
+        ) : null;
+      default: {
+        const unhandled: never = previewMode;
+
+        return unhandled;
+      }
+    }
+  };
 
   const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
 
@@ -171,32 +213,20 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       />
 
       <div className="relative flex min-h-0 flex-1 flex-col gap-3 p-3">
-        <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
-          <div className="flex h-7 shrink-0 items-center gap-2">
-            <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
-              <ToolFill className="size-3.5" />
+        {previewMode.kind === 'default' ? (
+          <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
+            <div className="flex h-7 shrink-0 items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
+                <ToolFill className="size-3.5" />
+              </div>
+              <span className="text-foreground-950 text-xs font-bold">Tool preview</span>
             </div>
-            <span className="text-foreground-950 text-xs font-bold">Tool preview</span>
+
+            <div className="flex min-h-0 flex-1 flex-col gap-1.5">{renderPreview()}</div>
           </div>
-
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-            <div className="flex h-4 shrink-0 items-center gap-1.5">
-              {isPreviewPending ? (
-                <Skeleton className="h-3 w-40" />
-              ) : (
-                <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-                  {previewLabel}
-                </span>
-              )}
-            </div>
-
-            {isPreviewPending ? <Skeleton className="h-24 w-full shrink-0 rounded-md" /> : renderPanel()}
-
-            <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-              {isPreviewPending ? <Skeleton className="h-3 w-full max-w-sm" /> : getHintText()}
-            </div>
-          </div>
-        </div>
+        ) : (
+          renderPreview()
+        )}
       </div>
     </div>
   );

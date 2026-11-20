@@ -1,8 +1,8 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { AgentIntegrationLink } from '@/api/agents';
-import { providerHasWhatsNextPhase } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
+import { filterUserRolloutLinks } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
 import { IS_SELF_HOSTED_CE } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -19,28 +19,6 @@ type RolloutStatus = {
   allRolledOut: boolean;
   isSettled: boolean;
 };
-
-function isRolloutCapableLink(
-  link: AgentIntegrationLink,
-  isMsTeamsWhatsNextEnabled: boolean,
-  isEmailWhatsNextEnabled: boolean
-): boolean {
-  const providerId = link.integration.providerId;
-
-  if (providerId === EmailProviderIdEnum.NovuAgent) {
-    return isEmailWhatsNextEnabled;
-  }
-
-  if (!providerHasWhatsNextPhase(providerId)) {
-    return false;
-  }
-
-  if (providerId === ChatProviderIdEnum.MsTeams && !isMsTeamsWhatsNextEnabled) {
-    return false;
-  }
-
-  return true;
-}
 
 function isEmailRolloutComplete(
   integrationId: string,
@@ -67,7 +45,11 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
   const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
 
   const rolloutLinks = useMemo(
-    () => links.filter((link) => isRolloutCapableLink(link, isMsTeamsWhatsNextEnabled, isEmailWhatsNextEnabled)),
+    () =>
+      filterUserRolloutLinks(links, {
+        isMsTeamsWhatsNextEnabled,
+        isEmailWhatsNextEnabled,
+      }),
     [links, isMsTeamsWhatsNextEnabled, isEmailWhatsNextEnabled]
   );
 
@@ -98,7 +80,11 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
     rolloutLinks.length === 0 || ((!hasEmailRolloutLink || !isIntegrationsLoading) && !chatEndpointsLoading);
 
   const allRolledOut = useMemo(() => {
-    if (rolloutLinks.length === 0 || !dashboardSubscriberId) {
+    if (rolloutLinks.length === 0) {
+      return true;
+    }
+
+    if (!dashboardSubscriberId) {
       return false;
     }
 

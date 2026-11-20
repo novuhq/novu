@@ -17,7 +17,9 @@ export class AppController {
   }
 
   @Get('/welcome/:userId')
-  public async sendWelcomeNotification(@Param('userId') userId: string) {
+  public async sendWelcomeNotification(
+    @Param('userId') userId: string
+  ): ReturnType<ReturnType<NotificationService['welcomeWorkflow']>['trigger']> {
     const user = this.userService.getUser(userId);
 
     return this.notificationService.welcomeWorkflow().trigger({

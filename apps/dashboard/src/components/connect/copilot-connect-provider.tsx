@@ -3,7 +3,7 @@ import { NovuProvider } from '@novu/react';
 import { useQuery } from '@tanstack/react-query';
 import { type ComponentProps, type ReactNode, useMemo } from 'react';
 import { getNovuInboxContext } from '@/api/novu-context';
-import { APP_ID, IS_SELF_HOSTED } from '@/config';
+import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -48,14 +48,17 @@ export function CopilotConnectProvider({ children, fallback = null }: CopilotCon
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
 
+  const email = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '';
+  // Keyed on primitives: Clerk hands back new `user` / `emailAddresses` references on session refreshes, and a new
+  // subscriber object makes `NovuProvider` build a new client, which resets any chat that is mid-run.
   const subscriber = useMemo(
     () => ({
       subscriberId: user?.externalId ?? '',
-      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
+      email,
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
     }),
-    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
+    [user?.externalId, email, user?.firstName, user?.lastName]
   );
 
   // Mint the tenant context + contextHash + subscriberHash from the customer-authenticated
@@ -91,6 +94,7 @@ export function CopilotConnectProvider({ children, fallback = null }: CopilotCon
       applicationIdentifier={APP_ID}
       apiUrl={resolveNovuProdApiUrl()}
       socketUrl={resolveNovuProdSocketUrl()}
+      socketOptions={isNovuProductionTarget() ? undefined : SOCKET_OPTIONS}
       subscriberHash={connectContext?.subscriberHash}
       context={connectContext?.context}
       contextHash={connectContext?.contextHash}

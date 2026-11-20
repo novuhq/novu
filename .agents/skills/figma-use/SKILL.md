@@ -12,7 +12,7 @@ Use the `use_figma` tool to execute JavaScript in Figma files via the Plugin API
 
 **If Figma MCP tools appear as deferred tools, batch-load all their schemas in a single `ToolSearch` call** using the `select:` syntax — e.g. `ToolSearch query="select:use_figma,get_screenshot,get_metadata,create_new_file"`. One round trip beats six.
 
-**If the task involves building or updating a full page, screen, or multi-section layout in Figma from code**, also load [figma-generate-design](../figma-generate-design/SKILL.md). It provides the workflow for discovering design system components via `search_design_system`, importing them, and assembling screens incrementally. Both skills work together: this one for the API rules, that one for the screen-building workflow.
+**If the task involves building or updating a full page, screen, or multi-section layout in Figma from code**, also load the `figma-generate-design` skill. It provides the workflow for discovering design system components via `search_design_system`, importing them, and assembling screens incrementally. Both skills work together: this one for the API rules, that one for the screen-building workflow.
 
 Before anything, load [plugin-api-standalone.index.md](references/plugin-api-standalone.index.md) to understand what is possible. When you are asked to write plugin API code, use this context to grep [plugin-api-standalone.d.ts](references/plugin-api-standalone.d.ts) for relevant types, methods, and properties. This is the definitive source of truth for the API surface. It is a large typings file, so do not load it all at once, grep for relevant sections as needed.
 
@@ -90,7 +90,7 @@ Available in Slides mode: Rectangle, Frame, Component, Text, Ellipse, Star, Line
 
 **Blocked** in Slides mode: Sticky, Connector, ShapeWithText, CodeBlock, Webpage, Page.
 
-> **Slides note:** There is no dedicated read tool for Slides files yet. Use `use_figma` with read-only scripts for inspection (see Section 6 "Inspect first" pattern), and `get_screenshot` / `await node.screenshot()` for visual context. For Slides-specific API guidance, load the [figma-use-slides](../figma-use-slides/SKILL.md) skill.
+> **Slides note:** There is no dedicated read tool for Slides files yet. Use `use_figma` with read-only scripts for inspection (see Section 6 "Inspect first" pattern), and `get_screenshot` / `await node.screenshot()` for visual context. For Slides-specific API guidance, load the `figma-use-slides` skill.
 
 ## 5. Efficient APIs — Prefer These Over Verbose Alternatives
 

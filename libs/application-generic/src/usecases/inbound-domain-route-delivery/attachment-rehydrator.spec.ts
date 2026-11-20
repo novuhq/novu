@@ -85,11 +85,59 @@ describe('AttachmentRehydrator', () => {
     expect(rehydrated.contentType).to.equal(attachment.contentType);
     expect(rehydrated.size).to.equal(attachment.size);
     expect(rehydrated.url).to.equal(attachment.url);
-    expect(rehydrated.storagePath).to.equal(attachment.storagePath);
+    expect(rehydrated).to.not.have.property('storagePath');
     // Legacy content embedded
     expect(rehydrated.content).to.deep.equal({ type: 'Buffer', data: [37, 80, 68, 70] });
     expect(rehydrated.contentBytes).to.equal(attachment.size);
     sinon.assert.calledOnceWithExactly(storageService.getFile, attachment.storagePath);
+  });
+
+  it('creates a fresh six-hour signed URL without downloading S3 content', async () => {
+    sandbox.useFakeTimers(new Date('2024-01-01T00:00:00.000Z'));
+    storageService.getReadSignedUrl.resolves('https://s3.example.com/fresh-six-hour-url');
+
+    const attachment = makeAttachment();
+    const result = await rehydrator.createSignedUrls([attachment]);
+
+    expect(result).to.deep.equal([
+      {
+        filename: attachment.filename,
+        contentType: attachment.contentType,
+        size: attachment.size,
+        url: 'https://s3.example.com/fresh-six-hour-url',
+        expiresAt: '2024-01-01T06:00:00.000Z',
+      },
+    ]);
+    sinon.assert.calledOnceWithExactly(storageService.getReadSignedUrl, attachment.storagePath, 21_600);
+    sinon.assert.notCalled(storageService.getFile);
+  });
+
+  it('keeps inline attachment content when signed URLs are unavailable', async () => {
+    const inlineAttachment = {
+      filename: 'inline.pdf',
+      contentType: 'application/pdf',
+      size: 4,
+      content: { type: 'Buffer' as const, data: [37, 80, 68, 70] },
+    };
+
+    const result = await rehydrator.createSignedUrls([inlineAttachment]);
+
+    expect(result[0].content).to.deep.equal(inlineAttachment.content);
+    expect(result[0]).to.not.have.property('expiresAt');
+    expect(result[0]).to.not.have.property('storagePath');
+    sinon.assert.notCalled(storageService.getReadSignedUrl);
+    sinon.assert.notCalled(storageService.getFile);
+  });
+
+  it('propagates signing failures so the webhook job can retry', async () => {
+    storageService.getReadSignedUrl.rejects(new Error('signing unavailable'));
+
+    try {
+      await rehydrator.createSignedUrls([makeAttachment()]);
+      expect.fail('Expected signed URL creation to fail');
+    } catch (error) {
+      expect((error as Error).message).to.equal('signing unavailable');
+    }
   });
 
   it('sets content to null when the file does not exist in S3 (NonExistingFileError)', async () => {
@@ -102,7 +150,7 @@ describe('AttachmentRehydrator', () => {
     expect(result[0].content).to.be.null;
     // url and other metadata still present
     expect(result[0].url).to.equal(attachment.url);
-    expect(result[0].size).to.equal(attachment.size);
+    expect(result[0]).to.not.have.property('storagePath');
   });
 
   it('sets content to null on unexpected S3 error', async () => {
@@ -114,6 +162,7 @@ describe('AttachmentRehydrator', () => {
     expect(result).to.have.length(1);
     expect(result[0].content).to.be.null;
     expect(result[0].url).to.equal(attachment.url);
+    expect(result[0]).to.not.have.property('storagePath');
   });
 
   it('rehydrates multiple attachments in parallel', async () => {
@@ -158,7 +207,7 @@ describe('AttachmentRehydrator', () => {
     expect(result[0].content).to.deep.equal({ type: 'Buffer', data: [37, 80, 68, 70] });
     expect(result[0].contentBytes).to.equal(4);
     expect(result[0].url).to.be.undefined;
-    expect(result[0].storagePath).to.be.undefined;
+    expect(result[0]).to.not.have.property('storagePath');
     sinon.assert.notCalled(storageService.getFile);
   });
 

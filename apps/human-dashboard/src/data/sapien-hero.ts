@@ -1,0 +1,156 @@
+import type { BrandChannel } from '@/components/sapien/brand-logo';
+import type { SectionAssets } from '@/data/sapien-assets';
+
+export const heroAssets = {
+  light: {
+    src: '/images/sapien/hero/light.svg',
+    width: 1049,
+    height: 667,
+    nodeId: '874:10702',
+    purpose: 'Blurred warm glow behind the card stack (785×403 ellipse plus its blur bleed)',
+  },
+  stackMask: {
+    src: '/images/sapien/hero/stack-mask.svg',
+    width: 810.307,
+    height: 580.307,
+    nodeId: '874:10704',
+    purpose: 'Blurred ellipse alpha mask that fades the card stack (575×345 ellipse plus its blur bleed)',
+  },
+  robotArms: {
+    src: '/images/sapien/hero/robot-arms.webp',
+    width: 1820,
+    height: 864,
+    nodeId: '874:10754',
+    purpose: 'Static dithered robot arms holding the card stack (Figma 2x render, shown at 910×432)',
+  },
+  opsAgentAvatar: {
+    src: '/images/sapien/hero/ops-agent-avatar.webp',
+    width: 88,
+    height: 88,
+    nodeId: '874:10713',
+    purpose: 'Dithered sphere avatar on the business card (2x, shown at 44×44)',
+  },
+  agentIdAvatar: {
+    src: '/images/sapien/hero/agent-id-avatar.webp',
+    width: 192,
+    height: 350,
+    nodeId: '874:5700',
+    purpose: 'Dithered portrait on the Agent ID card (2x, shown at 96×175)',
+  },
+  salesAgentAvatar: {
+    src: '/images/sapien/hero/sales-agent-avatar.webp',
+    width: 120,
+    height: 120,
+    nodeId: '874:5762',
+    purpose: 'Dithered sphere avatar on the call card (2x, shown at 60×60)',
+  },
+  salesAgentPhone: {
+    src: '/images/sapien/hero/sales-agent-phone.webp',
+    width: 379,
+    height: 85,
+    nodeId: '874:5780',
+    purpose: 'Noise-dissolved caller number on the call card (2x render of the text effect, shown at 189.5×42.5)',
+  },
+  callWaveform: {
+    src: '/images/sapien/hero/call-waveform.svg',
+    width: 261,
+    height: 60,
+    nodeId: '874:5731',
+    purpose: 'Voice waveform panel on the call card',
+  },
+  checkIcon: {
+    src: '/images/sapien/hero/check-icon.svg',
+    width: 20,
+    height: 20,
+    nodeId: '874:10730',
+    purpose: 'Hand-drawn verified tick on the business card rows',
+  },
+} satisfies SectionAssets;
+
+/**
+ * One sentence on two lines: "Get your AI agent on [channel]" in the sans, the channel in the original
+ * title's pill with its logo, then `accent` in orange Redaction italic.
+ */
+export const HERO_TITLE = {
+  lead: 'Get your AI agent on',
+  accent: 'with everyone around you',
+} as const;
+
+/** Email first, then the same cycle the title used to run (Slack, Telegram, and back). */
+export const HERO_CHANNELS = ['email', 'slack', 'telegram'] as const satisfies readonly BrandChannel[];
+
+/** How long each channel stays before the next one replaces it. */
+export const HERO_SWAP_INTERVAL = 5000;
+
+// Draft copy — not in Figma. The CLI's own summary: people write in, the agent works it from one inbox.
+export const HERO_DESCRIPTION = [
+  'Your team, family and customers write to it.',
+  'It reads, asks and answers, all from one inbox.',
+] as const;
+
+export const HERO_COMMAND_LABEL = 'Hero setup command';
+
+export const HERO_FIGURE_LABEL = 'Example agent identity cards';
+// Draft copy — not in Figma
+export const HERO_FIGURE_DESCRIPTION =
+  'Three example cards rotate in a stack held by two robot arms: a business card for ops-agent with a verified email address, phone number, Telegram and Slack handle; an Agent ID for atlas-northwind, a personal assistant working for Maya Chen, with its email, Telegram and Slack addresses; and sales-agent on a call with a customer.';
+export const HERO_FIGURE_CAPTION = 'fig. 01';
+export const HERO_FIGURE_STATE = { playing: 'dithering', paused: 'paused' };
+
+/** Each card stays in front for this long before the next one replaces it. */
+export const HERO_CARD_INTERVAL = 6000;
+
+export type HeroRelation = Readonly<{ verb: string; object: string }>;
+
+export const HERO_RELATIONS = [
+  { verb: 'hands out', object: 'business card' },
+  { verb: 'works for', object: 'human' },
+  { verb: 'calls', object: 'customer' },
+] as const satisfies readonly HeroRelation[];
+
+export const BUSINESS_CARD = {
+  title: 'Business Card',
+  status: 'Online',
+  name: 'ops-agent',
+  // Two-way is the point of the card: people reach the agent, and it reaches them.
+  role: 'They reach it. It reaches them.',
+  rows: [
+    // Figma's trailing "\r" renders as a non-breaking space before the tick.
+    { label: 'Email', channel: 'email', value: 'ops-agent@agentinbox.md ' },
+    { label: 'Phone', channel: null, value: '+1 (415) 555-0142' },
+    { label: 'Telegram', channel: 'telegram', value: '@ops_agent' },
+    { label: 'Slack', channel: 'slack', value: '@ops_agent' },
+  ],
+  mrz: ['AGENT<<OPS<AGENT<<<<<<<<<<<<<<<<<<<<<<', 'AGENTINBOX<MD<<14155550142<<<<<<<<<<<<'],
+} as const;
+
+export const AGENT_ID_CARD = {
+  title: 'Agent ID',
+  number: 'No. 0427',
+  fields: [
+    { label: 'Name', value: 'atlas-northwind' },
+    { label: 'Role', value: 'Personal assistant' },
+    { label: 'Works for', value: 'Maya Chen' },
+  ],
+  // Draft copy — not in Figma
+  channels: [
+    { channel: 'email', address: 'atlas@agentinbox.md' },
+    { channel: 'telegram', address: '@atlas_northwind_bot' },
+    { channel: 'slack', address: '@atlas' },
+  ],
+  mrz: ['AGENT<<ATLAS<<<<<<<<<<<<<<<<<<<<<<<<<<<', 'AGENTINBOX<MD<<PA<<0427<<<<<<<<<<<<<'],
+} as const;
+
+export const CALL_CARD = {
+  title: 'sales-agent',
+  status: 'Online',
+  callState: 'ON CALL · 00:42',
+  phone: '+1 (415) 555-0199',
+  // Figma's trailing "\r" renders as a non-breaking space at the line end.
+  quote: [
+    { text: '“Hi, it’s the sales agent from Acme. ', muted: true },
+    { text: 'You asked for a demo — does ', muted: true },
+    { text: 'Thursday at 3 pm work?”', muted: false },
+  ],
+  mrz: ['AGENT<<SALES<AGENT<<<<<<<<<<<<<<<<<<<<<<', 'AGENTINBOX<MD<<14155550199<<<<<<<<<<<<<<'],
+} as const;

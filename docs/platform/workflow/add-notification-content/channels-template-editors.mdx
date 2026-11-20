@@ -1,6 +1,6 @@
 ---
 title: 'Channels Template Editors'
-description: "Design and configure notification content for email, in-app, push, and SMS channels using the Novu template editors in the dashboard."
+description: "Design and configure notification content for email, in-app, push, SMS, and chat channels using the Novu template editors in the dashboard."
 ---
 
 
@@ -8,7 +8,8 @@ The channel template editors are where you define the content of the notificatio
 
 Each channel exposes an editor aligned with how messages are delivered on that channel:
 
-- **SMS and chat**: Body field only
+- **SMS**: Body field only
+- **Chat**: Block editor for rich cards, or a text editor for plain text / Liquid
 - **Push, email, and in-app**: Subject and body fields
 
 All editors (including the Subject field editors) support variables and dynamic data that can be used to [personalize notification content](/platform/workflow/add-notification-content/personalize-content). Notification preview is also supported on all editors.
@@ -91,6 +92,10 @@ You can:
 
 This enables full control over client-side navigation behavior.
 
+<Note>
+  For security, Novu only keeps redirect URLs that are an absolute `http`/`https` URL, a root-relative path that starts with `/` (for example, `/tasks/123`), or a URL built from [Liquid variables](/platform/workflow/add-notification-content/personalize-content) (for example, `{{payload.url}}`). Other values - such as `javascript:`, `mailto:`, protocol-relative `//host` URLs, or custom app deep-link schemes (`myapp://...`) - are removed, and the notification renders without a redirect. This applies to both the main redirect URL and action button URLs.
+</Note>
+
 ### Data object
 
 The data object is a customizable key-value store available in the in-app step. You can use it to extend each Inbox component notification by embedding custom data.
@@ -98,6 +103,12 @@ The data object is a customizable key-value store available in the in-app step. 
 <Note>
   To learn more about how to use the data object to customize how messages appear in the [`<Inbox />`](/platform/inbox), refer to the [Data Object](/platform/inbox/configuration/data-object) documentation.
 </Note>
+
+## Chat template editor
+
+The Chat template editor supports a **block editor** (structured cards) and a **text editor** (plain text / Liquid). Existing text steps stay on the text editor, and new empty steps default to the block editor.
+
+For supported blocks, preview, backward compatibility, and how this relates to provider overrides, see [Writing chat templates](/platform/integrations/chat/writing-chat-template).
 
 ## Email template editor
 
@@ -248,10 +259,10 @@ Every layout must include the `{{content}}` variable. This variable dynamically 
 - Reusable across workflows.
 - Support both block and code editors.
 - Each environment maintains its own set of layouts.
-- Supports variables and translations.
+- Supports subscriber variables, such as `{{subscriber.firstName}}`, and [translation keys](/platform/workflow/advanced-features/translations) after translations are enabled on the layout.
 
 <Note>
-  Payload variables are not supported in layouts because one layout can be used across multiple workflows and workflows can have strict payload schema validation.
+  Payload variables are not supported in layouts because one layout can be used across multiple workflows and workflows can have strict payload schema validation. Put payload fields in the email step body, which is injected at `{{content}}`.
 </Note>
 
 #### Apply an email layout to a workflow

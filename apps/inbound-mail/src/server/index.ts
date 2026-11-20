@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { BullMqService, buildEnvelopeRequestSource } from '@novu/application-generic';
+import { buildEnvelopeRequestSource } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -7,17 +7,19 @@ import events from 'events';
 import extend from 'extend';
 import { convert } from 'html-to-text';
 import _ from 'lodash';
-import { MailParser } from 'mailparser';
+import { simpleParser } from 'mailparser';
 import path from 'path';
 import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
 import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
+import { extractEmailDomain } from './address-utils';
 import { uploadAttachmentsToS3 } from './attachment-uploader';
 import { collectClientIpSources } from './client-ip-sources';
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
+import { normalizeParsedMail } from './mail-normalizer';
 
 const nr = require('newrelic');
 
@@ -27,7 +29,6 @@ const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 
 const inboundMailService = new InboundMailService();
-BullMqService.haveProInstalled();
 
 /**
  * Exposed for tests so they can inject mock `requestLogger` / `tenantResolver`
@@ -133,7 +134,7 @@ class Mailin extends events.EventEmitter {
             return reject(new Error(localErrorMessage));
           }
 
-          const domain = /@(.*)/.exec(email)[1];
+          const domain = extractEmailDomain(email);
 
           const validateViaLocal = () => {
             if (_this.listeners(validateEvent).length) {
@@ -152,6 +153,11 @@ class Mailin extends events.EventEmitter {
           };
 
           const validateViaDNS = () => {
+            if (domain === null) {
+              _this.emit(validationFailedEvent, email);
+
+              return reject(new Error(dnsErrorMessage));
+            }
             try {
               dns.resolveMx(domain, (err, addresses) => {
                 if (err || !addresses || !addresses.length) {
@@ -217,20 +223,27 @@ class Mailin extends events.EventEmitter {
 
             return logInboundMailAccepted(connection)
               .then(() => retrieveRawEmail(connection))
-              .then((rawEmail) =>
-                Promise.all([
+              .then((rawEmailBytes) => {
+                const rawEmail = rawEmailBytes.toString();
+
+                return Promise.all([
                   rawEmail,
-                  validateDkim(connection, rawEmail),
+                  /*
+                   * DKIM signs the exact bytes. Decoding them as UTF-8 and back
+                   * would change any 8-bit text in another charset and break
+                   * a valid signature.
+                   */
+                  validateDkim(connection, rawEmailBytes),
                   validateSpf(connection),
                   computeSpamScore(connection, rawEmail),
                   parseEmail(connection),
-                ])
-              )
-              .then(([rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail]) =>
+                ]);
+              })
+              .then(([rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail]) =>
                 Promise.all([
                   connection,
                   rawEmail,
-                  isDkimValid,
+                  dkimVerdict,
                   isSpfValid,
                   spamScore,
                   parsedEmail,
@@ -240,13 +253,13 @@ class Mailin extends events.EventEmitter {
               .then(function ([
                 connectionFinalize,
                 rawEmail,
-                isDkimValid,
+                dkimVerdict,
                 isSpfValid,
                 spamScore,
                 parsedEmail,
                 language,
               ]) {
-                const args = [connectionFinalize, rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail, language];
+                const args = [connectionFinalize, rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail, language];
 
                 return finalizeMessage.apply(this, args);
               })
@@ -281,6 +294,7 @@ class Mailin extends events.EventEmitter {
                 return finalizedMessage;
               })
               .then((finalizedMessage) =>
+                // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing attachment upload flow is outside this change.
                 nr.startSegment('inbound-mail/upload-attachments', true, async () => {
                   if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
                     const { mode, uploaded, failedCount, retriableFailedCount } = await uploadAttachmentsToS3(
@@ -373,15 +387,13 @@ class Mailin extends events.EventEmitter {
     }
 
     function retrieveRawEmail(connection) {
-      return nr.startSegment('inbound-mail/retrieve-raw-email', true, () =>
-        fs.promises.readFile(connection.mailPath).then((rawEmail) => rawEmail.toString())
-      );
+      return nr.startSegment('inbound-mail/retrieve-raw-email', true, () => fs.promises.readFile(connection.mailPath));
     }
 
     function validateDkim(connection, rawEmail) {
       return nr.startSegment('inbound-mail/validate-dkim', true, () => {
         if (configuration.disableDkim) {
-          return Promise.resolve(false);
+          return Promise.resolve({ isValid: false, domains: [] });
         }
 
         logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating dkim.`);
@@ -392,7 +404,7 @@ class Mailin extends events.EventEmitter {
             `${connection.id} Unable to validate dkim. Consider dkim as failed.`
           );
 
-          return false;
+          return { isValid: false, domains: [] };
         });
       });
     }
@@ -443,43 +455,27 @@ class Mailin extends events.EventEmitter {
     }
 
     function parseEmail(connection) {
-      return nr.startSegment(
-        'inbound-mail/parse-email',
-        true,
-        () =>
-          new Promise((resolve) => {
-            logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Parsing email.`);
+      return nr.startSegment('inbound-mail/parse-email', true, async () => {
+        logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Parsing email.`);
 
-            /* Prepare the mail parser. */
-            const mailParser = new MailParser();
+        const parsed = await simpleParser(fs.createReadStream(connection.mailPath));
+        const mail = normalizeParsedMail(parsed);
 
-            mailParser.on('end', (mail) => {
-              /*
-               * logger.verbose(util.inspect(mail, {
-               * depth: 5
-               * }));
-               */
+        /*
+         * Make sure that both text and html versions of the
+         * body are available.
+         */
+        if (!mail.text && !mail.html) {
+          mail.text = '';
+          mail.html = '<div></div>';
+        } else if (!mail.html) {
+          mail.html = _this._convertTextToHtml(mail.text);
+        } else if (!mail.text) {
+          mail.text = _this._convertHtmlToText(mail.html);
+        }
 
-              /*
-               * Make sure that both text and html versions of the
-               * body are available.
-               */
-              if (!mail.text && !mail.html) {
-                mail.text = '';
-                mail.html = '<div></div>';
-              } else if (!mail.html) {
-                mail.html = _this._convertTextToHtml(mail.text);
-              } else if (!mail.text) {
-                mail.text = _this._convertHtmlToText(mail.html);
-              }
-
-              return resolve(mail);
-            });
-
-            /* Stream the written email to the parser. */
-            fs.createReadStream(connection.mailPath).pipe(mailParser);
-          })
-      );
+        return mail;
+      });
     }
 
     function detectLanguage(connection, text) {
@@ -514,18 +510,28 @@ class Mailin extends events.EventEmitter {
       });
     }
 
-    function finalizeMessage(connection, rawEmail, isDkimValid, isSpfValid, spamScore, parsedEmail, language) {
+    function finalizeMessage(connection, rawEmail, dkimVerdict, isSpfValid, spamScore, parsedEmail, language) {
       /* Finalize the parsed email object. */
-      parsedEmail.dkim = isDkimValid ? 'pass' : 'failed';
+      parsedEmail.dkim = dkimVerdict.isValid ? 'pass' : 'failed';
       parsedEmail.spf = isSpfValid ? 'pass' : 'failed';
+      /*
+       * The domains the verdicts vouch for. A pass only proves that some
+       * domain sent the email, so consumers that trust the From address also
+       * check that one of these is its domain (alignment, as in DMARC):
+       *   dkimDomains: the d= domains whose signatures verified
+       *   spfDomain:   the MAIL FROM domain SPF checked, null without one
+       */
+      parsedEmail.dkimDomains = dkimVerdict.domains;
+      parsedEmail.spfDomain = extractEmailDomain(connection.envelope?.mailFrom?.address ?? '')?.toLowerCase() || null;
       parsedEmail.spamScore = spamScore;
       parsedEmail.language = language;
 
       /*
        * One searchable line per email with the final sender-auth verdicts and
        * the exact inputs the SPF check used. Downstream (agent runtime) fails
-       * closed on anything but pass/pass, so this is the primary breadcrumb
-       * when inbound agent mail bounces with "couldn't verify your email".
+       * closed unless both pass and one of the domains is the From address's,
+       * so this is the primary breadcrumb when inbound agent mail bounces with
+       * "couldn't verify your email".
        */
       logger.info(
         {
@@ -537,6 +543,8 @@ class Mailin extends events.EventEmitter {
           clientHostname: connection.clientHostname,
           dkim: parsedEmail.dkim,
           spf: parsedEmail.spf,
+          dkimDomains: parsedEmail.dkimDomains,
+          spfDomain: parsedEmail.spfDomain,
           spamScore,
           dkimCheckDisabled: configuration.disableDkim,
           spfCheckDisabled: configuration.disableSpf,
@@ -596,22 +604,15 @@ class Mailin extends events.EventEmitter {
 
       /*
        * Preserve threading headers so downstream consumers can correlate
-       * replies back to the original outbound message.
-       * mailparser@0.6.x stores both fields as string[] — normalise them to
-       * the shapes expected by IInboundParseDataDto / InboundEmailParseCommand
-       * so class-validator's @IsString() / @IsOptional() passes correctly.
+       * replies back to the original outbound message. normalizeParsedMail
+       * already guarantees bracketless ids with the shapes below; map absent
+       * values to null so class-validator's @IsString() / @IsOptional() on
+       * IInboundParseDataDto / InboundEmailParseCommand passes correctly.
        * inReplyTo  → string | null  (RFC 5322 allows only one message-id)
        * references → string[] | null
        */
-      parsedEmail.inReplyTo = Array.isArray(parsedEmail.inReplyTo)
-        ? (parsedEmail.inReplyTo[0] ?? null)
-        : (parsedEmail.inReplyTo ?? null);
-
-      parsedEmail.references = Array.isArray(parsedEmail.references)
-        ? parsedEmail.references.length > 0
-          ? parsedEmail.references
-          : null
-        : (parsedEmail.references ?? null);
+      parsedEmail.inReplyTo = parsedEmail.inReplyTo ?? null;
+      parsedEmail.references = parsedEmail.references ?? null;
 
       _this.emit('message', connection, parsedEmail, rawEmail);
 
@@ -829,36 +830,44 @@ class Mailin extends events.EventEmitter {
         connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
-        stream.pipe(fs.createWriteStream(mailPath));
+        const signalTemporaryFailure = (error) => {
+          nr.noticeError(error);
+          logger.error(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
+          );
+
+          /*
+           * Signal a transient failure (4xx) to the sending MTA so it retries
+           * delivery instead of treating the message as accepted. Without
+           * this, a queue-insert failure after an unconditional onDataCallback()
+           * would silently drop the message — sender thinks 250 OK, we have
+           * nothing persisted.
+           */
+          const smtpError: Error & { responseCode?: number } =
+            error instanceof Error ? error : new Error(String(error));
+          if (typeof smtpError.responseCode !== 'number') {
+            smtpError.responseCode = 451;
+          }
+          onDataCallback(smtpError);
+        };
+
+        const mailFile = fs.createWriteStream(mailPath);
+        stream.pipe(mailFile);
 
         stream.on('data', (chunk) => {
           _this.emit('data', connection, chunk);
         });
 
-        stream.on('end', () => {
+        // The SMTP stream ends before the temp file is flushed, so reading on 'end' can hit ENOENT.
+        mailFile.on('finish', () => {
           dataReady(connection)
             .then(() => onDataCallback())
-            .catch((error) => {
-              nr.noticeError(error);
-              logger.error(
-                { err: error, context: LOG_CONTEXT, connectionId: connection.id },
-                `${connection.id} Inbound mail processing failed; signalling temporary failure to sender for retry`
-              );
+            .catch(signalTemporaryFailure);
+        });
 
-              /*
-               * Signal a transient failure (4xx) to the sending MTA so it retries
-               * delivery instead of treating the message as accepted. Without
-               * this, a queue-insert failure after an unconditional onDataCallback()
-               * would silently drop the message — sender thinks 250 OK, we have
-               * nothing persisted.
-               */
-              const smtpError: Error & { responseCode?: number } =
-                error instanceof Error ? error : new Error(String(error));
-              if (typeof smtpError.responseCode !== 'number') {
-                smtpError.responseCode = 451;
-              }
-              onDataCallback(smtpError);
-            });
+        mailFile.on('error', (error) => {
+          unlinkFile(connection).then(() => signalTemporaryFailure(error));
         });
 
         stream.on('close', () => {
@@ -984,6 +993,7 @@ function getAddressTo(finalizedMessage) {
 
   return toAddressObject.address ?? toAddressObject;
 }
+
 interface ISmtpOptions {
   banner: string;
   logger: boolean;

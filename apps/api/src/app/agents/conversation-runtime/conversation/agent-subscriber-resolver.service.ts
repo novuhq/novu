@@ -6,7 +6,14 @@ import {
   CreateOrUpdateSubscriberUseCase,
   PinoLogger,
 } from '@novu/application-generic';
-import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import {
+  AgentRepository,
+  ChannelEndpointRepository,
+  HumanContactRepository,
+  isDuplicateKeyError,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
@@ -15,6 +22,7 @@ import {
 } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { provedWhatsAppNumberOf } from '../../human-relay/whatsapp-number-proof';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
@@ -40,6 +48,13 @@ export interface ResolveSubscriberParams {
   platform: AgentPlatformEnum;
   platformUserId: string;
   integrationIdentifier: string;
+  /** Set on inbound turns so a typed, still-unverified address resolves to its contact. */
+  agentIdentifier?: string;
+  /**
+   * An Agent Inbox relay: its WhatsApp senders resolve only by a number they proved with a wa.me code, never by
+   * `Subscriber.phone`. Anyone else on WhatsApp is a stranger.
+   */
+  isHumanRelay?: boolean;
 }
 
 export interface ResolveOrProvisionParams extends ResolveSubscriberParams {
@@ -99,7 +114,9 @@ export class AgentSubscriberResolver {
     private readonly createChannelEndpoint: CreateChannelEndpoint,
     private readonly analyticsService: AnalyticsService,
     private readonly adoptionService: AgentSubscriberAdoptionService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly humanContactRepository: HumanContactRepository,
+    private readonly agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -118,8 +135,21 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
-    // Phone-based platforms (WhatsApp, Sendblue) identify users by their phone number.
-    if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
+    if (platform === AgentPlatformEnum.WHATSAPP && params.isHumanRelay) {
+      return this.resolveProvedWhatsAppSubscriber({
+        environmentId,
+        organizationId,
+        platformUserId,
+        integrationIdentifier,
+      });
+    }
+
+    // Phone-based platforms (WhatsApp, Sendblue, Photon) identify users by their phone number.
+    if (
+      platform === AgentPlatformEnum.WHATSAPP ||
+      platform === AgentPlatformEnum.SENDBLUE ||
+      platform === AgentPlatformEnum.PHOTON_IMESSAGE
+    ) {
       return this.resolvePhoneSubscriber({
         environmentId,
         organizationId,
@@ -133,6 +163,7 @@ export class AgentSubscriberResolver {
         environmentId,
         organizationId,
         platformUserId,
+        agentIdentifier: params.agentIdentifier,
       });
     }
 
@@ -170,6 +201,38 @@ export class AgentSubscriberResolver {
     );
 
     return { outcome: 'not_found' };
+  }
+
+  /**
+   * An Agent Inbox contact on WhatsApp: whoever proved this number with a wa.me code on this business number. A
+   * number on a `phone` endpoint without that proof, or on a subscriber's profile, is no one's here.
+   */
+  private async resolveProvedWhatsAppSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    platformUserId: string;
+    integrationIdentifier: string;
+  }): Promise<SubscriberResolution> {
+    const phoneNumber = toCanonicalE164Phone(params.platformUserId);
+    if (!phoneNumber) {
+      return { outcome: 'invalid_identity' };
+    }
+
+    // Every endpoint on the number, not just the first: one written through the channel-endpoints API can share it,
+    // and must not hide the one that proved it.
+    const endpoints = await this.channelEndpointRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        integrationIdentifier: params.integrationIdentifier,
+        type: ENDPOINT_TYPES.PHONE,
+        'endpoint.phoneNumber': phoneNumber,
+      },
+      'subscriberId type providerId endpoint'
+    );
+    const proved = endpoints.find((endpoint) => provedWhatsAppNumberOf(endpoint));
+
+    return proved ? { outcome: 'resolved', subscriberId: proved.subscriberId } : { outcome: 'not_found' };
   }
 
   /**
@@ -259,6 +322,7 @@ export class AgentSubscriberResolver {
           break;
         case AgentPlatformEnum.WHATSAPP:
         case AgentPlatformEnum.SENDBLUE:
+        case AgentPlatformEnum.PHOTON_IMESSAGE:
           provisionedSubscriberId = await this.provisionPhoneIdentitySubscriber({
             environmentId: params.environmentId,
             organizationId: params.organizationId,
@@ -341,10 +405,10 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Provision a Subscriber for an open-access WhatsApp or Sendblue sender. Phone
-   * identity lives on `Subscriber.phone` (canonical E.164 with `+`) - no
-   * ChannelEndpoint. Idempotent via deterministic subscriberId. Returns `null`
-   * when the phone is empty/unparseable.
+   * Provision a Subscriber for an open-access WhatsApp, Sendblue, or Photon
+   * sender. Phone identity lives on `Subscriber.phone` (canonical E.164 with
+   * `+`) - no ChannelEndpoint. Idempotent via deterministic subscriberId.
+   * Returns `null` when the phone is empty/unparseable.
    */
   private async provisionPhoneIdentitySubscriber(params: {
     environmentId: string;
@@ -352,7 +416,7 @@ export class AgentSubscriberResolver {
     integrationIdentifier: string;
     agentIdentifier: string;
     phone: string;
-    platform: AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
+    platform: AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE | AgentPlatformEnum.PHOTON_IMESSAGE;
   }): Promise<string | null> {
     const phone = toCanonicalE164Phone(params.phone);
 
@@ -378,7 +442,11 @@ export class AgentSubscriberResolver {
     organizationId: string;
     integrationIdentifier: string;
     agentIdentifier: string;
-    platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
+    platform:
+      | AgentPlatformEnum.EMAIL
+      | AgentPlatformEnum.WHATSAPP
+      | AgentPlatformEnum.SENDBLUE
+      | AgentPlatformEnum.PHOTON_IMESSAGE;
     identity: string;
     identityFields: { email: string } | { phone: string };
   }): Promise<string> {
@@ -547,10 +615,57 @@ export class AgentSubscriberResolver {
     return null;
   }
 
+  /**
+   * A claimed org can mail an address it has only declared. That contact has no
+   * `Subscriber.email`, so an authenticated reply has to resolve through the
+   * contact or it lands on a different person and the question never settles.
+   */
+  private async resolveHumanContactEmail(params: {
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier?: string;
+    email: string;
+  }): Promise<string | null> {
+    if (!params.agentIdentifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: params.agentIdentifier,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      ['_id']
+    );
+    if (!agent) {
+      return null;
+    }
+
+    const matches = await this.humanContactRepository.findContactsByEmailAddress(
+      params.environmentId,
+      agent._id,
+      params.email
+    );
+    const subscriberIds = [...new Set(matches.map((match) => match.subscriberId))];
+    if (subscriberIds.length !== 1) {
+      if (subscriberIds.length > 1) {
+        this.logger.warn(
+          `Email ${params.email} is stored for more than one human contact in environment ${params.environmentId} — not resolving a reply to it`
+        );
+      }
+
+      return null;
+    }
+
+    return subscriberIds[0];
+  }
+
   private async resolveEmailSubscriber(params: {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
+    agentIdentifier?: string;
   }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const email = normalizeEmailForLookup(platformUserId);
@@ -564,6 +679,18 @@ export class AgentSubscriberResolver {
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
 
     if (matches.length === 0) {
+      const contactId = await this.resolveHumanContactEmail({
+        environmentId,
+        organizationId,
+        agentIdentifier: params.agentIdentifier,
+        email,
+      });
+      if (contactId) {
+        this.logger.debug(`Resolved email ${email} → human contact ${contactId}`);
+
+        return { outcome: 'resolved', subscriberId: contactId };
+      }
+
       this.logger.debug(`No subscriber found for email ${email}`);
 
       return { outcome: 'not_found' };
@@ -771,18 +898,24 @@ function escapeRegExp(value: string): string {
  * rather than by the customer's API/dashboard. Used to prefer real subscribers
  * over phantoms and to target phantoms for adoption.
  */
-function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
+export function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
   return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 
 function openAccessIdentityProvisionMeta(
-  platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE
+  platform:
+    | AgentPlatformEnum.EMAIL
+    | AgentPlatformEnum.WHATSAPP
+    | AgentPlatformEnum.SENDBLUE
+    | AgentPlatformEnum.PHOTON_IMESSAGE
 ): { label: string; operation: string } {
   switch (platform) {
     case AgentPlatformEnum.EMAIL:
       return { label: 'email', operation: 'provision-open-access-email-subscriber' };
     case AgentPlatformEnum.SENDBLUE:
       return { label: 'Sendblue', operation: 'provision-open-access-sendblue-subscriber' };
+    case AgentPlatformEnum.PHOTON_IMESSAGE:
+      return { label: 'Photon', operation: 'provision-open-access-photon-imessage-subscriber' };
     case AgentPlatformEnum.WHATSAPP:
       return { label: 'WhatsApp', operation: 'provision-open-access-whatsapp-subscriber' };
     default: {

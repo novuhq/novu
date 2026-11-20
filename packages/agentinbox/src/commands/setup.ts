@@ -1,0 +1,380 @@
+import pc from 'picocolors';
+import { lookToKeep, savedLook } from '../agent-look';
+import { createInteraction } from '../api/agent-inbox';
+import { type ApiClient, createApiClient } from '../api/client';
+import { errorCode } from '../api/listen';
+import { bootstrapKeylessSession, getWhatsAppSetup } from '../api/setup';
+import { info, success, warn } from '../cli-io';
+import {
+  type CliConfig,
+  configPath,
+  DEFAULT_RELAY_AGENT_IDENTIFIER,
+  loadConfig,
+  resolveTargetApiUrl,
+  saveConfig,
+} from '../config';
+import { keptHost } from '../host';
+import { openedScreen, openScreen } from '../screen/screen';
+import { failOnScreen } from './failure';
+import { handleError } from './interact';
+import { CHANNEL_NAMES, type ChannelName, type ChatChannel, channelLabel } from './link-channel';
+import { AgentInboxProvisioningError, announceAgentInbox, connectEmail } from './setup/email';
+import {
+  channelNameFor,
+  type ProvisionedOperator,
+  provisionOperator,
+  readPictureOption,
+  reusableAuth,
+  type SetupOptions,
+} from './setup/operator';
+import { defaultSetupIo, promptChoice, type SetupIo } from './setup/prompts';
+import { connectSlack } from './setup/slack';
+import { connectTelegram } from './setup/telegram';
+import { connectWhatsApp } from './setup/whatsapp';
+import { WHATSAPP_WINDOW_CLOSED } from './whatsapp-refusal';
+
+export type { SetupOptions } from './setup/operator';
+export { reusableAuth } from './setup/operator';
+
+/** The Agent Inbox skills live in their own repository, agentinboxhq/skills, and install with the skills CLI. */
+const SKILLS_COMMAND = 'npx skills add agentinboxhq/skills';
+
+/** `command` is how the screen names it: `setup`, `setup telegram`, or `channel add slack` when that runs it. */
+export async function setupCommand(
+  channelArg: string | undefined,
+  options: SetupOptions,
+  command = channelArg ? `setup ${channelArg}` : 'setup'
+): Promise<never> {
+  const screen = await openScreen({
+    command,
+    look: savedLook({
+      apiUrl: options.apiUrl,
+      secretKey: options.secretKey,
+      agentIdentifier: options.agentIdentifier,
+    }),
+  });
+
+  try {
+    await runSetup(parseSetupChannel(channelArg), options);
+    await screen?.done('happy');
+    process.exit(0);
+  } catch (err) {
+    if (screen) {
+      await failOnScreen(screen, err);
+    }
+    handleError(err);
+  }
+}
+
+async function runSetup(channel: ChannelName | undefined, options: SetupOptions): Promise<void> {
+  const picture = await readPictureOption(options);
+  const existing = loadConfig();
+  const apiUrl = resolveTargetApiUrl(options.apiUrl, existing);
+  const auth = await resolveSetupAuth(existing, apiUrl, options.secretKey ?? process.env.INBOX_SECRET_KEY?.trim());
+  const client = createApiClient({
+    apiUrl,
+    secretKey: auth.secretKey,
+    keylessIdentifier: auth.mode === 'keyless' ? auth.keylessIdentifier : undefined,
+  });
+  const provisioned = await provisionOperator(client, existing, options, picture);
+  // The agent is set up, so the mascot is its own from here on.
+  openedScreen()?.look(setupLook(apiUrl, auth, existing, provisioned).look);
+  // Before anything below waits for a person: a run stopped there leaves a setup the next run picks up.
+  writeSetupConfig(apiUrl, auth, existing, provisioned, undefined);
+
+  // The inbox always exists after setup, but only a verified address makes it
+  // a channel the person can be reached on. A deployment with email disabled
+  // must still be able to connect Telegram or Slack.
+  const verifyEmail = channel === 'email' || (client.isKeyless && !channel);
+  try {
+    await linkInbox(client, verifyEmail, provisioned, options);
+  } catch (err) {
+    if (channel === 'email' || !(err instanceof AgentInboxProvisioningError)) {
+      throw err instanceof AgentInboxProvisioningError ? err.original : err;
+    }
+
+    warn(`Could not set up the email inbox (${err.message}). Chat setup can continue.`);
+  }
+  const chat = await resolveChatChannel(client, provisioned.relay.agentIdentifier, channel);
+  if (chat) {
+    await connectChannel(client, chat, provisioned.relay, channelNameFor(provisioned.relay), provisioned.subscriberId, {
+      ...options,
+      ...(provisioned.operatorEmail ? { email: provisioned.operatorEmail } : {}),
+    });
+  }
+
+  const linked = channelLinkedBySetup(chat, verifyEmail, client.isKeyless);
+  saveSetupConfig(apiUrl, auth, existing, provisioned, linked);
+  await confirmLinkedChannel(client, linked, provisioned);
+
+  if (auth.mode === 'keyless') {
+    info(
+      `This is a free demo without an account. Run ${pc.bold('npx @agentinbox/cli login')} anytime to keep it in a Agent Inbox account.`
+    );
+  }
+
+  // Only shown: which skills to install, and for which coding agents, is the person's call.
+  if (options.showSkills !== false) {
+    info(`Teach your coding agent to use the inbox: ${pc.bold(SKILLS_COMMAND)}`);
+  }
+}
+
+async function resolveSetupAuth(
+  existing: CliConfig | null,
+  apiUrl: string,
+  secretKey: string | undefined
+): Promise<CliConfig['auth']> {
+  const auth = reusableAuth(existing, apiUrl, secretKey);
+  if (!auth) {
+    info('Creating a keyless inbox (no account needed)...');
+
+    return { mode: 'keyless', keylessIdentifier: await bootstrapKeylessSession(apiUrl) };
+  }
+
+  if (!secretKey) {
+    info(auth.mode === 'keyless' ? 'Reusing your existing keyless session.' : 'Using your saved login.');
+  }
+
+  return auth;
+}
+
+async function linkInbox(
+  client: ApiClient,
+  verifyEmail: boolean,
+  provisioned: ProvisionedOperator,
+  options: SetupOptions
+): Promise<void> {
+  if (verifyEmail) {
+    await connectEmail(client, provisioned.relay.agentIdentifier, provisioned.subscriberId, {
+      ...options,
+      ...(provisioned.operatorEmail ? { email: provisioned.operatorEmail } : {}),
+    });
+
+    return;
+  }
+
+  await announceAgentInbox(client, provisioned.relay.agentIdentifier);
+}
+
+/** Telegram, Slack or WhatsApp from the command, or a prompt after the inbox exists. Enter skips. */
+async function resolveChatChannel(
+  client: ApiClient,
+  agentIdentifier: string,
+  channel: ChannelName | undefined
+): Promise<ChatChannel | undefined> {
+  if (channel && channel !== 'email') {
+    return channel;
+  }
+
+  if (!defaultSetupIo.isTTY) {
+    return undefined;
+  }
+
+  return offerChatChannel(await offersWhatsApp(client, agentIdentifier));
+}
+
+/** WhatsApp is offered only where the account can connect it, and not on a keyless demo, which has no account. */
+async function offersWhatsApp(client: ApiClient, agentIdentifier: string): Promise<boolean> {
+  if (client.isKeyless || agentIdentifier !== DEFAULT_RELAY_AGENT_IDENTIFIER) {
+    return false;
+  }
+
+  const setup = await getWhatsAppSetup(client, agentIdentifier).catch(() => undefined);
+
+  return Boolean(setup?.enabled && setup.available);
+}
+
+export async function offerChatChannel(
+  whatsApp: boolean,
+  io: SetupIo = defaultSetupIo
+): Promise<ChatChannel | undefined> {
+  if (!io.isTTY) {
+    return undefined;
+  }
+
+  return promptChoice<ChatChannel>(
+    io,
+    {
+      heading: 'Also connect a chat channel? Press Enter to skip.',
+      question: whatsApp ? 'Channel [1, 2, 3, or Enter]: ' : 'Channel [1, 2, or Enter]: ',
+      retry: whatsApp
+        ? 'Pick 1 for Telegram, 2 for Slack, 3 for WhatsApp, or press Enter to skip.'
+        : 'Pick 1 for Telegram, 2 for Slack, or press Enter to skip.',
+    },
+    [
+      { label: 'Telegram', aliases: ['telegram'], value: 'telegram' },
+      { label: 'Slack', aliases: ['slack'], value: 'slack' },
+      ...(whatsApp ? [{ label: 'WhatsApp', aliases: ['whatsapp'], value: 'whatsapp' as const }] : []),
+    ],
+    { skippable: true }
+  );
+}
+
+/**
+ * The channel this run made usable. A verified keyless address still cannot
+ * send, so it is not saved as the default — a later chat setup would keep it.
+ */
+export function channelLinkedBySetup(
+  chat: ChatChannel | undefined,
+  verifyEmail: boolean,
+  keyless: boolean
+): ChannelName | undefined {
+  if (chat) {
+    return chat;
+  }
+
+  if (verifyEmail && !keyless) {
+    return 'email';
+  }
+
+  return undefined;
+}
+
+/** The look the setup's answer carries, else the one saved for this very agent: an API from before looks says nothing. */
+function setupLook(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator
+): Pick<CliConfig, 'look'> {
+  const { agentIdentifier: relayAgentIdentifier, look } = provisioned.relay;
+
+  return lookToKeep({ apiUrl, auth, relayAgentIdentifier }, existing, look);
+}
+
+function writeSetupConfig(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator,
+  channel: ChannelName | undefined
+): CliConfig['defaultChannel'] {
+  // A contact switch invalidates the saved default; otherwise keep it and fall
+  // back to whatever this run actually linked.
+  const keptDefault = provisioned.switchedContact ? undefined : existing?.defaultChannel;
+  const defaultChannel = keptDefault ?? channel;
+  saveConfig({
+    apiUrl,
+    auth,
+    relayAgentIdentifier: provisioned.relay.agentIdentifier,
+    subscriberId: provisioned.subscriberId,
+    ...(defaultChannel ? { defaultChannel } : {}),
+    ...keptHost(existing, apiUrl),
+    ...setupLook(apiUrl, auth, existing, provisioned),
+  });
+
+  return defaultChannel;
+}
+
+function saveSetupConfig(
+  apiUrl: string,
+  auth: CliConfig['auth'],
+  existing: CliConfig | null,
+  provisioned: ProvisionedOperator,
+  channel: ChannelName | undefined
+): void {
+  const defaultChannel = writeSetupConfig(apiUrl, auth, existing, provisioned, channel);
+  success(`Saved config to ${configPath()}.`);
+
+  if (channel && defaultChannel && defaultChannel !== channel) {
+    info(
+      `Your default channel is still ${pc.bold(defaultChannel)} — switch with: npx @agentinbox/cli channel default ${channel}`
+    );
+  }
+}
+
+async function confirmLinkedChannel(
+  client: ApiClient,
+  channel: ChannelName | undefined,
+  provisioned: ProvisionedOperator
+): Promise<void> {
+  if (!channel || (client.isKeyless && channel === 'email')) {
+    return;
+  }
+
+  const { name } = provisioned;
+  const sent = await createInteraction(client, {
+    kind: 'tell',
+    card: {
+      title: `${name ? `Hi ${name.firstName}, you're` : "You're"} connected. Agents can now reach you here — try \`npx @agentinbox/cli send approve "Deploy to production?"\`.`,
+    },
+    to: provisioned.subscriberId,
+    via: channel,
+    agentIdentifier: provisioned.relay.agentIdentifier,
+  }).then(
+    () => true,
+    (err: unknown) => {
+      // WhatsApp stays connected after its 24-hour window shuts; only this welcome can't go out until they write.
+      if (errorCode(err) !== WHATSAPP_WINDOW_CLOSED) throw err;
+      info('WhatsApp is connected; the welcome message waits until you next write to the agent there.');
+
+      return false;
+    }
+  );
+  if (!sent) {
+    return;
+  }
+
+  const examples = [
+    'npx @agentinbox/cli send ask "Which environment should I target?"',
+    'npx @agentinbox/cli send approve "Deploy to production?"',
+    'npx @agentinbox/cli send "Build finished."',
+  ];
+  const screen = openedScreen();
+
+  if (screen) {
+    screen.subtitle(`${channelLabel(channel)} connected. Agents on this machine can now run:`);
+    screen.add(...examples.map((example) => ({ mark: 'next' as const, value: pc.bold(example) })));
+    screen.feel('happy');
+
+    return;
+  }
+
+  process.stdout.write(
+    `\n${pc.green('✔')} ${channel} connected. Agents on this machine can now run:\n` +
+      examples.map((example) => `  ${pc.bold(example)}\n`).join('')
+  );
+}
+
+async function connectChannel(
+  client: ApiClient,
+  channel: ChatChannel,
+  relay: { agentId: string; agentIdentifier: string },
+  agentName: string,
+  subscriberId: string,
+  options: SetupOptions
+): Promise<string> {
+  switch (channel) {
+    case 'telegram':
+      return connectTelegram(client, relay.agentIdentifier, agentName, subscriberId, options);
+    case 'slack':
+      return connectSlack(
+        client,
+        { id: relay.agentId, identifier: relay.agentIdentifier, name: agentName },
+        subscriberId,
+        options
+      );
+    case 'whatsapp':
+      await connectWhatsApp(client, relay.agentIdentifier);
+
+      return relay.agentIdentifier;
+    default: {
+      const unhandled: never = channel;
+      throw new Error(`Unsupported channel: ${String(unhandled)}`);
+    }
+  }
+}
+
+/** A channel argument adds Telegram, Slack, WhatsApp, or account email verification. Omitted, setup is the inbox. */
+function parseSetupChannel(channelArg: string | undefined): ChannelName | undefined {
+  if (!channelArg) {
+    return undefined;
+  }
+
+  const normalized = channelArg.toLowerCase();
+  if ((CHANNEL_NAMES as readonly string[]).includes(normalized)) {
+    return normalized as ChannelName;
+  }
+
+  throw new Error(`Unknown channel "${channelArg}". Supported: ${CHANNEL_NAMES.join(', ')}.`);
+}

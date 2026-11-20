@@ -1,5 +1,6 @@
 import { Liquid } from 'liquidjs';
 import { describe, expect, it } from 'vitest';
+import { renderLiquidJson } from './compile-json-control-values';
 import { createLiquidEngine, defaultOutputEscape, stringifyDataStructureWithSingleQuotes } from './liquid.utils';
 
 describe('createLiquidEngine', () => {
@@ -119,10 +120,7 @@ describe('createLiquidEngine', () => {
       ],
     };
 
-    // Simulate the same approach as in the Client class
-    const templateString = engine.parse(JSON.stringify(templateControls));
-
-    const compiledString = await engine.render(templateString, {
+    const compiledString = await renderLiquidJson(engine, JSON.stringify(templateControls), {
       payload: event.payload,
       subscriber: event.subscriber,
       steps: event.state.reduce(
@@ -185,8 +183,7 @@ describe('createLiquidEngine', () => {
       },
     };
 
-    const templateString = engine.parse(JSON.stringify(controls));
-    const rendered = await engine.render(templateString, data);
+    const rendered = await renderLiquidJson(engine, JSON.stringify(controls), data);
     const result = JSON.parse(rendered);
 
     expect(result.email.subject).toBe('Welcome John');

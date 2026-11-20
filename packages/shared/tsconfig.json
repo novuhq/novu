@@ -3,7 +3,6 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "esModuleInterop": true,
     "isolatedModules": true,
     "lib": ["es2022", "dom"],
     "module": "nodenext",
@@ -19,6 +18,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ES2022",
+    "types": ["node"],
     "verbatimModuleSyntax": false
   },
   "include": ["src/**/*"],

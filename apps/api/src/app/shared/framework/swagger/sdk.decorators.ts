@@ -1,7 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiExtension, ApiParam, ApiProperty } from '@nestjs/swagger';
-import { ApiParamOptions } from '@nestjs/swagger/dist/decorators/api-param.decorator';
-import { ApiPropertyOptions } from '@nestjs/swagger/dist/decorators/api-property.decorator';
+import { ApiExtension, ApiParam, ApiParamOptions, ApiProperty, ApiPropertyOptions } from '@nestjs/swagger';
 
 /**
  * Sets the method name for the SDK.
@@ -71,25 +69,19 @@ class SDKOverrideOptions {
 }
 
 export function SdkApiParam(options: ApiParamOptions, sdkOverrideOptions?: SDKOverrideOptions) {
-  let finalOptions: ApiParamOptions;
-  if (sdkOverrideOptions) {
-    finalOptions = sdkOverrideOptions.nameOverride
-      ? ({ ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride } as unknown as ApiParamOptions)
-      : options;
-  } else {
-    finalOptions = options;
+  let finalOptions: ApiParamOptions = options;
+  if (sdkOverrideOptions?.nameOverride) {
+    const optionsWithNameOverride = { ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride };
+    finalOptions = optionsWithNameOverride;
   }
 
   return applyDecorators(ApiParam(finalOptions));
 }
 export function SdkApiProperty(options: ApiPropertyOptions, sdkOverrideOptions?: SDKOverrideOptions) {
-  let finalOptions: ApiPropertyOptions;
-  if (sdkOverrideOptions) {
-    finalOptions = sdkOverrideOptions.nameOverride
-      ? ({ ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride } as unknown as ApiPropertyOptions)
-      : options;
-  } else {
-    finalOptions = options;
+  let finalOptions: ApiPropertyOptions = options;
+  if (sdkOverrideOptions?.nameOverride) {
+    const optionsWithNameOverride = { ...options, 'x-speakeasy-name-override': sdkOverrideOptions.nameOverride };
+    finalOptions = optionsWithNameOverride;
   }
 
   return applyDecorators(ApiProperty(finalOptions));

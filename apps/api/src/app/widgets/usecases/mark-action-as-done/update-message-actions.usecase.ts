@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { sanitizeMessageCta } from '@novu/shared';
 
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 
@@ -68,9 +69,13 @@ export class UpdateMessageActions {
       _environment: command.environmentId,
     });
 
-    return (await this.messageRepository.findOne({
+    const updatedMessage = (await this.messageRepository.findOne({
       _environmentId: command.environmentId,
       _id: command.messageId,
     })) as MessageEntity;
+
+    updatedMessage.cta = sanitizeMessageCta(updatedMessage.cta);
+
+    return updatedMessage;
   }
 }

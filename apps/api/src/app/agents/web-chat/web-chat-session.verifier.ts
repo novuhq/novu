@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { WebChatSession } from '@novu/chat-adapter-web';
+import type { WebChatSession } from '@novu/chat-adapter-web-chat';
 import type { ISubscriberJwt } from '@novu/shared';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../../auth/services/auth.service';

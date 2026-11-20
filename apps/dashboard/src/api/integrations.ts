@@ -31,6 +31,7 @@ export type CreateIntegrationData = {
   active: boolean;
   primary?: boolean;
   _environmentId?: string;
+  rules?: Record<string, unknown> | null;
 };
 
 export enum CheckIntegrationResponseEnum {
@@ -48,6 +49,7 @@ export type UpdateIntegrationData = {
   credentials: Record<string, unknown>;
   configurations: Record<string, string>;
   check: boolean;
+  rules?: Record<string, unknown> | null;
 };
 
 export async function generateLinkUserOAuthUrl({

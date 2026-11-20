@@ -24,6 +24,7 @@ const topicSchema = new Schema<TopicDBModel>(
     name: {
       type: Schema.Types.String,
     },
+    data: Schema.Types.Mixed,
   },
   schemaOptions
 );

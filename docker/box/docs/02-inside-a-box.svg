@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg style="min-width: 1280px" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="inside-the-box-title inside-the-box-desc" id="d-02-inside-a-box-root">
+        <title id="inside-the-box-title">Inside one Novu Box</title>
+        <desc id="inside-the-box-desc">Architecture of one Novu Box container on Cloudflare: Caddy takes every request the Box Durable Object forwards and routes it by path to the dashboard, the api, the socket worker, Mailpit and s3; the api queues jobs in sqs for the worker, which sends email to Mailpit and SMS, push and chat to the sink; the api and worker call the bridge app, and Slack traffic goes through the Router Durable Object.</desc>
+        <defs>
+      <style>#d-02-inside-a-box-root { --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace; }
+      #d-02-inside-a-box-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-02-inside-a-box-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-02-inside-a-box-root .subtitle { font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--color-muted);
+      max-width: 78ch;
+      margin-bottom: 1.5rem; }
+      #d-02-inside-a-box-root .diagram-container { overflow-x: visible; }
+      #d-02-inside-a-box-root .diagram-container { overflow-x: visible; }
+      #d-02-inside-a-box-root nav { margin: 0 0 3rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; }
+      #d-02-inside-a-box-root nav a { color: var(--color-muted); text-decoration: none; border-bottom: 1px solid rgba(45,49,66,0.2); }
+      #d-02-inside-a-box-root nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
+      #d-02-inside-a-box-root section { padding: 3rem 0 4rem; border-top: 1px solid rgba(45,49,66,0.12); }
+      #d-02-inside-a-box-root section:first-of-type { border-top: 0; padding-top: 0; }</style>
+          <marker id="d-02-inside-a-box-inside-the-box-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d-02-inside-a-box-inside-the-box-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="d-02-inside-a-box-inside-the-box-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Container boundary and zones (drawn first) -->
+        <rect x="216" y="40" width="1024" height="576" rx="8" fill="none" stroke="#2d3142" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.30"/>
+        <rect x="228" y="34" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="232" y="43" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">CONTAINER</text>
+
+        <rect x="240" y="168" width="736" height="320" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="252" y="172" width="36" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="256" y="181" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">APPS</text>
+
+        <rect x="1000" y="168" width="224" height="320" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="1012" y="172" width="92" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1016" y="181" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">CHANNEL OUTPUT</text>
+
+        <rect x="240" y="504" width="984" height="96" rx="8" fill="#2d3142" stroke="#2d3142" stroke-width="0.8" fill-opacity="0.02" stroke-opacity="0.10"/>
+        <rect x="252" y="508" width="76" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="256" y="517" fill="#5a6580" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DATA STORES</text>
+
+        <!-- Arrows (behind nodes) -->
+        <!-- Crossing the container edge -->
+        <line x1="184" y1="96" x2="240" y2="96" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow-link)"/>
+        <line x1="112" y1="256" x2="112" y2="132" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow-link)"/>
+        <path d="M 480,296 V 288 Q 480,280 472,280 H 184" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow-link)"/>
+
+        <!-- Caddy routes by path -->
+        <line x1="328" y1="120" x2="328" y2="200" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="548" y1="120" x2="548" y2="296" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="880" y1="120" x2="880" y2="200" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="1120" y1="120" x2="1120" y2="200" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="1192" y1="120" x2="1192" y2="536" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+
+        <!-- api -->
+        <line x1="456" y1="324" x2="400" y2="324" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 608,352 V 412 Q 608,420 616,420 H 656" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 400,420 H 472 Q 480,420 480,412 V 352" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="512" y1="352" x2="512" y2="504" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 560,352 V 464 Q 560,472 568,472 H 856 Q 864,472 864,480 V 536" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+
+        <!-- worker -->
+        <line x1="928" y1="536" x2="928" y2="352" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 872,352 V 412 Q 872,420 864,420 H 832" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="880" y1="296" x2="880" y2="256" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 960,312 H 1048 Q 1056,312 1056,304 V 256" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <path d="M 960,336 H 1032 Q 1040,336 1040,344 V 392" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <line x1="1136" y1="392" x2="1136" y2="256" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+
+        <!-- Arrow labels (opaque masks, 6-10px clear of their stroke) -->
+        <g font-family="'Geist Mono', monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle">
+          <rect x="194" y="76" width="36" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="212" y="85" fill="#2e5aa8">:18080</text>
+          <rect x="120" y="188" width="68" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="154" y="197" fill="#2e5aa8">SLACK EVENTS</text>
+          <rect x="192" y="260" width="76" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="230" y="269" fill="#2e5aa8">SLACK_API_URL</text>
+
+          <rect x="336" y="136" width="64" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="368" y="145" fill="#4f5d75">OTHER PATHS</text>
+          <rect x="556" y="136" width="44" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="578" y="145" fill="#4f5d75">/v1 /v2</text>
+          <rect x="556" y="152" width="72" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="592" y="161" fill="#4f5d75">/.well-known</text>
+          <rect x="888" y="136" width="24" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="900" y="145" fill="#4f5d75">/ws</text>
+          <rect x="1076" y="136" width="36" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1094" y="145" fill="#4f5d75">/mail</text>
+          <rect x="1128" y="136" width="56" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1156" y="145" fill="#4f5d75">/novu-box</text>
+
+          <rect x="616" y="364" width="52" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="642" y="373" fill="#4f5d75">DISCOVER</text>
+          <rect x="412" y="400" width="52" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="438" y="409" fill="#4f5d75">WEBHOOKS</text>
+          <rect x="444" y="456" width="60" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="474" y="465" fill="#4f5d75">READ/WRITE</text>
+          <rect x="688" y="452" width="48" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="712" y="461" fill="#4f5d75">ENQUEUE</text>
+
+          <rect x="936" y="476" width="28" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="950" y="485" fill="#4f5d75">JOBS</text>
+          <rect x="816" y="364" width="48" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="840" y="373" fill="#4f5d75">EXECUTE</text>
+          <rect x="888" y="270" width="52" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="914" y="279" fill="#4f5d75">REALTIME</text>
+          <rect x="988" y="292" width="32" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1004" y="301" fill="#4f5d75">EMAIL</text>
+          <rect x="956" y="360" width="76" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="994" y="369" fill="#4f5d75">SMS/PUSH/CHAT</text>
+          <rect x="1080" y="316" width="48" height="12" rx="2" fill="#f5f5f5"/>
+          <text x="1104" y="325" fill="#4f5d75">AS EMAIL</text>
+        </g>
+
+        <!-- Nodes -->
+        <!-- Outside the container: Cloudflare Durable Objects -->
+        <rect x="40" y="60" width="144" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="60" width="144" height="72" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <rect x="48" y="66" width="80" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.22"/>
+        <text x="88" y="75" fill="#5a6580" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DURABLE OBJECT</text>
+        <text x="112" y="100" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Box</text>
+        <text x="112" y="116" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">forwards every request</text>
+
+        <rect x="40" y="256" width="144" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="256" width="144" height="72" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <rect x="48" y="262" width="80" height="12" rx="2" fill="none" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.22"/>
+        <text x="88" y="271" fill="#5a6580" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DURABLE OBJECT</text>
+        <text x="112" y="296" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Router</text>
+        <text x="112" y="312" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">holds real Slack token</text>
+
+        <!-- Front door: Caddy (focal) -->
+        <rect x="240" y="72" width="984" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="240" y="72" width="984" height="48" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="256" y="92" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif">Caddy</text>
+        <text x="256" y="108" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">routes by path</text>
+
+        <!-- Apps -->
+        <rect x="256" y="200" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="256" y="200" width="144" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="328" y="224" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">dashboard</text>
+        <text x="328" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">built files</text>
+
+        <rect x="800" y="200" width="160" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="800" y="200" width="160" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="880" y="224" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">socket</text>
+        <text x="880" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">realtime Inbox updates</text>
+
+        <rect x="256" y="296" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="256" y="296" width="144" height="56" rx="6" fill="#2d3142" stroke="#2d3142" stroke-width="1" stroke-dasharray="4,3" fill-opacity="0.02" stroke-opacity="0.30"/>
+        <text x="328" y="320" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">thalamus</text>
+        <text x="328" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">needs Anthropic key</text>
+
+        <rect x="456" y="296" width="184" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="456" y="296" width="184" height="56" rx="6" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="548" y="320" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">api</text>
+        <text x="548" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">REST API</text>
+
+        <rect x="800" y="296" width="160" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="800" y="296" width="160" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="880" y="320" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">worker</text>
+        <text x="880" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">runs notification jobs</text>
+
+        <rect x="256" y="392" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="256" y="392" width="144" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="328" y="416" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">stripe</text>
+        <text x="328" y="432" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sandbox webhooks</text>
+
+        <rect x="656" y="392" width="176" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="656" y="392" width="176" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="744" y="416" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">bridge</text>
+        <text x="744" y="432" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">code workflows + agents</text>
+
+        <!-- Channel output -->
+        <rect x="1016" y="200" width="160" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="1016" y="200" width="160" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1096" y="224" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Mailpit</text>
+        <text x="1096" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">catches every email</text>
+
+        <rect x="1016" y="392" width="160" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="1016" y="392" width="160" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1096" y="416" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">sink</text>
+        <text x="1096" y="432" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fake providers</text>
+
+        <!-- Data stores -->
+        <rect x="256" y="536" width="112" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="256" y="536" width="112" height="48" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="312" y="557" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">mongo</text>
+        <text x="312" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">data</text>
+
+        <rect x="384" y="536" width="112" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="384" y="536" width="112" height="48" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="440" y="557" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">redis</text>
+        <text x="440" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cache + BullMQ</text>
+
+        <rect x="528" y="536" width="144" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="528" y="536" width="144" height="48" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="600" y="557" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">clickhouse</text>
+        <text x="600" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">analytics, activity</text>
+
+        <rect x="832" y="536" width="128" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="832" y="536" width="128" height="48" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="896" y="557" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">sqs</text>
+        <text x="896" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">job queues</text>
+
+        <rect x="1080" y="536" width="128" height="48" rx="6" fill="#f5f5f5"/>
+        <rect x="1080" y="536" width="128" height="48" rx="6" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="1144" y="557" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">s3</text>
+        <text x="1144" y="572" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">files</text>
+
+        <!-- Legend strip -->
+        <line x1="40" y1="640" x2="1240" y2="640" stroke="#2d3142" stroke-width="0.8" stroke-opacity="0.10"/>
+        <text x="40" y="660" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+        <rect x="40" y="676" width="14" height="10" rx="2" fill="#bf4520" stroke="#bf4520" stroke-width="1" fill-opacity="0.08"/>
+        <text x="60" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Focal: front door and api</text>
+
+        <rect x="208" y="676" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="228" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">App</text>
+
+        <rect x="268" y="676" width="14" height="10" rx="2" fill="#2d3142" stroke="#4f5d75" stroke-width="1" fill-opacity="0.05"/>
+        <text x="288" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Data store</text>
+
+        <rect x="364" y="676" width="14" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" stroke-dasharray="3,2" fill-opacity="0.02" stroke-opacity="0.30"/>
+        <text x="384" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Runs only with its key</text>
+
+        <rect x="508" y="676" width="14" height="10" rx="2" fill="#2d3142" stroke="#2d3142" stroke-width="1" fill-opacity="0.03" stroke-opacity="0.30"/>
+        <text x="528" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cloudflare, outside the container</text>
+
+        <line x1="716" y1="681" x2="744" y2="681" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <text x="752" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Call inside the container</text>
+
+        <line x1="888" y1="681" x2="916" y2="681" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow-link)"/>
+        <text x="924" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Crosses the container edge</text>
+
+        <line x1="1072" y1="681" x2="1100" y2="681" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#d-02-inside-a-box-inside-the-box-arrow)"/>
+        <text x="1108" y="684" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Optional call</text>
+      </svg>

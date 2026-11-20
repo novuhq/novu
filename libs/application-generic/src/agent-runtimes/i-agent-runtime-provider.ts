@@ -234,7 +234,7 @@ export interface IAgentRuntimeProvider {
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
 
   /**
-   * Re-assert Novu-owned platform config (e.g. `novu_tool_catalog`, `novu_resolve`) on
+   * Re-assert Novu-owned platform config (e.g. `novu_tool_catalog`, `novu_resolve`, `novu_human`) on
    * an existing agent without changing user-selected tools, MCP servers, model,
    * system prompt, or skills. Idempotent — used to backfill agents created
    * before a platform-definition change so they pick up the latest overlay.

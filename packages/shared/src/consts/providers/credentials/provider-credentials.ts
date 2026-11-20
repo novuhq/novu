@@ -115,6 +115,26 @@ export const mandrillConfig: IConfigCredential[] = [
   ...mailConfigBase,
 ];
 
+function isPlainJsonObject(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isTlsOptionsValue(value: unknown): boolean {
+  if (value == null || value === '') {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      return isPlainJsonObject(JSON.parse(value));
+    } catch {
+      return false;
+    }
+  }
+
+  return isPlainJsonObject(value);
+}
+
 export const nodemailerConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.User,
@@ -161,8 +181,19 @@ export const nodemailerConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.TlsOptions,
     displayName: 'TLS options',
-    type: 'string',
+    description: 'One JSON object of Node.js TLS settings. Used only when Secure is on.',
+    placeholder: '{"minVersion":"TLSv1.2"}',
+    type: 'textarea',
     required: false,
+    validation: {
+      validate: (value: string) => {
+        if (isTlsOptionsValue(value)) {
+          return true;
+        }
+
+        return 'TLS options must be a JSON object.';
+      },
+    },
   },
   {
     key: CredentialsKeyEnum.Domain,
@@ -323,6 +354,13 @@ export const sesConfig: IConfigCredential[] = [
     displayName: 'Region',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ConfigurationSetName,
+    displayName: 'Configuration Set Name',
+    description: 'The name of the SES Configuration Set to apply to sent emails',
+    type: 'string',
+    required: false,
   },
   ...mailConfigBase,
 ];
@@ -486,8 +524,33 @@ export const twilioConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.AuthMethod,
+    displayName: 'Authentication method',
+    description:
+      'Use an API key to avoid sharing your account auth token. The key needs permission to create messages.',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Auth token', value: null },
+      { name: 'API key', value: 'apiKey' },
+    ],
+  },
+  {
     key: CredentialsKeyEnum.Token,
     displayName: 'Auth token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key SID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'API Key Secret',
     type: 'string',
     required: true,
   },
@@ -1012,6 +1075,20 @@ export const emailWebhookConfig: IConfigCredential[] = [
     description: 'the secret used to sign webhooks calls',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.HmacSecretKeyEncoding,
+    displayName: 'Secret Hmac Key Encoding',
+    type: 'dropdown',
+    description:
+      'how the Secret Hmac Key is interpreted when signing webhook calls — Base-64/HEX for binary keys (e.g. AWS KMS)',
+    required: false,
+    value: 'text',
+    dropdown: [
+      { name: 'Text', value: 'text' },
+      { name: 'Base-64', value: 'base64' },
+      { name: 'HEX', value: 'hex' },
+    ],
+  },
   ...mailConfigBase,
 ];
 
@@ -1044,7 +1121,7 @@ export const novuInAppConfig: IConfigCredential[] = [
   },
 ];
 
-/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for web chat. */
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for Web Chat. */
 export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
@@ -1370,6 +1447,31 @@ export const sendblueConfig: IConfigCredential[] = [
     type: 'string',
     required: false,
     hidden: true,
+  },
+];
+
+export const photonImessageConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Project ID',
+    description: 'Your Photon project ID from app.photon.codes',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Project Secret',
+    description: 'Your Photon project secret from app.photon.codes',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Webhook Signing Secret',
+    description:
+      'Issued by Photon when the inbound webhook is registered — filled in automatically by "Configure webhook", or paste it here after adding the webhook manually in the Photon dashboard',
+    type: 'string',
+    required: false,
   },
 ];
 

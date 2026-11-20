@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-import { validateHmacEncryption } from '../../inbox/utils/encryption';
+import { ApiKeyRevocationService } from '../../auth/api-key-revocation/api-key-revocation.service';
+import { isWebChatAgentHashValidForAnyKey } from './web-chat-agent-hash';
 
 const WEB_CHAT_UNAVAILABLE_MESSAGE = 'This agent is not available on web chat';
 
@@ -18,17 +19,51 @@ export class WebChatPublicationService {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly environmentRepository: EnvironmentRepository
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly apiKeyRevocationService: ApiKeyRevocationService
   ) {}
 
+  /**
+   * Resolve the Web Chat publication for a specific agent.
+   * Must not pick an arbitrary env-wide `novu-web-chat` integration — orgs
+   * can have one per agent; only the link for *this* agent counts.
+   */
   async resolvePublishedAgent(
     agentIdentifier: string,
     environmentId: string,
     organizationId: string,
     agentHash?: string
   ): Promise<PublishedWebChatAgent> {
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: agentIdentifier,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['_id', 'identifier', 'active']
+    );
+
+    if (!agent || agent.active === false) {
+      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+    }
+
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agent._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['_integrationId']
+    );
+
+    if (links.length === 0) {
+      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+    }
+
+    const linkedIntegrationIds = links.map((link) => link._integrationId);
     const integration = await this.integrationRepository.findOne(
       {
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: ChatProviderIdEnum.NovuWebChat,
@@ -50,38 +85,15 @@ export class WebChatPublicationService {
         throw new BadRequestException('Please provide a valid HMAC hash');
       }
 
-      validateHmacEncryption({
-        apiKeys: environment.apiKeys.map((apiKey) => apiKey.key),
-        subscriberId: agentIdentifier,
-        subscriberHash: agentHash,
+      const apiKeys = await this.apiKeyRevocationService.getSigningKeys({
+        organizationId,
+        environmentId,
+        apiKeys: environment.apiKeys,
       });
-    }
 
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: agentIdentifier,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_id', 'identifier', 'active']
-    );
-
-    if (!agent || agent.active === false) {
-      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
-    }
-
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _agentId: agent._id,
-        _integrationId: integration._id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      ['_id']
-    );
-
-    if (!link) {
-      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+      if (!isWebChatAgentHashValidForAnyKey(apiKeys, agentIdentifier, agentHash)) {
+        throw new BadRequestException('Please provide a valid HMAC hash');
+      }
     }
 
     return {

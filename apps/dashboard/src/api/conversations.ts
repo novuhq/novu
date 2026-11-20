@@ -124,14 +124,38 @@ export type ConversationActivityToolData = {
   approvalId?: string;
   input?: Record<string, unknown>;
   approved?: boolean;
+  optionId?: string;
   output?: unknown;
+  mcpServerName?: string;
+};
+
+export type ConversationHumanInteractionData = {
+  interactionIdentifier?: string;
+  requestId?: string;
+  kind?: string;
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  status?: string;
+  optionId?: string;
+  text?: string;
 };
 
 export type ConversationActivityDto = {
   _id: string;
   identifier: string;
   _conversationId: string;
-  type: 'message' | 'edit' | 'update' | 'signal' | 'tool_approval_request' | 'tool_approval_decision' | 'tool_result';
+  type:
+    | 'message'
+    | 'edit'
+    | 'update'
+    | 'signal'
+    | 'tool_approval_request'
+    | 'tool_approval_decision'
+    | 'tool_result'
+    | 'human_interaction_request'
+    | 'human_interaction_response'
+    | 'custom';
   content: string;
   platform: string;
   _integrationId: string;
@@ -148,6 +172,7 @@ export type ConversationActivityDto = {
       size?: number;
       storageKey?: string;
     }>;
+    humanInteraction?: ConversationHumanInteractionData;
   };
   toolData?: ConversationActivityToolData;
   signalData?:

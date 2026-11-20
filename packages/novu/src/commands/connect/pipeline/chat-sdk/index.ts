@@ -390,7 +390,7 @@ function shouldRunChatSdkTunnel(
   return outcome.tunnelAccepted === true;
 }
 
-function isChatSdkWiringReadyForTunnel(
+export function isChatSdkWiringReadyForTunnel(
   requirements: BridgeRequirement[] | undefined,
   projectDir: string,
   scaffolded = false

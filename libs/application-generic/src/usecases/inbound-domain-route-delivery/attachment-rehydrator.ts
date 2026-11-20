@@ -5,6 +5,7 @@ import { NonExistingFileError } from '../../services/storage/non-existing-file.e
 import { StorageService } from '../../services/storage/storage.service';
 
 const LOG_CONTEXT = 'AttachmentRehydrator';
+const WEBHOOK_ATTACHMENT_URL_TTL_SECONDS = 6 * 60 * 60;
 
 @Injectable()
 export class AttachmentRehydrator {
@@ -36,6 +37,33 @@ export class AttachmentRehydrator {
     return results;
   }
 
+  async createSignedUrls(attachments: IInboundParseAttachment[] | undefined): Promise<InboundEmailAttachment[]> {
+    if (!attachments || attachments.length === 0) {
+      return [];
+    }
+
+    return await Promise.all(
+      attachments.map(async (attachment) => {
+        if (!attachment.storagePath) {
+          return await this.rehydrateSingle(attachment);
+        }
+
+        const url = await this.storageService.getReadSignedUrl(
+          attachment.storagePath,
+          WEBHOOK_ATTACHMENT_URL_TTL_SECONDS
+        );
+
+        return {
+          filename: attachment.filename,
+          contentType: attachment.contentType,
+          size: attachment.size,
+          url,
+          expiresAt: new Date(Date.now() + WEBHOOK_ATTACHMENT_URL_TTL_SECONDS * 1000).toISOString(),
+        };
+      })
+    );
+  }
+
   private async rehydrateSingle(attachment: IInboundParseAttachment): Promise<InboundEmailAttachment> {
     /*
      * Inline-mode (S3-not-configured) fallback: the inbound-mail server already
@@ -54,7 +82,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: attachment.content ?? null,
         contentBytes: attachment.size,
       };
@@ -74,7 +101,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: {
           type: 'Buffer',
           data: Array.from(fileBuffer),
@@ -101,7 +127,6 @@ export class AttachmentRehydrator {
         contentType: attachment.contentType,
         size: attachment.size,
         url: attachment.url,
-        storagePath: attachment.storagePath,
         content: null,
         contentBytes: attachment.size,
       };

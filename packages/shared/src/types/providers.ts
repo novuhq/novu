@@ -28,6 +28,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ConfigurationSetName = 'configurationSetName',
   ApiKeyRequestHeader = 'apiKeyRequestHeader',
   SecretKeyRequestHeader = 'secretKeyRequestHeader',
   IdPath = 'idPath',
@@ -67,6 +68,10 @@ export enum CredentialsKeyEnum {
   Body = 'body',
   /** Tool-webhook routing mode: static (integration URL) or dynamic (per-subscriber endpoints). */
   RoutingMode = 'routingMode',
+  /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
+  HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
+  /** Twilio: which credentials authenticate requests. */
+  AuthMethod = 'authMethod',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -95,6 +100,8 @@ export enum EmailProviderIdEnum {
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
   NovuAgent = 'novu-email-agent',
+  /** Human-only shared inbox. Workflows must not send through it. */
+  AgentEmailInbox = 'agent-email-inbox',
 }
 
 export enum SmsProviderIdEnum {
@@ -144,6 +151,7 @@ export enum SmsProviderIdEnum {
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  GoogleChat = 'google-chat',
   MsTeams = 'msteams',
   WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
@@ -158,6 +166,7 @@ export enum ChatProviderIdEnum {
   Novu = 'novu-slack',
   Telegram = 'telegram',
   Sendblue = 'sendblue',
+  PhotonImessage = 'photon-imessage',
   NovuWebChat = 'novu-web-chat',
 }
 

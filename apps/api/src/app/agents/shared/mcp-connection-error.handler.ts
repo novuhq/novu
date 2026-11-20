@@ -3,6 +3,8 @@ import type { AgentEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import { McpConnectionStatusEnum } from '@novu/shared';
+import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { listOAuthMcps } from '../managed-runtime/tool-connect/list-oauth-mcps.helper';
 import { findOAuthMcpByServerName } from '../managed-runtime/tool-connect/oauth-mcp.types';
 import type { AgentEventContext } from './agent-event-sink.service';
@@ -20,6 +22,7 @@ export class McpConnectionErrorHandler {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly handleAgentReply: HandleAgentReply,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -88,7 +91,7 @@ export class McpConnectionErrorHandler {
         return;
       }
 
-      await this.mcpConnectionRepository.update(
+      const flipped = await this.mcpConnectionRepository.update(
         {
           _environmentId: environmentId,
           _organizationId: organizationId,
@@ -118,6 +121,15 @@ export class McpConnectionErrorHandler {
         },
         'Marked MCP connection as error after authentication failure'
       );
+
+      // Only notify on the Connected → Error transition (the atomic filter
+      // matched the `connected` row) so repeated failures don't spam the user.
+      // This closes the loop on the optimistic provider-managed connect: if the
+      // vault OAuth was never finished, the user is told instead of silently
+      // seeing the integration fail.
+      if (flipped.matched > 0) {
+        await this.notifyConnectionFailed(context, mcp.name);
+      }
     } catch (err) {
       this.logger.error(err, `connection.error failed: session=${context.sessionId}`);
       captureAgentException(err, {
@@ -125,6 +137,32 @@ export class McpConnectionErrorHandler {
         operation: 'connection-error',
         sessionId: context.sessionId,
       });
+    }
+  }
+
+  /**
+   * Tell the user their integration isn't actually connected and how to retry.
+   * Best-effort: delivery failures are logged but never rethrown, so a failed
+   * notification cannot break event ingest.
+   */
+  private async notifyConnectionFailed(context: AgentEventContext, mcpName: string): Promise<void> {
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: context.organizationId,
+          environmentId: context.environmentId,
+          organizationId: context.organizationId,
+          conversationId: context.conversationId,
+          agentIdentifier: context.agentIdentifier,
+          integrationIdentifier: context.integrationIdentifier,
+          reply: {
+            markdown: `⚠️ ${mcpName} isn't connected yet — no stored credential was found. Ask me to connect ${mcpName} again to retry.`,
+          },
+          isSystemGenerated: true,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(err, 'Failed to notify user about MCP connection failure');
     }
   }
 }

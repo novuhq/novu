@@ -1,6 +1,6 @@
+import { LayoutDtoV0 } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { LayoutDto } from '../dtos';
 import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
@@ -10,7 +10,7 @@ describe('Set layout as default - /layouts/:layoutId/default (POST) #novu-v0', a
   const layoutIdentifier = 'layout-identifier-set-default';
   const isDefault = false;
   let session: UserSession;
-  let createdLayout: LayoutDto;
+  let createdLayout: LayoutDtoV0;
 
   before(async () => {
     session = new UserSession();

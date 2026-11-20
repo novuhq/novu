@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { installPackages } from '../../../init/helpers/install';
+import { formatNpmInstallCommand, installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
 import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
 
@@ -34,7 +34,7 @@ function buildInstallCommand(projectDir: string, packages: string[]): string {
     case 'bun':
       return `bun add ${packageList}`;
     default:
-      return `npm install ${packageList} --no-workspaces`;
+      return formatNpmInstallCommand(packages);
   }
 }
 

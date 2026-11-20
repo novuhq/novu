@@ -97,6 +97,31 @@ describe('AgentAttachmentStorage', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
+  it('should skip the attachment when upload fails', async () => {
+    const uploadFile = sinon.stub().rejects(new Error('s3 unavailable'));
+    const getReadSignedUrl = sinon.stub();
+    const storageService = {
+      uploadFile,
+      getReadSignedUrl,
+      fileExists: sinon.stub(),
+    } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const attachment: Attachment = {
+      type: 'image',
+      name: 'image.png',
+      mimeType: 'image/png',
+      size: 5,
+      fetchData: async () => Buffer.from('hello'),
+    };
+
+    const result = await service.storeInbound([attachment], ctx);
+
+    expect(result).to.have.length(0);
+    expect(getReadSignedUrl.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
   it('should process at most 15 inbound attachments and preserve original indexes', async () => {
     const storageService = makeStorageService();
     const logger = makeLogger();
@@ -113,7 +138,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound(attachments, ctx);
 
     expect(result).to.have.length(15);
-    expect(storageService.uploadFile.callCount).to.equal(15);
+    expect((storageService.uploadFile as sinon.SinonStub).callCount).to.equal(15);
     expect(fetchDataStubs[15].called).to.equal(false);
     expect(result[14].storageKey).to.include('org1/env1/agents/conv1/msg1/14-file-14.txt');
     expect(logger.warn.calledWithMatch({ attachmentCount: 16, cap: 15 })).to.equal(true);
@@ -139,7 +164,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound(attachments, ctx);
 
     expect(result).to.have.length(2);
-    expect(storageService.uploadFile.callCount).to.equal(2);
+    expect((storageService.uploadFile as sinon.SinonStub).callCount).to.equal(2);
     expect(fetchDataStubs[2].called).to.equal(false);
     expect(logger.warn.calledWithMatch({ size: 20 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
@@ -155,7 +180,7 @@ describe('AgentAttachmentStorage', () => {
 
     expect(result).to.have.length(1);
     expect(fetchData.calledOnce).to.equal(true);
-    expect(storageService.uploadFile.calledOnce).to.equal(true);
+    expect((storageService.uploadFile as sinon.SinonStub).calledOnce).to.equal(true);
     expect(result[0]).to.include({
       type: 'file',
       name: 'unknown.bin',
@@ -176,7 +201,7 @@ describe('AgentAttachmentStorage', () => {
 
     expect(result).to.have.length(0);
     expect(fetchData.called).to.equal(false);
-    expect(storageService.uploadFile.called).to.equal(false);
+    expect((storageService.uploadFile as sinon.SinonStub).called).to.equal(false);
     expect(logger.warn.called).to.equal(true);
   });
 
@@ -194,7 +219,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound([attachment], ctx);
 
     expect(result).to.have.length(0);
-    expect(storageService.uploadFile.called).to.equal(false);
+    expect((storageService.uploadFile as sinon.SinonStub).called).to.equal(false);
     expect(logger.warn.called).to.equal(true);
   });
 
@@ -226,7 +251,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound(attachments, ctx);
 
     expect(result).to.have.length(2);
-    expect(storageService.uploadFile.callCount).to.equal(2);
+    expect((storageService.uploadFile as sinon.SinonStub).callCount).to.equal(2);
     expect(logger.warn.calledWithMatch({ byteLength: 2 * mb, aggregateCap: 50 * mb })).to.equal(true);
   });
 
@@ -249,7 +274,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound([attachment], ctx);
 
     expect(result).to.have.length(0);
-    expect(storageService.uploadFile.called).to.equal(false);
+    expect((storageService.uploadFile as sinon.SinonStub).called).to.equal(false);
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
@@ -273,7 +298,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound([attachment], ctx);
 
     expect(result).to.have.length(0);
-    expect(storageService.uploadFile.called).to.equal(false);
+    expect((storageService.uploadFile as sinon.SinonStub).called).to.equal(false);
   });
 
   it('should skip whatsapp fetchData attachment without size metadata when fetched data exceeds size limit', async () => {
@@ -294,7 +319,7 @@ describe('AgentAttachmentStorage', () => {
     const result = await service.storeInbound([attachment], { ...ctx, platform: AgentPlatformEnum.WHATSAPP });
 
     expect(result).to.have.length(0);
-    expect(storageService.uploadFile.called).to.equal(false);
+    expect((storageService.uploadFile as sinon.SinonStub).called).to.equal(false);
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
@@ -308,7 +333,7 @@ describe('AgentAttachmentStorage', () => {
     const url = await service.signRead('org/env/agents/conv/msg/0-f.txt');
 
     expect(url).to.equal('https://read');
-    expect(storageService.fileExists.calledOnce).to.equal(true);
+    expect((storageService.fileExists as sinon.SinonStub).calledOnce).to.equal(true);
   });
 
   it('should return null from signRead when object missing', async () => {
@@ -321,6 +346,72 @@ describe('AgentAttachmentStorage', () => {
     const url = await service.signRead('missing-key');
 
     expect(url).to.equal(null);
-    expect(storageService.getReadSignedUrl.called).to.equal(false);
+    expect((storageService.getReadSignedUrl as sinon.SinonStub).called).to.equal(false);
+  });
+
+  const getBytesScope = {
+    organizationId: 'org',
+    environmentId: 'env',
+    conversationId: 'conv',
+  };
+
+  it('should return file bytes from getFile without a fileExists probe', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('png-bytes'));
+    const fileExists = sinon.stub();
+    const storageService = {
+      fileExists,
+      getFile,
+    } as unknown as StorageService;
+
+    const service = new AgentAttachmentStorage(storageService, makeLogger() as any);
+    const bytes = await service.getBytes('org/env/agents/conv/msg/0-f.png', getBytesScope);
+
+    expect(bytes?.equals(Buffer.from('png-bytes'))).to.equal(true);
+    expect(getFile.calledOnce).to.equal(true);
+    expect(fileExists.called).to.equal(false);
+  });
+
+  it('should return null from getBytes when getFile fails', async () => {
+    const getFile = sinon.stub().rejects(new Error('NoSuchKey'));
+    const storageService = {
+      fileExists: sinon.stub(),
+      getFile,
+    } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+    const bytes = await service.getBytes('org/env/agents/conv/msg/missing.png', getBytesScope);
+
+    expect(bytes).to.equal(null);
+    expect(getFile.calledOnce).to.equal(true);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey belongs to another tenant', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes('victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf', getBytesScope);
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey escapes the conversation prefix', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes(
+      'org/env/agents/conv/../../victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf',
+      getBytesScope
+    );
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
   });
 });

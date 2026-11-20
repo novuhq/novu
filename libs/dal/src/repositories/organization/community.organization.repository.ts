@@ -1,3 +1,4 @@
+import { IOrganizationUsageLimits } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { CommunityMemberRepository } from '../member';
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
@@ -72,6 +73,36 @@ export class CommunityOrganizationRepository
       {
         $set: {
           defaultLocale,
+        },
+      }
+    );
+  }
+
+  /** Billing-only: the Mongo document owns usage limits, so these are not part of `IOrganizationRepository`. */
+  async updateUsageLimits(
+    organizationId: string,
+    usageLimits: IOrganizationUsageLimits
+  ): Promise<{ matched: number; modified: number }> {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          usageLimits,
+        },
+      }
+    );
+  }
+
+  async resetUsageLimits(organizationId: string): Promise<{ matched: number; modified: number }> {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $unset: {
+          usageLimits: 1,
         },
       }
     );

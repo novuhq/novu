@@ -1,3 +1,5 @@
+import { BILLING_SETTINGS_PATH } from '@novu/shared';
+
 export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
@@ -28,7 +30,7 @@ export const ROUTES = {
   SETTINGS_ACCOUNT: '/settings/account',
   SETTINGS_ORGANIZATION: '/settings/organization',
   SETTINGS_TEAM: '/settings/team',
-  SETTINGS_BILLING: '/settings/billing',
+  SETTINGS_BILLING: BILLING_SETTINGS_PATH,
   WORKFLOWS: '/env/:environmentSlug/workflows',
   TRANSLATION_SETTINGS: '/env/:environmentSlug/translations/settings',
   EDIT_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug',
@@ -99,6 +101,11 @@ export const ROUTES = {
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
+/** Legacy `/chat` tab. Redirects to overview with the preview drawer open. */
+export const AGENT_DETAILS_CHAT_TAB = 'chat';
+
+export const WEB_CHAT_PREVIEW_PARAM = 'previewChat';
+
 export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
@@ -109,6 +116,13 @@ export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
   }
 
   return AGENT_DETAILS_DEFAULT_TAB;
+}
+
+/** Reserved path segments, not slug prefixes. `create-account_wf_…` is still an editor slug. */
+const RESERVED_WORKFLOW_SEGMENTS = /\/workflows\/(?:create|templates)(?:\/|$)/;
+
+export function isWorkflowEditorPath(pathname: string): boolean {
+  return pathname.includes('/workflows/') && !RESERVED_WORKFLOW_SEGMENTS.test(pathname);
 }
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

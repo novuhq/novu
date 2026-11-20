@@ -22,13 +22,18 @@
  * setup couldn't provide.
  */
 
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { AgentRepository, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
-import { Actions, Button, Card, CardText } from '@novu/framework/express';
+import type { AgentMessage } from '@novu/framework';
+import { Actions, Button, Card, CardText, Chart, LinkButton, Table } from '@novu/framework/express';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
+import { esmImport } from '../shared/util/esm-import';
 import {
   AgentTestContext,
   activityRepository,
@@ -125,6 +130,11 @@ async function findEmulatorUser(emulatorUrl: string, email: string): Promise<Sla
   return body.user;
 }
 
+/** Concatenated text of an mdast table cell (text, inline code, emphasis children). */
+function toPlainCell(node: { value?: string; children?: unknown[] }): string {
+  return node.value ?? (node.children ?? []).map((child) => toPlainCell(child as typeof node)).join('');
+}
+
 const agentRepository = new AgentRepository();
 
 describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
@@ -137,6 +147,33 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
   /** Programmable handler swapped in per-test before the bridge fires. */
   let onMessageHandler: Parameters<typeof startBridgeServer>[0]['handlers']['onMessage'] = async () => {};
+
+  /**
+   * Sends a signed Slack `app_mention` webhook and waits until the bridge
+   * handler has run. Slack's `chat.handleWebhook` returns 200 the instant the
+   * payload is accepted; the bridge dispatch runs as a fire-and-forget promise,
+   * so poll for the stub to fire before awaiting `drain()`.
+   */
+  async function deliverSlackMention(mention: Omit<Parameters<typeof buildSlackAppMention>[0], 'userId' | 'channel'>) {
+    const body = JSON.stringify(buildSlackAppMention({ userId: user.id, channel: channel.id, ...mention }));
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    const res = await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
+    await Promise.race([
+      bridgeStub.drain(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
+      ),
+    ]);
+
+    return res;
+  }
 
   before(async () => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
@@ -215,42 +252,17 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     };
 
     const threadTs = `${Math.floor(Date.now() / 1000)}.000100`;
-    const body = JSON.stringify(
-      buildSlackAppMention({
-        userId: user.id,
-        channel: channel.id,
-        threadTs,
-        text: '<@UBOT> ping',
-      })
-    );
-    const timestamp = Math.floor(Date.now() / 1000);
-    const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
-
-    const res = await ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-      .set(headers)
-      .set('content-type', 'application/json')
-      .send(body);
+    const res = await deliverSlackMention({
+      threadTs,
+      text: '<@UBOT> ping',
+    });
 
     expect(res.status, JSON.stringify(res.body)).to.equal(200);
-
-    // Slack's `chat.handleWebhook` returns 200 the instant the payload is
-    // accepted; the real `handleMessageEvent` → bridge dispatch → bridge stub
-    // chain runs as a fire-and-forget promise. Poll for the stub to fire
-    // before we await `drain()`.
-    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
-
-    await Promise.race([
-      bridgeStub.drain(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
-      ),
-    ]);
 
     expect(bridgeStub.calls.length, 'bridge executor invoked').to.be.gte(1);
 
     // Plain markdown replies from orgs without `removeNovuBranding` get the
-    // free-plan "Powered by Novu" watermark appended as the last line, so the
+    // free-plan "Powered by Novu" watermark appended as a markdown footer, so the
     // delivered text is no longer exactly the bridge reply.
     const replyMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);
@@ -284,6 +296,73 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     expect(agentReply!.platformMessageId, 'platformMessageId mirrors emulator ts').to.equal(replyMessage.ts);
   });
 
+  it('delivers a pasted Slack table and the sender email to the bridge handler', async () => {
+    const received: AgentMessage[] = [];
+    onMessageHandler = async (message) => {
+      received.push(message);
+    };
+
+    const cell = (text: string, bold = false) => ({
+      type: 'rich_text',
+      elements: [
+        { type: 'rich_text_section', elements: [{ type: 'text', text, ...(bold ? { style: { bold: true } } : {}) }] },
+      ],
+    });
+    const threadTs = `${Math.floor(Date.now() / 1000)}.000300`;
+    const payload = buildSlackAppMention({
+      userId: user.id,
+      channel: channel.id,
+      threadTs,
+      text: '<@UBOT> Q3 by region, EMEA is *final*',
+    });
+    Object.assign(payload.event, {
+      blocks: [
+        {
+          type: 'table',
+          rows: [
+            [cell('Region', true), cell('Revenue', true), cell('Owner', true)],
+            [cell('EMEA'), cell('1,200'), cell('ana_lopez')],
+            [cell('APAC | JP'), cell('950'), cell('')],
+          ],
+        },
+      ],
+    });
+    const body = JSON.stringify(payload);
+    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
+
+    const res = await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    expect(res.status, JSON.stringify(res.body)).to.equal(200);
+    const message = await pollFor(async () => received[0], BRIDGE_DRAIN_TIMEOUT_MS);
+    await bridgeStub.drain();
+
+    // Reproducible artifact: the Slack event in, the framework `ctx.message` out.
+    const artifactPath = join(tmpdir(), 'novu-e2e-artifacts', 'slack-rich-inbound.json');
+    mkdirSync(dirname(artifactPath), { recursive: true });
+    writeFileSync(artifactPath, JSON.stringify({ slackEvent: payload.event, bridgeMessage: message }, null, 2));
+
+    // Parse the way `@novu/chat-sdk-adapter` does, so padding/escaping changes don't matter.
+    const { parseMarkdown }: typeof import('chat') = await esmImport('chat');
+    const root = parseMarkdown(message.markdown ?? '');
+    const table = root.children.find((node) => node.type === 'table');
+    const rows = table?.type === 'table' ? table.children.map((row) => row.children.map(toPlainCell)) : [];
+
+    expect(rows, `table rows (artifact: ${artifactPath})`).to.deep.equal([
+      ['Region', 'Revenue', 'Owner'],
+      ['EMEA', '1,200', 'ana_lopez'],
+      ['APAC | JP', '950', ''],
+    ]);
+    expect(root.children.some((node) => JSON.stringify(node).includes('"strong"'))).to.equal(true);
+    expect(message.text).to.contain('EMEA is final');
+    expect(message.author.userId).to.equal(user.id);
+    expect(message.author.email).to.equal('e2e@novu.test');
+    expect(message.author).to.not.have.property('isSystem');
+  });
+
   it('serializes top-level (non-threaded) replies into channel history', async () => {
     // When the inbound message has no thread_ts, the slack adapter encodes
     // threadTs = ts (the message itself becomes the thread root). Replies post
@@ -294,32 +373,11 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     };
 
     const ts = `${Math.floor(Date.now() / 1000)}.000200`;
-    const body = JSON.stringify(
-      buildSlackAppMention({
-        userId: user.id,
-        channel: channel.id,
-        threadTs: ts,
-        text: '<@UBOT> hello',
-        eventTs: ts,
-      })
-    );
-    const timestamp = Math.floor(Date.now() / 1000);
-    const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
-
-    await ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-      .set(headers)
-      .set('content-type', 'application/json')
-      .send(body);
-
-    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
-
-    await Promise.race([
-      bridgeStub.drain(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
-      ),
-    ]);
+    await deliverSlackMention({
+      threadTs: ts,
+      text: '<@UBOT> hello',
+      eventTs: ts,
+    });
 
     const reply = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, ts);
@@ -372,24 +430,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     };
 
     const threadTs = `${Math.floor(Date.now() / 1000)}.000300`;
-    const body = JSON.stringify(
-      buildSlackAppMention({ userId: user.id, channel: channel.id, threadTs, text: '<@UBOT> card' })
-    );
-    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
-
-    await ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-      .set(headers)
-      .set('content-type', 'application/json')
-      .send(body);
-
-    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
-    await Promise.race([
-      bridgeStub.drain(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
-      ),
-    ]);
+    await deliverSlackMention({ threadTs, text: '<@UBOT> card' });
 
     // Wait until `chat.postMessage` lands on the wire — the bridge handler
     // and the slack adapter's post are independently async after the bridge
@@ -426,6 +467,120 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     expect(cancelButton).to.have.property('style', 'danger');
   });
 
+  it('serializes Table, Chart and LinkButton replies into native Slack blocks', async () => {
+    // The Slack adapter silently downgrades an invalid chart or a second table to
+    // an ASCII `section` fallback, so assert the native block types explicitly.
+    onMessageHandler = async (_message, agentCtx) => {
+      await agentCtx.reply(
+        Card({
+          title: 'Weekly deliveries',
+          children: [
+            Table({
+              caption: 'Deliveries by channel',
+              pageSize: 3,
+              headers: ['Channel', 'Sent', 'Failed'],
+              rows: [
+                ['Email', '1200', '4'],
+                ['SMS', '640', '12'],
+                ['Push', '980', '1'],
+                ['Slack', '310', '0'],
+              ],
+            }),
+            Chart({
+              title: 'Sent per day',
+              chart: {
+                type: 'bar',
+                categories: ['Mon', 'Tue', 'Wed'],
+                series: [
+                  {
+                    name: 'Email',
+                    data: [
+                      { label: 'Mon', value: 400 },
+                      { label: 'Tue', value: 350 },
+                      { label: 'Wed', value: 450 },
+                    ],
+                  },
+                  {
+                    name: 'SMS',
+                    // Out of category order on purpose: the adapter reorders by label.
+                    data: [
+                      { label: 'Wed', value: 260 },
+                      { label: 'Mon', value: 200 },
+                      { label: 'Tue', value: 180 },
+                    ],
+                  },
+                ],
+                xLabel: 'Day',
+                yLabel: 'Messages',
+              },
+            }),
+            Actions([LinkButton({ label: 'Open dashboard', url: 'https://dashboard.novu.co/activity' })]),
+          ],
+        })
+      );
+    };
+
+    const threadTs = `${Math.floor(Date.now() / 1000)}.000350`;
+    await deliverSlackMention({ threadTs, text: '<@UBOT> report' });
+
+    const postCall = await pollFor(async () => {
+      const calls = getRecordedCalls('chat.postMessage');
+
+      return calls.find((c) => c.options.thread_ts === threadTs) ?? null;
+    }, SLACK_POLL_TIMEOUT_MS);
+
+    const blocks = (postCall.options.blocks ?? []) as Array<Record<string, unknown>>;
+
+    const tableBlock = blocks.find((b) => b.type === 'data_table');
+    expect(tableBlock, `native data_table block (got ${blocks.map((b) => b.type).join(', ')})`).to.exist;
+    expect(tableBlock).to.have.property('caption', 'Deliveries by channel');
+    expect(tableBlock).to.have.property('page_size', 3);
+    const tableRows = (tableBlock as { rows: Array<Array<{ text: string }>> }).rows;
+    expect(tableRows.map((row) => row.map((cell) => cell.text))).to.deep.equal([
+      ['Channel', 'Sent', 'Failed'],
+      ['Email', '1200', '4'],
+      ['SMS', '640', '12'],
+      ['Push', '980', '1'],
+      ['Slack', '310', '0'],
+    ]);
+
+    const chartBlock = blocks.find((b) => b.type === 'data_visualization');
+    expect(chartBlock, `native data_visualization block (got ${blocks.map((b) => b.type).join(', ')})`).to.exist;
+    expect(chartBlock).to.deep.include({
+      title: 'Sent per day',
+      chart: {
+        type: 'bar',
+        series: [
+          {
+            name: 'Email',
+            data: [
+              { label: 'Mon', value: 400 },
+              { label: 'Tue', value: 350 },
+              { label: 'Wed', value: 450 },
+            ],
+          },
+          {
+            name: 'SMS',
+            data: [
+              { label: 'Mon', value: 200 },
+              { label: 'Tue', value: 180 },
+              { label: 'Wed', value: 260 },
+            ],
+          },
+        ],
+        axis_config: { categories: ['Mon', 'Tue', 'Wed'], x_label: 'Day', y_label: 'Messages' },
+      },
+    });
+
+    const actionsBlock = blocks.find((b) => b.type === 'actions') as
+      | { elements?: Array<Record<string, unknown>> }
+      | undefined;
+    const linkButton = actionsBlock?.elements?.find((e) => e.url === 'https://dashboard.novu.co/activity');
+    expect(linkButton, 'LinkButton serialized as a url button').to.exist;
+    expect(linkButton).to.have.property('type', 'button');
+    expect(linkButton).to.have.nested.property('text.text', 'Open dashboard');
+  });
+
   it('emits reactions.add with the configured resolve emoji when ctx.resolve is called', async () => {
     // Scenario C: enable the configured `reactionOnResolved` behavior and
     // assert the Slack adapter actually emits a `reactions.add` for the
@@ -450,30 +605,11 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     // `thread_ts` so the test can assert the recorded `reactions.add` targets
     // exactly that ts.
     const ts = `${Math.floor(Date.now() / 1000)}.000400`;
-    const body = JSON.stringify(
-      buildSlackAppMention({
-        userId: user.id,
-        channel: channel.id,
-        threadTs: ts,
-        eventTs: ts,
-        text: '<@UBOT> resolve me',
-      })
-    );
-    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
-
-    await ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-      .set(headers)
-      .set('content-type', 'application/json')
-      .send(body);
-
-    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
-    await Promise.race([
-      bridgeStub.drain(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
-      ),
-    ]);
+    await deliverSlackMention({
+      threadTs: ts,
+      eventTs: ts,
+      text: '<@UBOT> resolve me',
+    });
 
     const reactionCall = await pollFor(async () => {
       const calls = getRecordedCalls('reactions.add');
@@ -508,24 +644,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     };
 
     const threadTs = `${Math.floor(Date.now() / 1000)}.000500`;
-    const body = JSON.stringify(
-      buildSlackAppMention({ userId: user.id, channel: channel.id, threadTs, text: '<@UBOT> edit me' })
-    );
-    const headers = signSlackRequest(ctx.signingSecret, Math.floor(Date.now() / 1000), body);
-
-    await ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-      .set(headers)
-      .set('content-type', 'application/json')
-      .send(body);
-
-    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
-    await Promise.race([
-      bridgeStub.drain(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)
-      ),
-    ]);
+    await deliverSlackMention({ threadTs, text: '<@UBOT> edit me' });
 
     const initialMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);

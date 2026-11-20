@@ -1,15 +1,13 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, RequestTraceInput } from '@novu/application-generic';
 import {
-  assertSafeOutboundUrl,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
   FeatureFlagsService,
-  InMemoryLRUCacheService,
-  InMemoryLRUCacheStore,
+  getPayloadSchemaValidator,
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
@@ -17,14 +15,12 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
-  SsrfBlockedError,
   StorageHelperService,
   TraceLogRepository,
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
   AgentRepository,
-  NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
   TenantRepository,
@@ -39,8 +35,7 @@ import {
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
 } from '@novu/shared';
-import Ajv, { ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -48,18 +43,8 @@ import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
+  TriggerWorkflow,
 } from './parse-event-request.command';
-
-const ajv = new Ajv({
-  allErrors: true,
-  useDefaults: true,
-  strict: false,
-});
-addFormats(ajv);
-
-function getSchemaHash(schema: object): string {
-  return createHash('sha256').update(JSON.stringify(schema)).digest('hex');
-}
 
 export type ParseEventRequestResult = {
   acknowledged: boolean;
@@ -82,13 +67,13 @@ export class ParseEventRequest {
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
     protected moduleRef: ModuleRef,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService,
     private agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential trigger guards (bridge, workflow lookup, payload schema, tenant, active, steps) before dispatch
   public async execute(command: ParseEventRequestCommand): Promise<ParseEventRequestResult> {
     const transactionId = command.transactionId || generateTransactionId();
     const requestId = command.requestId;
@@ -127,7 +112,7 @@ export class ParseEventRequest {
         });
       }
 
-      const template: Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'> | null =
+      const template =
         command.workflow ||
         (await this.getNotificationTemplateByTriggerIdentifier({
           environmentId: command.environmentId,
@@ -206,6 +191,14 @@ export class ParseEventRequest {
         return {
           acknowledged: true,
           status: TriggerEventStatusEnum.NOT_ACTIVE,
+          transactionId,
+        };
+      }
+
+      if (!template.steps?.length) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
           transactionId,
         };
       }
@@ -324,7 +317,7 @@ export class ParseEventRequest {
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
-    return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
+    return discover.workflows.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
 
   // The trigger pipeline performs an outbound DISCOVER request against the
@@ -420,7 +413,7 @@ export class ParseEventRequest {
 
     if (!command.skipQueueInsertion) {
       await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
-      this.logger.info(
+      this.logger.debug(
         { ...command, transactionId, discoveredWorkflowId: discoveredWorkflow?.workflowId },
         'Event dispatched to [Workflow] Queue'
       );
@@ -485,13 +478,13 @@ export class ParseEventRequest {
   private async getNotificationTemplateByTriggerIdentifier(command: {
     triggerIdentifier: string;
     environmentId: string;
-  }): Promise<Pick<NotificationTemplateEntity, '_id' | 'active' | 'payloadSchema' | 'validatePayload'> | null> {
+  }): Promise<TriggerWorkflow | null> {
     return await this.notificationTemplateRepository.findOne(
       {
         _environmentId: command.environmentId,
         'triggers.identifier': command.triggerIdentifier,
       },
-      '_id active payloadSchema validatePayload',
+      '_id active payloadSchema validatePayload steps._id',
       { readPreference: 'secondaryPreferred' }
     );
   }
@@ -594,7 +587,7 @@ export class ParseEventRequest {
 
   @Instrument()
   private validateAndApplyPayloadDefaults(payload: Record<string, unknown>, schema: object): Record<string, unknown> {
-    const validate = this.getCompiledValidator(schema);
+    const validate = getPayloadSchemaValidator(schema);
     const payloadWithDefaults = JSON.parse(JSON.stringify(payload));
     const valid = validate(payloadWithDefaults);
 
@@ -603,18 +596,6 @@ export class ParseEventRequest {
     }
 
     return payloadWithDefaults;
-  }
-
-  private getCompiledValidator(schema: object): ValidateFunction {
-    const hash = getSchemaHash(schema);
-    let validate = this.inMemoryLRUCacheService.getIfCached(InMemoryLRUCacheStore.VALIDATOR, hash) as ValidateFunction;
-
-    if (!validate) {
-      validate = ajv.compile(schema);
-      this.inMemoryLRUCacheService.set(InMemoryLRUCacheStore.VALIDATOR, hash, validate);
-    }
-
-    return validate;
   }
 }
 

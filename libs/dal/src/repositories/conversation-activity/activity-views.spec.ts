@@ -9,7 +9,7 @@ describe('activity-views', () => {
     }
   });
 
-  it('shows run lifecycle to clients only, since it is bookkeeping rather than conversation content', () => {
+  it('shows run lifecycle to clients only, since it is bookkeeping rather than conversation content, bar a stopped run', () => {
     const lifecycle = ['run_start', 'run_finish', 'run_error'];
 
     expect(getKindsForView('client_events')).to.include.members(lifecycle);
@@ -18,6 +18,25 @@ describe('activity-views', () => {
       expect(getKindsForView('llm_transcript')).to.not.include(kind);
       expect(getKindsForView('operator_timeline')).to.not.include(kind);
     }
+  });
+
+  it('hands a stopped run to the bridge so the model learns the turn was never completed', () => {
+    expect(getKindsForView('agent_handoff')).to.include('run_finish.aborted');
+    expect(getKindsForView('client_events')).to.include('run_finish');
+    expect(getKindsForView('client_events')).to.not.include('run_finish.aborted');
+    expect(getKindsForView('llm_transcript')).to.not.include('run_finish.aborted');
+    expect(getKindsForView('operator_timeline')).to.not.include('run_finish.aborted');
+
+    const handoff = compileActivityViewMatch('agent_handoff').$or ?? [];
+
+    expect(handoff).to.deep.include({
+      type: ConversationActivityTypeEnum.RUN_FINISH,
+      'richContent.lifecycle.outcome': 'aborted',
+    });
+    expect(handoff).to.not.deep.include({ type: ConversationActivityTypeEnum.RUN_FINISH });
+    expect(compileActivityViewMatch('client_events').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.RUN_FINISH,
+    });
   });
 
   it('keeps every kind the dashboard timeline renders, so scoping to a view is not a regression', () => {
@@ -31,11 +50,38 @@ describe('activity-views', () => {
       'signal.other',
       'tool_approval_request',
       'tool_approval_decision',
+      'mcp_connection_request',
+      'mcp_connection_result',
+      'human_interaction_request',
+      'human_interaction_response',
+      'custom',
     ]);
+  });
+
+  it('shows custom app data to clients and operators, not the model transcript or handoff', () => {
+    expect(getKindsForView('client_events')).to.include('custom');
+    expect(getKindsForView('operator_timeline')).to.include('custom');
+    expect(getKindsForView('llm_transcript')).to.not.include('custom');
+    expect(getKindsForView('agent_handoff')).to.not.include('custom');
+    expect(getKindsForView('approval_activities')).to.not.include('custom');
+    expect(compileActivityViewMatch('client_events').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
+    expect(compileActivityViewMatch('operator_timeline').$or).to.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
+    expect(compileActivityViewMatch('llm_transcript').$or).to.not.deep.include({
+      type: ConversationActivityTypeEnum.CUSTOM,
+    });
   });
 
   it('keeps human messages in approval_activities so the approval requester can be resolved', () => {
     expect(getKindsForView('approval_activities')).to.include.members(['message.subscriber', 'message.platform_user']);
+  });
+
+  it('keeps edit and delete off agent_handoff so the page is current-state rows', () => {
+    expect(getKindsForView('agent_handoff')).to.not.include.members(['edit', 'delete']);
+    expect(getKindsForView('operator_timeline')).to.include.members(['edit', 'delete']);
   });
 
   it('matches every kind in the view and nothing else', () => {
@@ -49,6 +95,10 @@ describe('activity-views', () => {
       {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.AGENT,
+      },
+      {
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
       },
     ]);
   });

@@ -5,8 +5,14 @@ import {
   isChannelOverPlanLimit,
   PinoLogger,
 } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  AgentIntegrationRepository,
+  AgentRepository,
+  ChannelEndpointRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
+import { DirectionEnum, isAgentInboxProvider } from '@novu/shared';
 
 import { ListAgentIntegrationsResponseDto } from '../../../shared/dtos/list-agent-integrations-response.dto';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -18,6 +24,7 @@ export class ListAgentIntegrations {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly agentEntitlementsService: AgentEntitlementsService,
     private readonly logger: PinoLogger
   ) {
@@ -112,16 +119,16 @@ export class ListAgentIntegrations {
             providerId: i.providerId,
             channel: i.channel,
             active: i.active,
-            credentials: i.providerId === EmailProviderIdEnum.NovuAgent ? i.credentials : undefined,
+            credentials: isAgentInboxProvider(i.providerId) ? i.credentials : undefined,
           } satisfies IntegrationSummary,
         ])
       );
     }
 
-    const channelUsage = await this.agentEntitlementsService.getChannelPlanUsage(
-      command.organizationId,
-      command.environmentId
-    );
+    const [channelUsage, linkedIdentifiers] = await Promise.all([
+      this.agentEntitlementsService.getChannelPlanUsage(command.organizationId, command.environmentId),
+      this.findIdentifiersWithChannelEndpoints(command, [...idToIntegration.values()]),
+    ]);
 
     const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
       const integration = idToIntegration.get(link._integrationId);
@@ -143,6 +150,7 @@ export class ListAgentIntegrations {
         ...toAgentIntegrationResponse(link, integration, agent),
         // `undefined` drops at JSON serialization, keeping the flag presence-only.
         exceedsPlanLimit: exceedsPlanLimit || undefined,
+        hasChannelEndpoints: linkedIdentifiers.has(integration.identifier) || undefined,
       });
 
       return acc;
@@ -156,5 +164,31 @@ export class ListAgentIntegrations {
       totalCountCapped: pagination.totalCountCapped,
       planUsage: { used: channelUsage.used, limit: channelUsage.limit },
     };
+  }
+
+  /**
+   * Which of the listed integrations someone has linked a chat on. One indexed lookup per integration
+   * instead of loading the endpoints, which an environment can have thousands of.
+   */
+  private async findIdentifiersWithChannelEndpoints(
+    command: ListAgentIntegrationsCommand,
+    integrations: Array<Pick<IntegrationEntity, 'identifier'>>
+  ): Promise<Set<string>> {
+    const found = await Promise.all(
+      integrations.map(async ({ identifier }) => {
+        const endpoint = await this.channelEndpointRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            integrationIdentifier: identifier,
+          },
+          '_id'
+        );
+
+        return endpoint ? identifier : null;
+      })
+    );
+
+    return new Set(found.filter((identifier): identifier is string => identifier !== null));
   }
 }

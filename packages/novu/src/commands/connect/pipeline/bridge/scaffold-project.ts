@@ -20,6 +20,7 @@ export type ScaffoldBridgeProjectInput = {
   agentIdentifier: string;
   silent?: boolean;
   llmAuth?: LlmAuthChoice;
+  region?: string;
 };
 
 export type ScaffoldBridgeProjectResult = {
@@ -87,6 +88,7 @@ export async function scaffoldBridgeProject(input: ScaffoldBridgeProjectInput): 
     skipInstall: skippedInstall,
     silent: input.silent,
     llmAuth: input.llmAuth,
+    region: input.region,
   });
 
   tryGitInit(root);

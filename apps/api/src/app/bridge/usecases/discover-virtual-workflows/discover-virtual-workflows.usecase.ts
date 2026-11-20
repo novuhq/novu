@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ExecuteBridgeRequest, WorkflowResponseDto } from '@novu/application-generic';
 import { DiscoverOutput, GetActionEnum } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
@@ -29,7 +29,7 @@ export class DiscoverVirtualWorkflows {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
-      discoveredWorkflows: discover.workflows ?? [],
+      discoveredWorkflows: discover.workflows,
     });
 
     return { workflows };
@@ -40,7 +40,7 @@ export class DiscoverVirtualWorkflows {
     // HttpException carrying `{ message, code }` (e.g. BRIDGE_AUTHENTICATION_FAILED
     // on HMAC mismatch), which the dashboard handshake branches on to guide the
     // user to the environment whose secret key matches their local app.
-    const discover = (await this.executeBridgeRequest.execute({
+    return (await this.executeBridgeRequest.execute({
       statelessBridgeUrl: command.bridgeUrl,
       environmentId: command.environmentId,
       action: GetActionEnum.DISCOVER,
@@ -48,11 +48,5 @@ export class DiscoverVirtualWorkflows {
       workflowOrigin: ResourceOriginEnum.EXTERNAL,
       enforceSsrfProtection: true,
     })) as DiscoverOutput;
-
-    if (!discover) {
-      throw new BadRequestException('Invalid Bridge URL Response');
-    }
-
-    return discover;
   }
 }

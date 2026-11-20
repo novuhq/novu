@@ -142,4 +142,56 @@ describe('AllExceptionsFilter', () => {
 
     expect(requestLogRepository.create.called).to.equal(false);
   });
+
+  it('should not write a second response or reject when the response was already sent', async () => {
+    const status = sinon.stub().throws(new Error('Cannot set headers after they are sent to the client'));
+    const json = sinon.stub().returnsThis();
+    const response = { status, json, headersSent: true };
+    const host = buildHost({ request: buildLogRequest({ _shouldLogAnalytics: false }), response });
+
+    await filter.catch(new Error('Cannot set headers after they are sent to the client'), host);
+
+    expect(status.called).to.equal(false);
+    expect(json.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+    expect(unhandledRejections).to.deep.equal([]);
+  });
+
+  describe('multer errors not translated by @nestjs/platform-express', () => {
+    function buildMulterError(code: string, message: string, field?: string) {
+      return Object.assign(new Error(message), { name: 'MulterError', code, field });
+    }
+
+    async function catchError(exception: unknown) {
+      const status = sinon.stub().returnsThis();
+      const json = sinon.stub().returnsThis();
+      const host = buildHost({ request: buildLogRequest({ _shouldLogAnalytics: false }), response: { status, json } });
+
+      await filter.catch(exception, host);
+
+      return { status: status.firstCall.args[0], body: json.firstCall.args[0] };
+    }
+
+    it('should return 400 with the field name for an unexpected file field', async () => {
+      const { status, body } = await catchError(
+        buildMulterError('LIMIT_UNEXPECTED_FILE', 'Unexpected file field', 'file')
+      );
+
+      expect(status).to.equal(HttpStatus.BAD_REQUEST);
+      expect(body.message).to.equal('Unexpected file field - file');
+      expect(logger.error.called).to.equal(false);
+    });
+
+    it('should return 413 when the file exceeds the size limit', async () => {
+      const { status } = await catchError(buildMulterError('LIMIT_FILE_SIZE', 'File too large', 'file'));
+
+      expect(status).to.equal(HttpStatus.PAYLOAD_TOO_LARGE);
+    });
+
+    it('should still return 500 for unrelated errors', async () => {
+      const { status } = await catchError(new Error('boom'));
+
+      expect(status).to.equal(HttpStatus.INTERNAL_SERVER_ERROR);
+    });
+  });
 });

@@ -1,8 +1,17 @@
-import { AGENT_ANALYTICS_SOURCES, AgentSubscriberAccessEnum } from '@novu/shared';
+import { AGENT_ANALYTICS_SOURCES, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { AgentDBModel } from './agent.entity';
+import {
+  AGENT_CARD_ART_KINDS,
+  AGENT_HOST_IDS,
+  AGENT_HOST_VIAS,
+  AGENT_INBOX_REACHES,
+  AGENT_LOOK_COLORS,
+  AGENT_MASCOT_BODIES,
+  AgentDBModel,
+  LISTEN_HOST_IDS,
+} from './agent.entity';
 
 const agentSchema = new Schema<AgentDBModel>(
   {
@@ -15,6 +24,88 @@ const agentSchema = new Schema<AgentDBModel>(
       required: true,
     },
     description: Schema.Types.String,
+    picture: {
+      storageKey: Schema.Types.String,
+      contentType: Schema.Types.String,
+      version: Schema.Types.String,
+    },
+    look: {
+      shape: {
+        type: Schema.Types.String,
+        enum: [...AGENT_MASCOT_BODIES],
+      },
+      color: {
+        type: Schema.Types.String,
+        enum: [...AGENT_LOOK_COLORS],
+      },
+      art: {
+        kind: {
+          type: Schema.Types.String,
+          enum: [...AGENT_CARD_ART_KINDS],
+        },
+        seed: Schema.Types.Number,
+      },
+    },
+    cardShown: {
+      at: Schema.Types.String,
+      via: {
+        type: Schema.Types.String,
+        enum: [...AGENT_HOST_VIAS],
+      },
+      host: {
+        type: Schema.Types.String,
+        enum: [...AGENT_HOST_IDS],
+      },
+    },
+    hosts: {
+      byId: {
+        type: Map,
+        of: new Schema(
+          {
+            connectedAt: Schema.Types.String,
+            lastCheckedAt: Schema.Types.String,
+            via: {
+              type: Schema.Types.String,
+              enum: [...AGENT_HOST_VIAS],
+            },
+          },
+          { _id: false }
+        ),
+      },
+      cli: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      mcp: {
+        connectedAt: Schema.Types.String,
+        lastCheckedAt: Schema.Types.String,
+      },
+      firstCheckedAt: Schema.Types.String,
+      waitingMessage: {
+        conversationId: Schema.Types.String,
+        from: Schema.Types.String,
+        subject: Schema.Types.String,
+        at: Schema.Types.String,
+        seenAt: Schema.Types.String,
+      },
+    },
+    listening: {
+      computerId: Schema.Types.String,
+      computerName: Schema.Types.String,
+      host: {
+        type: Schema.Types.String,
+        enum: [...LISTEN_HOST_IDS],
+      },
+      project: Schema.Types.String,
+      since: Schema.Types.String,
+      renewedAt: Schema.Types.String,
+      expiresAt: Schema.Types.String,
+    },
+    reach: {
+      type: Schema.Types.String,
+      enum: [...AGENT_INBOX_REACHES],
+    },
+    pausedAt: Schema.Types.String,
     active: {
       type: Schema.Types.Boolean,
       default: true,
@@ -27,6 +118,11 @@ const agentSchema = new Schema<AgentDBModel>(
         enum: Object.values(AgentSubscriberAccessEnum),
         required: true,
       },
+      accessRule: Schema.Types.Mixed,
+      replyPolicy: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentReplyPolicyEnum),
+      },
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,
@@ -36,7 +132,7 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     runtime: {
       type: Schema.Types.String,
-      enum: ['self-hosted', 'managed'],
+      enum: ['self-hosted', 'managed', 'human_relay'],
       default: 'self-hosted',
     },
     visibility: {

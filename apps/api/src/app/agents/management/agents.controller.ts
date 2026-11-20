@@ -26,7 +26,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -58,6 +58,11 @@ import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAgentUsageCommand } from './usecases/get-agent-usage/get-agent-usage.command';
 import { GetAgentUsage } from './usecases/get-agent-usage/get-agent-usage.usecase';
+import { GetAgentWebChatHashCommand } from './usecases/get-agent-web-chat-hash/get-agent-web-chat-hash.command';
+import {
+  type AgentWebChatHashResponseDto,
+  GetAgentWebChatHash,
+} from './usecases/get-agent-web-chat-hash/get-agent-web-chat-hash.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
@@ -76,6 +81,7 @@ export class AgentsController {
     private readonly listAgentsUsecase: ListAgents,
     private readonly getAgentUsecase: GetAgent,
     private readonly getAgentUsageUsecase: GetAgentUsage,
+    private readonly getAgentWebChatHashUsecase: GetAgentWebChatHash,
     private readonly updateAgentUsecase: UpdateAgent,
     private readonly deleteAgentUsecase: DeleteAgent,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
@@ -117,6 +123,7 @@ export class AgentsController {
   }
 
   @Post('/')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @SdkGroupName('Agents')
@@ -152,6 +159,7 @@ export class AgentsController {
   }
 
   @Get('/')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @SdkGroupName('Agents')
@@ -213,6 +221,7 @@ export class AgentsController {
   }
 
   @Get('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('retrieve')
@@ -261,7 +270,29 @@ export class AgentsController {
     );
   }
 
+  @Get('/:identifier/web-chat-hash')
+  @ApiExcludeEndpoint()
+  @ApiOperation({
+    summary: 'Get dashboard web chat agent hash',
+    description:
+      'Returns the web chat `agentHash` the dashboard tester uses when the agent web chat integration has HMAC enabled.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgentWebChatHash(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<AgentWebChatHashResponseDto> {
+    return this.getAgentWebChatHashUsecase.execute(
+      GetAgentWebChatHashCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+      })
+    );
+  }
+
   @Patch('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('update')
@@ -297,6 +328,7 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
   @SdkMethodName('delete')

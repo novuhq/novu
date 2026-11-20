@@ -8,7 +8,7 @@ import {
   NotificationTemplateEntity,
   StepFilter,
 } from '@novu/dal';
-import { IWorkflowStepMetadata, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum } from '@novu/shared';
+import { IWorkflowStepMetadata, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum, type WorkflowJobMetadata } from '@novu/shared';
 import { PinoLogger } from '../logging';
 
 /**
@@ -27,6 +27,7 @@ export type LeanNotificationStep = Pick<
   replyCallback?: { active: boolean; url: string };
   controlVariables?: Record<string, unknown>;
   bridgeUrl?: string;
+  workflowMetadata?: WorkflowJobMetadata;
   template: { _id?: string; type?: StepTypeEnum };
   variants?: LeanNotificationStep[];
 };
@@ -59,6 +60,7 @@ export function toLeanStep(step: NotificationStepData): LeanNotificationStep {
     metadata: step.metadata,
     replyCallback: step.replyCallback,
     controlVariables: step.controlVariables,
+    workflowMetadata: step.workflowMetadata,
     template: {
       _id: step.template?._id ?? step._templateId,
       type: step.template?.type,

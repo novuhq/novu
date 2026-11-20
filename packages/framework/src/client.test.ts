@@ -309,12 +309,7 @@ describe('Novu Client', () => {
       expect(stepBackoffDigest.type).toBe('digest');
       expect(stepBackoffDigest.code).toContain(`amount: 1`);
       expect(stepBackoffDigest.code).toContain(`unit: "hours"`);
-      expect(stepBackoffDigest.code.trim()).toContain(
-        `lookBackWindow: {
-            amount: 1,
-            unit: "hours"
-          }`.trim()
-      );
+      expect(stepBackoffDigest.code.replace(/\s+/g, ' ')).toContain('lookBackWindow: { amount: 1, unit: "hours" }');
 
       const stepTimedDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'timed-digest');
       expect(stepTimedDigest).toBeDefined();
@@ -395,6 +390,8 @@ describe('Novu Client', () => {
               return {
                 subject: `body static prefix ${controls.name}`,
                 body: controls.name,
+                from: controls.from,
+                preheader: controls.preheader,
               };
             },
             {
@@ -402,6 +399,13 @@ describe('Novu Client', () => {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{payload.name}}' },
+                  from: {
+                    type: 'object',
+                    properties: { name: { type: 'string' } },
+                    required: ['name'],
+                    additionalProperties: false,
+                  },
+                  preheader: { type: 'string' },
                 },
                 required: [],
                 additionalProperties: false,
@@ -432,8 +436,11 @@ describe('Novu Client', () => {
           lastName: "Smith's",
         },
         state: [],
-        controls: {},
-        context: {},
+        controls: {
+          from: { name: '{{payload.name}} {{subscriber.lastName}}' },
+          preheader: '{{env.name}} {{context.traceId}} {{t.preheader}}',
+        },
+        context: { traceId: 'trace-123' } as unknown as Event['context'],
         env: testEventEnv,
       };
 
@@ -442,8 +449,10 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const { subject } = emailExecutionResult.outputs;
+      const { subject, from, preheader } = emailExecutionResult.outputs;
       expect(subject).toBe('body static prefix John');
+      expect(from).toMatchObject({ name: "John Smith's" });
+      expect(preheader).toBe('Test trace-123 {{t.preheader}}');
     });
 
     it('should render step results in preview', async () => {

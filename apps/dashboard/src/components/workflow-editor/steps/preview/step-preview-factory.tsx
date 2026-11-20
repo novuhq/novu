@@ -5,7 +5,7 @@ import { ChatPreviewPanel } from '@/components/workflow-editor/steps/chat/chat-p
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { HttpRequestConsolePreview } from '@/components/workflow-editor/steps/http-request/http-request-console-preview';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
-import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
+import { PushPreviewPanel } from '@/components/workflow-editor/steps/push/push-preview-panel';
 import { StepResolverEmptyPreview } from '@/components/workflow-editor/steps/shared/step-resolver-empty-preview';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { ToolPreview } from '@/components/workflow-editor/steps/tool/tool-preview';
@@ -78,11 +78,7 @@ export function StepPreviewFactory() {
       );
 
     case StepTypeEnum.PUSH:
-      return (
-        <MobilePreviewWrapper description={mobilePreviewDescription}>
-          <PushPreview {...commonProps} />
-        </MobilePreviewWrapper>
-      );
+      return <PushPreviewPanel {...commonProps} />;
 
     case StepTypeEnum.CHAT:
       return <ChatPreviewPanel {...commonProps} />;

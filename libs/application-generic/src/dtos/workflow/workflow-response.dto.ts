@@ -180,13 +180,16 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     description: 'Runtime issues for workflow creation and update',
     type: 'object',
     additionalProperties: {
-      $ref: getSchemaPath(RuntimeIssueDto),
+      type: 'array',
+      items: {
+        $ref: getSchemaPath(RuntimeIssueDto),
+      },
     },
   })
   @IsOptional()
   @ValidateNested()
   @Type(() => RuntimeIssueDto)
-  issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
+  issues?: Partial<Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto[]>>;
 
   @ApiPropertyOptional({
     description: 'Timestamp of the last workflow trigger',

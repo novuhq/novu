@@ -28,7 +28,9 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
 const AGENT_TRIGGER_DOCS_URL = 'https://docs.novu.co/agents/get-started/mental-model';
@@ -45,6 +47,7 @@ type WorkflowAgentAssignmentFormProps = {
 export function WorkflowAgentAssignmentForm({ workflow, update, isReadOnly }: WorkflowAgentAssignmentFormProps) {
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
+  const track = useTelemetry();
   const has = useHasPermission();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
   const canWriteWorkflow = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
@@ -72,6 +75,15 @@ export function WorkflowAgentAssignmentForm({ workflow, update, isReadOnly }: Wo
   const hasNoAgents = !agentIdentifier && agentsPeekQuery.isSuccess && agentsPeekQuery.data.data.length === 0;
 
   const handleAgentChange = (nextIdentifier: string | null) => {
+    if (nextIdentifier && nextIdentifier !== agentIdentifier) {
+      track(TelemetryEvent.AGENT_ASSIGNED_TO_WORKFLOW, {
+        workflowId: workflow.workflowId,
+        workflowName: workflow.name,
+        agentIdentifier: nextIdentifier,
+        previousAgentIdentifier: agentIdentifier,
+      });
+    }
+
     update((current) => ({
       ...current,
       agent: nextIdentifier ? { identifier: nextIdentifier } : null,

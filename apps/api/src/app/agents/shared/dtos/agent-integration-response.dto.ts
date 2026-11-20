@@ -86,4 +86,12 @@ export class AgentIntegrationResponseDto {
       'types are disconnected.',
   })
   exceedsPlanLimit?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      '`true` when at least one person has linked their chat on this integration (it has a channel endpoint), ' +
+      'so the agent has someone to reach there. Only returned by the list, and only when true. Email has no ' +
+      'channel endpoints, so it never carries the flag.',
+  })
+  hasChannelEndpoints?: boolean;
 }

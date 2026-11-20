@@ -13,10 +13,9 @@ import type { EditPayloadDto, ReplyContentDto } from './dtos/agent-reply-payload
 /** Pure protocol-shape mappers between `AgentEvent` and the internal reply/Thalamus DTOs. No DI, no side effects. */
 
 /**
- * `AgentMessageContent['card']` is `Record<string, unknown>` on the wire — the protocol can't
- * depend on the `chat` package's `CardElement` type — while `ReplyContentDto['card']` is the
- * validated Chat SDK shape. This is the one place that crosses that trust boundary; the DTO's
- * own `@Validate(IsValidReplyContent)` rejects anything that isn't actually card-shaped.
+ * `AgentMessageContent['card']` is the Novu protocol `CardElement`. `ReplyContentDto['card']`
+ * is the Chat SDK type. This is the one place that crosses that authoring ↔ wire boundary;
+ * the DTO's `@Validate(IsValidReplyContent)` still rejects anything that isn't card-shaped.
  */
 export function toReplyContent(content: AgentMessageContent, files?: AgentFileRef[]): ReplyContentDto | null {
   const base: ReplyContentDto =

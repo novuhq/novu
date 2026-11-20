@@ -1,6 +1,6 @@
 import { ModuleRef } from '@nestjs/core';
 import { CreateExecutionDetails, DetailEnum, GetLayoutUseCaseV0, PinoLogger } from '@novu/application-generic';
-import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import { ControlValuesRepository, JobEntity, JobRepository, NotificationRepository } from '@novu/dal';
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import {
   ControlValuesLevelEnum,
@@ -84,6 +84,7 @@ describe('EmailOutputRendererUsecase', () => {
   let getLayoutUseCaseV0: sinon.SinonStubbedInstance<GetLayoutUseCaseV0>;
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
+  let notificationRepositoryMock: sinon.SinonStubbedInstance<NotificationRepository>;
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
   let translateStub: sinon.SinonStub;
 
@@ -101,6 +102,7 @@ describe('EmailOutputRendererUsecase', () => {
     getLayoutUseCaseV0 = sinon.createStubInstance(GetLayoutUseCaseV0);
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
+    notificationRepositoryMock = sinon.createStubInstance(NotificationRepository);
 
     const controlsTranslationService = new ControlsTranslationService(
       moduleRef as unknown as ModuleRef,
@@ -114,7 +116,8 @@ describe('EmailOutputRendererUsecase', () => {
       controlValuesRepositoryMock as any,
       getLayoutUseCaseV0 as any,
       jobRepositoryMock as any,
-      createExecutionDetailsMock as any
+      createExecutionDetailsMock as any,
+      notificationRepositoryMock as any
     );
   });
 
@@ -284,8 +287,11 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
-  describe('preheader injection', () => {
-    const buildPreheaderCommand = (preheader: string): EmailOutputRendererCommand => ({
+  describe('sender and preheader metadata', () => {
+    const buildPreheaderCommand = (
+      preheader: string,
+      controlValues: Record<string, unknown> = {}
+    ): EmailOutputRendererCommand => ({
       dbWorkflow: mockDbWorkflow,
       controlValues: {
         subject: 'Welcome Email',
@@ -299,6 +305,7 @@ describe('EmailOutputRendererUsecase', () => {
             },
           ],
         } satisfies MailyJSONContent),
+        ...controlValues,
       },
       fullPayloadForRender: mockFullPayload,
       stepId: 'fake_step_id',
@@ -322,6 +329,38 @@ describe('EmailOutputRendererUsecase', () => {
 
       expect(result.body).to.include("$'");
       expect(result.body.split('Unique body marker')).to.have.lengthOf(2);
+    });
+
+    it('should translate subject, sender name, and preheader only', async () => {
+      translateStub.callsFake(async (command: { content: string }) =>
+        command.content
+          .replace('{{t.subject}}', 'Willkommen')
+          .replace('{{t.senderName}}', 'Acme Sicherheit')
+          .replace('{{t.preheader}}', 'Ein Blick hinein')
+      );
+
+      const result = await emailOutputRendererUsecase.execute(
+        buildPreheaderCommand('{{t.preheader}}', {
+          subject: '{{t.subject}}',
+          from: { email: '{{t.senderEmail}}', name: '{{t.senderName}}' },
+          replyTo: '{{t.replyTo}}',
+        })
+      );
+
+      expect(result.subject).to.equal('Willkommen');
+      expect(result.from).to.deep.equal({ email: '{{t.senderEmail}}', name: 'Acme Sicherheit' });
+      expect(result.replyTo).to.equal('{{t.replyTo}}');
+      expect(result.preheader).to.equal('Ein Blick hinein');
+      expect(result.body).to.include('Ein Blick hinein');
+    });
+
+    it('should preserve an empty translated preheader', async () => {
+      translateStub.callsFake(async (command: { content: string }) => command.content.replace('{{t.preheader}}', ''));
+
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('{{t.preheader}}'));
+
+      expect(result).to.have.property('preheader', '');
+      expect(result.body).to.not.include('{{t.preheader}}');
     });
   });
 
@@ -2407,6 +2446,107 @@ describe('EmailOutputRendererUsecase', () => {
       // getLayoutUseCaseV0 should not be called when override is null
       expect(getLayoutUseCaseV0.execute.called).to.be.false;
       expect(controlValuesRepositoryMock.findOne.called).to.be.false;
+      expect(notificationRepositoryMock.findOne.called).to.be.false;
+    });
+
+    describe('overrides dedup (job without overrides)', () => {
+      const buildDedupedJob = (): JobEntity => ({
+        _id: 'test_job_id',
+        _environmentId: 'fake_env_id',
+        _organizationId: 'fake_org_id',
+        subscriberId: 'fake_subscriber_id',
+        providerId: 'fake_provider_id',
+        transactionId: 'fake_transaction_id',
+        type: StepTypeEnum.EMAIL,
+        status: JobStatusEnum.PENDING,
+        identifier: 'fake_identifier',
+        payload: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        step: {
+          _id: 'current_step_id',
+          name: 'fake_step_name',
+          _templateId: 'fake_template_id',
+          active: true,
+          replyCallback: {
+            active: true,
+            url: 'fake_url',
+          },
+        },
+        _notificationId: 'fake_notification_id',
+        _subscriberId: 'fake_subscriber_id',
+        _userId: 'fake_user_id',
+        _templateId: 'fake_template_id',
+      });
+
+      const buildRenderCommand = (jobId: string): EmailOutputRendererCommand => ({
+        dbWorkflow: mockDbWorkflow,
+        controlValues: {
+          subject: 'Deduped Override Test',
+          body: simpleBodyContent,
+          layoutId: 'original_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        jobId,
+        stepId: 'current_step_id',
+      });
+
+      it('should resolve the layout override from the parent notification', async () => {
+        const mockJob = buildDedupedJob();
+        jobRepositoryMock.findOne.resolves(mockJob as any);
+        notificationRepositoryMock.findOne.resolves({
+          overrides: { channels: { email: { layoutId: 'notification_override_layout_id' } } },
+        } as any);
+        createExecutionDetailsMock.execute.resolves();
+        getLayoutUseCaseV0.execute.resolves({
+          _id: 'notification_override_layout_id',
+          isDefault: false,
+          name: 'notification_override_layout_name',
+          layoutId: 'notification_override_layout_id',
+        } as any);
+
+        await emailOutputRendererUsecase.execute(buildRenderCommand(mockJob._id));
+
+        expect(notificationRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(notificationRepositoryMock.findOne.firstCall.args[0]).to.deep.equal({
+          _id: 'fake_notification_id',
+          _environmentId: 'fake_env_id',
+        });
+        expect(getLayoutUseCaseV0.execute.calledOnce).to.be.true;
+        expect(getLayoutUseCaseV0.execute.firstCall.args[0].layoutIdOrInternalId).to.equal(
+          'notification_override_layout_id'
+        );
+      });
+
+      it('should skip layout when the parent notification override is explicitly null', async () => {
+        const mockJob = buildDedupedJob();
+        jobRepositoryMock.findOne.resolves(mockJob as any);
+        notificationRepositoryMock.findOne.resolves({
+          overrides: { steps: { current_step_id: { layoutId: null } } },
+        } as any);
+        createExecutionDetailsMock.execute.resolves();
+
+        const result = await emailOutputRendererUsecase.execute(buildRenderCommand(mockJob._id));
+
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+        expect(getLayoutUseCaseV0.execute.called).to.be.false;
+      });
+
+      it('should use the step layout when the parent notification has no overrides', async () => {
+        const mockJob = buildDedupedJob();
+        jobRepositoryMock.findOne.resolves(mockJob as any);
+        notificationRepositoryMock.findOne.resolves({} as any);
+        createExecutionDetailsMock.execute.resolves();
+
+        await emailOutputRendererUsecase.execute(buildRenderCommand(mockJob._id));
+
+        expect(getLayoutUseCaseV0.execute.calledOnce).to.be.true;
+        expect(getLayoutUseCaseV0.execute.firstCall.args[0].layoutIdOrInternalId).to.equal('original_layout_id');
+      });
     });
 
     it('should prioritize step override over channel and deprecated overrides', async () => {

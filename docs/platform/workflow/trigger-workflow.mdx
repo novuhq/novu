@@ -7,9 +7,16 @@ Triggering a workflow starts the execution of a notification pipeline in Novu. A
 
 When a workflow is triggered, Novu resolves the target subscribers, evaluates workflow logic, and executes each configured step to deliver notifications across the selected channels. Trigger requests can include payload data, context, or target a topic, allowing you to control both who receives the notification and what data is available during execution.
 
-<Note>
-  You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.
-</Note>
+## Test with a real subscriber
+
+A real subscriber already exists in the same environment, with the `subscriberId` your app uses and the channel fields the workflow needs, such as `email`.
+
+1. Create the subscriber on the [Subscribers](https://dashboard.novu.co/subscribers) page, or pass their profile on the trigger.
+2. Open the workflow and click **Test workflow**.
+3. Select that subscriber, fill the payload, and send.
+4. Open the [Activity Feed](/platform/workflow/monitor-and-debug-workflow) and filter by that subscriber ID.
+
+The [demo email integration](/platform/integrations/demo-integration) only delivers to the email address on your Novu account. To reach a subscriber’s own address, connect your email provider and store that address on the subscriber. An Inbox test needs the `<Inbox />` component initialized with the same application identifier and `subscriberId`.
 
 <Prompt description="Integrate a workflow trigger in my app" icon="zap" actions={["copy", "cursor"]}>
 You are an AI agent specialized in integrating Novu workflow triggers into applications. Your primary goal is to seamlessly embed workflow trigger calls into existing codebases while maintaining the host application's design patterns and architecture.
@@ -75,7 +82,9 @@ See https://docs.novu.co/platform/sdks/server/typescript for SDK installation an
 
 ## Trigger Event API
 
-Workflows in Novu are triggered by sending events to the Event API. An event represents an action in your system, for example, an order created or a comment added and is mapped to a workflow using the workflow’s trigger identifier.
+Trigger a workflow from your backend by sending an event to the Novu API. An event represents an action in your system, for example, an order created or a comment added, and is mapped to a workflow using the workflow’s trigger identifier.
+
+Call `POST https://api.novu.co/v1/events/trigger` with the environment secret key. Never put that key in frontend code. The REST field for the workflow identifier is `name`. The server SDKs call it `workflowId`. A workflow must be [published](/platform/developer/environments#publish-changes-to-other-environments) before a Production trigger can run it. If the subscriber does not exist yet, passing `to` as an object [creates them on that trigger](/platform/concepts/subscribers#just-in-time).
 
 When you trigger an event, you specify:
 
@@ -200,7 +209,136 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 
 Once the event is received, Novu executes the workflow, evaluates step conditions, resolves variables, and delivers notifications across the configured channels.
 
-From here, you can extend event triggering by attaching context data or targeting multiple subscribers using topics.
+From here, you can extend event triggering by attaching context data, overriding the [workflow-assigned agent](/agents/workflow-agents), or targeting multiple subscribers using topics.
+
+## Override the assigned agent
+
+If the workflow has an agent assigned in **Configure workflow**, that agent is the default for every trigger. Pass `agentId` on the trigger to change that for a single execution:
+
+| `agentId` | Behavior |
+| --- | --- |
+| Omitted | Use the workflow-assigned agent |
+| Public agent identifier | Route this execution through that agent |
+| `null` | Disable agent routing for this execution |
+
+`agentId` is the public agent slug, not the Mongo `_id`. See [Workflow-assigned agents](/agents/workflow-agents#override-per-trigger).
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [{ subscriberId: "string" }],
+  agentId: "support-agent",
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": "string"},
+        agent_id="support-agent",
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+agentID := "support-agent"
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "string",
+    }),
+    AgentID: &agentID,
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'string'),
+        agentId: 'support-agent',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateStr("string"),
+    AgentId = "support-agent",
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of("string"))
+        .agentId("support-agent")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST "https://api.novu.co/v1/events/trigger" \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json" \
+  -H 'Accept: application/json' \
+  -d '{
+    "name": "workflow_identifier",
+    "to": [{ "subscriberId": "string" }],
+    "agentId": "support-agent"
+  }'
+```
+  </Tab>
+</Tabs>
+
+To skip agent routing for one run while leaving the workflow assignment in place, pass `agentId: null`.
 
 ## Trigger a workflow with context
 

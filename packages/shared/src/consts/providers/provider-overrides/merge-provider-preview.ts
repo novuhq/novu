@@ -1,3 +1,4 @@
+import { ToolProviderIdEnum } from '../../../types';
 import { getAtPath, setAtPath } from './path';
 import { getProviderOverrideConfig, getProviderPrimaryContentKey } from './provider-override-registry';
 
@@ -38,6 +39,11 @@ export function mergeProviderPreview({
   const primaryKey = getProviderPrimaryContentKey(providerId);
 
   if (!primaryKey) {
+    // Tool webhook contributes `{ content }` only while the override is empty. Any key replaces it.
+    if (providerId === ToolProviderIdEnum.Webhook && Object.keys(merged).length === 0) {
+      return { merged: { content: body }, defaultContentKey: 'content' };
+    }
+
     return { merged };
   }
 

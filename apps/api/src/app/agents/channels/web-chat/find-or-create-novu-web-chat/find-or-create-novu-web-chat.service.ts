@@ -3,11 +3,11 @@ import {
   type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
+  type ClientSession,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, providers, slugify } from '@novu/shared';
-import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
@@ -29,6 +29,9 @@ export class NovuWebChatProvisioningService {
   /**
    * Ensure the environment has a `novu-web-chat` integration and link the agent
    * to it. Idempotent — safe to call repeatedly for the same agent.
+   *
+   * Does not stamp `connectedAt`. Same as Slack: Connected only after the first
+   * genuine inbound user message (via the shared inbound handler).
    */
   async execute(
     agentId: string,
@@ -94,7 +97,7 @@ export class NovuWebChatProvisioningService {
         active: true,
         _environmentId: environmentId,
         _organizationId: organizationId,
-      } as any,
+      },
       { session }
     );
   }
@@ -116,7 +119,7 @@ export class NovuWebChatProvisioningService {
     const linkedIntegrationIds = links.map((l) => l._integrationId);
     const webChatIntegration = await this.integrationRepository.findOne(
       {
-        _id: { $in: linkedIntegrationIds } as unknown as string,
+        _id: { $in: linkedIntegrationIds },
         _environmentId: environmentId,
         _organizationId: organizationId,
         providerId: ChatProviderIdEnum.NovuWebChat,

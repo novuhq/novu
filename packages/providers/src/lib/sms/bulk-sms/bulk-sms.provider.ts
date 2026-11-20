@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
@@ -9,6 +9,7 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.bulksms.com/v1/messages';
   protected casing = CasingEnum.CAMEL_CASE;
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -36,7 +37,7 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
     const url = this.DEFAULT_BASE_URL;
 
     const encodedToken = Buffer.from(this.config.apiToken).toString('base64');
-    const response = await axios.create().post(url, JSON.stringify(payload.body), {
+    const response = await this.httpClient.post(url, JSON.stringify(payload.body), {
       headers: {
         Authorization: `Basic ${encodedToken}`,
         'Content-Type': 'application/json',

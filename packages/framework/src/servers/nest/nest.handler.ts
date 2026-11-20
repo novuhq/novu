@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 
 import { type INovuRequestHandlerOptions } from '../../handler';
 import type { Either } from '../../types';
+import { pipeToNodeResponse } from '../../utils';
 
 @Injectable()
 export class NovuHandler {
@@ -43,6 +44,7 @@ export class NovuHandler {
 
         return response.status(status).send(body);
       },
+      transformStreamResponse: (streamResponse) => pipeToNodeResponse(response, streamResponse),
     };
   }
 }

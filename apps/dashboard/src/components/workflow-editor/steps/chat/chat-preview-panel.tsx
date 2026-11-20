@@ -5,14 +5,14 @@ import {
   type GeneratePreviewResponseDto,
 } from '@novu/shared';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
-import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import {
-  getMergedOverrideHint,
   useAnnotatedOverridePreview,
+  usePreviewOverrideValues,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
 import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
+import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ChatPreview } from './chat-preview';
@@ -36,24 +36,25 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
  * Split out so the flag-off preview never subscribes to the `providerOverrides` form field.
  */
 function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
   const { selectedSource, previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractChatPreview(previewData);
   const body = preview?.body ?? '';
-  const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+  const overrideSource = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
 
+  const previewOverrides = usePreviewOverrideValues(preview);
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    providerId: activeProviderId,
-    formOverrides: providerOverrides,
-    previewOverrides: preview?.providerOverrides,
+    source: overrideSource,
+    formOverrides: overrides,
+    previewOverrides,
   });
 
   const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
 
   const renderBody = () => {
-    if (!activeProviderId || !annotatedPreview) {
+    if (!overrideSource || !annotatedPreview) {
       return <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} showPlatformSelector={false} />;
     }
 
@@ -61,25 +62,12 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
       return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
     }
 
-    const displayName =
-      providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? activeProviderId;
-
     return (
-      <div className="flex min-h-0 flex-col gap-1.5">
-        <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-          Merged override fields
-        </span>
-        <AnnotatedOverrideJson {...annotatedPreview} />
-        <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-          {getMergedOverrideHint({
-            hasOverride: annotatedPreview.hasOverride,
-            defaultContentKey: annotatedPreview.defaultContentKey,
-            body,
-            providerId: activeProviderId,
-            displayName,
-          })}
-        </div>
-      </div>
+      <ResolvedPayloadPreview
+        lines={annotatedPreview.annotatedLines}
+        source={overrideSource}
+        providerOptions={providerOptions}
+      />
     );
   };
 

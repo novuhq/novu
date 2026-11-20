@@ -10,12 +10,12 @@ import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
   OrganizationRepository,
+  Types,
   UserRepository,
 } from '@novu/dal';
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { CLERK_ORGANIZATION_1, CLERK_USER_1, ClerkClientMock } from '@novu/testing';
 import { expect } from 'chai';
-import mongoose from 'mongoose';
 import sinon from 'sinon';
 import { CreateEnvironmentCommand } from '../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../environments-v1/usecases/create-environment/create-environment.usecase';
@@ -43,16 +43,16 @@ describe('Link external and internal entities #novu-v2', () => {
 
   // Mock services
   const createEnvironment = {
-    execute: sinon.stub().resolves({ _id: new mongoose.Types.ObjectId() }),
+    execute: sinon.stub().resolves({ _id: new Types.ObjectId() }),
   };
 
   const createNovuIntegrations = {
-    execute: sinon.stub().resolves({ _id: new mongoose.Types.ObjectId() }),
+    execute: sinon.stub().resolves({ _id: new Types.ObjectId() }),
   };
 
   const upsertLayout = {
     execute: sinon.stub().resolves({
-      _id: new mongoose.Types.ObjectId(),
+      _id: new Types.ObjectId(),
       layoutId: 'layout-id',
       slug: 'layout-slug',
       name: 'layout-name',

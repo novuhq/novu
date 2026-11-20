@@ -141,6 +141,21 @@ describe('langchain agent adapter', () => {
 
       expect(ctx.reply).toHaveBeenCalledWith('done');
     });
+
+    it('passes a returned ReplyStream (async iterable) through unchanged for dispatch to stream', async () => {
+      async function* streamReply() {
+        yield 'one ';
+        yield 'two';
+      }
+      const stream = streamReply();
+      const supportAgent = agent('support', async () => stream);
+      const ctx = fakeMessageCtx();
+
+      const result = await supportAgent.handlers.onMessage({} as never, ctx);
+
+      expect(result).toBe(stream);
+      expect(ctx.reply).not.toHaveBeenCalled();
+    });
   });
 
   describe('onToolApproval', () => {
@@ -160,6 +175,29 @@ describe('langchain agent adapter', () => {
 
       expect(historySnapshots.at(-1)).toEqual(history);
       expect(ctx.reply).toHaveBeenCalledWith('done');
+    });
+
+    it('delivers a plain MessageContent returned by the resumed onMessage', async () => {
+      const billingAgent = agent('billing', async () => 'resumed reply');
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith('resumed reply');
+    });
+
+    it('delivers a ReplyStream returned by the resumed onMessage', async () => {
+      async function* streamReply() {
+        yield 'resumed ';
+        yield 'stream';
+      }
+      const stream = streamReply();
+      const billingAgent = agent('billing', async () => stream);
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
+
+      await invokeToolApproval(billingAgent, ctx);
+
+      expect(ctx.reply).toHaveBeenCalledWith(stream);
     });
 
     it('posts string returns from onToolApproval, then auto-resumes', async () => {

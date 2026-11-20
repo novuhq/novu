@@ -1,4 +1,4 @@
-import { safeOutboundJsonRequest } from '@novu/application-generic';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 
 export const META_GRAPH_API_VERSION = 'v22.0';
 export const META_GRAPH_API_BASE = `https://graph.facebook.com/${META_GRAPH_API_VERSION}`;
@@ -327,4 +327,247 @@ export function flattenScopes(debug: DebugTokenResponse): string[] {
   }
 
   return Array.from(flat);
+}
+
+/** Meta's review states for a message template. */
+export type MessageTemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED' | 'IN_APPEAL';
+
+export type MessageTemplate = {
+  id?: string;
+  name?: string;
+  status?: MessageTemplateStatus | string;
+  category?: string;
+  rejected_reason?: string;
+  language?: string;
+  components?: Array<{ type?: string; text?: string; buttons?: Array<{ type?: string; text?: string }> }>;
+};
+
+/** The body text Meta holds for a template. */
+export function templateBodyOf(template: MessageTemplate): string | undefined {
+  return template.components?.find((component) => component.type?.toUpperCase() === 'BODY')?.text;
+}
+
+/** A template's buttons, in the order Meta shows them. */
+export function templateButtonsOf(template: MessageTemplate): Array<{ type?: string; text?: string }> {
+  return template.components?.find((component) => component.type?.toUpperCase() === 'BUTTONS')?.buttons ?? [];
+}
+
+export type CreateMessageTemplateResponse = { id?: string; status?: string; category?: string } & MetaErrorBody;
+
+export type ListMessageTemplatesResponse = { data?: MessageTemplate[] } & MetaErrorBody;
+
+/** A template's body variable and the button that comes back to us, in the shape Meta wants for a named body. */
+export interface MessageTemplateDefinition {
+  name: string;
+  language: string;
+  /** Uses named variables, such as `{{agent_name}}`. */
+  body: string;
+  /** An example value for each named variable, which Meta's review needs. */
+  examples: Record<string, string>;
+  /** Quick-reply buttons, in order. */
+  quickReplies?: string[];
+}
+
+/**
+ * Submits a UTILITY template for review on a WhatsApp Business account. Meta answers with its id and the first
+ * status (usually PENDING); review can take up to 24 hours.
+ */
+export async function createMessageTemplate(args: {
+  accessToken: string;
+  wabaId: string;
+  template: MessageTemplateDefinition;
+  timeoutMs?: number;
+}): Promise<{ body: CreateMessageTemplateResponse; statusCode: number }> {
+  const { template } = args;
+  const examples = Object.entries(template.examples).map(([param_name, example]) => ({ param_name, example }));
+  // A body without variables takes no example: Meta refuses one it has nothing to match against.
+  const components: object[] = [
+    {
+      type: 'BODY',
+      text: template.body,
+      ...(examples.length ? { example: { body_text_named_params: examples } } : {}),
+    },
+  ];
+  if (template.quickReplies?.length) {
+    components.push({
+      type: 'BUTTONS',
+      buttons: template.quickReplies.map((text) => ({ type: 'QUICK_REPLY', text })),
+    });
+  }
+
+  return metaGraphPostJson<CreateMessageTemplateResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    {
+      name: template.name,
+      language: template.language,
+      category: 'UTILITY',
+      parameter_format: 'NAMED',
+      components,
+    },
+    { timeoutMs: args.timeoutMs }
+  );
+}
+
+/** One template by name on a WhatsApp Business account, or `undefined` when there is none. */
+export async function findMessageTemplate(args: {
+  accessToken: string;
+  wabaId: string;
+  name: string;
+  timeoutMs?: number;
+}): Promise<{ template?: MessageTemplate; error?: MetaErrorSummary; statusCode: number }> {
+  const { body, statusCode } = await metaGraphGet<ListMessageTemplatesResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    {
+      searchParams: { name: args.name, fields: 'id,name,status,category,rejected_reason,language,components' },
+      timeoutMs: args.timeoutMs,
+    }
+  );
+  const error = extractMetaError(body);
+  if (error || statusCode >= 400) {
+    return { error: error ?? { message: `Meta answered ${statusCode}` }, statusCode };
+  }
+
+  // Meta matches `name` as a prefix, so pick the exact one.
+  return { template: body.data?.find((candidate) => candidate.name === args.name), statusCode };
+}
+
+/**
+ * Sends an approved template with named body parameters and a payload on each quick-reply button, so a tap comes
+ * back as that payload.
+ */
+export async function sendNamedWhatsAppTemplate(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  to: string;
+  templateName: string;
+  languageCode: string;
+  bodyParameters: Record<string, string>;
+  quickReplyPayloads?: string[];
+  timeoutMs?: number;
+}): Promise<{ body: SendTemplateResponse; statusCode: number }> {
+  const parameters = Object.entries(args.bodyParameters).map(([parameter_name, text]) => ({
+    type: 'text',
+    parameter_name,
+    text,
+  }));
+  // A template without variables takes no body component: Meta refuses parameters it doesn't expect.
+  const components: object[] = [
+    ...(parameters.length ? [{ type: 'body', parameters }] : []),
+    ...(args.quickReplyPayloads ?? []).map((payload, index) => ({
+      type: 'button',
+      sub_type: 'quick_reply',
+      index: String(index),
+      parameters: [{ type: 'payload', payload }],
+    })),
+  ];
+
+  return metaGraphPostJson<SendTemplateResponse>(
+    `/${encodeURIComponent(args.phoneNumberId)}/messages`,
+    args.accessToken,
+    {
+      messaging_product: 'whatsapp',
+      to: args.to,
+      type: 'template',
+      template: { name: args.templateName, language: { code: args.languageCode }, components },
+    },
+    { timeoutMs: args.timeoutMs }
+  );
+}
+
+export type WhatsAppBusinessProfileResponse = {
+  data?: Array<{ about?: string; description?: string; profile_picture_url?: string }>;
+} & MetaErrorBody;
+
+export type UpdateWhatsAppBusinessProfileBody = {
+  about?: string;
+  description?: string;
+  profile_picture_handle?: string;
+};
+
+/** The profile people see on the business number: its about text, description and photo. */
+export async function getWhatsAppBusinessProfile(
+  accessToken: string,
+  phoneNumberId: string
+): Promise<{ body: WhatsAppBusinessProfileResponse; statusCode: number }> {
+  return metaGraphGet<WhatsAppBusinessProfileResponse>(
+    `/${encodeURIComponent(phoneNumberId)}/whatsapp_business_profile`,
+    accessToken,
+    { searchParams: { fields: 'about,description,profile_picture_url' } }
+  );
+}
+
+export async function updateWhatsAppBusinessProfile(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  profile: UpdateWhatsAppBusinessProfileBody;
+}): Promise<{ body: { success?: boolean } & MetaErrorBody; statusCode: number }> {
+  return metaGraphPostJson<{ success?: boolean } & MetaErrorBody>(
+    `/${encodeURIComponent(args.phoneNumberId)}/whatsapp_business_profile`,
+    args.accessToken,
+    { messaging_product: 'whatsapp', ...args.profile }
+  );
+}
+
+/** The Meta app a token was issued for. A token made with someone's own app uploads through that app. */
+export async function getTokenAppId(
+  accessToken: string
+): Promise<{ body: { id?: string } & MetaErrorBody; statusCode: number }> {
+  return metaGraphGet<{ id?: string } & MetaErrorBody>('/app', accessToken, { searchParams: { fields: 'id' } });
+}
+
+/**
+ * Uploads a file through Meta's Resumable Upload API and returns its handle, which a business profile takes as
+ * `profile_picture_handle`. The token goes in the `Authorization: OAuth` header on both calls, never in the URL.
+ */
+export async function uploadFileToMeta(args: {
+  accessToken: string;
+  appId: string;
+  file: Buffer;
+  contentType: string;
+  fileName: string;
+  timeoutMs?: number;
+}): Promise<{ handle?: string; error?: MetaErrorSummary; statusCode: number }> {
+  const timeoutMs = args.timeoutMs ?? 15_000;
+  const headers = { Authorization: `OAuth ${args.accessToken}` };
+
+  const startUrl = new URL(`${META_GRAPH_API_BASE}/${encodeURIComponent(args.appId)}/uploads`);
+  startUrl.searchParams.set('file_name', args.fileName);
+  startUrl.searchParams.set('file_length', String(args.file.length));
+  startUrl.searchParams.set('file_type', args.contentType);
+
+  const start = await safeOutboundJsonRequest<{ id?: string } & MetaErrorBody>({
+    url: startUrl,
+    method: 'POST',
+    timeoutMs,
+    headers,
+  });
+  const sessionId = typeof start.body?.id === 'string' ? start.body.id : undefined;
+
+  if (start.statusCode >= 400 || !sessionId) {
+    return {
+      error: extractMetaError(start.body) ?? { message: 'Meta did not start the upload.' },
+      statusCode: start.statusCode,
+    };
+  }
+
+  // The session id looks like `upload:<id>`: the colon belongs in the path as it is.
+  const upload = await safeOutboundJsonRequest<{ h?: string } & MetaErrorBody>({
+    url: new URL(`${META_GRAPH_API_BASE}/${sessionId}`),
+    method: 'POST',
+    timeoutMs,
+    headers: { ...headers, file_offset: '0' },
+    body: args.file,
+  });
+  const handle = typeof upload.body?.h === 'string' ? upload.body.h : undefined;
+
+  if (upload.statusCode >= 400 || !handle) {
+    return {
+      error: extractMetaError(upload.body) ?? { message: 'Meta did not accept the uploaded file.' },
+      statusCode: upload.statusCode,
+    };
+  }
+
+  return { handle, statusCode: upload.statusCode };
 }

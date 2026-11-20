@@ -43,6 +43,7 @@ export class SetIntegrationAsPrimary {
           active: true,
           primary: true,
           conditions: [],
+          rules: null,
         },
       }
     );

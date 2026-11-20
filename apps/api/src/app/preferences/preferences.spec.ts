@@ -60,6 +60,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           environmentId: session.environment._id,
@@ -98,6 +101,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -222,6 +228,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           environmentId: session.environment._id,
@@ -258,6 +267,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -298,6 +310,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           environmentId: session.environment._id,
@@ -334,6 +349,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
         schedule: undefined,
@@ -358,6 +376,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -390,6 +411,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -429,6 +453,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
         schedule: undefined,
@@ -455,6 +482,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           [PreferencesTypeEnum.USER_WORKFLOW]: {
@@ -476,6 +506,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -546,6 +579,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
         schedule: undefined,
@@ -572,6 +608,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           [PreferencesTypeEnum.USER_WORKFLOW]: {
@@ -593,6 +632,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -618,6 +660,7 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {},
             },
           },
           [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: null,
@@ -686,6 +729,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
         schedule: undefined,
@@ -712,6 +758,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           [PreferencesTypeEnum.USER_WORKFLOW]: {
@@ -733,6 +782,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -758,6 +810,7 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {},
             },
           },
           [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: {
@@ -781,6 +834,7 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {},
             },
           },
         },
@@ -815,6 +869,9 @@ describe('Preferences', () => {
               chat: {
                 enabled: false,
               },
+              tool: {
+                enabled: false,
+              },
             },
           },
           environmentId: session.environment._id,
@@ -847,6 +904,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
         type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
@@ -870,6 +930,9 @@ describe('Preferences', () => {
                 enabled: false,
               },
               chat: {
+                enabled: false,
+              },
+              tool: {
                 enabled: false,
               },
             },
@@ -905,6 +968,9 @@ describe('Preferences', () => {
             chat: {
               enabled: false,
             },
+            tool: {
+              enabled: false,
+            },
           },
         },
       });
@@ -928,6 +994,9 @@ describe('Preferences', () => {
             enabled: false,
           },
           chat: {
+            enabled: false,
+          },
+          tool: {
             enabled: false,
           },
         },

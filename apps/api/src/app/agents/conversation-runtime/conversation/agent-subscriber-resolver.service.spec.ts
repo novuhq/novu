@@ -24,6 +24,7 @@ describe('AgentSubscriberResolver', () => {
   function makeResolver(
     overrides: {
       findByPlatformIdentity?: sinon.SinonStub;
+      findEndpoints?: sinon.SinonStub;
       findByPhone?: sinon.SinonStub;
       findByEmail?: sinon.SinonStub;
       find?: sinon.SinonStub;
@@ -32,10 +33,13 @@ describe('AgentSubscriberResolver', () => {
       subscriberDelete?: sinon.SinonStub;
       trackAnalytics?: sinon.SinonStub;
       adoptPhantomsInto?: sinon.SinonStub;
+      findContactsByEmailAddress?: sinon.SinonStub;
+      findAgent?: sinon.SinonStub;
     } = {}
   ) {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findByPlatformIdentity ?? sinon.stub().resolves(null),
+      find: overrides.findEndpoints ?? sinon.stub().resolves([]),
     };
     const subscriberRepository = {
       findByPhone: overrides.findByPhone ?? sinon.stub().resolves([]),
@@ -62,6 +66,12 @@ describe('AgentSubscriberResolver', () => {
       debug: sinon.stub(),
       info: sinon.stub(),
     };
+    const humanContactRepository = {
+      findContactsByEmailAddress: overrides.findContactsByEmailAddress ?? sinon.stub().resolves([]),
+    };
+    const agentRepository = {
+      findOne: overrides.findAgent ?? sinon.stub().resolves(null),
+    };
 
     const resolver = new AgentSubscriberResolver(
       channelEndpointRepository as any,
@@ -70,7 +80,9 @@ describe('AgentSubscriberResolver', () => {
       createChannelEndpoint as any,
       analyticsService as any,
       adoptionService as any,
-      logger as any
+      logger as any,
+      humanContactRepository as any,
+      agentRepository as any
     );
 
     return {
@@ -82,8 +94,90 @@ describe('AgentSubscriberResolver', () => {
       analyticsService,
       adoptionService,
       logger,
+      humanContactRepository,
+      agentRepository,
     };
   }
+
+  describe('resolveSubscriber — an Agent Inbox relay on WhatsApp', () => {
+    const PROVED = {
+      subscriberId: 'ada',
+      type: 'phone',
+      providerId: 'whatsapp-business',
+      endpoint: { phoneNumber: '+15551234567', provedAt: '2026-11-01T10:00:00.000Z' },
+    };
+
+    function relayLookup(platformUserId = '15551234567') {
+      return {
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId,
+        isHumanRelay: true,
+      };
+    }
+
+    it('resolves the sender to whoever proved their number on this business number', async () => {
+      const { resolver, channelEndpointRepository, subscriberRepository } = makeResolver({
+        findEndpoints: sinon.stub().resolves([PROVED]),
+      });
+
+      expect(await resolver.resolveSubscriber(relayLookup())).to.deep.equal({
+        outcome: 'resolved',
+        subscriberId: 'ada',
+      });
+      expect(channelEndpointRepository.find.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        integrationIdentifier: 'integration-main',
+        type: 'phone',
+        'endpoint.phoneNumber': '+15551234567',
+      });
+      expect(subscriberRepository.findByPhone.called).to.equal(false);
+    });
+
+    it('reads a number without proof, or only on a profile, as a stranger', async () => {
+      const unproved = makeResolver({
+        findEndpoints: sinon.stub().resolves([{ ...PROVED, endpoint: { phoneNumber: '+15551234567' } }]),
+      });
+      expect(await unproved.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
+
+      const profileOnly = makeResolver({ findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]) });
+      expect(await profileOnly.resolver.resolveSubscriber(relayLookup())).to.deep.equal({ outcome: 'not_found' });
+      expect(profileOnly.subscriberRepository.findByPhone.called).to.equal(false);
+    });
+
+    it('finds the proved contact even when an unproved endpoint shares the number', async () => {
+      const { resolver } = makeResolver({
+        findEndpoints: sinon
+          .stub()
+          .resolves([{ ...PROVED, subscriberId: 'planted', endpoint: { phoneNumber: '+15551234567' } }, PROVED]),
+      });
+
+      expect(await resolver.resolveSubscriber(relayLookup())).to.deep.equal({
+        outcome: 'resolved',
+        subscriberId: 'ada',
+      });
+    });
+
+    it('cannot read a sender without a usable number', async () => {
+      const { resolver } = makeResolver();
+
+      expect(await resolver.resolveSubscriber(relayLookup('not-a-number'))).to.deep.equal({
+        outcome: 'invalid_identity',
+      });
+    });
+
+    it('still resolves other agents’ WhatsApp senders by their profile phone', async () => {
+      const { resolver, channelEndpointRepository } = makeResolver({
+        findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]),
+      });
+
+      const result = await resolver.resolveSubscriber({ ...relayLookup(), isHumanRelay: false });
+
+      expect(result).to.include({ subscriberId: 'sub-1' });
+      expect(channelEndpointRepository.find.called).to.equal(false);
+    });
+  });
 
   describe('resolveSubscriber — WhatsApp phone resolution', () => {
     it('resolves when inbound phone has no + and subscriber has +', async () => {
@@ -390,46 +484,11 @@ describe('AgentSubscriberResolver', () => {
       expect(result).to.equal('sub-existing');
       expect(createOrUpdateSubscriberExecute.called).to.equal(false);
       expect(find.calledOnce).to.equal(true);
-    });
-
-    it('does not reuse a non-agent-provisioned subscriber with the same email', async () => {
-      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
-      const { resolver } = makeResolver({
-        find: sinon.stub().resolves([]),
-        createOrUpdateSubscriberExecute,
-      });
-
-      const result = await resolver.provisionEmailSubscriber({
-        ...baseLookupParams,
-        agentIdentifier: 'agent-test',
-        email: 'customer@example.com',
-      });
-
-      expect(result)
-        .to.be.a('string')
-        .and.to.match(/^sub_ap_/);
-      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
-    });
-
-    it('reuses an agent-provisioned subscriber with a mixed-case stored email', async () => {
-      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
-      const find = sinon.stub().resolves([{ subscriberId: 'sub-mixed-case' }]);
-      const { resolver } = makeResolver({
-        find,
-        createOrUpdateSubscriberExecute,
-      });
-
-      const result = await resolver.provisionEmailSubscriber({
-        ...baseLookupParams,
-        agentIdentifier: 'agent-test',
-        email: 'user@example.com',
-      });
-
-      expect(result).to.equal('sub-mixed-case');
-      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
 
       const query = find.firstCall.args[0];
-      expect(query.email.$regex).to.be.instanceOf(RegExp);
+      expect(query.email.$regex.test('Existing@Example.COM')).to.equal(true);
+      expect(query.email.$regex.test('xexisting@example.com')).to.equal(false);
+      expect(query.email.$regex.test('existing@example.com.x')).to.equal(false);
       expect(query[`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(AGENT_PLATFORM_PROVISION_SOURCE);
     });
 
@@ -721,6 +780,27 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-known' });
       expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+    });
+
+    it('resolves a declared human contact without provisioning', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const findContactsByEmailAddress = sinon.stub().resolves([{ subscriberId: 'ada' }]);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+        findAgent: sinon.stub().resolves({ _id: 'agent-1' }),
+        findContactsByEmailAddress,
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'Ada@Acme.com',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'ada' });
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+      expect(findContactsByEmailAddress.calledOnceWith('env-1', 'agent-1', 'ada@acme.com')).to.equal(true);
     });
 
     it('provisions a phantom subscriber when the sender is unknown', async () => {

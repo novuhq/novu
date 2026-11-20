@@ -6,6 +6,7 @@ import {
   RotatingConnectionTokenService,
 } from '@novu/application-generic';
 import {
+  type AgentInboxReach,
   AgentIntegrationEntity,
   AgentIntegrationRepository,
   AgentRepository,
@@ -16,10 +17,17 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { type AgentAnalyticsSource, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  type AgentAccessRule,
+  type AgentAnalyticsSource,
+  AgentReplyPolicyEnum,
+  AgentSubscriberAccessEnum,
+  isAgentInboxProvider,
+} from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
+import { relayAcknowledgesMessages } from '../human-relay/relay-acknowledges-messages';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
@@ -56,6 +64,13 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   isKeyless: boolean;
+  /**
+   * The Human relay is delivery infrastructure. Inbound turns skip Novu plan
+   * limits so a signed-up Human user never sees an upgrade card.
+   */
+  isHumanRelay: boolean;
+  /** Who can write to a Human relay: anyone, or only its contacts. Set for Human relays only. */
+  inboxReach?: AgentInboxReach;
   isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
@@ -75,15 +90,23 @@ export interface ResolvedAgentConfig {
    * delivery path.
    */
   removeNovuBranding: boolean;
+  /**
+   * Whether a message gets a signal as it arrives: typing, or an `eyes` reaction where the platform has no typing.
+   * On unless the agent turned it off. A Human relay is the other way around: off until its operator turns it on,
+   * and off while it is paused, when it sends nothing at all.
+   */
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   /**
-   * Whether unknown senders are auto-provisioned as subscribers (`open`) or
-   * gated (`restricted`). Resolved from persisted `agent.behavior.subscriberAccess`.
+   * Whether unknown senders are auto-provisioned as subscribers (`open`),
+   * gated (`restricted`), or admitted only when `accessRule` matches (`rule`).
+   * Resolved from persisted `agent.behavior.subscriberAccess`.
    * Legacy rows missing the field (pre-migration self-hosted) fall back to `open`
    * so inbound webhooks keep working until the backfill migration runs.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  accessRule?: AgentAccessRule;
+  replyPolicy: AgentReplyPolicyEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -131,6 +154,15 @@ async function resolveReaction(
   return value as WellKnownEmoji;
 }
 
+const WEBHOOK_SECRET_REJECTIONS: Partial<Record<AgentPlatformEnum, string>> = {
+  [AgentPlatformEnum.TELEGRAM]:
+    'Telegram inbound webhook rejected: secret_token not yet configured for this integration',
+  [AgentPlatformEnum.SENDBLUE]:
+    'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration',
+  [AgentPlatformEnum.PHOTON_IMESSAGE]:
+    'Photon inbound webhook rejected: webhook signing secret not yet configured for this integration',
+};
+
 @Injectable()
 export class AgentConfigResolver {
   constructor(
@@ -143,6 +175,67 @@ export class AgentConfigResolver {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Defense in depth: reject inbound webhooks for platforms whose Configure step has not yet
+   * provisioned `credentials.token` (Telegram secret_token, Sendblue sb-signing-secret, Photon
+   * Spectrum v0 signing secret). Without it the adapter has nothing to verify inbound deliveries
+   * against (Telegram's handleWebhook is even fail-open). Throwing NotFoundException keeps this
+   * public endpoint indistinguishable from "unknown agent / unknown integration" so callers
+   * cannot fingerprint which integrations are mid-setup.
+   */
+  private rejectUnconfiguredWebhookSecret(
+    platform: AgentPlatformEnum,
+    credentials: ICredentialsEntity,
+    agentId: string,
+    integrationIdentifier: string
+  ): void {
+    const rejection = WEBHOOK_SECRET_REJECTIONS[platform];
+
+    if (!rejection || credentials.token) {
+      return;
+    }
+
+    this.logger.warn({ agentId, integrationIdentifier }, rejection);
+    throw new NotFoundException();
+  }
+
+  private async resolveConnectionAccessToken(
+    platform: AgentPlatformEnum,
+    credentials: ICredentialsEntity,
+    environmentId: string,
+    organizationId: string,
+    integrationIdentifier: string,
+    source: AgentConfigResolveSource | undefined
+  ): Promise<string | undefined> {
+    if (platform !== AgentPlatformEnum.SLACK) {
+      const connection = await this.channelConnectionRepository.findOne({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        integrationIdentifier,
+      });
+
+      return connection ? decryptChannelConnectionAuth(connection.auth)?.accessToken : undefined;
+    }
+
+    const botToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
+
+    if (source === 'webhook_message') {
+      if (!credentials.signingSecret) {
+        throw new UnprocessableEntityException(
+          'Slack signing secret is missing. Complete Slack app setup (quick setup or paste credentials) for this integration.'
+        );
+      }
+
+      if (!botToken) {
+        throw new UnprocessableEntityException(
+          'Slack workspace is not installed. Open the agent Slack setup guide and click Install to connect your workspace via OAuth.'
+        );
+      }
+    }
+
+    return botToken;
   }
 
   async resolve(
@@ -174,7 +267,7 @@ export class AgentConfigResolver {
     // ("Enable email inbox" toggle in the dashboard). When false the email channel
     // for this agent is disabled - reject resolve here so both inbound webhook and
     // outbound chat paths fail fast with a clear error.
-    if (integration.providerId === EmailProviderIdEnum.NovuAgent && integration.active === false) {
+    if (isAgentInboxProvider(integration.providerId) && integration.active === false) {
       throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
     }
 
@@ -237,61 +330,16 @@ export class AgentConfigResolver {
 
     const credentials = decryptCredentials(integration.credentials);
 
-    // Defense in depth: reject Telegram inbound webhooks that have not completed
-    // the Configure step. ConfigureTelegramAgentWebhook is the only place that
-    // provisions credentials.token (the X-Telegram-Bot-Api-Secret-Token). Without
-    // it the @chat-adapter/telegram handleWebhook is fail-open and would accept
-    // every POST regardless of origin. Throwing NotFoundException here makes this
-    // public endpoint indistinguishable from "unknown agent / unknown integration"
-    // so callers cannot fingerprint which integrations are mid-setup.
-    if (platform === AgentPlatformEnum.TELEGRAM && !credentials.token) {
-      this.logger.warn(
-        { agentId, integrationIdentifier },
-        'Telegram inbound webhook rejected: secret_token not yet configured for this integration'
-      );
-      throw new NotFoundException();
-    }
+    this.rejectUnconfiguredWebhookSecret(platform, credentials, agentId, integrationIdentifier);
 
-    // Same defense-in-depth as Telegram: ConfigureSendblueWebhook is the only place that
-    // provisions credentials.token (the sb-signing-secret shared secret). Without it the
-    // adapter has no secret to verify inbound webhooks against, so reject early and keep the
-    // public endpoint indistinguishable from "unknown agent / unknown integration".
-    if (platform === AgentPlatformEnum.SENDBLUE && !credentials.token) {
-      this.logger.warn(
-        { agentId, integrationIdentifier },
-        'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration'
-      );
-      throw new NotFoundException();
-    }
-
-    let connectionAccessToken: string | undefined;
-    if (platform === AgentPlatformEnum.SLACK) {
-      connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
-
-      if (options.source === 'webhook_message') {
-        if (!credentials.signingSecret) {
-          throw new UnprocessableEntityException(
-            'Slack signing secret is missing. Complete Slack app setup (quick setup or paste credentials) for this integration.'
-          );
-        }
-
-        if (!connectionAccessToken) {
-          throw new UnprocessableEntityException(
-            'Slack workspace is not installed. Open the agent Slack setup guide and click Install to connect your workspace via OAuth.'
-          );
-        }
-      }
-    } else {
-      const connection = await this.channelConnectionRepository.findOne({
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        integrationIdentifier,
-      });
-      if (connection) {
-        const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
-        connectionAccessToken = decryptedAuth?.accessToken;
-      }
-    }
+    const connectionAccessToken = await this.resolveConnectionAccessToken(
+      platform,
+      credentials,
+      environmentId,
+      organizationId,
+      integrationIdentifier,
+      options.source
+    );
 
     // NOTE: `connectedAt` is intentionally NOT written here. Marking the link
     // connected on any inbound webhook POST is too eager: every webhook event
@@ -302,6 +350,8 @@ export class AgentConfigResolver {
     // now recorded only when a genuine, non-bot user message is dispatched, in
     // `AgentInboundHandler.handle` (after the bot-author filter).
 
+    const isHumanRelay = agent.runtime === 'human_relay';
+
     return {
       platform,
       credentials,
@@ -309,6 +359,8 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
+      isHumanRelay,
+      ...(isHumanRelay ? { inboxReach: agent.reach ?? 'anyone' } : {}),
       isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
@@ -316,14 +368,20 @@ export class AgentConfigResolver {
       integrationIdentifier,
       integrationId: integration._id,
       providerId: integration.providerId,
-      removeNovuBranding: await this.resolveRemoveNovuBranding(organizationId),
-      acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
+      // Human-relay messages are utility traffic between a person and their own
+      // agents — never consumer-facing web chat — so they always ship unbranded.
+      removeNovuBranding: isHumanRelay ? true : await this.resolveRemoveNovuBranding(organizationId),
+      acknowledgeOnReceived: isHumanRelay
+        ? relayAcknowledgesMessages(agent) && !agent.pausedAt
+        : agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
       subscriberAccess: agent.behavior?.subscriberAccess ?? AgentSubscriberAccessEnum.OPEN,
+      accessRule: agent.behavior?.accessRule,
+      replyPolicy: agent.behavior?.replyPolicy ?? AgentReplyPolicyEnum.AUTO_REPLY,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

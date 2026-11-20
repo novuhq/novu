@@ -131,7 +131,12 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
 
       {/* Type-specific sections */}
       {currentType === 'enum' && (
-        <EnumSection enumArrayPath={paths.enum} control={control} indentationLevel={indentationLevel} />
+        <EnumSection
+          enumArrayPath={paths.enum}
+          control={control}
+          indentationLevel={indentationLevel}
+          readOnly={readOnly}
+        />
       )}
 
       {currentType === 'object' && (

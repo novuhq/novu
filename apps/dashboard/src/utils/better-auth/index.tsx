@@ -1,3 +1,4 @@
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -37,46 +38,48 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
 
   const isOrgLoading = !!activeOrganizationId && !organization;
 
-  useEffect(() => {
-    const fetchOrganization = async () => {
-      if (activeOrganizationId && currentUserId) {
-        try {
-          const { data: fullOrgData } = await authClient.organization.getFullOrganization({
-            query: {
-              organizationId: activeOrganizationId,
-            },
-          });
+  const refreshOrganization = useCallback(async () => {
+    if (!activeOrganizationId || !currentUserId) {
+      setOrganization(undefined);
+      setMemberRole(null);
 
-          if (fullOrgData) {
-            setOrganization({
-              id: fullOrgData.id,
-              name: fullOrgData.name,
-              slug: fullOrgData.slug,
-            });
+      return;
+    }
 
-            const currentMember = (fullOrgData as any).members?.find((member: any) => member.userId === currentUserId);
-            if (currentMember?.role) {
-              setMemberRole(currentMember.role as MemberRoleEnum);
-            } else {
-              setMemberRole(null);
-            }
-          } else {
-            setOrganization(undefined);
-            setMemberRole(null);
-          }
-        } catch (error) {
-          console.error('Failed to fetch organization:', error);
-          setOrganization(undefined);
+    try {
+      const { data: fullOrgData } = await authClient.organization.getFullOrganization({
+        query: {
+          organizationId: activeOrganizationId,
+        },
+      });
+
+      if (fullOrgData) {
+        setOrganization({
+          id: fullOrgData.id,
+          name: fullOrgData.name,
+          slug: fullOrgData.slug,
+        });
+
+        const currentMember = fullOrgData.members.find((member) => member.userId === currentUserId);
+        if (currentMember?.role) {
+          setMemberRole(currentMember.role as MemberRoleEnum);
+        } else {
           setMemberRole(null);
         }
       } else {
         setOrganization(undefined);
         setMemberRole(null);
       }
-    };
-
-    fetchOrganization();
+    } catch (error) {
+      console.error('Failed to fetch organization:', error);
+      setOrganization(undefined);
+      setMemberRole(null);
+    }
   }, [activeOrganizationId, currentUserId]);
+
+  useEffect(() => {
+    void refreshOrganization();
+  }, [refreshOrganization]);
 
   const refreshSession = useCallback(async () => {
     await refetch();
@@ -141,6 +144,7 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       signOut,
       getToken,
       refreshSession,
+      refreshOrganization,
       has,
       isAutoLoginPending,
       isAutoLoginFailed,
@@ -152,6 +156,7 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       isLoaded,
       isSessionLoaded,
       refreshSession,
+      refreshOrganization,
       signOut,
       getToken,
       has,
@@ -176,6 +181,7 @@ export function useAuth() {
     orgId: context.organization?.id,
     signOut: context.signOut,
     refreshSession: context.refreshSession,
+    refreshOrganization: context.refreshOrganization,
     has: context.has,
   };
 }
@@ -203,7 +209,7 @@ export function useUser() {
           unsafeMetadata: {
             newDashboardOptInStatus: 'opted_in',
           },
-          update: async (data: any) => {
+          update: async (_data: unknown) => {
             return Promise.resolve();
           },
           reload: async () => {
@@ -247,7 +253,7 @@ export function useOrganization() {
 
 export function useOrganizationList(options?: { userMemberships?: { infinite?: boolean; pageSize?: number } }) {
   const { organization: currentOrganization, isLoaded: orgLoaded } = useOrganization();
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<BetterAuthOrganization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -411,7 +417,13 @@ export function UserButton() {
   return <UserButtonComponent />;
 }
 
-export function UserProfile({ appearance, children }: { appearance?: any; children?: React.ReactNode }) {
+export function UserProfile({
+  appearance,
+  children,
+}: {
+  appearance?: ClerkAppearanceTheme;
+  children?: React.ReactNode;
+}) {
   return <UserProfileComponent appearance={appearance}>{children}</UserProfileComponent>;
 }
 
@@ -422,7 +434,7 @@ export function OrganizationSwitcher() {
 }
 
 export function OrganizationList(props?: {
-  appearance?: any;
+  appearance?: ClerkAppearanceTheme;
   hidePersonal?: boolean;
   skipInvitationScreen?: boolean;
   afterSelectOrganizationUrl?: string;
@@ -436,7 +448,13 @@ export function OrganizationList(props?: {
   );
 }
 
-export function OrganizationProfile({ appearance, children }: { appearance?: any; children?: React.ReactNode }) {
+export function OrganizationProfile({
+  appearance,
+  children,
+}: {
+  appearance?: ClerkAppearanceTheme;
+  children?: React.ReactNode;
+}) {
   return <TeamMembersComponent appearance={appearance} />;
 }
 
@@ -500,11 +518,13 @@ export async function refreshBetterAuthSession(): Promise<boolean> {
 }
 
 if (typeof window !== 'undefined' && EE_AUTH_PROVIDER === 'better-auth') {
-  (window as any).Clerk = {
-    session: {
-      getToken: async () => {
-        return localStorage.getItem('better-auth-session-token');
+  Object.assign(window, {
+    Clerk: {
+      session: {
+        getToken: async () => {
+          return localStorage.getItem('better-auth-session-token');
+        },
       },
     },
-  };
+  });
 }

@@ -5,8 +5,8 @@ import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   EnforceEnvOrOrgIds,
+  type FilterQuery,
 } from '@novu/dal';
-import { FilterQuery } from 'mongoose';
 import { GetChannelConnectionCommand } from './get-channel-connection.command';
 
 @Injectable()

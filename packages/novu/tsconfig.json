@@ -1,14 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
     "declaration": false,
     "declarationMap": false,
     "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noImplicitAny": true,
     "outDir": "./dist",
     "removeComments": true,
@@ -23,6 +20,7 @@
   "exclude": [
     "node_modules",
     "src/commands/init/templates",
+    "src/commands/connect/templates",
     "src/**/__fixtures__",
     "src/commands/wizard/ui/**",
     "src/commands/connect/ui/**"

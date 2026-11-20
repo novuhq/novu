@@ -5,7 +5,9 @@ import {
   IProviderConfig,
   PermissionsEnum,
 } from '@novu/shared';
-import { Control } from 'react-hook-form';
+import { useState } from 'react';
+import { Control, useWatch, UseFormSetValue } from 'react-hook-form';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
@@ -17,6 +19,7 @@ import { ConfigurationGroup } from './configuration-group';
 
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
+  setValue: UseFormSetValue<IntegrationFormData>;
   mode: 'create' | 'update';
   isReadOnly?: boolean;
   hidePrimarySelector?: boolean;
@@ -31,6 +34,7 @@ type GeneralSettingsProps = {
 
 export function GeneralSettings({
   control,
+  setValue,
   mode,
   isReadOnly,
   hidePrimarySelector,
@@ -47,6 +51,8 @@ export function GeneralSettings({
     FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_CONFIGURATION_ENABLED,
     false
   );
+  const rules = useWatch({ control, name: 'rules' });
+  const [showPrimaryConfirm, setShowPrimaryConfirm] = useState(false);
 
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -86,7 +92,15 @@ export function GeneralSettings({
                 <Switch
                   id={field.name}
                   checked={field.value}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(checked) => {
+                    if (checked && rules) {
+                      setShowPrimaryConfirm(true);
+
+                      return;
+                    }
+
+                    field.onChange(checked);
+                  }}
                   disabled={disabledPrimary || isReadOnly}
                 />
               </FormControl>
@@ -166,6 +180,19 @@ export function GeneralSettings({
             </Protect>
           </>
         )}
+
+      <ConfirmationModal
+        open={showPrimaryConfirm}
+        onOpenChange={setShowPrimaryConfirm}
+        onConfirm={() => {
+          setValue('rules', null, { shouldDirty: true });
+          setValue('primary', true, { shouldDirty: true });
+          setShowPrimaryConfirm(false);
+        }}
+        title="Remove conditions?"
+        description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
+        confirmButtonText="Continue"
+      />
     </div>
   );
 }

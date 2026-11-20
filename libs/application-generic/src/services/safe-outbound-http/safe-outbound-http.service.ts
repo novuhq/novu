@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '../../logging';
 import {
   type SafeOutboundJsonResponse,
   type SafeOutboundRequestOptions,
   type SafeOutboundResponse,
   safeOutboundJsonRequest,
   safeOutboundRequest,
-} from '../../utils/ssrf-url-validation';
+} from '@novu/shared/utils/safe-outbound-http';
+import { PinoLogger } from '../../logging';
 
 /**
  * NestJS-friendly wrapper around the SSRF-safe outbound HTTP primitives.

@@ -42,6 +42,12 @@ def get_txt_pydns(name):
     if name.endswith('.'):
         name = name[:-1]
     response = DNS.DnsRequest(name, qtype='txt').req()
+    # py3dns asks over UDP without EDNS0, so an answer over 512 bytes comes
+    # back truncated (TC set) and usually empty. 2048-bit keys, such as
+    # Proton's, Outlook's and SendGrid's, don't fit, so ask again over TCP,
+    # as spf.py does.
+    if response.header['tc']:
+        response = DNS.DnsRequest(name, qtype='txt', protocol='tcp').req()
     # The answer section may contain CNAME records (whose data is a str)
     # before the TXT record, e.g. when the DKIM selector is CNAME-delegated.
     for answer in response.answers:

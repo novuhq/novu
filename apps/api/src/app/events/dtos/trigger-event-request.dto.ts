@@ -42,7 +42,7 @@ export class WorkflowToStepControlValuesDto {
       type: 'object',
       additionalProperties: true,
     },
-    required: false,
+    selfRequired: false,
   })
   steps?: Record<string, Record<string, unknown>>;
 }
@@ -173,7 +173,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  email?: Record<string, any>;
+  email?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the push provider specific configurations for the entire workflow',
@@ -181,7 +181,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  push?: Record<string, any>;
+  push?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the sms provider specific configurations for the entire workflow',
@@ -189,7 +189,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  sms?: Record<string, any>;
+  sms?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the chat provider specific configurations for the entire workflow',
@@ -197,7 +197,7 @@ export class TriggerOverrides {
     type: 'object',
     additionalProperties: true,
   })
-  chat?: Record<string, any>;
+  chat?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Override the layout identifier for the entire workflow',
@@ -239,7 +239,7 @@ export class TriggerEventRequestDto {
     used to render the workflow, or perform routing rules based on it. 
       This data will also be available when fetching the notifications feed from the API to display certain parts of the UI.`,
     type: 'object',
-    required: false,
+    selfRequired: false,
     additionalProperties: true,
     example: {
       comment_id: 'string',

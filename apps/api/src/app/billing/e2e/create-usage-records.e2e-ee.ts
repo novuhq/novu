@@ -1,10 +1,12 @@
-// biome-ignore lint/style/noRestrictedImports: <explanation>
-import { Logger } from '@nestjs/common';
-import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 const { StripeUsageTypeEnum } = require('@novu/ee-billing/src/stripe/types');
+
+interface UsecaseStub {
+  execute: () => Promise<unknown>;
+}
 
 const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
@@ -37,9 +39,21 @@ describe('CreateUsageRecords #novu-v2', () => {
   const analyticsServiceStub = {
     track: sinon.stub(),
   };
-  const createSubscriptionUsecase = { execute: () => Promise.resolve() };
-  const getOrCreateCustomerUsecase = { execute: () => Promise.resolve() };
-  const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
+  const loggerStub = {
+    setContext: sinon.stub(),
+    debug: sinon.stub(),
+    info: sinon.stub(),
+    error: sinon.stub(),
+  };
+  const featureFlagsServiceStub = {
+    getFlag: sinon.stub(),
+  };
+  const traceLogRepositoryStub = {
+    getOrganizationWorkflowRunsCount: sinon.stub(),
+  };
+  const createSubscriptionUsecase: UsecaseStub = { execute: () => Promise.resolve() };
+  const getOrCreateCustomerUsecase: UsecaseStub = { execute: () => Promise.resolve() };
+  const getPlatformNotificationUsageUsecase: UsecaseStub = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let createSubscriptionStub: sinon.SinonStub;
@@ -56,10 +70,10 @@ describe('CreateUsageRecords #novu-v2', () => {
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
         notificationsCount: 100,
       },
-    ] as any);
+    ]);
     createSubscriptionStub = sinon.stub(createSubscriptionUsecase, 'execute').resolves({
       id: 'subscription_id',
-    } as any);
+    });
     getOrCreateCustomerStub = sinon.stub(getOrCreateCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
       deleted: false,
@@ -69,7 +83,8 @@ describe('CreateUsageRecords #novu-v2', () => {
       subscriptions: {
         data: [mockMonthlyBusinessSubscription],
       },
-    } as any);
+    });
+    featureFlagsServiceStub.getFlag.resolves(false);
   });
 
   afterEach(() => {
@@ -78,6 +93,12 @@ describe('CreateUsageRecords #novu-v2', () => {
     createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
+    loggerStub.setContext.reset();
+    loggerStub.debug.reset();
+    loggerStub.info.reset();
+    loggerStub.error.reset();
+    featureFlagsServiceStub.getFlag.reset();
+    traceLogRepositoryStub.getOrganizationWorkflowRunsCount.reset();
   });
 
   const createUseCase = () => {
@@ -86,10 +107,32 @@ describe('CreateUsageRecords #novu-v2', () => {
       getOrCreateCustomerUsecase,
       createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      featureFlagsServiceStub,
+      traceLogRepositoryStub,
+      loggerStub
     );
 
     return useCase;
+  };
+
+  const enableClickHouseUsage = () => {
+    featureFlagsServiceStub.getFlag
+      .withArgs(sinon.match({ key: FeatureFlagsKeysEnum.IS_BILLING_USAGE_CLICKHOUSE_ENABLED }))
+      .resolves(true);
+  };
+
+  const givenSubscriptionPeriodStart = (periodStart: Date) => {
+    getOrCreateCustomerStub.resolves({
+      subscriptions: {
+        data: [
+          {
+            ...mockMonthlyBusinessSubscription,
+            current_period_start: periodStart.getTime() / 1000,
+          },
+        ],
+      },
+    });
   };
 
   it('should fetch the platform usage records with usage dates between the start and end date of the previous day', async () => {
@@ -202,7 +245,6 @@ describe('CreateUsageRecords #novu-v2', () => {
   });
 
   it('should log an error if the usage subscription item is not found on the subscription', async () => {
-    const logStub = sinon.spy(Logger, 'error');
     getPlatformNotificationUsageStub.resolves([
       {
         _id: 'organization_id_1',
@@ -234,11 +276,9 @@ describe('CreateUsageRecords #novu-v2', () => {
       })
     );
 
-    expect(logStub.lastCall.args[0].message).to.equal(
+    expect(loggerStub.error.lastCall.args[0].err.message).to.equal(
       "No metered subscription found for organizationId: 'organization_id_1'"
     );
-
-    logStub.restore();
   });
 
   it('should create a usage record for each organization', async () => {
@@ -283,5 +323,121 @@ describe('CreateUsageRecords #novu-v2', () => {
         },
       ],
     ]);
+  });
+
+  describe('around the billing period start', () => {
+    const cronRunDate = new Date('2026-09-26T10:05:00Z');
+    const lateMidnightPeriodStart = new Date('2026-09-26T00:02:00Z');
+    const lateMidnightCronRunDate = new Date('2026-09-26T00:05:00Z');
+
+    const toStripeTimestamp = (date: Date) => date.getTime() / 1000;
+
+    beforeEach(() => {
+      getPlatformNotificationUsageStub.resolves([
+        {
+          _id: 'organization_id',
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          notificationsCount: 1500,
+        },
+      ]);
+    });
+
+    describe('with ClickHouse usage enabled', () => {
+      beforeEach(() => {
+        enableClickHouseUsage();
+      });
+
+      it('should report only the runs since the period start when the period starts during the usage day', async () => {
+        const periodStart = new Date('2026-09-26T09:24:00Z');
+        givenSubscriptionPeriodStart(periodStart);
+        traceLogRepositoryStub.getOrganizationWorkflowRunsCount.resolves(1000);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.lastCall.args).to.deep.equal([
+          'organization_id',
+          periodStart,
+          new Date('2026-09-26T10:00:00Z'),
+        ]);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1000, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+        expect(analyticsServiceStub.track.lastCall.args[2].quantity).to.equal(1000);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should skip the usage record on the late midnight run after the period start', async () => {
+        givenSubscriptionPeriodStart(lateMidnightPeriodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: lateMidnightCronRunDate }));
+
+        expect(createUsageRecordStub.called).to.equal(false);
+        expect(analyticsServiceStub.track.called).to.equal(false);
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
+        expect(loggerStub.info.calledWithMatch({ organizationId: 'organization_id' })).to.equal(true);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should skip the usage record when the period starts right after the usage window ends', async () => {
+        givenSubscriptionPeriodStart(new Date('2026-09-26T10:00:00Z'));
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(createUsageRecordStub.called).to.equal(false);
+        expect(loggerStub.error.called).to.equal(false);
+      });
+
+      it('should report the whole-day count when the period starts at the usage day midnight', async () => {
+        const periodStart = new Date('2026-09-26T00:00:00Z');
+        givenSubscriptionPeriodStart(periodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+      });
+
+      it('should report the whole-day count when the period started before the usage day', async () => {
+        givenSubscriptionPeriodStart(new Date('2026-09-01T09:24:00Z'));
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(new Date('2026-09-26T00:00:00Z')), action: 'set' },
+        ]);
+      });
+    });
+
+    describe('with ClickHouse usage disabled', () => {
+      it('should report the whole-day count at the period start when the period starts during the usage day', async () => {
+        const periodStart = new Date('2026-09-26T09:24:00Z');
+        givenSubscriptionPeriodStart(periodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: cronRunDate }));
+
+        expect(traceLogRepositoryStub.getOrganizationWorkflowRunsCount.called).to.equal(false);
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(periodStart), action: 'set' },
+        ]);
+      });
+
+      it('should still report the late midnight run at the period start', async () => {
+        givenSubscriptionPeriodStart(lateMidnightPeriodStart);
+
+        await createUseCase().execute(CreateUsageRecordsCommand.create({ startDate: lateMidnightCronRunDate }));
+
+        expect(createUsageRecordStub.lastCall.args).to.deep.equal([
+          'item_id_usage_notifications',
+          { quantity: 1500, timestamp: toStripeTimestamp(lateMidnightPeriodStart), action: 'set' },
+        ]);
+      });
+    });
   });
 });

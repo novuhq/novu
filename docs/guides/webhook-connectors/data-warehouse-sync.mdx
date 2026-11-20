@@ -1,0 +1,68 @@
+---
+title: 'Export notification events to a data warehouse'
+description: 'Stream Novu delivery and engagement events to BigQuery or another data warehouse for notification analytics.'
+sidebarTitle: Plan your export
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+
+Novu can stream notification events to a data warehouse through an outbound webhook connector. You can then analyze delivery and engagement alongside your product data.
+
+This page covers the decisions to make before you configure an export. The connector guide for your warehouse owns the table schema, the transformation, and the verification query.
+
+<WebhookConnectorsPlanNote />
+
+## What the connector exports
+
+The endpoint receives the [webhook event types](/platform/developer/webhooks/event-types) you select. For notification analytics, these message events are usually the most useful:
+
+- `message.sent`
+- `message.delivered`
+- `message.failed`
+- `message.seen`
+- `message.read`
+- `message.archived`
+
+Start with `message.sent`, `message.delivered`, and `message.failed` for delivery reporting, and add `message.seen`, `message.read`, and `message.archived` if you report on Inbox engagement. You can also subscribe to preference and workflow events.
+
+Each event arrives as a separate item in a delivery batch, and the connector transformation decides how many warehouse rows that batch produces. The default is one row per event.
+
+<Warning>
+  Connectors stream events emitted after you create the endpoint. They do not backfill historical messages or create a current-state snapshot.
+</Warning>
+
+## Choose a destination
+
+Each warehouse has its own authentication model, default column layout, and transformation output. Open the guide for your destination and follow it end to end.
+
+| Warehouse | Guide |
+| --- | --- |
+| Google BigQuery | [Stream webhook events into Google BigQuery](/guides/webhook-connectors/google-bigquery) |
+| ClickHouse | [Insert webhook events into ClickHouse](/guides/webhook-connectors/clickhouse) |
+| Snowflake | [Load webhook events into Snowflake](/guides/webhook-connectors/snowflake) |
+| Amazon Redshift | [Load webhook events into Amazon Redshift](/guides/webhook-connectors/amazon-redshift) |
+| Postgres | [Insert webhook events into Postgres](/guides/webhook-connectors/postgres) |
+
+If you want files rather than rows, an [object storage connector](/platform/developer/webhooks/connectors#object-storage) writes each batch as an object that you can load on your own schedule.
+
+## Plan the schema before you enable the endpoint
+
+Connectors insert into a table that already exists. They do not create or alter tables, so a schema mismatch shows up as a failed delivery rather than a migration.
+
+Two decisions matter more than the rest:
+
+**Keep the full webhook body in one column.** Every connector guide's example stores the complete payload as JSON or a string alongside a small number of extracted columns. New fields in a Novu payload then land in the warehouse without a schema change, and you promote fields into views once you have seen real rows from your own environment.
+
+**Add an insert-time timestamp column.** Novu payload fields vary by event type, so a column your transformation always sets is the reliable partition and sort key. The connector examples use `received_at`.
+
+Do not treat event payloads as a stable contract for extracted columns. Send one example of each event type you plan to subscribe to, inspect what actually arrives, and extract only fields that are present across the event types you store.
+
+## Create one endpoint per environment
+
+Webhook endpoints are scoped to a Novu environment. Development and Production do not share endpoints, so create the endpoint in each environment whose events you want to export, and point non-production environments at a separate table or dataset.
+
+## Verify and troubleshoot
+
+Each connector guide ends with a verification query and a troubleshooting section for that destination. In every case, the endpoint's **Testing** tab sends an example for a subscribed event type, and the **Logs** tab shows the transformed payload and the destination's error message for a failed attempt.
+
+Failed deliveries follow the standard [webhook retry and recovery behavior](/platform/developer/webhooks/webhooks#recovering-and-resending-failed-messages).

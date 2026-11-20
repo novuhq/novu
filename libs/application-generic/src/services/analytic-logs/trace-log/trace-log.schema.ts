@@ -79,7 +79,7 @@ export const TTL: keyof typeof schemaDefinition = 'expires_at';
 const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'MergeTree',
-  order_by: `(${ORDER_BY.join(', ')})` as any,
+  order_by: `(${ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
 };
 
@@ -152,6 +152,7 @@ export type EventType =
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'
   | 'integration_selected'
+  | 'integration_conditions_matched'
   | 'layout_not_found'
   | 'layout_selected'
   | 'tenant_selected'

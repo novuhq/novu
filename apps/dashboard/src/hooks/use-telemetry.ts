@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import * as mixpanel from 'mixpanel-browser';
+import mixpanel from 'mixpanel-browser';
 import { useCallback } from 'react';
 import { measure } from '@/api/telemetry';
 import { IS_SELF_HOSTED, MIXPANEL_KEY } from '@/config';

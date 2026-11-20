@@ -1,4 +1,5 @@
 import { PinoLogger } from 'nestjs-pino';
+import type { Mocked } from 'vitest';
 import { RequestLogRepository, TraceLogRepository } from '../analytic-logs';
 import { InboundMailRequestLogger } from './inbound-mail-request-logger';
 import { InboundRequestSource } from './inbound-request-metadata';
@@ -21,24 +22,24 @@ function buildSource(): InboundRequestSource {
 }
 
 describe('InboundMailRequestLogger', () => {
-  let requestLogRepository: jest.Mocked<Pick<RequestLogRepository, 'create' | 'identifierPrefix'>>;
-  let traceLogRepository: jest.Mocked<Pick<TraceLogRepository, 'createRequest'>>;
+  let requestLogRepository: Mocked<Pick<RequestLogRepository, 'create' | 'identifierPrefix'>>;
+  let traceLogRepository: Mocked<Pick<TraceLogRepository, 'createRequest'>>;
   let logger: InboundMailRequestLogger;
-  let pinoLogger: jest.Mocked<PinoLogger>;
+  let pinoLogger: Mocked<PinoLogger>;
 
   beforeEach(() => {
     requestLogRepository = {
-      create: jest.fn().mockResolvedValue(undefined),
+      create: vi.fn().mockResolvedValue(undefined),
       identifierPrefix: 'req_',
     } as any;
     traceLogRepository = {
-      createRequest: jest.fn().mockResolvedValue(undefined),
+      createRequest: vi.fn().mockResolvedValue(undefined),
     } as any;
     pinoLogger = {
-      setContext: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
+      setContext: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
     } as any;
 
     logger = new InboundMailRequestLogger(

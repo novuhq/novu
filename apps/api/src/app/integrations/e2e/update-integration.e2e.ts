@@ -1,13 +1,24 @@
-import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { randomUUID } from 'node:crypto';
+import { decryptCredentials } from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  ControlValuesRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
+  ControlValuesLevelEnum,
   EmailProviderIdEnum,
   FieldOperatorEnum,
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
+  SmsProviderIdEnum,
+  StepTypeEnum,
   ToolProviderIdEnum,
+  WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -143,6 +154,34 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.field).to.equal('identifier');
     expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.value).to.equal('test');
     expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.operator).to.equal('EQUAL');
+  });
+
+  it('should update JsonLogic conditions on integration', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
+      active: true,
+      check: false,
+      rules: {
+        '==': [{ var: 'subscriber.locale' }, 'fr'],
+      },
+    };
+
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
+
+    const integration = data.find((i) => i.primary && i.channel === 'email');
+
+    await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
+
+    const result = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(result?.rules).to.deep.equal(payload.rules);
+    expect(result?.conditions).to.deep.equal([]);
+    expect(result?.primary).to.equal(false);
   });
 
   it('should return error with malformed conditions', async () => {
@@ -379,6 +418,98 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       updatedNodeMailerProviderPayload.credentials.tlsOptions
     );
     expect(nodeMailerIntegration?.active).to.equal(true);
+  });
+
+  describe('Twilio authentication method', () => {
+    async function createTwilioIntegration() {
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: SmsProviderIdEnum.Twilio,
+        channel: ChannelTypeEnum.SMS,
+        credentials: { accountSid: 'AC123', token: 'auth-token', from: '+15550000000' },
+        active: true,
+        check: false,
+      });
+      expect(response.status).to.equal(201);
+
+      return response.body.data._id as string;
+    }
+
+    async function findTwilioCredentials(integrationId: string) {
+      const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
+
+      const credentials = integrations.find((integration) => integration._id === integrationId)?.credentials;
+
+      return credentials ? decryptCredentials(credentials) : undefined;
+    }
+
+    it('should store only the API key when switching to API key authentication', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: {
+          authMethod: 'apiKey',
+          accountSid: 'AC123',
+          token: 'auth-token',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal('apiKey');
+      expect(credentials?.apiKey).to.equal('SK123');
+      expect(credentials?.secretKey).to.equal('api-key-secret');
+      expect(credentials?.token).to.equal(undefined);
+    });
+
+    it('should store only the auth token when no authentication method is set', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: {
+          accountSid: 'AC123',
+          token: 'auth-token',
+          apiKey: 'SK123',
+          secretKey: 'api-key-secret',
+          from: '+15550000000',
+        },
+        check: false,
+      });
+      expect(response.status).to.equal(200);
+
+      const credentials = await findTwilioCredentials(integrationId);
+      expect(credentials?.authMethod).to.equal(undefined);
+      expect(credentials?.token).to.equal('auth-token');
+      expect(credentials?.apiKey).to.equal(undefined);
+      expect(credentials?.secretKey).to.equal(undefined);
+    });
+
+    it('should reject authMethod values other than apiKey', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'authToken', accountSid: 'AC123', token: 'auth-token' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(422);
+      expect(JSON.stringify(response.body)).to.contain('credentials.authMethod must be one of the following values');
+    });
+
+    it('should reject API key authentication without the API key secret', async () => {
+      const integrationId = await createTwilioIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { authMethod: 'apiKey', accountSid: 'AC123', apiKey: 'SK123' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain('requires apiKey (API Key SID) and secretKey (API Key Secret)');
+    });
   });
 
   it('should not calculate primary and priority if active is not defined', async () => {
@@ -1065,6 +1196,202 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
+  });
+
+  describe('step integration overrides on identifier rename', () => {
+    const controlValuesRepository = new ControlValuesRepository();
+    const OLD_IDENTIFIER = 'prod-alerts';
+    const NEW_IDENTIFIER = 'prod-alerts-v2';
+
+    async function createWebhookIntegration() {
+      return integrationRepository.create({
+        name: 'Prod alerts',
+        identifier: OLD_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Webhook,
+        channel: ChannelTypeEnum.TOOL,
+        active: true,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+    }
+
+    async function createToolWorkflow(integrationOverrides: Record<string, Record<string, Record<string, unknown>>>) {
+      const response = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.EDITOR,
+        name: 'Integration Rename Workflow',
+        workflowId: `integration-rename-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: { body: 'default alert' },
+            integrationOverrides,
+          },
+        ],
+      });
+
+      expect(response.status).to.equal(201);
+
+      return response.body.data;
+    }
+
+    async function renameIntegration(integrationId: string) {
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integrationId}`)
+        .send({ identifier: NEW_IDENTIFIER, check: false });
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data.identifier).to.equal(NEW_IDENTIFIER);
+    }
+
+    async function findWebhookOverrideDocs(environmentId: string, integrationIdentifier: string) {
+      return controlValuesRepository.find({
+        _environmentId: environmentId,
+        _organizationId: session.organization._id,
+        level: ControlValuesLevelEnum.STEP_INTEGRATION_CONTROLS,
+        providerId: ToolProviderIdEnum.Webhook,
+        integrationIdentifier,
+      });
+    }
+
+    it('should re-key the step integration overrides to the new identifier', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+        [ToolProviderIdEnum.Opsgenie]: { [OLD_IDENTIFIER]: { priority: 'P1' } },
+      });
+      const stepId = workflow.steps[0]._id;
+
+      await renameIntegration(integration._id);
+
+      const expectedOverrides = {
+        [ToolProviderIdEnum.Webhook]: { [NEW_IDENTIFIER]: { alert_type: 'incident' } },
+        [ToolProviderIdEnum.Opsgenie]: { [OLD_IDENTIFIER]: { priority: 'P1' } },
+      };
+
+      const workflowResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(workflowResponse.status).to.equal(200);
+      expect(workflowResponse.body.data.steps[0].integrationOverrides).to.deep.equal(expectedOverrides);
+
+      const stepResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}/steps/${stepId}`);
+      expect(stepResponse.status).to.equal(200);
+      expect(stepResponse.body.data.integrationOverrides).to.deep.equal(expectedOverrides);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
+
+    it('should replace step overrides already stored under the new identifier', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: {
+          [OLD_IDENTIFIER]: { alert_type: 'incident' },
+          [NEW_IDENTIFIER]: { alert_type: 'stale' },
+        },
+      });
+
+      await renameIntegration(integration._id);
+
+      const workflowResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(workflowResponse.status).to.equal(200);
+      expect(workflowResponse.body.data.steps[0].integrationOverrides).to.deep.equal({
+        [ToolProviderIdEnum.Webhook]: { [NEW_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+
+      const renamedDocs = await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER);
+      expect(renamedDocs).to.have.length(1);
+      expect(renamedDocs[0].controls).to.deep.equal({ alert_type: 'incident' });
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+    });
+
+    it('should only re-key step integration overrides in the integration environment', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      await renameIntegration(integration._id);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(0);
+    });
+
+    it('should re-key step integration overrides in the destination environment when the integration is also moved', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integration._id}`)
+        .send({ identifier: NEW_IDENTIFIER, _environmentId: prodEnv!._id, check: false });
+      expect(response.status).to.equal(200);
+      expect(response.body.data.identifier).to.equal(NEW_IDENTIFIER);
+      expect(response.body.data._environmentId).to.equal(prodEnv!._id);
+
+      expect(await findWebhookOverrideDocs(session.environment._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
+
+    it('should keep destination overrides that already belong to an integration there', async () => {
+      const integration = await createWebhookIntegration();
+      const workflow = await createToolWorkflow({
+        [ToolProviderIdEnum.Webhook]: { [OLD_IDENTIFIER]: { alert_type: 'incident' } },
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const destinationIntegration = await integrationRepository.create({
+        name: 'Prod alerts',
+        identifier: OLD_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Webhook,
+        channel: ChannelTypeEnum.TOOL,
+        active: true,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnv!._id,
+      });
+      expect(syncResponse.status).to.equal(200);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+
+      const response = await session.testAgent
+        .put(`/v1/integrations/${integration._id}`)
+        .send({ identifier: NEW_IDENTIFIER, _environmentId: prodEnv!._id, check: false });
+      expect(response.status).to.equal(200);
+
+      const untouched = await integrationRepository.findOne({
+        _id: destinationIntegration._id,
+        _environmentId: prodEnv!._id,
+      });
+      expect(untouched?.identifier).to.equal(OLD_IDENTIFIER);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, OLD_IDENTIFIER)).to.have.length(1);
+      expect(await findWebhookOverrideDocs(prodEnv!._id, NEW_IDENTIFIER)).to.have.length(0);
+      expect(await findWebhookOverrideDocs(session.environment._id, NEW_IDENTIFIER)).to.have.length(1);
+    });
   });
 
   describe('API key authentication is scoped to the key environment', () => {

@@ -4,6 +4,8 @@ import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slac
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import {
+  buildDirectToolApprovalPersistActionId,
+  buildMcpToolApprovalPersistActionId,
   buildToolApprovalActionId,
   DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
   MCP_TOOL_APPROVAL_ACTION_PREFIX,
@@ -54,26 +56,6 @@ function formatToolArgumentsBody(tool: PendingToolApproval): string | undefined 
   const truncatedBody = `*Arguments*\n\`\`\`\n${truncatedJson}\n\`\`\``;
 
   return truncatedBody.length <= SLACK_CARD_BODY_MAX ? truncatedBody : truncatedBody.slice(0, SLACK_CARD_BODY_MAX);
-}
-
-// ---------------------------------------------------------------------------
-// Persist ("always allow") action ids — kept in sync with parseToolApprovalActionId
-// ---------------------------------------------------------------------------
-
-function buildMcpToolApprovalPersistActionId(
-  verdict: 'approve-tool' | 'approve-server',
-  tool: PendingToolApproval
-): string {
-  const toolName = encodeURIComponent(tool.toolName);
-  const mcpServerName = encodeURIComponent(tool.mcpServerName ?? '');
-
-  return `${MCP_TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${toolName}:${mcpServerName}`;
-}
-
-function buildDirectToolApprovalPersistActionId(tool: PendingToolApproval): string {
-  const toolName = encodeURIComponent(tool.toolName);
-
-  return `${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:${tool.toolUseId}:${toolName}`;
 }
 
 // ---------------------------------------------------------------------------

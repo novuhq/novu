@@ -38,11 +38,12 @@ export class TriggerMulticast extends TriggerBase {
     protected logger: PinoLogger,
     private traceLogRepository: TraceLogRepository
   ) {
-    super(subscriberProcessQueueService, cacheService, logger, QUEUE_CHUNK_SIZE);
+    super(subscriberProcessQueueService, cacheService, featureFlagsService, logger, QUEUE_CHUNK_SIZE);
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fan-out over single subscribers, then paged topic subscribers minus exclusions
   async execute(command: TriggerMulticastCommand) {
     const { environmentId, organizationId, to: recipients, actor } = command;
 

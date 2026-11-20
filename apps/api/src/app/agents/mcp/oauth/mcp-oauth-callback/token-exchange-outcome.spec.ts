@@ -102,18 +102,4 @@ describe('resolveDcrTokenExchangeOutcome', () => {
       },
     });
   });
-
-  it('maps application_suspended on non-2xx to mcp_github_org_block', () => {
-    const outcome = resolveDcrTokenExchangeOutcome(403, { error: 'application_suspended' });
-
-    expect(outcome).to.deep.equal({
-      kind: 'error',
-      code: 'mcp_github_org_block',
-      message: 'Token exchange failed: application_suspended',
-      providerError: 'application_suspended',
-      logVariant: 'non_2xx',
-      logMessage: 'MCP OAuth token exchange returned non-2xx',
-      exceptionMessage: 'OAuth token exchange failed: application_suspended',
-    });
-  });
 });

@@ -21,7 +21,7 @@ export class WorkflowOverrideService {
     const tenant = await this.tenantRepository.create({
       _organizationId: organizationId,
       _environmentId: environmentId,
-      identifier: faker.datatype.uuid(),
+      identifier: faker.string.uuid(),
       name: 'name_123',
       data: { test1: 'test value1', test2: 'test value2' },
     });

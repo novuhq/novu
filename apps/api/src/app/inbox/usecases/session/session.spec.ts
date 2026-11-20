@@ -2,6 +2,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
+  createContextHash,
+  createHash,
   FeatureFlagsService,
   GetSubscriberSchedule,
   PinoLogger,
@@ -28,14 +30,14 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { SubscriberSessionAuthStatsService } from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
-import { AnalyticsEventsEnum } from '../../utils';
-import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
@@ -89,6 +91,8 @@ describe('Session', () => {
   let getSubscriberSchedule: sinon.SinonStubbedInstance<GetSubscriberSchedule>;
   let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
   let keylessAbuseGuard: sinon.SinonStubbedInstance<KeylessAbuseGuardService>;
+  let subscriberSessionAuthStatsService: sinon.SinonStubbedInstance<SubscriberSessionAuthStatsService>;
+  let apiKeyRevocationService: sinon.SinonStubbedInstance<ApiKeyRevocationService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -115,6 +119,9 @@ describe('Session', () => {
     getSubscriberSchedule = sinon.createStubInstance(GetSubscriberSchedule);
     updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
     keylessAbuseGuard = sinon.createStubInstance(KeylessAbuseGuardService);
+    subscriberSessionAuthStatsService = sinon.createStubInstance(SubscriberSessionAuthStatsService);
+    apiKeyRevocationService = sinon.createStubInstance(ApiKeyRevocationService);
+    apiKeyRevocationService.getSigningKeys.callsFake(async ({ apiKeys }) => apiKeys.map((apiKey) => apiKey.key));
 
     session = new Session(
       environmentRepository as any,
@@ -140,7 +147,9 @@ describe('Session', () => {
       featureFlagsService as any,
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any,
-      keylessAbuseGuard as any
+      keylessAbuseGuard as any,
+      subscriberSessionAuthStatsService as any,
+      apiKeyRevocationService as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
@@ -169,7 +178,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -206,7 +215,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(legacyProdNamed as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -277,7 +286,7 @@ describe('Session', () => {
         subscriber: {
           subscriberId: 'subscriber-id',
         },
-        subscriberHash: 'hash',
+        subscriberHash: createHash('api-key', 'subscriber-id') as string,
       },
     };
     const subscriber = { _id: 'subscriber-id' };
@@ -292,7 +301,7 @@ describe('Session', () => {
       name: 'Development',
     } as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves(mockIntegration);
+    selectIntegration.execute.resolves({ integration: mockIntegration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -301,12 +310,61 @@ describe('Session', () => {
       defaultLocale: 'en_US',
     });
 
-    const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
+    const response = await session.execute(command);
+    expect(response.token).to.equal(token);
 
+    const wrongHash = { ...command, requestData: { ...command.requestData, subscriberHash: 'hash' } };
+    try {
+      await session.execute(wrongHash);
+      expect.fail('Expected BadRequestException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('Please provide a valid HMAC hash');
+    }
+  });
+
+  it('should not accept a subscriber hash signed with a key the revocation policy stops from signing', async () => {
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
+      name: 'Development',
+    };
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: createHash('api-key', 'subscriber-id') as string,
+      },
+    };
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves({ _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    createSubscriber.execute.resolves({ _id: 'subscriber-id' } as any);
+    notificationsCount.execute.resolves({ data: [{ count: 0, filter: {} }] });
+    authService.getSubscriberWidgetToken.resolves('token');
+    getOrganizationSettingsUsecase.execute.resolves({ removeNovuBranding: false, defaultLocale: 'en_US' });
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    selectIntegration.execute.resolves({ integration: mockIntegration });
+    try {
+      await session.execute(command);
+      expect.fail('Expected BadRequestException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('Please provide a valid HMAC hash');
+    }
+
+    // Without HMAC enforcement the session still opens, but the hash no longer lets it update the subscriber.
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     await session.execute(command);
 
-    expect(validateHmacEncryptionStub.calledOnce).to.be.true;
-    validateHmacEncryptionStub.restore();
+    expect(createSubscriber.execute.lastCall.args[0].allowUpdate).to.equal(false);
+    expect(apiKeyRevocationService.getSigningKeys.firstCall.args[0]).to.deep.equal({
+      organizationId: 'org-id',
+      environmentId: 'env-id',
+      apiKeys: environment.apiKeys,
+    });
   });
 
   it('should return correct removeNovuBranding value when set on the organization', async () => {
@@ -327,7 +385,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -367,7 +425,7 @@ describe('Session', () => {
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
-    selectIntegration.execute.resolves(integration);
+    selectIntegration.execute.resolves({ integration });
     organizationRepository.findById.resolves(organization as any);
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
@@ -385,15 +443,6 @@ describe('Session', () => {
     expect(response.unreadCount.severity[SeverityLevelEnum.MEDIUM]).to.equal(mockSeverityCounts[1].count);
     expect(response.unreadCount.severity[SeverityLevelEnum.LOW]).to.equal(0);
     expect(response.unreadCount.severity[SeverityLevelEnum.NONE]).to.equal(0);
-    expect(
-      analyticsService.mixpanelTrack.calledWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
-        _organization: environment._organizationId,
-        environmentName: environment.name,
-        _subscriber: subscriber._id,
-        origin: command.origin,
-        context: [],
-      })
-    ).to.be.true;
   });
 
   it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {
@@ -414,7 +463,7 @@ describe('Session', () => {
 
     organizationRepository.findById.resolves(organization as any);
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
-    selectIntegration.execute.resolves(integration);
+    selectIntegration.execute.resolves({ integration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -467,7 +516,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -497,9 +546,9 @@ describe('Session', () => {
       requestData: {
         applicationIdentifier: 'app-id',
         subscriber: { subscriberId: 'subscriber-id' },
-        subscriberHash: 'subscriber-hash',
+        subscriberHash: createHash('api-key', 'subscriber-id') as string,
         context: { teamId: 'team-123' },
-        contextHash: 'context-hash',
+        contextHash: createContextHash('api-key', { teamId: 'team-123' }) as string,
       },
     };
 
@@ -517,7 +566,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves(mockIntegration);
+    selectIntegration.execute.resolves({ integration: mockIntegration });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
@@ -528,24 +577,17 @@ describe('Session', () => {
     featureFlagsService.getFlag.resolves(true);
     contextRepository.findOrCreateContextsFromPayload.resolves(mockContexts as any);
 
-    const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
-    const validateContextHmacEncryptionStub = sinon.stub(encryption, 'validateContextHmacEncryption');
+    const response = await session.execute(command);
+    expect(response.contextKeys).to.deep.equal(['teamId:team-123']);
 
-    await session.execute(command);
-
-    expect(validateContextHmacEncryptionStub.calledOnce).to.be.true;
-    expect(
-      validateContextHmacEncryptionStub.calledWith(
-        sinon.match({
-          apiKeys: [environment.apiKeys[0].key],
-          context: command.requestData.context,
-          contextHash: command.requestData.contextHash,
-        })
-      )
-    ).to.be.true;
-
-    validateHmacEncryptionStub.restore();
-    validateContextHmacEncryptionStub.restore();
+    const wrongContextHash = { ...command, requestData: { ...command.requestData, contextHash: 'context-hash' } };
+    try {
+      await session.execute(wrongContextHash);
+      expect.fail('Expected BadRequestException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('Please provide a valid context HMAC hash');
+    }
   });
 
   it('should return empty contextKeys array when no context is provided', async () => {
@@ -569,7 +611,7 @@ describe('Session', () => {
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
-    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
     createSubscriber.execute.resolves(subscriber as any);
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);

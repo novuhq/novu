@@ -56,6 +56,7 @@ export function useIntegrationList(searchQuery: string = '') {
       [ChannelTypeEnum.CHAT]: [
         ChatProviderIdEnum.Slack,
         ChatProviderIdEnum.Discord,
+        ChatProviderIdEnum.GoogleChat,
         ChatProviderIdEnum.MsTeams,
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,

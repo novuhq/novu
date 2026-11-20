@@ -156,8 +156,7 @@ function InlineRouteForm({
             </div>
             {form.address.includes('+') && (
               <p className="text-warning text-label-xs max-w-[220px] leading-4">
-                Avoid <code className="font-medium">+</code> in route addresses — it is reserved for Novu reply
-                tokens.
+                Avoid <code className="font-medium">+</code> in route addresses — it is reserved for Novu reply tokens.
               </p>
             )}
           </div>

@@ -10,6 +10,13 @@ export type Context = {
   type: ContextType;
   data: ContextData;
 
+  /**
+   * Optional bridge URL override. When set, an inbound agent turn whose resolved connect-time context
+   * includes this context routes its bridge call here instead of the agent's default bridge URL.
+   * Only writable through the trusted `/v2/contexts` API (never via subscriber-facing context payloads).
+   */
+  bridgeUrl?: string;
+
   key: string;
 
   createdAt: string;

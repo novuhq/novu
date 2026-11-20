@@ -1,14 +1,16 @@
-import { openai } from '@ai-sdk/openai';
-import { convertToModelMessages, streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { convertToModelMessages, streamText, type ToolSet } from 'ai';
 import { buildRefundTools } from '../lib/toolkit';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const tools = await buildRefundTools();
+  // In this monorepo the toolkit's types resolve its own `ai` devDependency, a different major than this app's;
+  // comparing the two `ToolSet`s is "excessively deep" (TS2589). Customers' installs resolve one `ai`.
+  const tools = (await buildRefundTools()) as unknown as ToolSet;
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: anthropic('claude-haiku-4-5'),
     system:
       'You are a helpful customer support agent for an e-commerce store. ' +
       'You can issue refunds on behalf of customers. ' +

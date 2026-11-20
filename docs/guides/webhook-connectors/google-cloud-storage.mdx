@@ -1,0 +1,108 @@
+---
+title: 'Send webhook events to Google Cloud Storage'
+description: 'Configure the Google Cloud Storage webhook connector to store selected Novu events as batched objects.'
+sidebarTitle: 'Google Cloud Storage'
+---
+
+import WebhookConnectorsPlanNote from "/snippets/webhook-connectors-plan-note.mdx";
+import WebhookConnectorAddEndpoint from "/snippets/webhook-connector-add-endpoint.mdx";
+import WebhookConnectorRelated from "/snippets/webhook-connector-related.mdx";
+import ObjectStorageTransformation from "/snippets/object-storage-transformation.mdx";
+
+The Google Cloud Storage connector writes selected Novu webhook events to a bucket. Each delivered batch creates a new object.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). This connector maps to the Svix [object storage advanced endpoint](https://docs.svix.com/advanced-endpoints/object-storage), which is shared with Amazon S3 and Azure Blob Storage.
+
+<WebhookConnectorsPlanNote />
+
+## Prerequisites
+
+- An existing Google Cloud Storage bucket, created before you configure the endpoint
+- A Google Cloud service account with a JSON key that can create objects in that bucket
+
+### Required permission
+
+Writing a new object requires the `storage.objects.create` permission, which is included in the predefined `roles/storage.objectCreator` role. That role can create objects but cannot read, overwrite, or delete them, which is usually what an append-only event archive wants. Grant it on the bucket rather than the project:
+
+```bash
+gcloud storage buckets add-iam-policy-binding gs://novu-events \
+  --member="serviceAccount:novu-writer@my-gcp-project.iam.gserviceaccount.com" \
+  --role="roles/storage.objectCreator"
+```
+
+See [Cloud Storage IAM roles](https://cloud.google.com/storage/docs/access-control/iam-roles) for the full permission reference. Paste the complete JSON key into the credentials field and treat it as a secret.
+
+## Configuration
+
+| Dashboard field | Required | Description |
+| --- | --- | --- |
+| **Bucket** | Yes | Name of the destination Google Cloud Storage bucket. |
+| **Credentials** | Yes | Google Cloud service account credentials JSON, supplied as a string. |
+| **Transformation** | Yes | JavaScript that defines the object key, format, and data. |
+
+<ObjectStorageTransformation />
+
+## Configure in the Dashboard
+
+<Steps>
+  <Step>
+## Prepare the bucket
+
+Create the bucket and service account credentials. Keep the complete credentials JSON available.
+  </Step>
+
+<WebhookConnectorAddEndpoint connectorName="Google Cloud Storage" />
+
+  <Step>
+## Enter connection details
+
+Enter **Bucket** and the service account **Credentials** JSON.
+  </Step>
+
+  <Step>
+## Configure the transformation
+
+Start from the provided object storage template. Change `config.key` to the prefix you want and keep `config.format` aligned with `data`.
+  </Step>
+
+  <Step>
+## Select event types
+
+Select the [event types](/platform/developer/webhooks/event-types) to store. Selecting fewer event types also limits which events reach the transformation.
+  </Step>
+
+  <Step>
+## Test the endpoint
+
+Create the endpoint. In **Testing**, send an example for a subscribed event type. Confirm success in **Logs**, then verify the bucket contains a new timestamp-suffixed object with the expected content.
+  </Step>
+</Steps>
+
+## Verify delivery
+
+List objects under your key prefix, then read one and compare it with the transformation output in the endpoint's **Logs**:
+
+```bash
+gcloud storage ls "gs://novu-events/novu-events/**"
+
+gcloud storage cat "gs://novu-events/novu-events/dt=2026-09-01/events-<timestamp>"
+```
+
+If `roles/storage.objectCreator` is the only role you granted, the connector's service account cannot list or read objects. Run these commands with your own credentials rather than the connector's key.
+
+## Troubleshooting
+
+- **Credentials are rejected**: Paste the complete service account credentials JSON and confirm it is valid JSON.
+- **The bucket cannot be accessed**: Confirm the bucket exists and the supplied service account can write to it.
+- **No object appears after a successful test**: Check the exact bucket name and inspect the transformed output in **Logs**.
+- **Object contents are malformed**: Confirm `config.format` matches `data`. For `"raw"`, return a string.
+- **Events are missing**: Confirm the endpoint subscribes to those event types in the intended Novu environment.
+
+
+<WebhookConnectorRelated />
+
+## Official references
+
+- [Svix object storage endpoints](https://docs.svix.com/advanced-endpoints/object-storage)
+- [Svix advanced endpoint types](https://docs.svix.com/advanced-endpoints)
+- [Cloud Storage IAM roles](https://cloud.google.com/storage/docs/access-control/iam-roles)

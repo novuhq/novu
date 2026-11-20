@@ -1,14 +1,20 @@
 import mitt, { Emitter } from 'mitt';
-import { EventHandler, EventNames, Events } from './types';
+import { EventHandler, Events } from './types';
+import type { WebChatMessagesUpdated } from './web-chat-events';
+
+type InternalEvents = Events & {
+  'web_chat.messages.updated': { data: WebChatMessagesUpdated };
+};
+type InternalEventNames = keyof InternalEvents;
 
 export class NovuEventEmitter {
-  #mittEmitter: Emitter<Events>;
+  #mittEmitter: Emitter<InternalEvents>;
 
   constructor() {
     this.#mittEmitter = mitt();
   }
 
-  on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): () => void {
+  on<Key extends InternalEventNames>(eventName: Key, listener: EventHandler<InternalEvents[Key]>): () => void {
     this.#mittEmitter.on(eventName, listener);
 
     return () => {
@@ -16,11 +22,11 @@ export class NovuEventEmitter {
     };
   }
 
-  off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
+  off<Key extends InternalEventNames>(eventName: Key, listener: EventHandler<InternalEvents[Key]>): void {
     this.#mittEmitter.off(eventName, listener);
   }
 
-  emit<Key extends EventNames>(type: Key, event?: Events[Key]): void {
-    this.#mittEmitter.emit(type, event as Events[Key]);
+  emit<Key extends InternalEventNames>(type: Key, event?: InternalEvents[Key]): void {
+    this.#mittEmitter.emit(type, event as InternalEvents[Key]);
   }
 }

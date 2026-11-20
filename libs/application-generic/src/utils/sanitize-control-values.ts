@@ -16,13 +16,20 @@ import {
   LookBackWindowType,
   PushControlType,
   SmsControlType,
+  ThrottleControlType,
   ToolControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
+import { resolveChatEditorType } from './resolve-chat-editor-type';
 
-// Cast input T_Type to trigger Ajv validation errors - possible undefined
-function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
-  return isEmpty(input) ? defaultValue : input;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue: TValue): TValue;
+function sanitizeEmptyInput<TValue>(input: TValue): TValue | undefined;
+function sanitizeEmptyInput<TValue>(input: TValue, defaultValue?: TValue): TValue | undefined {
+  if (isEmpty(input)) {
+    return defaultValue;
+  }
+
+  return input;
 }
 
 export function sanitizeRedirect(redirect: InAppRedirectType | undefined) {
@@ -111,50 +118,60 @@ function sanitizeSms(controlValues: SmsControlType) {
   return filterNullishValues(mappedValues);
 }
 
-function sanitizePush(controlValues: PushControlType) {
+interface StitchedContentOverrides {
+  providerOverrides?: Record<string, unknown>;
+  integrationOverrides?: Record<string, unknown>;
+}
+
+/**
+ * Runtime/preview may still nest providerOverrides and integrationOverrides (stitched or form-sourced).
+ * They are not part of the persisted main control schema — pass them through.
+ */
+function keepContentOverrides(
+  sanitized: Record<string, unknown>,
+  controlValues: StitchedContentOverrides
+): Record<string, unknown> {
+  const { providerOverrides, integrationOverrides } = controlValues;
+
+  if (providerOverrides === undefined && integrationOverrides === undefined) {
+    return sanitized;
+  }
+
+  return {
+    ...sanitized,
+    ...(providerOverrides === undefined ? {} : { providerOverrides }),
+    ...(integrationOverrides === undefined ? {} : { integrationOverrides }),
+  };
+}
+
+function sanitizePush(controlValues: PushControlType & StitchedContentOverrides) {
   const mappedValues: PushControlType = {
     subject: sanitizeEmptyInput(controlValues.subject),
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
   };
 
-  return filterNullishValues(mappedValues);
+  return keepContentOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
-type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
-
-/**
- * Runtime/preview may still nest providerOverrides (stitched or form-sourced).
- * They are not part of the persisted main control schema — pass them through.
- */
-function keepProviderOverrides(
-  sanitized: Record<string, unknown>,
-  controlValues: { providerOverrides?: Record<string, unknown> }
-): Record<string, unknown> {
-  if (controlValues.providerOverrides === undefined) {
-    return sanitized;
-  }
-
-  return { ...sanitized, providerOverrides: controlValues.providerOverrides };
-}
-
-function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
+function sanitizeChat(controlValues: ChatControlType & StitchedContentOverrides) {
+  const editorType = resolveChatEditorType(controlValues.body, controlValues.editorType);
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
-    editorType: controlValues.editorType,
+    ...(editorType ? { editorType } : {}),
   };
 
-  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+  return keepContentOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
-function sanitizeTool(controlValues: WithProviderOverrides<ToolControlType>) {
+function sanitizeTool(controlValues: ToolControlType & StitchedContentOverrides) {
   const mappedValues: ToolControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
   };
 
-  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+  return keepContentOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
@@ -194,10 +211,12 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
 
   const anyControlValues = controlValues as Record<string, unknown>;
   const lookBackWindow = (anyControlValues.lookBackWindow as LookBackWindowType)?.amount;
+  const rawAmount = anyControlValues.amount;
+  const amount = typeof rawAmount === 'number' || typeof rawAmount === 'string' ? rawAmount : undefined;
 
   return filterNullishValues({
     // Cast to trigger Ajv validation errors - possible undefined
-    ...(parseAmount(anyControlValues.amount) as { amount?: number }),
+    ...(parseAmount(amount) as { amount?: number }),
     unit: anyControlValues.unit,
     digestKey: anyControlValues.digestKey,
     skip: anyControlValues.skip,
@@ -251,6 +270,18 @@ function sanitizeDelay(controlValues: DelayControlType) {
   return filterNullishValues(controlValues);
 }
 
+/**
+ * A fixed throttle never reads `dynamicKey`, but the dashboard form still persists it as an empty
+ * string. The control schema keeps `dynamicKey` optional with `minLength: 1`, so a present-but-empty
+ * value fails validation and surfaces a "DynamicKey is required" issue on a correctly configured
+ * fixed throttle. Drop the unused key; a dynamic throttle keeps it so the issue still surfaces there.
+ */
+function sanitizeThrottle(controlValues: ThrottleControlType) {
+  const shouldDropDynamicKey = controlValues?.type !== 'dynamic' && isEmpty(controlValues?.dynamicKey);
+
+  return filterNullishValues(shouldDropDynamicKey ? { ...controlValues, dynamicKey: undefined } : controlValues);
+}
+
 function sanitizeLayout(controlValues: LayoutControlType) {
   return {
     email: filterNullishValues({
@@ -260,17 +291,17 @@ function sanitizeLayout(controlValues: LayoutControlType) {
   };
 }
 
-function parseAmount(amount?: unknown) {
+function parseAmount(amount?: number | string): { amount?: number } | number | string {
   try {
     if (!isNumber(amount)) {
       return {};
     }
 
-    const numberAmount = typeof amount === 'string' ? parseInt(amount, 10) : amount;
+    const numberAmount = typeof amount === 'string' ? Number.parseInt(amount, 10) : amount;
 
     return { amount: numberAmount };
-  } catch (error) {
-    return amount;
+  } catch {
+    return amount ?? {};
   }
 }
 
@@ -345,19 +376,22 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizeSms(controlValues as SmsControlType);
         break;
       case StepTypeEnum.PUSH:
-        normalizedValues = sanitizePush(controlValues as PushControlType);
+        normalizedValues = sanitizePush(controlValues as PushControlType & StitchedContentOverrides);
         break;
       case StepTypeEnum.CHAT:
-        normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);
+        normalizedValues = sanitizeChat(controlValues as ChatControlType & StitchedContentOverrides);
         break;
       case StepTypeEnum.TOOL:
-        normalizedValues = sanitizeTool(controlValues as WithProviderOverrides<ToolControlType>);
+        normalizedValues = sanitizeTool(controlValues as ToolControlType & StitchedContentOverrides);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);
         break;
       case StepTypeEnum.DELAY:
         normalizedValues = sanitizeDelay(controlValues as DelayControlType);
+        break;
+      case StepTypeEnum.THROTTLE:
+        normalizedValues = sanitizeThrottle(controlValues as ThrottleControlType);
         break;
       case 'layout':
         normalizedValues = sanitizeLayout(controlValues as LayoutControlType);

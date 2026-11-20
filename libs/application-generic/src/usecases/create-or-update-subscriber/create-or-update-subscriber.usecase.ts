@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
 import { InstrumentUsecase } from '../../instrumentation';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
@@ -13,8 +13,7 @@ export class CreateOrUpdateSubscriberUseCase {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private updateSubscriberUseCase: UpdateSubscriber,
-    private updateSubscriberChannel: UpdateSubscriberChannel,
-    private analyticsService: AnalyticsService
+    private updateSubscriberChannel: UpdateSubscriberChannel
   ) {}
 
   @RetryOnError('MongoServerError', {
@@ -28,34 +27,46 @@ export class CreateOrUpdateSubscriberUseCase {
       throw new ConflictException(`Subscriber with id "${command.subscriberId}" already exists`);
     }
 
+    let updatedSubscriber: SubscriberEntity | undefined;
+
     if (persistedSubscriber) {
       if (command.allowUpdate) {
-        await this.updateSubscriber(command, persistedSubscriber);
+        updatedSubscriber = await this.updateSubscriber(command, persistedSubscriber);
       }
     } else {
       await this.createSubscriber(command);
     }
 
-    if (command.channels?.length && command.allowUpdate) {
+    const hasChannels = !!command.channels?.length;
+
+    if (hasChannels && command.allowUpdate) {
       await this.updateCredentials(command);
     }
 
-    return persistedSubscriber && !command.allowUpdate
-      ? persistedSubscriber
-      : await this.fetchSubscriber({
-          _environmentId: command.environmentId,
-          subscriberId: command.subscriberId,
-        });
+    if (persistedSubscriber && !command.allowUpdate) {
+      return persistedSubscriber;
+    }
+
+    /*
+     * UpdateSubscriber already returns the merged entity, so re-reading it is only needed
+     * when channel credentials changed or a new subscriber was created.
+     */
+    if (updatedSubscriber && !hasChannels) {
+      return updatedSubscriber;
+    }
+
+    return await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
   }
 
+  /*
+   * UpdateSubscriber invalidates the subscriber cache itself, and only when a field actually
+   * changes. Invalidating here too would bust the cache on every no-op upsert (e.g. each Inbox
+   * session), forcing the next subscriber JWT requests back to the database.
+   */
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
-    await this.invalidateCache.invalidateByKey({
-      key: buildSubscriberKey({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
     return await this.updateSubscriberUseCase.execute(
       UpdateSubscriberCommand.create({
         environmentId: command.environmentId,
@@ -84,18 +95,6 @@ export class CreateOrUpdateSubscriberUseCase {
       }));
 
     return existingSubscriber;
-  }
-
-  private publishSubscriberCreatedEvent(command: CreateOrUpdateSubscriberCommand) {
-    this.analyticsService.mixpanelTrack('Subscriber Created', '', {
-      _organization: command.organizationId,
-      hasEmail: !!command.email,
-      hasPhone: !!command.phone,
-      hasAvatar: !!command.avatar,
-      hasLocale: !!command.locale,
-      hasData: !!command.data,
-      hasCredentials: !!command.channels,
-    });
   }
 
   private async updateCredentials(command: CreateOrUpdateSubscriberCommand) {
@@ -136,8 +135,6 @@ export class CreateOrUpdateSubscriberUseCase {
       data: command.data,
       timezone: command.timezone,
     });
-    this.publishSubscriberCreatedEvent(command);
-
     return createdSubscriber;
   }
 

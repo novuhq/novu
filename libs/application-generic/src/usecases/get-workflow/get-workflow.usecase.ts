@@ -29,7 +29,7 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services/workflow-data.container';
 import { generatePayloadExample } from '../../utils/generate-payload-example';
 import { toResponseWorkflowDto } from '../../utils/notification-template-mapper';
-import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
+import { BuildStepDataCommand, BuildStepDataUsecase, WorkflowStepSharedContext } from '../build-step-data';
 import { GetWorkflowWithPreferencesCommand, GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences';
 import { GetWorkflowCommand } from './get-workflow.command';
 
@@ -112,19 +112,25 @@ export class GetWorkflowUseCase {
     workflowWithPreferences: NotificationTemplateEntity,
     user: UserSessionData
   ): Promise<StepResponseDto[]> {
-    // Fetch all relevant integrations in a single query
     const requiredIntegrations = await this.fetchAllRelevantIntegrations(
       workflowWithPreferences.steps,
       user.environmentId,
       user.organizationId
     );
 
+    if (workflowWithPreferences.steps.length === 0) {
+      return [];
+    }
+
+    const sharedContext = await this.buildStepDataUsecase.loadWorkflowBuildContext(workflowWithPreferences, user);
+
     const stepPromises = workflowWithPreferences.steps.map((step) =>
       this.buildStepForWorkflow(
         workflowWithPreferences,
         step as NotificationStepEntity & { _id: string },
         user,
-        requiredIntegrations
+        requiredIntegrations,
+        sharedContext
       )
     );
 
@@ -165,15 +171,19 @@ export class GetWorkflowUseCase {
     workflow: NotificationTemplateEntity,
     step: NotificationStepEntity & { _id: string },
     user: UserSessionData,
-    availableIntegrations: IntegrationEntity[]
+    availableIntegrations: IntegrationEntity[],
+    sharedContext: WorkflowStepSharedContext
   ): Promise<StepResponseDto> {
     try {
       const stepResponse = await this.buildStepDataUsecase.execute(
-        BuildStepDataCommand.create({
-          workflowIdOrInternalId: workflow._id,
-          stepIdOrInternalId: step._id,
-          user,
-        })
+        BuildStepDataCommand.create(
+          {
+            workflowIdOrInternalId: workflow._id,
+            stepIdOrInternalId: step._id,
+            user,
+          },
+          { sharedContext }
+        )
       );
 
       const runtimeIntegrationIssues = this.validateIntegrationFromCache(

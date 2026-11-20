@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JobRepository, MessageRepository, NotificationRepository, NotificationTemplateRepository } from '@novu/dal';
 import { DeliveryLifecycleStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import type { Mock } from 'vitest';
 import { PinoLogger } from '../logging';
 import { TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs/workflow-run';
@@ -9,21 +10,21 @@ import { WorkflowRunService } from './workflow-run.service';
 
 // ESM-only dependencies pulled in transitively (analytic-logs → p-queue, feature-flags → LaunchDarkly);
 // jest 27 cannot parse them, and the spec injects its own mocks anyway.
-jest.mock('p-queue', () => ({ __esModule: true, default: class PQueueMock {} }));
-jest.mock('@launchdarkly/node-server-sdk', () => ({ init: jest.fn() }));
+vi.mock('p-queue', () => ({ __esModule: true, default: class PQueueMock {} }));
+vi.mock('@launchdarkly/node-server-sdk', () => ({ init: vi.fn() }));
 
 describe('WorkflowRunService', () => {
   let service: WorkflowRunService;
   let notificationRepository: {
-    findOne: jest.Mock;
-    tryWorkflowStatusTransition: jest.Mock;
-    tryDeliveryLifecycleTransition: jest.Mock;
+    findOne: Mock;
+    tryWorkflowStatusTransition: Mock;
+    tryDeliveryLifecycleTransition: Mock;
   };
-  let notificationTemplateRepository: { findOne: jest.Mock };
-  let traceLogRepository: { createWorkflowRun: jest.Mock };
-  let workflowRunRepository: { updateWorkflowRunState: jest.Mock };
-  let featureFlagsService: { getFlag: jest.Mock };
-  let logger: { setContext: jest.Mock; debug: jest.Mock; trace: jest.Mock; error: jest.Mock };
+  let notificationTemplateRepository: { findOne: Mock };
+  let traceLogRepository: { createWorkflowRun: Mock };
+  let workflowRunRepository: { updateWorkflowRunState: Mock };
+  let featureFlagsService: { getFlag: Mock };
+  let logger: { setContext: Mock; debug: Mock; trace: Mock; error: Mock };
 
   const notificationId = 'notif-1';
   const organizationId = 'org-1';
@@ -53,21 +54,21 @@ describe('WorkflowRunService', () => {
 
   beforeEach(async () => {
     notificationRepository = {
-      findOne: jest.fn().mockResolvedValue(notification),
-      tryWorkflowStatusTransition: jest.fn().mockResolvedValue({ isUpdated: true }),
-      tryDeliveryLifecycleTransition: jest.fn().mockResolvedValue({ isUpdated: true }),
+      findOne: vi.fn().mockResolvedValue(notification),
+      tryWorkflowStatusTransition: vi.fn().mockResolvedValue({ isUpdated: true }),
+      tryDeliveryLifecycleTransition: vi.fn().mockResolvedValue({ isUpdated: true }),
     };
     notificationTemplateRepository = {
-      findOne: jest.fn().mockResolvedValue(workflow),
+      findOne: vi.fn().mockResolvedValue(workflow),
     };
     traceLogRepository = {
-      createWorkflowRun: jest.fn().mockResolvedValue(undefined),
+      createWorkflowRun: vi.fn().mockResolvedValue(undefined),
     };
     workflowRunRepository = {
-      updateWorkflowRunState: jest.fn().mockResolvedValue(undefined),
+      updateWorkflowRunState: vi.fn().mockResolvedValue(undefined),
     };
     featureFlagsService = {
-      getFlag: jest.fn().mockImplementation(({ key }) => {
+      getFlag: vi.fn().mockImplementation(({ key }) => {
         if (key === FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED) {
           return Promise.resolve(true);
         }
@@ -76,17 +77,17 @@ describe('WorkflowRunService', () => {
       }),
     };
     logger = {
-      setContext: jest.fn(),
-      debug: jest.fn(),
-      trace: jest.fn(),
-      error: jest.fn(),
+      setContext: vi.fn(),
+      debug: vi.fn(),
+      trace: vi.fn(),
+      error: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WorkflowRunService,
-        { provide: JobRepository, useValue: { find: jest.fn().mockResolvedValue([]) } },
-        { provide: MessageRepository, useValue: { find: jest.fn().mockResolvedValue([]) } },
+        { provide: JobRepository, useValue: { find: vi.fn().mockResolvedValue([]) } },
+        { provide: MessageRepository, useValue: { find: vi.fn().mockResolvedValue([]) } },
         { provide: WorkflowRunRepository, useValue: workflowRunRepository },
         { provide: NotificationRepository, useValue: notificationRepository },
         { provide: NotificationTemplateRepository, useValue: notificationTemplateRepository },

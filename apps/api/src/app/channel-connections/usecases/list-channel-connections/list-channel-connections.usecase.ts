@@ -5,9 +5,9 @@ import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   EnforceEnvOrOrgIds,
+  type FilterQuery,
 } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 import { ListChannelConnectionsCommand } from './list-channel-connections.command';
 
 @Injectable()
@@ -15,6 +15,7 @@ export class ListChannelConnections {
   constructor(private readonly channelConnectionRepository: ChannelConnectionRepository) {}
 
   @InstrumentUsecase()
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing cursor-filter assembly is outside this import change
   async execute(command: ListChannelConnectionsCommand) {
     if (command.before && command.after) {
       throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');

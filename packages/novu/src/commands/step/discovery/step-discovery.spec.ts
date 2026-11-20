@@ -90,7 +90,7 @@ describe('step-discovery', () => {
   });
 
   it('accepts all supported channel step types', async () => {
-    for (const type of ['email', 'sms', 'chat', 'push']) {
+    for (const type of ['email', 'sms', 'chat', 'push', 'tool']) {
       writeStepFile(
         `onboarding/${type}-step.step.ts`,
         createStepFileContent({ stepId: `${type}-step`, type, useJsx: false })
@@ -105,7 +105,7 @@ describe('step-discovery', () => {
 
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
-    expect(result.steps).toHaveLength(5);
+    expect(result.steps).toHaveLength(6);
   });
 
   it('detects invalid step type', async () => {

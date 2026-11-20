@@ -1,6 +1,7 @@
 import { ChannelEndpointByType, ENDPOINT_TYPES, IChatOptions } from '@novu/stateless';
 import { nanoid } from 'nanoid';
 import { expect, test } from 'vitest';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { LineChatProvider } from './line.provider';
 
@@ -28,6 +29,7 @@ const expectedHeaders = {
     Authorization: `Bearer ${mockProviderConfig.channelAccessToken}`,
     'Content-Type': 'application/json',
   },
+  timeout: PROVIDER_HTTP_TIMEOUT_MS,
 };
 
 test('should trigger LINE library correctly with text message', async () => {

@@ -16,4 +16,22 @@ describe('mapStreamPart run lifecycle', () => {
       expect(mapStreamPart({ type: 'status-change', status })).to.deep.equal([]);
     }
   });
+
+  it('maps provider-event to the protocol provider-event event', () => {
+    expect(
+      mapStreamPart({
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'content_block_delta',
+        data: { index: 0 },
+      })
+    ).to.deep.equal([
+      {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'content_block_delta',
+        data: { index: 0 },
+      },
+    ]);
+  });
 });

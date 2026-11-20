@@ -1,6 +1,7 @@
 export * from './context-payload.decorator';
 export * from './external-api.decorator';
 export * from './is-valid-context-payload.decorator';
+export * from './is-valid-custom-data.decorator';
 export * from './is-valid-locale.decorator';
 export * from './json-schema.validator';
 export * from './permissions.decorator';

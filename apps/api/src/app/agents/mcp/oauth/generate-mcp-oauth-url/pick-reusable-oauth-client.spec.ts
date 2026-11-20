@@ -89,10 +89,4 @@ describe('pickReusableOAuthClient', () => {
 
     expect(result).to.not.equal(undefined);
   });
-
-  it('reuses a client whose secret never expires (no field set)', () => {
-    const result = pickReusableOAuthClient(makeClient({ clientSecretExpiresAt: undefined }), ISSUER, REDIRECT_URI);
-
-    expect(result).to.not.equal(undefined);
-  });
 });

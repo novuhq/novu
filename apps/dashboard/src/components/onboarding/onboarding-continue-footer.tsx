@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronRight } from 'lucide-react';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
+import { BOOK_DEMO_URL } from '@/components/help-panel';
 import { cn } from '@/utils/ui';
 
 type OnboardingContinueFooterProps = {

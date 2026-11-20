@@ -135,7 +135,7 @@ export class DigestRegularOutput {
 
   @ApiPropertyOptional({
     description: 'Look back window configuration',
-    type: 'object',
+    type: Object,
   })
   @IsOptional()
   @ValidateNested()
@@ -253,7 +253,7 @@ export class GeneratePreviewResponseDto {
     additionalProperties: true,
   })
   @IsOptional()
-  schema?: any | null;
+  schema?: unknown;
 
   @ApiPropertyOptional({
     description: 'Sample novu-signature header value for HTTP request steps',
@@ -265,7 +265,6 @@ export class GeneratePreviewResponseDto {
 
   @ApiProperty({
     description: 'Preview result',
-    type: 'object',
     oneOf: [
       {
         type: 'object',
@@ -382,7 +381,11 @@ export class GeneratePreviewResponseDto {
           | ChannelTypeEnum.CHAT
           | ChannelTypeEnum.TOOL
           | ActionTypeEnum.DELAY
-          | ActionTypeEnum.DIGEST;
+          | ActionTypeEnum.DIGEST
+          | ActionTypeEnum.THROTTLE
+          | ActionTypeEnum.CUSTOM
+          | ActionTypeEnum.HTTP_REQUEST
+          | ActionTypeEnum.TRIGGER;
         preview: Record<string, unknown>;
         error?: PreviewErrorDto;
       };

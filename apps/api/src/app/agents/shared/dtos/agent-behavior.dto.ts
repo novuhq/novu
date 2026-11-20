@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { AgentSubscriberAccessEnum } from '@novu/shared';
-import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
+import { IsBoolean, IsEnum, IsObject, IsOptional, ValidateIf } from 'class-validator';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
 export class AgentBehaviorDto {
@@ -17,6 +17,8 @@ export class AgentBehaviorDto {
   acknowledgeOnReceived?: boolean;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
       'Cross-platform emoji name for resolved conversations (e.g. "check", "star"). ' +
       'Set to null to disable. Default: "check"',
@@ -34,10 +36,41 @@ export class AgentBehaviorDto {
       '"open" on managed agents auto-creates a lightweight subscriber so the agent can reply; ' +
       'on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. ' +
       '"restricted" rejects unknown senders with a managed denial reply (any runtime). ' +
+      '"rule" requires a known subscriber and accessRule must evaluate truthy for every message, edit, delete, click and reaction; ' +
+      'unknown senders, an invalid rule and an evaluation error are refused; a missing field evaluates as JSON Logic says. ' +
       'Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; ' +
       'self-hosted create defaults to "restricted".',
   })
   @IsOptional()
   @IsEnum(AgentSubscriberAccessEnum)
   subscriberAccess?: AgentSubscriberAccessEnum;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'JSON Logic rule evaluated over subscriber.* and context.* when subscriberAccess is "rule". ' +
+      'Present only when subscriberAccess is "rule". A missing field evaluates as JSON Logic says, ' +
+      'so `null` is less than any positive number. "==" and "!=" compare strictly, without type coercion. ' +
+      'At most 16 KB, with objects and arrays nested at most 32 levels deep.',
+    example: { in: [{ var: 'context.tenant.data.plan' }, ['pro', 'enterprise']] },
+  })
+  @ValidateIf((_, value) => value !== undefined)
+  @IsObject()
+  accessRule?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    enum: AgentReplyPolicyEnum,
+    description:
+      'How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. ' +
+      '"auto_reply" replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. ' +
+      '"smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else or another agent joins, or the incumbent @mentions another teammate. ' +
+      'Create persists "smart". An omitted field on existing agents still means "auto_reply". ' +
+      'DMs always reply without a mention. ' +
+      'Optional on update (partial PATCH).',
+    default: AgentReplyPolicyEnum.AUTO_REPLY,
+  })
+  @IsOptional()
+  @IsEnum(AgentReplyPolicyEnum)
+  replyPolicy?: AgentReplyPolicyEnum;
 }

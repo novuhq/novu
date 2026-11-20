@@ -11,8 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { ApiExcludeController, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { GetLayoutCommandV0, GetLayoutUseCaseV0, OtelSpan, PinoLogger } from '@novu/application-generic';
 import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';

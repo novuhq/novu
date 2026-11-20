@@ -1,5 +1,5 @@
 import type { AgentRuntimeContext } from '../agent.runtime';
-import type { AgentToolCall, ToolApprovalCard, ToolApprovalConfig } from '../agent.types';
+import type { AgentToolCall, ToolApprovalCard, ToolApprovalConfig, ToolApprovalRequestOptions } from '../agent.types';
 import { isToolApprovalCard } from '../guards';
 import { buildApprovalActionId, type ToolApprovalRequestPayload } from './action-id';
 
@@ -7,7 +7,8 @@ export async function postToolApprovalCard(
   ctx: AgentRuntimeContext,
   toolCall: AgentToolCall,
   config: ToolApprovalConfig | undefined,
-  approvalId?: string
+  approvalId?: string,
+  opts?: ToolApprovalRequestOptions
 ): Promise<void> {
   const id = approvalId ?? toolCall.id;
   const actionIds = {
@@ -26,6 +27,9 @@ export async function postToolApprovalCard(
     toolCallId: toolCall.id,
     name: toolCall.name,
     input: toolCall.input,
+    ...(opts?.to !== undefined ? { to: opts.to } : {}),
+    ...(opts?.from ? { from: opts.from } : {}),
+    ...(opts?.ttlSeconds !== undefined ? { ttlSeconds: opts.ttlSeconds } : {}),
   };
 
   ctx.emitToolApprovalRequest(payload);

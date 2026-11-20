@@ -1,10 +1,13 @@
 import { ConversationActivityDto } from '@/api/conversations';
 
-function buildApprovalCardMessageIds(activities: ConversationActivityDto[]): Set<string> {
+function buildHiddenCardMessageIds(activities: ConversationActivityDto[]): Set<string> {
   const ids = new Set<string>();
 
   for (const activity of activities) {
-    if (activity.type === 'tool_approval_request' && activity.platformMessageId) {
+    if (
+      (activity.type === 'tool_approval_request' || activity.type === 'human_interaction_request') &&
+      activity.platformMessageId
+    ) {
       ids.add(activity.platformMessageId);
     }
   }
@@ -16,7 +19,7 @@ function buildApprovalCardMessageIds(activities: ConversationActivityDto[]): Set
  * Ledger rows we intentionally omit from the dashboard timeline.
  * They may still exist for runtime history (e.g. tool_result) or managed plan cards (tool-use).
  */
-function isHiddenTimelineActivity(activity: ConversationActivityDto, approvalCardMessageIds: Set<string>): boolean {
+function isHiddenTimelineActivity(activity: ConversationActivityDto, hiddenCardMessageIds: Set<string>): boolean {
   if (activity.type === 'tool_result') {
     return true;
   }
@@ -29,7 +32,7 @@ function isHiddenTimelineActivity(activity: ConversationActivityDto, approvalCar
     return false;
   }
 
-  return approvalCardMessageIds.has(activity.platformMessageId);
+  return hiddenCardMessageIds.has(activity.platformMessageId);
 }
 
 export function getTimelineLabel(activity: ConversationActivityDto): string {
@@ -41,7 +44,7 @@ export function getTimelineLabel(activity: ConversationActivityDto): string {
 }
 
 export function groupActivitiesForTimeline(activities: ConversationActivityDto[]): ConversationActivityDto[] {
-  const approvalCardMessageIds = buildApprovalCardMessageIds(activities);
+  const hiddenCardMessageIds = buildHiddenCardMessageIds(activities);
 
-  return activities.filter((activity) => !isHiddenTimelineActivity(activity, approvalCardMessageIds));
+  return activities.filter((activity) => !isHiddenTimelineActivity(activity, hiddenCardMessageIds));
 }

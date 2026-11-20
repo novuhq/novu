@@ -1,4 +1,5 @@
 import { FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { urlTargetTypes } from '@/utils/url';
@@ -6,6 +7,7 @@ import { URLInput } from '../../url-input';
 
 export const InAppRedirect = () => {
   const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { isReadOnly } = useStepEditor();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
@@ -30,6 +32,7 @@ export const InAppRedirect = () => {
         }}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
+        readOnly={isReadOnly}
       />
       <FormMessage />
     </div>

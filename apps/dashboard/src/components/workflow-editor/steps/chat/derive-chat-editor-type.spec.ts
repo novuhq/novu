@@ -12,8 +12,9 @@ describe('deriveChatEditorType', () => {
     expect(deriveChatEditorType(mailyBody, 'text', true)).toBe('text');
   });
 
-  it('routes Maily JSON to block when editorType is unset', () => {
+  it('routes Maily JSON to block when editorType is unset or invalid', () => {
     expect(deriveChatEditorType(mailyBody, undefined, true)).toBe('block');
+    expect(deriveChatEditorType(mailyBody, '', true)).toBe('block');
   });
 
   it('routes non-empty plain/Liquid bodies to text when editorType is unset', () => {

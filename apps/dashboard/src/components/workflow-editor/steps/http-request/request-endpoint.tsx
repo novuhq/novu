@@ -7,11 +7,11 @@ import { CopyButton } from '@/components/primitives/copy-button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { InputRoot } from '../../../primitives/input';
-import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { SectionHeader } from './section-header';
 import { useHttpRequestTest } from './use-http-request-test';
@@ -33,7 +33,7 @@ export function RequestEndpoint() {
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const { editorValue } = useStepEditor();
+  const { editorValue, isReadOnly } = useStepEditor();
   const { triggerTest, isTestPending } = useHttpRequestTest();
 
   const handleTestEndpoint = useCallback(async () => {
@@ -60,7 +60,7 @@ export function RequestEndpoint() {
             size="2xs"
             className="gap-1 px-1 text-xs font-medium text-text-strong"
             onClick={handleTestEndpoint}
-            disabled={isTestPending}
+            disabled={isTestPending || isReadOnly}
           >
             {isTestPending ? (
               <RiLoader4Line className="size-3.5 animate-spin" />
@@ -88,6 +88,7 @@ export function RequestEndpoint() {
                         field.onChange(value);
                         saveForm();
                       }}
+                      disabled={isReadOnly}
                     >
                       <SelectTrigger
                         size="2xs"
@@ -133,6 +134,7 @@ export function RequestEndpoint() {
                         field.onBlur();
                         saveForm();
                       }}
+                      readOnly={isReadOnly}
                       className="py-0"
                     />
                   </InputRoot>

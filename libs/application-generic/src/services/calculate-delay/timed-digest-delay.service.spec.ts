@@ -5,16 +5,13 @@ import { TimedDigestDelayService } from './timed-digest-delay.service';
 
 describe('TimedDigestDelayService', () => {
   describe('calculate', () => {
-    let clock: typeof jest;
-
     beforeEach(() => {
-      const date = new Date('2023-05-04T12:00:00Z');
-      clock = jest.useFakeTimers('modern' as FakeTimersConfig);
-      clock.setSystemTime(date.getTime());
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2023-05-04T12:00:00Z'));
     });
 
     afterEach(() => {
-      clock.clearAllTimers();
+      vi.useRealTimers();
     });
 
     describe('minutely schedule', () => {

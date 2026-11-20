@@ -10,7 +10,10 @@ import { AgentTestContext, conversationRepository, setupAgentTestContext } from 
 const POLL_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
 
-async function pollFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = POLL_TIMEOUT_MS): Promise<T> {
+async function pollFor<T>(
+  fn: () => T | null | undefined | Promise<T | null | undefined>,
+  timeoutMs = POLL_TIMEOUT_MS
+): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
 

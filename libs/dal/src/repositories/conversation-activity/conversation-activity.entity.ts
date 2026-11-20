@@ -12,20 +12,37 @@ export enum ConversationActivityTypeEnum {
    * Does not hard-delete the original MESSAGE activity.
    */
   DELETE = 'delete',
+  /**
+   * Append-only emoji reaction added to or removed from a stored message.
+   * `platformMessageId` is the target message; `richContent.reaction` holds `{ emoji, added }`.
+   */
+  REACTION = 'reaction',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
   /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
   TOOL_APPROVAL_REQUEST = 'tool_approval_request',
   /** Human approve/deny verdict for a pending tool approval. Carries `{ approvalId, approved }` in `toolData`. */
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
-  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
+  /** Tool call the agent issued. Carries `{ toolCallId, toolName, input?, mcpServerName? }` in `toolData`. */
+  TOOL_CALL = 'tool_call',
+  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName?, output?, content?, isError?, truncated?, recordOnly? }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** An MCP OAuth connection is required before the agent can continue. */
+  MCP_CONNECTION_REQUEST = 'mcp_connection_request',
+  /** Outcome of a previously requested MCP OAuth connection. */
+  MCP_CONNECTION_RESULT = 'mcp_connection_result',
+  /** Agent posted a human-in-the-loop card (`ask` / `approve` / `choose` / `tell`). Details in `richContent.humanInteraction`. */
+  HUMAN_INTERACTION_REQUEST = 'human_interaction_request',
+  /** Human settled a HITL card, or the row expired/canceled/delivered. Details in `richContent.humanInteraction`. */
+  HUMAN_INTERACTION_RESPONSE = 'human_interaction_response',
   /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
   RUN_START = 'run_start',
-  /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
+  /** Agent run ended (`richContent.lifecycle` holds outcome). Reaches model/bridge history only when `aborted`. */
   RUN_FINISH = 'run_finish',
   /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
   RUN_ERROR = 'run_error',
+  /** App-emitted UI data (`richContent.custom` holds `{ name, data }`). Client events + operator timeline. */
+  CUSTOM = 'custom',
 }
 
 /** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
@@ -48,23 +65,43 @@ export interface ConversationActivitySignalData {
   payload?: Record<string, unknown>;
 }
 
+/** Stored copy of a protocol `AgentToolResultContent` part. Media parts are kept without `data`. */
+export type ConversationActivityToolResultPart =
+  | { type: 'text'; text: string }
+  | { type: 'citation'; url: string; title?: string; excerpts?: string[] }
+  | { type: 'json'; value: unknown }
+  | { type: 'media'; mediaType: string; name?: string }
+  | { type: 'unknown'; providerType: string; data: Record<string, unknown> };
+
 export interface ConversationActivityToolData {
-  /** The tool call this activity relates to (request + result). */
+  /** The tool call this activity relates to (request + call + result). */
   toolCallId?: string;
-  /** Human-readable tool name (request + result). */
+  /** Human-readable tool name (request + call + result). */
   toolName?: string;
   /** Correlation id linking an approval request to its decision (request + decision). */
   approvalId?: string;
-  /** Tool input arguments (request). */
+  /** Tool input arguments (request + call). */
   input?: Record<string, unknown>;
   /** Approve/deny verdict (decision). */
   approved?: boolean;
+  /** HITL option id when the decision came from a card click (`approve`, `deny`, `trust-tool`, …). */
+  optionId?: string;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
+  /** Size-capped protocol result parts (result). */
+  content?: ConversationActivityToolResultPart[];
+  /** Whether the tool failed (result). */
+  isError?: boolean;
+  /** `content` lost data: parts were cut or dropped for the size cap, or media `data` was removed (result). */
+  truncated?: boolean;
+  /** The result was never shown to the model, so it stays out of the handoff and web chat (result). */
+  recordOnly?: boolean;
   /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
   denyActionId?: string;
+  /** MCP server name when the tool is from an MCP server (request + call). */
+  mcpServerName?: string;
 }
 
 export class ConversationActivityEntity {
@@ -122,6 +159,10 @@ export class ConversationActivityEntity {
 }
 
 export type ConversationActivityDBModel = ChangePropsValueType<
-  ConversationActivityEntity,
-  '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  ChangePropsValueType<
+    ConversationActivityEntity,
+    '_conversationId' | '_environmentId' | '_organizationId' | '_integrationId'
+  >,
+  'createdAt',
+  Date
 >;

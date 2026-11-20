@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FeatureFlagsService, NotificationPayloadService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, OrganizationEntity, SubscriberEntity } from '@novu/dal';
-import { ActorTypeEnum, ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum, FeatureFlagsKeysEnum, sanitizeMessageCta } from '@novu/shared';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
 import { GetMessagesCommand } from './get-messages.command';
 
@@ -64,6 +64,8 @@ export class GetMessages {
       if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
         message.actor.data = this.processUserAvatar(message.actorSubscriber);
       }
+
+      message.cta = sanitizeMessageCta(message.cta);
     }
 
     // Payload-dedup: email/SMS/push messages no longer persist their own payload;

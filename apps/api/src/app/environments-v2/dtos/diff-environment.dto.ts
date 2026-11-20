@@ -5,7 +5,8 @@ import { DependencyReasonEnum, DiffActionEnum, ResourceTypeEnum } from '../types
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({
-    description: 'Source environment ID to compare from. Defaults to the Development environment if not provided.',
+    description:
+      'Source environment ID. Only the Development environment is currently supported; defaults to Development if omitted.',
     example: '507f1f77bcf86cd799439011',
   })
   @IsOptional()
@@ -31,6 +32,11 @@ export class UserInfoDto {
   @IsOptional()
   @IsString()
   externalId?: string;
+
+  @ApiPropertyOptional({ type: 'string', description: 'User email, used when the user has no name' })
+  @IsOptional()
+  @IsString()
+  email?: string | null;
 }
 
 export class ResourceInfoDto {
@@ -130,8 +136,8 @@ export class ResourceDiffDto {
     },
   })
   diffs?: {
-    previous: Record<string, any> | null;
-    new: Record<string, any> | null;
+    previous: Record<string, unknown> | null;
+    new: Record<string, unknown> | null;
   };
 
   // Step-specific fields

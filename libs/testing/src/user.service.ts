@@ -14,8 +14,8 @@ export class UserService {
   async createTestUser(): Promise<UserEntity> {
     const user = await this.createUser({
       email: this.randomEmail(),
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
       password: this.testPassword(),
     });
 
@@ -34,8 +34,8 @@ export class UserService {
 
     const user = await this.userRepository.create({
       email: normalizeEmail(userEntity?.email ?? faker.internet.email()),
-      firstName: userEntity?.firstName ?? faker.name.firstName(),
-      lastName: userEntity?.lastName ?? faker.name.lastName(),
+      firstName: userEntity?.firstName ?? faker.person.firstName(),
+      lastName: userEntity?.lastName ?? faker.person.lastName(),
       password: passwordHash,
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],

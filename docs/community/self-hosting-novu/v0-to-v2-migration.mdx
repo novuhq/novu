@@ -41,7 +41,9 @@ Workflow Variants will not be available in the v2 UI, if you rely on them, you c
 
 ### Changes (Deprecated)
 
-The changes mechanism was removed, in favor of a more simple "Sync" mechanism, that enables you to sync workflow state between environments, Production environment can also be modified directly from the UI, however we still recommend using the Dev environment and syncing the changes to Production.
+The changes mechanism was removed, in favor of a more simple "Sync" mechanism, that enables you to sync workflow state between environments. Production is view-only for workflows; edit in Development and publish to Production.
+
+Workflow edits auto-save in Development, with no version history or restore. See [Manage workflows](/platform/workflow/create-a-workflow#manage-workflows).
 
 ### User management (Not available)
 

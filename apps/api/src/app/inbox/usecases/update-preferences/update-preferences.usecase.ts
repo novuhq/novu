@@ -16,6 +16,7 @@ import {
 import {
   BaseRepository,
   EnforceEnvOrOrgIds,
+  type FilterQuery,
   NotificationTemplateEntity,
   PreferencesDBModel,
   PreferencesRepository,
@@ -36,7 +37,6 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -261,15 +261,19 @@ export class UpdatePreferences {
 
     if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowIdOrIdentifier && workflow) {
       const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
-        GetSubscriberTemplatePreferenceCommand.create({
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          environmentId: command.environmentId,
-          template: workflow,
-          subscriber,
-          includeInactiveChannels: command.includeInactiveChannels,
-          contextKeys: command.contextKeys,
-        } as GetSubscriberTemplatePreferenceCommand)
+        GetSubscriberTemplatePreferenceCommand.create(
+          {
+            organizationId: command.organizationId,
+            subscriberId: command.subscriberId,
+            environmentId: command.environmentId,
+            includeInactiveChannels: command.includeInactiveChannels,
+            contextKeys: command.contextKeys,
+          } as GetSubscriberTemplatePreferenceCommand,
+          {
+            template: workflow,
+            subscriber,
+          }
+        )
       );
 
       return {

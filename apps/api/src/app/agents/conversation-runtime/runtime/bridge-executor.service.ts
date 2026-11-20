@@ -1,43 +1,57 @@
 import { isIP } from 'node:net';
+import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
-  assertSafeOutboundUrl,
+  bridgeSigningScope,
   buildNovuSignatureHeader,
-  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
+  isNovuTlsEnabled,
+  nextSigningKeyOrder,
+  orderSigningKeys,
   PinoLogger,
-  resolvePublicAddresses,
-  SsrfBlockedError,
-  safeOutboundJsonRequest,
+  rememberAcceptedSigningKey,
 } from '@novu/application-generic';
+import type { WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
   AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
+  AgentHumanResponse,
   AgentMessage,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { type SafeOutboundStreamResponse, safeOutboundStreamRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
-  AGENT_PLATFORM_PROVISION_SOURCE,
-  AGENT_PROVISION_DATA_KEYS,
-  AgentSubscriberAccessEnum,
-  FeatureFlagsKeysEnum,
-} from '@novu/shared';
-import type { Message } from 'chat';
+  assertSafeOutboundUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
+import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
+import { esmImport } from '../../shared/util/esm-import';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
+import {
+  resolveInboundReplyTo,
+  type WorkflowOriginData,
+  type WorkflowOriginSnapshot,
+} from '../ingress/workflow-origin.helpers';
+import { type ActiveAgentTurn, AgentTurnAbortStore } from './agent-turn-abort.store';
 
 const MAX_RETRIES = 2;
+/** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
+const LIVE_REPLY_IDLE_TIMEOUT_MS = 60_000;
 
 /**
  * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
@@ -75,24 +89,28 @@ function isLoopbackHttpsUrl(rawUrl: string): boolean {
  * on the same machine can reach it directly, and TLS (with its untrusted
  * private dev CA) never enters the picture. An explicit AGENT_API_HOSTNAME is
  * trusted verbatim so unusual self-host topologies keep full control.
+ *
+ * Under NOVU_TLS_ENABLED there is no plain-HTTP port to fall back to and the
+ * operator's CA is trusted deployment-wide, so the downgrade is skipped.
  */
 function resolveAgentReplyApiOrigin(): string {
   const port = process.env.PORT || '3000';
-  const localHttpOrigin = `http://localhost:${port}`;
+  const tlsEnabled = isNovuTlsEnabled();
+  const localOrigin = tlsEnabled ? `https://localhost:${port}` : `http://localhost:${port}`;
 
   let rootUrl: string;
   try {
     rootUrl = buildAgentApiRootUrl();
   } catch {
-    return localHttpOrigin;
+    return localOrigin;
   }
 
   if (process.env.AGENT_API_HOSTNAME?.trim()) {
     return rootUrl;
   }
 
-  if (isLoopbackHttpsUrl(rootUrl)) {
-    return localHttpOrigin;
+  if (!tlsEnabled && isLoopbackHttpsUrl(rootUrl)) {
+    return localOrigin;
   }
 
   return rootUrl;
@@ -105,6 +123,8 @@ interface AttachmentSigningContext {
   organizationId: string;
   environmentId: string;
   conversationId: string;
+  platform?: ResolvedAgentConfig['platform'];
+  platformThreadId?: string;
 }
 
 async function mapWithConcurrency<T, R>(
@@ -142,14 +162,44 @@ export interface AgentExecutionParams {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   message: Message | null;
+  previousMessage?: Message | null;
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
+  workflowOrigin?: WorkflowOriginSnapshot | null;
+  /**
+   * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
+   * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
+   * every send attempt.
+   */
+  bridgeUrlOverride?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
+  humanResponse?: AgentHumanResponse | null;
   storedAttachments?: StoredAttachment[];
+  /** Distinguishes edit/delete deliveries that reuse the same platform message id. */
+  deliveryRevision?: string;
+  platformThreadId?: string;
   /** Called after all retries are exhausted and the bridge remains unreachable. */
   onBridgeFailure?: (error: Error) => Promise<void>;
+  /** When set, the bridge is asked for SSE; an SSE response body is handed here instead of being discarded. */
+  onEventStream?: (body: Readable) => void;
+  /** Set on `onAbort`: the turn the user stopped, forwarded as `ctx.abortedTurn`. */
+  abortedTurn?: ActiveAgentTurn;
+}
+
+/** Turns a user can stop. Novu's own follow-ups (`onResolve`, `onAbort`) never become the active turn. */
+function isStoppableTurn(event: AgentEventEnum): boolean {
+  return event !== AgentEventEnum.ON_RESOLVE && event !== AgentEventEnum.ON_ABORT;
+}
+
+function bridgeHandlesOnAbort(headers: SafeOutboundStreamResponse['headers']): boolean {
+  const handledEvents = headers[HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS];
+  if (typeof handledEvents !== 'string') {
+    return false;
+  }
+
+  return handledEvents.split(',').some((handledEvent) => handledEvent.trim() === AgentEventEnum.ON_ABORT);
 }
 
 export class NoBridgeUrlError extends Error {
@@ -165,10 +215,37 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly activityLedger: ConversationActivityLedger,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly conversationService: AgentConversationService,
+    private readonly turnAbortStore: AgentTurnAbortStore
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  async prepareSignedBridgeRequest(params: AgentExecutionParams): Promise<{
+    bridgeUrl: string;
+    payload: Awaited<ReturnType<BridgeExecutorService['buildPayload']>>;
+    signatureHeader: string;
+  }> {
+    const agentIdentifier = params.config.agentIdentifier;
+    const bridgeUrl = this.resolveBridgeUrl(params.config, agentIdentifier, params.event, params.bridgeUrlOverride);
+    if (!bridgeUrl) {
+      throw new NoBridgeUrlError(agentIdentifier);
+    }
+
+    const secretKeys = await this.getDecryptedSecretKey.executeAll(
+      GetDecryptedSecretKeyCommand.create({
+        environmentId: params.config.environmentId,
+        organizationId: params.config.organizationId,
+      })
+    );
+    const payload = await this.buildPayload(params);
+    const signingKeys = orderSigningKeys(bridgeSigningScope(params.config.environmentId, bridgeUrl), secretKeys);
+
+    return {
+      bridgeUrl,
+      payload,
+      signatureHeader: buildNovuSignatureHeader(signingKeys, payload),
+    };
   }
 
   async execute(params: AgentExecutionParams): Promise<void> {
@@ -177,12 +254,12 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event, params.bridgeUrlOverride);
       if (!bridgeUrl) {
         throw new NoBridgeUrlError(agentIdentifier);
       }
 
-      const secretKey = await this.getDecryptedSecretKey.execute(
+      const secretKeys = await this.getDecryptedSecretKey.executeAll(
         GetDecryptedSecretKeyCommand.create({
           environmentId: config.environmentId,
           organizationId: config.organizationId,
@@ -190,23 +267,56 @@ export class BridgeExecutorService {
       );
 
       const payload = await this.buildPayload(params);
+      const { onEventStream } = params;
+      const conversationId = String(params.conversation._id);
+      const stoppable = isStoppableTurn(event);
 
-      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
-        this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
-        captureAgentException(err, {
-          component: 'bridge-executor',
-          operation: 'bridge-delivery',
-          agentIdentifier,
+      // Recorded before the bridge is called, so a Stop clicked right after Send already finds the turn.
+      if (stoppable) {
+        await this.turnAbortStore.setActiveTurn(conversationId, {
+          turnId: payload.deliveryId,
+          ...(params.message?.id ? { platformMessageId: params.message.id } : {}),
         });
-        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
-          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
-          captureAgentWarning(callbackErr, {
+      }
+
+      const signingScope = bridgeSigningScope(config.environmentId, bridgeUrl);
+
+      this.fireWithRetries(bridgeUrl, payload, secretKeys, signingScope, agentIdentifier, !!onEventStream)
+        .then((response) => {
+          if (stoppable && bridgeHandlesOnAbort(response.headers)) {
+            void this.turnAbortStore.markBridgeHandlesOnAbort(conversationId, payload.deliveryId);
+          }
+
+          const isEventStream = String(response.headers['content-type'] ?? '').startsWith('text/event-stream');
+          if (onEventStream && isEventStream) {
+            onEventStream(response.body);
+          } else {
+            response.body.resume();
+          }
+        })
+        .catch((err) => {
+          // `onAbort` is best-effort: the turn it follows is already stopped whether or not the bridge takes it.
+          if (event === AgentEventEnum.ON_ABORT) {
+            this.logger.warn(err, `[agent:${agentIdentifier}] Bridge did not take the onAbort event`);
+
+            return;
+          }
+
+          this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+          captureAgentException(err, {
             component: 'bridge-executor',
-            operation: 'on-bridge-failure-callback',
+            operation: 'bridge-delivery',
             agentIdentifier,
           });
+          params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+            this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+            captureAgentWarning(callbackErr, {
+              component: 'bridge-executor',
+              operation: 'on-bridge-failure-callback',
+              agentIdentifier,
+            });
+          });
         });
-      });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         throw err;
@@ -224,35 +334,30 @@ export class BridgeExecutorService {
   private async fireWithRetries(
     url: string,
     payload: AgentBridgeRequest,
-    secretKey: string,
-    agentIdentifier: string
-  ): Promise<void> {
+    secretKeys: readonly string[],
+    signingScope: string,
+    agentIdentifier: string,
+    streamReply: boolean
+  ): Promise<SafeOutboundStreamResponse> {
     let lastError: Error | undefined;
+    const accept = streamReply ? 'text/event-stream, application/json' : 'application/json';
+    let signingKeys = orderSigningKeys(signingScope, secretKeys);
+    let keyOrderChanged = false;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
-      // safeOutboundJsonRequest call performs the connect-time DNS guard and
-      // re-validates every redirect target.
-      try {
-        assertSafeOutboundUrl(url);
-        await resolvePublicAddresses(new URL(url).hostname);
-      } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
-        }
-        throw err;
-      }
+      await this.assertBridgeUrlIsSafe(url);
 
       // HMAC is computed and attached only after the destination has been
       // validated, so a blocked URL never sees the signed payload.
-      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
+      const signatureHeader = buildNovuSignatureHeader(signingKeys, payload);
 
       try {
-        const response = await safeOutboundJsonRequest({
+        const response = await safeOutboundStreamRequest({
           url,
           method: 'POST',
           headers: {
             'content-type': 'application/json',
+            accept,
             // Must match HttpHeaderKeysEnum.NOVU_SIGNATURE — the framework SDK reads
             // this exact header to verify the HMAC. Sending any other name (e.g.
             // `x-novu-signature`) silently disables signature verification on the
@@ -260,22 +365,36 @@ export class BridgeExecutorService {
             // via an attacker-controlled `replyUrl`.
             [HttpHeaderKeysEnum.NOVU_SIGNATURE]: signatureHeader,
           },
-          body: payload,
+          body: JSON.stringify(payload),
+          idleTimeoutMs: LIVE_REPLY_IDLE_TIMEOUT_MS,
         });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          return;
+          if (keyOrderChanged) {
+            rememberAcceptedSigningKey(signingScope, signingKeys[0]);
+          }
+
+          return response;
         }
 
+        response.body.resume();
         lastError = new Error(`Bridge returned ${response.statusCode}: ${response.statusMessage}`);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
         );
-      } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+
+        /*
+         * During a key rotation a bridge on an older SDK verifies only the first
+         * `v1` and answers 401 when it already uses the other key. The retry that
+         * follows anyway puts another active key first. A 401 means the bridge
+         * did not process the request, so this adds no request and no risk.
+         */
+        if (response.statusCode === 401 && signingKeys.length > 1) {
+          signingKeys = nextSigningKeyOrder(signingKeys);
+          keyOrderChanged = true;
         }
-        lastError = err instanceof Error ? err : new Error(String(err));
+      } catch (err) {
+        lastError = this.retryableError(err, streamReply);
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} network error: ${lastError.message}`
         );
@@ -289,17 +408,69 @@ export class BridgeExecutorService {
     throw lastError ?? new Error('Bridge call failed');
   }
 
+  /**
+   * Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
+   * safeOutboundStreamRequest call performs the connect-time DNS guard and
+   * re-validates every redirect target.
+   */
+  private async assertBridgeUrlIsSafe(url: string): Promise<void> {
+    try {
+      assertSafeOutboundUrl(url);
+      await resolvePublicAddresses(new URL(url).hostname);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+      }
+      throw err;
+    }
+  }
+
+  private retryableError(err: unknown, streamReply: boolean): Error {
+    if (err instanceof SsrfBlockedError) {
+      throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+    }
+
+    const error = err instanceof Error ? err : new Error(String(err));
+    // A host that buffers the SSE response holds its headers while the turn runs; a retry would run it twice.
+    if (streamReply && (err as NodeJS.ErrnoException).code === 'ETIMEDOUT') {
+      throw error;
+    }
+
+    return error;
+  }
+
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
   }
 
-  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
+  /** Host only (no path/query) so override routing can be diagnosed without logging a full URL. */
+  private safeHost(rawUrl: string): string {
+    try {
+      return new URL(rawUrl).host;
+    } catch {
+      return 'invalid-url';
+    }
+  }
+
+  private resolveBridgeUrl(
+    config: ResolvedAgentConfig,
+    agentIdentifier: string,
+    event: AgentEventEnum,
+    bridgeUrlOverride?: string
+  ): string | null {
     let baseUrl: string | undefined;
 
+    // Precedence: active dev bridge (local development) > per-context override > agent default.
     if (config.devBridgeActive && config.devBridgeUrl) {
       baseUrl = config.devBridgeUrl;
+    } else if (bridgeUrlOverride) {
+      baseUrl = bridgeUrlOverride;
+      this.logger.info(
+        { agentIdentifier, bridgeHost: this.safeHost(bridgeUrlOverride) },
+        `[agent:${agentIdentifier}] Routing bridge call to per-context bridge URL override`
+      );
     } else if (config.bridgeUrl) {
       baseUrl = config.bridgeUrl;
     }
@@ -319,7 +490,8 @@ export class BridgeExecutorService {
   }
 
   private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
-    const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
+    const { event, config, conversation, subscriber, message, platformContext, action, reaction, humanResponse } =
+      params;
     const agentIdentifier = config.agentIdentifier;
 
     const history = await this.loadHistory(
@@ -332,22 +504,21 @@ export class BridgeExecutorService {
     const apiOrigin = resolveAgentReplyApiOrigin();
     const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
 
-    const isEventProtocolEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-      organization: { _id: config.organizationId },
-      environment: { _id: config.environmentId },
-    });
-
     const timestamp = new Date().toISOString();
 
     let deliveryId: string;
-    if (message?.id) {
+    if (message?.id && event === AgentEventEnum.ON_MESSAGE) {
       deliveryId = `${conversation._id}:${message.id}`;
+    } else if (message?.id) {
+      deliveryId = `${conversation._id}:${event}:${message.id}:${params.deliveryRevision ?? timestamp}`;
     } else if (action) {
       deliveryId = `${conversation._id}:${event}:${action.id}:${timestamp}`;
     } else if (reaction) {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
+    } else if (humanResponse) {
+      deliveryId = `${conversation._id}:${event}:${humanResponse.interactionId}:${timestamp}`;
+    } else if (params.abortedTurn) {
+      deliveryId = `${conversation._id}:${event}:${params.abortedTurn.turnId}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
@@ -359,6 +530,7 @@ export class BridgeExecutorService {
       event,
       agentId: agentIdentifier,
       replyUrl,
+      eventsUrl: `${apiOrigin}/v1/agents/events/ingest`,
       conversationId: conversation._id,
       integrationIdentifier: config.integrationIdentifier,
       message: message
@@ -366,22 +538,41 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
+          })
+        : null,
+      previousMessage: params.previousMessage
+        ? await this.mapMessage(params.previousMessage, undefined, {
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId: params.platformThreadId,
           })
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
       subscriberAccess: config.subscriberAccess,
       context: params.context ?? null,
+      notification: params.workflowOrigin ? mapWorkflowOriginToNotification(params.workflowOrigin.data) : null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
       action: action ?? null,
-      reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
+      reaction: reaction ? await this.mapReaction(reaction, config, conversation, params.platformThreadId) : null,
+      humanResponse: humanResponse ?? null,
+      ...(params.abortedTurn
+        ? {
+            abortedTurn: {
+              turnId: params.abortedTurn.turnId,
+              ...(params.abortedTurn.platformMessageId
+                ? { platformMessageId: params.abortedTurn.platformMessageId }
+                : {}),
+            },
+          }
+        : {}),
     };
-
-    if (isEventProtocolEnabled) {
-      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
-    }
 
     return payload;
   }
@@ -394,7 +585,7 @@ export class BridgeExecutorService {
     organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      const page = await this.activityLedger.listForView({
+      const page = await this.conversationService.listForView({
         view: 'agent_handoff',
         environmentId,
         organizationId,
@@ -414,22 +605,63 @@ export class BridgeExecutorService {
     }
   }
 
+  /**
+   * GFM rendering of the adapter-parsed `formatted` AST, so platform structure that `text`
+   * flattens (Slack table blocks, bold, links, code) reaches every bridge runtime. Omitted for
+   * plain prose: stringifying it only adds Markdown escapes (`snake\_case`) the brain would read.
+   * Fail-soft: an unserializable node must not drop the delivery — the brain still gets `text`.
+   */
+  private async toBridgeMarkdown(message: Message): Promise<string | undefined> {
+    if (!message.formatted || isPlainProse(message.formatted)) {
+      return undefined;
+    }
+
+    try {
+      const { stringifyMarkdown }: typeof import('chat') = await esmImport('chat');
+      const markdown = stringifyMarkdown(message.formatted).trimEnd();
+
+      return markdown.length > 0 ? markdown : undefined;
+    } catch (err) {
+      this.logger.warn(err, `Failed to render inbound message ${message.id} as markdown; sending plain text only`);
+
+      return undefined;
+    }
+  }
+
   private async mapMessage(
     message: Message,
     storedAttachments?: StoredAttachment[],
     signingContext?: AttachmentSigningContext
   ): Promise<AgentMessage> {
+    const markdown = await this.toBridgeMarkdown(message);
     const mapped: AgentMessage = {
       text: message.text,
+      ...(markdown !== undefined ? { markdown } : {}),
       platformMessageId: message.id,
       author: {
         userId: message.author.userId,
         fullName: message.author.fullName,
         userName: message.author.userName,
         isBot: message.author.isBot,
+        ...(message.author.email ? { email: message.author.email } : {}),
+        ...(message.author.isSystem ? { isSystem: true } : {}),
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (signingContext?.platform === AgentPlatformEnum.WEB_CHAT) {
+      const metadata = (message.raw as WebChatRawMessage | undefined)?.metadata;
+      if (metadata && Object.keys(metadata).length > 0) {
+        mapped.metadata = metadata;
+      }
+    }
+
+    if (signingContext?.platform) {
+      const replyTo = resolveInboundReplyTo(signingContext.platform, message, signingContext.platformThreadId);
+      if (replyTo) {
+        mapped.replyTo = replyTo;
+      }
+    }
 
     if (storedAttachments !== undefined) {
       mapped.attachments = signingContext
@@ -483,7 +715,8 @@ export class BridgeExecutorService {
   private async mapReaction(
     reaction: BridgeReaction,
     config: ResolvedAgentConfig,
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    platformThreadId?: string
   ): Promise<AgentReaction> {
     return {
       messageId: reaction.messageId,
@@ -494,6 +727,8 @@ export class BridgeExecutorService {
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,
+            platform: config.platform,
+            platformThreadId,
           })
         : null,
     };
@@ -665,4 +900,23 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
+  return {
+    id: origin.notificationId,
+    workflowId: origin.workflowIdentifier,
+    messageId: origin.messageId,
+    platformMessageId: origin.platformMessageId,
+    sentAt: origin.sentAt,
+    body: origin.body,
+    payload: origin.payload,
+  };
+}
+
+/** True when the AST is only paragraphs of plain text, i.e. `text` already says everything. */
+function isPlainProse(formatted: Root): boolean {
+  return formatted.children.every(
+    (node) => node.type === 'paragraph' && node.children.every((child) => child.type === 'text')
+  );
 }

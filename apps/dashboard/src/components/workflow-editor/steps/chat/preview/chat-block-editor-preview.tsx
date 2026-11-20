@@ -1,26 +1,28 @@
 import {
   ChannelTypeEnum,
   type ChatRenderOutput,
+  type ContentOverrideProviderId,
   FeatureFlagsKeysEnum,
   type GeneratePreviewResponseDto,
 } from '@novu/shared';
-import { type ReactNode, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Skeleton } from '@/components/primitives/skeleton';
-import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
+import { useOptionalContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
+import {
+  useAnnotatedOverridePreview,
+  usePreviewOverrideValues,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
 import {
   type ContentSource,
   DEFAULT_CONTENT_SOURCE,
-  PROVIDER_OVERRIDES_FIELD,
-  type ProviderOverrides,
-} from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
-import { useOptionalContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
-import {
-  getMergedOverrideHint,
-  useAnnotatedOverridePreview,
-} from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+  isContentOverrideProviderId,
+  type OverrideContentSource,
+  providerSource,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-source';
+import { ResolvedPayloadPreview } from '@/components/workflow-editor/steps/shared/provider-overrides/resolved-payload-preview';
+import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { ChatShellContent } from './chat-shell-content';
@@ -35,11 +37,30 @@ import {
 } from './use-configured-chat-providers';
 
 function contentSourceToPreviewProviderId(source: ContentSource): string {
-  return source === DEFAULT_CONTENT_SOURCE ? DEFAULT_PREVIEW_PROVIDER_ID : source;
+  return source === DEFAULT_CONTENT_SOURCE ? DEFAULT_PREVIEW_PROVIDER_ID : source.providerId;
 }
 
 function previewProviderIdToContentSource(providerId: string): ContentSource {
-  return providerId === DEFAULT_PREVIEW_PROVIDER_ID ? DEFAULT_CONTENT_SOURCE : (providerId as ContentSource);
+  return providerId === DEFAULT_PREVIEW_PROVIDER_ID
+    ? DEFAULT_CONTENT_SOURCE
+    : providerSource(providerId as ContentOverrideProviderId);
+}
+
+/**
+ * The platform selector lists providers only, so an integration source picked in the editor is kept
+ * while its provider is on screen; any other platform previews its provider override.
+ */
+function getPreviewOverrideSource(
+  previewSource: ContentSource | undefined,
+  activeProviderId: string
+): OverrideContentSource | undefined {
+  if (previewSource && previewSource !== DEFAULT_CONTENT_SOURCE && previewSource.providerId === activeProviderId) {
+    return previewSource;
+  }
+
+  return isContentOverrideProviderId(ChannelTypeEnum.CHAT, activeProviderId)
+    ? providerSource(activeProviderId)
+    : undefined;
 }
 
 type ChatBlockEditorPreviewProps = {
@@ -207,13 +228,12 @@ function ChatBlockEditorPreviewBase({ isPreviewPending, previewData }: ChatBlock
 
 /**
  * Rich preview with editor content-source sync and override JSON. Split out so the
- * overrides-flag-off path never subscribes to `providerOverrides` or `ContentSourceContext`.
+ * overrides-flag-off path never subscribes to the override form fields or `ContentSourceContext`.
  */
 function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: ChatBlockEditorPreviewProps) {
   const { options, defaultProviderId, isLoading } = useConfiguredChatProviders();
   const contentSource = useOptionalContentSource();
-  const { watch } = useFormContext();
-  const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined;
+  const { providerOptions, overrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
 
   const resolvedProviderId = contentSource
     ? contentSourceToPreviewProviderId(contentSource.previewSource)
@@ -226,17 +246,23 @@ function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: 
   const preview = extractChatPreview(previewData);
   const body = preview?.body ?? '';
   const isPreviewSupported = isChatPreviewSupported(activeProviderId);
-  const hasOverride = !!providerOverrides && activeProviderId in providerOverrides;
   const hasConnectedIntegrations = options.some(
     (option) => option.providerId !== DEFAULT_PREVIEW_PROVIDER_ID && option.isConnected
   );
 
+  const previewOverrides = usePreviewOverrideValues(preview);
+  const previewSource = contentSource?.previewSource;
+  const previewOverrideSource = useMemo(
+    () => getPreviewOverrideSource(previewSource, activeProviderId),
+    [previewSource, activeProviderId]
+  );
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
-    providerId: hasOverride ? activeProviderId : undefined,
-    formOverrides: providerOverrides,
-    previewOverrides: preview?.providerOverrides,
+    source: previewOverrideSource,
+    formOverrides: overrides,
+    previewOverrides,
   });
+  const hasOverride = annotatedPreview?.hasOverride ?? false;
 
   const warningBanner = usePreviewWarningBanner({
     activeProviderId,
@@ -255,25 +281,13 @@ function ChatBlockEditorPreviewWithOverrides({ isPreviewPending, previewData }: 
         return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
       }
 
-      const displayName = activeOption?.displayName ?? activeProviderId;
-
-      return (
-        <div className="flex min-h-0 flex-col gap-1.5">
-          <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-            Merged override fields
-          </span>
-          <AnnotatedOverrideJson {...annotatedPreview} />
-          <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-            {getMergedOverrideHint({
-              hasOverride: annotatedPreview.hasOverride,
-              defaultContentKey: annotatedPreview.defaultContentKey,
-              body,
-              providerId: activeProviderId,
-              displayName,
-            })}
-          </div>
-        </div>
-      );
+      return previewOverrideSource ? (
+        <ResolvedPayloadPreview
+          lines={annotatedPreview.annotatedLines}
+          source={previewOverrideSource}
+          providerOptions={providerOptions}
+        />
+      ) : null;
     }
 
     return (

@@ -8,5 +8,6 @@ export function mapContextEntityToDto(context: ContextEntity): GetContextRespons
     type: context.type,
     id: context.id,
     data: context.data,
+    bridgeUrl: context.bridgeUrl,
   };
 }

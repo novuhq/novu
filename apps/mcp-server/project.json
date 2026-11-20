@@ -1,0 +1,36 @@
+{
+	"name": "@novu/mcp-server",
+	"projectType": "application",
+	"sourceRoot": "apps/mcp-server/src",
+	"tags": ["type:app"],
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "pnpm --filter @novu/mcp-server run build",
+				"cwd": "{workspaceRoot}"
+			},
+			"outputs": ["{projectRoot}/dist/tools"]
+		},
+		"lint": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "npx biome lint apps/mcp-server"
+			}
+		},
+		"test": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "pnpm --filter @novu/mcp-server run test",
+				"cwd": "{workspaceRoot}"
+			}
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "pnpm --filter @novu/mcp-server run type-check",
+				"cwd": "{workspaceRoot}"
+			}
+		}
+	}
+}

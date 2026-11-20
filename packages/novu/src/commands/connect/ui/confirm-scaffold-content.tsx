@@ -7,16 +7,37 @@ export function ConfirmScaffoldContent({
   projectDir,
   appName,
   variant,
+  llmAuthLabel,
   onResolve,
 }: {
   projectDir: string;
   appName: string;
   variant: BridgeScaffoldVariant;
+  llmAuthLabel?: string;
   onResolve: (confirmed: boolean) => void;
 }): React.ReactElement {
+  const ignoreEnterRef = React.useRef(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      ignoreEnterRef.current = false;
+    }, 75);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useInput((_input, key) => {
-    if (key.return) onResolve(true);
-    if (key.escape) onResolve(false);
+    if (key.return) {
+      if (ignoreEnterRef.current) {
+        return;
+      }
+
+      onResolve(true);
+    }
+
+    if (key.escape) {
+      onResolve(false);
+    }
   });
 
   if (variant === 'custom-code') {
@@ -28,6 +49,11 @@ export function ConfirmScaffoldContent({
           <Text bold>{projectDir}/</Text>
           <Text color="cyan">{appName}</Text>
         </Text>
+        {llmAuthLabel ? (
+          <Text>
+            LLM wiring: <Text color="cyan">{llmAuthLabel}</Text>
+          </Text>
+        ) : null}
         <Text dimColor>
           This installs <Text color="white">@novu/framework</Text>, <Text color="white">Next.js</Text>, and wires your
           Novu credentials into <Text color="white">.env.local</Text>.
@@ -46,6 +72,11 @@ export function ConfirmScaffoldContent({
           <Text bold>{projectDir}/</Text>
           <Text color="cyan">{appName}</Text>
         </Text>
+        {llmAuthLabel ? (
+          <Text>
+            LLM wiring: <Text color="cyan">{llmAuthLabel}</Text>
+          </Text>
+        ) : null}
         <Text dimColor>
           This installs <Text color="white">@novu/framework</Text>, <Text color="white">Next.js</Text>, and wires your
           Novu credentials into <Text color="white">.env.local</Text>. Agent handlers use{' '}
@@ -65,6 +96,11 @@ export function ConfirmScaffoldContent({
           <Text bold>{projectDir}/</Text>
           <Text color="cyan">{appName}</Text>
         </Text>
+        {llmAuthLabel ? (
+          <Text>
+            LLM wiring: <Text color="cyan">{llmAuthLabel}</Text>
+          </Text>
+        ) : null}
         <Text dimColor>
           This installs <Text color="white">@novu/framework</Text>, <Text color="white">langchain</Text>,{' '}
           <Text color="white">Next.js</Text>, and wires your Novu credentials into <Text color="white">.env.local</Text>

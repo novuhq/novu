@@ -55,7 +55,11 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
-import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import {
+  assertEnvironmentScopedAccess,
+  isEnvironmentScopedAuthScheme,
+  isInternalAuthScheme,
+} from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -294,6 +298,7 @@ export class IntegrationsController {
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
         })
       );
@@ -304,7 +309,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+      return integrationWithoutCredentials as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -349,6 +354,7 @@ export class IntegrationsController {
           active: body.active,
           check: body.check ?? false,
           conditions: body.conditions,
+          rules: body.rules,
           configurations: body.configurations,
           restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
         })
@@ -360,7 +366,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+      return integrationWithoutCredentials as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -401,6 +407,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
+  @HttpCode(HttpStatus.OK)
   @OAuthAccessible()
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
@@ -438,7 +445,7 @@ export class IntegrationsController {
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-    return integrationWithoutCredentials as unknown as IntegrationResponseDto;
+    return integrationWithoutCredentials as IntegrationResponseDto;
   }
 
   @Delete('/:integrationId')
@@ -805,36 +812,55 @@ export class IntegrationsController {
     @Query('error') error?: string,
     @Query('error_description') errorDescription?: string
   ): Promise<void> {
-    if (error) {
-      throw new BadRequestException(`OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
-    }
+    try {
+      if (error) {
+        throw new BadRequestException(`OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
+      }
 
+      if (!state) {
+        throw new BadRequestException('Missing required OAuth parameter: state');
+      }
+
+      if (!providerCode && !tenant) {
+        throw new BadRequestException('Missing required OAuth parameters: code or tenant');
+      }
+
+      const result = await this.chatOauthCallbackUsecase.execute(
+        ChatOauthCallbackCommand.create({
+          providerCode,
+          tenant,
+          adminConsent,
+          state,
+        })
+      );
+
+      if (result.type === ResponseTypeEnum.HTML) {
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
+        res.send(result.result);
+
+        return;
+      }
+
+      res.redirect(result.result);
+    } catch (err) {
+      const redirectUrl = await this.resolveAgentInboxSlackErrorRedirect(state);
+      if (!redirectUrl) {
+        throw err;
+      }
+
+      this.logger.error({ err }, 'Agent Inbox Slack OAuth callback failed');
+      res.redirect(redirectUrl);
+    }
+  }
+
+  /** A readable Agent Inbox Slack install goes to its result page. Anything else keeps the thrown error. */
+  private async resolveAgentInboxSlackErrorRedirect(state: string | undefined): Promise<string | null> {
     if (!state) {
-      throw new BadRequestException('Missing required OAuth parameter: state');
+      return null;
     }
 
-    if (!providerCode && !tenant) {
-      throw new BadRequestException('Missing required OAuth parameters: code or tenant');
-    }
-
-    const result = await this.chatOauthCallbackUsecase.execute(
-      ChatOauthCallbackCommand.create({
-        providerCode,
-        tenant,
-        adminConsent,
-        state,
-      })
-    );
-
-    if (result.type === ResponseTypeEnum.HTML) {
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
-      res.send(result.result);
-
-      return;
-    }
-
-    res.redirect(result.result);
+    return this.chatOauthCallbackUsecase.resolveHumanRelayErrorRedirect(state);
   }
 
   @Post('/whatsapp/validate-token')
@@ -1162,7 +1188,7 @@ export class IntegrationsController {
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
-     * API-key, keyless, and OAuth auth must never receive decrypted provider credentials,
+     * API-key, keyless, OAuth, and internal (service) auth must never receive decrypted provider credentials,
      * regardless of RBAC state. API keys grant ALL_PERMISSIONS in `community.auth.service.ts`,
      * which would otherwise allow the RBAC path below to succeed and leak every stored
      * provider secret to any caller holding an environment API key or OAuth token.
@@ -1170,7 +1196,8 @@ export class IntegrationsController {
     if (
       user.scheme === ApiAuthSchemeEnum.API_KEY ||
       user.scheme === ApiAuthSchemeEnum.KEYLESS ||
-      user.scheme === ApiAuthSchemeEnum.OAUTH2
+      user.scheme === ApiAuthSchemeEnum.OAUTH2 ||
+      isInternalAuthScheme(user.scheme)
     ) {
       return false;
     }

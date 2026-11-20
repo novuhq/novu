@@ -7,7 +7,7 @@ import { ApiKeyDto } from '../../dtos/api-key.dto';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { GetApiKeysCommand } from '../get-api-keys/get-api-keys.command';
 
-export const MAX_API_KEYS_PER_ENVIRONMENT = 2;
+const MAX_API_KEYS_PER_ENVIRONMENT = 2;
 
 @Injectable()
 export class CreateApiKey {

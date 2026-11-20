@@ -21,6 +21,12 @@ export class ConversationEventSequenceService {
   ) {}
 
   async mint(request: MintEventSequenceRequest): Promise<number> {
+    const [sequence] = await this.mintRange(request, 1);
+
+    return sequence;
+  }
+
+  async mintRange(request: MintEventSequenceRequest, count: number): Promise<number[]> {
     const conversation = await this.conversationRepository.findOne(
       {
         _id: request.conversationId,
@@ -43,10 +49,11 @@ export class ConversationEventSequenceService {
             request.conversationId
           );
 
-    return this.conversationRepository.allocateEventSequence(
+    return this.conversationRepository.allocateEventSequenceRange(
       request.environmentId,
       request.organizationId,
       request.conversationId,
+      count,
       minimum
     );
   }

@@ -3,7 +3,6 @@ import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generi
 import {
   type AgentEntity,
   AgentRepository,
-  ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationEntity,
@@ -11,18 +10,30 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
+import { type ContentPart, type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
+import {
+  AgentAttachmentStorage,
+  type StoredAttachment,
+} from '../conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
+import type { UnseenThreadMessage } from '../conversation-runtime/ingress/seed-slack-thread-history';
+import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
+import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
+import {
+  applyUserContentToLatestUserTurn,
+  buildUserMessageContent,
+  preserveMediaThroughThalamusPacking,
+} from './build-user-message-content';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { formatUserMessageWithSenderName } from './format-user-message-with-sender-name';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
@@ -31,8 +42,13 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  senderName?: string | null;
+  storedAttachments?: StoredAttachment[];
+  workflowOrigin?: WorkflowOriginSnapshot | null;
+  unseenThreadMessages?: UnseenThreadMessage[];
   platformThreadId?: string;
   platformMessageId?: string;
+  platformUserId?: string;
 }
 
 interface WebhookSessionMetadata {
@@ -48,6 +64,7 @@ interface WebhookSessionMetadata {
   platform: AgentPlatformEnum;
   platformThreadId: string;
   platformMessageId?: string;
+  platformUserId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
   suppressReply?: boolean;
@@ -68,14 +85,13 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
-    private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly conversationService: AgentConversationService,
-    private readonly activityLedger: ConversationActivityLedger,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
+    private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -117,9 +133,31 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId
-      ? [{ role: MessageRole.USER, content: context.userMessageText }]
-      : await this.buildMessagesWithHistory(context);
+    const labeledUserText = formatUserMessageWithSenderName(context.userMessageText, context.senderName);
+    const userContent = await buildUserMessageContent({
+      userMessageText: labeledUserText,
+      attachments: context.storedAttachments,
+      getBytes: (storageKey) =>
+        this.attachmentStorage.getBytes(storageKey, {
+          organizationId: context.config.organizationId,
+          environmentId: context.config.environmentId,
+          conversationId: String(context.conversation._id),
+        }),
+      logger: this.logger,
+    });
+
+    const messages = preserveMediaThroughThalamusPacking(
+      sessionId
+        ? buildLiveSessionMessages(
+            {
+              userMessageText: labeledUserText,
+              workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
+              unseenThreadMessages: context.unseenThreadMessages,
+            },
+            userContent
+          )
+        : await this.buildMessagesWithHistory(context, userContent)
+    );
 
     const sendResult = await provider.send({
       messages,
@@ -138,6 +176,7 @@ export class ManagedAgentService implements OnModuleInit {
         platform: context.config.platform,
         platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId ?? '',
         platformMessageId: context.platformMessageId,
+        platformUserId: context.platformUserId,
         firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
@@ -151,48 +190,6 @@ export class ManagedAgentService implements OnModuleInit {
     );
 
     return { status: sendResult.status };
-  }
-
-  /**
-   * Re-dispatch a user turn that was parked while managed-agent setup completed.
-   * Loads the persisted inbound activity and forwards only its body to dispatch.
-   */
-  async replayParkedInboundTurn(params: {
-    conversation: ConversationEntity;
-    config: ResolvedAgentConfig;
-    subscriber: SubscriberEntity;
-    pendingPlatformMessageId: string;
-    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
-  }): Promise<ManagedAgentDispatchResult | null> {
-    const activity = await this.conversationActivityRepository.findOne(
-      {
-        _conversationId: params.conversation._id,
-        _environmentId: params.config.environmentId,
-        platformMessageId: params.pendingPlatformMessageId,
-      },
-      '*'
-    );
-
-    if (!activity) {
-      this.logger.warn(
-        { conversationId: params.conversation._id, pendingPlatformMessageId: params.pendingPlatformMessageId },
-        'Managed agent setup completed but parked message was not found'
-      );
-
-      return null;
-    }
-
-    return this.dispatch(
-      {
-        config: params.config,
-        conversation: params.conversation,
-        subscriber: params.subscriber,
-        userMessageText: activity.content,
-        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
-        platformMessageId: params.pendingPlatformMessageId,
-      },
-      params.agent
-    );
   }
 
   /**
@@ -213,6 +210,7 @@ export class ManagedAgentService implements OnModuleInit {
     followUpMessage?: string;
     platform: AgentPlatformEnum;
     platformThreadId: string;
+    platformUserId?: string;
     suppressReply?: boolean;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
@@ -278,6 +276,7 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberId: params.subscriberId ?? '',
       platform: params.platform,
       platformThreadId: params.platformThreadId,
+      platformUserId: params.platformUserId,
       firstPlatformMessageId: channel?.firstPlatformMessageId,
       suppressReply: params.suppressReply,
     });
@@ -409,8 +408,13 @@ export class ManagedAgentService implements OnModuleInit {
     await provider.dispatchQueued(params.sessionId, params.runId, params.turnId, params.request);
   }
 
-  private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const page = await this.activityLedger.listForView({
+  private async buildMessagesWithHistory(
+    context: ManagedAgentContext,
+    userContent?: string | ContentPart[]
+  ): Promise<Message[]> {
+    const labeledUserText = formatUserMessageWithSenderName(context.userMessageText, context.senderName);
+    const turnContent = userContent ?? labeledUserText;
+    const page = await this.conversationService.listForView({
       view: 'llm_transcript',
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,
@@ -422,14 +426,32 @@ export class ManagedAgentService implements OnModuleInit {
     const messages: Message[] = history
       .filter((entry) => entry.type === ConversationActivityTypeEnum.MESSAGE)
       .reverse()
-      .map((entry) => ({
-        role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
-        content: entry.content,
-      }));
+      .map((entry) => {
+        if (entry.senderType === ConversationActivitySenderTypeEnum.AGENT) {
+          return {
+            role: MessageRole.ASSISTANT,
+            content: entry.content,
+          };
+        }
+
+        return {
+          role: MessageRole.USER,
+          content: formatUserMessageWithSenderName(entry.content, entry.senderName),
+        };
+      });
 
     // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
     // re-run every historical USER turn as a live event on reopen after resolve.
-    return collapseHistoryForNewSession(messages, context.userMessageText);
+    const collapsed = applyUserContentToLatestUserTurn(
+      collapseHistoryForNewSession(messages, labeledUserText),
+      turnContent
+    );
+
+    if (!context.workflowOrigin) {
+      return collapsed;
+    }
+
+    return [buildOriginAssistantMessage(context.workflowOrigin), ...collapsed];
   }
 
   private async resolveVaultIdsForTurn(
@@ -472,6 +494,10 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (input.platformMessageId) {
       metadata.platformMessageId = input.platformMessageId;
+    }
+
+    if (input.platformUserId) {
+      metadata.platformUserId = input.platformUserId;
     }
 
     if (input.firstPlatformMessageId) {

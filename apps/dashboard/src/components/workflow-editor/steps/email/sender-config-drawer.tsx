@@ -15,7 +15,6 @@ import {
   SheetTitle,
 } from '@/components/primitives/sheet';
 import { Switch } from '@/components/primitives/switch';
-import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import {
@@ -33,7 +32,6 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integration';
 
 const AGENT_TRIGGER_DOCS_URL = 'https://docs.novu.co/agents/get-started/mental-model';
-const PREHEADER_MAX_LENGTH = 84;
 
 type SenderConfigDrawerProps = {
   open: boolean;
@@ -299,6 +297,7 @@ export function SenderConfigDrawer({ open, onOpenChange, disabled = false }: Sen
                       isAllowedVariable={isAllowedVariable}
                       size="sm"
                       indentWithTab={false}
+                      enableTranslations
                     />
                   </InputWrapper>
                 </InputRoot>
@@ -425,15 +424,20 @@ export function SenderConfigDrawer({ open, onOpenChange, disabled = false }: Sen
               </Tooltip>
             </FormLabel>
             <FormControl>
-              <Textarea
-                value={localPreheader}
-                onChange={(event) => setLocalPreheader(event.target.value.slice(0, PREHEADER_MAX_LENGTH))}
-                placeholder="One-line summary shown next to the subject"
-                maxLength={PREHEADER_MAX_LENGTH}
-                showCounter
-                disabled={disabled}
-                className="min-h-[96px]"
-              />
+              <InputRoot className="min-h-[96px] items-start">
+                <ControlInput
+                  placeholder="One-line summary shown next to the subject"
+                  disabled={disabled}
+                  value={localPreheader}
+                  onChange={setLocalPreheader}
+                  variables={variables}
+                  isAllowedVariable={isAllowedVariable}
+                  size="2xs"
+                  multiline
+                  indentWithTab={false}
+                  enableTranslations
+                />
+              </InputRoot>
             </FormControl>
           </FormItem>
         </SheetMain>

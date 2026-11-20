@@ -11,6 +11,7 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import type { PlanUsage } from '@/api/agents-plan-usage';
+import { filterUserRolloutLinks } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import TruncatedText from '@/components/truncated-text';
@@ -301,6 +302,8 @@ function AddAnotherChannelCard({
 
 export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
+  const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
+  const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
@@ -321,6 +324,14 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const links = integrationsQuery.data?.data ?? [];
   const planUsage = integrationsQuery.data?.planUsage;
   const connectedLinks = useMemo(() => links.filter((link) => hasAgentInboundConnection(link.connectedAt)), [links]);
+  const userRolloutLinks = useMemo(
+    () =>
+      filterUserRolloutLinks(connectedLinks, {
+        isMsTeamsWhatsNextEnabled,
+        isEmailWhatsNextEnabled,
+      }),
+    [connectedLinks, isMsTeamsWhatsNextEnabled, isEmailWhatsNextEnabled]
+  );
   const { allRolledOut, isSettled: rolloutSettled } = useAgentChannelsRolloutStatus(connectedLinks);
 
   const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -399,22 +410,24 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   return (
     <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
       <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
-        <SetupStep
-          index={1}
-          status="current"
-          indicator="dot"
-          sectionLabel="FOR YOUR USERS"
-          inlineSectionLabel
-          title="Setup channels for your users"
-          description="Setup the channels to let your users easily connect to this agent on wherever they are."
-          rightContent={<ChannelList links={connectedLinks} onConfigure={handleConfigureChannel} />}
-        />
+        {userRolloutLinks.length > 0 ? (
+          <SetupStep
+            index={1}
+            status="current"
+            indicator="dot"
+            sectionLabel="FOR YOUR USERS"
+            inlineSectionLabel
+            title="Setup channels for your users"
+            description="Setup the channels to let your users easily connect to this agent on wherever they are."
+            rightContent={<ChannelList links={userRolloutLinks} onConfigure={handleConfigureChannel} />}
+          />
+        ) : null}
         <AddAnotherChannelStep
           agent={agent}
           links={links}
           planUsage={planUsage}
           readOnly={readOnly}
-          index={2}
+          index={userRolloutLinks.length > 0 ? 2 : 1}
           onAddChannel={handleAddChannel}
           onChannelAdded={handleChannelAdded}
         />

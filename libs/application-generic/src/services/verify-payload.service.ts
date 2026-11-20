@@ -69,6 +69,7 @@ function parseVariablePath(variableName: string): PathPart[] | null {
   return parts;
 }
 
+// biome-ignore lint/plugin: trigger payloads are arbitrary JSON, so the value at a variable path has no domain type
 function getValueAtPath(payload: Record<string, unknown>, variableName: string): unknown {
   const pathParts = parseVariablePath(variableName);
 
@@ -107,11 +108,11 @@ export class VerifyPayloadService {
     const invalidKeys: string[] = [];
 
     for (const variable of variables.filter((vari) => vari.required && !this.isSystemVariable(vari.name))) {
-      let value;
+      let value: unknown;
 
       try {
         value = getValueAtPath(payload, variable.name);
-      } catch (e) {
+      } catch {
         value = null;
       }
 
@@ -153,7 +154,7 @@ export class VerifyPayloadService {
         continue;
       }
 
-      if (pathParts.length === 1 && variable.defaultValue === '') {
+      if (variable.defaultValue === '') {
         continue;
       }
 

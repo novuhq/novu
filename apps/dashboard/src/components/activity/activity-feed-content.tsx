@@ -18,6 +18,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { areActivityDateRangesEqual } from '@/utils/activityFilters';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
@@ -38,7 +39,7 @@ export function ActivityFeedContent({
   onTriggerWorkflow,
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
-  const { activity, isPending, error } = usePullActivity(activityItemId);
+  const { activity, isPending, isPlaceholderData, error } = usePullActivity(activityItemId);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const onListStateChange = useCallback((hasActivities: boolean) => setShowDetailPanel(hasActivities), []);
 
@@ -107,7 +108,7 @@ export function ActivityFeedContent({
   const hasChanges = useMemo(() => {
     const baseFilters = { ...defaultActivityFilters, ...initialFilters };
     return (
-      mergedFilterValues.dateRange !== baseFilters.dateRange ||
+      !areActivityDateRangesEqual(mergedFilterValues.dateRange, baseFilters.dateRange) ||
       mergedFilterValues.channels.length > 0 ||
       mergedFilterValues.workflows.length > (baseFilters.workflows?.length || 0) ||
       mergedFilterValues.transactionId !== (baseFilters.transactionId || '') ||
@@ -177,7 +178,7 @@ export function ActivityFeedContent({
             >
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={activityItemId}
+                  key={activityItemId ? 'activity-detail' : 'activity-empty'}
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
@@ -191,7 +192,11 @@ export function ActivityFeedContent({
                         <ActivityError />
                       ) : (
                         <>
-                          <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
+                          <ActivityHeader
+                            activity={activity}
+                            isPlaceholder={isPlaceholderData}
+                            onTransactionIdChange={handleTransactionIdChange}
+                          />
                           <ActivityOverview activity={activity} />
                           <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
                         </>

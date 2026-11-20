@@ -30,9 +30,7 @@ function formatValidationMessages(rawError: unknown): string | undefined {
   }
 
   if (Array.isArray(errorData.message)) {
-    const messages = (errorData.message as string[])
-      .map((msg) => msg.replace(/^credentials\./, ''))
-      .filter(Boolean);
+    const messages = (errorData.message as string[]).map((msg) => msg.replace(/^credentials\./, '')).filter(Boolean);
 
     return messages.length > 0 ? messages.join('. ') : undefined;
   }

@@ -1,0 +1,34 @@
+---
+title: 'Usage'
+description: 'Read the Novu dashboard Usage page: what delivery, subscriber, and interaction metrics count, and how that differs from a single workflow run.'
+---
+
+The **Usage** page in the Novu dashboard summarizes notification volume for the selected environment and time range. It shows how much you sent and how subscribers interacted with Inbox messages. It does not replace the [Activity Feed](/platform/workflow/monitor-and-debug-workflow), which is where you inspect one workflow run.
+
+## Delivery metrics
+
+Delivery metrics on the Usage page count messages in the time range you select.
+
+- **Messages delivered** is the number of messages sent across email, SMS, push, chat, and in-app. A workflow with an in-app step and an email step counts two messages when both steps send.
+- **Active subscribers** is the number of distinct subscribers who received at least one message in that range.
+- **Average messages per subscriber** is messages delivered divided by active subscribers.
+- **Delivery trend** splits that volume by day and by channel.
+- **Workflow runs by volume** and **workflow runs trend** count workflow executions, which is not the same number as messages. One run can produce several messages.
+- **Providers by volume** splits messages by provider, such as SendGrid or Twilio. Integrations using the same provider are counted together.
+
+A skipped step does not contribute to the count. A topic trigger creates one workflow run per subscriber whose subscription matches, and only those runs are counted.
+
+## Notification engagement
+
+Track notification engagement with the **Interactions** metric. It counts Inbox actions in the selected range:
+
+- Message seen
+- Message read
+- Message snoozed
+- Message archived
+
+The interaction trend shows seen, read, snoozed, and archived actions by day. These charts cover the Inbox channel. Email opens and clicks are not included in Interactions.
+
+Email and push engagement is recorded on the message in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow) after you configure [email activity tracking](/platform/integrations/email/activity-tracking) or [push activity tracking](/platform/integrations/push/push-activity-tracking). You can also subscribe to [message webhooks](/platform/developer/webhooks/event-types#message-events) such as `message.seen`, `message.read`, and `message.delivered` and store those events in your own warehouse.
+
+The Usage page only shows totals. To see why a notification was not delivered, open that run in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow#why-a-notification-was-not-delivered).

@@ -10,6 +10,7 @@ type LinkType = {
 
 const LINKS: LinkType[] = [
   { href: '/agent-toolkit', label: 'Refund Agent (HITL)', category: 'AI' },
+  { href: '/agent-human', label: 'Framework HITL (ctx.ask)', category: 'AI' },
   { href: '/', label: 'Default Inbox', category: 'Components' },
   { href: '/keyless', label: 'Keyless Inbox', category: 'Components' },
   { href: '/render-bell', label: 'Render Bell', category: 'Components' },
@@ -32,6 +33,7 @@ const LINKS: LinkType[] = [
   { href: '/custom-icons', label: 'Custom Icons', category: 'Customization' },
   { href: '/send-email', label: 'Send Test Email', category: 'Tools' },
   { href: '/send-email-thread', label: 'Send Email Thread', category: 'Tools' },
+  { href: '/fcm-web-push', label: 'FCM Web Push', category: 'Tools' },
   { href: '/hooks', label: 'Hooks', category: 'Advanced' },
 ];
 

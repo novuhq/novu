@@ -1,16 +1,15 @@
-import { EnvironmentTypeEnum, UiComponentEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { UiComponentEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { useState } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { SenderConfigDrawer } from '@/components/workflow-editor/steps/email/sender-config-drawer';
-import { useEnvironment } from '@/context/environment/hooks';
 import { cn } from '../../../../utils/ui';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };
 
 export const EmailEditor = (props: EmailEditorProps) => {
-  const { currentEnvironment, readOnly } = useEnvironment();
+  const { isReadOnly } = useStepEditor();
   const { uiSchema, isEditorV2 = false } = props;
   const [senderDrawerOpen, setSenderDrawerOpen] = useState(false);
 
@@ -43,18 +42,10 @@ export const EmailEditor = (props: EmailEditorProps) => {
             </div>
           )}
         </div>
-        {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
-          getComponentByType({ component: body.component })
-        ) : (
-          <StepEditorUnavailable />
-        )}
+        {getComponentByType({ component: body.component })}
       </div>
 
-      <SenderConfigDrawer
-        open={senderDrawerOpen}
-        onOpenChange={setSenderDrawerOpen}
-        disabled={readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
-      />
+      <SenderConfigDrawer open={senderDrawerOpen} onOpenChange={setSenderDrawerOpen} disabled={isReadOnly} />
     </>
   );
 };

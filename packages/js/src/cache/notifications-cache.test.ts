@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
@@ -13,12 +14,12 @@ describe('NotificationsCache', () => {
 
   beforeEach(() => {
     mockEmitter = {
-      on: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
     } as unknown as NovuEventEmitter;
 
     mockInboxService = {
-      fetchNotifications: jest.fn(),
+      fetchNotifications: vi.fn(),
     } as unknown as InboxService;
     notificationsCache = new NotificationsCache({
       emitter: mockEmitter,
@@ -80,7 +81,7 @@ describe('NotificationsCache', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should normalize plain notification objects when storing in cache', () => {

@@ -14,7 +14,7 @@ export function buildOpaqueStorageKey(keyPrefix: string, token: string): string 
   return `${keyPrefix}${token}`;
 }
 
-export function mintedOpaqueTokenBodyLength(randomTokenBytes: number): number {
+function mintedOpaqueTokenBodyLength(randomTokenBytes: number): number {
   return Math.ceil((randomTokenBytes * 8) / 6);
 }
 

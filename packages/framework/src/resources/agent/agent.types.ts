@@ -7,10 +7,138 @@ export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
   ON_MESSAGE = 'onMessage',
+  ON_MESSAGE_UPDATED = 'onMessageUpdated',
+  ON_MESSAGE_DELETED = 'onMessageDeleted',
   ON_ACTION = 'onAction',
   ON_RESOLVE = 'onResolve',
   ON_REACTION = 'onReaction',
+  ON_ABORT = 'onAbort',
 }
+
+export type HumanInteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
+
+export type HumanOption = { id: string; label: string };
+export type HumanOptionInput = string | HumanOption;
+
+export type HumanCardPresentation = {
+  title?: string;
+  /**
+   * Slack only. MCP catalog id (`stripe`, `github`), catalog display name,
+   * or an `https://` URL (32×32). Ignored on Telegram, Teams, WhatsApp,
+   * email, and web chat. Do not pass emoji names.
+   */
+  icon?: string;
+  /** Secondary line under the title. Shown on every channel. */
+  subtitle?: string;
+  /** Optional details under the subtitle. Shown on every channel. */
+  body?: string;
+};
+
+export type HumanApproveCard = HumanCardPresentation & {
+  /** Approve button label. Defaults to `Approve`. */
+  approveLabel?: string;
+  /** Deny button label. Defaults to `Deny`. */
+  denyLabel?: string;
+  /**
+   * Extra buttons after Approve / Deny (max 4). Do not invent
+   * `trust-tool` / `trust-server` — Novu injects those on parked tool cards.
+   */
+  extraActions?: HumanOptionInput[];
+};
+
+export type HumanChooseCard = HumanCardPresentation & {
+  /** Choose options (2–10). String label or `{ id, label }`. */
+  options?: HumanOptionInput[];
+};
+
+/** Chrome descriptor returned by `askCard()` from `ctx.ask({ render })`. */
+export type HumanAskChrome = HumanCardPresentation & { type: 'human-ask-card' };
+/** Chrome descriptor returned by `approveCard()` from `ctx.approve({ render })`. */
+export type HumanApproveChrome = HumanApproveCard & { type: 'human-approve-card' };
+/** Chrome descriptor returned by `chooseCard()` from `ctx.choose({ render })`. */
+export type HumanChooseChrome = HumanChooseCard & { type: 'human-choose-card' };
+/** Chrome descriptor returned by `tellCard()` from `ctx.tell({ render })`. */
+export type HumanTellChrome = HumanCardPresentation & { type: 'human-tell-card' };
+
+export type HumanChrome = HumanAskChrome | HumanApproveChrome | HumanChooseChrome | HumanTellChrome;
+
+type HumanThreadOptions = {
+  /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
+  from?: string;
+  /** Time until the request expires, in seconds (max 72h; default 24h). */
+  ttlSeconds?: number;
+  /**
+   * Novu `subscriberId`(s) allowed to settle this request. First valid answer
+   * wins. When omitted, the conversation's first subscriber participant is used.
+   * The maximum number of subscribers is 50.
+   */
+  to?: string | string[];
+};
+
+export type HumanAskOptions = HumanThreadOptions & {
+  card?: HumanCardPresentation;
+};
+
+/** `ctx.ask({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskRenderOptions = HumanThreadOptions & {
+  render: HumanAskRenderFn;
+};
+
+export type HumanAskApproveOptions = HumanThreadOptions & {
+  card?: HumanApproveCard;
+};
+
+/** `ctx.approve({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanAskApproveRenderOptions = HumanThreadOptions & {
+  render: HumanApproveRenderFn;
+};
+
+export type HumanChooseOptions = HumanThreadOptions & {
+  card?: HumanChooseCard;
+};
+
+/** `ctx.choose({ render })` — `card` is omitted; `render` builds the posted message. */
+export type HumanChooseRenderOptions = HumanThreadOptions & {
+  render: HumanChooseRenderFn;
+};
+
+export type HumanTellOptions = {
+  /** Attribution label shown to the human (e.g. `"deploy-bot"`). */
+  from?: string;
+  /**
+   * Novu `subscriberId`(s) this notice is addressed to. In-thread delivery
+   * still posts one card on the current conversation.
+   */
+  to?: string | string[];
+};
+
+/** `ctx.tell({ render })` — `render` builds the posted message. */
+export type HumanTellRenderOptions = HumanTellOptions & {
+  render: HumanTellRenderFn;
+};
+
+/**
+ * Outcome of a `ctx.ask` / `ctx.approve` / `ctx.choose` request, attached to
+ * the later `onMessage` (ask) or `onAction` (approve / choose) turn.
+ */
+export type AgentHumanResponse = {
+  /** Client-minted id returned by `ctx.ask` / `ctx.approve` / `ctx.choose`. */
+  requestId: string;
+  /** Public interaction identifier (`hi_...`). */
+  interactionId: string;
+  kind: HumanInteractionKind;
+  /** Terminal status: `answered` | `approved` | `denied` | `expired` | `canceled` | `delivered`. */
+  status: string;
+  /** True when the TTL elapsed before a valid answer. Do not treat `text` / `optionId` as a verdict. */
+  expired: boolean;
+  /** Freeform reply text for `ask`. */
+  text?: string;
+  /** `approve`: `'approve'` | `'deny'`; `choose`: the picked option id. */
+  optionId?: string;
+  respondedBy?: string;
+  /** Stable Novu subscriberId of whoever settled the interaction. */
+  respondedBySubscriberId?: string;
+};
 
 // ---------------------------------------------------------------------------
 // User-facing types (visible on ctx properties)
@@ -22,6 +150,16 @@ export interface AgentMessageAuthor {
   fullName: string;
   userName: string;
   isBot: boolean | 'unknown';
+  /**
+   * The author's email, when the platform provides it (Slack with the `users:read.email` scope,
+   * Teams, email). Present even when the author is not linked to a subscriber.
+   */
+  email?: string;
+  /**
+   * `true` when the chat platform itself generated the message (e.g. Slackbot notices from
+   * Slack's reserved `USLACK` user) rather than a person or bot. Absent means `false`.
+   */
+  isSystem?: boolean;
 }
 
 /** A file or media attachment included with a message. */
@@ -33,15 +171,32 @@ export interface AgentAttachment {
   size?: number;
 }
 
+export interface AgentReplyToContext {
+  messageId: string;
+}
+
 /** An incoming message from the user in the current conversation. */
 export interface AgentMessage {
   /** Plain-text content of the message. */
   text: string;
+  /**
+   * The message as GitHub-flavored Markdown, preserving platform formatting that `text` flattens:
+   * bold, links, code, and structured content such as pasted Slack tables (rendered as GFM tables).
+   * Absent when the message is plain prose (then `text` is complete); use `markdown ?? text`.
+   */
+  markdown?: string;
   /** Platform-native message ID (e.g. Slack `ts`, Teams `activityId`). */
   platformMessageId: string;
   author: AgentMessageAuthor;
   timestamp: string;
   attachments?: AgentAttachment[];
+  /** Set when the user quote-replied to a prior message (WhatsApp, Telegram, Teams). */
+  replyTo?: AgentReplyToContext;
+  /**
+   * Client-supplied per-message metadata (web chat only), e.g. what the user has open in the UI.
+   * Sanitized to a flat map of string | number | boolean | null values; absent when empty.
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /** Live state of the current conversation thread. */
@@ -72,9 +227,10 @@ export type AgentContextValue = string | { id: string; data?: Record<string, unk
  * turn.
  *
  * Populated by Novu from the context an integrator passes to the Connect button (e.g. the Slack
- * connect flow persists it on the `ChannelConnection`). It lets a single hosted agent serve many
- * tenants: the agent reads its own tenant/org out of the context to scope writes. Keys are
- * integrator-defined context types (e.g. `tenant`), mirroring Novu's `ContextPayload`.
+ * connect flow persists it on the `ChannelConnection`) or, on Web Chat, to `NovuProvider` with a
+ * `contextHash`. It lets a single hosted agent serve many tenants: the agent reads its own
+ * tenant/org out of the context to scope writes. Keys are integrator-defined context types (e.g.
+ * `tenant`), mirroring Novu's `ContextPayload`.
  */
 export type AgentContextPayload = Record<string, AgentContextValue>;
 
@@ -90,6 +246,18 @@ export interface AgentSubscriber {
   locale?: string;
   /** Arbitrary custom data attached to the subscriber in Novu. */
   data?: Record<string, unknown>;
+}
+
+/** Workflow-origin notification for this turn. */
+export interface AgentNotification<TPayload extends Record<string, unknown> = Record<string, unknown>> {
+  id: string;
+  /** User-facing workflow slug — same string as `ctx.trigger(workflowId)`. */
+  workflowId: string;
+  messageId: string;
+  platformMessageId: string;
+  sentAt: string;
+  body: string;
+  payload: TPayload;
 }
 
 /**
@@ -120,8 +288,9 @@ export interface AgentHistoryEntry {
   /** Message role: `'user'`, `'assistant'`, or `'system'`. */
   role: string;
   /**
-   * The kind of entry: `'message'`, `'edit'`, `'signal'`, or a tool-lifecycle event
-   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`).
+   * The kind of entry: `'message'`, `'edit'`, `'signal'`, a tool-lifecycle event
+   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`), or `'run_finish'` for a turn the user
+   * stopped (`richContent.lifecycle.outcome === 'aborted'`).
    */
   type: string;
   /** Plain-text representation of the message content. */
@@ -206,6 +375,40 @@ export interface FileRef {
  */
 export type MessageContent = string | ChatElement;
 
+/**
+ * Reply text as it is generated, e.g. an AI SDK `textStream`. Accepted by ctx.reply() and as an
+ * `onMessage` return value: channels that support it show the reply growing, others get it whole.
+ */
+export type ReplyStream = AsyncIterable<string>;
+
+export function isReplyStream(value: unknown): value is ReplyStream {
+  return typeof value === 'object' && value !== null && Symbol.asyncIterator in value;
+}
+
+/** Platform message id or an inbound message to quote in the outbound reply. */
+export type QuoteReplyTarget = { messageId: string } | Pick<AgentMessage, 'platformMessageId'>;
+
+export interface AgentReplyOptions {
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+/**
+ * Wrapper for handler return values that need delivery options beyond bare content.
+ *
+ * @example
+ *   return { content: 'Done', quoteReply: message };
+ */
+export interface AgentHandlerReply {
+  content: MessageContent;
+  files?: FileRef[];
+  quoteReply?: QuoteReplyTarget;
+}
+
+export function isAgentHandlerReply(value: unknown): value is AgentHandlerReply {
+  return typeof value === 'object' && value !== null && 'content' in value && !('type' in value);
+}
+
 /** Normalized content shape sent over HTTP to the reply endpoint. */
 export interface ReplyContent {
   markdown?: string;
@@ -275,6 +478,37 @@ export class PendingApproval {
   readonly __novuPendingApproval = true as const;
 }
 
+/** Arguments passed to `ctx.ask({ render })`. */
+export interface HumanAskRenderArgs {
+  requestId: string;
+  askCard: (overrides?: Omit<HumanAskChrome, 'type'>) => HumanAskChrome;
+}
+
+/** Arguments passed to `ctx.approve({ render })`. */
+export interface HumanApproveRenderArgs {
+  requestId: string;
+  actionIds: { approve: string; deny: string };
+  approveCard: (overrides?: Omit<HumanApproveChrome, 'type'>) => HumanApproveChrome;
+}
+
+/** Arguments passed to `ctx.choose({ render })`. */
+export interface HumanChooseRenderArgs {
+  requestId: string;
+  actionIds: { option: (optionId: string) => string };
+  chooseCard: (overrides?: Omit<HumanChooseChrome, 'type'>) => HumanChooseChrome;
+}
+
+/** Arguments passed to `ctx.tell({ render })`. */
+export interface HumanTellRenderArgs {
+  requestId: string;
+  tellCard: (overrides?: Omit<HumanTellChrome, 'type'>) => HumanTellChrome;
+}
+
+export type HumanAskRenderFn = (args: HumanAskRenderArgs) => Awaitable<ChatElement | HumanAskChrome>;
+export type HumanApproveRenderFn = (args: HumanApproveRenderArgs) => Awaitable<ChatElement | HumanApproveChrome>;
+export type HumanChooseRenderFn = (args: HumanChooseRenderArgs) => Awaitable<ChatElement | HumanChooseChrome>;
+export type HumanTellRenderFn = (args: HumanTellRenderArgs) => Awaitable<ChatElement | HumanTellChrome>;
+
 /** Optional customization for tool approval messages. */
 export interface ToolApprovalConfig {
   /**
@@ -297,8 +531,10 @@ export interface ToolApprovalConfig {
  * - `open`: anyone may talk to the agent (unknown senders are auto-provisioned).
  * - `restricted`: only authenticated, linked subscribers proceed; unlinked authors
  *   are shown an auth CTA and short-circuited.
+ * - `rule`: only a known subscriber who matches the agent's access rule may send
+ *   messages, edits, deletes, clicks or reactions. Enforced server-side.
  */
-export type AgentSubscriberAccess = 'open' | 'restricted';
+export type AgentSubscriberAccess = 'open' | 'restricted' | 'rule';
 
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
 export interface ToolApprovalDecision {
@@ -315,13 +551,19 @@ export interface ToolApprovalDecision {
 }
 
 /** Controls on `ctx.toolApproval` for gating tool calls. */
+export type ToolApprovalRequestOptions = {
+  from?: string;
+  ttlSeconds?: number;
+  to?: string | string[];
+};
+
 export interface ToolApprovalControl {
   /**
    * Post an approval message and pause the turn.
    * Return the result (`return ctx.toolApproval.request(...)`) from `onMessage`
    * to end the turn until the user decides.
    */
-  request(toolCall: AgentToolCall): Promise<PendingApproval>;
+  request(toolCall: AgentToolCall, opts?: ToolApprovalRequestOptions): Promise<PendingApproval>;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,11 +606,27 @@ export interface AgentHandlerContext {
    */
   readonly subscriber: AgentSubscriber | null;
   /**
-   * Connect-time context resolved for this turn from the channel connection, or `null` when none
-   * was bound. Populated server-side (trusted) — safe to use for authorizing and scoping writes
-   * (e.g. reading the customer's tenant/organization out of it).
+   * Context resolved server-side for this turn, or `null` when none was bound: from the channel
+   * connection or endpoint (Slack, Teams, Telegram), or from the subscriber session on Web Chat,
+   * where it is only forwarded when every active Novu In-App integration of the environment
+   * enforces HMAC (session start then requires a matching `contextHash`).
+   *
+   * Before using it to authorize or scope writes (e.g. by the customer's tenant), check that
+   * `subscriber` belongs to that tenant, since a `contextHash` is not tied to a subscriber, and trust
+   * the context `id` rather than its stored `data`.
    */
   readonly context: AgentContextPayload | null;
+  /**
+   * The Novu notification this turn is replying to (workflow origin), or `null` when the
+   * conversation was not opened from a workflow send.
+   */
+  readonly notification: AgentNotification | null;
+  /**
+   * Settled `ctx.ask` / `ctx.approve` / `ctx.choose` payload when this
+   * `onMessage` or `onAction` turn answered (or expired) a human interaction.
+   * `null` on ordinary chat and button clicks.
+   */
+  readonly humanResponse: AgentHumanResponse | null;
   /**
    * Full conversation history as an ordered array of entries.
    * Map to your LLM's message format before making a model call:
@@ -379,6 +637,14 @@ export interface AgentHandlerContext {
   readonly platform: string;
   /** Platform-specific thread and channel identifiers. */
   readonly platformContext: AgentPlatformContext;
+  /**
+   * Aborts when the user stops this turn. Novu reports the stop on the turn's next event delivery
+   * (a reply, typing status or custom event; a streamed reply only once it ends), so long work between
+   * deliveries runs on until then.
+   * Pass it to your model calls (e.g. AI SDK `abortSignal`); `@novu/framework/langchain` wires it in for you.
+   * The turn then ends as `aborted` and `onError` is not called.
+   */
+  readonly signal: AbortSignal;
 
   /**
    * Post a message to the conversation and return a handle to it.
@@ -392,8 +658,14 @@ export interface AgentHandlerContext {
    *   await ctx.reply('Here is your report', {
    *     files: [{ filename: 'report.pdf', url: 'https://...' }],
    *   });
+   *
+   * @example quote-reply to the triggering inbound message
+   *   await ctx.reply('answer', { quoteReply: message });
+   *
+   * @example stream the reply as the model writes it (resolves once the stream ends)
+   *   await ctx.reply(result.textStream);
    */
-  reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  reply(content: MessageContent | ReplyStream, options?: AgentReplyOptions): Promise<ReplyHandle>;
   /**
    * Gate tool calls that need user approval before they run.
    *
@@ -446,6 +718,71 @@ export interface AgentHandlerContext {
    */
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
   /**
+   * Ask the conversation subscriber a freeform question. Queued and flushed
+   * with the next `ctx.reply()`, or automatically when the handler completes.
+   * The answer arrives later on `onMessage` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.ask('What environment should we deploy to?');
+   *   ctx.ask('Which environment?', { to: 'alice' });
+   *   ctx.ask({ render: ({ askCard }) => askCard({ title: 'What environment?' }) });
+   *   // `card` cannot be passed alongside `render` — return askCard(...) or a Card.
+   */
+  ask(question: string, opts?: HumanAskOptions | HumanAskRenderOptions): string;
+  ask(opts: HumanAskOptions & { card: HumanCardPresentation & { title: string } }): string;
+  ask(opts: HumanAskRenderOptions): string;
+  /**
+   * Ask the conversation subscriber to approve or deny an action.
+   * The verdict arrives later on `onAction` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.approve('Deploy v2.4.1 to production?');
+   *   ctx.approve('Deploy v2.4.1?', { to: ['alice', 'bob'] });
+   *   ctx.approve({
+   *     render: ({ actionIds, approveCard }) =>
+   *       approveCard({ title: 'Refund $25?', extraActions: ['Escalate'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return approveCard(...) or a Card.
+   */
+  approve(action: string, opts?: HumanAskApproveOptions | HumanAskApproveRenderOptions): string;
+  approve(opts: HumanAskApproveOptions & { card: HumanApproveCard & { title: string } }): string;
+  approve(opts: HumanAskApproveRenderOptions): string;
+  /**
+   * Ask the conversation subscriber to pick one of several options (2–10).
+   * The pick arrives later on `onAction` with `ctx.humanResponse` set.
+   * Pass `to` to let any listed subscriber settle (first valid answer wins).
+   *
+   * @returns A `requestId` you can match against `ctx.humanResponse.requestId`.
+   *
+   * @example
+   *   ctx.choose('Which region?', ['us-east', 'eu-west', 'ap-south']);
+   *   ctx.choose({
+   *     render: ({ chooseCard }) =>
+   *       chooseCard({ title: 'Which region?', options: ['us-east', 'eu-west'] }),
+   *   });
+   *   // `card` cannot be passed alongside `render` — return chooseCard(...) or a Card.
+   */
+  choose(question: string, options: HumanOptionInput[], opts?: HumanChooseOptions | HumanChooseRenderOptions): string;
+  choose(opts: HumanChooseOptions & { card: HumanChooseCard & { title: string } }): string;
+  choose(opts: HumanChooseRenderOptions): string;
+  /**
+   * Send a one-way notification to the conversation subscriber. Nothing to wait
+   * on — `tell` never sets `ctx.humanResponse`.
+   *
+   * @example
+   *   ctx.tell('Deploy finished. v2.4.1 is live.');
+   *   ctx.tell({ render: ({ tellCard }) => tellCard({ title: 'Deploy finished.' }) });
+   *   // `card` cannot be passed alongside `render` — return tellCard(...) or a Card.
+   */
+  tell(message: string, opts?: HumanTellOptions | HumanTellRenderOptions): string;
+  tell(opts: HumanTellRenderOptions): string;
+  /**
    * Add an emoji reaction to any platform message.
    * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
    * when the handler completes (same batching contract as `ctx.trigger()`).
@@ -493,6 +830,18 @@ export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
+/** Context passed to the `onMessageUpdated` handler. */
+export interface AgentMessageUpdatedContext extends AgentHandlerContext {
+  readonly event: 'onMessageUpdated';
+  /** The message as it read before this edit. `null` when the channel does not send the old body. */
+  readonly previousMessage: AgentMessage | null;
+}
+
+/** Context passed to the `onMessageDeleted` handler. */
+export interface AgentMessageDeletedContext extends AgentHandlerContext {
+  readonly event: 'onMessageDeleted';
+}
+
 /** Context passed to the `onAction` handler. */
 export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
@@ -512,7 +861,29 @@ export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
-export type AgentContext = AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+/** The turn the user stopped, as passed to `onAbort`. */
+export interface AgentAbortedTurn {
+  /** The stopped turn's delivery id. */
+  turnId: string;
+  /** The inbound message that started the stopped turn (its `message.platformMessageId`), when it had one. */
+  platformMessageId?: string;
+}
+
+/** Context passed to the `onAbort` handler. */
+export interface AgentAbortContext extends AgentHandlerContext {
+  readonly event: 'onAbort';
+  /** The turn the user stopped. */
+  readonly abortedTurn: AgentAbortedTurn;
+}
+
+export type AgentContext =
+  | AgentMessageContext
+  | AgentMessageUpdatedContext
+  | AgentMessageDeletedContext
+  | AgentActionContext
+  | AgentReactionContext
+  | AgentResolveContext
+  | AgentAbortContext;
 
 /** Event handlers for a conversational agent. */
 export interface AgentHandlers {
@@ -522,10 +893,33 @@ export interface AgentHandlers {
    * @param message - The incoming message that triggered this handler.
    * @param ctx - Conversation history, subscriber, metadata, and reply/trigger methods.
    *
-   * Return a string or JSX card to reply, or call `ctx.reply()` directly
+   * Return a string, JSX card or {@link ReplyStream} to reply, or call `ctx.reply()` directly
    * for more control (e.g. editing a message in place).
    */
-  onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | void>;
+  onMessage: (
+    message: AgentMessage,
+    ctx: AgentMessageContext
+  ) => Awaitable<MessageContent | ReplyStream | AgentHandlerReply | PendingApproval | void>;
+  /**
+   * Fires when the user edits a previously sent message. Does not re-run `onMessage`.
+   *
+   * @param message - The message after the edit (same `platformMessageId`).
+   * @param ctx - `ctx.previousMessage` is the body before this edit, when the channel sent it.
+   */
+  onMessageUpdated?: (
+    message: AgentMessage,
+    ctx: AgentMessageUpdatedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires when the user deletes a message. Does not re-run `onMessage`.
+   *
+   * @param message - The removed message. `text` is the last known body and may be empty
+   *   when the channel did not send a snapshot.
+   */
+  onMessageDeleted?: (
+    message: AgentMessage,
+    ctx: AgentMessageDeletedContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user adds or removes an emoji reaction to a message.
    *
@@ -534,7 +928,10 @@ export interface AgentHandlers {
    *
    * Return a string or card to post a reply, or return nothing to silently acknowledge.
    */
-  onReaction?: (reaction: AgentReaction, ctx: AgentReactionContext) => Awaitable<MessageContent | void>;
+  onReaction?: (
+    reaction: AgentReaction,
+    ctx: AgentReactionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user clicks a `<Button>` or other interactive element.
    *
@@ -544,7 +941,7 @@ export interface AgentHandlers {
    *
    * Return a string or card to reply, or return nothing to silently acknowledge the click.
    */
-  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onAction?: (action: AgentAction, ctx: AgentActionContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires after `ctx.resolve()` is called and the conversation is marked resolved.
    * Use for post-resolution side-effects (e.g. triggering a follow-up workflow).
@@ -552,7 +949,16 @@ export interface AgentHandlers {
    * @param ctx - Conversation context. Access subscriber and conversation via
    *   `ctx.subscriber` and `ctx.conversation`.
    */
-  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
+  /**
+   * Fires in a new turn after the user stopped a running one. The stopped turn already ended as
+   * `aborted`; use this to follow up on what it left behind (e.g. offer to undo its changes).
+   *
+   * @param ctx - Conversation context, plus `ctx.abortedTurn` naming the stopped turn.
+   *
+   * Return a string or card to reply, or return nothing to post nothing.
+   */
+  onAbort?: (ctx: AgentAbortContext) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Fires when the user approves or denies a tool call you previously gated with
    * `ctx.toolApproval.request()`.
@@ -563,7 +969,10 @@ export interface AgentHandlers {
    * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
    * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
    */
-  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  onToolApproval?: (
+    decision: ToolApprovalDecision,
+    ctx: AgentActionContext
+  ) => Awaitable<MessageContent | AgentHandlerReply | void>;
   /**
    * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
    * return message content for a custom user reply, or return nothing to auto-report
@@ -571,7 +980,14 @@ export interface AgentHandlers {
    */
   onError?: (
     error: AgentError,
-    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+    ctx:
+      | AgentMessageContext
+      | AgentMessageUpdatedContext
+      | AgentMessageDeletedContext
+      | AgentActionContext
+      | AgentReactionContext
+      | AgentResolveContext
+      | AgentAbortContext
   ) => Awaitable<AgentErrorResult>;
   /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
@@ -580,7 +996,7 @@ export interface AgentHandlers {
 }
 
 export type AgentErrorSuppress = { suppress: true };
-export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+export type AgentErrorResult = MessageContent | AgentHandlerReply | void | AgentErrorSuppress;
 
 export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
   return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;
@@ -614,11 +1030,16 @@ export interface AgentBridgeRequest {
   integrationIdentifier: string;
   action: AgentAction | null;
   message: AgentMessage | null;
+  /**
+   * The message as it read before an `onMessageUpdated` edit. Optional on the wire
+   * for backward compatibility; absent → `ctx.previousMessage` is `null`.
+   */
+  previousMessage?: AgentMessage | null;
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
   /**
-   * Effective subscriber-access policy for this agent (`open` | `restricted`),
+   * Effective subscriber-access policy for this agent (`open` | `restricted` | `rule`),
    * resolved server-side. Drives the framework's built-in auth gate: on a
    * `restricted` agent an unlinked author is short-circuited with an auth CTA
    * before any handler runs. Optional on the wire for backward compatibility;
@@ -630,6 +1051,23 @@ export interface AgentBridgeRequest {
    * older API versions that don't send it remain compatible; absent → `ctx.context` is `null`.
    */
   context?: AgentContextPayload | null;
+  /**
+   * The Novu notification this turn is replying to, when the conversation was opened (or
+   * re-attached) from a workflow send. Optional on the wire for backward compatibility;
+   * absent → `ctx.notification` is `null`.
+   */
+  notification?: AgentNotification | null;
+  /**
+   * Settled human-interaction payload when this `onMessage` / `onAction` turn
+   * answered or expired a `ctx.ask` / `ctx.approve` / `ctx.choose`. Optional on
+   * the wire for backward compatibility; absent → `ctx.humanResponse` is `null`.
+   */
+  humanResponse?: AgentHumanResponse | null;
+  /**
+   * The turn the user stopped, on an `onAbort` delivery. Optional on the wire for backward
+   * compatibility; absent on every other event.
+   */
+  abortedTurn?: AgentAbortedTurn | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;
@@ -656,7 +1094,43 @@ export type TriggerSignal = {
   payload?: Record<string, unknown>;
 };
 
-export type Signal = MetadataSignal | TriggerSignal;
+/**
+ * Queued by `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` — instructs
+ * Novu to create a human interaction in the current conversation thread.
+ */
+export type HumanSignalCard = {
+  title?: string;
+  icon?: string;
+  subtitle?: string;
+  body?: string;
+  approveLabel?: string;
+  denyLabel?: string;
+  extraActions?: HumanOptionInput[];
+  options?: HumanOptionInput[];
+};
+
+export type HumanSignal = {
+  type: 'human';
+  kind: HumanInteractionKind;
+  requestId: string;
+  /**
+   * When set, Novu mints `human:{actionIdentifier}:…` button ids (the
+   * `requestId` when a HITL `render*` helper is used). Omitted = public `hi_…`.
+   */
+  actionIdentifier?: string;
+  /**
+   * The only content carrier: chrome presentation (built from the simple args or
+   * the `card` arg) or a posted `Card` element (`type: 'card'`) from `{ render }`.
+   * Title lives on `card.title`; choose options on `card.options` / option buttons.
+   */
+  card: HumanSignalCard | CardElement;
+  from?: string;
+  ttlSeconds?: number;
+  /** Novu subscriberId(s) allowed to settle. Omitted = conversation subscriber. */
+  to?: string | string[];
+};
+
+export type Signal = MetadataSignal | TriggerSignal | HumanSignal;
 
 /** The outcome of a tool call, reported back so it's saved in the conversation history. */
 export type ToolResult = {

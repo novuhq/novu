@@ -10,8 +10,8 @@ import { UpdateLayoutDto } from './update-layout.dto';
 
 export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
 
-class LayoutControlsDto extends ControlsMetadataDto {
-  @ApiProperty({ description: 'Email layout controls' })
+class LayoutControlsDto extends ControlsMetadataDto<LayoutControlValuesDto> {
+  @ApiPropertyOptional({ description: 'Email layout controls', type: 'object', additionalProperties: true })
   @IsOptional()
   values?: LayoutControlValuesDto;
 }

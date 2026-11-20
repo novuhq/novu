@@ -7,10 +7,11 @@ import {
   SLACK_OAUTH_ACCESS_URL,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionEntity,
   ChannelConnectionRepository,
   ChannelTypeEnum,
-  ContextRepository,
   EnvironmentRepository,
   ICredentialsEntity,
   IntegrationEntity,
@@ -18,12 +19,18 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
+import {
+  assertCanReconnectChannelConnection,
+  resolveCallerContextKeys,
+} from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
 import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { AgentInboxFeaturesService } from '../../../../human/services/agent-inbox-features.service';
+import { buildHumanDashboardUrl } from '../../../../shared/helpers/resolve-human-dashboard-base-url';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
@@ -33,6 +40,11 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 
+type SlackOAuthAuthData = {
+  authed_user?: { id?: string };
+  incoming_webhook?: { url: string };
+};
+
 @Injectable()
 export class SlackOauthCallback {
   constructor(
@@ -40,10 +52,12 @@ export class SlackOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private channelConnectionRepository: ChannelConnectionRepository,
-    private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
     private updateChannelConnection: UpdateChannelConnection,
-    private createChannelEndpoint: CreateChannelEndpoint
+    private createChannelEndpoint: CreateChannelEndpoint,
+    private agentIntegrationRepository: AgentIntegrationRepository,
+    private agentRepository: AgentRepository,
+    private agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   async execute(command: SlackOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -90,6 +104,11 @@ export class SlackOauthCallback {
       }
     }
 
+    const humanRelayUrl = await this.humanRelayResultUrl(integration, 'connected');
+    if (humanRelayUrl) {
+      return { type: ResponseTypeEnum.URL, result: humanRelayUrl };
+    }
+
     if (credentials.redirectUrl) {
       return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
     }
@@ -103,6 +122,71 @@ export class SlackOauthCallback {
         message: 'Your Slack workspace is connected and ready to use.',
       }),
     };
+  }
+
+  /**
+   * Where an Agent Inbox Slack install should land when the callback cannot finish.
+   * Returns null for every other Slack app, and for a state we cannot read, so those
+   * callers keep their existing error response.
+   */
+  async resolveHumanRelayErrorRedirect(state: string): Promise<string | null> {
+    try {
+      const preliminary = peekOAuthStatePayload<{ providerId?: ChatProviderIdEnum }>(state);
+      if (preliminary.providerId !== ChatProviderIdEnum.Slack && preliminary.providerId !== ChatProviderIdEnum.Novu) {
+        return null;
+      }
+
+      const stateData = await this.decodeSlackState(state);
+      const integration = await this.getIntegration(stateData);
+
+      return await this.humanRelayResultUrl(integration, 'error');
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Agent Inbox installs always return to the public result page, including ones already
+   * in a workspace. A Slack app can be linked to more than one agent, so any `human_relay`
+   * link is enough — picking a single link can miss the Agent Inbox agent.
+   */
+  private async humanRelayResultUrl(
+    integration: IntegrationEntity,
+    status: 'connected' | 'error'
+  ): Promise<string | null> {
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _integrationId: integration._id,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_agentId']
+    );
+    const agentIds = links.flatMap((link) => (link._agentId ? [link._agentId] : []));
+    if (agentIds.length === 0) {
+      return null;
+    }
+
+    const humanRelay = await this.agentRepository.findOne(
+      {
+        _id: { $in: agentIds },
+        runtime: 'human_relay',
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_id', '_organizationId', 'look']
+    );
+    if (!humanRelay) {
+      return null;
+    }
+
+    // The page has nothing else to tell whose agent it is, so the link carries the look its mascot shows there.
+    const look = await this.agentInboxFeatures.mascotLookOf(humanRelay);
+
+    return buildHumanDashboardUrl('/connect/slack/result', {
+      status,
+      ...(look ? { shape: look.shape, color: look.color } : {}),
+    });
   }
 
   private async upsertWorkspaceConnection(
@@ -152,30 +236,13 @@ export class SlackOauthCallback {
     );
   }
 
-  private async resolveContextKeys(stateData: StateData): Promise<string[]> {
-    // A session-validated context arrives pre-resolved as trusted keys.
-    if (stateData.contextKeys?.length) {
-      return stateData.contextKeys;
-    }
-
-    if (!stateData.context) {
-      return [];
-    }
-
-    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-      stateData.environmentId,
-      stateData.organizationId,
-      stateData.context
-    );
-
-    return contexts.map((context) => context.key);
-  }
-
   private async findExistingConnection(
     stateData: StateData,
     integration: IntegrationEntity,
     subscriberId: string | undefined
   ): Promise<ChannelConnectionEntity | null> {
+    const contextKeys = resolveCallerContextKeys(stateData);
+
     if (stateData.identifier) {
       const connectionByIdentifier = await this.channelConnectionRepository.findOne({
         identifier: stateData.identifier,
@@ -184,11 +251,15 @@ export class SlackOauthCallback {
       });
 
       if (connectionByIdentifier) {
+        assertCanReconnectChannelConnection(connectionByIdentifier, {
+          subscriberId: stateData.subscriberId,
+          contextKeys,
+        });
+
         return connectionByIdentifier;
       }
     }
 
-    const contextKeys = await this.resolveContextKeys(stateData);
     const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
 
     return await this.channelConnectionRepository.findOne({
@@ -200,7 +271,11 @@ export class SlackOauthCallback {
     });
   }
 
-  private async linkUserEndpoint(stateData: StateData, integration: IntegrationEntity, authData: any): Promise<void> {
+  private async linkUserEndpoint(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    authData: SlackOAuthAuthData
+  ): Promise<void> {
     if (!stateData.subscriberId) {
       throw new BadRequestException('subscriberId is required for link_user mode');
     }
@@ -231,7 +306,7 @@ export class SlackOauthCallback {
   private async createIncomingWebhookEndpoint(
     stateData: StateData,
     integration: IntegrationEntity,
-    authData: any
+    authData: SlackOAuthAuthData & { incoming_webhook: { url: string } }
   ): Promise<void> {
     if (!stateData.subscriberId) {
       throw new BadRequestException('subscriberId is required for incoming webhook');

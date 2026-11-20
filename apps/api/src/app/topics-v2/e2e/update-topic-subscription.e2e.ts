@@ -105,7 +105,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     );
 
     expect(subscriptionResponse.result.data.length, 'Should have created a subscription').to.equal(1);
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
@@ -155,7 +155,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       topicKey
     );
 
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
@@ -253,7 +253,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       topicKey
     );
 
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
@@ -280,7 +280,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       topicKey
     );
 
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const customCondition = {
       and: [{ '==': [{ var: 'priority' }, 'high'] }, { '>': [{ var: 'amount' }, 100] }],
@@ -321,7 +321,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       topicKey
     );
 
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const response = await session.testAgent
       .patch(`/v2/topics/${topicKey}/subscriptions/${subscriptionIdentifier}`)
@@ -349,7 +349,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       topicKey
     );
 
-    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
 
     const updateResponse = await novuClient.topics.subscriptions.update({
       topicKey,
@@ -433,7 +433,7 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
       );
 
       expect(subscriptionResponse.result.data.length).to.equal(1);
-      const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+      const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier!;
       expect(subscriptionIdentifier).to.include(':ctx_');
       expect(subscriptionResponse.result.data[0].contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
 

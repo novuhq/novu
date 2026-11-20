@@ -35,7 +35,7 @@ const PERIOD_CACHE_TTL_MS = 60_000;
 const PERIOD_CACHE_MAX_ENTRIES = 10_000;
 
 /** Rolling inactivity windows per channel kind (see plan counting model). */
-export const ACTIVATION_WINDOW_MS = {
+const ACTIVATION_WINDOW_MS = {
   /** WhatsApp / Telegram — a fresh reply after 24h of silence is a new conversation. */
   DAY: DAY_MS,
   /** Slack / Teams group threads — every new 7-day stretch of activity counts again. */
@@ -287,6 +287,7 @@ export class ConversationActivationService {
       case AgentPlatformEnum.WHATSAPP:
       case AgentPlatformEnum.TELEGRAM:
       case AgentPlatformEnum.SENDBLUE:
+      case AgentPlatformEnum.PHOTON_IMESSAGE:
         return ACTIVATION_WINDOW_MS.DAY;
       case AgentPlatformEnum.SLACK:
       case AgentPlatformEnum.TEAMS:

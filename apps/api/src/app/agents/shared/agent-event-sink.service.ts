@@ -1,17 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  ConversationActivityEntity,
-  ConversationActivityRepository,
-  type ConversationChannel,
-  ConversationRepository,
-} from '@novu/dal';
+import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
+import {
+  AgentConversationService,
+  type ConversationActivityContext,
+} from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
@@ -20,7 +17,9 @@ import { formatToolInputSummary } from '../conversation-runtime/reply/handle-pla
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
+import { LiveReplyStreamer, type OpenLiveReply } from '../managed-runtime/live-reply-streamer.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
+import { ManagedAgentProviderFactory } from '../managed-runtime/managed-agent-provider-factory.service';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
@@ -59,6 +58,8 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
+  /** The acting user's platform identity (Slack userId, Telegram chatId) for the turn being answered. */
+  platformUserId?: string;
   /** Conversation channel for durable activity persist (web-chat lifecycle, tool ledger, etc.). */
   channel?: ConversationChannel;
   sessionId?: string;
@@ -77,12 +78,12 @@ export class AgentEventSink {
     private readonly inboundAck: InboundAckService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly conversationRepository: ConversationRepository,
-    private readonly activityRepository: ConversationActivityRepository,
-    private readonly activityLedger: ConversationActivityLedger,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly liveReplyStreamer: LiveReplyStreamer,
+    private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -112,6 +113,24 @@ export class AgentEventSink {
     }
   }
 
+  /** The streamer delivers the reply through this path, so its `message` is skipped. */
+  startLiveReply(context: AgentEventContext, runId: string, messageId: string, open: OpenLiveReply): void {
+    const baseFields = this.buildBaseFields(context);
+    this.liveReplyStreamer.start(
+      context,
+      messageId,
+      (text, previewMessageId) =>
+        this.handleMessageEvent(
+          { type: 'message', role: 'assistant', messageId, content: { markdown: text } },
+          baseFields,
+          context,
+          runId,
+          previewMessageId
+        ),
+      open
+    );
+  }
+
   private async dispatchEvent(
     envelope: AgentEventEnvelope,
     context: AgentEventContext,
@@ -136,6 +155,14 @@ export class AgentEventSink {
       case 'channel.typing':
         return this.handleChannelTyping(event, baseFields, context, envelope.runId);
 
+      case 'provider-event':
+        await this.handleProviderEvent(envelope, context);
+
+        return 'accepted';
+
+      case 'custom':
+        return this.handleCustom(event, context, envelope);
+
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
 
@@ -148,7 +175,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'tool-use-done':
-        await this.handleToolUseDone(event, baseFields, context.sessionId);
+        await this.handleToolUseDone(event, baseFields, context, envelope.runId);
 
         return 'accepted';
 
@@ -193,6 +220,16 @@ export class AgentEventSink {
 
         return 'accepted';
 
+      case 'message-start':
+        if (context.source === 'managed' && context.sessionId) {
+          const { sessionId } = context;
+          this.startLiveReply(context, envelope.runId, event.messageId, (signal) =>
+            this.providerFactory.getObserver().live(sessionId, event.messageId, { signal })
+          );
+        }
+
+        return 'accepted';
+
       case 'step-start':
       case 'step-end':
       case 'thinking-start':
@@ -201,9 +238,9 @@ export class AgentEventSink {
       case 'message-delta':
       case 'tool-use-delta':
       case 'source':
-      case 'custom':
       case 'tool-approval-response':
-      case 'message-start':
+      case 'mcp-connection-request':
+      case 'mcp-connection-result':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
 
@@ -236,6 +273,9 @@ export class AgentEventSink {
       toolCallId: event.toolUseId,
       name: event.toolName,
       input: event.input,
+      ...(event.ttlSeconds !== undefined ? { ttlSeconds: event.ttlSeconds } : {}),
+      ...(event.to !== undefined ? { to: event.to } : {}),
+      ...(event.from !== undefined ? { from: event.from } : {}),
     };
 
     try {
@@ -290,7 +330,8 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    runId: string,
+    replacePlatformMessageId?: string
   ): Promise<IngestOutcome> {
     // Runtime ingest accepts assistant messages only. Subscriber turns arrive
     // through the inbound HTTP endpoint, not through this path.
@@ -302,6 +343,10 @@ export class AgentEventSink {
 
     if (context.suppressReply) {
       return 'accepted';
+    }
+
+    if (event.streamed) {
+      await this.liveReplyStreamer.waitForDelivery(context, event.messageId);
     }
 
     const isDuplicate = await this.isDuplicateMessage(context.environmentId, context.conversationId, event.messageId);
@@ -317,7 +362,13 @@ export class AgentEventSink {
     }
 
     return this.dispatchReply(
-      HandleAgentReplyCommand.create({ ...baseFields, reply, activityIdentifier: event.messageId }),
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        reply,
+        quoteReply: event.quoteReply,
+        activityIdentifier: event.messageId,
+        replacePlatformMessageId,
+      }),
       context,
       'message',
       runId
@@ -463,6 +514,74 @@ export class AgentEventSink {
     );
   }
 
+  private async handleProviderEvent(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
+    if (!context.platform || !usesProtocolEventApprovals(context.platform)) {
+      return;
+    }
+
+    if (envelope.event.type !== 'provider-event') {
+      return;
+    }
+
+    const conversation = await this.conversationService.getConversation(
+      context.conversationId,
+      context.environmentId,
+      context.organizationId
+    );
+
+    if (!conversation) {
+      return;
+    }
+
+    await this.webChatLiveActivityPublisher.emitEphemeralEvent({
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      conversation,
+      event: envelope.event,
+      runId: envelope.runId,
+      turnId: envelope.turnId,
+    });
+  }
+
+  private async handleCustom(
+    event: Extract<AgentEvent, { type: 'custom' }>,
+    context: AgentEventContext,
+    envelope: AgentEventEnvelope
+  ): Promise<IngestOutcome> {
+    if (!isPersistableCustomEvent(event)) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event: empty name or data over 64KiB'
+      );
+
+      return 'accepted';
+    }
+
+    const channel = context.channel;
+    if (!channel) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event persist: missing channel on AgentEventContext'
+      );
+
+      return 'accepted';
+    }
+
+    await this.conversationService.persistCustom({
+      conversationId: context.conversationId,
+      channel,
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      identifier: `custom:${envelope.runId}:${envelope.sequence}`,
+      name: event.name,
+      data: event.data,
+    });
+
+    return 'accepted';
+  }
+
   private async handleSignal(
     event: Extract<AgentEvent, { type: 'signal' }>,
     baseFields: BaseCommandFields,
@@ -528,13 +647,32 @@ export class AgentEventSink {
   private async handleToolUseDone(
     event: Extract<AgentEvent, { type: 'tool-use-done' }>,
     baseFields: BaseCommandFields,
-    sessionId?: string
+    context: AgentEventContext,
+    runId: string
   ): Promise<void> {
-    try {
-      if (this.isInternalTool(event.toolName)) {
-        return;
-      }
+    const { sessionId } = context;
 
+    if (this.isInternalTool(event.toolName)) {
+      return;
+    }
+
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-done',
+      (activityContext) =>
+        this.conversationService.persistToolCall({
+          ...activityContext,
+          runId,
+          toolCallId: event.toolUseId,
+          toolName: event.toolName,
+          input: event.input,
+          mcpServerName: this.mcpServerNameOf(event.source),
+        }),
+      { rethrow: true }
+    );
+
+    try {
       if (!event.input || Object.keys(event.input).length === 0) {
         return;
       }
@@ -570,16 +708,52 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<void> {
+    const toolCallId = event.toolUseId;
+
     if (context.source === 'bridge') {
-      await this.dispatchReply(
-        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [mapToolUseResultEvent(event)] }),
+      await this.persistActivity(
         context,
-        'tool-use-result',
-        runId
+        runId,
+        'record-tool-use-result',
+        async (activityContext) => {
+          const { output, preview } = mapToolUseResultEvent(event);
+          await this.conversationService.recordToolResult({
+            ...activityContext,
+            runId,
+            toolCallId,
+            content: event.content,
+            isError: event.isError,
+            modelFacing: { output, preview },
+          });
+        },
+        { rethrow: true }
       );
 
       return;
     }
+
+    await this.persistActivity(
+      context,
+      runId,
+      'record-tool-use-result',
+      async (activityContext) => {
+        // A result carries no tool name. An internal tool never gets a call row, so its result is skipped too.
+        const toolName = await this.conversationService.findToolCallName({ ...activityContext, toolCallId });
+        if (!toolName) {
+          return;
+        }
+
+        await this.conversationService.recordToolResult({
+          ...activityContext,
+          runId,
+          toolCallId,
+          toolName,
+          content: event.content,
+          isError: event.isError,
+        });
+      },
+      { rethrow: true }
+    );
 
     try {
       await this.handlePlanProgress.execute(
@@ -647,7 +821,7 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     const baseFields = this.buildBaseFields(context);
-    const { platform, platformThreadId, sessionId, subscriberId } = context;
+    const { platform, platformThreadId, platformUserId, sessionId, subscriberId } = context;
     const approvals = event.approvals ?? [];
 
     if (!platform || !platformThreadId || !sessionId) {
@@ -660,9 +834,12 @@ export class AgentEventSink {
     }
 
     if (approvals.length === 0) {
-      this.logger.error({ runId }, 'paused run-finish carried zero approvals — skipping tool approval dispatch');
-
-      return;
+      // Empty when the pending tool_use came from an earlier run (resumed streams are a live
+      // tail). HandlePendingToolApprovals recovers from the session.
+      this.logger.warn(
+        { runId, sessionId },
+        'paused run-finish carried zero approvals — recovering pending approvals from the session'
+      );
     }
 
     try {
@@ -682,6 +859,7 @@ export class AgentEventSink {
           subscriberId,
           platform,
           platformThreadId,
+          platformUserId,
           sessionId,
           response,
         })
@@ -715,6 +893,8 @@ export class AgentEventSink {
       return;
     }
 
+    this.logger.error({ runId, sessionId: context.sessionId, code: event.code }, `Agent run failed: ${event.message}`);
+
     const error = new Error(event.message);
 
     if (event.code) {
@@ -747,13 +927,29 @@ export class AgentEventSink {
     runId: string,
     event: RunLifecycleEvent
   ): Promise<void> {
+    await this.persistActivity(
+      context,
+      runId,
+      'persist-run-lifecycle',
+      (activityContext) => this.conversationService.persistRunLifecycle({ ...activityContext, runId, event }),
+      { rethrow: event.type === 'run-start' }
+    );
+  }
+
+  private async persistActivity(
+    context: AgentEventContext,
+    runId: string,
+    operation: string,
+    persist: (activityContext: ConversationActivityContext) => Promise<unknown>,
+    { rethrow }: { rethrow: boolean }
+  ): Promise<void> {
     const channel = context.channel;
     if (!channel) {
-      const message = 'run lifecycle persist skipped: missing channel on AgentEventContext';
+      const message = `${operation} skipped: missing channel on AgentEventContext`;
       this.logger.error({ runId, conversationId: context.conversationId }, message);
       captureAgentException(new Error(message), {
         component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
+        operation,
         sessionId: context.sessionId,
       });
 
@@ -761,35 +957,22 @@ export class AgentEventSink {
     }
 
     try {
-      const activity = await this.activityLedger.persistProtocolEvent({
+      await persist({
         conversationId: context.conversationId,
         channel,
         agentIdentifier: context.agentIdentifier,
         environmentId: context.environmentId,
         organizationId: context.organizationId,
-        runId,
-        event,
       });
-
-      if (activity) {
-        await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
-          channel,
-          conversationId: context.conversationId,
-          environmentId: context.environmentId,
-          organizationId: context.organizationId,
-          agentIdentifier: context.agentIdentifier,
-          activity,
-        });
-      }
     } catch (err) {
-      this.logger.error(err, `run lifecycle persist failed: run=${runId}`);
+      this.logger.error(err, `${operation} failed: run=${runId}`);
       captureAgentException(err, {
         component: 'agent-event-sink',
-        operation: 'persist-run-lifecycle',
+        operation,
         sessionId: context.sessionId,
       });
 
-      if (event.type === 'run-start') {
+      if (rethrow) {
         throw err;
       }
     }
@@ -800,9 +983,10 @@ export class AgentEventSink {
       return false;
     }
 
-    const existing = await this.activityRepository.findOne(
-      { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
-      '*'
+    const existing = await this.conversationService.findAgentMessageByIdentifier(
+      environmentId,
+      conversationId,
+      messageId
     );
 
     return existing !== null;
@@ -828,9 +1012,10 @@ export class AgentEventSink {
     }
 
     for (let attempt = 0; attempt < ACTIVITY_RESOLVE_MAX_ATTEMPTS; attempt += 1) {
-      const activity = await this.activityRepository.findOne(
-        { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
-        '*'
+      const activity = await this.conversationService.findAgentMessageByIdentifier(
+        environmentId,
+        conversationId,
+        messageId
       );
 
       if (activity) {
@@ -842,7 +1027,7 @@ export class AgentEventSink {
       }
     }
 
-    return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, messageId);
+    return this.conversationService.findByPlatformMessageId(environmentId, conversationId, messageId);
   }
 
   private async resolveConversationAgentId(context: AgentEventContext): Promise<string | null> {
@@ -937,4 +1122,20 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+const CUSTOM_AGENT_EVENT_DATA_MAX_BYTES = 65536;
+
+function isPersistableCustomEvent(event: { name: unknown; data: unknown }): boolean {
+  if (typeof event.name !== 'string' || event.name.length === 0) {
+    return false;
+  }
+
+  try {
+    const serialized = JSON.stringify(event.data ?? null);
+
+    return typeof serialized === 'string' && Buffer.byteLength(serialized, 'utf8') <= CUSTOM_AGENT_EVENT_DATA_MAX_BYTES;
+  } catch {
+    return false;
+  }
 }

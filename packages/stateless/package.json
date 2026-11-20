@@ -48,7 +48,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "handlebars": "4.7.9",
+    "handlebars": "^4.7.10",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
   },
@@ -65,7 +65,7 @@
     "run-p": "0.0.0",
     "ts-jest": "^29.1.0",
     "typedoc": "^0.24.0",
-    "typescript": "5.6.2"
+    "typescript": "6.0.3"
   },
   "nx": {
     "tags": [

@@ -6,7 +6,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const NS_UNRESOLVABLE_CODE = 'ns_unresolvable';
+const NS_UNRESOLVABLE_CODE: string = 'ns_unresolvable';
 
 describe('Domain DNS diagnose API - /v1/domains/:domain/diagnose #novu-v2', () => {
   let session: UserSession;

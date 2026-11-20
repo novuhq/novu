@@ -121,12 +121,12 @@ npx novu@latest connect
 
 ## Embeddable Inbox component
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=readme&utm_campaign=react-starter-link), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
 
 <div align="center">
 <img width="4800" height="2700" alt="Novu's Embeddable Inbox components" src="https://github.com/user-attachments/assets/00224c75-7ed0-4e19-b6fd-2a0bdced6258" />
 
-Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=readme&utm_campaign=read-more-react-link) to your app.
+Read more about how to add a [notification center Inbox](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=readme&utm_campaign=read-more-react-link) to your app.
 
 </div>
 
@@ -251,7 +251,7 @@ Expand a channel below to browse supported providers.
 
 | Provider |
 | --- |
-| [Novu Inbox](https://docs.novu.co/inbox/react/get-started?utm_source=github&utm_medium=repository&utm_campaign=inbox-channel-link) |
+| [Novu Inbox](https://docs.novu.co/platform/quickstart/react?utm_source=github&utm_medium=repository&utm_campaign=inbox-channel-link) |
 
 </details>
 
@@ -275,9 +275,7 @@ Novu is a commercial open source company, which means some parts of this open so
 
 The following modules and folders are licensed under the enterprise license:
 
-- `enterprise` folder at the root of the project and all of their subfolders and modules
-- `apps/web/src/ee` folder and all of their subfolders and modules
-- `apps/dashboard/src/ee` folder and all of their subfolders and modules
+- `enterprise` folder at the root of the project and all of its subfolders and modules
 
 ## 💪 Thanks to all of our contributors
 

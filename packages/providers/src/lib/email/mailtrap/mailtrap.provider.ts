@@ -69,10 +69,13 @@ export class MailtrapEmailProvider extends BaseProvider implements IEmailProvide
         html: options.html,
         bcc: options.bcc?.map(this.mapAddress),
         cc: options.cc?.map(this.mapAddress),
+        reply_to: options.replyTo ? this.mapAddress(options.replyTo) : undefined,
+        headers: options.headers,
         attachments: options.attachments?.map((attachment) => ({
           filename: attachment.name,
           content: attachment.file,
           type: attachment.mime,
+          disposition: (attachment.disposition as 'inline' | 'attachment') ?? (attachment.cid ? 'inline' : undefined),
           content_id: attachment.cid,
         })),
       }).body

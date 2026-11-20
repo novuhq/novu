@@ -44,7 +44,7 @@ export const Notification = (props: NotificationProps) => {
         />
       }
     >
-      <ExternalElementRenderer render={(el) => props.renderNotification!(el, props.notification)} />
+      {(renderNotification) => <ExternalElementRenderer render={renderNotification()} args={[props.notification]} />}
     </Show>
   );
 };

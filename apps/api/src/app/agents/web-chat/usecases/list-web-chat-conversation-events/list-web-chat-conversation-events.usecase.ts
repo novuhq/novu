@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentRepository, ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
-import { ConversationActivityLedger } from '../../../conversation-runtime/conversation/conversation-activity-ledger';
+import { AgentConversationService } from '../../../conversation-runtime/conversation/agent-conversation.service';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { type EventMapContext, mapNewestFirstEventActivities } from '../../activity-to-events';
 import { withWebChatContextFilter } from '../../web-chat-context-query.util';
@@ -17,7 +17,7 @@ interface EventPageResult {
 export class ListWebChatConversationEvents {
   constructor(
     private readonly conversationRepository: ConversationRepository,
-    private readonly activityLedger: ConversationActivityLedger,
+    private readonly conversationService: AgentConversationService,
     private readonly agentRepository: AgentRepository
   ) {}
 
@@ -71,7 +71,7 @@ export class ListWebChatConversationEvents {
       agentIdentifier: agent.identifier,
     };
 
-    const page = await this.activityLedger.listForView({
+    const page = await this.conversationService.listForView({
       view: 'client_events',
       environmentId: command.environmentId,
       organizationId: command.organizationId,

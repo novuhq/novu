@@ -1,38 +1,20 @@
 import { BadGatewayException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { expect } from 'chai';
-import { formatDeliveryErrorMessage, resolveDeliveryHttpStatus, toDeliveryError } from './delivery-error.util';
+import { toDeliveryError } from './delivery-error.util';
 
 describe('delivery-error.util', () => {
-  it('maps adapter ValidationError to HTTP 400', () => {
-    const err = Object.assign(new Error('Message text cannot be empty'), {
-      name: 'ValidationError',
-      code: 'VALIDATION_ERROR',
-      adapter: 'telegram',
-    });
-
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.BAD_REQUEST);
-  });
-
-  it('maps upstream 4xx provider responses to the same status', () => {
-    const err = {
-      message: 'Provider rejected request',
-      status: 403,
-    };
-
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.FORBIDDEN);
-  });
-
   it('maps upstream 5xx provider responses to HTTP 502', () => {
     const err = {
       message: 'Provider unavailable',
       status: 503,
     };
 
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.BAD_GATEWAY);
-  });
-
-  it('maps unknown delivery failures to HTTP 502', () => {
-    expect(resolveDeliveryHttpStatus(new Error('network timeout'))).to.equal(HttpStatus.BAD_GATEWAY);
+    expect(() => toDeliveryError(err)).to.throw(BadGatewayException);
+    try {
+      toDeliveryError(err);
+    } catch (error) {
+      expect((error as BadGatewayException).getStatus()).to.equal(HttpStatus.BAD_GATEWAY);
+    }
   });
 
   it('throws BadRequestException for validation delivery failures', () => {
@@ -82,8 +64,14 @@ describe('delivery-error.util', () => {
       },
     };
 
-    expect(formatDeliveryErrorMessage(err)).to.equal(
-      'Delivery failed: Invalid file "sample.txt": data must be a base64-encoded string.'
-    );
+    expect(() => toDeliveryError(err)).to.throw(BadGatewayException);
+    try {
+      toDeliveryError(err);
+    } catch (error) {
+      expect((error as BadGatewayException).getResponse()).to.deep.equal({
+        error: 'delivery_failed',
+        message: 'Delivery failed: Invalid file "sample.txt": data must be a base64-encoded string.',
+      });
+    }
   });
 });

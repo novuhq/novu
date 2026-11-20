@@ -9,6 +9,7 @@ export function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>)
     event: 'onMessage',
     agentId: 'test-bot',
     replyUrl: 'https://api.novu.co/v1/agents/test-bot/reply',
+    eventsUrl: 'https://api.novu.co/v1/agents/events/ingest',
     conversationId: 'conv-456',
     integrationIdentifier: 'slack-main',
     action: null,

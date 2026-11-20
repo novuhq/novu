@@ -166,6 +166,31 @@ export default step.chat(
 `;
 }
 
+const toolFields: ControlFields = {
+  body: { default: 'An incident requires attention.' },
+};
+
+export function generateToolStepFile(stepId: string, useZod: boolean): string {
+  return `${stepImports(useZod)}
+
+export default step.tool(
+  '${escapeString(stepId)}',
+  async (controls) => ({
+    body: controls.body,
+  }),
+  {
+    controlSchema: ${controlSchema(toolFields, useZod)},
+    // providers: {
+    //   'tool-webhook': async ({ outputs }) => ({
+    //     alert_type: 'incident',
+    //     title: outputs.body,
+    //   }),
+    // },
+  }
+);
+`;
+}
+
 const inAppFields: ControlFields = {
   subject: { default: 'New activity' },
   body: { default: 'You have a new notification.' },
@@ -283,6 +308,7 @@ const STEP_GENERATORS: Record<string, (stepId: string, useZod: boolean) => strin
   push: generatePushStepFile,
   chat: generateChatStepFile,
   in_app: generateInAppStepFile,
+  tool: generateToolStepFile,
   delay: generateDelayStepFile,
   digest: generateDigestStepFile,
   throttle: generateThrottleStepFile,

@@ -1,6 +1,6 @@
 import type { ButtonElement, CardChild, CardElement } from 'chat';
 
-export const TELEGRAM_CALLBACK_DATA_PREFIX = 'chat:';
+const TELEGRAM_CALLBACK_DATA_PREFIX = 'chat:';
 export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
 
 type ActionBlockChild = ButtonElement | { type: string; id?: string; value?: string; label?: string };

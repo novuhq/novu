@@ -2,11 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "customConditions": ["require"],
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "esModuleInterop": true,
     "sourceMap": true,
     "types": ["node"]
   },

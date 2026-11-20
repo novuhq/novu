@@ -27,31 +27,22 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
   const [selectedDays, setSelectedDays] = createSignal<Array<keyof WeeklySchedule>>([props.day()]);
   const [isAllSelected, setIsAllSelected] = createSignal<boolean>(false);
   const allWeekDaysSelected = createMemo(() => selectedDays().length === weekDays.length);
-  const reset = () => {
-    setSelectedDays([props.day()]);
-    setIsAllSelected(false);
-    setIsOpen(false);
-  };
-  const onOpenChange = createMemo(() => (isOpen: boolean) => {
+  // The selection resets when the menu opens, not when it closes, so the checkboxes don't flip during its exit.
+  const onOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       // close other copy times to dropdowns
       document.dispatchEvent(new CustomEvent(NOVU_EVENT_CLOSE_DAY_SCHEDULE_COPY_COMPONENT, { detail: { id } }));
+      setSelectedDays([props.day()]);
+      setIsAllSelected(false);
     }
-    setTimeout(() => {
-      // set is open after a short delay to ensure nicer animation
-      if (!isOpen) {
-        reset();
-      } else {
-        setIsOpen(isOpen);
-      }
-    }, 50);
-  });
+    setIsOpen(isOpen);
+  };
 
   createEffect(() => {
     const listener = (event: CustomEvent<{ id: string }>) => {
       const data = event.detail;
       if (data.id !== id) {
-        reset();
+        setIsOpen(false);
       }
     };
 
@@ -69,7 +60,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
       <Tooltip.Trigger
         disabled={props.disabled}
         asChild={(childProps) => (
-          <Dropdown.Root placement="right" offset={0} open={isOpen()} onOpenChange={onOpenChange()}>
+          <Dropdown.Root placement="right" offset={0} open={isOpen()} onOpenChange={onOpenChange}>
             <Dropdown.Trigger
               disabled={props.disabled}
               class={style({
@@ -83,7 +74,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                   class={style({
                     key: 'dayScheduleCopyIcon',
                     className: cn(
-                      'nt-text-foreground-alpha-600 nt-size-3.5 group-hover:nt-opacity-100 nt-opacity-0 nt-transition-opacity nt-duration-200',
+                      'nt-text-foreground-alpha-600 nt-size-3.5 group-hover:nt-opacity-100 nt-opacity-0 nt-transition-opacity nt-duration-base',
                       {
                         'group-hover:nt-opacity-0': props.disabled,
                       }
@@ -181,7 +172,7 @@ export const DayScheduleCopy = (props: DayScheduleCopyProps) => {
                         },
                       });
                     }
-                    reset();
+                    setIsOpen(false);
                   }}
                   data-localization="preferences.schedule.dayScheduleCopy.apply"
                 >

@@ -9,9 +9,9 @@ Novu uses environments to separate your workflows and its data. This lets you sa
 
 When you create a Novu account, you are provided with a development and production environment by default. On certain plans, you can also create custom environments to match your team’s workflow.
 
-- **Development environment**: Use the development environment to build and test new workflows, layouts, translations, and experiment with different configurations before publishing to other environments.
-- **Production environment**: The production environment is used to send notifications to your subscribers. To ensure stability and prevent unintended changes, this environment is view-only for workflows, layouts, and translations. Changes are not made here directly, they are made from other environment and then published to this production environment.
-- **Custom environment**: Custom environments are only available on [Team and Enterprise plans](https://novu.co/pricing). You can use them to reflect your release process, for example, staging or QA.
+- **Development environment**: Use the development environment to build and test new workflows, layouts, and translations, and experiment with different configurations before publishing to other environments. Triggers here use the Development secret key. A workflow that exists only in Development does not run when you call the API with the Production secret key.
+- **Production environment**: The production environment is used to send notifications to your subscribers. To ensure stability and prevent unintended changes, this environment is view-only for workflows, layouts, and translations. Changes are not made here directly. They are made in Development and then published.
+- **Custom environment**: Custom environments are only available on [Team and Enterprise plans](https://novu.co/pricing). The Free plan includes Development and Production only. Use a custom environment to match your release process, for example staging or QA.
 
 ## Create a custom environment
 
@@ -84,7 +84,29 @@ You can promote changes to other environments by following these steps:
    ![Publish changes](/images/developer-tools/list-of-environment.png)
 4. Select the checkboxes next to the workflows that you want to publish. A menu appears, showing all the available workflows.
    ![Publish changes](/images/developer-tools/publish-changes-modal.png)
-5. Click the publish button to publish the selected workflows to the selected environment.
+5. Review the changes before publishing. The modal summarizes how many resources changed and flags any breaking changes, and you can expand a resource to see its specific additions, edits, and removals.
+6. Click the publish button to publish the selected workflows to the selected environment.
+
+### Publish via API
+
+You can also publish programmatically with the [Publish resources to target environment](/api-reference/environments/publish-resources-to-target-environment) endpoint (`POST /v2/environments/{targetEnvironmentId}/publish`). The request body accepts:
+
+- `sourceEnvironmentId`: the environment to sync from. Defaults to the Development environment.
+- `resources`: an array of specific resources to publish, each with a `resourceType` (`workflow`, `layout`, or `agent`) and a `resourceId`. `resourceId` is the public identifier: the workflow trigger identifier (`workflowId`), layout identifier, or agent identifier. Do not pass an internal database `_id`. If omitted, all resources are published. If none of the supplied IDs match a resource in the source environment, the request succeeds but publishes nothing.
+- `dryRun`: set to `true` to preview the changes without applying them.
+
+Publishing happens at the workflow level. There is no per-step publish action.
+
+### Delete a workflow from Production
+
+Production is view-only for workflows, so you can't delete a workflow there directly. To remove a workflow from Production:
+
+1. In the **Development** environment, [delete the workflow](/platform/workflow/create-a-workflow#delete-a-workflow).
+2. Click **Publish changes** and select **Production**.
+3. Review the changes. The summary lists the deleted workflow as a removal.
+4. Click the publish button. Novu removes the workflow from Production.
+
+After the workflow is removed from Production, triggers that reference its `workflowId` in Production fail with a `workflow not found` error.
 
 ## Frequently asked questions
 

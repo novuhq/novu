@@ -1,0 +1,189 @@
+import { BadGatewayException, BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
+import { AgentRepository, EnvironmentRepository } from '@novu/dal';
+import { HumanChannelViaEnum } from '@novu/shared';
+import { GenerateConnectOauthUrlCommand } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
+import { GenerateConnectOauthUrl } from '../../../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { IssueTelegramSubscriberLinkCommand } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from '../../../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
+import { HUMAN_INVITE_APP_NAMES } from '../../dtos/human-invite.dto';
+import { findAgentInboxOwner, trackAgentInboxInviteAccepted } from '../../services/agent-inbox-analytics';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
+import { HumanDeliveryService } from '../../services/human-delivery.service';
+import { type HumanInviteTokenPayload, HumanInviteTokenService } from '../../services/human-invite-token.service';
+import { IssueHumanWhatsAppLink } from '../human-whatsapp/issue-human-whatsapp-link.usecase';
+import { RequestAddressVerificationCommand } from '../request-address-verification/request-address-verification.command';
+import {
+  RequestAddressVerification,
+  type RequestAddressVerificationResult,
+} from '../request-address-verification/request-address-verification.usecase';
+import { ConnectHumanInviteChannelCommand } from './connect-human-invite-channel.command';
+
+export type ConnectHumanInviteChannelResult =
+  | { url: string }
+  | (RequestAddressVerificationResult & { via: HumanChannelViaEnum.EMAIL });
+
+/**
+ * Mints a fresh connect link for the app the human picked on the invite page —
+ * the same links `human contact invite --via` prints (Telegram start code, Slack OAuth
+ * with the Slack user auto-linked), created at click time so they never go stale.
+ * Email starts double opt-in instead of minting a URL.
+ */
+@Injectable()
+export class ConnectHumanInviteChannel {
+  constructor(
+    private readonly inviteTokens: HumanInviteTokenService,
+    private readonly deliveryService: HumanDeliveryService,
+    private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
+    private readonly generateConnectOauthUrl: GenerateConnectOauthUrl,
+    private readonly requestAddressVerification: RequestAddressVerification,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate,
+    private readonly issueHumanWhatsAppLink: IssueHumanWhatsAppLink,
+    private readonly agentRepository: AgentRepository
+  ) {}
+
+  async execute(command: ConnectHumanInviteChannelCommand): Promise<ConnectHumanInviteChannelResult> {
+    const { payload } = await this.inviteTokens.requireActive(command.token);
+    await this.channelGate.assertViaEnabled(command.via, { organizationId: payload.org, environmentId: payload.env });
+    const result = await this.connect(command, payload);
+    this.trackAccepted(payload, command.via);
+
+    return result;
+  }
+
+  private async connect(
+    command: ConnectHumanInviteChannelCommand,
+    payload: HumanInviteTokenPayload
+  ): Promise<ConnectHumanInviteChannelResult> {
+    const appName = HUMAN_INVITE_APP_NAMES[command.via];
+
+    const channels = await this.deliveryService.describeInviteChannels({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentId: payload.agentId,
+      subscriberId: payload.subscriberId,
+    });
+    const channel = channels.find(({ via }) => via === command.via);
+
+    if (!channel?.available) {
+      throw new BadRequestException({
+        code: 'channel_unavailable',
+        message: `${appName} isn't offered on this invite.`,
+      });
+    }
+
+    if (channel.connected) {
+      throw new ConflictException({
+        code: 'channel_already_connected',
+        message: `You're already connected on ${appName}.`,
+      });
+    }
+
+    if (command.via === HumanChannelViaEnum.EMAIL) {
+      if (!command.address?.trim()) {
+        throw new BadRequestException({
+          code: 'address_required',
+          message: 'Enter an email address to confirm.',
+        });
+      }
+
+      try {
+        const result = await this.requestAddressVerification.execute(
+          RequestAddressVerificationCommand.create({
+            environmentId: payload.env,
+            organizationId: payload.org,
+            agentId: payload.agentId,
+            subscriberId: payload.subscriberId,
+            via: HumanChannelViaEnum.EMAIL,
+            address: command.address,
+          })
+        );
+
+        return { ...result, via: HumanChannelViaEnum.EMAIL };
+      } catch (err) {
+        if (err instanceof BadGatewayException) {
+          throw new BadGatewayException({
+            error: 'delivery_failed',
+            message: 'Could not send the confirmation email. Try again in a moment.',
+          });
+        }
+
+        throw err;
+      }
+    }
+
+    if (command.via === HumanChannelViaEnum.WHATSAPP) {
+      return this.whatsAppLink(payload, channel.integrationIdentifier, appName);
+    }
+
+    if (command.via === HumanChannelViaEnum.TELEGRAM) {
+      const link = await this.issueTelegramSubscriberLink.execute(
+        IssueTelegramSubscriberLinkCommand.create({
+          environmentId: payload.env,
+          organizationId: payload.org,
+          integrationIdentifier: channel.integrationIdentifier,
+          subscriberId: payload.subscriberId,
+        })
+      );
+
+      return { url: link.deepLinkUrl };
+    }
+
+    const url = await this.generateConnectOauthUrl.execute(
+      GenerateConnectOauthUrlCommand.create({
+        environmentId: payload.env,
+        organizationId: payload.org,
+        integrationIdentifier: channel.integrationIdentifier,
+        subscriberId: payload.subscriberId,
+        connectionMode: 'subscriber',
+        autoLinkUser: true,
+      })
+    );
+
+    return { url };
+  }
+
+  /** A wa.me link with a code: sending it from WhatsApp binds the contact's number, as `/start` does on Telegram. */
+  private async whatsAppLink(
+    payload: HumanInviteTokenPayload,
+    integrationIdentifier: string,
+    appName: string
+  ): Promise<{ url: string }> {
+    const agent = await this.agentRepository.findOne(
+      { _id: payload.agentId, _environmentId: payload.env, _organizationId: payload.org },
+      ['identifier']
+    );
+    if (!agent) {
+      throw new BadRequestException({
+        code: 'channel_unavailable',
+        message: `${appName} isn't offered on this invite.`,
+      });
+    }
+
+    const link = await this.issueHumanWhatsAppLink.execute({
+      environmentId: payload.env,
+      organizationId: payload.org,
+      agentIdentifier: agent.identifier,
+      subscriberId: payload.subscriberId,
+      integrationIdentifier,
+    });
+
+    return { url: link.url };
+  }
+
+  /**
+   * Counts the accepted invite for the agent's owner. The invite page has no session, so the owner is found by
+   * the invite's environment. In the background, so it never slows or fails the invite page.
+   */
+  private trackAccepted(payload: HumanInviteTokenPayload, channel: HumanChannelViaEnum): void {
+    findAgentInboxOwner(this.environmentRepository, { environmentId: payload.env, organizationId: payload.org })
+      .then((owner) => {
+        if (owner) {
+          trackAgentInboxInviteAccepted(this.analyticsService, owner, { agentId: payload.agentId, channel });
+        }
+      })
+      .catch(() => undefined);
+  }
+}

@@ -123,6 +123,109 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(body.data.conditions[0].children[0].operator).to.equal('EQUAL');
   });
 
+  it('should create integration with JsonLogic conditions', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'context.tenant.id' }, 'acme'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.rules).to.deep.equal(payload.rules);
+    expect(body.data.primary).to.equal(false);
+  });
+
+  it('should reject JsonLogic conditions on a payload field', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-invalid',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'payload.foo' }, 'bar'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
+  it('should create integration with JsonLogic conditions on a workflow field', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-workflow',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'workflow.name' }, 'Order confirmation'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.rules).to.deep.equal(payload.rules);
+  });
+
+  it('should reject JsonLogic conditions on unsupported workflow fields', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-workflow-invalid',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'workflow.identifier' }, 'order-confirmation'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
+  it('should reject JsonLogic conditions on deprecated tenant fields', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-tenant',
+      active: false,
+      check: false,
+      rules: {
+        '==': [{ var: 'tenant.identifier' }, 'acme'],
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
+  it('should reject JsonLogic conditions with unsupported operators', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions-logic-log',
+      active: false,
+      check: false,
+      rules: {
+        log: { var: 'subscriber.email' },
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
   it('should return error with malformed conditions', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
@@ -271,6 +374,32 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(data.credentials?.tlsOptions).to.instanceOf(Object);
     expect(data.credentials?.tlsOptions).to.eql(payload.credentials.tlsOptions);
     expect(data.active).to.equal(true);
+  });
+
+  it('should not store the Twilio auth token for API key authentication', async () => {
+    const response = await session.testAgent.post('/v1/integrations').send({
+      providerId: SmsProviderIdEnum.Twilio,
+      channel: ChannelTypeEnum.SMS,
+      credentials: {
+        authMethod: 'apiKey',
+        accountSid: 'AC123',
+        token: 'auth-token',
+        apiKey: 'SK123',
+        secretKey: 'api-key-secret',
+        from: '+15550000000',
+      },
+      active: true,
+      check: false,
+    });
+    expect(response.status).to.equal(201);
+
+    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { credentials } = integrations.find((integration) => integration._id === response.body.data._id);
+
+    expect(credentials.authMethod).to.equal('apiKey');
+    expect(credentials.apiKey).to.equal('SK123');
+    expect(credentials.secretKey).to.equal('api-key-secret');
+    expect(credentials.token).to.equal(undefined);
   });
 
   it('should not calculate primary and priority fields when is not active', async () => {
@@ -675,12 +804,12 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
   describe('API key authentication is scoped to the key environment', () => {
     it('should forbid creating with a different `_environmentId` when authenticated via API key', async () => {
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
-      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      if (!prodEnv) throw new Error('Expected Production environment fixture');
 
       const payload = {
         providerId: EmailProviderIdEnum.SendGrid,
         channel: ChannelTypeEnum.EMAIL,
-        _environmentId: prodEnv!._id,
+        _environmentId: prodEnv._id,
         check: false,
       };
 

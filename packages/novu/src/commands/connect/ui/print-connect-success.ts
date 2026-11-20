@@ -1,11 +1,20 @@
 import chalk from 'chalk';
-import { channelDisplayName } from '../dashboard-urls';
+import { channelDisplayName, resolveConnectSuccessDestination, UNCLAIMED_KEYLESS_HINT } from '../dashboard-urls';
+import { printDevCommandBox } from '../pipeline/bridge/print-bridge-dev-next-steps';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
-import type { ConnectUI } from './ui';
-
-type ConnectSuccessResult = Parameters<ConnectUI['success']>[0];
+import {
+  type ConnectSuccessResult,
+  describeEmbedSuccessNextStep,
+  formatDemoSubscriberWarning,
+  resolveWebChatSuccessPresentation,
+  UNKNOWN_SOCKET_HOST_WARNING,
+} from './format-web-chat-success';
 
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
+  if (result.connectedChannel === 'web-chat') {
+    return false;
+  }
+
   return (
     result.customCodeOutcome?.scaffolded === true ||
     result.chatSdkOutcome?.scaffolded === true ||
@@ -14,42 +23,47 @@ export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): b
   );
 }
 
+function printUnknownSocketHostWarning(unknownSocketHost: boolean): void {
+  if (!unknownSocketHost) {
+    return;
+  }
+
+  console.log(`  ${chalk.yellow('!')} ${UNKNOWN_SOCKET_HOST_WARNING}`);
+}
+
 export function printConnectSuccess(result: ConnectSuccessResult): void {
   if (shouldSkipConnectSuccessSummary(result)) {
     return;
   }
 
-  const agentUrl = result.environmentSlug
-    ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
-    : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
-  const channelLabel = (() => {
-    if (result.connectedChannel === 'slack') return 'Slack';
-    if (result.connectedChannel === 'telegram') return 'Telegram';
-    if (result.connectedChannel === 'email') return 'Email';
-    if (result.connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
-    if (result.connectedChannel === 'whatsapp') return 'WhatsApp';
+  const webChatPresentation = resolveWebChatSuccessPresentation(result);
+  if (printWebChatAppSuccess(webChatPresentation, formatDemoSubscriberWarning(result))) {
+    return;
+  }
 
-    return null;
-  })();
-  const redirectChannelLabel = result.dashboardRedirectChannel
-    ? channelDisplayName(result.dashboardRedirectChannel)
-    : null;
+  const destination = resolveConnectSuccessDestination({
+    connectDashboardUrl: result.connectDashboardUrl,
+    environmentSlug: result.environmentSlug,
+    agentIdentifier: result.agent.identifier,
+    isKeyless: result.isKeyless,
+    claimUrl: result.claimUrl ?? null,
+  });
 
   console.log('');
-  console.log(`${chalk.green('✓')} Your agent is live.`);
-  console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-  if (channelLabel) {
-    console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
-  } else if (redirectChannelLabel) {
-    console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);
+  if (result.connectedChannel === 'web-chat') {
+    console.log(`${chalk.green('✓')} Web Chat linked — add it to your app.`);
   } else {
-    console.log(`  ${chalk.gray('No channel connected.')}`);
+    console.log(`${chalk.green('✓')} Your agent is live.`);
   }
-  if (result.isKeyless && result.claimUrl) {
-    console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
+  console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
+  printSuccessNextStep(result, webChatPresentation);
+  if (destination.kind === 'claim') {
+    console.log(`  ${chalk.bold('Claim your agent:')} ${destination.url}`);
     console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
+  } else if (destination.kind === 'dashboard') {
+    console.log(`  ${chalk.bold('Dashboard:')} ${destination.url}`);
   } else {
-    console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+    console.log(`  ${chalk.gray(UNCLAIMED_KEYLESS_HINT)}`);
   }
   const followUp = resolveBridgeSetupFollowUpMessage(result.connectMode, {
     chatSdk: result.chatSdkOutcome,
@@ -68,4 +82,120 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   ) {
     console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
   }
+}
+
+type WebChatSuccessPresentation = ReturnType<typeof resolveWebChatSuccessPresentation>;
+
+function printWebChatAppSuccess(
+  webChatPresentation: WebChatSuccessPresentation,
+  demoSubscriberWarning: string | null
+): boolean {
+  if (webChatPresentation?.kind === 'merged-scaffold') {
+    console.log('');
+    console.log(`${chalk.green('✓')} Agent app ready with Web Chat.`);
+    console.log(
+      `  ${chalk.bold('Agent:')} ${webChatPresentation.agentName} ${chalk.gray(`(${webChatPresentation.agentIdentifier})`)}`
+    );
+    console.log(`  ${chalk.bold('App:')} ${webChatPresentation.appName}`);
+    console.log('');
+    console.log(`  ${chalk.bold('One Next.js app serves both:')}`);
+    console.log(`    ${chalk.cyan('Web Chat UI')}  ${chalk.underline(webChatPresentation.chatUrl)}`);
+    console.log(`    ${chalk.cyan('Agent handler')}  ${webChatPresentation.handlerRoute}`);
+    if (webChatPresentation.editAgentHint) {
+      console.log(`  ${chalk.gray(webChatPresentation.editAgentHint)}`);
+    }
+    printDemoSubscriberWarning(demoSubscriberWarning);
+    printDevCommandBox(webChatPresentation.devCommand);
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
+
+    return true;
+  }
+
+  if (webChatPresentation?.kind === 'embed') {
+    console.log('');
+    console.log(`${chalk.green('✓')} Web Chat connected`);
+    if (webChatPresentation.alreadyWired) {
+      if (webChatPresentation.envSummary) {
+        console.log(`  ${chalk.dim(`Refreshed ${webChatPresentation.envSummary} with your Novu keys.`)}`);
+      }
+      console.log(`  ${chalk.bold('Status:')} This project is already wired for Web Chat.`);
+      console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
+      printDemoSubscriberWarning(demoSubscriberWarning);
+      printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
+
+      return true;
+    }
+
+    if (webChatPresentation.envSummary) {
+      console.log(`  ${chalk.dim(`Updated ${webChatPresentation.envSummary} with your Novu keys.`)}`);
+    }
+    printDemoSubscriberWarning(demoSubscriberWarning);
+    console.log(`  ${chalk.bold('Next:')} Copy the setup prompt below into your coding agent.`);
+    console.log(`  ${chalk.dim(describeEmbedSuccessNextStep(webChatPresentation.connectMode))}`);
+    if (webChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.dim('Prompt file:')} ${webChatPresentation.embedPromptFile}`);
+    }
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
+    if (webChatPresentation.embedPrompt) {
+      console.log('');
+      console.log(webChatPresentation.embedPrompt);
+    }
+
+    return true;
+  }
+
+  if (webChatPresentation?.kind === 'standalone-scaffold') {
+    console.log('');
+    console.log(`${chalk.green('✓')} Web Chat app ready.`);
+    console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(webChatPresentation.chatUrl)}`);
+    printDemoSubscriberWarning(demoSubscriberWarning);
+    printDevCommandBox(webChatPresentation.devCommand);
+    printUnknownSocketHostWarning(webChatPresentation.unknownSocketHost);
+
+    return true;
+  }
+
+  return false;
+}
+
+function printSuccessNextStep(result: ConnectSuccessResult, webChatPresentation: WebChatSuccessPresentation): void {
+  const channelLabel = resolveChannelLabel(result.connectedChannel);
+  const redirectChannelLabel = result.dashboardRedirectChannel
+    ? channelDisplayName(result.dashboardRedirectChannel)
+    : null;
+
+  if (webChatPresentation?.kind === 'generic-linked') {
+    if (webChatPresentation.dashboardUrl) {
+      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${webChatPresentation.dashboardUrl}`);
+    }
+    if (webChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${webChatPresentation.embedPromptFile}`);
+    }
+    if (webChatPresentation.projectDir) {
+      console.log(`  ${chalk.cyan('→')} Example app: ${webChatPresentation.projectDir}`);
+    }
+  } else if (channelLabel) {
+    console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
+  } else if (redirectChannelLabel) {
+    console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);
+  } else {
+    console.log(`  ${chalk.gray('No channel connected.')}`);
+  }
+}
+
+function printDemoSubscriberWarning(warning: string | null): void {
+  if (warning) {
+    console.log(`  ${chalk.yellow(warning)}`);
+  }
+}
+
+function resolveChannelLabel(connectedChannel: ConnectSuccessResult['connectedChannel']): string | null {
+  if (connectedChannel === 'slack') return 'Slack';
+  if (connectedChannel === 'telegram') return 'Telegram';
+  if (connectedChannel === 'email') return 'Email';
+  if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
+  if (connectedChannel === 'whatsapp') return 'WhatsApp';
+  if (connectedChannel === 'web-chat') return 'Web Chat';
+
+  return null;
 }

@@ -5,6 +5,9 @@ import type { SubscriberResolutionOutcome } from '../types/subscriber-resolution
 export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
   "We couldn't match your identity to a known user, so this agent can't reply yet. Sign in or link your account in the app that owns this agent, then try again.";
 
+export const SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY =
+  "You don't have access to this agent. Contact the team that owns it if you think this is a mistake.";
+
 /**
  * Shown when resolution itself broke rather than the sender being unknown —
  * blaming the sender's identity for an internal failure would be misleading.
@@ -18,6 +21,18 @@ export const UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY =
  * "unknown user" rather than an unverified sender.
  */
 export const UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY = buildEmailVerificationFailedReply(undefined);
+
+export function buildMentionRequiredNoticeReply(params: { joinerName?: string; agentName?: string }): string {
+  const handle = params.agentName?.trim();
+  const mentionHint = handle ? `@-mention me (${handle})` : '@-mention me';
+  const joiner = params.joinerName?.trim();
+
+  if (joiner) {
+    return `I see ${joiner} joined this thread. Now that more than one person is here, ${mentionHint} when you'd like me to reply.`;
+  }
+
+  return `There's more than one person in this thread, so ${mentionHint} when you'd like me to reply.`;
+}
 
 export function buildUnresolvedSubscriberAccessReply(params: {
   platform: AgentPlatformEnum;

@@ -1,6 +1,6 @@
 {
   "name": "@novu/nextjs",
-  "version": "3.19.0",
+  "version": "3.20.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",
@@ -81,13 +81,13 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
-    "tsup": "^8.2.1",
-    "typescript": "5.6.2"
+    "tsup": "^9.0.0",
+    "typescript": "6.0.3"
   },
   "peerDependencies": {
     "next": ">=13.5.2 || ^14.0.0 || ^15.0.0 || ^16.0.0",

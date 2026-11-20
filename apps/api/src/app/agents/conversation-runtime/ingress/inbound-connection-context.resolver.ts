@@ -6,9 +6,12 @@ import {
   ChannelEndpointRepository,
   type ContextEntity,
   ContextRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import type { AgentContextPayload, AgentContextValue } from '@novu/framework';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { WORKSPACE_ID_EXTRACTORS } from '../../shared/util/workspace-id';
@@ -22,8 +25,22 @@ function toContextValue(context: ContextEntity): AgentContextValue {
 }
 
 /**
+ * The connect-time context resolved for an inbound turn, plus an optional per-context bridge URL
+ * override. When `bridgeUrl` is set, the bridge executor routes this turn's bridge call there
+ * instead of the agent's default bridge URL.
+ */
+export interface ResolvedInboundContext {
+  context: AgentContextPayload | null;
+  bridgeUrl?: string;
+  lookupFailed?: true;
+}
+
+const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
+const FAILED_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null, lookupFailed: true };
+
+/**
  * Resolves the connect-time context bound to an inbound chat so a Novu-hosted multi-tenant agent
- * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Two scopes are supported,
+ * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Three scopes are supported,
  * matching where the connect flow persisted the context:
  *
  *  - **Workspace scope** (Slack, Teams): one Novu-hosted app is installed across many customer
@@ -32,6 +49,8 @@ function toContextValue(context: ContextEntity): AgentContextValue {
  *    Additionally the *author's* own `SLACK_USER` / `MS_TEAMS_USER` endpoint is resolved and its
  *    verified per-user context takes precedence over the workspace hint on conflict — the connection
  *    is only a tenant/routing fallback for unlinked authors.
+ *
+ *  - **Session scope** (web chat): the tenant rides on the subscriber session's `contextKeys`.
  *
  *  - **Endpoint scope** (Telegram): there is no workspace — the subscriber links their chat via a
  *    `/start` deep link that binds the tenant to their per-subscriber `ChannelEndpoint`. Matched by
@@ -50,6 +69,7 @@ export class InboundConnectionContextResolver {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly contextRepository: ContextRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -59,19 +79,86 @@ export class InboundConnectionContextResolver {
    * @param rawEvent Raw inbound platform payload — used for workspace-scoped platforms.
    * @param platformUserId The sender's platform identity (e.g. Telegram `chat.id`) — used for
    *   endpoint-scoped platforms.
+   * @param storedWorkspaceId The workspace id captured on the conversation — used when the payload
+   *   carries none (Slack reaction and delete events).
    */
   async resolve(
     config: ResolvedAgentConfig,
     rawEvent: unknown,
-    platformUserId?: string | null
-  ): Promise<AgentContextPayload | null> {
+    platformUserId?: string | null,
+    storedWorkspaceId?: string
+  ): Promise<ResolvedInboundContext> {
+    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
+      return this.resolveBySessionContextKeys(config, rawEvent);
+    }
+
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
-      return this.resolveByWorkspaceAndEndpoint(config, extractWorkspaceId(rawEvent), platformUserId ?? null);
+      return this.resolveByWorkspaceAndEndpoint(
+        config,
+        extractWorkspaceId(rawEvent) ?? storedWorkspaceId ?? null,
+        platformUserId ?? null
+      );
     }
 
     return this.resolveByEndpoint(config, platformUserId ?? null);
+  }
+
+  /**
+   * Web chat has no connection or endpoint: the subscriber's session token carries the tenant as
+   * `contextKeys`, which the adapter stamps on every inbound raw payload (messages and actions).
+   *
+   * Session init only verifies the context signature when the environment's in-app integration
+   * enforces HMAC; otherwise any caller can mint a session naming any context of the environment.
+   * The keys are only trusted as the agent's tenant (and bridge URL) when HMAC is enforced.
+   */
+  private async resolveBySessionContextKeys(
+    config: ResolvedAgentConfig,
+    rawEvent: unknown
+  ): Promise<ResolvedInboundContext> {
+    const contextKeys = (rawEvent as { contextKeys?: unknown } | null | undefined)?.contextKeys;
+    if (!Array.isArray(contextKeys) || contextKeys.length === 0) {
+      return EMPTY_RESOLVED_CONTEXT;
+    }
+
+    try {
+      if (!(await this.isSessionContextSigned(config))) {
+        this.logger.warn(
+          { integrationIdentifier: config.integrationIdentifier, environmentId: config.environmentId },
+          'Ignoring web chat session context: the in-app integration does not enforce HMAC'
+        );
+
+        return EMPTY_RESOLVED_CONTEXT;
+      }
+
+      return await this.buildContextFromKeys(
+        config,
+        contextKeys.filter((key): key is string => typeof key === 'string')
+      );
+    } catch (err) {
+      this.logResolveFailure(err, config, { scope: 'session' });
+
+      return FAILED_RESOLVED_CONTEXT;
+    }
+  }
+
+  /** Every active Novu in-app integration of the environment enforces HMAC, so session init verified the context. */
+  private async isSessionContextSigned(config: ResolvedAgentConfig): Promise<boolean> {
+    const inAppIntegrations = await this.integrationRepository.find(
+      {
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+        active: true,
+      },
+      'credentials'
+    );
+
+    return (
+      inAppIntegrations.length > 0 && inAppIntegrations.every((integration) => integration.credentials?.hmac === true)
+    );
   }
 
   /**
@@ -87,46 +174,58 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     workspaceId: string | null,
     platformUserId: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     // Resolve the workspace connection first so the per-user endpoint lookup can be scoped to it.
-    const connection = await this.findWorkspaceConnection(config, workspaceId);
+    const { connection, lookupFailed: connectionLookupFailed } = await this.findWorkspaceConnection(
+      config,
+      workspaceId
+    );
 
-    const [workspaceContext, endpointContext] = await Promise.all([
+    const [workspaceResult, endpointResult] = await Promise.all([
       this.buildWorkspaceContext(config, connection, workspaceId),
       // Scope the per-user endpoint to the resolved workspace connection. Without it, a platform
       // user (e.g. a Slack `userId`) linked in another customer org — which shares Novu's hosted
       // env/integration — could match here and override the current workspace's tenant.
       platformUserId && connection
         ? this.resolveByEndpoint(config, platformUserId, connection.identifier)
-        : Promise.resolve(null),
+        : Promise.resolve(EMPTY_RESOLVED_CONTEXT),
     ]);
+    const lookupFailed = connectionLookupFailed || workspaceResult.lookupFailed || endpointResult.lookupFailed;
 
-    if (!workspaceContext && !endpointContext) {
-      return null;
+    if (!workspaceResult.context && !endpointResult.context) {
+      return lookupFailed ? FAILED_RESOLVED_CONTEXT : EMPTY_RESOLVED_CONTEXT;
     }
 
-    return { ...(workspaceContext ?? {}), ...(endpointContext ?? {}) };
+    return {
+      context: { ...(workspaceResult.context ?? {}), ...(endpointResult.context ?? {}) },
+      // The verified per-user endpoint context takes precedence over the workspace hint, so its
+      // bridge URL override wins on conflict; the workspace override is the fallback.
+      bridgeUrl: endpointResult.bridgeUrl ?? workspaceResult.bridgeUrl,
+      ...(lookupFailed && { lookupFailed }),
+    };
   }
 
   private async findWorkspaceConnection(
     config: ResolvedAgentConfig,
     workspaceId: string | null
-  ): Promise<ChannelConnectionEntity | null> {
+  ): Promise<{ connection: ChannelConnectionEntity | null; lookupFailed?: true }> {
     if (!workspaceId) {
-      return null;
+      return { connection: null };
     }
 
     try {
-      return await this.channelConnectionRepository.findOne({
+      const connection = await this.channelConnectionRepository.findOne({
         _environmentId: config.environmentId,
         _organizationId: config.organizationId,
         integrationIdentifier: config.integrationIdentifier,
         'workspace.id': workspaceId,
       });
+
+      return { connection };
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return null;
+      return { connection: null, lookupFailed: true as const };
     }
   }
 
@@ -134,9 +233,9 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     connection: ChannelConnectionEntity | null,
     workspaceId: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     if (!connection) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
@@ -144,7 +243,7 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return null;
+      return FAILED_RESOLVED_CONTEXT;
     }
   }
 
@@ -157,11 +256,11 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     platformUserId: string | null,
     connectionIdentifier?: string
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     const endpointConfig = PLATFORM_ENDPOINT_CONFIG[config.platform];
 
     if (!endpointConfig || !platformUserId) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
@@ -179,31 +278,73 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'endpoint', platformUserId });
 
-      return null;
+      return FAILED_RESOLVED_CONTEXT;
     }
   }
 
   private async buildContextFromKeys(
     config: ResolvedAgentConfig,
     contextKeys: string[] | undefined
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     if (!contextKeys?.length) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     const contexts = await this.contextRepository.findByKeys(config.environmentId, config.organizationId, contextKeys);
 
     if (!contexts.length) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
+
+    // Deterministic order so bridge URL selection and conflict logging are stable across turns.
+    const sorted = [...contexts].sort((a, b) => a.key.localeCompare(b.key));
 
     const payload: AgentContextPayload = {};
 
-    for (const context of contexts) {
+    for (const context of sorted) {
       payload[context.type] = toContextValue(context);
     }
 
-    return payload;
+    return {
+      context: payload,
+      bridgeUrl: this.selectBridgeUrlOverride(config, sorted),
+    };
+  }
+
+  /**
+   * Any resolved context may carry a `bridgeUrl` override. When several within the same scope set
+   * one, pick the first by sorted key (stable) and warn on divergent values so misconfiguration is
+   * diagnosable.
+   */
+  private selectBridgeUrlOverride(config: ResolvedAgentConfig, sortedContexts: ContextEntity[]): string | undefined {
+    const withBridgeUrl = sortedContexts.filter((context) => !!context.bridgeUrl);
+
+    if (!withBridgeUrl.length) {
+      return undefined;
+    }
+
+    const selected = withBridgeUrl[0];
+    const distinct = new Set(withBridgeUrl.map((context) => context.bridgeUrl));
+
+    if (distinct.size > 1) {
+      this.logger.warn(
+        {
+          platform: config.platform,
+          integrationIdentifier: config.integrationIdentifier,
+          selectedContextKey: selected.key,
+          conflictingContextKeys: withBridgeUrl.map((context) => context.key),
+        },
+        'Multiple resolved contexts define different bridge URLs; using the first by sorted key'
+      );
+      captureAgentWarning(new Error('Conflicting context bridge URL overrides'), {
+        component: 'inbound-connection-context-resolver',
+        operation: 'select-bridge-url-override',
+        platform: config.platform,
+        integrationIdentifier: config.integrationIdentifier,
+      });
+    }
+
+    return selected.bridgeUrl;
   }
 
   private logResolveFailure(err: unknown, config: ResolvedAgentConfig, extra: Record<string, unknown>): void {

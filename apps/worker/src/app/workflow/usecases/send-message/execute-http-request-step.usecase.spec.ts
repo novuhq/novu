@@ -1,8 +1,10 @@
+import { createHmac } from 'node:crypto';
+import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageStatus } from './send-message-type.usecase';
+import { SendMessageResultFailed, SendMessageStatus } from './send-message-type.usecase';
 
 describe('ExecuteHttpRequestStep - steps namespace', () => {
   function buildDigestStepsMap() {
@@ -27,7 +29,11 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     };
   }
 
-  function buildUsecase(controls: Record<string, unknown>) {
+  function buildUsecase(
+    controls: Record<string, unknown>,
+    wasConditionEvaluationTraced = false,
+    secretKeys: string[] = ['secret-key']
+  ) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const jobRepository = { updateOne: sinon.stub().resolves(undefined) };
     const httpClientService = {
@@ -47,7 +53,8 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       }),
     };
     const getDecryptedSecretKey = {
-      execute: sinon.stub().resolves('secret-key'),
+      execute: sinon.stub().resolves(secretKeys[0]),
+      executeAll: sinon.stub().resolves(secretKeys),
     };
     const executeBridgeJob = {
       buildStepsMap: sinon.stub().resolves(buildDigestStepsMap()),
@@ -56,8 +63,8 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       error: sinon.stub(),
     };
 
-    const createStepConditionsPassedDetail = {
-      execute: sinon.stub().resolves(undefined),
+    const createStepConditionEvaluationDetail = {
+      execute: sinon.stub().resolves(wasConditionEvaluationTraced),
       isEnabled: sinon.stub().resolves(false),
     };
 
@@ -69,7 +76,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       logger as never,
       getDecryptedSecretKey as never,
       executeBridgeJob as never,
-      createStepConditionsPassedDetail as never,
+      createStepConditionEvaluationDetail as never,
       {} as never,
       createExecutionDetails as never
     );
@@ -78,10 +85,19 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       usecase,
       httpClientService,
       executeBridgeJob,
+      createExecutionDetails,
+      createStepConditionEvaluationDetail,
     };
   }
 
-  function buildCommand() {
+  function findFailureDetail(createExecutionDetails: { execute: sinon.SinonStub }) {
+    return createExecutionDetails.execute
+      .getCalls()
+      .map((call) => call.args[0] as { detail: string; raw?: string })
+      .find((args) => args.raw?.includes('Invalid raw JSON body'));
+  }
+
+  function buildCommand(env: Record<string, string> = { name: 'Development', type: 'dev' }) {
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
       organizationId: 'org_1',
@@ -119,6 +135,10 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       workflow: {
         _id: 'tpl_1',
         origin: 'novu-cloud',
+        name: 'Workflow Actual Name',
+        description: 'A test workflow',
+        tags: ['test'],
+        triggers: [{ identifier: 'wf-identifier' }],
       } as never,
       compileContext: {
         subscriber: { subscriberId: 'subscriber_1' },
@@ -128,7 +148,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
           events: undefined,
           total_count: undefined,
         },
-        env: { name: 'Development', type: 'dev' },
+        env,
       } as never,
       bridgeData: null,
       environment: { _id: 'env_1' } as never,
@@ -153,6 +173,64 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
 
     const requestArgs = httpClientService.request.firstCall.args[0];
     expect(requestArgs.body).to.deep.equal({ eventCount: 2 });
+  });
+
+  it('signs the request with every active secret key, original key first', async () => {
+    const { usecase, httpClientService } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+      },
+      false,
+      ['original-key', 'rotated-key']
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    const header = requestArgs.headers['novu-signature'] as string;
+    const [timestampPart, first, second, extra] = header.split(',');
+    const timestamp = timestampPart.slice(2);
+    const signedPayload = `${timestamp}.${JSON.stringify(requestArgs.body)}`;
+    const hmacFor = (secretKey: string) => createHmac('sha256', secretKey).update(signedPayload).digest('hex');
+
+    expect(extra).to.equal(undefined);
+    expect(first).to.equal(`v1=${hmacFor('original-key')}`);
+    expect(second).to.equal(`v1=${hmacFor('rotated-key')}`);
+  });
+
+  it('uses the condition evaluation detail instead of a generic bridge skip detail when tracing succeeds', async () => {
+    const { usecase, createExecutionDetails, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        skip: { '==': [{ var: 'payload.tier' }, 'pro'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(createStepConditionEvaluationDetail.execute.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(false);
+    expect(createExecutionDetails.execute.called).to.equal(false);
+  });
+
+  it('keeps the generic bridge skip detail when condition evaluation tracing is disabled', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      skip: { '==': [{ var: 'payload.tier' }, 'pro'] },
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(createExecutionDetails.execute.calledOnce).to.equal(true);
   });
 
   it('compiles steps.digest-step.events into the HTTP request body', async () => {
@@ -188,5 +266,138 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     expect(requestArgs.url).to.equal('https://example.com/2 notifications');
     expect(requestArgs.headers['X-Digest-Summary']).to.equal('Ada, Grace');
     expect(requestArgs.body).to.deep.equal({ summary: '2 notifications' });
+  });
+
+  it('records an execution detail when the compiled body cannot be repaired into valid JSON', async () => {
+    const { usecase, httpClientService, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"order":{"lines":[{"item":{"sku" }}]}}',
+    });
+
+    const result = (await usecase.execute(buildCommand())) as SendMessageResultFailed;
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    expect(result.shouldHalt).to.equal(true);
+    expect(httpClientService.request.called).to.equal(false);
+
+    const failureDetail = findFailureDetail(createExecutionDetails);
+    expect(failureDetail, 'expected a failed execution detail for the unrepairable body').to.not.equal(undefined);
+
+    const raw = JSON.parse(failureDetail?.raw ?? '{}');
+    expect(raw.error).to.contain('Colon expected');
+    expect(raw.bodyExcerpt).to.contain('"sku"');
+    expect(raw.hint).to.be.a('string');
+  });
+
+  it('does not halt the chain for an unrepairable body when continueOnFailure is enabled', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      continueOnFailure: true,
+      body: '{"order":{"lines":[{"item":{"sku" }}]}}',
+    });
+
+    const result = (await usecase.execute(buildCommand())) as SendMessageResultFailed;
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    expect(result.shouldHalt).to.equal(false);
+    expect(findFailureDetail(createExecutionDetails)).to.not.equal(undefined);
+  });
+
+  it('masks rendered environment variable secrets out of the persisted excerpt', async () => {
+    const secret = 'sk_live_51NQpZmKq7xTvR3wY';
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"token":"{{env.PARTNER_API_KEY}}","tier":"{{env.type}}","order":{"sku" }}',
+    });
+
+    const result = await usecase.execute(buildCommand({ name: 'Production', type: 'prod', PARTNER_API_KEY: secret }));
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+
+    const raw = JSON.parse(findFailureDetail(createExecutionDetails)?.raw ?? '{}');
+    expect(raw.bodyExcerpt, 'the excerpt must not carry the decrypted env secret').to.not.contain(secret);
+    expect(raw.bodyExcerpt).to.contain(SECRET_MASK);
+    // System env values are not secrets, and masking them would gut the excerpt.
+    expect(raw.bodyExcerpt).to.contain('"tier":"prod"');
+    expect(raw.bodyExcerpt).to.contain('"order":{"sku" }');
+  });
+
+  it('runs the HTTP step when a workflow.name skip condition matches', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+        skip: { '==': [{ var: 'workflow.name' }, 'Workflow Actual Name'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(httpClientService.request.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.name': 'Workflow Actual Name',
+    });
+  });
+
+  it('skips the HTTP step when a workflow.name skip condition does not match', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        skip: { '==': [{ var: 'workflow.name' }, 'Pawan'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    expect(httpClientService.request.called).to.equal(false);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].passed).to.equal(false);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.name': 'Workflow Actual Name',
+    });
+  });
+
+  it('resolves workflow.workflowId from the trigger identifier in skip conditions', async () => {
+    const { usecase, httpClientService, createStepConditionEvaluationDetail } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+        skip: { '==': [{ var: 'workflow.workflowId' }, 'wf-identifier'] },
+      },
+      true
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(httpClientService.request.calledOnce).to.equal(true);
+    expect(createStepConditionEvaluationDetail.execute.firstCall.args[0].evaluatedValues).to.deep.equal({
+      'workflow.workflowId': 'wf-identifier',
+    });
+  });
+
+  it('compiles workflow.name into the HTTP request body', async () => {
+    const { usecase, httpClientService } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"workflowName":"{{ workflow.name }}"}',
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    expect(requestArgs.body).to.deep.equal({ workflowName: 'Workflow Actual Name' });
   });
 });

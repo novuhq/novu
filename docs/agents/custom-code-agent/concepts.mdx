@@ -95,6 +95,8 @@ That object is the only interface your code needs. You do not integrate Slack, T
 
 Replies talk to the user; signals update the system around the conversation. One handler turn can reply, set metadata, trigger a workflow, and resolve.
 
+[`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) sends a named payload on the turn. It is not a reply and not a signal. Web Chat renders it as a `data` part.
+
 Signals queue in memory and batch with your next `ctx.reply()` in one request. If the handler exits without calling `ctx.reply()`, pending signals still send.
 
 ## Conversations and workflows
@@ -102,7 +104,7 @@ Signals queue in memory and batch with your next `ctx.reply()` in one request. I
 Conversations and Novu workflows share the same account:
 
 - **Conversation to workflow:** User asks in Slack for a report by email; handler calls `ctx.trigger()` and an existing workflow sends the email.
-- **Workflow to conversation:** User replies to a digest email; that reply opens a new agent conversation.
+- **Workflow to conversation:** Assign an agent on the workflow so chat and email steps send as that agent. When the subscriber replies, Novu opens an agent conversation and hydrates `ctx.notification` with the original payload. See [Workflow-assigned agents](/agents/workflow-agents).
 
 ACI extends Novu's workflow system; it does not replace it. Transactional workflows and open-ended chat work together on one platform.
 

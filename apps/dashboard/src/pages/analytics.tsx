@@ -3,7 +3,7 @@ import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   type ActiveSubscribersTrendDataPoint,
   type ProviderVolumeDataPoint,
@@ -22,6 +22,8 @@ import {
 import { ActiveSubscribersTrendChart } from '../components/analytics/charts/active-subscribers-trend-chart';
 import { ProvidersByVolume } from '../components/analytics/charts/providers-by-volume';
 import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
+import type { ComparePlansLocationState } from '../components/billing/plan';
+import { UsageTierSuggestionBanner } from '../components/billing/usage-limits/usage-tier-suggestion-banner';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { Badge } from '../components/primitives/badge';
@@ -33,6 +35,7 @@ import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useFetchWorkflows } from '../hooks/use-fetch-workflows';
 import { useTelemetry } from '../hooks/use-telemetry';
+import { ROUTES } from '../utils/routes';
 import { TelemetryEvent } from '../utils/telemetry';
 
 export function AnalyticsPage() {
@@ -41,6 +44,7 @@ export function AnalyticsPage() {
   const { subscription } = useFetchSubscription();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const isWorkflowFilterEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_WORKFLOW_FILTER_ENABLED);
 
   const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
@@ -178,6 +182,17 @@ export function AnalyticsPage() {
                 onSelect={(values) => setSelectedWorkflows(values)}
               />
             )}
+          </motion.div>
+
+          <motion.div variants={ANIMATION_VARIANTS.section} className="mb-1.5 mt-2.5 empty:hidden">
+            <UsageTierSuggestionBanner
+              source="usage_page_tier_suggestion"
+              onComparePlans={() =>
+                navigate(ROUTES.SETTINGS_BILLING, {
+                  state: { scrollToComparePlans: true } satisfies ComparePlansLocationState,
+                })
+              }
+            />
           </motion.div>
 
           <motion.div variants={ANIMATION_VARIANTS.section}>

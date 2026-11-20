@@ -9,6 +9,13 @@ const LOG_CONTEXT = 'Main';
 void runWithHydratedSecrets(async () => {
   await import('./config/env.config');
   await import('./instrument');
+
+  // After env.config so the dotenv files are loaded, and before the server so a
+  // queue backend that cannot be reached fails the boot instead of surfacing as
+  // rejected SMTP transactions.
+  const { validateEnv } = await import('./config/env.validators');
+  validateEnv();
+
   const { default: mailin } = await import('./server/index');
   const { default: logger } = await import('./server/logger');
 

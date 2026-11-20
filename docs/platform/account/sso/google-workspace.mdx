@@ -1,0 +1,116 @@
+---
+title: 'Google Workspace SSO'
+sidebarTitle: 'Google Workspace'
+description: 'Add a custom SAML app in the Google Admin console, map the primary email, and upload the IdP metadata to Novu.'
+---
+
+<Note>
+  This is an Enterprise feature on [Novu Cloud](https://dashboard.novu.co). Configure it as the organization **Owner** from **Settings** > **Organization** > **Security** after we enable self-serve, or email [support@novu.co](mailto:support@novu.co) and we will do the Novu side with you. Domain verification and activation are covered in [SAML SSO & SCIM](/platform/account/sso).
+</Note>
+
+Use this for accounts on your Google Workspace domain. This is a custom SAML app in the Google Admin console. It is separate from the **Google** button on the Novu sign-in page, which signs in a personal Google account and does not use your Workspace policies.
+
+Novu is the service provider. Google is the identity provider. The Admin console shows Google's own SSO URL and certificate first. Download those, continue, and only then paste Novu's ACS URL and entity ID.
+
+## Before you start
+
+- An Enterprise organization on Novu Cloud.
+- One or more email domains verified on the Security tab. The domain has to be the one in the person's primary email, because Name ID is set to EMAIL. For SAML, `alex@acme.com` matches a connection for `acme.com`. `alex@sales.acme.com` does not, unless we have enabled subdomain matching.
+- A Google Workspace admin who can add web and mobile apps and change user access.
+- The **ACS URL** and **Entity ID** from the Security tab when **Google Workspace** is selected, or from the message we send.
+
+## Values to paste into Google
+
+| Google field | What Novu gives you |
+| --- | --- |
+| ACS URL | The assertion consumer service URL. Google posts the SAML response here. |
+| Entity ID | The service provider entity ID. |
+
+You paste these on the service provider step, which is after you download Google's metadata. They are not the SSO URL and entity ID that Google shows on the previous screen. Those belong to Google, and you send them back to Novu.
+
+## Create the custom SAML app
+
+<Steps>
+  <Step title="Add a custom SAML app">
+    In the [Google Admin console](https://admin.google.com), go to **Apps** > **Web and mobile apps**. Select **Add app**, then **Add custom SAML app**. Enter an app name and select **Continue**.
+  </Step>
+  <Step title="Download Google's metadata">
+    On **Google Identity Provider details**, under **Option 1: Download IdP metadata**, select **Download Metadata**. Keep that file. You will upload it on the Security tab, or send it to us.
+
+    If you cannot use the file, use **Option 2** and copy three values instead:
+
+    | What to copy | What it is |
+    | --- | --- |
+    | SSO URL | Where Novu sends the user so Google can authenticate them. |
+    | Entity ID | Google's identifier for this app. This is not Novu's entity ID. |
+    | Certificate | The certificate Google uses to sign the SAML response. |
+
+    Select **Continue** only after you have the file, or those three values. Novu cannot finish the connection without Google's metadata.
+  </Step>
+  <Step title="Enter Novu's service provider details">
+    Paste the **ACS URL** and **Entity ID** from Novu into their fields. Under **Name ID**, set **Name ID format** to **EMAIL**. Select **Continue**.
+
+    EMAIL means Google puts the person's primary email in the SAML subject. Leave this on EMAIL. A different Name ID format, such as an opaque ID, does not give Novu an email address to match.
+  </Step>
+  <Step title="Map attributes">
+    Only the primary email is required. The app attribute for email on this Google connection is `email`, not `mail`.
+
+    | Google Directory attribute | App attribute | Required |
+    | --- | --- | --- |
+    | Primary email | `email` | Yes |
+    | First name | `firstName` | No |
+    | Last name | `lastName` | No |
+
+    Select **Finish**.
+  </Step>
+  <Step title="Turn the app on">
+    In **User access**, select **ON for everyone**, or turn it on only for the organizational units that should use Novu. Select **Save**.
+
+    A user in an organizational unit where the app is off cannot sign in, even when SSO is active in Novu and their email domain is verified.
+  </Step>
+  <Step title="Return the metadata to Novu">
+    Upload the metadata file on the Security tab, or send the file to us. If you used Option 2, provide the SSO URL, Google's entity ID, and the certificate instead.
+
+    When Google rotates the signing certificate, send the new metadata file or the new certificate before Google stops using the old one. On a live connection, that update applies immediately.
+  </Step>
+</Steps>
+
+## Test it, then turn it on
+
+On the Security tab, run a test sign-in with a Workspace user who can open the app and whose email is on a verified domain. For a new connection, that test does not change sign-in for anyone else. The connection is not live until you activate it.
+
+<Warning>
+  After you activate, anyone with an email on a verified domain must sign in through this Workspace app. That includes people who already opened Novu with a password or with the personal Google button. Editing the live connection applies immediately. Change it when someone can fix a failed login, and run the test again.
+</Warning>
+
+## What your users experience
+
+- They start on the Novu sign-in page, enter their work email, and are sent to Google. Google checks their Workspace credentials, then sends them back.
+- An existing Novu account with that email is linked to this SAML login. They keep the same account.
+- If they also have multi-factor authentication on the Novu account, they still complete that step after Google accepts them. Workspace 2-Step Verification is separate, and Google enforces that before it returns the user.
+- Starting from a Google app launcher tile is not part of this setup. Ask us if you need IdP-initiated SAML.
+- Removing the connection does not delete Novu accounts.
+- Without [directory sync](/platform/account/directory-sync/google-workspace), a person is created in Novu the first time they sign in. Google directory sync does not use SCIM. It reads the directory with a service account.
+
+## If Google sign-in fails
+
+<AccordionGroup>
+  <Accordion title="Google signs them in and Novu has no email">
+    **Name ID format** is not **EMAIL**, or the primary email is not mapped to the app attribute `email`. `mail` is the Okta and custom SAML name. It is the wrong name on this Google app.
+  </Accordion>
+  <Accordion title="The user is in the Workspace directory and still cannot open Novu">
+    **User access** is off for their organizational unit. Turn the app on for that unit, or move them into a unit where it is on.
+  </Accordion>
+  <Accordion title="The ACS URL was rejected">
+    The ACS URL and entity ID from Novu belong on the service provider step. Google's SSO URL and entity ID, from the previous step, are what you upload or send back. Swapping those two pairs is a common mismatch.
+  </Accordion>
+  <Accordion title="Only the test user is redirected">
+    Activate the connection after the test succeeds.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+Keep the Workspace directory in step with Novu membership in [Google Workspace directory sync](/platform/account/directory-sync/google-workspace). That setup is a Google Cloud service account, not a SCIM token.
+
+Email [support@novu.co](mailto:support@novu.co) or your Slack Connect channel if the test still fails. Include the organization name, the domain, and the email address you tried.

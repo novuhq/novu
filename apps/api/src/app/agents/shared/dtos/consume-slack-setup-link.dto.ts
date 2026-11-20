@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 const SLACK_CONFIG_TOKEN_PATTERN = /^xoxe\.xoxp-/;
@@ -24,4 +24,10 @@ export class ConsumeSlackSetupLinkRequestDto {
 export class ConsumeSlackSetupLinkResponseDto {
   @ApiProperty({ type: Boolean })
   success: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Slack OAuth install URL when the setup token was bound to a subscriber. Valid for 5 minutes.',
+  })
+  authorizeUrl?: string;
 }

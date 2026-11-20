@@ -119,7 +119,7 @@ function HeaderBar() {
   return (
     <div className="flex items-center justify-between gap-3">
       <Header />
-      <UserButton afterSignOutUrl="/agents-mcp" />
+      <UserButton />
     </div>
   );
 }

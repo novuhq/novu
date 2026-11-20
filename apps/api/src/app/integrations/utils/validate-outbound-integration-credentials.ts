@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { resolveSafeInfobipBaseUrl, resolveSafeProviderUrl } from '@novu/providers';
 import {
   assertAllowedSinchSmsRegion,
   EmailProviderIdEnum,
@@ -7,17 +8,13 @@ import {
   SmsProviderIdEnum,
   ToolProviderIdEnum,
 } from '@novu/shared';
-
-type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/dist/cjs/utils/validate-smtp-outbound-target');
-type SsrfUrlValidationModule = typeof import('@novu/shared/dist/cjs/utils/ssrf-url-validation');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { assertSafeSmtpOutboundTargetSync } =
-  require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { assertSafeOutboundUrl, normalizeOutboundHttpUrl, resolvePublicAddresses, SsrfBlockedError } =
-  require('@novu/shared/utils/ssrf-url-validation') as SsrfUrlValidationModule;
+import {
+  assertSafeOutboundUrl,
+  normalizeOutboundHttpUrl,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
+import { assertSafeSmtpOutboundTargetSync } from '@novu/shared/utils/validate-smtp-outbound-target';
 
 /**
  * Rejects operator-supplied destinations that point at internal infrastructure, so a
@@ -48,6 +45,24 @@ async function assertSafeCredentialUrl(rawUrl: string | undefined, fieldLabel: s
   }
 }
 
+async function assertSafeWebhookDestinations(providerId: string, credentials: ICredentials): Promise<void> {
+  if (
+    providerId === EmailProviderIdEnum.EmailWebhook ||
+    providerId === PushProviderIdEnum.PushWebhook ||
+    providerId === ToolProviderIdEnum.Webhook
+  ) {
+    await assertSafeCredentialUrl(credentials.webhookUrl, 'Webhook URL');
+  }
+
+  if (providerId === SmsProviderIdEnum.GenericSms) {
+    await assertSafeCredentialUrl(credentials.baseUrl, 'Base URL');
+
+    if (credentials.authenticateByToken) {
+      await assertSafeCredentialUrl(credentials.domain, 'Auth URL');
+    }
+  }
+}
+
 export async function validateOutboundIntegrationCredentials(
   providerId: string,
   credentials?: ICredentials
@@ -69,20 +84,60 @@ export async function validateOutboundIntegrationCredentials(
       assertAllowedSinchSmsRegion(credentials.region);
     }
 
+    await assertSafeWebhookDestinations(providerId, credentials);
+
     if (
-      providerId === EmailProviderIdEnum.EmailWebhook ||
-      providerId === PushProviderIdEnum.PushWebhook ||
-      providerId === ToolProviderIdEnum.Webhook
+      providerId === SmsProviderIdEnum.Twilio &&
+      credentials.authMethod === 'apiKey' &&
+      (!credentials.apiKey || !credentials.secretKey)
     ) {
-      await assertSafeCredentialUrl(credentials.webhookUrl, 'Webhook URL');
+      throw new Error('Twilio API key authentication requires apiKey (API Key SID) and secretKey (API Key Secret).');
     }
 
-    if (providerId === SmsProviderIdEnum.GenericSms) {
-      await assertSafeCredentialUrl(credentials.baseUrl, 'Base URL');
+    if (providerId === EmailProviderIdEnum.Infobip) {
+      resolveSafeInfobipBaseUrl(credentials.baseUrl);
+    }
 
-      if (credentials.authenticateByToken) {
-        await assertSafeCredentialUrl(credentials.domain, 'Auth URL');
-      }
+    if (providerId === EmailProviderIdEnum.Braze) {
+      resolveSafeProviderUrl(credentials.apiURL, {
+        blockedPrefix: 'Braze API URL blocked',
+        isHostnameAllowed: (hostname) => /^rest\.[a-z0-9-]+\.braze\.(com|eu)$/.test(hostname),
+        requireHttps: true,
+      });
+    }
+
+    if (providerId === EmailProviderIdEnum.Mailgun) {
+      resolveSafeProviderUrl(credentials.baseUrl || 'https://api.mailgun.net', {
+        allowedHostnames: ['api.mailgun.net', 'api.eu.mailgun.net'],
+        blockedPrefix: 'Mailgun base URL blocked',
+        requireHttps: true,
+      });
+    }
+
+    if (providerId === SmsProviderIdEnum.SmsCentral) {
+      resolveSafeProviderUrl(credentials.baseUrl || 'https://my.smscentral.com.au/api/v3.2', {
+        blockedPrefix: 'SMS Central base URL blocked',
+      });
+    }
+
+    if (providerId === SmsProviderIdEnum.Mobishastra) {
+      resolveSafeProviderUrl(credentials.baseUrl, {
+        blockedPrefix: 'Mobishastra base URL blocked',
+      });
+    }
+
+    if (providerId === SmsProviderIdEnum.Kannel) {
+      resolveSafeProviderUrl(`http://${credentials.host}:${credentials.port}/cgi-bin`, {
+        blockedPrefix: 'Kannel host blocked',
+      });
+    }
+
+    if (providerId === PushProviderIdEnum.AppIO) {
+      resolveSafeProviderUrl(credentials.AppIOBaseUrl || 'https://api.io.italia.it/api/v1', {
+        allowedHostnames: ['api.io.italia.it'],
+        blockedPrefix: 'AppIO base URL blocked',
+        requireHttps: true,
+      });
     }
   } catch (error) {
     if (error instanceof Error) {

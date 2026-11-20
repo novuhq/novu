@@ -13,7 +13,7 @@ describe('enhanceDigestStepOutputs', () => {
 
     expect(outputs.eventCount).to.equal(2);
     expect(outputs.countSummary).to.equal('2 notifications');
-    expect(outputs.sentenceSummary).to.equal('Ada, Grace');
+    expect(outputs.sentenceSummary).to.equal('Ada and Grace');
   });
 
   it('returns outputs unchanged when events are missing', () => {

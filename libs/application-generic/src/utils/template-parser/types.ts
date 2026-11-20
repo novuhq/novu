@@ -14,6 +14,9 @@ export type Variable = {
   /** Error message if the variable is invalid */
   message?: string;
 
+  /** Liquid failed to parse this snippet, and no variable name could be read from it. */
+  isParseFailure?: boolean;
+
   /** Error message if the variable filter is invalid */
   filterMessage?: string;
 

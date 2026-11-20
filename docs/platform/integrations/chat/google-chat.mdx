@@ -1,0 +1,37 @@
+---
+title: "Google Chat Integration with Novu"
+sidebarTitle: "Google Chat"
+description: "Connect Google Chat to Novu and send workflow notifications to a space through an incoming webhook."
+---
+
+Novu supports one-way Google Chat notifications through incoming webhooks. Each webhook delivers messages to the Google Chat space where it was created.
+
+<Note>
+  Incoming webhooks cannot receive messages or interactions from Google Chat. Use this integration for outbound
+  notifications to a space.
+</Note>
+
+## Create an incoming webhook
+
+1. Open the Google Chat space that should receive notifications.
+2. Open the space menu and select **Apps & integrations**.
+3. Under **Webhooks**, click **Add webhooks**.
+4. Enter a name for the webhook and click **Save**.
+5. Copy the generated webhook URL.
+
+Your Google Workspace administrator must allow incoming webhooks. If the option is unavailable, ask your administrator to enable them.
+
+## Connect the webhook to a subscriber
+
+1. In the Novu Dashboard, create or select a Google Chat integration.
+2. Open **Subscribers** and select the subscriber that represents the destination.
+3. Add a Google Chat channel endpoint.
+4. Select **Webhook**, paste the incoming webhook URL, and save it.
+
+You can also store the webhook URL through the [subscriber credentials API](/api-reference/subscribers/update-provider-credentials). Use `google-chat` as the provider ID and provide the URL as `webhookUrl`.
+
+## Send a notification
+
+Add a chat step to a workflow and select the Google Chat integration. When the workflow runs for the linked subscriber, Novu posts the message to the configured Google Chat space.
+
+Google Chat limits incoming webhooks to one request per second per space. For current limits and supported message formats, see the [Google Chat webhook documentation](https://developers.google.com/workspace/chat/quickstart/webhooks).

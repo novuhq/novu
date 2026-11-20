@@ -61,7 +61,7 @@ export async function connectSendblueForAgent(
   });
 
   ui.showSendblueTestWaiting({ phone: testPhone, fromNumber: credentials.from, imessageUrl });
-  void open(imessageUrl).catch(() => undefined);
+  void open(imessageUrl).catch((): undefined => undefined);
 
   const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {
     intervalMs: CHANNEL_POLL_INTERVAL_MS,

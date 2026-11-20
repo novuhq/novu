@@ -1,0 +1,517 @@
+---
+title: "Connect Microsoft Teams tenants and destinations"
+sidebarTitle: "Teams tenant connect"
+description: "Run admin consent for each customer tenant, then register Teams channels or users as Novu channel endpoints."
+---
+
+Complete [Azure and bot setup](/platform/integrations/chat/ms-teams-azure-setup) first. This page covers tenant-wide admin consent and where Novu should send messages.
+
+## Let organizations connect their Microsoft 365 tenant
+
+Each organization you notify has its own Microsoft 365 tenant. Before you can send Teams messages on their behalf, a **tenant administrator** from that organization must grant your app a one-time **admin consent**. This authorizes your bot in their tenant using **application permissions** (app-only / client credentials).
+
+<Note>
+  **Tenant connect and user linking are separate steps.** Admin consent connects the organization's Microsoft 365 tenant. Linking a Novu **subscriber** for direct messages is a separate OAuth flow - see [Link a subscriber for direct messages](#link-a-subscriber-for-direct-messages).
+</Note>
+
+### Generate a Connect Teams URL
+
+Call this from **your backend** when someone starts the connect flow in your product (for example, when a tenant administrator clicks **Connect Microsoft Teams**).
+
+<Warning>
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache it - generate a new URL each time someone starts connect.
+</Warning>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+const response = await novu.integrations.generateConnectOAuthUrl({
+  integrationIdentifier: 'ms-teams-bot',
+  subscriberId: 'user-123',
+  context: {
+    tenant: 'acme-corp',
+  },
+  autoLinkUser: false,
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_connect_o_auth_url(generate_connect_oauth_url_request_dto={
+        "integration_identifier": "ms-teams-bot",
+        "subscriber_id": "user-123",
+        "context": {
+            "tenant": "acme-corp",
+        },
+        "auto_link_user": False,
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateConnectOAuthURL(context.Background(), components.GenerateConnectOauthURLRequestDto{
+    IntegrationIdentifier: "ms-teams-bot",
+    SubscriberID: novugo.String("user-123"),
+    Context: map[string]components.GenerateConnectOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateConnectOauthURLRequestDtoContextStr("acme-corp"),
+    },
+    AutoLinkUser: novugo.Bool(false),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateConnectOAuthUrl(
+    generateConnectOauthUrlRequestDto: new Components\GenerateConnectOauthUrlRequestDto(
+        integrationIdentifier: 'ms-teams-bot',
+        subscriberId: 'user-123',
+        context: [
+            'tenant' => 'acme-corp',
+        ],
+        autoLinkUser: false,
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateConnectOAuthUrlAsync(
+    generateConnectOauthUrlRequestDto: new GenerateConnectOauthUrlRequestDto() {
+        IntegrationIdentifier = "ms-teams-bot",
+        SubscriberId = "user-123",
+        Context = new Dictionary<string, object> {
+            { "tenant", "acme-corp" },
+        },
+        AutoLinkUser = false,
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateConnectOAuthUrl()
+    .body(GenerateConnectOauthUrlRequestDto.builder()
+        .integrationIdentifier("ms-teams-bot")
+        .subscriberId("user-123")
+        .context(java.util.Map.of("tenant", "acme-corp"))
+        .autoLinkUser(false)
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-connections/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "ms-teams-bot",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
+  "autoLinkUser": false
+}'
+```
+  </Tab>
+</Tabs>
+
+Call `POST /v1/integrations/channel-connections/oauth` with the same body if you are not using the TypeScript SDK. Authenticate with your Novu **secret key**.
+
+Novu returns a URL pointing to Microsoft's administrator consent endpoint (`login.microsoftonline.com/organizations/v2.0/adminconsent`). It includes your Client ID, redirect URI, and the `https://graph.microsoft.com/.default` scope.
+
+For tenant-wide admin consent, set **`autoLinkUser: false`** (or omit `autoLinkUser` - the API treats omitted as `false`). Only when `autoLinkUser` is explicitly `true` does Novu chain a second OAuth flow after admin consent to link that subscriber for DMs.
+
+<Note>
+  **`@novu/react` `MsTeamsConnectButton`** defaults `autoLinkUser` to `true` in subscriber mode. That is intended for in-app end-user connect flows. For server-side tenant admin consent (Java, REST, or `@novu/api`), pass `autoLinkUser: false` explicitly.
+</Note>
+
+For a resource-specific organization connection as shown above, use a valid, stable Novu `subscriberId`. The
+subscriber can represent the organization rather than an individual person, but it must exist in the same environment
+as the integration. For a shared connection, omit `subscriberId` and provide a Context. Do not send `null` as the
+subscriber ID.
+
+<Warning>
+  Run tenant admin consent once for each combination of environment, integration, resource, and Context. Starting the
+  flow again for an existing connection returns `409 Conflict` with `A channel connection already exists`. Reuse the
+  existing connection instead of creating a duplicate. If you must reconnect after changing Azure permissions or
+  credentials, remove the existing channel connection before starting a new consent flow.
+</Warning>
+
+### Show it in your UI
+
+Open the URL in a new tab or window when the tenant administrator is ready to consent:
+
+```tsx
+window.open(response.url, '_blank');
+```
+
+### What the tenant administrator does
+
+The tenant administrator is someone at the **connecting organization** (not a Novu dashboard user). They grant consent in Microsoft - they do not need a Novu account.
+
+<Steps>
+  <Step title="Sign in to your product">
+    The tenant administrator signs in to your application.
+  </Step>
+
+  <Step title="Click Connect Microsoft Teams">
+    They click **Connect Microsoft Teams**. Your backend generates a fresh OAuth URL and opens it.
+  </Step>
+
+  <Step title="Review consent page">
+    Microsoft shows a consent page listing the application permissions.
+  </Step>
+
+<Step title="Accept consent">
+    They click **Accept**.
+  </Step>
+</Steps>
+
+Microsoft redirects to Novu with `admin_consent=True` and the organization's `tenant` ID. Novu stores the tenant on a channel connection and the flow is complete. You do not handle the callback yourself.
+
+If you set an optional **Redirect URL** on the MS Teams integration in the Novu dashboard, the administrator is sent there after success; otherwise the consent window shows a success message and can be closed.
+
+### Install the app in Teams
+
+Admin consent only authorizes your bot in the organization's tenant. It does not add the bot to a specific team or chat.
+
+For the bot to send messages, someone must install the app where notifications should appear:
+
+- **For channel messages**: Install the app in the specific Team.
+- **For direct messages**: Install the app for the specific user in their personal scope.
+
+The tenant administrator can install your app from the Teams app store or their org catalog, depending on how you published. If you requested the `TeamsAppInstallation.ReadWriteSelfForTeam.All` permission, your backend can programmatically install the app into a specific Team using the Microsoft Graph API.
+
+## Tell Novu where to send the messages
+
+Decide where notifications should land in Teams, collect the required IDs, and register them as channel endpoints in Novu.
+
+You can choose between two destination types:
+  - **Channels**: Send a message to a specific channel within a Team.
+  - **Users**: Send a direct message to a specific user.
+
+### Sending message to channels
+
+To send a notification to a specific channel, you must discover the Team ID and Channel ID from Microsoft, and then register them in Novu.
+
+#### Find the Team and Channel IDs (Microsoft Graph)
+
+You can discover these IDs using the Microsoft Graph API. This requires an App-Only Token (Client credentials) scoped to the customer's tenant.
+
+<Steps>
+  <Step title="Get a Graph access token">
+    ```bash
+    POST https://login.microsoftonline.com/{SUBSCRIBER_TENANT_ID}/oauth2/v2.0/token
+    Content-Type: application/x-www-form-urlencoded
+
+client_id={BOT_APP_ID}
+    &client_secret={BOT_APP_SECRET}
+    &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
+    &grant_type=client_credentials
+    ```
+
+The `SUBSCRIBER_TENANT_ID` represents the customer's tenant ID, which Novu stored on the `ChannelConnection` object after completing the Admin Consent flow.
+
+```bash
+    GET /v1/channel-connections
+    {
+      "identifier": "chconn-eeybt4",
+      "integrationIdentifier": "msteams",
+      "providerId": "msteams",
+      "channel": "chat",
+      "subscriberId": "689c4a87c5bdaa96aaef0cfd",
+      "workspace": {
+        "id": "e6633b86-ef94-4416-863f-f0f409700ca0" // the customer's tenant workspace ID
+      },
+      "auth": {
+        "accessToken": "app-only"
+      },
+    }
+    ```
+  </Step>
+
+<Step title="List Teams">
+    ```bash
+    GET https://graph.microsoft.com/v1.0/teams
+    Authorization: Bearer {ACCESS_TOKEN}
+    ```
+  </Step>
+
+<Step title="List channels in a Team">
+    ```bash
+    GET https://graph.microsoft.com/v1.0/teams/{TEAM_ID}/channels
+    Authorization: Bearer {ACCESS_TOKEN}
+    ```
+  </Step>
+</Steps>
+
+#### Register the channel endpoint (Novu)
+
+Once you have the IDs, create an `ms_teams_channel` endpoint in Novu. This maps a subscriber to that specific channel.
+
+```bash
+POST /v1/channel-endpoints
+Authorization: ApiKey {CUSTOMER_API_KEY}
+Content-Type: application/json
+
+{
+  "identifier": "msteams-main-notifications",
+  "integrationIdentifier": "ms-teams-bot-1",
+  "providerId": "msteams",
+  "channel": "chat",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
+  "connectionIdentifier": "msteams-tenant-subscriberX",
+  "type": "ms_teams_channel",
+  "endpoint": {
+    "teamId": "TEAM_ID",
+    "channelId": "CHANNEL_ID"
+  }
+}
+```
+
+Novu stores this as `ChannelEndpoint<'ms_teams_channel'>`.
+
+### Send a direct message to a user
+
+To send a direct message (DM), register an `ms_teams_user` channel endpoint for the subscriber. You can do this with OAuth or by supplying the Teams user ID manually.
+
+#### Link a subscriber for direct messages
+
+Prerequisites:
+
+- Admin consent has already connected the organization's tenant (see above).
+- The subscriber exists in Novu.
+- Application permission `TeamsAppInstallation.ReadWriteSelfForUser.All` and delegated `User.Read` are configured in Azure (see [Add Microsoft Graph app permissions](/platform/integrations/chat/ms-teams-azure-setup#add-microsoft-graph-app-permissions)).
+
+Run a **separate** OAuth flow - do not set `autoLinkUser: true` on `generateConnectOAuthUrl`. Use `generateLinkUserOAuthUrl` instead:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+const response = await novu.integrations.generateLinkUserOAuthUrl({
+  integrationIdentifier: 'ms-teams-bot',
+  subscriberId: 'user-123',
+  context: {
+    tenant: 'acme-corp',
+  },
+  connectionIdentifier: 'msteams-tenant-acme',
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_link_user_o_auth_url(generate_link_user_oauth_url_request_dto={
+        "integration_identifier": "ms-teams-bot",
+        "subscriber_id": "user-123",
+        "context": {
+            "tenant": "acme-corp",
+        },
+        "connection_identifier": "msteams-tenant-acme",
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateLinkUserOAuthURL(context.Background(), components.GenerateLinkUserOauthURLRequestDto{
+    IntegrationIdentifier: "ms-teams-bot",
+    SubscriberID: "user-123",
+    Context: map[string]components.GenerateLinkUserOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateLinkUserOauthURLRequestDtoContextStr("acme-corp"),
+    },
+    ConnectionIdentifier: novugo.String("msteams-tenant-acme"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateLinkUserOAuthUrl(
+    generateLinkUserOauthUrlRequestDto: new Components\GenerateLinkUserOauthUrlRequestDto(
+        integrationIdentifier: 'ms-teams-bot',
+        subscriberId: 'user-123',
+        context: [
+            'tenant' => 'acme-corp',
+        ],
+        connectionIdentifier: 'msteams-tenant-acme',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateLinkUserOAuthUrlAsync(
+    generateLinkUserOauthUrlRequestDto: new GenerateLinkUserOauthUrlRequestDto() {
+        IntegrationIdentifier = "ms-teams-bot",
+        SubscriberId = "user-123",
+        Context = new Dictionary<string, object> {
+            { "tenant", "acme-corp" },
+        },
+        ConnectionIdentifier = "msteams-tenant-acme",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateLinkUserOAuthUrl()
+    .body(GenerateLinkUserOauthUrlRequestDto.builder()
+        .integrationIdentifier("ms-teams-bot")
+        .subscriberId("user-123")
+        .context(java.util.Map.of("tenant", "acme-corp"))
+        .connectionIdentifier("msteams-tenant-acme")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "ms-teams-bot",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
+  "connectionIdentifier": "msteams-tenant-acme"
+}'
+```
+  </Tab>
+</Tabs>
+
+Call `POST /v1/integrations/channel-endpoints/oauth` with the same body when using the REST API.
+
+This opens a Microsoft sign-in flow with delegated scopes (`openid`, `profile`, `User.Read`). Novu reads the user's identity from the token, installs the bot for that user when possible, and creates an `ms_teams_user` channel endpoint.
+
+<Warning>
+  The generated OAuth URL expires after <strong>5 minutes</strong>. Generate it when the subscriber is ready to sign in.
+</Warning>
+
+#### Find the user ID manually (Bot framework)
+
+Alternatively, discover the Teams user ID yourself and register the endpoint without OAuth.
+
+Use the [Bot framework API](https://learn.microsoft.com/en-us/azure/bot-service/rest-api/bot-framework-rest-overview?view=azure-bot-service-4.0) to inspect the roster of the Team where you installed the bot.
+
+<Steps>
+  <Step title="Install the bot in a Team">
+    Install the bot in at least one Team that includes the target user.
+  </Step>
+
+<Step title="Get a Bot Framework token">
+    ```bash
+    POST https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token
+    Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&
+    client_id={BOT_APP_ID}&
+    client_secret={BOT_APP_SECRET}&
+    scope=https%3A%2F%2Fapi.botframework.com%2F.default
+    ```
+  </Step>
+
+<Step title="Call the roster API">
+    ```bash
+    GET https://smba.trafficmanager.net/teams/v3/conversations/{TEAM_CONVERSATION_ID}/members
+    Authorization: Bearer {BOT_ACCESS_TOKEN}
+    ```
+  </Step>
+</Steps>
+
+From the returned members, take the member’s `id`; this value represents the Teams user ID (`29:...`) you’ll use as `userId`.
+
+#### Register the user endpoint (Novu)
+
+Once you have the IDs, create the endpoint in Novu using the `ms_teams_user` type.
+
+```bash
+POST /v1/channel-endpoints
+Authorization: ApiKey {CUSTOMER_API_KEY}
+Content-Type: application/json
+
+{
+  "identifier": "msteams-user-alice",
+  "integrationIdentifier": "ms-teams-bot-1",
+  "providerId": "msteams",
+  "channel": "chat",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
+  "connectionIdentifier": "msteams-tenant-subscriberX",
+  "type": "ms_teams_user",
+  "endpoint": {
+    "userId": "29:1GcS4EyB_oSI8A88XmWB..."
+  }
+}
+```
+
+Novu stores this as `ChannelEndpoint<'ms_teams_user'>`. From here, any workflow that resolves to this endpoint can send a DM from your bot to that user.
+
+## Related
+
+<Card title="Set up the Azure bot" icon="cloud" href="/platform/integrations/chat/ms-teams-azure-setup">
+  Create the Entra ID app, Azure Bot, and Teams package.
+</Card>

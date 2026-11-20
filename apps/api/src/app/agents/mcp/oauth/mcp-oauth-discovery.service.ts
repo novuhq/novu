@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, SsrfBlockedError, safeOutboundJsonRequest, safeOutboundRequest } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import {
   DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD,
   MCP_TOKEN_ENDPOINT_AUTH_METHODS,
   type McpTokenEndpointAuthMethod,
 } from '@novu/shared';
+import { safeOutboundJsonRequest, safeOutboundRequest } from '@novu/shared/utils/safe-outbound-http';
+import { SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { LRUCache } from 'lru-cache';
 import { isAcceptableIssuerMatch } from './mcp-oauth-issuer-match';
 
@@ -345,30 +347,6 @@ export class McpOAuthDiscoveryService {
         'mcp_registration_failed',
         `Dynamic Client Registration with "${asMetadata.issuer}" failed.`
       );
-    }
-  }
-
-  /** Test-only escape hatch: drop cached entries for a (mcpUrl|issuer) pair. */
-  clearCache(opts?: { mcpUrl?: string; issuer?: string }): void {
-    if (!opts) {
-      this.prmCache.clear();
-      this.asMetadataCache.clear();
-
-      return;
-    }
-    if (opts.mcpUrl) {
-      this.prmCache.delete(opts.mcpUrl);
-    }
-    if (opts.issuer) {
-      // `discoverAuthorizationServer` dual-keys the metadata under both the
-      // discovery URL and the document's canonical `issuer` (Auth0-tenant
-      // pattern). Evicting only the requested key would leave the canonical
-      // entry stale, so drop both when they diverge.
-      const entry = this.asMetadataCache.get(opts.issuer);
-      this.asMetadataCache.delete(opts.issuer);
-      if (entry && entry.document.issuer !== opts.issuer) {
-        this.asMetadataCache.delete(entry.document.issuer);
-      }
     }
   }
 

@@ -5,6 +5,7 @@ import type {
   NovuEmailAttachment,
 } from '@novu/shared';
 import type { Adapter } from 'chat';
+import type { CardNode } from './card-renderer.js';
 
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
 
@@ -12,6 +13,14 @@ export interface NovuEmailAdapterConfig {
   senderName?: string;
   signingSecret: string;
   sendEmail: (params: SendEmailParams) => Promise<{ messageId?: string }>;
+  stripAgentReplyToken: (address: string) => string;
+  /**
+   * Address the agent sends from when a thread has no recorded agent address yet.
+   * Inbound threads learn it from the `To` header of the first email; threads the
+   * agent opens itself (`openDM` → `post`, e.g. a human-interaction DM) have no
+   * inbound email to learn from and would otherwise fail on the first send.
+   */
+  defaultAgentAddress?: string;
   /**
    * Resolves a URL for an interactive `<Button id="…">` rendered inside an outbound email.
    * Called once per button before the email HTML is rendered. When omitted, action buttons
@@ -19,7 +28,33 @@ export interface NovuEmailAdapterConfig {
    * its explicit URL and is never passed to this builder.
    */
   actionUrlBuilder?: ActionUrlBuilder;
+  /**
+   * Gives an agent's emails a look of their own in place of the default rendering. Without it
+   * the adapter renders every message itself.
+   */
+  layout?: EmailMessageLayout;
 }
+
+export interface EmailLayoutMessage {
+  threadId: string;
+  /** The plain-text version of the message. */
+  text: string;
+  /** The message as HTML. Absent on a card. */
+  html?: string;
+  /** The card to lay out. Its action buttons already carry their `url`. */
+  card?: CardNode;
+  /** Renders a card's Markdown the way a plain message is rendered. */
+  renderMarkdown: (markdown: string) => string;
+}
+
+export interface EmailLayoutResult {
+  html: string;
+  text: string;
+  /** Subject of a new thread. A reply keeps the subject of its thread. */
+  subject?: string;
+}
+
+export type EmailMessageLayout = (message: EmailLayoutMessage) => Promise<EmailLayoutResult>;
 
 export type ActionButtonStyle = 'primary' | 'danger' | 'default';
 
@@ -32,6 +67,8 @@ export type ActionUrlBuilder = (params: {
   /** Echoes the `<Button style="…">` prop so the click-confirmation page can render a
    *  destructive variant (red button + warning copy) when appropriate. */
   style?: ActionButtonStyle;
+  /** Title of the card the button sits on: what the person is answering. */
+  cardTitle?: string;
 }) => Promise<string>;
 
 export type EmailAlternative = IEmailAlternative;
@@ -88,10 +125,13 @@ export interface NovuEmailRawMessage {
   /**
    * Sender-authentication verdicts (`'pass'` / `'failed'`) forwarded from the
    * inbound-mail service. Downstream identity resolution must treat the
-   * spoofable `from` address as untrusted unless both are `'pass'`.
+   * spoofable `from` address as untrusted unless both are `'pass'` and one of
+   * the domains they vouch for (below) is its domain.
    */
   dkim?: string;
   spf?: string;
+  dkimDomains?: string[];
+  spfDomain?: string | null;
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;

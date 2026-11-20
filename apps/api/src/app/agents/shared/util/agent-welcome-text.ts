@@ -10,6 +10,8 @@ export function getWelcomeText(platform: AgentPlatformEnum): string {
       return 'Connected! Send me a message to try it out.';
     case AgentPlatformEnum.SENDBLUE:
       return 'Connected! Send me a message to try it out.';
+    case AgentPlatformEnum.PHOTON_IMESSAGE:
+      return 'Connected! Send me a message to try it out.';
     case AgentPlatformEnum.EMAIL:
       return 'Connected! Reply to this email to try it out.';
     default:

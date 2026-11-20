@@ -28,11 +28,10 @@ export class GenerateLayoutPreviewResponseDto {
     additionalProperties: true,
   })
   @IsOptional()
-  schema?: any | null;
+  schema?: unknown;
 
   @ApiProperty({
     description: 'Preview result',
-    type: 'object',
     oneOf: [
       {
         properties: {

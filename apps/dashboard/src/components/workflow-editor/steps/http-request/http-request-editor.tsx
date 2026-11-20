@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -7,10 +7,9 @@ import {
   SegmentedControlTrigger,
 } from '@/components/primitives/segmented-control';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { useEnvironment } from '@/context/environment/hooks';
-import { StepEditorUnavailable } from '../step-editor-unavailable';
 import {
   type BodyEditorMode,
   canMethodHaveBody,
@@ -31,7 +30,7 @@ type HttpRequestEditorProps = {
 };
 
 export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
-  const { currentEnvironment } = useEnvironment();
+  const { isReadOnly } = useStepEditor();
   const { watch, setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const method = watch('method');
@@ -42,10 +41,6 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
 
   if (uiSchema.group !== UiSchemaGroupEnum.HTTP_REQUEST) {
     return null;
-  }
-
-  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
-    return <StepEditorUnavailable />;
   }
 
   const handleBodyModeChange = (mode: BodyEditorMode) => {
@@ -71,10 +66,10 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
       }}
     >
       <SegmentedControlList className="w-fit min-w-[148px] rounded-md bg-neutral-alpha-100 p-0.5">
-        <SegmentedControlTrigger value="key-value" className="h-5 px-2 text-label-xs font-medium">
+        <SegmentedControlTrigger value="key-value" className="h-5 px-2 text-label-xs font-medium" disabled={isReadOnly}>
           Key-value
         </SegmentedControlTrigger>
-        <SegmentedControlTrigger value="raw" className="h-5 px-2 text-label-xs font-medium">
+        <SegmentedControlTrigger value="raw" className="h-5 px-2 text-label-xs font-medium" disabled={isReadOnly}>
           Raw JSON
         </SegmentedControlTrigger>
       </SegmentedControlList>

@@ -1,0 +1,22 @@
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Local environment
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/
+.primeui/temp
+.primeui/project.json
+.env*
+
+# Local Prime agent setup
+.agents/
+.codex/
+skills-lock.json

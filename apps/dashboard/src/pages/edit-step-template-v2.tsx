@@ -1,13 +1,23 @@
-import { ContentIssueEnum, StepResponseDto, StepUpdateDto, WorkflowResponseDto } from '@novu/shared';
+import {
+  ContentIssueEnum,
+  FeatureFlagsKeysEnum,
+  StepResponseDto,
+  StepTypeEnum,
+  StepUpdateDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
 import { Form } from '@/components/primitives/form/form';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
+import { deriveChatEditorType } from '@/components/workflow-editor/steps/chat/derive-chat-editor-type';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
+import { useStepContentReadOnly } from '@/components/workflow-editor/steps/use-step-content-read-only';
 import { UpdateWorkflowFn, useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { getControlsDefaultValues } from '@/utils/default-values';
 
@@ -28,6 +38,7 @@ function fingerprintControls(step: StepResponseDto): string {
   return JSON.stringify({
     v: step.controls?.values,
     po: step.providerOverrides,
+    io: step.integrationOverrides,
     ui: step.controls?.uiSchema,
     ds: step.controls?.dataSchema,
   });
@@ -40,6 +51,8 @@ type StepTemplateFormProps = {
 };
 
 function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
+  const isChatBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
+  const isReadOnly = useStepContentReadOnly(workflow, step);
   const form = useForm({
     defaultValues: getControlsDefaultValues(step),
     shouldFocusError: false,
@@ -84,13 +97,20 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
   const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({
     previousData: {},
     form,
+    // Live environments render the editors read-only; never let a stray blur write to them.
+    isReadOnly,
     save: (data, { onSuccess }) => {
-      const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
-        providerOverrides?: StepUpdateDto['providerOverrides'];
-      };
+      const { providerOverrides, integrationOverrides, ...controlValues } = data as Record<string, unknown> &
+        Pick<StepUpdateDto, 'providerOverrides' | 'integrationOverrides'>;
+
+      if (step.type === StepTypeEnum.CHAT && isChatBlockEditorEnabled) {
+        controlValues.editorType = deriveChatEditorType(controlValues.body, controlValues.editorType, true);
+      }
+
       const fp = JSON.stringify({
         v: controlValues,
         po: providerOverrides,
+        io: integrationOverrides,
         ui: step.controls?.uiSchema,
         ds: step.controls?.dataSchema,
       });
@@ -104,6 +124,9 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       // Omit when untouched (leave server docs unchanged); send null only to delete all.
       if (providerOverrides !== undefined) {
         updateStepData.providerOverrides = providerOverrides;
+      }
+      if (integrationOverrides !== undefined) {
+        updateStepData.integrationOverrides = integrationOverrides;
       }
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {
@@ -163,7 +186,7 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       <Form {...form}>
         <div className="flex h-full w-full flex-col">
           <SaveFormContext.Provider value={value}>
-            <StepEditorLayout workflow={workflow} step={step} />
+            <StepEditorLayout workflow={workflow} step={step} isReadOnly={isReadOnly} />
           </SaveFormContext.Provider>
         </div>
       </Form>

@@ -1,5 +1,7 @@
-import type { ModelMessage } from 'ai';
-import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { ModelMessage, TextPart } from 'ai';
+import type { AgentHandlerContext, AgentHistoryEntry } from '../../resources/agent/agent.types';
+import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resources/agent/history-source';
+import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import {
   type ApprovalIndex,
   buildApprovalIndex,
@@ -7,6 +9,7 @@ import {
   mapApprovalRequest,
   mapToolResult,
 } from './approval-cycles';
+import { mapUserAttachmentParts } from './attachment-parts';
 
 /**
  * Maps Novu conversation ledger entries to AI SDK `ModelMessage[]`.
@@ -19,6 +22,10 @@ const TYPE_MESSAGE = 'message';
 const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
 const TYPE_TOOL_APPROVAL_DECISION = 'tool_approval_decision';
 const TYPE_TOOL_RESULT = 'tool_result';
+const TYPE_RUN_FINISH = 'run_finish';
+
+const STOPPED_TURN_MARKER =
+  '[Stopped by the user before finishing. This request was not completed; do not carry it out unless the user asks again.]';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
@@ -36,15 +43,39 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMessage | undefined {
-  if (!entry.content.trim()) {
+  const isAssistant = isAssistantRole(entry.role);
+  const hasText = !!entry.content.trim();
+
+  // Vision/document parts only ride on user turns; assistant rows stay text.
+  const fileParts = isAssistant ? [] : mapUserAttachmentParts(entry);
+
+  if (!hasText && fileParts.length === 0) {
     return undefined;
   }
 
-  const isAssistant = isAssistantRole(entry.role);
   const text =
     !isAssistant && multiSender && entry.senderName ? `${entry.senderName}: ${entry.content}` : entry.content;
 
-  return { role: isAssistant ? 'assistant' : 'user', content: text };
+  if (fileParts.length === 0) {
+    return { role: isAssistant ? 'assistant' : 'user', content: text };
+  }
+
+  // Files before text (providers recommend media-then-instruction ordering).
+  const content = hasText ? [...fileParts, { type: 'text', text } satisfies TextPart] : fileParts;
+
+  return { role: 'user', content };
+}
+
+/** A stopped turn leaves its user prompt with no reply; the marker tells the model it was never carried out. */
+function isAbortedRunFinish(entry: AgentHistoryEntry): boolean {
+  const lifecycle = entry.richContent?.lifecycle;
+
+  return (
+    entry.type === TYPE_RUN_FINISH &&
+    typeof lifecycle === 'object' &&
+    lifecycle !== null &&
+    (lifecycle as { outcome?: unknown }).outcome === 'aborted'
+  );
 }
 
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): ModelMessage[] {
@@ -66,6 +97,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
 
       return resultMessage ? [resultMessage] : [];
     }
+    case TYPE_RUN_FINISH:
+      // Only an aborted finish reaches the bridge history; a completed one carries nothing for the model.
+      return isAbortedRunFinish(entry) ? [{ role: 'assistant', content: STOPPED_TURN_MARKER }] : [];
     default:
       // `edit`, `signal`, and unknown types are UI/runtime artifacts — not model transcript.
       return [];
@@ -73,18 +107,35 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
 }
 
 /**
- * Convert `ctx.history` into AI SDK `ModelMessage[]` for `streamText` / `generateText`.
+ * Convert conversation context into AI SDK `ModelMessage[]` for `streamText` / `generateText`.
  *
- * History already includes the current incoming message — do not append the handler's
- * `message` argument on top of it.
+ * Pass `ctx` to prepend `ctx.notification` as an assistant row. Pass `ctx.history` to skip that
+ * injection (e.g. after `isFromWorkflow`). History already includes the current inbound message.
+ *
+ * For http/localhost attachment URLs (e.g. LocalStack), wrap the result in
+ * `hydrateUnreachableAttachmentUrls` before passing it to `generateText`.
  *
  * Pass the system prompt via the top-level `instructions` option of `streamText` /
  * `generateText`. AI SDK 7 rejects `system` messages inside the `messages` array by default,
  * so this helper never injects one.
  */
-export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[] {
+export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[];
+export function toModelMessages(ctx: Pick<AgentHandlerContext, 'history' | 'notification'>): ModelMessage[];
+export function toModelMessages(source: AgentTranscriptSource): ModelMessage[] {
+  const { history, notification } = resolveTranscriptSource(source);
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history);
+  const mapped = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
 
-  return history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
+  if (!notification) {
+    return mapped;
+  }
+
+  return [
+    {
+      role: 'assistant',
+      content: buildWorkflowOriginInjection(notification.workflowId, notification.body, notification.payload),
+    },
+    ...mapped,
+  ];
 }

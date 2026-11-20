@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import Sendblue from 'sendblue';
 import { restore, stub } from 'sinon';
 
-import * as sendblueWebhookClient from '../shared/sendblue-webhook-client';
 import { RemoveSendblueWebhooksCommand } from './remove-sendblue-webhooks.command';
 import { RemoveSendblueWebhooks } from './remove-sendblue-webhooks.usecase';
 
@@ -67,21 +67,15 @@ describe('RemoveSendblueWebhooks usecase', () => {
       warn: stub(),
     };
 
-    deleteStub = stub(sendblueWebhookClient, 'deleteSendblueReceiveWebhooks').resolves();
+    deleteStub = stub(Sendblue.Webhooks.prototype, 'delete').resolves({} as any);
   });
 
   afterEach(() => {
     restore();
-    process.env.API_ROOT_URL = originalApiRootUrl;
-    process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
-  });
-
-  it('removes Novu-shaped webhook URLs', async () => {
-    const result = await buildUsecase().execute(buildCommand());
-
-    expect(result.success).to.equal(true);
-    expect(result.removedWebhookUrls).to.deep.equal([NOVU_WEBHOOK_URL]);
-    expect(deleteStub.calledOnceWith({ apiKey: 'key', secretKey: 'secret' }, [NOVU_WEBHOOK_URL])).to.equal(true);
+    if (originalApiRootUrl === undefined) delete process.env.API_ROOT_URL;
+    else process.env.API_ROOT_URL = originalApiRootUrl;
+    if (originalAgentApiHostname === undefined) delete process.env.AGENT_API_HOSTNAME;
+    else process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
   });
 
   it('filters out non-Novu-shaped URLs before calling Sendblue', async () => {
@@ -91,7 +85,12 @@ describe('RemoveSendblueWebhooks usecase', () => {
 
     expect(result.success).to.equal(true);
     expect(result.removedWebhookUrls).to.deep.equal([NOVU_WEBHOOK_URL]);
-    expect(deleteStub.calledOnceWith({ apiKey: 'key', secretKey: 'secret' }, [NOVU_WEBHOOK_URL])).to.equal(true);
+    expect(deleteStub.calledOnceWith({ webhooks: [NOVU_WEBHOOK_URL] })).to.equal(true);
+    const [{ _client }] = deleteStub.thisValues;
+    expect({ apiKey: _client.apiKey, apiSecret: _client.apiSecret }).to.deep.equal({
+      apiKey: 'key',
+      apiSecret: 'secret',
+    });
   });
 
   it('rejects when none of the supplied URLs are Novu-shaped', async () => {

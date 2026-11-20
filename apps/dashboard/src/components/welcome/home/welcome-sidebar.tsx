@@ -10,7 +10,7 @@ import {
   RiGithubLine,
   RiGroup2Fill,
 } from 'react-icons/ri';
-import { BOOK_DEMO_URL, docsUrl } from '@/components/header-navigation/support-drawer-constants';
+import { BOOK_DEMO_URL, docsUrl } from '@/components/help-panel';
 import { BotIcon } from '@/components/icons/bot';
 import { LinkIcon } from '@/components/icons/link';
 import { useTelemetry } from '@/hooks/use-telemetry';

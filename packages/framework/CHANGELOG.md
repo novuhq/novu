@@ -1,3 +1,78 @@
+## v2.14.0 (2026-09-28)
+
+### 🚀 Features
+
+- **api-service:** rich inbound message content and author metadata fixes NV-8629 ([#12728](https://github.com/novuhq/novu/pull/12728))
+- **framework:** re-export Chart, Table and LinkButton card builders fixes NV-8632 ([#12727](https://github.com/novuhq/novu/pull/12727))
+- **api-service,framework:** add inbound message edit/delete lifecycle fixes NV-8628 ([#12703](https://github.com/novuhq/novu/pull/12703))
+- **providers:** add Google Chat provider and documentation fixes NV-8811 ([#12690](https://github.com/novuhq/novu/pull/12690))
+- **root:** Add Photon (iMessage via Spectrum Cloud) channel and agent integration ([#12411](https://github.com/novuhq/novu/pull/12411))
+- **api-service:** expose inbound message.replyTo fixes NV-8627 ([#12645](https://github.com/novuhq/novu/pull/12645))
+- **framework:** add quoteReply option to ctx.reply() fixes NV-8794 ([#12633](https://github.com/novuhq/novu/pull/12633))
+
+### 🩹 Fixes
+
+- **framework:** treat Chart as a chat JSX primitive and type resolved card nodes fixes NV-8632 ([#12729](https://github.com/novuhq/novu/pull/12729))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Andy
+- Cursor @cursoragent
+- Nikita Grossman @nikitagrossman
+- Pawan Jain
+
+## v2.13.2 (2026-09-07)
+
+### 🩹 Fixes
+
+- **framework:** type outbound agent cards as protocol CardElement instead of Record fixes NV-8745 ([#12525](https://github.com/novuhq/novu/pull/12525))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+
+## v2.13.1 (2026-08-31)
+
+### 🚀 Features
+
+- **api-service,framework,human:** hitl multi-recipient to and invite fixes NV-8697 ([#12475](https://github.com/novuhq/novu/pull/12475))
+- **api-service,framework:** hitl agent context helpers fixes NV-8677 ([#12457](https://github.com/novuhq/novu/pull/12457))
+- **api-service,framework:** agents vision and file support fixes NV-7810 ([#12423](https://github.com/novuhq/novu/pull/12423))
+- **api-service:** structured workflow-origin hydration for agents fixes NV-8608 ([#12371](https://github.com/novuhq/novu/pull/12371))
+- **js,react,api:** headless useAgentChat send + open/resume fixes NV-8445 ([#12271](https://github.com/novuhq/novu/pull/12271))
+- **dashboard:** hide empty subscriber credential cards fixes NV-8338 ([#12015](https://github.com/novuhq/novu/pull/12015))
+- **dashboard,api-service:** add workflow agent assignment fixes NV-8422 ([#12139](https://github.com/novuhq/novu/pull/12139))
+- **api-service,worker,framework,providers:** rich chat card delivery flow fixes NV-8386 ([#12142](https://github.com/novuhq/novu/pull/12142))
+- **providers:** add Grafana endpoint-routed tool provider fixes NV-8455 ([#12101](https://github.com/novuhq/novu/pull/12101))
+- **shared:** chat provider content overrides with Slack schema fixes NV-8397 ([#12103](https://github.com/novuhq/novu/pull/12103))
+- **providers:** tool-webhook static and dynamic delivery modes fixes NV-8358 ([#12045](https://github.com/novuhq/novu/pull/12045))
+- **framework,api:** emit AgentEvents from self-hosted agents via ingest fixes NV-8360 ([#12062](https://github.com/novuhq/novu/pull/12062))
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **providers:** add Ruach SMS provider integration and configuration fixes NV-8351 ([#11937](https://github.com/novuhq/novu/pull/11937))
+- **dashboard:** add opt-in per-provider tool content overrides fixes NV-8331 ([#11997](https://github.com/novuhq/novu/pull/11997))
+- **shared:** add Tool channel with PagerDuty, Opsgenie and Webhook providers fixes NV-8284 ([#11923](https://github.com/novuhq/novu/pull/11923))
+
+### 🩹 Fixes
+
+- **api-service:** add translations support to sender name and preheader fields fixes NV-8691 ([#12458](https://github.com/novuhq/novu/pull/12458))
+- **docs:** enhance agent communication documentation with new channels and capabilities ([#12188](https://github.com/novuhq/novu/pull/12188))
+- **novu:** resolve LangChain Turbopack dynamic import failure fixes NV-8430 ([#12126](https://github.com/novuhq/novu/pull/12126))
+- **worker:** wire steps namespace into HTTP request compile context fixes NV-8364 ([#12052](https://github.com/novuhq/novu/pull/12052))
+- **framework:** resolve next/server ESM import for Next.js fixes NV-8366 ([#12053](https://github.com/novuhq/novu/pull/12053))
+- **framework:** digest filter renders "and 0 others" when maxNames covers all items ([#11984](https://github.com/novuhq/novu/pull/11984))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- David Onifade @zyzer01
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Nikita Grossman @nikitagrossman
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+- WinkleMad @winklemad
+
 ## v2.13.0 (2026-07-16)
 
 ### 🚀 Features

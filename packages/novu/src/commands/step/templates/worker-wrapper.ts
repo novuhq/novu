@@ -25,7 +25,7 @@ function generateValidatorPrecompilation(steps: DiscoveredStep[]): string {
 
   return `// Pre-compile all JSON Schema validators during the startup phase.
 // Cloudflare Workers allow new Function() (used by AJV) during startup but not during request handling.
-// JsonSchemaValidator caches compiled validators by schema object reference, so these pre-compiled
+// JsonSchemaValidator caches compiled validators by schema content, so these pre-compiled
 // validators are reused on every request without triggering new Function() again.
 await Promise.all([
   ...Object.values(channelStepSchemas).map(({ output }) =>

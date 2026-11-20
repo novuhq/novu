@@ -1,9 +1,9 @@
-import type { Message } from 'chat';
+import type { Message, MessageData } from 'chat';
+import type { InboundMarkdownParser } from './inbound-markdown.js';
 import type { NovuEmailRawMessage } from './types.js';
 import { extractDisplayName, parseEmailAddress, stripHtml } from './utils.js';
 
-type MessageConstructor = new (data: unknown) => Message<NovuEmailRawMessage>;
-type ParseMarkdownFn = (text: string) => import('chat').Root;
+type MessageConstructor = new (data: MessageData<NovuEmailRawMessage>) => Message<NovuEmailRawMessage>;
 
 /**
  * Converts raw email data into a Chat SDK Message.
@@ -11,15 +11,15 @@ type ParseMarkdownFn = (text: string) => import('chat').Root;
  */
 export class MessageParser {
   private MessageClass: MessageConstructor | null = null;
-  private parseMarkdownFn: ParseMarkdownFn | null = null;
+  private parseInbound: InboundMarkdownParser | null = null;
 
-  setChatModule(MessageClass: MessageConstructor, parseMarkdownFn: ParseMarkdownFn): void {
+  setChatModule(MessageClass: MessageConstructor, parseInbound: InboundMarkdownParser): void {
     this.MessageClass = MessageClass;
-    this.parseMarkdownFn = parseMarkdownFn;
+    this.parseInbound = parseInbound;
   }
 
-  parse(raw: NovuEmailRawMessage, fromAddress: string): Message<NovuEmailRawMessage> {
-    if (!this.MessageClass || !this.parseMarkdownFn) {
+  parse(raw: NovuEmailRawMessage, fromAddress: string, threadId: string): Message<NovuEmailRawMessage> {
+    if (!this.MessageClass || !this.parseInbound) {
       throw new Error('MessageParser not initialized — call setChatModule() first');
     }
 
@@ -30,6 +30,7 @@ export class MessageParser {
       userId: authorEmail,
       userName: authorEmail,
       fullName: authorName,
+      email: authorEmail || undefined,
       isBot: false,
       isMe: authorEmail === fromAddress,
     };
@@ -68,9 +69,9 @@ export class MessageParser {
 
     return new this.MessageClass({
       id: raw.id,
-      threadId: '',
+      threadId,
       text,
-      formatted: this.parseMarkdownFn(text),
+      formatted: this.parseInbound(text),
       raw,
       author: mappedAuthor,
       metadata: mappedMetadata,

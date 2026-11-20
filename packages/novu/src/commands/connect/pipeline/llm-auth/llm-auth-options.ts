@@ -1,5 +1,5 @@
 import type { BridgeAdapterVariant } from '../bridge-adapter/types';
-import type { LlmAuthPickerOption } from './types';
+import type { LlmAuthChoice, LlmAuthPickerOption } from './types';
 
 const OPENAI_API_KEY_OPTION: LlmAuthPickerOption = {
   kind: 'openai-api-key',
@@ -46,3 +46,18 @@ export const LLM_AUTH_PICKER_TITLE = 'How do you want to power your agent?';
 
 export const LLM_AUTH_PICKER_SUBTITLE =
   'Optional for local dev. API keys are saved to .env.local; subscriptions use CLI OAuth on your machine.';
+
+export function describeLlmAuthChoice(llmAuth: LlmAuthChoice): string {
+  switch (llmAuth.kind) {
+    case 'openai-api-key':
+      return 'OpenAI API key';
+    case 'anthropic-api-key':
+      return 'Anthropic API key';
+    case 'codex-subscription':
+      return 'ChatGPT subscription (Codex CLI)';
+    case 'claude-subscription':
+      return 'Claude subscription (Claude Code)';
+    case 'skip':
+      return 'Demo echo (no LLM wired yet)';
+  }
+}

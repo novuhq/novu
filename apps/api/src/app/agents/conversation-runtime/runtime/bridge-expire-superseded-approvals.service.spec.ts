@@ -36,8 +36,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
@@ -46,8 +44,9 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
+      { findPendingByRequestId: sinon.stub().resolves(null) } as any,
+      { settle: sinon.stub().resolves(null) } as any,
       makeLogger() as any
     );
 
@@ -93,8 +92,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [approvedDecision, request], hasMore: false }),
     };
     const outboundGateway = {
@@ -102,8 +99,9 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
+      { findPendingByRequestId: sinon.stub().resolves(null) } as any,
+      { settle: sinon.stub().resolves(null) } as any,
       makeLogger() as any
     );
 
@@ -125,8 +123,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
@@ -134,13 +130,45 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
+      { findPendingByRequestId: sinon.stub().resolves(null) } as any,
+      { settle: sinon.stub().resolves(null) } as any,
       makeLogger() as any
     );
 
     await service.expireOnNewMessage(makeTurn() as any);
 
+    expect(outboundGateway.deleteInConversation.called).to.equal(false);
+  });
+
+  it('cancels a pending HITL row instead of deleting the old-grammar card', async () => {
+    const pendingRequest = {
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+      platformMessageId: 'msg-approval',
+      toolData: { approvalId: 'approval-1', toolCallId: 'tc-1', toolName: 'issueRefund' },
+    };
+    const conversationService = {
+      getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
+      persistToolApprovalDecision: sinon.stub().resolves(undefined),
+      listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
+    };
+    const outboundGateway = { deleteInConversation: sinon.stub().resolves(undefined) };
+    const pendingHitl = { identifier: 'hi_1', requestId: 'tool_approval:approval-1', status: 'pending' };
+    const humanInteractionRepository = { findPendingByRequestId: sinon.stub().resolves(pendingHitl) };
+    const settlement = { settle: sinon.stub().resolves({ ...pendingHitl, status: 'canceled' }) };
+    const service = new BridgeExpireSupersededApprovalsService(
+      conversationService as any,
+      outboundGateway as any,
+      humanInteractionRepository as any,
+      settlement as any,
+      makeLogger() as any
+    );
+
+    await service.expireOnNewMessage(makeTurn() as any);
+
+    expect(settlement.settle.calledOnce).to.equal(true);
+    expect(settlement.settle.firstCall.args[1]).to.equal('canceled');
+    expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
     expect(outboundGateway.deleteInConversation.called).to.equal(false);
   });
 });

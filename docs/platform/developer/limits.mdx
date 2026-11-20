@@ -8,7 +8,7 @@ Novu enforces default limits on specific resources and configurations. These lim
 
 | Resource                | Free    | Pro     | Team    | Enterprise |
 |-------------------------|---------|---------|---------|------------|
-| Workflows               | 20      | 20      | 100     | Custom     |
+| Workflows               | 5       | 20      | 100     | Custom     |
 | Layouts                 | 1       | 100     | 100     | Custom     |
 | Steps per workflow      | 20      | 20      | 20      | Custom     |
 | Context per trigger     | 5       | 5       | 5       | Custom     |
@@ -23,6 +23,12 @@ Novu enforces default limits on specific resources and configurations. These lim
 | Environment variables   | -       | 10     | 10       | Custom     |
 
 Reach out to us at support@novu.co if you are looking for a custom limit.
+
+## Fixed validation limits
+
+Some limits are fixed constraints that apply to all plans and cannot be customized:
+
+- **Topic subscription identifier**: A subscription `identifier` supplied when adding subscribers to a topic must not exceed **512 characters**. Longer values are rejected. Omit the field to let Novu generate an identifier automatically.
 
 ## Frequently Asked Questions
 

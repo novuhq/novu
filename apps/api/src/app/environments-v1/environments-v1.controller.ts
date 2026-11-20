@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -36,10 +37,17 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import {
+  assertEnvironmentScopedAccess,
+  isEnvironmentScopedAuthScheme,
+  isInternalAuthScheme,
+} from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
+import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { BuildDashboardInboxHashesCommand } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.command';
+import { BuildDashboardInboxHashes } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.usecase';
 import { CreateApiKey } from './usecases/create-api-key/create-api-key.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
@@ -75,6 +83,7 @@ export class EnvironmentsControllerV1 {
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
+    private buildDashboardInboxHashesUsecase: BuildDashboardInboxHashes,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -97,6 +106,26 @@ export class EnvironmentsControllerV1 {
     );
   }
 
+  @Get('/me/dashboard-inbox-hashes')
+  @ApiOperation({
+    summary: 'Sign the dashboard Inbox and web chat identities of the current environment',
+    description:
+      'Returns HMAC hashes, signed with the current environment API key, for the subscriber ids the dashboard ' +
+      'opens sessions as (the authenticated user and their web chat tester).',
+  })
+  @ApiResponse(DashboardInboxHashesResponseDto)
+  @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
+  async getDashboardInboxHashes(@UserSession() user: UserSessionData): Promise<DashboardInboxHashesResponseDto> {
+    return await this.buildDashboardInboxHashesUsecase.execute(
+      BuildDashboardInboxHashesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
   @Post('/')
   @ApiOperation({
     summary: 'Create an environment',
@@ -115,8 +144,9 @@ export class EnvironmentsControllerV1 {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
-    const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
-    const canAccessApiKeys = isApiKeyAuth ? false : await this.canUserAccessApiKeys(user);
+    // Neither an API key nor an internal (service) token may mint readable API keys.
+    const isNonUserAuth = user.scheme === ApiAuthSchemeEnum.API_KEY || isInternalAuthScheme(user.scheme);
+    const canAccessApiKeys = isNonUserAuth ? false : await this.canUserAccessApiKeys(user);
 
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -144,12 +174,13 @@ export class EnvironmentsControllerV1 {
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
-    const isOAuthAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2;
+    // OAuth and internal (service) tokens act for a user but must not read API keys.
+    const isDelegatedAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2 || isInternalAuthScheme(user.scheme);
     let canAccessApiKeys = false;
 
     if (isApiKeyAuth) {
       canAccessApiKeys = true;
-    } else if (!isOAuthAuth) {
+    } else if (!isDelegatedAuth) {
       canAccessApiKeys = await this.canUserAccessApiKeys(user);
     }
 
@@ -190,6 +221,8 @@ export class EnvironmentsControllerV1 {
     @Param('environmentId') environmentId: string,
     @Body() payload: UpdateEnvironmentRequestDto
   ) {
+    assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
+
     return await this.updateEnvironmentUsecase.execute(
       UpdateEnvironmentCommand.create({
         environmentId,
@@ -215,6 +248,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -234,6 +269,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async createOrganizationApiKey(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -253,6 +290,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
+    this.assertNotInternalAuth(user);
+
     const command = DeleteApiKeyCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -268,6 +307,8 @@ export class EnvironmentsControllerV1 {
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    this.assertNotInternalAuth(user);
+
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -299,6 +340,12 @@ export class EnvironmentsControllerV1 {
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
+  }
+
+  private assertNotInternalAuth(user: UserSessionData): void {
+    if (isInternalAuthScheme(user.scheme)) {
+      throw new ForbiddenException('Internal tokens cannot manage API keys');
+    }
   }
 
   private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {

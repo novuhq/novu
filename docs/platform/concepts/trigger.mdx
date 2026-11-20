@@ -63,7 +63,7 @@ Jobs play a crucial role in the trigger event lifecycle. They are created based 
     It depends on **where** the filter runs:
 
     - **Topic subscription filters** ([Context](/platform/concepts/contexts) mismatch or [JSON Logic conditions](/platform/subscription/manage-topic-subscriptions#json-logic-conditions)): **Not billed.** Filtering happens during fan-out, before a workflow run is created.
-    - **[Workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences)**, **[global channel preferences](/platform/concepts/preferences#subscriber-global-preferences)**, or **[step conditions](/platform/workflow/add-and-configure-steps/step-conditions)**: **Still billed.** The workflow run is already created; only delivery or individual steps are skipped.
+    - **[Workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences)**, **[subscriber channel preferences](/platform/concepts/preferences#subscriber-channel-preferences-per-workflow)**, **[global channel preferences](/platform/concepts/preferences#subscriber-global-preferences)**, or **[step conditions](/platform/workflow/add-and-configure-steps/step-conditions)**: **Still billed.** The workflow run is already created; only delivery or individual steps are skipped.
   </Accordion>
 
   <Accordion title="How events are billed for digested events?">

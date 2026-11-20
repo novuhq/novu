@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
 import { useNovu } from '../../hooks/NovuProvider';
 import { NovuUI, NovuUIOptions } from '../NovuUI';
-import { withRenderer } from '../Renderer';
 import { DefaultMsTeamsConnectButton, DefaultMsTeamsConnectButtonProps } from './DefaultMsTeamsConnectButton';
 
 export type MsTeamsConnectButtonProps = DefaultMsTeamsConnectButtonProps &
   Pick<NovuUIOptions, 'container' | 'appearance'>;
 
-const MsTeamsConnectButtonInternal = withRenderer<MsTeamsConnectButtonProps>((props) => {
+const MsTeamsConnectButtonInternal = (props: MsTeamsConnectButtonProps) => {
   const { container, appearance, ...defaultProps } = props;
   const novu = useNovu();
 
@@ -24,7 +23,7 @@ const MsTeamsConnectButtonInternal = withRenderer<MsTeamsConnectButtonProps>((pr
       <DefaultMsTeamsConnectButton {...defaultProps} />
     </NovuUI>
   );
-});
+};
 
 MsTeamsConnectButtonInternal.displayName = 'MsTeamsConnectButtonInternal';
 

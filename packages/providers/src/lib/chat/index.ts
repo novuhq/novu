@@ -3,10 +3,12 @@ export { type ChatCardValidator, getChatCardValidator } from './card-validators'
 export * from './chat-webhook/chat-webhook.provider';
 export * from './discord/discord.provider';
 export * from './getstream/getstream.provider';
+export * from './google-chat/google-chat.provider';
 export * from './grafana-on-call/grafana-on-call.provider';
 export * from './line/line.provider';
 export * from './mattermost/mattermost.provider';
 export * from './msTeams/msTeams.provider';
+export * from './photon-imessage/photon-imessage.provider';
 export * from './rocket-chat/rocket-chat.provider';
 export * from './ryver/ryver.provider';
 export * from './sendblue/sendblue.provider';

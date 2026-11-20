@@ -19,7 +19,6 @@ describe('CORS Configuration', () => {
     it('should allow all origins', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/test' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -42,7 +41,6 @@ describe('CORS Configuration', () => {
       process.env.WIDGET_BASE_URL = widgetOrigin;
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate(
         {
           url: '/v1/test',
@@ -63,7 +61,6 @@ describe('CORS Configuration', () => {
     it('should allow for the preview deployments origin', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate(
         {
           url: '/v1/test',
@@ -80,10 +77,38 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(previewOrigin);
     });
 
+    it('should allow the agentinbox.md landing page origins on the public setup routes only', () => {
+      const setupRoutes = [
+        '/v1/integrations/mobile-configure/status',
+        '/v1/integrations/mobile-configure',
+        '/v1/agents/public/slack/setup/status',
+        '/v1/agents/public/slack/setup',
+      ];
+
+      for (const humanOrigin of ['https://www.agentinbox.md', 'https://agentinbox.md']) {
+        for (const url of setupRoutes) {
+          const callbackSpy = spy();
+
+          corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
+
+          expect(callbackSpy.calledOnce).to.be.ok;
+          expect(callbackSpy.firstCall.firstArg).to.be.null;
+          expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([humanOrigin]);
+        }
+
+        for (const url of ['/v1/test', '/v1/better-auth/session', '/v1/agents']) {
+          const callbackSpy = spy();
+
+          corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
+
+          expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([]);
+        }
+      }
+    });
+
     it('widget routes should be wildcarded', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/widgets/test' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -94,12 +119,54 @@ describe('CORS Configuration', () => {
     it('inbox routes should be wildcarded', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/inbox/session' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
       expect(callbackSpy.firstCall.firstArg).to.be.null;
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
+    });
+
+    it('web-chat routes should be wildcarded', () => {
+      const callbackSpy = spy();
+
+      corsOptionsDelegate({ url: '/v1/web-chat/conversations' }, callbackSpy);
+
+      expect(callbackSpy.calledOnce).to.be.ok;
+      expect(callbackSpy.firstCall.firstArg).to.be.null;
+      expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
+    });
+
+    describe('Human dashboard invite page', () => {
+      const humanDashboardOrigin = 'https://agentinbox.md';
+
+      afterEach(() => {
+        delete process.env.HUMAN_DASHBOARD_URL;
+      });
+
+      // Requests come from the dashboard, so any Human dashboard origin in the result was added for the route.
+      function originsFor(url: string) {
+        const callbackSpy = spy();
+
+        corsOptionsDelegate({ url, headers: { origin: dashboardOrigin } }, callbackSpy);
+
+        return callbackSpy.firstCall.lastArg.origin as string[];
+      }
+
+      it('allows the Human dashboard on the public invite routes', () => {
+        process.env.HUMAN_DASHBOARD_URL = 'https://agentinbox.md/';
+
+        expect(originsFor('/v1/human/invites/status?token=abc')).to.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/invites/connect')).to.include(humanDashboardOrigin);
+      });
+
+      it('falls back to agentinbox.md when HUMAN_DASHBOARD_URL is not set', () => {
+        expect(originsFor('/v1/human/invites/decline')).to.include(humanDashboardOrigin);
+      });
+
+      it('does not allow the Human dashboard anywhere else', () => {
+        expect(originsFor('/v1/human/invites')).to.not.include(humanDashboardOrigin);
+        expect(originsFor('/v1/human/interactions')).to.not.include(humanDashboardOrigin);
+      });
     });
   });
 });

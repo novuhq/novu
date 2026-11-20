@@ -18,7 +18,7 @@ export class EnvironmentService {
 
     return await environmentRepository.create({
       identifier: faker.string.uuid(),
-      name: name ?? faker.name.jobTitle(),
+      name: name ?? faker.person.jobTitle(),
       _organizationId: organizationId,
       ...(parentId && { _parentId: parentId }),
       apiKeys: [

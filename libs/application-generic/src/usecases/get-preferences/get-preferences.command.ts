@@ -1,3 +1,4 @@
+import type { PreferencesEntity } from '@novu/dal';
 import { EnvironmentCommand } from '../../commands';
 
 export class GetPreferencesCommand extends EnvironmentCommand {
@@ -18,4 +19,10 @@ export class GetPreferencesCommand extends EnvironmentCommand {
    * require read-your-own-write consistency across API instances.
    */
   skipCache?: boolean = false;
+  /**
+   * The subscriber's SUBSCRIBER_GLOBAL preference when the caller already read it,
+   * so it is not queried again. `null` means "looked, there is none";
+   * `undefined` means "not provided, query it".
+   */
+  subscriberGlobalPreference?: PreferencesEntity | null;
 }

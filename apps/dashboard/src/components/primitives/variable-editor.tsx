@@ -118,7 +118,9 @@ export function VariableEditor({
     onChange
   );
 
-  const isVariablePopoverOpen = !!selectedVariable;
+  const isEditable = !disabled && !readOnly;
+  // The popover edits and deletes the variable, so a locked editor must never open it.
+  const isVariablePopoverOpen = isEditable && !!selectedVariable;
   const variable: LiquidVariable | undefined = selectedVariable
     ? {
         name: selectedVariable.value,
@@ -387,7 +389,7 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
-        editable={!disabled && !readOnly}
+        editable={isEditable}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover

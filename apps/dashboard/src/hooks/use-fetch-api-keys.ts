@@ -1,16 +1,27 @@
 import { IApiKey } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { createApiKey, deleteApiKey, getApiKeys, regenerateApiKeys } from '../api/environments';
 
-export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) => {
+export const useFetchApiKeys = ({
+  enabled = true,
+  staleTime,
+  showError = true,
+}: {
+  enabled?: boolean;
+  staleTime?: number;
+  showError?: boolean;
+} = {}) => {
   const { currentEnvironment } = useEnvironment();
 
   const query = useQuery<{ data: IApiKey[] }>({
     queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
-    queryFn: async () => await getApiKeys({ environment: currentEnvironment! }),
+    queryFn: async () =>
+      await getApiKeys({ environment: requireEnvironment(currentEnvironment, 'No environment selected') }),
     enabled: !!currentEnvironment?._id && enabled,
+    staleTime,
+    meta: { showError },
   });
 
   return query;
@@ -21,11 +32,18 @@ export const useRegenerateApiKeys = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => regenerateApiKeys({ environment: currentEnvironment! }),
+    mutationFn: () =>
+      regenerateApiKeys({ environment: requireEnvironment(currentEnvironment, 'No environment selected') }),
     onSuccess: () => {
       // Invalidate the API keys query to refetch the new keys
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.agentWebChatHash, currentEnvironment?._id],
       });
     },
   });
@@ -36,7 +54,7 @@ export const useCreateApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => createApiKey({ environment: currentEnvironment! }),
+    mutationFn: () => createApiKey({ environment: requireEnvironment(currentEnvironment, 'No environment selected') }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
@@ -50,10 +68,17 @@ export const useDeleteApiKey = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ hash }: { hash: string }) => deleteApiKey({ environment: currentEnvironment!, hash }),
+    mutationFn: ({ hash }: { hash: string }) =>
+      deleteApiKey({ environment: requireEnvironment(currentEnvironment, 'No environment selected'), hash }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.dashboardInboxHashes, currentEnvironment?._id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.agentWebChatHash, currentEnvironment?._id],
       });
     },
   });

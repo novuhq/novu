@@ -3,11 +3,8 @@
   "compilerOptions": {
     "sourceMap": true,
     "strictNullChecks": false,
-    "allowSyntheticDefaultImports": true,
     "outDir": "build/main",
     "module": "commonjs",
-    "target": "es6",
-    "esModuleInterop": true,
     "rootDir": "src",
     "strict": true,
     "types": ["node", "jest"],

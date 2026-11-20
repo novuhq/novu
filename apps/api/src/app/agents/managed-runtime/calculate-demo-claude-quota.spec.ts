@@ -27,7 +27,8 @@ describe('CalculateDemoClaudeQuota', () => {
   });
 
   afterEach(() => {
-    process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
+    if (previousApiKey === undefined) delete process.env.NOVU_MANAGED_CLAUDE_API_KEY;
+    else process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
   });
 
   it('returns undefined when demo credentials are not configured', async () => {

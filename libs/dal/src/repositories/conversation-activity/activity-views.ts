@@ -25,14 +25,23 @@ export const ACTIVITY_KINDS = [
   'message.system',
   'edit',
   'delete',
+  'reaction',
   'signal.tool_use',
   'signal.other',
   'tool_approval_request',
   'tool_approval_decision',
+  'tool_call',
   'tool_result',
+  'tool_result.record',
+  'mcp_connection_request',
+  'mcp_connection_result',
+  'human_interaction_request',
+  'human_interaction_response',
   'run_start',
   'run_finish',
+  'run_finish.aborted',
   'run_error',
+  'custom',
 ] as const;
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -46,18 +55,28 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
     'approval_activities',
   ],
   'message.agent': ['llm_transcript', 'agent_handoff', 'client_events', 'operator_timeline'],
-  'message.platform_user': ['agent_handoff', 'operator_timeline', 'approval_activities'],
+  'message.platform_user': ['llm_transcript', 'agent_handoff', 'operator_timeline', 'approval_activities'],
   'message.system': ['agent_handoff', 'operator_timeline'],
-  edit: ['agent_handoff', 'client_events', 'operator_timeline'],
-  delete: ['agent_handoff', 'client_events', 'operator_timeline'],
+  edit: ['client_events', 'operator_timeline'],
+  delete: ['client_events', 'operator_timeline'],
+  reaction: ['client_events', 'operator_timeline'],
   'signal.tool_use': ['agent_handoff'],
   'signal.other': ['agent_handoff', 'operator_timeline'],
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_approval_decision: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
+  tool_call: ['operator_timeline'],
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
+  'tool_result.record': ['operator_timeline'],
+  mcp_connection_request: ['client_events', 'operator_timeline'],
+  mcp_connection_result: ['client_events', 'operator_timeline'],
+  human_interaction_request: ['agent_handoff', 'operator_timeline'],
+  human_interaction_response: ['agent_handoff', 'operator_timeline'],
   run_start: ['client_events'],
   run_finish: ['client_events'],
+  // A stopped turn is the one run end the model must hear about; completed/paused finishes stay bookkeeping.
+  'run_finish.aborted': ['agent_handoff'],
   run_error: ['client_events'],
+  custom: ['client_events', 'operator_timeline'],
 };
 
 export function getKindsForView(view: ActivityView): ActivityKind[] {
@@ -67,6 +86,11 @@ export function getKindsForView(view: ActivityView): ActivityKind[] {
 /** `client_events` is sequence-paged; other views sort by createdAt. */
 export function viewUsesSequencePagination(view: ActivityView): boolean {
   return view === 'client_events';
+}
+
+/** Model-facing views: fold `edit`/`delete` onto `message` rows at read time. */
+export function viewFoldsRevisions(view: ActivityView): boolean {
+  return view === 'llm_transcript' || view === 'agent_handoff';
 }
 
 function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBModel> {
@@ -101,6 +125,9 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'delete':
       return { type: ConversationActivityTypeEnum.DELETE };
 
+    case 'reaction':
+      return { type: ConversationActivityTypeEnum.REACTION };
+
     case 'signal.tool_use':
       return {
         type: ConversationActivityTypeEnum.SIGNAL,
@@ -119,8 +146,26 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'tool_approval_decision':
       return { type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION };
 
+    case 'tool_call':
+      return { type: ConversationActivityTypeEnum.TOOL_CALL };
+
     case 'tool_result':
-      return { type: ConversationActivityTypeEnum.TOOL_RESULT };
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': { $ne: true } };
+
+    case 'tool_result.record':
+      return { type: ConversationActivityTypeEnum.TOOL_RESULT, 'toolData.recordOnly': true };
+
+    case 'mcp_connection_request':
+      return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };
+
+    case 'mcp_connection_result':
+      return { type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT };
+
+    case 'human_interaction_request':
+      return { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_REQUEST };
+
+    case 'human_interaction_response':
+      return { type: ConversationActivityTypeEnum.HUMAN_INTERACTION_RESPONSE };
 
     case 'run_start':
       return { type: ConversationActivityTypeEnum.RUN_START };
@@ -128,8 +173,17 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
     case 'run_finish':
       return { type: ConversationActivityTypeEnum.RUN_FINISH };
 
+    case 'run_finish.aborted':
+      return {
+        type: ConversationActivityTypeEnum.RUN_FINISH,
+        'richContent.lifecycle.outcome': 'aborted',
+      };
+
     case 'run_error':
       return { type: ConversationActivityTypeEnum.RUN_ERROR };
+
+    case 'custom':
+      return { type: ConversationActivityTypeEnum.CUSTOM };
   }
 }
 

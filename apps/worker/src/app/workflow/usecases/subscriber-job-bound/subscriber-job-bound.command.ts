@@ -12,6 +12,7 @@ import {
 } from '@novu/shared';
 import {
   IsArray,
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsMongoId,
@@ -32,6 +33,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   requestId?: string;
 
   @IsDefined()
+  // biome-ignore lint/suspicious/noExplicitAny: the trigger payload is arbitrary customer JSON
   payload: any;
 
   @IsDefined()
@@ -81,4 +83,9 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
 
   controls?: StatelessControls;
+
+  /** Mirrors `IProcessSubscriberDataDto.incrementUsageInWorker`; transitional (NV-8853). */
+  @IsOptional()
+  @IsBoolean()
+  incrementUsageInWorker?: boolean;
 }

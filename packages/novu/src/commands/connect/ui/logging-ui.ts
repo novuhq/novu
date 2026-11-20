@@ -74,7 +74,7 @@ export function createLoggingUI(): ConnectUI {
       if (!url) {
         if (authUrlFilePromise) {
           void authUrlFilePromise.then((filePath) => {
-            if (filePath) void unlink(filePath).catch(() => undefined);
+            if (filePath) void unlink(filePath).catch((): undefined => undefined);
           });
           authUrlFilePromise = undefined;
         }
@@ -90,7 +90,7 @@ export function createLoggingUI(): ConnectUI {
 
             return authUrlFile;
           })
-          .catch(() => undefined);
+          .catch((): undefined => undefined);
       }
 
       if (spinner) {
@@ -220,8 +220,11 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve('skip');
     },
-    confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
+    confirmScaffold({ projectDir, appName, variant = 'chat-sdk', llmAuthLabel }) {
       console.log(chalk.cyan(`→ Scaffolding ${bridgeScaffoldLabel(variant)} "${appName}" in ${projectDir}`));
+      if (llmAuthLabel) {
+        console.log(chalk.gray(`  LLM wiring: ${llmAuthLabel}`));
+      }
 
       return Promise.resolve(true);
     },
@@ -268,7 +271,6 @@ export function createLoggingUI(): ConnectUI {
     },
     pickChannel() {
       stop();
-      // Non-interactive default: Slack.
       console.log(chalk.gray('Non-interactive mode: defaulting to Slack.'));
 
       return Promise.resolve('slack');
@@ -322,7 +324,7 @@ export function createLoggingUI(): ConnectUI {
       logTelegramSetupLinkHandoffEvent({ setupUrl: mobileUrl });
       void renderQRPngFile(mobileUrl)
         .then((setupQrPngPath) => logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }))
-        .catch(() => undefined);
+        .catch((): undefined => undefined);
     },
     savingTelegramBotToken() {
       start('Saving your Telegram bot token…');
@@ -333,7 +335,7 @@ export function createLoggingUI(): ConnectUI {
       logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
       void renderQRPngFile(deepLinkUrl)
         .then((deepLinkQrPngPath) => logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }))
-        .catch(() => undefined);
+        .catch((): undefined => undefined);
     },
     telegramConnected() {
       succeed('Telegram connected');
@@ -421,7 +423,7 @@ export function createLoggingUI(): ConnectUI {
       if (waMeUrl) {
         void renderQRPngFile(waMeUrl)
           .then((waMeQrPngPath) => logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath }))
-          .catch(() => undefined);
+          .catch((): undefined => undefined);
       }
       start('Waiting for your first inbound WhatsApp message…');
     },
@@ -469,8 +471,29 @@ export function createLoggingUI(): ConnectUI {
     slackSkipped() {
       console.log(chalk.gray('Slack step skipped (--skip-slack).'));
     },
+    addingWebChatIntegration() {
+      start('Linking Web Chat to your agent…');
+    },
+    awaitWebChatHandoff({ dashboardUrl, embedPrompt, embedPromptFile }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Try Web Chat in the dashboard: ${chalk.underline(dashboardUrl)}`);
+      if (embedPromptFile) {
+        console.log(`${chalk.cyan('→')} Embed prompt saved to: ${chalk.bold(embedPromptFile)}`);
+      } else {
+        console.log(chalk.dim('Embed prompt ready for your app.'));
+      }
+      void embedPrompt;
+
+      return Promise.resolve();
+    },
+    pickWebChatSetup({ projectKind }) {
+      return Promise.resolve(projectKind === 'empty' ? 'scaffold' : 'embed');
+    },
+    scaffoldingWebChat() {
+      start('Scaffolding your Web Chat example app…');
+    },
     sendingWelcome() {
-      start('Asking your agent to say hello in Slack…');
+      start('Sending a welcome message from your agent…');
     },
     success(result) {
       stop();

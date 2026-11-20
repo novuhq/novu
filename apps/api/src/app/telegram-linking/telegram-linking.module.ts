@@ -14,6 +14,7 @@ import {
 } from '@novu/dal';
 
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { ConnectContextVerifier } from '../integrations/usecases/generate-chat-oath-url/connect-context-verifier.service';
 import { SharedModule } from '../shared/shared.module';
 import { ConfigureTelegramWebhook } from './configure-telegram-webhook/configure-telegram-webhook.usecase';
@@ -24,6 +25,7 @@ import { IssueTelegramSubscriberLink } from './issue-telegram-subscriber-link/is
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { ProcessIntegrationTelegramWebhook } from './process-integration-telegram-webhook/process-integration-telegram-webhook.usecase';
 import { TelegramAgentLinkResolver } from './telegram-agent-link.resolver';
+import { TelegramBotProfile } from './telegram-bot-profile.service';
 import { TelegramMobileLinkTokenService } from './telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
@@ -39,6 +41,7 @@ const USE_CASES = [
 
 const SERVICES = [
   TelegramAgentLinkResolver,
+  TelegramBotProfile,
   TelegramMobileLinkTokenService,
   TelegramStartCodeService,
   ConnectContextVerifier,
@@ -58,6 +61,7 @@ const REPOSITORIES = [
     ...USE_CASES,
     ...SERVICES,
     ...REPOSITORIES,
+    AgentInboxFeaturesService,
     analyticsService,
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,

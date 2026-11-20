@@ -8,6 +8,7 @@ export class ListContextsQueryDto extends CursorPaginationQueryDto<GetContextRes
   @ApiPropertyOptional({
     description: 'Filter contexts by type',
     example: 'tenant',
+    type: String,
   })
   @IsString()
   @IsOptional()

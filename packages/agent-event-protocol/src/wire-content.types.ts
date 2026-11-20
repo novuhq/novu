@@ -1,3 +1,5 @@
+import type { CardElement } from './card-element.types';
+
 export type AgentMessageRole = 'user' | 'assistant';
 
 export type AgentToolSource = { type: 'builtin' } | { type: 'custom' } | { type: 'mcp'; serverName: string };
@@ -9,7 +11,7 @@ export type AgentToolResultContent =
   | { type: 'media'; mediaType: string; data: string; name?: string }
   | { type: 'unknown'; providerType: string; data: Record<string, unknown> };
 
-export type AgentMessageContent = { markdown: string } | { card: Record<string, unknown> };
+export type AgentMessageContent = { markdown: string } | { card: CardElement };
 
 export interface AgentFileRef {
   fileId: string;

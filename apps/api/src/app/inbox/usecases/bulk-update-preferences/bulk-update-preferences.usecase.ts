@@ -17,6 +17,7 @@ import { UpdatePreferences } from '../update-preferences/update-preferences.usec
 import { BulkUpdatePreferencesCommand } from './bulk-update-preferences.command';
 
 const MAX_BULK_LIMIT = 100;
+const UPDATE_BATCH_SIZE = 5;
 
 @Injectable()
 export class BulkUpdatePreferences {
@@ -101,44 +102,54 @@ export class BulkUpdatePreferences {
       _id: command.environmentId,
     });
 
-    const updatePromises = Array.from(workflowPreferencesMap.entries()).map(
-      async ([workflowId, { preference, workflow }]) => {
-        const isUpdatingSubscriptionPreference =
-          preference.subscriptionIdentifier &&
-          (typeof preference.enabled !== 'undefined' || typeof preference.condition !== 'undefined');
+    const workflowPreferenceEntries = Array.from(workflowPreferencesMap.entries());
+    const updatedPreferences: InboxPreference[] = [];
 
-        return this.updatePreferencesUsecase.execute(
-          UpdatePreferencesCommand.create({
-            organizationId: command.organizationId,
-            subscriberId: command.subscriberId,
-            environmentId: command.environmentId,
-            contextKeys,
-            level: PreferenceLevelEnum.TEMPLATE,
-            subscriptionIdentifier: preference.subscriptionIdentifier,
-            ...(isUpdatingSubscriptionPreference && {
-              all: {
-                ...(typeof preference.enabled !== 'undefined' && { enabled: preference.enabled }),
-                ...(typeof preference.condition !== 'undefined' && { condition: preference.condition }),
+    for (let batchStart = 0; batchStart < workflowPreferenceEntries.length; batchStart += UPDATE_BATCH_SIZE) {
+      const batch = workflowPreferenceEntries.slice(batchStart, batchStart + UPDATE_BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async ([workflowId, { preference, workflow }]) => {
+          const isUpdatingSubscriptionPreference =
+            preference.subscriptionIdentifier &&
+            (typeof preference.enabled !== 'undefined' || typeof preference.condition !== 'undefined');
+
+          return this.updatePreferencesUsecase.execute(
+            UpdatePreferencesCommand.create(
+              {
+                organizationId: command.organizationId,
+                subscriberId: command.subscriberId,
+                environmentId: command.environmentId,
+                contextKeys,
+                level: PreferenceLevelEnum.TEMPLATE,
+                subscriptionIdentifier: preference.subscriptionIdentifier,
+                ...(isUpdatingSubscriptionPreference && {
+                  all: {
+                    ...(typeof preference.enabled !== 'undefined' && { enabled: preference.enabled }),
+                    ...(typeof preference.condition !== 'undefined' && { condition: preference.condition }),
+                  },
+                }),
+                chat: preference.chat,
+                email: preference.email,
+                in_app: preference.in_app,
+                push: preference.push,
+                sms: preference.sms,
+                tool: preference.tool,
+                workflowIdOrIdentifier: workflowId,
+                includeInactiveChannels: false,
               },
-            }),
-            chat: preference.chat,
-            email: preference.email,
-            in_app: preference.in_app,
-            push: preference.push,
-            sms: preference.sms,
-            tool: preference.tool,
-            workflowIdOrIdentifier: workflowId,
-            workflow,
-            includeInactiveChannels: false,
-            subscriber,
-            // biome-ignore lint/style/noNonNullAssertion: environment is always found
-            environment: environment!,
-          })
-        );
-      }
-    );
+              {
+                workflow,
+                subscriber,
+                // biome-ignore lint/style/noNonNullAssertion: environment is always found
+                environment: environment!,
+              }
+            )
+          );
+        })
+      );
 
-    const updatedPreferences = await Promise.all(updatePromises);
+      updatedPreferences.push(...batchResults);
+    }
 
     return updatedPreferences;
   }

@@ -68,6 +68,74 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * The newest message a person wrote on each of these platform threads of one integration, across every agent on
+   * it, keyed by thread id. A read over `lastHumanMessageAt`, which the inbound path already keeps, so it writes
+   * nothing. Agent Inbox reads it for WhatsApp's 24-hour window, which belongs to the business number, not an agent.
+   */
+  async findLastHumanMessageAtByPlatformThreads(
+    environmentId: string,
+    organizationId: string,
+    integrationId: string,
+    platformThreadIds: string[]
+  ): Promise<Map<string, string>> {
+    const latest = new Map<string, string>();
+    if (platformThreadIds.length === 0) {
+      return latest;
+    }
+
+    const integration = new Types.ObjectId(integrationId);
+    const rows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        channels: { $elemMatch: { platformThreadId: { $in: platformThreadIds }, _integrationId: integration } },
+        lastHumanMessageAt: { $exists: true },
+      },
+      { channels: 1, lastHumanMessageAt: 1 }
+    );
+
+    const wanted = new Set(platformThreadIds);
+    for (const row of rows) {
+      const at = row.lastHumanMessageAt;
+      if (!at) {
+        continue;
+      }
+
+      for (const channel of row.channels ?? []) {
+        const threadId = channel.platformThreadId;
+        if (!wanted.has(threadId) || String(channel._integrationId) !== String(integration)) {
+          continue;
+        }
+
+        const known = latest.get(threadId);
+        if (!known || new Date(at).getTime() > new Date(known).getTime()) {
+          latest.set(threadId, at);
+        }
+      }
+    }
+
+    return latest;
+  }
+
+  /**
+   * How many other agents already have a conversation on this platform thread.
+   * Used by Smart reply-policy so a second Novu agent counts like a second speaker.
+   */
+  async countOtherAgentsOnPlatformThread(
+    environmentId: string,
+    organizationId: string,
+    platformThreadId: string,
+    agentId: string
+  ): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _agentId: { $ne: agentId },
+      'channels.platformThreadId': platformThreadId,
+    });
+  }
+
   async findByAgentIntegrationParticipant(
     environmentId: string,
     organizationId: string,
@@ -184,11 +252,40 @@ export class ConversationRepository extends BaseRepositoryV2<
     return result.modified;
   }
 
+  /**
+   * Takes a subscriber out of the direct threads with one platform user on one integration, such as a WhatsApp
+   * number that someone else has just proved theirs. The thread stays, for whoever writes from it next. Returns the
+   * number of conversations changed.
+   */
+  async removeSubscriberFromPlatformUserThreads(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    /** The user's id as the thread id ends with it, after the last `:`. */
+    platformUserId: string;
+    subscriberId: string;
+  }): Promise<number> {
+    const endsWithUser = new RegExp(`:${params.platformUserId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: { $elemMatch: { _integrationId: params.integrationId, platformThreadId: endsWithUser } },
+        participants: { $elemMatch: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } },
+      },
+      { $pull: { participants: { id: params.subscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } } }
+    );
+
+    return result.modified;
+  }
+
   async touchActivity(
     environmentId: string,
     organizationId: string,
     id: string,
-    messagePreview: string
+    messagePreview: string,
+    session?: ClientSession | null,
+    options?: { humanMessageAt?: string }
   ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
@@ -197,8 +294,119 @@ export class ConversationRepository extends BaseRepositoryV2<
           lastActivityAt: new Date().toISOString(),
           lastMessagePreview: messagePreview.slice(0, 200),
         },
+        ...(options?.humanMessageAt ? { $max: { lastHumanMessageAt: options.humanMessageAt } } : {}),
         $inc: { messageCount: 1 },
+      },
+      session ? { session } : {}
+    );
+  }
+
+  /**
+   * Advances the Human inbox read cursor. `$max` keeps concurrent readers from moving it backwards.
+   */
+  async markRead(environmentId: string, organizationId: string, id: string, readUpTo: string): Promise<void> {
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $max: { lastReadAt: readUpTo } }
+    );
+  }
+
+  async findByAgentAndIdentifier(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    identifier: string
+  ): Promise<ConversationEntity | null> {
+    return this.findOne(
+      { _environmentId: environmentId, _organizationId: organizationId, _agentId: agentId, identifier },
+      '*'
+    );
+  }
+
+  /**
+   * Threads of one agent for the Human inbox, newest activity first. A thread is unread while its
+   * newest human message is newer than its read cursor. `after` is the identifier of the last
+   * thread of the previous page.
+   */
+  async findInboxThreads(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    read?: 'unread' | 'read';
+    status?: ConversationStatusEnum;
+    /** Platform slug of the thread's channel, such as `telegram`. */
+    channel?: string;
+    limit: number;
+    after?: string;
+  }): Promise<{ data: ConversationEntity[]; next: string | null }> {
+    const scope = { _environmentId: params.environmentId, _organizationId: params.organizationId };
+    const query: FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds = { ...scope, _agentId: params.agentId };
+    const and: FilterQuery<ConversationDBModel>[] = [];
+
+    if (params.status) {
+      query.status = params.status;
+    }
+
+    if (params.channel) {
+      // A thread lives on one channel, and that is its first one.
+      query['channels.0.platform'] = params.channel;
+    }
+
+    if (params.read === 'unread') {
+      query.lastHumanMessageAt = { $exists: true };
+      and.push({ $expr: { $lt: ['$lastReadAt', '$lastHumanMessageAt'] } });
+    }
+
+    if (params.read === 'read') {
+      and.push({
+        $or: [{ lastHumanMessageAt: { $exists: false } }, { $expr: { $gte: ['$lastReadAt', '$lastHumanMessageAt'] } }],
+      });
+    }
+
+    if (params.after) {
+      const cursor = await this.findOne({ ...scope, _agentId: params.agentId, identifier: params.after }, [
+        '_id',
+        'lastActivityAt',
+      ]);
+
+      if (!cursor) {
+        return { data: [], next: null };
       }
+
+      and.push({
+        $or: [
+          { lastActivityAt: { $lt: cursor.lastActivityAt } },
+          { lastActivityAt: cursor.lastActivityAt, _id: { $lt: new Types.ObjectId(cursor._id) } },
+        ],
+      });
+    }
+
+    if (and.length) {
+      query.$and = and;
+    }
+
+    const rows = await this.find(query, '*', { sort: { lastActivityAt: -1, _id: -1 }, limit: params.limit + 1 });
+    const data = rows.slice(0, params.limit);
+    const next = rows.length > params.limit ? (data[data.length - 1]?.identifier ?? null) : null;
+
+    return { data, next };
+  }
+
+  async incrementMessageCount(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    count: number,
+    session?: ClientSession | null
+  ): Promise<void> {
+    if (count === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: { messageCount: count } },
+      session ? { session } : {}
     );
   }
 
@@ -207,7 +415,13 @@ export class ConversationRepository extends BaseRepositoryV2<
    * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
    * but the conversation's timeline and preview should reflect the latest content.
    */
-  async touchPreview(environmentId: string, organizationId: string, id: string, messagePreview: string): Promise<void> {
+  async touchPreview(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string,
+    session?: ClientSession | null
+  ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       {
@@ -215,7 +429,8 @@ export class ConversationRepository extends BaseRepositoryV2<
           lastActivityAt: new Date().toISOString(),
           lastMessagePreview: messagePreview.slice(0, 200),
         },
-      }
+      },
+      session ? { session } : {}
     );
   }
 
@@ -275,6 +490,18 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
 
     return result.matched > 0;
+  }
+
+  async setNotificationId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    notificationId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { _notificationId: notificationId } }
+    );
   }
 
   async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
@@ -483,6 +710,22 @@ export class ConversationRepository extends BaseRepositoryV2<
     conversationId: string,
     minimum = 0
   ): Promise<number> {
+    const [sequence] = await this.allocateEventSequenceRange(environmentId, organizationId, conversationId, 1, minimum);
+
+    return sequence;
+  }
+
+  async allocateEventSequenceRange(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    count: number,
+    minimum = 0
+  ): Promise<number[]> {
+    if (count <= 0) {
+      return [];
+    }
+
     const filter = {
       _id: conversationId,
       _environmentId: environmentId,
@@ -499,9 +742,11 @@ export class ConversationRepository extends BaseRepositoryV2<
       );
     }
 
-    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: count } }, { new: true });
+    const lastSequence = updated?.eventSequence ?? count;
+    const firstSequence = lastSequence - count + 1;
 
-    return updated?.eventSequence ?? 1;
+    return Array.from({ length: count }, (_, index) => firstSequence + index);
   }
 
   async incrementTokenUsage(

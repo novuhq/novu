@@ -12,7 +12,7 @@ export type {
   SubscriptionProps,
   TelegramConnectButtonProps,
 } from './components';
-export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';
+export type { BaseNovuUIOptions, EngineStores, NovuUIOptions } from './novuUI';
 export { NovuUI } from './novuUI';
 export type {
   AllAppearance,
@@ -25,12 +25,15 @@ export type {
   AllLocalization,
   AllLocalizationKey,
   AllTheme,
+  AvatarRenderer,
   BellRenderer,
   BodyRenderer,
   ChannelConnectButtonAppearanceCallback,
   ChannelConnectButtonAppearanceCallbackFunction,
   ChannelConnectButtonAppearanceCallbackKeys,
   ChannelConnectButtonIconKey,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   ElementStyles,
   IconRenderer,
   InboxAppearance,
@@ -44,6 +47,7 @@ export type {
   InboxLocalization,
   InboxLocalizationKey,
   InboxTheme,
+  MountHandle,
   MsTeamsLinkUserAppearanceCallback,
   MsTeamsLinkUserAppearanceCallbackFunction,
   MsTeamsLinkUserAppearanceCallbackKeys,
@@ -52,6 +56,8 @@ export type {
   NotificationRenderer,
   NotificationStatus,
   NovuProviderProps,
+  OutletCleanup,
+  OutletHandle,
   PreferenceGroups,
   PreferencesFilter,
   PreferencesSort,

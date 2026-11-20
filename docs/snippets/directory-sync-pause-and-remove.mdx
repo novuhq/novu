@@ -1,0 +1,11 @@
+**Deactivate** pauses new sync from this directory and withdraws organization access that only this directory granted. It does not delete Novu accounts, the directory, a SCIM bearer token, or a stored Google service account key. A membership created from **Settings** > **Team**, or still granted by another directory, stays.
+
+**Activate** resumes sync. Access returns from the directory's current state, not from a snapshot of who was a member before the pause.
+
+**Remove** deletes the directory after you type the organization name.
+
+- A membership that came only from this directory is removed.
+- An invitation membership, or access still granted by another directory, stays.
+- The Novu account is not deleted. If this was the only directory for that person, removing it does not sign them out. Deactivate them in the identity provider, and wait until that change has synced, before you remove the directory if they must lose access.
+- For SCIM, the bearer token is deleted. Setting directory sync up again creates a new endpoint and a new token.
+- For Google Workspace, Novu's copy of the service account key is destroyed. That does not delete the key in Google Cloud. Delete it there if it may have leaked.

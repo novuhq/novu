@@ -1,7 +1,7 @@
 /**
  * Audits DTO class properties for consistency between TypeScript optionality (`?`)
  * and @nestjs/swagger decorators (@ApiProperty vs @ApiPropertyOptional), including
- * explicit `required: true | false` in decorator options.
+ * explicit `required: true | false` (or `selfRequired` on object schemas) in decorator options.
  *
  * Run: pnpm check:api-property-optionality (from repo root) or pnpm run check:api-property-optionality in apps/api
  * Run: pnpm  pnpm --filter @novu/api-service run check:api-property-optionality --format json --write-report .cursor/api-property-optionality-report.json
@@ -12,8 +12,8 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { type Decorator, Project, type SourceFile } from 'ts-morph';
-import { SyntaxKind } from 'typescript';
+// SyntaxKind must come from ts-morph's bundled TypeScript: its enum values differ between TypeScript versions.
+import { type Decorator, Project, type SourceFile, SyntaxKind } from 'ts-morph';
 
 const REPORT_VERSION = 1 as const;
 
@@ -58,7 +58,7 @@ function getRequiredFromDecoratorOptions(decorator: Decorator): boolean | undefi
     return undefined;
   }
 
-  const requiredProp = first.getProperty('required');
+  const requiredProp = first.getProperty('selfRequired') ?? first.getProperty('required');
 
   if (!requiredProp || requiredProp.getKind() !== SyntaxKind.PropertyAssignment) {
     return undefined;

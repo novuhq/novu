@@ -57,6 +57,8 @@ function makeCommand(localPart: string): InboundEmailParseCommand {
     priority: 'normal',
     dkim: 'pass',
     spf: 'pass',
+    dkimDomains: ['other.com'],
+    spfDomain: 'other.com',
     spamScore: 0,
     language: 'english',
     connection: {} as any,
@@ -113,11 +115,48 @@ describe('DomainRouteStrategy', () => {
 
     sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
-    // The DKIM/SPF verdicts must reach the agent delivery so the API can reject
-    // spoofed senders — they are dropped without the commandToMail passthrough.
+    // The DKIM/SPF verdicts, and the domains they vouch for, must reach the
+    // agent delivery so the API can reject spoofed senders — they are dropped
+    // without the commandToMail passthrough.
     const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
     expect(agentCall.args[0].mail.dkim).to.equal('pass');
     expect(agentCall.args[0].mail.spf).to.equal('pass');
+    expect(agentCall.args[0].mail.dkimDomains).to.deep.equal(['other.com']);
+    expect(agentCall.args[0].mail.spfDomain).to.equal('other.com');
+  });
+
+  it('should match the domain using the selected envelope recipient', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    const command = makeCommand('customer');
+    command.to = [{ address: 'customer@other.com', name: '' }];
+    command.cc = [{ address: `support@${DOMAIN_NAME}`, name: '' }];
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(command, `support@${DOMAIN_NAME}`);
+
+    sinon.assert.calledOnceWithExactly(domainRepository.findByName as any, DOMAIN_NAME);
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].toAddress).to.equal(`support@${DOMAIN_NAME}`);
+    expect(agentCall.args[0].mail.to).to.deep.equal(command.to);
+    expect(agentCall.args[0].mail.cc).to.deep.equal(command.cc);
+    expect(agentCall.args[0].mail.bcc).to.be.undefined;
+  });
+
+  it('should expose an envelope-only route recipient as BCC without changing To', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    const command = makeCommand('customer');
+    command.to = [{ address: 'customer@other.com', name: 'Customer' }];
+    command.cc = [];
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(command, `support@${DOMAIN_NAME}`);
+
+    const webhookCall = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    expect(webhookCall.args[0].mail.to).to.deep.equal(command.to);
+    expect(webhookCall.args[0].mail.cc).to.deep.equal([]);
+    expect(webhookCall.args[0].mail.bcc).to.deep.equal([{ address: `support@${DOMAIN_NAME}`, name: '' }]);
   });
 
   it('should strip a +nv reply token and prefer exact then stripped custom-domain routes', async () => {
@@ -308,14 +347,15 @@ describe('DomainRouteStrategy', () => {
 
   describe('shared agent domain branch', () => {
     const SHARED_DOMAIN = 'agentconnect.sh';
+    const AGENT_INBOX_DOMAIN = 'agentinbox.md';
     const AGENT_ID = '65a3f1d2b8e4c7a9f3b2c1d0';
     const INTEGRATION_ID = '65a3f1d2b8e4c7a9f3b2c1ff';
     const ROUTING_KEY = 'a1b2c3d4';
 
-    function makeSharedCommand(localPart: string): InboundEmailParseCommand {
+    function makeSharedCommand(localPart: string, domain = SHARED_DOMAIN): InboundEmailParseCommand {
       return {
         ...makeCommand('ignored'),
-        to: [{ address: `${localPart}@${SHARED_DOMAIN}`, name: '' }],
+        to: [{ address: `${localPart}@${domain}`, name: '' }],
       } as InboundEmailParseCommand;
     }
 
@@ -342,7 +382,12 @@ describe('DomainRouteStrategy', () => {
         credentials: {
           inboxRoutingKey: ROUTING_KEY,
           emailSlugPrefix: 'wine-bot',
-        } as { inboxRoutingKey: string; emailSlugPrefix: string; sharedInboxDisabled?: boolean },
+        } as {
+          inboxRoutingKey: string;
+          emailSlugPrefix: string;
+          inboxDomain?: string;
+          sharedInboxDisabled?: boolean;
+        },
       };
     }
 
@@ -351,20 +396,24 @@ describe('DomainRouteStrategy', () => {
     }
 
     const sharedEnvKey = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+    const inboxDomainEnvKey = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
     const enterpriseKey = 'NOVU_ENTERPRISE';
     const selfHostedKey = 'IS_SELF_HOSTED';
     const apiRootKey = 'API_ROOT_URL';
     let prevShared: string | undefined;
+    let prevInboxDomain: string | undefined;
     let prevEnterprise: string | undefined;
     let prevSelfHosted: string | undefined;
     let prevApiRoot: string | undefined;
 
     beforeEach(() => {
       prevShared = process.env[sharedEnvKey];
+      prevInboxDomain = process.env[inboxDomainEnvKey];
       prevEnterprise = process.env[enterpriseKey];
       prevSelfHosted = process.env[selfHostedKey];
       prevApiRoot = process.env[apiRootKey];
       process.env[sharedEnvKey] = SHARED_DOMAIN;
+      process.env[inboxDomainEnvKey] = AGENT_INBOX_DOMAIN;
       process.env[enterpriseKey] = 'true';
       process.env[selfHostedKey] = 'false';
       process.env[apiRootKey] = 'http://localhost:3000';
@@ -373,6 +422,8 @@ describe('DomainRouteStrategy', () => {
     afterEach(() => {
       if (prevShared === undefined) delete process.env[sharedEnvKey];
       else process.env[sharedEnvKey] = prevShared;
+      if (prevInboxDomain === undefined) delete process.env[inboxDomainEnvKey];
+      else process.env[inboxDomainEnvKey] = prevInboxDomain;
       if (prevEnterprise === undefined) delete process.env[enterpriseKey];
       else process.env[enterpriseKey] = prevEnterprise;
       if (prevSelfHosted === undefined) delete process.env[selfHostedKey];
@@ -391,9 +442,72 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
       const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
       expect(call.args[0].route.destination).to.equal(AGENT_ID);
+      expect(call.args[0].integrationId).to.equal(INTEGRATION_ID);
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
       sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
+    });
+
+    it('delivers mail on the Agent Inbox domain when the integration is pinned there', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: AGENT_INBOX_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`, AGENT_INBOX_DOMAIN));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.name).to.equal(AGENT_INBOX_DOMAIN);
+    });
+
+    it('still delivers on agentconnect.sh when the integration is pinned there', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: SHARED_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      expect(inboundDomainRouteDelivery.deliverToAgent.getCall(0).args[0].domain.name).to.equal(SHARED_DOMAIN);
+    });
+
+    it('drops mail when the address domain does not match the pinned domain', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, inboxDomain: AGENT_INBOX_DOMAIN };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
+    });
+
+    it('delivers a vanity handle on the Agent Inbox domain', async () => {
+      integrationRepository.findAgentInboundByVanitySlug.resolves({
+        ...makeIntegration(),
+        providerId: EmailProviderIdEnum.AgentEmailInbox,
+        credentials: { emailSlugPrefix: 'atlas', inboxDomain: AGENT_INBOX_DOMAIN },
+      } as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand('atlas', AGENT_INBOX_DOMAIN));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.calledOnceWithExactly(
+        integrationRepository.findAgentInboundByVanitySlug as any,
+        'atlas',
+        AGENT_INBOX_DOMAIN
+      );
+      sinon.assert.notCalled(integrationRepository.findAgentInboundByInboxRoutingKey as any);
     });
 
     it('strips a +nv reply token before shared-inbox routing and forwards originToken', async () => {
@@ -438,6 +552,49 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
       sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
+    });
+
+    it('accepts the published fallback slug when the stored prefix is missing', async () => {
+      const integration = makeIntegration();
+      delete (integration.credentials as { emailSlugPrefix?: string }).emailSlugPrefix;
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
+    it('drops a non-published slug when the stored prefix is missing', async () => {
+      const integration = makeIntegration();
+      delete (integration.credentials as { emailSlugPrefix?: string }).emailSlugPrefix;
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`other-agent-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
+    it('drops mail when the address slug does not match the integration', async () => {
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
+
+      try {
+        await strategy.execute(makeSharedCommand(`other-agent-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
     });
 
     it('drops mail when the integration is inactive', async () => {

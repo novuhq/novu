@@ -1,6 +1,12 @@
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
-import { COMPARISON_OPERATORS, JsonComparisonOperatorEnum, JsonLogicOperatorEnum } from './types';
+import type { UnaryStringOperator } from './types';
+import {
+  COMPARISON_OPERATORS,
+  isUnaryStringOperator,
+  JsonComparisonOperatorEnum,
+  JsonLogicOperatorEnum,
+} from './types';
 
 type QueryIssue = {
   message: string;
@@ -147,6 +153,16 @@ export class QueryValidatorService {
         continue;
       }
 
+      if (isUnaryStringOperator(key)) {
+        this.validateUnaryStringOperation({
+          operator: key,
+          value,
+          issues,
+          path,
+        });
+        continue;
+      }
+
       const isBetween =
         key === JsonComparisonOperatorEnum.LESS_THAN_OR_EQUAL && Array.isArray(value) && value.length === 3;
       if (isBetween) {
@@ -191,6 +207,26 @@ export class QueryValidatorService {
     if (lowerBoundIsUndefined || upperBoundIsUndefined) {
       issues.push(this.getValueIssue(path));
     }
+  }
+
+  private validateUnaryStringOperation({
+    operator,
+    value,
+    issues,
+    path,
+  }: {
+    operator: UnaryStringOperator;
+    value: unknown;
+    issues: QueryIssue[];
+    path: number[];
+  }) {
+    if (!Array.isArray(value) || value.length !== 1) {
+      issues.push(this.getOperationIssue(operator, path));
+
+      return;
+    }
+
+    this.validateFieldReference(value[0], issues, path);
   }
 
   private validateComparisonOperation({

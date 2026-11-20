@@ -7,6 +7,7 @@ import {
   WorkflowResponseDtoSortField,
   WorkflowStatusEnum,
 } from '@novu/api/models/components';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -18,6 +19,7 @@ describe('List Workflows - /workflows (GET) #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
     novuClient = initNovuClassSdkInternalAuth(session);
   });
 

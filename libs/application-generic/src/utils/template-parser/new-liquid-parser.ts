@@ -81,32 +81,13 @@ function processLiquidRawOutput({
       error.errors.forEach((e: RenderError) => {
         const { token } = e;
         if (token) {
-          addVariable(
-            {
-              name: extractVariableFromOutput(token.input) || 'unknown',
-              message: e.message,
-              context: e.context,
-              output: token.input,
-              outputStart: token.begin,
-              outputEnd: token.end,
-            },
-            false
-          );
+          addVariable(variableFromParseError(token, e.message, e.context), false);
         }
       });
     } else if (error instanceof LiquidError) {
-      const { token } = error as any;
+      const { token } = error;
       if (token) {
-        addVariable(
-          {
-            name: extractVariableFromOutput(token.input) || 'unknown',
-            message: error.message,
-            output: token.input,
-            outputStart: token.begin,
-            outputEnd: token.end,
-          },
-          false
-        );
+        addVariable(variableFromParseError(token, error.message), false);
       }
     }
   }
@@ -411,6 +392,39 @@ function validateOutputToken({
   });
 }
 
+type TagScan = {
+  validVariables: Array<Variable>;
+  invalidVariables: Array<Variable>;
+  variableSchema?: JSONSchemaDto;
+  localVariables: Set<string>;
+  output: string;
+  outputStart: number;
+  outputEnd: number;
+};
+
+function validateParsedNames(
+  variableNames: string[],
+  scan: TagScan,
+  location?: { output: string; outputStart: number; outputEnd: number }
+) {
+  const output = location?.output ?? scan.output;
+  const outputStart = location?.outputStart ?? scan.outputStart;
+  const outputEnd = location?.outputEnd ?? scan.outputEnd;
+
+  for (const variableName of variableNames) {
+    validateVariable({
+      variableName,
+      validVariables: scan.validVariables,
+      invalidVariables: scan.invalidVariables,
+      variableSchema: scan.variableSchema,
+      localVariables: scan.localVariables,
+      output,
+      outputStart,
+      outputEnd,
+    });
+  }
+}
+
 function processTagToken({
   template,
   validVariables,
@@ -425,313 +439,245 @@ function processTagToken({
   localVariables: Set<string>;
 }) {
   const { token } = template;
-  const outputStart = token.begin;
-  const outputEnd = token.end;
-  const output = token.input.slice(outputStart, outputEnd);
+  const scan: TagScan = {
+    validVariables,
+    invalidVariables,
+    variableSchema,
+    localVariables,
+    output: token.input.slice(token.begin, token.end),
+    outputStart: token.begin,
+    outputEnd: token.end,
+  };
 
   if (template instanceof ForTag) {
-    // Extract iterator variable from token content: {% for item in collection %}
-    const forMatch = output.match(/^\s*{%\s*for\s+(\w+)\s+in\s+(.+?)\s*%}/);
-    if (forMatch) {
-      const [, iteratorVariable, collectionExpression] = forMatch;
-      const isRangeExpression = collectionExpression.trim().match(/^\(.+?\.\..+?\)$/);
+    processLoopTag(scan, template, 'for', 'forloop');
 
-      // Check if it's a range expression
-      if (isRangeExpression) {
-        // Extract variables from range
-        const rangeVariables = extractVariablesFromRange(collectionExpression.trim());
-        rangeVariables.forEach((variableName) => {
-          validateVariable({
-            variableName,
-            validVariables,
-            invalidVariables,
-            variableSchema,
-            localVariables,
-            output,
-            outputStart,
-            outputEnd,
-          });
-        });
-      } else {
-        // Extract collection variable (non-range)
-        const collectionVariable = extractVariableFromExpression(collectionExpression);
-        if (collectionVariable) {
-          validateVariable({
-            variableName: collectionVariable,
-            validVariables,
-            invalidVariables,
-            variableSchema,
-            localVariables,
-            output,
-            outputStart,
-            outputEnd,
-          });
-        }
-      }
+    return;
+  }
 
-      const newLocalVariables = new Set(localVariables);
-      newLocalVariables.add(iteratorVariable);
-      newLocalVariables.add('forloop'); // Add forloop built-in variable
+  if (template instanceof TablerowTag) {
+    processLoopTag(scan, template, 'tablerow', 'tablerowloop');
 
-      const nestedTemplates = (template as any).templates || [];
+    return;
+  }
 
-      // process nested templates with new local variables
-      processTemplates({
-        templates: nestedTemplates,
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables: newLocalVariables,
-      });
+  if (template instanceof IfTag || template instanceof UnlessTag) {
+    processConditionalTag(scan, template);
 
-      if (!isRangeExpression) {
-        const collectionVar = extractVariableFromExpression(collectionExpression);
-        annotateCollectionVariable(iteratorVariable, collectionVar, nestedTemplates, validVariables, invalidVariables);
-      }
-    }
-  } else if (template instanceof IfTag || template instanceof UnlessTag) {
-    // Extract variables from condition
-    const tagName = template instanceof IfTag ? 'if' : 'unless';
-    const conditionMatch = output.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+(.+?)\\s*%}`));
-    if (conditionMatch) {
-      const condition = conditionMatch[1];
-      const variables = extractVariablesFromCondition(condition);
+    return;
+  }
 
-      variables.forEach((variableName) => {
-        validateVariable({
-          variableName,
-          validVariables,
-          invalidVariables,
-          variableSchema,
-          localVariables,
-          output,
-          outputStart,
-          outputEnd,
-        });
-      });
-    }
+  if (template instanceof AssignTag) {
+    processAssignTag(scan);
 
-    // Process branches
-    const branches = (template as any).branches || [];
-    for (const branch of branches) {
-      // Extract variables from branch condition (elsif conditions)
-      if (branch.value) {
-        const branchVariables = extractVariablesFromValue(branch.value);
-        branchVariables.forEach((variableName) => {
-          validateVariable({
-            variableName,
-            validVariables,
-            invalidVariables,
-            variableSchema,
-            localVariables,
-            output: variableName, // Using variable name as output since we don't have the exact token
-            outputStart: 0,
-            outputEnd: variableName.length,
-          });
-        });
-      }
+    return;
+  }
 
-      processTemplates({
-        templates: branch.templates || [],
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables,
-      });
-    }
+  if (template instanceof CaptureTag) {
+    processCaptureTag(scan, template);
 
-    // Process else templates
-    const elseTemplates = (template as any).elseTemplates || [];
-    if (elseTemplates.length > 0) {
-      processTemplates({
-        templates: elseTemplates,
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables,
-      });
-    }
-  } else if (template instanceof AssignTag) {
-    // Extract assigned variable from token content: {% assign myVar = value %} or {%- assign myVar = value -%}
-    const assignMatch = output.match(/^\s*{%-?\s*assign\s+(\w+)\s*=\s*(.+?)\s*-?%}/);
-    if (assignMatch) {
-      const [, assignedVariable, valueExpression] = assignMatch;
+    return;
+  }
 
-      // Add to local variables BEFORE processing the value expression
-      const newLocalVariables = new Set(localVariables);
-      newLocalVariables.add(assignedVariable);
+  if (template instanceof CaseTag) {
+    processCaseTag(scan, template);
+  }
+}
 
-      // Extract variables from value expression
-      const variables = extractVariablesFromCondition(valueExpression);
-      variables.forEach((variableName) => {
-        validateVariable({
-          variableName,
-          validVariables,
-          invalidVariables,
-          variableSchema,
-          localVariables: newLocalVariables, // Use the new set with the assigned variable
-          output,
-          outputStart,
-          outputEnd,
-        });
-      });
+function processLoopTag(
+  scan: TagScan,
+  template: ForTag | TablerowTag,
+  tagName: 'for' | 'tablerow',
+  loopVariable: string
+) {
+  const loopMatch = scan.output.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+(\\w+)\\s+in\\s+(.+?)\\s*%}`));
+  if (!loopMatch) {
+    return;
+  }
 
-      // Update the original set
-      localVariables.add(assignedVariable);
-    }
-  } else if (template instanceof CaptureTag) {
-    // Extract captured variable: {% capture myVar %}...{% endcapture %}
-    const captureMatch = output.match(/^\s*{%\s*capture\s+(\w+)\s*%}/);
-    if (captureMatch) {
-      const capturedVariable = captureMatch[1];
+  const [, iteratorVariable, collectionExpression] = loopMatch;
+  const isRangeExpression = collectionExpression.trim().match(/^\(.+?\.\..+?\)$/);
 
-      // Add to local variables BEFORE processing the content
-      const newLocalVariables = new Set(localVariables);
-      newLocalVariables.add(capturedVariable);
-
-      // Process captured content
-      const templates = (template as any).templates || [];
-      processTemplates({
-        templates,
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables: newLocalVariables,
-      });
-
-      // Update the original set
-      localVariables.add(capturedVariable);
-    }
-  } else if (template instanceof TablerowTag) {
-    // Similar to for loop - also needs range handling
-    const tablerowMatch = output.match(/^\s*{%\s*tablerow\s+(\w+)\s+in\s+(.+?)\s*%}/);
-    if (tablerowMatch) {
-      const [, iteratorVariable, collectionExpression] = tablerowMatch;
-      const isRangeExpression = collectionExpression.trim().match(/^\(.+?\.\..+?\)$/);
-
-      // Check if it's a range expression
-      if (isRangeExpression) {
-        // Extract variables from range
-        const rangeVariables = extractVariablesFromRange(collectionExpression.trim());
-        rangeVariables.forEach((variableName) => {
-          validateVariable({
-            variableName,
-            validVariables,
-            invalidVariables,
-            variableSchema,
-            localVariables,
-            output,
-            outputStart,
-            outputEnd,
-          });
-        });
-      } else {
-        // Extract collection variable (non-range)
-        const collectionVariable = extractVariableFromExpression(collectionExpression);
-        if (collectionVariable) {
-          validateVariable({
-            variableName: collectionVariable,
-            validVariables,
-            invalidVariables,
-            variableSchema,
-            localVariables,
-            output,
-            outputStart,
-            outputEnd,
-          });
-        }
-      }
-
-      // Process nested templates with new local variables
-      const newLocalVariables = new Set(localVariables);
-      newLocalVariables.add(iteratorVariable);
-      newLocalVariables.add('tablerowloop'); // Add tablerowloop built-in variable
-
-      const nestedTemplates = (template as any).templates || [];
-      processTemplates({
-        templates: nestedTemplates,
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables: newLocalVariables,
-      });
-
-      if (!isRangeExpression) {
-        const collectionVar = extractVariableFromExpression(collectionExpression);
-        annotateCollectionVariable(iteratorVariable, collectionVar, nestedTemplates, validVariables, invalidVariables);
-      }
-    }
-  } else if (template instanceof CaseTag) {
-    // Extract case variable: {% case variable %}
-    const caseMatch = output.match(/^\s*{%\s*case\s+(.+?)\s*%}/);
-    if (caseMatch) {
-      const caseExpression = caseMatch[1];
-
-      // Extract variables from the case expression
-      const variables = extractVariablesFromCondition(caseExpression);
-      variables.forEach((variableName) => {
-        validateVariable({
-          variableName,
-          validVariables,
-          invalidVariables,
-          variableSchema,
-          localVariables,
-          output,
-          outputStart,
-          outputEnd,
-        });
-      });
-    }
-
-    // Process branches (when clauses)
-    const branches = (template as any).branches || [];
-    for (const branch of branches) {
-      // Extract variables from when values if they exist
-      if (branch.values) {
-        branch.values.forEach((valueToken: any) => {
-          // Check if the value token is a variable (not a literal)
-          if (valueToken.kind === TokenKind.PropertyAccess || valueToken.kind === TokenKind.Word) {
-            const variableName = valueToken.input.slice(valueToken.begin, valueToken.end).trim();
-            if (variableName && /^[a-zA-Z_]/.test(variableName)) {
-              // Ensure it starts with a letter
-              validateVariable({
-                variableName,
-                validVariables,
-                invalidVariables,
-                variableSchema,
-                localVariables,
-                output: variableName,
-                outputStart: valueToken.begin,
-                outputEnd: valueToken.end,
-              });
-            }
-          }
-        });
-      }
-
-      // Process templates within this when branch
-      processTemplates({
-        templates: branch.templates || [],
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables,
-      });
-    }
-
-    // Process else templates
-    const elseTemplates = (template as any).elseTemplates || [];
-    if (elseTemplates.length > 0) {
-      processTemplates({
-        templates: elseTemplates,
-        validVariables,
-        invalidVariables,
-        variableSchema,
-        localVariables,
-      });
+  if (isRangeExpression) {
+    validateParsedNames(extractVariablesFromRange(collectionExpression.trim()), scan);
+  } else {
+    const collectionVariable = extractVariableFromExpression(collectionExpression);
+    if (collectionVariable) {
+      validateParsedNames([collectionVariable], scan);
     }
   }
-  // Add more tag types as needed
+
+  const newLocalVariables = new Set(scan.localVariables);
+  newLocalVariables.add(iteratorVariable);
+  newLocalVariables.add(loopVariable);
+
+  const nestedTemplates = template.templates || [];
+  processTemplates({
+    templates: nestedTemplates,
+    validVariables: scan.validVariables,
+    invalidVariables: scan.invalidVariables,
+    variableSchema: scan.variableSchema,
+    localVariables: newLocalVariables,
+  });
+
+  if (!isRangeExpression) {
+    const collectionVar = extractVariableFromExpression(collectionExpression);
+    annotateCollectionVariable(
+      iteratorVariable,
+      collectionVar,
+      nestedTemplates,
+      scan.validVariables,
+      scan.invalidVariables
+    );
+  }
+}
+
+function processConditionalTag(scan: TagScan, template: IfTag | UnlessTag) {
+  const tagName = template instanceof IfTag ? 'if' : 'unless';
+  const conditionMatch = scan.output.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+(.+?)\\s*%}`));
+  if (conditionMatch) {
+    validateParsedNames(extractVariablesFromCondition(conditionMatch[1]), scan);
+  }
+
+  for (const branch of template.branches) {
+    if (branch.value) {
+      for (const variableName of extractVariablesFromValue(branch.value)) {
+        validateParsedNames([variableName], scan, {
+          output: variableName,
+          outputStart: 0,
+          outputEnd: variableName.length,
+        });
+      }
+    }
+
+    processTemplates({
+      templates: branch.templates || [],
+      validVariables: scan.validVariables,
+      invalidVariables: scan.invalidVariables,
+      variableSchema: scan.variableSchema,
+      localVariables: scan.localVariables,
+    });
+  }
+
+  const elseTemplates = template.elseTemplates || [];
+  if (elseTemplates.length > 0) {
+    processTemplates({
+      templates: elseTemplates,
+      validVariables: scan.validVariables,
+      invalidVariables: scan.invalidVariables,
+      variableSchema: scan.variableSchema,
+      localVariables: scan.localVariables,
+    });
+  }
+}
+
+function processAssignTag(scan: TagScan) {
+  const assignMatch = scan.output.match(/^\s*{%-?\s*assign\s+(\w+)\s*=\s*(.+?)\s*-?%}/);
+  if (!assignMatch) {
+    return;
+  }
+
+  const [, assignedVariable, valueExpression] = assignMatch;
+  const newLocalVariables = new Set(scan.localVariables);
+  newLocalVariables.add(assignedVariable);
+
+  validateParsedNames(extractVariablesFromCondition(valueExpression), {
+    ...scan,
+    localVariables: newLocalVariables,
+  });
+  scan.localVariables.add(assignedVariable);
+}
+
+function processCaptureTag(scan: TagScan, template: CaptureTag) {
+  const captureMatch = scan.output.match(/^\s*{%\s*capture\s+(\w+)\s*%}/);
+  if (!captureMatch) {
+    return;
+  }
+
+  const capturedVariable = captureMatch[1];
+  const newLocalVariables = new Set(scan.localVariables);
+  newLocalVariables.add(capturedVariable);
+
+  processTemplates({
+    templates: template.templates || [],
+    validVariables: scan.validVariables,
+    invalidVariables: scan.invalidVariables,
+    variableSchema: scan.variableSchema,
+    localVariables: newLocalVariables,
+  });
+  scan.localVariables.add(capturedVariable);
+}
+
+function processCaseTag(scan: TagScan, template: CaseTag) {
+  const caseMatch = scan.output.match(/^\s*{%\s*case\s+(.+?)\s*%}/);
+  if (caseMatch) {
+    validateParsedNames(extractVariablesFromCondition(caseMatch[1]), scan);
+  }
+
+  for (const branch of template.branches) {
+    if (branch.values) {
+      for (const valueToken of branch.values) {
+        if (valueToken.kind !== TokenKind.PropertyAccess && valueToken.kind !== TokenKind.Word) {
+          continue;
+        }
+
+        const variableName = valueToken.input.slice(valueToken.begin, valueToken.end).trim();
+        if (!variableName || !/^[a-zA-Z_]/.test(variableName)) {
+          continue;
+        }
+
+        validateParsedNames([variableName], scan, {
+          output: variableName,
+          outputStart: valueToken.begin,
+          outputEnd: valueToken.end,
+        });
+      }
+    }
+
+    processTemplates({
+      templates: branch.templates || [],
+      validVariables: scan.validVariables,
+      invalidVariables: scan.invalidVariables,
+      variableSchema: scan.variableSchema,
+      localVariables: scan.localVariables,
+    });
+  }
+
+  const elseTemplates = template.elseTemplates || [];
+  if (elseTemplates.length > 0) {
+    processTemplates({
+      templates: elseTemplates,
+      validVariables: scan.validVariables,
+      invalidVariables: scan.invalidVariables,
+      variableSchema: scan.variableSchema,
+      localVariables: scan.localVariables,
+    });
+  }
+}
+
+function variableFromParseError(
+  token: { input: string; begin: number; end: number },
+  message: string,
+  context?: string
+): Variable {
+  const extractedName = extractVariableFromOutput(token.input);
+  const variable: Variable = {
+    name: extractedName ?? 'unknown',
+    message,
+    output: token.input,
+    outputStart: token.begin,
+    outputEnd: token.end,
+  };
+
+  if (context) {
+    variable.context = context;
+  }
+
+  if (!extractedName) {
+    variable.isParseFailure = true;
+  }
+
+  return variable;
 }
 
 function extractVariableFromOutput(output: string): string | null {
@@ -837,16 +783,17 @@ function isTagToken(template: Template): template is Tag {
   return template.token?.kind === TokenKind.Tag;
 }
 
-const buildVariable = (parts: string[]) => {
-  if (parts.length === 0) return '';
-
-  return parts.reduce((acc, prop, i) => {
-    // if the prop is a number, preserve array notation (.[idx])
+const buildVariable = (parts: Array<string | number>): string => {
+  return parts.reduce<string>((acc, prop) => {
     if (typeof prop === 'number') {
       return `${acc}[${prop}]`;
     }
 
-    return i === 0 ? prop : `${acc}.${prop}`;
+    if (!acc) {
+      return prop;
+    }
+
+    return `${acc}.${prop}`;
   }, '');
 };
 
@@ -854,30 +801,53 @@ function isOutputToken(template: Template): boolean {
   return template.token?.kind === TokenKind.Output;
 }
 
-function extractProps(template: any): { valid: boolean; props: string[]; error?: string } {
-  const initial = template.value?.initial;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
-  // Handle case where there's no initial value
-  if (!initial) {
+function stringField(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+
+  return typeof value === 'string' ? value : undefined;
+}
+
+function namePart(value: unknown): string | number | undefined {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return value;
+  }
+
+  return undefined;
+}
+
+function extractProps(template: Template): { valid: boolean; props: Array<string | number>; error?: string } {
+  if (!(template instanceof Output)) {
     return { valid: true, props: [] };
   }
 
-  // If it's a simple word without namespace
-  if (initial.kind === TokenKind.Word && !initial.postfix?.length) {
-    // Return the word as a single prop (no namespace)
+  const initial = template.value?.initial;
+  if (!initial || !isRecord(initial)) {
+    return { valid: true, props: [] };
+  }
+
+  const content = stringField(initial, 'content');
+  const postfix = Array.isArray(initial.postfix) ? initial.postfix : [];
+
+  if (initial.kind === TokenKind.Word && postfix.length === 0) {
     return {
       valid: true,
-      props: [initial.content],
-      error: undefined, // We'll handle namespace validation in processOutputToken
+      props: content === undefined ? [] : [content],
+      error: undefined,
     };
   }
 
-  if (!initial?.postfix?.[0]?.props) {
-    // Single variable without properties
-    if (initial.content) {
+  const firstPostfix = postfix[0];
+  const props = isRecord(firstPostfix) && Array.isArray(firstPostfix.props) ? firstPostfix.props : undefined;
+
+  if (!props) {
+    if (content) {
       return {
         valid: true,
-        props: [initial.content],
+        props: [content],
         error: undefined,
       };
     }
@@ -885,11 +855,7 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
     return { valid: true, props: [] };
   }
 
-  /**
-   * If initial.postfix length is greater than 1, it means the variable contains spaces
-   * which is not supported in Novu's variable syntax.
-   */
-  if (initial.postfix.length > 1) {
+  if (postfix.length > 1) {
     return {
       valid: false,
       props: [],
@@ -897,15 +863,20 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
     };
   }
 
-  const validProps: string[] = [];
-
-  // Add the initial identifier/word
-  if (initial.content) {
-    validProps.push(initial.content);
+  const validProps: Array<string | number> = [];
+  if (content) {
+    validProps.push(content);
   }
 
-  for (const prop of initial.postfix[0].props) {
-    validProps.push(prop.content);
+  for (const prop of props) {
+    if (!isRecord(prop)) {
+      continue;
+    }
+
+    const propContent = namePart(prop.content);
+    if (propContent !== undefined) {
+      validProps.push(propContent);
+    }
   }
 
   return { valid: true, props: validProps };
@@ -935,39 +906,90 @@ function validateFilters(filters: Filter[], isDigestEventsVariable: boolean): Li
   }, [] as LiquidFilterIssue[]);
 }
 
+function outputVariableNames(tmpl: Template): string[] {
+  if (!isOutputToken(tmpl)) {
+    return [];
+  }
+
+  const result = extractProps(tmpl);
+  if (!result.valid) {
+    return [];
+  }
+
+  const varName = buildVariable(result.props);
+  if (!varName) {
+    return [];
+  }
+
+  return [varName];
+}
+
+function loopCollectionNames(tmpl: Template): string[] {
+  if (!(tmpl instanceof ForTag || tmpl instanceof TablerowTag)) {
+    return [];
+  }
+
+  const { token } = tmpl;
+  const tagOutput = token.input.slice(token.begin, token.end);
+  const tagName = tmpl instanceof ForTag ? 'for' : 'tablerow';
+  const loopMatch = tagOutput.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+\\w+\\s+in\\s+(.+?)\\s*%}`));
+  if (!loopMatch) {
+    return [];
+  }
+
+  const collExpr = loopMatch[1].trim();
+  if (collExpr.match(/^\(.+?\.\..+?\)$/)) {
+    return [];
+  }
+
+  const collVar = extractVariableFromExpression(collExpr);
+  if (!collVar) {
+    return [];
+  }
+
+  return [collVar];
+}
+
+function readTemplateList(value: unknown): Template[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is Template => isRecord(item) && 'token' in item);
+}
+
+function nestedTemplateGroups(tmpl: Tag): Template[][] {
+  if (!isRecord(tmpl)) {
+    return [];
+  }
+
+  const groups = [readTemplateList(tmpl.templates)];
+  const branches = Array.isArray(tmpl.branches) ? tmpl.branches : [];
+  for (const branch of branches) {
+    if (!isRecord(branch)) {
+      continue;
+    }
+
+    groups.push(readTemplateList(branch.templates));
+  }
+  groups.push(readTemplateList(tmpl.elseTemplates));
+
+  return groups;
+}
+
 function extractRawVariableNames(templates: Template[]): string[] {
   const names: string[] = [];
-  for (const tmpl of templates) {
-    if (isOutputToken(tmpl)) {
-      const result = extractProps(tmpl);
-      if (result.valid) {
-        const varName = buildVariable(result.props);
-        if (varName) names.push(varName);
-      }
-    }
-    if (isTagToken(tmpl)) {
-      if (tmpl instanceof ForTag || tmpl instanceof TablerowTag) {
-        const { token } = tmpl;
-        const tagOutput = token.input.slice(token.begin, token.end);
-        const tagName = tmpl instanceof ForTag ? 'for' : 'tablerow';
-        const loopMatch = tagOutput.match(new RegExp(`^\\s*{%\\s*${tagName}\\s+\\w+\\s+in\\s+(.+?)\\s*%}`));
-        if (loopMatch) {
-          const collExpr = loopMatch[1].trim();
-          if (!collExpr.match(/^\(.+?\.\..+?\)$/)) {
-            const collVar = extractVariableFromExpression(collExpr);
-            if (collVar) names.push(collVar);
-          }
-        }
-      }
 
-      const nested = (tmpl as any).templates || [];
-      names.push(...extractRawVariableNames(nested));
-      const branches = (tmpl as any).branches || [];
-      for (const branch of branches) {
-        names.push(...extractRawVariableNames(branch.templates || []));
-      }
-      const elseTemplates = (tmpl as any).elseTemplates || [];
-      names.push(...extractRawVariableNames(elseTemplates));
+  for (const tmpl of templates) {
+    names.push(...outputVariableNames(tmpl));
+    names.push(...loopCollectionNames(tmpl));
+
+    if (!isTagToken(tmpl)) {
+      continue;
+    }
+
+    for (const group of nestedTemplateGroups(tmpl)) {
+      names.push(...extractRawVariableNames(group));
     }
   }
 
@@ -999,49 +1021,66 @@ function annotateCollectionVariable(
   }
 }
 
-function extractVariablesFromValue(value: any): string[] {
-  const variables: string[] = [];
+type LiquidValueNode = {
+  initial?: object;
+  lhs?: LiquidValueNode | LiquidValueNode[];
+  rhs?: LiquidValueNode | LiquidValueNode[];
+};
 
-  function processValue(val: any) {
-    if (!val) return;
-
-    // If it has an initial property, it's likely a variable reference
-    if (val.initial) {
-      const varName = buildVariableFromValue(val);
-      if (varName) {
-        variables.push(varName);
-      }
+function collectValueVariables(val: LiquidValueNode | LiquidValueNode[], variables: string[]): void {
+  if (Array.isArray(val)) {
+    for (const item of val) {
+      collectValueVariables(item, variables);
     }
 
-    // Process operands for binary expressions
-    if (val.lhs) processValue(val.lhs);
-    if (val.rhs) processValue(val.rhs);
+    return;
+  }
 
-    // Process array/object values
-    if (Array.isArray(val)) {
-      val.forEach(processValue);
+  if (val.initial) {
+    const varName = buildVariableFromValue(val);
+    if (varName) {
+      variables.push(varName);
     }
   }
 
-  processValue(value);
+  if (val.lhs) {
+    collectValueVariables(val.lhs, variables);
+  }
+
+  if (val.rhs) {
+    collectValueVariables(val.rhs, variables);
+  }
+}
+
+function extractVariablesFromValue(value: LiquidValueNode): string[] {
+  const variables: string[] = [];
+  collectValueVariables(value, variables);
 
   return variables;
 }
 
-function buildVariableFromValue(value: any): string | null {
-  if (!value?.initial) return null;
-
-  const parts: string[] = [];
-
-  // Add initial content
-  if (value.initial.content) {
-    parts.push(value.initial.content);
+function buildVariableFromValue(value: LiquidValueNode): string | null {
+  if (!isRecord(value.initial)) {
+    return null;
   }
 
-  // Add postfix properties
-  if (value.initial.postfix?.[0]?.props) {
-    for (const prop of value.initial.postfix[0].props) {
-      parts.push(prop.content);
+  const parts: Array<string | number> = [];
+  const content = stringField(value.initial, 'content');
+  if (content) {
+    parts.push(content);
+  }
+
+  const postfix = Array.isArray(value.initial.postfix) ? value.initial.postfix : [];
+  const firstPostfix = postfix[0];
+  const props = isRecord(firstPostfix) && Array.isArray(firstPostfix.props) ? firstPostfix.props : [];
+  for (const prop of props) {
+    if (!isRecord(prop)) {
+      continue;
+    }
+
+    const propContent = namePart(prop.content);
+    if (propContent !== undefined) {
+      parts.push(propContent);
     }
   }
 

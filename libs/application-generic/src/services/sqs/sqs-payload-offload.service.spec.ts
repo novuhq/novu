@@ -4,14 +4,16 @@ import { Readable } from 'stream';
 import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import { SQS_DEFAULT_PAYLOAD_SIZE_THRESHOLD } from './types';
 
-const mockSend = jest.fn();
+const mockSend = vi.fn();
 
-jest.mock('@aws-sdk/client-s3', () => {
-  const actual = jest.requireActual('@aws-sdk/client-s3');
+vi.mock('@aws-sdk/client-s3', async () => {
+  const actual = await vi.importActual('@aws-sdk/client-s3');
 
   return {
     ...actual,
-    S3Client: jest.fn(() => ({ send: mockSend })),
+    S3Client: vi.fn(function () {
+      return { send: mockSend };
+    }),
   };
 });
 
@@ -27,7 +29,7 @@ describe('SqsPayloadOffloadService', () => {
   const BUCKET = 'test-offload-bucket';
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     process.env.SQS_PAYLOAD_OFFLOAD_BUCKET = BUCKET;
     delete process.env.SQS_PAYLOAD_SIZE_THRESHOLD;
   });

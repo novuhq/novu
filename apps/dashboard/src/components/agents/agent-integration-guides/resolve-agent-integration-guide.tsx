@@ -2,6 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { PhotonSetupGuide } from '@/components/agents/photon-setup-guide';
 import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
@@ -15,6 +16,7 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
+import { WebChatAgentIntegrationGuide } from './web-chat-agent-integration-guide';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
@@ -120,6 +122,21 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
+  // Web Chat: setup → connected transition; no What's next (embed is the user surface).
+  if (providerId === ChatProviderIdEnum.NovuWebChat) {
+    return (
+      <WebChatAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
   // WhatsApp owns setup ↔ connected transition + Layer-2 What's Next (email-shaped), same as email.
   if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
     return (
@@ -154,6 +171,10 @@ export function ResolveAgentIntegrationGuide({
     case ChatProviderIdEnum.Sendblue:
       setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
       setupDisplayName = 'Sendblue';
+      break;
+    case ChatProviderIdEnum.PhotonImessage:
+      setupGuide = <PhotonSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Photon';
       break;
     default:
       setupGuide = null;
@@ -224,8 +245,9 @@ export function ResolveAgentIntegrationGuide({
             justConnected={justConnected}
           />
         );
-      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      // No bespoke connected details for Sendblue/Photon yet — fall back to the generic guide.
       case ChatProviderIdEnum.Sendblue:
+      case ChatProviderIdEnum.PhotonImessage:
         return (
           <GenericAgentIntegrationGuide
             embedded={embedded}

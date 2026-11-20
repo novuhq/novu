@@ -3,7 +3,6 @@ import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
   areNovuManagedClaudeCredentialsSet,
-  areNovuSlackCredentialsSet,
   FeatureFlagsService,
 } from '@novu/application-generic';
 import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntity } from '@novu/dal';
@@ -11,7 +10,6 @@ import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntit
 import {
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
-  ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentEnum,
   EnvironmentTypeEnum,
@@ -163,34 +161,6 @@ export class CreateNovuIntegrations {
     }
   }
 
-  private async createSlackIntegration(command: CreateNovuIntegrationsCommand) {
-    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
-      return;
-    }
-
-    const slackIntegrationCount = await this.integrationRepository.count({
-      providerId: ChatProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.CHAT,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
-
-    if (slackIntegrationCount === 0) {
-      await this.createIntegration.execute(
-        CreateIntegrationCommand.create({
-          name: 'Novu Slack',
-          providerId: ChatProviderIdEnum.Novu,
-          channel: ChannelTypeEnum.CHAT,
-          active: true,
-          check: false,
-          userId: command.userId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        })
-      );
-    }
-  }
-
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
     const integrationPromises: Array<Promise<void>> = [];
 
@@ -200,10 +170,6 @@ export class CreateNovuIntegrations {
 
     if (!command.channels || command.channels.includes(ChannelTypeEnum.IN_APP)) {
       integrationPromises.push(this.createInAppIntegration(command));
-    }
-
-    if (!command.channels || command.channels.includes(ChannelTypeEnum.CHAT)) {
-      integrationPromises.push(this.createSlackIntegration(command));
     }
 
     integrationPromises.push(this.createManagedClaudeIntegration(command));

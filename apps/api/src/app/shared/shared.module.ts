@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import {
+  AgentEmailInboxQuotaService,
   analyticsService,
   CacheServiceHealthIndicator,
   ComputeJobWaitDurationService,
@@ -19,11 +20,14 @@ import {
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
+  MetricsModule,
   NotificationPayloadService,
   QueuesModule,
   RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
+  StepRunV2Repository,
+  StepRunV2Writer,
   storageService,
   TraceLogRepository,
   TraceRollupRepository,
@@ -65,6 +69,11 @@ import {
 } from '@novu/dal';
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { ApiKeyRevocationService } from '../auth/api-key-revocation/api-key-revocation.service';
+import { ActivityRetentionService } from './services/activity-retention.service';
+import { NovuTokens } from './services/novu-tokens.service';
+import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
+import { getClientIp } from './utils/client-ip';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -137,6 +146,7 @@ const ANALYTICS_PROVIDERS = [
   RequestLogRepository,
   TraceLogRepository,
   StepRunRepository,
+  StepRunV2Repository,
   WorkflowRunRepository,
   WorkflowRunCountRepository,
   TraceRollupRepository,
@@ -144,9 +154,15 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   clickHouseService,
+  StepRunV2Writer,
 ];
 
 const PROVIDERS = [
+  ActivityRetentionService,
+  // Here rather than in one module: every module that provides `GetApiKeys` needs it.
+  ApiKeyRevocationService,
+  AgentEmailInboxQuotaService,
+  SubscriberSessionAuthStatsService,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
@@ -158,6 +174,7 @@ const PROVIDERS = [
   InvalidateCacheService,
   NotificationPayloadService,
   storageService,
+  NovuTokens,
   ...DAL_MODELS,
   CreateExecutionDetails,
   ExecuteBridgeRequest,
@@ -170,6 +187,7 @@ const PROVIDERS = [
 ];
 
 const IMPORTS = [
+  MetricsModule,
   QueuesModule.forRoot([
     JobTopicNameEnum.WEB_SOCKETS,
     JobTopicNameEnum.WORKFLOW,
@@ -181,6 +199,8 @@ const IMPORTS = [
       serviceName: packageJson.name,
       version: packageJson.version,
       silent: !!process.env.CI,
+      // cfRay is the join key into Cloudflare's own logs for the same request.
+      customProps: (req) => ({ clientIp: getClientIp(req), cfRay: req.headers['cf-ray'] }),
     })
   ),
 ];

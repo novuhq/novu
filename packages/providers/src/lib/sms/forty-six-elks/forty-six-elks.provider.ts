@@ -1,7 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 interface IFortySixElksSuccessObject {
@@ -24,6 +24,7 @@ export class FortySixElksSmsProvider extends BaseProvider implements ISmsProvide
   id = SmsProviderIdEnum.FortySixElks;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.SNAKE_CASE;
+  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -49,7 +50,7 @@ export class FortySixElksSmsProvider extends BaseProvider implements ISmsProvide
 
     const data = new URLSearchParams(transformedData.body).toString();
 
-    const res: IFortySixElksRequestResponse = await axios.create().post('https://api.46elks.com/a1/sms', data, {
+    const res: IFortySixElksRequestResponse = await this.httpClient.post('https://api.46elks.com/a1/sms', data, {
       headers: {
         Authorization: `Basic ${authKey}`,
         ...transformedData.headers,
