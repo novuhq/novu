@@ -1,4 +1,5 @@
 import type { AgentMessage } from '@novu/js';
+import { CopilotWorkflowChangeEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import type { IconType } from 'react-icons';
 import {
@@ -8,18 +9,24 @@ import {
   RiArrowUpDownLine,
   RiCheckboxCircleFill,
   RiCloseCircleFill,
-  RiDeleteBin2Line,
+  RiDeleteBinLine,
   RiEdit2Line,
   RiLoader4Line,
   RiRefreshLine,
 } from 'react-icons/ri';
 import { MessageResponse } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
+import { Badge, BadgeIcon } from '@/components/primitives/badge';
+import { NodeIcon } from '@/components/workflow-editor/base-node';
+import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
 import { CopilotCardBlock } from './copilot-card';
 import {
   type AssistantBlock,
   buildAssistantBlocks,
+  type ChangeRow,
   getUserMessageText,
   summarizeToolGroup,
   type ToolChange,
@@ -138,24 +145,9 @@ function StatusIcon({ status }: { status: ToolRow['status'] }) {
   return <span className="size-2.5 rounded-full border border-stroke-soft" />;
 }
 
-const CHANGE_ICONS: Record<ToolChange, IconType> = {
-  Added: RiAddBoxLine,
-  Edited: RiEdit2Line,
-  Removed: RiDeleteBin2Line,
-  Moved: RiArrowUpDownLine,
-};
-
-/** A finished step edit is a bordered change row, as in the design; other tool rows stay compact. */
 function ToolRowView({ row }: { row: ToolRow }) {
-  const ChangeIcon = row.change && row.status === 'done' ? CHANGE_ICONS[row.change] : undefined;
-
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2',
-        ChangeIcon ? 'h-8 rounded-lg border border-stroke-soft bg-bg-white pl-1.5 pr-1' : 'h-6'
-      )}
-    >
+    <div className="flex h-6 items-center gap-2">
       <span className="flex w-3.5 shrink-0 justify-center">
         <StatusIcon status={row.status} />
       </span>
@@ -163,16 +155,12 @@ function ToolRowView({ row }: { row: ToolRow }) {
         {row.label}
       </span>
       {row.arg && (
-        <span className="max-w-[120px] truncate font-mono text-xs italic leading-4 text-text-soft">{row.arg}</span>
+        <span className="max-w-[120px] truncate rounded bg-bg-weak px-1 font-mono text-[10px] leading-4 text-text-sub">
+          {row.arg}
+        </span>
       )}
-      {ChangeIcon && row.change && (
-        <span
-          className={cn(
-            'ml-auto flex shrink-0 items-center gap-1 rounded px-1 text-[10px] font-medium leading-4',
-            CHANGE_STYLES[row.change]
-          )}
-        >
-          <ChangeIcon className="size-3" aria-hidden />
+      {row.change && row.status === 'done' && (
+        <span className={cn('rounded px-1 text-[10px] font-medium leading-4', CHANGE_STYLES[row.change])}>
           {row.change}
         </span>
       )}
@@ -207,6 +195,50 @@ function ToolGroup({ block }: { block: Extract<AssistantBlock, { kind: 'tools' }
   );
 }
 
+const CHANGE_BADGES: Record<
+  CopilotWorkflowChangeEnum,
+  { label: string; color: 'green' | 'blue' | 'red' | 'purple'; icon: IconType }
+> = {
+  [CopilotWorkflowChangeEnum.ADDED]: { label: 'Added', color: 'green', icon: RiAddBoxLine },
+  [CopilotWorkflowChangeEnum.EDITED]: { label: 'Edited', color: 'blue', icon: RiEdit2Line },
+  [CopilotWorkflowChangeEnum.REMOVED]: { label: 'Removed', color: 'red', icon: RiDeleteBinLine },
+  [CopilotWorkflowChangeEnum.MOVED]: { label: 'Moved', color: 'purple', icon: RiArrowUpDownLine },
+};
+
+/** The steps a turn changed, each as the design's change row: step icon, step name, step id and a change badge. */
+function ChangeRows({ rows }: { rows: ChangeRow[] }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {rows.map((row) => {
+        const stepType = row.stepType as StepTypeEnum;
+        const Icon = STEP_TYPE_TO_ICON[stepType] ?? STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP];
+        const badge = CHANGE_BADGES[row.kind];
+
+        return (
+          <div key={row.id} className="rounded-lg border border-stroke-soft px-0.5">
+            <div className="flex h-[30px] items-center gap-2 rounded-md bg-bg-weak py-1 pl-1.5 pr-1">
+              <NodeIcon
+                variant={STEP_TYPE_TO_COLOR[stepType] ?? STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}
+                className="size-5 shrink-0 p-0"
+              >
+                <Icon className="size-3" />
+              </NodeIcon>
+              <span className="truncate text-label-xs text-text-sub">{row.stepName}</span>
+              <span className="min-w-0 flex-1 truncate font-code text-xs italic leading-4 text-text-soft">
+                {row.stepId}
+              </span>
+              <Badge variant="lighter" color={badge.color} size="sm" className="h-[18px] shrink-0 text-label-2xs">
+                <BadgeIcon as={badge.icon} />
+                {badge.label}
+              </Badge>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CopilotAssistantMessage({ message }: { message: AgentMessage }) {
   const blocks = buildAssistantBlocks(message);
 
@@ -236,6 +268,8 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
         if (block.kind === 'card') {
           return <CopilotCardBlock key={block.key} card={block.card} sourceMessageId={block.sourceMessageId} />;
         }
+
+        if (block.kind === 'changes') return <ChangeRows key={block.key} rows={block.rows} />;
 
         return <ToolGroup key={block.key} block={block} />;
       })}

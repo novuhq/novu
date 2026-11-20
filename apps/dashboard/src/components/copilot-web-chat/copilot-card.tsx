@@ -3,6 +3,8 @@ import { CopilotReviewActionEnum } from '@novu/shared';
 import { Fragment } from 'react';
 import type { IconType } from 'react-icons';
 import { RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
+import { Button, type ButtonProps } from '@/components/primitives/button';
+import { LinkButton } from '@/components/primitives/button-link';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
 import { getCardButtonLabel } from './copilot-review-labels';
@@ -14,19 +16,17 @@ type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][
 type CardButtonStyle = NonNullable<CardButtonChild['style']>;
 type CardTextStyle = NonNullable<Extract<AgentCardChild, { type: 'text' }>['style']>;
 
-/** Card actions read as text links, as in the design: only a danger action changes colour. */
-function actionTone(style: CardButtonStyle | undefined): string {
-  return style === 'danger' ? 'text-error-base' : 'text-text-strong';
-}
+const BUTTON_APPEARANCE: Record<CardButtonStyle, Pick<ButtonProps, 'variant' | 'mode'>> = {
+  primary: { variant: 'primary', mode: 'filled' },
+  danger: { variant: 'error', mode: 'outline' },
+  default: { variant: 'secondary', mode: 'outline' },
+};
 
-const REVIEW_ACTION_ICONS: Partial<Record<string, IconType>> = {
+const REVIEW_ACTION_ICONS: Record<CopilotReviewActionEnum, IconType> = {
   [CopilotReviewActionEnum.KEEP]: RiCheckLine,
   [CopilotReviewActionEnum.REVERT]: RiCloseLine,
   [CopilotReviewActionEnum.TRY_AGAIN]: RiRefreshLine,
 };
-
-const ACTION_LINK_CLASS =
-  'flex items-center gap-1 text-label-xs font-medium leading-4 transition-opacity hover:opacity-80 disabled:pointer-events-none disabled:opacity-50';
 
 const TEXT_STYLES: Record<CardTextStyle, string> = {
   plain: 'text-text-strong',
@@ -63,54 +63,83 @@ function withoutReviewButtons(children: AgentCardChild[]): AgentCardChild[] {
   });
 }
 
-function CardActionButton({ action, context }: { action: CardButtonChild; context: CardContext }) {
-  const Icon = REVIEW_ACTION_ICONS[action.id];
-
+function CardActions({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
   return (
-    <button
-      type="button"
-      title={action.tooltip}
-      disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
-      onClick={() => context.onButtonClick(action)}
-      className={cn(ACTION_LINK_CLASS, actionTone(action.style))}
-    >
-      {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
-      {getCardButtonLabel(action)}
-    </button>
+    <div className="flex flex-wrap items-center gap-2">
+      {actions.map((action, index) => {
+        if (action.type === 'button') {
+          return (
+            <Button
+              key={action.id}
+              type="button"
+              size="2xs"
+              {...BUTTON_APPEARANCE[action.style ?? 'default']}
+              title={action.tooltip}
+              disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
+              onClick={() => context.onButtonClick(action)}
+            >
+              {getCardButtonLabel(action)}
+            </Button>
+          );
+        }
+
+        if (action.type === 'link-button') {
+          const href = toSafeExternalUrl(action.url);
+          if (!href) return null;
+
+          return (
+            <Button key={action.id ?? index} size="2xs" {...BUTTON_APPEARANCE[action.style ?? 'default']} asChild>
+              <a href={href} target="_blank" rel="noreferrer" title={action.tooltip}>
+                {action.label}
+              </a>
+            </Button>
+          );
+        }
+
+        return null;
+      })}
+    </div>
   );
 }
 
-/** Card actions as one row of text links, separated by dots. Links with an unsafe URL are dropped, dots included. */
-function CardActions({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
-  const visible = actions.filter(
-    (action) => action.type === 'button' || (action.type === 'link-button' && toSafeExternalUrl(action.url))
-  );
+function isReviewButton(action: CardActionChild): action is CardButtonChild {
+  return action.type === 'button' && isCopilotReviewActionId(action.id);
+}
 
+/** Keep all · Discard · Try again read as text links with a trailing icon, as in the design. */
+function ReviewActions({ buttons, context }: { buttons: CardButtonChild[]; context: CardContext }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {visible.map((action, index) => (
-        <Fragment key={action.type === 'button' ? action.id : `${action.type}:${action.id ?? index}`}>
+      {buttons.map((button, index) => (
+        <Fragment key={button.id}>
           {index > 0 && (
-            <span aria-hidden className="text-label-xs leading-4 text-text-soft">
+            <span aria-hidden className="text-label-xs text-text-soft">
               ·
             </span>
           )}
-          {action.type === 'button' && <CardActionButton action={action} context={context} />}
-          {action.type === 'link-button' && (
-            <a
-              href={toSafeExternalUrl(action.url) ?? undefined}
-              target="_blank"
-              rel="noreferrer"
-              title={action.tooltip}
-              className={cn(ACTION_LINK_CLASS, actionTone(action.style))}
-            >
-              {action.label}
-            </a>
-          )}
+          <LinkButton
+            type="button"
+            variant="black"
+            size="sm"
+            className="text-label-xs"
+            trailingIcon={REVIEW_ACTION_ICONS[button.id as CopilotReviewActionEnum]}
+            title={button.tooltip}
+            disabled={button.disabled || context.isReviewLocked}
+            onClick={() => context.onButtonClick(button)}
+          >
+            {getCardButtonLabel(button)}
+          </LinkButton>
         </Fragment>
       ))}
     </div>
   );
+}
+
+/** A row of review buttons reads as links; any other row keeps the card's buttons. */
+function CardActionRow({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
+  if (actions.every(isReviewButton)) return <ReviewActions buttons={actions} context={context} />;
+
+  return <CardActions actions={actions} context={context} />;
 }
 
 function CardChildren({ items, context }: { items: AgentCardChild[]; context: CardContext }) {
@@ -125,9 +154,9 @@ function CardChildren({ items, context }: { items: AgentCardChild[]; context: Ca
           </p>
         );
       case 'button':
-        return <CardActions key={key} actions={[child]} context={context} />;
+        return <CardActionRow key={key} actions={[child]} context={context} />;
       case 'actions':
-        return <CardActions key={key} actions={child.children} context={context} />;
+        return <CardActionRow key={key} actions={child.children} context={context} />;
       case 'section':
         return (
           <div key={key} className="flex flex-col gap-2">

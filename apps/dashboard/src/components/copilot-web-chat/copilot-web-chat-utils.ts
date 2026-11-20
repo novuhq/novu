@@ -1,5 +1,11 @@
 import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
-import { AiWorkflowToolsEnum, CopilotReviewActionEnum } from '@novu/shared';
+import {
+  AiWorkflowToolsEnum,
+  COPILOT_WORKFLOW_UPDATED_EVENT,
+  CopilotReviewActionEnum,
+  CopilotWorkflowChangeEnum,
+  type CopilotWorkflowUpdatedEventData,
+} from '@novu/shared';
 
 // The plan branding the API appends to delivered replies (stored history has none), in the shapes it can take.
 // Same pattern as the agents web-chat panel (`agent-message-to-thread-message.ts`), which strips it the same way.
@@ -8,6 +14,20 @@ const POWERED_BY =
 
 function stripPoweredBy(text: string): string {
   return text.replace(POWERED_BY, '').trimEnd();
+}
+
+// The `reasoning` tool's arguments on a line of their own: the model sometimes writes them as reply text instead of
+// calling the tool, and the bridge streams the text of every model call into the reply.
+const REASONING_JSON =
+  /^[ \t]*\{\s*"label"\s*:\s*"(?:[^"\\]|\\.)*"\s*,\s*"thought"\s*:\s*"(?:[^"\\]|\\.)*"\s*\}[ \t]*$/gm;
+// The line still streaming when it opens an object that may turn out to be one.
+const STREAMING_OBJECT_LINE = /(^|\n)[ \t]*\{[^\n]*$/;
+
+/** Drops the reasoning JSON from a reply. While it streams, an unfinished object is held back so it never flashes. */
+function stripReasoningJson(text: string, streaming: boolean): string {
+  const stripped = text.replace(REASONING_JSON, '');
+
+  return (streaming ? stripped.replace(STREAMING_OBJECT_LINE, '$1') : stripped).trimStart();
 }
 
 /** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
@@ -199,26 +219,65 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
   return { isRunning, title: `Used ${rows.length} ${rows.length === 1 ? 'tool' : 'tools'}` };
 }
 
+/** A step the Copilot changed, read from the `copilot.workflow-updated` event it emits after each change. */
+export type ChangeRow = {
+  id: string;
+  kind: CopilotWorkflowChangeEnum;
+  stepId: string;
+  stepName: string;
+  /** A step type value, kept as the string the event carried. */
+  stepType: string;
+};
+
+const CHANGE_KINDS: ReadonlySet<string> = new Set(Object.values(CopilotWorkflowChangeEnum));
+
+/** The step change an event carries. Older events, and calls that change the workflow itself, carry none. */
+function readStepChange(data: unknown): Omit<ChangeRow, 'id'> | undefined {
+  const change = (data as Partial<CopilotWorkflowUpdatedEventData> | null)?.change;
+  const isValid =
+    !!change &&
+    CHANGE_KINDS.has(change.kind) &&
+    typeof change.stepId === 'string' &&
+    typeof change.stepName === 'string' &&
+    typeof change.stepType === 'string';
+
+  return isValid
+    ? { kind: change.kind, stepId: change.stepId, stepName: change.stepName, stepType: change.stepType }
+    : undefined;
+}
+
+/** One row per step: the first change wins, so a step added then edited stays "Added", but a removal replaces it. */
+function addChangeRow(rows: ChangeRow[], row: ChangeRow): void {
+  const index = rows.findIndex((existing) => existing.stepId === row.stepId);
+
+  if (index < 0) rows.push(row);
+  else if (row.kind === CopilotWorkflowChangeEnum.REMOVED) rows[index] = row;
+}
+
 export type AssistantBlock =
   | { kind: 'text'; key: string; text: string; streaming: boolean }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
   | { kind: 'tools'; key: string; rows: ToolRow[] }
+  | { kind: 'changes'; key: string; rows: ChangeRow[] }
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
 /**
- * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
- * Novu" footer the API appends to replies (it is in the saved text, so restored threads carry it too).
+ * Groups consecutive tool parts into one block, puts the steps the turn changed first, and drops what this UI does not
+ * render: the "Powered by Novu" footer the API appends to replies and the reasoning JSON the model can write as text
+ * (both are in the saved text, so restored threads carry them too).
  */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   const blocks: AssistantBlock[] = [];
+  const changes: ChangeRow[] = [];
 
   message.parts.forEach((part, index) => {
     const key = `${message.id}:${index}`;
 
     if (part.type === 'text') {
-      const text = stripPoweredBy(part.text);
+      const streaming = part.state === 'streaming';
+      const text = stripReasoningJson(stripPoweredBy(part.text), streaming);
       if (!text.trim()) return;
-      blocks.push({ kind: 'text', key, text, streaming: part.state === 'streaming' });
+      blocks.push({ kind: 'text', key, text, streaming });
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
@@ -229,10 +288,14 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
       else blocks.push({ kind: 'tools', key, rows: [row] });
     } else if (part.type === 'card') {
       blocks.push({ kind: 'card', key, card: part.card, sourceMessageId: part.sourceMessageId });
+    } else if (part.type === 'data' && part.name === COPILOT_WORKFLOW_UPDATED_EVENT) {
+      const change = readStepChange(part.data);
+      if (change) addChangeRow(changes, { id: key, ...change });
     }
   });
 
-  return blocks;
+  // Live, the events can land after the reply text started; history replays them in a message of their own before it.
+  return changes.length > 0 ? [{ kind: 'changes', key: `${message.id}:changes`, rows: changes }, ...blocks] : blocks;
 }
 
 function getLastCardPart(messages: readonly AgentMessage[]): AgentCardPart | undefined {
@@ -397,13 +460,16 @@ export function getCopilotTypingLabel(status: string | undefined): string | unde
   return trimmed;
 }
 
-/** Whether the thread still needs a placeholder: nothing from the agent is visible after the last user message. */
+/**
+ * Whether the thread still needs a placeholder: the agent has shown nothing after the last user message, or only the
+ * steps it changed, which land while it is still working.
+ */
 export function hasPendingReplyGap(messages: readonly AgentMessage[]): boolean {
   const last = messages[messages.length - 1];
   if (!last) return false;
   if (last.role === 'user') return last.status !== 'failed';
 
-  return buildAssistantBlocks(last).length === 0;
+  return buildAssistantBlocks(last).every((block) => block.kind === 'changes');
 }
 
 function isCardMessage(message: AgentMessage): boolean {
