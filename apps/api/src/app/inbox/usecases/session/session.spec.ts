@@ -36,7 +36,10 @@ import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { SubscriberSessionAuthStatsService } from '../../../shared/services/subscriber-session-auth-stats.service';
+import {
+  SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
+} from '../../../shared/services/subscriber-session-auth-stats.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
@@ -354,6 +357,17 @@ describe('Session', () => {
       expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Please provide a valid HMAC hash');
     }
+
+    // Recorded before the rejection, with the keys the session accepted, so the old key's use can be counted.
+    expect(apiKeyRevocationService.recordOldKeySubscriberHash.firstCall.args[0]).to.deep.equal({
+      organizationId: 'org-id',
+      environmentId: 'env-id',
+      apiKeys: environment.apiKeys,
+      signingKeys: [],
+      subscriberId: 'subscriber-id',
+      subscriberHash: command.requestData.subscriberHash,
+      source: SubscriberSessionSourceEnum.INBOX,
+    });
 
     // Without HMAC enforcement the session still opens, but the hash no longer lets it update the subscriber.
     selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });

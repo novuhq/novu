@@ -163,6 +163,17 @@ export class Session {
       command.requestData.subscriberHash
     );
 
+    // Before the checks below, so a hash rejected because its key no longer signs is recorded too.
+    await this.apiKeyRevocationService.recordOldKeySubscriberHash({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+      signingKeys: environmentApiKeys,
+      subscriberId: subscriber.subscriberId,
+      subscriberHash: command.requestData.subscriberHash,
+      source: SubscriberSessionSourceEnum.INBOX,
+    });
+
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
         apiKeys: environmentApiKeys,
