@@ -1,4 +1,3 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import {
   DigestTypeEnum,
   DigestUnitEnum,
@@ -8,8 +7,7 @@ import {
   UiSchemaGroupEnum,
 } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 const lookBackWindowZodSchema = z
   .object({
@@ -47,7 +45,7 @@ export type DigestTimedControlType = z.infer<typeof digestTimedControlZodSchema>
 export type DigestControlSchemaType = z.infer<typeof digestControlZodSchema>;
 
 export const digestControlZodSchema = z.union([digestRegularControlZodSchema, digestTimedControlZodSchema]);
-export const digestControlSchema = zodToJsonSchema(digestControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const digestControlSchema = toControlJsonSchema(digestControlZodSchema);
 
 export function isDigestRegularControl(data: unknown): data is DigestRegularControlType {
   const result = digestRegularControlZodSchema.safeParse(data);

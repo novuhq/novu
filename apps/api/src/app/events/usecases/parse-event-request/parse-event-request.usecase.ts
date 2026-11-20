@@ -38,7 +38,7 @@ import {
 import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
-import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
+import { RecipientSchema } from '../../utils/trigger-recipient-validation';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
@@ -535,7 +535,7 @@ export class ParseEventRequest {
    * @param invalidValues - Array to collect invalid values
    * @returns The valid item or null if invalid
    */
-  @Instrument()
+  // Not instrumented: it runs once per recipient, inside the `parseRecipients` segment.
   private validateItem(item: unknown, invalidValues: unknown[]) {
     const result = RecipientSchema.safeParse(item);
     if (result.success) {
@@ -566,13 +566,11 @@ export class ParseEventRequest {
   private parseRecipients(input: unknown) {
     const invalidValues: unknown[] = [];
 
-    // Try to validate the whole input first
-    const parsed = RecipientsSchema.safeParse(input);
-    if (parsed.success) {
-      return { validRecipients: parsed.data, invalidRecipients: [] };
-    }
-
-    // If input is an array, validate each item
+    /*
+     * Validate array items one at a time rather than parsing the whole array with a single schema:
+     * a whole-array parse collects the issues of every invalid item at once, so a large array of
+     * invalid recipients can exhaust memory (GHSA-mrhx-c7xc-m3w5).
+     */
     if (Array.isArray(input)) {
       const validValues = input.map((item) => this.validateItem(item, invalidValues)).filter(Boolean);
 

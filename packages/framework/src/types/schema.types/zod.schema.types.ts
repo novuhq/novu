@@ -1,9 +1,19 @@
-import type zod from 'zod';
-
 /**
  * A ZodSchema used to validate a JSON object.
+ *
+ * Declared structurally rather than with `zod.ZodType` so it accepts schemas from both Zod v3 and v4,
+ * whose `ZodType` generics differ (v4 removed `ZodTypeDef`).
  */
-export type ZodSchema = zod.ZodType<Record<string, unknown>, zod.ZodTypeDef, Record<string, unknown>>;
+export type ZodSchema = {
+  readonly _output: Record<string, unknown>;
+  readonly _input: Record<string, unknown>;
+  safeParseAsync(
+    data: unknown
+  ): Promise<
+    | { success: true; data: Record<string, unknown> }
+    | { success: false; error: { issues: ReadonlyArray<{ path: PropertyKey[]; message: string }> } }
+  >;
+};
 
 /**
  * A minimal ZodSchema type.

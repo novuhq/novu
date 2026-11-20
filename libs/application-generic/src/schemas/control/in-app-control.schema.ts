@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { IN_APP_REDIRECT_URL_REGEX, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 const redirectZodSchema = z.object({
   url: z.string().regex(IN_APP_REDIRECT_URL_REGEX),
@@ -46,9 +44,9 @@ export type InAppRedirectType = z.infer<typeof redirectZodSchema>;
 export type InAppActionType = z.infer<typeof actionZodSchema>;
 export type InAppControlType = z.infer<typeof inAppControlZodSchema>;
 
-export const inAppRedirectSchema = zodToJsonSchema(redirectZodSchema, defaultOptions) as JSONSchemaEntity;
-export const inAppActionSchema = zodToJsonSchema(actionZodSchema, defaultOptions) as JSONSchemaEntity;
-export const inAppControlSchema = zodToJsonSchema(inAppControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const inAppRedirectSchema = toControlJsonSchema(redirectZodSchema);
+export const inAppActionSchema = toControlJsonSchema(actionZodSchema);
+export const inAppControlSchema = toControlJsonSchema(inAppControlZodSchema);
 
 const redirectPlaceholder = {
   url: {
