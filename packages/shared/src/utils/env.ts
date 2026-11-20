@@ -4,12 +4,12 @@ type CloudflareEnv = { env: Record<string, string> };
  * https://remix.run/blog/remix-vite-stable#cloudflare-pages-support
  */
 
-const hasCloudflareProxyContext = (context: any): context is { cloudflare: CloudflareEnv } => {
-  return !!context?.cloudflare?.env;
+const hasCloudflareProxyContext = (context: unknown): context is { cloudflare: CloudflareEnv } => {
+  return !!(context as { cloudflare?: Partial<CloudflareEnv> } | undefined)?.cloudflare?.env;
 };
 
-const hasCloudflareContext = (context: any): context is CloudflareEnv => {
-  return !!context?.env;
+const hasCloudflareContext = (context: unknown): context is CloudflareEnv => {
+  return !!(context as Partial<CloudflareEnv> | undefined)?.env;
 };
 
 /**
