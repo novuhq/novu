@@ -87,9 +87,10 @@ export class ApiKeyRevocationService {
   }
 
   /**
-   * The environment's stored (encrypted) keys whose subscriber and context hashes still count. In `block_all` a key
-   * created before the cutoff is left out, so a leaked key can no longer open an Inbox or update a subscriber
-   * through it.
+   * The environment's stored (encrypted) keys whose subscriber and context hashes still count. A key created before
+   * the cutoff is left out in `block_all`, and in `block_except_allowed` while
+   * `IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED` is on, so a leaked key can no longer open an Inbox or update a
+   * subscriber through it.
    */
   async getSigningKeys({
     organizationId,
@@ -100,10 +101,21 @@ export class ApiKeyRevocationService {
     environmentId: string;
     apiKeys: IApiKey[];
   }): Promise<string[]> {
-    const policy = await this.getPolicy({ organizationId, environmentId });
+    const [policy, isHmacBlockEnabled] = await Promise.all([
+      this.getPolicy({ organizationId, environmentId }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+        environment: { _id: environmentId },
+        component: 'api',
+      }),
+    ]);
 
     return apiKeys
-      .filter((apiKey) => canSignWithApiKey(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id)))
+      .filter((apiKey) =>
+        canSignWithApiKey(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id), isHmacBlockEnabled)
+      )
       .map((apiKey) => apiKey.key);
   }
 
