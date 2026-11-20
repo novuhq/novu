@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import {
@@ -26,7 +27,8 @@ export class InitializeSession {
     private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
-    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {}
 
   @LogDecorator()
@@ -53,14 +55,15 @@ export class InitializeSession {
     }
     const { integration: inAppIntegration } = selection;
 
-    const hmacValid = isHmacValidForAnyKey(
-      environment.apiKeys.map((apiKey) => apiKey.key),
-      command.subscriberId,
-      command.hmacHash
-    );
+    const signingKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+    });
+    const hmacValid = isHmacValidForAnyKey(signingKeys, command.subscriberId, command.hmacHash);
 
-    if (inAppIntegration.credentials.hmac) {
-      validateNotificationCenterEncryption(environment, command);
+    if (inAppIntegration.credentials.hmac && !hmacValid) {
+      throw new BadRequestException('Please provide a valid HMAC hash');
     }
 
     const subscriber = await this.createOrUpdateSubscriberUsecase.execute(
@@ -94,13 +97,5 @@ export class InitializeSession {
         phone: subscriber.phone,
       },
     };
-  }
-}
-
-function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const apiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
-
-  if (!isHmacValidForAnyKey(apiKeys, command.subscriberId, command.hmacHash)) {
-    throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }

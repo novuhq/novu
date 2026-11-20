@@ -98,6 +98,20 @@ function isRuntimeInDevelopment() {
   return ['development', undefined, 'dev'].includes(process.env.NODE_ENV);
 }
 
+function verificationSecretsFor(primary: string, additional: string[]): readonly string[] {
+  const secrets: string[] = [];
+
+  for (const secret of [primary, ...additional]) {
+    if (!secret || secrets.includes(secret)) {
+      continue;
+    }
+
+    secrets.push(secret);
+  }
+
+  return secrets;
+}
+
 export class Client {
   private discoveredWorkflows = new Map<string, DiscoverWorkflowOutput>();
   private discoverWorkflowPromises = new Map<string, Promise<void>>();
@@ -106,6 +120,12 @@ export class Client {
   private templateEngine: Liquid;
 
   public secretKey: string;
+
+  /**
+   * Secret keys that may verify an inbound `novu-signature`. Includes
+   * `secretKey` plus any `secretKeys` passed for a rolling rotation.
+   */
+  public verificationSecretKeys: readonly string[];
 
   public apiUrl: string;
 
@@ -121,6 +141,7 @@ export class Client {
     const builtOpts = this.buildOptions(options);
     this.apiUrl = builtOpts.apiUrl;
     this.secretKey = builtOpts.secretKey;
+    this.verificationSecretKeys = verificationSecretsFor(builtOpts.secretKey, builtOpts.secretKeys);
     this.strictAuthentication = builtOpts.strictAuthentication;
     this.verbose = builtOpts.verbose;
     this.logger = builtOpts.logger;
@@ -131,6 +152,7 @@ export class Client {
     const builtConfiguration: Required<ClientOptions> = {
       apiUrl: resolveApiUrl(providedOptions?.apiUrl),
       secretKey: resolveSecretKey(providedOptions?.secretKey),
+      secretKeys: providedOptions?.secretKeys?.filter((key) => key.length > 0) ?? [],
       strictAuthentication: !isRuntimeInDevelopment(),
       verbose: isRuntimeInDevelopment(),
       logger: console,

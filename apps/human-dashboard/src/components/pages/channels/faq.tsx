@@ -1,18 +1,30 @@
 import { FaqRow } from '@/components/sapien/faq';
 import { SectionFrame } from '@/components/sapien/section-frame';
 import { type AgentId, type ChannelId, pageFaq } from '@/data/channel-pages';
+import type { FaqItem } from '@/data/sapien-faq';
 import { cn } from '@/lib/utils';
 import { landingAudit } from './audit-attributes';
 
 export function ChannelFaq({ channel, agent }: { channel: ChannelId; agent?: AgentId }) {
-  const items = pageFaq(channel, agent);
+  return <LandingFaq items={pageFaq(channel, agent)} compact={Boolean(agent)} />;
+}
+
+export function LandingFaq({
+  items,
+  compact = false,
+  highlightOpen = false,
+}: {
+  items: readonly FaqItem[];
+  compact?: boolean;
+  highlightOpen?: boolean;
+}) {
   return (
     <SectionFrame
       anchor="faq"
       auditId="faq"
       className={cn(
         'grid gap-8 px-4 py-20 lg:gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,637px)] md:px-8 md:py-37',
-        agent && 'md:py-30'
+        compact && 'md:py-30'
       )}
     >
       <h2
@@ -25,7 +37,7 @@ export function ChannelFaq({ channel, agent }: { channel: ChannelId; agent?: Age
       </h2>
       <div className="overflow-hidden rounded-xl border border-sapien-border">
         {items.map((item) => (
-          <FaqRow key={item.id} item={item} variant="landing" />
+          <FaqRow key={item.id} item={item} variant="landing" highlightOpen={highlightOpen} />
         ))}
       </div>
     </SectionFrame>

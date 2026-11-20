@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -28,7 +29,11 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     };
   }
 
-  function buildUsecase(controls: Record<string, unknown>, wasConditionEvaluationTraced = false) {
+  function buildUsecase(
+    controls: Record<string, unknown>,
+    wasConditionEvaluationTraced = false,
+    secretKeys: string[] = ['secret-key']
+  ) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const jobRepository = { updateOne: sinon.stub().resolves(undefined) };
     const httpClientService = {
@@ -48,7 +53,8 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       }),
     };
     const getDecryptedSecretKey = {
-      execute: sinon.stub().resolves('secret-key'),
+      execute: sinon.stub().resolves(secretKeys[0]),
+      executeAll: sinon.stub().resolves(secretKeys),
     };
     const executeBridgeJob = {
       buildStepsMap: sinon.stub().resolves(buildDigestStepsMap()),
@@ -167,6 +173,33 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
 
     const requestArgs = httpClientService.request.firstCall.args[0];
     expect(requestArgs.body).to.deep.equal({ eventCount: 2 });
+  });
+
+  it('signs the request with every active secret key, original key first', async () => {
+    const { usecase, httpClientService } = buildUsecase(
+      {
+        url: 'https://example.com/webhook',
+        method: 'POST',
+        body: '{"ok":true}',
+      },
+      false,
+      ['original-key', 'rotated-key']
+    );
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    const header = requestArgs.headers['novu-signature'] as string;
+    const [timestampPart, first, second, extra] = header.split(',');
+    const timestamp = timestampPart.slice(2);
+    const signedPayload = `${timestamp}.${JSON.stringify(requestArgs.body)}`;
+    const hmacFor = (secretKey: string) => createHmac('sha256', secretKey).update(signedPayload).digest('hex');
+
+    expect(extra).to.equal(undefined);
+    expect(first).to.equal(`v1=${hmacFor('original-key')}`);
+    expect(second).to.equal(`v1=${hmacFor('rotated-key')}`);
   });
 
   it('uses the condition evaluation detail instead of a generic bridge skip detail when tracing succeeds', async () => {

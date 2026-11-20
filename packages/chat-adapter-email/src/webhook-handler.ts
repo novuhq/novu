@@ -41,20 +41,22 @@ export class WebhookHandler {
    * Verify HMAC signature matching the format produced by
    * `buildNovuSignatureHeader` in libs/application-generic/src/utils/hmac.ts.
    *
-   * Format: t={timestamp},v1={hmac-hex}
+   * Format: t={timestamp},v1={hmac-hex}[,v1={hmac-hex}...]
    * HMAC input: "{timestamp}.{body}"
+   *
+   * A rolling secret-key rotation puts one `v1` in the header per active key.
+   * The webhook is authentic when any of them matches this handler's secret.
    */
   private verifySignature(signature: string, body: string): boolean {
     const parts = signature.split(',');
     const timestampPart = parts.find((p) => p.startsWith('t='));
-    const hmacPart = parts.find((p) => p.startsWith('v1='));
+    const receivedHmacs = parts.filter((p) => p.startsWith('v1=')).map((p) => p.slice(3));
 
-    if (!timestampPart || !hmacPart) {
+    if (!timestampPart || receivedHmacs.length === 0) {
       return false;
     }
 
     const timestamp = timestampPart.slice(2);
-    const receivedHmac = hmacPart.slice(3);
 
     const age = Date.now() - Number(timestamp);
     if (Number.isNaN(age) || age > MAX_TIMESTAMP_AGE_MS || age < -MAX_FUTURE_SKEW_MS) {
@@ -62,11 +64,24 @@ export class WebhookHandler {
     }
 
     const expectedHmac = createHmac('sha256', this.signingSecret).update(`${timestamp}.${body}`).digest('hex');
+    const expected = Buffer.from(expectedHmac, 'hex');
+    let matched = false;
 
-    if (receivedHmac.length !== expectedHmac.length) {
-      return false;
+    for (const receivedHmac of receivedHmacs) {
+      if (receivedHmac.length !== expectedHmac.length) {
+        continue;
+      }
+
+      const received = Buffer.from(receivedHmac, 'hex');
+      if (received.length !== expected.length) {
+        continue;
+      }
+
+      if (timingSafeEqual(received, expected)) {
+        matched = true;
+      }
     }
 
-    return timingSafeEqual(Buffer.from(receivedHmac, 'hex'), Buffer.from(expectedHmac, 'hex'));
+    return matched;
   }
 }

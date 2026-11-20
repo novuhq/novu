@@ -9,8 +9,6 @@ import {
 const MS_PER_SECOND = 1000;
 const THIRTY_SECONDS_MS = MS_PER_SECOND * 30;
 const ONE_MINUTE_MS = MS_PER_SECOND * 60;
-const ONE_HOUR_MS = ONE_MINUTE_MS * 60;
-
 export enum InMemoryLRUCacheStore {
   WORKFLOW = 'workflow',
   ORGANIZATION = 'organization',
@@ -84,7 +82,8 @@ export const STORE_CONFIGS: Record<InMemoryLRUCacheStore, StoreConfig> = {
   },
   [InMemoryLRUCacheStore.VALIDATOR]: {
     max: 5000,
-    ttl: ONE_HOUR_MS,
+    // Key deletions only invalidate the local instance, so other instances must expire within a minute.
+    ttl: ONE_MINUTE_MS,
     featureFlagComponent: 'validator',
     skipFeatureFlag: true,
   },

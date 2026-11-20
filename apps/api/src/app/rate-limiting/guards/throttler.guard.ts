@@ -24,11 +24,9 @@ import {
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
-import { getClientIp } from 'request-ip';
-import {
-  isKeylessApplicationIdentifierHeader,
-  isResolvedKeylessAuthScheme,
-} from '../../shared/utils/auth.utils';
+import type { Request } from 'express';
+import { isKeylessApplicationIdentifierHeader, isResolvedKeylessAuthScheme } from '../../shared/utils/auth.utils';
+import { getClientIp } from '../../shared/utils/client-ip';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
@@ -130,9 +128,10 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: existing rate-limit evaluation is outside this client IP change
   protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
-    const clientIp = getClientIp(req) || undefined;
+    const clientIp = getClientIp(req as Request);
 
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.

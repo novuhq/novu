@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { CopyButton } from '@/components/sapien/copy-button';
 import { CopyCommand } from '@/components/sapien/copy-command';
 import { SETUP_COMMAND } from '@/data/sapien';
@@ -25,7 +27,13 @@ const cardMask = {
   maskSize: '100% 100%',
 } as const;
 
-export function Closing() {
+export function Closing({
+  heading = CLOSING_HEADING,
+  actions,
+}: {
+  heading?: { lead: string; rest: string; accent: string };
+  actions?: ReactNode;
+} = {}) {
   return (
     <SectionFrame
       anchor="get-started"
@@ -33,10 +41,10 @@ export function Closing() {
     >
       <div className="relative z-10 w-full sm:max-w-87.75">
         <h2 className="text-[36px] leading-[1.125] tracking-[-0.04em] sm:text-[40px]">
-          {CLOSING_HEADING.lead}
+          {heading.lead}
           <br />
-          {`${CLOSING_HEADING.rest} `}
-          <DisplayAccent className="text-[1.2em] leading-[0]">{CLOSING_HEADING.accent}</DisplayAccent>
+          {`${heading.rest} `}
+          <DisplayAccent className="text-[1.2em] leading-[0]">{heading.accent}</DisplayAccent>
         </h2>
         <p className="mt-[13px] h-[42px] text-[15px] leading-[1.375] tracking-tight text-sapien-foreground/70 sm:mt-[11px]">
           {CLOSING_DESCRIPTION[0]}
@@ -45,17 +53,19 @@ export function Closing() {
         </p>
         <div className="mt-8 flex flex-col gap-3">
           <CopyCommand command={SETUP_COMMAND} label={CLOSING_COMMAND_LABEL} variant="icon" className="w-full" />
-          <div className="flex flex-col">
-            <CopyButton
-              text={CLOSING_PROMPT}
-              successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
-              errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
-              showTextOnError
-              className="flex h-10 w-full items-center justify-center rounded-lg bg-sapien-surface p-2 text-[15px] leading-none font-medium tracking-tight text-white hover:bg-sapien-raised"
-            >
-              {CLOSING_PROMPT_LABEL}
-            </CopyButton>
-          </div>
+          {actions ?? (
+            <div className="flex flex-col">
+              <CopyButton
+                text={CLOSING_PROMPT}
+                successMessage={CLOSING_PROMPT_SUCCESS_MESSAGE}
+                errorMessage={CLOSING_PROMPT_ERROR_MESSAGE}
+                showTextOnError
+                className="flex h-10 w-full items-center justify-center rounded-lg bg-sapien-surface p-2 text-[15px] leading-none font-medium tracking-tight text-white hover:bg-sapien-raised"
+              >
+                {CLOSING_PROMPT_LABEL}
+              </CopyButton>
+            </div>
+          )}
         </div>
       </div>
       {/*
