@@ -1,7 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { env } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
@@ -11,6 +10,7 @@ import {
   SubscriberRepository,
   TopicRepository,
 } from '@novu/dal';
+import { env } from '../../../config/env';
 import { loadOrCreateMachineId } from '../utils/machine.utils';
 import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 

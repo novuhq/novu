@@ -4,7 +4,6 @@ import {
   AnalyticsService,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
-  env,
   LoggerModule,
   QueuesModule,
   WebSocketsInMemoryProviderService,
@@ -13,6 +12,7 @@ import { DalService, MessageRepository, NotificationRepository, SubscriberReposi
 
 import { JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../package.json';
+import { env } from '../config/env';
 import { SubscriberOnlineService } from './subscriber-online';
 
 const DAL_MODELS = [SubscriberRepository, NotificationRepository, MessageRepository];

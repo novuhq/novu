@@ -1,11 +1,12 @@
 import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { env, IDestroy } from '@novu/application-generic';
+import { IDestroy } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { instrument } from '@socket.io/admin-ui';
 import { Server, Socket } from 'socket.io';
+import { env } from '../config/env';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 

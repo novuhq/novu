@@ -1,16 +1,10 @@
 import './instrument';
 import { NestFactory } from '@nestjs/core';
-import {
-  env,
-  getErrorInterceptor,
-  Logger,
-  type NovuTlsConfig,
-  toNovuTlsServerOptions,
-  warnDeprecatedEnv,
-} from '@novu/application-generic';
+import { getErrorInterceptor, Logger, type NovuTlsConfig, toNovuTlsServerOptions } from '@novu/application-generic';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
+import { env, warnDeprecatedEnv } from './config/env';
 import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 

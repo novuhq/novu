@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { buildEnvelopeRequestSource, env } from '@novu/application-generic';
+import { buildEnvelopeRequestSource } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -13,6 +13,7 @@ import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
 import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
+import { env } from '../config/env';
 
 import { extractEmailDomain } from './address-utils';
 import { uploadAttachmentsToS3 } from './attachment-uploader';

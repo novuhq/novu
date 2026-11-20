@@ -1,8 +1,8 @@
 import child_process from 'node:child_process';
 import path from 'node:path';
-import { env } from '@novu/application-generic';
 import shell from 'shelljs';
 import Spamc from 'spamc';
+import { env } from '../config/env';
 import logger from './logger';
 
 const LOG_CONTEXT = 'MailUtilities';

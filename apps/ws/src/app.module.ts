@@ -1,11 +1,12 @@
 import { Module, Provider } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { env, TracingModule } from '@novu/application-generic';
+import { TracingModule } from '@novu/application-generic';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { join } from 'path';
 import packageJson from '../package.json';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { env } from './config/env';
 import { HealthModule } from './health/health.module';
 import { SharedModule } from './shared/shared.module';
 import { SocketModule } from './socket/socket.module';

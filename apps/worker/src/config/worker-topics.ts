@@ -1,5 +1,5 @@
-import { env } from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
+import { env } from './env';
 
 /**
  * Queues each worker produces to, on top of the topic it consumes.

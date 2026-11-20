@@ -6,7 +6,6 @@ import {
   CreateExecutionDetailsCommand,
   createProviderSelectedMessage,
   DetailEnum,
-  env,
   GetNovuProviderCredentials,
   Instrument,
   type IntegrationFilterData,
@@ -36,6 +35,7 @@ import {
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { cloneDeep, isPlainObject, mergeWith } from 'lodash';
+import { env } from '../../../../config/env';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';

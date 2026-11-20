@@ -1,5 +1,5 @@
-import { env } from '@novu/application-generic';
 import pino from 'pino';
+import { env } from '../config/env';
 
 const logger = pino<'verbose'>({
   level: env.LOG_LEVEL,

@@ -16,7 +16,7 @@ void runWithHydratedSecrets(async () => {
   const { validateEnv } = await import('./config/env.validators');
   validateEnv();
 
-  const { env, warnDeprecatedEnv } = await import('@novu/application-generic');
+  const { env, warnDeprecatedEnv } = await import('./config/env');
   warnDeprecatedEnv();
 
   const { default: mailin } = await import('./server/index');

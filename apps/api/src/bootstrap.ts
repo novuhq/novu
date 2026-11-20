@@ -11,7 +11,6 @@ import {
   PinoLogger,
   RequestLogRepository,
   toNovuTlsServerOptions,
-  warnDeprecatedEnv,
 } from '@novu/application-generic';
 
 import bodyParser from 'body-parser';
@@ -23,6 +22,7 @@ import { RequestIdMiddleware } from './app/shared/middleware/request-id.middlewa
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+import { warnDeprecatedEnv } from './config/env';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');

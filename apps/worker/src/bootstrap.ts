@@ -3,12 +3,10 @@ import './instrument';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
-  env,
   getErrorInterceptor,
   type NovuTlsConfig,
   Logger as PinoLogger,
   toNovuTlsServerOptions,
-  warnDeprecatedEnv,
 } from '@novu/application-generic';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
@@ -16,6 +14,7 @@ import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
+import { env, warnDeprecatedEnv } from './config/env';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 

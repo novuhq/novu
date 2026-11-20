@@ -11,7 +11,6 @@ import {
   CreateExecutionDetails,
   CreateStepConditionEvaluationDetail,
   ExecuteStepResolverRequest,
-  env,
   GetDecryptedIntegrations,
   GetLayoutUseCaseV0,
   GetNovuLayout,
@@ -57,6 +56,7 @@ import {
   PreferencesRepository,
 } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { env } from '../../config/env';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { SharedModule } from '../shared/shared.module';
 import {

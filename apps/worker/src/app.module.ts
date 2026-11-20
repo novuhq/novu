@@ -11,13 +11,14 @@ import {
 } from '@nestjs/common';
 
 import { APP_FILTER } from '@nestjs/core';
-import { env, TracingModule } from '@novu/application-generic';
+import { TracingModule } from '@novu/application-generic';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { HealthModule } from './app/health/health.module';
 import { SharedModule } from './app/shared/shared.module';
 import { TelemetryModule } from './app/telemetry/telemetry.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
+import { env } from './config/env';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,

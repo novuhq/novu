@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Logger } from '@nestjs/common';
-import { env } from '@novu/application-generic';
 import { firstValueFrom } from 'rxjs';
+import { env } from '../../../config/env';
 
 export async function sendDataToNovuTrace(
   httpService: HttpService,

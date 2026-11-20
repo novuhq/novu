@@ -1,4 +1,4 @@
-import { createEnv, type EnvVarDefinition, warnDeprecatedEnv } from './env';
+import { createAppEnv, createEnv, type EnvVarDefinition } from './env';
 import { envSchema } from './env.schema';
 
 const schema = {
@@ -78,18 +78,31 @@ describe('env', () => {
     expect(testEnv.TEST_ENV_BOOLEAN_ON).toBe(true);
   });
 
+  it('should build an app env from the shared schema plus the app variables', () => {
+    const appEnv = createAppEnv({
+      TEST_ENV_APP_FLAG: { type: 'boolean', default: true, description: 'App-only boolean.' },
+    }).env;
+
+    expectTypeOf(appEnv.TEST_ENV_APP_FLAG).toEqualTypeOf<boolean>();
+    expectTypeOf(appEnv.NODE_ENV).toEqualTypeOf<string | undefined>();
+    expect(appEnv.TEST_ENV_APP_FLAG).toBe(true);
+    expect(appEnv.NODE_ENV).toBe(process.env.NODE_ENV);
+
+    // @ts-expect-error an app cannot redeclare a shared variable
+    createAppEnv({ NODE_ENV: { description: 'Shadows the shared NODE_ENV.' } });
+  });
+
   it('should log deprecated variables that are still set, without their value', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { warnDeprecatedEnv } = createAppEnv(schema);
+    const warnings = () => warn.mock.calls.map(([message]) => String(message)).filter((m) => m.includes('TEST_ENV_'));
 
-    warnDeprecatedEnv(schema);
-    expect(warn).not.toHaveBeenCalled();
+    warnDeprecatedEnv();
+    expect(warnings()).toEqual([]);
 
     process.env.TEST_ENV_DEPRECATED = 'secret-value';
-    warnDeprecatedEnv(schema);
-    expect(warn).toHaveBeenCalledOnce();
-    expect(warn.mock.calls[0][0]).toContain('TEST_ENV_DEPRECATED');
-    expect(warn.mock.calls[0][0]).toContain('Use TEST_ENV_STRING instead.');
-    expect(warn.mock.calls[0][0]).not.toContain('secret-value');
+    warnDeprecatedEnv();
+    expect(warnings()).toEqual(['[Env] TEST_ENV_DEPRECATED is deprecated and still set. Use TEST_ENV_STRING instead.']);
   });
 
   it('should keep the schema keys sorted so each variable has one obvious place', () => {

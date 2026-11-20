@@ -73,14 +73,31 @@ export function createEnv<S extends EnvSchema>(schema: S): Env<S> {
   return Object.defineProperties({}, properties) as Env<S>;
 }
 
-/** Typed access to every environment variable declared in `env.schema.ts`. */
+/** Typed access to the shared variables in `env.schema.ts`. Apps read through their own `config/env.ts`. */
 export const env = createEnv(envSchema);
 
-/** Call once at boot, after secrets are hydrated. Logs the name of each deprecated variable that is still set, never its value. */
-export function warnDeprecatedEnv(schema: EnvSchema = envSchema): void {
+function warnDeprecatedEnv(schema: EnvSchema): void {
   for (const [name, definition] of Object.entries(schema)) {
     if (definition.deprecated && process.env[name]) {
       console.warn(`[Env] ${name} is deprecated and still set. ${definition.deprecated}`);
     }
   }
+}
+
+/**
+ * Builds an app's `env` from the shared schema plus the variables only that app reads.
+ * Redeclaring a shared key does not compile.
+ *
+ * `warnDeprecatedEnv`: call once at boot, after secrets are hydrated. Logs the name of each
+ * deprecated variable that is still set, never its value.
+ *
+ * `env` is typed as two `Env`s because `Env<typeof envSchema & S>` collapses to `never` for apps
+ * compiled with strictNullChecks, like the worker.
+ */
+export function createAppEnv<S extends EnvSchema & { readonly [K in keyof typeof envSchema]?: never }>(
+  appSchema: S
+): { env: Env<typeof envSchema> & Env<S>; warnDeprecatedEnv: () => void } {
+  const schema = { ...envSchema, ...appSchema };
+
+  return { env: createEnv(schema), warnDeprecatedEnv: () => warnDeprecatedEnv(schema) };
 }

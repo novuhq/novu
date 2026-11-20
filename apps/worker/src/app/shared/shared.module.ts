@@ -17,7 +17,6 @@ import {
   ExecuteBridgeRequest,
   ExecuteFrameworkRequest,
   ExecuteStepResolverRequest,
-  env,
   featureFlagsService,
   GetDecryptedSecretKey,
   GetTenant,
@@ -71,6 +70,7 @@ import {
 
 import { JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { env } from '../../config/env';
 import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 import { ActiveJobsMetricService } from '../workflow/services';
 

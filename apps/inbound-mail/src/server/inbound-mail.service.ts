@@ -1,6 +1,5 @@
 import {
   ClickHouseService,
-  env,
   FeatureFlagsService,
   InboundMailRequestLogger,
   InboundMailTenantResolver,
@@ -12,6 +11,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { DalService, DomainRepository } from '@novu/dal';
+import { env } from '../config/env';
 import logger from './logger';
 
 /**

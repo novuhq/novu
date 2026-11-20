@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
-  env,
   getInboundParseMailWorkerOptions,
   IInboundParseDataDto,
   INBOUND_PARSE_RETRY_POLICY,
@@ -15,6 +14,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { JobTopicNameEnum } from '@novu/shared';
+import { env } from '../../../config/env';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { InboundParseProcessingError } from '../usecases/inbound-email-parse/inbound-parse-outcome';
