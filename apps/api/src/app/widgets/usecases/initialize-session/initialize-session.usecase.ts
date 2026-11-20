@@ -62,6 +62,17 @@ export class InitializeSession {
     });
     const hmacValid = isHmacValidForAnyKey(signingKeys, command.subscriberId, command.hmacHash);
 
+    // Before the check below, so a hash rejected because its key no longer signs is recorded too.
+    await this.apiKeyRevocationService.recordOldKeySubscriberHash({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+      signingKeys,
+      subscriberId: command.subscriberId,
+      subscriberHash: command.hmacHash,
+      source: SubscriberSessionSourceEnum.LEGACY_WIDGET,
+    });
+
     if (inAppIntegration.credentials.hmac && !hmacValid) {
       throw new BadRequestException('Please provide a valid HMAC hash');
     }
