@@ -204,7 +204,7 @@ The same rules hold:
 - **Whom it listens to.** Your messages, and those of the contacts whose **Listen to** is on.
 - **One session per conversation.** The next message in a conversation goes on with the same session, until the conversation is resolved.
 - **Permission questions go to you.** When the host asks before a command, you get an Allow and Deny message on your channel, with **Allow for this session** where the host has one. No answer counts as Deny. A contact never sees it.
-- **A contact's conversation is for talking.** There the plugin reads and resolves that conversation, and uses only what you let contacts use: `contacts_can_use` in Hermes's config, `contactsCanUse` in OpenClaw's ([What a contact can have it do](#what-a-contact-can-have-it-do)). A contact with [full access](#full-access) gets what your own chat gets, and the plugin asks them, not you.
+- **A contact's conversation is for talking.** There the plugin asks in that conversation, reads it and resolves it, and uses only what you let contacts use: `contacts_can_use` in Hermes's config, `contactsCanUse` in OpenClaw's ([What a contact can have it do](#what-a-contact-can-have-it-do)). A contact with [full access](#full-access) gets what your own chat gets, and the plugin asks them, not you.
 
 A contact's message can't run the host's own commands, such as Hermes's `/yolo`: only `/stop`, which stops the run in their own conversation. Yours work as in any of your chats with the host.
 
