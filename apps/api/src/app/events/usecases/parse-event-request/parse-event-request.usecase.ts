@@ -535,7 +535,7 @@ export class ParseEventRequest {
    * @param invalidValues - Array to collect invalid values
    * @returns The valid item or null if invalid
    */
-  @Instrument()
+  // Not instrumented: it runs once per recipient, inside the `parseRecipients` segment.
   private validateItem(item: unknown, invalidValues: unknown[]) {
     const result = RecipientSchema.safeParse(item);
     if (result.success) {
