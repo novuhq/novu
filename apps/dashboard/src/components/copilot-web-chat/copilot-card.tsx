@@ -1,5 +1,10 @@
 import type { AgentCardChild, AgentCardElement } from '@novu/js';
+import { CopilotReviewActionEnum } from '@novu/shared';
+import { Fragment } from 'react';
+import type { IconType } from 'react-icons';
+import { RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
 import { Button, type ButtonProps } from '@/components/primitives/button';
+import { LinkButton } from '@/components/primitives/button-link';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
 import { getCardButtonLabel } from './copilot-review-labels';
@@ -15,6 +20,12 @@ const BUTTON_APPEARANCE: Record<CardButtonStyle, Pick<ButtonProps, 'variant' | '
   primary: { variant: 'primary', mode: 'filled' },
   danger: { variant: 'error', mode: 'outline' },
   default: { variant: 'secondary', mode: 'outline' },
+};
+
+const REVIEW_ACTION_ICONS: Record<CopilotReviewActionEnum, IconType> = {
+  [CopilotReviewActionEnum.KEEP]: RiCheckLine,
+  [CopilotReviewActionEnum.REVERT]: RiCloseLine,
+  [CopilotReviewActionEnum.TRY_AGAIN]: RiRefreshLine,
 };
 
 const TEXT_STYLES: Record<CardTextStyle, string> = {
@@ -91,6 +102,46 @@ function CardActions({ actions, context }: { actions: CardActionChild[]; context
   );
 }
 
+function isReviewButton(action: CardActionChild): action is CardButtonChild {
+  return action.type === 'button' && isCopilotReviewActionId(action.id);
+}
+
+/** Keep all · Discard · Try again read as text links with a trailing icon, as in the design. */
+function ReviewActions({ buttons, context }: { buttons: CardButtonChild[]; context: CardContext }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {buttons.map((button, index) => (
+        <Fragment key={button.id}>
+          {index > 0 && (
+            <span aria-hidden className="text-label-xs text-text-soft">
+              ·
+            </span>
+          )}
+          <LinkButton
+            type="button"
+            variant="black"
+            size="sm"
+            className="text-label-xs"
+            trailingIcon={REVIEW_ACTION_ICONS[button.id as CopilotReviewActionEnum]}
+            title={button.tooltip}
+            disabled={button.disabled || context.isReviewLocked}
+            onClick={() => context.onButtonClick(button)}
+          >
+            {getCardButtonLabel(button)}
+          </LinkButton>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+/** A row of review buttons reads as links; any other row keeps the card's buttons. */
+function CardActionRow({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
+  if (actions.every(isReviewButton)) return <ReviewActions buttons={actions} context={context} />;
+
+  return <CardActions actions={actions} context={context} />;
+}
+
 function CardChildren({ items, context }: { items: AgentCardChild[]; context: CardContext }) {
   return items.map((child, index) => {
     const key = `${child.type}:${index}`;
@@ -103,9 +154,9 @@ function CardChildren({ items, context }: { items: AgentCardChild[]; context: Ca
           </p>
         );
       case 'button':
-        return <CardActions key={key} actions={[child]} context={context} />;
+        return <CardActionRow key={key} actions={[child]} context={context} />;
       case 'actions':
-        return <CardActions key={key} actions={child.children} context={context} />;
+        return <CardActionRow key={key} actions={child.children} context={context} />;
       case 'section':
         return (
           <div key={key} className="flex flex-col gap-2">

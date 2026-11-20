@@ -1,11 +1,12 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
-import { CopilotReviewActionEnum } from '@novu/shared';
+import { COPILOT_WORKFLOW_UPDATED_EVENT, CopilotReviewActionEnum, CopilotWorkflowChangeEnum } from '@novu/shared';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildAssistantBlocks,
   getCopilotTypingLabel,
   getOpenReviewActions,
   getTryAgainPrompt,
+  hasPendingReplyGap,
   loadTryAgainPrompt,
   orderStoppedTurns,
 } from './copilot-web-chat-utils';
@@ -291,6 +292,126 @@ describe('buildAssistantBlocks (Powered by footer)', () => {
     expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
       { kind: 'text', key: 'act_1:0', text, streaming: false },
     ]);
+  });
+});
+
+/** A reply as history saved it: the model wrote the reasoning tool's arguments as text before its answer. */
+const REASONING_REPLY =
+  '{"label":"Updating email subject","thought":"I’ll update only the email subject and keep the preheader, sender details, reply-to, and body unchanged."}\n\nDone — I updated the subject to **“Your order shipped”** and left everything else unchanged.';
+
+function streamingReply(text: string): AgentMessage {
+  return { ...assistantMessage('act_1', ''), parts: [{ type: 'text', text, state: 'streaming' }] };
+}
+
+describe('buildAssistantBlocks (reasoning JSON)', () => {
+  it('strips the reasoning object the model wrote as text before its reply', () => {
+    expect(buildAssistantBlocks(assistantMessage('act_1', REASONING_REPLY))).toEqual([
+      {
+        kind: 'text',
+        key: 'act_1:0',
+        text: 'Done — I updated the subject to **“Your order shipped”** and left everything else unchanged.',
+        streaming: false,
+      },
+    ]);
+  });
+
+  it('strips one written between paragraphs, escaped quotes included', () => {
+    const blocks = buildAssistantBlocks(
+      assistantMessage('act_1', 'Sure.\n\n{"label":"Plan","thought":"Add a \\"Welcome\\" email."}\n\nDone.')
+    );
+
+    expect(blocks).toEqual([
+      expect.objectContaining({ kind: 'text', text: expect.stringMatching(/^Sure\.\n+Done\.$/) }),
+    ]);
+  });
+
+  it('holds back the object while it streams, then shows the reply that follows it', () => {
+    const reasoning = REASONING_REPLY.slice(0, REASONING_REPLY.indexOf('}') + 1);
+
+    expect(buildAssistantBlocks(streamingReply('{"label":"Updating email sub'))).toEqual([]);
+    expect(buildAssistantBlocks(streamingReply(`${reasoning}\n\nDone`))).toEqual([
+      { kind: 'text', key: 'act_1:0', text: 'Done', streaming: true },
+    ]);
+  });
+
+  it('keeps JSON that is not the reasoning object', () => {
+    const text = '{"name":"Order shipped","steps":1}';
+
+    expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
+      { kind: 'text', key: 'act_1:0', text, streaming: false },
+    ]);
+  });
+});
+
+/** The custom event the Copilot emits after a tool call changed the workflow, as `@novu/js` adds it to a message. */
+function workflowUpdated(change?: Record<string, unknown>) {
+  return {
+    type: 'data' as const,
+    name: COPILOT_WORKFLOW_UPDATED_EVENT,
+    data: { workflowId: 'wf-1', ...(change && { change }) },
+  };
+}
+
+const EMAIL_ADDED = {
+  kind: CopilotWorkflowChangeEnum.ADDED,
+  stepId: 'email',
+  stepName: 'Email Step',
+  stepType: 'email',
+};
+const SMS_EDITED = { kind: CopilotWorkflowChangeEnum.EDITED, stepId: 'sms', stepName: 'SMS Step', stepType: 'sms' };
+
+function changesMessage(parts: AgentMessage['parts']): AgentMessage {
+  return { ...assistantMessage('act_1', ''), parts };
+}
+
+describe('buildAssistantBlocks (change rows)', () => {
+  it('lists the steps the turn changed first, ahead of the reply text they arrived after', () => {
+    const message = changesMessage([
+      { type: 'text', text: 'Done.', state: 'done' },
+      workflowUpdated(EMAIL_ADDED),
+      workflowUpdated(),
+      { type: 'data', name: 'other-event', data: { change: SMS_EDITED } },
+    ]);
+
+    expect(buildAssistantBlocks(message)).toEqual([
+      { kind: 'changes', key: 'act_1:changes', rows: [{ id: 'act_1:1', ...EMAIL_ADDED }] },
+      { kind: 'text', key: 'act_1:0', text: 'Done.', streaming: false },
+    ]);
+  });
+
+  it('keeps one row per step: an added step stays added, and a removal replaces the row', () => {
+    const message = changesMessage([
+      workflowUpdated(EMAIL_ADDED),
+      workflowUpdated({ ...EMAIL_ADDED, kind: CopilotWorkflowChangeEnum.EDITED }),
+      workflowUpdated(SMS_EDITED),
+      workflowUpdated({ ...SMS_EDITED, kind: CopilotWorkflowChangeEnum.REMOVED }),
+    ]);
+    const [block] = buildAssistantBlocks(message);
+
+    expect(block.kind === 'changes' && block.rows.map((row) => [row.stepId, row.kind])).toEqual([
+      ['email', CopilotWorkflowChangeEnum.ADDED],
+      ['sms', CopilotWorkflowChangeEnum.REMOVED],
+    ]);
+  });
+
+  it('skips a change it cannot read', () => {
+    const message = changesMessage([
+      workflowUpdated({ ...EMAIL_ADDED, kind: 'renamed' }),
+      workflowUpdated({ kind: CopilotWorkflowChangeEnum.ADDED, stepId: 'email' }),
+    ]);
+
+    expect(buildAssistantBlocks(message)).toEqual([]);
+  });
+});
+
+describe('hasPendingReplyGap', () => {
+  it('keeps the placeholder while only change rows arrived, and drops it once the reply shows', () => {
+    const prompt = userMessage('msg_1', 'Add an email step');
+    const rowsOnly = changesMessage([workflowUpdated(EMAIL_ADDED)]);
+    const withReply = changesMessage([workflowUpdated(EMAIL_ADDED), { type: 'text', text: 'Done.', state: 'done' }]);
+
+    expect(hasPendingReplyGap([prompt, rowsOnly])).toBe(true);
+    expect(hasPendingReplyGap([prompt, withReply])).toBe(false);
   });
 });
 

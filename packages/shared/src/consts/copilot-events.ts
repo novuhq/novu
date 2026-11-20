@@ -1,8 +1,32 @@
+import type { StepTypeEnum } from '../types';
+
 /**
  * Custom agent event the Copilot emits on web chat after a tool call changed the workflow, so the dashboard
- * refreshes the canvas while the run is still going.
+ * refreshes the canvas while the run is still going and lists the step the call changed.
  */
 export const COPILOT_WORKFLOW_UPDATED_EVENT = 'copilot.workflow-updated';
+
+/** What a Copilot tool call did to a step. */
+export enum CopilotWorkflowChangeEnum {
+  ADDED = 'added',
+  EDITED = 'edited',
+  REMOVED = 'removed',
+  MOVED = 'moved',
+}
+
+/** The step a tool call changed, shown as a change row in the web chat. */
+export type CopilotWorkflowStepChange = {
+  kind: CopilotWorkflowChangeEnum;
+  stepId: string;
+  stepName: string;
+  stepType: StepTypeEnum;
+};
+
+/** The data of {@link COPILOT_WORKFLOW_UPDATED_EVENT}. Calls that change the workflow itself, not a step, have no `change`. */
+export type CopilotWorkflowUpdatedEventData = {
+  workflowId: string;
+  change?: CopilotWorkflowStepChange;
+};
 
 /**
  * Custom agent event the Copilot emits on web chat once a Try again click reverted the turn, so the dashboard
