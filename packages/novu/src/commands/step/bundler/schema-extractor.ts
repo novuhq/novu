@@ -153,6 +153,11 @@ function zodV4ToJsonSchema(schema: ZodV4Schema): Record<string, unknown> {
       if (def.type === 'object' && def.catchall === undefined && jsonSchema.additionalProperties === undefined) {
         jsonSchema.additionalProperties = false;
       }
+      // Zod v4 bounds `.int()` to the safe-integer range, which `zod-to-json-schema` left implicit.
+      if (jsonSchema.type === 'integer') {
+        if (jsonSchema.maximum === Number.MAX_SAFE_INTEGER) delete jsonSchema.maximum;
+        if (jsonSchema.minimum === Number.MIN_SAFE_INTEGER) delete jsonSchema.minimum;
+      }
       // Zod v4 emits `oneOf` for discriminated unions where `zod-to-json-schema` emitted `anyOf`.
       if (def.type === 'union' && jsonSchema.oneOf !== undefined && jsonSchema.anyOf === undefined) {
         jsonSchema.anyOf = jsonSchema.oneOf;

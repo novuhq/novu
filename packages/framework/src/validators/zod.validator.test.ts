@@ -11,7 +11,7 @@ import { transformSchema, validateData } from './base.validator';
 const buildSchemas = (z: typeof zV3 | typeof zV4) => ({
   object: (z as typeof zV3).object({
     name: (z as typeof zV3).string().min(1),
-    age: (z as typeof zV3).number().optional(),
+    age: (z as typeof zV3).number().int().min(1).optional(),
     role: (z as typeof zV3).enum(['admin', 'member']).default('member'),
     nickname: (z as typeof zV3).string().nullable().optional(),
     nested: (z as typeof zV3)
