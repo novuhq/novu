@@ -168,7 +168,11 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
+  /*
+   * A PinoLogger, not the Nest `Logger` adapter: the adapter would log the filter's message text as `context`
+   * and leave `msg` as the raw exception message.
+   */
+  app.useGlobalFilters(new AllExceptionsFilter(await app.resolve(PinoLogger), app.get(RequestLogRepository)));
 
   /*
    * Handle unhandled promise rejections
