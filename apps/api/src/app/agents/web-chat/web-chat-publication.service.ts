@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { ApiKeyRevocationService } from '../../auth/api-key-revocation/api-key-revocation.service';
 import { isWebChatAgentHashValidForAnyKey } from './web-chat-agent-hash';
 
 const WEB_CHAT_UNAVAILABLE_MESSAGE = 'This agent is not available on web chat';
@@ -18,7 +19,8 @@ export class WebChatPublicationService {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly environmentRepository: EnvironmentRepository
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly apiKeyRevocationService: ApiKeyRevocationService
   ) {}
 
   /**
@@ -83,7 +85,11 @@ export class WebChatPublicationService {
         throw new BadRequestException('Please provide a valid HMAC hash');
       }
 
-      const apiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+      const apiKeys = await this.apiKeyRevocationService.getSigningKeys({
+        organizationId,
+        environmentId,
+        apiKeys: environment.apiKeys,
+      });
 
       if (!isWebChatAgentHashValidForAnyKey(apiKeys, agentIdentifier, agentHash)) {
         throw new BadRequestException('Please provide a valid HMAC hash');

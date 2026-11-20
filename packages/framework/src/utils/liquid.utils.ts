@@ -50,11 +50,16 @@ export const stringifyDataStructureWithSingleQuotes = (value: unknown, spaces: n
  * @param options - LiquidJS options. Note: By default, this uses a custom outputEscape function
  *   that escapes special JSON characters. If you need different escaping behavior (e.g., for HTML
  *   rendering), you can override the outputEscape function in the options.
+ *
+ * Templates come from untrusted control values, so file tags (`render`, `include`, `layout`) must
+ * never reach the disk. An empty in-memory `templates` map replaces liquidjs's default Node
+ * filesystem (rooted at the process cwd); it is set after `options` so callers cannot re-enable it.
  */
 export function createLiquidEngine(options?: LiquidOptions): Liquid {
   const liquidEngine = new Liquid({
     outputEscape: defaultOutputEscape,
     ...options,
+    templates: Object.create(null),
   });
 
   // Register default filters

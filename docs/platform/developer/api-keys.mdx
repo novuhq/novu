@@ -1,21 +1,22 @@
 ---
 title: 'API keys'
-description: 'Find your Novu application identifier, secret key, and API hostnames, and rotate secret keys without downtime using rolling rotation.'
+description: 'Find your Novu application identifier, secret key, and API hostnames, and replace a secret key with rolling rotation or immediate regeneration.'
 ---
 
 Novu provides a set of keys and hostnames that your application uses to authenticate requests, send events to the Novu API, and to interact with the [`<Inbox />`](/platform/inbox).
 
-Your API keys are environment specific and allow Novu to tie all request to a particular Novu environment.
+Your API keys are environment specific and allow Novu to tie all requests to a particular Novu environment.
 
 ## Finding your API keys
 
 Follow these steps to find your environment-specific API keys:
-1. Login to the Novu dashboard.
-2. On the developer section, click **API Keys** to find all your environment keys, whiich are:
+1. Log in to the Novu dashboard.
+2. In the **Developer** section, click **API Keys** to find all your environment keys, which are:
       - Application Identifier
       - Secret Keys
       - API URLs
-![API Keys](/images/developer-tools/api-keys.png)
+
+![API Keys in the Developer section](/images/developer-tools/api-keys-page.png)
 
 ## Application identifier
 
@@ -33,19 +34,37 @@ The key is scoped to one environment. A Development key only reads and writes De
   Keep your secret key private.
 </Warning>
 
-You can regenerate the secret key from the API Keys dashboard. This will invalidate the old key and require you to update your environment variables.
+To replace a secret key, see [Rotate your secret key](#rotate-your-secret-key).
 
-## Rolling secret key rotation
+## Rotate your secret key
 
-Rolling rotation lets you replace a secret key without downtime by keeping two active keys during the switchover. You generate a second key, roll your applications over to it, and then delete the old key once nothing is still using it.
+Replace a secret key when it leaked, when someone who had access to it leaves, or on a regular schedule. The **Secret Keys** card lists every active key with per-key mask, reveal, and copy controls.
 
-An environment can have at most **two active secret keys** at any time, and at least one key must always exist.
+You need permission to manage API keys. Without it, **Generate new key**, **Delete**, and the regenerate icon do not appear.
 
-### Rotate a key from the dashboard
+**Generate new key** appears only when your organization has multiple secret keys enabled. If you do not see it, [regenerate all keys](#regenerate-all-keys).
 
-The **Secret Keys** card on the API Keys page lists every active key with per-key mask, reveal, and copy controls.
+An environment can have at most **two active secret keys** at a time, and at least one key must always exist.
 
-1. Click **Generate new key** to add a second secret key. The card now shows both keys.
+| Method | What happens to the old key | When to use it |
+| --- | --- | --- |
+| [Rolling rotation](#rolling-rotation) (recommended) | It stays valid until you delete it | You can update your applications before the old key is cut off |
+| [Regenerate all keys](#regenerate-all-keys) | Every key in the environment is replaced | You must cut off access immediately, or **Generate new key** is not available |
+
+<Warning>
+If a secret key leaked, replace it right away. Use rolling rotation when you can move your applications to a new key first. Use regenerate all keys when you cannot, or when **Generate new key** is not available. After you delete or regenerate a key, Novu can still accept it for up to one minute while caches expire.
+</Warning>
+
+### Rolling rotation
+
+Rolling rotation replaces a secret key without downtime. You add a second key, move your applications to it, and delete the old key once nothing is still using it.
+
+1. Click **Generate new key**. The card shows both keys.
+
+   ![Generate new key on the Secret Keys card](/images/developer-tools/generate-new-key.png)
+
+   ![Original secret key and Secret Key (new) after generating a key](/images/developer-tools/secret-keys-after-generate.png)
+
 2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
 3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
 
@@ -53,11 +72,22 @@ Bridge requests and HTTP request steps are signed with every active secret key. 
 
 A bridge built with `@novu/framework` or `@novu/chat-sdk-adapter` can move to the new key on any SDK version. Older versions check only the first `v1`. When such a bridge rejects a request because it already uses the new key, Novu sends the request again with the new key's signature first and keeps that order for later requests to the same bridge. Novu does not resend HTTP request steps. Their header always has the original key's signature first, so an endpoint that checks only the first `v1` must keep the original key until that key is deleted.
 
-Novu can't tell which key your bridge or endpoint verifies with. Before you delete the original key, confirm that every application, bridge and endpoint uses the new key.
+Novu can't tell which key your bridge or endpoint verifies with. Before you delete the original key, confirm that every application, bridge, and endpoint uses the new key.
+
+### Regenerate all keys
+
+Regenerating creates a new random secret key and replaces every key in the environment with it, including a second key created for rolling rotation. The new key exists only after that replacement, so applications cannot be updated to it beforehand.
 
 <Warning>
-If a secret key leaked, rotate right away. Novu keeps signing with the leaked key, and the key keeps authenticating API requests, until you delete it. Generate the new key, move your applications to it, then delete the leaked key. After the deletion, Novu can still accept the leaked key for up to one minute while caches expire.
+Requests that use a replaced key fail until your applications send the new key. Prepare for that interruption, then copy the new key and update your applications immediately. Use [rolling rotation](#rolling-rotation) when requests must keep succeeding through the change.
 </Warning>
+
+1. On the **Secret Keys** card, click the regenerate icon next to the key.
+
+   ![Regenerate icon next to the secret key](/images/developer-tools/regenerate-secret-key.png)
+
+2. In the dialog, type the environment name to confirm, then click **Regenerate Keys**.
+3. Copy the new key and update your applications right away.
 
 ## API URLs
 

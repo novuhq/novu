@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EnvironmentRepository, IntegrationEntity } from '@novu/dal';
 import { ContextPayload } from '@novu/shared';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { validateContextHmacEncryption } from '../../../inbox/utils/encryption';
 
 /**
@@ -20,7 +21,10 @@ import { validateContextHmacEncryption } from '../../../inbox/utils/encryption';
  */
 @Injectable()
 export class ConnectContextVerifier {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private apiKeyRevocationService: ApiKeyRevocationService
+  ) {}
 
   async verify(params: {
     integration: IntegrationEntity;
@@ -49,19 +53,24 @@ export class ConnectContextVerifier {
       throw new BadRequestException('A valid contextHash is required when HMAC validation is enabled.');
     }
 
-    const apiKeys = await this.getEnvironmentApiKeys(integration._environmentId);
+    const apiKeys = await this.getSigningKeys(integration);
 
     // Throws BadRequestException on mismatch; rotation-safe + timing-safe.
     validateContextHmacEncryption({ apiKeys, context, contextHash });
   }
 
-  private async getEnvironmentApiKeys(environmentId: string): Promise<string[]> {
+  private async getSigningKeys(integration: IntegrationEntity): Promise<string[]> {
+    const environmentId = integration._environmentId;
     const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
 
     if (!apiKeys.length) {
       throw new BadRequestException(`Environment ID: ${environmentId} not found`);
     }
 
-    return apiKeys.map((apiKey) => apiKey.key);
+    return this.apiKeyRevocationService.getSigningKeys({
+      organizationId: integration._organizationId,
+      environmentId,
+      apiKeys,
+    });
   }
 }
