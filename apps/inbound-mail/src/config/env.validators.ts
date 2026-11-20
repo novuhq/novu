@@ -1,6 +1,14 @@
-import { assertQueueBackendConfig, isBullMqEnabled, isClusterModeEnabled } from '@novu/application-generic';
+import {
+  assertQueueBackendConfig,
+  isBullMqEnabled,
+  isClusterModeEnabled,
+  parseTlsFlagEnvValue,
+} from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend, StringifyEnv } from '@novu/shared';
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, makeValidator, num, port, str, ValidatorSpec } from 'envalid';
+
+// Accepts the same values the Redis providers parse (true/false, 1/0, yes/no, on/off).
+const tlsFlag = makeValidator(parseTlsFlagEnvValue);
 
 const processEnv = process.env as Record<string, string>;
 
@@ -47,7 +55,7 @@ export function createEnvValidators() {
      * or IN_MEMORY_CLUSTER_MODE_ENABLED. Skipped entirely in SQS-only mode.
      */
     ...(isBullMqEnabled() ? bullMqRedisValidators() : {}),
-    REDIS_TLS: json({ default: undefined }),
+    REDIS_TLS: tlsFlag({ default: undefined }),
     IS_IN_MEMORY_CLUSTER_MODE_ENABLED: bool({ default: false }),
     REDIS_CLUSTER_SERVICE_PORT: str({ default: undefined }),
     REDIS_CLUSTER_USERNAME: str({ default: undefined }),
