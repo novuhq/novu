@@ -75,7 +75,10 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       docs-only: ${{ steps.detect-docs.outputs.docs-only }}
+      api-e2e: ${{ steps.plan-jobs.outputs.api-e2e }}
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
+      test-unit-services: ${{ steps.plan-jobs.outputs.test-unit-services }}
+      test-unit-light: ${{ steps.plan-jobs.outputs.test-unit-light }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
       test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
@@ -121,7 +124,11 @@ jobs:
       # documentation-only and don't need the E2E / code test suites to run.
       # `docs/` is not a pnpm workspace package, so `nx affected` already skips
       # the unit/lib/package/openapi jobs for it; this output additionally gates
-      # the E2E suite, which otherwise always runs.
+      # the E2E suite.
+      #
+      # `outside-projects` is true when a changed file lives outside the folders
+      # Nx maps to projects (CI files, scripts, root config, lockfile, docker...).
+      # `nx affected` can't see those changes, so the API E2E suite runs for them.
       - name: Detect docs-only changes
         id: detect-docs
         env:
@@ -137,21 +144,49 @@ jobs:
           # run the full suite.
           if [[ -z "$PR_NUMBER" ]]; then
             echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            echo "outside-projects=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # The API lists at most 3000 files without flagging truncation, so only
           # trust a list whose length matches changed_files. Renamed files count
           # by both old and new path, and a missing filename is never docs/.
-          read -r listed all_docs < <(
-            gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" |
-              jq -r 'add // [] | "\(length) \(all(.[]; [.filename, .previous_filename // "docs/"] | all(type == "string" and startswith("docs/"))))"'
-          )
-          echo "Listed $listed of $CHANGED_FILES changed files; all under docs/: $all_docs"
-          if [ "$all_docs" = true ] && [ "$listed" -gt 0 ] && [ "$listed" -lt 3000 ] && [ "$listed" -eq "$CHANGED_FILES" ]; then
+          # A failed API call leaves the list empty, which runs the full suite below.
+          if ! pr_files=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" | jq -c 'add // []'); then
+            echo "::warning::Could not list the PR's files; running the full suite."
+            pr_files='[]'
+          fi
+          listed=$(echo "$pr_files" | jq 'length')
+          # Renamed files count by both old and new path.
+          files=$(echo "$pr_files" | jq -c 'map(.filename, (.previous_filename // empty))')
+          trusted=false
+          if [ "$listed" -gt 0 ] && [ "$listed" -lt 3000 ] && [ "$listed" -eq "$CHANGED_FILES" ]; then
+            trusted=true
+          fi
+
+          all_docs=$(echo "$files" | jq 'all(.[]; type == "string" and startswith("docs/"))')
+          # Folders Nx maps to projects, plus folders no build or test reads. `.source` is not here:
+          # print-affected-array.mjs maps it to the @novu/ee-* projects only, not to the apps that load them.
+          outside_files=$(echo "$files" | jq -r --arg known '^(apps|libs|packages|enterprise|playground|docs|agent-inbox-docs|\.agents|\.cursor)/' \
+            '.[] | select(type != "string" or (test($known) | not))')
+          outside=false
+          if [ -n "$outside_files" ]; then
+            outside=true
+            echo "Changed files outside Nx projects:"
+            while IFS= read -r f; do echo "  $f"; done <<< "$outside_files"
+          fi
+          echo "Listed $listed of $CHANGED_FILES changed files; all under docs/: $all_docs; files outside Nx projects: $outside"
+
+          if [ "$trusted" != true ]; then
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            echo "outside-projects=true" >> "$GITHUB_OUTPUT"
+            echo "The file list is incomplete, so the full suite runs."
+          elif [ "$all_docs" = true ]; then
             echo "docs-only=true" >> "$GITHUB_OUTPUT"
+            echo "outside-projects=false" >> "$GITHUB_OUTPUT"
             echo "Only docs/ changed — E2E and code tests will be skipped."
           else
             echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            echo "outside-projects=$outside" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: ./.github/actions/setup-project-minimal
@@ -186,6 +221,44 @@ jobs:
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n 1)" >> $GITHUB_OUTPUT
             echo "typecheck-spec=$(pnpm run get-affected typecheck:spec origin/${{steps.get-base-branch-name.outputs.branch}} all | tail -n 1)" >> $GITHUB_OUTPUT
           fi
+
+      # Decide which test jobs start, so a job that has nothing to do never gets a runner.
+      # - test-unit-services: @novu/api-service and @novu/worker, one job each (slow suites that need services).
+      # - test-unit-light: every other `test-unit` project, in one job.
+      # - api-e2e: the API E2E suite runs when the API side is affected: @novu/api-service, @novu/worker
+      #   (started by the suite), or @novu/ee-* (loaded by the API). Nx marks api-service affected when
+      #   any lib or package it builds from changes. It also runs when a changed file is outside the
+      #   folders Nx maps to projects (CI, scripts, root config, lockfile, .source), and when `test-unit`
+      #   is not a valid JSON array: unknown input means more tests, never fewer.
+      - name: Plan test jobs
+        id: plan-jobs
+        env:
+          TEST_UNIT: ${{ steps.get-projects-arrays.outputs.test-unit }}
+          OUTSIDE_PROJECTS: ${{ steps.detect-docs.outputs.outside-projects }}
+        run: |
+          set -euo pipefail
+          services='["@novu/api-service","@novu/worker"]'
+
+          if echo "$TEST_UNIT" | jq -e 'type == "array" and all(.[]; type == "string")' > /dev/null 2>&1; then
+            unit=$(echo "$TEST_UNIT" | jq -c '.')
+            api_side=$(echo "$unit" | jq --argjson s "$services" 'any(.[]; . as $p | ($s | index($p)) != null or startswith("@novu/ee-"))')
+          else
+            echo "::warning::test-unit is not a JSON array ('$TEST_UNIT'); running the API E2E suite."
+            unit='[]'
+            api_side=true
+          fi
+
+          api_e2e=false
+          if [ "$api_side" = true ] || [ "$OUTSIDE_PROJECTS" != false ]; then
+            api_e2e=true
+          fi
+
+          {
+            echo "test-unit-services=$(echo "$unit" | jq -c --argjson s "$services" 'map(select(. as $p | $s | index($p)))')"
+            echo "test-unit-light=$(echo "$unit" | jq -c --argjson s "$services" 'map(select(. as $p | ($s | index($p)) == null))')"
+            echo "api-e2e=$api_e2e"
+          } >> "$GITHUB_OUTPUT"
+          echo "API side affected: $api_side; files outside Nx projects: ${OUTSIDE_PROJECTS:-unknown}; API E2E: $api_e2e"
 
   test_unit_providers:
     name: Unit test @novu/providers
@@ -228,15 +301,7 @@ jobs:
         with:
           slim: "true"
 
-      - name: Build
-        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
-        env:
-          LOG_LEVEL: "info"
-          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
-        with:
-          targets: build
-          projects: "@novu/api"
-
+      # `build` depends on `^build`, so Nx builds each project's own dependencies first.
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
@@ -271,18 +336,18 @@ jobs:
           AFFECTED_LIBS: ${{ join(fromJson(needs.get-affected.outputs.test-libs), ',') }}
         run: npx nx run-many -t test --projects="$AFFECTED_LIBS" --parallel=3
 
+  # @novu/api-service and @novu/worker: the two slow suites, one job each.
   test_unit_services:
     name: Unit test backend services
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [get-affected]
     # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
-    if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] && github.event.pull_request.head.repo.fork != true }}
+    if: ${{ fromJson(needs.get-affected.outputs.test-unit-services)[0] && github.event.pull_request.head.repo.fork != true }}
     timeout-minutes: 80
     strategy:
       fail-fast: false
-      # One job for each different project and node version
       matrix:
-        projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
+        projectName: ${{ fromJson(needs.get-affected.outputs.test-unit-services) }}
     permissions:
       contents: read
       packages: write
@@ -296,27 +361,13 @@ jobs:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
+      # Both projects need Mongo, Redis and ClickHouse.
       - uses: ./.github/actions/setup-project
-        with:
-          # Don't run redis and etc... for other unit tests
-          slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
-
-      # Without .source/<package>/node_modules, sources resolved through .source load pnpm's hoisted packages,
-      # e.g. a second copy of @langchain/core for @novu/ee-ai.
-      - name: Link enterprise packages into .source
-        if: ${{ startsWith(matrix.projectName, '@novu/ee-') }}
-        run: pnpm symlink:submodules
 
       - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
-        name: Lint and build and test
-        env:
-          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
-        with:
-          targets: build
-          projects: "@novu/api"
-          args: ""
 
+      # `build` depends on `^build`, so Nx builds the project's own dependencies first
+      # (@novu/api for @novu/api-service).
       - name: Build
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -328,6 +379,58 @@ jobs:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
           PROJECT_NAME: ${{ matrix.projectName }}
         run: npx nx run-many -t test --projects="$PROJECT_NAME" --parallel=3
+
+  # Every other affected project with a `test` target outside providers/, packages/ and libs/
+  # (dashboard, ws, inbound-mail, @novu/ee-*, ...). Their tests take 20-60 s each, less than
+  # one setup, so they share one runner.
+  test_unit_services_light:
+    name: Unit test other apps and enterprise packages
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [get-affected]
+    # Fork PRs don't receive SUBMODULES_TOKEN, so the private submodule checkout below can't run for them.
+    if: ${{ fromJson(needs.get-affected.outputs.test-unit-light)[0] && github.event.pull_request.head.repo.fork != true }}
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - name: Affected projects
+        run: echo '${{ needs.get-affected.outputs.test-unit-light }}'
+
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - uses: ./.github/actions/setup-project
+        with:
+          # Only @novu/ws and @novu/inbound-mail need Mongo, Redis and ClickHouse.
+          slim: ${{ !contains(fromJson(needs.get-affected.outputs.test-unit-light), '@novu/ws') && !contains(fromJson(needs.get-affected.outputs.test-unit-light), '@novu/inbound-mail') }}
+
+      # Without .source/<package>/node_modules, sources resolved through .source load pnpm's hoisted packages,
+      # e.g. a second copy of @langchain/core for @novu/ee-ai.
+      - name: Link enterprise packages into .source
+        if: ${{ contains(needs.get-affected.outputs.test-unit-light, '"@novu/ee-') }}
+        run: pnpm symlink:submodules
+
+      - uses: ./.github/actions/setup-redis-cluster
+
+      # `build` depends on `^build`, so Nx builds each project's own dependencies first
+      # (@novu/api for @novu/dashboard).
+      - name: Build
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.test-unit-light), ',') }}
+        run: npx nx run-many -t build --projects="$AFFECTED_PROJECTS" --parallel=3
+
+      - name: Test
+        env:
+          NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          AFFECTED_PROJECTS: ${{ join(fromJson(needs.get-affected.outputs.test-unit-light), ',') }}
+        run: npx nx run-many -t test --projects="$AFFECTED_PROJECTS" --parallel=3
 
   # Test runners strip types from test files without checking them. Projects opt in by defining a `typecheck:spec` script.
   typecheck_spec:
@@ -389,8 +492,9 @@ jobs:
   test_e2e_api:
     name: E2E test API
     needs: [get-affected]
-    # Skip the E2E suite for documentation-only PRs (docs/ changes only).
-    if: ${{ needs.get-affected.outputs.docs-only != 'true' }}
+    # Runs when the API side is affected; see the "Plan test jobs" step in get-affected.
+    # Docs-only PRs never run it. A missing `api-e2e` output (anything but 'false') runs it.
+    if: ${{ needs.get-affected.outputs.docs-only != 'true' && needs.get-affected.outputs.api-e2e != 'false' }}
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       # PRs opened from forks (community contributions) do not receive repo
@@ -430,6 +534,7 @@ jobs:
       - test_unit_packages
       - test_unit_libs
       - test_unit_services
+      - test_unit_services_light
       - typecheck_spec
       - validate_openapi
       - test_e2e_api
