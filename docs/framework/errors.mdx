@@ -412,9 +412,9 @@ Novu puts a `novu-signature` header on every bridge request except the health ch
 novu-signature: t=1710000000000,v1=ab12cd34...
 ```
 
-`t` is a Unix timestamp in milliseconds. `v1` is HMAC-SHA256 of the text `<t>.<json body>`, using the environment secret key as the key. A GET with no body is signed over `{}`.
+`t` is a Unix timestamp in milliseconds. `v1` is HMAC-SHA256 of the text `<t>.<json body>`, using an environment secret key as the key. A GET with no body is signed over `{}`. While two secret keys are active, the header contains one `v1` per key. The bridge accepts the request when any of them matches its secret key.
 
-Your bridge computes the same HMAC with its own copy of that secret and compares it to `v1`. The check runs when strict authentication is on. That is the default when `NODE_ENV` is not `development`, `dev`, or unset. `strictAuthentication: true` on the framework client, or `NOVU_STRICT_AUTHENTICATION_ENABLED=true`, turns it on anyway. Leave it on in production.
+Your bridge computes the same HMAC with its own copy of that secret and compares it to each `v1`. The check runs when strict authentication is on. That is the default when `NODE_ENV` is not `development`, `dev`, or unset. `strictAuthentication: true` on the framework client, or `NOVU_STRICT_AUTHENTICATION_ENABLED=true`, turns it on anyway. Leave it on in production.
 
 The secret the bridge uses is `secretKey` on the client, otherwise `NOVU_SECRET_KEY` or `NOVU_API_KEY` environment variables. It has to be the secret key of the environment that sent the request. The Development key and the Production key are different. A webhook signing secret from another product will not work here.
 
@@ -424,7 +424,7 @@ Novu checks in this order, and stops at the first failure:
 2. Empty secret on the bridge → `SigningKeyNotFoundError`
 3. Header is missing `t` or `v1` → `SignatureInvalidError`
 4. `t` is more than 5 minutes from the bridge clock → `SignatureExpiredError`
-5. HMAC differs → `SignatureMismatchError`
+5. None of the `v1` values match → `SignatureMismatchError`
 
 Before chasing a signature code, confirm the request reached the framework:
 

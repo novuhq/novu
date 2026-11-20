@@ -28,7 +28,6 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import type { Request } from 'express';
-import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -57,6 +56,7 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
+import { getClientIp } from '../shared/utils/client-ip';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -170,7 +170,7 @@ export class InboxController {
       SessionCommand.create({
         requestData: body,
         origin,
-        clientIp: getClientIp(request) ?? undefined,
+        clientIp: getClientIp(request),
         clientVersion,
       })
     );

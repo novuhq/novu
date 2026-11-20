@@ -2,6 +2,7 @@ export * from './agent-inbox-address';
 export * from './agent-shared-inbox';
 export * from './base62';
 export * from './bridge';
+export * from './bridge-signing-keys';
 export * from './build-slug';
 export * from './build-variables';
 export * from './build-workflow-variables';

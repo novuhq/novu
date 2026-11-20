@@ -30,6 +30,7 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
@@ -91,6 +92,7 @@ describe('Session', () => {
   let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
   let keylessAbuseGuard: sinon.SinonStubbedInstance<KeylessAbuseGuardService>;
   let subscriberSessionAuthStatsService: sinon.SinonStubbedInstance<SubscriberSessionAuthStatsService>;
+  let apiKeyRevocationService: sinon.SinonStubbedInstance<ApiKeyRevocationService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -118,6 +120,8 @@ describe('Session', () => {
     updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
     keylessAbuseGuard = sinon.createStubInstance(KeylessAbuseGuardService);
     subscriberSessionAuthStatsService = sinon.createStubInstance(SubscriberSessionAuthStatsService);
+    apiKeyRevocationService = sinon.createStubInstance(ApiKeyRevocationService);
+    apiKeyRevocationService.getSigningKeys.callsFake(async ({ apiKeys }) => apiKeys.map((apiKey) => apiKey.key));
 
     session = new Session(
       environmentRepository as any,
@@ -144,7 +148,8 @@ describe('Session', () => {
       getSubscriberSchedule as any,
       updatePreferencesUsecase as any,
       keylessAbuseGuard as any,
-      subscriberSessionAuthStatsService as any
+      subscriberSessionAuthStatsService as any,
+      apiKeyRevocationService as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
@@ -316,6 +321,50 @@ describe('Session', () => {
       expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('Please provide a valid HMAC hash');
     }
+  });
+
+  it('should not accept a subscriber hash signed with a key the revocation policy stops from signing', async () => {
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      apiKeys: [{ key: 'api-key', _userId: 'user-id' }],
+      name: 'Development',
+    };
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: createHash('api-key', 'subscriber-id') as string,
+      },
+    };
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves({ _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
+    createSubscriber.execute.resolves({ _id: 'subscriber-id' } as any);
+    notificationsCount.execute.resolves({ data: [{ count: 0, filter: {} }] });
+    authService.getSubscriberWidgetToken.resolves('token');
+    getOrganizationSettingsUsecase.execute.resolves({ removeNovuBranding: false, defaultLocale: 'en_US' });
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    selectIntegration.execute.resolves({ integration: mockIntegration });
+    try {
+      await session.execute(command);
+      expect.fail('Expected BadRequestException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('Please provide a valid HMAC hash');
+    }
+
+    // Without HMAC enforcement the session still opens, but the hash no longer lets it update the subscriber.
+    selectIntegration.execute.resolves({ integration: { ...mockIntegration, credentials: { hmac: false } } });
+    await session.execute(command);
+
+    expect(createSubscriber.execute.lastCall.args[0].allowUpdate).to.equal(false);
+    expect(apiKeyRevocationService.getSigningKeys.firstCall.args[0]).to.deep.equal({
+      organizationId: 'org-id',
+      environmentId: 'env-id',
+      apiKeys: environment.apiKeys,
+    });
   });
 
   it('should return correct removeNovuBranding value when set on the organization', async () => {

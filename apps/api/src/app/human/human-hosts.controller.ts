@@ -15,13 +15,13 @@ import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import type { Request } from 'express';
-import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { UserSession } from '../shared/framework/user.decorator';
+import { getClientIp } from '../shared/utils/client-ip';
 import { HumanAgentQueryDto } from './dtos/human-agent.dto';
 import {
   type ConnectCodeResponseDto,
@@ -146,7 +146,7 @@ export class HumanConnectPublicController {
       ConnectHostCommand.create({
         agent: body.agent,
         code: body.code,
-        clientIp: getClientIp(request) ?? undefined,
+        clientIp: getClientIp(request),
         host: readHostId(host),
       })
     );
