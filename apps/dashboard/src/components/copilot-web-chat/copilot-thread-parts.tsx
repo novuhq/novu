@@ -1,10 +1,15 @@
 import type { AgentMessage } from '@novu/js';
 import { useEffect, useRef, useState } from 'react';
+import type { IconType } from 'react-icons';
 import {
+  RiAddBoxLine,
   RiArrowDownSLine,
   RiArrowRightSLine,
+  RiArrowUpDownLine,
   RiCheckboxCircleFill,
   RiCloseCircleFill,
+  RiDeleteBin2Line,
+  RiEdit2Line,
   RiLoader4Line,
   RiRefreshLine,
 } from 'react-icons/ri';
@@ -133,9 +138,24 @@ function StatusIcon({ status }: { status: ToolRow['status'] }) {
   return <span className="size-2.5 rounded-full border border-stroke-soft" />;
 }
 
+const CHANGE_ICONS: Record<ToolChange, IconType> = {
+  Added: RiAddBoxLine,
+  Edited: RiEdit2Line,
+  Removed: RiDeleteBin2Line,
+  Moved: RiArrowUpDownLine,
+};
+
+/** A finished step edit is a bordered change row, as in the design; other tool rows stay compact. */
 function ToolRowView({ row }: { row: ToolRow }) {
+  const ChangeIcon = row.change && row.status === 'done' ? CHANGE_ICONS[row.change] : undefined;
+
   return (
-    <div className="flex h-6 items-center gap-2">
+    <div
+      className={cn(
+        'flex items-center gap-2',
+        ChangeIcon ? 'h-8 rounded-lg border border-stroke-soft bg-bg-white pl-1.5 pr-1' : 'h-6'
+      )}
+    >
       <span className="flex w-3.5 shrink-0 justify-center">
         <StatusIcon status={row.status} />
       </span>
@@ -143,12 +163,16 @@ function ToolRowView({ row }: { row: ToolRow }) {
         {row.label}
       </span>
       {row.arg && (
-        <span className="max-w-[120px] truncate rounded bg-bg-weak px-1 font-mono text-[10px] leading-4 text-text-sub">
-          {row.arg}
-        </span>
+        <span className="max-w-[120px] truncate font-mono text-xs italic leading-4 text-text-soft">{row.arg}</span>
       )}
-      {row.change && row.status === 'done' && (
-        <span className={cn('rounded px-1 text-[10px] font-medium leading-4', CHANGE_STYLES[row.change])}>
+      {ChangeIcon && row.change && (
+        <span
+          className={cn(
+            'ml-auto flex shrink-0 items-center gap-1 rounded px-1 text-[10px] font-medium leading-4',
+            CHANGE_STYLES[row.change]
+          )}
+        >
+          <ChangeIcon className="size-3" aria-hidden />
           {row.change}
         </span>
       )}

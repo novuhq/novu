@@ -1,5 +1,8 @@
 import type { AgentCardChild, AgentCardElement } from '@novu/js';
-import { Button, type ButtonProps } from '@/components/primitives/button';
+import { CopilotReviewActionEnum } from '@novu/shared';
+import { Fragment } from 'react';
+import type { IconType } from 'react-icons';
+import { RiCheckLine, RiCloseLine, RiRefreshLine } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
 import { getCardButtonLabel } from './copilot-review-labels';
@@ -11,11 +14,19 @@ type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][
 type CardButtonStyle = NonNullable<CardButtonChild['style']>;
 type CardTextStyle = NonNullable<Extract<AgentCardChild, { type: 'text' }>['style']>;
 
-const BUTTON_APPEARANCE: Record<CardButtonStyle, Pick<ButtonProps, 'variant' | 'mode'>> = {
-  primary: { variant: 'primary', mode: 'filled' },
-  danger: { variant: 'error', mode: 'outline' },
-  default: { variant: 'secondary', mode: 'outline' },
+/** Card actions read as text links, as in the design: only a danger action changes colour. */
+function actionTone(style: CardButtonStyle | undefined): string {
+  return style === 'danger' ? 'text-error-base' : 'text-text-strong';
+}
+
+const REVIEW_ACTION_ICONS: Partial<Record<string, IconType>> = {
+  [CopilotReviewActionEnum.KEEP]: RiCheckLine,
+  [CopilotReviewActionEnum.REVERT]: RiCloseLine,
+  [CopilotReviewActionEnum.TRY_AGAIN]: RiRefreshLine,
 };
+
+const ACTION_LINK_CLASS =
+  'flex items-center gap-1 text-label-xs font-medium leading-4 transition-opacity hover:opacity-80 disabled:pointer-events-none disabled:opacity-50';
 
 const TEXT_STYLES: Record<CardTextStyle, string> = {
   plain: 'text-text-strong',
@@ -52,41 +63,52 @@ function withoutReviewButtons(children: AgentCardChild[]): AgentCardChild[] {
   });
 }
 
-function CardActions({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
+function CardActionButton({ action, context }: { action: CardButtonChild; context: CardContext }) {
+  const Icon = REVIEW_ACTION_ICONS[action.id];
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {actions.map((action, index) => {
-        if (action.type === 'button') {
-          return (
-            <Button
-              key={action.id}
-              type="button"
-              size="2xs"
-              {...BUTTON_APPEARANCE[action.style ?? 'default']}
+    <button
+      type="button"
+      title={action.tooltip}
+      disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
+      onClick={() => context.onButtonClick(action)}
+      className={cn(ACTION_LINK_CLASS, actionTone(action.style))}
+    >
+      {Icon && <Icon className="size-4 shrink-0" aria-hidden />}
+      {getCardButtonLabel(action)}
+    </button>
+  );
+}
+
+/** Card actions as one row of text links, separated by dots. Links with an unsafe URL are dropped, dots included. */
+function CardActions({ actions, context }: { actions: CardActionChild[]; context: CardContext }) {
+  const visible = actions.filter(
+    (action) => action.type === 'button' || (action.type === 'link-button' && toSafeExternalUrl(action.url))
+  );
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {visible.map((action, index) => (
+        <Fragment key={action.type === 'button' ? action.id : `${action.type}:${action.id ?? index}`}>
+          {index > 0 && (
+            <span aria-hidden className="text-label-xs leading-4 text-text-soft">
+              ·
+            </span>
+          )}
+          {action.type === 'button' && <CardActionButton action={action} context={context} />}
+          {action.type === 'link-button' && (
+            <a
+              href={toSafeExternalUrl(action.url) ?? undefined}
+              target="_blank"
+              rel="noreferrer"
               title={action.tooltip}
-              disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
-              onClick={() => context.onButtonClick(action)}
+              className={cn(ACTION_LINK_CLASS, actionTone(action.style))}
             >
-              {getCardButtonLabel(action)}
-            </Button>
-          );
-        }
-
-        if (action.type === 'link-button') {
-          const href = toSafeExternalUrl(action.url);
-          if (!href) return null;
-
-          return (
-            <Button key={action.id ?? index} size="2xs" {...BUTTON_APPEARANCE[action.style ?? 'default']} asChild>
-              <a href={href} target="_blank" rel="noreferrer" title={action.tooltip}>
-                {action.label}
-              </a>
-            </Button>
-          );
-        }
-
-        return null;
-      })}
+              {action.label}
+            </a>
+          )}
+        </Fragment>
+      ))}
     </div>
   );
 }
