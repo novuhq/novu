@@ -517,6 +517,32 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     );
   });
 
+  it('sends Hermes and OpenClaw to the plugin their own gateway listens with', async () => {
+    const { deps: listener } = deps();
+
+    await expect(listenOn('hermes', {}, listener)).rejects.toThrow(
+      [
+        'Hermes listens in its own gateway, with Agent Inbox’s plugin for it. On the computer Hermes runs on:',
+        '  hermes plugins install agentinboxhq/hermes-plugin --enable',
+        '  hermes agentinbox setup <agent> --code <code>',
+        '  hermes gateway restart',
+        'The code is a one-time code from agentinbox.md: Configure › Connect another agent.',
+      ].join('\n')
+    );
+    // A person at the terminal answers what OpenClaw asks while it installs.
+    const byPerson = await listenOn('openclaw', {}, listener).catch((error: Error) => error.message);
+    expect(byPerson).toContain('  openclaw plugins install clawhub:@agentinbox/openclaw\n');
+
+    // An agent has nobody there to answer: its install agrees ahead.
+    const { deps: agent } = deps({ personAtTerminal: false });
+    await expect(listenOn('openclaw', {}, agent)).rejects.toThrow(
+      '  openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities\n'
+    );
+    await expect(listenOn('hermes', {}, agent)).rejects.toThrow(
+      '  hermes plugins install agentinboxhq/hermes-plugin --enable\n'
+    );
+  });
+
   it('needs the computer connected first', async () => {
     rmSync(join(dir, 'config.json'));
     const { deps: listener } = deps();

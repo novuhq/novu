@@ -31,17 +31,21 @@
 //   wait-for:<ms>        runs `npx @agentinbox/cli reply <conversation> ask …`, which waits <ms> for the answer
 //   fail                 ends the turn as failed
 //   remember             says how many messages its session has seen
+//   call:<tool>          calls a tool by the name the model sees, an MCP server's as `<server>_<tool>`
+//   skill:<name>         loads a skill
+//   read:<path>          reads a file
 //   rules                says the session's rules
 //   instructions         says the instructions the listener gave it
 //   env                  says which parent-session variables it was started with
 //   anything else        echoes it
 // FAKE_OPENCODE_LOG names a file that gets a line per start, per session opened and per message; FAKE_OPENCODE_SESSIONS
 // a folder that keeps sessions. FAKE_OPENCODE_AGENT_RULES (JSON `{ name, pattern, effect }`) are its default agent's
-// rules, FAKE_OPENCODE_MCP (JSON) its MCP servers' names, FAKE_OPENCODE_SLOW_START (ms) how long its server takes to
+// rules, FAKE_OPENCODE_MCP (JSON) its MCP servers' names (with those of OPENCODE_CONFIG_CONTENT, which it logs), FAKE_OPENCODE_SLOW_START (ms) how long its server takes to
 // start, FAKE_OPENCODE_SLOW_VERSION (ms) how long `--version` takes, FAKE_OPENCODE_SLOW_REPLY (ms) how long OpenCode 2
 // takes to answer a prompt it already took, and FAKE_OPENCODE_CRASH makes it end on its first message. FAKE_OPENCODE_MCP_LATE makes OpenCode 2 list its
 // MCP servers only once they start, a moment after it was first asked, as OpenCode 2 does, and say so with an event;
-// `quiet` leaves the event out.
+// `quiet` leaves the event out. FAKE_OPENCODE_ACTIVATING (a count) makes OpenCode 2 answer that many of its first asks
+// for its agents with a 503, as OpenCode 2.2 does while it still sets up the folder, and log each.
 import { randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -76,7 +80,9 @@ const apiUrl = process.env.FAKE_API_URL;
 const log = (entry) => {
   if (logFile) appendFileSync(logFile, `${JSON.stringify(entry)}\n`);
 };
-log({ event: 'start', argv, cwd: process.cwd() });
+/** The settings it takes from its environment, as OpenCode does (`OPENCODE_CONFIG_CONTENT`): its MCP servers. */
+const configContent = process.env.OPENCODE_CONFIG_CONTENT ? JSON.parse(process.env.OPENCODE_CONFIG_CONTENT) : {};
+log({ event: 'start', argv, cwd: process.cwd(), ...(process.env.OPENCODE_CONFIG_CONTENT ? { configContent } : {}) });
 
 const password =
   major >= 2
@@ -95,8 +101,13 @@ const agentRules = JSON.parse(
       { name: 'external_directory', pattern: '/tmp/opencode/*', effect: 'allow' },
     ])
 );
-const mcpServers = JSON.parse(process.env.FAKE_OPENCODE_MCP ?? '["AgentInbox"]');
+const contentServers = Object.keys((major >= 2 ? configContent.mcp?.servers : configContent.mcp) ?? {}).filter(
+  (name) => name !== 'servers'
+);
+const mcpServers = [...JSON.parse(process.env.FAKE_OPENCODE_MCP ?? '["AgentInbox"]'), ...contentServers];
 const mcpLate = major >= 2 ? process.env.FAKE_OPENCODE_MCP_LATE : undefined;
+/** How many more asks for its agents OpenCode 2 answers with a 503, while it still sets up the folder. */
+let activating = major >= 2 ? Number(process.env.FAKE_OPENCODE_ACTIVATING ?? 0) : 0;
 /** Resolves once the MCP servers have started; a model only sees their tools from then on. */
 let mcpStarted = mcpLate ? undefined : Promise.resolve();
 
@@ -522,6 +533,49 @@ const BEHAVIORS = [
   ],
   ['fail', async () => ({ error: 'You have hit your usage limit.' })],
   ['remember', async (_rest, turn) => ({ answer: `This session has seen ${turn.session.seen} messages before.` })],
+  [
+    'call:',
+    async (rest, turn) => {
+      // A tool by its name as the model sees it: an MCP server's is `<server>_<tool>`.
+      const name = rest.trim();
+      const decision = await tool(turn, name, {}, { name, patterns: ['*'] });
+      if (decision === 'aborted') return {};
+
+      return {
+        answer: decision.allowed
+          ? `Called ${name} (${decision.reply}).`
+          : `Not allowed (${decision.reply}).${told(decision)}`,
+      };
+    },
+  ],
+  [
+    'skill:',
+    async (rest, turn) => {
+      const name = rest.trim();
+      const decision = await tool(turn, 'skill', { name }, { name: 'skill', patterns: [name] });
+      if (decision === 'aborted') return {};
+
+      return {
+        answer: decision.allowed
+          ? `Loaded the ${name} skill (${decision.reply}).`
+          : `Not allowed (${decision.reply}).${told(decision)}`,
+      };
+    },
+  ],
+  [
+    'read:',
+    async (rest, turn) => {
+      const path = rest.trim();
+      const decision = await tool(turn, 'read', { filePath: path }, { name: 'read', patterns: [path] });
+      if (decision === 'aborted') return {};
+
+      return {
+        answer: decision.allowed
+          ? `Read ${path} (${decision.reply}).`
+          : `Not allowed (${decision.reply}).${told(decision)}`,
+      };
+    },
+  ],
   ['rules', async (_rest, turn) => ({ answer: `Rules: ${JSON.stringify(turn.session.rules)}` })],
   ['instructions', async (_rest, turn) => ({ answer: `Instructions: ${turn.instructions ?? 'none'}` })],
   [
@@ -792,13 +846,22 @@ const ROUTES_2 = [
   [
     'GET',
     /^\/api\/agent$/,
-    (_req, res) =>
+    (_req, res) => {
+      if (activating > 0) {
+        activating -= 1;
+        log({ event: 'activating' });
+        return send(res, 503, {
+          _tag: 'ServiceUnavailableError',
+          message: 'Location plugins did not finish activating',
+        });
+      }
       send(res, 200, {
         data: [
           { id: 'build', name: 'Build', mode: 'primary', permissions: v2Rules(agentRules) },
           { id: 'compaction', name: 'Compaction', mode: 'primary', hidden: true, permissions: [] },
         ],
-      }),
+      });
+    },
   ],
   [
     'GET',

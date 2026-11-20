@@ -52,6 +52,16 @@ function applyReserve(store: CounterStore, keys: string[], args: Array<string | 
   return 'ok';
 }
 
+function applyClaim(store: CounterStore, keys: string[], args: Array<string | number>): number {
+  if ((store.get(keys[0]) ?? 0) < Number(args[0]) || store.has(keys[1])) {
+    return 0;
+  }
+
+  store.set(keys[1], 1);
+
+  return 1;
+}
+
 function applyRelease(store: CounterStore, keys: string[], args: Array<string | number>): number {
   const count = Number(args[0]);
   for (const key of keys) {
@@ -86,10 +96,15 @@ describe('HumanMessageQuotaService', () => {
         return applyReserve(store, keys, args);
       }
 
+      if (script.includes("'NX'")) {
+        return applyClaim(store, keys, args);
+      }
+
       return applyRelease(store, keys, args);
     });
+    const mget = async (keys: string[]) => keys.map((key) => (store.has(key) ? String(store.get(key)) : null));
     service = new HumanMessageQuotaService(
-      { cacheEnabled: () => cacheEnabled, eval: evalStub } as never,
+      { cacheEnabled: () => cacheEnabled, eval: evalStub, mget } as never,
       { findById: sinon.stub().resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE }) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never
     );
@@ -146,5 +161,54 @@ describe('HumanMessageQuotaService', () => {
     await credits.release();
 
     expect(evalStub.called).to.equal(false);
+  });
+
+  describe('the notice that the limit was reached', () => {
+    const refusal = (cap: 'daily' | 'monthly', limit: number) =>
+      new HumanMessageQuotaExceededException(cap, limit, 3600, '2026-11-21T00:00:00.000Z');
+
+    it('is claimed once, when the last credit of the day is spent', async () => {
+      store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 50);
+
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
+    });
+
+    it('is not claimed while credits remain, when a send to several people needed more of them', async () => {
+      store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 48);
+
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
+    });
+
+    it('is claimed for the month apart from the day', async () => {
+      const keys = humanMessageQuotaKeys(organizationId, new Date());
+      store.set(keys.daily, 50);
+      store.set(keys.monthly, 300);
+
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
+      expect(await service.claimLimitNotice(organizationId, refusal('monthly', 300))).to.equal(true);
+    });
+  });
+
+  it('reads how much of today and this month the account used', async () => {
+    const credits = await service.reserveCredits(organizationId, 3);
+    credits.accept(3);
+    await credits.release();
+
+    const usage = await service.usage(organizationId);
+
+    expect(usage?.daily).to.include({ used: 3, limit: 50 });
+    expect(usage?.monthly).to.include({ used: 3, limit: 300 });
+    expect(Date.parse(usage?.daily.resetsAt ?? '')).to.be.greaterThan(Date.now());
+    expect(Date.parse(usage?.monthly.resetsAt ?? '')).to.be.at.least(Date.parse(usage?.daily.resetsAt ?? ''));
+  });
+
+  it('reads no usage where nothing is counted', async () => {
+    process.env.IS_SELF_HOSTED = 'true';
+    expect(await service.usage(organizationId)).to.equal(null);
+
+    delete process.env.IS_SELF_HOSTED;
+    cacheEnabled = false;
+    expect(await service.usage(organizationId)).to.equal(null);
   });
 });

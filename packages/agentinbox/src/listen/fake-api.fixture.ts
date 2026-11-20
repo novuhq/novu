@@ -86,6 +86,8 @@ export class FakeApi {
   down = false;
   /** The next send goes through, but its answer is lost on the way back, as when the connection drops. */
   loseNextAnswer = false;
+  /** Agent Inbox refuses what is said in a conversation (a send with a `thread`), as it would one too long. */
+  refuseReplies = false;
   /** How long an interaction takes to come back once it was asked for: the read it is happens at once. */
   showDelayMs = 0;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
@@ -257,6 +259,11 @@ export class FakeApi {
     }
     if (this.keyRejected) {
       send(401, { statusCode: 401, message: 'API Key not found' });
+
+      return;
+    }
+    if (this.refuseReplies && call.method === 'POST' && call.path === '/v1/inbox/messages' && call.body.thread) {
+      send(400, { statusCode: 400, message: 'The message is too long.' });
 
       return;
     }

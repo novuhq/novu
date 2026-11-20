@@ -17,10 +17,14 @@ import { liveListening } from './human-listen-lease.service';
 
 /**
  * The request header that says which way a host came in: `cli` from the `agentinbox` CLI, `mcp` from the
- * hosted MCP server. Both use the account's one key, so the key can't tell them apart. Requests without
- * it, such as the dashboard's own, are not a host checking the inbox.
+ * hosted MCP server, `plugin` from a host's own plugin (Hermes's and OpenClaw's gateways). All of them use the
+ * account's one key, so the key can't tell them apart. Requests without it, such as the dashboard's own, are
+ * not a host checking the inbox.
  */
 export const AGENT_INBOX_VIA_HEADER = 'agent-inbox-via';
+
+/** The ways in that agents kept an entry for each of, before hosts were told apart (`AgentHosts.cli`, `.mcp`). */
+const VIAS_FROM_BEFORE = ['cli', 'mcp'] as const satisfies readonly AgentHostVia[];
 
 /**
  * The request header that says which host it is, as one of `AGENT_HOST_IDS`: the CLI reads it from the
@@ -54,7 +58,7 @@ export function readHostId(header: unknown): AgentHostId | undefined {
 
 /**
  * Which hosts act as an Agent Inbox agent: when each host first connected and last checked the inbox, the
- * way it came in (CLI or MCP), and the message that was waiting the first time a host looked. Kept on the
+ * way it came in (CLI, MCP or a plugin), and the message that was waiting the first time a host looked. Kept on the
  * agent, one entry per host: two computers running the same host, or a host that came in both ways, are one.
  * Recording never fails what it follows: a host still gets its inbox when this can't be saved.
  */
@@ -182,7 +186,7 @@ export function describeHosts(
   const named = AGENT_HOST_IDS.flatMap((id) => toHosts(id, hosts?.byId?.[id]));
   const fromBefore = named.some((host) => host.id !== GENERAL_HOST && host.lastCheckedAt)
     ? []
-    : AGENT_HOST_VIAS.flatMap((via) => toHosts(GENERAL_HOST, hosts?.[via], via));
+    : VIAS_FROM_BEFORE.flatMap((via) => toHosts(GENERAL_HOST, hosts?.[via], via));
   const list = mergeSameHost([...named, ...fromBefore]).sort(
     (a, b) => (b.lastCheckedAt ?? '').localeCompare(a.lastCheckedAt ?? '') || b.connectedAt.localeCompare(a.connectedAt)
   );

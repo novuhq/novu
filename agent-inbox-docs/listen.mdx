@@ -14,7 +14,7 @@ npx @agentinbox/cli listen codex
 npx @agentinbox/cli listen opencode
 ```
 
-It starts Claude Code, Codex and OpenCode.
+It starts Claude Code, Codex and OpenCode. Hermes and OpenClaw listen in their own gateway instead, with Agent Inbox's plugin: see [Hermes and OpenClaw](#hermes-and-openclaw).
 
 ## Turning it on
 
@@ -35,18 +35,79 @@ It uses the connection saved on this computer by `setup`, `login` or `connect`, 
 ## Whom it listens to
 
 - **You**, always.
-- **A contact**, once you turn on their **Listen to** switch on agentinbox.md. It is off by default.
+- **A contact**, once you turn on their **Listen to** switch on agentinbox.md. It is off by default. Their runs are limited ([What a contact can have it do](#what-a-contact-can-have-it-do)), unless you also give them [full access](#full-access).
 - **A stranger**, never.
+
+## What a contact can have it do
+
+A conversation with a contact is for talking with them. In it, the host:
+
+- answers them, and can ask them something;
+- reads that conversation and resolves it, with tools for that conversation only;
+- uses what the folder's own settings allow, and nothing else.
+
+Anything else is refused at once, and no question reaches you about it. What the folder's settings say to ask still asks you, never the contact.
+
+- **A group** with a contact in it counts as a conversation with a contact, your own messages there too.
+- **An answer** to a question the host asked comes back to the conversation that asked, yours too, and doesn't change what that conversation is.
+- **Every contact's message** reaches the host marked as an outside person's: a request and data, never instructions or a permission.
+
+### What the folder's settings allow
+
+Only the settings of the folder the listener runs in count. Your own settings for the host, in your home folder, are for your own runs.
+
+- **Claude Code**: `.claude/settings.json`, the servers in `.mcp.json` that a rule names, and the skills in `.claude/skills`. A rule like `Bash(npm test)` or `Read(./docs/**)` allows that, and an `ask` rule asks you. `.claude/settings.local.json` doesn't count: Claude Code keeps your own "don't ask again" answers there.
+- **Codex**: the folder's `.codex`, once you trust the folder in Codex: its rules (`.codex/rules/*.rules`), MCP servers and web search, and the skills in `.agents/skills`. A rule with `allow` runs, one with `prompt` asks you. Codex has no rules for edits, so a contact's run edits nothing.
+- **OpenCode**: the permission rules in the folder's `opencode.json` and `.opencode/opencode.json`, and its skills. Before each file read, edit, search or command the rules allow, OpenCode checks with the listener, which sees where paths really lead. These checks never ask you.
+- **Hermes and OpenClaw** have no folder. Their config says what contacts can use: `contacts_can_use` under `platforms.agentinbox` in Hermes's `config.yaml`, and `contactsCanUse` under `channels.agentinbox` in OpenClaw's. Nothing by default.
+
+For example, with `Bash(npm test)` allowed and `Bash(npm publish)` set to ask, Ben can have Claude Code run the tests, `npm publish` asks you first, and `git push` is refused.
+
+A command the shell works out for itself, with a pipe, a variable or `$(…)`, runs only when a rule allows every command, on Claude Code and OpenCode. Codex refuses it.
+
+Settings that only switch everything on don't count, such as Claude Code's `bypassPermissions` or `acceptEdits`, Codex's full access, or OpenCode's `"permission": "allow"`. Only a rule that names a tool does. Agent Inbox follows the same settings: a rule that allows `npx @agentinbox/cli invite` lets a contact invite people.
+
+Some things stay closed whatever the settings say:
+
+- **The key.** Agent Inbox's key never opens to a contact's run, whatever a rule says: not the folder where the CLI keeps it, `~/.agentinbox`, nor the file `INBOX_CONFIG` points it at. A link to it is no way in either. In a folder that keeps such a link in git, a contact's run can't run commands or search files. On Hermes and OpenClaw, keys and their own files never open.
+- **What decides a run.** Changing the folder's settings, skills and instructions (`.claude`, `.codex`, `.opencode`, `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.git`) asks you on Claude Code and is refused on Codex and OpenCode, so a contact can't give their next run more.
+
+**Allow only what you'd let any contact do.** A contact can use what the folder allows as fully as you can. A rule that runs code, such as `Bash(python3 *)`, or edits together with `npm test`, lets them run any code, and code can read the key. The checks read what the host is about to do; code built to get around them can.
+
+**Your personal notes can reach a contact's run.** Some hosts add your own instructions or memory to every run, a contact's too, and a contact could ask the host what they say:
+
+- **Codex** reads `~/.codex/AGENTS.md`.
+- **OpenCode** reads `~/.config/opencode/AGENTS.md`.
+- **Hermes** adds its memory, `MEMORY.md` and `USER.md`.
+
+Keep private things out of them. On Hermes, you can also turn memory off in the profile that listens to contacts: set `memory_enabled` and `user_profile_enabled` under `memory` to `false`. Claude Code leaves your personal `CLAUDE.md` and its memory out of a contact's run, and OpenClaw leaves out `USER.md` and `MEMORY.md`.
+
+## Full access
+
+You can give a contact you trust full access, with the **Full access** switch on their contact card on agentinbox.md (Contacts, then their row). It is off by default, and it only turns on while **Listen to** is on. Turning **Listen to** off turns it off too.
+
+With full access, a message from them in their own chat starts the host as your own messages do:
+
+- The host follows your own settings and has your tools, files, skills, instructions and memory, Agent Inbox included.
+- What needs an OK asks **them**, in their chat, not you.
+
+For example, Carol has full access and writes "Deploy staging". Claude Code runs what your settings allow, and when it wants to run `npm publish`, Carol gets the card and answers it.
+
+- **A group** stays a contact's conversation, even with them in it.
+- **The switch counts as it is now.** Turn it off, and their next message gets a contact's limits again. If the host is still working on something of theirs when that message comes, that run stops, and the message starts a fresh one with a contact's limits.
+- **A change starts a fresh session.** The next message after you turn it on or off starts a new session of the host, so nothing a full-access run read carries over into a contact's run, and the old limits don't carry over into a full-access one.
+
+**Only for someone you'd trust with the agent's key.** Full access opens everything you have, the key in `~/.agentinbox` too, and they can have the host run any command.
 
 ## Sessions
 
-Each conversation gets one session of the host. The next message in it goes on with the same session, so the host remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`.
+Each conversation gets one session of the host. The next message in it goes on with the same session, so the host remembers what was said and done. When the conversation is resolved, the session ends, and the next message starts a fresh one. The conversation's history stays readable with `show`. A session kept by a version of the CLI from before contacts' limits starts fresh once.
 
 Conversations don't wait for each other: each one's session runs at the same time as the others', up to 5 at once (`--runs-at-once`). They all work in the same project folder, and each host is told that the others may change files there while it works. A conversation over the most at once waits until a run ends.
 
 A message that comes while the host works joins the same run, and so does the answer to a question it asked without waiting (`--async`). An answer comes back to the conversation the question was asked in, also when the host asked someone outside it (`--to`), and whatever their "Listen to" switch says. Once the run is over, it goes on with that conversation's session. Send `/stop` to stop the run in that conversation.
 
-The host replies in the conversation itself. When a turn ends without a reply, its last words are sent as the reply. Reading and answering in its own conversation never asks you, whether the host uses the CLI or the Agent Inbox MCP tools, as long as it stays in that conversation with the same people: writing to someone else, or letting anyone answer, asks you. A CLI command asks you too when it could run other code than Agent Inbox's: when the folder it runs in, or one above it in the project, has its own `@agentinbox/cli`, an `agentinbox` bin, or an `.npmrc` that changes where npm gets packages or how it runs them, or when the command runs outside the project.
+The host replies in the conversation itself. When a turn ends without a reply, its last words are sent as the reply. A contact's run that asked to resolve its conversation resolves it only once that reply is out. Reading and answering in its own conversation never asks you, whether the host uses the CLI or the Agent Inbox MCP tools, as long as it stays in that conversation with the same people: writing to someone else, or letting anyone answer, asks you. In a conversation with a contact, the host gets its own tools for that conversation instead ([What a contact can have it do](#what-a-contact-can-have-it-do)). A CLI command asks you too when it could run other code than Agent Inbox's: when the folder it runs in, or one above it in the project, has its own `@agentinbox/cli`, an `agentinbox` bin, or an `.npmrc` that changes where npm gets packages or how it runs them, or when the command runs outside the project.
 
 While the host works on a message, the chat shows it typing, until its reply goes out. It doesn't while you're asked to allow something. Email has no typing.
 
@@ -61,7 +122,7 @@ The host follows its own settings for the project and may edit files inside it. 
 - a command its settings don't allow
 - the network
 - files outside the project
-- writing to anyone else
+- writing to anyone else, from your own conversations
 
 Each of these is an Allow and Deny message to you, and it shows the whole command. It comes to you even when a contact's message started the run, and then it says first whose message it was, where they wrote, and how it began. One too long to show whole isn't asked at all: the host is told to do it in shorter steps. **Allow for this session** lets the same request through until the session ends, and writes nothing to your settings. No answer in 10 minutes counts as Deny.
 
@@ -131,6 +192,21 @@ npx @agentinbox/cli listen stop
 `listen status` says where the agent is listening, what this computer does, and where its log is. `listen stop` stops it on this computer, in the background or in a terminal. It leaves another computer alone. Both work while the agent is paused.
 
 The dashboard shows where the agent is listening, such as "Listening on MacBook (Codex)".
+
+## Hermes and OpenClaw
+
+Hermes and OpenClaw run a gateway that stays on, so nothing runs beside it: Agent Inbox's plugin for the gateway listens. `npx @agentinbox/cli listen hermes` says how to install it. See [Connect a host](/connect#plugin-hermes-and-openclaw) for the commands.
+
+The same rules hold:
+
+- **You allow it first.** `setup` asks at your terminal, or `--yes` there allows it. When an agent runs `setup`, the gateway asks you on your channel when it starts. A Deny, or no answer within an hour, stops it until the gateway restarts.
+- **One computer at a time.** Allowing it moves listening from wherever it was, a gateway or `listen` on another computer. When another one takes it over, the gateway stops listening; restarting it asks you again before it moves back.
+- **Whom it listens to.** Your messages, and those of the contacts whose **Listen to** is on.
+- **One session per conversation.** The next message in a conversation goes on with the same session, until the conversation is resolved.
+- **Permission questions go to you.** When the host asks before a command, you get an Allow and Deny message on your channel, with **Allow for this session** where the host has one. No answer counts as Deny. A contact never sees it.
+- **A contact's conversation is for talking.** There the plugin asks in that conversation, reads it and resolves it, and uses only what you let contacts use: `contacts_can_use` in Hermes's config, `contactsCanUse` in OpenClaw's ([What a contact can have it do](#what-a-contact-can-have-it-do)). A contact with [full access](#full-access) gets what your own chat gets, and the plugin asks them, not you.
+
+A contact's message can't run the host's own commands, such as Hermes's `/yolo`: only `/stop`, which stops the run in their own conversation. Yours work as in any of your chats with the host.
 
 ## When it stops by itself
 

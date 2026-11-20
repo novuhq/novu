@@ -22,8 +22,8 @@ import { useSwap } from '@/hooks/use-swap';
 import {
   CONNECTOR_CAPTION,
   chatPrompt,
-  cliCaption,
-  cliScript,
+  codeCaption,
+  codeScript,
   connectorSteps,
   copiesAlone,
   type HostWay,
@@ -34,6 +34,7 @@ import {
   promptCaption,
   promptText,
   type Script,
+  usesCode,
   wayLabel,
 } from '@/lib/host-ways';
 import { type ChatApp, type CommandHost, type Host, type HostId, hostOf, hostSubject } from '@/lib/hosts';
@@ -63,8 +64,9 @@ type HostSetupBoxProps = {
   code?: ConnectCodeState;
   onRetry?: () => void;
   /**
-   * A public page has no code. The CLI tab shows the same commands, with a sign-in where the agent and the
-   * code go. The other tabs are the same as in the dashboard: they need no code.
+   * A public page has no code. The tabs whose commands carry it (the CLI, and Hermes's and OpenClaw's plugin)
+   * show the same commands, with a sign-in where the agent and the code go. The other tabs are the same as in
+   * the dashboard: they need no code.
    */
   signedOut?: { signInHref: string };
   /** The hosted MCP server. Without one, the ways that need it are left out (`waysFor`). */
@@ -104,7 +106,7 @@ export function HostSetupBox({
   const lead = useSwap(host.id, SWAP_MS);
   const leadHost = hostOf(lead.shown);
   const cliStatus = signedOut ? 'signed-out' : (code?.status ?? 'loading');
-  const status = host.group === 'commands' && way === 'cli' ? cliStatus : 'ready';
+  const status = usesCode(host, way) ? cliStatus : 'ready';
   const body = useSwap(`${host.id}:${way}:${status}`, SWAP_MS);
   const { ref, height } = useMeasuredHeight();
 
@@ -181,7 +183,7 @@ type Details = {
   onRetry: () => void;
   /** Why the code couldn't be had, when it couldn't. */
   error: string;
-  /** Where a public page's CLI tab sends the operator to get a code. */
+  /** Where a public page's tabs with a code send the operator to get one. */
   signInHref?: string;
 };
 
@@ -271,7 +273,7 @@ function actionOf(
   details: Details,
   signedOut?: { signInHref: string }
 ): Action {
-  if (way === 'cli' && host.group === 'commands' && signedOut) {
+  if (usesCode(host, way) && signedOut) {
     return { kind: 'link', label: 'Sign in', href: signedOut.signInHref, icon: 'login' };
   }
 
@@ -286,13 +288,13 @@ function actionOf(
       : { kind: 'copy', label: 'Copy URL', copyLabel: 'Copy the MCP server address', value: details.mcpUrl };
   }
 
-  if (way === 'cli' && host.group === 'commands') {
+  if (usesCode(host, way)) {
     if (code?.status === 'ready') {
       return {
         kind: 'copy',
         label: 'Copy commands',
         copyLabel: 'Copy the commands',
-        value: cliScript(host, codeDetails(details, code.code)).copy,
+        value: codeScript(host, way, codeDetails(details, code.code)).copy,
       };
     }
 
@@ -338,9 +340,9 @@ function BoxBody({ view, details }: { view: string; details: Details }) {
     );
   }
 
-  if (way === 'cli') {
+  if (usesCode(host, way)) {
     if (status === 'signed-out' && details.signInHref) {
-      return <SignedOutCli host={host} signInHref={details.signInHref} />;
+      return <SignedOutCommands host={host} way={way} signInHref={details.signInHref} />;
     }
 
     const code = details.codes[host.id];
@@ -349,9 +351,9 @@ function BoxBody({ view, details }: { view: string; details: Details }) {
     }
 
     return status === 'ready' && code ? (
-      <CliView host={host} code={code} details={details} />
+      <CodeView host={host} way={way} code={code} details={details} />
     ) : (
-      <Skeleton host={host} />
+      <Skeleton host={host} way={way} />
     );
   }
 
@@ -369,14 +371,14 @@ const PUBLIC_AGENT = '<agent>';
 const PUBLIC_CODE = '<code>';
 
 /** The commands on a public page: the same script, with a sign-in where the agent and the code go. */
-function SignedOutCli({ host, signInHref }: { host: CommandHost; signInHref: string }) {
+function SignedOutCommands({ host, way, signInHref }: { host: CommandHost; way: HostWay; signInHref: string }) {
   const where =
     host.runsIn === 'computer' ? `on the computer ${host.name} runs on` : `where ${hostSubject(host)} works`;
 
   return (
     <Words caption={`Run it ${where}. Sign in to fill in your agent and a code. It works once and expires in 10 min.`}>
       <ScriptLines
-        script={cliScript(host, { handle: PUBLIC_AGENT, code: PUBLIC_CODE })}
+        script={codeScript(host, way, { handle: PUBLIC_AGENT, code: PUBLIC_CODE })}
         slots={[
           { text: PUBLIC_AGENT, render: (text) => <span className="text-muted">{text}</span> },
           { text: PUBLIC_CODE, render: () => <SignInSlot href={signInHref} /> },
@@ -386,12 +388,12 @@ function SignedOutCli({ host, signInHref }: { host: CommandHost; signInHref: str
   );
 }
 
-/** The commands, with the code in the first one (`1.4b · Connect · CLI`). */
-function CliView({ host, code, details }: { host: CommandHost; code: HeldCode; details: Details }) {
+/** The commands, with the code in the one that connects (`1.4b · Connect · CLI`). */
+function CodeView({ host, way, code, details }: { host: CommandHost; way: HostWay; code: HeldCode; details: Details }) {
   return (
-    <Words caption={cliCaption(host)}>
+    <Words caption={codeCaption(host, way)}>
       <ScriptLines
-        script={cliScript(host, codeDetails(details, code))}
+        script={codeScript(host, way, codeDetails(details, code))}
         slots={[{ text: code.code, render: (text) => <SwappingCode code={text} /> }]}
       />
     </Words>
@@ -504,7 +506,7 @@ function InlineCopy({ value, label }: { value: string; label: string }) {
 }
 
 /** Stands in for the commands while the code is on its way. */
-function Skeleton({ host }: { host: CommandHost }) {
+function Skeleton({ host, way }: { host: CommandHost; way: HostWay }) {
   return (
     <div className="flex flex-col gap-3 p-4">
       {/* biome-ignore lint/a11y/useSemanticElements: an <output> is for the result of a form, not a loading state */}
@@ -517,7 +519,7 @@ function Skeleton({ host }: { host: CommandHost }) {
           </span>
         ))}
       </div>
-      <p className="font-mono text-[11px] leading-3.5 text-muted">{cliCaption(host)}</p>
+      <p className="font-mono text-[11px] leading-3.5 text-muted">{codeCaption(host, way)}</p>
     </div>
   );
 }
