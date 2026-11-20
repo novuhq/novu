@@ -8,7 +8,11 @@ import {
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+
+/** Honors a lower `NOVU_PROVIDER_HTTP_TIMEOUT_MS` while keeping the safe client's 30s cap. */
+const SSRF_REQUEST_TIMEOUT_MS = Math.min(30_000, PROVIDER_HTTP_TIMEOUT_MS);
 
 export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.GenericSms;
@@ -76,8 +80,9 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
         throw new Error('Generic SMS auth request failed: authentication token missing from response.');
       }
 
+      // The API key and secret authenticate against the auth URL only; the SMS endpoint
+      // gets the issued token, never the login credentials.
       requestHeaders = {
-        ...this.headers,
         ...data.headers,
         [authTokenKey]: token,
       };
@@ -141,6 +146,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       method: options.method,
       headers: options.headers,
       body: options.body,
+      timeoutMs: SSRF_REQUEST_TIMEOUT_MS,
     }).catch((err: unknown) => {
       if (err instanceof SsrfBlockedError) {
         throw new Error(`${blockedPrefix}: ${err.message}`);

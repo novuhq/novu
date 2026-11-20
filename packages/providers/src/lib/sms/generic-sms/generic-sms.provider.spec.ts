@@ -11,7 +11,10 @@ const ORIGINAL_SELF_HOSTED = process.env.IS_SELF_HOSTED;
 let server: http.Server;
 let serverUrl: string;
 let directServerUrl: string;
-let lastRequest: { url: string; method: string; headers: http.IncomingHttpHeaders; body: string } | null = null;
+type RecordedRequest = { url: string; method: string; headers: http.IncomingHttpHeaders; body: string };
+
+let lastRequest: RecordedRequest | null = null;
+let requests: RecordedRequest[] = [];
 
 function restoreEnv(key: string, value: string | undefined) {
   if (value === undefined) {
@@ -23,6 +26,7 @@ function restoreEnv(key: string, value: string | undefined) {
 
 beforeEach(async () => {
   lastRequest = null;
+  requests = [];
   server = http.createServer((req, res) => {
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => chunks.push(c));
@@ -33,6 +37,15 @@ beforeEach(async () => {
         headers: req.headers,
         body: Buffer.concat(chunks).toString('utf8'),
       };
+      requests.push(lastRequest);
+
+      if (req.url?.startsWith('/auth')) {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ data: { 'x-auth-token': 'issued-token' } }));
+
+        return;
+      }
+
       const messageId = crypto.randomUUID();
       const messageDate = new Date().toISOString();
       res.writeHead(200, { 'content-type': 'application/json' });
@@ -103,6 +116,37 @@ describe('with an allow-listed target', () => {
     expect(lastRequest?.headers.apikey).toBe('123456');
     expect(result.id).toBeDefined();
     expect(result.date).toBeDefined();
+  });
+
+  test('should send login credentials only to the auth URL when authenticating by token', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: `${serverUrl}send`,
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      secretKeyRequestHeader: 'secretKey',
+      secretKey: 'top-secret',
+      from: 'sender-id',
+      authenticateByToken: true,
+      domain: `${serverUrl}auth`,
+      authenticationTokenKey: 'x-auth-token',
+    });
+
+    await provider.sendMessage({
+      to: '+1234567890',
+      content: 'SMS Content form Generic SMS Provider',
+    });
+
+    expect(requests).toHaveLength(2);
+    const [authRequest, sendRequest] = requests;
+
+    expect(authRequest.url).toBe('/auth');
+    expect(authRequest.headers.apikey).toBe('123456');
+    expect(authRequest.headers.secretkey).toBe('top-secret');
+
+    expect(sendRequest.url).toBe('/send');
+    expect(sendRequest.headers['x-auth-token']).toBe('issued-token');
+    expect(sendRequest.headers.apikey).toBeUndefined();
+    expect(sendRequest.headers.secretkey).toBeUndefined();
   });
 
   test('should trigger generic-sms library correctly with _passthrough', async () => {
