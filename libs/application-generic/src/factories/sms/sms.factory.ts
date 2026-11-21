@@ -36,6 +36,7 @@ import {
   SnsHandler,
   TelnyxHandler,
   TermiiSmsHandler,
+  TextLkSmsHandler,
   TwilioHandler,
   UnifonicHandler,
 } from './handlers';
@@ -49,6 +50,7 @@ export class SmsFactory implements ISmsFactory {
     new TwilioHandler(),
     new Sms77Handler(),
     new TermiiSmsHandler(),
+    new TextLkSmsHandler(),
     new PlivoHandler(),
     new ClickatellHandler(),
     new GupshupSmsHandler(),
