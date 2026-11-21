@@ -63,33 +63,37 @@ const guardrails = [
 
 export function UseCaseTeams() {
   return (
-    <SectionFrame anchor="by-team" className="border-t border-sapien-border px-4 pt-18 pb-8 md:px-8 md:pt-24">
+    <SectionFrame
+      anchor="by-team"
+      className="border-t border-sapien-border px-[11px] pt-16 pb-2.5 sm:px-4 sm:pt-18 sm:pb-8 md:px-8 md:pt-24"
+    >
       <LandingHeading
         lead="Anywhere work"
         accent="needs a person"
         description="The same three channels fit very different teams."
+        className="max-sm:gap-4 max-sm:[&>h2]:gap-1.5 max-sm:[&>h2]:text-4xl max-sm:[&>h2]:leading-[41px]"
         descriptionClassName="max-w-none md:mb-1 md:w-auto md:pr-4"
       />
       <div className="mt-10 overflow-hidden rounded-xl border border-sapien-border md:mt-14">
-        <table className="w-full table-fixed text-left">
+        <table className="w-full table-fixed text-left max-sm:block">
           <caption className="sr-only">How teams use Agent Inbox</caption>
-          <colgroup>
+          <colgroup className="max-sm:hidden">
             <col className="w-[35%] sm:w-[36%]" />
             <col />
           </colgroup>
-          <tbody className="divide-y divide-sapien-border">
+          <tbody className="divide-y divide-sapien-border max-sm:block">
             {teams.map(({ name, icon, description, tags }) => (
-              <tr key={name}>
+              <tr key={name} className="max-sm:block max-sm:px-4 max-sm:py-5">
                 <th
                   scope="row"
-                  className="py-4 pr-2 pl-3 align-top text-sm font-normal leading-[1.35] tracking-tight sm:py-6 sm:pl-5 sm:text-lg"
+                  className="align-top text-lg leading-6 font-normal tracking-tight max-sm:block max-sm:pb-3 sm:py-6 sm:pr-2 sm:pl-5"
                 >
-                  <span className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-4">
-                    <UseCaseIcon name={icon} />
+                  <span className="flex items-center gap-3 sm:gap-4">
+                    <UseCaseIcon name={icon} className="max-sm:size-5" />
                     {name}
                   </span>
                 </th>
-                <td className="py-4 pr-3 pl-1.5 text-[15px] leading-[21px] tracking-tight text-sapien-foreground/60 sm:p-6">
+                <td className="text-[15px] leading-[21px] tracking-tight text-sapien-foreground/60 max-sm:block sm:p-6">
                   {description}
                   <ul className="mt-3 flex flex-wrap gap-1.5">
                     {tags.map((tag) => (
@@ -157,6 +161,8 @@ export function UseCaseGuardrails() {
   );
 }
 
-function UseCaseIcon({ name }: { name: string }) {
-  return <Image src={`/images/use-cases/${name}.svg`} width={24} height={24} alt="" unoptimized />;
+function UseCaseIcon({ name, className }: { name: string; className?: string }) {
+  return (
+    <Image src={`/images/use-cases/${name}.svg`} width={24} height={24} alt="" className={className} unoptimized />
+  );
 }
