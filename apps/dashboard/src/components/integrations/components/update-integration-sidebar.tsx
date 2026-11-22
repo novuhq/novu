@@ -12,6 +12,7 @@ import { ROUTES } from '../../../utils/routes';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
@@ -118,7 +119,10 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
       await deleteIntegration({ id: integration._id });
 
-      showSuccessToast('Integration deleted successfully');
+      showIntegrationDeletedToast({
+        integration,
+        newPrimary: integrations?.find((i) => i._id === newPrimaryIntegrationId),
+      });
       setIsDeleteDialogOpen(false);
       setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
@@ -205,14 +209,14 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={onDelete}
-        isPrimary={integration.primary}
-        otherIntegrations={integrations?.filter(
+        integration={integration}
+        channelIntegrations={integrations?.filter(
           (i) =>
             i._id !== integration?._id &&
             i.channel === integration?.channel &&
-            i.active &&
             i._environmentId === integration?._environmentId
         )}
+        isLoading={isDeleting || isSettingPrimary}
       />
 
       <SelectPrimaryIntegrationModal

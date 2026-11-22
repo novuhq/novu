@@ -35,6 +35,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
+import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
@@ -75,14 +76,14 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   // One toast per card, so the "Testing…" toast is replaced by its result instead of stacking.
   const testToastId = `test-connection-${useId()}`;
 
-  /** Other active integrations on the channel: candidates to take over as primary. */
-  const otherActive = integrations.filter(
+  /** The other integrations on the channel in this environment; the active ones can take over as primary. */
+  const otherInChannel = integrations.filter(
     (other) =>
       other._id !== integration._id &&
       other.channel === integration.channel &&
-      other.active &&
       other._environmentId === integration._environmentId
   );
+  const otherActive = otherInChannel.filter((other) => other.active);
 
   const settle = () => {
     setConditionsLossAction(null);
@@ -173,14 +174,15 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     onSettled: settle,
   });
 
-  const { mutate: remove } = useMutation({
+  const { mutate: remove, isPending: isDeleting } = useMutation({
     mutationFn: async (newPrimaryId?: string) => {
       if (!currentEnvironment) throw new Error('No environment selected');
       if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, currentEnvironment);
 
       return deleteIntegration({ id: integration._id, environment: currentEnvironment });
     },
-    onSuccess: () => showSuccessToast(`${integration.name} was deleted.`),
+    onSuccess: (_, newPrimaryId) =>
+      showIntegrationDeletedToast({ integration, newPrimary: findReplacement(newPrimaryId) }),
     onError: () => showErrorToast(`Couldn't delete ${integration.name}.`),
     onSettled: settle,
   });
@@ -281,8 +283,9 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         onConfirm={(newPrimaryId) => confirmConditionsLoss(findReplacement(newPrimaryId), () => remove(newPrimaryId))}
-        isPrimary={integration.primary}
-        otherIntegrations={otherActive}
+        integration={integration}
+        channelIntegrations={otherInChannel}
+        isLoading={isDeleting}
       />
 
       {isPauseOpen && (
