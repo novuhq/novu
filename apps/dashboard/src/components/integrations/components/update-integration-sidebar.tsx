@@ -183,8 +183,12 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const openIntegration = (integrationIdToOpen: string) =>
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: integrationIdToOpen }), { replace: true });
 
+  const isWriting = isUpdating || isSettingPrimary || isDeleting;
+
   const handleSelectEnvironment = (target: { _id: string }) => {
     if (target._id === integration?._id) return;
+    // A save that finishes after a switch would close the drawer on the next integration's edits.
+    if (isWriting) return;
     if (formState.isDirty) {
       setPendingSwitchId(target._id);
       setShowUnsavedDialog(true);
@@ -244,7 +248,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           <ManageIntegrationHeader
             integration={integration}
             provider={provider}
-            canVerify={integration.active && canVerifyIntegration(integration)}
+            // Verifying needs write access, so read-only members don't get an action that can only fail.
+            canVerify={!isReadOnly && integration.active && canVerifyIntegration(integration)}
             canDelete={isIntegrationDeletionAllowed}
             onVerify={() =>
               verify(integration).catch(() => showErrorToast(`Couldn't verify ${integration.name}. Try again.`))
@@ -262,6 +267,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             currentEnvironmentId={currentEnvironment?._id}
             matches={matches}
             healthById={healthById}
+            isSwitchDisabled={isWriting}
             onSelect={handleSelectEnvironment}
           />
           <div className="scrollbar-custom flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto p-4">

@@ -223,6 +223,7 @@ export function IntegrationDetailsPanel({
   currentEnvironmentId,
   matches,
   healthById,
+  isSwitchDisabled,
   onSelect,
 }: {
   integration: IIntegration;
@@ -232,6 +233,8 @@ export function IntegrationDetailsPanel({
   /** The integrations with this identifier, one per environment. */
   matches: IIntegration[];
   healthById: Map<string, IntegrationHealth>;
+  /** While a save or delete runs, the rows can't switch to another integration. */
+  isSwitchDisabled?: boolean;
   onSelect: (integration: IIntegration) => void;
 }) {
   const environmentOf = (item: IIntegration) => environments.find((env) => env._id === item._environmentId);
@@ -249,9 +252,10 @@ export function IntegrationDetailsPanel({
         key={item._id}
         type="button"
         aria-current={isSelected ? 'true' : undefined}
+        disabled={isSwitchDisabled && !isSelected}
         onClick={() => onSelect(item)}
         className={cn(
-          'flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left transition-colors',
+          'flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
           isSelected ? cn('bg-bg-white', CARD_SHADOW) : 'hover:bg-bg-white/60'
         )}
       >

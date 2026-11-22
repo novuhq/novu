@@ -20,7 +20,8 @@ type IntegrationSheetProps = {
 };
 
 function getSheetWidth({ mode, step, provider, isManageLayout }: Partial<IntegrationSheetProps>) {
-  if (isManageLayout) return 'w-[900px] max-w-full sm:max-w-[900px]';
+  // Full width until the screen is wide enough for 900px, so it never runs off the left edge.
+  if (isManageLayout) return 'w-full sm:max-w-[900px]';
   // The provider picker lays providers out two per row, and the setup layout is drawn at the same width.
   if (mode === 'create' && (step === 'select' || usesProviderSetupLayout(provider?.id))) {
     return 'w-[600px] max-w-full sm:max-w-[600px]';
