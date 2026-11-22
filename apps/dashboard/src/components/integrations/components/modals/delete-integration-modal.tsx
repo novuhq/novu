@@ -238,7 +238,11 @@ function PickPrimaryStep({
           <RadioGroup
             value={selectedId}
             onValueChange={setSelectedId}
-            className={cn('bg-bg-white gap-0 overflow-hidden rounded-md', CARD_SHADOW)}
+            className={cn(
+              // About four rows, so the footer buttons stay on screen however many providers the channel has.
+              'bg-bg-white scrollbar-custom max-h-[min(232px,40vh)] gap-0 overflow-y-auto rounded-md',
+              CARD_SHADOW
+            )}
             aria-label={`New primary ${noun} provider`}
           >
             {options.map((option) => (
