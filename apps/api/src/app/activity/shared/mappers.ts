@@ -1,5 +1,5 @@
 import { Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { TraceResponseDto } from '../dtos/get-request.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 import { StepExecutionDetailDto } from '../dtos/workflow-run-response.dto';
@@ -17,6 +17,13 @@ export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEn
     default:
       return WorkflowRunStatusDtoEnum.PROCESSING;
   }
+}
+
+const DELIVERY_LIFECYCLE_DETAILS = new Set<string>(Object.values(DeliveryLifecycleDetail));
+
+/** ClickHouse stores an unset detail as ''; only known values reach the response. */
+export function toDeliveryLifecycleDetail(value: string | null | undefined): DeliveryLifecycleDetail | undefined {
+  return value && DELIVERY_LIFECYCLE_DETAILS.has(value) ? (value as DeliveryLifecycleDetail) : undefined;
 }
 
 export function mapTraceToResponseDto({

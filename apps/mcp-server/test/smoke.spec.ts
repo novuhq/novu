@@ -1,6 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { registerWorkflowTools, WORKFLOW_TOOL_NAMES } from "../src/tools/index";
+import {
+	ACTIVITY_TOOL_NAMES,
+	registerActivityTools,
+	registerWorkflowTools,
+	WORKFLOW_TOOL_NAMES,
+} from "../src/tools/index";
 import { API_URL, callTool, connect, connectAllTools, textOf, tokenAccessors } from "./support";
 
 function stubFetch(body: unknown = { data: [] }, status = 200) {
@@ -51,7 +56,10 @@ describe("the Novu MCP server tools", () => {
 			  "get_step_schema",
 			  "get_subscriber",
 			  "get_subscriber_preferences",
+			  "get_trigger_requests",
 			  "get_workflow",
+			  "get_workflow_run",
+			  "get_workflow_runs",
 			  "get_workflows",
 			  "insert_workflow_step",
 			  "move_workflow_step",
@@ -81,6 +89,15 @@ describe("the Novu MCP server tools", () => {
 		expect(tools.map((tool) => tool.name).sort()).toEqual(
 			Object.values(WORKFLOW_TOOL_NAMES).sort(),
 		);
+	});
+
+	it("exports a name for every activity tool the ./tools entry registers", async () => {
+		const server = new McpServer({ name: "tools", version: "1.0.0" });
+		registerActivityTools(server, tokenAccessors("api-key"));
+
+		const { tools } = await (await connect(server)).listTools();
+
+		expect(tools.map((tool) => tool.name).sort()).toEqual([...ACTIVITY_TOOL_NAMES].sort());
 	});
 
 	it("asks a caller without a credential to sign in", async () => {

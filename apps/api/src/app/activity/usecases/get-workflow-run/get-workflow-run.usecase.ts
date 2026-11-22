@@ -13,7 +13,11 @@ import { JobEntity, JobRepository, NotificationEntity, NotificationRepository } 
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
-import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import {
+  mapTraceToExecutionDetailDto,
+  mapWorkflowRunStatusToDto,
+  toDeliveryLifecycleDetail,
+} from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
@@ -40,6 +44,7 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'delivery_lifecycle_detail',
   'severity',
   'critical',
   'context_keys',
@@ -362,6 +367,8 @@ export class GetWorkflowRun {
       stepType: stepRun.step_type,
       providerId: stepRun.provider_id || undefined,
       status: stepRun.status,
+      errorCode: stepRun.error_code || undefined,
+      errorMessage: stepRun.error_message || undefined,
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
@@ -385,6 +392,7 @@ export class GetWorkflowRun {
       subscriberId: workflowRun.external_subscriber_id || undefined,
       status: mapWorkflowRunStatusToDto(workflowRun.status),
       deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
+      deliveryLifecycleDetail: toDeliveryLifecycleDetail(workflowRun.delivery_lifecycle_detail),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

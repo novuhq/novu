@@ -1,8 +1,10 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
-import { CopilotReviewActionEnum } from '@novu/shared';
+import { CopilotPageEnum, CopilotReviewActionEnum, CopilotViewingResourceEnum } from '@novu/shared';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildAssistantBlocks,
+  buildCopilotMetadata,
+  getCopilotContextLabel,
   getCopilotTypingLabel,
   getOpenReviewActions,
   getTryAgainPrompt,
@@ -472,5 +474,53 @@ describe('getCopilotTypingLabel', () => {
     ['Thinking about the email step…', 'Thinking about the email step…'],
   ])('keeps the agent status %j', (status, expected) => {
     expect(getCopilotTypingLabel(status)).toBe(expected);
+  });
+});
+
+describe('buildCopilotMetadata', () => {
+  it('sends the environment, workflow and step from the workflow editor', () => {
+    expect(
+      buildCopilotMetadata(
+        { workflowId: 'wf_1', stepId: 'step_1', workflowLabel: 'Welcome', stepLabel: 'Email' },
+        'env_1'
+      )
+    ).toEqual({ environmentId: 'env_1', workflowId: 'wf_1', stepId: 'step_1' });
+  });
+
+  it('sends the page and what it shows, but not its local question', () => {
+    const viewing = {
+      resource: { type: CopilotViewingResourceEnum.WORKFLOW_RUN, id: 'run_1', label: 'Welcome' },
+      filters: { channels: ['email', 'sms'] },
+    };
+
+    expect(
+      buildCopilotMetadata({ page: CopilotPageEnum.ACTIVITY, viewing, question: 'Explain this run' }, 'env_1')
+    ).toEqual({ environmentId: 'env_1', page: CopilotPageEnum.ACTIVITY, viewing: JSON.stringify(viewing) });
+  });
+
+  it('leaves out what is not set', () => {
+    expect(buildCopilotMetadata({ page: CopilotPageEnum.ACTIVITY }, undefined)).toEqual({
+      page: CopilotPageEnum.ACTIVITY,
+    });
+    expect(buildCopilotMetadata(undefined, undefined)).toEqual({});
+  });
+});
+
+describe('getCopilotContextLabel', () => {
+  it('joins the workflow and step labels in the workflow editor', () => {
+    expect(getCopilotContextLabel({ workflowLabel: 'Welcome', stepLabel: 'Email' })).toBe('Welcome / Email');
+    expect(getCopilotContextLabel({ workflowLabel: 'Welcome' })).toBe('Welcome');
+  });
+
+  it('shows the open resource on a page, and nothing without one', () => {
+    expect(
+      getCopilotContextLabel({
+        page: CopilotPageEnum.ACTIVITY,
+        viewing: { resource: { type: CopilotViewingResourceEnum.REQUEST, id: 'req_1', label: 'POST /v1/events' } },
+      })
+    ).toBe('POST /v1/events');
+    expect(
+      getCopilotContextLabel({ page: CopilotPageEnum.ACTIVITY, viewing: { filters: { workflows: 'welcome' } } })
+    ).toBe('');
   });
 });

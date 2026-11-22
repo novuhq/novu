@@ -3,6 +3,8 @@ import { ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { GetChartsRequestDto } from './dtos/get-charts.request.dto';
 import { GetChartsResponseDto } from './dtos/get-charts.response.dto';
@@ -37,6 +39,10 @@ export class ActivityController {
   ) {}
 
   @Get('requests')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiOkResponse({ type: GetRequestsResponseDto })
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.Requests')
   @SdkMethodName('list')
@@ -56,6 +62,10 @@ export class ActivityController {
   }
 
   @Get('requests/:requestId')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiResponse(GetRequestResponseDto)
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.Requests')
   @SdkMethodName('retrieve')
@@ -74,6 +84,10 @@ export class ActivityController {
   }
 
   @Get('workflow-runs')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiOkResponse({ type: GetWorkflowRunsResponseDto })
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
   @SdkMethodName('list')
@@ -97,6 +111,10 @@ export class ActivityController {
   }
 
   @Get('workflow-runs/:workflowRunId')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiResponse(GetWorkflowRunResponseDto)
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
   @SdkMethodName('retrieve')

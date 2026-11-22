@@ -6,6 +6,7 @@ import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { getCopilotPageCopy } from './copilot-pages';
 import {
   CopilotAssistantMessage,
   CopilotErrorNotice,
@@ -13,16 +14,31 @@ import {
   CopilotUserMessage,
 } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
+import {
+  getCopilotContextLabel,
+  getCopilotTypingLabel,
+  getFailedSend,
+  hasPendingReplyGap,
+  orderStoppedTurns,
+} from './copilot-web-chat-utils';
 
 export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };
 
+type EmptyStateCopy = { title: string; body: string };
+
 const DEFAULT_SUGGESTIONS: CopilotSuggestion[] = [{ label: 'Autocomplete workflow' }, { label: 'Audit this workflow' }];
+const DEFAULT_EMPTY_STATE: EmptyStateCopy = {
+  title: 'Novu Copilot',
+  body: 'Suggests improvements, fills gaps, and applies best practices as you build.',
+};
+const DEFAULT_PLACEHOLDER = 'Ask anything about this page…';
 
 function EmptyState({
+  copy,
   suggestions,
   onSuggestion,
 }: {
+  copy: EmptyStateCopy;
   suggestions: CopilotSuggestion[];
   onSuggestion: (text: string) => void;
 }) {
@@ -36,10 +52,8 @@ function EmptyState({
         <div className="relative flex size-11 items-center justify-center rounded-xl border border-stroke-soft bg-bg-white shadow-xs">
           <BroomSparkle className="size-6" />
         </div>
-        <div className="relative text-label-sm text-text-strong">Novu Copilot</div>
-        <p className="relative text-xs leading-4 text-text-soft">
-          Suggests improvements, fills gaps, and applies best practices as you build.
-        </p>
+        <div className="relative text-label-sm text-text-strong">{copy.title}</div>
+        <p className="relative text-xs leading-4 text-text-soft">{copy.body}</p>
       </div>
       <div className="flex flex-col rounded-lg border border-stroke-soft bg-bg-white">
         <div className="px-3 pb-1 pt-2.5 text-[10px] font-medium uppercase leading-4 tracking-wider text-text-soft">
@@ -104,7 +118,7 @@ function SendFailureStrip({
   );
 }
 
-function Composer({ hasMessages }: { hasMessages: boolean }) {
+function Composer({ hasMessages, placeholder }: { hasMessages: boolean; placeholder: string }) {
   const {
     isAvailable,
     chat,
@@ -124,7 +138,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
   // The failure stays until retried, dismissed or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
-  const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
+  const contextLabel = getCopilotContextLabel(pageContext);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -178,7 +192,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
           aria-label="Message Copilot"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask anything about this page…'}
+          placeholder={hasMessages ? 'Ask a follow-up…' : placeholder}
           className="min-h-8 w-full resize-none bg-transparent text-xs leading-4 text-text-strong outline-none placeholder:text-text-soft"
         />
         <div className="flex items-center justify-between gap-2">
@@ -294,8 +308,16 @@ function CenteredStatus({ children }: { children: ReactNode }) {
   return <div className="flex flex-1 items-center justify-center">{children}</div>;
 }
 
-function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; suggestions: CopilotSuggestion[] }) {
-  const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface } = useCopilotWebChat();
+function ThreadBody({
+  hasMessages,
+  emptyState,
+  suggestions,
+}: {
+  hasMessages: boolean;
+  emptyState: EmptyStateCopy;
+  suggestions: CopilotSuggestion[];
+}) {
+  const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface, pageContext } = useCopilotWebChat();
   const track = useTelemetry();
 
   if (hasMessages || hasRunError) return <Thread />;
@@ -326,24 +348,33 @@ function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; sugges
 
   return (
     <EmptyState
+      copy={emptyState}
       suggestions={suggestions}
       onSuggestion={(text) => {
-        track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: text, surface });
+        track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: text, surface, page: pageContext?.page });
         void sendMessage(text);
       }}
     />
   );
 }
 
-/** The conversation, its empty state and the composer, shared by the popover and the sidebar. */
+/**
+ * The conversation, its empty state and the composer, shared by the popover and the sidebar. On a Copilot page the
+ * page's copy and suggestions replace the workflow editor's.
+ */
 export function CopilotThreadPanel({ suggestions = DEFAULT_SUGGESTIONS }: { suggestions?: CopilotSuggestion[] }) {
-  const { chat } = useCopilotWebChat();
+  const { chat, pageContext } = useCopilotWebChat();
   const hasMessages = (chat?.messages.length ?? 0) > 0;
+  const pageCopy = pageContext?.page ? getCopilotPageCopy(pageContext.page, pageContext.question) : undefined;
 
   return (
     <>
-      <ThreadBody hasMessages={hasMessages} suggestions={suggestions} />
-      <Composer hasMessages={hasMessages} />
+      <ThreadBody
+        hasMessages={hasMessages}
+        emptyState={pageCopy?.emptyState ?? DEFAULT_EMPTY_STATE}
+        suggestions={pageCopy ? pageCopy.suggestions.map((label) => ({ label })) : suggestions}
+      />
+      <Composer hasMessages={hasMessages} placeholder={pageCopy?.placeholder ?? DEFAULT_PLACEHOLDER} />
     </>
   );
 }
