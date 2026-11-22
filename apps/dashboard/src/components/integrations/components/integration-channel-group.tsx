@@ -184,26 +184,40 @@ const SECTION_LABELS: Record<ChannelTypeEnum, { title: string; noun: string; ste
   [ChannelTypeEnum.TOOL]: { title: 'Tool', noun: 'tool', step: StepTypeEnum.TOOL, color: 'text-warning' },
 };
 
+/** The channel's coloured glyph on a soft tile; `size` sets the tile, the glyph scales with it. */
+export function ChannelSectionIcon({ channel, size = 'md' }: { channel: ChannelTypeEnum; size?: 'sm' | 'md' }) {
+  const { step, color } = SECTION_LABELS[channel];
+  const Icon = SECTION_ICON_OVERRIDES[channel] ?? STEP_TYPE_TO_ICON[step];
+  if (!Icon) return null;
+
+  return (
+    <span
+      className={cn(
+        'flex shrink-0 items-center justify-center overflow-hidden bg-[#f4f4f5] bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0)_100%)]',
+        size === 'md' ? 'size-5 rounded-[5px]' : 'size-[18px] rounded-[4.5px]'
+      )}
+    >
+      <Icon
+        className={cn(
+          'size-3 [filter:drop-shadow(0_0_0.5px_white)_drop-shadow(0_0_0.5px_white)_drop-shadow(0_0_0.25px_white)_drop-shadow(0_0.5px_0.5px_rgba(14,18,27,0.16))]',
+          size === 'sm' && 'size-[11px]',
+          color
+        )}
+      />
+    </span>
+  );
+}
+
 /** Channel icon, name and card count, with a shortcut to add another provider for the channel. */
 export function ChannelSectionHeader({ channel, count }: { channel: ChannelTypeEnum; count: number }) {
   const navigate = useNavigate();
-  const { title, noun, step, color } = SECTION_LABELS[channel];
-  const Icon = SECTION_ICON_OVERRIDES[channel] ?? STEP_TYPE_TO_ICON[step];
+  const { title, noun } = SECTION_LABELS[channel];
   // In-app has a single provider (Novu Inbox), so it has nothing to add.
   const canAddProvider = (INTEGRATION_CHANNELS as readonly ChannelTypeEnum[]).includes(channel);
 
   return (
     <div className="flex h-7 items-center gap-2">
-      {Icon && (
-        <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-[5px] bg-[#f4f4f5] bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0)_100%)]">
-          <Icon
-            className={cn(
-              'size-3 [filter:drop-shadow(0_0_0.5px_white)_drop-shadow(0_0_0.5px_white)_drop-shadow(0_0_0.25px_white)_drop-shadow(0_0.5px_0.5px_rgba(14,18,27,0.16))]',
-              color
-            )}
-          />
-        </span>
-      )}
+      <ChannelSectionIcon channel={channel} />
       <h2 className="text-label-sm text-text-strong">{title}</h2>
       <span className="text-paragraph-sm text-text-soft">{count}</span>
       {canAddProvider && (
