@@ -45,6 +45,8 @@ export type CopilotViewing = {
 export enum CopilotViewingResourceEnum {
   WORKFLOW_RUN = 'workflow_run',
   REQUEST = 'request',
+  SUBSCRIBER = 'subscriber',
+  INTEGRATION = 'integration',
 }
 
 /** Web-chat message metadata keys the dashboard sends on top of `environmentId`, `workflowId` and `stepId`. */
