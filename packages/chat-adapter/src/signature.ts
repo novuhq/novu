@@ -14,9 +14,12 @@ export interface VerifyOptions {
  * Verify the `novu-signature` HMAC produced by Novu's `buildNovuSignatureHeader`
  * (libs/application-generic/src/utils/hmac.ts):
  *
- *   header  = `t=<timestamp>,v1=<hmac-hex>`
+ *   header  = `t=<timestamp>,v1=<hmac-hex>[,v1=<hmac-hex>...]`
  *   message = `<timestamp>.<rawBody>`
  *   hmac    = HMAC-SHA256(secret, message) as lowercase hex
+ *
+ * One `v1` is present per active secret key during a rolling rotation. The
+ * request is authentic when any `v1` matches `secret`.
  *
  * The timestamp is milliseconds since epoch. `rawBody` MUST be the exact bytes of
  * the request body — Novu signs `JSON.stringify(payload)` and sends those same
@@ -35,13 +38,12 @@ export function verifyNovuSignature(
 
   const parts = signatureHeader.split(',');
   const timestampPart = parts.find((p) => p.startsWith('t='));
-  const hmacPart = parts.find((p) => p.startsWith('v1='));
-  if (!timestampPart || !hmacPart) {
+  const receivedHmacs = parts.filter((p) => p.startsWith('v1=')).map((p) => p.slice(3));
+  if (!timestampPart || receivedHmacs.length === 0) {
     return false;
   }
 
   const timestamp = timestampPart.slice(2);
-  const receivedHmac = hmacPart.slice(3);
 
   const now = options.now?.() ?? Date.now();
   const maxAgeMs = options.maxAgeMs ?? DEFAULT_MAX_AGE_MS;
@@ -51,17 +53,25 @@ export function verifyNovuSignature(
   }
 
   const expectedHmac = createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
-  if (receivedHmac.length !== expectedHmac.length) {
-    return false;
-  }
-
-  const received = Buffer.from(receivedHmac, 'hex');
   const expected = Buffer.from(expectedHmac, 'hex');
-  if (received.length !== expected.length) {
-    return false;
+  let matched = false;
+
+  for (const receivedHmac of receivedHmacs) {
+    if (receivedHmac.length !== expectedHmac.length) {
+      continue;
+    }
+
+    const received = Buffer.from(receivedHmac, 'hex');
+    if (received.length !== expected.length) {
+      continue;
+    }
+
+    if (timingSafeEqual(received, expected)) {
+      matched = true;
+    }
   }
 
-  return timingSafeEqual(received, expected);
+  return matched;
 }
 
 export function getSignatureHeader(request: Request): string | null {

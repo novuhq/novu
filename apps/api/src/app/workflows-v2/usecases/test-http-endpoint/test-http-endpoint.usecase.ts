@@ -78,10 +78,10 @@ export class TestHttpEndpointUsecase {
       return blocked;
     }
 
-    const secretKey = await this.getDecryptedSecretKey.execute(
+    const secretKeys = await this.getDecryptedSecretKey.executeAll(
       GetDecryptedSecretKeyCommand.create({ environmentId: command.user.environmentId })
     );
-    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKey, hasBody ? resolvedBody.body : {});
+    resolvedHeaders['novu-signature'] = buildNovuSignatureHeader(secretKeys, hasBody ? resolvedBody.body : {});
 
     return this.sendTestRequest(resolvedUrl, method, resolvedHeaders, resolvedBody.body, hasBody, startTime);
   }

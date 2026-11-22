@@ -17,6 +17,7 @@ import {
 import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { env } from '../../../../config/env';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { assertLegacyChatOauthHmac } from '../chat-oauth/chat-oauth.usecase';
@@ -66,7 +67,8 @@ export class ChatOauthCallback {
     private featureFlagsService: FeatureFlagsService,
     private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private createChannelEndpoint: CreateChannelEndpoint,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {
     this.logger.setContext(ChatOauthCallback.name);
   }
@@ -93,7 +95,11 @@ export class ChatOauthCallback {
 
     assertLegacyChatOauthHmac({
       isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
-      apiKeys: apiKeys.map(({ key }) => key),
+      apiKeys: await this.apiKeyRevocationService.getSigningKeys({
+        organizationId: _organizationId,
+        environmentId: routing.environmentId,
+        apiKeys,
+      }),
       subscriberId: routing.subscriberId,
       externalHmacHash: routing.hmacHash,
     });

@@ -24,6 +24,10 @@ export const { env, warnDeprecatedEnv } = createAppEnv({
   CLERK_ISSUER_URL: {
     description: 'Clerk issuer URL, advertised as the authorization server in the OAuth protected-resource metadata.',
   },
+  CLIENT_IP_HEADER: {
+    description:
+      'Single-IP header set by the edge proxy (cf-connecting-ip on Novu Cloud). When set, only that header is trusted for the client IP. Unset trusts the first proxy header.',
+  },
   CONTEXT_DEV_API_KEY: {
     description:
       'context.dev API key for enriching new organizations with brand details. Unset turns brand enrichment off.',

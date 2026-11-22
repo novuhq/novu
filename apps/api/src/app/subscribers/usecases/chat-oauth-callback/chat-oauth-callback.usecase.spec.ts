@@ -10,6 +10,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeLegacyChatOauthState } from '../chat-oauth/legacy-chat-oauth-state';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
@@ -52,6 +53,7 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
   let featureFlagsService: { getFlag: sinon.SinonStub };
   let createSubscriber: sinon.SinonStubbedInstance<CreateOrUpdateSubscriberUseCase>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
+  let apiKeyRevocationService: sinon.SinonStubbedInstance<ApiKeyRevocationService>;
 
   function stubIntegration(credentials: Record<string, unknown>) {
     integrationRepository.findOne.resolves({
@@ -77,6 +79,8 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     featureFlagsService = { getFlag: sinon.stub() };
     createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
+    apiKeyRevocationService = sinon.createStubInstance(ApiKeyRevocationService);
+    apiKeyRevocationService.getSigningKeys.callsFake(async ({ apiKeys }) => apiKeys.map((apiKey) => apiKey.key));
 
     environmentRepository.findOne.resolves({
       _id: ENVIRONMENT_ID,
@@ -101,7 +105,8 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
       featureFlagsService as unknown as FeatureFlagsService,
       createSubscriber as any,
       createChannelEndpoint as any,
-      sinon.createStubInstance(PinoLogger) as any
+      sinon.createStubInstance(PinoLogger) as any,
+      apiKeyRevocationService as any
     );
   });
 
@@ -197,6 +202,21 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     await expectRejection(usecase.execute(buildCommand()), BadRequestException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('rejects a hash signed with a key the revocation policy stops from signing', async () => {
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    await expectRejection(
+      usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string })),
+      BadRequestException
+    );
+
+    expect(createChannelEndpoint.execute.called).to.equal(false);
+    expect(apiKeyRevocationService.getSigningKeys.firstCall.args[0]).to.deep.include({
+      organizationId: ORGANIZATION_ID,
+      environmentId: ENVIRONMENT_ID,
+    });
   });
 });
 

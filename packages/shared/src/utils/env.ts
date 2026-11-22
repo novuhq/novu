@@ -4,12 +4,12 @@ type CloudflareEnv = { env: Record<string, string> };
  * https://remix.run/blog/remix-vite-stable#cloudflare-pages-support
  */
 
-const hasCloudflareProxyContext = (context: any): context is { cloudflare: CloudflareEnv } => {
-  return !!context?.cloudflare?.env;
+const hasCloudflareProxyContext = (context: unknown): context is { cloudflare: CloudflareEnv } => {
+  return !!(context as { cloudflare?: Partial<CloudflareEnv> } | undefined)?.cloudflare?.env;
 };
 
-const hasCloudflareContext = (context: any): context is CloudflareEnv => {
-  return !!context?.env;
+const hasCloudflareContext = (context: unknown): context is CloudflareEnv => {
+  return !!(context as Partial<CloudflareEnv> | undefined)?.env;
 };
 
 /**
@@ -74,14 +74,15 @@ export const isClerkEnabled = () => isEEAuthEnabled() && getEEAuthProvider() ===
 export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'better-auth';
 
 /**
- * Outbound SSRF DNS-pinning for non-bridge paths (HTTP request steps, provider
- * webhooks, etc.) applies on Novu Cloud Enterprise builds.
+ * Outbound SSRF DNS-pinning for HTTP request steps applies on Novu Cloud
+ * Enterprise builds.
  *
- * Bridge user-supplied URLs always enforce DNS pinning regardless of
- * deployment mode — see ExecuteFrameworkRequest. Self-hosted operators who
- * need private/internal bridge targets must allow-list them via
- * NOVU_SAFE_OUTBOUND_ALLOW (link-local / cloud-metadata ranges are never
- * allow-listed).
+ * Bridge user-supplied URLs and provider webhook targets (email webhook,
+ * generic SMS, chat/push/tool webhooks) always enforce the outbound URL policy
+ * regardless of deployment mode — see ExecuteFrameworkRequest and the webhook
+ * providers. Self-hosted operators who need private/internal targets must
+ * allow-list them via NOVU_SAFE_OUTBOUND_ALLOW (link-local / cloud-metadata
+ * ranges are never allow-listed).
  */
 export const isOutboundSsrfProtectionEnabled = (): boolean => {
   const isEnterprise = getEnvVariable('NOVU_ENTERPRISE') === 'true' || getEnvVariable('CI_EE_TEST') === 'true';

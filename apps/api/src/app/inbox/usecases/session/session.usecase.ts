@@ -57,6 +57,7 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { env } from '../../../../config/env';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
@@ -119,7 +120,8 @@ export class Session {
     private getSubscriberSchedule: GetSubscriberSchedule,
     private updatePreferencesUsecase: UpdatePreferences,
     private keylessAbuseGuard: KeylessAbuseGuardService,
-    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService
+    private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -151,12 +153,27 @@ export class Session {
     }
     const { integration: inAppIntegration } = selection;
 
-    const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+    const environmentApiKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+    });
     const hmacValid = isHmacValidForAnyKey(
       environmentApiKeys,
       subscriber.subscriberId,
       command.requestData.subscriberHash
     );
+
+    // Before the checks below, so a hash rejected because its key no longer signs is recorded too.
+    await this.apiKeyRevocationService.recordOldKeySubscriberHash({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+      signingKeys: environmentApiKeys,
+      subscriberId: subscriber.subscriberId,
+      subscriberHash: command.requestData.subscriberHash,
+      source: SubscriberSessionSourceEnum.INBOX,
+    });
 
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
