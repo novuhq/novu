@@ -31,6 +31,20 @@ const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.SigningSecret,
 ];
 
+/** The field's explanation for the "i" next to its label: its tooltip and its description, when it has them. */
+function getCredentialTooltip(credential: IConfigCredential): ReactNode {
+  const parts = [credential.tooltip?.text, credential.description].filter((part): part is string => !!part);
+  if (parts.length === 0) return undefined;
+
+  return (
+    <div className="flex max-w-[280px] flex-col gap-1">
+      {parts.map((part) => (
+        <DescriptionWithLinks key={part} description={part} links={credential.links} />
+      ))}
+    </div>
+  );
+}
+
 function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
   return (
     <PrimitiveFormLabel
@@ -146,14 +160,16 @@ function TextareaInput({
   credential,
   field,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <Textarea
           id={credential.key}
@@ -172,16 +188,18 @@ function SecretInputControl({
   credential,
   field,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <SecretInput
           id={credential.key}
@@ -200,17 +218,19 @@ function TextInputControl({
   field,
   fieldState,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   fieldState: ControllerFieldState;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <Input
           size={'md'}
@@ -333,14 +353,22 @@ function InputControl({
   }
 
   if (credential.type === 'textarea') {
-    return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} />;
+    return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
   }
 
   if (SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum)) {
-    return <SecretInputControl credential={credential} field={field} isReadOnly={isReadOnly} />;
+    return <SecretInputControl credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
   }
 
-  return <TextInputControl credential={credential} field={field} fieldState={fieldState} isReadOnly={isReadOnly} />;
+  return (
+    <TextInputControl
+      credential={credential}
+      field={field}
+      fieldState={fieldState}
+      isReadOnly={isReadOnly}
+      tooltip={tooltip}
+    />
+  );
 }
 
 export function CredentialSection({
@@ -385,19 +413,11 @@ export function CredentialSection({
             isDisabledWithSwitch={isDisabledWithSwitch}
             disabledSwitchMessage={disabledSwitchMessage}
             integrationId={integrationId}
-            tooltip={
-              credential.tooltip?.text ? (
-                <DescriptionWithLinks description={credential.tooltip?.text} links={credential.links} />
-              ) : undefined
-            }
+            tooltip={getCredentialTooltip(credential)}
           />
 
-          <FormMessage>
-            {fieldState.error?.message ||
-              (credential.description && (
-                <DescriptionWithLinks description={credential.description} links={credential.links} />
-              ))}
-          </FormMessage>
+          {/* The explanation sits behind the label's "i"; only a validation error shows under the field. */}
+          {fieldState.error?.message && <FormMessage>{fieldState.error.message}</FormMessage>}
         </FormItem>
       )}
     />

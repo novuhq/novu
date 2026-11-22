@@ -1206,6 +1206,7 @@ export class IntegrationsController {
         integrationId,
         agentId: body.agentId,
         configToken: body.configToken,
+        appName: body.appName,
         subscriberId: body.subscriberId,
         connectionIdentifier: body.connectionIdentifier,
       })

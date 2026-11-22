@@ -112,3 +112,8 @@ export function hasRoutingConditions(integration: IIntegration) {
 
 // Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
 export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
+
+/** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
+export function usesProviderSetupLayout(providerId?: string) {
+  return providerId === ChatProviderIdEnum.Slack;
+}
