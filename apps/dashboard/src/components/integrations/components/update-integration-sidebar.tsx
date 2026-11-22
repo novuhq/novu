@@ -1,20 +1,35 @@
 import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/primitives/button';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
-import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { buildRoute } from '@/utils/routes';
+import { showErrorToast, showSuccessToast } from '../../../components/primitives/sonner-helpers';
 import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
+import {
+  canVerifyIntegration,
+  getIntegrationHealthQueryKey,
+  useIntegrationHealth,
+} from './hooks/use-integration-health';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
+import {
+  EnvironmentTitle,
+  HealthBanner,
+  IntegrationDetailsPanel,
+  ManageIntegrationFooter,
+  ManageIntegrationHeader,
+  ProviderGuideLink,
+} from './manage-integration-drawer';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
@@ -60,6 +75,22 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   });
 
   const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
+  const queryClient = useQueryClient();
+  const { environments, currentEnvironment } = useEnvironment();
+  /** Another environment's integration picked from the details panel while this one has unsaved changes. */
+  const [pendingSwitchId, setPendingSwitchId] = useState<string>();
+
+  // The same integration in each environment: integrations aren't linked across environments, so they're
+  // matched by identifier.
+  const matches = useMemo(
+    () =>
+      integration
+        ? // Environments may use different providers under one identifier; each row shows its own.
+          (integrations ?? []).filter((item) => item.identifier === integration.identifier)
+        : [],
+    [integrations, integration]
+  );
+  const { healthById, verify } = useIntegrationHealth(matches, environments);
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;
@@ -101,6 +132,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
       }
 
       showSuccessToast('Integration updated successfully');
+      // The last check was about the old settings, so it no longer applies.
+      queryClient.removeQueries({ queryKey: getIntegrationHealthQueryKey(integration._id) });
 
       setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
@@ -147,14 +180,47 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     navigate(ROUTES.INTEGRATIONS);
   };
 
+  const openIntegration = (integrationIdToOpen: string) =>
+    navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: integrationIdToOpen }), { replace: true });
+
+  const handleSelectEnvironment = (target: { _id: string }) => {
+    if (target._id === integration?._id) return;
+    if (formState.isDirty) {
+      setPendingSwitchId(target._id);
+      setShowUnsavedDialog(true);
+
+      return;
+    }
+
+    openIntegration(target._id);
+  };
+
   const handleProceedClose = () => {
     setShowUnsavedDialog(false);
+    if (pendingSwitchId) {
+      openIntegration(pendingSwitchId);
+      setPendingSwitchId(undefined);
+
+      return;
+    }
+
     setIsSheetOpen(false);
     navigate(ROUTES.INTEGRATIONS);
   };
 
   const handleCancelClose = () => {
     setShowUnsavedDialog(false);
+    setPendingSwitchId(undefined);
+  };
+
+  const copyIdentifier = async () => {
+    if (!integration) return;
+    try {
+      await navigator.clipboard.writeText(integration.identifier);
+      showSuccessToast('Identifier copied to clipboard.');
+    } catch {
+      showErrorToast("Couldn't copy the identifier.");
+    }
   };
 
   if (!integration || !provider) return null;
@@ -162,47 +228,72 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const isIntegrationDeletionAllowed =
     !isDemoIntegration(integration?.providerId) && integration?.channel !== ChannelTypeEnum.IN_APP && !isReadOnly;
 
+  const environment = environments?.find((env) => env._id === integration._environmentId);
+  const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '', needsReconnect: false };
+  const formId = `integration-configuration-form-${provider.id}`;
+
   return (
     <>
-      <IntegrationSheet isOpened={isSheetOpen} onClose={handleClose} provider={provider} mode="update">
-        <div className="scrollbar-custom flex-1 overflow-y-auto">
-          <IntegrationSettings
-            isChannelSupportPrimary={isChannelSupportPrimary}
-            provider={provider}
+      <IntegrationSheet
+        isOpened={isSheetOpen}
+        onClose={handleClose}
+        provider={provider}
+        mode="update"
+        isManageLayout
+        header={
+          <ManageIntegrationHeader
             integration={integration}
-            onSubmit={handleSubmitWithPrimaryCheck}
-            mode="update"
-            hasOtherProviders={!!hasOtherProviders}
-            isReadOnly={isReadOnly}
-            onFormStateChange={setFormState}
+            provider={provider}
+            canVerify={integration.active && canVerifyIntegration(integration)}
+            canDelete={isIntegrationDeletionAllowed}
+            onVerify={() =>
+              verify(integration).catch(() => showErrorToast(`Couldn't verify ${integration.name}. Try again.`))
+            }
+            onCopyIdentifier={copyIdentifier}
+            onDelete={() => setIsDeleteDialogOpen(true)}
           />
+        }
+      >
+        <div className="flex min-h-0 flex-1">
+          <IntegrationDetailsPanel
+            integration={integration}
+            provider={provider}
+            environments={environments ?? []}
+            currentEnvironmentId={currentEnvironment?._id}
+            matches={matches}
+            healthById={healthById}
+            onSelect={handleSelectEnvironment}
+          />
+          <div className="scrollbar-custom flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+            <EnvironmentTitle environment={environment} health={health} />
+            <HealthBanner integration={integration} environment={environment} health={health} />
+            <IntegrationSettings
+              // Switching environments shows another integration, so the form starts again from its values.
+              key={integration._id}
+              layout="manage"
+              isChannelSupportPrimary={isChannelSupportPrimary}
+              provider={provider}
+              integration={integration}
+              onSubmit={handleSubmitWithPrimaryCheck}
+              mode="update"
+              hasOtherProviders={!!hasOtherProviders}
+              isReadOnly={isReadOnly}
+              onFormStateChange={setFormState}
+            />
+            <ProviderGuideLink provider={provider} />
+          </div>
         </div>
 
-        <div className="bg-background flex justify-between gap-2 border-t p-3">
-          {isIntegrationDeletionAllowed && (
-            <Button
-              variant="error"
-              mode="ghost"
-              isLoading={isDeleting}
-              disabled={isReadOnly}
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
-              Delete Integration
-            </Button>
-          )}
-
-          {!isReadOnly && (
-            <Button
-              type="submit"
-              form={`integration-configuration-form-${provider.id}`}
-              className="ml-auto"
-              isLoading={isUpdating || isSettingPrimary}
-              disabled={isReadOnly || !formState.isValid}
-            >
-              Save Changes
-            </Button>
-          )}
-        </div>
+        <ManageIntegrationFooter
+          integration={integration}
+          environment={environment}
+          health={health}
+          formId={formId}
+          isSaving={isUpdating || isSettingPrimary}
+          canSave={formState.isValid}
+          isReadOnly={isReadOnly}
+          onCancel={handleClose}
+        />
       </IntegrationSheet>
 
       <DeleteIntegrationModal

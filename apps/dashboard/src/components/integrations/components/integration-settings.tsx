@@ -32,6 +32,7 @@ import {
   AdvancedSettings,
   EnvironmentPills,
   type ProviderSetupMode,
+  SettingsSection,
   SetupCard,
   SetupDocsLink,
   SetupTip,
@@ -60,6 +61,8 @@ type IntegrationConfigurationProps = {
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
+  /** "manage": the sections of the manage drawer, for an existing integration. */
+  layout?: 'default' | 'manage';
   /** Turns on the Quick setup / Manual layout for Slack in the create flow. */
   slackQuickSetup?: {
     /** The Slack app Novu created, once "Create app" has run. */
@@ -96,6 +99,7 @@ export function IntegrationSettings({
   testSubscriberId,
   onFormStateChange,
   slackQuickSetup,
+  layout = 'default',
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -229,6 +233,131 @@ export function IntegrationSettings({
 
     return visibleCredentials;
   }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding, unusedCredentialKeys]);
+
+  const credentialFields = (
+    <>
+      {provider?.id === ChatProviderIdEnum.MsTeams && (
+        <InlineToast
+          variant="tip"
+          className="mb-3"
+          description="These credentials are only required for Bot App authentication and are not needed for incoming webhook functionality."
+        />
+      )}
+      <div
+        className={cn(
+          'text-foreground-600 flex flex-col gap-2',
+          layout !== 'manage' && 'border-neutral-alpha-200 bg-background mx-0 mt-0 rounded-lg border p-3'
+        )}
+      >
+        {isSlackOnboarding && <SlackCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />}
+        {isWhatsAppOnboarding && (
+          <>
+            <WhatsAppCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
+            <WhatsAppCredentialsValidator control={control} />
+          </>
+        )}
+        {showTelegramPaste && (
+          <TelegramCredentialsPaste
+            control={control}
+            setValue={setValue}
+            isReadOnly={isReadOnly}
+            mobileSetup={telegramMobileVariant}
+          />
+        )}
+        {isToolWebhookProvider ? (
+          <ToolWebhookSettings control={control} setValue={setValue} isReadOnly={isReadOnly} />
+        ) : (
+          <div
+            onPasteCapture={handleAgentOnboardingPaste}
+            className={cn('flex flex-col gap-2', layout === 'manage' && 'grid grid-cols-2 gap-3')}
+          >
+            {providerCredentials.map((credential) => (
+              <div
+                key={`${credential.key}-${integration?._id || 'no-id'}`}
+                // Short text fields pair up two per row in the manage drawer; the rest take the full width.
+                className={cn(layout === 'manage' && credential.type !== 'string' && 'col-span-2')}
+              >
+                <CredentialSection
+                  credential={
+                    showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
+                      ? {
+                          ...credential,
+                          description: 'Auto-filled from the BotFather message above, or enter it manually.',
+                        }
+                      : credential
+                  }
+                  control={control}
+                  isReadOnly={isReadOnly}
+                  integrationId={integration?._id}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const hasCredentialFields = !isDemo && (isToolWebhookProvider || providerCredentials.length > 0);
+
+  if (layout === 'manage') {
+    return (
+      <Form {...form}>
+        <FormRoot
+          id={`integration-configuration-form-${provider.id}`}
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col gap-3"
+        >
+          <ProviderDeprecationNotice provider={provider} />
+          {isDemo && (
+            <InlineToast
+              variant="warning"
+              title="Demo Integration"
+              description={`This is a demo ${provider.channel.toLowerCase()} integration intended for testing purposes only. It is limited to 300 notifications per month.`}
+            />
+          )}
+          {hasCredentialFields && (
+            <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+              <SettingsSection title={`${provider.displayName} credentials`} defaultOpen>
+                {credentialFields}
+              </SettingsSection>
+            </Protect>
+          )}
+          <SettingsSection title="General settings" defaultOpen={!hasCredentialFields}>
+            <div className="flex flex-col gap-3">
+              <GeneralSettings
+                control={control}
+                setValue={setValue}
+                mode={mode}
+                isReadOnly={isReadOnly}
+                hidePrimarySelector={!isChannelSupportPrimary}
+                disabledPrimary={!hasOtherProviders && integration?.primary}
+                configurations={provider.configurations}
+                integrationId={integration?._id}
+                isDemo={isDemo}
+                provider={provider}
+                formData={form.getValues()}
+                onAutoConfigureSuccess={(updatedIntegration) => {
+                  setValue('configurations', updatedIntegration.configurations as Record<string, string>);
+                  setValue('credentials', updatedIntegration.credentials as Record<string, string>);
+                  setValue('name', updatedIntegration.name);
+                  setValue('identifier', updatedIntegration.identifier);
+                  setValue('active', updatedIntegration.active);
+                  setValue('primary', updatedIntegration.primary ?? false);
+                }}
+              />
+              <IntegrationConditionsDrawer
+                control={control}
+                setValue={setValue}
+                legacyConditions={integration?.conditions}
+                isReadOnly={isReadOnly}
+              />
+            </div>
+          </SettingsSection>
+        </FormRoot>
+      </Form>
+    );
+  }
 
   if (usesSetupLayout && slackQuickSetup) {
     const generalSettings = (
@@ -433,7 +562,7 @@ export function IntegrationSettings({
             </div>
           )}
 
-        {!isDemo && (isToolWebhookProvider || providerCredentials.length > 0) && (
+        {hasCredentialFields && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -444,57 +573,7 @@ export function IntegrationSettings({
                       Delivery Provider Credentials
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    {provider?.id === ChatProviderIdEnum.MsTeams && (
-                      <InlineToast
-                        variant="tip"
-                        className="mb-3"
-                        description="These credentials are only required for Bot App authentication and are not needed for incoming webhook functionality."
-                      />
-                    )}
-                    <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
-                      {isSlackOnboarding && (
-                        <SlackCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
-                      )}
-                      {isWhatsAppOnboarding && (
-                        <>
-                          <WhatsAppCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
-                          <WhatsAppCredentialsValidator control={control} />
-                        </>
-                      )}
-                      {showTelegramPaste && (
-                        <TelegramCredentialsPaste
-                          control={control}
-                          setValue={setValue}
-                          isReadOnly={isReadOnly}
-                          mobileSetup={telegramMobileVariant}
-                        />
-                      )}
-                      {isToolWebhookProvider ? (
-                        <ToolWebhookSettings control={control} setValue={setValue} isReadOnly={isReadOnly} />
-                      ) : (
-                        <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
-                          {providerCredentials.map((credential) => (
-                            <CredentialSection
-                              key={`${credential.key}-${integration?._id || 'no-id'}`}
-                              credential={
-                                showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
-                                  ? {
-                                      ...credential,
-                                      description:
-                                        'Auto-filled from the BotFather message above, or enter it manually.',
-                                    }
-                                  : credential
-                              }
-                              control={control}
-                              isReadOnly={isReadOnly}
-                              integrationId={integration?._id}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </AccordionContent>
+                  <AccordionContent>{credentialFields}</AccordionContent>
                 </AccordionItem>
               </Accordion>
             </Protect>
