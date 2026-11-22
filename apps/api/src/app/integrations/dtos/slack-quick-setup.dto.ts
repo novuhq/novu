@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
+
+/** The longest app name Slack takes in a manifest. */
+export const SLACK_APP_NAME_MAX_LENGTH = 35;
 
 export class SlackQuickSetupRequestDto {
   @ApiProperty({
@@ -11,13 +14,24 @@ export class SlackQuickSetupRequestDto {
   @IsString()
   configToken: string;
 
-  @ApiProperty({
-    description: 'The internal MongoDB `_id` of the agent. Used to build the Slack event webhook URL.',
+  @ApiPropertyOptional({
+    description:
+      'The name of the Slack app and its bot user, as people see it in Slack. Defaults to the integration name. Slack takes up to 35 characters and drops the word "Slack".',
+    example: 'Acme Notifications',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(SLACK_APP_NAME_MAX_LENGTH)
+  appName?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The internal MongoDB `_id` of the agent. Used to build the Slack event webhook URL. Omit it to create a notifications app, which only sends messages.',
     example: '69f84d848bed9b0a73216d96',
   })
-  @IsDefined()
+  @IsOptional()
   @IsMongoId()
-  agentId: string;
+  agentId?: string;
 
   @ApiPropertyOptional({
     description:
@@ -38,4 +52,10 @@ export class SlackQuickSetupRequestDto {
   connectionIdentifier?: string;
 }
 
-export class SlackQuickSetupResponseDto {}
+export class SlackQuickSetupResponseDto {
+  @ApiPropertyOptional({
+    description: 'The ID of the Slack app that was created, for linking to its settings in Slack.',
+    example: 'A0123456789',
+  })
+  appId?: string;
+}

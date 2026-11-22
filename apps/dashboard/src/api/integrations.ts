@@ -137,7 +137,12 @@ export async function autoConfigureIntegration(integrationId: string, environmen
   return response.data;
 }
 
-export async function updateIntegration(integrationId: string, data: UpdateIntegrationData, environment: IEnvironment) {
+/** Updates only the fields given; the rest of the integration stays as it is. */
+export async function updateIntegration(
+  integrationId: string,
+  data: Partial<UpdateIntegrationData>,
+  environment: IEnvironment
+) {
   return await put<IIntegration>(`/integrations/${integrationId}`, {
     body: data,
     environment: environment,
@@ -146,7 +151,10 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
 
 export type SlackQuickSetupParams = {
   configToken: string;
-  agentId: string;
+  /** The Slack app's name; defaults to the integration name. */
+  appName?: string;
+  /** Leave out to create a notifications app, which only sends messages. */
+  agentId?: string;
   subscriberId?: string;
   connectionIdentifier?: string;
 };
@@ -155,11 +163,13 @@ export async function slackQuickSetup(
   integrationId: string,
   params: SlackQuickSetupParams,
   environment: IEnvironment
-): Promise<void> {
-  await post(`/integrations/${integrationId}/slack-quick-setup`, {
+): Promise<{ appId?: string }> {
+  const response = await post<{ data: { appId?: string } }>(`/integrations/${integrationId}/slack-quick-setup`, {
     body: params,
     environment,
   });
+
+  return response.data ?? {};
 }
 
 export type WhatsAppEmbeddedSignupParams = {

@@ -38,7 +38,7 @@ function buildHarness() {
     logger as any
   );
 
-  return { usecase, integrationRepository, agentRepository, agentInboxFeatures, logger };
+  return { usecase, integrationRepository, agentIntegrationRepository, agentRepository, agentInboxFeatures, logger };
 }
 
 function buildCommand(overrides: Partial<SlackQuickSetupCommand> = {}): SlackQuickSetupCommand {
@@ -101,6 +101,52 @@ describe('SlackQuickSetup', () => {
     } else {
       process.env.HUMAN_DASHBOARD_URL = originalDashboardUrl;
     }
+  });
+
+  describe('without an agent', () => {
+    it('creates a notifications app that only sends messages', async () => {
+      const { usecase } = buildHarness();
+
+      await usecase.execute(buildCommand({ agentId: undefined }));
+
+      const manifest = parseSentManifest(axiosPost);
+      expect(manifest.display_information.name).to.equal('My Bot');
+      expect(manifest.oauth_config.scopes.bot).to.include.members(['chat:write', 'incoming-webhook']);
+      expect(manifest.oauth_config.redirect_urls[0]).to.match(/\/v1\/integrations\/chat\/oauth\/callback$/);
+      expect(manifest.settings.event_subscriptions).to.equal(undefined);
+      expect(manifest.settings.interactivity).to.equal(undefined);
+      expect(manifest.settings.token_rotation_enabled).to.equal(false);
+    });
+
+    it('names the app with the name the user chose', async () => {
+      const { usecase } = buildHarness();
+
+      await usecase.execute(buildCommand({ agentId: undefined, appName: '  Acme Alerts  ' }));
+
+      const manifest = parseSentManifest(axiosPost);
+      expect(manifest.display_information.name).to.equal('Acme Alerts');
+      expect(manifest.features.bot_user.display_name).to.equal('Acme Alerts');
+    });
+
+    it('neither looks up nor links an agent', async () => {
+      const { usecase, agentRepository, agentIntegrationRepository } = buildHarness();
+
+      await usecase.execute(buildCommand({ agentId: undefined }));
+
+      expect(agentRepository.findOne.called).to.equal(false);
+      expect(agentIntegrationRepository.findOne.called).to.equal(false);
+      expect(agentIntegrationRepository.createOrReviveLink.called).to.equal(false);
+    });
+
+    it('saves the credentials and returns the Slack app ID', async () => {
+      const { usecase, integrationRepository } = buildHarness();
+
+      const result = await usecase.execute(buildCommand({ agentId: undefined }));
+
+      expect(result).to.deep.equal({ appId: 'A123' });
+      expect(integrationRepository.update.calledOnce).to.equal(true);
+      expect(axiosPost.calledOnce).to.equal(true);
+    });
   });
 
   it('always enables token rotation in the manifest', async () => {
@@ -245,7 +291,7 @@ describe('SlackQuickSetup', () => {
       agentRepository.findOne.resolves({ _id: MOCK_AGENT_ID, runtime: 'human_relay', picture });
       axiosPost.onSecondCall().resolves({ data: { ok: false, error: 'invalid_icon_size' } });
 
-      expect(await usecase.execute(buildCommand())).to.deep.equal({});
+      expect(await usecase.execute(buildCommand())).to.deep.equal({ appId: 'A123' });
 
       expect(axiosPost.callCount).to.equal(2);
       expect(integrationRepository.update.calledOnce).to.equal(true);
@@ -260,7 +306,7 @@ describe('SlackQuickSetup', () => {
       });
       axiosPost.onSecondCall().rejects(failure);
 
-      expect(await usecase.execute(buildCommand())).to.deep.equal({});
+      expect(await usecase.execute(buildCommand())).to.deep.equal({ appId: 'A123' });
 
       expect(logger.warn.calledOnce).to.equal(true);
       expect(JSON.stringify(logger.warn.args)).to.contain('timeout of 3000ms exceeded');

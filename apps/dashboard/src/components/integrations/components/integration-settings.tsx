@@ -10,7 +10,7 @@ import {
   slackConfig,
   ToolProviderIdEnum,
 } from '@novu/shared';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -28,12 +28,21 @@ import { CredentialSection } from './credential-section';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
 import { ProviderDeprecationNotice } from './provider-deprecation';
+import {
+  AdvancedSettings,
+  EnvironmentPills,
+  type ProviderSetupMode,
+  SetupCard,
+  SetupDocsLink,
+  SetupTip,
+} from './provider-setup-layout';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { SlackQuickSetup } from './slack-quick-setup';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
-import { isDemoIntegration } from './utils/helpers';
+import { isDemoIntegration, usesProviderSetupLayout } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -51,7 +60,16 @@ type IntegrationConfigurationProps = {
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
+  /** Turns on the Quick setup / Manual layout for Slack in the create flow. */
+  slackQuickSetup?: {
+    /** The Slack app Novu created, once "Create app" has run. */
+    appId?: string;
+    isCreating: boolean;
+    onCreateApp: (data: IntegrationFormData, configToken: string, appName: string) => void;
+  };
 };
+
+const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
 
 function generateSlug(name: string): string {
   return name
@@ -75,6 +93,7 @@ export function IntegrationSettings({
   agentIdentifier,
   testSubscriberId,
   onFormStateChange,
+  slackQuickSetup,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -108,16 +127,26 @@ export function IntegrationSettings({
 
   const { handleSubmit, control, setValue, formState } = form;
 
+  const usesSetupLayout =
+    mode === 'create' &&
+    usesProviderSetupLayout(provider.id) &&
+    !!slackQuickSetup &&
+    !(agentOnboarding || searchParams.get('agent_onboarding') === 'true');
+  const [setupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
+  // Quick setup saves the credentials on the server, so the form is ready once the app exists.
+  const isQuickSetupMode = usesSetupLayout && setupMode === 'quick';
+  const isFormReady = isQuickSetupMode ? !!slackQuickSetup?.appId : formState.isValid;
+
   // Notify parent component of form state changes
   useEffect(() => {
     if (onFormStateChange) {
       onFormStateChange({
-        isValid: formState.isValid,
+        isValid: isFormReady,
         errors: formState.errors,
         isDirty: formState.isDirty,
       });
     }
-  }, [formState.isValid, formState.errors, formState.isDirty, onFormStateChange]);
+  }, [isFormReady, formState.errors, formState.isDirty, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
@@ -198,6 +227,102 @@ export function IntegrationSettings({
 
     return visibleCredentials;
   }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding, unusedCredentialKeys]);
+
+  if (usesSetupLayout && slackQuickSetup) {
+    const generalSettings = (
+      <GeneralSettings
+        control={control}
+        setValue={setValue}
+        mode={mode}
+        isReadOnly={isReadOnly}
+        hidePrimarySelector={!isChannelSupportPrimary}
+        disabledPrimary={!hasOtherProviders && integration?.primary}
+        configurations={provider.configurations}
+        integrationId={integration?._id}
+        isDemo={isDemo}
+        provider={provider}
+        formData={form.getValues()}
+      />
+    );
+
+    return (
+      <Form {...form}>
+        <FormRoot
+          id={`integration-configuration-form-${provider.id}`}
+          onSubmit={async (event) => {
+            if (!isQuickSetupMode) return handleSubmit(onSubmit)(event);
+
+            // Quick setup already saved the credentials on the server; only the general settings are left to check.
+            event.preventDefault();
+            if (await form.trigger(['name', 'identifier'])) onSubmit({ ...form.getValues(), credentials: {} });
+          }}
+          className="flex flex-col gap-5 p-5"
+        >
+          <ProviderDeprecationNotice provider={provider} replaceOnNavigate />
+          <EnvironmentPills
+            environments={environments ?? []}
+            selectedId={environmentId}
+            onSelect={(id) => setValue('environmentId', id, { shouldDirty: true })}
+            // The integration is created with the app, so its environment is settled from then on.
+            disabled={isReadOnly || !!slackQuickSetup.appId}
+          />
+          <SetupCard
+            title={`Set up ${provider.displayName}`}
+            duration="~2 min"
+            mode={setupMode}
+            onModeChange={setSetupMode}
+            footer={
+              <>
+                <SetupTip>
+                  Add <code className="font-code">&lt;SlackConnectButton /&gt;</code> to your app so subscribers can
+                  connect their Slack workspace.{' '}
+                  <a href={SLACK_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                    Read docs
+                  </a>
+                  .
+                </SetupTip>
+                {provider.docReference && <SetupDocsLink href={provider.docReference} />}
+              </>
+            }
+          >
+            {setupMode === 'quick' ? (
+              <SlackQuickSetup
+                appId={slackQuickSetup.appId}
+                isCreating={slackQuickSetup.isCreating}
+                canCreate={!isReadOnly && !!name?.trim()}
+                onCreateApp={(configToken, appName) =>
+                  slackQuickSetup.onCreateApp(form.getValues(), configToken, appName)
+                }
+              />
+            ) : (
+              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                <div className="flex flex-col gap-2 pb-4">
+                  {providerCredentials.map((credential) => (
+                    <CredentialSection
+                      key={credential.key}
+                      credential={credential}
+                      control={control}
+                      isReadOnly={isReadOnly}
+                      integrationId={integration?._id}
+                    />
+                  ))}
+                </div>
+              </Protect>
+            )}
+          </SetupCard>
+          <AdvancedSettings>
+            {generalSettings}
+            <IntegrationConditionsDrawer
+              control={control}
+              setValue={setValue}
+              legacyConditions={integration?.conditions}
+              isReadOnly={isReadOnly}
+            />
+          </AdvancedSettings>
+        </FormRoot>
+      </Form>
+    );
+  }
 
   return (
     <Form {...form}>
