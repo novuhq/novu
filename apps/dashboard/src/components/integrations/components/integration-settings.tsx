@@ -65,6 +65,8 @@ type IntegrationConfigurationProps = {
     /** The Slack app Novu created, once "Create app" has run. */
     appId?: string;
     isCreating: boolean;
+    /** True once creation has started: the integration belongs to that environment from then on. */
+    isEnvironmentLocked: boolean;
     onCreateApp: (data: IntegrationFormData, configToken: string, appName: string) => void;
   };
 };
@@ -264,7 +266,7 @@ export function IntegrationSettings({
             selectedId={environmentId}
             onSelect={(id) => setValue('environmentId', id, { shouldDirty: true })}
             // The integration is created with the app, so its environment is settled from then on.
-            disabled={isReadOnly || !!slackQuickSetup.appId}
+            disabled={isReadOnly || slackQuickSetup.isEnvironmentLocked}
           />
           <SetupCard
             title={`Set up ${provider.displayName}`}

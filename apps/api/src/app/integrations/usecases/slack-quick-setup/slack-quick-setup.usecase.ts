@@ -18,7 +18,10 @@ import { humanRelayProfile } from '../../../agents/human-relay/human-relay-ident
 import { AgentInboxFeaturesService } from '../../../human/services/agent-inbox-features.service';
 import { agentPictureOrDefaultUrl, type MascotLook } from '../../../human/services/agent-picture-url';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
-import { SLACK_DEFAULT_OAUTH_SCOPES } from '../generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import {
+  GenerateSlackOauthUrl,
+  SLACK_DEFAULT_OAUTH_SCOPES,
+} from '../generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { SlackQuickSetupCommand } from './slack-quick-setup.command';
 
 type SlackManifestError = {
@@ -215,7 +218,6 @@ export class SlackQuickSetup {
    * asks for when a subscriber connects Slack, and has no event or interactivity webhook.
    */
   private buildNotificationManifest(botName: string, nameFallback: string): object {
-    const apiBaseUrl = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
     const displayName = this.sanitizeBotDisplayName(botName, nameFallback);
 
     return {
@@ -230,7 +232,8 @@ export class SlackQuickSetup {
         },
       },
       oauth_config: {
-        redirect_urls: [`${apiBaseUrl}${CHAT_OAUTH_CALLBACK_PATH}`],
+        // The same callback the OAuth link sends Slack back to, so the installation isn't rejected.
+        redirect_urls: [GenerateSlackOauthUrl.buildRedirectUri()],
         scopes: {
           bot: [...SLACK_DEFAULT_OAUTH_SCOPES, 'incoming-webhook'],
         },

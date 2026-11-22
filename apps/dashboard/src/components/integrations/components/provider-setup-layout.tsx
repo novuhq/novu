@@ -1,4 +1,5 @@
 import type { IEnvironment } from '@novu/shared';
+import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import type { ReactNode } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiShareBoxLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
@@ -103,33 +104,30 @@ function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange
     { value: 'manual', label: 'Manual' },
   ];
 
+  // A radio group, so arrow keys move between the modes and only the selected one is in the Tab order.
   return (
-    <div
-      role="radiogroup"
+    <RadioGroupPrimitive.Root
+      value={mode}
+      onValueChange={(value) => onChange(value as ProviderSetupMode)}
+      orientation="horizontal"
       aria-label="Setup mode"
       className="inline-flex min-w-[188px] gap-px rounded-[7px] bg-[#f4f4f5] p-px"
     >
-      {options.map((option) => {
-        const isActive = option.value === mode;
-
-        return (
-          // biome-ignore lint/a11y/useSemanticElements: a segmented switch; native radios can't take this look.
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              'flex h-7 flex-1 items-center justify-center whitespace-nowrap rounded-md px-4 text-[13px] font-medium leading-[1.1] transition-colors',
-              isActive ? cn('bg-bg-white text-text-strong', CARD_SHADOW) : 'text-text-sub hover:text-text-strong'
-            )}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+      {options.map((option) => (
+        <RadioGroupPrimitive.Item
+          key={option.value}
+          value={option.value}
+          className={cn(
+            'text-text-sub hover:text-text-strong flex h-7 flex-1 items-center justify-center whitespace-nowrap rounded-md px-4 text-[13px] font-medium leading-[1.1] transition-colors',
+            'data-[state=checked]:bg-bg-white data-[state=checked]:text-text-strong',
+            'data-[state=checked]:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]',
+            'focus-visible:ring-stroke-strong outline-none focus-visible:ring-2'
+          )}
+        >
+          {option.label}
+        </RadioGroupPrimitive.Item>
+      ))}
+    </RadioGroupPrimitive.Root>
   );
 }
 

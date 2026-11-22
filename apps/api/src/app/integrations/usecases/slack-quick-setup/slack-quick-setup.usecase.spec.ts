@@ -128,6 +128,24 @@ describe('SlackQuickSetup', () => {
       expect(manifest.features.bot_user.display_name).to.equal('Acme Alerts');
     });
 
+    it('registers the same OAuth callback the install link uses', async () => {
+      const originalAgentHost = process.env.AGENT_API_HOSTNAME;
+      process.env.AGENT_API_HOSTNAME = 'https://tunnel.example.com/';
+      const { usecase } = buildHarness();
+
+      try {
+        await usecase.execute(buildCommand({ agentId: undefined }));
+      } finally {
+        if (originalAgentHost === undefined) delete process.env.AGENT_API_HOSTNAME;
+        else process.env.AGENT_API_HOSTNAME = originalAgentHost;
+      }
+
+      const manifest = parseSentManifest(axiosPost);
+      expect(manifest.oauth_config.redirect_urls).to.deep.equal([
+        'https://tunnel.example.com/v1/integrations/chat/oauth/callback',
+      ]);
+    });
+
     it('neither looks up nor links an agent', async () => {
       const { usecase, agentRepository, agentIntegrationRepository } = buildHarness();
 

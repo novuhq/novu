@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { slackQuickSetup, updateIntegration } from '@/api/integrations';
@@ -8,6 +8,7 @@ import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { showErrorToast, showSuccessToast } from '../../../components/primitives/sonner-helpers';
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
+import { QueryKeys } from '../../../utils/query-keys';
 import { buildRoute, ROUTES } from '../../../utils/routes';
 import { Button } from '../../primitives/button';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
@@ -58,17 +59,33 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   const { environments } = useEnvironment();
   const usesSetupLayout = step === 'configure' && usesProviderSetupLayout(provider?.id);
 
-  /** The integration "Create app" made; "Connect provider" then saves the rest of the form onto it. */
-  const [quickSetupResult, setQuickSetupResult] = useState<{ integrationId: string; appId?: string }>();
+  /**
+   * The integration "Create app" made, with the environment it lives in. "Connect provider" then saves the
+   * rest of the form onto it, and a retry after a failed Slack call reuses it.
+   */
+  const [quickSetupResult, setQuickSetupResult] = useState<{
+    integrationId: string;
+    environmentId: string;
+    appId?: string;
+  }>();
+  /** Bumped on every reset, so a reply from an abandoned setup can tell it is stale and do nothing. */
+  const setupAttemptRef = useRef(0);
 
   // A new provider, or going back to the list, starts a fresh setup.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the provider or step changes.
   useEffect(() => {
+    setupAttemptRef.current += 1;
     setQuickSetupResult(undefined);
   }, [provider?.id, step]);
+
+  const refreshIntegrations = () => {
+    queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
+    queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
+  };
 
   const { mutate: createSlackApp, isPending: isCreatingSlackApp } = useMutation({
     mutationFn: async ({
@@ -80,7 +97,11 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       configToken: string;
       appName: string;
     }) => {
-      const environment = environments?.find((env) => env._id === data.environmentId);
+      const attempt = setupAttemptRef.current;
+      const isCurrent = () => attempt === setupAttemptRef.current;
+      // Once the integration exists, it stays in its environment, whatever the pills say.
+      const environmentId = quickSetupResult?.environmentId ?? data.environmentId;
+      const environment = environments?.find((env) => env._id === environmentId);
       if (!provider || !environment) throw new Error('Pick an environment first.');
 
       // Reuse the integration from an earlier attempt, so a retry doesn't create a second one.
@@ -98,19 +119,52 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
           rules: data.rules ?? null,
         });
         integrationId = created.data._id;
-        setQuickSetupResult({ integrationId });
+        if (isCurrent()) setQuickSetupResult({ integrationId, environmentId: environment._id });
       }
 
       const { appId } = await slackQuickSetup(integrationId, { configToken, appName }, environment);
 
-      return { integrationId, appId };
+      return { attempt, result: { integrationId, environmentId: environment._id, appId } };
     },
-    onSuccess: (result) => {
+    onSuccess: ({ attempt, result }) => {
+      refreshIntegrations();
+      // The user moved on to another provider meanwhile: the Slack integration stays, but this sheet isn't its.
+      if (attempt !== setupAttemptRef.current) return;
       setQuickSetupResult(result);
       showSuccessToast('Slack app created. Its credentials are saved.');
     },
     onError: (error: unknown) =>
       showErrorToast(error instanceof Error ? error.message : "Couldn't create the Slack app. Try again."),
+  });
+
+  /** Saves the general settings, and any credentials typed in Manual, onto the integration "Create app" made. */
+  const { mutate: finishQuickSetup, isPending: isFinishingQuickSetup } = useMutation({
+    mutationFn: async ({ integrationId, data }: { integrationId: string; data: IntegrationFormData }) => {
+      const environment = environments?.find((env) => env._id === quickSetupResult?.environmentId);
+      if (!environment) throw new Error('The integration has no environment.');
+
+      const credentials = cleanCredentials(data.credentials);
+
+      return updateIntegration(
+        integrationId,
+        {
+          name: data.name,
+          identifier: data.identifier,
+          active: data.active,
+          configurations: data.configurations,
+          rules: data.rules ?? null,
+          ...(Object.keys(credentials ?? {}).length > 0 && { credentials, check: false }),
+        },
+        environment
+      );
+    },
+    onSuccess: () => {
+      refreshIntegrations();
+      showSuccessToast(`${provider?.displayName ?? 'Integration'} connected`);
+      setIsSheetOpen(false);
+      navigate(ROUTES.INTEGRATIONS);
+    },
+    onError: (error: unknown) => handleIntegrationError(error, 'update'),
   });
 
   useEffect(() => {
@@ -196,7 +250,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
     if (!provider) return;
 
     if (quickSetupResult) {
-      await finishQuickSetup(quickSetupResult.integrationId, data);
+      if (!isFinishingQuickSetup) finishQuickSetup({ integrationId: quickSetupResult.integrationId, data });
 
       return;
     }
@@ -224,35 +278,6 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       navigate(ROUTES.INTEGRATIONS);
     } catch (error: unknown) {
       handleIntegrationError(error, 'create');
-    }
-  }
-
-  /** Saves the general settings, and any credentials typed in Manual, onto the integration "Create app" made. */
-  async function finishQuickSetup(integrationId: string, data: IntegrationFormData) {
-    const environment = environments?.find((env) => env._id === data.environmentId);
-    if (!environment) return;
-
-    const credentials = cleanCredentials(data.credentials);
-
-    try {
-      await updateIntegration(
-        integrationId,
-        {
-          name: data.name,
-          identifier: data.identifier,
-          active: data.active,
-          configurations: data.configurations,
-          rules: data.rules ?? null,
-          ...(Object.keys(credentials ?? {}).length > 0 && { credentials, check: false }),
-        },
-        environment
-      );
-
-      showSuccessToast(`${provider?.displayName ?? 'Integration'} connected`);
-      setIsSheetOpen(false);
-      navigate(ROUTES.INTEGRATIONS);
-    } catch (error: unknown) {
-      handleIntegrationError(error, 'update');
     }
   }
 
@@ -315,6 +340,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                     ? {
                         appId: quickSetupResult?.appId,
                         isCreating: isCreatingSlackApp,
+                        // The integration belongs to an environment from the moment creation starts.
+                        isEnvironmentLocked: isCreatingSlackApp || !!quickSetupResult,
                         onCreateApp: (data, configToken, appName) => createSlackApp({ data, configToken, appName }),
                       }
                     : undefined
@@ -326,8 +353,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 onPickDifferentProvider={onBack}
                 onCancel={handleClose}
                 formId={`integration-configuration-form-${provider.id}`}
-                isSubmitting={isPending || isSettingPrimary}
-                canSubmit={formState.isValid && !isCreatingSlackApp}
+                isSubmitting={isPending || isSettingPrimary || isFinishingQuickSetup}
+                canSubmit={formState.isValid && !isCreatingSlackApp && !isFinishingQuickSetup}
               />
             ) : (
               <div className="bg-background flex justify-end gap-2 border-t p-3">
