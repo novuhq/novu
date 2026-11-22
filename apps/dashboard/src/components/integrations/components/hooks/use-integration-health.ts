@@ -5,7 +5,7 @@ import {
   IntegrationConnectionStatusEnum,
   type ITestIntegrationConnectionResponse,
 } from '@novu/shared';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { testIntegrationConnection } from '@/api/integrations';
 import { isDemoIntegration } from '../utils/helpers';
 
@@ -19,8 +19,6 @@ export type IntegrationHealth = {
   /** True when the credentials were rejected, so saving new ones is a reconnect. */
   needsReconnect: boolean;
 };
-
-const HEALTH_STALE_TIME_MS = 5 * 60_000;
 
 export function getIntegrationHealthQueryKey(integrationId: string) {
   return ['integration-health', integrationId];
@@ -46,42 +44,59 @@ function toHealth(
       return { tone: 'error', label: 'Verification failed', message: result.message, needsReconnect: true };
     case IntegrationConnectionStatusEnum.UNREACHABLE:
       return { tone: 'warning', label: 'Provider unreachable', message: result.message, needsReconnect: false };
+    case IntegrationConnectionStatusEnum.INCONCLUSIVE:
+      return { tone: 'neutral', label: 'Verification inconclusive', needsReconnect: false };
     default:
-      // The provider can't be verified, or the check couldn't run: the integration is on, which is all we know.
-      return { tone: 'success', label: 'Active', needsReconnect: false };
+      // Not verified yet, the provider can't be verified, or the check couldn't run: the integration is on,
+      // which is all we know, so it isn't shown as delivering.
+      return { tone: 'neutral', label: 'Active', needsReconnect: false };
   }
 }
 
+const HEALTH_CACHE_TIME_MS = 10 * 60_000;
+
 /**
- * Verifies each integration with the provider (the same check as "Verify integration") and turns the results
- * into a health per integration. Results are cached for a few minutes, so reopening the drawer doesn't call
- * the provider again. The check only reads; it never changes the integration.
+ * Health per integration, from the last "Verify integration" check. Checks never run on their own: for some
+ * providers the check sends a real message (e.g. a test email), so it only runs when the user asks with
+ * `verify`. A result is kept for a while, so reopening the drawer still shows it.
  */
 export function useIntegrationHealth(integrations: IIntegration[], environments: IEnvironment[] | undefined) {
+  const queryClient = useQueryClient();
+
+  const runCheck = (integration: IIntegration) => {
+    const environment = environments?.find((env) => env._id === integration._environmentId);
+    if (!environment) throw new Error('The integration has no environment.');
+
+    return testIntegrationConnection(integration._id, environment);
+  };
+
   const queries = useQueries({
-    queries: integrations.map((integration) => {
-      const environment = environments?.find((env) => env._id === integration._environmentId);
-
-      return {
-        queryKey: getIntegrationHealthQueryKey(integration._id),
-        queryFn: () => {
-          if (!environment) throw new Error('The integration has no environment.');
-
-          return testIntegrationConnection(integration._id, environment);
-        },
-        enabled: !!environment && integration.active && canVerifyIntegration(integration),
-        staleTime: HEALTH_STALE_TIME_MS,
-        retry: false,
-        refetchOnWindowFocus: false,
-      };
-    }),
+    queries: integrations.map((integration) => ({
+      queryKey: getIntegrationHealthQueryKey(integration._id),
+      queryFn: () => runCheck(integration),
+      // Read the cache only; `verify` is the one way a check starts.
+      enabled: false,
+      gcTime: HEALTH_CACHE_TIME_MS,
+      retry: false,
+    })),
   });
 
-  return new Map(
+  const healthById = new Map(
     integrations.map((integration, index) => {
       const query = queries[index];
 
-      return [integration._id, toHealth(integration, query?.data, !!query?.isFetching && !query?.data)];
+      return [integration._id, toHealth(integration, query?.data, !!query?.isFetching)];
     })
   );
+
+  const verify = (integration: IIntegration) =>
+    queryClient.fetchQuery({
+      queryKey: getIntegrationHealthQueryKey(integration._id),
+      queryFn: () => runCheck(integration),
+      staleTime: 0,
+      gcTime: HEALTH_CACHE_TIME_MS,
+      retry: false,
+    });
+
+  return { healthById, verify };
 }

@@ -85,13 +85,12 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const matches = useMemo(
     () =>
       integration
-        ? (integrations ?? []).filter(
-            (item) => item.identifier === integration.identifier && item.providerId === integration.providerId
-          )
+        ? // Environments may use different providers under one identifier; each row shows its own.
+          (integrations ?? []).filter((item) => item.identifier === integration.identifier)
         : [],
     [integrations, integration]
   );
-  const healthById = useIntegrationHealth(matches, environments);
+  const { healthById, verify } = useIntegrationHealth(matches, environments);
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;
@@ -133,8 +132,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
       }
 
       showSuccessToast('Integration updated successfully');
-      // New credentials need a fresh check the next time the drawer opens.
-      queryClient.invalidateQueries({ queryKey: getIntegrationHealthQueryKey(integration._id) });
+      // The last check was about the old settings, so it no longer applies.
+      queryClient.removeQueries({ queryKey: getIntegrationHealthQueryKey(integration._id) });
 
       setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
@@ -247,7 +246,9 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             provider={provider}
             canVerify={integration.active && canVerifyIntegration(integration)}
             canDelete={isIntegrationDeletionAllowed}
-            onVerify={() => queryClient.invalidateQueries({ queryKey: getIntegrationHealthQueryKey(integration._id) })}
+            onVerify={() =>
+              verify(integration).catch(() => showErrorToast(`Couldn't verify ${integration.name}. Try again.`))
+            }
             onCopyIdentifier={copyIdentifier}
             onDelete={() => setIsDeleteDialogOpen(true)}
           />
