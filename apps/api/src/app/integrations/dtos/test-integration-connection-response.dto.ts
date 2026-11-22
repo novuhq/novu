@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IntegrationConnectionStatusEnum, ITestIntegrationConnectionResponse } from '@novu/shared';
 
 export class TestIntegrationConnectionResponseDto implements ITestIntegrationConnectionResponse {
@@ -14,10 +14,4 @@ export class TestIntegrationConnectionResponseDto implements ITestIntegrationCon
 
   @ApiProperty({ type: Number, description: 'How many times the provider was called before reaching the result.' })
   attempts: number;
-
-  @ApiPropertyOptional({
-    type: String,
-    description: "The integration's updatedAt when its credentials were read.",
-  })
-  revision?: string;
 }

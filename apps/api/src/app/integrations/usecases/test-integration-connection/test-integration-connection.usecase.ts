@@ -40,12 +40,12 @@ const MESSAGES: Record<IntegrationConnectionStatusEnum, string> = {
 };
 
 /**
- * "Test connection": checks an integration's stored credentials against its provider with a read-only call.
+ * "Verify integration": checks an integration's stored credentials against its provider with a read-only call.
  *
  * A single failure is never trusted. The check runs up to `RETRY_DELAYS_MS.length + 1` times and stops early on a
  * conclusive answer (valid / inconclusive / unsupported). It reports INVALID only when *every* attempt was rejected,
- * so a flaky network or a provider blip can never get an integration paused. This endpoint only reports; pausing
- * is left to the caller (the dashboard reuses its Pause flow, including the primary hand-over).
+ * so a flaky network or a provider blip isn't reported as bad credentials. It only reports: it never changes the
+ * integration.
  *
  * Runs only on an explicit user click, never on the trigger → worker → provider path.
  */
@@ -88,8 +88,6 @@ export class TestIntegrationConnection {
       };
     }
 
-    // The revision whose credentials are tested: the dashboard skips pausing if the integration changed meanwhile.
-    const revision = toRevision((encryptedIntegration as { updatedAt?: Date | string }).updatedAt);
     const integration = GetDecryptedIntegrations.getDecryptedCredentials(encryptedIntegration);
     const statuses: VerifyCredentialsStatusEnum[] = [];
     let last: IVerifyCredentialsResponse | null = null;
@@ -106,7 +104,6 @@ export class TestIntegrationConnection {
           status: IntegrationConnectionStatusEnum.UNSUPPORTED,
           message: MESSAGES.unsupported,
           attempts: 0,
-          revision,
         };
       }
 
@@ -133,7 +130,6 @@ export class TestIntegrationConnection {
       status,
       message: status === (last?.status as string) && last?.message ? last.message : MESSAGES[status],
       attempts: statuses.length,
-      revision,
     };
   }
 
@@ -239,10 +235,4 @@ async function withDeadline<T, F>(promise: Promise<T>, ms: number, fallback: F):
   } finally {
     clearTimeout(timer);
   }
-}
-
-function toRevision(updatedAt: Date | string | undefined): string | undefined {
-  if (!updatedAt) return undefined;
-
-  return new Date(updatedAt).toISOString();
 }

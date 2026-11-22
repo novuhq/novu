@@ -17,7 +17,6 @@ const ENVIRONMENT_ID = '69f84d848bed9b0a73216d98';
 const ORGANIZATION_ID = '69f84d848bed9b0a73216d99';
 
 const { VALID, INVALID, UNREACHABLE, INCONCLUSIVE } = VerifyCredentialsStatusEnum;
-const UPDATED_AT = new Date('2026-11-01T10:00:00.000Z');
 
 function buildHarness(integration: Record<string, unknown> = {}) {
   const integrationRepository = {
@@ -28,7 +27,6 @@ function buildHarness(integration: Record<string, unknown> = {}) {
       providerId: SmsProviderIdEnum.Twilio,
       channel: ChannelTypeEnum.SMS,
       credentials: { accountSid: 'AC123', token: 'secret' },
-      updatedAt: UPDATED_AT,
       ...integration,
     }),
   };
@@ -86,15 +84,6 @@ describe('TestIntegrationConnection', () => {
       _environmentId: ENVIRONMENT_ID,
       _organizationId: ORGANIZATION_ID,
     });
-  });
-
-  it('returns the revision whose credentials were tested', async () => {
-    const { usecase } = buildHarness();
-    stubProviderAnswers(VALID);
-
-    const result = await usecase.execute(command);
-
-    expect(result.revision).to.equal(UPDATED_AT.toISOString());
   });
 
   it('passes the saved email sender to the handler', async () => {

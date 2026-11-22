@@ -19,12 +19,7 @@ import {
   RiStarLine,
 } from 'react-icons/ri';
 import { put } from '@/api/api.client';
-import {
-  deleteIntegration,
-  getIntegrations,
-  setAsPrimaryIntegration,
-  testIntegrationConnection,
-} from '@/api/integrations';
+import { deleteIntegration, setAsPrimaryIntegration, testIntegrationConnection } from '@/api/integrations';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
   DropdownMenu,
@@ -54,8 +49,6 @@ function setIntegrationActive(integrationId: string, active: boolean, environmen
   return put<IIntegration>(`/integrations/${integrationId}`, { body: { active }, environment });
 }
 
-type PauseReason = 'manual' | 'invalid-credentials';
-
 type IntegrationCardActionsProps = {
   /** An integration in the current environment. */
   integration: IIntegration;
@@ -81,7 +74,6 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   const canTestConnection = canWrite && canDelete;
   // One toast per card, so the "Testing…" toast is replaced by its result instead of stacking.
   const testToastId = `test-connection-${useId()}`;
-  const [pauseReason, setPauseReason] = useState<PauseReason>('manual');
 
   /** Other active integrations on the channel: candidates to take over as primary. */
   const otherActive = integrations.filter(
@@ -101,29 +93,15 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   };
 
   const { mutate: setActive } = useMutation({
-    mutationFn: async ({ active, newPrimaryId }: { active: boolean; newPrimaryId?: string; reason?: PauseReason }) => {
+    mutationFn: async ({ active, newPrimaryId }: { active: boolean; newPrimaryId?: string }) => {
       if (!currentEnvironment) throw new Error('No environment selected');
       // Hand primary over first, so the channel keeps a primary while this one is paused.
       if (newPrimaryId) await setAsPrimaryIntegration(newPrimaryId, currentEnvironment);
 
       return setIntegrationActive(integration._id, active, currentEnvironment);
     },
-    onSuccess: (_, { active, reason }) =>
-      reason === 'invalid-credentials'
-        ? showErrorToast(
-            `The provider rejected ${integration.name}'s credentials, so it was paused. Update them in Edit configuration, then resume it.`,
-            'Integration paused',
-            { id: testToastId, duration: 10_000 }
-          )
-        : showSuccessToast(`${integration.name} is ${active ? 'active' : 'paused'}.`),
-    onError: (_, { active, reason }) =>
-      reason === 'invalid-credentials'
-        ? showErrorToast(
-            `The provider rejected ${integration.name}'s credentials, but pausing it failed. Pause it manually.`,
-            undefined,
-            { id: testToastId }
-          )
-        : showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${integration.name}.`),
+    onSuccess: (_, { active }) => showSuccessToast(`${integration.name} is ${active ? 'active' : 'paused'}.`),
+    onError: (_, { active }) => showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${integration.name}.`),
     onSettled: settle,
   });
 
@@ -148,56 +126,21 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   });
 
   /**
-   * Pauses after rejected credentials, but only if the integration is still the revision that was tested:
-   * if someone saved new credentials while the check ran, the result is stale and nothing is paused.
+   * Shows the outcome. It never changes the integration: rejected credentials are reported so the user can
+   * fix them in Edit configuration, or pause the integration themselves.
    */
-  const pauseIfUnchanged = async (revision: string | undefined, message: string) => {
-    const toastOptions = { id: testToastId, duration: 10_000 };
-    let fresh: IIntegration | undefined;
-
-    try {
-      if (!currentEnvironment) throw new Error('No environment selected');
-      const latest = await queryClient.fetchQuery({
-        queryKey: [QueryKeys.fetchIntegrations, currentEnvironment._id],
-        queryFn: () => getIntegrations({ environment: currentEnvironment }),
-        staleTime: 0,
-      });
-      fresh = latest.find((candidate) => candidate._id === integration._id);
-    } catch {
-      return showErrorToast(
-        `${message} Couldn't confirm ${integration.name} is unchanged, so it wasn't paused. Pause it manually.`,
-        'Credentials rejected',
-        toastOptions
-      );
-    }
-
-    const freshUpdatedAt = (fresh as (IIntegration & { updatedAt?: string }) | undefined)?.updatedAt;
-    const isSameRevision = !revision || !freshUpdatedAt || new Date(freshUpdatedAt).toISOString() === revision;
-
-    if (!fresh || !isSameRevision) {
-      return showWarningToast(
-        `${integration.name} changed while it was being verified, so it wasn't paused. Verify it again.`,
-        'Verification out of date',
-        toastOptions
-      );
-    }
-
-    if (!fresh.active) {
-      return showErrorToast(`${message} ${integration.name} is already paused.`, 'Credentials rejected', toastOptions);
-    }
-
-    requestPause('invalid-credentials');
-  };
-
-  /** Shows the outcome; on confirmed-invalid credentials, pauses the integration through the regular Pause flow. */
-  const handleConnectionResult = ({ status, message, revision }: ITestIntegrationConnectionResponse) => {
+  const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
     const toastOptions = { id: testToastId, duration: 8_000 };
 
     switch (status) {
       case IntegrationConnectionStatusEnum.VALID:
         return showSuccessToast(`${integration.name} is verified. ${message}`, undefined, toastOptions);
       case IntegrationConnectionStatusEnum.INVALID:
-        return pauseIfUnchanged(revision, message);
+        return showErrorToast(
+          `${message} ${integration.name} didn't pass verification. Update its credentials in Edit configuration.`,
+          'Credentials rejected',
+          { id: testToastId, duration: 10_000 }
+        );
       case IntegrationConnectionStatusEnum.UNREACHABLE:
         return showWarningToast(
           `${message} Nothing was changed. Try again in a few minutes.`,
@@ -248,23 +191,10 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   const findReplacement = (newPrimaryId?: string) => otherActive.find((other) => other._id === newPrimaryId);
 
   // Pausing the primary leaves the channel without one, so pick its replacement first when there is one.
-  const requestPause = (reason: PauseReason = 'manual') => {
-    setPauseReason(reason);
-
-    if (supportsPrimary && integration.primary && otherActive.length > 0) {
-      if (reason === 'invalid-credentials') {
-        showErrorToast(
-          `The provider rejected ${integration.name}'s credentials. Pick the integration that takes over as primary, and ${integration.name} will be paused.`,
-          'Credentials rejected',
-          { id: testToastId, duration: 10_000 }
-        );
-      }
-
-      return setIsPauseOpen(true);
-    }
-
-    setActive({ active: false, reason });
-  };
+  const requestPause = () =>
+    supportsPrimary && integration.primary && otherActive.length > 0
+      ? setIsPauseOpen(true)
+      : setActive({ active: false });
 
   const copyIdentifier = async () => {
     try {
@@ -326,7 +256,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
           {canWrite && (
             <DropdownMenuItem
               className={ITEM_CLASS}
-              onSelect={() => (integration.active ? requestPause('manual') : setActive({ active: true }))}
+              onSelect={() => (integration.active ? requestPause() : setActive({ active: true }))}
             >
               <RiShutDownLine />
               {integration.active ? 'Pause' : 'Resume'}
@@ -360,9 +290,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
           isOpen
           onOpenChange={setIsPauseOpen}
           onConfirm={(newPrimaryId) =>
-            confirmConditionsLoss(findReplacement(newPrimaryId), () =>
-              setActive({ active: false, newPrimaryId, reason: pauseReason })
-            )
+            confirmConditionsLoss(findReplacement(newPrimaryId), () => setActive({ active: false, newPrimaryId }))
           }
           otherIntegrations={otherActive}
           mode="select"
