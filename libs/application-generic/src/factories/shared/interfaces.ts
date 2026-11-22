@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, IConfigurations } from '@novu/shared';
-import { ChannelProvider, IEmailEventBody, ISMSEventBody } from '@novu/stateless';
+import { ChannelProvider, IEmailEventBody, ISMSEventBody, IVerifyCredentialsResponse } from '@novu/stateless';
 
 export interface IHandler {
   inboundWebhookEnabled(): boolean;
@@ -27,6 +27,9 @@ export interface IHandler {
     message?: string;
     configurations?: IConfigurations;
   }>;
+
+  /** Read-only credentials check; `null` when this provider has no way to check them yet. */
+  verifyCredentials: () => Promise<IVerifyCredentialsResponse | null>;
 }
 
 export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> implements IHandler {
@@ -88,6 +91,14 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     }
 
     return this.provider.verifySignature({ rawBody, headers, body });
+  }
+
+  public async verifyCredentials(): Promise<IVerifyCredentialsResponse | null> {
+    if (!this.provider?.verifyCredentials) {
+      return null;
+    }
+
+    return this.provider.verifyCredentials();
   }
 
   public async autoConfigureInboundWebhook(configurations: { webhookUrl: string }): Promise<{

@@ -1,9 +1,16 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+  IVerifyCredentialsResponse,
+} from '@novu/stateless';
 import { Auth } from '@vonage/auth';
 import { Vonage } from '@vonage/server-sdk';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Nexmo;
@@ -27,11 +34,17 @@ export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
     );
   }
 
+  /** Reads the account balance: a read-only call that any valid key/secret pair can make. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() => this.vonageClient.accounts.getBalance());
+  }
+
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.vonageClient.sms.send(
+      // biome-ignore lint/suspicious/noExplicitAny: pre-existing; provider SDK request type differs from the transformed body
       this.transform<any>(bridgeProviderData, {
         to: options.to,
         from: this.config.from,

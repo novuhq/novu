@@ -78,6 +78,7 @@ import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue
 import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
 import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
+import { TestIntegrationConnectionResponseDto } from './dtos/test-integration-connection-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import {
   WhatsAppEmbeddedSignupRequestDto,
@@ -125,6 +126,8 @@ import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-pr
 import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick-setup.command';
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
+import { TestIntegrationConnectionCommand } from './usecases/test-integration-connection/test-integration-connection.command';
+import { TestIntegrationConnection } from './usecases/test-integration-connection/test-integration-connection.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { IssueWhatsAppSignupLinkCommand } from './usecases/whatsapp/issue-whatsapp-signup-link.command';
@@ -164,6 +167,7 @@ export class IntegrationsController {
     private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
+    private testIntegrationConnectionUsecase: TestIntegrationConnection,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
     private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
     private whatsAppEmbeddedSignupAvailabilityUsecase: WhatsAppEmbeddedSignupAvailability,
@@ -592,6 +596,28 @@ export class IntegrationsController {
     );
 
     return { url };
+  }
+
+  /**
+   * "Test connection" from the integration store: checks the stored credentials against the provider
+   * with a read-only call (retrying transient failures) and reports the outcome. It changes nothing itself.
+   */
+  @Post('/:integrationId/test-connection')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async testIntegrationConnection(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<TestIntegrationConnectionResponseDto> {
+    return this.testIntegrationConnectionUsecase.execute(
+      TestIntegrationConnectionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
   }
 
   /**

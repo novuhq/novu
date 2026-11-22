@@ -1,9 +1,16 @@
 import { assertAllowedSinchSmsRegion, SmsProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+  IVerifyCredentialsResponse,
+} from '@novu/stateless';
 
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class SinchSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sinch;
@@ -22,6 +29,18 @@ export class SinchSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.region = assertAllowedSinchSmsRegion(this.config.region);
+  }
+
+  /** Lists one batch of the service plan: read-only, and it uses the same region, plan and token as sends. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    const url = `https://${this.region}.sms.api.sinch.com/xms/v1/${encodeURIComponent(this.config.servicePlanId ?? '')}/batches`;
+
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(url, {
+        params: { page_size: 1 },
+        headers: { Authorization: `Bearer ${this.config.apiToken}` },
+      })
+    );
   }
 
   async sendMessage(
