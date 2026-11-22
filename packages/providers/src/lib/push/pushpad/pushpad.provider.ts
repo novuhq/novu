@@ -1,8 +1,10 @@
 import { PushProviderIdEnum } from '@novu/shared';
-import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IPushOptions, IPushProvider, ISendMessageSuccessResponse, IVerifyCredentialsResponse } from '@novu/stateless';
 import Pushpad from 'pushpad';
 import { CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { PushBaseProvider } from '../push.base-provider';
 
 export class PushpadPushProvider extends PushBaseProvider implements IPushProvider {
@@ -22,6 +24,16 @@ export class PushpadPushProvider extends PushBaseProvider implements IPushProvid
       authToken: this.config.apiKey,
       projectId: this.config.appId,
     });
+  }
+
+  /** Reads the project (`GET /api/v1/projects/{id}`) with the same token and project the sends use. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(
+        `https://pushpad.xyz/api/v1/projects/${encodeURIComponent(this.config.appId ?? '')}`,
+        { headers: { Authorization: `Token token="${this.config.apiKey}"`, Accept: 'application/json' } }
+      )
+    );
   }
 
   async sendMessage(

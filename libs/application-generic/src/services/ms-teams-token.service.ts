@@ -67,6 +67,17 @@ export class MsTeamsTokenService {
     }
   }
 
+  /**
+   * Asks Azure AD for a fresh app-only Graph token, bypassing the token cache, so a secret that was revoked
+   * or expired since the last cached token is caught. Throws the axios error when Azure AD refuses.
+   * Used only by an explicit, user-triggered credentials check.
+   */
+  async verifyGraphCredentials(clientId: string, secretKey: string, appTenantId: string): Promise<boolean> {
+    const token = await this.fetchClientCredentialsToken(clientId, secretKey, appTenantId, GRAPH_SCOPE);
+
+    return !!token;
+  }
+
   private async fetchClientCredentialsToken(
     clientId: string,
     secretKey: string,

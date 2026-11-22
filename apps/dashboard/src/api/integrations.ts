@@ -3,6 +3,7 @@ import {
   IEnvironment,
   IIntegration,
   IntegrationKindEnum,
+  type ITestIntegrationConnectionResponse,
   type WhatsAppSignupLinkStatus,
 } from '@novu/shared';
 
@@ -223,6 +224,19 @@ export async function getAzureSetupOauthUrl(
   return data;
 }
 
+/** Checks the integration's stored credentials against its provider. Read-only: it never pauses anything itself. */
+export async function testIntegrationConnection(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<ITestIntegrationConnectionResponse> {
+  const { data } = await post<{ data: ITestIntegrationConnectionResponse }>(
+    `/integrations/${integrationId}/test-connection`,
+    { environment }
+  );
+
+  return data;
+}
+
 export async function getMsTeamsHealthCheck(
   integrationId: string,
   environment: IEnvironment,
@@ -401,6 +415,7 @@ export async function completeWhatsAppSignupPublic(
   return unwrapEnvelope(data) as WhatsAppEmbeddedSignupResult;
 }
 
+// biome-ignore lint/plugin: pre-existing; raw response bodies are parsed by each caller
 async function safeJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -414,6 +429,7 @@ async function safeJson(response: Response): Promise<unknown> {
  * `{ data: ... }` envelope from the API's `ResponseInterceptor` must be
  * unwrapped manually.
  */
+// biome-ignore lint/plugin: pre-existing; raw response bodies are parsed by each caller
 function unwrapEnvelope(data: unknown): unknown {
   if (data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)) {
     return (data as { data: unknown }).data;

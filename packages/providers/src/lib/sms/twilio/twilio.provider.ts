@@ -5,6 +5,7 @@ import {
   ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
+  IVerifyCredentialsResponse,
   SmsEventStatusEnum,
 } from '@novu/stateless';
 
@@ -12,6 +13,7 @@ import { Twilio } from 'twilio';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
@@ -35,6 +37,11 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     this.twilioClient = config.apiKeySid
       ? new Twilio(config.apiKeySid, config.apiKeySecret, { ...regionConfig, accountSid: config.accountSid })
       : new Twilio(config.accountSid, config.authToken, regionConfig);
+  }
+
+  /** Fetches the account itself: works for both auth-token and API-key auth and sends nothing. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() => this.twilioClient.api.v2010.accounts(this.config.accountSid).fetch());
   }
 
   async sendMessage(

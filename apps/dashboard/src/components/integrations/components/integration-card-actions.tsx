@@ -3,10 +3,12 @@ import {
   ChannelTypeEnum,
   type IEnvironment,
   type IIntegration,
+  IntegrationConnectionStatusEnum,
+  type ITestIntegrationConnectionResponse,
   PermissionsEnum,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
   RiDeleteBin2Line,
   RiEditBoxLine,
@@ -17,7 +19,7 @@ import {
   RiStarLine,
 } from 'react-icons/ri';
 import { put } from '@/api/api.client';
-import { deleteIntegration, setAsPrimaryIntegration } from '@/api/integrations';
+import { deleteIntegration, setAsPrimaryIntegration, testIntegrationConnection } from '@/api/integrations';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
   DropdownMenu,
@@ -26,8 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { ToastIcon } from '@/components/primitives/sonner';
+import { showErrorToast, showSuccessToast, showToast, showWarningToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -66,9 +68,12 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
 
   const canWrite = has({ permission: PermissionsEnum.INTEGRATION_WRITE }) && !!currentEnvironment;
   const supportsPrimary = !!integration.channel && CHANNELS_WITH_PRIMARY.includes(integration.channel);
-  const isEmail = integration.channel === ChannelTypeEnum.EMAIL;
   // Same rule as the settings sheet: Inbox and Novu's demo providers can't be deleted.
   const canDelete = integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
+  // Inbox has no provider credentials, and Novu owns the demo providers' credentials.
+  const canTestConnection = canWrite && canDelete;
+  // One toast per card, so the "Testing…" toast is replaced by its result instead of stacking.
+  const testToastId = `test-connection-${useId()}`;
 
   /** Other active integrations on the channel: candidates to take over as primary. */
   const otherActive = integrations.filter(
@@ -99,6 +104,63 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     onError: (_, { active }) => showErrorToast(`Couldn't ${active ? 'resume' : 'pause'} ${integration.name}.`),
     onSettled: settle,
   });
+
+  const { mutate: testConnection, isPending: isTestingConnection } = useMutation({
+    mutationFn: async () => {
+      if (!currentEnvironment) throw new Error('No environment selected');
+
+      return testIntegrationConnection(integration._id, currentEnvironment);
+    },
+    onMutate: () =>
+      showToast({
+        children: () => (
+          <>
+            <ToastIcon variant="default" className="animate-spin" />
+            <span className="text-sm">Verifying {integration.name}…</span>
+          </>
+        ),
+        options: { id: testToastId, duration: Number.POSITIVE_INFINITY },
+      }),
+    onSuccess: (result) => handleConnectionResult(result),
+    onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: testToastId }),
+  });
+
+  /**
+   * Shows the outcome. It never changes the integration: rejected credentials are reported so the user can
+   * fix them in Edit configuration, or pause the integration themselves.
+   */
+  const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
+    const toastOptions = { id: testToastId, duration: 8_000 };
+
+    switch (status) {
+      case IntegrationConnectionStatusEnum.VALID:
+        return showSuccessToast(`${integration.name} is verified. ${message}`, undefined, toastOptions);
+      case IntegrationConnectionStatusEnum.INVALID:
+        return showErrorToast(
+          `${message} ${integration.name} didn't pass verification. Update its credentials in Edit configuration.`,
+          'Credentials rejected',
+          { id: testToastId, duration: 10_000 }
+        );
+      case IntegrationConnectionStatusEnum.UNREACHABLE:
+        return showWarningToast(
+          `${message} Nothing was changed. Try again in a few minutes.`,
+          'Provider unreachable',
+          toastOptions
+        );
+      case IntegrationConnectionStatusEnum.UNSUPPORTED:
+        return showToast({
+          children: () => (
+            <>
+              <ToastIcon variant="info" />
+              <span className="text-sm">{message}</span>
+            </>
+          ),
+          options: toastOptions,
+        });
+      default:
+        return showWarningToast(`${message} Nothing was changed.`, 'Verification inconclusive', toastOptions);
+    }
+  };
 
   const { mutate: makePrimary } = useMutation({
     mutationFn: async () => {
@@ -170,18 +232,12 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
             Edit configuration
           </DropdownMenuItem>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* Disabled items ignore the pointer, so the wrapper carries the tooltip. */}
-              <div>
-                <DropdownMenuItem className={ITEM_CLASS} disabled>
-                  <RiFlashlightLine />
-                  {isEmail ? 'Send a test email' : 'Send a test message'}
-                </DropdownMenuItem>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="left">Coming soon</TooltipContent>
-          </Tooltip>
+          {canTestConnection && (
+            <DropdownMenuItem className={ITEM_CLASS} disabled={isTestingConnection} onSelect={() => testConnection()}>
+              <RiFlashlightLine />
+              {isTestingConnection ? 'Verifying integration…' : 'Verify integration'}
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem className={ITEM_CLASS} onSelect={copyIdentifier}>
             <RiStackLine />

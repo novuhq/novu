@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
 import { ChannelData } from './channel-data.type';
-import { CheckIntegrationResponseEnum } from './provider.enum';
+import { CheckIntegrationResponseEnum, VerifyCredentialsStatusEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
@@ -15,6 +15,17 @@ export interface IProvider {
     message?: string;
     configurations?: unknown;
   }>;
+  /**
+   * Checks the configured credentials with a cheap, read-only call that sends nothing.
+   * Must not throw for provider answers: classify them into a {@link VerifyCredentialsStatusEnum}.
+   * The message is shown to the user, so it must never echo credentials or raw upstream errors.
+   */
+  verifyCredentials?: () => Promise<IVerifyCredentialsResponse>;
+}
+
+export interface IVerifyCredentialsResponse {
+  status: VerifyCredentialsStatusEnum;
+  message?: string;
 }
 
 export interface IEmailAlternative {
@@ -34,9 +45,13 @@ export interface IEmailOptions {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   payloadDetails?: any;
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   notificationDetails?: any;
   ipPoolName?: string;
+  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
@@ -49,6 +64,8 @@ export interface ISmsOptions {
   from?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
@@ -113,6 +130,8 @@ export interface IChatOptions {
    * The provider spreads it into its outgoing body; `content` carries the markdown fallback text.
    */
   nativePayload?: Record<string, unknown>;
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
@@ -350,8 +369,10 @@ export interface IEmailProvider extends IProvider {
     bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   getMessageId?: (body: any | any[]) => string[];
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => IEmailEventBody | undefined;
 
   checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
@@ -362,8 +383,10 @@ export interface ISmsProvider extends IProvider {
 
   channelType: ChannelTypeEnum.SMS;
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   getMessageId?: (body: any) => string[];
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => ISMSEventBody | undefined;
 }
 
@@ -381,8 +404,10 @@ export interface IChatProvider extends IProvider {
    */
   render?: (card: CardElement) => Promise<IChatRenderResult>;
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   getMessageId?: (body: any | any[]) => string[];
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
@@ -393,8 +418,10 @@ export interface IPushProvider extends IProvider {
 
   channelType: ChannelTypeEnum.PUSH;
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   getMessageId?: (body: any | any[]) => string[];
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
@@ -423,8 +450,10 @@ export interface IToolProvider extends IProvider {
 
   channelType: ChannelTypeEnum.TOOL;
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   getMessageId?: (body: any | any[]) => string[];
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 

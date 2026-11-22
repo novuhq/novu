@@ -198,6 +198,29 @@ export enum ToolProviderIdEnum {
   Webhook = 'tool-webhook',
 }
 
+/**
+ * Result of "Test connection" on an integration.
+ * - VALID: the provider accepted the stored credentials.
+ * - INVALID: the provider rejected them on every attempt.
+ * - UNREACHABLE: the provider couldn't be reached reliably (timeouts, 429, 5xx), so nothing is concluded.
+ * - INCONCLUSIVE: the provider answered, but the answer doesn't prove the credentials either way.
+ * - UNSUPPORTED: this provider has no connection test yet.
+ */
+export enum IntegrationConnectionStatusEnum {
+  VALID = 'valid',
+  INVALID = 'invalid',
+  UNREACHABLE = 'unreachable',
+  INCONCLUSIVE = 'inconclusive',
+  UNSUPPORTED = 'unsupported',
+}
+
+export interface ITestIntegrationConnectionResponse {
+  status: IntegrationConnectionStatusEnum;
+  message: string;
+  /** How many times the provider was called before reaching the result. */
+  attempts: number;
+}
+
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
 export enum IntegrationKindEnum {
   DELIVERY = 'delivery',

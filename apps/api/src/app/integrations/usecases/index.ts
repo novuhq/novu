@@ -36,6 +36,7 @@ import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
+import { TestIntegrationConnection } from './test-integration-connection/test-integration-connection.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
 import { CompleteWhatsAppSignupLink } from './whatsapp/complete-whatsapp-signup-link.usecase';
 import { GetWhatsAppSignupLinkStatus } from './whatsapp/get-whatsapp-signup-link-status.usecase';
@@ -78,6 +79,7 @@ export const USE_CASES = [
   WebexOauthCallback,
   ChatOauthCallback,
   MsTeamsHealthCheck,
+  TestIntegrationConnection,
   SlackQuickSetup,
   WhatsAppValidateToken,
   WhatsAppEmbeddedSignup,
