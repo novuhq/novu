@@ -1,7 +1,7 @@
 import type { IEnvironment } from '@novu/shared';
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import type { ReactNode } from 'react';
-import { RiAddLine, RiArrowDownSLine, RiShareBoxLine } from 'react-icons/ri';
+import { RiAddLine, RiArrowDownSLine, RiArrowRightSLine, RiShareBoxLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
@@ -175,6 +175,32 @@ export function AdvancedSettings({ children }: { children: ReactNode }) {
         </CollapsibleTrigger>
         <CollapsibleContent className="border-stroke-soft border-t p-3">{children}</CollapsibleContent>
       </div>
+    </Collapsible>
+  );
+}
+
+/** A titled, collapsible block of settings, e.g. "SLACK APP CREDENTIALS" in the manage drawer. */
+export function SettingsSection({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Collapsible
+      defaultOpen={defaultOpen}
+      className="bg-bg-weak border-stroke-weak group/section rounded-[10px] border p-1"
+    >
+      <CollapsibleTrigger className="text-code-xs font-code text-text-sub flex w-full items-center px-2 py-1.5 text-left uppercase tracking-[-0.24px]">
+        <span className="flex-1">{title}</span>
+        <RiArrowRightSLine className="text-text-soft size-4 shrink-0 transition-transform group-data-[state=open]/section:rotate-90" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className={cn('bg-bg-white mt-0.5 rounded-md p-3.5', CARD_SHADOW)}>{children}</div>
+      </CollapsibleContent>
     </Collapsible>
   );
 }
