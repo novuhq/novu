@@ -54,6 +54,12 @@ export class TestIntegrationConnection {
   /** Wait before each retry. Exposed so tests can run without real delays. */
   static RETRY_DELAYS_MS: number[] = [1_000, 3_000];
 
+  /**
+   * Hard cap per attempt. HTTP checks already time out at 10s, but SDK-backed ones (Twilio, Vonage, FCM, email
+   * `checkIntegration`) use their own clients, so the cap is enforced here for all of them.
+   */
+  static ATTEMPT_TIMEOUT_MS = 15_000;
+
   constructor(
     private integrationRepository: IntegrationRepository,
     private msTeamsTokenService: MsTeamsTokenService,
@@ -82,6 +88,8 @@ export class TestIntegrationConnection {
       };
     }
 
+    // The revision whose credentials are tested: the dashboard skips pausing if the integration changed meanwhile.
+    const revision = toRevision((encryptedIntegration as { updatedAt?: Date | string }).updatedAt);
     const integration = GetDecryptedIntegrations.getDecryptedCredentials(encryptedIntegration);
     const statuses: VerifyCredentialsStatusEnum[] = [];
     let last: IVerifyCredentialsResponse | null = null;
@@ -89,10 +97,17 @@ export class TestIntegrationConnection {
     for (let attempt = 0; attempt <= TestIntegrationConnection.RETRY_DELAYS_MS.length; attempt += 1) {
       if (attempt > 0) await sleep(TestIntegrationConnection.RETRY_DELAYS_MS[attempt - 1]);
 
-      last = await this.verifyOnce(integration);
+      last = await withDeadline(this.verifyOnce(integration), TestIntegrationConnection.ATTEMPT_TIMEOUT_MS, {
+        status: VerifyCredentialsStatusEnum.UNREACHABLE,
+      });
 
       if (!last) {
-        return { status: IntegrationConnectionStatusEnum.UNSUPPORTED, message: MESSAGES.unsupported, attempts: 0 };
+        return {
+          status: IntegrationConnectionStatusEnum.UNSUPPORTED,
+          message: MESSAGES.unsupported,
+          attempts: 0,
+          revision,
+        };
       }
 
       statuses.push(last.status);
@@ -118,6 +133,7 @@ export class TestIntegrationConnection {
       status,
       message: status === (last?.status as string) && last?.message ? last.message : MESSAGES[status],
       attempts: statuses.length,
+      revision,
     };
   }
 
@@ -147,7 +163,10 @@ export class TestIntegrationConnection {
     let handler: ReturnType<ChannelFactory['getHandler']>;
     try {
       // A fresh factory per check: factories reuse handler instances, and building one swaps its provider.
-      handler = new ChannelFactory().getHandler(integration, integration.channel as HandlerChannel);
+      // Email handlers take the sender through options, as sends and `CheckIntegrationEMail` do.
+      handler = new ChannelFactory().getHandler(integration, integration.channel as HandlerChannel, {
+        from: integration.credentials?.from,
+      });
     } catch (error) {
       // No handler for this provider, or its constructor refused the stored credentials.
       this.logger.warn(
@@ -170,22 +189,23 @@ export class TestIntegrationConnection {
     }
   }
 
-  /** MS Teams: an app-only Graph token is only issued for a valid client id / secret / tenant. */
-  private async verifyMsTeams(integration: IntegrationEntity): Promise<IVerifyCredentialsResponse> {
+  /**
+   * MS Teams: an app-only Graph token is only issued for a valid client id / secret / tenant. The token is requested
+   * fresh (not from the 55-minute cache), so a secret revoked since the last send is caught.
+   * Without bot app credentials the integration delivers through incoming webhooks, which have nothing to check.
+   */
+  private async verifyMsTeams(integration: IntegrationEntity): Promise<IVerifyCredentialsResponse | null> {
     const credentials = (integration.credentials ?? {}) as Record<string, string | undefined>;
     const { clientId, secretKey, tenantId } = credentials;
 
     if (!clientId || !secretKey || !tenantId) {
-      return {
-        status: VerifyCredentialsStatusEnum.INVALID,
-        message: 'The client ID, client secret or tenant ID is missing.',
-      };
+      return null;
     }
 
     try {
-      const token = await this.msTeamsTokenService.getGraphToken(clientId, secretKey, tenantId);
+      const isIssued = await this.msTeamsTokenService.verifyGraphCredentials(clientId, secretKey, tenantId);
 
-      return { status: token ? VerifyCredentialsStatusEnum.VALID : VerifyCredentialsStatusEnum.UNREACHABLE };
+      return { status: isIssued ? VerifyCredentialsStatusEnum.VALID : VerifyCredentialsStatusEnum.UNREACHABLE };
     } catch (error) {
       if (!axios.isAxiosError(error) || !error.response) return { status: VerifyCredentialsStatusEnum.UNREACHABLE };
 
@@ -205,4 +225,24 @@ export class TestIntegrationConnection {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Resolves with `fallback` if `promise` hasn't settled within `ms`. The slow call is left to finish on its own. */
+async function withDeadline<T, F>(promise: Promise<T>, ms: number, fallback: F): Promise<T | F> {
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<F>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+
+  try {
+    return await Promise.race([promise, deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function toRevision(updatedAt: Date | string | undefined): string | undefined {
+  if (!updatedAt) return undefined;
+
+  return new Date(updatedAt).toISOString();
 }

@@ -219,6 +219,8 @@ export interface ITestIntegrationConnectionResponse {
   message: string;
   /** How many times the provider was called before reaching the result. */
   attempts: number;
+  /** The integration's `updatedAt` when its credentials were read, so a caller can tell if they changed since. */
+  revision?: string;
 }
 
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */

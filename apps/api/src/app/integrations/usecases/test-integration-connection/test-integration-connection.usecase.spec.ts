@@ -17,6 +17,7 @@ const ENVIRONMENT_ID = '69f84d848bed9b0a73216d98';
 const ORGANIZATION_ID = '69f84d848bed9b0a73216d99';
 
 const { VALID, INVALID, UNREACHABLE, INCONCLUSIVE } = VerifyCredentialsStatusEnum;
+const UPDATED_AT = new Date('2026-11-01T10:00:00.000Z');
 
 function buildHarness(integration: Record<string, unknown> = {}) {
   const integrationRepository = {
@@ -27,10 +28,11 @@ function buildHarness(integration: Record<string, unknown> = {}) {
       providerId: SmsProviderIdEnum.Twilio,
       channel: ChannelTypeEnum.SMS,
       credentials: { accountSid: 'AC123', token: 'secret' },
+      updatedAt: UPDATED_AT,
       ...integration,
     }),
   };
-  const msTeamsTokenService = { getGraphToken: sinon.stub() };
+  const msTeamsTokenService = { verifyGraphCredentials: sinon.stub() };
   const logger = { setContext: sinon.stub(), info: sinon.stub(), warn: sinon.stub() };
 
   const usecase = new TestIntegrationConnection(
@@ -59,14 +61,17 @@ function stubProviderAnswers(...statuses: VerifyCredentialsStatusEnum[]) {
 
 describe('TestIntegrationConnection', () => {
   const originalDelays = TestIntegrationConnection.RETRY_DELAYS_MS;
+  const originalTimeout = TestIntegrationConnection.ATTEMPT_TIMEOUT_MS;
 
   beforeEach(() => {
     TestIntegrationConnection.RETRY_DELAYS_MS = [0, 0];
+    TestIntegrationConnection.ATTEMPT_TIMEOUT_MS = 50;
     sinon.stub(GetDecryptedIntegrations, 'getDecryptedCredentials').callsFake((integration) => integration);
   });
 
   afterEach(() => {
     TestIntegrationConnection.RETRY_DELAYS_MS = originalDelays;
+    TestIntegrationConnection.ATTEMPT_TIMEOUT_MS = originalTimeout;
     sinon.restore();
   });
 
@@ -81,6 +86,41 @@ describe('TestIntegrationConnection', () => {
       _environmentId: ENVIRONMENT_ID,
       _organizationId: ORGANIZATION_ID,
     });
+  });
+
+  it('returns the revision whose credentials were tested', async () => {
+    const { usecase } = buildHarness();
+    stubProviderAnswers(VALID);
+
+    const result = await usecase.execute(command);
+
+    expect(result.revision).to.equal(UPDATED_AT.toISOString());
+  });
+
+  it('passes the saved email sender to the handler', async () => {
+    const { usecase } = buildHarness({
+      providerId: EmailProviderIdEnum.Postmark,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'key', from: 'hello@example.com' },
+    });
+    stubProviderAnswers(VALID);
+
+    await usecase.execute(command);
+
+    const getHandler = ChannelFactory.prototype.getHandler as sinon.SinonStub;
+    expect(getHandler.firstCall.args[2]).to.deep.equal({ from: 'hello@example.com' });
+  });
+
+  it('treats an attempt that exceeds the deadline as unreachable', async () => {
+    const { usecase } = buildHarness();
+    sinon
+      .stub(ChannelFactory.prototype, 'getHandler')
+      .returns({ verifyCredentials: () => new Promise(() => undefined) } as any);
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(IntegrationConnectionStatusEnum.UNREACHABLE);
+    expect(result.attempts).to.equal(3);
   });
 
   it('reports valid after one attempt', async () => {
@@ -184,9 +224,9 @@ describe('TestIntegrationConnection', () => {
       credentials: { clientId: 'client', secretKey: 'secret', tenantId: 'tenant' },
     };
 
-    it('is valid when a Graph token is issued', async () => {
+    it('is valid when a fresh Graph token is issued', async () => {
       const { usecase, msTeamsTokenService } = buildHarness(msTeams);
-      msTeamsTokenService.getGraphToken.resolves('token');
+      msTeamsTokenService.verifyGraphCredentials.resolves(true);
 
       const result = await usecase.execute(command);
 
@@ -195,7 +235,7 @@ describe('TestIntegrationConnection', () => {
 
     it('is invalid when Azure AD rejects the client', async () => {
       const { usecase, msTeamsTokenService } = buildHarness(msTeams);
-      msTeamsTokenService.getGraphToken.rejects(
+      msTeamsTokenService.verifyGraphCredentials.rejects(
         Object.assign(new Error('Request failed'), {
           isAxiosError: true,
           response: { status: 401, data: { error: 'invalid_client' } },
@@ -205,6 +245,15 @@ describe('TestIntegrationConnection', () => {
       const result = await usecase.execute(command);
 
       expect(result.status).to.equal(IntegrationConnectionStatusEnum.INVALID);
+    });
+
+    it('is unsupported for webhook-only integrations without bot credentials', async () => {
+      const { usecase, msTeamsTokenService } = buildHarness({ ...msTeams, credentials: {} });
+
+      const result = await usecase.execute(command);
+
+      expect(result.status).to.equal(IntegrationConnectionStatusEnum.UNSUPPORTED);
+      expect(msTeamsTokenService.verifyGraphCredentials.called).to.equal(false);
     });
   });
 });

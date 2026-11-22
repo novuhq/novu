@@ -19,7 +19,12 @@ import {
   RiStarLine,
 } from 'react-icons/ri';
 import { put } from '@/api/api.client';
-import { deleteIntegration, setAsPrimaryIntegration, testIntegrationConnection } from '@/api/integrations';
+import {
+  deleteIntegration,
+  getIntegrations,
+  setAsPrimaryIntegration,
+  testIntegrationConnection,
+} from '@/api/integrations';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
   DropdownMenu,
@@ -142,23 +147,57 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: testToastId }),
   });
 
+  /**
+   * Pauses after rejected credentials, but only if the integration is still the revision that was tested:
+   * if someone saved new credentials while the check ran, the result is stale and nothing is paused.
+   */
+  const pauseIfUnchanged = async (revision: string | undefined, message: string) => {
+    const toastOptions = { id: testToastId, duration: 10_000 };
+    let fresh: IIntegration | undefined;
+
+    try {
+      if (!currentEnvironment) throw new Error('No environment selected');
+      const latest = await queryClient.fetchQuery({
+        queryKey: [QueryKeys.fetchIntegrations, currentEnvironment._id],
+        queryFn: () => getIntegrations({ environment: currentEnvironment }),
+        staleTime: 0,
+      });
+      fresh = latest.find((candidate) => candidate._id === integration._id);
+    } catch {
+      return showErrorToast(
+        `${message} Couldn't confirm ${integration.name} is unchanged, so it wasn't paused. Pause it manually.`,
+        'Credentials rejected',
+        toastOptions
+      );
+    }
+
+    const freshUpdatedAt = (fresh as (IIntegration & { updatedAt?: string }) | undefined)?.updatedAt;
+    const isSameRevision = !revision || !freshUpdatedAt || new Date(freshUpdatedAt).toISOString() === revision;
+
+    if (!fresh || !isSameRevision) {
+      return showWarningToast(
+        `${integration.name} changed while it was being verified, so it wasn't paused. Verify it again.`,
+        'Verification out of date',
+        toastOptions
+      );
+    }
+
+    if (!fresh.active) {
+      return showErrorToast(`${message} ${integration.name} is already paused.`, 'Credentials rejected', toastOptions);
+    }
+
+    requestPause('invalid-credentials');
+  };
+
   /** Shows the outcome; on confirmed-invalid credentials, pauses the integration through the regular Pause flow. */
-  const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
+  const handleConnectionResult = ({ status, message, revision }: ITestIntegrationConnectionResponse) => {
     const toastOptions = { id: testToastId, duration: 8_000 };
 
     switch (status) {
       case IntegrationConnectionStatusEnum.VALID:
         return showSuccessToast(`${integration.name} is verified. ${message}`, undefined, toastOptions);
       case IntegrationConnectionStatusEnum.INVALID:
-        if (!integration.active) {
-          return showErrorToast(
-            `${message} ${integration.name} is already paused.`,
-            'Credentials rejected',
-            toastOptions
-          );
-        }
-
-        return requestPause('invalid-credentials');
+        return pauseIfUnchanged(revision, message);
       case IntegrationConnectionStatusEnum.UNREACHABLE:
         return showWarningToast(
           `${message} Nothing was changed. Try again in a few minutes.`,
