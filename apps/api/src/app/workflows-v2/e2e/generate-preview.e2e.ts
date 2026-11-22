@@ -2396,6 +2396,7 @@ function buildEmailControlValuesPayload(): EmailControlType {
   return {
     subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
     body: JSON.stringify(fullCodeSnippet()),
+    editorType: 'block',
     disableOutputSanitization: false,
   };
 }
