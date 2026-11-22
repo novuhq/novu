@@ -54,6 +54,8 @@ function toHealth(
 }
 
 const HEALTH_CACHE_TIME_MS = 10 * 60_000;
+/** The caller of `verify` shows its own error, so the app-wide query error toast stays out of it. */
+const HEALTH_QUERY_META = { showError: false };
 
 /**
  * Health per integration, from the last "Verify integration" check. Checks never run on their own: for some
@@ -78,6 +80,7 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
       enabled: false,
       gcTime: HEALTH_CACHE_TIME_MS,
       retry: false,
+      meta: HEALTH_QUERY_META,
     })),
   });
 
@@ -96,6 +99,7 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
       staleTime: 0,
       gcTime: HEALTH_CACHE_TIME_MS,
       retry: false,
+      meta: HEALTH_QUERY_META,
     });
 
   return { healthById, verify };
