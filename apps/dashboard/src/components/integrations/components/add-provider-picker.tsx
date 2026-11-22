@@ -18,6 +18,7 @@ import { cn } from '@/utils/ui';
 import { INTEGRATION_CHANNELS } from '../utils/channels';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { ChannelSectionIcon } from './integration-channel-group';
+import { ProviderDeprecatedBadge } from './provider-deprecation';
 import { ProviderIcon } from './provider-icon';
 import { ProviderRequestDialog } from './provider-request-dialog';
 import { CHANNEL_LABELS, GITHUB_NEW_ISSUE_URL } from './utils/helpers';
@@ -456,7 +457,10 @@ function ProviderCard({
         <ProviderIcon providerId={provider.id} providerDisplayName={provider.displayName} className="size-[19px]" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-label-sm text-text-strong truncate">{provider.displayName}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="text-label-sm text-text-strong truncate">{provider.displayName}</span>
+          <ProviderDeprecatedBadge provider={provider} className="shrink-0" />
+        </span>
         {description && <span className="text-paragraph-xs text-text-soft truncate">{description}</span>}
       </span>
       {isInstalled && <RiCheckboxCircleFill className="text-success size-4 shrink-0" aria-label="Installed" />}

@@ -28,7 +28,7 @@ export function IntegrationSheet({ isOpened, onClose, provider, mode, step, onBa
       className={cn(
         'flex-col',
         // The provider picker lays providers out two per row, so it needs the wider drawer.
-        mode === 'create' && step === 'select' ? 'w-[600px] max-w-[600px] sm:max-w-[600px]' : 'w-auto min-w-[460px]'
+        mode === 'create' && step === 'select' ? 'w-[600px] max-w-full sm:max-w-[600px]' : 'w-auto min-w-[460px]'
       )}
     >
       <IntegrationSheetHeader provider={provider} mode={mode} step={step} onBack={onBack} />
