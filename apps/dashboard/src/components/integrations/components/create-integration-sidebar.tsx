@@ -1,7 +1,8 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, CopilotPageEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
@@ -53,6 +54,11 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
   const { catalogProviders, integrationsByChannel } = useIntegrationList(searchQuery);
   const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
+
+  // The provider whose connect form is open: a filter, since no integration exists yet.
+  useRegisterCopilotPageView(CopilotPageEnum.INTEGRATIONS, {
+    viewing: isOpened && provider ? { filters: { provider: provider.id } } : undefined,
+  });
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 

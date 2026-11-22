@@ -23,3 +23,17 @@ export const ACTIVITY_TOOL_NAMES = [
 ] as const;
 
 export type ActivityToolName = (typeof ACTIVITY_TOOL_NAMES)[number];
+
+/** Every tool `registerIntegrationTools` registers, by public MCP name. */
+export const INTEGRATION_TOOL_NAMES = {
+	DELETE_INTEGRATION: "delete_integration",
+	GET_ACTIVE_INTEGRATIONS: "get_active_integrations",
+	GET_INTEGRATION_SETUP_LINK: "get_integration_setup_link",
+	GET_INTEGRATIONS: "get_integrations",
+	SET_ACTIVITY_TRACKING: "set_activity_tracking",
+	SET_PRIMARY_INTEGRATION: "set_primary_integration",
+	UPDATE_INTEGRATION: "update_integration",
+} as const;
+
+export type IntegrationToolName =
+	(typeof INTEGRATION_TOOL_NAMES)[keyof typeof INTEGRATION_TOOL_NAMES];

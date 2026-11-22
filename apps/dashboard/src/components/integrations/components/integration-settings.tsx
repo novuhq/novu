@@ -79,6 +79,11 @@ export function IntegrationSettings({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { currentEnvironment, environments } = useEnvironment();
+  // A Copilot setup link can name the environment to connect the provider in.
+  const linkedEnvironmentId = searchParams.get('environmentId');
+  const defaultEnvironmentId = environments?.some((env) => env._id === linkedEnvironmentId)
+    ? linkedEnvironmentId
+    : currentEnvironment?._id;
 
   const form = useForm<IntegrationFormData>({
     mode: 'all',
@@ -101,7 +106,7 @@ export function IntegrationSettings({
           primary: true,
           credentials: {},
           configurations: {},
-          environmentId: currentEnvironment?._id ?? '',
+          environmentId: defaultEnvironmentId ?? '',
           rules: null,
         },
   });
