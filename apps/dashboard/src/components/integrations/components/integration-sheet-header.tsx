@@ -1,6 +1,7 @@
 import { IProviderConfig } from '@novu/shared';
 import { RiArrowLeftSLine } from 'react-icons/ri';
-import { SheetHeader, SheetTitle } from '@/components/primitives/sheet';
+import { SheetDescription, SheetHeader, SheetTitle } from '@/components/primitives/sheet';
+import { useEnvironment } from '@/context/environment/hooks';
 import { CompactButton } from '../../primitives/button-compact';
 import { ProviderDeprecatedBadge } from './provider-deprecation';
 import { ProviderIcon } from './provider-icon';
@@ -13,21 +14,17 @@ type IntegrationSheetHeaderProps = {
 };
 
 export function IntegrationSheetHeader({ provider, mode, onBack, step }: IntegrationSheetHeaderProps) {
+  const { currentEnvironment } = useEnvironment();
+
   if (mode === 'create' && step === 'select') {
     return (
-      <SheetHeader className="borde-neutral-300 space-y-1 border-b p-3">
-        <SheetTitle className="text-lg">Connect Integration</SheetTitle>
-        <p className="text-foreground-400 text-xs">
-          Select an integration to connect with your application.{' '}
-          <a
-            href="https://docs.novu.co/platform/integrations/overview"
-            target="_blank"
-            className="underline"
-            rel="noopener"
-          >
-            Learn More
-          </a>
-        </p>
+      <SheetHeader className="border-stroke-soft space-y-0.5 border-b py-3 pl-5 pr-12">
+        <SheetTitle className="text-label-md text-text-strong">Add a provider</SheetTitle>
+        <SheetDescription className="text-paragraph-xs text-text-sub">
+          {currentEnvironment?.name
+            ? `Connects to ${currentEnvironment.name}. You can add it to other environments after.`
+            : 'You can add it to other environments after.'}
+        </SheetDescription>
       </SheetHeader>
     );
   }

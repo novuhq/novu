@@ -9,10 +9,9 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ProviderIcon } from './provider-icon';
 import { ProviderRequestDialog } from './provider-request-dialog';
+import { GITHUB_NEW_ISSUE_URL } from './utils/helpers';
 
 const TILE_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
-// Self-hosted installs can't reach the Novu team's inbox, so they ask on GitHub.
-const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
 
 /** Shown when a search matches nothing installed and nothing in the store. */
 export function IntegrationSearchEmptyState({ query }: { query: string }) {

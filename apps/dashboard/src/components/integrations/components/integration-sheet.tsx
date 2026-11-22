@@ -1,6 +1,7 @@
 import { IProviderConfig } from '@novu/shared';
 import { ReactNode } from 'react';
 import { NonModalSheet } from '@/components/primitives/sheet';
+import { cn } from '@/utils/ui';
 import { IntegrationSheetHeader } from './integration-sheet-header';
 
 type IntegrationSheetProps = {
@@ -21,7 +22,15 @@ export function IntegrationSheet({ isOpened, onClose, provider, mode, step, onBa
   };
 
   return (
-    <NonModalSheet open={isOpened} onOpenChange={handleOpenChange} className="w-auto min-w-[460px] flex-col">
+    <NonModalSheet
+      open={isOpened}
+      onOpenChange={handleOpenChange}
+      className={cn(
+        'flex-col',
+        // The provider picker lays providers out two per row, so it needs the wider drawer.
+        mode === 'create' && step === 'select' ? 'w-[600px] max-w-full sm:max-w-[600px]' : 'w-auto min-w-[460px]'
+      )}
+    >
       <IntegrationSheetHeader provider={provider} mode={mode} step={step} onBack={onBack} />
       {children}
     </NonModalSheet>

@@ -109,3 +109,6 @@ export function hasRoutingConditions(integration: IIntegration) {
     (!!integration.conditions && integration.conditions.length > 0)
   );
 }
+
+// Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
+export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';

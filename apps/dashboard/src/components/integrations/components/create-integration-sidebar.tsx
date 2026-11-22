@@ -1,6 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -8,10 +7,9 @@ import { showSuccessToast } from '../../../components/primitives/sonner-helpers'
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
 import { buildRoute, ROUTES } from '../../../utils/routes';
 import { Button } from '../../primitives/button';
-import { Input } from '../../primitives/input';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
-import { ChannelTabs } from './channel-tabs';
+import { AddProviderPicker } from './add-provider-picker';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
@@ -52,7 +50,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       onBack: handleBack,
     });
 
-  const { catalogProviders, integrationsByChannel } = useIntegrationList(searchQuery);
+  const { catalogProviders } = useIntegrationList();
   const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -203,26 +201,13 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         onBack={onBack}
       >
         {step === 'select' ? (
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <div className="border-b p-3">
-              <Input
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search providers across channels..."
-                leadingIcon={RiSearchLine}
-                size="xs"
-              />
-            </div>
-            <div className="scrollbar-custom flex-1 overflow-y-auto">
-              <ChannelTabs
-                integrationsByChannel={integrationsByChannel}
-                searchQuery={searchQuery}
-                onIntegrationSelect={onIntegrationSelect}
-                defaultChannel={searchParams.get('channel')}
-              />
-            </div>
-          </div>
+          <AddProviderPicker
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchInputRef={searchInputRef}
+            onProviderSelect={onIntegrationSelect}
+            defaultChannel={searchParams.get('channel')}
+          />
         ) : provider ? (
           <>
             <div className="scrollbar-custom flex-1 overflow-y-auto">
