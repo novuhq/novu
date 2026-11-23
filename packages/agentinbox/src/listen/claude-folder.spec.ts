@@ -195,14 +195,17 @@ describe('decideForContact', () => {
   });
 
   it('keeps the key closed through the links a command names, from where Claude Code’s shell is', () => {
-    const given = folder({ allow: ['Bash(cat:*)', 'Bash(grep:*)'] });
+    const given = folder({ allow: ['Bash(cat:*)', 'Bash(grep:*)', 'Bash(cd docs)'] });
     mkdirSync(join(project, 'docs'));
     symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'inbox'));
     writeFileSync(join(project, 'docs', 'a.md'), '');
 
     expect(decide(given, 'Bash', { command: 'cat docs/a.md' })).toBe('allow');
+    expect(decide(given, 'Bash', { command: 'cd docs && cat a.md' })).toBe('allow');
     expect(decide(given, 'Bash', { command: 'cat docs/inbox/config.json' })).toBe('deny');
     expect(decideForContact(given, 'Bash', { command: 'cat inbox/config.json' }, join(project, 'docs'))).toBe('deny');
+    // A `cd` in the chain moves where the next command runs.
+    expect(decide(given, 'Bash', { command: 'cd docs && cat inbox/config.json' })).toBe('deny');
     expect(decide(given, 'Bash', { command: `grep -r secretKey ${home}` })).toBe('deny');
   });
 
