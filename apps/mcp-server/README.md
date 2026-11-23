@@ -176,12 +176,13 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_notifications` | Fetch events with filtering by channel, template, subscriber, date, and more |
 | `get_notification` | Get a specific notification with detailed execution logs |
 | `find_subscribers` | Search subscribers by email, name, phone, or ID |
-| `get_subscriber` | Get a single subscriber by ID |
+| `get_subscriber` | Get a single subscriber by ID (push tokens and webhook URLs masked) |
+| `get_subscriber_reachability` | Check which channels can reach a subscriber and why not, without phone numbers or credentials |
 | `create_subscriber` | Create a subscriber |
 | `update_subscriber` | Update a subscriber's profile fields |
 | `delete_subscriber` | Delete a subscriber |
 | `get_subscriber_preferences` | Get a subscriber's preferences across all channels and workflows |
-| `update_subscriber_preferences` | Update a subscriber's channel preferences globally or per workflow |
+| `update_subscriber_preferences` | Update some of a subscriber's channel preferences, globally or per workflow |
 | `get_workflows` | List all workflows with their basic information |
 | `get_workflow` | Get a workflow's full definition, steps, and payload schema |
 | `create_workflow` | Create a workflow with steps, payload schema, preferences, and optional agent assignment |
