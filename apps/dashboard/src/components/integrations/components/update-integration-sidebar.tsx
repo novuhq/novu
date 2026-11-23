@@ -27,6 +27,7 @@ import {
   useIntegrationHealth,
 } from './hooks/use-integration-health';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { useMakePrimary } from './hooks/use-make-primary';
 import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
@@ -43,7 +44,7 @@ import { DiscardChangesModal } from './modals/discard-changes-modal';
 import { MakePrimaryModal } from './modals/make-primary-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { cleanCredentials, isDemoIntegration } from './utils/helpers';
+import { cleanCredentials, hasRoutingConditions, isDemoIntegration } from './utils/helpers';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -87,6 +88,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     mode: 'update',
     setPrimaryIntegration: setPrimaryIntegration,
   });
+  const makePrimary = useMakePrimary(integration);
 
   const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const queryClient = useQueryClient();
@@ -285,18 +287,15 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
   const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '', needsReconnect: false };
   const formId = `integration-configuration-form-${provider.id}`;
+  const onMakePrimary = canMakePrimary(integration, isReadOnly, isChannelSupportPrimary) ? makePrimary.open : undefined;
 
-  // Inbox and Novu's demo providers are set up in every environment by Novu, so there's nothing to copy.
-  const duplicateTargets =
-    isReadOnly || isDemoIntegration(integration.providerId) || integration.channel === ChannelTypeEnum.IN_APP
-      ? []
-      : getDuplicateTargets(integration, environments ?? [], matches);
-  const keepsSecretsBehind = duplicateTargets.some(
-    (target) => !target.existing && !shouldCopySecrets(environment, target.environment)
-  );
-  const duplicateNote = keepsSecretsBehind
-    ? `Copies settings and credentials. From ${environment?.name ?? 'a live environment'} into development environments, secrets are not copied. Paste them there.`
-    : 'Copies settings and credentials.';
+  const { duplicateTargets, duplicateNote } = getDuplicateMenu({
+    integration,
+    environment,
+    environments: environments ?? [],
+    matches,
+    isReadOnly,
+  });
 
   const activityEnvironmentSlug = environment?.slug;
   const viewActivity =
@@ -334,6 +333,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             }
             onDuplicate={handleDuplicate}
             onCopyIdentifier={copyIdentifier}
+            onMakePrimary={onMakePrimary}
             onViewActivity={viewActivity}
             onDelete={() => setIsDeleteDialogOpen(true)}
           />
@@ -361,6 +361,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
               provider={provider}
               integration={integration}
               onSubmit={handleSubmitWithPrimaryCheck}
+              // Taking primary from another integration confirms first; with none to take it from, Save applies it.
+              onRequestPrimary={existingPrimaryIntegration ? onMakePrimary : undefined}
               mode="update"
               hasOtherProviders={!!hasOtherProviders}
               isReadOnly={isReadOnly}
@@ -396,6 +398,19 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         isLoading={isDeleting || isSettingPrimary}
       />
 
+      <MakePrimaryModal
+        isOpen={makePrimary.isOpen}
+        newPrimaryName={integration.name}
+        currentPrimaryName={existingPrimaryIntegration?.name}
+        channel={integration.channel}
+        environment={environment}
+        environments={environments ?? []}
+        removesConditions={hasRoutingConditions(integration)}
+        isLoading={makePrimary.isPending}
+        onCancel={makePrimary.close}
+        onConfirm={makePrimary.confirm}
+      />
+
       <PrimaryIntegrationModal
         integration={integration}
         integrations={integrations ?? []}
@@ -419,6 +434,40 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
       />
     </>
   );
+}
+
+/** "Duplicate to…": the environments to copy into, and what the copy leaves behind. */
+function getDuplicateMenu({
+  integration,
+  environment,
+  environments,
+  matches,
+  isReadOnly,
+}: {
+  integration: IIntegration;
+  environment?: IEnvironment;
+  environments: IEnvironment[];
+  matches: IIntegration[];
+  isReadOnly: boolean;
+}) {
+  // Inbox and Novu's demo providers are set up in every environment by Novu, so there's nothing to copy.
+  const duplicateTargets =
+    isReadOnly || isDemoIntegration(integration.providerId) || integration.channel === ChannelTypeEnum.IN_APP
+      ? []
+      : getDuplicateTargets(integration, environments, matches);
+  const keepsSecretsBehind = duplicateTargets.some(
+    (target) => !target.existing && !shouldCopySecrets(environment, target.environment)
+  );
+  const duplicateNote = keepsSecretsBehind
+    ? `Copies settings and credentials. From ${environment?.name ?? 'a live environment'} into development environments, secrets are not copied. Paste them there.`
+    : 'Copies settings and credentials.';
+
+  return { duplicateTargets, duplicateNote };
+}
+
+/** Primary applies to active integrations on channels that have one, and needs write access. */
+function canMakePrimary(integration: IIntegration, isReadOnly: boolean, isChannelSupportPrimary: boolean) {
+  return !isReadOnly && isChannelSupportPrimary && integration.active && !integration.primary;
 }
 
 /** Saving a change to primary: confirm taking over from the current primary, or pick who takes over this one's. */

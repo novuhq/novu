@@ -16,6 +16,7 @@ import {
   RiInformationLine,
   RiMoreFill,
   RiStackLine,
+  RiStarLine,
 } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -153,6 +154,7 @@ export function ManageIntegrationHeader({
   onVerify,
   onDuplicate,
   onCopyIdentifier,
+  onMakePrimary,
   onViewActivity,
   onDelete,
 }: {
@@ -167,6 +169,8 @@ export function ManageIntegrationHeader({
   onVerify: () => void;
   onDuplicate: (environment: IEnvironment) => void;
   onCopyIdentifier: () => void;
+  /** Hidden when it's already primary, paused, or the member can't edit it. */
+  onMakePrimary?: () => void;
   /** Hidden when the member can't read the activity feed. */
   onViewActivity?: () => void;
   onDelete: () => void;
@@ -216,6 +220,12 @@ export function ManageIntegrationHeader({
             <RiStackLine />
             Copy identifier
           </DropdownMenuItem>
+          {onMakePrimary && (
+            <DropdownMenuItem className={ITEM_CLASS} onSelect={onMakePrimary}>
+              <RiStarLine />
+              Make primary
+            </DropdownMenuItem>
+          )}
           {onViewActivity && (
             <DropdownMenuItem className={ITEM_CLASS} onSelect={onViewActivity}>
               <RiBarChartBoxLine />

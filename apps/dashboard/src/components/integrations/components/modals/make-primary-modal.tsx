@@ -39,6 +39,8 @@ export type MakePrimaryModalProps = {
   /** The environment the integration is in. */
   environment?: IEnvironment;
   environments: IEnvironment[];
+  /** A primary can't have routing conditions, so making it primary removes them. */
+  removesConditions?: boolean;
   isLoading?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -52,6 +54,7 @@ export function MakePrimaryModal({
   channel,
   environment,
   environments,
+  removesConditions,
   isLoading,
   onCancel,
   onConfirm,
@@ -59,6 +62,7 @@ export function MakePrimaryModal({
   const channelLabel = channel ? CHANNEL_LABELS[channel] : 'Channel';
   const where = environment ? ` in ${environment.name}` : '';
   const stays = currentPrimaryName ? ` ${currentPrimaryName} stays connected, so you can switch back any time.` : '';
+  const conditions = removesConditions ? " Its routing conditions are removed, since a primary can't have any." : '';
   const others = otherEnvironmentNames(environment, environments);
   const note =
     others.length === 0
@@ -73,7 +77,7 @@ export function MakePrimaryModal({
       icon={<RiStarLine className="size-[18px]" />}
       iconTileClassName="bg-bg-weak border-stroke-soft text-text-strong border"
       title={`Make ${newPrimaryName} your primary ${channelNoun(channel)} provider?`}
-      description={`${channelLabel} steps${where} will send through ${newPrimaryName} from now on.${stays}`}
+      description={`${channelLabel} steps${where} will send through ${newPrimaryName} from now on.${stays}${conditions}`}
       note={note}
       cancelLabel="Cancel"
       confirmLabel="Make primary"

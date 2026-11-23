@@ -6,7 +6,7 @@ import {
   PermissionsEnum,
 } from '@novu/shared';
 import { useState } from 'react';
-import { Control, useWatch, UseFormSetValue } from 'react-hook-form';
+import { Control, UseFormSetValue, useWatch } from 'react-hook-form';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
@@ -30,6 +30,8 @@ type GeneralSettingsProps = {
   provider?: IProviderConfig;
   formData?: IntegrationFormData;
   onAutoConfigureSuccess?: (integration: IIntegration) => void;
+  /** When set, turning Primary on asks for confirmation and applies it right away instead of on save. */
+  onRequestPrimary?: () => void;
 };
 
 export function GeneralSettings({
@@ -45,6 +47,7 @@ export function GeneralSettings({
   provider,
   formData,
   onAutoConfigureSuccess,
+  onRequestPrimary,
 }: GeneralSettingsProps) {
   const isInboundWebhooksEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_WEBHOOKS_ENABLED, true);
   const isInboundWebhooksConfigurationEnabled = useFeatureFlag(
@@ -93,6 +96,12 @@ export function GeneralSettings({
                   id={field.name}
                   checked={field.value}
                   onCheckedChange={(checked) => {
+                    if (checked && onRequestPrimary) {
+                      onRequestPrimary();
+
+                      return;
+                    }
+
                     if (checked && rules) {
                       setShowPrimaryConfirm(true);
 

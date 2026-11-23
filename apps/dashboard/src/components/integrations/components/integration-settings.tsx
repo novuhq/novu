@@ -68,6 +68,8 @@ type IntegrationConfigurationProps = {
     /** Labels of the edited fields, as the form shows them. */
     changedFields: string[];
   }) => void;
+  /** Passed to the Primary toggle: turning it on confirms and applies right away (manage drawer). */
+  onRequestPrimary?: () => void;
   /** "manage": the sections of the manage drawer, for an existing integration. */
   layout?: 'default' | 'manage';
   /** Turns on the Quick setup / Manual layout for Slack in the create flow. */
@@ -151,6 +153,7 @@ export function IntegrationSettings({
   agentIdentifier,
   testSubscriberId,
   onFormStateChange,
+  onRequestPrimary,
   slackQuickSetup,
   layout = 'default',
 }: IntegrationConfigurationProps) {
@@ -186,6 +189,14 @@ export function IntegrationSettings({
   });
 
   const { handleSubmit, control, setValue, formState } = form;
+
+  // Primary can change outside the form (the drawer's "Make primary"), so the toggle follows it unless it was edited.
+  const savedPrimary = integration?.primary ?? false;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when the saved value changes
+  useEffect(() => {
+    if (!integration || form.getFieldState('primary').isDirty) return;
+    form.resetField('primary', { defaultValue: savedPrimary });
+  }, [savedPrimary]);
 
   const usesSetupLayout =
     mode === 'create' &&
@@ -391,6 +402,7 @@ export function IntegrationSettings({
           <SettingsSection title="General settings" defaultOpen={!hasCredentialFields}>
             <div className="flex flex-col gap-3">
               <GeneralSettings
+                onRequestPrimary={onRequestPrimary}
                 control={control}
                 setValue={setValue}
                 mode={mode}
