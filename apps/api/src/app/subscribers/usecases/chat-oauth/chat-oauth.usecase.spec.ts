@@ -4,6 +4,7 @@ import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepo
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { ChatOauthCommand } from './chat-oauth.command';
 import { ChatOauth } from './chat-oauth.usecase';
 import { decodeLegacyChatOauthState } from './legacy-chat-oauth-state';
@@ -29,6 +30,7 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let featureFlagsService: { getFlag: sinon.SinonStub };
+  let apiKeyRevocationService: sinon.SinonStubbedInstance<ApiKeyRevocationService>;
 
   function stubIntegration(credentials: Record<string, unknown>) {
     integrationRepository.findOne.resolves({
@@ -63,13 +65,16 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
       createdAt: new Date('2020-01-01'),
     } as any);
     stubHmacRequiredEnabled(true);
+    apiKeyRevocationService = sinon.createStubInstance(ApiKeyRevocationService);
+    apiKeyRevocationService.getSigningKeys.callsFake(async ({ apiKeys }) => apiKeys.map((apiKey) => apiKey.key));
 
     usecase = new ChatOauth(
       integrationRepository as any,
       environmentRepository as any,
       organizationRepository as any,
       featureFlagsService as unknown as FeatureFlagsService,
-      sinon.createStubInstance(PinoLogger) as any
+      sinon.createStubInstance(PinoLogger) as any,
+      apiKeyRevocationService as any
     );
 
     stubIntegration({ clientId: CLIENT_ID, secretKey: 'victim-secret' });
@@ -123,6 +128,20 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     stubIntegration({ clientId: CLIENT_ID, hmac: true });
 
     await expectRejection(usecase.execute(buildCommand({ hmacHash: 'not-the-right-hash' })), BadRequestException);
+  });
+
+  it('rejects an HMAC hash signed with a key the revocation policy stops from signing', async () => {
+    stubIntegration({ clientId: CLIENT_ID, hmac: true });
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    await expectRejection(
+      usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string })),
+      BadRequestException
+    );
+    expect(apiKeyRevocationService.getSigningKeys.firstCall.args[0]).to.deep.include({
+      organizationId: ORGANIZATION_ID,
+      environmentId: ENVIRONMENT_ID,
+    });
   });
 
   it('does not require an HMAC hash for allowlisted legacy organizations without integration HMAC', async () => {

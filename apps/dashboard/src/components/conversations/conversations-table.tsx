@@ -132,6 +132,7 @@ export function ConversationsTable({
           <Table
             isLoading={isLoading}
             loadingRow={<SkeletonRow />}
+            className="table-fixed"
             containerClassname="bg-transparent w-full flex flex-col overflow-y-auto overflow-x-hidden max-h-full rounded-lg border border-neutral-200 bg-white"
           >
             <TableHeader>

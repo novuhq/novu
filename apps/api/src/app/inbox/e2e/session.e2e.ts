@@ -1,10 +1,17 @@
-import { createContextHash, createHash } from '@novu/application-generic';
+import { CacheService, createContextHash, createHash } from '@novu/application-generic';
 import { ContextRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
+import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
+import sinon from 'sinon';
+import { AuthService } from '../../auth/services/auth.service';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import {
+  SubscriberSessionAuthMethodEnum,
+  SubscriberSessionAuthStatsService,
+  SubscriberSessionSourceEnum,
+} from '../../shared/services/subscriber-session-auth-stats.service';
 
 const integrationRepository = new IntegrationRepository();
 const contextRepository = new ContextRepository();
@@ -37,20 +44,26 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     defaultSchedule,
     context,
     contextHash,
+    clientVersion,
   }: {
     applicationIdentifier: string;
     subscriberId?: string;
-    subscriberHash?: string;
+    subscriberHash?: string | null;
     subscriber?: Record<string, unknown>;
     origin?: string;
     defaultSchedule?: Record<string, unknown>;
     context?: ContextPayload;
-    contextHash?: string;
+    contextHash?: string | null;
+    clientVersion?: string;
   }) => {
     const request = session.testAgent.post('/v1/inbox/session');
 
     if (origin) {
       request.set('origin', origin);
+    }
+
+    if (clientVersion) {
+      request.set('Novu-Client-Version', clientVersion);
     }
 
     return await request.send({
@@ -1376,7 +1389,165 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     expect(body.data.contextKeys).to.be.an('array');
     expect(body.data.contextKeys).to.have.lengthOf(0);
   });
+
+  it('should record session auth method and client version', async () => {
+    session = new UserSession();
+    await session.initialize({ noWidgetSession: true });
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+    });
+
+    const secretKey = session.environment.apiKeys[0].key;
+    const subscriberHash = createHash(secretKey, mockSubscriberId);
+
+    const first = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      subscriberHash,
+      clientVersion: '@novu/js@3.14.0',
+    });
+    expect(first.status).to.equal(201);
+
+    const second = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      subscriberHash,
+      clientVersion: '@novu/js@3.14.0',
+    });
+    expect(second.status).to.equal(201);
+
+    const rejected = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      subscriberHash: 'invalid-hash',
+      clientVersion: '@novu/js@3.14.0',
+    });
+    expect(rejected.status).to.equal(400);
+
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+
+    const noHeader = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+    });
+    expect(noHeader.status).to.equal(201);
+
+    const junkHeader = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      clientVersion: 'my-app/1.0',
+    });
+    expect(junkHeader.status).to.equal(201);
+
+    for (const clientVersion of ['@novu/js@03.14.0', `@novu/${'a'.repeat(33)}@1.0.0`]) {
+      const malformed = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        clientVersion,
+      });
+      expect(malformed.status).to.equal(201);
+    }
+
+    const hashedOff = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      subscriberHash,
+      clientVersion: '@novu/js@3.15.0-beta.2',
+    });
+    expect(hashedOff.status).to.equal(201);
+
+    const dashboard = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      origin: 'https://dashboard.novu.co',
+      clientVersion: '@novu/js@3.14.0',
+    });
+    expect(dashboard.status).to.equal(201);
+
+    expect(await sessionCounts(session.environment._id)).to.have.deep.members([
+      { authMethod: SubscriberSessionAuthMethodEnum.HMAC, client: '@novu/js@3.14.0', count: 2 },
+      { authMethod: SubscriberSessionAuthMethodEnum.NONE, client: 'unknown', count: 4 },
+      { authMethod: SubscriberSessionAuthMethodEnum.HMAC, client: '@novu/js@3.15.0', count: 1 },
+    ]);
+  });
+
+  it('should report session stats as unavailable when the cache is not ready', async () => {
+    const cacheStub = sinon.stub(CacheService.prototype, 'cacheEnabled').returns(false);
+
+    try {
+      const counts = await testServer
+        .getService(SubscriberSessionAuthStatsService)
+        .countLastDays(session.environment._id, 2);
+      expect(counts).to.equal(null);
+    } finally {
+      cacheStub.restore();
+    }
+  });
+
+  it('should not record a session that fails after authentication', async () => {
+    session = new UserSession();
+    await session.initialize({ noWidgetSession: true });
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+
+    const tokenStub = sinon
+      .stub(testServer.getService(AuthService), 'getSubscriberWidgetToken')
+      .rejects(new Error('token failure'));
+
+    try {
+      const { status } = await initializeSession({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: mockSubscriberId,
+        clientVersion: '@novu/js@3.14.0',
+      });
+      expect(status).to.equal(500);
+    } finally {
+      tokenStub.restore();
+    }
+
+    expect(await sessionCounts(session.environment._id)).to.deep.equal([]);
+  });
+
+  it('should cap distinct session clients per day at 100 and count the rest as other', async () => {
+    const stats = testServer.getService(SubscriberSessionAuthStatsService);
+    const environmentId = `cap-${randomBytes(8).toString('hex')}`;
+    const record = (clientVersion?: string) =>
+      stats.record({ environmentId, hmacValid: false, clientVersion, source: SubscriberSessionSourceEnum.INBOX });
+
+    for (let i = 0; i < 105; i += 1) {
+      await record(`@novu/js@1.0.${i}`);
+    }
+    await record(undefined);
+
+    const counts = await sessionCounts(environmentId);
+    const named = counts.filter((row) => row.client.startsWith('@novu/'));
+
+    expect(counts).to.have.lengthOf(102);
+    expect(counts).to.deep.include({ authMethod: SubscriberSessionAuthMethodEnum.NONE, client: 'other', count: 5 });
+    expect(counts).to.deep.include({ authMethod: SubscriberSessionAuthMethodEnum.NONE, client: 'unknown', count: 1 });
+    expect(named).to.have.lengthOf(100);
+    expect(named.every((row) => row.authMethod === SubscriberSessionAuthMethodEnum.NONE && row.count === 1)).to.equal(
+      true
+    );
+  });
 });
+
+async function sessionCounts(environmentId: string) {
+  const counts = await testServer.getService(SubscriberSessionAuthStatsService).countLastDays(environmentId, 2);
+  if (!counts) {
+    throw new Error('Subscriber session stats are unavailable');
+  }
+
+  return counts;
+}
 
 async function setIntegrationConfig({
   _environmentId,

@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { TimeUnitEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 // Throttle-specific time units (excluding seconds for performance reasons)
 const ThrottleTimeUnitEnum = {
@@ -51,7 +49,7 @@ export const throttleControlZodSchema = z
 
 export type ThrottleControlType = z.infer<typeof throttleControlZodSchema>;
 
-export const throttleControlSchema = zodToJsonSchema(throttleControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const throttleControlSchema = toControlJsonSchema(throttleControlZodSchema);
 
 export const throttleUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.THROTTLE,

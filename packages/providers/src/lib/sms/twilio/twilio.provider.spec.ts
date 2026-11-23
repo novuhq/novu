@@ -103,6 +103,52 @@ test('should initialize Twilio client with EU region config', () => {
   });
 });
 
+test('keeps the resolved recipient when a blank destination override was omitted', async () => {
+  const provider = new TwilioSmsProvider({
+    accountSid: 'AC<twilio-account-Sid>',
+    authToken: '<twilio-auth-Token>',
+    from: '+112345',
+  });
+
+  await provider.sendMessage(
+    {
+      to: '+15555555555',
+      content: 'SMS Content',
+      from: '+10000000000',
+    },
+    { statusCallback: 'https://example.com/sms' }
+  );
+
+  expect(twilioCreateMock).toHaveBeenCalledWith({
+    from: '+10000000000',
+    body: 'SMS Content',
+    to: '+15555555555',
+    statusCallback: 'https://example.com/sms',
+  });
+});
+
+test('a blank bridge to replaces the resolved recipient', async () => {
+  const provider = new TwilioSmsProvider({
+    accountSid: 'AC<twilio-account-Sid>',
+    authToken: '<twilio-auth-Token>',
+    from: '+112345',
+  });
+
+  await provider.sendMessage(
+    {
+      to: '+15555555555',
+      content: 'SMS Content',
+    },
+    { to: '   ' }
+  );
+
+  expect(twilioCreateMock).toHaveBeenCalledWith({
+    from: '+112345',
+    body: 'SMS Content',
+    to: '   ',
+  });
+});
+
 test('should initialize Twilio client without region config for US', () => {
   new TwilioSmsProvider({
     accountSid: 'AC<twilio-account-Sid>',

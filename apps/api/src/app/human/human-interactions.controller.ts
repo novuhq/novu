@@ -22,6 +22,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
+import type { AgentLook } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
@@ -46,6 +47,7 @@ import {
   type SendHumanTestEmailResponseDto,
   UpdateHumanAgentRequestDto,
 } from './dtos/human-agent.dto';
+import { ShowHumanAgentCardResponseDto } from './dtos/human-agent-card-shown.dto';
 import {
   CreateHumanInviteRequestDto,
   CreateHumanInviteResponseDto,
@@ -75,6 +77,8 @@ import {
 import { HumanAgentPausedGuard } from './guards/human-agent-paused.guard';
 import { assertFromHumanDashboard, carriesHumanDashboardSecret } from './guards/human-dashboard-secret.guard';
 import { readAnalyticsSource } from './services/agent-inbox-analytics';
+import { AgentInboxFeaturesService } from './services/agent-inbox-features.service';
+import { lookToMake } from './services/agent-look';
 import {
   AGENT_PICTURE_FIELD,
   AGENT_PICTURE_MAX_BYTES,
@@ -83,6 +87,7 @@ import {
 import {
   AGENT_INBOX_HOST_HEADER,
   AGENT_INBOX_VIA_HEADER,
+  GENERAL_HOST,
   HumanHostStatusService,
   readHostId,
   readHostVia,
@@ -123,6 +128,8 @@ import {
   DEFAULT_HUMAN_RELAY_IDENTIFIER,
   SetupHumanRelay,
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
+import { ShowHumanAgentCardCommand } from './usecases/show-human-agent-card/show-human-agent-card.command';
+import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
 import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 
@@ -153,7 +160,9 @@ export class HumanInteractionsController {
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
     private readonly hostStatus: HumanHostStatusService,
-    private readonly setContactListenToUsecase: SetContactListenTo
+    private readonly setContactListenToUsecase: SetContactListenTo,
+    private readonly showHumanAgentCardUsecase: ShowHumanAgentCard,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService
   ) {}
 
   @Post('/interactions')
@@ -374,13 +383,24 @@ export class HumanInteractionsController {
   /**
    * Whether an Agent Inbox handle is free. Asked while the operator types one. A taken handle comes
    * back with a nearby free one. With no handle, the answer is only the mailbox domain this deployment publishes.
+   *
+   * It is what a host asks before it makes an agent, so it also says whether that agent can be given a look:
+   * the CLI and the MCP server ask for a shape and a colour only then.
    */
   @Get('/inbox-address')
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  checkInboxAddress(@Query() query: CheckInboxAddressQueryDto): Promise<CheckInboxAddressResponseDto> {
-    return this.inboxAddresses.check(query.handle, query.email);
+  async checkInboxAddress(
+    @UserSession() user: UserSessionData,
+    @Query() query: CheckInboxAddressQueryDto
+  ): Promise<CheckInboxAddressResponseDto> {
+    const [address, canPickLook] = await Promise.all([
+      this.inboxAddresses.check(query.handle, query.email),
+      this.agentInboxFeatures.areLooksOn(user.organizationId),
+    ]);
+
+    return { ...address, canPickLook };
   }
 
   @Post('/setup')
@@ -414,6 +434,7 @@ export class HumanInteractionsController {
         lastName: body.lastName,
         defaultVia: body.defaultVia,
         analyticsSource: readAnalyticsSource(analyticsSource),
+        look: await this.lookOfNewAgent(body, user.organizationId, headers),
       })
     );
 
@@ -432,8 +453,9 @@ export class HumanInteractionsController {
 
   /**
    * Changes the relay agent `human setup` made: renames or describes it (people see that on the invite
-   * page, in emails and on the agent's Telegram bot), sets who can reach it, and pauses or resumes it.
-   * Who can reach it and pausing are the operator's, on the dashboard; a host gets 403 `dashboard_only`.
+   * page, in emails and on the agent's Telegram bot), sets who can reach it and whether it acknowledges
+   * incoming messages, and pauses or resumes it. Those settings are the operator's, on the dashboard; a host
+   * gets 403 `dashboard_only`.
    */
   @Patch('/agent')
   @KeylessAccessible()
@@ -444,7 +466,7 @@ export class HumanInteractionsController {
     @Body() body: UpdateHumanAgentRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<HumanAgentResponseDto> {
-    if (body.reach !== undefined || body.paused !== undefined) {
+    if (body.reach !== undefined || body.paused !== undefined || body.acknowledgeOnReceived !== undefined) {
       assertFromHumanDashboard(headers);
     }
 
@@ -458,6 +480,7 @@ export class HumanInteractionsController {
         description: body.description,
         reach: body.reach,
         paused: body.paused,
+        acknowledgeOnReceived: body.acknowledgeOnReceived,
       })
     );
   }
@@ -528,6 +551,39 @@ export class HumanInteractionsController {
   }
 
   /**
+   * A host shows the agent's card to its operator (`agent_card` over MCP, `agentinbox card` in the CLI): what the
+   * agent says, its name, address, link and look. The first showing is kept on the agent, with the host that
+   * showed it, which is how the dashboard's onboarding sees the agent say hi.
+   */
+  @Post('/agent/card')
+  @HttpCode(HttpStatus.OK)
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  showAgentCard(
+    @UserSession() user: UserSessionData,
+    @Body() body: HumanAgentQueryDto,
+    @Headers(AGENT_INBOX_VIA_HEADER) via?: string,
+    @Headers(AGENT_INBOX_HOST_HEADER) host?: string,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSource?: string
+  ): Promise<ShowHumanAgentCardResponseDto> {
+    const hostVia = readHostVia(via);
+
+    return this.showHumanAgentCardUsecase.execute(
+      ShowHumanAgentCardCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        agentIdentifier: body.agentIdentifier,
+        hostVia,
+        // A host that didn't say which it is counts as any other host, as its inbox checks do.
+        hostId: hostVia ? (readHostId(host) ?? GENERAL_HOST) : undefined,
+        analyticsSource: readAnalyticsSource(analyticsSource),
+      })
+    );
+  }
+
+  /**
    * Gives the relay agent a picture: one JPEG or PNG of up to 2 MB, sent as a form upload. It needs an
    * account, because the picture is then served to anyone who opens an invite.
    */
@@ -564,21 +620,38 @@ export class HumanInteractionsController {
   }
 
   /**
-   * The account owner's own contact, so the CLI and the Human dashboard treat the same person as "you".
-   * Nothing is created here; `POST /human/setup` with `operator` records one.
+   * The look a new agent is made with. The dashboard's server sends the one its operator picked in the
+   * onboarding. A host, such as the CLI or the MCP server, may pick one too where looks are on, with an account
+   * or without one; elsewhere its look is left out, and the agent has the original one.
+   */
+  private async lookOfNewAgent(
+    body: SetupHumanRelayRequestDto,
+    organizationId: string,
+    headers: Record<string, unknown>
+  ): Promise<AgentLook | undefined> {
+    const look = lookToMake(body.look);
+    if (!look || carriesHumanDashboardSecret(headers)) {
+      return look;
+    }
+
+    return (await this.agentInboxFeatures.areLooksOn(organizationId)) ? look : undefined;
+  }
+
+  /**
+   * The account owner's own contact, so the CLI and the Human dashboard treat the same person as "you", and the
+   * agent's look, so the CLI's mascot is the agent's own. Nothing is created here; `POST /human/setup` with
+   * `operator` records one.
    */
   @Get('/operator')
   @KeylessAccessible()
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
-  async getOperator(@UserSession() user: UserSessionData): Promise<HumanOperatorResponseDto> {
-    const subscriberId = await this.humanOperator.find({
+  getOperator(@UserSession() user: UserSessionData): Promise<HumanOperatorResponseDto> {
+    return this.humanOperator.describe({
       environmentId: user.environmentId,
       organizationId: user.organizationId,
       agentIdentifier: DEFAULT_HUMAN_RELAY_IDENTIFIER,
     });
-
-    return subscriberId ? { subscriberId } : {};
   }
 
   /**

@@ -27,6 +27,7 @@ export interface ConversationTurn {
    * log/reply accordingly.
    */
   subscriberResolution?: SubscriberResolution;
+  contextLookupFailed?: boolean;
   message: Message | null;
   /** The message as it read before an inbound edit. */
   previousMessage?: Message | null;

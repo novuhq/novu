@@ -14,6 +14,7 @@ import {
 } from '@novu/dal';
 
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { AgentInboxFeaturesService } from '../human/services/agent-inbox-features.service';
 import { ConnectContextVerifier } from '../integrations/usecases/generate-chat-oath-url/connect-context-verifier.service';
 import { SharedModule } from '../shared/shared.module';
 import { ConfigureTelegramWebhook } from './configure-telegram-webhook/configure-telegram-webhook.usecase';
@@ -60,6 +61,7 @@ const REPOSITORIES = [
     ...USE_CASES,
     ...SERVICES,
     ...REPOSITORIES,
+    AgentInboxFeaturesService,
     analyticsService,
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,

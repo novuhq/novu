@@ -78,10 +78,10 @@ describe('User registration - /auth/register (POST) #novu-v0-os', async () => {
     expect(jwtContent.organizationId).to.be.ok;
     const organization = await organizationRepository.findById(jwtContent.organizationId);
 
-    expect(organization.name).to.equal('Sample org');
+    expect(organization!.name).to.equal('Sample org');
 
     // Should generate two (prod and dev) environments
-    const environments = await environmentRepository.findOrganizationEnvironments(organization._id);
+    const environments = await environmentRepository.findOrganizationEnvironments(organization!._id);
 
     // Check that each environment has a valid apiKey
     environments.forEach((env) => {

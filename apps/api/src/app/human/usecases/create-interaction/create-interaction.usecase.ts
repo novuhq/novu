@@ -45,18 +45,21 @@ import {
 } from '../../dtos/interaction-response.dto';
 import { trackAgentInboxMessageSent } from '../../services/agent-inbox-analytics';
 import { contactIdCandidates, explicitEmailAddress } from '../../services/explicit-email-recipient';
+import { HumanChannelGate } from '../../services/human-channel-gate.service';
 import { HumanDeliveryService, type ResolvedHumanTarget } from '../../services/human-delivery.service';
 import { HumanInboxService, type InboxScope } from '../../services/human-inbox.service';
 import {
   assertHumanCardActions,
   assertHumanPendingCap,
   buildPendingHumanInteraction,
+  countHumanCardButtons,
   deliverToTargets,
   type HumanDeliveryTarget,
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
 import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
+import { WHATSAPP_WINDOW_CLOSED, WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
@@ -101,7 +104,8 @@ export class CreateInteraction {
     private readonly keylessEmailGate: KeylessEmailGateService,
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly channelGate: HumanChannelGate
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -114,6 +118,7 @@ export class CreateInteraction {
     }
 
     assertHumanCardActions(command.kind, command.card);
+    await this.channelGate.assertViaEnabled(command.via, command);
 
     // Once claimed, the relay agent and channels live in the user's own
     // environment; a stale keyless credential must not read as "run setup".
@@ -298,7 +303,7 @@ export class CreateInteraction {
             throw capped;
           }
 
-          const send = () => this.deliveryService.deliver(interaction, target);
+          const send = () => this.deliveryService.deliver(interaction, target, subscriberId);
           const sent = credits ? await credits.run(send) : await send();
           options.onSent?.(subscriberId, target.platform);
           const thread = await this.landInThread(scope, interaction, subscriberId, target, sent.platformThreadId);
@@ -379,6 +384,8 @@ export class CreateInteraction {
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
     const relay = await this.inbox.resolveRelayAgent(scope, agent.identifier);
     const conversation = await this.inbox.findThread(scope, relay, command.thread as string);
+    // A thread can outlive its channel's flag: turning WhatsApp off stops sends into its threads too.
+    await this.channelGate.assertViaEnabled(conversation.channels?.[0]?.platform as HumanChannelViaEnum, scope);
     const audience =
       to.length > 0
         ? { recipients: to, anyoneMayAnswer: command.anyoneMayAnswer === true }
@@ -403,6 +410,10 @@ export class CreateInteraction {
     await this.keylessCap.assertWithinCap({ ...scope, agentId: agent._id, subscriberIds: recipients });
 
     const channel = this.inbox.primaryChannel(conversation);
+    // Only a reply to the one person the conversation is with can wait for them: anyone else would get nothing.
+    const firstMessage = await this.assertWhatsAppThreadFits(command, agent, conversation, channel, {
+      canHold: outside.length === 0 && !audience.anyoneMayAnswer,
+    });
 
     // A new thread is refused in resolveChannel. An existing email thread skips that, so check here.
     // The claim reply does not come through this path.
@@ -466,6 +477,20 @@ export class CreateInteraction {
           onPosted: () => {
             postedInThread = true;
           },
+          // Their window is closed: the approved first message goes into the conversation, and this waits for them.
+          sendInstead: firstMessage
+            ? (created) =>
+                this.deliveryService.deliver(
+                  created,
+                  {
+                    platform: HumanChannelViaEnum.WHATSAPP,
+                    platformUserId: channel.platformThreadId.split(':').pop() ?? '',
+                    integrationIdentifier,
+                    firstMessage: { templateName: firstMessage.templateName, body: firstMessage.body },
+                  },
+                  firstMessage.subscriberId
+                )
+            : undefined,
         }
       );
       // Whoever got nothing takes no credit: the people in the thread when its post failed while a contact outside
@@ -810,6 +835,66 @@ export class CreateInteraction {
     return true;
   }
 
+  /**
+   * A WhatsApp thread takes a card only inside the person's 24-hour window, and only with as many buttons as
+   * WhatsApp shows. Refused before anything is sent, naming the person's channels that still work. With a closed
+   * window, an approved first message and `canHold`, the first message goes instead: this returns it.
+   */
+  private async assertWhatsAppThreadFits(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    conversation: ConversationEntity,
+    channel: { platform: string; platformThreadId: string; _integrationId: string },
+    options: { canHold: boolean }
+  ): Promise<{ templateName: string; body: string; subscriberId: string } | undefined> {
+    if (channel.platform !== HumanChannelViaEnum.WHATSAPP) {
+      return undefined;
+    }
+
+    const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
+    // The person the thread is with, whoever else `to` names: theirs is the window this send needs.
+    const person = await this.inbox.firstContactId(scope, conversation);
+    const params = { ...scope, agentId: agent._id, ...(person ? { subscriberId: person } : {}) };
+    const unfit = await this.deliveryService.whatsAppThreadUnfit({
+      ...params,
+      integrationId: String(channel._integrationId),
+      platformThreadId: channel.platformThreadId,
+      buttons: countHumanCardButtons(command.kind, command.card),
+    });
+    if (!unfit) {
+      return undefined;
+    }
+
+    if (
+      unfit.reason === WHATSAPP_WINDOW_CLOSED &&
+      person &&
+      options.canHold &&
+      // Only while the conversation's number is still theirs: a number that moved to someone else would get the
+      // first message while the reply waited for the old contact.
+      (await this.deliveryService.isWhatsAppNumberOf({
+        ...scope,
+        subscriberId: person,
+        integrationId: String(channel._integrationId),
+        platformThreadId: channel.platformThreadId,
+      }))
+    ) {
+      const approved = await this.deliveryService.approvedFirstMessageOn({
+        ...scope,
+        agentId: agent._id,
+        integrationId: String(channel._integrationId),
+      });
+      if (approved) {
+        return { ...approved, subscriberId: person };
+      }
+    }
+
+    const availableChannels = person
+      ? await this.deliveryService.otherReachableVias({ ...params, subscriberId: person })
+      : [];
+
+    throw new WhatsAppUndeliverableException(person ?? 'this person', unfit, availableChannels);
+  }
+
   private async resolveTargets(command: CreateInteractionCommand, agent: AgentEntity, recipients: ExplicitRecipient[]) {
     return Promise.all(
       recipients.map(async (recipient) => ({
@@ -822,6 +907,7 @@ export class CreateInteraction {
           ...(recipient.explicitEmail
             ? { via: HumanChannelViaEnum.EMAIL, explicitEmail: recipient.explicitEmail }
             : { via: command.via }),
+          buttons: countHumanCardButtons(command.kind, command.card),
         }),
       }))
     );

@@ -22,12 +22,15 @@ import {
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
 import type { Agent } from './resources/agent';
-import type { AgentBridgeRequest } from './resources/agent/agent.types';
+import { type AgentBridgeRequest, AgentEventEnum } from './resources/agent/agent.types';
 import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import { AgentLiveStream } from './resources/agent/agent-live-stream';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
 import { parseSignatureHeader } from './utils/bridge-signature';
+
+/** Novu sends `onAbort` only to a bridge that lists it here: older frameworks fail the turn on an unknown event. */
+const HANDLED_AGENT_EVENTS = Object.values(AgentEventEnum).join(',');
 
 export interface ServeHandlerOptions {
   client?: Client;
@@ -158,6 +161,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SERVER]: this.frameworkName,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS]: HANDLED_AGENT_EVENTS,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
     };
   }
@@ -430,12 +434,13 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureNotFoundError();
     }
 
-    if (!this.client.secretKey) {
+    const secretKeys = this.client.verificationSecretKeys;
+    if (secretKeys.length === 0) {
       throw new SigningKeyNotFoundError();
     }
 
     const parsed = parseSignatureHeader(hmacHeader);
-    if (!parsed.v1 || parsed.t === undefined) {
+    if (parsed.v1s.length === 0 || parsed.t === undefined) {
       throw new SignatureInvalidError();
     }
 
@@ -444,10 +449,36 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureExpiredError();
     }
 
-    const localHash = await createHmacSubtle(this.client.secretKey, `${parsed.t}.${JSON.stringify(payload)}`);
+    const signedPayload = `${parsed.t}.${JSON.stringify(payload)}`;
+    const matched = await this.signatureMatchesAnyKey(secretKeys, signedPayload, parsed.v1s);
 
-    if (!timingSafeEqual(localHash, parsed.v1)) {
+    if (!matched) {
       throw new SignatureMismatchError();
     }
+  }
+
+  /**
+   * Compare every signature against every active key. A match on any pair is
+   * enough, which is what lets a bridge keep the new key while Novu still
+   * signs with the original key as well.
+   */
+  private async signatureMatchesAnyKey(
+    secretKeys: readonly string[],
+    signedPayload: string,
+    candidates: readonly string[]
+  ): Promise<boolean> {
+    let matched = false;
+
+    for (const secretKey of secretKeys) {
+      const localHash = await createHmacSubtle(secretKey, signedPayload);
+
+      for (const candidate of candidates) {
+        if (timingSafeEqual(localHash, candidate)) {
+          matched = true;
+        }
+      }
+    }
+
+    return matched;
   }
 }

@@ -22,4 +22,8 @@ export class UpdateHumanAgentCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   paused?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  acknowledgeOnReceived?: boolean;
 }

@@ -42,7 +42,6 @@ describe('HandleNovuTools', () => {
 
     await usecase.execute(
       HandleNovuToolsCommand.create({
-        userId: 'organization-id',
         environmentId: 'environment-id',
         organizationId: 'organization-id',
         toolUseId: 'tool-use-id',
@@ -103,7 +102,6 @@ describe('HandleNovuTools', () => {
 
     await usecase.execute(
       HandleNovuToolsCommand.create({
-        userId: 'organization-id',
         environmentId: 'environment-id',
         organizationId: 'organization-id',
         toolUseId: 'tool-use-id',
@@ -159,7 +157,6 @@ describe('HandleNovuTools', () => {
 
     await usecase.execute(
       HandleNovuToolsCommand.create({
-        userId: 'organization-id',
         environmentId: 'environment-id',
         organizationId: 'organization-id',
         toolUseId: 'tool-use-id',

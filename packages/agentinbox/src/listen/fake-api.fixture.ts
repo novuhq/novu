@@ -79,6 +79,8 @@ export class FakeApi {
   readonly listenMessages: ListenMessage[] = [];
   lease: Listening | null = null;
   paused = false;
+  /** How the agent looks, as the lease's status says it. None, as an API from before looks answers. */
+  look?: { shape: string; color: string; art?: { kind: string; seed: number } };
   keyRejected = false;
   /** Agent Inbox can't be reached: every call fails, as in an outage. */
   down = false;
@@ -280,7 +282,10 @@ export class FakeApi {
     [
       'GET',
       /^\/v1\/listen\/lease$/,
-      (_call, _match, send) => send(200, { data: { listening: this.liveLease(), paused: this.paused } }),
+      (_call, _match, send) =>
+        send(200, {
+          data: { listening: this.liveLease(), paused: this.paused, ...(this.look ? { look: this.look } : {}) },
+        }),
     ],
     ['POST', /^\/v1\/listen\/lease\/release$/, (call, _match, send) => this.release(call, send)],
     ['GET', /^\/v1\/listen\/messages$/, (call, _match, send) => this.waitForMessages(call, send)],

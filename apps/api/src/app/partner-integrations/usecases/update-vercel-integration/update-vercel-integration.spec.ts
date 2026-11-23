@@ -23,7 +23,6 @@ describe('UpdateVercelIntegration', () => {
   let loggerMock;
 
   beforeEach(async () => {
-    // @ts-expect-error
     process.env.VERCEL_BASE_URL = 'https://api.vercel.com';
 
     httpServiceMock = {

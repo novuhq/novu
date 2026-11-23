@@ -7,6 +7,7 @@ import { Analytics } from '@/components/analytics/analytics';
 import { DASHBOARD_HOME } from '@/components/dashboard/nav';
 import { Sidebar, type SidebarAgent } from '@/components/dashboard/sidebar';
 import { TopBar } from '@/components/dashboard/top-bar';
+import { AgentLookProvider } from '@/components/ui/agent-look';
 import { StatusPoll } from '@/components/ui/status-poll';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -15,6 +16,7 @@ import { requireHumanAccount } from '@/lib/human-account';
 import { agentDisplayName } from '@/lib/human-agent-api';
 import { countUnreadThreads } from '@/lib/human-inbox-api';
 import { describeProgress, isSetupUnfinished, loadSetupProgress } from '@/lib/human-onboarding';
+import type { MascotLook } from '@/lib/look';
 import { belongsInOnboarding } from '@/lib/onboarding-progress';
 
 const AGENT_NOT_SET_UP: SidebarAgent = { name: 'Your agent', status: 'Not set up', setUp: false };
@@ -40,23 +42,26 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect(`/sign-in?${new URLSearchParams({ redirect_url: DASHBOARD_HOME })}`);
   }
 
-  const { agent, setupStatus } = await loadSidebarAgent();
+  const { agent, setupStatus, look } = await loadSidebarAgent();
   const analyticsUserId = await loadAnalyticsUserId();
   const email = user.primaryEmailAddress?.emailAddress ?? null;
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || email || 'Your account';
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex min-h-dvh flex-col md:flex-row">
-        <Sidebar agent={agent} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar user={{ name, email, imageUrl: user.hasImage ? user.imageUrl : null }} />
-          {/* A page drawn to the full width, like the inbox, marks itself `data-full-width`. */}
-          <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 has-data-full-width:max-w-none md:px-10">
-            {children}
-          </main>
+      {/* Every mascot in the dashboard is the operator's own agent's. */}
+      <AgentLookProvider look={look}>
+        <div className="flex min-h-dvh flex-col md:flex-row">
+          <Sidebar agent={agent} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar user={{ name, email, imageUrl: user.hasImage ? user.imageUrl : null }} />
+            {/* A page drawn to the full width, like the inbox, marks itself `data-full-width`. */}
+            <main className="mx-auto flex w-full max-w-300 flex-1 flex-col gap-5 px-6 pt-7 pb-20 has-data-full-width:max-w-none md:px-10">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </AgentLookProvider>
       <Toaster />
       {setupStatus && <StatusPoll status={setupStatus} read={readOnboardingStatusAction} everyMs={SETUP_POLL_MS} />}
       <Analytics userId={analyticsUserId} />
@@ -73,17 +78,24 @@ export default async function DashboardLayout({ children }: { children: ReactNod
  * While the setup is unfinished, `setupStatus` is its `describeProgress`. The shell keeps asking for it,
  * so a host that connects elsewhere clears the banners and the sidebar's dot without a reload.
  *
+ * `look` is the agent's look once the new onboarding is on for the account, for every mascot in the dashboard;
+ * before that, and before there is an agent, they show as they always have.
+ *
  * A failure shows the agent as not set up instead of taking the whole dashboard down: an error in a
  * layout has no error page of its own.
  */
-async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: string | null }> {
+async function loadSidebarAgent(): Promise<{
+  agent: SidebarAgent;
+  setupStatus: string | null;
+  look: MascotLook | null;
+}> {
   try {
     const account = await requireHumanAccount({ returnTo: DASHBOARD_HOME });
     const progress = await loadSetupProgress(account);
     const { agent, step, state } = progress;
     const onboardingDue = belongsInOnboarding(agent, step, state);
     if (!agent) {
-      return { agent: { ...AGENT_NOT_SET_UP, onboardingDue }, setupStatus: null };
+      return { agent: { ...AGENT_NOT_SET_UP, onboardingDue }, setupStatus: null, look: null };
     }
 
     const setupUnfinished = isSetupUnfinished(step);
@@ -99,13 +111,14 @@ async function loadSidebarAgent(): Promise<{ agent: SidebarAgent; setupStatus: s
         unreadThreads: await countUnreadThreads(account),
       },
       setupStatus: setupUnfinished ? describeProgress(progress) : null,
+      look: progress.features.newOnboarding ? { shape: agent.look.shape, color: agent.look.color } : null,
     };
   } catch (error) {
     // A redirect to sign-in travels as an error and has to keep going.
     unstable_rethrow(error);
     console.error('Failed to load the agent for the sidebar', error);
 
-    return { agent: AGENT_NOT_SET_UP, setupStatus: null };
+    return { agent: AGENT_NOT_SET_UP, setupStatus: null, look: null };
   }
 }
 

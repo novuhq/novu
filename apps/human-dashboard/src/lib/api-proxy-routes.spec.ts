@@ -32,3 +32,16 @@ describe('api proxy routes for listen', () => {
     expect(isProxiedRoute('DELETE', '/v1/listen/lease')).toBe(false);
   });
 });
+
+describe('api proxy routes for WhatsApp', () => {
+  it('lets the CLI read where WhatsApp setup stands, but never connect or bind a number', () => {
+    expect(isProxiedRoute('GET', '/v1/channels/whatsapp')).toBe(true);
+    expect(isProxiedRoute('POST', '/v1/channels/whatsapp')).toBe(false);
+  });
+});
+
+describe('api proxy routes for the agent card', () => {
+  it('lets the CLI and the MCP server show the agent’s card', () => {
+    expect(isProxiedRoute('POST', '/v1/agent/card')).toBe(true);
+  });
+});

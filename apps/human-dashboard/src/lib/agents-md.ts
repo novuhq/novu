@@ -51,7 +51,7 @@ export async function agentsMarkdown(): Promise<string> {
     `3. \`${NPX_CLI} login\` prints a link and a code, then waits up to an hour, so run it the same way. Give both to your operator: they sign in on ${AGENT_DOMAIN}, check that the code matches and approve. The setup then moves into their account. If it stops before they approve, run it again for a new code.`,
     '4. Add the skills and check that it works, as above.',
     '',
-    `Never ask for a Telegram bot token or a Slack token: \`${NPX_CLI} channel add telegram\` (or \`slack\`) prints a link where your operator finishes in their browser. When your host won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
+    `Never ask for a Telegram bot token, a Slack token or WhatsApp credentials: \`${NPX_CLI} channel add telegram\` (or \`slack\`, or \`whatsapp\`) prints a link where your operator finishes in their browser. When your host won't let you run a command, for example one that saves a key, tell your operator the exact command and let them run it.`,
     '',
     '## Steps for your host',
     '',

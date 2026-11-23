@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationEntity, HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum, parseToolApprovalRequestId } from '@novu/shared';
+import type { WrapperType } from '../../shared/wrapper-type';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ResumeManagedHuman } from '../managed-runtime/novu-human/resume-managed-human.usecase';
 import { editDeliveredHumanCards } from './edit-delivered-card';
@@ -22,7 +23,7 @@ export class HumanInteractionSettlementService {
     private readonly humanInteractionRepository: HumanInteractionRepository,
     private readonly outboundGateway: OutboundGateway,
     @Inject(forwardRef(() => ResumeManagedHuman))
-    private readonly resumeManagedHuman: ResumeManagedHuman,
+    private readonly resumeManagedHuman: WrapperType<ResumeManagedHuman>,
     private readonly resumeToolApprovalFromHitl: ResumeToolApprovalFromHitl,
     private readonly logger: PinoLogger,
     private readonly activityRecorder: HumanInteractionActivityRecorder

@@ -28,7 +28,13 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
-import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
+import {
+  combineProviderOverrides,
+  mergeTriggerProviderOverrides,
+  omitBlankPhoneDestination,
+  resolvePhoneDestination,
+  SendMessageBase,
+} from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -88,11 +94,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      subscriber.locale
-    );
 
     if (template) {
       step.template = template;
@@ -103,6 +104,12 @@ export class SendMessageSms extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        // Bridge output is already rendered (and translated), so translations are only loaded here.
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -123,8 +130,6 @@ export class SendMessageSms extends SendMessageBase {
         errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
-
-    const phone = command.payload.phone || subscriber.phone;
 
     if (!selection) {
       await this.createExecutionDetails.execute(
@@ -165,6 +170,7 @@ export class SendMessageSms extends SendMessageBase {
       integration?.providerId,
       command.step.stepId
     ) as SmsMessageOverrides;
+    const phone = resolvePhoneDestination(overrides.to, command.payload.phone, subscriber.phone);
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -324,16 +330,13 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: overrides.to || phone,
+        to: phone,
         from: overrides.from || integration.credentials.from,
         content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
-        bridgeProviderData: combineProviderOverrides(
-          command.bridgeData,
-          command.overrides,
-          command.step.stepId,
-          integration.providerId
+        bridgeProviderData: omitBlankPhoneDestination(
+          combineProviderOverrides(command.bridgeData, command.overrides, command.step.stepId, integration.providerId)
         ),
       });
 
@@ -376,6 +379,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       return {
@@ -402,6 +406,7 @@ export class SendMessageSms extends SendMessageBase {
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        environment: command.environment,
       });
 
       await this.createExecutionDetails.execute(

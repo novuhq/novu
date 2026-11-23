@@ -74,7 +74,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
    * saying which host runs it when `host` names one.
    */
   function connect(agent: string, code: string, from: string = network, host?: string) {
-    const request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('X-Forwarded-For', from);
+    // Cloudflare's header: getClientIp trusts only it when run as Novu Cloud, and request-ip reads it otherwise.
+    const request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('CF-Connecting-IP', from);
 
     return (host ? request.set(AGENT_INBOX_HOST_HEADER, host) : request).send({ agent, code });
   }
@@ -137,7 +138,13 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect(res.body.data).to.deep.equal({
         apiKey: session.apiKey,
         environmentId: session.environment._id,
-        agent: { identifier: 'human-relay', name: res.body.data.agent.name, handle },
+        // Its look goes along for the CLI's mascot: the original one, as nobody picked another.
+        agent: {
+          identifier: 'human-relay',
+          name: res.body.data.agent.name,
+          handle,
+          look: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+        },
         host: 'general',
       });
 
@@ -424,6 +431,7 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
         firstCheckedAt: null,
         waitingMessage: null,
         listening: null,
+        cardShown: null,
       });
 
       const { code } = await issueCode();

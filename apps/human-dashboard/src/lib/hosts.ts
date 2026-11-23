@@ -123,7 +123,7 @@ export type CommandHost = HostBase & {
   afterCommands?: string;
   /**
    * `listen` can start it on a computer when a message to the agent comes: the optional last step after its
-   * commands. Claude Code for now; the other hosts that run commands follow.
+   * commands: Claude Code, Codex and OpenCode.
    */
   listenStarts?: true;
   alternative?: HostAlternative;
@@ -235,6 +235,7 @@ export const HOSTS: readonly Host[] = [
     runsIn: 'project',
     icon: '/tools/codex.png',
     skillsAgent: 'codex',
+    listenStarts: true,
     docsUrl: 'https://learn.chatgpt.com/docs/plugins',
     alternative: {
       kind: 'plugin',
@@ -259,6 +260,7 @@ export const HOSTS: readonly Host[] = [
     // The dark square logo from opencode.ai/brand, on OpenCode's own dark.
     icon: '/tools/opencode.svg',
     skillsAgent: 'opencode',
+    listenStarts: true,
     docsUrl: 'https://opencode.ai/docs/mcp-servers/',
     alternative: {
       kind: 'mcp-config',

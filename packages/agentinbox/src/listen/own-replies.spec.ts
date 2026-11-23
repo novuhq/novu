@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  cliSwapIn,
   isOurMcpServer,
   isOwnReply,
   isOwnReplySubject,
@@ -328,5 +332,68 @@ describe('isOurMcpServer', () => {
     for (const server of ['mail', 'github', 'plugin_mail_inbox', 'claude_ai_Gmail', 'inboxes', 'my_inbox']) {
       expect(isOurMcpServer(server), server).toBe(false);
     }
+  });
+});
+
+describe('cliSwapIn', () => {
+  let project: string;
+  const put = (path: string, text = '') => {
+    mkdirSync(join(project, path, '..'), { recursive: true });
+    writeFileSync(join(project, path), text);
+  };
+
+  afterEach(() => rmSync(project, { recursive: true, force: true }));
+
+  it('finds nothing where npx would run the published CLI, also with settings that don’t change what it runs', () => {
+    project = mkdtempSync(join(tmpdir(), 'cli-swap-'));
+    put('package.json', JSON.stringify({ name: 'app' }));
+    put('.npmrc', '# pnpm\nshamefully-hoist=true\nauto-install-peers=true\n');
+    put('node_modules/left-pad/package.json', JSON.stringify({ name: 'left-pad' }));
+    put('node_modules/left-pad/.npmrc', 'registry=http://localhost:4873/');
+    // npx run in the project doesn't look in its other folders.
+    put('web/node_modules/@agentinbox/cli/package.json', JSON.stringify({ name: '@agentinbox/cli' }));
+
+    expect(cliSwapIn(project)).toBeUndefined();
+  });
+
+  it.each([
+    [
+      'a package of the CLI’s name',
+      'node_modules/@agentinbox/cli/package.json',
+      '',
+      '',
+      'node_modules/@agentinbox/cli',
+    ],
+    ['a bin of its name', 'node_modules/.bin/agentinbox', '', '', 'node_modules/.bin/agentinbox'],
+    ['a package.json of its name', 'package.json', JSON.stringify({ name: '@agentinbox/cli' }), '', 'package.json'],
+    ['another registry', '.npmrc', 'registry=http://localhost:4873/', '', '.npmrc'],
+    ['how npm runs it', '.npmrc', 'node-options=--require ./x.js', '', '.npmrc'],
+    [
+      'another registry for its scope, where it runs',
+      'web/.npmrc',
+      '@agentinbox:registry=http://x/',
+      'web',
+      'web/.npmrc',
+    ],
+    [
+      'one in a folder above where it runs',
+      'node_modules/.bin/agentinbox',
+      '',
+      'web/src',
+      'node_modules/.bin/agentinbox',
+    ],
+    [
+      'one in a node_modules it runs in',
+      'node_modules/tmp/node_modules/@agentinbox/cli/package.json',
+      '',
+      'node_modules/tmp',
+      'node_modules/tmp/node_modules/@agentinbox/cli',
+    ],
+  ])('finds %s', (_what, path, text, cwd, found) => {
+    project = mkdtempSync(join(tmpdir(), 'cli-swap-'));
+    put(path, text);
+    mkdirSync(join(project, cwd), { recursive: true });
+
+    expect(cliSwapIn(project, join(project, cwd))).toBe(found);
   });
 });

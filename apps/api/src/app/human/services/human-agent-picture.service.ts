@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import { AgentEntity, type AgentPicture, AgentRepository } from '@novu/dal';
+import { relayAcknowledgesMessages } from '../../agents/human-relay/relay-acknowledges-messages';
 import type { HumanAgentResponseDto } from '../dtos/human-agent.dto';
+import { AgentInboxFeaturesService } from './agent-inbox-features.service';
+import { agentLookOf, cardShownOf } from './agent-look';
 import { agentPictureUrl } from './agent-picture-url';
 import { HumanAgentIdentityService } from './human-agent-identity.service';
 import { HumanOperatorService } from './human-operator.service';
@@ -38,8 +41,8 @@ type AgentScope = { environmentId: string; organizationId: string; agentIdentifi
 
 /**
  * The relay agent's picture: kept in file storage, served from a public address (the invite page is
- * public too), and set on the agent's Telegram bots. A Slack app takes it as its icon when it's created, and
- * after that the icon can only be changed in Slack.
+ * public too), and set on the agent's Telegram bots and WhatsApp business numbers. A Slack app takes it as its icon when it's created, and
+ * after that the icon can only be changed in Slack. An agent with no picture shows its mascot in those places.
  */
 @Injectable()
 export class HumanAgentPictureService {
@@ -48,6 +51,7 @@ export class HumanAgentPictureService {
     private readonly storageService: StorageService,
     private readonly humanAgentIdentity: HumanAgentIdentityService,
     private readonly humanOperator: HumanOperatorService,
+    private readonly agentInboxFeatures: AgentInboxFeaturesService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -56,6 +60,7 @@ export class HumanAgentPictureService {
   /** The agent as the Human endpoints report it. */
   describe(agent: AgentEntity): HumanAgentResponseDto {
     const pictureUrl = agentPictureUrl(agent);
+    const cardShown = cardShownOf(agent);
 
     return {
       agentId: agent._id,
@@ -63,11 +68,14 @@ export class HumanAgentPictureService {
       name: agent.name,
       ...(agent.description ? { description: agent.description } : {}),
       ...(pictureUrl ? { pictureUrl } : {}),
+      look: agentLookOf(agent),
+      ...(cardShown ? { cardShown } : {}),
       active: agent.active !== false,
       createdAt: agent.createdAt,
       reach: agent.reach ?? 'anyone',
       paused: Boolean(agent.pausedAt),
       ...(agent.pausedAt ? { pausedAt: agent.pausedAt } : {}),
+      acknowledgeOnReceived: relayAcknowledgesMessages(agent),
     };
   }
 
@@ -110,7 +118,7 @@ export class HumanAgentPictureService {
       await this.deleteFile(agent.picture.storageKey);
     }
 
-    await this.humanAgentIdentity.updateTelegramBots(agent, { picture });
+    await this.humanAgentIdentity.updateChannelProfiles(agent, { picture });
 
     return { ...agent, picture };
   }
@@ -126,7 +134,11 @@ export class HumanAgentPictureService {
       { $unset: { picture: 1 } }
     );
     await this.deleteFile(agent.picture.storageKey);
-    await this.humanAgentIdentity.updateTelegramBots(agent, { picture: null });
+    // Its bots go back to its mascot, in the look its mascots show.
+    await this.humanAgentIdentity.updateChannelProfiles(agent, {
+      picture: null,
+      mascot: await this.agentInboxFeatures.mascotLookOf(agent),
+    });
 
     return { ...agent, picture: undefined };
   }

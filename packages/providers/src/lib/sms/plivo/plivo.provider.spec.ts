@@ -9,11 +9,13 @@ vi.mock(import('plivo'), async (importOriginal) => {
 
   return {
     ...actual,
-    Client: vi.fn().mockImplementation(() => ({
-      messages: {
-        create: createMock,
-      },
-    })),
+    Client: vi.fn().mockImplementation(function () {
+      return {
+        messages: {
+          create: createMock,
+        },
+      };
+    }),
   };
 });
 

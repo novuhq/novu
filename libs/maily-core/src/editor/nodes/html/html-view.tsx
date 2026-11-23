@@ -14,17 +14,19 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
   const languageClass = language ? `language-${language}` : '';
 
   const html = useMemo(() => {
-    const text = node.content.content.reduce((acc, cur) => {
+    const fragment = node.content;
+    let text = '';
+    for (let index = 0; index < fragment.childCount; index++) {
+      const cur = fragment.child(index);
+
       if (cur.type.name === 'text') {
-        return acc + cur.text;
+        text += cur.text;
       } else if (cur.type.name === 'variable') {
         const { id: variable, fallback } = cur?.attrs || {};
         const formattedVariable = fallback ? `{{${variable},fallback=${fallback}}}` : `{{${variable}}}`;
-        return acc + formattedVariable;
+        text += formattedVariable;
       }
-
-      return acc;
-    }, '');
+    }
 
     const htmlParser = new DOMParser();
     const htmlDoc = htmlParser.parseFromString(text, 'text/html');

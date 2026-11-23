@@ -190,11 +190,44 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     expect(store.current).toMatchObject({
       host: 'claude-code',
       project,
-      limits: { runsPerHour: 20, maxRunSeconds: 1800 },
+      limits: { runsPerHour: 20, maxRunSeconds: 1800, runsAtOnce: 5 },
     });
     expect(store.current?.allowedAt).toBeTruthy();
     // Every call is Claude Code's.
     expect(api.calls.every((call) => call.host === 'claude-code')).toBe(true);
+  });
+
+  it('keeps how the agent looks, as the lease’s status says it, for the next screen to open in', async () => {
+    api.look = { shape: 'drop', color: 'coral', art: { kind: 'waves', seed: 7 } };
+    const { deps: listener } = deps();
+
+    expect(await listenOn('claude-code', {}, listener)).toBe(EXIT_OK);
+
+    // Only what the terminal draws is kept, next to everything else saved here.
+    expect(config()).toMatchObject({ look: { shape: 'drop', color: 'coral' }, subscriberId: 'ada' });
+    expect(config().computerId).toMatch(/^cmp_/);
+    // Nothing was asked for the look alone.
+    expect(api.callsTo('GET', '/v1/listen/lease')).toHaveLength(1);
+  });
+
+  it('leaves the saved look alone when an API from before looks says nothing, or names one this CLI can’t draw', async () => {
+    const saved = { ...config(), look: { shape: 'bean', color: 'bone' } };
+    writeFileSync(join(dir, 'config.json'), JSON.stringify(saved));
+
+    await listenOn('claude-code', {}, deps().deps);
+    expect(config().look).toEqual({ shape: 'bean', color: 'bone' });
+
+    api.look = { shape: 'cube', color: 'coral' };
+    await listenOn('claude-code', {}, deps().deps);
+    expect(config().look).toEqual({ shape: 'bean', color: 'bone' });
+  });
+
+  it('keeps the limits it was given', async () => {
+    const { deps: listener, store } = deps();
+
+    expect(await listenOn('claude-code', { runsPerHour: '6', maxRun: '10m', runsAtOnce: '2' }, listener)).toBe(EXIT_OK);
+
+    expect(store.current?.limits).toEqual({ runsPerHour: 6, maxRunSeconds: 600, runsAtOnce: 2 });
   });
 
   it('takes nothing when the person says no', async () => {
@@ -477,10 +510,10 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     const { deps: listener } = deps();
 
     await expect(listenOn('chatgpt', {}, listener)).rejects.toThrow(
-      'Listening starts a host on this computer: claude-code.'
+      'Listening starts a host on this computer: claude-code, codex, opencode.'
     );
-    await expect(listenOn('codex', {}, listener)).rejects.toThrow(
-      'Listening doesn’t start Codex yet, only Claude Code.'
+    await expect(listenOn('cursor', {}, listener)).rejects.toThrow(
+      'Listening doesn’t start Cursor, only Claude Code, Codex and OpenCode.'
     );
   });
 
@@ -632,6 +665,14 @@ describe('listen status', () => {
     expect(lines[1]).toBe(`This computer listens for Claude Code in ${project}, in the background (launchd).`);
   });
 
+  it('keeps how the agent looks too, since its answer says it', async () => {
+    api.look = { shape: 'mochi', color: 'marigold' };
+
+    expect(await listenStatus({}, deps().deps)).toBe(EXIT_OK);
+
+    expect(config().look).toEqual({ shape: 'mochi', color: 'marigold' });
+  });
+
   it('says the agent is paused, where it is still listening, and what this computer does', async () => {
     const { deps: listener, lines, project } = deps();
     await listenOn('claude-code', {}, listener);
@@ -676,7 +717,7 @@ describe('listen run', { timeout: 20_000 }, () => {
         host: 'claude-code',
         project: dir,
         program: { command: 'claude', args: [] },
-        limits: { runsPerHour: 20, maxRunSeconds: 60 },
+        limits: { runsPerHour: 20, maxRunSeconds: 60, runsAtOnce: 5 },
       }),
       allowedAt: new Date().toISOString(),
       stopped: { reason: 'key_changed', message: KEY_CHANGED_MESSAGE, at: new Date().toISOString() },

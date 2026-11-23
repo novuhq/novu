@@ -6,8 +6,8 @@ import { expect } from 'chai';
 import { createHash } from 'crypto';
 import { lastValueFrom, of } from 'rxjs';
 import sinon from 'sinon';
-import { serializeCachedHttpError } from './idempotency-http-error';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
+import { serializeCachedHttpError } from './idempotency-http-error';
 
 describe('IdempotencyInterceptor', () => {
   const body = { name: 'missing-workflow' };
@@ -99,15 +99,41 @@ describe('IdempotencyInterceptor', () => {
       expect(nextHandle.called).to.equal(false);
     }
   });
+
+  it('keeps the API key cache key scoped to the organization', async () => {
+    cacheService.setIfNotExist.resolves('OK');
+
+    await lastValueFrom(await interceptor.intercept(createContext(body), { handle: nextHandle }));
+
+    expect(cacheService.setIfNotExist.firstCall.args[0]).to.equal(
+      `${process.env.NODE_ENV}-org-id-ea398302-4865-4851-a9a9-25da599c923d`
+    );
+  });
+
+  it('scopes the Internal cache key to the acting user so members never share replays', async () => {
+    cacheService.setIfNotExist.resolves('OK');
+
+    for (const userId of ['user-a', 'user-b']) {
+      const context = createContext(body, { scheme: ApiAuthSchemeEnum.INTERNAL, userId });
+      await lastValueFrom(await interceptor.intercept(context, { handle: nextHandle }));
+    }
+
+    const [first, second] = cacheService.setIfNotExist.getCalls().map((call) => call.args[0]);
+    expect(first).to.equal(`${process.env.NODE_ENV}-org-id:internal:user-a-ea398302-4865-4851-a9a9-25da599c923d`);
+    expect(second).to.equal(`${process.env.NODE_ENV}-org-id:internal:user-b-ea398302-4865-4851-a9a9-25da599c923d`);
+  });
 });
 
-function createContext(body: object): ExecutionContext {
+function createContext(
+  body: object,
+  { scheme = ApiAuthSchemeEnum.API_KEY, userId = 'user-id' }: { scheme?: ApiAuthSchemeEnum; userId?: string } = {}
+): ExecutionContext {
   const request = {
     method: 'POST',
     headers: { 'idempotency-key': 'ea398302-4865-4851-a9a9-25da599c923d' },
     body,
-    user: { _id: 'user-id', organizationId: 'org-id', environmentId: 'env-id' },
-    authScheme: ApiAuthSchemeEnum.API_KEY,
+    user: { _id: userId, organizationId: 'org-id', environmentId: 'env-id', scheme },
+    authScheme: scheme,
   };
   const response = { set: sinon.stub() };
 

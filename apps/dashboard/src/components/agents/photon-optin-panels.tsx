@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { RiCheckLine, RiSmartphoneLine } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { patchSubscriber } from '@/api/subscribers';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';

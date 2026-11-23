@@ -250,7 +250,11 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     expect((pushMessages[0].overrides as any).android.notification.notificationCount).to.equal(2);
     expect((pushMessages[0].overrides as any).apns.payload.aps.badge).to.equal(2);
 
-    (process.env as Record<string, string>).IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
+    if (oldPushUnreadCountFlag === undefined) {
+      delete process.env.IS_PUSH_UNREAD_COUNT_ENABLED;
+    } else {
+      process.env.IS_PUSH_UNREAD_COUNT_ENABLED = oldPushUnreadCountFlag;
+    }
   });
 
   it('should send push notification using FCM topic override without device tokens', async () => {

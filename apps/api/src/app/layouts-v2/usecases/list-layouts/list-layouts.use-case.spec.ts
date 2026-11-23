@@ -148,7 +148,7 @@ describe('ListLayoutsUseCase', () => {
     });
 
     it('should return empty result when repository returns null data', async () => {
-      layoutRepositoryMock.getV2List.resolves({ data: null, totalCount: 0 });
+      layoutRepositoryMock.getV2List.resolves({ data: null as unknown as LayoutEntity[], totalCount: 0 });
 
       const command = ListLayoutsCommand.create({
         user: mockUser as any,
@@ -167,7 +167,7 @@ describe('ListLayoutsUseCase', () => {
     });
 
     it('should return empty result when repository returns undefined data', async () => {
-      layoutRepositoryMock.getV2List.resolves({ data: undefined, totalCount: 0 });
+      layoutRepositoryMock.getV2List.resolves({ data: undefined as unknown as LayoutEntity[], totalCount: 0 });
 
       const command = ListLayoutsCommand.create({
         user: mockUser as any,

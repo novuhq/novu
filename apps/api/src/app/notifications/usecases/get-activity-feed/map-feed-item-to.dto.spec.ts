@@ -1,9 +1,39 @@
+import { ActivitiesResponseDto$inboundSchema } from '@novu/api/models/components';
 import { NotificationFeedItemEntity } from '@novu/dal';
 import { FieldLogicalOperatorEnum, FieldOperatorEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
 describe('mapFeedItemToDto', () => {
+  it('returns run-level overrides from the notification, also when it has no jobs', () => {
+    const overrides = { email: { to: 'override@example.com' } };
+
+    const dto = mapFeedItemToDto({
+      _id: 'notification-id',
+      overrides,
+      jobs: [],
+    } as unknown as NotificationFeedItemEntity);
+
+    expect(dto.overrides).to.deep.equal(overrides);
+  });
+
+  it('never takes run-level overrides from a job', () => {
+    const entity = {
+      _id: 'notification-id',
+      jobs: [
+        {
+          _id: 'job-id',
+          type: StepTypeEnum.EMAIL,
+          executionDetails: [],
+          step: { _id: 'step-id' },
+          overrides: { email: { to: 'job@example.com' } },
+        },
+      ],
+    } as unknown as NotificationFeedItemEntity;
+
+    expect(mapFeedItemToDto(entity).overrides).to.equal(undefined);
+  });
+
   it('maps nested step filter groups in filter children without throwing', () => {
     const entity = {
       _id: 'notification-id',
@@ -156,5 +186,140 @@ describe('mapFeedItemToDto', () => {
     expect((filters![0].children[0] as { field?: string }).field).to.equal('plan');
     expect(filters![1].value).to.equal(FieldLogicalOperatorEnum.OR);
     expect(filters![1].children[0].on).to.equal(FilterPartTypeEnum.PAYLOAD);
+  });
+
+  describe('job overrides', () => {
+    function buildEntity(jobOverrides: Record<string, unknown> | undefined, notificationOverrides?: object) {
+      return {
+        _id: 'notification-id',
+        overrides: notificationOverrides,
+        jobs: [
+          {
+            _id: 'job-id',
+            type: StepTypeEnum.EMAIL,
+            status: 'completed',
+            executionDetails: [],
+            step: { _id: 'step-id', active: true },
+            overrides: jobOverrides,
+          },
+        ],
+      } as unknown as NotificationFeedItemEntity;
+    }
+
+    it('returns the job overrides when the job carries them', () => {
+      const dto = mapFeedItemToDto(
+        buildEntity(
+          { email: { toRecipient: 'job@example.com' } },
+          { email: { toRecipient: 'notification@example.com' } }
+        )
+      );
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({ email: { toRecipient: 'job@example.com' } });
+    });
+
+    it('falls back to the notification overrides for overrides-dedup jobs', () => {
+      const dto = mapFeedItemToDto(buildEntity(undefined, { email: { toRecipient: 'notification@example.com' } }));
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({ email: { toRecipient: 'notification@example.com' } });
+    });
+
+    it('returns an empty object when neither carries overrides', () => {
+      const dto = mapFeedItemToDto(buildEntity(undefined));
+
+      expect(dto.jobs?.[0].overrides).to.deep.equal({});
+    });
+  });
+
+  it('keeps a null subscriber phone on the activity response', () => {
+    const entity = {
+      _id: 'notification-id',
+      jobs: [],
+      subscriber: {
+        _id: 'subscriber-internal-id',
+        subscriberId: 'subscriber-id',
+        firstName: null,
+        lastName: null,
+        email: null,
+        phone: null,
+      },
+    } as unknown as NotificationFeedItemEntity;
+
+    const dto = mapFeedItemToDto(entity);
+
+    expect(dto.subscriber?.phone).to.equal(null);
+    expect(dto.subscriber?.email).to.equal(null);
+    expect(dto.subscriber?.firstName).to.equal(null);
+    expect(dto.subscriber?.lastName).to.equal(null);
+  });
+});
+
+describe('notifications.list subscriber validation', () => {
+  function parseActivityList(subscriber: Record<string, unknown>) {
+    return ActivitiesResponseDto$inboundSchema.safeParse({
+      hasMore: false,
+      page: 0,
+      pageSize: 10,
+      data: [
+        {
+          _environmentId: 'environment-id',
+          _organizationId: 'organization-id',
+          _subscriberId: 'subscriber-internal-id',
+          transactionId: 'transaction-id',
+          subscriber,
+        },
+      ],
+    });
+  }
+
+  it('accepts a subscriber with a null phone number', () => {
+    const parsed = parseActivityList({
+      _id: 'subscriber-internal-id',
+      subscriberId: 'subscriber-id',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+      phone: null,
+    });
+
+    expect(parsed.success).to.equal(true);
+    if (!parsed.success) {
+      return;
+    }
+
+    expect(parsed.data.data[0]?.subscriber?.phone).to.equal(null);
+  });
+
+  it('accepts a subscriber whose cleared profile fields are null', () => {
+    const parsed = parseActivityList({
+      _id: 'subscriber-internal-id',
+      subscriberId: 'subscriber-id',
+      firstName: null,
+      lastName: null,
+      email: null,
+      phone: null,
+    });
+
+    expect(parsed.success).to.equal(true);
+    if (!parsed.success) {
+      return;
+    }
+
+    expect(parsed.data.data[0]?.subscriber?.email).to.equal(null);
+    expect(parsed.data.data[0]?.subscriber?.phone).to.equal(null);
+  });
+
+  it('accepts a subscriber when the phone field is omitted', () => {
+    const parsed = parseActivityList({
+      _id: 'subscriber-internal-id',
+      subscriberId: 'subscriber-id',
+      email: 'test@example.com',
+    });
+
+    expect(parsed.success).to.equal(true);
+    if (!parsed.success) {
+      return;
+    }
+
+    expect(parsed.data.data[0]?.subscriber?.phone).to.equal(undefined);
   });
 });

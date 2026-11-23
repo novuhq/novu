@@ -25,7 +25,7 @@ function _ShowPopover(props: ShowPopoverProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const autoCompleteOptions = useMemo(() => {
-    return processVariables(variables, {
+    return processVariables(variables || [], {
       query: showIfKey || '',
       from: 'bubble-variable',
       editor,
@@ -90,7 +90,7 @@ function _ShowPopover(props: ShowPopoverProps) {
               }, 0);
             }}
           >
-            {renderVariable({
+            {renderVariable?.({
               variable: {
                 name: showIfKey,
                 valid: !!isValidWhenKey,

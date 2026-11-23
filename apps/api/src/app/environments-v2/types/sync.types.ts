@@ -103,6 +103,8 @@ export interface IUserInfo {
   firstName: string;
   lastName?: string | null;
   externalId?: string;
+  /** Present when the user has no name, so the publish UI can still show who edited. */
+  email?: string | null;
 }
 
 export interface IResourceInfo {
@@ -118,7 +120,11 @@ export interface IResourceDiff {
   resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
   diffs?: {
+    // biome-ignore lint/suspicious/noExplicitAny: a field snapshot is arbitrary workflow JSON
+    // biome-ignore lint/plugin: a field snapshot is arbitrary workflow JSON
     previous: Record<string, any> | null;
+    // biome-ignore lint/suspicious/noExplicitAny: a field snapshot is arbitrary workflow JSON
+    // biome-ignore lint/plugin: a field snapshot is arbitrary workflow JSON
     new: Record<string, any> | null;
   };
   // Step-specific fields

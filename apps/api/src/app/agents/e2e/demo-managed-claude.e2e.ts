@@ -16,7 +16,7 @@ const integrationRepository = new IntegrationRepository();
 const agentRepository = new AgentRepository();
 const agentMcpServerRepository = new AgentMcpServerRepository();
 
-function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
+function buildMockProvider(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
     capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true, tokenVault: true },

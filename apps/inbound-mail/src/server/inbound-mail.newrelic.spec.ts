@@ -5,9 +5,10 @@ import sinon from 'sinon';
 
 const newrelic = require('newrelic');
 
-import mailinServer from './index';
-
 describe('Inbound Mail New Relic instrumentation', () => {
+  const host = '127.0.0.1';
+  const port = Number(process.env.PORT || 2525);
+
   let startBackgroundTransactionStub: sinon.SinonSpy;
   let startSegmentStub: sinon.SinonSpy;
   let addCustomAttributesStub: sinon.SinonSpy;
@@ -17,8 +18,6 @@ describe('Inbound Mail New Relic instrumentation', () => {
     startSegmentStub = sinon.spy(newrelic, 'startSegment');
     addCustomAttributesStub = sinon.spy(newrelic, 'addCustomAttributes');
 
-    const port = (mailinServer as unknown as { configuration: { port: number; host: string } }).configuration.port;
-    const host = (mailinServer as unknown as { configuration: { port: number; host: string } }).configuration.host;
     await waitForPort(host, port, 10_000);
   });
 
@@ -29,9 +28,6 @@ describe('Inbound Mail New Relic instrumentation', () => {
   });
 
   it('should wrap the inbound mail processing pipeline in a custom New Relic background transaction', async () => {
-    const port = (mailinServer as unknown as { configuration: { port: number; host: string } }).configuration.port;
-    const host = (mailinServer as unknown as { configuration: { port: number; host: string } }).configuration.host;
-
     await sendSmtpMessage({
       host,
       port,

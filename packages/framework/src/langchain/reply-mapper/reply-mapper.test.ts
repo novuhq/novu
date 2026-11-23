@@ -2,7 +2,7 @@ import { AIMessage } from '@langchain/core/messages';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from '../../resources/agent/agent.runtime';
-import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AgentHistoryEntry, MessageContent } from '../../resources/agent/agent.types';
 import { fakeReply } from '../../resources/agent/reply.fixture';
 import { NovuToolApprovalRequired } from '../tool-approval';
 import type { LangChainAgentConfig } from '../types';
@@ -16,7 +16,7 @@ vi.mock('langchain', async (importOriginal) => {
   return { ...actual, createAgent: createAgentMock };
 });
 
-function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
+function fakeRuntimeCtx(history: AgentHistoryEntry[] = [], signal: AbortSignal = new AbortController().signal) {
   const { reply, sent } = fakeReply();
   const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const ctx = {
@@ -25,6 +25,7 @@ function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
     sent,
     replyApprovalCard,
     history,
+    signal,
     emitToolResult: vi.fn(),
     emitToolApprovalRequest: vi.fn(),
     typing: { stop: vi.fn() },
@@ -220,7 +221,7 @@ describe('handleLangChainResult', () => {
     it('delivers the formatReply result instead of the raw text', async () => {
       const ctx = fakeRuntimeCtx();
       streams([new AIMessage({ id: 'ai_1', content: 'created it' })]);
-      const card = { type: 'card', children: [{ type: 'text', content: 'created it' }] } as const;
+      const card: MessageContent = { type: 'card', children: [{ type: 'text', content: 'created it' }] };
 
       await handleLangChainResult(config({ formatReply: () => card }), ctx, undefined);
 
@@ -234,6 +235,131 @@ describe('handleLangChainResult', () => {
       await handleLangChainResult(config({ formatReply: () => undefined }), ctx, undefined);
 
       expect(ctx.reply).toHaveBeenCalledWith('plain answer');
+    });
+
+    it('streams the model text followed by the replyFooter', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Created it' })]);
+
+      await handleLangChainResult(config({ replyFooter: () => '[Open](https://x)' }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('Created it\n\n[Open](https://x)');
+    });
+
+    it('streams only the replyFooter when the model returns no text', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: '' })]);
+
+      await handleLangChainResult(config({ replyFooter: () => 'footer' }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('footer');
+    });
+
+    it('posts the replyFollowUp as its own message after the streamed reply', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Updated it' })]);
+      const card = { type: 'card', title: 'Review', children: [] } as unknown as MessageContent;
+
+      await handleLangChainResult(config({ replyFollowUp: () => card }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('Updated it');
+      expect(ctx.reply).toHaveBeenCalledTimes(2);
+      expect(ctx.reply).toHaveBeenLastCalledWith(card);
+    });
+
+    it('posts nothing more when replyFollowUp returns undefined', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Answered' })]);
+
+      await handleLangChainResult(config({ replyFollowUp: () => undefined }), ctx, undefined);
+
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+    });
+
+    /** Streams one chunk, aborts `source` mid-run and reports whether the run's signal followed it. */
+    function abortWhileStreaming(source: AbortController) {
+      const seen: { before?: boolean; after?: boolean } = {};
+      const messages = [new AIMessage({ id: 'ai_1', content: 'hi' })];
+      streamMock.mockImplementation(async (_input, runConfig: { signal: AbortSignal }) =>
+        (async function* () {
+          seen.before = runConfig.signal.aborted;
+          yield ['messages', [messages[0], { langgraph_node: 'model_request' }]];
+          source.abort();
+          seen.after = runConfig.signal.aborted;
+          yield ['values', { messages }];
+        })()
+      );
+
+      return seen;
+    }
+
+    it("passes the turn's stop signal to the run, combined with the caller's own", async () => {
+      const turn = new AbortController();
+      const caller = new AbortController();
+      const ctx = fakeRuntimeCtx([], turn.signal);
+      const seen = abortWhileStreaming(turn);
+
+      await handleLangChainResult(config({ invokeConfig: { signal: caller.signal } }), ctx, undefined);
+
+      expect(seen).toEqual({ before: false, after: true });
+    });
+
+    it("still honours the caller's own signal", async () => {
+      const caller = new AbortController();
+      const ctx = fakeRuntimeCtx();
+      const seen = abortWhileStreaming(caller);
+
+      await handleLangChainResult(config({ invokeConfig: { signal: caller.signal } }), ctx, undefined);
+
+      expect(seen).toEqual({ before: false, after: true });
+    });
+
+    it("leaves no listener on the caller's signal once the run ends", async () => {
+      const caller = new AbortController();
+      const addListener = vi.spyOn(caller.signal, 'addEventListener');
+      const removeListener = vi.spyOn(caller.signal, 'removeEventListener');
+      const agentConfig = config({ invokeConfig: { signal: caller.signal } });
+
+      for (let turn = 0; turn < 3; turn += 1) {
+        streams([new AIMessage({ id: `ai_${turn}`, content: 'hi' })]);
+        await handleLangChainResult(agentConfig, fakeRuntimeCtx(), undefined);
+      }
+
+      expect(addListener).toHaveBeenCalledTimes(3);
+      expect(removeListener.mock.calls).toEqual(addListener.mock.calls.map(([type, listener]) => [type, listener]));
+    });
+
+    it('adds no footer and posts no follow-up once the turn was stopped', async () => {
+      const turn = new AbortController();
+      const ctx = fakeRuntimeCtx([], turn.signal);
+      const messages = [new AIMessage({ id: 'ai_1', content: 'Partial' })];
+      streamMock.mockImplementation(async () =>
+        (async function* () {
+          yield ['messages', [messages[0], { langgraph_node: 'model_request' }]];
+          turn.abort();
+          yield ['values', { messages }];
+        })()
+      );
+      const replyFollowUp = vi.fn((): MessageContent | undefined => 'card');
+
+      await handleLangChainResult(config({ replyFooter: () => 'footer', replyFollowUp }), ctx, undefined);
+
+      expect(ctx.sent).toHaveBeenCalledWith('Partial');
+      expect(replyFollowUp).not.toHaveBeenCalled();
+      expect(ctx.reply).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips the replyFooter when formatReply is set', async () => {
+      const ctx = fakeRuntimeCtx();
+      streams([new AIMessage({ id: 'ai_1', content: 'Created it' })]);
+
+      await handleLangChainResult(
+        config({ formatReply: () => undefined, replyFooter: () => 'footer' }),
+        ctx,
+        undefined
+      );
+
+      expect(ctx.sent).toHaveBeenCalledWith('Created it');
     });
 
     it('does not call formatReply when the model returns no text', async () => {

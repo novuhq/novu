@@ -187,7 +187,11 @@ describe('McpOAuthCallback managed chat resume', () => {
     );
     const resumeSessionAfterConnect = (
       callback as unknown as {
-        resumeSessionAfterConnect(stateData: McpOAuthState, connection: McpConnectionEntity): Promise<void>;
+        resumeSessionAfterConnect(
+          stateData: McpOAuthState,
+          connection: McpConnectionEntity,
+          session: { toolUseId: string; conversationId: string; platform: string; platformThreadId: string }
+        ): Promise<void>;
       }
     ).resumeSessionAfterConnect.bind(callback);
     const stateData = {
@@ -207,7 +211,12 @@ describe('McpOAuthCallback managed chat resume', () => {
       platformThreadId: 'web_chat:conversation-id',
     } as McpOAuthState;
 
-    await resumeSessionAfterConnect(stateData, {} as McpConnectionEntity);
+    await resumeSessionAfterConnect(stateData, {} as McpConnectionEntity, {
+      toolUseId: 'tool-use-id',
+      conversationId: 'conversation-id',
+      platform: AgentPlatformEnum.WEB_CHAT,
+      platformThreadId: 'web_chat:conversation-id',
+    });
 
     expect(
       agentConversationService.persistMcpConnectionResult.calledOnceWithExactly({

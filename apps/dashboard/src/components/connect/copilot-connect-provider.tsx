@@ -48,14 +48,17 @@ export function CopilotConnectProvider({ children, fallback = null }: CopilotCon
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
 
+  const email = user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '';
+  // Keyed on primitives: Clerk hands back new `user` / `emailAddresses` references on session refreshes, and a new
+  // subscriber object makes `NovuProvider` build a new client, which resets any chat that is mid-run.
   const subscriber = useMemo(
     () => ({
       subscriberId: user?.externalId ?? '',
-      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
+      email,
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
     }),
-    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
+    [user?.externalId, email, user?.firstName, user?.lastName]
   );
 
   // Mint the tenant context + contextHash + subscriberHash from the customer-authenticated

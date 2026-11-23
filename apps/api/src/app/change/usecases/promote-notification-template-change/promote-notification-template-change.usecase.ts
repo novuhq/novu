@@ -27,6 +27,7 @@ import {
   IPreferenceChannels,
   PreferencesTypeEnum,
 } from '@novu/shared';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { INotificationTemplateChangeService } from '../shared';
@@ -48,7 +49,7 @@ export class PromoteNotificationTemplateChange implements INotificationTemplateC
     private environmentRepository: EnvironmentRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
-    @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
+    @Inject(forwardRef(() => ApplyChange)) private applyChange: WrapperType<ApplyChange>,
     private changeRepository: ChangeRepository,
     private upsertPreferences: UpsertPreferences,
     private deletePreferences: DeletePreferencesUseCase,

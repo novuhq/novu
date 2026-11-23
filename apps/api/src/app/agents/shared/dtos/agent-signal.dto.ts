@@ -207,6 +207,13 @@ export class MetadataSetSignalDto {
 
   @ApiProperty({
     description: 'JSON-serializable value to store.',
+    oneOf: [
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object', additionalProperties: true },
+      { type: 'array', items: {} },
+    ],
     example: 'TCK-1001',
   })
   @IsDefined()
@@ -305,7 +312,8 @@ export class HumanSignalDto {
 
   @ApiProperty({
     description: 'Markdown, HITL chrome, or a posted Card element (`type: "card"`) from `{ render }`.',
-    oneOf: [
+    // anyOf, not oneOf: the three shapes are open objects that no schema can tell apart.
+    anyOf: [
       {
         type: 'object',
         additionalProperties: true,
@@ -432,7 +440,7 @@ function resolveAgentSignalDto(plain: object): ClassConstructor<object> {
   }
 }
 
-export function toAgentSignalDtos(value: unknown): unknown {
+export function toAgentSignalDtos<T>(value: T): T | object[] {
   if (!Array.isArray(value)) {
     return value;
   }

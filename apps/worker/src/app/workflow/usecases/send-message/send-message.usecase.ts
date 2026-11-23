@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  AnalyticsService,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -11,7 +10,6 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   ICompileContext,
-  IConditionsFilterResponse,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -26,6 +24,7 @@ import {
   EnvironmentVariableRepository,
   JobEntity,
   NotificationTemplateRepository,
+  SubscriberEntity,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
@@ -34,17 +33,14 @@ import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
-  DigestTypeEnum,
   EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IDigestRegularMetadata,
-  IDigestTimedMetadata,
   IPreferenceChannels,
   PreferencesTypeEnum,
-  ResourceTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
+import { getCachedEnvironment } from '../../../shared/utils';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
@@ -81,7 +77,6 @@ export class SendMessage {
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private analyticsService: AnalyticsService,
     private contextRepository: ContextRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
@@ -92,7 +87,32 @@ export class SendMessage {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
-    const { compileContext: variables, environment } = await this.buildVariables(command);
+    const subscriber =
+      command.subscriber ??
+      (await this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }));
+
+    if (!subscriber) throw new PlatformException('Subscriber not found');
+
+    /*
+     * Preferences are checked before anything else: a step the subscriber opted out of
+     * is skipped whatever its conditions or bridge output say, so building variables and
+     * calling the bridge for it is wasted work.
+     */
+    const channelPreference = await this.evaluateChannelPreference(command, subscriber);
+    if (!channelPreference.result) {
+      return {
+        status: SendMessageStatus.SKIPPED,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatusEnum.SKIPPED,
+          detail: DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE,
+        },
+      };
+    }
+
+    const { compileContext: variables, environment } = await this.buildVariables(command, subscriber);
 
     const stepType = command.step?.template?.type;
 
@@ -102,6 +122,7 @@ export class SendMessage {
         ...command,
         variables,
         workflow: command.workflow,
+        environment,
       });
     }
 
@@ -120,29 +141,14 @@ export class SendMessage {
       );
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
-    if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(
-        command,
-        isBridgeSkipped,
-        stepCondition,
-        channelPreference.result,
-        !!bridgeResponse?.outputs
-      );
-    }
+    const stepCondition = await this.evaluateStepCondition(command, variables);
 
-    const conditionsShouldRun = stepCondition?.passed;
-    const preferenceShouldRun = channelPreference.result;
-    const isBridgeSkippedShouldRun = !isBridgeSkipped;
-
-    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
+    if (!stepCondition?.passed || isBridgeSkipped) {
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
           status: DeliveryLifecycleStatusEnum.SKIPPED,
-          detail: !channelPreference.result
-            ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
-            : DeliveryLifecycleDetail.USER_STEP_CONDITION,
+          detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
     }
@@ -230,21 +236,6 @@ export class SendMessage {
     }
   }
 
-  private async evaluateFilters(
-    command: SendMessageCommand,
-    variables: ICompileContext
-  ): Promise<{
-    stepCondition: IConditionsFilterResponse;
-    channelPreference: { result: boolean; reason?: DetailEnum };
-  }> {
-    const [stepCondition, channelPreference] = await Promise.all([
-      this.evaluateStepCondition(command, variables),
-      this.evaluateChannelPreference(command, variables),
-    ]);
-
-    return { stepCondition, channelPreference };
-  }
-
   private async evaluateStepCondition(command: SendMessageCommand, variables: ICompileContext) {
     const stepCondition = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
@@ -280,68 +271,10 @@ export class SendMessage {
     return stepCondition;
   }
 
-  private sendProcessStepEvent(
-    command: SendMessageCommand,
-    isBridgeSkipped: boolean | undefined,
-    filterResult: IConditionsFilterResponse | null,
-    preferredResult: boolean | null,
-    isBridgeWorkflow: boolean
-  ) {
-    const usedFilters = filterResult?.conditions?.reduce(ConditionsFilter.sumFilters, {
-      filters: [],
-      failedFilters: [],
-      passedFilters: [],
-    });
-
-    const { digest } = command.job;
-    let timedInfo: Record<string, unknown> = {};
-
-    if (digest && 'type' in digest && digest.type === DigestTypeEnum.TIMED) {
-      const timedDigest = digest as IDigestTimedMetadata;
-      if (timedDigest.timed) {
-        timedInfo = {
-          digestAtTime: timedDigest.timed.atTime,
-          digestWeekDays: timedDigest.timed.weekDays,
-          digestMonthDays: timedDigest.timed.monthDays,
-          digestOrdinal: timedDigest.timed.ordinal,
-          digestOrdinalValue: timedDigest.timed.ordinalValue,
-        };
-      }
-    }
-
-    /**
-     * userId is empty string due to mixpanel hot shard events.
-     * This is intentional, so that mixpanel can automatically reshard it.
-     */
-    this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-      workflowType: isBridgeWorkflow ? ResourceTypeEnum.BRIDGE : ResourceTypeEnum.REGULAR,
-      _template: command.job._templateId,
-      _organization: command.organizationId,
-      _environment: command.environmentId,
-      _subscriber: command.job?._subscriberId,
-      provider: command.job?.providerId,
-      delay: command.job?.delay,
-      jobType: command.job?.type,
-      digestType: digest && 'type' in digest ? digest.type : undefined,
-      digestEventsCount: digest?.events?.length,
-      digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
-      digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
-      digestBackoff:
-        (digest && 'type' in digest && digest.type === DigestTypeEnum.BACKOFF) ||
-        (digest as IDigestRegularMetadata)?.backoff === true,
-      ...timedInfo,
-      filterPassed: filterResult?.passed,
-      preferencesPassed: preferredResult,
-      isBridgeSkipped,
-      ...(usedFilters || {}),
-      source: command.payload?.__source || 'api',
-    });
-  }
-
   @Instrument()
   private async evaluateChannelPreference(
     command: SendMessageCommand,
-    compileContext: ICompileContext
+    subscriber: SubscriberEntity
   ): Promise<{ result: boolean; reason?: DetailEnum }> {
     const { job } = command;
 
@@ -355,9 +288,6 @@ export class SendMessage {
         _id: job._templateId,
         environmentId: job._environmentId,
       }));
-
-    const subscriber = compileContext.subscriber;
-    if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
     let subscriberPreferenceType: PreferencesTypeEnum;
@@ -391,6 +321,7 @@ export class SendMessage {
           tenant: job.tenant,
           includeInactiveChannels: false,
           contextKeys: job.contextKeys,
+          subscriberGlobalPreference: command.subscriberGlobalPreference,
         })
       );
       subscriberPreference = preference;
@@ -440,13 +371,10 @@ export class SendMessage {
 
   @Instrument()
   private async buildVariables(
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    subscriber: SubscriberEntity
   ): Promise<{ compileContext: ICompileContext; environment: EnvironmentEntity }> {
-    const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
-      this.getSubscriberBySubscriberId({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
+    const [actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       command.job.actorId &&
         this.getSubscriberBySubscriberId({
           subscriberId: command.job.actorId,
@@ -455,10 +383,9 @@ export class SendMessage {
       this.handleTenantExecution(command.job),
       this.resolveContext(command),
       this.getEnvironmentVariables(command),
-      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
+      this.getEnvironment(command.environmentId, command.organizationId),
     ]);
 
-    if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!environmentEntity) throw new PlatformException('EnvironmentEntity not found');
 
     // Compile-safe: adding a required field to EnvironmentSystemVariables will cause a TS error here
@@ -487,6 +414,18 @@ export class SendMessage {
     };
 
     return { compileContext, environment: environmentEntity };
+  }
+
+  /**
+   * The full environment, shared with ExecuteBridgeJob (and from there the bridge
+   * request) so one cached read serves variables, webhooks and the bridge call.
+   */
+  @Instrument()
+  private async getEnvironment(environmentId: string, organizationId: string): Promise<EnvironmentEntity | null> {
+    return getCachedEnvironment(this.inMemoryLRUCacheService, this.environmentRepository, {
+      environmentId,
+      organizationId,
+    });
   }
 
   @Instrument()

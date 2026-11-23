@@ -13,17 +13,11 @@ import {
   WebhookData,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { esmImport } from '../../../utils/esm-import';
 import { createProviderHttpClient } from '../../../utils/http';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 import { omitIncompleteLinkButtons } from '../card-render.utils';
 import { dedupeSlackActionIds, toSlackFlavoredCard, validateSlackCard } from './card-render.utils';
-
-type SlackBlocksModule = {
-  cardToBlockKit: (card: unknown) => unknown[];
-  cardToFallbackText: (card: unknown) => string;
-};
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -36,7 +30,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
    * Rich Chat: serialize a `CardElement` to Slack Block Kit + mrkdwn fallback text.
    */
   async render(card: CardElement): Promise<IChatRenderResult> {
-    const { cardToBlockKit, cardToFallbackText } = await esmImport<SlackBlocksModule>('@chat-adapter/slack');
+    const { cardToBlockKit, cardToFallbackText } = await import('@chat-adapter/slack');
 
     // Translate the card's provider-agnostic markdown into Slack mrkdwn (links `<url|label>`,
     // strikethrough `~x~`) before serializing; the adapter only converts `**bold**` on its own.

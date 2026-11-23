@@ -3,6 +3,7 @@ import { AGENT_INBOX_REACHES, type AgentInboxReach } from '@novu/dal';
 import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { AgentCardShownDto, AgentLookDto } from './human-agent-look.dto';
 import { AGENT_DESCRIPTION_MAX_LENGTH, trimmed } from './setup-human-relay.dto';
 
 /** Whether a mailbox local-part is free on the Agent Inbox domain. */
@@ -35,6 +36,12 @@ export class CheckInboxAddressResponseDto {
 
   @ApiProperty({ description: 'The mailbox domain this deployment publishes, such as `dev.agentinbox.md`.' })
   domain: string;
+
+  @ApiProperty({
+    description:
+      'Whether a new agent made here, with an account or without one, can be given a look: `POST /human/setup` takes one from a host only then. It is what tells the CLI and the MCP server to ask for a shape and a colour.',
+  })
+  canPickLook: boolean;
 }
 
 /** Which relay agent a call is about, for a setup made with its own `--agent-identifier`. */
@@ -85,6 +92,14 @@ export class UpdateHumanAgentRequestDto extends HumanAgentQueryDto {
   @IsOptional()
   @IsBoolean()
   paused?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the agent acknowledges a message as it arrives: typing where the chat has it, otherwise an `eyes` reaction on the first message. Off until the operator turns it on. Missing leaves it as it is. The operator’s dashboard only.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  acknowledgeOnReceived?: boolean;
 }
 
 export class HumanAgentResponseDto {
@@ -103,6 +118,18 @@ export class HumanAgentResponseDto {
   @ApiPropertyOptional({ description: 'Where anyone can load the agent’s picture. Missing when it has none.' })
   pictureUrl?: string;
 
+  @ApiProperty({
+    type: AgentLookDto,
+    description: 'How the agent looks: its mascot and its card’s art. The original look until its operator picks one.',
+  })
+  look: AgentLookDto;
+
+  @ApiPropertyOptional({
+    type: AgentCardShownDto,
+    description: 'The first time a host showed the agent’s card. Missing until one did.',
+  })
+  cardShown?: AgentCardShownDto;
+
   @ApiProperty()
   active: boolean;
 
@@ -117,6 +144,11 @@ export class HumanAgentResponseDto {
 
   @ApiPropertyOptional({ description: 'When the agent was paused. Missing while it isn’t.' })
   pausedAt?: string;
+
+  @ApiProperty({
+    description: 'Whether the agent acknowledges a message as it arrives. Off until the operator turns it on.',
+  })
+  acknowledgeOnReceived: boolean;
 
   @ApiPropertyOptional({
     description:

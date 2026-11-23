@@ -30,6 +30,7 @@ import type { ExternalToast } from 'sonner';
 import { getAgent, getAgentDetailQueryKey, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useCopilotWorkflowFormSync } from '@/components/copilot-web-chat';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
 import { RouteFill } from '@/components/icons/route-fill';
 import { PageMeta } from '@/components/page-meta';
@@ -60,6 +61,7 @@ import { SidebarContent, SidebarHeader } from '@/components/side-navigation/side
 import { workflowSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { parseWorkflowLimitError } from '@/hooks/use-create-workflow';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
@@ -246,18 +248,28 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     resolver: standardSchemaResolver(workflowSchema),
     shouldFocusError: false,
   });
+  useCopilotWorkflowFormSync(form, workflow);
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: workflow,
     form,
     isReadOnly,
-    save: (data) => update(data as UpdateWorkflowDto),
+    save: (data) =>
+      update(data as UpdateWorkflowDto, {
+        onError: (error) => {
+          // Activation blocked by the plan's active workflow limit: flip the switch back
+          if (parseWorkflowLimitError(error)) {
+            form.setValue('active', false);
+          }
+        },
+      }),
     shouldClientValidate: true,
   });
 
   const onPauseWorkflow = (active: boolean) => {
     form.setValue('active', active, { shouldValidate: true, shouldDirty: true });
-    saveForm();
+    // Force the save so re-enabling after a blocked activation is not skipped as a duplicate
+    saveForm({ forceSubmit: true });
   };
 
   function handleExportToCode() {

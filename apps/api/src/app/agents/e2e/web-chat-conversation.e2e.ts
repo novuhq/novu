@@ -26,7 +26,10 @@ const integrationRepository = new IntegrationRepository();
 const POLL_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
 
-async function pollFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = POLL_TIMEOUT_MS): Promise<T> {
+async function pollFor<T>(
+  fn: () => T | null | undefined | Promise<T | null | undefined>,
+  timeoutMs = POLL_TIMEOUT_MS
+): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
 
@@ -96,10 +99,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     },
     token = subscriberToken
   ) {
-    return ctx.session.testAgent
-      .post('/v1/web-chat/conversations')
-      .set('Authorization', `Bearer ${token}`)
-      .send(body);
+    return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
   }
 
   async function setWebChatHmac(enabled: boolean) {
@@ -124,10 +124,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   }
 
   function listConversations(token = subscriberToken, query: { after?: string; before?: string; limit?: number } = {}) {
-    return ctx.session.testAgent
-      .get('/v1/web-chat/conversations')
-      .query(query)
-      .set('Authorization', `Bearer ${token}`);
+    return ctx.session.testAgent.get('/v1/web-chat/conversations').query(query).set('Authorization', `Bearer ${token}`);
   }
 
   function getConversation(conversationIdentifier: string, token = subscriberToken) {
@@ -478,7 +475,8 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       return (
         envelope.event.type === 'message' &&
         envelope.event.role === 'user' &&
-        envelope.event.content?.markdown === 'Start thread'
+        'markdown' in envelope.event.content &&
+        envelope.event.content.markdown === 'Start thread'
       );
     });
     expect(subscriberMessageEvent).to.exist;

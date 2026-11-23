@@ -1,5 +1,6 @@
 export const NOVU_CLOUD_API_URL = 'https://api.novu.co';
 export const NOVU_STAGING_API_URL = 'https://api.novu-staging.co';
+export const NOVU_EU_API_URL = 'https://eu.api.novu.co';
 
 export type NovuConnectPackageTag = 'latest' | 'rc';
 
@@ -70,12 +71,24 @@ export function getNovuScaffoldSdkTag(apiUrl?: string | null, region?: string | 
   return isNovuPreReleaseConnectMode(apiUrl, region) ? 'next' : 'latest';
 }
 
-export function getNovuConnectRegionFlag(apiUrl?: string | null): '--region staging' | undefined {
-  if (!isNovuStagingApiUrl(apiUrl)) {
-    return undefined;
+export function isNovuEuApiUrl(apiUrl: string | null | undefined): boolean {
+  return normalizeApiUrl(apiUrl) === NOVU_EU_API_URL;
+}
+
+/**
+ * Cloud regions are passed as `--region` so the CLI resolves the matching API and
+ * dashboard URLs together (browser OAuth, post-connect links, scaffold region).
+ */
+export function getNovuConnectRegionFlag(apiUrl?: string | null): '--region staging' | '--region eu' | undefined {
+  if (isNovuStagingApiUrl(apiUrl)) {
+    return '--region staging';
   }
 
-  return '--region staging';
+  if (isNovuEuApiUrl(apiUrl)) {
+    return '--region eu';
+  }
+
+  return undefined;
 }
 
 export function getNovuConnectInvocation(apiUrl?: string | null): string {
@@ -97,8 +110,9 @@ export function formatNovuConnectCommandForDisplay(parts: readonly string[]): st
 }
 
 /**
- * Staging uses `--region staging` so OAuth hits dashboard.novu-staging.co.
- * Other non-US Cloud APIs keep `--api-url`. Local dev also needs dashboard URLs
+ * Staging and EU use `--region` so OAuth hits the matching Cloud dashboard
+ * (dashboard.novu-staging.co / eu.dashboard.novu.co). Other non-US APIs
+ * (self-hosted, local) keep `--api-url`. Local dev also needs dashboard URLs
  * so browser OAuth opens the same dashboard the user copied the command from.
  */
 export function getNovuConnectTargetFlags(apiUrlOrOptions?: string | null | NovuConnectTargetOptions): string[] {

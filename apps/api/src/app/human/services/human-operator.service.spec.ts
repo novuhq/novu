@@ -66,6 +66,50 @@ describe('HumanOperatorService.require', () => {
   });
 });
 
+describe('HumanOperatorService.describe', () => {
+  const scope = { environmentId: 'env1', organizationId: 'org1', agentIdentifier: 'human-relay' };
+
+  function setup(agent: Record<string, unknown> | null, operator: { subscriberId: string } | null = null) {
+    const agentRepository = { findOne: sinon.stub().resolves(agent) };
+    const humanContactRepository = {
+      findOperator: sinon.stub().resolves(operator),
+      findOperatorInEnvironment: sinon.stub().resolves(null),
+    };
+    const service = new HumanOperatorService(
+      agentRepository as never,
+      { find: sinon.stub().resolves([]) } as never,
+      humanContactRepository as never
+    );
+
+    return { service, agentRepository };
+  }
+
+  it('names the operator and the agent’s look from one read of the agent', async () => {
+    const look = { shape: 'drop', color: 'coral', art: { kind: 'arcs', seed: 7 } };
+    const { service, agentRepository } = setup(
+      { _id: 'relay1', runtime: 'human_relay', look },
+      { subscriberId: 'dima' }
+    );
+
+    expect(await service.describe(scope)).to.deep.equal({ subscriberId: 'dima', agentLook: look });
+    expect(agentRepository.findOne.callCount).to.equal(1);
+    expect(agentRepository.findOne.firstCall.args[1]).to.include('look');
+  });
+
+  it('gives an agent nobody picked a look for the original one, also while it has no operator', async () => {
+    const { service } = setup({ _id: 'relay1', runtime: 'human_relay' });
+
+    expect(await service.describe(scope)).to.deep.equal({
+      agentLook: { shape: 'orb', color: 'ember', art: { kind: 'rays', seed: 0 } },
+    });
+  });
+
+  it('says nothing before setup made the agent, or for an agent that is not a relay', async () => {
+    expect(await setup(null).service.describe(scope)).to.deep.equal({});
+    expect(await setup({ _id: 'a1', runtime: 'self-hosted' }).service.describe(scope)).to.deep.equal({});
+  });
+});
+
 describe('HumanOperatorService.cardNameFor', () => {
   const scope = { environmentId: 'env1', organizationId: 'org1', agentId: 'relay1' };
 

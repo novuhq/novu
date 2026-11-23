@@ -2,6 +2,7 @@ import {
   ControlValueSanitizerService,
   CreateVariablesObject,
   GetLayoutUseCase,
+  JSONSchemaDto,
   LayoutControlType,
   PayloadMergerService,
   PreviewPayloadProcessorService,
@@ -174,8 +175,9 @@ describe('PreviewLayoutUsecase', () => {
       });
       expect(result.previewPayloadExample).to.deep.equal(mockPayloadExample);
       expect(result.schema).to.exist;
-      expect(result.schema?.type).to.equal('object');
-      expect(result.schema?.properties).to.have.keys(['subscriber', 'context']);
+      const schema = result.schema as JSONSchemaDto;
+      expect(schema.type).to.equal('object');
+      expect(schema.properties).to.have.keys(['subscriber', 'context']);
     });
 
     it('should use layout control values when command control values are not provided', async () => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { agentPagePairs, CHANNEL_IDS } from '@/data/channel-pages';
+
 import { HOST_IDS, hostPath } from './hosts';
 import { publicSitemap } from './public-sitemap';
 import { SITE_ORIGIN, SITE_PAGES } from './seo';
@@ -9,10 +11,12 @@ const modified = new Date('2026-10-26T00:00:00.000Z');
 describe('the public sitemap', () => {
   const entries = publicSitemap(modified);
 
-  it('lists the website pages, then each host page, at the canonical origin', () => {
+  it('lists website, host, channel and supported agent pages at the canonical origin', () => {
     expect(entries.map((entry) => entry.url)).toEqual([
       ...Object.values(SITE_PAGES).map((page) => `${SITE_ORIGIN}${page.path}`),
       ...HOST_IDS.map((id) => `${SITE_ORIGIN}${hostPath(id)}`),
+      ...CHANNEL_IDS.map((id) => `${SITE_ORIGIN}/${id}`),
+      ...agentPagePairs().map(({ channel, agent }) => `${SITE_ORIGIN}/${channel}/${agent}`),
     ]);
   });
 

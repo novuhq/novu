@@ -1,5 +1,11 @@
 import { PushFactory } from '@novu/application-generic';
-import { ChannelTypeEnum, INTEGRATION_OVERRIDES_OUTPUT_KEY, PushProviderIdEnum, TriggerOverrides } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  INTEGRATION_OVERRIDES_OUTPUT_KEY,
+  PushProviderIdEnum,
+  TriggerOverrides,
+  WebhookEventEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -52,6 +58,32 @@ describe('serializePushProviderError', () => {
     expect(parsed.message).to.equal('boom');
     expect(parsed.name).to.equal('Error');
   });
+
+  it('keeps message and name next to own fields such as code', () => {
+    const error = Object.assign(new Error('Sending message failed due to "Device unregistered."'), {
+      code: 'messaging/registration-token-not-registered',
+    });
+
+    expect(JSON.parse(serializePushProviderError(error))).to.deep.equal({
+      name: 'Error',
+      message: 'Sending message failed due to "Device unregistered."',
+      code: 'messaging/registration-token-not-registered',
+    });
+  });
+
+  it("prefers an error's own toJSON output (e.g. AxiosError)", () => {
+    class ToJsonError extends Error {
+      toJSON() {
+        return { message: 'from toJSON', status: 502 };
+      }
+    }
+
+    expect(JSON.parse(serializePushProviderError(new ToJsonError('raw')))).to.deep.equal({
+      name: 'Error',
+      message: 'from toJSON',
+      status: 502,
+    });
+  });
 });
 
 describe('SendMessagePush - provider content overrides', () => {
@@ -93,7 +125,8 @@ describe('SendMessagePush - provider content overrides', () => {
 
   function buildUsecase(
     messageRepository = buildMessageRepository(),
-    selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration })
+    selectIntegrationExecute = sinon.stub().resolves({ integration: fcmIntegration }),
+    sendWebhookExecute = sinon.stub().resolves(undefined)
   ) {
     const usecase = new SendMessagePush(
       {} as never, // subscriberRepository
@@ -108,7 +141,7 @@ describe('SendMessagePush - provider content overrides', () => {
           getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
         }),
       } as never,
-      { execute: sinon.stub().resolves(undefined) } as never, // sendWebhookMessage
+      { execute: sendWebhookExecute } as never, // sendWebhookMessage
       {} as never, // invalidateCache
       { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
     );
@@ -980,6 +1013,140 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(result.status).to.equal(SendMessageStatus.SUCCESS);
       sinon.assert.calledOnce(sendStub);
       expect(getHandlerStub.firstCall.args[0]).to.include({ _id: fcmIntegration._id });
+    });
+  });
+
+  describe('workflow identifiers on push webhooks', () => {
+    function buildPersistedMessageRepository() {
+      return {
+        create: sinon.stub().callsFake(async (doc: Record<string, unknown>) => ({ _id: 'message_1', ...doc })),
+        update: sinon.stub().resolves(undefined),
+        updateMessageStatus: sinon.stub().resolves(undefined),
+      };
+    }
+
+    it('includes workflowId and templateIdentifier on message.sent', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const messageRepository = buildPersistedMessageRepository();
+      const sendWebhookExecute = sinon.stub().resolves(undefined);
+      const result = await buildUsecase(
+        messageRepository,
+        sinon.stub().resolves({ integration: fcmIntegration }),
+        sendWebhookExecute
+      ).execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
+
+      const sentEvent = sendWebhookExecute.firstCall.args[0];
+      expect(sentEvent.eventType).to.equal(WebhookEventEnum.MESSAGE_SENT);
+      expect(sentEvent.payload.object.channel).to.equal(ChannelTypeEnum.PUSH);
+      expect(sentEvent.payload.object.templateIdentifier).to.equal('wf-identifier');
+      expect(sentEvent.payload.object.workflowId).to.equal('wf-identifier');
+    });
+
+    it('includes workflowId and templateIdentifier on message.failed', async () => {
+      const sendStub = sinon.stub().rejects(new Error('provider down'));
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const messageRepository = buildPersistedMessageRepository();
+      const sendWebhookExecute = sinon.stub().resolves(undefined);
+      const result = await buildUsecase(
+        messageRepository,
+        sinon.stub().resolves({ integration: fcmIntegration }),
+        sendWebhookExecute
+      ).execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.FAILED);
+      expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
+
+      const failedEvent = sendWebhookExecute.firstCall.args[0];
+      expect(failedEvent.eventType).to.equal(WebhookEventEnum.MESSAGE_FAILED);
+      expect(failedEvent.payload.object.channel).to.equal(ChannelTypeEnum.PUSH);
+      expect(failedEvent.payload.object.templateIdentifier).to.equal('wf-identifier');
+      expect(failedEvent.payload.object.workflowId).to.equal('wf-identifier');
+    });
+  });
+
+  describe('invalid device token removal', () => {
+    function buildRemovalUsecase(isTokenInvalid: boolean, isRemovalEnabled: boolean) {
+      const sendStub = sinon
+        .stub()
+        .rejects(
+          new Error(
+            'Sending message failed due to "Device unregistered." (messaging/registration-token-not-registered)'
+          )
+        );
+      const isTokenInvalidStub = sinon.stub().returns(isTokenInvalid);
+      const getHandlerStub = sinon
+        .stub(PushFactory.prototype, 'getHandler')
+        .returns({ send: sendStub, isTokenInvalid: isTokenInvalidStub } as never);
+      const subscriberRepository = { update: sinon.stub().resolves(undefined) };
+      const invalidateCache = { invalidateByKey: sinon.stub().resolves(undefined) };
+      const sendWebhookExecute = sinon.stub().resolves(undefined);
+
+      const usecase = new SendMessagePush(
+        subscriberRepository as never,
+        {
+          create: sinon.stub().callsFake(async (doc: Record<string, unknown>) => ({ _id: 'message_1', ...doc })),
+          update: sinon.stub().resolves(undefined),
+          updateMessageStatus: sinon.stub().resolves(undefined),
+        } as never,
+        { execute: sinon.stub().resolves(undefined) } as never,
+        {} as never,
+        { execute: sinon.stub().resolves({ integration: fcmIntegration }) } as never,
+        {} as never,
+        { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+        {
+          get: () => ({
+            getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+          }),
+        } as never,
+        { execute: sendWebhookExecute } as never,
+        invalidateCache as never,
+        { getFlag: sinon.stub().resolves(isRemovalEnabled) } as never
+      );
+
+      return { usecase, getHandlerStub, isTokenInvalidStub, subscriberRepository, sendWebhookExecute };
+    }
+
+    it('pulls the token from the subscriber and reuses the send handler', async () => {
+      const { usecase, getHandlerStub, isTokenInvalidStub, subscriberRepository, sendWebhookExecute } =
+        buildRemovalUsecase(true, true);
+
+      const result = await usecase.execute(buildCommand());
+
+      expect(result.status).to.equal(SendMessageStatus.FAILED);
+      sinon.assert.calledOnce(getHandlerStub);
+      sinon.assert.calledOnceWithExactly(
+        isTokenInvalidStub,
+        'Sending message failed due to "Device unregistered." (messaging/registration-token-not-registered)'
+      );
+      sinon.assert.calledOnceWithExactly(
+        subscriberRepository.update,
+        { _environmentId: 'env_1', _id: '_sub_1', 'channels._integrationId': fcmIntegration._id },
+        { $pull: { 'channels.$.credentials.deviceTokens': 'device-token-1' } }
+      );
+      expect(sendWebhookExecute.firstCall.args[0].payload.error.push.reason).to.equal('token_invalid');
+    });
+
+    it('keeps the token while expired-token removal is disabled', async () => {
+      const { usecase, subscriberRepository } = buildRemovalUsecase(true, false);
+
+      await usecase.execute(buildCommand());
+
+      sinon.assert.notCalled(subscriberRepository.update);
+    });
+
+    it('keeps the token when the provider does not flag it as invalid', async () => {
+      const { usecase, subscriberRepository, sendWebhookExecute } = buildRemovalUsecase(false, true);
+
+      await usecase.execute(buildCommand());
+
+      sinon.assert.notCalled(subscriberRepository.update);
+      expect(sendWebhookExecute.firstCall.args[0].payload.error.push.reason).to.equal('generic_error');
     });
   });
 });

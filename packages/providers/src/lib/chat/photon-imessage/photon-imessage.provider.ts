@@ -82,22 +82,7 @@ interface SpectrumHandle {
   lastUsedAt: number;
 }
 
-/*
- * spectrum-ts is ESM-only while this package compiles to CJS, where tsc turns
- * `import()` into `require()`. The Function constructor keeps a genuine
- * dynamic import at runtime (same technique as the API's esm-import util).
- *
- * The function body is deliberately NOT textually identical to other
- * `new Function` importers in the monorepo: V8 dedupes identically-sourced
- * dynamic functions in its compilation cache, and the reused compilation
- * keeps the FIRST caller's import referrer — which silently rebases other
- * packages' dynamic imports onto this package's node_modules.
- */
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const nativeEsmImport = new Function(
-  'photonSpecifier',
-  'return import(/* photon-imessage esm importer */ photonSpecifier)'
-) as (specifier: string) => Promise<Record<string, unknown>>;
+const nativeEsmImport = (specifier: string): Promise<Record<string, unknown>> => import(specifier);
 
 let spectrumImport = nativeEsmImport;
 

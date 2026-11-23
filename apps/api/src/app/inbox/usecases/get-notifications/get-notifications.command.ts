@@ -1,3 +1,4 @@
+import type { SubscriberEntity } from '@novu/dal';
 import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
@@ -56,4 +57,7 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   @IsOptional()
   @IsInt()
   readonly createdLte?: number;
+
+  @IsOptional()
+  readonly subscriber?: SubscriberEntity;
 }

@@ -1,6 +1,8 @@
 {
-  "extends": "apps/api/tsconfig.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
     "strictNullChecks": false,
     "types": ["node", "mocha"]
   }

@@ -31,7 +31,7 @@ Agents branch on these. Do not parse the prose when a code will do.
 | --- | --- |
 | `INBOX_SECRET_KEY` | API secret key. Wins over `login` and `setup` |
 | `INBOX_TO` | Default recipient: contact id or ids, comma-separated, as `--to` (max 50) |
-| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, or `email`. Ignored when `--to` names someone else |
+| `INBOX_VIA` | Default channel for `INBOX_TO`: `telegram`, `slack`, `whatsapp`, or `email`. Ignored when `--to` names someone else |
 | `INBOX_API_URL` | API URL. The default is `https://www.agentinbox.md/api` |
 | `INBOX_CONFIG` | Config file path. The default is `~/.agentinbox/config.json` |
 
@@ -49,7 +49,7 @@ On a terminal, `setup`, `login`, `connect`, and `channel add` draw one updating 
 Creates a keyless inbox, then optionally connects a channel. A keyless setup waits up to 5 minutes for you to open the confirmation email. Running it again keeps the same inbox. See [Create an inbox](/setup).
 
 ```bash
-npx @agentinbox/cli setup [telegram|slack|email]
+npx @agentinbox/cli setup [telegram|slack|whatsapp|email]
 ```
 
 | Flag | Meaning |
@@ -60,6 +60,8 @@ npx @agentinbox/cli setup [telegram|slack|email]
 | `--agent-handle` | Its address before the `@`. Comes from the name otherwise, and can't be changed later |
 | `--agent-description` | One line about what the agent does |
 | `--agent-picture` | JPEG or PNG, up to 2 MB. Needs `login` |
+| `--agent-shape` | A new agent's mascot: `orb`, `pebble`, `drop`, `bean`, `peek` or `mochi`. Can't be changed later |
+| `--agent-color` | Its colour: `ember`, `marigold`, `coral`, `paprika`, `peach` or `bone`. Can't be changed later |
 | `--telegram-bot-token` | BotFather token. Skips the prompt |
 | `--slack-config-token` | Slack App Configuration Token. Skips the prompt |
 | `--api-url` | API URL override |
@@ -80,6 +82,18 @@ npx @agentinbox/cli connect <agent> --code <code>
 ```
 
 `<agent>` is the address before the `@`. `--code` is required. The code works once, for 10 minutes. `--yes` replaces a setup already on this computer without asking.
+
+## card
+
+```bash
+npx @agentinbox/cli card
+```
+
+Your agent says hi and shows its card: its name, its address, and the link where anyone can email or message it. At a terminal it draws the card with the mascot in your agent's look and a QR code of the link. In a pipe it prints the text only. Run it once your agent is connected; the first time any host shows the card, agentinbox.md moves on to your agent's inbox.
+
+| Flag | What it does |
+| --- | --- |
+| `--json` | Print the card as JSON |
 
 ## list
 
@@ -131,7 +145,7 @@ A plain message returns when it is delivered. Start the words with `ask`, `appro
 | Flag | Meaning |
 | --- | --- |
 | `--to` | Contact id, email, or a comma-separated list (max 50). Default: `INBOX_TO`, then you |
-| `--via` | `telegram`, `slack`, or `email`. Default channel for this send |
+| `--via` | `telegram`, `slack`, `whatsapp`, or `email`. Default channel for this send |
 | `--from` | Label shown to the person |
 | `--ttl` | How long a question stays answerable. Default 24h, max 5d |
 | `--timeout` | How long this command waits. Default: until answered or expired |
@@ -167,12 +181,12 @@ npx @agentinbox/cli contact invite <id|email>
 
 | Flag | Meaning |
 | --- | --- |
-| `--via` | `telegram`, `slack`, or `email`. Skips the invite page. Becomes their default |
+| `--via` | `telegram`, `slack`, `whatsapp`, or `email`. Skips the invite page. Becomes their default |
 | `--email` | Required for `--via email` when there is no terminal, unless the argument is already an email |
 | `--name` | Display name |
 | `--async` | Print the link, or send the confirmation email, and exit |
 
-The page link works for 3 days. A Telegram or Slack link from `--via` works for minutes.
+The page link works for 3 days. A Telegram, Slack, or WhatsApp link from `--via` works for minutes.
 
 ## channel list
 
@@ -181,7 +195,7 @@ Prints the channels you connected and which one is your default.
 ## channel add
 
 ```bash
-npx @agentinbox/cli channel add <telegram|slack|email>
+npx @agentinbox/cli channel add <telegram|slack|whatsapp|email>
 ```
 
 `--telegram-bot-token`, `--slack-config-token`, and `--email` skip the prompts.
@@ -189,7 +203,7 @@ npx @agentinbox/cli channel add <telegram|slack|email>
 ## channel default
 
 ```bash
-npx @agentinbox/cli channel default <telegram|slack|email>
+npx @agentinbox/cli channel default <telegram|slack|whatsapp|email>
 ```
 
 Sets the channel used when a message goes to you on this computer. Other people keep their own default.
@@ -197,12 +211,12 @@ Sets the channel used when a message goes to you on this computer. Other people 
 ## listen
 
 ```bash
-npx @agentinbox/cli listen claude-code
+npx @agentinbox/cli listen <claude-code|codex|opencode>
 npx @agentinbox/cli listen status
 npx @agentinbox/cli listen stop
 ```
 
-Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host (Claude Code, Codex or OpenCode) in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
 
 | Flag | What it does |
 | --- | --- |
@@ -210,6 +224,7 @@ Listens for messages on this computer: one from the operator, or from a contact 
 | `--timeout <duration>` | When an agent runs it: how long to wait for the operator's Allow. Exits `11` when it runs out |
 | `--runs-per-hour <n>` | How many runs may start in an hour. Default 20 |
 | `--max-run <duration>` | How long one run may go on. Default 30 minutes |
+| `--runs-at-once <n>` | How many runs may go on at once, each for its own conversation. Default 5 |
 | `--json` | `listen status` only: print JSON |
 
 Exit codes as for `approve`: `0` allowed, `10` denied, `11` still waiting, `12` the question expired, `1` an error.

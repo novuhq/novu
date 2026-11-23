@@ -74,7 +74,7 @@ export function useChannelEndpointsDeleteMutation(
 }
 
 export function mutationKeyChannelEndpointsDelete(): MutationKey {
-  return ["@novu/api", "Channel Endpoints", "delete"];
+  return ["@novu/api", "ChannelEndpoints", "delete"];
 }
 
 export function buildChannelEndpointsDeleteMutation(

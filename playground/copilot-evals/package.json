@@ -1,0 +1,20 @@
+{
+  "name": "copilot-evals",
+  "version": "0.0.1",
+  "private": true,
+  "description": "LangSmith experiments comparing Copilot's direct workflow tools against the MCP tools",
+  "type": "module",
+  "scripts": {
+    "dataset:sync": "node --env-file=.env src/sync-dataset.ts",
+    "eval:direct": "node --env-file=.env src/run-eval.ts direct",
+    "eval:mcp": "node --env-file=.env src/run-eval.ts mcp",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "langsmith": "^0.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "6.0.3"
+  }
+}

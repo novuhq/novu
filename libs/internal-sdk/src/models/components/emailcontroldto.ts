@@ -3,10 +3,12 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  EmailFromControlDto,
+  EmailFromControlDto$Outbound,
+  EmailFromControlDto$outboundSchema,
+} from "./emailfromcontroldto.js";
 
 /**
  * Type of editor to use for the body.
@@ -47,30 +49,29 @@ export type EmailControlDto = {
    * Layout ID to use for the email. Null means no layout, undefined means default layout.
    */
   layoutId?: string | null | undefined;
+  /**
+   * Sender name and email overrides for this step.
+   */
+  from?: EmailFromControlDto | undefined;
+  /**
+   * When true, sender name/email use the primary email integration defaults and skip workflow agent defaults.
+   */
+  useProviderDefaults?: boolean | undefined;
+  /**
+   * Step-level Reply-To override. When unset, inherits the workflow agent reply-to.
+   */
+  replyTo?: string | undefined;
+  /**
+   * One-line inbox preview text shown next to the subject.
+   */
+  preheader?: string | undefined;
 };
 
 /** @internal */
-export const EmailControlDtoEditorType$inboundSchema: z.ZodNativeEnum<
-  typeof EmailControlDtoEditorType
-> = z.nativeEnum(EmailControlDtoEditorType);
-/** @internal */
 export const EmailControlDtoEditorType$outboundSchema: z.ZodNativeEnum<
   typeof EmailControlDtoEditorType
-> = EmailControlDtoEditorType$inboundSchema;
+> = z.nativeEnum(EmailControlDtoEditorType);
 
-/** @internal */
-export const EmailControlDto$inboundSchema: z.ZodType<
-  EmailControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string(),
-  body: z.string().default(""),
-  editorType: EmailControlDtoEditorType$inboundSchema.default("block"),
-  disableOutputSanitization: z.boolean().default(false),
-  layoutId: z.nullable(z.string()).optional(),
-});
 /** @internal */
 export type EmailControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -79,6 +80,10 @@ export type EmailControlDto$Outbound = {
   editorType: string;
   disableOutputSanitization: boolean;
   layoutId?: string | null | undefined;
+  from?: EmailFromControlDto$Outbound | undefined;
+  useProviderDefaults?: boolean | undefined;
+  replyTo?: string | undefined;
+  preheader?: string | undefined;
 };
 
 /** @internal */
@@ -93,19 +98,14 @@ export const EmailControlDto$outboundSchema: z.ZodType<
   editorType: EmailControlDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
   layoutId: z.nullable(z.string()).optional(),
+  from: EmailFromControlDto$outboundSchema.optional(),
+  useProviderDefaults: z.boolean().optional(),
+  replyTo: z.string().optional(),
+  preheader: z.string().optional(),
 });
 
 export function emailControlDtoToJSON(
   emailControlDto: EmailControlDto,
 ): string {
   return JSON.stringify(EmailControlDto$outboundSchema.parse(emailControlDto));
-}
-export function emailControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<EmailControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailControlDto' from JSON`,
-  );
 }

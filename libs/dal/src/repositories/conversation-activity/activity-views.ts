@@ -39,6 +39,7 @@ export const ACTIVITY_KINDS = [
   'human_interaction_response',
   'run_start',
   'run_finish',
+  'run_finish.aborted',
   'run_error',
   'custom',
 ] as const;
@@ -72,6 +73,8 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   human_interaction_response: ['agent_handoff', 'operator_timeline'],
   run_start: ['client_events'],
   run_finish: ['client_events'],
+  // A stopped turn is the one run end the model must hear about; completed/paused finishes stay bookkeeping.
+  'run_finish.aborted': ['agent_handoff'],
   run_error: ['client_events'],
   custom: ['client_events', 'operator_timeline'],
 };
@@ -169,6 +172,12 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'run_finish':
       return { type: ConversationActivityTypeEnum.RUN_FINISH };
+
+    case 'run_finish.aborted':
+      return {
+        type: ConversationActivityTypeEnum.RUN_FINISH,
+        'richContent.lifecycle.outcome': 'aborted',
+      };
 
     case 'run_error':
       return { type: ConversationActivityTypeEnum.RUN_ERROR };

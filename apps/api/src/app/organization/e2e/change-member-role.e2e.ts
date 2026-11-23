@@ -29,13 +29,12 @@ describe('Change member role - /organizations/members/:memberId/role (PUT) #novu
   it.skip('should update admin to member', async () => {
     await memberRepository.addMember(session.organization._id, {
       _userId: user2.user._id,
-      invite: null,
       roles: [MemberRoleEnum.OSS_ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
 
     const member = await memberRepository.findMemberByUserId(session.organization._id, user2.user._id);
-    const { body } = await session.testAgent.put(`/v1/organizations/members/${member._id}/roles`).send({
+    const { body } = await session.testAgent.put(`/v1/organizations/members/${member!._id}/roles`).send({
       role: MemberRoleEnum.OSS_MEMBER,
     });
 
@@ -46,14 +45,13 @@ describe('Change member role - /organizations/members/:memberId/role (PUT) #novu
   it('should update member to admin', async () => {
     await memberRepository.addMember(session.organization._id, {
       _userId: user3.user._id,
-      invite: null,
       roles: [MemberRoleEnum.OSS_MEMBER],
       memberStatus: MemberStatusEnum.ACTIVE,
     });
 
     const member = await memberRepository.findMemberByUserId(session.organization._id, user3.user._id);
 
-    const { body } = await session.testAgent.put(`/v1/organizations/members/${member._id}/roles`).send({
+    const { body } = await session.testAgent.put(`/v1/organizations/members/${member!._id}/roles`).send({
       role: MemberRoleEnum.OSS_ADMIN,
     });
 

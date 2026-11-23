@@ -5,8 +5,7 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
   sourcemap: true,
-  // tsup 8 injects the deprecated `baseUrl` option into the dts build
-  dts: { compilerOptions: { ignoreDeprecations: '6.0' } },
+  dts: true,
   clean: true,
   minify: true,
   external: ['react'],

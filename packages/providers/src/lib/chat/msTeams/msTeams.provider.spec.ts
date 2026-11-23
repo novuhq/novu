@@ -1,16 +1,9 @@
 import { CardElement, ENDPOINT_TYPES } from '@novu/stateless';
 import { v4 as uuidv4 } from 'uuid';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { MsTeamsProvider } from './msTeams.provider';
-
-// The runtime `esmImport` uses `new Function('return import(...)')` so the CJS build can load
-// the ESM-only chat adapter. That indirection has no dynamic-import callback under Vitest, so
-// swap it for a transform-aware dynamic import that resolves the real adapter.
-vi.mock('../../../utils/esm-import', () => ({
-  esmImport: (specifier: string) => import(/* @vite-ignore */ specifier),
-}));
 
 const richCard: CardElement = {
   type: 'card',

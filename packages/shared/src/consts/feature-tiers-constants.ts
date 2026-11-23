@@ -3,6 +3,15 @@ import { ApiServiceLevelEnum, FeatureFlags, FeatureFlagsKeysEnum } from '../type
 // This is a large value on purpose that should surpass any realistic system limits
 export const UNLIMITED_VALUE = 9999;
 
+/** Published free-tier workflow cap. */
+export const FREE_TIER_MAX_WORKFLOWS = 5;
+
+/**
+ * Free-tier workflow cap used when `IS_FREE_TIER_WORKFLOW_LIMIT_ENABLED` is off.
+ * Matches the cap that applied before the free-tier limit was reduced.
+ */
+export const FREE_TIER_LEGACY_MAX_WORKFLOWS = 20;
+
 export enum FeatureNameEnum {
   // Platform Features
   AUTO_TRANSLATIONS = 'autoTranslations',
@@ -251,7 +260,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited notification subscribers', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
-    [ApiServiceLevelEnum.FREE]: { label: '20 workflows', value: 20 },
+    [ApiServiceLevelEnum.FREE]: { label: '5 workflows', value: FREE_TIER_MAX_WORKFLOWS },
     [ApiServiceLevelEnum.PRO]: { label: '20 workflows', value: 20 },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited workflows', value: UNLIMITED_VALUE },

@@ -78,7 +78,6 @@ export const TYPECHECK_SCRIPT_CANDIDATES = [
   'check:types',
   'tsc:check',
   'tsc:typecheck',
-  'tsc',
 ] as const;
 
 /**

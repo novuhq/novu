@@ -41,6 +41,7 @@ const workflowRunSelectColumns = [
   'severity',
   'critical',
   'context_keys',
+  'digested_workflow_run_id',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -491,6 +492,7 @@ export class GetWorkflowRuns {
       severity: workflowRun.severity,
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,
+      digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
     };
   }
 }

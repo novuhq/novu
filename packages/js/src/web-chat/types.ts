@@ -121,6 +121,22 @@ export type SendActionResult = {
   conversationId: string;
 };
 
+export type StopArgs = AgentHashFields & {
+  agentId: string;
+  conversationId?: string;
+  /** @internal Session key for the local cache. */
+  key?: string;
+};
+
+/**
+ * Result of a stop request.
+ * `aborted`: the server marked the active turn as stopped. The run ends when its `run-finish` event arrives.
+ * `idle`: the conversation had no active turn.
+ */
+export type StopResult = {
+  status: 'aborted' | 'idle';
+};
+
 /** One conversation in a `listConversations` page. */
 export type WebChatConversation = {
   identifier: string;

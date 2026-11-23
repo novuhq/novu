@@ -102,7 +102,7 @@ describe('McpConnectionErrorHandler', () => {
     });
 
     await handler.handle(
-      { type: 'connection.error', source: 'mcp', serverName: 'Slack', reason: 'timeout', message: 'slow' },
+      { type: 'connection.error', source: 'mcp', serverName: 'Slack', reason: 'connection', message: 'slow' },
       CONTEXT
     );
 

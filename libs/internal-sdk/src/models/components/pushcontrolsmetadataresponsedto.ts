@@ -3,14 +3,32 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  PushControlDto,
-  PushControlDto$inboundSchema,
-} from "./pushcontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Control values specific to Push
+ */
+export type PushControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Subject/title of the push notification.
+   */
+  subject?: string | undefined;
+  /**
+   * Body content of the push notification.
+   */
+  body?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type PushControlsMetadataResponseDto = {
   /**
@@ -24,8 +42,34 @@ export type PushControlsMetadataResponseDto = {
   /**
    * Control values specific to Push
    */
-  values: PushControlDto;
+  values?: PushControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const PushControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  PushControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    subject: z.string().optional(),
+    body: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function pushControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<PushControlsMetadataResponseDtoValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      PushControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'PushControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const PushControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +79,8 @@ export const PushControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: PushControlDto$inboundSchema,
+  values: z.lazy(() => PushControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function pushControlsMetadataResponseDtoFromJSON(

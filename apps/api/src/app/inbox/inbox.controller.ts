@@ -28,7 +28,6 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import type { Request } from 'express';
-import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -57,6 +56,7 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
+import { getClientIp } from '../shared/utils/client-ip';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -163,13 +163,15 @@ export class InboxController {
   async sessionInitialize(
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string,
+    @Headers('novu-client-version') clientVersion: string,
     @Req() request: Request
   ): Promise<SubscriberSessionResponseDto> {
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
         requestData: body,
         origin,
-        clientIp: getClientIp(request) ?? undefined,
+        clientIp: getClientIp(request),
+        clientVersion,
       })
     );
   }
@@ -186,6 +188,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         contextKeys: subscriberSession.contextKeys,
+        subscriber: subscriberSession,
         limit: query.limit,
         offset: query.offset,
         after: query.after,
@@ -215,6 +218,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         contextKeys: subscriberSession.contextKeys,
         filters: query.filters,
+        subscriber: subscriberSession,
       })
     );
 

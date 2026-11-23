@@ -3,11 +3,9 @@
   "compilerOptions": {
     "module": "commonjs",
     "customConditions": ["require"],
-    "target": "es6",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "esModuleInterop": true,
     "sourceMap": true,
     "types": ["node"]
   },

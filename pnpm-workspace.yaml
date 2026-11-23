@@ -127,7 +127,7 @@ overrides:
   joi@<18.3.1: ^18.3.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
-  '@swc/core@>=1.0.0 <2.0.0': 1.7.26
+  '@swc/core@>=1.0.0 <2.0.0': 1.16.21
   '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
   '@babel/core@>7.0.0 <8.0.0': 7.29.7
   prismjs@<=1.29.0: 1.30.0
@@ -149,10 +149,13 @@ overrides:
   # CVE-2026-112942 / CVE-2026-112943 / CVE-2026-112944: the bundled
   # launch-editor has a Windows existence-check bypass, missing `%` escaping,
   # and editor CLI flag injection. All patched in 6.4.4 (patch bump within the
-  # 6.4.x line). Widen the previous `<6.4.3` floor so transitive 6.4.3
-  # resolutions (via vitest, @vitest/mocker, @sveltejs/kit, maily-core/render)
-  # pick up the fix; the dashboard's vite 8.x is unaffected.
-  vite@>=5.0.0 <6.4.4: ^6.4.4
+  # 6.4.x line). GHSA-8g5g-mxqh-grgj (moderate): `server.fs.deny` bypass via
+  # URL queries in dev-server static file handling, affecting exactly 6.4.4.
+  # Patched in 6.4.5 (patch bump within the 6.4.x line). Widen the previous
+  # `<6.4.4` floor so transitive 6.4.4 resolutions (via vitest, @vitest/mocker,
+  # @sveltejs/kit, maily-core/render) pick up the fix; the dashboard's vite
+  # 8.x is unaffected.
+  vite@>=5.0.0 <6.4.5: ^6.4.5
   # GHSA-q3jh-wrc6-jgq8 (high): follow-redirects array-form headers bypass
   # cross-origin credential stripping. GHSA-8r9p-f939-6h3c (high):
   # sensitiveHeaders regex escaping can expose credential headers. Both are
@@ -179,7 +182,15 @@ overrides:
   # the previous `<1.4.0` floor so transitive consumers (@nestjs/jwt, selfsigned,
   # webpack-dev-server, verdaccio, @puppeteer/*, msal-node, mongodb-connection-string-url)
   # pick up the fix.
-  node-forge@<1.4.1: ^1.4.1
+  # GHSA-6889-vf6x-f3g5 (low) Ed25519 signature verification accepts small-order
+  # public keys, GHSA-w4xr-hqv8-ch44 (moderate) TLS client crash on an
+  # unsupported ServerHello compression method, GHSA-6cv4-p8m7-4r25 (moderate)
+  # ReDoS in forge.http response header and cookie trimming, and
+  # GHSA-j8rw-jp99-435v (moderate) TLS client crash on a handshake record
+  # received without a session. All four are patched in 1.4.3 (patch bump
+  # within the 1.4.x line). Widen the previous `<1.4.1` floor so transitive
+  # consumers pick up the fix.
+  node-forge@<1.4.3: ^1.4.3
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
@@ -187,9 +198,15 @@ overrides:
   # GHSA-2464-fhr4-w9xw (critical): Next.js unauthenticated RCE in the Image
   # Optimization API when SVG files are used. Patched in 15.5.28 for the 15.x
   # line (also covers GHSA-4jqv-mc3x-m676, GHSA-mcj8-r9mp-w47p and friends in
-  # >=15.0.0 <15.5.27). Widen the override from 15.5.27 so the playground
-  # picks up 15.5.28.
-  nextjs>next: ^15.5.28
+  # >=15.0.0 <15.5.27).
+  # GHSA-7qx7-33qx-rqx2 (moderate): Next.js SVG rejection bypass in the image
+  # optimization. GHSA-f3mh-rxg3-f5g2 (moderate): HttpOnly cookie exposure
+  # through internal response header on Edge runtime routes.
+  # GHSA-pc58-hwjq-p385 (moderate): cross-client response injection and
+  # disclosure in self-hosted Next.js applications forwarding fetched
+  # responses. All three patched in 15.5.29 (patch bump within the 15.5.x
+  # line). Widen the override from 15.5.28 so the playground picks up 15.5.29.
+  nextjs>next: ^15.5.29
   # GHSA-vcvr-r3jv-pc5j (critical): Next.js remote code execution in
   # next/og ImageResponse. Patched in 16.3.6; widen the override so transitive
   # 16.3.4 resolutions (via better-auth, @better-auth/sso) also pick up the fix.
@@ -201,13 +218,20 @@ overrides:
   # Optimization API when SVG files are used, and GHSA-673q-mjm6-r5xr
   # (critical): unauthenticated RCE in `use cache` functions returning typed
   # arrays, plus GHSA-p3m5-59mp-jv5r (high) content-disclosure. All three are
-  # patched in 16.4.1; widen the override from <16.3.8 so transitive consumers
-  # (better-auth, @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land
-  # on 16.4.1+.
-  next@<16.4.1: ^16.4.1
-  fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
-  fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
-  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
+  # patched in 16.4.1.
+  # GHSA-mfr8-8qww-v76h (moderate): Next.js information disclosure across
+  # root params when a `use cache` function is called through
+  # `unstable_cache()` (affects >=16.3.0 <=16.4.4). Patched in 16.4.5; widen
+  # the override from <16.4.1 so transitive consumers (better-auth,
+  # @better-auth/sso, @clerk/nextjs, apps/human-dashboard) land on 16.4.5+.
+  next@<16.4.5: ^16.4.5
+  # GHSA-474x-hrwr-fgx4 (low): fast-xml-parser quadratic CPU consumption
+  # scanning unterminated stop-node tags. Patched in 5.12.0 (minor bump within
+  # the 5.x line). Consolidate the previous `>=4.0.0 <5.0.0`, `>=5.0.0 <5.7.3`,
+  # and `>=5.9.3 <5.10.1` overrides into a single blanket floor since no fix
+  # was backported to earlier majors and transitive 5.10.x / 5.11.x
+  # resolutions (via @aws-sdk/*, @smithy/*, mailparser) need the bump.
+  fast-xml-parser@<5.12.0: ^5.12.0
   # GHSA-c475-qrg2-pj4r: basic-ftp SSRF via `./` prefixed paths in list()
   # bypassing the loopback / private-IP guard. Patched in 6.2.1. Widen the
   # override from the previous 5.3.1 floor so the transitive `get-uri` >
@@ -215,7 +239,15 @@ overrides:
   # the 6.x line. basic-ftp 6.0 removed the deprecated `Client.list()` string
   # overload and tightened TypeScript signatures, but `get-uri` only calls
   # `Client.access()` + `Client.downloadTo()`, which are unchanged.
-  basic-ftp@<6.2.1: ^6.2.1
+  # GHSA-4xjp-22g4-fmrf (moderate): uncaught `TypeError` in the MLSD
+  # directory-listing parser via a `__proto__` fact name causes
+  # `Client.list()` to crash the Node.js process (DoS). Patched in 6.2.4.
+  # GHSA-3hrq-5c38-xwg2 (moderate): uncaught exception crashes the Node.js
+  # process when a password (or resumed-download path) contains CR/LF.
+  # Patched in 6.2.3. Widen the previous `<6.2.1` floor to `<6.2.4` so the
+  # same transitive chain picks up the 6.2.4+ fix; the 6.2.x line is a pure
+  # patch series with no further API changes.
+  basic-ftp@<6.2.4: ^6.2.4
   # GHSA-ch52-4w7c-c8xp: http-cache-semantics max-stale handling can disclose
   # cross-user cached responses. Patched in 4.2.1. Transitive via got >
   # cacheable-request across build tooling.
@@ -341,6 +373,12 @@ overrides:
   altcha-lib@<1.4.1: ^1.4.1
   lodash-es@<=4.17.23: ^4.18.0
   lodash@<=4.17.23: ^4.18.0
+  # GHSA-f23m-r3pf-42rh (moderate) and GHSA-xxjr-mmjv-4gpg (moderate):
+  # lodash.omit prototype pollution via array-path bypass in `_.unset`,
+  # `_.omit`, and `_.pullAt`. Patched in 4.18.0 (first patched standalone
+  # release). Transitive via @vonage/server-sdk > @vonage/numbers and
+  # @vonage/verify in packages/providers.
+  lodash.omit@<4.18.0: ^4.18.0
   ajv@>=8.0.0 <8.18.0: ^8.18.0
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
@@ -398,6 +436,9 @@ overrides:
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
+  # GHSA-73rr-hh4g-fpgx has no 6.x or 7.x patch. mocha 11 pins diff ^7 but only
+  # calls createPatch and diffWordsWithSpace, which 8.x keeps under require().
+  diff@>=6.0.0 <8.0.3: ^8.0.3
   formidable@>=2.1.0 <2.1.3: ^2.1.3
   formidable@>=3.1.1 <3.5.3: ^3.5.3
   ip@<1.1.9: ^1.1.9
@@ -416,7 +457,22 @@ overrides:
   svelte: 5.55.7
   # GHSA-29g2-3rmr-qm68: ReDoS (O(n^2)) in @sveltejs/kit content negotiation
   # via the Accept header. Patched in 2.70.2 (patch bump within the 2.x line).
-  '@sveltejs/kit@<2.70.2': ^2.70.2
+  # GHSA-mw6w-2fmv-pvw3 (moderate): adapter-node crashes with an unhandled
+  # URIError when `reroute` rewrites malformed pathnames (DoS). Patched in
+  # 2.70.4 (patch bump within the 2.70.x line).
+  # GHSA-3r8g-jcqq-3p5j (high): DoS while parsing form data from a remote
+  # functions `form` (>=2.42.0 <=3.1.0). GHSA-6cf5-gc4q-fm3x (moderate):
+  # private `query.batch` functions could collide, producing unexpected
+  # parameter / function combinations (>=2.60.1 <=3.1.0). GHSA-pfhg-q3qv-9q6r
+  # (low): URL redirection to untrusted site via enhanced form submission
+  # (<3.0.0). GHSA-27mw-82g8-phjj (low): XSS via untrusted cache-control
+  # header in prerendered page (<3.0.0). All four are patched by moving to
+  # 3.1.1+ (there is no backport to the 2.x line). Widen the previous `<2.70.4`
+  # floor so transitive consumers (packages/framework and
+  # enterprise/packages/auth > better-auth / @better-auth/sso, both of which
+  # already peer `^2.0.0 || ^3.0.0`) pick up the fix. The repo meets SvelteKit
+  # 3's prerequisites: Node >=22, TypeScript 6, and @sveltejs/vite-plugin-svelte 7.
+  '@sveltejs/kit@<3.1.1': ^3.1.1
   langsmith@<0.6.0: ^0.6.3
   devalue@<5.9.3: ^5.9.3
   picomatch@<2.3.2: ^2.3.2
@@ -445,16 +501,35 @@ overrides:
   # in 4.13.5; stay on the 4.x line (patch bump within 4.x).
   # CVE-2026-111757: `serveStatic` decodes the request path twice, bypassing
   # middleware on static paths. Patched in 4.13.11.
-  hono@<4.13.11: ^4.13.11
+  # GHSA-4m76-xfj5-7975 (moderate): `mount()` / `app.mount()` forwards a path
+  # that bypasses middleware scoped inside the mount prefix.
+  # GHSA-h7mg-cq63-vhpq (moderate): RegExpRouter skips wildcard middleware
+  # for some route sets and for paths with an encoded line terminator.
+  # GHSA-46wx-v44x-9hh2 (moderate): `csrf()` does not check requests sent by
+  # hyperlink auditing (`text/ping`).
+  # GHSA-4h7h-rv7c-7m2v (moderate): `validator('form')` skips validation for
+  # `multipart/form-data` requests with extra parameters. All four are
+  # patched in 4.13.16 (patch bump within the 4.13.x line). Widen the previous
+  # `<4.13.11` floor so transitive consumers (packages/framework,
+  # enterprise/workers/socket, @modelcontextprotocol/sdk, @hono/node-server)
+  # pick up the fix.
+  hono@<4.13.16: ^4.13.16
   # GHSA-rmxm-3fg6-px4f (moderate): @hono/node-server 1.19.10 - 2.1.2 passes
   # the full request URL (including query string) to the Node.js HTTP response
   # body-less code path, enabling response-splitting / request-smuggling-like
   # confusion when a malicious URL is reflected into the response status line.
-  # Patched in 2.1.3 (patch bump within the 2.x line). Widen the previous
-  # <2.0.5 floor so transitive consumers (apps/api > emulate, apps/agent-inbox-mcp
-  # > @modelcontextprotocol/sdk, playground/web-chat, packages/novu, enterprise
-  # workers) land on the fix.
-  '@hono/node-server@<2.1.3': ^2.1.3
+  # Patched in 2.1.3 (patch bump within the 2.x line).
+  # GHSA-qv5m-9pm6-hqp3 (moderate): unhandled `ECONNRESET` on the socket
+  # during an asynchronous WebSocket upgrade crashes the Node.js process.
+  # GHSA-jpvv-r467-5p4w (moderate): backslash in the request path is parsed
+  # as a path separator, bypassing path-based access control at a reverse
+  # proxy. Both patched in 2.1.6 (patch bump within the 2.1.x line). Widen
+  # the previous `<2.1.3` floor so transitive consumers (apps/api > emulate,
+  # apps/agent-inbox-mcp > @modelcontextprotocol/sdk, apps/mcp-server >
+  # @modelcontextprotocol/sdk, playground/web-chat, packages/novu >
+  # @anthropic-ai/claude-agent-sdk, enterprise/workers/thalamus-observer >
+  # agents) land on the fix.
+  '@hono/node-server@<2.1.6': ^2.1.6
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
@@ -470,7 +545,17 @@ overrides:
   # apps/agent-inbox-mcp > @modelcontextprotocol/sdk > express-rate-limit)
   # pick up the fix.
   ip-address@<10.7.4: ^10.7.4
-  mongoose@>=8.0.0 <8.24.1: ^8.24.1
+  # GHSA-pcrw-h46h-c93h (critical): mongoose Model.$where search-injection
+  # that can be abused when user input reaches `$where`. Patched in 8.24.3.
+  # GHSA-gg4r-jv3p-qx3c (high) / GHSA-8332-j7wj-wjw4 (high) /
+  # GHSA-wr5m-5jph-8m96 (moderate) / GHSA-6972-9mcm-vhwj (moderate): additional
+  # search / prototype-pollution / NoSQL-injection advisories in mongoose
+  # Model and Query APIs. All patched in 8.24.7 (patch bump within the 8.24.x
+  # line). Widen the previous `<8.24.1` floor so transitive consumers
+  # (@nestjs/terminus across apps/api, apps/worker, apps/webhook, apps/ws)
+  # and the enterprise auth package pick up the fix. enterprise/packages/auth
+  # declares `mongoose: ^8.22.1`, which semver-allows 8.24.x.
+  mongoose@>=8.0.0 <8.24.8: ^8.24.8
   newrelic: 13.19.2
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
@@ -518,7 +603,6 @@ overrides:
   # the 3.x line). Only pulled transitively via `pino-pretty > fast-copy` in
   # libs/application-generic (and other logger consumers).
   fast-copy@>=3.0.0 <3.1.0: ^3.1.0
-  tsup@<8.3.5: ^8.3.5
   # GHSA-g8qq-57p8-ggw5 / GHSA-jxwj-j7wr-gfrw: stored/mutation XSS via SVG SMIL
   # URI-list scheme-policy bypass and literal `</textarea/>` solidus close.
   # Patched in 2.17.7 (patch bump within the 2.17.x line).
@@ -527,8 +611,11 @@ overrides:
   # `meta http-equiv=refresh` URLs. Patched in 2.18.0.
   sanitize-html@<2.18.0: ^2.18.0
   samlify@<2.13.0: ^2.13.0
-  better-auth@<1.6.13: ^1.6.23
-  '@better-auth/sso@<1.6.13': ^1.6.23
+  # GHSA-965c-763c-88jm (critical): OAuth state accepted as a Magic Link token.
+  # Patched only in 1.7.7+ (no 1.6.x backport). Novu does not enable the
+  # Magic Link plugin, but the floor keeps every resolution on a patched release.
+  better-auth@<1.7.7: ^1.7.19
+  '@better-auth/sso@<1.7.7': ^1.7.19
   # GHSA-2x7j-588g-ccc2 (high) and the related moderate advisories
   # GHSA-8m3c-c648-2xjj, GHSA-wmmp-3585-3rmp, GHSA-cc9r-2j5m-2m83 are all
   # patched in nodemailer 9.1.0. GHSA-prgh-xp8r-p3m5 (high, 9.1.0-10.0.4)
@@ -548,7 +635,7 @@ overrides:
   # GHSA-pqg4-j6r4-53mv (critical): shell-quote `quote()` command injection via a
   # line terminator in a token following a `{ comment }` token. Patched in 1.11.0
   # (minor bump within the 1.x line). Widen the previous <1.8.5 override so
-  # transitive 1.10.0 resolutions (via npm-run-all and cpx) pick up the fix.
+  # transitive 1.10.0 resolutions (via npm-run-all) pick up the fix.
   shell-quote@<1.11.0: ^1.11.0
   # GHSA-67c8-pqhq-4rmx (critical): piscina prototype-pollution gadget in
   # ThreadPool.options allowing RCE via execArgv / loadBalancer / env.
@@ -617,6 +704,22 @@ overrides:
   # `moment` in libs/application-generic. moment-timezone@0.5.48 declares a
   # `moment@^2.29.4` peer, which 2.31.0 satisfies.
   moment@>=2.29.2 <2.31.0: ^2.31.0
+  # GHSA-mrhx-c7xc-m3w5 (high): zod `$ZodArray.handleArrayResult` accumulates
+  # every validation issue for each failing element with no cap, enabling
+  # memory exhaustion / OOM when a large array is parsed through an array
+  # schema without a length constraint. The vulnerable code only exists in
+  # the zod 4.x core (`$ZodArray` was introduced in v4). Patched in 4.6.6
+  # (patch bump within the 4.6.x line). Scope the override to the 4.x range
+  # so the many direct zod@^3.x consumers (@team-plain/typescript-sdk,
+  # @novu/ntfr-client, @ai-sdk/*, @anthropic-ai/*, @langchain/*,
+  # @modelcontextprotocol/sdk, @novu/api, @novu/framework, novu, etc.) keep
+  # resolving their declared 3.x floor; forcing v3 -> v4 would break those
+  # direct deps. Transitive 4.3.x / 4.4.x / 4.5.x resolutions (via knip,
+  # pkg-pr-new > query-registry, @ai-sdk/gateway, @ai-sdk/mcp,
+  # @better-auth/sso > better-auth) pick up 4.6.x. `pnpm audit` still reports
+  # the advisory against zod@3.x because its `<4.6.6` range matches semver,
+  # but zod 3's bundled `zod/v4` preview subpath is unused in this tree.
+  zod@>=4.0.0 <4.6.6: ^4.6.6
   # GHSA-834v-8h66-3h79 (high): happy-dom 17.x-21.0.3 has an incomplete fix
   # for CVE-2026-33943 — an unsanitized import alias in the module registry
   # still allows host code execution when test code evaluates attacker-
@@ -669,3 +772,10 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
+
+# `pnpm deploy --prod` in the app Dockerfiles leaves out dev-only patched packages (@stoplight/spectral-core),
+# and an unused patch would fail the image build.
+allowUnusedPatches: true
+
+patchedDependencies:
+  '@stoplight/spectral-core@1.20.0': patches/@stoplight__spectral-core@1.20.0.patch

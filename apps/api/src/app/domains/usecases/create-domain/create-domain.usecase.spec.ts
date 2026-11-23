@@ -1,8 +1,8 @@
+import { promises as dnsPromises } from 'node:dns';
 import { BadRequestException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
-import * as dnsProviderModule from '../../utils/dns-provider';
 import { CreateDomain } from './create-domain.usecase';
 
 describe('CreateDomain usecase', () => {
@@ -39,7 +39,7 @@ describe('CreateDomain usecase', () => {
       validateCustomEmailDomainsLimit: stub().resolves(),
     };
 
-    stub(dnsProviderModule, 'detectDnsProvider').resolves(null);
+    stub(dnsPromises, 'resolveNs').rejects(Object.assign(new Error('queryNs ENODATA'), { code: 'ENODATA' }));
   });
 
   afterEach(() => {

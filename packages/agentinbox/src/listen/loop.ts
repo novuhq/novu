@@ -1,3 +1,4 @@
+import { isAbsolute, relative, resolve } from 'node:path';
 import {
   type CreateInteractionInput,
   cancelInteraction,
@@ -23,7 +24,7 @@ import {
   takeLease,
   waitForListenMessages,
 } from '../api/listen';
-import { projectLabel } from './computer';
+import { projectLabel, shortPath } from './computer';
 import type {
   HostAdapter,
   HostAnswer,
@@ -34,8 +35,9 @@ import type {
   TurnEnded,
 } from './host-adapter';
 import { hostNameOf } from './hosts';
-import { isOwnReplySubject, repliesIn, waitsForAnswerIn } from './own-replies';
+import { cliSwapIn, isOwnReplySubject, realPathOf, repliesIn, waitsForAnswerIn } from './own-replies';
 import {
+  DEFAULT_LIMITS,
   IDS_KEPT,
   type ListenConnection,
   type ListenState,
@@ -59,6 +61,7 @@ import {
   questionCard,
   runFailedNotice,
   runLimitReply,
+  runStarter,
   STOPPED_REPLY,
   spanWords,
   startedBy,
@@ -142,13 +145,15 @@ export type LoopEnd = { reason: 'signal' } | { reason: StopReason; message: stri
 /** How a session's run ended. */
 type RunOutcome = { kind: 'idle' } | { kind: 'interrupted' } | { kind: 'lost'; error: string; sessionGone: boolean };
 
-/** The run in progress: one conversation's session in one round, and what it was started with. */
+/** A run in progress: one conversation's session in one round, and what it was started with. */
 interface ActiveRun {
   conversationId: string;
   round: number;
   channel: string;
-  /** Whose message started it, as the operator reads it in a question: "you" or a contact's name. */
+  /** Whose message started it, as the log says it: "you" or a contact's name. */
   startedBy: string;
+  /** The message that started it: a contact's run says on the operator's cards whose it is, and how it began. */
+  startedWith: ListenMessage;
   /** Every message this run carries, so a run can start again with them. */
   messages: ListenMessage[];
   session?: HostSession;
@@ -185,9 +190,9 @@ type StreamAnswer = NonNullable<ListenMessage['answer']>;
 
 /**
  * Keeps an agent listening on this computer until it is stopped: holds the lease, waits for messages, starts the
- * host with one session per conversation and round, gets its answers out, and asks the operator before the
- * host does what its settings don't allow. It stops for good, without retrying, when the key stops working or
- * another holder takes the agent over; a paused agent only waits.
+ * host with one session per conversation and round, side by side for different conversations, gets its answers
+ * out, and asks the operator before the host does what its settings don't allow. It stops for good, without
+ * retrying, when the key stops working or another holder takes the agent over; a paused agent only waits.
  */
 export async function runListenLoop(options: ListenLoopOptions): Promise<LoopEnd> {
   return new ListenLoop(options).run();
@@ -202,8 +207,14 @@ class ListenLoop {
   private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
   /** Answers to the host's questions being looked up: whatever else needs one waits for that look. */
   private readonly lookups = new Map<string, Promise<boolean>>();
-  private active?: ActiveRun;
-  private activeDone?: Promise<void>;
+  /** The runs going on, by conversation: never two for one, and at most `runsAtOnce` of them. */
+  private readonly active = new Map<string, ActiveRun>();
+  /** How each run started here ends, so the listener's own end waits for them all. */
+  private readonly runsDone = new Set<Promise<void>>();
+  /** The runs the program's last end cut off: their conversations are told, and they aren't run again. */
+  private readonly cut: Array<{ conversationId: string; at: string }>;
+  /** The first messages of conversations that wait for a run to end, as the log said once of each. */
+  private readonly heldBack = new Set<string>();
   private end?: LoopEnd;
   private paused = false;
   private renewAt = 0;
@@ -217,7 +228,9 @@ class ListenLoop {
       throw new Error('Listening isn’t turned on here: nothing was allowed yet.');
     }
 
-    this.state = state;
+    // A limit saved before it was one takes its default.
+    this.state = { ...state, limits: { ...DEFAULT_LIMITS, ...state.limits } };
+    this.cut = [...(state.inProgress ?? [])];
     this.timing = { ...DEFAULT_TIMING, ...options.timing };
     this.log = options.log ?? ((line) => process.stdout.write(`${new Date().toISOString()} ${line}\n`));
     // Stopped already, say by Ctrl-C while listening was being turned on: it doesn't begin.
@@ -296,19 +309,23 @@ class ListenLoop {
   }
 
   /**
-   * A run the program stopped in (a restart, a logout, a crash) isn't run again, so nothing is done twice: its
-   * conversation is told instead, once the lease is this computer's again.
+   * The runs the program stopped in (a restart, a logout, a crash) aren't run again, so nothing is done twice: their
+   * conversations are told instead, once the lease is this computer's again, before any run starts here.
    */
   private async tellInterrupted(): Promise<void> {
-    const cut = this.state.running;
-    if (!cut || this.active || Date.now() >= this.leaseUntil) {
+    if (this.cut.length === 0 || Date.now() >= this.leaseUntil) {
       return;
     }
 
-    this.state.running = undefined;
+    const cut = this.cut.splice(0);
+    this.state.inProgress = this.state.inProgress?.filter(
+      (run) => !cut.some((each) => each.conversationId === run.conversationId && each.at === run.at)
+    );
     this.save();
-    this.log(`${cut.conversationId}: the run it was in when it last stopped didn’t finish; telling the conversation.`);
-    await this.reply(cut.conversationId, interruptedReply(this.options.host.name));
+    for (const { conversationId } of cut) {
+      this.log(`${conversationId}: the run it was in when it last stopped didn’t finish; telling the conversation.`);
+      await this.reply(conversationId, interruptedReply(this.options.host.name));
+    }
   }
 
   private async poll(): Promise<ListenMessagesPage | null> {
@@ -396,7 +413,7 @@ class ListenLoop {
 
     this.paused = true;
     this.log('The agent is paused on agentinbox.md: waiting until it is resumed.');
-    void this.stopRun('paused');
+    void this.stopAll('paused');
   }
 
   private stopForGood(reason: StopReason, message: string): void {
@@ -416,8 +433,8 @@ class ListenLoop {
   }
 
   private async windDown(): Promise<void> {
-    await this.stopRun('shutdown');
-    await this.activeDone;
+    await this.stopAll('shutdown');
+    await Promise.allSettled(this.runsDone);
     // What a look found is kept: an answer a command got isn't passed on after a restart.
     await Promise.allSettled(this.lookups.values());
 
@@ -474,7 +491,10 @@ class ListenLoop {
     this.state.lookedUp = this.state.lookedUp?.filter((id) => id !== message.id);
   }
 
-  /** Hands the queue on: messages of the running session join it; the next conversation waits its turn. */
+  /**
+   * Hands the queue on: messages of a running session join it, and each other conversation starts a run of its own,
+   * as many at once as the limits allow. A conversation never has two: its next round waits for its run to end.
+   */
   private pump(): void {
     if (this.end || this.paused || this.connectedAnew()) {
       return;
@@ -491,17 +511,18 @@ class ListenLoop {
       this.save();
     }
 
-    const active = this.active;
-    if (active) {
+    for (const active of this.active.values()) {
       this.joinActive(active);
-
-      return;
     }
 
     // An answer goes on with the session that asked. With no session here for its conversation, another host
-    // asked: it starts nothing, and stays in the conversation for whoever asked.
+    // asked: it starts nothing, and stays in the conversation for whoever asked. While its conversation has a run,
+    // it waits for that run: the session it runs may be the one that asked, and not kept yet.
     const unasked = this.state.queue.filter(
-      (message) => message.answersMessageId && this.state.sessions[message.conversationId]?.round !== roundOf(message)
+      (message) =>
+        message.answersMessageId &&
+        !this.active.has(message.conversationId) &&
+        this.state.sessions[message.conversationId]?.round !== roundOf(message)
     );
     if (unasked.length > 0) {
       for (const message of unasked) {
@@ -515,12 +536,56 @@ class ListenLoop {
     }
 
     // A run starts only while the lease is surely this computer's: by then another may have taken it, and run it too.
-    const next = this.state.queue[0];
-    if (!next || now >= this.leaseUntil || !this.mayRun(now)) {
-      return;
+    if (now < this.leaseUntil) {
+      this.startWaiting(now);
     }
+  }
 
-    this.activeDone = this.startRun(next);
+  /** Starts a run for each conversation that waits for one, as many as go on at once and the hour allow. */
+  private startWaiting(now: number): void {
+    const waiting = this.firstOfEachWaiting();
+    for (const id of this.heldBack) {
+      if (!waiting.some((message) => message.id === id)) {
+        this.heldBack.delete(id);
+      }
+    }
+    for (const next of waiting) {
+      if (this.active.has(next.conversationId)) {
+        // Started meanwhile, by a run that ended at once and handed the queue on itself.
+        continue;
+      }
+      if (this.active.size >= this.state.limits.runsAtOnce) {
+        if (!this.heldBack.has(next.id)) {
+          this.heldBack.add(next.id);
+          this.log(
+            `${next.conversationId}: waits for a run to end: the most at once here is ${this.state.limits.runsAtOnce}.`
+          );
+        }
+        continue;
+      }
+      if (!this.mayRun(now)) {
+        return;
+      }
+
+      this.heldBack.delete(next.id);
+      const done = this.startRun(next);
+      this.runsDone.add(done);
+      void done.then(() => this.runsDone.delete(done));
+    }
+  }
+
+  /** The oldest queued message of each conversation without a run, oldest first: each starts its conversation's next. */
+  private firstOfEachWaiting(): ListenMessage[] {
+    const seen = new Set<string>();
+
+    return this.state.queue.filter((message) => {
+      if (this.active.has(message.conversationId) || seen.has(message.conversationId)) {
+        return false;
+      }
+      seen.add(message.conversationId);
+
+      return true;
+    });
   }
 
   /**
@@ -676,6 +741,7 @@ class ListenLoop {
       round,
       channel: first.channel,
       startedBy: startedBy(first),
+      startedWith: first,
       messages: this.state.queue.filter((message) => this.belongs(message, conversationId, round)),
       pending: new Set(),
       waiting: new Set(),
@@ -685,8 +751,17 @@ class ListenLoop {
       replies: Promise.resolve(),
       typing: this.typingIn(conversationId),
     };
-    // From now on no other run starts, while the answers it was started with are looked up.
-    this.active = active;
+    // From now on no other run starts for this conversation, while the answers it was started with are looked up.
+    this.active.set(conversationId, active);
+    // Counted at once, so the hourly limit holds for the runs that start along with it; taken back when it runs nothing.
+    const startedAt = new Date().toISOString();
+    this.state.runs.push(startedAt);
+    const uncount = () => {
+      const at = this.state.runs.lastIndexOf(startedAt);
+      if (at >= 0) {
+        this.state.runs.splice(at, 1);
+      }
+    };
 
     try {
       // An answer that a command of the session's last run got already, waiting for it, isn't given again.
@@ -699,6 +774,8 @@ class ListenLoop {
       }
       if (this.end) {
         // Ending now: what it was started for waits for the next start.
+        uncount();
+
         return;
       }
 
@@ -707,14 +784,15 @@ class ListenLoop {
         this.markHandled(message);
       }
       if (active.messages.length === 0) {
+        uncount();
         this.save();
 
         return;
       }
 
-      active.startedBy = startedBy(active.messages[0]);
-      this.state.runs.push(new Date().toISOString());
-      this.state.running = { conversationId, at: new Date().toISOString() };
+      active.startedWith = active.messages[0];
+      active.startedBy = startedBy(active.startedWith);
+      this.state.inProgress = [...(this.state.inProgress ?? []), { conversationId, at: startedAt }];
       this.save();
       // The session goes on in the same round; a resolve since then starts a fresh one.
       const kept = this.state.sessions[conversationId];
@@ -734,10 +812,10 @@ class ListenLoop {
     } finally {
       // A run the program's end cut off stays on record: the next start tells its conversation.
       if (active.stopping !== 'shutdown') {
-        this.state.running = undefined;
+        this.state.inProgress = this.state.inProgress?.filter((run) => run.conversationId !== conversationId);
         this.save();
       }
-      this.active = undefined;
+      this.active.delete(conversationId);
       this.pump();
     }
   }
@@ -772,6 +850,7 @@ class ListenLoop {
           conversationId: active.conversationId,
           channel: active.channel,
           project: this.project,
+          alongside: this.state.limits.runsAtOnce > 1,
         }),
       },
       {
@@ -810,7 +889,7 @@ class ListenLoop {
       this.joinActive(active);
     }
 
-    const limit = setTimeout(() => void this.stopRun('limit'), this.state.limits.maxRunSeconds * 1000);
+    const limit = setTimeout(() => void this.stopRun(active, 'limit'), this.state.limits.maxRunSeconds * 1000);
     limit.unref?.();
     try {
       return await finished;
@@ -932,8 +1011,9 @@ class ListenLoop {
       this.save();
     }
 
-    if (this.active?.conversationId === conversationId) {
-      await this.stopRun('stop');
+    const active = this.active.get(conversationId);
+    if (active) {
+      await this.stopRun(active, 'stop');
 
       return;
     }
@@ -941,16 +1021,20 @@ class ListenLoop {
     await this.reply(conversationId, waiting.length > 0 ? STOPPED_REPLY : NOTHING_TO_STOP_REPLY);
   }
 
-  /** Stops the run in progress; one still starting stops as soon as its host is up. */
-  private async stopRun(why: NonNullable<ActiveRun['stopping']>): Promise<void> {
-    const active = this.active;
-    if (!active || active.stopping) {
+  /** Stops a run; one still starting stops as soon as its host is up. */
+  private async stopRun(active: ActiveRun, why: NonNullable<ActiveRun['stopping']>): Promise<void> {
+    if (active.stopping) {
       return;
     }
 
     active.stopping = why;
     active.typing.stop();
     await active.session?.interrupt();
+  }
+
+  /** Stops every run going on. */
+  private async stopAll(why: NonNullable<ActiveRun['stopping']>): Promise<void> {
+    await Promise.all([...this.active.values()].map((active) => this.stopRun(active, why)));
   }
 
   // --- answers ---
@@ -1110,9 +1194,31 @@ class ListenLoop {
   }
 
   /**
+   * Why the agent's own command could run other code than Agent Inbox's CLI, or undefined when it can't: it runs
+   * outside the project, or where it runs the project has what npx would run instead ({@link cliSwapIn}).
+   */
+  private cliSwap(subject: PermissionQuestion['subject']): string | undefined {
+    if (subject.kind !== 'command') {
+      return undefined;
+    }
+
+    // npx looks above the folder it really runs in, so links are followed first, for the project too.
+    const project = realPathOf(this.state.project);
+    const cwd = realPathOf(resolve(this.state.project, subject.cwd ?? '.'));
+    const from = relative(project, cwd);
+    if (from.startsWith('..') || isAbsolute(from)) {
+      return `it runs in ${shortPath(cwd)}, outside the project`;
+    }
+
+    const found = cliSwapIn(project, cwd);
+
+    return found ? `the project has its own ${found}` : undefined;
+  }
+
+  /**
    * The host wants to do what its settings don't allow. The agent's own reading and replying in its
-   * conversation goes ahead; anything else is the operator's to decide, with an `approve`, even when a contact's
-   * message started the host. No answer in time is a Deny.
+   * conversation goes ahead, unless it could run other code than Agent Inbox's; anything else is the operator's to
+   * decide, with an `approve`, even when a contact's message started the host. No answer in time is a Deny.
    */
   private async askOperator(
     active: ActiveRun,
@@ -1124,10 +1230,17 @@ class ListenLoop {
     const deny = question.options.find((option) => option.kind === 'deny') ?? { id: 'deny' };
 
     const action = oneLine(question.action);
+    const details = [...question.details];
     if (allowOnce && isOwnReplySubject(question.subject, active.conversationId)) {
-      this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
+      const swap = this.cliSwap(question.subject);
+      if (!swap) {
+        this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
 
-      return { optionId: allowOnce.id };
+        return { optionId: allowOnce.id };
+      }
+
+      this.log(`${active.conversationId}: the agent’s own ${action} asks the operator: ${swap}.`);
+      details.push(`It is Agent Inbox’s own command, but ${swap}, so it may run other code than Agent Inbox’s.`);
     }
 
     if (!allowOnce) {
@@ -1139,10 +1252,10 @@ class ListenLoop {
       hostName: this.options.host.name,
       action: question.action,
       brief: question.brief,
-      detail: question.details.join(' ') || undefined,
+      detail: details.join(' ') || undefined,
       project: this.project,
       computerName: this.options.computerName,
-      startedBy: active.startedBy,
+      startedBy: runStarter(active.startedWith),
       timeoutSeconds,
     });
     if (!card) {

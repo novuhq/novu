@@ -1,10 +1,12 @@
 import pc from 'picocolors';
+import { lookToKeep } from '../agent-look';
 import { ApiError, createApiClient } from '../api/client';
 import { type ConnectedAgent, connectWithCode } from '../api/connect';
 import { findOperator } from '../api/login';
 import { info, promptLine, success } from '../cli-io';
 import { CLI_COMMAND, type CliConfig, configPath, loadConfig, resolveTargetApiUrl, saveConfig } from '../config';
 import { detectHost, type HostId, isHostId } from '../host';
+import { hostNameOf, startableHosts } from '../listen/hosts';
 import { openedScreen, openScreen } from '../screen/screen';
 import { failOnScreen } from './failure';
 import { handleError } from './interact';
@@ -106,6 +108,13 @@ export async function runConnect(
     })
     .finally(stopWaiting);
 
+  const auth: CliConfig['auth'] = { mode: 'apiKey', secretKey: connected.apiKey };
+  const relayAgentIdentifier = connected.agent.identifier;
+  // The code is accepted, so the mascot is this agent's from here on. An API from before looks says nothing:
+  // the look saved for this very agent stays then.
+  const look = lookToKeep({ apiUrl, auth, relayAgentIdentifier }, existing, connected.agent.look);
+  openedScreen()?.look(look.look);
+
   // Who agents here reach by default only carries over from the same account, which has the same key.
   const current = existing?.apiUrl === apiUrl ? existing : null;
   const sameAccount = current?.auth.mode === 'apiKey' && current.auth.secretKey === connected.apiKey;
@@ -119,11 +128,12 @@ export async function runConnect(
 
   const config: CliConfig = {
     apiUrl,
-    auth: { mode: 'apiKey', secretKey: connected.apiKey },
-    relayAgentIdentifier: connected.agent.identifier,
+    auth,
+    relayAgentIdentifier,
     ...(keptSetup ? { subscriberId: savedId, defaultChannel: current?.defaultChannel } : {}),
     ...(operatorId && !keptSetup ? { subscriberId: operatorId } : {}),
     ...(host ? { host } : {}),
+    ...look,
   };
   saveConfig(config);
 
@@ -131,15 +141,15 @@ export async function runConnect(
 }
 
 /**
- * The optional last step, for a host `listen` can start (Claude Code for now): listening for messages, so one
- * to the agent starts it on this computer. Undefined for every other host.
+ * The optional last step, for a host `listen` can start: listening for messages, so one to the agent starts it on
+ * this computer. Undefined for every other host.
  */
 export function listenHint(host: HostId | undefined, handle: string): string | undefined {
-  if (host !== 'claude-code') {
+  if (!host || !(startableHosts() as readonly string[]).includes(host)) {
     return undefined;
   }
 
-  return `Optional: keep Claude Code listening, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} listen claude-code`)}`;
+  return `Optional: keep ${hostNameOf(host)} listening, so a message to ${handle} starts it in this folder: ${pc.bold(`${CLI_COMMAND} listen ${host}`)}`;
 }
 
 /**

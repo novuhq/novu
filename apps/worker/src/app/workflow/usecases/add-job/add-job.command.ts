@@ -14,6 +14,7 @@ export type PartialNotificationEntity = Pick<
   | 'channels'
   | 'to'
   | 'payload'
+  | 'overrides'
   | 'controls'
   | 'topics'
   | '_digestedNotificationId'

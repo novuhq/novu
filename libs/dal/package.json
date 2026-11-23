@@ -46,7 +46,6 @@
     "apollo-boost": "0.4.9",
     "rimraf": "^3.0.2",
     "supertest": "^7.0.0",
-    "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "6.0.3"
   }

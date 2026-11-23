@@ -44,6 +44,8 @@ describe('AgentInboundHandler', () => {
 
   afterEach(() => {
     delete (conversation as { _notificationId?: string })._notificationId;
+    // The handler records the first platform message id on the shared fixture's primary channel.
+    delete (conversation.channels[0] as { firstPlatformMessageId?: string }).firstPlatformMessageId;
   });
 
   function makeLogger() {
@@ -288,6 +290,12 @@ describe('AgentInboundHandler', () => {
       resolveOperatorClaimCard: sinon.stub().resolves(undefined),
     };
     const contactHandles = { refresh: sinon.stub().resolves() };
+    const whatsAppBindInbound = {
+      tryConsume: sinon.stub().callsFake(async (_agentId, _config, _thread, message) => message),
+    };
+    const featureFlagsService = {
+      getFlag: sinon.stub().resolves(true),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -313,13 +321,18 @@ describe('AgentInboundHandler', () => {
       humanConversationInbound,
       agentConfigResolver as any,
       keylessEmailGate as any,
-      contactHandles as any
+      contactHandles as any,
+      whatsAppBindInbound as any,
+      { release: sinon.stub().resolves() } as any,
+      featureFlagsService as any
     );
 
     return {
       handler,
       logger,
+      connectionContextResolver,
       replyApprovalInterceptor,
+      featureFlagsService,
       humanInteractionInbound,
       humanRelayRuntime,
       attachmentStorage,
@@ -341,6 +354,7 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService,
       keylessEmailGate,
       contactHandles,
+      whatsAppBindInbound,
     };
   }
 
@@ -395,11 +409,29 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
-    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
-    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
-    // simulate a spoofed `From`.
-    const { dkim = 'pass', spf = 'pass' } = auth;
+  function makeEmailDmMessage(
+    senderEmail: string,
+    auth: {
+      dkim?: string;
+      spf?: string;
+      dkimDomains?: string[];
+      spfDomain?: string | null;
+      withoutDomains?: boolean;
+    } = {}
+  ) {
+    // Default to a DKIM/SPF-verified sender, both checks passing for the
+    // sender's own domain, so existing cases model a legitimate (non-spoofed)
+    // email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to simulate a
+    // spoofed `From`, `dkimDomains` / `spfDomain` for the domains the checks
+    // passed for, and `withoutDomains` for a payload that predates them.
+    const senderDomain = senderEmail.slice(senderEmail.lastIndexOf('@') + 1);
+    const {
+      dkim = 'pass',
+      spf = 'pass',
+      dkimDomains = [senderDomain],
+      spfDomain = senderDomain,
+      withoutDomains = false,
+    } = auth;
 
     return {
       id: 'email-msg-1',
@@ -411,7 +443,7 @@ describe('AgentInboundHandler', () => {
         userName: senderEmail,
         isBot: false,
       },
-      raw: { dkim, spf },
+      raw: withoutDomains ? { dkim, spf } : { dkim, spf, dkimDomains, spfDomain },
       attachments: [],
     };
   }
@@ -483,6 +515,32 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('should forward the resolved context and its bridge URL override to the bridge', async () => {
+      const { handler, bridgeExecutor, connectionContextResolver } = makeHandler();
+      const context = { tenant: { id: 'org-1', data: { environmentId: 'env-1' } } };
+      connectionContextResolver.resolve.resolves({ context, bridgeUrl: 'https://org-1.example.com/api/novu' });
+
+      const message = { ...makeSlackDmMessage(), id: '1777837499.000001' };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      // The resolver reads the workspace id from the raw payload and the sender from the author.
+      expect(connectionContextResolver.resolve.firstCall.args).to.deep.equal([
+        config,
+        message.raw,
+        message.author.userId,
+      ]);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.context).to.deep.equal(context);
+      expect(params.bridgeUrlOverride).to.equal('https://org-1.example.com/api/novu');
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();
@@ -755,6 +813,7 @@ describe('AgentInboundHandler', () => {
         text: '<@UBOT> see `<@UBOT>`',
         author: { userId: 'U1', fullName: 'Ada', isBot: false },
         isMention: false,
+        raw: { event: { type: 'message', text: '<@UBOT> see `<@UBOT>`' } },
         attachments: [],
       };
       const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
@@ -769,6 +828,80 @@ describe('AgentInboundHandler', () => {
 
       expect(unsubscribe.called).to.equal(false);
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
+    it('drops a nested-thread message that mentions another user when mention-only is on', async () => {
+      const { handler, conversationService, bridgeExecutor } = makeHandler();
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: 'hey <@U99> take a look',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        raw: { event: { type: 'message', text: 'hey <@U99> take a look' } },
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('does not throw or dispatch when the resolved Slack bot user id is not a Slack id', async () => {
+      const { handler, conversationService, bridgeExecutor, agentConfigResolver } = makeHandler();
+      agentConfigResolver.resolveSlackInstallation.resolves({ token: 'xoxb-test', botUserId: 'not a slack id!' });
+      const unsubscribe = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe,
+      };
+      const message = {
+        id: 'follow-up',
+        text: '<@UBOT> help',
+        author: { userId: 'U1', fullName: 'Ada', isBot: false },
+        isMention: false,
+        raw: { event: { type: 'message', text: '<@UBOT> help' } },
+        attachments: [],
+      };
+      const mentionOnlyConfig = { ...config, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+      await handler.handle(
+        'agent1',
+        mentionOnlyConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(message.isMention).to.equal(false);
+      expect(unsubscribe.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
     it('dispatches an unmentioned nested-thread follow-up after the agent has joined', async () => {
@@ -876,6 +1009,32 @@ describe('AgentInboundHandler', () => {
         expect(thread.postEphemeral.firstCall.args[1].markdown).to.contain('Support Bot');
         expect(thread.unsubscribe.calledOnce).to.equal(true);
         expect(conversationService.persistInboundMessage.calledOnce).to.equal(true);
+        expect(bridgeExecutor.execute.called).to.equal(false);
+      });
+
+      it('stays in the thread and only refuses a newcomer the access rule denies', async () => {
+        const { handler, bridgeExecutor, outboundGateway } = makeHandler({
+          ...makeResolvedSubscriberOverrides('sub2'),
+          subscriberFindById: sinon.stub().resolves({ _id: 'subscriber-mongo-2', subscriberId: 'sub2', data: {} }),
+        });
+        const thread = makeNestedThread();
+        const ruleConfig = {
+          ...smartConfig,
+          subscriberAccess: AgentSubscriberAccessEnum.RULE,
+          accessRule: { '==': [{ var: 'subscriber.data.tier' }, 'gold'] },
+        };
+
+        await handler.handle(
+          'agent1',
+          ruleConfig as any,
+          thread as any,
+          makeFollowUp({ isMention: true }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(thread.postEphemeral.called).to.equal(false);
+        expect(thread.unsubscribe.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
         expect(bridgeExecutor.execute.called).to.equal(false);
       });
 
@@ -1012,6 +1171,7 @@ describe('AgentInboundHandler', () => {
             author: { userId: 'U1', fullName: 'Ada', isBot: false },
             text: '<@UBOT> what is the status?',
             isMention: false,
+            raw: { event: { type: 'message', text: '<@UBOT> what is the status?' } },
           }) as any,
           AgentEventEnum.ON_MESSAGE
         );
@@ -1202,6 +1362,7 @@ describe('AgentInboundHandler', () => {
             author: { userId: 'U1', fullName: 'Ada', isBot: false },
             text: '<@UBOT> help',
             isMention: false,
+            raw: { event: { type: 'message', text: '<@UBOT> help' } },
           }) as any,
           AgentEventEnum.ON_MESSAGE
         );
@@ -2196,6 +2357,128 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
 
+    describe('when DKIM and SPF passed, but for which domain', () => {
+      const restrictedEmailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+
+      function makeRestrictedEmailHandler() {
+        return makeHandler({
+          subscriberResolve: sinon.stub().resolves('known-subscriber'),
+          subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+          agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        });
+      }
+
+      it("should not map the From address's subscriber when both checks passed for another domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // The attacker signs as, and sends through, their own domain, then writes the victim's address in From.
+        const message = makeEmailDmMessage('victim@example.com', {
+          dkimDomains: ['evil.example'],
+          spfDomain: 'evil.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+        expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
+      });
+
+      it("should resolve the sender when a DKIM signature is from the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeRestrictedEmailHandler();
+        // SPF passed only for the email service's bounce domain, but DKIM aligns.
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example', 'example.com'],
+          spfDomain: 'bounces.esp.example',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        expect(outboundGateway.replyOnThread.called).to.equal(false);
+      });
+
+      it("should resolve the sender when SPF passed for a subdomain of the sender's domain", async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          dkimDomains: ['esp.example'],
+          spfDomain: 'em123.example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      });
+
+      it('should trust the verdicts alone for a payload without the domains, and log it', async () => {
+        const { handler, logger, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        // Queued by an inbound-mail service that predates the domains, e.g. during a deploy.
+        const message = makeEmailDmMessage('member@example.com', { withoutDomains: true });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+        expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+        const warnings = logger.warn.getCalls().map((call) => String(call.args[1]));
+        expect(warnings.some((text) => text.startsWith('Inbound email payload has no DKIM/SPF domains'))).to.equal(
+          true
+        );
+      });
+
+      it('should still require both checks to pass when the domains align', async () => {
+        const { handler, subscriberResolver, managedAgentService } = makeRestrictedEmailHandler();
+        const message = makeEmailDmMessage('member@example.com', {
+          spf: 'failed',
+          dkimDomains: ['example.com'],
+          spfDomain: 'example.com',
+        });
+
+        await handler.handle(
+          'agent1',
+          restrictedEmailConfig as any,
+          makeEmailDmThread() as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+        expect(managedAgentService.dispatch.called).to.equal(false);
+      });
+    });
+
     it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {
       const whatsappConfig = {
         ...config,
@@ -2427,6 +2710,33 @@ describe('AgentInboundHandler', () => {
       });
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('WhatsApp code binding', () => {
+    const whatsAppConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.WHATSAPP,
+      integrationIdentifier: 'whatsapp-main',
+      integrationId: 'integration1',
+      agentIdentifier: 'human-relay',
+      isHumanRelay: true,
+      acknowledgeOnReceived: false,
+      subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+    };
+
+    it('stops a message that carried a code before the sender is resolved', async () => {
+      const { handler, whatsAppBindInbound, subscriberResolver, conversationService } = makeHandler();
+      whatsAppBindInbound.tryConsume.resolves(null);
+      const message = { id: 'wamid-1', text: 'Connect me to ada: BCDF-GHJK', author: { userId: '15550100199' } };
+
+      await handler.handle('agent1', whatsAppConfig as any, {} as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(whatsAppBindInbound.tryConsume.calledOnce).to.equal(true);
+      expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
     });
   });
 
@@ -2702,6 +3012,7 @@ describe('AgentInboundHandler', () => {
       id: 'thread1',
       channelId: 'channel1',
       isDM: false,
+      post: sinon.stub().resolves({ id: 'reply', threadId: 'thread1' }),
     };
   }
 
@@ -3383,6 +3694,144 @@ describe('AgentInboundHandler', () => {
       await deleteWithoutAuthor(handler);
 
       expect(conversationService.deleteInboundMessage.called).to.equal(false);
+    });
+  });
+
+  describe('rule-mode admission', () => {
+    const denyRuleConfig = {
+      ...config,
+      subscriberAccess: AgentSubscriberAccessEnum.RULE,
+      accessRule: { '==': [{ var: 'subscriber.data.tier' }, 'gold'] },
+    };
+
+    function makeMentionOnlyThread() {
+      return {
+        id: 'slack:C1:root-ts',
+        channelId: 'slack:C1',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C1:root-ts', channelId: 'slack:C1', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply', threadId: 'slack:C1:root-ts' }),
+        subscribe: sinon.stub().resolves(undefined),
+        unsubscribe: sinon.stub().resolves(undefined),
+      };
+    }
+
+    it('does not run approval, HITL, or dispatch when rule mode denies ON_MESSAGE', async () => {
+      const { handler, replyApprovalInterceptor, humanInteractionInbound, bridgeExecutor } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handle(
+        'agent1',
+        denyRuleConfig as any,
+        { id: 'thread1', channelId: 'C1', isDM: true, post: sinon.stub().resolves({ id: 'r1' }) } as any,
+        {
+          id: 'msg-1',
+          text: 'hello',
+          author: { userId: 'U1', fullName: 'Ada', isBot: false },
+          isMention: true,
+          attachments: [],
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(replyApprovalInterceptor.tryHandleAsApprovalReply.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleMessage.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    for (const { isMention, refuses } of [
+      { isMention: true, refuses: true },
+      { isMention: false, refuses: false },
+    ]) {
+      it(`${refuses ? 'refuses' : 'stays silent on'} a denied ${isMention ? 'mention' : 'unmentioned answer to a pending ask'} in a shared thread`, async () => {
+        const { handler, outboundGateway, humanInteractionInbound } = makeHandler({
+          ...makeResolvedSubscriberOverrides('sub1'),
+          subscriberFindById: sinon.stub().resolves({
+            _id: 'subscriber-mongo-1',
+            subscriberId: 'sub1',
+            data: { tier: 'silver' },
+          }),
+        });
+        humanInteractionInbound.hasPendingConversationAsk.resolves(true);
+        const mentionOnlyConfig = { ...denyRuleConfig, replyPolicy: AgentReplyPolicyEnum.MENTION_ONLY };
+
+        await handler.handle(
+          'agent1',
+          mentionOnlyConfig as any,
+          makeMentionOnlyThread() as any,
+          {
+            id: 'msg-1',
+            text: 'side chat',
+            author: { userId: 'U1', fullName: 'Ada', isBot: false },
+            isMention,
+            attachments: [],
+          } as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(humanInteractionInbound.tryHandleMessage.called).to.equal(false);
+        expect(outboundGateway.replyOnThread.called).to.equal(refuses);
+      });
+    }
+
+    it('does not record action accept or dispatch when rule mode denies ON_ACTION', async () => {
+      const { handler, conversationService, bridgeExecutor, humanInteractionInbound } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub1'),
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handleAction(
+        'agent1',
+        denyRuleConfig as any,
+        makeActionThread() as any,
+        { id: 'topic-billing', value: 'yes' } as any,
+        'user1'
+      );
+
+      expect(conversationService.persistInboundActionAccept.called).to.equal(false);
+      expect(humanInteractionInbound.tryHandleAction.called).to.equal(false);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('does not dispatch or reply to ON_MESSAGE_DELETED when rule mode denies the delete', async () => {
+      const { handler, bridgeExecutor, outboundGateway } = makeHandler({
+        history: [{ platformMessageId: 'msg-1', content: 'secret', senderId: 'sub1' }],
+        subscriberFindById: sinon.stub().resolves({
+          _id: 'subscriber-mongo-1',
+          subscriberId: 'sub1',
+          data: { tier: 'silver' },
+        }),
+      });
+
+      await handler.handleMessageDeleted(
+        'agent1',
+        denyRuleConfig as any,
+        {
+          messageId: 'msg-1',
+          threadId: 'thread1',
+          channelId: 'C1',
+          previousMessage: {
+            id: 'msg-1',
+            text: 'secret',
+            author: { userId: 'user1', fullName: 'Ada', userName: 'ada', isBot: false },
+          },
+          raw: {},
+        } as any
+      );
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
   });
 });

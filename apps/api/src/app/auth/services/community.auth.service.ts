@@ -38,6 +38,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { createHash } from 'crypto';
+import type { WrapperType } from '../../shared/wrapper-type';
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.command';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
@@ -55,7 +56,7 @@ export class CommunityAuthService implements IAuthService {
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization))
-    private switchOrganizationUsecase: SwitchOrganization
+    private switchOrganizationUsecase: WrapperType<SwitchOrganization>
   ) {}
 
   public async authenticate(

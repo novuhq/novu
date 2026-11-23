@@ -21,6 +21,13 @@ export class APNSPushProvider extends PushBaseProvider implements IPushProvider 
     locArgs: 'loc-args',
   };
 
+  /**
+   * APNs `reason` values that mean the token itself is dead; a match removes the token from the
+   * subscriber. `BadDeviceToken` stays out: Apple also returns it when the token belongs to the other
+   * APNs environment (sandbox vs production), which is an integration misconfiguration.
+   */
+  private readonly INVALID_TOKEN_REASONS = ['Unregistered'];
+
   private provider: apn.Provider;
   constructor(
     private config: {
@@ -41,6 +48,10 @@ export class APNSPushProvider extends PushBaseProvider implements IPushProvider 
       },
       production: config.production,
     });
+  }
+
+  isTokenInvalid(errorMessage: string): boolean {
+    return this.INVALID_TOKEN_REASONS.some((reason) => errorMessage?.includes(`failed for reason: ${reason}`));
   }
 
   async sendMessage(

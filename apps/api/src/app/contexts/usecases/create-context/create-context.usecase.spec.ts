@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { ContextRepository } from '@novu/dal';
+import { ContextEntity, ContextRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateContextCommand } from './create-context.command';
@@ -18,7 +18,10 @@ describe('CreateContext', () => {
     data: { tenantName: 'Acme Corp' },
   });
 
-  const createdContext = {
+  const createdContext: ContextEntity = {
+    _id: 'context_id',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
     _environmentId: 'env_id',
     _organizationId: 'org_id',
     type: 'tenant',

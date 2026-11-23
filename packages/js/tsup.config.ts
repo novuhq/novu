@@ -61,8 +61,6 @@ const baseModuleConfig: Options = {
     resolve: ['@novu/agent-event-protocol'],
     compilerOptions: {
       stripInternal: true,
-      // tsup 8 injects the deprecated `baseUrl` option into the dts build
-      ignoreDeprecations: '6.0',
     },
   },
   noExternal: ['@novu/agent-event-protocol'],

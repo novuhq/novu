@@ -15,6 +15,9 @@
       ],
       "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
     },
+    "test": {
+      "cache": false
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

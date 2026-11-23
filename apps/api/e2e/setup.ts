@@ -4,7 +4,8 @@ import { testServer } from '@novu/testing';
 import axios from 'axios';
 import chai from 'chai';
 import sinon from 'sinon';
-import { ZodError } from 'zod';
+// The generated API SDK validates responses with `zod/v3`, so its validation errors are v3 `ZodError`s.
+import { ZodError } from 'zod/v3';
 import { bootstrap } from '../src/bootstrap';
 
 let databaseConnection: Connection;
@@ -32,7 +33,7 @@ process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
 
 async function getDatabaseConnection(): Promise<Connection> {
   if (!databaseConnection) {
-    databaseConnection = await dalService.connect(process.env.MONGO_URL);
+    databaseConnection = await dalService.connect(process.env.MONGO_URL as string);
   }
 
   return databaseConnection;

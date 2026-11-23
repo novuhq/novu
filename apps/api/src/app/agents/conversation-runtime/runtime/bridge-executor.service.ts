@@ -2,12 +2,17 @@ import { isIP } from 'node:net';
 import type { Readable } from 'node:stream';
 import { Injectable } from '@nestjs/common';
 import {
+  bridgeSigningScope,
   buildNovuSignatureHeader,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   isNovuTlsEnabled,
+  nextSigningKeyOrder,
+  orderSigningKeys,
   PinoLogger,
+  rememberAcceptedSigningKey,
 } from '@novu/application-generic';
+import type { WebChatRawMessage } from '@novu/chat-adapter-web-chat';
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
@@ -31,6 +36,7 @@ import {
 } from '@novu/shared/utils/ssrf-url-validation';
 import type { Message, Root } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { esmImport } from '../../shared/util/esm-import';
@@ -41,6 +47,7 @@ import {
   type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from '../ingress/workflow-origin.helpers';
+import { type ActiveAgentTurn, AgentTurnAbortStore } from './agent-turn-abort.store';
 
 const MAX_RETRIES = 2;
 /** Bridges send an SSE comment every 15s while a turn runs, so a longer silence means the bridge is gone. */
@@ -177,6 +184,22 @@ export interface AgentExecutionParams {
   onBridgeFailure?: (error: Error) => Promise<void>;
   /** When set, the bridge is asked for SSE; an SSE response body is handed here instead of being discarded. */
   onEventStream?: (body: Readable) => void;
+  /** Set on `onAbort`: the turn the user stopped, forwarded as `ctx.abortedTurn`. */
+  abortedTurn?: ActiveAgentTurn;
+}
+
+/** Turns a user can stop. Novu's own follow-ups (`onResolve`, `onAbort`) never become the active turn. */
+function isStoppableTurn(event: AgentEventEnum): boolean {
+  return event !== AgentEventEnum.ON_RESOLVE && event !== AgentEventEnum.ON_ABORT;
+}
+
+function bridgeHandlesOnAbort(headers: SafeOutboundStreamResponse['headers']): boolean {
+  const handledEvents = headers[HttpHeaderKeysEnum.NOVU_FRAMEWORK_AGENT_EVENTS];
+  if (typeof handledEvents !== 'string') {
+    return false;
+  }
+
+  return handledEvents.split(',').some((handledEvent) => handledEvent.trim() === AgentEventEnum.ON_ABORT);
 }
 
 export class NoBridgeUrlError extends Error {
@@ -192,7 +215,8 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly conversationService: AgentConversationService
+    private readonly conversationService: AgentConversationService,
+    private readonly turnAbortStore: AgentTurnAbortStore
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -208,18 +232,19 @@ export class BridgeExecutorService {
       throw new NoBridgeUrlError(agentIdentifier);
     }
 
-    const secretKey = await this.getDecryptedSecretKey.execute(
+    const secretKeys = await this.getDecryptedSecretKey.executeAll(
       GetDecryptedSecretKeyCommand.create({
         environmentId: params.config.environmentId,
         organizationId: params.config.organizationId,
       })
     );
     const payload = await this.buildPayload(params);
+    const signingKeys = orderSigningKeys(bridgeSigningScope(params.config.environmentId, bridgeUrl), secretKeys);
 
     return {
       bridgeUrl,
       payload,
-      signatureHeader: buildNovuSignatureHeader(secretKey, payload),
+      signatureHeader: buildNovuSignatureHeader(signingKeys, payload),
     };
   }
 
@@ -234,7 +259,7 @@ export class BridgeExecutorService {
         throw new NoBridgeUrlError(agentIdentifier);
       }
 
-      const secretKey = await this.getDecryptedSecretKey.execute(
+      const secretKeys = await this.getDecryptedSecretKey.executeAll(
         GetDecryptedSecretKeyCommand.create({
           environmentId: config.environmentId,
           organizationId: config.organizationId,
@@ -243,9 +268,25 @@ export class BridgeExecutorService {
 
       const payload = await this.buildPayload(params);
       const { onEventStream } = params;
+      const conversationId = String(params.conversation._id);
+      const stoppable = isStoppableTurn(event);
 
-      this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier, !!onEventStream)
+      // Recorded before the bridge is called, so a Stop clicked right after Send already finds the turn.
+      if (stoppable) {
+        await this.turnAbortStore.setActiveTurn(conversationId, {
+          turnId: payload.deliveryId,
+          ...(params.message?.id ? { platformMessageId: params.message.id } : {}),
+        });
+      }
+
+      const signingScope = bridgeSigningScope(config.environmentId, bridgeUrl);
+
+      this.fireWithRetries(bridgeUrl, payload, secretKeys, signingScope, agentIdentifier, !!onEventStream)
         .then((response) => {
+          if (stoppable && bridgeHandlesOnAbort(response.headers)) {
+            void this.turnAbortStore.markBridgeHandlesOnAbort(conversationId, payload.deliveryId);
+          }
+
           const isEventStream = String(response.headers['content-type'] ?? '').startsWith('text/event-stream');
           if (onEventStream && isEventStream) {
             onEventStream(response.body);
@@ -254,6 +295,13 @@ export class BridgeExecutorService {
           }
         })
         .catch((err) => {
+          // `onAbort` is best-effort: the turn it follows is already stopped whether or not the bridge takes it.
+          if (event === AgentEventEnum.ON_ABORT) {
+            this.logger.warn(err, `[agent:${agentIdentifier}] Bridge did not take the onAbort event`);
+
+            return;
+          }
+
           this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
           captureAgentException(err, {
             component: 'bridge-executor',
@@ -286,30 +334,22 @@ export class BridgeExecutorService {
   private async fireWithRetries(
     url: string,
     payload: AgentBridgeRequest,
-    secretKey: string,
+    secretKeys: readonly string[],
+    signingScope: string,
     agentIdentifier: string,
     streamReply: boolean
   ): Promise<SafeOutboundStreamResponse> {
     let lastError: Error | undefined;
     const accept = streamReply ? 'text/event-stream, application/json' : 'application/json';
+    let signingKeys = orderSigningKeys(signingScope, secretKeys);
+    let keyOrderChanged = false;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      // Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
-      // safeOutboundStreamRequest call performs the connect-time DNS guard and
-      // re-validates every redirect target.
-      try {
-        assertSafeOutboundUrl(url);
-        await resolvePublicAddresses(new URL(url).hostname);
-      } catch (err) {
-        if (err instanceof SsrfBlockedError) {
-          throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
-        }
-        throw err;
-      }
+      await this.assertBridgeUrlIsSafe(url);
 
       // HMAC is computed and attached only after the destination has been
       // validated, so a blocked URL never sees the signed payload.
-      const signatureHeader = buildNovuSignatureHeader(secretKey, payload);
+      const signatureHeader = buildNovuSignatureHeader(signingKeys, payload);
 
       try {
         const response = await safeOutboundStreamRequest({
@@ -330,6 +370,10 @@ export class BridgeExecutorService {
         });
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
+          if (keyOrderChanged) {
+            rememberAcceptedSigningKey(signingScope, signingKeys[0]);
+          }
+
           return response;
         }
 
@@ -338,6 +382,17 @@ export class BridgeExecutorService {
         this.logger.warn(
           `[agent:${agentIdentifier}] Bridge call attempt ${attempt + 1} failed: ${response.statusCode}`
         );
+
+        /*
+         * During a key rotation a bridge on an older SDK verifies only the first
+         * `v1` and answers 401 when it already uses the other key. The retry that
+         * follows anyway puts another active key first. A 401 means the bridge
+         * did not process the request, so this adds no request and no risk.
+         */
+        if (response.statusCode === 401 && signingKeys.length > 1) {
+          signingKeys = nextSigningKeyOrder(signingKeys);
+          keyOrderChanged = true;
+        }
       } catch (err) {
         lastError = this.retryableError(err, streamReply);
         this.logger.warn(
@@ -351,6 +406,23 @@ export class BridgeExecutorService {
     }
 
     throw lastError ?? new Error('Bridge call failed');
+  }
+
+  /**
+   * Pre-flight URL syntax/scheme/host check on every attempt. The follow-up
+   * safeOutboundStreamRequest call performs the connect-time DNS guard and
+   * re-validates every redirect target.
+   */
+  private async assertBridgeUrlIsSafe(url: string): Promise<void> {
+    try {
+      assertSafeOutboundUrl(url);
+      await resolvePublicAddresses(new URL(url).hostname);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Bridge URL blocked by SSRF protection: ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   private retryableError(err: unknown, streamReply: boolean): Error {
@@ -445,6 +517,8 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${event}:${reaction.messageId}:${timestamp}`;
     } else if (humanResponse) {
       deliveryId = `${conversation._id}:${event}:${humanResponse.interactionId}:${timestamp}`;
+    } else if (params.abortedTurn) {
+      deliveryId = `${conversation._id}:${event}:${params.abortedTurn.turnId}`;
     } else {
       deliveryId = `${conversation._id}:${event}`;
     }
@@ -488,6 +562,16 @@ export class BridgeExecutorService {
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation, params.platformThreadId) : null,
       humanResponse: humanResponse ?? null,
+      ...(params.abortedTurn
+        ? {
+            abortedTurn: {
+              turnId: params.abortedTurn.turnId,
+              ...(params.abortedTurn.platformMessageId
+                ? { platformMessageId: params.abortedTurn.platformMessageId }
+                : {}),
+            },
+          }
+        : {}),
     };
 
     return payload;
@@ -564,6 +648,13 @@ export class BridgeExecutorService {
       },
       timestamp: message.metadata?.dateSent?.toISOString() ?? new Date().toISOString(),
     };
+
+    if (signingContext?.platform === AgentPlatformEnum.WEB_CHAT) {
+      const metadata = (message.raw as WebChatRawMessage | undefined)?.metadata;
+      if (metadata && Object.keys(metadata).length > 0) {
+        mapped.metadata = metadata;
+      }
+    }
 
     if (signingContext?.platform) {
       const replyTo = resolveInboundReplyTo(signingContext.platform, message, signingContext.platformThreadId);

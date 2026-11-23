@@ -1,11 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "declaration": false,
     "declarationMap": false,
     "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
     "module": "commonjs",
     "moduleResolution": "bundler",
     "noImplicitAny": true,

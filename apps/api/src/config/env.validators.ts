@@ -113,7 +113,11 @@ export const envValidators = {
   NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
   NOVU_TLS_CA_BASE64: str({ default: undefined }),
   NOVU_TLS_CA_FILE: str({ default: undefined }),
+  // Single-IP header the edge proxy overwrites. Novu Cloud defaults to `cf-connecting-ip`, empty opts out. See getClientIp.
+  CLIENT_IP_HEADER: str({ default: undefined }),
   JWT_SECRET: str(),
+  // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.
+  NOVU_INTERNAL_AUTH_SECRET: str({ default: '' }),
   SENDGRID_API_KEY: str({ default: '' }),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
@@ -163,6 +167,7 @@ export const envValidators = {
   API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
+  NOVU_TOKEN_SIGNING_KEYS: str({ default: undefined }),
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
@@ -219,11 +224,21 @@ export const envValidators = {
       AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
       AI_LLM_API_KEY: str({ default: '' }),
       AI_LLM_MODEL: str({ default: '' }),
+      AI_LLM_SIDE_CALL_MODEL: str({ default: 'gpt-4o' }),
+      // Copilot on AWS Bedrock (IS_COPILOT_BEDROCK_ENABLED); used only when all four are set
+      AI_BEDROCK_REGION: str({ default: '' }),
+      AI_BEDROCK_MODEL: str({ default: '' }),
+      AI_BEDROCK_GUARDRAIL_ID: str({ default: '' }),
+      AI_BEDROCK_GUARDRAIL_VERSION: str({ default: '' }),
       AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 8192 }),
       AI_LLM_TEMPERATURE: num({ default: 0.7 }),
       AI_LLM_MAX_RETRIES: num({ default: 3 }),
       AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
+      AI_LLM_REASONING_EFFORT: str({
+        choices: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+        default: undefined,
+      }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
     }),

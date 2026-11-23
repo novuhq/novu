@@ -1,11 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import { ChannelCTATypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
-import { AnalyticsEventsEnum } from '../../utils';
 import { mapToDto } from '../../utils/notification-mapper';
 import { MarkManyNotificationsAsCommand } from '../mark-many-notifications-as/mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
@@ -33,19 +31,16 @@ describe('MarkNotificationAs', () => {
   let updateNotification: MarkNotificationAs;
   let markManyNotificationsAsMock: sinon.SinonStubbedInstance<MarkManyNotificationsAs>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
-  let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
 
   beforeEach(() => {
     markManyNotificationsAsMock = sinon.createStubInstance(MarkManyNotificationsAs);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
-    analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
 
     updateNotification = new MarkNotificationAs(
       markManyNotificationsAsMock as any,
       getSubscriberMock as any,
-      analyticsServiceMock as any,
       messageRepositoryMock as any
     );
   });
@@ -124,35 +119,5 @@ describe('MarkNotificationAs', () => {
       }),
     ]);
     expect(mapToDto(updatedMessageMock)).to.deep.equal(updatedMessage);
-  });
-
-  it('should send the analytics', async () => {
-    const command: MarkNotificationAsCommand = {
-      environmentId: '6447aff3d89122e250412c23',
-      organizationId: '6447aff3d89122e250412c1d',
-      subscriberId: '6447aff5d89122e250412c79',
-      notificationId: mockMessage._id,
-      read: true,
-    };
-
-    getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.findOneForInbox.onFirstCall().resolves(mockMessage);
-    messageRepositoryMock.findOneForInbox.onSecondCall().resolves(mockMessage);
-
-    await updateNotification.execute(command);
-
-    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
-    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
-      AnalyticsEventsEnum.MARK_NOTIFICATION_AS,
-      '',
-      {
-        _organization: command.organizationId,
-        _subscriber: mockSubscriber._id,
-        _notification: command.notificationId,
-        read: command.read,
-        archived: command.archived,
-        snoozedUntil: command.snoozedUntil,
-      },
-    ]);
   });
 });

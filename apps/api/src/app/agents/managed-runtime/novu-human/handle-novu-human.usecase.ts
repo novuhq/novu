@@ -9,6 +9,7 @@ import {
 } from '@novu/shared';
 import { CreateConversationInteractionCommand } from '../../../human/usecases/create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../../../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { ManagedAgentService } from '../managed-agent.service';
 import { HandleNovuHumanCommand } from './handle-novu-human.command';
@@ -21,7 +22,7 @@ export class HandleNovuHuman {
     private readonly conversationService: AgentConversationService,
     private readonly createConversationInteraction: CreateConversationInteraction,
     @Inject(forwardRef(() => ManagedAgentService))
-    private readonly managedAgentService: ManagedAgentService,
+    private readonly managedAgentService: WrapperType<ManagedAgentService>,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {

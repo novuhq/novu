@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import axios, { AxiosInstance } from 'axios';
 import { expect } from 'chai';
-import { restore, stub } from 'sinon';
+import { match, restore, stub } from 'sinon';
 
-import * as photonWebhookClient from '../shared/photon-webhook-client';
 import { ConfigurePhotonWebhookCommand } from './configure-photon-webhook.command';
 import { ConfigurePhotonWebhook } from './configure-photon-webhook.usecase';
 
@@ -14,6 +14,11 @@ const INTEGRATION_IDENTIFIER = 'photon-int';
 const CALLBACK_URL = `https://api.example.com/v1/agents/${AGENT_ID}/webhook/${INTEGRATION_IDENTIFIER}`;
 const OTHER_NOVU_WEBHOOK_URL = `https://other-env.example.com/v1/agents/other-agent-id/webhook/other-integration`;
 const THIRD_PARTY_WEBHOOK_URL = 'https://third-party-service.example.com/photon-webhook';
+const PHOTON_AUTH = { username: 'project-id', password: 'project-secret' };
+
+function photonResponse(data: unknown) {
+  return { data: { succeed: true, data } };
+}
 
 function buildCommand(overrides: Partial<ConfigurePhotonWebhookCommand> = {}) {
   return ConfigurePhotonWebhookCommand.create({
@@ -36,10 +41,8 @@ describe('ConfigurePhotonWebhook usecase', () => {
   let integrationRepository: { findOne: sinon.SinonStub; update: sinon.SinonStub };
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
-  let enableStub: sinon.SinonStub;
-  let listStub: sinon.SinonStub;
-  let createStub: sinon.SinonStub;
-  let deleteStub: sinon.SinonStub;
+  let createClientStub: sinon.SinonStub;
+  let photonApi: { patch: sinon.SinonStub; get: sinon.SinonStub; post: sinon.SinonStub; delete: sinon.SinonStub };
 
   function buildUsecase() {
     return new ConfigurePhotonWebhook(
@@ -80,15 +83,20 @@ describe('ConfigurePhotonWebhook usecase', () => {
       warn: stub(),
     };
 
-    enableStub = stub(photonWebhookClient, 'enablePhotonImessagePlatform').resolves();
-    listStub = stub(photonWebhookClient, 'listPhotonWebhooks').resolves([]);
-    createStub = stub(photonWebhookClient, 'createPhotonWebhook').resolves({
-      id: 'webhook-id',
-      webhookUrl: CALLBACK_URL,
-      standardSigningSecret: 'whsec_new-secret',
-      signingSecret: 'legacy-secret',
-    });
-    deleteStub = stub(photonWebhookClient, 'deletePhotonWebhooks').resolves();
+    photonApi = {
+      patch: stub().resolves(photonResponse(null)),
+      get: stub().resolves(photonResponse([])),
+      post: stub().resolves(
+        photonResponse({
+          id: 'webhook-id',
+          webhookUrl: CALLBACK_URL,
+          standardSigningSecret: 'whsec_new-secret',
+          signingSecret: 'legacy-secret',
+        })
+      ),
+      delete: stub().resolves(photonResponse(null)),
+    };
+    createClientStub = stub(axios, 'create').returns(photonApi as unknown as AxiosInstance);
   });
 
   // Assigning `undefined` to process.env stores the string "undefined" — delete instead.
@@ -112,8 +120,7 @@ describe('ConfigurePhotonWebhook usecase', () => {
     expect(result.success).to.equal(false);
     expect(result.fallbackToManual).to.equal(true);
     expect(result.reason?.code).to.equal('missing_credentials');
-    expect(enableStub.called).to.equal(false);
-    expect(createStub.called).to.equal(false);
+    expect(createClientStub.called).to.equal(false);
   });
 
   it('enables the platform, registers the webhook, and persists the Photon-issued secret', async () => {
@@ -121,10 +128,9 @@ describe('ConfigurePhotonWebhook usecase', () => {
 
     expect(result.success).to.equal(true);
     expect(result.callbackUrl).to.equal(CALLBACK_URL);
-    expect(enableStub.calledOnce).to.equal(true);
-    expect(
-      createStub.calledOnceWith({ projectId: 'project-id', projectSecret: 'project-secret' }, CALLBACK_URL)
-    ).to.equal(true);
+    expect(createClientStub.alwaysCalledWithMatch({ auth: PHOTON_AUTH })).to.equal(true);
+    expect(photonApi.patch.calledOnceWith('/platforms', { platform: 'imessage', enabled: true })).to.equal(true);
+    expect(photonApi.post.calledOnceWith('/webhooks', match({ webhookUrl: CALLBACK_URL }))).to.equal(true);
 
     expect(integrationRepository.update.calledOnce).to.equal(true);
     const [, update] = integrationRepository.update.firstCall.args;
@@ -136,44 +142,44 @@ describe('ConfigurePhotonWebhook usecase', () => {
 
   it('keeps an intact registration when the URL is registered and the secret is already stored', async () => {
     stubIntegration({ apiKey: 'project-id', secretKey: 'project-secret', token: 'whsec_existing' });
-    listStub.resolves([{ id: 'webhook-id', webhookUrl: CALLBACK_URL }]);
+    photonApi.get.resolves(photonResponse([{ id: 'webhook-id', webhookUrl: CALLBACK_URL }]));
 
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(true);
-    expect(createStub.called).to.equal(false);
-    expect(deleteStub.called).to.equal(false);
+    expect(photonApi.post.called).to.equal(false);
+    expect(photonApi.delete.called).to.equal(false);
     expect(integrationRepository.update.called).to.equal(false);
   });
 
   it('replaces a stale own registration when the stored secret is missing', async () => {
-    listStub.resolves([{ id: 'stale-id', webhookUrl: CALLBACK_URL }]);
+    photonApi.get.resolves(photonResponse([{ id: 'stale-id', webhookUrl: CALLBACK_URL }]));
 
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(true);
-    expect(
-      deleteStub.calledOnceWith({ projectId: 'project-id', projectSecret: 'project-secret' }, ['stale-id'])
-    ).to.equal(true);
-    expect(createStub.calledOnce).to.equal(true);
+    expect(photonApi.delete.calledOnceWith('/webhooks/stale-id')).to.equal(true);
+    expect(photonApi.post.calledOnce).to.equal(true);
     expect(integrationRepository.update.calledOnce).to.equal(true);
   });
 
   it('surfaces other Novu webhook URLs and ignores third-party ones', async () => {
-    listStub.resolves([
-      { id: 'other-novu-id', webhookUrl: OTHER_NOVU_WEBHOOK_URL },
-      { id: 'third-party-id', webhookUrl: THIRD_PARTY_WEBHOOK_URL },
-    ]);
+    photonApi.get.resolves(
+      photonResponse([
+        { id: 'other-novu-id', webhookUrl: OTHER_NOVU_WEBHOOK_URL },
+        { id: 'third-party-id', webhookUrl: THIRD_PARTY_WEBHOOK_URL },
+      ])
+    );
 
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(true);
     expect(result.existingNovuWebhookUrls).to.deep.equal([OTHER_NOVU_WEBHOOK_URL]);
-    expect(deleteStub.called).to.equal(false);
+    expect(photonApi.delete.called).to.equal(false);
   });
 
   it('falls back to manual configuration when Photon rejects the registration', async () => {
-    createStub.rejects(new Error('boom'));
+    photonApi.post.rejects(new Error('boom'));
 
     const result = await buildUsecase().execute(buildCommand());
 

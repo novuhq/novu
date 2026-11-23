@@ -448,7 +448,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createAgentRes.status).to.equal(201);
 
     const createWorkflowRes = await session.testAgent.post('/v2/workflows').send({
-      __source: WorkflowCreationSourceEnum.Editor,
+      __source: WorkflowCreationSourceEnum.EDITOR,
       name: 'Agent Assigned Workflow',
       workflowId: `agent-assigned-${randomUUID()}`,
       active: true,

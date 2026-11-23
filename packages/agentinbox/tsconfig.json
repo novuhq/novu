@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "declaration": false,
     "module": "commonjs",
     "moduleResolution": "bundler",

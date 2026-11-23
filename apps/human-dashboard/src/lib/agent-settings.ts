@@ -17,10 +17,12 @@ export type AgentSettings = {
   reach: AgentReach;
   /** `null` while the agent isn't paused. */
   paused: AgentPause | null;
+  /** Whether people see a sign that their message arrived, such as typing. Off until the operator turns it on. */
+  acknowledgeOnReceived: boolean;
 };
 
 /** What an agent has before anyone changed its settings, and what an API from before them answers. */
-export const DEFAULT_AGENT_SETTINGS: AgentSettings = { reach: 'anyone', paused: null };
+export const DEFAULT_AGENT_SETTINGS: AgentSettings = { reach: 'anyone', paused: null, acknowledgeOnReceived: false };
 
 /** One setting to change, as the Settings block sends it. */
-export type AgentSettingsChange = { reach: AgentReach } | { paused: boolean };
+export type AgentSettingsChange = { reach: AgentReach } | { paused: boolean } | { acknowledgeOnReceived: boolean };

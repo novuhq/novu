@@ -38,7 +38,7 @@ vi.mock('node-mailjet', async (importOriginal) => {
 
   return {
     ...actual,
-    Client: vi.fn().mockImplementation(() => {
+    Client: vi.fn().mockImplementation(function () {
       return {
         post: vi.fn().mockImplementation(() => {
           return {

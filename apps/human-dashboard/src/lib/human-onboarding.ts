@@ -7,18 +7,26 @@ import type { AgentReach } from './agent-settings';
 import { buildChannelPrompt } from './agent-setup-prompt';
 import { isToolId, type ToolId } from './ai-tools';
 import { findCurrentUser } from './auth-page';
+import { type AgentInboxFeatures, loadFeatures } from './feature-flags';
 import type { HostStatus } from './host-status';
 import type { HostId } from './hosts';
 import type { HumanAccount } from './human-account';
-import { agentDisplayName, DEFAULT_AGENT_NAME, getRelayAgent, type RelayAgent } from './human-agent-api';
+import {
+  agentDisplayName,
+  type CardShown,
+  DEFAULT_AGENT_NAME,
+  getRelayAgent,
+  type RelayAgent,
+} from './human-agent-api';
 import { requestForAccount } from './human-api-key';
-import { listChannels } from './human-channels-api';
-import { loadChannelsOverview } from './human-channels-overview';
+import { type Channel, listChannels } from './human-channels-api';
+import { loadChannelsOverview, withinTime } from './human-channels-overview';
 import { loadHostStatus } from './human-hosts-api';
 import { getInboxThread, listInboxThreads } from './human-inbox-api';
 import type { SlackSetupState } from './human-slack-setup';
 import type { TelegramSetupState } from './human-telegram-setup';
 import { listSignIns, readMcpUrl, type SignIn } from './human-tools-api';
+import { readWhatsAppSetup, type WhatsAppSetupState } from './human-whatsapp-setup';
 import {
   activityIsAfter,
   humanMessageAfter,
@@ -29,6 +37,7 @@ import {
   preferNewerInbound,
 } from './inbound-email';
 import type { InboxThread } from './inbox';
+import type { AgentLook } from './look';
 import {
   AGENT_DOMAIN,
   cardLinkOf,
@@ -48,12 +57,17 @@ import {
   wasMadeInTheSteps,
 } from './onboarding-progress';
 import { type OnboardingState, readOnboardingState, writeOnboardingState } from './onboarding-state';
+import { legacyStepOf, resolveSayHiStep, type SayHiStep } from './say-hi-progress';
 import { readApiUrl, readSiteOrigin } from './site-origin';
 
 export { isSetupUnfinished, resolveStep, type SetupStep, wasMadeInTheSteps };
 
 export type SetupProgress = {
+  /** The earlier onboarding's step, which the dashboard's banners and redirects read in either onboarding. */
   step: SetupStep;
+  /** The step of the onboarding where the agent says hi with its card, or `null` where the account hasn't got it. */
+  sayHiStep: SayHiStep | null;
+  features: AgentInboxFeatures;
   state: OnboardingState;
   agent: RelayAgent | null;
   hostStatus: HostStatus | null;
@@ -76,11 +90,13 @@ export type SetupProgress = {
  * lets it catch up with what happened since: see `catchUp`.
  */
 export const loadSetupProgress = cache(async (account: HumanAccount): Promise<SetupProgress> => {
-  const [user, agent] = await Promise.all([findCurrentUser(), getRelayAgent(account)]);
+  const [user, agent, features] = await Promise.all([findCurrentUser(), getRelayAgent(account), loadFeatures(account)]);
   const hostStatus = agent ? await loadHostStatus(account) : null;
   if (!user) {
     return {
       step: resolveStep(agent, {}, hostStatus),
+      sayHiStep: features.newOnboarding ? resolveSayHiStep(agent, {}, hostStatus) : null,
+      features,
       state: {},
       agent,
       hostStatus,
@@ -88,6 +104,10 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
       user,
       testMail: null,
     };
+  }
+
+  if (features.newOnboarding) {
+    return loadSayHiProgress(account, user, agent, hostStatus, features);
   }
 
   const { state, testMail } = await catchUp(user, account, agent, readOnboardingState(user));
@@ -98,6 +118,8 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
 
   return {
     step: signIns.length > 0 ? resolveStep(agent, state, hostStatus, true) : step,
+    sayHiStep: null,
+    features,
     state,
     agent,
     hostStatus,
@@ -106,6 +128,39 @@ export const loadSetupProgress = cache(async (account: HumanAccount): Promise<Se
     testMail,
   };
 });
+
+/**
+ * The progress of the onboarding where the agent says hi with its card. It has no test email to look out for:
+ * the agent says hi in its host instead. Until a host connects, an app that signed in through the MCP server
+ * since the agent was made is a host that came in, before the API sees it check.
+ */
+async function loadSayHiProgress(
+  account: HumanAccount,
+  user: User,
+  agent: RelayAgent | null,
+  hostStatus: HostStatus | null,
+  features: AgentInboxFeatures
+): Promise<SetupProgress> {
+  const state = readOnboardingState(user);
+  const waiting = resolveSayHiStep(agent, state, hostStatus);
+  const signIns =
+    agent && (waiting === 'host' || waiting === 'connect')
+      ? (await listSignIns(account)).filter((signIn) => signedInSince(signIn.at, agent))
+      : [];
+  const sayHiStep = signIns.length > 0 ? resolveSayHiStep(agent, state, hostStatus, true) : waiting;
+
+  return {
+    step: legacyStepOf(sayHiStep),
+    sayHiStep,
+    features,
+    state,
+    agent,
+    hostStatus,
+    signIns,
+    user,
+    testMail: null,
+  };
+}
 
 /**
  * Brings the stored state up to date with mail that landed after the agent was created. Only the time is
@@ -221,10 +276,14 @@ export async function requireSetUpAgent(
 }
 
 /** What the onboarding page keeps asking for, to notice a change it has to show. Cheap to work out. */
-export function describeProgress({ step, state, agent, hostStatus }: SetupProgress): string {
+export function describeProgress({ step, sayHiStep, state, agent, hostStatus }: SetupProgress): string {
   return [
     step,
+    sayHiStep,
     agent?.id,
+    agent?.cardShown?.at,
+    hostStatus?.cardShown?.at,
+    state.hostPickedAt,
     state.testSentAt,
     state.testReplyAt,
     agent && state.testLeftAt && !hostStatus ? 'host-status-unavailable' : '',
@@ -320,7 +379,7 @@ export async function loadSetupSummary(
     step,
     agent: describeAgentIdentity(agent, state, origin, channels.emailAddress),
     waiting: waiting ?? 0,
-    secondChannelConnected: channels.telegram || channels.slack,
+    secondChannelConnected: channels.telegram || channels.slack || channels.whatsapp,
     wentThroughSteps: wasMadeInTheSteps(agent, state),
     doneBannerDismissed: state.doneBannerDismissed === true,
     checklist: { done: Object.keys(state.checklist?.done ?? {}), hidden: state.checklist?.hidden === true },
@@ -347,7 +406,7 @@ export type OnboardingView = {
   mcpUrl: string | null;
   /** The apps that signed in through the MCP server since the agent was made, which step 3's picker ticks. */
   connectedTools: ToolId[];
-  channels: { telegram: boolean; slack: boolean };
+  channels: { telegram: boolean; slack: boolean; whatsapp: boolean };
   /** What the Telegram and Slack drawers of step 4 open with. `null` on the other steps. */
   channelSetup: OnboardingChannelSetup | null;
   /** Who can reach the agent, for the Share dialog of step 4. `null` while there is no agent, or it couldn't be read. */
@@ -363,6 +422,8 @@ export type OnboardingChannelSetup = {
   /** How far each setup got, so its drawer opens where it was left. `unknown` when it couldn't be read. */
   telegram: TelegramSetupState;
   slack: SlackSetupState;
+  /** `hidden` while WhatsApp isn't offered to this account: step 4 then has no WhatsApp row. */
+  whatsapp: WhatsAppSetupState;
   /** What the Slack app is called until the operator names it. */
   slackAppName: string;
   /** What the operator hands their own agent in each drawer. */
@@ -383,7 +444,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
         countWaitingMessages(account),
         step === 'reach' ? loadChannelSetups(account) : null,
       ])
-    : [{ telegram: false, slack: false, emailAddress: undefined }, 0, null];
+    : [{ telegram: false, slack: false, whatsapp: false, emailAddress: undefined }, 0, null];
   const mcpUrl = readMcpUrl();
   const [origin, mailDomain] = await Promise.all([readSiteOrigin(), readInboxMailDomain(account)]);
   // Only an app that signed in since the agent was made is ticked; one that did would have moved the steps on.
@@ -422,7 +483,7 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
     apiUrl,
     mcpUrl,
     connectedTools,
-    channels: { telegram: channels.telegram, slack: channels.slack },
+    channels: { telegram: channels.telegram, slack: channels.slack, whatsapp: channels.whatsapp },
     channelSetup:
       agent && identity && setups
         ? {
@@ -434,6 +495,77 @@ export async function loadOnboardingView(account: HumanAccount): Promise<Onboard
             },
           }
         : null,
+    reach: agent?.settings?.reach ?? null,
+    origin,
+    mailDomain,
+  };
+}
+
+/**
+ * What the onboarding where the agent says hi shows (`A.1` to `A.4`). `null` once it has nothing left to show:
+ * the operator opened the inbox, or the agent came from a terminal.
+ */
+export type SayHiView = {
+  step: Exclude<SayHiStep, 'done'>;
+  /** `describeProgress` of what this view shows, which the page polls for a change. */
+  status: string;
+  operator: { email: string | null; firstName: string | null };
+  /** Missing on A.1, where the agent is still being named. */
+  agent: (AgentIdentity & { look: AgentLook }) | null;
+  /** The host picked on A.2, which A.3 opens on. `null` before one was picked. */
+  pickedHost: HostId | null;
+  /** The host that came in first, and the way it came: what A.4a asks to say hi. `null` before one did. */
+  connected: { via: 'cli' | 'mcp'; host: HostId | null } | null;
+  /** The first time a host showed the card, and which: what A.4 shows happening. `null` before. */
+  cardShown: CardShown | null;
+  /** Messages already in the inbox, waiting for a host to read them. `null` when they couldn't be counted. */
+  waiting: number | null;
+  apiUrl: string;
+  mcpUrl: string | null;
+  /** The apps that signed in through the MCP server since the agent was made. */
+  connectedTools: ToolId[];
+  /** Who can reach the agent, for the Share dialog of A.4. `null` when it couldn't be read. */
+  reach: AgentReach | null;
+  origin: string;
+  mailDomain: string;
+};
+
+export async function loadSayHiView(account: HumanAccount): Promise<SayHiView | null> {
+  const progress = await loadSetupProgress(account);
+  const { sayHiStep, state, agent, hostStatus, signIns, user } = progress;
+  if (!sayHiStep || sayHiStep === 'done' || !user) {
+    return null;
+  }
+
+  const [channels, waiting, origin, mailDomain, apiUrl] = await Promise.all([
+    agent ? loadChannelFacts(account) : { telegram: false, slack: false, emailAddress: undefined },
+    agent ? countWaitingMessages(account) : 0,
+    readSiteOrigin(),
+    readInboxMailDomain(account),
+    readApiUrl(),
+  ]);
+  const first = hostStatus?.hosts.reduce<(typeof hostStatus.hosts)[number] | null>(
+    (earliest, entry) => (!earliest || entry.connectedAt < earliest.connectedAt ? entry : earliest),
+    null
+  );
+  const signedIn = signIns.reduce<SignIn | null>(
+    (earliest, signIn) => (!earliest || signIn.at < earliest.at ? signIn : earliest),
+    null
+  );
+  const identity = agent ? describeAgentIdentity(agent, state, origin, channels.emailAddress) : null;
+
+  return {
+    step: sayHiStep,
+    status: describeProgress(progress),
+    operator: { email: user.primaryEmailAddress?.emailAddress ?? null, firstName: user.firstName },
+    agent: identity && agent ? { ...identity, look: agent.look } : null,
+    pickedHost: state.pickedHost ?? null,
+    connected: first ? { via: first.via, host: first.id ?? null } : signedIn ? { via: 'mcp', host: signedIn.id } : null,
+    cardShown: agent?.cardShown ?? hostStatus?.cardShown ?? null,
+    waiting,
+    apiUrl,
+    mcpUrl: readMcpUrl(),
+    connectedTools: signIns.map((signIn) => signIn.id).filter(isToolId),
     reach: agent?.settings?.reach ?? null,
     origin,
     mailDomain,
@@ -459,15 +591,18 @@ async function readInboxMailDomain(account: HumanAccount): Promise<string> {
  * The Telegram and Slack setups, read as the Configure page reads them. They are a detail of step 4: when
  * they can't be read, the drawers find out for themselves once they open.
  */
-async function loadChannelSetups(account: HumanAccount): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack'>> {
+async function loadChannelSetups(
+  account: HumanAccount
+): Promise<Pick<OnboardingChannelSetup, 'telegram' | 'slack' | 'whatsapp'>> {
   try {
-    const { telegramSetup, slackSetup } = await loadChannelsOverview(account);
+    const { telegramSetup, slackSetup, whatsappSetup } = await loadChannelsOverview(account);
 
-    return { telegram: telegramSetup, slack: slackSetup };
+    return { telegram: telegramSetup, slack: slackSetup, whatsapp: whatsappSetup };
   } catch (error) {
     console.error('Failed to read the channel setups for the onboarding', error);
 
-    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' } };
+    // WhatsApp is behind a flag, so it stays out unless the API said it's there.
+    return { telegram: { step: 'unknown' }, slack: { step: 'unknown' }, whatsapp: { step: 'hidden' } };
   }
 }
 
@@ -480,14 +615,28 @@ async function loadChannelFacts(account: HumanAccount) {
     return {
       telegram: connected('telegram'),
       slack: connected('slack'),
+      whatsapp: await isWhatsAppConnected(account, channels),
       emailAddress: channels.find((channel) => channel.via === 'email' && channel.active)?.address,
     };
   } catch (error) {
     // The channels are a detail of these screens: without them the agent still shows, as not set up.
     console.error('Failed to load the channels for the onboarding', error);
 
-    return { telegram: false, slack: false, emailAddress: undefined };
+    return { telegram: false, slack: false, whatsapp: false, emailAddress: undefined };
   }
+}
+
+/**
+ * WhatsApp counts as connected once the operator's own number is bound to the business number, as its
+ * Configure row shows it, which the channel list can't tell. Only asked when the relay has a WhatsApp channel at all.
+ */
+async function isWhatsAppConnected(account: HumanAccount, channels: Channel[]): Promise<boolean> {
+  if (!channels.some((channel) => channel.via === 'whatsapp' && channel.active)) {
+    return false;
+  }
+
+  // A detail of these pages: capped like the other setup reads, so a slow answer never holds the page up.
+  return (await withinTime(readWhatsAppSetup(account))).step === 'connected';
 }
 
 /** How many messages wait for a host: the unread threads of the inbox. */

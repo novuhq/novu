@@ -15,10 +15,11 @@
     "start:test": "cross-env NODE_ENV=test nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "typecheck:spec": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'test'",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
+    "test:e2e": "cross-env NODE_ENV=test mocha --timeout 10000 --require @novu/testing/swc-register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.971.0",
@@ -62,12 +63,10 @@
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
     "jest": "^27.0.6",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.6",
     "sinon": "^9.2.4",
     "supertest": "^7.0.0",
     "ts-jest": "^27.0.7",
-    "ts-loader": "~9.4.0",
-    "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "6.0.3"
   },

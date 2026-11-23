@@ -9,6 +9,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
+import { decryptApiKey } from '../../encryption';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -21,7 +22,15 @@ import {
   RETRYABLE_ERROR_CODES,
 } from '../../services/http-client';
 import { getNovuServiceCa, isNovuTlsEnabled } from '../../services/tls';
-import { BRIDGE_EXECUTION_ERROR, buildNovuSignatureHeader } from '../../utils';
+import {
+  BRIDGE_EXECUTION_ERROR,
+  bridgeSigningScope,
+  buildNovuSignatureHeader,
+  isBridgeSignatureMismatch,
+  nextSigningKeyOrder,
+  orderSigningKeys,
+  rememberAcceptedSigningKey,
+} from '../../utils';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 
@@ -58,9 +67,11 @@ export class ExecuteFrameworkRequest {
   async execute<T extends PostActionEnum | GetActionEnum>(
     command: ExecuteBridgeRequestCommand
   ): Promise<ExecuteBridgeRequestDto<T>> {
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
+    const environment =
+      command.environment ??
+      (await this.environmentRepository.findOne({
+        _id: command.environmentId,
+      }));
 
     if (!environment) {
       throw new NotFoundException(`Environment ${command.environmentId} not found`);
@@ -104,7 +115,7 @@ export class ExecuteFrameworkRequest {
       ? 'POST'
       : 'GET';
 
-    const headers = await this.buildRequestHeaders(command);
+    const signingKeys = await this.resolveSigningKeys(command);
 
     this.logger.debug(`Making bridge request to \`${url}\``);
 
@@ -122,38 +133,23 @@ export class ExecuteFrameworkRequest {
 
     let body: ExecuteBridgeRequestDto<T>;
     try {
-      const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
-        url,
-        method,
-        headers,
-        body: command.event,
-        timeout,
-        retry: {
-          limit: retriesLimit,
-        },
-        /*
-         * A Novu-hosted bridge is this API calling itself, so once TLS is on the
-         * certificate must verify against the private CA no matter what the
-         * environment is called. Externally hosted bridges keep the existing
-         * per-environment behaviour and never see the private CA.
-         */
-        rejectUnauthorized:
-          environment.name.toLowerCase() === 'production' || (isNovuTlsEnabled() && isNovuHostedBridge),
-        ca: isNovuHostedBridge ? getNovuServiceCa() : undefined,
-        // DNS-pinned SSRF guard for user- or environment-controlled bridge
-        // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
-        // The safe outbound layer pins the connection to a validated public IP
-        // and re-runs the policy on every redirect target.
-        enforceSsrfProtection,
-        onRetry: ({ statusCode, errorCode, delay }) => {
-          if (statusCode) {
-            this.logger.info(`Retryable status code ${statusCode} detected. Retrying in ${delay}ms`);
-          } else if (errorCode) {
-            this.logger.info(`Retryable error code ${errorCode} detected. Retrying in ${delay}ms`);
-          }
-        },
-      });
-      body = response.body;
+      body = await this.sendWithSigningKeyFallback(
+        bridgeSigningScope(command.environmentId, bridgeUrl),
+        signingKeys,
+        (orderedKeys) =>
+          this.sendBridgeRequest<T>({
+            url,
+            method,
+            headers: this.buildRequestHeaders(orderedKeys, command.event),
+            body: command.event,
+            timeout,
+            retriesLimit,
+            environmentName: environment.name,
+            isNovuHostedBridge,
+            enforceSsrfProtection,
+          }),
+        bridgeUrl
+      );
     } catch (error) {
       return this.handleResponseError(error, bridgeUrl, command.processError);
     }
@@ -170,26 +166,126 @@ export class ExecuteFrameworkRequest {
     return body;
   }
 
-  @Instrument()
-  private async buildRequestHeaders(command: ExecuteBridgeRequestCommand) {
-    const novuSignatureHeader = await this.buildRequestSignature(command);
+  /**
+   * Sends with the remembered key order. When the bridge says the first `v1`
+   * did not match its key, sends once more per remaining key with that key
+   * first. A bridge decides this before running any workflow code, so sending
+   * again is safe. An environment has at most two keys, so at most one resend.
+   */
+  private async sendWithSigningKeyFallback<R>(
+    signingScope: string,
+    secretKeys: readonly string[],
+    send: (orderedKeys: readonly string[]) => Promise<R>,
+    bridgeUrl: string
+  ): Promise<R> {
+    let orderedKeys = orderSigningKeys(signingScope, secretKeys);
 
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const result = await send(orderedKeys);
+
+        if (attempt > 0) {
+          rememberAcceptedSigningKey(signingScope, orderedKeys[0]);
+        }
+
+        return result;
+      } catch (error) {
+        if (attempt >= orderedKeys.length - 1 || !this.isSignatureMismatch(error)) {
+          throw error;
+        }
+
+        this.logger.info(
+          `Bridge \`${bridgeUrl}\` rejected the first signature. Sending again with another active secret key first.`
+        );
+        orderedKeys = nextSigningKeyOrder(orderedKeys);
+      }
+    }
+  }
+
+  private isSignatureMismatch(error: unknown): boolean {
+    return (
+      error instanceof HttpClientError &&
+      error.type === HttpClientErrorType.HTTP_ERROR &&
+      isBridgeSignatureMismatch(error.statusCode, error.responseBody)
+    );
+  }
+
+  private async sendBridgeRequest<T extends PostActionEnum | GetActionEnum>(params: {
+    url: string;
+    method: 'GET' | 'POST';
+    headers: Record<string, string>;
+    body: ExecuteBridgeRequestCommand['event'];
+    timeout: number;
+    retriesLimit: number;
+    environmentName: string;
+    isNovuHostedBridge: boolean;
+    enforceSsrfProtection: boolean;
+  }): Promise<ExecuteBridgeRequestDto<T>> {
+    const { url, method, headers, body, timeout, retriesLimit, environmentName, isNovuHostedBridge } = params;
+
+    const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
+      url,
+      method,
+      headers,
+      body,
+      timeout,
+      retry: {
+        limit: retriesLimit,
+      },
+      /*
+       * A Novu-hosted bridge is this API calling itself, so once TLS is on the
+       * certificate must verify against the private CA no matter what the
+       * environment is called. Externally hosted bridges keep the existing
+       * per-environment behaviour and never see the private CA.
+       */
+      rejectUnauthorized: environmentName.toLowerCase() === 'production' || (isNovuTlsEnabled() && isNovuHostedBridge),
+      ca: isNovuHostedBridge ? getNovuServiceCa() : undefined,
+      // DNS-pinned SSRF guard for user- or environment-controlled bridge
+      // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
+      // The safe outbound layer pins the connection to a validated public IP
+      // and re-runs the policy on every redirect target.
+      enforceSsrfProtection: params.enforceSsrfProtection,
+      onRetry: ({ statusCode, errorCode, delay }) => {
+        if (statusCode) {
+          this.logger.info(`Retryable status code ${statusCode} detected. Retrying in ${delay}ms`);
+        } else if (errorCode) {
+          this.logger.info(`Retryable error code ${errorCode} detected. Retrying in ${delay}ms`);
+        }
+      },
+    });
+
+    return response.body;
+  }
+
+  /**
+   * Built per attempt so every send carries a fresh timestamp and the key
+   * order for that attempt.
+   */
+  private buildRequestHeaders(signingKeys: readonly string[], event: ExecuteBridgeRequestCommand['event']) {
     return {
       [HttpRequestHeaderKeysEnum.BYPASS_TUNNEL_REMINDER]: 'true',
       [HttpRequestHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
-      [HttpHeaderKeysEnum.NOVU_SIGNATURE]: novuSignatureHeader,
+      [HttpHeaderKeysEnum.NOVU_SIGNATURE]: buildNovuSignatureHeader(signingKeys, event || {}),
     };
   }
 
-  @Instrument()
-  private async buildRequestSignature(command: ExecuteBridgeRequestCommand) {
-    const secretKey = await this.getDecryptedSecretKey.execute(
+  /**
+   * Sign with every active key already loaded on the environment. That is the
+   * same document the bridge call already has, so rotation does not add a read
+   * on the trigger path. Keys are appended, and the header keeps that order.
+   */
+  private async resolveSigningKeys(command: ExecuteBridgeRequestCommand): Promise<string[]> {
+    const storedKeys = command.environment?.apiKeys?.map((apiKey) => apiKey.key) ?? [];
+
+    if (storedKeys.length > 0) {
+      return storedKeys.map((key) => decryptApiKey(key));
+    }
+
+    return this.getDecryptedSecretKey.executeAll(
       GetDecryptedSecretKeyCommand.create({
         environmentId: command.environmentId,
       })
     );
-
-    return buildNovuSignatureHeader(secretKey, command.event || {});
   }
 
   @Instrument()

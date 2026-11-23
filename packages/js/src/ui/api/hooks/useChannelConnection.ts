@@ -63,11 +63,11 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
 
     const cleanupGetResolved = currentNovu.on(
       'channel-connection.get.resolved',
-      ({ args, data }: { args: GetChannelConnectionArgs; data?: ChannelConnectionResponse }) => {
+      ({ args, data }: { args: GetChannelConnectionArgs; data?: ChannelConnectionResponse | null }) => {
         if (!args || args.identifier !== options.connectionIdentifier) {
           return;
         }
-        mutate((data as ChannelConnectionResponse) ?? null);
+        mutate(data ?? null);
         setLoading(false);
       }
     );

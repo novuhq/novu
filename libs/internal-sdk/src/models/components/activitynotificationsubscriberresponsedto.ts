@@ -12,7 +12,7 @@ export type ActivityNotificationSubscriberResponseDto = {
   /**
    * First name of the subscriber
    */
-  firstName?: string | undefined;
+  firstName?: string | null | undefined;
   /**
    * External unique identifier of the subscriber
    */
@@ -24,15 +24,15 @@ export type ActivityNotificationSubscriberResponseDto = {
   /**
    * Last name of the subscriber
    */
-  lastName?: string | undefined;
+  lastName?: string | null | undefined;
   /**
    * Email address of the subscriber
    */
-  email?: string | undefined;
+  email?: string | null | undefined;
   /**
    * Phone number of the subscriber
    */
-  phone?: string | undefined;
+  phone?: string | null | undefined;
 };
 
 /** @internal */
@@ -41,12 +41,12 @@ export const ActivityNotificationSubscriberResponseDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  firstName: z.string().optional(),
+  firstName: z.nullable(z.string()).optional(),
   subscriberId: z.string(),
   _id: z.string(),
-  lastName: z.string().optional(),
-  email: z.string().optional(),
-  phone: z.string().optional(),
+  lastName: z.nullable(z.string()).optional(),
+  email: z.nullable(z.string()).optional(),
+  phone: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

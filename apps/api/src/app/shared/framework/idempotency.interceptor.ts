@@ -22,6 +22,7 @@ import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/
 import { createHash } from 'crypto';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { isInternalAuthScheme } from '../utils/auth.utils';
 import { EXCLUDE_FROM_IDEMPOTENCY } from './exclude-from-idempotency';
 import { restoreCachedHttpException, serializeCachedHttpError } from './idempotency-http-error';
 
@@ -35,7 +36,6 @@ enum ReqStatusEnum {
 }
 
 const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
-const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
 const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()
@@ -76,7 +76,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   }
 
   @Instrument()
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest();
     const isAllowedMethod = ALLOWED_METHODS.includes(request.method.toLowerCase());
     const idempotencyKey = this.getIdempotencyKey(context);
@@ -140,7 +140,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const req = context.switchToHttp().getRequest();
     const { authScheme } = req;
 
-    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
+    // `Internal` callers retry with the same idempotency key, so their retries must be deduplicated too.
+    return authScheme === ApiAuthSchemeEnum.API_KEY || isInternalAuthScheme(authScheme);
   }
 
   private getCacheKey(context: ExecutionContext): string {
@@ -151,13 +152,21 @@ export class IdempotencyInterceptor implements NestInterceptor {
       throw new InternalServerErrorException(message);
     }
     const env = process.env.NODE_ENV;
+    /*
+     * An API key is the organization's own client, but Internal tokens act for different members of
+     * the same organization, so one member's key must never replay another member's response.
+     */
+    // The `:internal:` tag keeps an API key caller from forging a member's key by prefixing a user id.
+    const scope = isInternalAuthScheme(user.scheme)
+      ? `${user.organizationId}:internal:${user._id}`
+      : user.organizationId;
 
-    return `${env}-${user.organizationId}-${this.getIdempotencyKey(context)}`;
+    return `${env}-${scope}-${this.getIdempotencyKey(context)}`;
   }
 
   async setCache(
     key: string,
-    val: { status: ReqStatusEnum; bodyHash: string; data?: any; statusCode?: number },
+    val: { status: ReqStatusEnum; bodyHash: string; data?: unknown; statusCode?: number },
     ttl: number,
     ifNotExists?: boolean
   ): Promise<string | null> {
@@ -173,7 +182,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return null;
   }
 
-  private setHeaders(response: any, headers: Record<string, string>) {
+  private setHeaders(response: { set(key: string, value: string): unknown }, headers: Record<string, string>) {
     Object.keys(headers).forEach((key) => {
       if (headers[key]) {
         response.set(key, headers[key]);
@@ -195,9 +204,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return hash.digest('hex');
   }
 
-  private async handlerDuplicateRequest(context: ExecutionContext, bodyHash: string): Promise<Observable<any>> {
+  private async handlerDuplicateRequest(context: ExecutionContext, bodyHash: string): Promise<Observable<unknown>> {
     const cacheKey = this.getCacheKey(context);
-    const idempotencyKey = this.getIdempotencyKey(context)!;
+    const idempotencyKey = this.getIdempotencyKey(context) ?? '';
     const data = await this.cacheService.get(cacheKey);
     this.setHeaders(context.switchToHttp().getResponse(), {
       [HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]: idempotencyKey,
@@ -255,9 +264,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
     bodyHash: string
-  ): Promise<Observable<any>> {
+  ): Promise<Observable<unknown>> {
     const cacheKey = this.getCacheKey(context);
-    const idempotencyKey = this.getIdempotencyKey(context)!;
+    const idempotencyKey = this.getIdempotencyKey(context) ?? '';
 
     return next.handle().pipe(
       map(async (response) => {

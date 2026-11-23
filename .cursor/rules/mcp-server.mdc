@@ -1,0 +1,16 @@
+---
+description: Rules for working in the hosted MCP server (apps/mcp-server) and its tool schemas
+globs: apps/mcp-server/**/*
+alwaysApply: false
+---
+
+## MCP server
+
+**Stack:** Cloudflare Worker · `@modelcontextprotocol/sdk` · zod 4 · vitest · Biome. `src/tools` and `src/utils` also ship in process as `@novu/mcp-server/tools` to the enterprise Copilot (`pnpm build` writes `dist`).
+
+Before adding or changing a tool, a tool's input schema or description, or the step, Maily, skip or payload-property schemas, read `.agents/skills/nv-mcp-server-tools/SKILL.md` and follow `apps/mcp-server/AGENTS.md`.
+
+The short version:
+- **Budgets:** `tools/list` stays small and has no `$ref`. `test/tool-schemas.spec.ts` enforces the budgets, and `pnpm tools:report` prints the sizes.
+- **Large or nested inputs** are advertised loose and validated strict (`loose.pipe(strict)`), with full detail on demand from `get_step_schema`.
+- **Compatibility:** don't reject input that was accepted before, and keep tool names, argument shapes and error envelopes; the Copilot depends on them.

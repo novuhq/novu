@@ -27,6 +27,7 @@ export const IntegrationResponseDtoChannel = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
 } as const;
 /**
  * The channel type for the integration, which defines how it communicates (e.g., email, SMS). Not set for agent-kind integrations.
@@ -38,14 +39,16 @@ export type IntegrationResponseDtoChannel = ClosedEnum<
 /**
  * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
  */
-export const Kind = {
+export const IntegrationResponseDtoKind = {
   Delivery: "delivery",
   Agent: "agent",
 } as const;
 /**
  * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
  */
-export type Kind = ClosedEnum<typeof Kind>;
+export type IntegrationResponseDtoKind = ClosedEnum<
+  typeof IntegrationResponseDtoKind
+>;
 
 export type IntegrationResponseDto = {
   /**
@@ -79,7 +82,7 @@ export type IntegrationResponseDto = {
   /**
    * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
    */
-  kind?: Kind | undefined;
+  kind?: IntegrationResponseDtoKind | undefined;
   /**
    * The decrypted credentials required for the integration to function (e.g. provider API keys, signing secrets). Only returned to dashboard/session-token callers; API-key authenticated callers receive the integration metadata without this field to avoid amplifying API-key leaks into provider-credential leaks.
    */
@@ -109,9 +112,15 @@ export type IntegrationResponseDto = {
    */
   primary: boolean;
   /**
-   * An array of conditions associated with the integration that may influence its behavior or processing logic.
+   * Legacy StepFilter conditions. Ignored when `rules` is also set.
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   conditions?: Array<StepFilterDto> | undefined;
+  /**
+   * JSONLogic used at send time to select this integration. Takes precedence over `conditions`.
+   */
+  rules?: { [k: string]: any } | null | undefined;
 };
 
 /** @internal */
@@ -120,9 +129,9 @@ export const IntegrationResponseDtoChannel$inboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(IntegrationResponseDtoChannel);
 
 /** @internal */
-export const Kind$inboundSchema: z.ZodNativeEnum<typeof Kind> = z.nativeEnum(
-  Kind,
-);
+export const IntegrationResponseDtoKind$inboundSchema: z.ZodNativeEnum<
+  typeof IntegrationResponseDtoKind
+> = z.nativeEnum(IntegrationResponseDtoKind);
 
 /** @internal */
 export const IntegrationResponseDto$inboundSchema: z.ZodType<
@@ -137,7 +146,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   identifier: z.string(),
   providerId: z.string(),
   channel: IntegrationResponseDtoChannel$inboundSchema.optional(),
-  kind: Kind$inboundSchema.optional(),
+  kind: IntegrationResponseDtoKind$inboundSchema.optional(),
   credentials: CredentialsDto$inboundSchema.optional(),
   configurations: ConfigurationsDto$inboundSchema.optional(),
   active: z.boolean(),
@@ -146,6 +155,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   deletedBy: z.string().optional(),
   primary: z.boolean(),
   conditions: z.array(StepFilterDto$inboundSchema).optional(),
+  rules: z.nullable(z.record(z.any())).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

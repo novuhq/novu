@@ -2,7 +2,7 @@ import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/com
 import { IntegrationEntity, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, IChannelSettings } from '@novu/shared';
 import { isEqual } from 'lodash';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
+import { buildSubscriberKey, InvalidateCacheService } from '../../../services';
 import { FeatureFlagsService } from '../../../services/feature-flags';
 import { SYSTEM_LIMITS } from '../../../services/resource-validator.service';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
@@ -14,8 +14,6 @@ export class UpdateSubscriberChannel {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository,
-    @Inject(forwardRef(() => AnalyticsService))
-    private analyticsService: AnalyticsService,
     private featureFlagsService: FeatureFlagsService
   ) {}
 
@@ -65,13 +63,6 @@ export class UpdateSubscriberChannel {
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
-
-    this.analyticsService.mixpanelTrack('Set Subscriber Credentials - [Subscribers]', '', {
-      providerId: command.providerId,
-      _organization: command.organizationId,
-      oauthHandler: command.oauthHandler,
-      _subscriberId: foundSubscriber._id,
-    });
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,

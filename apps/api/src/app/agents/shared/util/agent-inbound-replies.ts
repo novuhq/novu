@@ -5,6 +5,9 @@ import type { SubscriberResolutionOutcome } from '../types/subscriber-resolution
 export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
   "We couldn't match your identity to a known user, so this agent can't reply yet. Sign in or link your account in the app that owns this agent, then try again.";
 
+export const SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY =
+  "You don't have access to this agent. Contact the team that owns it if you think this is a mistake.";
+
 /**
  * Shown when resolution itself broke rather than the sender being unknown —
  * blaming the sender's identity for an internal failure would be misleading.

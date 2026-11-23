@@ -19,7 +19,6 @@ describe('CORS Configuration', () => {
     it('should allow all origins', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/test' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -42,7 +41,6 @@ describe('CORS Configuration', () => {
       process.env.WIDGET_BASE_URL = widgetOrigin;
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate(
         {
           url: '/v1/test',
@@ -63,7 +61,6 @@ describe('CORS Configuration', () => {
     it('should allow for the preview deployments origin', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate(
         {
           url: '/v1/test',
@@ -92,7 +89,6 @@ describe('CORS Configuration', () => {
         for (const url of setupRoutes) {
           const callbackSpy = spy();
 
-          // @ts-expect-error - corsOptionsDelegate is not typed correctly
           corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
 
           expect(callbackSpy.calledOnce).to.be.ok;
@@ -103,7 +99,6 @@ describe('CORS Configuration', () => {
         for (const url of ['/v1/test', '/v1/better-auth/session', '/v1/agents']) {
           const callbackSpy = spy();
 
-          // @ts-expect-error - corsOptionsDelegate is not typed correctly
           corsOptionsDelegate({ url, headers: { origin: humanOrigin } }, callbackSpy);
 
           expect(callbackSpy.firstCall.lastArg.origin).to.deep.equal([]);
@@ -114,7 +109,6 @@ describe('CORS Configuration', () => {
     it('widget routes should be wildcarded', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/widgets/test' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -125,7 +119,6 @@ describe('CORS Configuration', () => {
     it('inbox routes should be wildcarded', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/inbox/session' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -136,7 +129,6 @@ describe('CORS Configuration', () => {
     it('web-chat routes should be wildcarded', () => {
       const callbackSpy = spy();
 
-      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/web-chat/conversations' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;

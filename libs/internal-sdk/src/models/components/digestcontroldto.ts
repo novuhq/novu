@@ -3,13 +3,9 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
   LookBackWindowDto,
-  LookBackWindowDto$inboundSchema,
   LookBackWindowDto$Outbound,
   LookBackWindowDto$outboundSchema,
 } from "./lookbackwindowdto.js";
@@ -74,37 +70,15 @@ export type DigestControlDto = {
 };
 
 /** @internal */
-export const DigestControlDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof DigestControlDtoType
-> = z.nativeEnum(DigestControlDtoType);
-/** @internal */
 export const DigestControlDtoType$outboundSchema: z.ZodNativeEnum<
   typeof DigestControlDtoType
-> = DigestControlDtoType$inboundSchema;
+> = z.nativeEnum(DigestControlDtoType);
 
-/** @internal */
-export const DigestControlDtoUnit$inboundSchema: z.ZodNativeEnum<
-  typeof DigestControlDtoUnit
-> = z.nativeEnum(DigestControlDtoUnit);
 /** @internal */
 export const DigestControlDtoUnit$outboundSchema: z.ZodNativeEnum<
   typeof DigestControlDtoUnit
-> = DigestControlDtoUnit$inboundSchema;
+> = z.nativeEnum(DigestControlDtoUnit);
 
-/** @internal */
-export const DigestControlDto$inboundSchema: z.ZodType<
-  DigestControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: DigestControlDtoType$inboundSchema.optional(),
-  amount: z.number().optional(),
-  unit: DigestControlDtoUnit$inboundSchema.optional(),
-  lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
-  cron: z.string().optional(),
-  digestKey: z.string().optional(),
-});
 /** @internal */
 export type DigestControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -136,14 +110,5 @@ export function digestControlDtoToJSON(
 ): string {
   return JSON.stringify(
     DigestControlDto$outboundSchema.parse(digestControlDto),
-  );
-}
-export function digestControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<DigestControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DigestControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DigestControlDto' from JSON`,
   );
 }

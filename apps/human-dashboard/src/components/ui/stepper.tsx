@@ -5,7 +5,7 @@ import { type ReactNode, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-type StepStatus = 'done' | 'current' | 'upcoming' | 'error';
+export type StepStatus = 'done' | 'current' | 'upcoming' | 'error';
 
 /** The numbered steps of a setup flow, one card per step. */
 export function Stepper({ className, children }: { className?: string; children: ReactNode }) {

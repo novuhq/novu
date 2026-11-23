@@ -40,8 +40,20 @@ import {
   SmsRenderOutput$inboundSchema,
 } from "./smsrenderoutput.js";
 
-export const GeneratePreviewResponseDtoResult9Type = {
+export const GeneratePreviewResponseDtoResult10Type = {
   Digest: "digest",
+} as const;
+export type GeneratePreviewResponseDtoResult10Type = ClosedEnum<
+  typeof GeneratePreviewResponseDtoResult10Type
+>;
+
+export type Ten = {
+  type?: GeneratePreviewResponseDtoResult10Type | undefined;
+  preview?: DigestRegularOutput | undefined;
+};
+
+export const GeneratePreviewResponseDtoResult9Type = {
+  Delay: "delay",
 } as const;
 export type GeneratePreviewResponseDtoResult9Type = ClosedEnum<
   typeof GeneratePreviewResponseDtoResult9Type
@@ -53,7 +65,7 @@ export type Nine = {
 };
 
 export const GeneratePreviewResponseDtoResult8Type = {
-  Delay: "delay",
+  Tool: "tool",
 } as const;
 export type GeneratePreviewResponseDtoResult8Type = ClosedEnum<
   typeof GeneratePreviewResponseDtoResult8Type
@@ -61,7 +73,8 @@ export type GeneratePreviewResponseDtoResult8Type = ClosedEnum<
 
 export type Eight = {
   type?: GeneratePreviewResponseDtoResult8Type | undefined;
-  preview?: DigestRegularOutput | undefined;
+  preview?: { [k: string]: any } | undefined;
+  error?: PreviewErrorDto | undefined;
 };
 
 export const GeneratePreviewResponseDtoResult7Type = {
@@ -154,7 +167,8 @@ export type GeneratePreviewResponseDtoResult =
   | Six
   | Seven
   | Eight
-  | Nine;
+  | Nine
+  | Ten;
 
 export type GeneratePreviewResponseDto = {
   /**
@@ -181,8 +195,32 @@ export type GeneratePreviewResponseDto = {
     | Six
     | Seven
     | Eight
-    | Nine;
+    | Nine
+    | Ten;
 };
+
+/** @internal */
+export const GeneratePreviewResponseDtoResult10Type$inboundSchema:
+  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResult10Type> = z.nativeEnum(
+    GeneratePreviewResponseDtoResult10Type,
+  );
+
+/** @internal */
+export const Ten$inboundSchema: z.ZodType<Ten, z.ZodTypeDef, unknown> = z
+  .object({
+    type: GeneratePreviewResponseDtoResult10Type$inboundSchema.optional(),
+    preview: DigestRegularOutput$inboundSchema.optional(),
+  });
+
+export function tenFromJSON(
+  jsonString: string,
+): SafeParseResult<Ten, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Ten$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Ten' from JSON`,
+  );
+}
 
 /** @internal */
 export const GeneratePreviewResponseDtoResult9Type$inboundSchema:
@@ -217,7 +255,8 @@ export const GeneratePreviewResponseDtoResult8Type$inboundSchema:
 export const Eight$inboundSchema: z.ZodType<Eight, z.ZodTypeDef, unknown> = z
   .object({
     type: GeneratePreviewResponseDtoResult8Type$inboundSchema.optional(),
-    preview: DigestRegularOutput$inboundSchema.optional(),
+    preview: z.record(z.any()).optional(),
+    error: PreviewErrorDto$inboundSchema.optional(),
   });
 
 export function eightFromJSON(
@@ -389,6 +428,7 @@ export const GeneratePreviewResponseDtoResult$inboundSchema: z.ZodType<
   z.lazy(() => Seven$inboundSchema),
   z.lazy(() => Eight$inboundSchema),
   z.lazy(() => Nine$inboundSchema),
+  z.lazy(() => Ten$inboundSchema),
 ]);
 
 export function generatePreviewResponseDtoResultFromJSON(
@@ -420,6 +460,7 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
     z.lazy(() => Seven$inboundSchema),
     z.lazy(() => Eight$inboundSchema),
     z.lazy(() => Nine$inboundSchema),
+    z.lazy(() => Ten$inboundSchema),
   ]),
 });
 

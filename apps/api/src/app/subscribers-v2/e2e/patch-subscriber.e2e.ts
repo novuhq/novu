@@ -1,4 +1,5 @@
 import { Novu } from '@novu/api';
+import { SubscriberResponseDto } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -7,7 +8,6 @@ import {
   expectSdkValidationExceptionGeneric,
   initNovuClassSdk,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { SubscriberResponseDto } from '../../subscribers/dtos';
 
 let session: UserSession;
 

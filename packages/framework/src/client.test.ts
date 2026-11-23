@@ -440,7 +440,7 @@ describe('Novu Client', () => {
           from: { name: '{{payload.name}} {{subscriber.lastName}}' },
           preheader: '{{env.name}} {{context.traceId}} {{t.preheader}}',
         },
-        context: { traceId: 'trace-123' },
+        context: { traceId: 'trace-123' } as unknown as Event['context'],
         env: testEventEnv,
       };
 
@@ -451,7 +451,7 @@ describe('Novu Client', () => {
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
       const { subject, from, preheader } = emailExecutionResult.outputs;
       expect(subject).toBe('body static prefix John');
-      expect(from?.name).toBe("John Smith's");
+      expect(from).toMatchObject({ name: "John Smith's" });
       expect(preheader).toBe('Test trace-123 {{t.preheader}}');
     });
 

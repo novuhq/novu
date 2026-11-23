@@ -3,9 +3,11 @@ import 'server-only';
 import { cache } from 'react';
 
 import { AGENT_REACHES, type AgentSettings, type AgentSettingsChange, DEFAULT_AGENT_SETTINGS } from './agent-settings';
+import { type HostId, isHostId } from './host-ids';
 import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
+import { type AgentLook, lookOf } from './look';
 
 /** The relay agent `setup` creates; the claim keeps its identifier. */
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
@@ -25,7 +27,7 @@ export type RelayAgent = {
   pictureUrl?: string;
   /** ISO timestamp of the `setup` that made it. */
   createdAt?: string;
-  /** Who can reach it and whether it is paused. `null` when they couldn't be read just now. */
+  /** Who can reach it, whether it acknowledges messages and is paused. `null` when they couldn't be read just now. */
   settings: AgentSettings | null;
   /**
    * Who runs it, as its public card names them: "Ada L.". Empty without the operator's first name, or when it
@@ -34,9 +36,19 @@ export type RelayAgent = {
   operatorName: string;
   /** The operator's whole first name, for "Ada’s agent". Empty when `operatorName` is. */
   operatorFirstName: string;
+  /** How it looks: its mascot and its card's art. The original look until its operator picks one, or unread. */
+  look: AgentLook;
+  /** The first time a host showed its card, and which host. `null` until one did, or when it couldn't be read. */
+  cardShown: CardShown | null;
 };
 
-type ApiAgent = Omit<RelayAgent, 'id' | 'pictureUrl' | 'settings' | 'operatorName' | 'operatorFirstName'> & {
+/** The first time a host showed the agent's card (`agent_card`, `agentinbox card`): when, how and which host. */
+export type CardShown = { at: string; via?: 'cli' | 'mcp'; host?: HostId };
+
+type ApiAgent = Omit<
+  RelayAgent,
+  'id' | 'pictureUrl' | 'settings' | 'operatorName' | 'operatorFirstName' | 'look' | 'cardShown'
+> & {
   _id: string;
 };
 
@@ -46,9 +58,12 @@ type HumanApiAgent = {
   reach?: string;
   paused?: boolean;
   pausedAt?: string;
+  acknowledgeOnReceived?: boolean;
   /** Only `GET` names the operator, as the public card does. */
   operatorName?: string;
   operatorFirstName?: string;
+  look?: unknown;
+  cardShown?: { at?: unknown; via?: unknown; host?: unknown };
 };
 
 const HUMAN_AGENT_PATH = '/v1/human/agent';
@@ -77,6 +92,8 @@ export const getRelayAgent = cache(async (account: HumanAccount): Promise<RelayA
       settings: details ? toSettings(details) : null,
       operatorName: details?.operatorName ?? '',
       operatorFirstName: details?.operatorFirstName ?? '',
+      look: lookOf(details?.look),
+      cardShown: cardShownOf(details?.cardShown),
     };
   } catch (error) {
     if (isHumanApiNotFound(error)) {
@@ -106,7 +123,7 @@ async function loadHumanDetails(account: HumanAccount): Promise<HumanApiAgent | 
   }
 }
 
-/** Changes who can reach the agent, or pauses or resumes it, and returns the settings it has now. */
+/** Changes one setting of the Settings block, and returns the settings the agent has now. */
 export async function updateAgentSettings(account: HumanAccount, change: AgentSettingsChange): Promise<AgentSettings> {
   const agent = await requestForAccount<HumanApiAgent>(account, HUMAN_AGENT_PATH, { method: 'PATCH', body: change });
 
@@ -136,6 +153,7 @@ function toSettings(agent: HumanApiAgent): AgentSettings {
   return {
     reach: AGENT_REACHES.find((value) => value === agent.reach) ?? DEFAULT_AGENT_SETTINGS.reach,
     paused: agent.paused && agent.pausedAt ? { at: agent.pausedAt } : null,
+    acknowledgeOnReceived: agent.acknowledgeOnReceived === true,
   };
 }
 
@@ -154,4 +172,17 @@ export const UNNAMED_AGENT_LABEL = 'Inbox agent';
  */
 export function agentDisplayName(agent: RelayAgent): string {
   return agent.name && agent.name !== DEFAULT_AGENT_NAME ? agent.name : UNNAMED_AGENT_LABEL;
+}
+
+/** The first showing of the card as the API answered it, or `null` for none or for an answer this page can't read. */
+export function cardShownOf(value: HumanApiAgent['cardShown'] | null | undefined): CardShown | null {
+  if (!value || typeof value.at !== 'string') {
+    return null;
+  }
+
+  return {
+    at: value.at,
+    ...(value.via === 'cli' || value.via === 'mcp' ? { via: value.via } : {}),
+    ...(isHostId(value.host) ? { host: value.host } : {}),
+  };
 }

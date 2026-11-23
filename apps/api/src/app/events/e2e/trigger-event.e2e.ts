@@ -4780,6 +4780,9 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
               push: {
                 enabled: true,
               },
+              tool: {
+                enabled: true,
+              },
             },
           },
         },

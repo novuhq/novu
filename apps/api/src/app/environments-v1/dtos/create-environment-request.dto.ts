@@ -23,7 +23,7 @@ export class CreateEnvironmentRequestDto {
   @ApiProperty({
     type: String,
     description: 'Hex color code for the environment',
-    example: '#3498db',
+    example: '#3498DB',
   })
   @IsDefined({ message: 'Environment color is required' })
   @IsHexColor({ message: 'Color must be a valid hex color code' })

@@ -9,7 +9,7 @@ describe('applyDecorators', () => {
     const firstDecorator = (): ClassDecorator => (target) => {
       Reflect.defineMetadata(firstKey, 'first', target);
 
-      return class extends (target as typeof NovuController) {};
+      return class extends (target as unknown as typeof NovuController) {} as unknown as typeof target;
     };
     const secondDecorator = (): ClassDecorator => (target) => {
       Reflect.defineMetadata(secondKey, 'second', target);
@@ -26,11 +26,11 @@ describe('applyDecoratorsInPlace', () => {
   it('should copy metadata from class-replacing decorators onto the base controller', () => {
     const metadataKey = Symbol('novu-replaced-class-decorator');
     const replacingDecorator = (): ClassDecorator => (target) => {
-      const replacedClass = class extends (target as typeof NovuController) {};
+      const replacedClass = class extends (target as unknown as typeof NovuController) {};
 
       Reflect.defineMetadata(metadataKey, 'replaced', replacedClass);
 
-      return replacedClass;
+      return replacedClass as unknown as typeof target;
     };
 
     applyDecoratorsInPlace(NovuController, [replacingDecorator()]);

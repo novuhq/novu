@@ -30,6 +30,7 @@ import {
 import { subDays } from 'date-fns';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
+import { NotificationFeedV2Reader } from '../../services/notification-feed-v2-reader.service';
 import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
 
@@ -78,7 +79,8 @@ export class GetActivity {
     private stepRunRepository: StepRunRepository,
     private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private notificationFeedV2Reader: NotificationFeedV2Reader
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -93,6 +95,28 @@ export class GetActivity {
       user: { _id: command.userId },
       environment: { _id: command.environmentId },
     } as const;
+
+    const isStepRunsV2ReadEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ACTIVITY_STEP_RUNS_V2_READ_ENABLED,
+      defaultValue: false,
+      ...flagContext,
+    });
+
+    if (isStepRunsV2ReadEnabled) {
+      const feedItemV2 = await this.notificationFeedV2Reader.getFeedItem({
+        notificationId: command.notificationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+
+      if (!feedItemV2) {
+        throw new NotFoundException('Notification not found', {
+          cause: `Notification with id ${command.notificationId} not found`,
+        });
+      }
+
+      return mapFeedItemToDto(feedItemV2);
+    }
 
     const [tracesEnabled, stepRunsEnabled, workflowRunsEnabled] = await Promise.all([
       this.featureFlagsService.getFlag({

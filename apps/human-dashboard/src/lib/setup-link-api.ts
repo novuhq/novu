@@ -5,9 +5,17 @@ import {
   safeJson,
   unwrapData,
 } from './api-response';
+import { type MascotLook, mascotLookOf } from './look';
 import type { InactiveSetupReason, SetupChannel } from './setup-link';
 
-export type SetupLinkStatus = { valid: true; agentName?: string } | { valid: false; reason: InactiveSetupReason };
+export type SetupLinkStatus =
+  | {
+      valid: true;
+      agentName?: string;
+      /** The agent's look, for its mascot on the page. Missing while its mascots show as they always have. */
+      agentLook?: MascotLook;
+    }
+  | { valid: false; reason: InactiveSetupReason };
 
 export type TelegramSetupResult = {
   botUsername: string;
@@ -115,8 +123,13 @@ function asStatus(data: JsonBody): SetupLinkStatus {
   }
 
   const agentName = data.agentName;
+  const agentLook = mascotLookOf(data.agentLook);
 
-  return { valid: true, ...(typeof agentName === 'string' && agentName ? { agentName } : {}) };
+  return {
+    valid: true,
+    ...(typeof agentName === 'string' && agentName ? { agentName } : {}),
+    ...(agentLook ? { agentLook } : {}),
+  };
 }
 
 function stringField(data: JsonBody, key: string): string | undefined {

@@ -3,6 +3,7 @@ import { AgentEntitlementsService, PinoLogger } from '@novu/application-generic'
 import { ConversationEntity } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { CardElement, Thread } from 'chat';
+import type { WrapperType } from '../../../shared/wrapper-type';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -90,7 +91,7 @@ export class PlanLimitGateService {
     private readonly logger: PinoLogger,
     private readonly agentEntitlements: AgentEntitlementsService,
     @Inject(forwardRef(() => OutboundGateway))
-    private readonly outboundGateway: OutboundGateway,
+    private readonly outboundGateway: WrapperType<OutboundGateway>,
     private readonly conversationActivation: ConversationActivationService,
     private readonly conversationService: AgentConversationService
   ) {

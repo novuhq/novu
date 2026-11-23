@@ -101,9 +101,6 @@ export type InboxNotificationDto = {
    * Secondary action button for the notification
    */
   secondaryAction?: InboxActionDto | undefined;
-  /**
-   * Channel type through which the message is sent
-   */
   channelType: ChannelTypeEnum;
   /**
    * Tags associated with the notification
@@ -122,7 +119,7 @@ export type InboxNotificationDto = {
    */
   workflow?: NotificationWorkflowDto | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity: SeverityLevelEnum;
 };

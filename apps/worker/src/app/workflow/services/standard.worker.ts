@@ -10,13 +10,14 @@ import {
   PinoLogger,
   SqsService,
   StandardWorkerService,
+  StepRunV2Writer,
   Store,
   storage,
   UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
+import { JobRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   HandleLastFailedJob,
@@ -42,11 +43,11 @@ export class StandardWorker extends StandardWorkerService {
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository,
     private jobRepository: JobRepository,
     sqsService: SqsService,
     logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private stepRunV2Writer: StepRunV2Writer
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
@@ -158,51 +159,45 @@ export class StandardWorker extends StandardWorkerService {
       }
 
       const minimalJobData = this.extractMinimalJobData(data);
-      const organizationExists = await this.organizationExist(data);
-
-      if (!organizationExists) {
-        Logger.verbose(
-          `Organization not found for organizationId ${minimalJobData.organizationId}. Skipping job.`,
-          LOG_CONTEXT
-        );
-
-        return;
-      }
+      // Fetched here so the transaction can be named by job type; RunJob re-fetches when it is missing.
+      const job = await this.jobRepository.findOne({
+        _id: minimalJobData.jobId,
+        _environmentId: minimalJobData.environmentId,
+      });
+      const transactionName = job?.type
+        ? `${ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE}/${job.type}`
+        : ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE;
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
       return await new Promise((resolve, reject) => {
         const _this = this;
 
-        nr.startBackgroundTransaction(
-          ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE,
-          'Trigger Engine',
-          function processTask() {
-            const transaction = nr.getTransaction();
+        nr.startBackgroundTransaction(transactionName, 'Jobs Worker', function processTask() {
+          const transaction = nr.getTransaction();
 
-            storage.run(new Store(PinoLogger.root), () => {
-              _this.runJob
-                .execute(RunJobCommand.create(minimalJobData))
-                .then(resolve)
-                .catch((error) => {
-                  Logger.error(
-                    error,
-                    `Failed to run the job ${minimalJobData.jobId} during worker processing`,
-                    LOG_CONTEXT
-                  );
+          storage.run(new Store(PinoLogger.root), () => {
+            _this.runJob
+              .execute(RunJobCommand.create({ ...minimalJobData, job: job ?? undefined }))
+              .then(resolve)
+              .catch((error) => {
+                Logger.error(
+                  error,
+                  `Failed to run the job ${minimalJobData.jobId} during worker processing`,
+                  LOG_CONTEXT
+                );
 
-                  if (isWebhookFilterSsrfBlockedError(error)) {
-                    return reject(new UnrecoverableError((error as Error).message));
-                  }
+                if (isWebhookFilterSsrfBlockedError(error)) {
+                  return reject(new UnrecoverableError((error as Error).message));
+                }
 
-                  return reject(error);
-                })
-                .finally(() => {
-                  transaction.end();
-                });
-            });
-          }
-        );
+                return reject(error);
+              })
+              .finally(() => {
+                transaction.end();
+              });
+          });
+        });
       });
     };
   }
@@ -218,7 +213,7 @@ export class StandardWorker extends StandardWorkerService {
        * The job might have been cancelled in the pipeline (e.g., by a digest or delay step)
        * In such cases, we only update jobs that are in RUNNING status to COMPLETED, preserving other final statuses
        */
-      await this.jobRepository.updateOne(
+      const completedJob = await this.jobRepository.findOneAndUpdate(
         {
           _environmentId: minimalData.environmentId,
           _id: minimalData.jobId,
@@ -228,8 +223,10 @@ export class StandardWorker extends StandardWorkerService {
           $set: {
             status: JobStatusEnum.COMPLETED,
           },
-        }
+        },
+        { new: true }
       );
+      this.stepRunV2Writer.write(completedJob);
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }
@@ -335,12 +332,5 @@ export class StandardWorker extends StandardWorkerService {
       // Undefined, not 0: 0 would mean "retry immediately".
       return undefined;
     }
-  }
-
-  private async organizationExist(data: IStandardDataDto): Promise<boolean> {
-    const { _organizationId } = data;
-    const organization = await this.organizationRepository.findOne({ _id: _organizationId });
-
-    return !!organization;
   }
 }

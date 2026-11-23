@@ -17,6 +17,7 @@ import type {
 import { handleBridgeProbe } from './bridge-probe.js';
 import { toAgentFileRefs, toAgentMessageContent } from './event-mapper.js';
 import { AgentEventOutbox, deriveEventsUrl, mint } from './event-outbox.js';
+import { createInboundMarkdownParser } from './inbound-markdown.js';
 import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
 import { patchSnapshotFromSignals, patchSnapshotResolved } from './snapshot-store.js';
 import { deliverBufferedStream, deliverStreamingWithEdits, shouldBufferStream } from './stream-delivery.js';
@@ -118,7 +119,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     this.getEmojiFn = chatModule.getEmoji;
     this.mapper.setChatModule({
       Message: asChatModulePart<ChatModuleParts['Message']>(chatModule.Message),
-      parseMarkdown: chatModule.parseMarkdown,
+      parseInbound: createInboundMarkdownParser(chatModule),
       stringifyMarkdown: chatModule.stringifyMarkdown,
       toCardElement: asChatModulePart<ChatModuleParts['toCardElement']>(chatModule.toCardElement),
       isCardElement: chatModule.isCardElement,

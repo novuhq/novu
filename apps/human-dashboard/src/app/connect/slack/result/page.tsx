@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 
 import { InviteFrame } from '@/components/invite/invite-frame';
-import { MascotFace } from '@/components/ui/mascot-face';
+import { AgentLookProvider, AgentMascot } from '@/components/ui/agent-look';
+import { mascotLookOf } from '@/lib/look';
 
 export const metadata: Metadata = {
   title: 'Slack',
@@ -14,17 +15,20 @@ function isConnected(status: string | string[] | undefined): boolean {
 
 /**
  * Slack sends the operator here after they approve or deny the Agent Inbox app.
- * The API only puts `connected` or `error` on the link.
+ * The API puts `connected` or `error` on the link, and the agent's look (`shape` and `color`) once its mascots
+ * show it: nobody is signed in here, so the link is all the page knows about the agent.
  */
 export default async function Page(props: PageProps<'/connect/slack/result'>) {
-  const { status } = await props.searchParams;
-  const connected = isConnected(status);
+  const query = await props.searchParams;
+  const connected = isConnected(query.status);
 
   return (
     <InviteFrame>
       <div className="flex w-full max-w-120 flex-col gap-5.5 rounded-xl border border-border bg-background p-5 sm:p-8">
         {connected ? (
-          <MascotFace art="waiting" mood="happy" className="size-35" />
+          <AgentLookProvider look={mascotLookOf(query)}>
+            <AgentMascot art="waiting" mood="happy" className="size-35" />
+          </AgentLookProvider>
         ) : (
           <img src="/illustrations/state-error.svg" alt="" width={120} height={120} className="size-30" />
         )}

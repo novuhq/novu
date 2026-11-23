@@ -21,7 +21,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const messageRepository = { findOne: sinon.stub().resolves(null) };
     const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
+      findByIdAndOrganization: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
     const controlValuesRepository = {
       findOne: sinon.stub().resolves(null),
@@ -312,6 +312,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.controls).to.deep.equal({
       body: 'default chat body',
+      editorType: 'text',
       providerOverrides: {
         [ChatProviderIdEnum.Slack]: {
           blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],
@@ -420,6 +421,47 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       },
     ]);
     expect(stepsMap['digest-step'].sentenceSummary).to.equal('');
+  });
+
+  it('walks the parent chain nearest first and stops at the root job without querying for its parent', async () => {
+    const { usecase, jobRepository } = buildUsecase();
+
+    const triggerJob = {
+      _id: 'trigger_job',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'trigger',
+      status: 'completed',
+      step: { stepId: 'trigger-step', uuid: 'trigger-step' },
+    };
+    const emailJob = {
+      _id: 'email_job',
+      _parentId: 'trigger_job',
+      _environmentId: 'env_1',
+      type: 'email',
+      status: 'completed',
+      step: { stepId: 'email-step', uuid: 'email-step' },
+    };
+    jobRepository.findOne.withArgs({ _id: 'email_job', _environmentId: 'env_1' }).resolves(emailJob);
+    jobRepository.findOne.withArgs({ _id: 'trigger_job', _environmentId: 'env_1' }).resolves(triggerJob);
+
+    const state = await (
+      usecase as never as { generateStateForJob: (job: unknown, envId: string) => Promise<{ stepId: string }[]> }
+    ).generateStateForJob({ _id: 'sms_job', _parentId: 'email_job' }, 'env_1');
+
+    expect(state.map((item) => item.stepId)).to.deep.equal(['email-step', 'trigger-step']);
+    expect(jobRepository.findOne.callCount).to.equal(2);
+  });
+
+  it('does not query for a parent when the job is the root of the chain', async () => {
+    const { usecase, jobRepository } = buildUsecase();
+
+    const state = await (
+      usecase as never as { generateStateForJob: (job: unknown, envId: string) => Promise<unknown[]> }
+    ).generateStateForJob({ _id: 'trigger_job', _parentId: undefined }, 'env_1');
+
+    expect(state).to.deep.equal([]);
+    expect(jobRepository.findOne.called).to.equal(false);
   });
 
   it('buildStepsMap keeps the nearest parent output when duplicate stepIds exist', async () => {

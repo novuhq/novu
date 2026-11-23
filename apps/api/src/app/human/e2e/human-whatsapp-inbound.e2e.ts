@@ -1,0 +1,416 @@
+import { encryptCredentials } from '@novu/application-generic';
+import {
+  AgentIntegrationRepository,
+  ChannelEndpointRepository,
+  ConversationRepository,
+  HumanInteractionRepository,
+  IntegrationRepository,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ENDPOINT_TYPES,
+  HumanInteractionKindEnum,
+  HumanInteractionStatusEnum,
+} from '@novu/shared';
+import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
+import { testServer, UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
+import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
+import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
+import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
+import { WhatsAppFirstMessageStatus } from '../../agents/human-relay/whatsapp-first-message-status.service';
+import { AgentEventEnum } from '../../agents/shared/enums/agent-event.enum';
+import { AGENT_INBOX_DASHBOARD_SECRET_HEADER } from '../guards/human-dashboard-secret.guard';
+
+const integrationRepository = new IntegrationRepository();
+const agentIntegrationRepository = new AgentIntegrationRepository();
+const channelEndpointRepository = new ChannelEndpointRepository();
+const humanInteractionRepository = new HumanInteractionRepository();
+const conversationRepository = new ConversationRepository();
+
+const DASHBOARD_SECRET = 'e2e-whatsapp-inbound-dashboard-secret';
+const PHONE_NUMBER_ID = '1234';
+const ADA_WA_ID = '15550100201';
+const STRANGER_WA_ID = '15550100999';
+
+/**
+ * What comes back on WhatsApp: a contact's answer and button tap settle what was asked, matched by the number they
+ * proved with a wa.me code, and a stranger is kept out, or shown by their number, as the agent's reach says.
+ */
+describe('Agent Inbox WhatsApp inbound #novu-v2', () => {
+  const original = {
+    flag: process.env.IS_AGENT_INBOX_WHATSAPP_ENABLED,
+    secret: process.env.AGENT_INBOX_DASHBOARD_API_SECRET,
+  };
+  let session: UserSession;
+  let operatorId: string;
+  let relayAgentId: string;
+  let whatsAppIdentifier: string;
+
+  before(() => {
+    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+  });
+
+  beforeEach(async () => {
+    process.env.IS_AGENT_INBOX_WHATSAPP_ENABLED = 'true';
+    process.env.AGENT_INBOX_DASHBOARD_API_SECRET = DASHBOARD_SECRET;
+    session = new UserSession();
+    await session.initialize();
+
+    operatorId = `whatsapp-inbound-e2e-${Date.now()}`;
+    const setupRes = await session.testAgent
+      .post('/v1/human/setup')
+      .send({ subscriberId: operatorId, operator: true, firstName: 'Ada' });
+    expect(setupRes.status).to.equal(200, JSON.stringify(setupRes.body));
+    relayAgentId = setupRes.body.data.agentId as string;
+
+    const integration = await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: encryptCredentials({
+        apiToken: 'EAAG-e2e-token',
+        phoneNumberIdentification: PHONE_NUMBER_ID,
+        businessAccountId: 'waba-1',
+        from: '+1 555-010-0199',
+        token: 'e2e-verify-token',
+      } as never),
+      active: true,
+      identifier: `whatsapp-inbound-e2e-${Date.now()}`,
+      priority: 1,
+      primary: false,
+      deleted: false,
+    });
+    whatsAppIdentifier = integration.identifier;
+    await agentIntegrationRepository.create({
+      _agentId: relayAgentId,
+      _integrationId: integration._id,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    // Ada proved her number with a code.
+    await channelEndpointRepository.create({
+      identifier: `ce-whatsapp-inbound-e2e-${Date.now()}`,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      integrationIdentifier: whatsAppIdentifier,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      subscriberId: operatorId,
+      contextKeys: [],
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: `+${ADA_WA_ID}`, provedAt: new Date().toISOString() },
+    });
+  });
+
+  afterEach(async () => {
+    for (const [key, value] of [
+      ['IS_AGENT_INBOX_WHATSAPP_ENABLED', original.flag],
+      ['AGENT_INBOX_DASHBOARD_API_SECRET', original.secret],
+    ] as const) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+
+    await testServer.getService(ChatInstanceRegistry).onModuleDestroy();
+  });
+
+  function asDashboard(method: 'get' | 'patch', path: string) {
+    return session.testAgent[method](path)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .set(AGENT_INBOX_DASHBOARD_SECRET_HEADER, DASHBOARD_SECRET);
+  }
+
+  async function setReach(reach: 'anyone' | 'contacts') {
+    const res = await asDashboard('patch', '/v1/human/agent').send({ reach });
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+  }
+
+  async function operatorInbox() {
+    const res = await asDashboard('get', '/v1/human/inbox').query({ senders: 'all' });
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+
+    return res.body.data as Array<Record<string, any>>;
+  }
+
+  async function relayConfig() {
+    return testServer
+      .getService(AgentConfigResolver)
+      .resolve(relayAgentId, whatsAppIdentifier, { source: 'webhook_message' });
+  }
+
+  function whatsAppThread(waId: string) {
+    const id = `whatsapp:${PHONE_NUMBER_ID}:${waId}`;
+
+    return {
+      id,
+      channelId: `whatsapp:${PHONE_NUMBER_ID}`,
+      isDM: true,
+      toJSON: () => ({ id, channelId: `whatsapp:${PHONE_NUMBER_ID}`, isDM: true }),
+      startTyping: async () => {},
+      post: sinon.stub().resolves({ id: 'wamid.reply', threadId: id }),
+    };
+  }
+
+  /** A WhatsApp message from `waId`, as the adapter hands it over; `quoting` is the message it swipe-replies to. */
+  async function sendWhatsApp(text: string, waId: string, quoting?: string) {
+    const thread = whatsAppThread(waId);
+    const id = `wamid.${Math.random().toString(36).slice(2)}`;
+
+    await testServer.getService(AgentInboundHandler).handle(
+      relayAgentId,
+      await relayConfig(),
+      thread as any,
+      {
+        id,
+        threadId: thread.id,
+        text,
+        author: { userId: waId, fullName: 'Someone', userName: waId, isBot: false },
+        raw: { message: { id, from: waId, ...(quoting ? { context: { id: quoting } } : {}) }, userId: waId },
+        attachments: [],
+      } as any,
+      AgentEventEnum.ON_MESSAGE
+    );
+
+    return thread;
+  }
+
+  async function pendingInteraction(kind: HumanInteractionKindEnum, platformMessageId: string) {
+    return humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: kind === HumanInteractionKindEnum.ASK ? 'Which region?' : 'Deploy?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      deliveries: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platform: 'whatsapp',
+          platformMessageId,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+        },
+      ],
+    } as never);
+  }
+
+  async function statusOf(identifier: string) {
+    return (
+      await humanInteractionRepository.findOne(
+        { _environmentId: session.environment._id, identifier } as never,
+        ['status', 'response'] as never
+      )
+    )?.status;
+  }
+
+  it('with contacts only, keeps a stranger out and lets in the contact who proved their number', async () => {
+    await setReach('contacts');
+
+    await sendWhatsApp('hi, who is this?', STRANGER_WA_ID);
+    expect(await operatorInbox()).to.have.length(0);
+
+    await sendWhatsApp('hello from Ada', ADA_WA_ID);
+    const inbox = await operatorInbox();
+    expect(inbox).to.have.length(1);
+    expect(inbox[0].channel).to.equal('whatsapp');
+  });
+
+  it('with anyone, shows a stranger by their number', async () => {
+    await setReach('anyone');
+
+    await sendWhatsApp('hi, who is this?', STRANGER_WA_ID);
+
+    const [thread] = await operatorInbox();
+    expect(thread.channel).to.equal('whatsapp');
+    expect(thread.from).to.equal(`+${STRANGER_WA_ID}`);
+  });
+
+  it('settles a question with the answer that swipe-replies to it', async () => {
+    const ask = await pendingInteraction(HumanInteractionKindEnum.ASK, 'wamid.question');
+
+    await sendWhatsApp('eu-west', ADA_WA_ID, 'wamid.question');
+
+    expect(await statusOf(ask.identifier)).to.equal(HumanInteractionStatusEnum.ANSWERED);
+  });
+
+  it('settles an approve with a tap on its button', async () => {
+    await setReach('contacts');
+    const approve = await pendingInteraction(HumanInteractionKindEnum.APPROVE, 'wamid.approve');
+    const thread = whatsAppThread(ADA_WA_ID);
+
+    await testServer
+      .getService(AgentInboundHandler)
+      .handleAction(
+        relayAgentId,
+        await relayConfig(),
+        thread as any,
+        { id: `human:${approve.identifier}:approve`, sourceMessageId: 'wamid.approve' },
+        ADA_WA_ID,
+        { id: 'wamid.tap', from: ADA_WA_ID }
+      );
+
+    expect(await statusOf(approve.identifier)).to.equal(HumanInteractionStatusEnum.APPROVED);
+  });
+
+  it('sends a question held for Ada once she writes, and does not take her words as its answer', async () => {
+    const held = await humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: 'Which region?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      held: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+          templateMessageId: 'wamid.first-message',
+          heldAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+    const gateway = testServer.getService(OutboundGateway);
+    const sendDirect = sinon
+      .stub(gateway, 'sendDirectMessage')
+      .resolves({ messageId: 'wamid.released', platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}` } as never);
+
+    try {
+      await sendWhatsApp('hi, what is it?', ADA_WA_ID);
+    } finally {
+      sendDirect.restore();
+    }
+
+    expect(sendDirect.calledOnce).to.equal(true);
+    expect(sendDirect.firstCall.args.slice(1, 3)).to.deep.equal([whatsAppIdentifier, ADA_WA_ID]);
+    const after = await humanInteractionRepository.findOne(
+      { _environmentId: session.environment._id, _id: held._id } as never,
+      '*'
+    );
+    expect(after?.status).to.equal(HumanInteractionStatusEnum.PENDING);
+    expect(after?.held ?? []).to.have.length(0);
+    expect(after?.deliveries?.[0]).to.include({ subscriberId: operatorId, platformMessageId: 'wamid.released' });
+  });
+
+  it('holds a reply in Ada’s conversation when her window is closed and a first message is approved', async () => {
+    await sendWhatsApp('hello from Ada', ADA_WA_ID);
+    const [thread] = await operatorInbox();
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const scope = { _environmentId: session.environment._id, _organizationId: session.organization._id };
+    // Her last message and her proof are two days old, so her window is closed.
+    await conversationRepository.update({ ...scope, identifier: thread.id } as never, {
+      $set: { lastHumanMessageAt: twoDaysAgo },
+    });
+    await channelEndpointRepository.update({ ...scope, subscriberId: operatorId } as never, {
+      $set: { 'endpoint.provedAt': twoDaysAgo },
+    });
+    const body = 'You have a message from {{agent_name}}. Reply here to view it.';
+    await integrationRepository.update({ ...scope, identifier: whatsAppIdentifier } as never, {
+      $set: {
+        'credentials.agentInboxWhatsappTemplateName': 'agentinbox_first_message',
+        'credentials.agentInboxWhatsappTemplateStatus': 'APPROVED',
+        'credentials.agentInboxWhatsappTemplateBody': body,
+        'credentials.agentInboxWhatsappTemplateApprovedName': 'agentinbox_first_message',
+        'credentials.agentInboxWhatsappTemplateApprovedBody': body,
+      },
+    });
+    const request = sinon
+      .stub(safeOutboundHttp, 'safeOutboundJsonRequest')
+      .resolves({ statusCode: 200, body: { messages: [{ id: 'wamid.first-message' }] } } as never);
+
+    let res: { status: number; body: Record<string, any> };
+    try {
+      res = await session.testAgent
+        .post('/v1/human/interactions')
+        .send({ kind: 'ask', card: { title: 'Are you hungry?' }, thread: thread.id });
+    } finally {
+      request.restore();
+    }
+
+    expect(res.status).to.equal(201, JSON.stringify(res.body));
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    const sent = request.getCalls().find((call) => String(call.args[0].url).endsWith(`/${PHONE_NUMBER_ID}/messages`));
+    expect(sent?.args[0].body).to.deep.include({ to: ADA_WA_ID, type: 'template' });
+    const row = await humanInteractionRepository.findOne(
+      { _environmentId: session.environment._id, identifier: res.body.data.id } as never,
+      '*'
+    );
+    expect(row?.held?.[0]).to.include({ subscriberId: operatorId, integrationIdentifier: whatsAppIdentifier });
+    expect(row?.deliveries ?? []).to.have.length(0);
+  });
+
+  it('says when Meta reports the first message undelivered, and keeps the question waiting', async () => {
+    const held = await humanInteractionRepository.create({
+      identifier: `hi_wa_${Math.random().toString(36).slice(2, 10)}`,
+      kind: HumanInteractionKindEnum.ASK,
+      status: HumanInteractionStatusEnum.PENDING,
+      content: { cardChrome: { title: 'Are you hungry?' } },
+      subscriberIds: [operatorId],
+      _agentId: relayAgentId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      held: [
+        {
+          subscriberId: operatorId,
+          integrationIdentifier: whatsAppIdentifier,
+          platformThreadId: `whatsapp:${PHONE_NUMBER_ID}:${ADA_WA_ID}`,
+          templateMessageId: 'wamid.first-message-failed',
+          heldAt: new Date().toISOString(),
+        },
+      ],
+    } as never);
+
+    await testServer.getService(WhatsAppFirstMessageStatus).record(await relayConfig(), {
+      entry: [
+        {
+          changes: [
+            {
+              field: 'messages',
+              value: {
+                statuses: [
+                  {
+                    id: 'wamid.first-message-failed',
+                    status: 'failed',
+                    errors: [
+                      {
+                        code: 131042,
+                        title: 'Business eligibility payment issue',
+                        href: 'https://business.facebook.com/billing_hub/accounts/details/?business_id=1',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const res = await session.testAgent.get(`/v1/human/interactions/${held.identifier}`);
+    expect(res.status).to.equal(200, JSON.stringify(res.body));
+    expect(res.body.data.status).to.equal('pending');
+    expect(res.body.data.heldFor).to.deep.equal([operatorId]);
+    expect(res.body.data.firstMessageFailed).to.have.length(1);
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain('no payment method or currency');
+    expect(res.body.data.firstMessageFailed[0].reason).to.contain(
+      'Fix it here: https://business.facebook.com/billing_hub/accounts/details/?business_id=1'
+    );
+  });
+});

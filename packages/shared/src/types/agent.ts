@@ -10,13 +10,20 @@
  *   agent can reply; on custom-code / self-hosted agents, the turn is forwarded
  *   to the bridge with a null subscriber. Managed agent create defaults to open.
  *   Abuse mitigation is the customer's responsibility in this mode.
+ * - `rule`: a known subscriber AND `accessRule` must evaluate truthy, for every
+ *   message, edit, delete, click and reaction. Unknown senders, invalid rules and
+ *   evaluation errors are refused.
  *
  * Always persisted on agents (create sets it; legacy rows were backfilled).
  */
 export enum AgentSubscriberAccessEnum {
   OPEN = 'open',
   RESTRICTED = 'restricted',
+  RULE = 'rule',
 }
+
+/** JSON Logic object evaluated over `subscriber.*` and `context.*`. */
+export type AgentAccessRule = Record<string, unknown>;
 
 /**
  * How the agent decides whether to reply in shared rooms (Slack/Teams threads).
@@ -136,10 +143,20 @@ export interface EmailWebhookPayload {
    * Sender-authentication verdicts computed by the inbound-mail service
    * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,
    * consumers that resolve a sender identity from it MUST treat the address as
-   * untrusted unless both verdicts are `'pass'`. Optional for backward
-   * compatibility with payloads produced before this field existed — a missing
-   * verdict must be treated as unverified (fail closed).
+   * untrusted unless both verdicts are `'pass'` and one of the domains below
+   * is the address's domain. Optional for backward compatibility with payloads
+   * produced before this field existed — a missing verdict must be treated as
+   * unverified (fail closed).
    */
   dkim?: string;
   spf?: string;
+  /**
+   * The domains the verdicts vouch for: the d= domains whose DKIM signatures
+   * verified, and the MAIL FROM domain SPF checked (null without one). Anyone
+   * can pass both checks for a domain they own while writing someone else's
+   * address in `From`, so a pass counts only when one of these is the `From`
+   * domain (alignment, as in DMARC). Missing on payloads produced before them.
+   */
+  dkimDomains?: string[];
+  spfDomain?: string | null;
 }
