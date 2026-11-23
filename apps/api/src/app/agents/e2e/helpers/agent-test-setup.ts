@@ -147,7 +147,7 @@ export async function seedConversation(
 
 export async function seedChannelEndpoint(ctx: AgentTestContext, platformUserId: string, subscriberId: string) {
   await channelEndpointRepository.create({
-    identifier: `ep-e2e-${Date.now()}`,
+    identifier: `ep-e2e-${platformUserId}-${Date.now()}`,
     _environmentId: ctx.session.environment._id,
     _organizationId: ctx.session.organization._id,
     integrationIdentifier: ctx.integrationIdentifier,
