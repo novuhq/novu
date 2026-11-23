@@ -610,6 +610,16 @@ export class SendMessageChat extends SendMessageBase {
       integration.identifier
     );
 
+    /*
+     * Auto-resolved phone channels (no _integrationId) picked their recipient from the overrides of the
+     * integration selected at resolution time. Agent gating may have bound another integration since,
+     * so re-resolve against the integration actually sending.
+     */
+    if (isPhoneBased && !subscriberChannel._integrationId) {
+      const phoneNumber = resolvePhoneDestination(combinedOverrides.to, command.compileContext.subscriber.phone);
+      subscriberChannel = { ...subscriberChannel, credentials: { ...subscriberChannel.credentials, phoneNumber } };
+    }
+
     const chatWebhookUrl =
       combinedOverrides?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;

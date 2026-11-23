@@ -1098,6 +1098,77 @@ describe('SendMessageChat - agent assigned path', () => {
     expect(capturedIntegration?._id).to.equal('integration_wa_linked');
   });
 
+  it('resolves the WhatsApp recipient from the agent-linked integration, not an override scoped to another integration', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'wamid.linked', date: new Date().toISOString() });
+    const linkedIntegration = {
+      _id: 'integration_wa_linked',
+      identifier: 'whatsapp-linked',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'linked-token', phoneNumberIdentification: '111' },
+    };
+    const otherActiveIntegration = { ...linkedIntegration, _id: 'integration_wa_other', identifier: 'whatsapp-other' };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
+        if (command.identifier === 'whatsapp-linked') return { integration: linkedIntegration };
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) return { integration: otherActiveIntegration };
+
+        return null;
+      }),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      {
+        create: sinon.stub().resolves({ _id: 'message_1' }),
+        updateMessageStatus: sinon.stub().resolves(undefined),
+        update: sinon.stub().resolves(undefined),
+      } as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-linked', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string }).phone = '+15551234567';
+    (command as { bridgeData: unknown }).bridgeData = {
+      outputs: { body: 'agent hello' },
+      providers: {
+        [ChatProviderIdEnum.WhatsAppBusiness]: {
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'whatsapp-other': { to: '+15550000999' } },
+        },
+      },
+    };
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    expect(chatHandlerSend.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+15551234567');
+  });
+
   it('persists templateIdentifier so workflow-origin hydration can name the workflow', async () => {
     const { usecase, messageRepository } = buildAgentUsecase({ jobAgentId: 'agent_1' });
 
@@ -1164,14 +1235,14 @@ describe('SendMessageChat - phone-based provider recipient override (NV-9530)', 
     return { usecase, chatHandlerSend, messageRepository, selectIntegration, createExecutionDetails };
   }
 
-  function buildCommand(options: { phone?: string; overrides?: TriggerOverrides; contextKeys?: string[] } = {}) {
+  function buildCommand(options: { phone?: string; overrides?: Record<string, unknown>; contextKeys?: string[] } = {}) {
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
       organizationId: 'org_1',
       userId: 'user_1',
       identifier: 'wf-identifier',
       payload: {},
-      overrides: options.overrides ?? {},
+      overrides: (options.overrides ?? {}) as TriggerOverrides,
       transactionId: 'txn_1',
       notificationId: 'notif_1',
       _templateId: 'tpl_1',
