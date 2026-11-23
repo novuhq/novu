@@ -111,14 +111,14 @@ function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange
       onValueChange={(value) => onChange(value as ProviderSetupMode)}
       orientation="horizontal"
       aria-label="Setup mode"
-      className="inline-flex min-w-[188px] gap-px rounded-[7px] bg-[#f4f4f5] p-px"
+      className="inline-flex w-[188px] gap-px rounded-[7px] bg-[#f4f4f5] p-px"
     >
       {options.map((option) => (
         <RadioGroupPrimitive.Item
           key={option.value}
           value={option.value}
           className={cn(
-            'text-text-sub hover:text-text-strong flex h-7 flex-1 items-center justify-center whitespace-nowrap rounded-md px-4 text-[13px] font-medium leading-[1.1] transition-colors',
+            'text-text-sub hover:text-text-strong flex h-7 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-md px-2 text-[13px] font-medium leading-[1.1] transition-colors',
             'data-[state=checked]:bg-bg-white data-[state=checked]:text-text-strong',
             'data-[state=checked]:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]',
             'focus-visible:ring-stroke-strong outline-none focus-visible:ring-2'

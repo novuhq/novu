@@ -39,6 +39,7 @@ import {
   SetupTip,
 } from './provider-setup-layout';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { SlackManualSetup } from './slack-manual-setup';
 import { SlackQuickSetup } from './slack-quick-setup';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { ToolWebhookSettings } from './tool-webhook-settings';
@@ -211,6 +212,9 @@ export function IntegrationSettings({
   const changedFields = describeChangedFields(formState.dirtyFields, provider);
   // Joined so the effect runs when the list changes, not on every new dirtyFields object.
   const changedFieldsKey = changedFields.join('\n');
+  // Not formState.isDirty: it compares the whole form to its defaults, and a credential field that mounts with no
+  // value adds an undefined key to `credentials`, so `{}` stops matching and an untouched form reads as dirty.
+  const hasChanges = Object.values(formState.dirtyFields).some(isDirtyValue);
 
   // Notify parent component of form state changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: changedFieldsKey stands in for changedFields
@@ -219,15 +223,16 @@ export function IntegrationSettings({
       onFormStateChange({
         isValid: isFormReady,
         errors: formState.errors,
-        isDirty: formState.isDirty,
+        isDirty: hasChanges,
         changedFields,
       });
     }
-  }, [isFormReady, formState.errors, formState.isDirty, changedFieldsKey, onFormStateChange]);
+  }, [isFormReady, formState.errors, hasChanges, changedFieldsKey, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });
   const authMethod = useWatch({ control, name: `credentials.${CredentialsKeyEnum.AuthMethod}` });
+  const slackAppId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.ApplicationId}` });
   const unusedCredentialKeys = useMemo(
     () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
     [provider.id, authMethod]
@@ -476,7 +481,7 @@ export function IntegrationSettings({
           />
           <SetupCard
             title={`Set up ${provider.displayName}`}
-            duration="~2 min"
+            duration={setupMode === 'quick' ? '~2 min' : '~5 min'}
             mode={setupMode}
             onModeChange={setSetupMode}
             footer={
@@ -504,17 +509,25 @@ export function IntegrationSettings({
               />
             ) : (
               <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <div className="flex flex-col gap-2 pb-4">
-                  {providerCredentials.map((credential) => (
-                    <CredentialSection
-                      key={credential.key}
-                      credential={credential}
-                      control={control}
-                      isReadOnly={isReadOnly}
-                      integrationId={integration?._id}
-                    />
-                  ))}
-                </div>
+                <SlackManualSetup
+                  appId={slackAppId}
+                  credentialFields={
+                    <div className="flex flex-col gap-3">
+                      {providerCredentials
+                        // The redirect URL is optional and the manifest already sets Novu's callback.
+                        .filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl)
+                        .map((credential) => (
+                          <CredentialSection
+                            key={credential.key}
+                            credential={credential}
+                            control={control}
+                            isReadOnly={isReadOnly}
+                            integrationId={integration?._id}
+                          />
+                        ))}
+                    </div>
+                  }
+                />
               </Protect>
             )}
           </SetupCard>
