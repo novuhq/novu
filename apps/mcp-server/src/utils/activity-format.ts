@@ -40,6 +40,9 @@ const UNSAFE_KEY =
 	/config|headers|request|auth|key|token|secret|password|credential|cookie|signature/i;
 const CREDENTIAL_VALUE = /\b(Bearer|Basic|ApiKey|Token)\s+[\w\-.~+/=]+/gi;
 const LONG_TOKEN = /[A-Za-z0-9_\-+=]{40,}/g;
+const URL_IN_TEXT = /\bhttps?:\/\/[^\s"'<>]+/gi;
+/** A path segment that reads like an id or secret, such as the last parts of a chat webhook URL. */
+const SECRET_LIKE_SEGMENT = /^(?=[^/]*\d)(?=[^/]*[A-Za-z])[\w\-.~]{16,}$/;
 
 const ATTENTION_STATUSES = new Set(["Failed", "Warning"]);
 
@@ -67,9 +70,30 @@ function truncate(value: string, cap: number): string {
 	return value.length <= cap ? value : `${value.slice(0, cap)}…`;
 }
 
+/**
+ * A URL in an error message (an HTTP step's warning quotes the URL it called) keeps its origin and path; credentials,
+ * the query and secret-looking path segments are redacted.
+ */
+function redactUrl(text: string): string {
+	try {
+		const url = new URL(text);
+		const path = url.pathname
+			.split("/")
+			.map((segment) => (SECRET_LIKE_SEGMENT.test(segment) ? "[redacted]" : segment))
+			.join("/");
+
+		return `${url.protocol}//${url.host}${path}${url.search ? "?[redacted]" : ""}`;
+	} catch {
+		return "[redacted URL]";
+	}
+}
+
 function scrub(value: string): string {
 	return truncate(
-		value.replace(CREDENTIAL_VALUE, "$1 [redacted]").replace(LONG_TOKEN, "[redacted]"),
+		value
+			.replace(URL_IN_TEXT, redactUrl)
+			.replace(CREDENTIAL_VALUE, "$1 [redacted]")
+			.replace(LONG_TOKEN, "[redacted]"),
 		TEXT_CAP,
 	);
 }
@@ -316,36 +340,28 @@ function recipients(to: unknown): string[] {
 	return subscriberId ? [subscriberId] : [];
 }
 
-function containsJsonPair(text: string, key: string, value: string): boolean {
-	return text.includes(`"${key}":${JSON.stringify(value)}`);
-}
-
 /**
- * Whether a request's body names this workflow (`name`) and subscriber (`to`).
- * A body truncated at 50 KB is not valid JSON, so it falls back to a text match.
+ * Whether one event of a request's body names this workflow (`name`) and subscriber (`to`). A body the API truncated
+ * at 50 KB is not valid JSON, and a text search could pair values from different events or the payload, so it is
+ * `unchecked` rather than guessed.
  */
-export function triggerRequestMatches(
+export function matchTriggerRequest(
 	row: JsonRecord,
 	filters: { workflowId?: string; subscriberId?: string },
-): boolean {
-	if (!filters.workflowId && !filters.subscriberId) return true;
+): "match" | "no_match" | "unchecked" {
+	if (!filters.workflowId && !filters.subscriberId) return "match";
 
 	const text = typeof row.requestBody === "string" ? row.requestBody : "";
 	const events = triggerEvents(parseJson(text));
-	if (events.length === 0) {
-		return (
-			(!filters.workflowId || containsJsonPair(text, "name", filters.workflowId)) &&
-			(!filters.subscriberId ||
-				containsJsonPair(text, "subscriberId", filters.subscriberId) ||
-				containsJsonPair(text, "to", filters.subscriberId))
-		);
-	}
+	if (events.length === 0) return text ? "unchecked" : "no_match";
 
-	return events.some(
+	const matches = events.some(
 		(event) =>
 			(!filters.workflowId || event.name === filters.workflowId) &&
 			(!filters.subscriberId || recipients(event.to).includes(filters.subscriberId)),
 	);
+
+	return matches ? "match" : "no_match";
 }
 
 function workflowNames(body: unknown): string | undefined {
@@ -394,6 +410,38 @@ export function toTriggerRequestSummary(row: JsonRecord) {
 		urlPattern: asString(row.urlPattern),
 		workflow: workflowNames(parseJson(row.requestBody)),
 		...triggerOutcome(row.responseBody),
+	};
+}
+
+/**
+ * Whether a request row belongs to this transaction. The requests API matches `transactionId` as a substring, so
+ * `order_1` also finds `order_10`; a bulk request stores its transaction ids comma-joined.
+ */
+export function hasTransactionId(row: JsonRecord, transactionId: string): boolean {
+	return (asString(row.transactionId) ?? "").split(",").includes(transactionId);
+}
+
+/** `GET /v1/activity/requests/:id`: the request without its bodies, and what Novu did with it. */
+export function toTriggerRequestDetail(payload: unknown) {
+	const record = asRecord(payload);
+
+	return {
+		request: toTriggerRequestSummary(asRecord(record?.request) ?? {}),
+		traces: asArray(record?.traces)
+			.map(asRecord)
+			.filter((trace): trace is JsonRecord => trace !== undefined)
+			.map((trace) => {
+				const message = asString(trace.message);
+
+				return {
+					createdAt: asString(trace.createdAt),
+					eventType: asString(trace.eventType),
+					message: message ? scrub(message) : undefined,
+					status: asString(trace.status),
+					subscriberId: asString(trace.externalSubscriberId),
+					title: asString(trace.title),
+				};
+			}),
 	};
 }
 

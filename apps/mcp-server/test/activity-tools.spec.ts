@@ -336,7 +336,13 @@ describe("get_workflow_run", () => {
 	it("returns step errors, trimmed execution details and the trigger request", async () => {
 		const api = fakeApi(
 			path("/v1/activity/workflow-runs/run-1", { data: failedRun }),
-			path("/v1/activity/requests", { data: [requestRow()], page: 0, pageSize: 5, total: 1 }),
+			path("/v1/activity/requests", {
+				// The API matches transactionId as a substring: txn-10 is another trigger.
+				data: [requestRow({ id: "req-10", transactionId: "txn-10" }), requestRow()],
+				page: 0,
+				pageSize: 50,
+				total: 2,
+			}),
 		);
 
 		const result = output(
@@ -344,7 +350,7 @@ describe("get_workflow_run", () => {
 		);
 
 		expect(api.urls[1].searchParams.get("transactionId")).toBe("txn-1");
-		expect(api.urls[1].searchParams.get("limit")).toBe("5");
+		expect(api.urls[1].searchParams.get("limit")).toBe("50");
 		expect(result.run).toEqual({
 			createdAt: "2026-11-20T10:00:00.000Z",
 			dashboardPath: "/activity/workflow-runs?activityItemId=run-1",
@@ -430,6 +436,47 @@ describe("get_workflow_run", () => {
 		expect(kept[0].detail).toBe("Provider rejected");
 		expect(kept.at(-1).detail).toBe("Detail 14");
 		expect(result.steps[0].executionDetailsOmitted).toBe(5);
+	});
+
+	it("redacts credentials, the query and secret-looking path parts of URLs in provider messages", async () => {
+		fakeApi(
+			path("/v1/activity/workflow-runs/run-1", {
+				data: run({
+					steps: [
+						{
+							executionDetails: [
+								{
+									_id: "e1",
+									createdAt: "2026-11-20T10:00:01.000Z",
+									detail: "HTTP request returned a non-object response",
+									raw: JSON.stringify({
+										message:
+											"Expected an object from https://user:pw@api.example.com/hooks/T0123456789ABCDEFG/handle?token=short-secret-123",
+									}),
+									status: "Warning",
+								},
+							],
+							status: "completed",
+							stepId: "http-step",
+							stepType: "http_request",
+						},
+					],
+				}),
+			}),
+			path("/v1/activity/requests", { data: [], total: 0 }),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_workflow_run", { workflowRunId: "run-1" }),
+		);
+
+		expect(result.steps[0].executionDetails[0].providerResponse).toEqual({
+			message:
+				"Expected an object from https://api.example.com/hooks/[redacted]/handle?[redacted]",
+		});
+		for (const secret of ["short-secret-123", "user:pw", "T0123456789ABCDEFG"]) {
+			expect(JSON.stringify(result), secret).not.toContain(secret);
+		}
 	});
 
 	it("says the trigger request lookup failed instead of failing the tool", async () => {
@@ -597,9 +644,59 @@ describe("get_trigger_requests", () => {
 			"object-to",
 			"array-to",
 			"bulk",
-			"truncated",
 		]);
 		expect(result.requests[3].workflow).toBe("welcome, password-reset");
+		// A truncated body could pair values from different events, so it is counted, not matched.
+		expect(result.truncatedBodiesNotChecked).toBe(1);
+		expect(result.note).toContain("1 request bodies were too large to store whole");
+	});
+
+	it("gets one request by id, with its traces and without its bodies", async () => {
+		const api = fakeApi(
+			path("/v1/activity/requests/req-1", {
+				data: {
+					request: requestRow(),
+					traces: [
+						{
+							createdAt: "2026-11-20T10:00:00.100Z",
+							entityId: "req-1",
+							eventType: "request_invalid_recipients",
+							externalSubscriberId: "user_123",
+							message:
+								"Subscriber has no email, see https://hooks.example.com/x?token=s3cr3t",
+							rawData: '{"secret":"s3cr3t"}',
+							status: "error",
+							title: "Invalid recipients",
+						},
+					],
+				},
+			}),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_trigger_requests", {
+				requestId: "req-1",
+				statusCodes: [500],
+			}),
+		);
+
+		expect(api.urls).toHaveLength(1);
+		expect(result.request).toMatchObject({
+			id: "req-1",
+			statusCode: 201,
+			workflow: "password-reset",
+		});
+		expect(result.traces).toEqual([
+			{
+				createdAt: "2026-11-20T10:00:00.100Z",
+				eventType: "request_invalid_recipients",
+				message: "Subscriber has no email, see https://hooks.example.com/x?[redacted]",
+				status: "error",
+				subscriberId: "user_123",
+				title: "Invalid recipients",
+			},
+		]);
+		expect(JSON.stringify(result)).not.toContain("s3cr3t");
 	});
 
 	it("scans at most 500 requests and reports when the cap was hit", async () => {
