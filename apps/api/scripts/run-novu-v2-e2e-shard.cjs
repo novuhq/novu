@@ -13,7 +13,8 @@ const NOVU_V2_TAG = '#novu-v2';
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
-const MOCHA_RETRIES = 3;
+// One retry: a flaky test can still pass, and the report lists it under `flaky`.
+const MOCHA_RETRIES = 1;
 const REPORTER_PATH = path.join(__dirname, 'novu-v2-e2e-reporter.cjs');
 
 // CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
