@@ -26,16 +26,61 @@
 //   remember             says how many messages its thread has seen
 //   env                  says which parent-session variables it was started with
 //   anything else        echoes it
+//   call:<server>.<tool> calls an MCP server's tool, which asks nothing
+// A contact's thread (one opened with `untrusted` approvals) runs the hook it was started with (`-c hooks.PreToolUse`,
+// trusted by `-c hooks.state`) before each command and tool call, and goes by the folder's rules as Codex does: an
+// `allow` rule runs without asking, `forbidden` refuses, and anything else asks. The folder is `.codex` in the folder
+// it runs in, its settings the JSON in `.codex/fake-config.json` (Codex reads `config.toml`) and its rules
+// `.codex/rules/*.rules`, read as lines of `prefix_rule(pattern = [...], decision = "...")`; FAKE_CODEX_UNTRUSTED
+// leaves it unloaded. Its skills are `.agents/skills/*/SKILL.md`; FAKE_CODEX_USER_SKILLS (JSON) lists the operator's,
+// FAKE_CODEX_MCP_SERVERS (JSON) the operator's MCP servers and FAKE_CODEX_USER_HOOK=1 adds a hook of theirs.
+// FAKE_CODEX_HOOKS_UNTRUSTED=1 never trusts the hook. `execpolicy check --rules <file>… -- <words>` checks words.
 // FAKE_CODEX_LOG names a file that gets a line per start and per thread; FAKE_CODEX_SESSIONS a folder that keeps
 // threads. FAKE_CODEX_SIGNED_OUT signs it out; FAKE_CODEX_PROVIDER and FAKE_CODEX_PROVIDERS (JSON) are what its config
 // says about providers, and FAKE_CODEX_DEVELOPER_INSTRUCTIONS its developer instructions; FAKE_CODEX_OLD makes it a
 // Codex without `app-server`; FAKE_CODEX_SLOW_START (ms) makes it slow to answer `initialize`.
-import { randomUUID } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createHash, randomUUID } from 'node:crypto';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
 const argv = process.argv.slice(2);
+
+/** The folder's rules, from `prefix_rule(...)` lines: each one's words and decision. */
+function rulesFrom(files) {
+  return files.flatMap((file) =>
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .flatMap((line) => {
+        const found = /prefix_rule\(\s*pattern\s*=\s*(\[[^\]]*\])\s*,\s*decision\s*=\s*"(\w+)"/.exec(line);
+        return found ? [{ pattern: JSON.parse(found[1]), decision: found[2] }] : [];
+      })
+  );
+}
+
+/** What the rules say about a command's words, as `codex execpolicy check` prints it: the strictest one wins. */
+function checkWords(rules, words) {
+  const matched = rules.filter((rule) => rule.pattern.every((word, index) => words[index] === word));
+  const order = ['allow', 'prompt', 'forbidden'];
+  const decision = matched.map((rule) => rule.decision).sort((a, b) => order.indexOf(b) - order.indexOf(a))[0];
+  return {
+    matchedRules: matched.map((rule) => ({
+      prefixRuleMatch: { matchedPrefix: rule.pattern, decision: rule.decision },
+    })),
+    ...(decision ? { decision } : {}),
+  };
+}
+
+if (argv[0] === 'execpolicy' && argv[1] === 'check') {
+  const files = [];
+  let at = 2;
+  for (; at < argv.length && argv[at] !== '--'; at++) {
+    if (argv[at] === '--rules') files.push(argv[++at]);
+  }
+  process.stdout.write(`${JSON.stringify(checkWords(rulesFrom(files), argv.slice(at + 1)))}\n`);
+  process.exit(0);
+}
 
 if (argv[0] === '--version') {
   process.stdout.write('codex-cli 0.165.0\n');
@@ -61,7 +106,40 @@ const apiUrl = process.env.FAKE_API_URL;
 const log = (entry) => {
   if (logFile) appendFileSync(logFile, `${JSON.stringify(entry)}\n`);
 };
-log({ event: 'start', argv, cwd: process.cwd() });
+/** What it was started with: the listener's hook, and the hooks' states (`-c` flags). */
+const flags = argv.slice(1).flatMap((word, index, all) => (all[index - 1] === '-c' ? [word] : []));
+const hookCommand = flags
+  .map((flag) => /^hooks\.PreToolUse=.*command=("(?:[^"\\]|\\.)*")/.exec(flag)?.[1])
+  .filter(Boolean)
+  .map((quoted) => JSON.parse(quoted))[0];
+const hookStates = flags.find((flag) => flag.startsWith('hooks.state=')) ?? '';
+const HOOK_KEY = '/<session-flags>/config.toml:pre_tool_use:0:0';
+const USER_HOOK_KEY = '/fake-home/.codex/config.toml:permission_request:0:0';
+const hookHash = hookCommand ? `sha256:${createHash('sha256').update(hookCommand).digest('hex')}` : undefined;
+const hookTrusted =
+  Boolean(hookCommand) &&
+  process.env.FAKE_CODEX_HOOKS_UNTRUSTED !== '1' &&
+  hookStates.includes(`trusted_hash="${hookHash}"`);
+const folderGiven = process.env.AGENTINBOX_CODEX_FOLDER ? JSON.parse(process.env.AGENTINBOX_CODEX_FOLDER) : undefined;
+log({ event: 'start', argv, cwd: process.cwd(), folder: folderGiven?.folder });
+
+/** The folder's `.codex`, when it loads: its settings and its rules. */
+function projectLayer() {
+  const dotCodex = join(process.cwd(), '.codex');
+  if (!existsSync(dotCodex)) return undefined;
+  const settings = join(dotCodex, 'fake-config.json');
+  const rulesDir = join(dotCodex, 'rules');
+  return {
+    dotCodex,
+    config: existsSync(settings) ? JSON.parse(readFileSync(settings, 'utf8')) : {},
+    rules: existsSync(rulesDir)
+      ? readdirSync(rulesDir)
+          .filter((name) => name.endsWith('.rules'))
+          .map((name) => join(rulesDir, name))
+      : [],
+    disabledReason: process.env.FAKE_CODEX_UNTRUSTED === '1' ? 'Trust the project to load it.' : null,
+  };
+}
 
 const out = (message) => process.stdout.write(`${JSON.stringify(message)}\n`);
 const notify = (method, params) => out({ method, params, emittedAtMs: Date.now() });
@@ -132,8 +210,64 @@ function completed(entry) {
   notify('item/completed', { item: entry, threadId, turnId: turn.id, completedAtMs: Date.now() });
 }
 
+/** Whether the thread is a contact's: one opened with `untrusted` approvals. */
+let contactThread = false;
+/** Why the hook refused the last call it refused. */
+let blockedFor = '';
+
+/** Runs the listener's hook for a call of a contact's thread: the reason when it refuses, or undefined. */
+function runHook(toolName, toolInput, cwd) {
+  if (!contactThread || !hookTrusted) return undefined;
+  const ran = spawnSync('/bin/sh', ['-c', hookCommand], {
+    input: JSON.stringify({
+      session_id: threadId,
+      turn_id: turn?.id,
+      cwd,
+      hook_event_name: 'PreToolUse',
+      tool_name: toolName,
+      tool_input: toolInput,
+    }),
+    encoding: 'utf8',
+    env: process.env,
+  });
+  const said = ran.stdout.trim() ? JSON.parse(ran.stdout) : {};
+  const reason =
+    ran.status === 2
+      ? ran.stderr.trim()
+      : said.hookSpecificOutput?.permissionDecision === 'deny'
+        ? said.hookSpecificOutput.permissionDecisionReason
+        : undefined;
+  notify('hook/completed', {
+    threadId,
+    turnId: turn?.id,
+    run: {
+      id: randomUUID(),
+      eventName: 'preToolUse',
+      status: reason ? 'blocked' : 'completed',
+      entries: reason ? [{ kind: 'feedback', text: reason }] : [],
+    },
+  });
+  return reason;
+}
+
+/** What the folder's rules say about a command of a contact's thread, as Codex goes by them. */
+function ruleFor(script) {
+  const layer = projectLayer();
+  if (!contactThread || !layer || layer.disabledReason) return undefined;
+  return checkWords(rulesFrom(layer.rules), script.split(/\s+/)).decision;
+}
+
 /** A command it runs: started, maybe asked about, then ended. */
-async function command(script, { asks, interruptible, cwd = process.cwd() }) {
+async function command(script, { asks: asked, interruptible, cwd = process.cwd() }) {
+  const blocked = runHook('Bash', { command: script }, cwd);
+  if (blocked) {
+    blockedFor = blocked;
+    return 'blocked';
+  }
+  const rule = ruleFor(script);
+  if (rule === 'forbidden') return 'forbidden';
+  // A contact's thread asks before anything a rule doesn't allow.
+  const asks = contactThread ? rule !== 'allow' : asked;
   const entry = item('commandExecution', {
     command: shellCommand(script),
     cwd,
@@ -186,6 +320,7 @@ const BEHAVIORS = [
       const script = rest.trim();
       const decision = await command(script, { asks: true, ...context });
       if (decision === 'aborted') return {};
+      if (decision === 'blocked') return { answer: `Blocked: ${blockedFor}` };
 
       return { answer: allowed(decision) ? `Ran ${script} (${decision}).` : `Not allowed (${decision}).` };
     },
@@ -303,6 +438,19 @@ const BEHAVIORS = [
       }
 
       return { answer: `Used ${tool}${answer._meta?.persist ? ` (${answer._meta.persist})` : ''}.` };
+    },
+  ],
+  [
+    'call:',
+    async (rest) => {
+      const [server, tool] = rest.trim().split('.');
+      const blocked = runHook(`mcp__${server}__${tool}`, {}, process.cwd());
+      if (blocked) return { answer: `Blocked: ${blocked}` };
+      const entry = item('mcpToolCall', { server, tool, arguments: {}, status: 'inProgress' });
+      started(entry);
+      completed({ ...entry, status: 'completed' });
+
+      return { answer: `Called ${tool} of ${server}.` };
     },
   ],
   [
@@ -478,6 +626,7 @@ function fail(id, message, code = -32600) {
 /** Opens a thread, or goes on with one it keeps. */
 function openThread(id, method, params) {
   log({ event: 'thread', method, params });
+  contactThread = params.approvalPolicy === 'untrusted';
   if (method === 'thread/resume') {
     if (sessionsDir && !existsSync(threadFile(params.threadId))) {
       fail(id, `no rollout found for thread id ${params.threadId}`);
@@ -518,18 +667,87 @@ const METHODS = {
     else reply();
   },
   initialized: () => undefined,
-  'config/read': (id) =>
+  'config/read': (id, params) => {
+    const layer = projectLayer();
+    const own = layer && !layer.disabledReason ? layer.config : {};
     answer(id, {
       config: {
         model_provider: process.env.FAKE_CODEX_PROVIDER || null,
         model_providers: JSON.parse(process.env.FAKE_CODEX_PROVIDERS || '{}'),
-        developer_instructions: process.env.FAKE_CODEX_DEVELOPER_INSTRUCTIONS || null,
+        developer_instructions: own.developer_instructions ?? process.env.FAKE_CODEX_DEVELOPER_INSTRUCTIONS ?? null,
         profile: null,
         profiles: {},
+        mcp_servers: { ...JSON.parse(process.env.FAKE_CODEX_MCP_SERVERS || '{}'), ...(own.mcp_servers ?? {}) },
       },
       origins: {},
-      layers: null,
-    }),
+      layers: params?.includeLayers
+        ? [
+            ...(layer
+              ? [
+                  {
+                    name: { type: 'project', dotCodexFolder: layer.dotCodex },
+                    version: 'sha256:fake',
+                    config: layer.config,
+                    disabledReason: layer.disabledReason,
+                  },
+                ]
+              : []),
+            { name: { type: 'user', file: '/fake-home/.codex/config.toml' }, version: 'sha256:fake', config: {} },
+          ]
+        : null,
+    });
+  },
+  'skills/list': (id) => {
+    const folder = join(process.cwd(), '.agents', 'skills');
+    const repo = existsSync(folder)
+      ? readdirSync(folder)
+          .filter((name) => existsSync(join(folder, name, 'SKILL.md')))
+          .map((name) => ({ name, path: join(folder, name, 'SKILL.md'), scope: 'repo', enabled: true }))
+      : [];
+    const user = JSON.parse(process.env.FAKE_CODEX_USER_SKILLS || '[]').map((path) => ({
+      name: path.split('/').at(-2),
+      path,
+      scope: 'user',
+      enabled: true,
+    }));
+    answer(id, { data: [{ cwd: process.cwd(), skills: [...repo, ...user], errors: [] }] });
+  },
+  'hooks/list': (id) => {
+    const hooks = [
+      ...(hookCommand
+        ? [
+            {
+              key: HOOK_KEY,
+              eventName: 'preToolUse',
+              handlerType: 'command',
+              command: hookCommand,
+              matcher: '*',
+              source: 'sessionFlags',
+              enabled: true,
+              isManaged: false,
+              currentHash: hookHash,
+              trustStatus: hookTrusted ? 'trusted' : 'untrusted',
+            },
+          ]
+        : []),
+      ...(process.env.FAKE_CODEX_USER_HOOK === '1'
+        ? [
+            {
+              key: USER_HOOK_KEY,
+              eventName: 'permissionRequest',
+              handlerType: 'command',
+              command: 'approve-everything',
+              source: 'user',
+              enabled: !hookStates.includes(`"${USER_HOOK_KEY}"={enabled=false}`),
+              isManaged: false,
+              currentHash: 'sha256:user',
+              trustStatus: 'trusted',
+            },
+          ]
+        : []),
+    ];
+    answer(id, { data: [{ cwd: process.cwd(), hooks, warnings: [], errors: [] }] });
+  },
   'thread/start': (id, params) => openThread(id, 'thread/start', params),
   'thread/resume': (id, params) => openThread(id, 'thread/resume', params),
   'turn/start': (id, params) => {

@@ -14,7 +14,7 @@ import type { ConnectCodeState } from '@/hooks/use-connect-code';
 import { useMeasuredHeight } from '@/hooks/use-measured-height';
 import { useSwap } from '@/hooks/use-swap';
 import type { ConnectApi } from '@/lib/host-status';
-import { type HostWay, waysOf } from '@/lib/host-ways';
+import { type HostWay, usesCode, waysOf } from '@/lib/host-ways';
 import {
   type CommandHost,
   exampleOf,
@@ -344,11 +344,12 @@ function useSwapEasing(leaving: boolean): boolean {
 
 /**
  * Whether the page asks if the host has signed in: only the hosts the MCP server tells apart can be told so,
- * and only on a tab whose way in signs in through it. Every way but the CLI does: a chat app's, a plugin, which
- * brings the MCP server along, and an MCP config.
+ * and only on a tab whose way in signs in through it. Every way but those with the one-time code does: a chat
+ * app's, a coding agent's plugin, which brings the MCP server along, and an MCP config. The CLI and Hermes's
+ * and OpenClaw's own plugin connect with the code instead.
  */
 function watchesSignIn(host: Host, way: HostWay, mcpUrl: string | null): boolean {
-  return isToolId(host.id) && mcpUrl !== null && way !== 'cli';
+  return isToolId(host.id) && mcpUrl !== null && !usesCode(host, way);
 }
 
 /** The host whose commands get the listen step under them now: one `listen` can start, on its CLI tab. */

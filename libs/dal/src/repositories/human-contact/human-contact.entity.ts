@@ -80,6 +80,14 @@ export class HumanContactEntity {
    */
   listenTo?: boolean;
 
+  /**
+   * Whether a message from them starts the agent's hosts with everything the operator's own messages get, with every
+   * approval going to them instead of the operator. Only the operator turns it on, on the dashboard, and only while
+   * `listenTo` is on; turning `listenTo` off turns it off too. Missing reads as off. The operator's own contact has
+   * none: the operator always has everything.
+   */
+  fullAccess?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;
