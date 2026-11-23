@@ -2,6 +2,7 @@ import {
   CredentialsKeyEnum,
   EnvironmentTypeEnum,
   getUnusedTwilioAuthCredentialKeys,
+  type IConfigurations,
   type ICredentials,
   type IEnvironment,
   type IIntegration,
@@ -104,12 +105,16 @@ export function useDuplicateIntegration({
           secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
       );
       const needsSecrets = droppedSecret || missingRequiredSecret;
-      // Without its signing key the copy still sends; inbound delivery events wait until it's pasted.
-      const configurations = Object.fromEntries(
+      const configurations: IConfigurations = Object.fromEntries(
         Object.entries(integration.configurations ?? {}).filter(
           ([key]) => copySecrets || !SECRET_CONFIGURATION_KEYS.has(key)
         )
-      ) as Record<string, string>;
+      );
+      // Some providers accept unsigned webhooks when the key is missing, so inbound delivery events stay off until
+      // the copy has its own signing key. Sending isn't affected.
+      if (integration.configurations?.inboundWebhookSigningKey && !configurations.inboundWebhookSigningKey) {
+        configurations.inboundWebhookEnabled = false;
+      }
 
       const { data } = await createIntegration(
         {
@@ -119,7 +124,8 @@ export function useDuplicateIntegration({
           name: integration.name,
           identifier: integration.identifier,
           credentials,
-          configurations,
+          // The request type says strings, but configurations also hold flags like inboundWebhookEnabled.
+          configurations: configurations as Record<string, string>,
           // Without its secrets the copy can't send, so it waits paused instead of failing every step.
           active: integration.active && !needsSecrets,
           _environmentId: target._id,
