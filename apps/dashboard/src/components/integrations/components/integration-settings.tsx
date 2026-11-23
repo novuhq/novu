@@ -61,7 +61,13 @@ type IntegrationConfigurationProps = {
   agentIdentifier?: string;
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
-  onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
+  onFormStateChange?: (formState: {
+    isValid: boolean;
+    errors: Record<string, unknown>;
+    isDirty: boolean;
+    /** Labels of the edited fields, as the form shows them. */
+    changedFields: string[];
+  }) => void;
   /** "manage": the sections of the manage drawer, for an existing integration. */
   layout?: 'default' | 'manage';
   /** Turns on the Quick setup / Manual layout for Slack in the create flow. */
@@ -84,6 +90,52 @@ function generateSlug(name: string): string {
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+const GENERAL_FIELD_LABELS: Partial<Record<keyof IntegrationFormData, string>> = {
+  name: 'Name',
+  identifier: 'Identifier',
+  active: 'Active Integration',
+  primary: 'Primary Integration',
+  rules: 'Conditions',
+};
+
+type DirtyFields = Partial<Record<string, unknown>>;
+
+/** A field counts as edited when react-hook-form marked it, or anything nested in it, as dirty. */
+function isDirtyValue(value: unknown): boolean {
+  if (value === true) return true;
+  if (Array.isArray(value)) return value.some(isDirtyValue);
+  if (value && typeof value === 'object') return Object.values(value).some(isDirtyValue);
+
+  return false;
+}
+
+/** The edited fields by the labels the form shows: "Name", or a credential's "API Key". */
+function describeChangedFields(dirtyFields: DirtyFields, provider: IProviderConfig): string[] {
+  const labels: string[] = [];
+  const credentialLabel = (key: string) =>
+    provider.credentials.find((credential) => credential.key === key)?.displayName ?? key;
+  const configurationLabel = (key: string) =>
+    provider.configurations?.flatMap((group) => group.configurations).find((configuration) => configuration.key === key)
+      ?.displayName ?? key;
+
+  for (const [field, value] of Object.entries(dirtyFields)) {
+    if (!isDirtyValue(value)) continue;
+
+    if ((field === 'credentials' || field === 'configurations') && value && typeof value === 'object') {
+      const toLabel = field === 'credentials' ? credentialLabel : configurationLabel;
+      for (const [key, nested] of Object.entries(value)) {
+        if (isDirtyValue(nested)) labels.push(toLabel(key));
+      }
+      continue;
+    }
+
+    const label = GENERAL_FIELD_LABELS[field as keyof IntegrationFormData];
+    if (label) labels.push(label);
+  }
+
+  return labels;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing per-provider settings form; splitting it is out of scope here
@@ -145,16 +197,22 @@ export function IntegrationSettings({
   const isQuickSetupMode = usesSetupLayout && setupMode === 'quick';
   const isFormReady = isQuickSetupMode ? !!slackQuickSetup?.appId : formState.isValid;
 
+  const changedFields = describeChangedFields(formState.dirtyFields, provider);
+  // Joined so the effect runs when the list changes, not on every new dirtyFields object.
+  const changedFieldsKey = changedFields.join('\n');
+
   // Notify parent component of form state changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: changedFieldsKey stands in for changedFields
   useEffect(() => {
     if (onFormStateChange) {
       onFormStateChange({
         isValid: isFormReady,
         errors: formState.errors,
         isDirty: formState.isDirty,
+        changedFields,
       });
     }
-  }, [isFormReady, formState.errors, formState.isDirty, onFormStateChange]);
+  }, [isFormReady, formState.errors, formState.isDirty, changedFieldsKey, onFormStateChange]);
 
   const name = useWatch({ control, name: 'name' });
   const environmentId = useWatch({ control, name: 'environmentId' });

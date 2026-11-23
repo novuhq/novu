@@ -18,7 +18,6 @@ import { buildRoute } from '@/utils/routes';
 import { showErrorToast, showSuccessToast } from '../../../components/primitives/sonner-helpers';
 import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
-import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
 import { getDuplicateTargets, shouldCopySecrets, useDuplicateIntegration } from './hooks/use-duplicate-integration';
 import {
@@ -39,6 +38,7 @@ import {
   ProviderGuideLink,
 } from './manage-integration-drawer';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
+import { DiscardChangesModal } from './modals/discard-changes-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { cleanCredentials, isDemoIntegration } from './utils/helpers';
@@ -59,8 +59,12 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [formState, setFormState] = useState({
+    isValid: true,
+    errors: {} as Record<string, unknown>,
+    isDirty: false,
+    changedFields: [] as string[],
+  });
   const [isSheetOpen, setIsSheetOpen] = useState(isOpened);
 
   const {
@@ -85,8 +89,11 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const queryClient = useQueryClient();
   const { environments, currentEnvironment } = useEnvironment();
-  /** Where to go once the user confirms leaving unsaved changes: another environment's integration, or the activity feed. */
-  const [pendingNavigation, setPendingNavigation] = useState<{ run: () => void }>();
+  /**
+   * Leaving with unsaved changes, waiting on "Discard changes": closing the drawer, another environment's
+   * integration, a duplicate or the activity feed. `action` finishes the modal's "If you … now".
+   */
+  const [pendingNavigation, setPendingNavigation] = useState<{ run: () => void; action: string }>();
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
 
   // The same integration in each environment: integrations aren't linked across environments, so they're
@@ -184,15 +191,19 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     setIsSheetOpen(isOpened);
   }, [isOpened]);
 
+  const closeDrawer = () => {
+    setIsSheetOpen(false);
+    navigate(ROUTES.INTEGRATIONS);
+  };
+
   const handleClose = () => {
     if (formState.isDirty && !isUpdating && !isSettingPrimary && !isDeleting) {
-      setShowUnsavedDialog(true);
+      setPendingNavigation({ run: closeDrawer, action: 'close the drawer' });
 
       return;
     }
 
-    setIsSheetOpen(false);
-    navigate(ROUTES.INTEGRATIONS);
+    closeDrawer();
   };
 
   const openIntegration = (integrationIdToOpen: string) =>
@@ -204,12 +215,11 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   navigationGuard.current = { isWriting, isDirty: formState.isDirty };
 
   /** Leaves this integration, after confirming when it has unsaved changes. */
-  const requestNavigation = (run: () => void) => {
+  const requestNavigation = (run: () => void, action: string) => {
     // A save that finishes after a switch would close the drawer on the next integration's edits.
     if (navigationGuard.current.isWriting) return;
     if (navigationGuard.current.isDirty) {
-      setPendingNavigation({ run });
-      setShowUnsavedDialog(true);
+      setPendingNavigation({ run, action });
 
       return;
     }
@@ -217,26 +227,17 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     run();
   };
 
-  const handleSelectEnvironment = (target: { _id: string }) => {
+  const handleSelectEnvironment = (target: { _id: string; _environmentId: string }) => {
     if (target._id === integration?._id) return;
-    requestNavigation(() => openIntegration(target._id));
+    const targetEnvironment = environments?.find((env) => env._id === target._environmentId);
+    requestNavigation(
+      () => openIntegration(target._id),
+      targetEnvironment ? `switch to ${targetEnvironment.name}` : 'switch environments'
+    );
   };
 
-  const handleProceedClose = () => {
-    setShowUnsavedDialog(false);
-    if (pendingNavigation) {
-      pendingNavigation.run();
-      setPendingNavigation(undefined);
-
-      return;
-    }
-
-    setIsSheetOpen(false);
-    navigate(ROUTES.INTEGRATIONS);
-  };
-
-  const handleCancelClose = () => {
-    setShowUnsavedDialog(false);
+  const handleDiscardChanges = () => {
+    pendingNavigation?.run();
     setPendingNavigation(undefined);
   };
 
@@ -265,7 +266,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           `Its secrets weren't copied, so it's paused. Paste them in ${target.name} and resume it.`,
           `${integration.name} added to ${target.name}`
         );
-        requestNavigation(() => openIntegration(copy._id));
+        requestNavigation(() => openIntegration(copy._id), `open the copy in ${target.name}`);
       },
       onError: (error) =>
         showErrorToast(
@@ -304,7 +305,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           });
           // The feed has no per-integration filter yet; its channel is the closest match.
           const query = integration.channel ? `?${new URLSearchParams({ channels: integration.channel })}` : '';
-          requestNavigation(() => navigate(`${path}${query}`));
+          requestNavigation(() => navigate(`${path}${query}`), 'open the activity feed');
         }
       : undefined;
 
@@ -410,7 +411,14 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         mode={integration?.primary ? 'select' : 'switch'}
       />
 
-      <UnsavedChangesAlertDialog show={showUnsavedDialog} onCancel={handleCancelClose} onProceed={handleProceedClose} />
+      <DiscardChangesModal
+        isOpen={!!pendingNavigation}
+        changedFields={formState.changedFields}
+        environmentName={environment?.name}
+        action={pendingNavigation?.action ?? 'close the drawer'}
+        onKeepEditing={() => setPendingNavigation(undefined)}
+        onDiscard={handleDiscardChanges}
+      />
     </>
   );
 }
