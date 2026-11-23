@@ -54,7 +54,9 @@ const getWorkflowRunsSchema = z.object({
 	statuses: z
 		.array(z.enum(["processing", "completed", "error"]))
 		.optional()
-		.describe("Only runs with one of these statuses"),
+		.describe(
+			"Only runs with one of these statuses. A run with a failed step can stay processing, so to find failed runs omit this and check step statuses",
+		),
 	subscriberId: z.string().optional().describe("Only runs for this subscriberId"),
 	topicKey: z.string().optional().describe("Only runs triggered to this topic key"),
 	transactionId: z.string().optional().describe("Only runs of this trigger transactionId"),
