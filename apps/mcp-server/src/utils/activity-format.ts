@@ -168,12 +168,98 @@ function toStepDetail(step: JsonRecord) {
 	};
 }
 
+const RUNS_PATH = "/activity/workflow-runs";
+const REQUESTS_PATH = "/activity/requests";
+
+/** A dashboard path with the query params that are set. */
+function toDashboardPath(path: string, params: [string, string | undefined][]): string {
+	const search = new URLSearchParams();
+	for (const [key, value] of params) {
+		if (value) search.append(key, value);
+	}
+	const query = search.toString();
+
+	return query ? `${path}?${query}` : path;
+}
+
+function toIsoDate(value: string | undefined): string | undefined {
+	return value === undefined || Number.isNaN(Date.parse(value))
+		? undefined
+		: new Date(value).toISOString();
+}
+
+/**
+ * The dashboard's workflow runs page with these filters, as a path under
+ * `/env/<environment>`. Its `workflows` filter takes workflow _ids, and it has no
+ * status filter. A date range needs both ends, so `createdAfter` alone runs to now.
+ */
+export function workflowRunsDashboardPath(
+	filters: {
+		channels?: string[];
+		createdAfter?: string;
+		createdBefore?: string;
+		subscriberId?: string;
+		topicKey?: string;
+		transactionId?: string;
+		workflowId?: string;
+	},
+	now = new Date(),
+): string {
+	const after = toIsoDate(filters.createdAfter);
+	const before = after ? (toIsoDate(filters.createdBefore) ?? now.toISOString()) : undefined;
+
+	return toDashboardPath(RUNS_PATH, [
+		["workflows", filters.workflowId],
+		["subscriberId", filters.subscriberId],
+		["channels", filters.channels?.join(",")],
+		["transactionId", filters.transactionId],
+		["topicKey", filters.topicKey],
+		["dateRange", after ? "custom" : undefined],
+		["after", after],
+		["before", before],
+	]);
+}
+
+/** The dashboard's requests page with these filters; `createdGte` is in epoch milliseconds there. */
+export function triggerRequestsDashboardPath(filters: {
+	createdAfter?: string;
+	statusCodes?: number[];
+	transactionId?: string;
+	urlPattern?: string;
+}): string {
+	const createdAfter = toIsoDate(filters.createdAfter);
+
+	return toDashboardPath(REQUESTS_PATH, [
+		...(filters.statusCodes ?? []).map((code): [string, string] => ["status", String(code)]),
+		["transactionId", filters.transactionId],
+		["urlPattern", filters.urlPattern],
+		["createdGte", createdAfter ? String(Date.parse(createdAfter)) : undefined],
+	]);
+}
+
+function runDashboardPath(id: string | undefined): string | undefined {
+	return id ? toDashboardPath(RUNS_PATH, [["activityItemId", id]]) : undefined;
+}
+
+/** The requests page only opens a request that is on its current page, so it also filters by the transaction. */
+function requestDashboardPath(id: string | undefined, transactionId: string | undefined) {
+	return id
+		? toDashboardPath(REQUESTS_PATH, [
+				["transactionId", transactionId],
+				["selectedLogId", id],
+			])
+		: undefined;
+}
+
 function runFields(run: JsonRecord) {
+	const id = asString(run.id);
+
 	return {
 		createdAt: asString(run.createdAt),
+		dashboardPath: runDashboardPath(id),
 		deliveryLifecycleDetail: asString(run.deliveryLifecycleDetail),
 		deliveryLifecycleStatus: asString(run.deliveryLifecycleStatus),
-		id: asString(run.id),
+		id,
 		status: asString(run.status),
 		subscriberId: asString(run.subscriberId),
 		transactionId: asString(run.transactionId),
@@ -296,11 +382,15 @@ function triggerOutcome(responseBody: unknown): { error?: string; triggerStatus?
 
 /** One trigger request without its request or response body. */
 export function toTriggerRequestSummary(row: JsonRecord) {
+	const id = asString(row.id);
+	const transactionId = asString(row.transactionId);
+
 	return {
 		createdAt: asString(row.createdAt),
-		id: asString(row.id),
+		dashboardPath: requestDashboardPath(id, transactionId),
+		id,
 		statusCode: typeof row.statusCode === "number" ? row.statusCode : undefined,
-		transactionId: asString(row.transactionId),
+		transactionId,
 		urlPattern: asString(row.urlPattern),
 		workflow: workflowNames(parseJson(row.requestBody)),
 		...triggerOutcome(row.responseBody),

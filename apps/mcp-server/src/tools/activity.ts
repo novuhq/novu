@@ -10,6 +10,8 @@ import {
 	toRunSummary,
 	toTriggerRequestSummary,
 	triggerRequestMatches,
+	triggerRequestsDashboardPath,
+	workflowRunsDashboardPath,
 } from "../utils/activity-format";
 import { NovuApiUtils } from "../utils/api";
 import type { ToolAccessors } from "../utils/tool-accessors";
@@ -195,9 +197,10 @@ async function triggerRequestsForRun(context: ToolContext, transactionId: string
 
 		return {
 			triggerRequests: listRows(result.data).map((row) => {
-				const { createdAt, id, statusCode, urlPattern } = toTriggerRequestSummary(row);
+				const { createdAt, dashboardPath, id, statusCode, urlPattern } =
+					toTriggerRequestSummary(row);
 
-				return { createdAt, id, statusCode, urlPattern };
+				return { createdAt, dashboardPath, id, statusCode, urlPattern };
 			}),
 		};
 	} catch (error) {
@@ -239,6 +242,7 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 			const runs = listRows(result.data).map(toRunSummary);
 
 			return json({
+				dashboardPath: workflowRunsDashboardPath({ ...input, workflowId: workflow?.id }),
 				filters: {
 					channels: input.channels,
 					createdAfter: input.createdAfter,
@@ -341,6 +345,7 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 			const requests = matches.map(toTriggerRequestSummary);
 
 			return json({
+				dashboardPath: triggerRequestsDashboardPath(input),
 				filters: {
 					createdAfter: input.createdAfter,
 					statusCodes: input.statusCodes,

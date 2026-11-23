@@ -140,6 +140,7 @@ describe("get_workflow_runs", () => {
 		expect(query.get("createdGte")).toBe("2026-11-01");
 		expect(query.get("limit")).toBe("10");
 		expect(result).toEqual({
+			dashboardPath: expect.stringMatching(/^\/activity\/workflow-runs\?/),
 			filters: {
 				createdAfter: "2026-11-01",
 				statuses: ["completed", "error"],
@@ -151,6 +152,7 @@ describe("get_workflow_runs", () => {
 			runs: [
 				{
 					createdAt: "2026-11-20T10:00:00.000Z",
+					dashboardPath: "/activity/workflow-runs?activityItemId=run-1",
 					deliveryLifecycleDetail: "preference",
 					deliveryLifecycleStatus: "skipped",
 					id: "run-1",
@@ -162,6 +164,37 @@ describe("get_workflow_runs", () => {
 					workflowName: "Password reset",
 				},
 			],
+		});
+	});
+
+	it("links to the runs page with the workflow _id, never the trigger identifier", async () => {
+		fakeApi(
+			path("/v2/workflows/password-reset", {
+				data: { _id: WORKFLOW_DB_ID, workflowId: "password-reset" },
+			}),
+			path("/v1/activity/workflow-runs", { data: [], next: null }),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_workflow_runs", {
+				channels: ["email", "sms"],
+				createdAfter: "2026-11-23",
+				createdBefore: "2026-11-23T23:59:59.999Z",
+				statuses: ["error"],
+				subscriberId: "user_123",
+				workflowId: "password-reset",
+			}),
+		);
+
+		const link = new URL(result.dashboardPath, "https://dashboard.test");
+		expect(link.pathname).toBe("/activity/workflow-runs");
+		expect(Object.fromEntries(link.searchParams)).toEqual({
+			after: "2026-11-23T00:00:00.000Z",
+			before: "2026-11-23T23:59:59.999Z",
+			channels: "email,sms",
+			dateRange: "custom",
+			subscriberId: "user_123",
+			workflows: WORKFLOW_DB_ID,
 		});
 	});
 
@@ -314,6 +347,7 @@ describe("get_workflow_run", () => {
 		expect(api.urls[1].searchParams.get("limit")).toBe("5");
 		expect(result.run).toEqual({
 			createdAt: "2026-11-20T10:00:00.000Z",
+			dashboardPath: "/activity/workflow-runs?activityItemId=run-1",
 			deliveryLifecycleStatus: "errored",
 			id: "run-1",
 			status: "completed",
@@ -351,6 +385,7 @@ describe("get_workflow_run", () => {
 		expect(result.triggerRequests).toEqual([
 			{
 				createdAt: "2026-11-20T10:00:00.000Z",
+				dashboardPath: "/activity/requests?transactionId=txn-1&selectedLogId=req-1",
 				id: "req-1",
 				statusCode: 201,
 				urlPattern: "/v1/events/trigger",
@@ -473,9 +508,13 @@ describe("get_trigger_requests", () => {
 		expect(query.get("urlPattern")).toBeNull();
 		expect(query.get("createdGte")).toBe(String(Date.parse("2026-11-20T00:00:00Z")));
 		expect(query.get("limit")).toBe("20");
+		expect(result.dashboardPath).toBe(
+			`/activity/requests?createdGte=${Date.parse("2026-11-20T00:00:00Z")}`,
+		);
 		expect(result.requests).toEqual([
 			{
 				createdAt: "2026-11-20T10:00:00.000Z",
+				dashboardPath: "/activity/requests?transactionId=txn-1&selectedLogId=req-1",
 				id: "req-1",
 				statusCode: 201,
 				transactionId: "txn-1",
