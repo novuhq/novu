@@ -46,8 +46,8 @@
     "express": "^5.0.1",
     "langchain": "^1.2.16",
     "openai": "^6.49.0",
-    "zod": "^3.23.8",
-    "zod-to-json-schema": "^3.23.3"
+    "zod": "^4.6.6",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@nestjs/testing": "11.1.27",
