@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
   type IEnvironment,
+  type IIntegration,
   providers as novuProviders,
   PermissionsEnum,
 } from '@novu/shared';
@@ -39,6 +40,7 @@ import {
 } from './manage-integration-drawer';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { DiscardChangesModal } from './modals/discard-changes-modal';
+import { MakePrimaryModal } from './modals/make-primary-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { cleanCredentials, isDemoIntegration } from './utils/helpers';
@@ -394,21 +396,17 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         isLoading={isDeleting || isSettingPrimary}
       />
 
-      <SelectPrimaryIntegrationModal
+      <PrimaryIntegrationModal
+        integration={integration}
+        integrations={integrations ?? []}
+        environment={environment}
+        environments={environments ?? []}
         isOpen={isPrimaryModalOpen}
+        pendingName={pendingData?.name}
+        currentPrimaryName={existingPrimaryIntegration?.name}
+        isLoading={isUpdating || isSettingPrimary}
         onOpenChange={setIsPrimaryModalOpen}
         onConfirm={handlePrimaryConfirm}
-        currentPrimaryName={existingPrimaryIntegration?.name}
-        newPrimaryName={pendingData?.name ?? ''}
-        isLoading={isUpdating || isSettingPrimary}
-        otherIntegrations={integrations?.filter(
-          (i) =>
-            i._id !== integration?._id &&
-            i.channel === integration?.channel &&
-            i.active &&
-            i._environmentId === integration?._environmentId
-        )}
-        mode={integration?.primary ? 'select' : 'switch'}
       />
 
       <DiscardChangesModal
@@ -420,5 +418,64 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         onDiscard={handleDiscardChanges}
       />
     </>
+  );
+}
+
+/** Saving a change to primary: confirm taking over from the current primary, or pick who takes over this one's. */
+function PrimaryIntegrationModal({
+  integration,
+  integrations,
+  environment,
+  environments,
+  isOpen,
+  pendingName,
+  currentPrimaryName,
+  isLoading,
+  onOpenChange,
+  onConfirm,
+}: {
+  integration: IIntegration;
+  integrations: IIntegration[];
+  environment?: IEnvironment;
+  environments: IEnvironment[];
+  isOpen: boolean;
+  /** The name in the form being saved; it may have been edited too. */
+  pendingName?: string;
+  currentPrimaryName?: string;
+  isLoading: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: (newPrimaryIntegrationId?: string) => void;
+}) {
+  if (integration.primary) {
+    return (
+      <SelectPrimaryIntegrationModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onConfirm={onConfirm}
+        isLoading={isLoading}
+        otherIntegrations={integrations.filter(
+          (other) =>
+            other._id !== integration._id &&
+            other.channel === integration.channel &&
+            other.active &&
+            other._environmentId === integration._environmentId
+        )}
+        mode="select"
+      />
+    );
+  }
+
+  return (
+    <MakePrimaryModal
+      isOpen={isOpen}
+      newPrimaryName={pendingName || integration.name}
+      currentPrimaryName={currentPrimaryName}
+      channel={integration.channel}
+      environment={environment}
+      environments={environments}
+      isLoading={isLoading}
+      onCancel={() => onOpenChange(false)}
+      onConfirm={() => onConfirm()}
+    />
   );
 }
