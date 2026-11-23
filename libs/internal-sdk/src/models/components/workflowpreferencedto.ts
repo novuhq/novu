@@ -16,6 +16,10 @@ export type WorkflowPreferenceDto = {
    * A flag specifying if the preference is read-only. If true, the preference cannot be changed by the Subscriber.
    */
   readOnly?: boolean | undefined;
+  /**
+   * JsonLogic condition controlling whether this preference applies
+   */
+  condition?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -26,11 +30,13 @@ export const WorkflowPreferenceDto$inboundSchema: z.ZodType<
 > = z.object({
   enabled: z.boolean().default(true),
   readOnly: z.boolean().default(false),
+  condition: z.record(z.any()).optional(),
 });
 /** @internal */
 export type WorkflowPreferenceDto$Outbound = {
   enabled: boolean;
   readOnly: boolean;
+  condition?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -41,6 +47,7 @@ export const WorkflowPreferenceDto$outboundSchema: z.ZodType<
 > = z.object({
   enabled: z.boolean().default(true),
   readOnly: z.boolean().default(false),
+  condition: z.record(z.any()).optional(),
 });
 
 export function workflowPreferenceDtoToJSON(

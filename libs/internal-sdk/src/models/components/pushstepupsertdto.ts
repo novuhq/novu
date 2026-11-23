@@ -31,7 +31,7 @@ export type PushStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "push";
   /**

@@ -1098,11 +1098,268 @@ describe('SendMessageChat - agent assigned path', () => {
     expect(capturedIntegration?._id).to.equal('integration_wa_linked');
   });
 
+  it('resolves the WhatsApp recipient from the agent-linked integration, not an override scoped to another integration', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'wamid.linked', date: new Date().toISOString() });
+    const linkedIntegration = {
+      _id: 'integration_wa_linked',
+      identifier: 'whatsapp-linked',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'linked-token', phoneNumberIdentification: '111' },
+    };
+    const otherActiveIntegration = { ...linkedIntegration, _id: 'integration_wa_other', identifier: 'whatsapp-other' };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string; identifier?: string }) => {
+        if (command.identifier === 'whatsapp-linked') return { integration: linkedIntegration };
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) return { integration: otherActiveIntegration };
+
+        return null;
+      }),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      {
+        create: sinon.stub().resolves({ _id: 'message_1' }),
+        updateMessageStatus: sinon.stub().resolves(undefined),
+        update: sinon.stub().resolves(undefined),
+      } as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-linked', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string }).phone = '+15551234567';
+    (command as { bridgeData: unknown }).bridgeData = {
+      outputs: { body: 'agent hello' },
+      providers: {
+        [ChatProviderIdEnum.WhatsAppBusiness]: {
+          [INTEGRATION_OVERRIDES_OUTPUT_KEY]: { 'whatsapp-other': { to: '+15550000999' } },
+        },
+      },
+    };
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    expect(chatHandlerSend.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+15551234567');
+  });
+
   it('persists templateIdentifier so workflow-origin hydration can name the workflow', async () => {
     const { usecase, messageRepository } = buildAgentUsecase({ jobAgentId: 'agent_1' });
 
     await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
+  });
+});
+
+describe('SendMessageChat - phone-based provider recipient override (NV-9530)', () => {
+  const whatsappIntegration = {
+    _id: 'integration_wa',
+    identifier: 'whatsapp-main',
+    providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: { apiToken: 'token', phoneNumberIdentification: '123' },
+  };
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  function buildUsecase() {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'wamid.1', date: new Date().toISOString() });
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    const selectIntegration = {
+      execute: sinon
+        .stub()
+        .callsFake(async (command: { providerId?: string }) =>
+          command.providerId === ChatProviderIdEnum.WhatsAppBusiness ? { integration: whatsappIntegration } : undefined
+        ),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      { listLinkedIntegrationRefs: sinon.stub().resolves([]) } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    return { usecase, chatHandlerSend, messageRepository, selectIntegration, createExecutionDetails };
+  }
+
+  function buildCommand(options: { phone?: string; overrides?: Record<string, unknown>; contextKeys?: string[] } = {}) {
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: (options.overrides ?? {}) as TriggerOverrides,
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: options.contextKeys ?? [],
+      compileContext: {
+        subscriber: {
+          subscriberId: 'sub_1',
+          locale: 'en',
+          channels: [],
+          ...(options.phone ? { phone: options.phone } : {}),
+        },
+      } as never,
+      bridgeData: { outputs: { body: 'hello' } } as never,
+      step: {
+        stepId: 'step_1',
+        template: { _id: 'mt_1', type: ChannelTypeEnum.CHAT, content: 'hello' },
+      } as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.CHAT,
+        step: { stepId: 'step_1' },
+        _agentId: null,
+      } as never,
+    });
+  }
+
+  it('sends to the override `to` when the subscriber has no phone', async () => {
+    const { usecase, chatHandlerSend, messageRepository } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand({
+        overrides: { providers: { [ChatProviderIdEnum.WhatsAppBusiness]: { to: '+15550001111' } } },
+        contextKeys: ['tenant:acme'],
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    expect(chatHandlerSend.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+15550001111');
+    expect(messageRepository.create.firstCall.args[0].phone).to.equal('+15550001111');
+  });
+
+  it('sends to a step-scoped override `to` when the subscriber has no phone', async () => {
+    const { usecase, chatHandlerSend } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand({
+        overrides: {
+          steps: { step_1: { providers: { [ChatProviderIdEnum.WhatsAppBusiness]: { to: '+15550002222' } } } },
+        },
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(chatHandlerSend.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+15550002222');
+  });
+
+  it('prefers the override `to` over the subscriber phone', async () => {
+    const { usecase, chatHandlerSend, messageRepository } = buildUsecase();
+
+    await usecase.execute(
+      buildCommand({
+        phone: '+15551234567',
+        overrides: { providers: { [ChatProviderIdEnum.WhatsAppBusiness]: { to: '+15550001111' } } },
+      })
+    );
+
+    expect(chatHandlerSend.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+15550001111');
+    expect(messageRepository.create.firstCall.args[0].phone).to.equal('+15550001111');
+  });
+
+  it('falls back to the subscriber phone and drops a blank override `to`', async () => {
+    const { usecase, chatHandlerSend } = buildUsecase();
+
+    await usecase.execute(
+      buildCommand({
+        phone: '+15551234567',
+        overrides: { providers: { [ChatProviderIdEnum.WhatsAppBusiness]: { to: '  ' } } },
+      })
+    );
+
+    const sendArgs = chatHandlerSend.firstCall.args[0];
+    expect(sendArgs.channelData.endpoint.phoneNumber).to.equal('+15551234567');
+    expect(sendArgs.bridgeProviderData).to.not.have.property('to');
+  });
+
+  it('skips without looking up integrations when there is no phone and no phone-provider override', async () => {
+    const { usecase, chatHandlerSend, selectIntegration, createExecutionDetails } = buildUsecase();
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.notCalled(selectIntegration.execute);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, { detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL });
+  });
+
+  it('skips when the only phone-provider override has a blank `to` and the subscriber has no phone', async () => {
+    const { usecase, chatHandlerSend } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand({ overrides: { providers: { [ChatProviderIdEnum.WhatsAppBusiness]: { to: '' } } } })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+    sinon.assert.notCalled(chatHandlerSend);
   });
 });

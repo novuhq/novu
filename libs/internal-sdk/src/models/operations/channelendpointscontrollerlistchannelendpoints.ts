@@ -35,6 +35,7 @@ export const QueryParamChannel = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
 } as const;
 /**
  * Channel type to filter results.

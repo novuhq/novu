@@ -88,7 +88,7 @@ export class Topics extends ClientSDK {
    * Update a topic
    *
    * @remarks
-   * Update a topic name by its unique key identifier **topicKey**
+   * Update a topic name or data by its unique key identifier **topicKey**
    */
   async update(
     updateTopicRequestDto: components.UpdateTopicRequestDto,

@@ -38,7 +38,7 @@ export class Environments extends ClientSDK {
    * Compare resources between environments
    *
    * @remarks
-   * Compares workflows and other resources between the source and target environments, returning detailed diff information including additions, modifications, and deletions.
+   * Compares workflows and other resources between the development and target environments, returning detailed diff information including additions, modifications, and deletions.
    */
   async diff(
     diffEnvironmentRequestDto: components.DiffEnvironmentRequestDto,
@@ -59,7 +59,7 @@ export class Environments extends ClientSDK {
    * Publish resources to target environment
    *
    * @remarks
-   * Publishes all workflows and resources from the source environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.
+   * Publishes all workflows and resources from the development environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.
    */
   async publish(
     publishEnvironmentRequestDto: components.PublishEnvironmentRequestDto,

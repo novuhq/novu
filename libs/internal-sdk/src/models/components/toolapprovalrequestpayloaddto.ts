@@ -4,6 +4,11 @@
 
 import * as z from "zod/v3";
 
+/**
+ * Novu subscriberId(s) allowed to settle this tool gate when HITL is enabled.
+ */
+export type To = {};
+
 export type ToolApprovalRequestPayloadDto = {
   /**
    * Unique id for this approval request (matches the AI SDK approvalId).
@@ -21,7 +26,42 @@ export type ToolApprovalRequestPayloadDto = {
    * Tool input the model proposed.
    */
   input?: { [k: string]: any } | undefined;
+  /**
+   * Server-minted approve action id. When omitted, self-hosted tool-approval:* is minted at persist.
+   */
+  approveActionId?: string | undefined;
+  /**
+   * Server-minted deny action id. When omitted, self-hosted tool-approval:* is minted at persist.
+   */
+  denyActionId?: string | undefined;
+  /**
+   * MCP server name when the gated tool is from an MCP server (for UI labels).
+   */
+  mcpServerName?: string | undefined;
+  /**
+   * Novu subscriberId(s) allowed to settle this tool gate when HITL is enabled.
+   */
+  to?: To | undefined;
+  /**
+   * Attribution label shown on the HITL card.
+   */
+  from?: string | undefined;
+  /**
+   * Seconds until the HITL tool-gate expires.
+   */
+  ttlSeconds?: number | undefined;
 };
+
+/** @internal */
+export type To$Outbound = {};
+
+/** @internal */
+export const To$outboundSchema: z.ZodType<To$Outbound, z.ZodTypeDef, To> = z
+  .object({});
+
+export function toToJSON(to: To): string {
+  return JSON.stringify(To$outboundSchema.parse(to));
+}
 
 /** @internal */
 export type ToolApprovalRequestPayloadDto$Outbound = {
@@ -29,6 +69,12 @@ export type ToolApprovalRequestPayloadDto$Outbound = {
   toolCallId: string;
   name: string;
   input?: { [k: string]: any } | undefined;
+  approveActionId?: string | undefined;
+  denyActionId?: string | undefined;
+  mcpServerName?: string | undefined;
+  to?: To$Outbound | undefined;
+  from?: string | undefined;
+  ttlSeconds?: number | undefined;
 };
 
 /** @internal */
@@ -41,6 +87,12 @@ export const ToolApprovalRequestPayloadDto$outboundSchema: z.ZodType<
   toolCallId: z.string(),
   name: z.string(),
   input: z.record(z.any()).optional(),
+  approveActionId: z.string().optional(),
+  denyActionId: z.string().optional(),
+  mcpServerName: z.string().optional(),
+  to: z.lazy(() => To$outboundSchema).optional(),
+  from: z.string().optional(),
+  ttlSeconds: z.number().optional(),
 });
 
 export function toolApprovalRequestPayloadDtoToJSON(

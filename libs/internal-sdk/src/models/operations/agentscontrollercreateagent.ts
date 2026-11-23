@@ -10,6 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type AgentsControllerCreateAgentRequest = {
+  novuAnalyticsSource: string;
   /**
    * A header for idempotency purposes
    */
@@ -24,6 +25,7 @@ export type AgentsControllerCreateAgentResponse = {
 
 /** @internal */
 export type AgentsControllerCreateAgentRequest$Outbound = {
+  "Novu-Analytics-Source": string;
   "idempotency-key"?: string | undefined;
   CreateAgentRequestDto: components.CreateAgentRequestDto$Outbound;
 };
@@ -34,10 +36,12 @@ export const AgentsControllerCreateAgentRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   AgentsControllerCreateAgentRequest
 > = z.object({
+  novuAnalyticsSource: z.string(),
   idempotencyKey: z.string().optional(),
   createAgentRequestDto: components.CreateAgentRequestDto$outboundSchema,
 }).transform((v) => {
   return remap$(v, {
+    novuAnalyticsSource: "Novu-Analytics-Source",
     idempotencyKey: "idempotency-key",
     createAgentRequestDto: "CreateAgentRequestDto",
   });

@@ -32,7 +32,7 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Retrieve an agent by its external identifier (not the internal MongoDB id).
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function agentsRetrieve(
   client: NovuCore,

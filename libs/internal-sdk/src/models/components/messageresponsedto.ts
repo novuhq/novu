@@ -100,9 +100,6 @@ export type MessageResponseDto = {
    * Subject of the message, if applicable
    */
   subject?: string | undefined;
-  /**
-   * Channel type through which the message is sent
-   */
   channel: ChannelTypeEnum;
   /**
    * Indicates if the message has been read

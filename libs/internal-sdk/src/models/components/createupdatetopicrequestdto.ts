@@ -13,12 +13,17 @@ export type CreateUpdateTopicRequestDto = {
    * The display name for the topic
    */
   name?: string | undefined;
+  /**
+   * Additional custom data associated with the topic. Flat key-value pairs of scalars (string, number, boolean, string[]). Maximum size: 64KB.
+   */
+  data?: { [k: string]: any } | null | undefined;
 };
 
 /** @internal */
 export type CreateUpdateTopicRequestDto$Outbound = {
   key: string;
   name?: string | undefined;
+  data?: { [k: string]: any } | null | undefined;
 };
 
 /** @internal */
@@ -29,6 +34,7 @@ export const CreateUpdateTopicRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   key: z.string(),
   name: z.string().optional(),
+  data: z.nullable(z.record(z.any())).optional(),
 });
 
 export function createUpdateTopicRequestDtoToJSON(

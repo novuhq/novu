@@ -9,11 +9,16 @@ export type UpdateContextRequestDto = {
    * Custom data to associate with this context. Replaces existing data.
    */
   data: { [k: string]: any };
+  /**
+   * Optional bridge URL override for agent connect. When an inbound agent turn resolves this context, its bridge call is routed here instead of the agent default bridge URL. Must be a publicly reachable URL. Pass null to clear an existing override.
+   */
+  bridgeUrl?: string | null | undefined;
 };
 
 /** @internal */
 export type UpdateContextRequestDto$Outbound = {
   data: { [k: string]: any };
+  bridgeUrl?: string | null | undefined;
 };
 
 /** @internal */
@@ -23,6 +28,7 @@ export const UpdateContextRequestDto$outboundSchema: z.ZodType<
   UpdateContextRequestDto
 > = z.object({
   data: z.record(z.any()),
+  bridgeUrl: z.nullable(z.string()).optional(),
 });
 
 export function updateContextRequestDtoToJSON(

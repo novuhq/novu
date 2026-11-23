@@ -33,11 +33,12 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Create an agent scoped to the current environment. The identifier must be unique per environment. Set `runtime` to `managed` and supply `managedRuntime` to provision a provider-hosted agent brain.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function agentsCreate(
   client: NovuCore,
   createAgentRequestDto: components.CreateAgentRequestDto,
+  novuAnalyticsSource: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -58,6 +59,7 @@ export function agentsCreate(
   return new APIPromise($do(
     client,
     createAgentRequestDto,
+    novuAnalyticsSource,
     idempotencyKey,
     options,
   ));
@@ -66,6 +68,7 @@ export function agentsCreate(
 async function $do(
   client: NovuCore,
   createAgentRequestDto: components.CreateAgentRequestDto,
+  novuAnalyticsSource: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
@@ -88,6 +91,7 @@ async function $do(
 > {
   const input: operations.AgentsControllerCreateAgentRequest = {
     createAgentRequestDto: createAgentRequestDto,
+    novuAnalyticsSource: novuAnalyticsSource,
     idempotencyKey: idempotencyKey,
   };
 
@@ -110,6 +114,11 @@ async function $do(
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
     Accept: "application/json",
+    "Novu-Analytics-Source": encodeSimple(
+      "Novu-Analytics-Source",
+      payload["Novu-Analytics-Source"],
+      { explode: false, charEncoding: "none" },
+    ),
     "idempotency-key": encodeSimple(
       "idempotency-key",
       payload["idempotency-key"],

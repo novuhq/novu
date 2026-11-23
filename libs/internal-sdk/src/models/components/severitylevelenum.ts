@@ -6,7 +6,7 @@ import * as z from "zod/v3";
 import { ClosedEnum } from "../../types/enums.js";
 
 /**
- * Severity of the workflow
+ * Override the severity of the workflow
  */
 export const SeverityLevelEnum = {
   High: "high",
@@ -15,7 +15,7 @@ export const SeverityLevelEnum = {
   None: "none",
 } as const;
 /**
- * Severity of the workflow
+ * Override the severity of the workflow
  */
 export type SeverityLevelEnum = ClosedEnum<typeof SeverityLevelEnum>;
 
