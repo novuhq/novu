@@ -102,7 +102,8 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     return mailData;
   }
 
-  getMessageId(body: PostmarkWebhookEvent | PostmarkWebhookEvent[]): string[] {
+  // biome-ignore lint/suspicious/noExplicitAny: Postmark webhook payloads are untyped
+  getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.MessageID);
     }
@@ -110,11 +111,11 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     return [body.MessageID];
   }
 
-  parseEventBody(
-    events: PostmarkWebhookEvent | PostmarkWebhookEvent[],
-    identifier: string
-  ): IEmailEventBody | undefined {
-    const body = Array.isArray(events) ? events.find((item) => item.MessageID === identifier) : events;
+  // biome-ignore lint/suspicious/noExplicitAny: Postmark webhook payloads are untyped
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.MessageID === identifier);
+    }
 
     if (!body) {
       return undefined;
@@ -160,13 +161,6 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
  * A Postmark-hosted template is selected with `TemplateId` or `TemplateAlias`
  * (usually via `_passthrough.body`). Those must go to `/email/withTemplate`.
  */
-type PostmarkWebhookEvent = {
-  MessageID: string;
-  RecordType: string;
-  attempt?: string;
-  response?: string;
-};
-
 type PostmarkRequestBody = Message &
   Partial<Pick<TemplatedMessage, 'TemplateId' | 'TemplateAlias' | 'TemplateModel' | 'InlineCss'>>;
 
