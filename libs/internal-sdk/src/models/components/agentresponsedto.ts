@@ -52,7 +52,7 @@ export type AgentResponseDto = {
   name: string;
   identifier: string;
   description?: string | undefined;
-  behavior?: AgentBehaviorDto | undefined;
+  behavior: AgentBehaviorDto;
   active: boolean;
   /**
    * Production bridge URL
@@ -112,7 +112,7 @@ export const AgentResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   identifier: z.string(),
   description: z.string().optional(),
-  behavior: AgentBehaviorDto$inboundSchema.optional(),
+  behavior: AgentBehaviorDto$inboundSchema,
   active: z.boolean(),
   bridgeUrl: z.string().optional(),
   devBridgeUrl: z.string().optional(),

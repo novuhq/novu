@@ -20,11 +20,6 @@ import {
 } from "./subscriberpreferencechannels.js";
 
 /**
- * Custom data associated with the workflow
- */
-export type GetPreferencesResponseDtoData = {};
-
-/**
  * Workflow information if this is a template-level preference
  */
 export type Workflow = {
@@ -51,9 +46,9 @@ export type Workflow = {
   /**
    * Custom data associated with the workflow
    */
-  data?: GetPreferencesResponseDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity: SeverityLevelEnum;
 };
@@ -87,23 +82,6 @@ export type GetPreferencesResponseDto = {
 };
 
 /** @internal */
-export const GetPreferencesResponseDtoData$inboundSchema: z.ZodType<
-  GetPreferencesResponseDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function getPreferencesResponseDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<GetPreferencesResponseDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => GetPreferencesResponseDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'GetPreferencesResponseDtoData' from JSON`,
-  );
-}
-
-/** @internal */
 export const Workflow$inboundSchema: z.ZodType<
   Workflow,
   z.ZodTypeDef,
@@ -114,7 +92,7 @@ export const Workflow$inboundSchema: z.ZodType<
   name: z.string(),
   critical: z.boolean(),
   tags: z.array(z.string()).optional(),
-  data: z.lazy(() => GetPreferencesResponseDtoData$inboundSchema).optional(),
+  data: z.record(z.any()).optional(),
   severity: SeverityLevelEnum$inboundSchema,
 });
 

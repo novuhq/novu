@@ -10,6 +10,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 export type WorkspaceDto = {
   id: string;
   name?: string | undefined;
+  botUserId?: string | undefined;
 };
 
 /** @internal */
@@ -20,11 +21,13 @@ export const WorkspaceDto$inboundSchema: z.ZodType<
 > = z.object({
   id: z.string(),
   name: z.string().optional(),
+  botUserId: z.string().optional(),
 });
 /** @internal */
 export type WorkspaceDto$Outbound = {
   id: string;
   name?: string | undefined;
+  botUserId?: string | undefined;
 };
 
 /** @internal */
@@ -35,6 +38,7 @@ export const WorkspaceDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string(),
   name: z.string().optional(),
+  botUserId: z.string().optional(),
 });
 
 export function workspaceDtoToJSON(workspaceDto: WorkspaceDto): string {

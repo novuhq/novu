@@ -225,6 +225,66 @@ export function mergeTriggerProviderOverrides(
   };
 }
 
+/**
+ * Returns the first candidate that is a non-blank string. Used by phone-addressed channels (SMS and
+ * phone-based chat providers such as WhatsApp) to pick the recipient: an override `to` first, then
+ * the payload or subscriber phone.
+ */
+export function resolvePhoneDestination(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (isNonBlankString(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Provider SDKs merge provider data over the resolved recipient. A blank `to` would replace the
+ * phone that `resolvePhoneDestination` already chose, so drop it (top level and `_passthrough.body`).
+ */
+export function omitBlankPhoneDestination(providerData: Record<string, unknown>): Record<string, unknown> {
+  const withoutTopLevelTo = isBlankString(providerData.to) ? withoutKey(providerData, 'to') : providerData;
+  const passthrough = withoutTopLevelTo._passthrough;
+
+  if (!isRecord(passthrough)) {
+    return withoutTopLevelTo;
+  }
+
+  const body = passthrough.body;
+
+  if (!isRecord(body) || !isBlankString(body.to)) {
+    return withoutTopLevelTo;
+  }
+
+  return {
+    ...withoutTopLevelTo,
+    _passthrough: {
+      ...passthrough,
+      body: withoutKey(body, 'to'),
+    },
+  };
+}
+
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isBlankString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length === 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutKey(record: Record<string, unknown>, key: string): Record<string, unknown> {
+  const { [key]: _removed, ...rest } = record;
+
+  return rest;
+}
+
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
   protected constructor(

@@ -16,9 +16,6 @@ import {
 } from "./preferenceoverridesourceenum.js";
 
 export type SubscriberPreferenceOverrideDto = {
-  /**
-   * Channel type through which the message is sent
-   */
   channel: ChannelTypeEnum;
   /**
    * The source of overrides

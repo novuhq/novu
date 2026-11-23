@@ -26,7 +26,7 @@ export const { env, warnDeprecatedEnv } = createAppEnv({
   },
   CLIENT_IP_HEADER: {
     description:
-      'Single-IP header set by the edge proxy (cf-connecting-ip on Novu Cloud). When set, only that header is trusted for the client IP. Unset trusts the first proxy header.',
+      'Single-IP header set by the edge proxy. When it applies, only that header is trusted for the client IP. Unset defaults to cf-connecting-ip on Novu Cloud and trusts the first proxy header elsewhere; empty turns the Cloud default off.',
   },
   CONTEXT_DEV_API_KEY: {
     description:

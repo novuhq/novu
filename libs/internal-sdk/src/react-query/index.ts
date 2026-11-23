@@ -126,6 +126,7 @@ export * from "./subscribersPreferencesUpdate.js";
 export * from "./subscribersPropertiesUpdateOnlineFlag.js";
 export * from "./subscribersRetrieve.js";
 export * from "./subscribersSearch.js";
+export * from "./subscribersTokensCreate.js";
 export * from "./subscribersTopicsList.js";
 export * from "./topicsCreate.js";
 export * from "./topicsDelete.js";

@@ -24,8 +24,6 @@ import {
   SubscriberPreferenceChannels$inboundSchema,
 } from "./subscriberpreferencechannels.js";
 
-export type WorkflowResponseData = {};
-
 export type WorkflowIntegrationStatus = {};
 
 export type WorkflowResponse = {
@@ -48,26 +46,9 @@ export type WorkflowResponse = {
   deletedAt: string;
   deletedBy: string;
   notificationGroup?: NotificationGroup | undefined;
-  data?: WorkflowResponseData | undefined;
+  data?: { [k: string]: any } | undefined;
   workflowIntegrationStatus?: WorkflowIntegrationStatus | undefined;
 };
-
-/** @internal */
-export const WorkflowResponseData$inboundSchema: z.ZodType<
-  WorkflowResponseData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function workflowResponseDataFromJSON(
-  jsonString: string,
-): SafeParseResult<WorkflowResponseData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => WorkflowResponseData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'WorkflowResponseData' from JSON`,
-  );
-}
 
 /** @internal */
 export const WorkflowIntegrationStatus$inboundSchema: z.ZodType<
@@ -111,7 +92,7 @@ export const WorkflowResponse$inboundSchema: z.ZodType<
   deletedAt: z.string(),
   deletedBy: z.string(),
   notificationGroup: NotificationGroup$inboundSchema.optional(),
-  data: z.lazy(() => WorkflowResponseData$inboundSchema).optional(),
+  data: z.record(z.any()).optional(),
   workflowIntegrationStatus: z.lazy(() =>
     WorkflowIntegrationStatus$inboundSchema
   ).optional(),

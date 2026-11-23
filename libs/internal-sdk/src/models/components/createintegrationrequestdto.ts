@@ -25,6 +25,7 @@ export const CreateIntegrationRequestDtoChannel = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
 } as const;
 /**
  * The channel type for the integration. Not required for agent-kind integrations.
@@ -46,11 +47,6 @@ export const CreateIntegrationRequestDtoKind = {
 export type CreateIntegrationRequestDtoKind = ClosedEnum<
   typeof CreateIntegrationRequestDtoKind
 >;
-
-/**
- * Configurations for the integration
- */
-export type Configurations = {};
 
 export type CreateIntegrationRequestDto = {
   /**
@@ -90,13 +86,19 @@ export type CreateIntegrationRequestDto = {
    */
   check?: boolean | undefined;
   /**
-   * Conditions for the integration
+   * Legacy StepFilter conditions. Ignored when `rules` is also set.
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   conditions?: Array<StepFilterDto> | undefined;
   /**
+   * JSONLogic used at send time to select this integration. Takes precedence over `conditions`.
+   */
+  rules?: { [k: string]: any } | null | undefined;
+  /**
    * Configurations for the integration
    */
-  configurations?: Configurations | undefined;
+  configurations?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -110,20 +112,6 @@ export const CreateIntegrationRequestDtoKind$outboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(CreateIntegrationRequestDtoKind);
 
 /** @internal */
-export type Configurations$Outbound = {};
-
-/** @internal */
-export const Configurations$outboundSchema: z.ZodType<
-  Configurations$Outbound,
-  z.ZodTypeDef,
-  Configurations
-> = z.object({});
-
-export function configurationsToJSON(configurations: Configurations): string {
-  return JSON.stringify(Configurations$outboundSchema.parse(configurations));
-}
-
-/** @internal */
 export type CreateIntegrationRequestDto$Outbound = {
   name?: string | undefined;
   identifier?: string | undefined;
@@ -135,7 +123,8 @@ export type CreateIntegrationRequestDto$Outbound = {
   active?: boolean | undefined;
   check?: boolean | undefined;
   conditions?: Array<StepFilterDto$Outbound> | undefined;
-  configurations?: Configurations$Outbound | undefined;
+  rules?: { [k: string]: any } | null | undefined;
+  configurations?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -154,7 +143,8 @@ export const CreateIntegrationRequestDto$outboundSchema: z.ZodType<
   active: z.boolean().optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$outboundSchema).optional(),
-  configurations: z.lazy(() => Configurations$outboundSchema).optional(),
+  rules: z.nullable(z.record(z.any())).optional(),
+  configurations: z.record(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     environmentId: "_environmentId",

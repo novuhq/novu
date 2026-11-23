@@ -262,7 +262,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
   private handleZod(exception: ZodError, request: RequestWithReqId): ErrorDto {
     const ctx = {
-      errors: exception.errors.map((err) => ({
+      errors: exception.issues.map((err) => ({
         message: err.message,
         path: err.path,
       })),

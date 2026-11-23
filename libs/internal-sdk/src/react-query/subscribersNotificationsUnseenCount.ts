@@ -116,6 +116,7 @@ export function setSubscribersNotificationsUnseenCountData(
   queryKeyBase: [
     subscriberId: string,
     parameters: {
+      feedId?: Array<string> | undefined;
       seen?: boolean | undefined;
       limit?: number | undefined;
       idempotencyKey?: string | undefined;
@@ -137,6 +138,7 @@ export function invalidateSubscribersNotificationsUnseenCount(
     [
       subscriberId: string,
       parameters: {
+        feedId?: Array<string> | undefined;
         seen?: boolean | undefined;
         limit?: number | undefined;
         idempotencyKey?: string | undefined;

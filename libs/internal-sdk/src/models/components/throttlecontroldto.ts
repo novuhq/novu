@@ -3,10 +3,7 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
  * The type of throttle window.
@@ -65,37 +62,15 @@ export type ThrottleControlDto = {
 };
 
 /** @internal */
-export const ThrottleControlDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof ThrottleControlDtoType
-> = z.nativeEnum(ThrottleControlDtoType);
-/** @internal */
 export const ThrottleControlDtoType$outboundSchema: z.ZodNativeEnum<
   typeof ThrottleControlDtoType
-> = ThrottleControlDtoType$inboundSchema;
+> = z.nativeEnum(ThrottleControlDtoType);
 
-/** @internal */
-export const ThrottleControlDtoUnit$inboundSchema: z.ZodNativeEnum<
-  typeof ThrottleControlDtoUnit
-> = z.nativeEnum(ThrottleControlDtoUnit);
 /** @internal */
 export const ThrottleControlDtoUnit$outboundSchema: z.ZodNativeEnum<
   typeof ThrottleControlDtoUnit
-> = ThrottleControlDtoUnit$inboundSchema;
+> = z.nativeEnum(ThrottleControlDtoUnit);
 
-/** @internal */
-export const ThrottleControlDto$inboundSchema: z.ZodType<
-  ThrottleControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: ThrottleControlDtoType$inboundSchema.default("fixed"),
-  amount: z.number().optional(),
-  unit: ThrottleControlDtoUnit$inboundSchema.optional(),
-  dynamicKey: z.string().optional(),
-  threshold: z.number().default(1),
-  throttleKey: z.string().optional(),
-});
 /** @internal */
 export type ThrottleControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -127,14 +102,5 @@ export function throttleControlDtoToJSON(
 ): string {
   return JSON.stringify(
     ThrottleControlDto$outboundSchema.parse(throttleControlDto),
-  );
-}
-export function throttleControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<ThrottleControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ThrottleControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ThrottleControlDto' from JSON`,
   );
 }

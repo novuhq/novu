@@ -19,11 +19,6 @@ import { StepFilterDto, StepFilterDto$inboundSchema } from "./stepfilterdto.js";
 export type ActivityNotificationStepResponseDtoReplyCallback = {};
 
 /**
- * Control variables
- */
-export type ControlVariables = {};
-
-/**
  * Metadata for the workflow step
  */
 export type ActivityNotificationStepResponseDtoMetadata = {};
@@ -49,7 +44,7 @@ export type ActivityNotificationStepResponseDto = {
   /**
    * Control variables
    */
-  controlVariables?: ControlVariables | undefined;
+  controlVariables?: { [k: string]: any } | undefined;
   /**
    * Metadata for the workflow step
    */
@@ -109,23 +104,6 @@ export function activityNotificationStepResponseDtoReplyCallbackFromJSON(
 }
 
 /** @internal */
-export const ControlVariables$inboundSchema: z.ZodType<
-  ControlVariables,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function controlVariablesFromJSON(
-  jsonString: string,
-): SafeParseResult<ControlVariables, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ControlVariables$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlVariables' from JSON`,
-  );
-}
-
-/** @internal */
 export const ActivityNotificationStepResponseDtoMetadata$inboundSchema:
   z.ZodType<
     ActivityNotificationStepResponseDtoMetadata,
@@ -174,7 +152,7 @@ export const ActivityNotificationStepResponseDto$inboundSchema: z.ZodType<
   replyCallback: z.lazy(() =>
     ActivityNotificationStepResponseDtoReplyCallback$inboundSchema
   ).optional(),
-  controlVariables: z.lazy(() => ControlVariables$inboundSchema).optional(),
+  controlVariables: z.record(z.any()).optional(),
   metadata: z.lazy(() =>
     ActivityNotificationStepResponseDtoMetadata$inboundSchema
   ).optional(),

@@ -17,7 +17,7 @@ export type MessageActionResult = {
    */
   payload?: { [k: string]: any } | undefined;
   /**
-   * Type of button for the action result
+   * Type of the button
    */
   type?: ButtonTypeEnum | undefined;
 };

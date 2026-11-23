@@ -3,14 +3,78 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  ThrottleControlDto,
-  ThrottleControlDto$inboundSchema,
-} from "./throttlecontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * The type of throttle window.
+ */
+export const ThrottleControlsMetadataResponseDtoType = {
+  Fixed: "fixed",
+  Dynamic: "dynamic",
+} as const;
+/**
+ * The type of throttle window.
+ */
+export type ThrottleControlsMetadataResponseDtoType = ClosedEnum<
+  typeof ThrottleControlsMetadataResponseDtoType
+>;
+
+/**
+ * The unit of time for the throttle window (required for fixed type).
+ */
+export const ThrottleControlsMetadataResponseDtoUnit = {
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+} as const;
+/**
+ * The unit of time for the throttle window (required for fixed type).
+ */
+export type ThrottleControlsMetadataResponseDtoUnit = ClosedEnum<
+  typeof ThrottleControlsMetadataResponseDtoUnit
+>;
+
+/**
+ * Control values specific to Throttle
+ */
+export type ThrottleControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * The type of throttle window.
+   */
+  type: ThrottleControlsMetadataResponseDtoType;
+  /**
+   * The amount of time for the throttle window (required for fixed type).
+   */
+  amount?: number | undefined;
+  /**
+   * The unit of time for the throttle window (required for fixed type).
+   */
+  unit?: ThrottleControlsMetadataResponseDtoUnit | undefined;
+  /**
+   * Key path to retrieve dynamic window value (required for dynamic type).
+   */
+  dynamicKey?: string | undefined;
+  /**
+   * The maximum number of executions allowed within the window. Defaults to 1.
+   */
+  threshold: number;
+  /**
+   * Optional key for grouping throttle rules. If not provided, defaults to workflow and subscriber combination.
+   */
+  throttleKey?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type ThrottleControlsMetadataResponseDto = {
   /**
@@ -24,8 +88,55 @@ export type ThrottleControlsMetadataResponseDto = {
   /**
    * Control values specific to Throttle
    */
-  values: ThrottleControlDto;
+  values?: ThrottleControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const ThrottleControlsMetadataResponseDtoType$inboundSchema:
+  z.ZodNativeEnum<typeof ThrottleControlsMetadataResponseDtoType> = z
+    .nativeEnum(ThrottleControlsMetadataResponseDtoType);
+
+/** @internal */
+export const ThrottleControlsMetadataResponseDtoUnit$inboundSchema:
+  z.ZodNativeEnum<typeof ThrottleControlsMetadataResponseDtoUnit> = z
+    .nativeEnum(ThrottleControlsMetadataResponseDtoUnit);
+
+/** @internal */
+export const ThrottleControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  ThrottleControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    type: ThrottleControlsMetadataResponseDtoType$inboundSchema.default(
+      "fixed",
+    ),
+    amount: z.number().optional(),
+    unit: ThrottleControlsMetadataResponseDtoUnit$inboundSchema.optional(),
+    dynamicKey: z.string().optional(),
+    threshold: z.number().default(1),
+    throttleKey: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function throttleControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  ThrottleControlsMetadataResponseDtoValues,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      ThrottleControlsMetadataResponseDtoValues$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'ThrottleControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const ThrottleControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +146,8 @@ export const ThrottleControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: ThrottleControlDto$inboundSchema,
+  values: z.lazy(() => ThrottleControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function throttleControlsMetadataResponseDtoFromJSON(
