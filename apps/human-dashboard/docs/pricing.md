@@ -28,7 +28,7 @@ Enterprise values at the final scroll position, including “Custom volume” an
 - Conversations: homepage-style bordered cards with numbered badges and inline title/description paragraphs, followed by a bordered examples table with a filled header. The fixed 24-hour rules, exclusions and billing-cycle attribution are unchanged.
 - FAQ: reuse existing `FaqRow`, including keyboard controls, focus treatment and reduced-motion behavior.
 
-Local conventions win: 960px `LandingShell`, `SectionFrame`, `LandingHeading`, Inter/Redaction/Geist Mono, existing `sapien-*` tokens, orange accent, static Tailwind utilities and `cn`. The new sections are Server Components. No dependencies, custom CSS or raster assets are added. Shared navigation changes are limited to a pricing link in the existing landing footer.
+Local conventions win: 960px `LandingShell`, `SectionFrame`, `LandingHeading`, Inter/Redaction/Geist Mono, existing `sapien-*` tokens, orange accent, static Tailwind utilities and `cn`. The new sections are Server Components. No dependencies, custom CSS or raster assets are added. Shared navigation changes were limited to a pricing link in the landing footer; since the shared navigation (README, "Header and footer") that link is in the header.
 
 ## Verification
 
@@ -52,7 +52,7 @@ The final production build, typecheck, 176 unit tests and all 187 Chromium brows
 
 Manual browser checks follow Hobby and Pro into the existing sign-in flow, open the Enterprise meeting page, exercise the comparison link and FAQ, and open/close the mobile menu. No account or booking was created. The production preview must use `localhost` to match the configured development auth origin.
 
-`/pricing` is registered in page metadata, the sitemap and the Markdown-request route allowlist. The shared landing footer links to pricing; its existing header/footer navigation arrays are unchanged. All existing browser consumers pass their regressions. [Production overview](screenshots/pricing.png) is retained for PR review. The older channel/agent exact Figma audits do not cover this new page.
+`/pricing` is registered in page metadata, the sitemap and the Markdown-request route allowlist. The shared landing footer linked to pricing, and its header/footer navigation arrays were unchanged; the shared header links to it now (README, "Header and footer"). All existing browser consumers pass their regressions. [Production overview](screenshots/pricing.png) is retained for PR review. The older channel/agent exact Figma audits do not cover this new page.
 
 ## Final desktop and mobile QA (November 11, 2026)
 

@@ -16,7 +16,6 @@ import {
   isShellCommand,
   setupPrompt,
 } from '@/data/channel-pages';
-import { NAVIGATION } from '@/data/sapien';
 import { geistMono, inter, redaction } from '@/lib/sapien-fonts';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +40,7 @@ export function LandingShell({ children }: { children: ReactNode }) {
         data-prime-audit-role="page"
         className="mx-auto w-[calc(100%-20px)] max-w-240 bg-sapien-background gap-0 sm:w-[calc(100%-2rem)] [&>header]:mb-px"
       >
-        <SiteHeader items={NAVIGATION} />
+        <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
       </div>
