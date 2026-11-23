@@ -9,7 +9,6 @@ import { postUnresolvedSubscriberAccessReply } from './post-unresolved-subscribe
 
 export type UnresolvedSubscriberAccess = 'admit' | 'drop' | 'refuse';
 
-/** What the subscriber-access gate does with a sender. Decides both dispatch and whether the agent may read the row. */
 export function decideUnresolvedSubscriberAccess(
   turn: Pick<ConversationTurn, 'event' | 'config' | 'subscriberResolution'>,
   emailSenderUnverified: boolean

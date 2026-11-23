@@ -151,7 +151,6 @@ export class ConversationActivityEntity {
   /** Populated only for the `TOOL_*` activity types — the tool call, decision, or result. */
   toolData?: ConversationActivityToolData;
 
-  /** An inbound message, edit or delete whose sender the agent's access setting refused. The agent never reads it. */
   accessRefused?: boolean;
 
   _environmentId: EnvironmentId;

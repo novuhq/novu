@@ -2300,7 +2300,6 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('victim@example.com');
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
-      // Refused, so the agent must not read the forged email in a later turn.
       expect(conversationService.persistInboundMessage.firstCall.args[0].accessRefused).to.equal(true);
     });
 

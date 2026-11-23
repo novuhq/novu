@@ -569,7 +569,6 @@ describe('Agent access rule #novu-v2', () => {
         slackThread = [];
       });
 
-      /** The thread as Slack shows it, so a mention seeds the messages Novu has not stored yet. */
       function sharedThread() {
         const newestFirst = [...slackThread].reverse();
 

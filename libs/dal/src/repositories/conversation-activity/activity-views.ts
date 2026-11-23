@@ -187,7 +187,6 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
   }
 }
 
-/** Views the agent reads. What a sender the access setting refused stays visible to them and the operator only. */
 function viewHidesAccessRefused(view: ActivityView): boolean {
   return view === 'llm_transcript' || view === 'agent_handoff' || view === 'approval_activities';
 }
