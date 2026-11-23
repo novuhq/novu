@@ -63,6 +63,11 @@ export class ContextCompatibilityInterceptor implements NestInterceptor {
       return next.handle();
     }
 
+    // Token sessions carry their signed context to every client version.
+    if (subscriberSession.authMethod === 'token') {
+      return next.handle();
+    }
+
     const clientVersion = request.headers['novu-client-version'];
 
     // Check if this is an old client

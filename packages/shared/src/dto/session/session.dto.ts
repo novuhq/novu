@@ -8,6 +8,7 @@ export interface ISubscriberJwtDto {
   environmentId: string;
   contextKeys: string[];
   aud: 'widget_user';
+  authMethod?: 'token';
 }
 
 export interface ISessionDto {

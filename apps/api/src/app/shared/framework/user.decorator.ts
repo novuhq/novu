@@ -11,6 +11,7 @@ export interface SubscriberSession extends SubscriberEntity {
   environmentId: string;
   contextKeys: string[];
   scheme: ApiAuthSchemeEnum;
+  authMethod?: 'token';
 }
 
 export const SubscriberSession = createParamDecorator((data, ctx) => {
