@@ -132,7 +132,7 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
       expect(identifiers).to.include(connectionDefault.identifier);
     });
 
-    it('should not allow deleting a channel connection from another context', async () => {
+    it('should not allow deleting a channel connection from another context, only the caller own', async () => {
       const connectionB = await createConnection(session, slackIntegrationIdentifier, [
         'project:project-b',
         'tenant:tenant-b',
@@ -157,6 +157,19 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
         identifier: connectionB.identifier,
       });
       expect(removed).to.be.null;
+
+      // The subscriber can still delete their own connection without context.
+      const ownNoContext = await createConnection(session, slackIntegrationIdentifier, []);
+
+      const ownNoContextDelete = await deleteChannelConnection(session, ownNoContext.identifier, noContextToken);
+      expect(ownNoContextDelete.status).to.equal(204);
+
+      const ownNoContextRemoved = await channelConnectionRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        identifier: ownNoContext.identifier,
+      });
+      expect(ownNoContextRemoved).to.be.null;
     });
   });
 
@@ -204,7 +217,7 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
       expect(getB.status).to.equal(404);
     });
 
-    it('should allow deleting a shared connection that matches the caller context', async () => {
+    it('should allow deleting a shared connection that matches the caller context, but not an environment-wide one', async () => {
       const sharedA = await createSharedConnection(session, slackIntegrationIdentifier, [
         'project:project-a',
         'tenant:tenant-a',
@@ -219,6 +232,22 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
         identifier: sharedA.identifier,
       });
       expect(removed).to.be.null;
+
+      // An environment-wide shared connection (no context) is visible but only admins may delete it.
+      const sharedEnvWide = await createSharedConnection(session, slackIntegrationIdentifier, []);
+
+      const visible = await getChannelConnection(session, sharedEnvWide.identifier, noContextToken);
+      expect(visible.status).to.equal(200);
+
+      const envWideDelete = await deleteChannelConnection(session, sharedEnvWide.identifier, noContextToken);
+      expect(envWideDelete.status).to.equal(404);
+
+      const envWideStillThere = await channelConnectionRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        identifier: sharedEnvWide.identifier,
+      });
+      expect(envWideStillThere).to.exist;
     });
 
     it('should narrow results by the connectionMode query param', async () => {
