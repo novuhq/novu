@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: |
         docker run -d --name redis -p 6379:6379 redis:latest
-        docker run -d --name mongodb -p 27017:27017 mongo:8.0
+        docker run -d --name mongodb -p 27017:27017 mongo:8
         docker run -d --name clickhouse -p 9000:9000 -p 8123:8123 -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 clickhouse/clickhouse-server:24.3-alpine
 
     - name: 🛟 Install dependencies
