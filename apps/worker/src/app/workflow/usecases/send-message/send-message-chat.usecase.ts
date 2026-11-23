@@ -108,6 +108,11 @@ const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
   ChatProviderIdEnum.PhotonImessage,
 ];
 
+type ActivePhoneIntegration = {
+  providerId: ChatProviderIdEnum;
+  integrationIdentifier?: string;
+};
+
 type UnifiedChannel = {
   type: 'new' | 'legacy';
   data: IntegrationEndpoints | IChannelSettings;
@@ -479,11 +484,9 @@ export class SendMessageChat extends SendMessageBase {
    * Returns the phone-based chat providers that have an active integration selectable for this job,
    * mirroring the selection performed later by {@link getAndValidateIntegration}.
    */
-  private async getActivePhoneBasedIntegrations(
-    command: SendMessageChannelCommand
-  ): Promise<Array<{ providerId: ChatProviderIdEnum; integrationIdentifier?: string }>> {
+  private async getActivePhoneBasedIntegrations(command: SendMessageChannelCommand): Promise<ActivePhoneIntegration[]> {
     const results = await Promise.all(
-      PHONE_BASED_CHAT_PROVIDERS.map(async (providerId) => {
+      PHONE_BASED_CHAT_PROVIDERS.map(async (providerId): Promise<ActivePhoneIntegration | null> => {
         const selection = await this.selectIntegration.execute(
           SelectIntegrationCommand.create({
             organizationId: command.organizationId,
@@ -499,9 +502,7 @@ export class SendMessageChat extends SendMessageBase {
       })
     );
 
-    return results.filter(
-      (result): result is { providerId: ChatProviderIdEnum; integrationIdentifier?: string } => result !== null
-    );
+    return results.filter((result): result is ActivePhoneIntegration => result !== null);
   }
 
   /**
