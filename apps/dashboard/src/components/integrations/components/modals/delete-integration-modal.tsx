@@ -291,7 +291,7 @@ function PrimaryOption({
     <label
       htmlFor={id}
       className={cn(
-        'border-stroke-soft flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0',
+        'border-stroke-soft flex items-center gap-2.5 border-b py-2.5 pl-2.5 pr-3 last:border-b-0',
         isPaused ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-bg-weak',
         isSelected && 'bg-bg-weak'
       )}
@@ -301,8 +301,9 @@ function PrimaryOption({
         value={integration._id}
         disabled={isPaused}
         className={cn(
-          'border-stroke-sub shrink-0 shadow-none',
-          'data-[state=checked]:border-primary-base data-[state=checked]:bg-primary-base [&_svg]:size-2 [&_svg]:fill-white'
+          'border-stroke-sub bg-bg-white size-4 shrink-0 border-[1.5px] shadow-none',
+          // Selected: 1.5px primary ring around an 8px primary dot, drawn with an inset white ring instead of the icon.
+          'data-[state=checked]:border-primary-base data-[state=checked]:bg-primary-base data-[state=checked]:shadow-[inset_0_0_0_2.5px_white] [&_svg]:hidden'
         )}
       />
       <span className="border-stroke-soft flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-[#f4f4f5]">
@@ -312,7 +313,7 @@ function PrimaryOption({
           className="size-4"
         />
       </span>
-      <span className="flex min-w-0 flex-1 flex-col">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-label-sm text-text-strong truncate">{integration.name}</span>
         <span className="text-code-xs text-text-soft font-code truncate">{integration.identifier}</span>
       </span>
