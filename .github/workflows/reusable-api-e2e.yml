@@ -67,12 +67,16 @@ jobs:
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
 
+      # The shard runner writes a JSON report (file and test times, flaky tests, failures) to
+      # NOVU_V2_E2E_REPORT_DIR and adds flaky and failed tests to the job summary.
       - name: Run Novu V2 CE E2E tests
         if: ${{ !inputs.ee }}
         env:
           NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
           NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
           NOVU_V2_MOCHA_REPORTER: dot
+          NOVU_V2_E2E_REPORT_DIR: ${{ runner.temp }}/api-e2e-report
+          NOVU_V2_E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2-ce
@@ -83,6 +87,17 @@ jobs:
           NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
           NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
           NOVU_V2_MOCHA_REPORTER: dot
+          NOVU_V2_E2E_REPORT_DIR: ${{ runner.temp }}/api-e2e-report
+          NOVU_V2_E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -e
           pnpm --filter @novu/api-service test:e2e:novu-v2
+
+      - name: Upload E2E report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: api-e2e-report-${{ inputs.ee && 'ee' || 'ce' }}-shard-${{ matrix.shard }}-of-${{ matrix.total }}
+          path: ${{ runner.temp }}/api-e2e-report/
+          if-no-files-found: warn
+          retention-days: 30

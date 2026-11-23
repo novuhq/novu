@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const { buildReport, renderSummary } = require('./novu-v2-e2e-report.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_SHARD_INDEX = 1;
@@ -11,6 +13,8 @@ const NOVU_V2_TAG = '#novu-v2';
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
+const MOCHA_RETRIES = 3;
+const REPORTER_PATH = path.join(__dirname, 'novu-v2-e2e-reporter.cjs');
 
 // CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
 // pinning, Stripe billing periods, RBAC permissions, translations, novu-app MCP)
@@ -31,10 +35,8 @@ const MOCHA_ARGS = [
   '--timeout',
   '30000',
   '--retries',
-  '3',
+  String(MOCHA_RETRIES),
   ...(process.env.CI ? ['--bail'] : []),
-  '--reporter',
-  MOCHA_REPORTER,
   '--grep',
   NOVU_V2_TAG,
   '--require',
@@ -237,12 +239,88 @@ function printShardSummary(shardIndex, totalShards, shard, ceOnly) {
   );
 }
 
-function runMocha(filePaths) {
-  return spawnSync(process.execPath, [require.resolve('mocha/bin/mocha'), ...MOCHA_ARGS, ...filePaths], {
-    cwd: ROOT,
-    env: process.env,
-    stdio: 'inherit',
-  });
+function getReporterArgs(rawResultsPath) {
+  return [
+    '--reporter',
+    REPORTER_PATH,
+    '--reporter-option',
+    `inner=${MOCHA_REPORTER}`,
+    '--reporter-option',
+    `output=${rawResultsPath}`,
+  ];
+}
+
+function runMocha(filePaths, rawResultsPath) {
+  return spawnSync(
+    process.execPath,
+    [require.resolve('mocha/bin/mocha'), ...MOCHA_ARGS, ...getReporterArgs(rawResultsPath), ...filePaths],
+    {
+      cwd: ROOT,
+      env: process.env,
+      stdio: 'inherit',
+    }
+  );
+}
+
+function getCommitSha() {
+  if (process.env.GITHUB_SHA) {
+    return process.env.GITHUB_SHA;
+  }
+
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' });
+
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function getReportMeta(shardIndex, totalShards, ceOnly) {
+  return {
+    shard: { index: shardIndex, total: totalShards },
+    edition: ceOnly ? 'ce' : 'ee',
+    retries: MOCHA_RETRIES,
+    commit: getCommitSha(),
+    headCommit: process.env.NOVU_V2_E2E_HEAD_SHA || null,
+    runId: process.env.GITHUB_RUN_ID || null,
+    runAttempt: process.env.GITHUB_RUN_ATTEMPT ? Number(process.env.GITHUB_RUN_ATTEMPT) : null,
+  };
+}
+
+/**
+ * Writes the shard report when NOVU_V2_E2E_REPORT_DIR is set, and adds it to the GitHub job summary when there is
+ * one. Never throws: a broken report must not hide the test result.
+ */
+function writeReport({ rawResultsPath, shard, shardIndex, totalShards, ceOnly, exitCode }) {
+  const reportDir = process.env.NOVU_V2_E2E_REPORT_DIR;
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+
+  if (!reportDir && !summaryPath) {
+    return;
+  }
+
+  try {
+    const report = buildReport({
+      root: ROOT,
+      rawPath: rawResultsPath,
+      assignedFiles: shard.files,
+      meta: getReportMeta(shardIndex, totalShards, ceOnly),
+      exitCode,
+    });
+
+    if (reportDir) {
+      const reportPath = path.resolve(
+        reportDir,
+        `novu-v2-e2e-${report.edition}-shard-${shardIndex}-of-${totalShards}.json`
+      );
+      fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+      fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+      console.log(`E2E report: ${reportPath}`);
+    }
+
+    if (summaryPath) {
+      fs.appendFileSync(summaryPath, renderSummary(report));
+    }
+  } catch (error) {
+    console.error(`Could not write the E2E report: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 function run() {
@@ -266,13 +344,20 @@ function run() {
     return;
   }
 
-  const result = runMocha(shard.files);
+  const rawResultsPath = path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'novu-v2-e2e-')),
+    `shard-${shardIndex}-of-${totalShards}.json`
+  );
+  const result = runMocha(shard.files, rawResultsPath);
+  const exitCode = result.status ?? 1;
+
+  writeReport({ rawResultsPath, shard, shardIndex, totalShards, ceOnly, exitCode: result.error ? null : exitCode });
 
   if (result.error) {
     throw result.error;
   }
 
-  process.exit(result.status ?? 1);
+  process.exit(exitCode);
 }
 
 try {
