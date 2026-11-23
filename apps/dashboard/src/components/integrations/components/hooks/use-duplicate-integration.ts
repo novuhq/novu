@@ -1,15 +1,17 @@
 import {
   EnvironmentTypeEnum,
+  getUnusedTwilioAuthCredentialKeys,
   type ICredentials,
   type IEnvironment,
   type IIntegration,
   type IProviderConfig,
+  SmsProviderIdEnum,
+  secureCredentials,
 } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createIntegration } from '@/api/integrations';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
-import { isSecureCredential } from '../utils/helpers';
 
 /** An environment the integration can be copied into, and the copy already there, if any. */
 export type DuplicateTarget = {
@@ -71,16 +73,24 @@ export function useDuplicateIntegration({
       if (!integration || !provider) throw new Error('Integration not found');
 
       const copySecrets = shouldCopySecrets(sourceEnvironment, target);
-      const secretKeys = new Set<string>(provider.credentials.filter(isSecureCredential).map((cred) => cred.key));
-      const credentials = Object.fromEntries(
-        Object.entries(integration.credentials ?? {}).filter(
-          ([key, value]) => hasValue(value) && (copySecrets || !secretKeys.has(key))
-        )
+      // The keys the API encrypts at rest, so `headers` (which can carry an auth token) is left behind too.
+      const secretKeys = new Set<string>(secureCredentials);
+      const source = Object.entries(integration.credentials ?? {}).filter(([, value]) => hasValue(value));
+      const credentials = Object.fromEntries(source.filter(([key]) => copySecrets || !secretKeys.has(key)));
+
+      // A secret the source uses didn't come along, even an optional one (MS Teams' bot app needs its secretKey).
+      const droppedSecret = source.some(([key]) => !hasValue(credentials[key]));
+      // Members who can't read credentials get them back empty. Twilio needs only its chosen auth method's keys.
+      const unusedKeys = new Set<string>(
+        provider.id === SmsProviderIdEnum.Twilio
+          ? getUnusedTwilioAuthCredentialKeys(credentials.authMethod as string | undefined)
+          : []
       );
-      // Members who can't read credentials get them back empty, so the copy can be missing secrets either way.
-      const needsSecrets = provider.credentials.some(
-        (cred) => isSecureCredential(cred) && cred.required && !hasValue(credentials[cred.key])
+      const missingRequiredSecret = provider.credentials.some(
+        (cred) =>
+          secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
       );
+      const needsSecrets = droppedSecret || missingRequiredSecret;
 
       const { data } = await createIntegration(
         {

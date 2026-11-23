@@ -6,7 +6,7 @@ import {
   PermissionsEnum,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -199,12 +199,15 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: integrationIdToOpen }), { replace: true });
 
   const isWriting = isUpdating || isSettingPrimary || isDeleting;
+  // Read when a navigation runs, so one started after a request (a duplicate) sees edits made while it ran.
+  const navigationGuard = useRef({ isWriting, isDirty: formState.isDirty });
+  navigationGuard.current = { isWriting, isDirty: formState.isDirty };
 
   /** Leaves this integration, after confirming when it has unsaved changes. */
   const requestNavigation = (run: () => void) => {
     // A save that finishes after a switch would close the drawer on the next integration's edits.
-    if (isWriting) return;
-    if (formState.isDirty) {
+    if (navigationGuard.current.isWriting) return;
+    if (navigationGuard.current.isDirty) {
       setPendingNavigation({ run });
       setShowUnsavedDialog(true);
 
