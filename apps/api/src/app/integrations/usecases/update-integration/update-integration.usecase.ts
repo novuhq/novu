@@ -15,6 +15,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum, IntegrationHealthStatusEnum } from '@novu/shared';
+import { isEqual } from 'lodash';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
@@ -278,7 +279,11 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(stampedCredentials);
 
       // New credentials are the Reconnect fix: clear the Error. The next send or test confirms or re-flags it.
-      if (existingIntegration.health?.status === IntegrationHealthStatusEnum.ERROR) {
+      // The dashboard always submits every credential, so a rename alone mustn't count as a reconnect.
+      const credentialsChanged = Object.entries(stampedCredentials).some(
+        ([key, value]) => !isEqual(value, existingCredentials?.[key])
+      );
+      if (credentialsChanged && existingIntegration.health?.status === IntegrationHealthStatusEnum.ERROR) {
         updatePayload.health = {
           status: IntegrationHealthStatusEnum.HEALTHY,
           updatedAt: new Date().toISOString(),

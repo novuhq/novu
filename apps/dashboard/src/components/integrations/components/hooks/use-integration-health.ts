@@ -36,11 +36,13 @@ export function canVerifyIntegration(integration: IIntegration) {
 function toHealth(
   integration: IIntegration,
   result: ITestIntegrationConnectionResponse | undefined,
-  isChecking: boolean
+  isChecking: boolean,
+  /** When `result` was fetched, in ms. */
+  checkedAt: number
 ): IntegrationHealth {
   if (!integration.active) return { tone: 'neutral', label: 'Paused', needsReconnect: false };
   if (isChecking) return { tone: 'neutral', label: 'Verifying…', needsReconnect: false };
-  if (isIntegrationFailing(integration) && result?.status !== IntegrationConnectionStatusEnum.VALID) {
+  if (isIntegrationFailing(integration) && !isNewerValidCheck(integration, result, checkedAt)) {
     return getStoredErrorHealth(integration);
   }
 
@@ -58,6 +60,18 @@ function toHealth(
       // which is all we know, so it isn't shown as delivering.
       return { tone: 'neutral', label: 'Active', needsReconnect: false };
   }
+}
+
+/** A passing check counts over a stored Error only when it ran after that failure was recorded. */
+function isNewerValidCheck(
+  integration: IIntegration,
+  result: ITestIntegrationConnectionResponse | undefined,
+  checkedAt: number
+) {
+  if (result?.status !== IntegrationConnectionStatusEnum.VALID) return false;
+  const failedAt = Date.parse(integration.health?.failedAt ?? '');
+
+  return Number.isFinite(failedAt) && checkedAt > failedAt;
 }
 
 function describeFailure(integration: IIntegration) {
@@ -122,7 +136,7 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
     integrations.map((integration, index) => {
       const query = queries[index];
 
-      return [integration._id, toHealth(integration, query?.data, !!query?.isFetching)];
+      return [integration._id, toHealth(integration, query?.data, !!query?.isFetching, query?.dataUpdatedAt ?? 0)];
     })
   );
 

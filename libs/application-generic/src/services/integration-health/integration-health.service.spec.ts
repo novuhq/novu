@@ -103,6 +103,29 @@ describe('IntegrationHealthService', () => {
       expect(integrationRepository.update.called).to.equal(false);
     });
 
+    it('only writes while the integration is as the send loaded it', async () => {
+      const { service, integrationRepository } = setup();
+      const loadedAt = new Date('2026-11-20T10:00:00.000Z');
+
+      await service.recordSendFailure(integration({ updatedAt: loadedAt } as Partial<IntegrationEntity>), {
+        response: { status: 401 },
+      });
+
+      const [query] = integrationRepository.update.firstCall.args;
+      expect(query.updatedAt).to.deep.equal(loadedAt);
+    });
+
+    it('leaves MS Teams to Test connection, since a failed token fetch also ends in a 401', async () => {
+      const { service, integrationRepository } = setup();
+
+      await service.recordSendFailure(
+        integration({ providerId: ChatProviderIdEnum.MsTeams, channel: ChannelTypeEnum.CHAT }),
+        new Error('MSTEAMS_INVALID_CREDENTIALS: Invalid bot credentials or token')
+      );
+
+      expect(integrationRepository.update.called).to.equal(false);
+    });
+
     it('never throws when the write fails', async () => {
       const { service, integrationRepository } = setup();
       integrationRepository.update.rejects(new Error('mongo down'));

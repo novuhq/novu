@@ -44,8 +44,9 @@ function writeDismissed(storageKey: string, dismissed: DismissedFailures) {
  * integration to reconnect when it's in the current one.
  */
 export function IntegrationHealthBanners() {
-  const { currentUser } = useAuth();
-  const storageKey = `${DISMISSED_STORAGE_PREFIX}:${currentUser?._id ?? 'anonymous'}`;
+  const { currentUser, currentOrganization } = useAuth();
+  // Per user and organization, so closing a banner in one organization keeps the other's dismissals.
+  const storageKey = `${DISMISSED_STORAGE_PREFIX}:${currentUser?._id ?? 'anonymous'}:${currentOrganization?._id ?? 'none'}`;
   const failing = useFailingIntegrations();
   // Bumped on each close so the stored map is read again; re-read too once the user loads.
   const [version, setVersion] = useState(0);

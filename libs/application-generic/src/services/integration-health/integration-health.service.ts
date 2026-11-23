@@ -22,13 +22,13 @@ const NOVU_MANAGED_PROVIDERS: ReadonlySet<string> = new Set([
 /**
  * Chat providers that authenticate sends with the integration's own credentials. The others (Slack, Discord,
  * webhooks…) send with a token or URL stored on each subscriber's endpoint, so a rejection there is about one
- * recipient's workspace, not the integration.
+ * recipient's workspace, not the integration. MS Teams is left to Test connection: a failed bot-token fetch
+ * (an Azure AD outage included) sends an empty token, so its 401 doesn't prove the secret is wrong.
  */
 const CHAT_PROVIDERS_WITH_INTEGRATION_CREDENTIALS: ReadonlySet<string> = new Set([
   ChatProviderIdEnum.Telegram,
   ChatProviderIdEnum.WhatsAppBusiness,
   ChatProviderIdEnum.Line,
-  ChatProviderIdEnum.MsTeams,
 ]);
 
 const HEALTH_CHANNELS: ReadonlySet<string> = new Set([
@@ -204,6 +204,9 @@ export class IntegrationHealthService {
           _id: integration._id,
           _environmentId: integration._environmentId,
           _organizationId: integration._organizationId,
+          // Only while the integration is as loaded: a send or check that finishes after the user saved new
+          // credentials must not judge them. Health writes don't touch `updatedAt`, so racing flips still match.
+          ...getLoadedRevision(integration),
           ...condition,
         },
         { $set: { health } },
@@ -230,6 +233,15 @@ export class IntegrationHealthService {
       );
     }
   }
+}
+
+function getLoadedRevision(integration: IntegrationEntity): { updatedAt?: Date } {
+  const { updatedAt } = integration as IntegrationEntity & { updatedAt?: unknown };
+  if (!(updatedAt instanceof Date) && typeof updatedAt !== 'string') return {};
+
+  const date = new Date(updatedAt);
+
+  return Number.isNaN(date.getTime()) ? {} : { updatedAt: date };
 }
 
 /** Reads the HTTP status off the error shapes provider SDKs throw (axios, got, Twilio, Vonage, SendGrid, AWS v3). */

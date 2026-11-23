@@ -7,18 +7,24 @@ import { QueryKeys } from '../utils/query-keys';
 export function useFetchIntegrations({
   refetchInterval,
   refetchOnWindowFocus,
+  enabled = true,
 }: {
   refetchInterval?: number;
   refetchOnWindowFocus?: boolean;
+  enabled?: boolean;
 } = {}) {
   const { currentEnvironment } = useEnvironment();
 
   const { data: integrations, ...rest } = useQuery<IIntegration[]>({
     queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id],
-    queryFn: () => getIntegrations({ environment: currentEnvironment! }),
+    queryFn: () => {
+      if (!currentEnvironment) throw new Error('No environment selected');
+
+      return getIntegrations({ environment: currentEnvironment });
+    },
     refetchInterval,
     refetchOnWindowFocus,
-    enabled: !!currentEnvironment?._id,
+    enabled: enabled && !!currentEnvironment?._id,
   });
 
   return {
