@@ -42,6 +42,8 @@ export type MakePrimaryModalProps = {
   /** A primary can't have routing conditions, so making it primary removes them. */
   removesConditions?: boolean;
   isLoading?: boolean;
+  /** Centered on the manage drawer by default; `page` when opened from an integration card. */
+  centerOn?: 'drawer' | 'page';
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -56,6 +58,7 @@ export function MakePrimaryModal({
   environments,
   removesConditions,
   isLoading,
+  centerOn,
   onCancel,
   onConfirm,
 }: MakePrimaryModalProps) {
@@ -84,6 +87,7 @@ export function MakePrimaryModal({
       confirmVariant="primary"
       isLoading={isLoading}
       className="w-[440px]"
+      centerOn={centerOn}
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

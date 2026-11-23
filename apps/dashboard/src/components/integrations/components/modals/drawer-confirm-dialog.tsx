@@ -27,6 +27,8 @@ export type DrawerConfirmDialogProps = {
   isLoading?: boolean;
   /** Dialog width in the design: 400px or 440px. */
   className?: string;
+  /** Over the manage drawer it's centered on the drawer; elsewhere (an integration card) on the page. */
+  centerOn?: 'drawer' | 'page';
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -44,6 +46,7 @@ export function DrawerConfirmDialog({
   confirmVariant,
   isLoading,
   className,
+  centerOn = 'drawer',
   onCancel,
   onConfirm,
 }: DrawerConfirmDialogProps) {
@@ -53,7 +56,7 @@ export function DrawerConfirmDialog({
         hideCloseButton
         className={cn(
           'w-[400px] max-w-[calc(100vw-2rem)] gap-0 overflow-hidden rounded-xl border-0 p-0',
-          CENTER_ON_DRAWER,
+          centerOn === 'drawer' && CENTER_ON_DRAWER,
           'shadow-[0_16px_32px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.08)]',
           className
         )}

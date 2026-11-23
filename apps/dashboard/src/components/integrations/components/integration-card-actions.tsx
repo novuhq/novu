@@ -37,6 +37,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
+import { MakePrimaryModal } from './modals/make-primary-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
 
@@ -60,10 +61,11 @@ type IntegrationCardActionsProps = {
 export function IntegrationCardActions({ integration, onEdit }: IntegrationCardActionsProps) {
   const has = useHasPermission();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, environments = [] } = useEnvironment();
   const { integrations = [] } = useFetchIntegrations();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPauseOpen, setIsPauseOpen] = useState(false);
+  const [isMakePrimaryOpen, setIsMakePrimaryOpen] = useState(false);
   // Setting primary clears an integration's routing conditions; this holds the action awaiting that confirmation.
   const [conditionsLossAction, setConditionsLossAction] = useState<{ run: () => void } | null>(null);
 
@@ -89,6 +91,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     setConditionsLossAction(null);
     setIsDeleteOpen(false);
     setIsPauseOpen(false);
+    setIsMakePrimaryOpen(false);
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
   };
@@ -165,7 +168,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     }
   };
 
-  const { mutate: makePrimary } = useMutation({
+  const { mutate: makePrimary, isPending: isMakingPrimary } = useMutation({
     mutationFn: async () => {
       if (!currentEnvironment) throw new Error('No environment selected');
 
@@ -249,10 +252,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
           </DropdownMenuItem>
 
           {canWrite && supportsPrimary && integration.active && !integration.primary && (
-            <DropdownMenuItem
-              className={ITEM_CLASS}
-              onSelect={() => confirmConditionsLoss(integration, () => makePrimary())}
-            >
+            <DropdownMenuItem className={ITEM_CLASS} onSelect={() => setIsMakePrimaryOpen(true)}>
               <RiStarLine />
               Make primary
             </DropdownMenuItem>
@@ -280,6 +280,21 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <MakePrimaryModal
+        isOpen={isMakePrimaryOpen}
+        newPrimaryName={integration.name}
+        currentPrimaryName={otherInChannel.find((other) => other.primary)?.name}
+        channel={integration.channel}
+        environment={currentEnvironment}
+        environments={environments}
+        // The modal says the conditions go, so it doesn't need the separate "Remove conditions?" step.
+        removesConditions={hasRoutingConditions(integration)}
+        isLoading={isMakingPrimary}
+        centerOn="page"
+        onCancel={() => setIsMakePrimaryOpen(false)}
+        onConfirm={() => makePrimary()}
+      />
 
       <DeleteIntegrationModal
         isOpen={isDeleteOpen}
