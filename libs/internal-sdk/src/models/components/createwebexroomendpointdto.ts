@@ -33,6 +33,10 @@ export type CreateWebexRoomEndpointDto = {
    * The subscriber ID to which the channel endpoint is linked
    */
   subscriberId: string;
+  /**
+   * When true, the subscriber is created if it does not exist yet (existing subscribers are never modified). When false or omitted, an unknown subscriberId returns 404.
+   */
+  createSubscriberIfMissing?: boolean | undefined;
   context?:
     | { [k: string]: CreateWebexRoomEndpointDtoContext2 | string }
     | undefined;
@@ -109,6 +113,7 @@ export function createWebexRoomEndpointDtoContextToJSON(
 export type CreateWebexRoomEndpointDto$Outbound = {
   identifier?: string | undefined;
   subscriberId: string;
+  createSubscriberIfMissing: boolean;
   context?: {
     [k: string]: CreateWebexRoomEndpointDtoContext2$Outbound | string;
   } | undefined;
@@ -126,6 +131,7 @@ export const CreateWebexRoomEndpointDto$outboundSchema: z.ZodType<
 > = z.object({
   identifier: z.string().optional(),
   subscriberId: z.string(),
+  createSubscriberIfMissing: z.boolean().default(false),
   context: z.record(
     z.union([
       z.lazy(() => CreateWebexRoomEndpointDtoContext2$outboundSchema),

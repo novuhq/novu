@@ -75,7 +75,7 @@ export function useChannelConnectionsCreateMutation(
 }
 
 export function mutationKeyChannelConnectionsCreate(): MutationKey {
-  return ["@novu/api", "Channel Connections", "create"];
+  return ["@novu/api", "ChannelConnections", "create"];
 }
 
 export function buildChannelConnectionsCreateMutation(

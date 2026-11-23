@@ -19,6 +19,7 @@ export const Channel = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
 } as const;
 /**
  * The channel type (email, sms, push, chat, etc.).
@@ -52,6 +53,7 @@ export const GetChannelConnectionResponseDtoProviderId = {
   EmailWebhook: "email-webhook",
   Braze: "braze",
   NovuEmailAgent: "novu-email-agent",
+  AgentEmailInbox: "agent-email-inbox",
   Nexmo: "nexmo",
   Plivo: "plivo",
   Sms77: "sms77",
@@ -89,6 +91,7 @@ export const GetChannelConnectionResponseDtoProviderId = {
   Sinch: "sinch",
   IsendproSms: "isendpro-sms",
   CmTelecom: "cm-telecom",
+  RuachSms: "ruach-sms",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",
@@ -100,6 +103,7 @@ export const GetChannelConnectionResponseDtoProviderId = {
   Novu: "novu",
   Slack: "slack",
   Discord: "discord",
+  GoogleChat: "google-chat",
   Msteams: "msteams",
   WebexMessaging: "webex-messaging",
   Mattermost: "mattermost",
@@ -114,9 +118,15 @@ export const GetChannelConnectionResponseDtoProviderId = {
   NovuSlack: "novu-slack",
   Telegram: "telegram",
   Sendblue: "sendblue",
+  PhotonImessage: "photon-imessage",
+  NovuWebChat: "novu-web-chat",
   Anthropic: "anthropic",
   NovuAnthropic: "novu-anthropic",
   AnthropicAws: "anthropic-aws",
+  Pagerduty: "pagerduty",
+  Opsgenie: "opsgenie",
+  Grafana: "grafana",
+  ToolWebhook: "tool-webhook",
 } as const;
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).

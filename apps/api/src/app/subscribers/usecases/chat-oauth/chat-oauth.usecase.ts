@@ -3,11 +3,13 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
+  IApiKey,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
+import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
 import {
@@ -33,7 +35,8 @@ export class ChatOauth {
     private environmentRepository: EnvironmentRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagsService: FeatureFlagsService,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private apiKeyRevocationService: ApiKeyRevocationService
   ) {
     this.logger.setContext(ChatOauth.name);
   }
@@ -60,7 +63,11 @@ export class ChatOauth {
 
     assertLegacyChatOauthHmac({
       isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
-      apiKeys,
+      apiKeys: await this.apiKeyRevocationService.getSigningKeys({
+        organizationId: integration._organizationId,
+        environmentId: command.environmentId,
+        apiKeys,
+      }),
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
@@ -86,7 +93,7 @@ export class ChatOauth {
         hmacHash: command.hmacHash,
         timestamp: Date.now(),
       },
-      apiKeys[0]
+      apiKeys[0].key
     );
 
     return this.getOAuthUrl(
@@ -153,14 +160,14 @@ export class ChatOauth {
     return integration;
   }
 
-  private async getEnvironmentApiKeys(environmentId: string): Promise<string[]> {
+  private async getEnvironmentApiKeys(environmentId: string): Promise<IApiKey[]> {
     const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
 
     if (!apiKeys.length) {
       throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
-    return apiKeys.map(({ key }) => key);
+    return apiKeys;
   }
 }
 

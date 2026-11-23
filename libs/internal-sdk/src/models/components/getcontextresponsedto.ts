@@ -21,6 +21,10 @@ export type GetContextResponseDto = {
    */
   data: { [k: string]: any };
   /**
+   * Bridge URL override for agent connect, if configured on this context
+   */
+  bridgeUrl?: string | undefined;
+  /**
    * Creation timestamp
    */
   createdAt: string;
@@ -39,6 +43,7 @@ export const GetContextResponseDto$inboundSchema: z.ZodType<
   type: z.string(),
   id: z.string(),
   data: z.record(z.any()),
+  bridgeUrl: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -36,6 +36,10 @@ export type AgentIntegrationResponseDto = {
    * Cloud only. `true` when this channel type (provider) falls outside the organization plan active-channel limit (by connection order). Active channels are counted per channel type, so multiple integrations of the same provider (e.g. several Slack workspaces) count as a single active channel. Over-limit channels keep their configuration but the agent will not respond on them until the plan is upgraded or older channel types are disconnected.
    */
   exceedsPlanLimit?: boolean | undefined;
+  /**
+   * `true` when at least one person has linked their chat on this integration (it has a channel endpoint), so the agent has someone to reach there. Only returned by the list, and only when true. Email has no channel endpoints, so it never carries the flag.
+   */
+  hasChannelEndpoints?: boolean | undefined;
 };
 
 /** @internal */
@@ -70,6 +74,7 @@ export const AgentIntegrationResponseDto$inboundSchema: z.ZodType<
   createdAt: z.string(),
   updatedAt: z.string(),
   exceedsPlanLimit: z.boolean().optional(),
+  hasChannelEndpoints: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

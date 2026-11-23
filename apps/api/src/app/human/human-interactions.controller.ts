@@ -54,6 +54,7 @@ import {
   RequestAddressVerificationDto,
   RequestAddressVerificationResponseDto,
 } from './dtos/human-invite.dto';
+import type { HumanMessageUsageResponseDto } from './dtos/human-message-usage.dto';
 import {
   ChangeOperatorEmailRequestDto,
   SetOperatorDefaultChannelRequestDto,
@@ -92,6 +93,7 @@ import {
   readHostId,
   readHostVia,
 } from './services/human-host-status.service';
+import { HumanMessageQuotaService } from './services/human-message-quota.service';
 import { HumanOperatorService } from './services/human-operator.service';
 import { CancelInteractionCommand } from './usecases/cancel-interaction/cancel-interaction.command';
 import { CancelInteraction } from './usecases/cancel-interaction/cancel-interaction.usecase';
@@ -119,8 +121,6 @@ import { RequestAddressVerificationCommand } from './usecases/request-address-ve
 import { RequestAddressVerification } from './usecases/request-address-verification/request-address-verification.usecase';
 import { SendHumanTestEmailCommand } from './usecases/send-human-test-email/send-human-test-email.command';
 import { SendHumanTestEmail } from './usecases/send-human-test-email/send-human-test-email.usecase';
-import { SetContactListenToCommand } from './usecases/set-contact-listen-to/set-contact-listen-to.command';
-import { SetContactListenTo } from './usecases/set-contact-listen-to/set-contact-listen-to.usecase';
 import { SetOperatorDefaultChannelCommand } from './usecases/set-operator-default-channel/set-operator-default-channel.command';
 import { SetOperatorDefaultChannel } from './usecases/set-operator-default-channel/set-operator-default-channel.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
@@ -130,6 +130,8 @@ import {
 } from './usecases/setup-human-relay/setup-human-relay.usecase';
 import { ShowHumanAgentCardCommand } from './usecases/show-human-agent-card/show-human-agent-card.command';
 import { ShowHumanAgentCard } from './usecases/show-human-agent-card/show-human-agent-card.usecase';
+import { UpdateContactCommand } from './usecases/update-contact/update-contact.command';
+import { UpdateContact } from './usecases/update-contact/update-contact.usecase';
 import { UpdateHumanAgentCommand } from './usecases/update-human-agent/update-human-agent.command';
 import { UpdateHumanAgent } from './usecases/update-human-agent/update-human-agent.usecase';
 
@@ -160,9 +162,10 @@ export class HumanInteractionsController {
     private readonly sendHumanTestEmailUsecase: SendHumanTestEmail,
     private readonly inboxAddresses: AgentInboxAddressService,
     private readonly hostStatus: HumanHostStatusService,
-    private readonly setContactListenToUsecase: SetContactListenTo,
+    private readonly updateContactUsecase: UpdateContact,
     private readonly showHumanAgentCardUsecase: ShowHumanAgentCard,
-    private readonly agentInboxFeatures: AgentInboxFeaturesService
+    private readonly agentInboxFeatures: AgentInboxFeaturesService,
+    private readonly messageQuota: HumanMessageQuotaService
   ) {}
 
   @Post('/interactions')
@@ -327,9 +330,10 @@ export class HumanInteractionsController {
   }
 
   /**
-   * Turns a contact's "Listen to" switch on or off: whether a message from them may start one of the agent's hosts
-   * (`agentinbox listen`). Only the operator, on the dashboard; a host gets 403 `dashboard_only`. The operator
-   * always can, so their own contact is a 400.
+   * Turns a contact's switches on or off. "Listen to": whether a message from them may start one of the agent's
+   * hosts (`agentinbox listen`). "Full access": whether such a message starts it with everything the operator's get,
+   * the hosts asking them, not the operator. Only the operator, on the dashboard; a host gets 403 `dashboard_only`.
+   * The operator always has both, so their own contact is a 400.
    */
   @Patch('/contacts/:subscriberId')
   @KeylessAccessible()
@@ -341,15 +345,19 @@ export class HumanInteractionsController {
     @Body() body: UpdateContactRequestDto,
     @Headers() headers: Record<string, unknown>
   ): Promise<UpdateContactResponseDto> {
-    assertFromHumanDashboard(headers, 'Only the operator can choose whom the agent listens to, on agentinbox.md.');
+    assertFromHumanDashboard(
+      headers,
+      'Only the operator can choose whom the agent listens to, and who has full access, on agentinbox.md.'
+    );
 
-    return this.setContactListenToUsecase.execute(
-      SetContactListenToCommand.create({
+    return this.updateContactUsecase.execute(
+      UpdateContactCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         subscriberId,
         listenTo: body.listenTo,
+        fullAccess: body.fullAccess,
         agentIdentifier: body.agentIdentifier,
       })
     );
@@ -401,6 +409,19 @@ export class HumanInteractionsController {
     ]);
 
     return { ...address, canPickLook };
+  }
+
+  /**
+   * How many messages the account's agents sent to people today and this month, out of how many they may, as the
+   * dashboard shows it. Both are `null` where nothing is counted: self-hosted, or without the cache.
+   */
+  @Get('/message-usage')
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  async getMessageUsage(@UserSession() user: UserSessionData): Promise<HumanMessageUsageResponseDto> {
+    const usage = await this.messageQuota.usage(user.organizationId);
+
+    return { daily: usage?.daily ?? null, monthly: usage?.monthly ?? null };
   }
 
   @Post('/setup')

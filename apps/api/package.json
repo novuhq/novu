@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.20.0",
+  "version": "3.21.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -149,7 +149,7 @@
     "tar": "^7.5.19",
     "tldts": "^7.0.28",
     "uuid": "^11.1.1",
-    "zod": "^3.23.8",
+    "zod": "^4.6.6",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {

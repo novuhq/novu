@@ -13,6 +13,7 @@ export type SubscribersV1ControllerGetNotificationsFeedRequest = {
   subscriberId: string;
   page?: number | undefined;
   limit?: number | undefined;
+  feedIdentifier?: Array<string> | undefined;
   read?: boolean | undefined;
   seen?: boolean | undefined;
   /**
@@ -35,6 +36,7 @@ export type SubscribersV1ControllerGetNotificationsFeedRequest$Outbound = {
   subscriberId: string;
   page?: number | undefined;
   limit: number;
+  feedIdentifier?: Array<string> | undefined;
   read?: boolean | undefined;
   seen?: boolean | undefined;
   payload?: string | undefined;
@@ -51,6 +53,7 @@ export const SubscribersV1ControllerGetNotificationsFeedRequest$outboundSchema:
     subscriberId: z.string(),
     page: z.number().optional(),
     limit: z.number().default(10),
+    feedIdentifier: z.array(z.string()).optional(),
     read: z.boolean().optional(),
     seen: z.boolean().optional(),
     payload: z.string().optional(),

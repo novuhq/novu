@@ -9,6 +9,10 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import { SubscriberDto, SubscriberDto$inboundSchema } from "./subscriberdto.js";
 import {
+  SubscriptionPreferenceDto,
+  SubscriptionPreferenceDto$inboundSchema,
+} from "./subscriptionpreferencedto.js";
+import {
   TopicResponseDto,
   TopicResponseDto$inboundSchema,
 } from "./topicresponsedto.js";
@@ -38,6 +42,10 @@ export type TopicSubscriptionResponseDto = {
    * Context keys that scope this subscription (e.g., tenant:org-a, project:proj-123)
    */
   contextKeys?: Array<string> | undefined;
+  /**
+   * The preferences for workflows in this subscription
+   */
+  preferences?: Array<SubscriptionPreferenceDto> | undefined;
 };
 
 /** @internal */
@@ -52,6 +60,7 @@ export const TopicSubscriptionResponseDto$inboundSchema: z.ZodType<
   topic: TopicResponseDto$inboundSchema,
   subscriber: SubscriberDto$inboundSchema,
   contextKeys: z.array(z.string()).optional(),
+  preferences: z.array(SubscriptionPreferenceDto$inboundSchema).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

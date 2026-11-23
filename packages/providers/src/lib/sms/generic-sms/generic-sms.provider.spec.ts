@@ -11,7 +11,10 @@ const ORIGINAL_SELF_HOSTED = process.env.IS_SELF_HOSTED;
 let server: http.Server;
 let serverUrl: string;
 let directServerUrl: string;
-let lastRequest: { url: string; method: string; headers: http.IncomingHttpHeaders; body: string } | null = null;
+type RecordedRequest = { url: string; method: string; headers: http.IncomingHttpHeaders; body: string };
+
+let lastRequest: RecordedRequest | null = null;
+let requests: RecordedRequest[] = [];
 
 function restoreEnv(key: string, value: string | undefined) {
   if (value === undefined) {
@@ -23,6 +26,7 @@ function restoreEnv(key: string, value: string | undefined) {
 
 beforeEach(async () => {
   lastRequest = null;
+  requests = [];
   server = http.createServer((req, res) => {
     const chunks: Buffer[] = [];
     req.on('data', (c: Buffer) => chunks.push(c));
@@ -33,6 +37,15 @@ beforeEach(async () => {
         headers: req.headers,
         body: Buffer.concat(chunks).toString('utf8'),
       };
+      requests.push(lastRequest);
+
+      if (req.url?.startsWith('/auth')) {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ data: { 'x-auth-token': 'issued-token' } }));
+
+        return;
+      }
+
       const messageId = crypto.randomUUID();
       const messageDate = new Date().toISOString();
       res.writeHead(200, { 'content-type': 'application/json' });
@@ -58,10 +71,8 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-describe('with SSRF protection (enterprise cloud)', () => {
+describe('with an allow-listed target', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
-    process.env.IS_SELF_HOSTED = 'false';
     process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
     const realLookup = dns.promises.lookup.bind(dns.promises);
     vi.spyOn(dns.promises, 'lookup').mockImplementation(((hostname: string, opts: unknown): unknown => {
@@ -78,8 +89,6 @@ describe('with SSRF protection (enterprise cloud)', () => {
   afterAll(() => {
     vi.restoreAllMocks();
     restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
-    restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
-    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
   });
 
   test('should trigger generic-sms library correctly', async () => {
@@ -107,6 +116,37 @@ describe('with SSRF protection (enterprise cloud)', () => {
     expect(lastRequest?.headers.apikey).toBe('123456');
     expect(result.id).toBeDefined();
     expect(result.date).toBeDefined();
+  });
+
+  test('should send login credentials only to the auth URL when authenticating by token', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: `${serverUrl}send`,
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      secretKeyRequestHeader: 'secretKey',
+      secretKey: 'top-secret',
+      from: 'sender-id',
+      authenticateByToken: true,
+      domain: `${serverUrl}auth`,
+      authenticationTokenKey: 'x-auth-token',
+    });
+
+    await provider.sendMessage({
+      to: '+1234567890',
+      content: 'SMS Content form Generic SMS Provider',
+    });
+
+    expect(requests).toHaveLength(2);
+    const [authRequest, sendRequest] = requests;
+
+    expect(authRequest.url).toBe('/auth');
+    expect(authRequest.headers.apikey).toBe('123456');
+    expect(authRequest.headers.secretkey).toBe('top-secret');
+
+    expect(sendRequest.url).toBe('/send');
+    expect(sendRequest.headers['x-auth-token']).toBe('issued-token');
+    expect(sendRequest.headers.apikey).toBeUndefined();
+    expect(sendRequest.headers.secretkey).toBeUndefined();
   });
 
   test('should trigger generic-sms library correctly with _passthrough', async () => {
@@ -173,18 +213,20 @@ describe('with SSRF protection (enterprise cloud)', () => {
   });
 });
 
-describe('without SSRF protection (self-hosted)', () => {
+describe('on self-hosted builds', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.NOVU_ENTERPRISE;
     process.env.IS_SELF_HOSTED = 'true';
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
   });
 
   afterAll(() => {
     restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
     restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+    restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
   });
 
-  test('should allow requests to private IPs via axios', async () => {
+  test('should block loopback targets', async () => {
     const provider = new GenericSmsProvider({
       baseUrl: directServerUrl,
       apiKeyRequestHeader: 'apiKey',
@@ -194,12 +236,57 @@ describe('without SSRF protection (self-hosted)', () => {
       datePath: 'message.date',
     });
 
-    const result = await provider.sendMessage({
-      to: '+1234567890',
-      content: 'SMS Content form Generic SMS Provider',
+    await expect(
+      provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      })
+    ).rejects.toThrow(/Generic SMS URL blocked/);
+
+    expect(lastRequest).toBeNull();
+  });
+
+  test('should block the cloud metadata endpoint used as the auth URL', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: 'https://sms.example.com/send',
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      from: 'sender-id',
+      authenticateByToken: true,
+      authenticationTokenKey: 'token',
+      domain: 'http://169.254.169.254/latest/meta-data/iam/security-credentials/novu',
     });
 
-    expect(lastRequest).not.toBeNull();
-    expect(result.id).toBeDefined();
+    await expect(
+      provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      })
+    ).rejects.toThrow(/Generic SMS auth URL blocked/);
+  });
+
+  test('should allow targets added to the outbound allow list', async () => {
+    process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
+
+    try {
+      const provider = new GenericSmsProvider({
+        baseUrl: directServerUrl,
+        apiKeyRequestHeader: 'apiKey',
+        apiKey: '123456',
+        from: 'sender-id',
+        idPath: 'message.id',
+        datePath: 'message.date',
+      });
+
+      const result = await provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      });
+
+      expect(lastRequest).not.toBeNull();
+      expect(result.id).toBeDefined();
+    } finally {
+      delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+    }
   });
 });

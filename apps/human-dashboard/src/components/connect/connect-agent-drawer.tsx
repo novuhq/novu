@@ -123,7 +123,8 @@ export function ConnectAgentDrawer({
         return { via: arrived.via, host: arrived.id ?? null };
       }
 
-      // A code is only ever used by `agentinbox connect`, by the host it was asked for.
+      // A code is only ever used by the host it was asked for, through `agentinbox connect` or the host's own
+      // plugin. Which of them the host list says (above); until it does, it counts as the CLI.
       if (codeWatch !== null && codeWatch !== 'renew') {
         return { via: 'cli', host: codeWatch.used.host ?? null };
       }

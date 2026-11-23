@@ -29,6 +29,10 @@ export type SubscriberPreferenceChannels = {
    * Push notification channel preference
    */
   push?: boolean | undefined;
+  /**
+   * Tool channel preference
+   */
+  tool?: boolean | undefined;
 };
 
 /** @internal */
@@ -42,6 +46,7 @@ export const SubscriberPreferenceChannels$inboundSchema: z.ZodType<
   in_app: z.boolean().optional(),
   chat: z.boolean().optional(),
   push: z.boolean().optional(),
+  tool: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "in_app": "inApp",

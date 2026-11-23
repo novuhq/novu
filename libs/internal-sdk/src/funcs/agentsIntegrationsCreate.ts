@@ -11,7 +11,6 @@ import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -37,9 +36,7 @@ import { Result } from "../types/fp.js";
  */
 export function agentsIntegrationsCreate(
   client: NovuCore,
-  addAgentIntegrationRequestDto: components.AddAgentIntegrationRequestDto,
-  identifier: string,
-  idempotencyKey?: string | undefined,
+  request: operations.AgentIntegrationsControllerAddAgentIntegrationRequest,
   options?: RequestOptions,
 ): APIPromise<
   Result<
@@ -58,18 +55,14 @@ export function agentsIntegrationsCreate(
 > {
   return new APIPromise($do(
     client,
-    addAgentIntegrationRequestDto,
-    identifier,
-    idempotencyKey,
+    request,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  addAgentIntegrationRequestDto: components.AddAgentIntegrationRequestDto,
-  identifier: string,
-  idempotencyKey?: string | undefined,
+  request: operations.AgentIntegrationsControllerAddAgentIntegrationRequest,
   options?: RequestOptions,
 ): Promise<
   [
@@ -89,15 +82,8 @@ async function $do(
     APICall,
   ]
 > {
-  const input:
-    operations.AgentIntegrationsControllerAddAgentIntegrationRequest = {
-      addAgentIntegrationRequestDto: addAgentIntegrationRequestDto,
-      identifier: identifier,
-      idempotencyKey: idempotencyKey,
-    };
-
   const parsed = safeParse(
-    input,
+    request,
     (value) =>
       operations
         .AgentIntegrationsControllerAddAgentIntegrationRequest$outboundSchema
@@ -123,6 +109,11 @@ async function $do(
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
     Accept: "application/json",
+    "Novu-Analytics-Source": encodeSimple(
+      "Novu-Analytics-Source",
+      payload["Novu-Analytics-Source"],
+      { explode: false, charEncoding: "none" },
+    ),
     "idempotency-key": encodeSimple(
       "idempotency-key",
       payload["idempotency-key"],

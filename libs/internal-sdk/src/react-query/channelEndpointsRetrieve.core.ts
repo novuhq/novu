@@ -74,5 +74,5 @@ export function queryKeyChannelEndpointsRetrieve(
   identifier: string,
   parameters: { idempotencyKey?: string | undefined },
 ): QueryKey {
-  return ["@novu/api", "Channel Endpoints", "retrieve", identifier, parameters];
+  return ["@novu/api", "ChannelEndpoints", "retrieve", identifier, parameters];
 }

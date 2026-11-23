@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions } from './shared';
+import { toControlJsonSchema } from './shared';
 
 // email layout schema is a subset of the email control schema
 const layoutZodSchema = z.object({
@@ -35,4 +33,4 @@ export const layoutUiSchema: UiSchema = {
   },
 };
 
-export const layoutControlSchema = zodToJsonSchema(layoutZodSchema, defaultOptions) as JSONSchemaEntity;
+export const layoutControlSchema = toControlJsonSchema(layoutZodSchema);

@@ -13,6 +13,7 @@ export class DeleteChannelConnection {
       identifier: command.identifier,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
+      ...(command.channelConnectionId ? { _id: command.channelConnectionId } : {}),
     });
 
     if (!channelConnection) {

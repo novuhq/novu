@@ -30,6 +30,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type AgentsCreateMutationVariables = {
   createAgentRequestDto: components.CreateAgentRequestDto;
+  novuAnalyticsSource: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -90,6 +91,7 @@ export function buildAgentsCreateMutation(
     mutationKey: mutationKeyAgentsCreate(),
     mutationFn: function agentsCreateMutationFn({
       createAgentRequestDto,
+      novuAnalyticsSource,
       idempotencyKey,
       options,
     }): Promise<AgentsCreateMutationData> {
@@ -108,6 +110,7 @@ export function buildAgentsCreateMutation(
       return unwrapAsync(agentsCreate(
         client$,
         createAgentRequestDto,
+        novuAnalyticsSource,
         idempotencyKey,
         mergedOptions,
       ));

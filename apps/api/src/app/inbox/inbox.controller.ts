@@ -28,8 +28,8 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import type { Request } from 'express';
-import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
+import { canCallerManageChannelConnection } from '../channel-connections/usecases/channel-connection.utils';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
 import { GetChannelConnectionCommand } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.command';
@@ -57,6 +57,7 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
+import { getClientIp } from '../shared/utils/client-ip';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -170,7 +171,7 @@ export class InboxController {
       SessionCommand.create({
         requestData: body,
         origin,
-        clientIp: getClientIp(request) ?? undefined,
+        clientIp: getClientIp(request),
         clientVersion,
       })
     );
@@ -757,13 +758,28 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
+    const channelConnection = await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
+
+    /*
+     * The lookup also matches shared connections. Only let the caller delete one they own:
+     * their own, or a shared one scoped to their exact, non-empty context. Environment-wide
+     * shared connections are managed by tenant admins through the INTEGRATION_WRITE API.
+     */
+    const canDelete = canCallerManageChannelConnection(channelConnection, {
+      subscriberId: subscriberSession.subscriberId,
+      contextKeys: subscriberSession.contextKeys ?? [],
+    });
+
+    if (!canDelete) {
+      throw new NotFoundException(`Channel connection not found: ${identifier}`);
+    }
 
     await this.deleteChannelConnectionUsecase.execute(
       DeleteChannelConnectionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         identifier,
+        channelConnectionId: channelConnection._id,
       })
     );
   }

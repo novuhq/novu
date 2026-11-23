@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { MessageLimitBanner } from '@/components/dashboard/message-usage';
 import {
   CONFIGURE_CONNECT_PARAM,
   CONFIGURE_DRAWER_PARAM,
@@ -17,6 +18,7 @@ import { agentDisplayName } from '@/lib/human-agent-api';
 import { describeAgentStatus } from '@/lib/human-agent-status';
 import { loadChannelsOverview } from '@/lib/human-channels-overview';
 import { loadHostStatus } from '@/lib/human-hosts-api';
+import { loadMessageUsage } from '@/lib/human-message-usage-api';
 import { isSetupUnfinished, loadSetupSummary, requireSetUpAgent } from '@/lib/human-onboarding';
 import { listConnectedTools, readMcpUrl } from '@/lib/human-tools-api';
 import { readApiUrl } from '@/lib/site-origin';
@@ -60,24 +62,33 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
   const progress = await requireSetUpAgent(account, connectHost);
   const { agent } = progress;
   const mcpUrl = readMcpUrl();
-  const [setup, connectedTools, { rows, telegramSetup, slackSetup, whatsappSetup }, hostStatus, features] =
-    await Promise.all([
-      loadSetupSummary(account, progress),
-      mcpUrl ? listConnectedTools(account) : [],
-      loadChannelsOverview(account),
-      loadHostStatus(account),
-      loadFeatures(account),
-    ]);
+  const [
+    setup,
+    connectedTools,
+    { rows, telegramSetup, slackSetup, whatsappSetup },
+    hostStatus,
+    features,
+    messageUsage,
+  ] = await Promise.all([
+    loadSetupSummary(account, progress),
+    mcpUrl ? listConnectedTools(account) : [],
+    loadChannelsOverview(account),
+    loadHostStatus(account),
+    loadFeatures(account),
+    loadMessageUsage(account),
+  ]);
 
   const context: PromptContext = { apiUrl: await readApiUrl() };
   const { handle } = setup.agent;
   // With Telegram, Slack or WhatsApp connected the setup is done, and there is nothing left to wait for.
   const settingUp = !rows.some((row) => row.via !== 'email' && row.connected);
   const status = describeAgentStatus(agent.id, rows);
+  const renderedAt = new Date().toISOString();
 
   return (
     <>
       {settingUp && <AgentStatusPoll status={status} everyMs={CHANNELS_POLL_MS} />}
+      {messageUsage && <MessageLimitBanner handle={handle} usage={messageUsage} renderedAt={renderedAt} />}
       {isSetupUnfinished(setup.step) ? (
         <ResumeSetupCard handle={handle} step={setup.step} waiting={setup.waiting} />
       ) : (
@@ -98,7 +109,8 @@ export default async function ConfigurePage(props: PageProps<'/configure'>) {
           slack: buildChannelPrompt(context, 'slack', handle),
         }}
         hostStatus={hostStatus}
-        renderedAt={new Date().toISOString()}
+        messageUsage={messageUsage}
+        renderedAt={renderedAt}
         apiUrl={context.apiUrl}
         docsUrl={DOCS_URL}
         mcpUrl={mcpUrl}

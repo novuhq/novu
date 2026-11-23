@@ -3,10 +3,30 @@ import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { version } from '../../package.json';
 import { CLI_COMMAND } from '../config';
+import {
+  type CodexConfigRead,
+  type CodexFolder,
+  type CodexHooksList,
+  type CodexSkillsList,
+  contactHookFlags,
+  contactThreadConfig,
+  decideCodexTool,
+  execPolicyCheck,
+  FOLDER_VARIABLE,
+  type RuleCheck,
+  readCodexFolder,
+  readRefusal,
+  refusalOf,
+  shellLine,
+  type Verdict,
+} from './codex-folder';
 import { shortPath } from './computer';
+import { CONVERSATION_TOOLS_SERVER } from './conversation-tools';
 import type {
+  ContactRun,
   HostAdapter,
   HostCheck,
+  HostProgram,
   HostQuestion,
   HostSession,
   OpenOptions,
@@ -121,6 +141,27 @@ export function threadParams(
   };
 }
 
+/**
+ * How a contact's session works (`codex-folder.ts`): Codex asks before every command its rules don't allow
+ * (`untrusted`) and writes nothing by itself (`read-only`), the listener answering by the folder's settings; the
+ * folder's own developer instructions stay, the operator's don't; and the thread goes without what the folder
+ * doesn't give it (`contactThreadConfig`), its own conversation tools (`helper`) added.
+ */
+export function contactThreadParams(
+  options: Pick<OpenOptions, 'project' | 'instructions'>,
+  folder: CodexFolder,
+  helper: HostProgram
+): Record<string, unknown> {
+  return {
+    cwd: options.project,
+    approvalPolicy: 'untrusted',
+    approvalsReviewer: 'user',
+    sandbox: 'read-only',
+    developerInstructions: [folder.instructions?.trim(), options.instructions].filter(Boolean).join('\n\n'),
+    config: contactThreadConfig(folder, helper),
+  };
+}
+
 async function checkCodex(project: string, given: NodeJS.ProcessEnv = process.env): Promise<HostCheck> {
   const env = withAccount(given);
   // The standalone installer's link, which is often only on the PATH of a login shell.
@@ -199,7 +240,51 @@ async function readConfig(
   project: string,
   env: NodeJS.ProcessEnv
 ): Promise<{ ok: true; config: CodexConfig } | { ok: false; message: string }> {
-  const child = spawn(command, ['app-server'], { cwd: project, env, stdio: ['pipe', 'pipe', 'pipe'] });
+  try {
+    const read = await withAppServer({ command, args: [] }, [], project, env, (peer) =>
+      peer.request<{ config?: CodexConfig }>('config/read', { cwd: project })
+    );
+
+    return { ok: true, config: read.config ?? {} };
+  } catch (err) {
+    return { ok: false, message: errorText(err) };
+  }
+}
+
+/**
+ * What the folder's own settings give a contact's run, as Codex reads them for the folder, and the listener's check
+ * among Codex's hooks (`check`, its command line), which the run then trusts by its hash.
+ */
+async function readFolderFor(
+  program: HostProgram,
+  project: string,
+  env: NodeJS.ProcessEnv,
+  check: string
+): Promise<ReturnType<typeof readCodexFolder>> {
+  return withAppServer(program, contactHookFlags(check), project, env, async (peer) => {
+    const [read, skills, hooks] = await Promise.all([
+      peer.request<CodexConfigRead>('config/read', { cwd: project, includeLayers: true }),
+      peer.request<CodexSkillsList>('skills/list', { cwds: [project] }),
+      peer.request<CodexHooksList>('hooks/list', { cwds: [project] }),
+    ]);
+
+    return readCodexFolder(project, { read, skills, hooks }, check, homedir(), env.INBOX_CONFIG);
+  });
+}
+
+/** A `codex app-server` started only to ask it something (`ask`), and ended after. */
+async function withAppServer<T>(
+  program: HostProgram,
+  flags: readonly string[],
+  project: string,
+  env: NodeJS.ProcessEnv,
+  ask: (peer: RpcPeer) => Promise<T>
+): Promise<T> {
+  const child = spawn(program.command, [...program.args, 'app-server', ...flags], {
+    cwd: project,
+    env,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
   const peer = new RpcPeer(child.stdout, child.stdin, {
     request: async () => {
       throw new RpcError(METHOD_NOT_FOUND, 'Nothing is handled while the listener only reads the config.');
@@ -218,11 +303,8 @@ async function readConfig(
   try {
     await peer.request('initialize', { clientInfo: CLIENT_INFO, capabilities: null });
     peer.notify('initialized');
-    const read = await peer.request<{ config?: CodexConfig }>('config/read', { cwd: project });
 
-    return { ok: true, config: read.config ?? {} };
-  } catch (err) {
-    return { ok: false, message: errorText(err) };
+    return await ask(peer);
   } finally {
     clearTimeout(timer);
     child.kill();
@@ -312,12 +394,16 @@ type UserInputRequest = {
 };
 
 class CodexSession implements HostSession {
-  private readonly child: ChildProcessWithoutNullStreams;
-  private readonly peer: RpcPeer;
-  private readonly exited: Promise<void>;
+  /** Codex, once started: in a contact's run, only after it said what the folder allows. */
+  private child?: ChildProcessWithoutNullStreams;
+  private peer?: RpcPeer;
+  private exited: Promise<void> = Promise.resolve();
   /** Whether the session is open, once Codex says so: messages wait for it. */
   private readonly ready: Promise<boolean>;
   private threadId?: string;
+  /** In a contact's run: what the folder's own settings allow, and how its rules are checked. */
+  private folder?: CodexFolder;
+  private checkRules?: RuleCheck;
   /** Messages are handed over one after the other, in order. */
   private handing: Promise<void> = Promise.resolve();
   /** Messages not handed to Codex yet. */
@@ -344,30 +430,7 @@ class CodexSession implements HostSession {
     private readonly options: OpenOptions,
     private readonly handlers: SessionHandlers
   ) {
-    this.child = spawn(options.program.command, [...options.program.args, 'app-server'], {
-      cwd: options.project,
-      env: programEnv(options.env ?? process.env),
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    this.exited = new Promise((resolve) => {
-      this.child.once('exit', (code, signal) => {
-        resolve();
-        this.onExit(code, signal);
-      });
-    });
-    this.child.once('error', (err) => {
-      this.lose(`Codex didn’t start: ${err.message}`, false);
-    });
-    // A closed input only means the process is going; what it said last still counts.
-    this.child.stdin.on('error', () => undefined);
-    this.child.stderr.on('data', (chunk: Buffer) => {
-      this.stderr = `${this.stderr}${chunk.toString()}`.slice(-4000);
-    });
-    this.peer = new RpcPeer(this.child.stdout, this.child.stdin, {
-      request: (method, params, id) => this.onRequest(method, params, id),
-      notification: (method, params) => this.onNotification(method, params),
-    });
-    this.ready = this.openThread();
+    this.ready = this.open();
   }
 
   /** The thread's id once Codex opened it; the one to go on with until then. */
@@ -413,7 +476,7 @@ class CodexSession implements HostSession {
     } else if (!this.gone && this.threadId === undefined) {
       // Stopped before it ever opened: nothing of it is owed, so its end isn't a loss either.
       this.gone = true;
-      this.child.kill('SIGTERM');
+      this.child?.kill('SIGTERM');
     }
 
     // The turns report themselves, with the messages they took; if they don't, Codex is ended.
@@ -424,7 +487,7 @@ class CodexSession implements HostSession {
       this.report({ inputIds: [...[...this.turns.values()].flat(), ...this.handed], outcome: 'interrupted' });
       this.turns.clear();
       this.handed.clear();
-      this.child.kill('SIGTERM');
+      this.child?.kill('SIGTERM');
     }
     this.stopping = false;
   }
@@ -434,31 +497,30 @@ class CodexSession implements HostSession {
     for (const controller of this.asking.values()) {
       controller.abort();
     }
-    if (this.child.exitCode === null && this.child.signalCode === null) {
-      this.child.stdin.end();
+    const child = this.child;
+    if (child && child.exitCode === null && child.signalCode === null) {
+      child.stdin.end();
       if (!(await within(this.exited, CLOSE_GRACE_MS))) {
-        this.child.kill('SIGTERM');
+        child.kill('SIGTERM');
         if (!(await within(this.exited, CLOSE_GRACE_MS))) {
-          this.child.kill('SIGKILL');
+          child.kill('SIGKILL');
         }
       }
     }
-    this.peer.close('The session closed.');
+    this.peer?.close('The session closed.');
   }
 
-  private async openThread(): Promise<boolean> {
-    const { resume } = this.options;
+  /** Starts Codex and opens the thread: a contact's run first reads what the folder allows. */
+  private async open(): Promise<boolean> {
+    const { resume, contact } = this.options;
     const timer = setTimeout(() => this.lose('Codex didn’t open the session in time.', false), OPEN_TIMEOUT_MS);
     timer.unref();
 
     try {
-      await this.peer.request('initialize', { clientInfo: CLIENT_INFO, capabilities: null });
-      this.peer.notify('initialized');
-      const own = await this.peer
-        .request<{ config?: { developer_instructions?: string | null } }>('config/read', { cwd: this.options.project })
-        .then((read) => read.config?.developer_instructions ?? undefined)
-        .catch(() => undefined);
-      const params = threadParams({ ...this.options, own });
+      const params = contact ? await this.startForContact(contact) : await this.startForOperator();
+      if (!params || !this.peer) {
+        return false;
+      }
       const opened = await this.peer.request<{ thread: { id: string } }>(
         resume ? 'thread/resume' : 'thread/start',
         resume ? { threadId: resume, ...params, excludeTurns: true } : params
@@ -469,12 +531,106 @@ class CodexSession implements HostSession {
     } catch (err) {
       const message = errorText(err);
       const sessionGone = Boolean(resume) && SESSION_GONE.test(message);
-      this.lose(sessionGone ? message : `Codex didn’t open the session: ${message}`, sessionGone);
+      this.lose(
+        sessionGone || err instanceof CheckNotTaken ? message : `Codex didn’t open the session: ${message}`,
+        sessionGone
+      );
 
       return false;
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /** The operator's run: Codex as the operator has it, their developer instructions kept. */
+  private async startForOperator(): Promise<Record<string, unknown>> {
+    const peer = this.start([], programEnv(this.options.env ?? process.env));
+    await this.initialize(peer);
+    const config = await peer
+      .request<{ config?: CodexConfig & { developer_instructions?: string | null } }>('config/read', {
+        cwd: this.options.project,
+      })
+      .then((read) => read.config)
+      .catch(() => undefined);
+
+    return threadParams({ ...this.options, own: config?.developer_instructions ?? undefined });
+  }
+
+  /**
+   * A contact's run (`codex-folder.ts`): a Codex started only to read what the folder allows, then the run's own,
+   * with the listener's check as a hook it trusts, the operator's own hooks off, and what the folder allows where the
+   * check finds it. A run whose Codex doesn't take the check doesn't go on.
+   */
+  private async startForContact(contact: ContactRun): Promise<Record<string, unknown> | undefined> {
+    const { program, project } = this.options;
+    const env = programEnv(this.options.env ?? process.env);
+    const check = shellLine(contact.check);
+    const read = await readFolderFor(program, project, env, check).catch((err: unknown) => {
+      throw new CheckNotTaken(`Codex didn’t say what this folder allows: ${errorText(err)}`);
+    });
+    if (!read.hook?.key || !read.hook.currentHash) {
+      throw new CheckNotTaken(
+        'Codex didn’t take the listener’s check for a contact’s conversation: its hooks don’t list it.'
+      );
+    }
+    if (this.closing || this.gone) {
+      return undefined;
+    }
+
+    this.folder = read.folder;
+    this.checkRules = execPolicyCheck(program, read.folder.rules, env);
+    const peer = this.start(contactHookFlags(check, { hook: read.hook, off: read.folder.otherHooks }), {
+      ...env,
+      [FOLDER_VARIABLE]: JSON.stringify({ folder: read.folder, codex: program }),
+    });
+    await this.initialize(peer);
+    const hooks = await peer.request<CodexHooksList>('hooks/list', { cwds: [project] });
+    const ours = hooks.data
+      ?.flatMap((entry) => entry.hooks ?? [])
+      .find((hook) => hook.source === 'sessionFlags' && hook.command === check);
+    if (!ours || ours.trustStatus !== 'trusted' || ours.enabled === false) {
+      throw new CheckNotTaken(
+        `Codex didn’t take the listener’s check for a contact’s conversation: ${ours ? `it is ${ours.enabled === false ? 'off' : (ours.trustStatus ?? 'not trusted')}` : 'its hooks don’t list it'}.`
+      );
+    }
+
+    return contactThreadParams(this.options, read.folder, contact.tools);
+  }
+
+  /** Starts `codex app-server` for the session, with these flags and this environment. */
+  private start(flags: readonly string[], env: NodeJS.ProcessEnv): RpcPeer {
+    const child = spawn(this.options.program.command, [...this.options.program.args, 'app-server', ...flags], {
+      cwd: this.options.project,
+      env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    this.child = child;
+    this.exited = new Promise((resolve) => {
+      child.once('exit', (code, signal) => {
+        resolve();
+        this.onExit(code, signal);
+      });
+    });
+    child.once('error', (err) => {
+      this.lose(`Codex didn’t start: ${err.message}`, false);
+    });
+    // A closed input only means the process is going; what it said last still counts.
+    child.stdin.on('error', () => undefined);
+    child.stderr.on('data', (chunk: Buffer) => {
+      this.stderr = `${this.stderr}${chunk.toString()}`.slice(-4000);
+    });
+    const peer = new RpcPeer(child.stdout, child.stdin, {
+      request: (method, params, id) => this.onRequest(method, params, id),
+      notification: (method, params) => this.onNotification(method, params),
+    });
+    this.peer = peer;
+
+    return peer;
+  }
+
+  private async initialize(peer: RpcPeer): Promise<void> {
+    await peer.request('initialize', { clientInfo: CLIENT_INFO, capabilities: null });
+    peer.notify('initialized');
   }
 
   /** Hands a message to Codex: it starts a turn, or joins the one running, as Codex decides. */
@@ -485,6 +641,9 @@ class CodexSession implements HostSession {
 
     this.handed.add(input.id);
     try {
+      if (!this.peer) {
+        throw new Error('Codex isn’t started.');
+      }
       const started = await this.peer.request<{ turn: Turn }>('turn/start', {
         threadId: this.threadId,
         input: textInput(input.text),
@@ -520,11 +679,11 @@ class CodexSession implements HostSession {
   }
 
   private stopTurn(turnId: string): void {
-    void this.peer.request('turn/interrupt', { threadId: this.threadId, turnId }).catch(() => undefined);
+    void this.peer?.request('turn/interrupt', { threadId: this.threadId, turnId }).catch(() => undefined);
   }
 
   private onExit(code: number | null, signal: NodeJS.Signals | null): void {
-    this.peer.close('Codex stopped.');
+    this.peer?.close('Codex stopped.');
     for (const controller of this.asking.values()) {
       controller.abort();
     }
@@ -595,6 +754,9 @@ class CodexSession implements HostSession {
         if (message.item) {
           this.itemEnded(message.item, message.turnId);
         }
+        break;
+      case 'hook/completed':
+        this.hookRan(params);
         break;
       case 'serverRequest/resolved':
         // Codex took a question back (the turn stopped, say): the operator's card goes too.
@@ -735,7 +897,7 @@ class CodexSession implements HostSession {
    * joins the turn, as a message of its own, before the no.
    */
   private async tell(turnId: string | undefined, message: string | undefined): Promise<void> {
-    if (!message || !turnId || this.stopping || this.gone) {
+    if (!message || !turnId || this.stopping || this.gone || !this.peer) {
       return;
     }
 
@@ -744,11 +906,72 @@ class CodexSession implements HostSession {
       .catch(() => undefined);
   }
 
-  private approveCommand(request: CommandApproval, id: RpcId): Promise<unknown> {
+  /** What the folder's settings say about a call of a contact's run; a check that fails refuses. */
+  private async decide(call: Parameters<typeof decideCodexTool>[1]): Promise<Verdict> {
+    if (!this.folder || !this.checkRules) {
+      return { decision: 'deny', what: 'this', why: 'the listener doesn’t know what this folder allows' };
+    }
+
+    return decideCodexTool(this.folder, call, this.checkRules).catch((err: unknown) => ({
+      decision: 'deny' as const,
+      what: call.tool,
+      why: `the check didn’t work (${errorText(err)})`,
+    }));
+  }
+
+  /**
+   * Refuses what the folder's settings don't allow in a contact's run, with no card: logged, and the agent told why
+   * in the turn, so it doesn't look for another way.
+   */
+  private async refuse<T>(
+    turnId: string | undefined,
+    subject: PermissionQuestion['subject'],
+    verdict: Verdict,
+    answer: T
+  ): Promise<T> {
+    this.handlers.refused(subject, verdict.why ?? 'the folder’s settings don’t allow it');
+    await this.tell(turnId, refusalOf(verdict));
+
+    return answer;
+  }
+
+  /** The listener's check refused a call of a contact's run, as Codex says once its hook ran: for the log. */
+  private hookRan(params: unknown): void {
+    const run = isRecord(params) && isRecord(params.run) ? params.run : undefined;
+    if (!this.folder || run?.status !== 'blocked' || !Array.isArray(run.entries)) {
+      return;
+    }
+
+    for (const entry of run.entries) {
+      const refusal = isRecord(entry) ? readRefusal(stringOf(entry.text) ?? '') : undefined;
+      if (refusal) {
+        this.handlers.refused({ kind: 'tool', name: refusal.what }, refusal.why);
+      }
+    }
+  }
+
+  /**
+   * A command of a contact's run, settled by the folder's rules without asking anyone: refused, or let through.
+   * Undefined for what they say to ask, which asks the operator.
+   */
+  private async contactCommand(request: CommandApproval, command: string): Promise<unknown> {
+    const verdict = await this.decide({ tool: 'Bash', input: { command }, cwd: request.cwd ?? undefined });
+    if (verdict.decision === 'deny') {
+      return this.refuse(request.turnId, { kind: 'command', command }, verdict, { decision: 'decline' });
+    }
+
+    return verdict.decision === 'allow' ? { decision: 'accept' } : undefined;
+  }
+
+  private async approveCommand(request: CommandApproval, id: RpcId): Promise<unknown> {
     const offered = request.availableDecisions;
     const offerSession = !offered || offered.includes('acceptForSession');
     const host = request.networkApprovalContext?.host;
     const command = unwrapShell(request.command ?? '');
+    const settled = this.folder && !host ? await this.contactCommand(request, command) : undefined;
+    if (settled) {
+      return settled;
+    }
     const question: PermissionQuestion = host
       ? {
           subject: { kind: 'network', hosts: [host] },
@@ -777,6 +1000,18 @@ class CodexSession implements HostSession {
 
   private approveFileChange(request: FileChangeApproval, id: RpcId): Promise<unknown> {
     const paths = request.grantRoot ? [request.grantRoot] : (this.fileChanges.get(request.itemId ?? '') ?? []);
+    if (this.folder) {
+      return this.refuse(
+        request.turnId,
+        { kind: 'files', paths },
+        {
+          decision: 'deny',
+          what: paths.length > 0 ? `editing ${paths.map(shortPath).join(', ')}` : 'editing files',
+          why: 'Codex has no rule that allows edits',
+        },
+        { decision: 'decline' }
+      );
+    }
     const question: PermissionQuestion = {
       subject: { kind: 'files', paths },
       action: request.grantRoot
@@ -826,6 +1061,14 @@ class CodexSession implements HostSession {
       options: [ALLOW_ONCE, ALLOW_SESSION, DENY],
     };
     const granted = { ...(asked.network ? { network: asked.network } : {}), ...(files ? { fileSystem: files } : {}) };
+    if (this.folder) {
+      return this.refuse(
+        request.turnId,
+        question.subject,
+        { decision: 'deny', what: question.action, why: 'the folder’s Codex settings give no more access than that' },
+        { permissions: {}, scope: 'turn' }
+      );
+    }
 
     // Codex gives such access for a turn at the least: that is what "Allow" gives.
     return this.permission(id, request.turnId, question, {
@@ -850,6 +1093,12 @@ class CodexSession implements HostSession {
     const server = request.serverName ?? '';
     const tool = stringOf(meta.tool_name) ?? '';
     const input = isRecord(meta.tool_params) ? meta.tool_params : {};
+    const settled = this.folder
+      ? this.contactToolCall(request, { kind: 'mcp', server, tool, input }, decline)
+      : undefined;
+    if (settled) {
+      return settled;
+    }
     const persist = Array.isArray(meta.persist) ? meta.persist : [meta.persist];
     const offerSession = persist.includes('session');
     const question: PermissionQuestion = {
@@ -865,6 +1114,30 @@ class CodexSession implements HostSession {
       allowSession: { action: 'accept', content: null, _meta: { persist: 'session' } },
       deny: decline,
     });
+  }
+
+  /**
+   * An MCP tool call of a contact's run, settled without asking anyone: its own conversation tools always work, and a
+   * server that isn't the folder's never does. Undefined for the folder's servers, which ask when Codex asks.
+   */
+  private contactToolCall<T>(
+    request: Elicitation,
+    subject: Extract<PermissionQuestion['subject'], { kind: 'mcp' }>,
+    decline: T
+  ): Promise<unknown> | undefined {
+    if (subject.server === CONVERSATION_TOOLS_SERVER) {
+      return Promise.resolve({ action: 'accept', content: null, _meta: null });
+    }
+    if (this.folder?.servers.includes(subject.server)) {
+      return undefined;
+    }
+
+    return this.refuse(
+      request.turnId ?? undefined,
+      subject,
+      { decision: 'deny', what: `${subject.tool} of ${subject.server}`, why: 'that MCP server isn’t the folder’s' },
+      decline
+    );
   }
 
   /** Questions for the person, from Codex's `request_user_input` tool: they go to the conversation. */
@@ -931,3 +1204,6 @@ function describeItem(item: Item): { note: string; subject: PermissionQuestion['
       };
   }
 }
+
+/** Codex didn't take the listener's check for a contact's run: the run doesn't go on, and the reason is the whole message. */
+class CheckNotTaken extends Error {}

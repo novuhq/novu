@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 export const pushControlZodSchema = z
   .object({
@@ -14,7 +12,7 @@ export const pushControlZodSchema = z
 
 export type PushControlType = z.infer<typeof pushControlZodSchema>;
 
-export const pushControlSchema = zodToJsonSchema(pushControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const pushControlSchema = toControlJsonSchema(pushControlZodSchema);
 export const pushUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.PUSH,
   properties: {

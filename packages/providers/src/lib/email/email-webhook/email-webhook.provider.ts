@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
-import { EmailProviderIdEnum, isOutboundSsrfProtectionEnabled } from '@novu/shared';
+import { EmailProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   assertSafeOutboundUrl,
@@ -16,7 +16,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { createProviderHttpClient, PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
 
 const PROTECTED_HEADER_NAMES = new Set(['content-type', 'x-novu-signature']);
@@ -43,7 +43,6 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly httpClient = createProviderHttpClient();
 
   constructor(
     private config: {
@@ -85,11 +84,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
       'X-Novu-Signature': hmacValue,
     };
 
-    if (isOutboundSsrfProtectionEnabled()) {
-      await this.sendWithSsrfProtection(bodyData, requestHeaders);
-    } else {
-      await this.sendWithAxios(bodyData, requestHeaders);
-    }
+    await this.sendWebhook(bodyData, requestHeaders);
 
     return {
       id: options.id,
@@ -147,24 +142,17 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
     throw new Error('webhook send failed !');
   }
 
-  private async sendWithAxios(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
-    await this.sendWithinBudget(async (remainingMs) => {
-      await this.httpClient.post(this.config.webhookUrl, bodyData, {
-        headers: requestHeaders,
-        timeout: remainingMs,
-      });
-    });
-  }
-
-  private async sendWithSsrfProtection(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
+  private async sendWebhook(bodyData: string, requestHeaders: Record<string, string>): Promise<void> {
     const webhookUrl = normalizeOutboundHttpUrl(this.config.webhookUrl);
 
     if (!webhookUrl) {
       throw new EmailWebhookUrlBlockedError('Email webhook URL blocked: Invalid URL format.');
     }
 
-    // Structure-only check (scheme, credentials, blocked hostnames). Literal private IPs
-    // are rejected at connect time inside safeOutboundJsonRequest.
+    // Validate the destination on every deployment mode, matching the other webhook
+    // providers. The connect-time DNS guard and redirect re-validation happen inside
+    // safeOutboundJsonRequest. Internal targets must be allow-listed via
+    // NOVU_SAFE_OUTBOUND_ALLOW.
     try {
       assertSafeOutboundUrl(webhookUrl);
     } catch (err) {
