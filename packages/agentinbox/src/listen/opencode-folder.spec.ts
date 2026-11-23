@@ -175,6 +175,21 @@ describe('contactSessionRules', () => {
     expect(decide(rules, 'this_conversation_resolve', '*')).toBe('allow');
   });
 
+  it('goes by the folder’s rules for a skill they name', () => {
+    const rules = contactSessionRules(2, {
+      ...folder,
+      rules: [
+        { name: 'skill', pattern: 'deploy', effect: 'deny' },
+        { name: 'skill', pattern: 'review', effect: 'ask' },
+      ],
+      skills: ['hello', 'deploy', 'review'],
+    });
+
+    expect(decide(rules, 'skill', 'hello')).toBe('allow');
+    expect(decide(rules, 'skill', 'deploy')).toBe('deny');
+    expect(decide(rules, 'skill', 'review')).toBe('ask');
+  });
+
   it('keeps the key closed, whatever a rule names, and the file INBOX_CONFIG points at too', () => {
     const rules = contactSessionRules(2, folder);
 
@@ -310,6 +325,32 @@ describe('decideOpenCodeCall', () => {
     expect(decideOpenCodeCall(2, custom, tool('read', { filePath: file }, [file]))).toMatchObject({ decision: 'deny' });
     expect(decideOpenCodeCall(2, custom, tool('grep', { pattern: 'secretKey' }))).toMatchObject({ decision: 'deny' });
     expect(decideOpenCodeCall(2, folder, shell('cat inbox.json'))).toEqual({ decision: 'allow' });
+  });
+
+  it('refuses an edit or a command that reaches what decides a run through a link', () => {
+    writeFileSync(join(project, 'AGENTS.md'), '');
+    symlinkSync('../opencode.json', join(project, 'docs', 'settings.json'));
+    symlinkSync('../AGENTS.md', join(project, 'docs', 'guide.md'));
+    writeFileSync(
+      join(project, 'opencode.json'),
+      JSON.stringify({ permission: { edit: { 'docs/*': 'allow' }, bash: { 'cp *': 'allow', 'cd *': 'allow' } } })
+    );
+    const linked = readOpenCodeFolder(project, 2, home);
+    const edit = (file: string) => tool('edit', { filePath: join(project, file) }, [file]);
+
+    expect(decideOpenCodeCall(2, linked, edit('docs/a.md'))).toEqual({ decision: 'allow' });
+    expect(decideOpenCodeCall(2, linked, shell('cp docs/a.md docs/b.md'))).toEqual({ decision: 'allow' });
+    for (const call of [
+      edit('docs/settings.json'),
+      edit('docs/guide.md'),
+      shell('cp docs/a.md docs/settings.json'),
+      shell('cd docs && cp a.md guide.md'),
+    ]) {
+      expect(decideOpenCodeCall(2, linked, call), call.patterns[0]).toEqual({
+        decision: 'deny',
+        why: 'it reaches what decides a run',
+      });
+    }
   });
 
   it('leaves what the shell works out for itself to a rule for every command', () => {

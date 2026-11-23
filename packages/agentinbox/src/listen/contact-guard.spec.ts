@@ -130,6 +130,26 @@ describe('the key guard', () => {
     expect(reaches('cat inbox/config.json')).toBe(false);
   });
 
+  it('reads each command of a chain from where the cd before it left the shell', () => {
+    symlinkSync(join(home, '.agentinbox'), join(project, 'docs', 'inbox'));
+    const guard = keyGuardFor(project, home);
+    const reaches = (command: string) => commandReachesKey(command, project, guard);
+
+    for (const command of [
+      'cd docs && cat inbox/config.json',
+      'cd docs && cd inbox && cat config.json',
+      'cd ~/work/app/docs && cat inbox/config.json',
+      // A change of folder this can't follow.
+      'cd - && cat inbox/config.json',
+      'cd -P docs && cat inbox/config.json',
+      'pushd docs && cat inbox/config.json',
+    ]) {
+      expect(reaches(command), command).toBe(true);
+    }
+    expect(reaches('cd docs && cat ../README.md')).toBe(false);
+    expect(reaches('cd .. && cd app && cat inbox/config.json')).toBe(false);
+  });
+
   it('counts the folder’s links git keeps that lead to the key, and anything run in a folder that holds one', () => {
     execFileSync('git', ['init', '-q'], { cwd: project });
     symlinkSync('../../../.agentinbox', join(project, 'docs', 'assets'));

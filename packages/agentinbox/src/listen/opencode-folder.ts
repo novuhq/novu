@@ -1,7 +1,16 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, resolve, sep } from 'node:path';
-import { chainParts, commandReachesKey, type Decision, type KeyGuard, keyGuardFor, reachesKey } from './contact-guard';
+import { dirname, join, relative, resolve, sep } from 'node:path';
+import {
+  chainParts,
+  commandLeadsTo,
+  commandReachesKey,
+  type Decision,
+  type KeyGuard,
+  keyGuardFor,
+  reachesKey,
+  realTarget,
+} from './contact-guard';
 import { CONVERSATION_TOOLS_SERVER } from './conversation-tools';
 import type { HostProgram } from './host-adapter';
 import { isRecord, stringOf } from './host-program';
@@ -22,11 +31,11 @@ import { realPathOf, simpleCommandWords } from './own-replies';
  *   command or a path, never where links lead or what the shell makes of quotes and patterns. As for Claude Code,
  *   what the shell works out for itself (pipes, variables, command substitution) only a rule for every command
  *   covers.
- * - The folder's skills need no rule, the person can always be asked a question, and the run's own conversation
- *   tools (`conversation-tools.ts`) always work.
+ * - The folder's skills need no rule, unless one of its rules names them; the person can always be asked a question,
+ *   and the run's own conversation tools (`conversation-tools.ts`) always work.
  * - Agent Inbox's key (`~/.agentinbox`, or the file `INBOX_CONFIG` points at) stays closed, whatever a rule says
  *   (`contact-guard.ts`): only full access opens it. Changing what decides a run (the folder's OpenCode settings,
- *   skills and instructions, or git's own files) is refused.
+ *   skills and instructions, or git's own files) is refused, also through a link to them.
  */
 export interface OpenCodeFolder {
   project: string;
@@ -98,6 +107,7 @@ const DECIDING_WORDS = [
   '*.claude*',
   '*.agents*',
 ];
+const DECIDING_EDITS = [...DECIDING_FILES, ...DECIDING_FOLDERS];
 
 /**
  * Reads what the folder's own OpenCode settings say. Settings that can't be read count as saying nothing. The key is
@@ -125,9 +135,10 @@ export function readOpenCodeFolder(
 }
 
 /**
- * The rules a contact's session goes by, in place of the operator's: everything refused, then the folder's rules,
- * then what always works, and last what no rule of the folder's turns back on: where the key is, what decides a run,
- * Code Mode, and OpenCode 1's subagents (which keep only the session's denies).
+ * The rules a contact's session goes by, in place of the operator's: everything refused, the folder's skills, then
+ * the folder's rules (which decide a skill they name), then what always works, and last what no rule of the folder's
+ * turns back on: where the key is, what decides a run, Code Mode, and OpenCode 1's subagents (which keep only the
+ * session's denies).
  */
 export function folderSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[] {
   const shell = shellOf(major);
@@ -136,13 +147,13 @@ export function folderSessionRules(major: 1 | 2, folder: OpenCodeFolder): Rule[]
 
   return [
     deny('*', '*'),
-    ...folder.rules,
     ...folder.skills.map((name): Rule => ({ name: 'skill', pattern: name, effect: 'allow' })),
+    ...folder.rules,
     ...ALWAYS.map((name): Rule => ({ name, pattern: '*', effect: 'allow' })),
     { name: `${CONVERSATION_TOOLS_SERVER}_*`, pattern: '*', effect: 'allow' },
     ...checkedTools(major).flatMap((name) => keyPatterns.map((pattern) => deny(name, pattern))),
     deny(shell, '*INBOX_CONFIG*'),
-    ...[...DECIDING_FILES, ...DECIDING_FOLDERS].map((pattern) => deny('edit', pattern)),
+    ...DECIDING_EDITS.map((pattern) => deny('edit', pattern)),
     ...DECIDING_WORDS.map((pattern) => deny(shell, pattern)),
     deny('execute', '*'),
     ...(major === 1 ? [deny('task', '*')] : []),
@@ -171,8 +182,9 @@ export interface OpenCodeCall {
 
 /**
  * What the listener answers for a contact's session about a tool that reaches files or commands: what the folder's
- * own rules say (`folderSessionRules`), unless the call could reach the key, or is a command the shell works out for
- * itself that no rule for every command covers. Undefined for other tools, which OpenCode decides by the rules alone.
+ * own rules say (`folderSessionRules`), unless the call could reach the key, writes or names what decides a run
+ * through a link (the rules only see the name it is given), or is a command the shell works out for itself that no
+ * rule for every command covers. Undefined for other tools, which OpenCode decides by the rules alone.
  */
 export function decideOpenCodeCall(
   major: 1 | 2,
@@ -193,6 +205,13 @@ export function decideOpenCodeCall(
       : pathsOf(call, folder).some((path) => reachesKey(path, folder.guard, searched))
   ) {
     return { decision: 'deny', why: 'it could reach Agent Inbox’s key' };
+  }
+  if (
+    isShell
+      ? commandLeadsTo(command, cwd, folder.guard.home, (path) => decidesRun(path, folder, DECIDING_WORDS))
+      : WRITES.includes(call.name) && pathsOf(call, folder).some((path) => decidesRun(path, folder, DECIDING_EDITS))
+  ) {
+    return { decision: 'deny', why: 'it reaches what decides a run' };
   }
 
   const rules = folderSessionRules(major, folder);
@@ -249,6 +268,19 @@ const EVERY_COMMAND = '\u0000';
 
 /** The tools that search a folder: everything under it counts as read. */
 const SEARCHES = ['glob', 'grep', 'list'];
+
+/** The tools that write files. */
+const WRITES = ['edit', 'write', 'patch'];
+
+/**
+ * Whether a path, its links followed, is one of the files that decide a run, as the session's denies name them
+ * (`patterns`): what they see is the name a call gives, which a link can hide.
+ */
+function decidesRun(path: string, folder: OpenCodeFolder, patterns: readonly string[]): boolean {
+  const fromProject = relative(realPathOf(folder.project), realTarget(path));
+
+  return patterns.some((pattern) => fitsPattern(fromProject, pattern));
+}
 
 /** The tools that reach files and commands, which the listener decides for a contact's session. */
 function checkedTools(major: 1 | 2): string[] {

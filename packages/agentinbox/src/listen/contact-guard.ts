@@ -176,8 +176,9 @@ export function reachesKey(path: string, guard: KeyGuard, searched = false): boo
  * path to where the key is, or a file name pattern among hidden folders, where `~/.agent*` would find it. By the paths
  * it names (`cwd` for where it runs), their links followed: one that leads to the key, or to a folder that holds it.
  * And by where it runs: in a folder that holds the key, or one of the folder's links to it, any command could reach it
- * without naming it (`grep -r`). Words only: a rule that runs any code it is given reaches anything, which the docs
- * say.
+ * without naming it (`grep -r`). Each command of a chain runs where a `cd` before it left the shell; a change of folder
+ * this can't follow (`cd -`, `pushd`, `popd`) counts as reaching it. Words only: a rule that runs any code it is given
+ * reaches anything, which the docs say.
  */
 export function commandReachesKey(command: string, cwd: string, guard: KeyGuard): boolean {
   const unquoted = command.replace(/["'\\]/g, '');
@@ -185,17 +186,77 @@ export function commandReachesKey(command: string, cwd: string, guard: KeyGuard)
     /\.agentinbox\b/i.test(unquoted) ||
     /\bINBOX_CONFIG\b/.test(unquoted) ||
     guard.places.some((place) => unquoted.includes(place)) ||
-    /(^|[\s=:/])\.[^\s/]*[*?[{$]/.test(unquoted) ||
-    reachesKey(cwd, guard, true)
+    /(^|[\s=:/])\.[^\s/]*[*?[{$]/.test(unquoted)
   ) {
     return true;
   }
 
-  return (chainParts(command) ?? [command]).some((part) =>
-    (simpleCommandWords(part) ?? []).some((word) =>
-      pathsIn(word).some((path) => reachesKey(expandPath(path, guard.home, cwd), guard, true))
+  const parts = chainParts(command) ?? [command];
+  const folders = chainFolders(parts, cwd, guard.home);
+
+  return (
+    folders === undefined ||
+    parts.some(
+      (part, at) =>
+        reachesKey(folders[at], guard, true) ||
+        namesPathTo(simpleCommandWords(part) ?? [], folders[at], guard.home, (path) => reachesKey(path, guard, true))
     )
   );
+}
+
+/**
+ * Whether a plain chain names a path that passes `test`, its links followed, each command's from where it runs
+ * (`chainFolders`). A change of folder this can't follow counts as one that passes. Words only, as for the key.
+ */
+export function commandLeadsTo(command: string, cwd: string, home: string, test: (path: string) => boolean): boolean {
+  const parts = chainParts(command) ?? [command];
+  const folders = chainFolders(parts, cwd, home);
+
+  return (
+    folders === undefined ||
+    parts.some((part, at) => namesPathTo(simpleCommandWords(part) ?? [], folders[at], home, test))
+  );
+}
+
+/**
+ * The folder each command of a chain runs in: where a `cd` before it left the shell, from `cwd`. Undefined when one
+ * changes folders in a way this can't follow (`cd -`, `pushd`, `popd`).
+ */
+export function chainFolders(parts: readonly string[], cwd: string, home: string): string[] | undefined {
+  const folders: string[] = [];
+  let here = cwd;
+  for (const part of parts) {
+    folders.push(here);
+    const words = simpleCommandWords(part) ?? [];
+    if (['cd', 'pushd', 'popd'].includes(words[0])) {
+      const next = folderAfterCd(words, home, here);
+      if (next === undefined) {
+        return undefined;
+      }
+      here = next;
+    }
+  }
+
+  return folders;
+}
+
+/** Whether one command's words name a path that, from `cwd` and with its links followed, passes `test`. */
+export function namesPathTo(
+  words: readonly string[],
+  cwd: string,
+  home: string,
+  test: (path: string) => boolean
+): boolean {
+  return words.some((word) => pathsIn(word).some((path) => test(realTarget(expandPath(path, home, cwd)))));
+}
+
+/** Where `cd` leaves the shell: the home folder without a folder named. Undefined where this can't tell. */
+function folderAfterCd(words: string[], home: string, cwd: string): string | undefined {
+  if (words[0] !== 'cd' || words.length > 2 || words[1]?.startsWith('-')) {
+    return undefined;
+  }
+
+  return words[1] === undefined ? home : expandPath(words[1], home, cwd);
 }
 
 /** What of a word could be a path: the word, and what follows `=` in `--file=<path>` or `NAME=<path>`. */

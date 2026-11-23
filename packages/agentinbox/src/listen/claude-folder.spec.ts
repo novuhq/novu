@@ -257,6 +257,19 @@ describe('decideForContact', () => {
     expect(decide(given, 'Bash', { command: 'cp evil.json .claude/settings.json' })).toBe('ask');
   });
 
+  it('asks before a command or an edit that reaches what decides a run through a link', () => {
+    const given = folder({ allow: ['Edit', 'Bash(cp:*)', 'Bash(cd:*)'] });
+    mkdirSync(join(project, 'docs'));
+    writeFileSync(join(project, 'AGENTS.md'), '');
+    writeFileSync(join(project, 'docs', 'a.md'), '');
+    symlinkSync('../AGENTS.md', join(project, 'docs', 'guide.md'));
+
+    expect(decide(given, 'Bash', { command: 'cp docs/a.md docs/b.md' })).toBe('allow');
+    expect(decide(given, 'Bash', { command: 'cp docs/a.md docs/guide.md' })).toBe('ask');
+    expect(decide(given, 'Bash', { command: 'cd docs && cp a.md guide.md' })).toBe('ask');
+    expect(decide(given, 'Edit', { file_path: join(project, 'docs', 'guide.md') })).toBe('ask');
+  });
+
   it('lets the folder’s skills, the MCP tools and the web hosts its rules name through', () => {
     const given = folder({
       allow: ['mcp__docs__search', 'mcp__crm', 'WebFetch(domain:docs.example.com)', 'Skill(release-notes)'],

@@ -239,6 +239,24 @@ describe('decideCodexTool: commands', () => {
     expect((await decideCodexTool(folder(), bash('cat AGENTS.md'), rules({ cat: 'allow' }))).decision).toBe('allow');
   });
 
+  it('refuses a change to what decides a run through a link too, from where each command runs', async () => {
+    const project = join(dir, 'app');
+    const at = (command: string) => ({ ...bash(command), cwd: project });
+    const check = rules({ cp: 'allow', cd: 'allow' });
+    mkdirSync(join(project, 'docs'));
+    writeFileSync(join(project, 'AGENTS.md'), '');
+    writeFileSync(join(project, 'docs', 'a.md'), '');
+    symlinkSync('../AGENTS.md', join(project, 'docs', 'guide.md'));
+
+    expect((await decideCodexTool(folder(), at('cp docs/a.md docs/b.md'), check)).decision).toBe('allow');
+    for (const command of ['cp docs/a.md docs/guide.md', 'cd docs && cp a.md guide.md']) {
+      expect(await decideCodexTool(folder(), at(command), check), command).toMatchObject({
+        decision: 'deny',
+        why: 'it would change the folder’s own settings or instructions',
+      });
+    }
+  });
+
   it('reads the folder’s skills without a rule, and nothing past them', async () => {
     const none = rules({});
     const project = join(dir, 'app');
@@ -263,6 +281,12 @@ describe('decideCodexTool: commands', () => {
     ]) {
       expect((await decideCodexTool(folder(), at(command), none)).decision).toBe('deny');
     }
+    // From where the command runs: after `cd docs`, the same words name another file.
+    mkdirSync(join(project, 'docs'));
+    const cd = rules({ cd: 'allow' });
+    expect((await decideCodexTool(folder(), at('cd docs && cat .agents/skills/hello/SKILL.md'), cd)).decision).toBe(
+      'deny'
+    );
   });
 });
 

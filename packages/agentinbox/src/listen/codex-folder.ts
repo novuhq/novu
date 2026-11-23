@@ -3,12 +3,15 @@ import { readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import {
+  chainFolders,
   chainParts,
   commandNames,
   commandReachesKey,
   type Decision,
   type KeyGuard,
   keyGuardFor,
+  namesPathTo,
+  pathIn,
   realTarget,
   within,
 } from './contact-guard';
@@ -330,10 +333,20 @@ async function decideCommand(folder: CodexFolder, command: string, cwd: string, 
     return refuse('it could reach Agent Inbox’s key');
   }
 
+  // Each command runs where a `cd` before it left the shell.
+  const folders = chainFolders(
+    parts.map((part) => part.raw),
+    cwd,
+    folder.guard.home
+  );
+  if (!folders) {
+    return refuse('it changes folders in a way that can’t be followed');
+  }
+
   let decision: Decision = 'allow';
-  for (const { raw, words } of parts) {
+  for (const [at, { raw, words }] of parts.entries()) {
     const read = plainRead(words ?? []);
-    if (read && read.length > 0 && read.every((path) => inSkills(path, folder, cwd))) {
+    if (read && read.length > 0 && read.every((path) => inSkills(path, folder, folders[at]))) {
       continue;
     }
     const match = await check(words ?? []);
@@ -343,7 +356,7 @@ async function decideCommand(folder: CodexFolder, command: string, cwd: string, 
     if (!match.decision) {
       return refuse('no rule in the folder’s Codex settings allows it');
     }
-    if (!read && match.decision === 'allow' && commandNames(raw, DECIDING)) {
+    if (!read && match.decision === 'allow' && namesDeciding(raw, words ?? [], folders[at], folder)) {
       return refuse('it would change the folder’s own settings or instructions');
     }
     if (match.decision === 'prompt') {
@@ -390,6 +403,14 @@ function sedPrints(words: string[]): string[] | undefined {
   const printsOnly = script !== undefined && /^(\d+|\$)?(,(\d+|\$))?p$/.test(script);
 
   return options.length > 0 && options.every((option) => option === '-n') && printsOnly ? files : undefined;
+}
+
+/** Whether one command of a chain names what decides a run: by its words, or by a path that leads there through a link. */
+function namesDeciding(raw: string, words: string[], cwd: string, folder: CodexFolder): boolean {
+  return (
+    commandNames(raw, DECIDING) ||
+    namesPathTo(words, cwd, folder.guard.home, (path) => pathIn(path, realPathOf(folder.project), DECIDING))
+  );
 }
 
 /** Whether a path a command reads is in one of the folder's skills, its links followed. */

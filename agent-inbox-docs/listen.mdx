@@ -70,7 +70,7 @@ Settings that only switch everything on don't count, such as Claude Code's `bypa
 Some things stay closed whatever the settings say:
 
 - **The key.** Agent Inbox's key never opens to a contact's run, whatever a rule says: not the folder where the CLI keeps it, `~/.agentinbox`, nor the file `INBOX_CONFIG` points it at. A link to it is no way in either. In a folder that keeps such a link in git, a contact's run can't run commands or search files. On Hermes and OpenClaw, keys and their own files never open.
-- **What decides a run.** Changing the folder's settings, skills and instructions (`.claude`, `.codex`, `.opencode`, `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.git`) asks you on Claude Code and is refused on Codex and OpenCode, so a contact can't give their next run more.
+- **What decides a run.** Changing the folder's settings, skills and instructions (`.claude`, `.codex`, `.opencode`, `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.git`), also through a link to them, asks you on Claude Code and is refused on Codex and OpenCode, so a contact can't give their next run more.
 
 **Allow only what you'd let any contact do.** A contact can use what the folder allows as fully as you can. A rule that runs code, such as `Bash(python3 *)`, or edits together with `npm test`, lets them run any code, and code can read the key. The checks read what the host is about to do; code built to get around them can.
 

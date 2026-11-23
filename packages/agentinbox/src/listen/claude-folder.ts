@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import {
   chainParts,
+  commandLeadsTo,
   commandNames,
   commandReachesKey,
   type Decision,
@@ -223,7 +224,8 @@ interface PlainPart {
  * that could reach the key is refused, and changing what decides a run asks.
  */
 function decideCommand(folder: ClaudeFolder, tool: string, command: string, place: Place, cwd: string): Decision {
-  if (commandReachesKey(command, expand(cwd, place), folder.guard)) {
+  const runsIn = expand(cwd, place);
+  if (commandReachesKey(command, runsIn, folder.guard)) {
     return 'deny';
   }
 
@@ -232,7 +234,7 @@ function decideCommand(folder: ClaudeFolder, tool: string, command: string, plac
   const parts = plainParts(command);
   const decision = parts ? decidePlain(rules, parts) : decideShellWork(rules, command);
 
-  return decision === 'allow' && commandTouchesDeciding(command) ? 'ask' : decision;
+  return decision === 'allow' && commandTouchesDeciding(command, runsIn, place) ? 'ask' : decision;
 }
 
 /** The plain commands of a chain joined by `&&`, or undefined when it is anything more. */
@@ -448,9 +450,12 @@ function touchesKey(target: Target, guard: KeyGuard): boolean {
   return target.paths.some((path) => reachesKey(path, guard, Boolean(target.searches)));
 }
 
-/** Whether a command names one of the folder's files that decide what a run does. Words only. */
-function commandTouchesDeciding(command: string): boolean {
-  return commandNames(command, DECIDING);
+/**
+ * Whether a command names one of the folder's files that decide what a run does: by its words, or by a path that
+ * leads there through a link, from where it runs (`cwd`).
+ */
+function commandTouchesDeciding(command: string, cwd: string, place: Place): boolean {
+  return commandNames(command, DECIDING) || commandLeadsTo(command, cwd, place.home, (path) => deciding(path, place));
 }
 
 /** Whether a path is one of the folder's files that decide what a run does. */
