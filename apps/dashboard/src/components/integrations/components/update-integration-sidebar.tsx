@@ -1,8 +1,15 @@
-import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  type IEnvironment,
+  providers as novuProviders,
+  PermissionsEnum,
+} from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
@@ -13,6 +20,7 @@ import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
+import { getDuplicateTargets, shouldCopySecrets, useDuplicateIntegration } from './hooks/use-duplicate-integration';
 import {
   canVerifyIntegration,
   getIntegrationHealthQueryKey,
@@ -77,8 +85,9 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const queryClient = useQueryClient();
   const { environments, currentEnvironment } = useEnvironment();
-  /** Another environment's integration picked from the details panel while this one has unsaved changes. */
-  const [pendingSwitchId, setPendingSwitchId] = useState<string>();
+  /** Where to go once the user confirms leaving unsaved changes: another environment's integration, or the activity feed. */
+  const [pendingNavigation, setPendingNavigation] = useState<{ run: () => void }>();
+  const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
 
   // The same integration in each environment: integrations aren't linked across environments, so they're
   // matched by identifier.
@@ -91,6 +100,12 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     [integrations, integration]
   );
   const { healthById, verify } = useIntegrationHealth(matches, environments);
+  const environment = environments?.find((env) => env._id === integration?._environmentId);
+  const { mutate: duplicate, isPending: isDuplicating } = useDuplicateIntegration({
+    integration,
+    provider,
+    sourceEnvironment: environment,
+  });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;
@@ -185,25 +200,30 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
   const isWriting = isUpdating || isSettingPrimary || isDeleting;
 
-  const handleSelectEnvironment = (target: { _id: string }) => {
-    if (target._id === integration?._id) return;
+  /** Leaves this integration, after confirming when it has unsaved changes. */
+  const requestNavigation = (run: () => void) => {
     // A save that finishes after a switch would close the drawer on the next integration's edits.
     if (isWriting) return;
     if (formState.isDirty) {
-      setPendingSwitchId(target._id);
+      setPendingNavigation({ run });
       setShowUnsavedDialog(true);
 
       return;
     }
 
-    openIntegration(target._id);
+    run();
+  };
+
+  const handleSelectEnvironment = (target: { _id: string }) => {
+    if (target._id === integration?._id) return;
+    requestNavigation(() => openIntegration(target._id));
   };
 
   const handleProceedClose = () => {
     setShowUnsavedDialog(false);
-    if (pendingSwitchId) {
-      openIntegration(pendingSwitchId);
-      setPendingSwitchId(undefined);
+    if (pendingNavigation) {
+      pendingNavigation.run();
+      setPendingNavigation(undefined);
 
       return;
     }
@@ -214,7 +234,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
   const handleCancelClose = () => {
     setShowUnsavedDialog(false);
-    setPendingSwitchId(undefined);
+    setPendingNavigation(undefined);
   };
 
   const copyIdentifier = async () => {
@@ -227,14 +247,63 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     }
   };
 
+  const handleDuplicate = (target: IEnvironment) => {
+    if (!integration) return;
+
+    duplicate(target, {
+      onSuccess: ({ integration: copy, needsSecrets }) => {
+        if (!needsSecrets) {
+          showSuccessToast(`${integration.name} is set up in ${target.name}.`);
+
+          return;
+        }
+
+        showSuccessToast(
+          `Its secrets weren't copied, so it's paused. Paste them in ${target.name} and resume it.`,
+          `${integration.name} added to ${target.name}`
+        );
+        requestNavigation(() => openIntegration(copy._id));
+      },
+      onError: (error) =>
+        showErrorToast(
+          error instanceof Error ? error.message : 'Try again in a moment.',
+          `Couldn't duplicate to ${target.name}`
+        ),
+    });
+  };
+
   if (!integration || !provider) return null;
 
   const isIntegrationDeletionAllowed =
     !isDemoIntegration(integration?.providerId) && integration?.channel !== ChannelTypeEnum.IN_APP && !isReadOnly;
 
-  const environment = environments?.find((env) => env._id === integration._environmentId);
   const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '', needsReconnect: false };
   const formId = `integration-configuration-form-${provider.id}`;
+
+  // Inbox and Novu's demo providers are set up in every environment by Novu, so there's nothing to copy.
+  const duplicateTargets =
+    isReadOnly || isDemoIntegration(integration.providerId) || integration.channel === ChannelTypeEnum.IN_APP
+      ? []
+      : getDuplicateTargets(integration, environments ?? [], matches);
+  const keepsSecretsBehind = duplicateTargets.some(
+    (target) => !target.existing && !shouldCopySecrets(environment, target.environment)
+  );
+  const duplicateNote = keepsSecretsBehind
+    ? `Copies settings and credentials. From ${environment?.name ?? 'a live environment'} into development environments, secrets are not copied. Paste them there.`
+    : 'Copies settings and credentials.';
+
+  const activityEnvironmentSlug = environment?.slug;
+  const viewActivity =
+    has({ permission: PermissionsEnum.NOTIFICATION_READ }) && activityEnvironmentSlug
+      ? () => {
+          const path = buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
+            environmentSlug: activityEnvironmentSlug,
+          });
+          // The feed has no per-integration filter yet; its channel is the closest match.
+          const query = integration.channel ? `?${new URLSearchParams({ channels: integration.channel })}` : '';
+          requestNavigation(() => navigate(`${path}${query}`));
+        }
+      : undefined;
 
   return (
     <>
@@ -251,10 +320,15 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             // Verifying needs write access, so read-only members don't get an action that can only fail.
             canVerify={!isReadOnly && integration.active && canVerifyIntegration(integration)}
             canDelete={isIntegrationDeletionAllowed}
+            duplicateTargets={duplicateTargets}
+            duplicateNote={duplicateNote}
+            isDuplicating={isDuplicating}
             onVerify={() =>
               verify(integration).catch(() => showErrorToast(`Couldn't verify ${integration.name}. Try again.`))
             }
+            onDuplicate={handleDuplicate}
             onCopyIdentifier={copyIdentifier}
+            onViewActivity={viewActivity}
             onDelete={() => setIsDeleteDialogOpen(true)}
           />
         }
