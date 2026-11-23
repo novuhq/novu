@@ -132,7 +132,7 @@ export function invalidateChannelEndpointsRetrieve(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Endpoints", "retrieve", ...queryKeyBase],
+    queryKey: ["@novu/api", "ChannelEndpoints", "retrieve", ...queryKeyBase],
   });
 }
 
@@ -142,6 +142,6 @@ export function invalidateAllChannelEndpointsRetrieve(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Endpoints", "retrieve"],
+    queryKey: ["@novu/api", "ChannelEndpoints", "retrieve"],
   });
 }

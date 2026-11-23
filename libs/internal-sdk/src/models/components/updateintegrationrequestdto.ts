@@ -15,11 +15,6 @@ import {
   StepFilterDto$outboundSchema,
 } from "./stepfilterdto.js";
 
-/**
- * Configurations for the integration
- */
-export type UpdateIntegrationRequestDtoConfigurations = {};
-
 export type UpdateIntegrationRequestDto = {
   name?: string | undefined;
   identifier?: string | undefined;
@@ -30,34 +25,21 @@ export type UpdateIntegrationRequestDto = {
   active?: boolean | undefined;
   credentials?: CredentialsDto | undefined;
   check?: boolean | undefined;
+  /**
+   * Legacy StepFilter conditions. Ignored when `rules` is also set.
+   *
+   * @deprecated field: This will be removed in a future release, please migrate away from it as soon as possible.
+   */
   conditions?: Array<StepFilterDto> | undefined;
+  /**
+   * JSONLogic used at send time to select this integration. Takes precedence over `conditions`.
+   */
+  rules?: { [k: string]: any } | null | undefined;
   /**
    * Configurations for the integration
    */
-  configurations?: UpdateIntegrationRequestDtoConfigurations | undefined;
+  configurations?: { [k: string]: string } | undefined;
 };
-
-/** @internal */
-export type UpdateIntegrationRequestDtoConfigurations$Outbound = {};
-
-/** @internal */
-export const UpdateIntegrationRequestDtoConfigurations$outboundSchema:
-  z.ZodType<
-    UpdateIntegrationRequestDtoConfigurations$Outbound,
-    z.ZodTypeDef,
-    UpdateIntegrationRequestDtoConfigurations
-  > = z.object({});
-
-export function updateIntegrationRequestDtoConfigurationsToJSON(
-  updateIntegrationRequestDtoConfigurations:
-    UpdateIntegrationRequestDtoConfigurations,
-): string {
-  return JSON.stringify(
-    UpdateIntegrationRequestDtoConfigurations$outboundSchema.parse(
-      updateIntegrationRequestDtoConfigurations,
-    ),
-  );
-}
 
 /** @internal */
 export type UpdateIntegrationRequestDto$Outbound = {
@@ -68,9 +50,8 @@ export type UpdateIntegrationRequestDto$Outbound = {
   credentials?: CredentialsDto$Outbound | undefined;
   check?: boolean | undefined;
   conditions?: Array<StepFilterDto$Outbound> | undefined;
-  configurations?:
-    | UpdateIntegrationRequestDtoConfigurations$Outbound
-    | undefined;
+  rules?: { [k: string]: any } | null | undefined;
+  configurations?: { [k: string]: string } | undefined;
 };
 
 /** @internal */
@@ -86,9 +67,8 @@ export const UpdateIntegrationRequestDto$outboundSchema: z.ZodType<
   credentials: CredentialsDto$outboundSchema.optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$outboundSchema).optional(),
-  configurations: z.lazy(() =>
-    UpdateIntegrationRequestDtoConfigurations$outboundSchema
-  ).optional(),
+  rules: z.nullable(z.record(z.any())).optional(),
+  configurations: z.record(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     environmentId: "_environmentId",

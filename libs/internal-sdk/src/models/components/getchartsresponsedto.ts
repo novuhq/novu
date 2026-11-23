@@ -7,31 +7,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Chart sections
- */
-export type Data = {};
-
 export type GetChartsResponseDto = {
   /**
    * Chart sections
    */
-  data: Data;
+  data: { [k: string]: any };
 };
-
-/** @internal */
-export const Data$inboundSchema: z.ZodType<Data, z.ZodTypeDef, unknown> = z
-  .object({});
-
-export function dataFromJSON(
-  jsonString: string,
-): SafeParseResult<Data, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Data$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Data' from JSON`,
-  );
-}
 
 /** @internal */
 export const GetChartsResponseDto$inboundSchema: z.ZodType<
@@ -39,7 +20,7 @@ export const GetChartsResponseDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  data: z.lazy(() => Data$inboundSchema),
+  data: z.record(z.any()),
 });
 
 export function getChartsResponseDtoFromJSON(

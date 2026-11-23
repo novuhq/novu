@@ -31,7 +31,7 @@ export type EmailStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "email";
   /**

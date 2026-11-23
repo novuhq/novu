@@ -11,6 +11,7 @@ import { ClosedEnum } from "../../types/enums.js";
 export const ChatOrPushProviderEnum = {
   Slack: "slack",
   Discord: "discord",
+  GoogleChat: "google-chat",
   Msteams: "msteams",
   WebexMessaging: "webex-messaging",
   Mattermost: "mattermost",
@@ -25,6 +26,8 @@ export const ChatOrPushProviderEnum = {
   NovuSlack: "novu-slack",
   Telegram: "telegram",
   Sendblue: "sendblue",
+  PhotonImessage: "photon-imessage",
+  NovuWebChat: "novu-web-chat",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

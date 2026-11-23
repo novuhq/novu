@@ -135,6 +135,10 @@ export type GetWorkflowRunsDto = {
    */
   topics?: Array<TopicResponseDto> | undefined;
   /**
+   * Workflow run whose active digest this run was merged into
+   */
+  digestedWorkflowRunId?: string | undefined;
+  /**
    * Workflow run steps
    */
   steps: Array<WorkflowRunStepsDetailsDto>;
@@ -177,6 +181,7 @@ export const GetWorkflowRunsDto$inboundSchema: z.ZodType<
   critical: z.boolean(),
   contextKeys: z.array(z.string()).optional(),
   topics: z.array(TopicResponseDto$inboundSchema).optional(),
+  digestedWorkflowRunId: z.string().optional(),
   steps: z.array(WorkflowRunStepsDetailsDto$inboundSchema),
 });
 

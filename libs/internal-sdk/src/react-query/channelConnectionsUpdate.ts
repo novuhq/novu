@@ -76,7 +76,7 @@ export function useChannelConnectionsUpdateMutation(
 }
 
 export function mutationKeyChannelConnectionsUpdate(): MutationKey {
-  return ["@novu/api", "Channel Connections", "update"];
+  return ["@novu/api", "ChannelConnections", "update"];
 }
 
 export function buildChannelConnectionsUpdateMutation(

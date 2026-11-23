@@ -3,17 +3,12 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
   HttpMethodEnum,
-  HttpMethodEnum$inboundSchema,
   HttpMethodEnum$outboundSchema,
 } from "./httpmethodenum.js";
 import {
   HttpRequestKeyValuePairDto,
-  HttpRequestKeyValuePairDto$inboundSchema,
   HttpRequestKeyValuePairDto$Outbound,
   HttpRequestKeyValuePairDto$outboundSchema,
 } from "./httprequestkeyvaluepairdto.js";
@@ -55,9 +50,6 @@ export type HttpRequestControlDto = {
 };
 
 /** @internal */
-export const Body$inboundSchema: z.ZodType<Body, z.ZodTypeDef, unknown> = z
-  .union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)]);
-/** @internal */
 export type Body$Outbound = string | Array<HttpRequestKeyValuePairDto$Outbound>;
 
 /** @internal */
@@ -67,31 +59,7 @@ export const Body$outboundSchema: z.ZodType<Body$Outbound, z.ZodTypeDef, Body> =
 export function bodyToJSON(body: Body): string {
   return JSON.stringify(Body$outboundSchema.parse(body));
 }
-export function bodyFromJSON(
-  jsonString: string,
-): SafeParseResult<Body, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Body$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Body' from JSON`,
-  );
-}
 
-/** @internal */
-export const HttpRequestControlDto$inboundSchema: z.ZodType<
-  HttpRequestControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  method: HttpMethodEnum$inboundSchema,
-  url: z.string(),
-  headers: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
-  body: z.union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)])
-    .optional(),
-  responseBodySchema: z.record(z.any()).optional(),
-  enforceSchemaValidation: z.boolean().optional(),
-  continueOnFailure: z.boolean().optional(),
-});
 /** @internal */
 export type HttpRequestControlDto$Outbound = {
   method: string;
@@ -126,14 +94,5 @@ export function httpRequestControlDtoToJSON(
 ): string {
   return JSON.stringify(
     HttpRequestControlDto$outboundSchema.parse(httpRequestControlDto),
-  );
-}
-export function httpRequestControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<HttpRequestControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => HttpRequestControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'HttpRequestControlDto' from JSON`,
   );
 }

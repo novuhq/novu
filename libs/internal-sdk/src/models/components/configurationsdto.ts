@@ -10,6 +10,10 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 export type ConfigurationsDto = {
   inboundWebhookEnabled?: boolean | undefined;
   inboundWebhookSigningKey?: string | undefined;
+  /**
+   * JSON Schema describing the payload accepted by this integration.
+   */
+  payloadSchema?: string | undefined;
 };
 
 /** @internal */
@@ -20,6 +24,7 @@ export const ConfigurationsDto$inboundSchema: z.ZodType<
 > = z.object({
   inboundWebhookEnabled: z.boolean().optional(),
   inboundWebhookSigningKey: z.string().optional(),
+  payloadSchema: z.string().optional(),
 });
 
 export function configurationsDtoFromJSON(

@@ -8,6 +8,7 @@ import {
   collectExtraKeys as collectExtraKeys$,
   safeParse,
 } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -21,6 +22,20 @@ import {
 import { StepIssuesDto, StepIssuesDto$inboundSchema } from "./stepissuesdto.js";
 
 /**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export const ChatStepResponseDtoEditorType = {
+  Block: "block",
+  Text: "text",
+} as const;
+/**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export type ChatStepResponseDtoEditorType = ClosedEnum<
+  typeof ChatStepResponseDtoEditorType
+>;
+
+/**
  * Control values for the chat step
  */
 export type ChatStepResponseDtoControlValues = {
@@ -32,6 +47,10 @@ export type ChatStepResponseDtoControlValues = {
    * Content of the chat message.
    */
   body?: string | undefined;
+  /**
+   * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+   */
+  editorType?: ChatStepResponseDtoEditorType | undefined;
   additionalProperties?: { [k: string]: any } | undefined;
 };
 
@@ -44,6 +63,17 @@ export type ChatStepResponseDto = {
    * Control values for the chat step
    */
   controlValues?: ChatStepResponseDtoControlValues | undefined;
+  /**
+   * Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Keys are ChatProviderIdEnum / ToolProviderIdEnum values (e.g. `slack`, `whatsapp-business`, `pagerduty`).
+   */
+  providerOverrides?: { [k: string]: { [k: string]: any } } | null | undefined;
+  /**
+   * Per-integration content overrides keyed by providerId, then by integration identifier. Each entry is merged over the matching providerOverrides entry, only for sends through that integration. Trigger-time overrides still take precedence. Entries whose integration does not exist in the environment are kept but not applied.
+   */
+  integrationOverrides?:
+    | { [k: string]: { [k: string]: { [k: string]: any } } }
+    | null
+    | undefined;
   /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
@@ -65,11 +95,11 @@ export type ChatStepResponseDto = {
    */
   slug: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "chat";
   /**
-   * Origin of the layout
+   * Origin of the workflow
    */
   origin: ResourceOriginEnum;
   /**
@@ -91,6 +121,11 @@ export type ChatStepResponseDto = {
 };
 
 /** @internal */
+export const ChatStepResponseDtoEditorType$inboundSchema: z.ZodNativeEnum<
+  typeof ChatStepResponseDtoEditorType
+> = z.nativeEnum(ChatStepResponseDtoEditorType);
+
+/** @internal */
 export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
   ChatStepResponseDtoControlValues,
   z.ZodTypeDef,
@@ -99,6 +134,7 @@ export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
   z.object({
     skip: z.record(z.any()).optional(),
     body: z.string().optional(),
+    editorType: ChatStepResponseDtoEditorType$inboundSchema.optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -122,6 +158,9 @@ export const ChatStepResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   controls: ChatControlsMetadataResponseDto$inboundSchema,
   controlValues: z.lazy(() => ChatStepResponseDtoControlValues$inboundSchema)
+    .optional(),
+  providerOverrides: z.nullable(z.record(z.record(z.any()))).optional(),
+  integrationOverrides: z.nullable(z.record(z.record(z.record(z.any()))))
     .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),

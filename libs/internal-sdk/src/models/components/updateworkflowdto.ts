@@ -66,6 +66,29 @@ import {
   ThrottleStepUpsertDto$Outbound,
   ThrottleStepUpsertDto$outboundSchema,
 } from "./throttlestepupsertdto.js";
+import {
+  ToolStepUpsertDto,
+  ToolStepUpsertDto$Outbound,
+  ToolStepUpsertDto$outboundSchema,
+} from "./toolstepupsertdto.js";
+
+export type UpdateWorkflowDtoProviders = {
+  replyTo?: string | undefined;
+};
+
+/**
+ * Optional agent assignment used to route this workflow through an agent's connected channels. Pass null to clear.
+ */
+export type UpdateWorkflowDtoAgent = {
+  /**
+   * Public agent identifier used to route this workflow through an agent's connected channels.
+   */
+  identifier: string;
+  /**
+   * Optional per-provider overrides keyed by providerId (e.g. novu-email-agent). Today only Novu Email replyTo is supported.
+   */
+  providers?: { [k: string]: UpdateWorkflowDtoProviders } | undefined;
+};
 
 export type UpdateWorkflowDtoSteps =
   | InAppStepUpsertDto
@@ -76,6 +99,7 @@ export type UpdateWorkflowDtoSteps =
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
+  | ToolStepUpsertDto
   | CustomStepUpsertDto
   | HttpRequestStepUpsertDto;
 
@@ -109,6 +133,10 @@ export type UpdateWorkflowDto = {
    */
   isTranslationEnabled?: boolean | undefined;
   /**
+   * Optional agent assignment used to route this workflow through an agent's connected channels. Pass null to clear.
+   */
+  agent?: UpdateWorkflowDtoAgent | null | undefined;
+  /**
    * Workflow ID (allowed only for code-first workflows)
    */
   workflowId?: string | undefined;
@@ -124,6 +152,7 @@ export type UpdateWorkflowDto = {
     | DelayStepUpsertDto
     | DigestStepUpsertDto
     | ThrottleStepUpsertDto
+    | ToolStepUpsertDto
     | CustomStepUpsertDto
     | HttpRequestStepUpsertDto
   >;
@@ -132,14 +161,61 @@ export type UpdateWorkflowDto = {
    */
   preferences: PreferencesRequestDto;
   /**
-   * Origin of the layout
+   * Origin of the workflow
    */
-  origin: ResourceOriginEnum;
+  origin?: ResourceOriginEnum | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity?: SeverityLevelEnum | undefined;
 };
+
+/** @internal */
+export type UpdateWorkflowDtoProviders$Outbound = {
+  replyTo?: string | undefined;
+};
+
+/** @internal */
+export const UpdateWorkflowDtoProviders$outboundSchema: z.ZodType<
+  UpdateWorkflowDtoProviders$Outbound,
+  z.ZodTypeDef,
+  UpdateWorkflowDtoProviders
+> = z.object({
+  replyTo: z.string().optional(),
+});
+
+export function updateWorkflowDtoProvidersToJSON(
+  updateWorkflowDtoProviders: UpdateWorkflowDtoProviders,
+): string {
+  return JSON.stringify(
+    UpdateWorkflowDtoProviders$outboundSchema.parse(updateWorkflowDtoProviders),
+  );
+}
+
+/** @internal */
+export type UpdateWorkflowDtoAgent$Outbound = {
+  identifier: string;
+  providers?: { [k: string]: UpdateWorkflowDtoProviders$Outbound } | undefined;
+};
+
+/** @internal */
+export const UpdateWorkflowDtoAgent$outboundSchema: z.ZodType<
+  UpdateWorkflowDtoAgent$Outbound,
+  z.ZodTypeDef,
+  UpdateWorkflowDtoAgent
+> = z.object({
+  identifier: z.string(),
+  providers: z.record(z.lazy(() => UpdateWorkflowDtoProviders$outboundSchema))
+    .optional(),
+});
+
+export function updateWorkflowDtoAgentToJSON(
+  updateWorkflowDtoAgent: UpdateWorkflowDtoAgent,
+): string {
+  return JSON.stringify(
+    UpdateWorkflowDtoAgent$outboundSchema.parse(updateWorkflowDtoAgent),
+  );
+}
 
 /** @internal */
 export type UpdateWorkflowDtoSteps$Outbound =
@@ -151,6 +227,7 @@ export type UpdateWorkflowDtoSteps$Outbound =
   | DelayStepUpsertDto$Outbound
   | DigestStepUpsertDto$Outbound
   | ThrottleStepUpsertDto$Outbound
+  | ToolStepUpsertDto$Outbound
   | CustomStepUpsertDto$Outbound
   | HttpRequestStepUpsertDto$Outbound;
 
@@ -168,6 +245,7 @@ export const UpdateWorkflowDtoSteps$outboundSchema: z.ZodType<
   DelayStepUpsertDto$outboundSchema,
   DigestStepUpsertDto$outboundSchema,
   ThrottleStepUpsertDto$outboundSchema,
+  ToolStepUpsertDto$outboundSchema,
   CustomStepUpsertDto$outboundSchema,
   HttpRequestStepUpsertDto$outboundSchema,
 ]);
@@ -189,6 +267,7 @@ export type UpdateWorkflowDto$Outbound = {
   validatePayload?: boolean | undefined;
   payloadSchema?: { [k: string]: any } | null | undefined;
   isTranslationEnabled: boolean;
+  agent?: UpdateWorkflowDtoAgent$Outbound | null | undefined;
   workflowId?: string | undefined;
   steps: Array<
     | InAppStepUpsertDto$Outbound
@@ -199,11 +278,12 @@ export type UpdateWorkflowDto$Outbound = {
     | DelayStepUpsertDto$Outbound
     | DigestStepUpsertDto$Outbound
     | ThrottleStepUpsertDto$Outbound
+    | ToolStepUpsertDto$Outbound
     | CustomStepUpsertDto$Outbound
     | HttpRequestStepUpsertDto$Outbound
   >;
   preferences: PreferencesRequestDto$Outbound;
-  origin: string;
+  origin?: string | undefined;
   severity?: string | undefined;
 };
 
@@ -220,6 +300,8 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   validatePayload: z.boolean().optional(),
   payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
+  agent: z.nullable(z.lazy(() => UpdateWorkflowDtoAgent$outboundSchema))
+    .optional(),
   workflowId: z.string().optional(),
   steps: z.array(
     z.union([
@@ -231,12 +313,13 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
       DelayStepUpsertDto$outboundSchema,
       DigestStepUpsertDto$outboundSchema,
       ThrottleStepUpsertDto$outboundSchema,
+      ToolStepUpsertDto$outboundSchema,
       CustomStepUpsertDto$outboundSchema,
       HttpRequestStepUpsertDto$outboundSchema,
     ]),
   ),
   preferences: PreferencesRequestDto$outboundSchema,
-  origin: ResourceOriginEnum$outboundSchema,
+  origin: ResourceOriginEnum$outboundSchema.optional(),
   severity: SeverityLevelEnum$outboundSchema.optional(),
 });
 
