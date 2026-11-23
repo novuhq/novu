@@ -29,6 +29,7 @@ import {
 import {
   AgentTestContext,
   activityRepository,
+  channelEndpointRepository,
   conversationRepository,
   must,
   seedChannelEndpoint,
@@ -554,14 +555,14 @@ describe('Agent access rule #novu-v2', () => {
       let threadId: string;
       let slackThread: SlackMessage[];
 
-      type SlackMessage = {
+      interface SlackMessage {
         id: string;
         text: string;
         author: { userId: string; fullName: string; userName: string; isBot: boolean };
         isMention: boolean;
         metadata: { dateSent: Date };
         raw: Record<string, unknown>;
-      };
+      }
 
       beforeEach(() => {
         threadId = `${channelId}:${Date.now()}.000100`;
@@ -703,17 +704,29 @@ describe('Agent access rule #novu-v2', () => {
         expect(await inboundHistory('operator_timeline')).to.include(injection);
       });
 
-      it('keeps what an unknown sender wrote to a restricted agent out of the history the agent gets', async () => {
+      it('keeps what an unknown sender wrote or edited to a restricted agent out of the history the agent gets', async () => {
         await seedSlackSubscriber('U_SHARED_KNOWN');
+        const unlinkedId = await seedSlackSubscriber('U_SHARED_UNLINKED');
         expect((await patchBehavior({ subscriberAccess: 'restricted' })).status).to.equal(200);
 
+        const order = await post('U_SHARED_UNLINKED', 'My order number is 42');
+        await channelEndpointRepository.delete({
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          subscriberId: unlinkedId,
+        });
+
         await post('U_SHARED_STRANGER', injection);
+        await edit(order, injection);
         await post('U_SHARED_KNOWN', 'What is the status of the ticket?');
 
-        expect(bridgeCalls).to.have.length(1);
-        expect(replies).to.deep.equal([UNRESOLVED_SUBSCRIBER_ACCESS_REPLY]);
+        expect(bridgeCalls).to.have.length(2);
+        expect(replies).to.deep.equal([UNRESOLVED_SUBSCRIBER_ACCESS_REPLY, UNRESOLVED_SUBSCRIBER_ACCESS_REPLY]);
         for (const view of ['agent_handoff', 'llm_transcript'] as const) {
-          expect(await inboundHistory(view), view).to.deep.equal(['What is the status of the ticket?']);
+          expect(await inboundHistory(view), view).to.deep.equal([
+            'My order number is 42',
+            'What is the status of the ticket?',
+          ]);
         }
         expect(await inboundHistory('operator_timeline')).to.include(injection);
       });
