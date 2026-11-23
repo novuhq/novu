@@ -11,22 +11,21 @@ import {
   opensHere,
   SiteAgentLink,
   SiteButtonLink,
-  SiteChannelLink,
+  SiteMenuChannelLink,
   SiteSourceLink,
 } from './site-navigation-items';
 import { SiteNavigationLink } from './site-navigation-link';
 
-/** A row of the panel's list: the header's links, at a size for a finger. */
+/** A row of the panel's list (Figma `1693:5324`): 56px with the line under it, the header's type at 20px. */
 const ROW_CLASS =
-  'flex h-14 w-full items-center px-3 font-sapien-mono text-xl leading-none tracking-tight text-sapien-foreground transition-colors duration-150 hover:text-accent focus-visible:-outline-offset-2 motion-reduce:transition-none';
+  'flex h-14 w-full items-center border-b border-sapien-border px-3 font-sapien-mono text-xl leading-none tracking-tight text-sapien-foreground transition-colors duration-150 hover:text-accent focus-visible:-outline-offset-2 motion-reduce:transition-none';
 
 /**
- * Small-screen header navigation: a disclosure button (Figma 895:1895) that shows the header's destinations
+ * Small-screen header navigation (Figma `1694:9934`): a disclosure button that shows the header's destinations
  * in a panel from under the header to the bottom of the window: the row's three items as one list, channels,
  * use cases and pricing, and its buttons in a row at the foot. Channels opens in place: each channel with a link
- * to its page, and under it the agents to connect there, a tap each. The open panel isn't designed in Figma; it
- * reuses the channels menu's rows and the header's tokens. It closes on Escape, a link followed, or the focus
- * moving on, and the page behind keeps its place meanwhile.
+ * to its page, and under it the agents to connect there, one to a line. It closes on Escape, a link followed, or
+ * the focus moving on, and the page behind keeps its place meanwhile.
  */
 export function SiteMenu({
   label,
@@ -128,65 +127,71 @@ export function SiteMenu({
       >
         <nav
           aria-label={label}
-          className="flex h-full flex-col overflow-y-auto overscroll-contain px-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]"
+          className="flex h-full flex-col overflow-y-auto overscroll-contain px-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
           <ul className="flex flex-col">
-            <li className="border-b border-sapien-border">
+            <li>
+              {/* Open, the line moves from under the row to under its channels. */}
               <button
                 type="button"
                 aria-expanded={channelsOpen}
                 aria-controls={channelsId}
                 onClick={() => setChannelsOpen((current) => !current)}
-                className={cn(ROW_CLASS, 'group/trigger cursor-pointer justify-between')}
+                className={cn(
+                  ROW_CLASS,
+                  'group/trigger cursor-pointer justify-between aria-expanded:border-transparent'
+                )}
               >
                 {channelsLabel}
-                <NavigationChevron eager size={16} />
+                <NavigationChevron menu />
               </button>
               <ul
                 id={channelsId}
                 hidden={!channelsOpen}
-                className="flex flex-col gap-1 pb-3 transition-[opacity,translate] duration-150 motion-reduce:transition-none starting:-translate-y-1 starting:opacity-0"
+                className="flex flex-col gap-8 border-b border-sapien-border px-3 pt-1 pb-5 transition-[opacity,translate] duration-150 motion-reduce:transition-none starting:-translate-y-1 starting:opacity-0"
               >
                 {channels.map((channel) => (
-                  <li key={channel.id}>
-                    <SiteChannelLink
+                  <li key={channel.id} className="flex flex-col gap-4">
+                    <SiteMenuChannelLink
                       channel={channel}
-                      eager
                       aria-current={pathname === channel.href ? 'page' : undefined}
                       onClick={close}
-                      className="hover:bg-sapien-border"
                     />
-                    {/* Under the channel's name, 58px in: its agents, as many to a line as fit. */}
-                    <ul
-                      aria-label={`${agentsLabel}: ${channel.name}`}
-                      className="flex flex-wrap gap-1.5 pb-1 pl-[58px]"
-                    >
-                      {channel.agents.map((agent) => (
-                        <li key={agent.id}>
-                          <SiteAgentLink
-                            agent={agent}
-                            aria-current={pathname === agent.href ? 'page' : undefined}
-                            onClick={close}
-                            className="h-9 rounded-md border border-sapien-border px-2.5 py-0 hover:border-sapien-surface"
-                          />
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex flex-col gap-2">
+                      <p
+                        aria-hidden="true"
+                        className="font-sapien-mono text-[10px] leading-none tracking-tight text-sapien-foreground/70 uppercase"
+                      >
+                        {agentsLabel}
+                      </p>
+                      <ul aria-label={`${agentsLabel}: ${channel.name}`} className="flex flex-col gap-0.5">
+                        {channel.agents.map((agent) => (
+                          <li key={agent.id}>
+                            <SiteAgentLink
+                              agent={agent}
+                              menu
+                              aria-current={pathname === agent.href ? 'page' : undefined}
+                              onClick={close}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </li>
                 ))}
               </ul>
             </li>
             {links.map((link) => (
-              <li key={link.href} className="border-b border-sapien-border">
+              <li key={link.href}>
                 <SiteNavigationLink href={link.href} onClick={close} className={ROW_CLASS}>
                   {link.label}
                 </SiteNavigationLink>
               </li>
             ))}
           </ul>
-          {/* The header's buttons, at the foot of the window, or after the list when the window is too short to part them. */}
-          <div className="mt-auto flex items-center gap-2 pt-2.5">
-            <SiteSourceLink link={source} eager onClick={close} className="size-11" />
+          {/* The header's buttons, at the foot of the window, or right after the list when the window is too short to part them. */}
+          <div className="mt-auto flex items-center gap-2 pt-px">
+            <SiteSourceLink link={source} menu onClick={close} />
             {actions.map((link) => (
               <SiteButtonLink key={link.href} link={link} onClick={close} className="h-11 flex-1 shrink px-2" />
             ))}

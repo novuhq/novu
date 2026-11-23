@@ -12,6 +12,10 @@ import { cn } from '@/lib/utils';
 
 const CHEVRON: NavigationIcon = { src: '/images/navigation/chevron-down.svg', width: 12, height: 12 };
 const SOURCE_MARK: NavigationIcon = { src: '/images/navigation/github.svg', width: 32, height: 32 };
+/** The small-screen menu's own drawings (Figma `1694:9934`): a 16px chevron, its arrow, and the 44px source button. */
+const MENU_CHEVRON: NavigationIcon = { src: '/images/navigation/chevron-down-16.svg', width: 16, height: 16 };
+const MENU_ARROW: NavigationIcon = { src: '/images/navigation/arrow-right.svg', width: 16, height: 16 };
+const MENU_SOURCE_MARK: NavigationIcon = { src: '/images/navigation/github-44.svg', width: 44, height: 44 };
 
 /**
  * A header link: 13px Geist Mono at 70%, full on hover. Its box is taller than its text, for the pointer, and
@@ -29,38 +33,50 @@ export function opensHere(event: MouseEvent): boolean {
 /**
  * A drawing from the navigation design, at the size Figma draws it: the style keeps a width such as 10.5335px,
  * and the attributes get the whole numbers the browser reads them as. It loads once it has a place on the page,
- * so a phone never fetches the desktop row's. `eager` is for a panel that has no place until it opens.
+ * so a phone never fetches the desktop row's. `eager` is for a panel that has no place until it opens, and
+ * `scale` for where Figma draws the same file larger.
  */
 function NavigationArt({
   icon,
   eager = false,
+  scale = 1,
   className,
 }: {
   icon: NavigationIcon;
   eager?: boolean;
+  scale?: number;
   className?: string;
 }) {
+  const width = icon.width * scale;
+  const height = icon.height * scale;
+
   return (
     <Image
       src={icon.src}
-      width={Math.round(icon.width)}
-      height={Math.round(icon.height)}
+      width={Math.round(width)}
+      height={Math.round(height)}
       alt=""
       unoptimized
       loading={eager ? 'eager' : 'lazy'}
-      style={{ width: icon.width, height: icon.height }}
+      style={{ width, height }}
       className={cn('pointer-events-none max-w-none shrink-0', className)}
     />
   );
 }
 
-/** Points down at 70%; a control that is open (`aria-expanded`) turns it up at full strength. */
-export function NavigationChevron({ eager, size = CHEVRON.width }: { eager?: boolean; size?: number }) {
+/**
+ * Points down; a control that is open (`aria-expanded`) turns it up. The row's is 12px, at 70% until its menu
+ * opens; the small-screen menu's is its own 16px drawing at full strength.
+ */
+export function NavigationChevron({ menu = false }: { menu?: boolean }) {
   return (
     <NavigationArt
-      icon={{ ...CHEVRON, width: size, height: size }}
-      eager={eager}
-      className="opacity-70 transition-[opacity,rotate] duration-150 group-aria-expanded/trigger:rotate-180 group-aria-expanded/trigger:opacity-100 motion-reduce:transition-none"
+      icon={menu ? MENU_CHEVRON : CHEVRON}
+      eager={menu}
+      className={cn(
+        'transition-[opacity,rotate] duration-150 group-aria-expanded/trigger:rotate-180 motion-reduce:transition-none',
+        !menu && 'opacity-70 group-aria-expanded/trigger:opacity-100'
+      )}
     />
   );
 }
@@ -94,40 +110,37 @@ export function SiteButtonLink({
 
 /**
  * The GitHub mark on its tile. The tile's colour is part of the drawing, so hovering lightens it from above,
- * to the colour the other dark buttons turn.
+ * to the colour the other dark buttons turn. `menu` is the small-screen menu's 44px button, its own drawing.
  */
 export function SiteSourceLink({
   link,
-  eager,
+  menu = false,
   className,
   ...props
-}: { link: { label: string; href: string }; eager?: boolean } & Omit<ComponentProps<'a'>, 'href' | 'children'>) {
+}: { link: { label: string; href: string }; menu?: boolean } & Omit<ComponentProps<'a'>, 'href' | 'children'>) {
   return (
     <a
       href={link.href}
       aria-label={link.label}
       className={cn(
-        'relative grid size-8 shrink-0 place-items-center overflow-clip rounded-sm bg-sapien-border after:absolute after:inset-0 after:bg-sapien-foreground/0 after:transition-colors after:duration-150 hover:after:bg-sapien-foreground/6 motion-reduce:after:transition-none',
+        'relative grid shrink-0 place-items-center overflow-clip rounded-sm bg-sapien-border after:absolute after:inset-0 after:bg-sapien-foreground/0 after:transition-colors after:duration-150 hover:after:bg-sapien-foreground/6 motion-reduce:after:transition-none',
+        menu ? 'size-11' : 'size-8',
         className
       )}
       {...props}
     >
-      <NavigationArt icon={SOURCE_MARK} eager={eager} />
+      <NavigationArt icon={menu ? MENU_SOURCE_MARK : SOURCE_MARK} eager={menu} />
     </a>
   );
 }
 
-/** A channel in a menu: its mark on a tile, its name, and what the agent gets there. */
+/** A channel in the header's menu: its mark on a tile, its name, and what the agent gets there. */
 export function SiteChannelLink({
   channel,
   active = false,
-  eager,
   className,
   ...props
-}: { channel: NavigationChannel; active?: boolean; eager?: boolean } & Omit<
-  ComponentProps<typeof Link>,
-  'href' | 'children'
->) {
+}: { channel: NavigationChannel; active?: boolean } & Omit<ComponentProps<typeof Link>, 'href' | 'children'>) {
   return (
     <Link
       href={channel.href}
@@ -139,7 +152,7 @@ export function SiteChannelLink({
       {...props}
     >
       <span className="grid size-9 shrink-0 place-items-center rounded-sm border border-sapien-surface bg-[#0d0c0b]">
-        <NavigationArt icon={channel.icon} eager={eager} />
+        <NavigationArt icon={channel.icon} />
       </span>
       <span className="flex min-w-0 flex-col gap-1 text-sm whitespace-nowrap">
         <span className="leading-none tracking-tight text-sapien-foreground">{channel.name}</span>
@@ -156,17 +169,46 @@ export function SiteChannelLink({
   );
 }
 
-/** An agent's page on a channel: the agent's logo tile and its name. */
-export function SiteAgentLink({
-  agent,
+/**
+ * A channel in the small-screen menu (Figma `1693:5380`): the same tile, a larger name over a quieter line, and
+ * an arrow at the far end. No padding of its own: the tile starts where the list does.
+ */
+export function SiteMenuChannelLink({
+  channel,
   className,
   ...props
-}: { agent: NavigationAgent } & Omit<ComponentProps<typeof Link>, 'href' | 'children'>) {
+}: { channel: NavigationChannel } & Omit<ComponentProps<typeof Link>, 'href' | 'children'>) {
+  return (
+    <Link href={channel.href} className={cn('flex items-center gap-3 rounded-sm', className)} {...props}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-sm border border-sapien-surface bg-[#0d0c0b]">
+        <NavigationArt icon={channel.icon} eager />
+      </span>
+      {/* Lines of 19px and 18px: Figma's 1.25, rounded up to whole pixels as it rounds a text's box. */}
+      <span className="flex min-w-0 flex-col gap-0.5 tracking-tight whitespace-nowrap">
+        <span className="text-[15px] leading-[19px] text-sapien-foreground">{channel.name}</span>
+        <span className="text-sm leading-[18px] text-sapien-foreground/50">{channel.description}</span>
+      </span>
+      <NavigationArt icon={MENU_ARROW} className="ml-auto" />
+    </Link>
+  );
+}
+
+/**
+ * An agent's page on a channel: the agent's logo tile and its name. `menu` is the small-screen menu's row
+ * (Figma `1693:5427`): an 18px tile, with the logo as much larger, and no padding at its sides.
+ */
+export function SiteAgentLink({
+  agent,
+  menu = false,
+  className,
+  ...props
+}: { agent: NavigationAgent; menu?: boolean } & Omit<ComponentProps<typeof Link>, 'href' | 'children'>) {
   return (
     <Link
       href={agent.href}
       className={cn(
-        'flex items-center gap-1.5 rounded-[9px] px-3 py-2 text-sm leading-none tracking-tight whitespace-nowrap text-sapien-foreground/70 transition-colors duration-150 hover:text-sapien-foreground focus-visible:-outline-offset-2 motion-reduce:transition-none',
+        'flex items-center gap-1.5 py-2 text-sm tracking-tight whitespace-nowrap text-sapien-foreground/70 transition-colors duration-150 hover:text-sapien-foreground focus-visible:-outline-offset-2 motion-reduce:transition-none',
+        menu ? 'rounded-sm leading-[18px]' : 'rounded-[9px] px-3 leading-none',
         className
       )}
       {...props}
@@ -174,11 +216,12 @@ export function SiteAgentLink({
       {/* The hairline is drawn inside the tile, not as a border: a border takes a whole pixel from a 16px logo. */}
       <span
         className={cn(
-          'grid size-4 shrink-0 place-items-center overflow-clip rounded-[3.5px] inset-ring-[0.25px] inset-ring-white/8',
+          'grid shrink-0 place-items-center overflow-clip inset-ring-[0.25px] inset-ring-white/8',
+          menu ? 'size-4.5 rounded-sm' : 'size-4 rounded-[3.5px]',
           agent.tile === 'claude' ? 'bg-[#da7757]' : 'bg-white'
         )}
       >
-        <NavigationArt icon={agent.icon} />
+        <NavigationArt icon={agent.icon} scale={menu ? 1.125 : 1} />
       </span>
       {agent.name}
     </Link>

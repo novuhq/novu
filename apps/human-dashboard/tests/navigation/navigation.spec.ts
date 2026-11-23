@@ -346,6 +346,28 @@ test.describe('desktop header', () => {
     await expect(page).toHaveURL(/\/email\/openclaw$/);
   });
 
+  test('the focus holds the menu when it enters just after the pointer has left', async ({ page }) => {
+    await page.goto('/use-cases');
+    const panel = await panelOf(page, channelsButton(page));
+    await channelsButton(page).focus();
+    await channelsButton(page).hover();
+    await expect(panel).toBeVisible();
+    // The pointer leaves, which starts the wait before closing; the keyboard moves in before it is over.
+    await page.mouse.move(300, 600);
+    await page.keyboard.press('Tab');
+    await expect(channelLink(page, 'Email')).toBeFocused();
+    await page.waitForTimeout(700);
+    await expect(panel).toBeVisible();
+    await expect(channelsButton(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(channelLink(page, 'Email')).toBeFocused();
+    // Without the keyboard in it, the same wait closes the menu.
+    await page.keyboard.press('Escape');
+    await channelsButton(page).hover();
+    await expect(panel).toBeVisible();
+    await page.mouse.move(300, 600);
+    await expect(panel).toBeHidden();
+  });
+
   test('the menu leads to the channel and agent pages and names the page that is open', async ({ page }) => {
     await page.goto('/use-cases');
     await channelsButton(page).hover();
@@ -646,10 +668,10 @@ test("a phone doesn't fetch the drawings only the desktop row shows", async ({ p
     '/images/navigation/channel-email.svg',
     '/images/navigation/channel-slack.svg',
     '/images/navigation/channel-telegram.svg',
-    '/images/navigation/chevron-down.svg',
-    '/images/navigation/github.svg',
+    '/images/navigation/chevron-down-16.svg',
+    '/images/navigation/github-44.svg',
   ]);
-  // The agents' logos are fetched when channels is opened.
+  // The agents' logos, and the rows' arrow, are fetched when channels is opened.
   await header(page).getByRole('button', { name: 'channels', exact: true }).click();
   await expect
     .poll(drawings)
@@ -659,11 +681,12 @@ test("a phone doesn't fetch the drawings only the desktop row shows", async ({ p
       '/images/navigation/agent-cursor.svg',
       '/images/navigation/agent-hermes.svg',
       '/images/navigation/agent-openclaw.svg',
+      '/images/navigation/arrow-right.svg',
       '/images/navigation/channel-email.svg',
       '/images/navigation/channel-slack.svg',
       '/images/navigation/channel-telegram.svg',
-      '/images/navigation/chevron-down.svg',
-      '/images/navigation/github.svg',
+      '/images/navigation/chevron-down-16.svg',
+      '/images/navigation/github-44.svg',
     ]);
 });
 
@@ -711,17 +734,17 @@ test('the small-screen menu fills the window: the list, channels opening in plac
   const navigation = header(page).getByRole('navigation', { name: 'Header navigation' });
   // From under the header's line to the bottom of the window, as wide as the column.
   expect(await box(panel)).toEqual({ x: 10, y: 51, width: 370, height: 793 });
-  // The buttons are one row at its foot, in the header's order: the source, the dashboard, the demo booking.
+  // Figma `1693:5333`: the buttons are one row 12px from its foot, in the header's order.
   expect(await box(navigation.getByRole('link', { name: 'GitHub', exact: true }))).toEqual({
     x: 20,
-    y: 790,
+    y: 788,
     width: 44,
     height: 44,
   });
   const dashboard = await box(navigation.getByRole('link', { name: 'dashboard', exact: true }));
   const demo = await box(navigation.getByRole('link', { name: 'book a demo', exact: true }));
-  expect(dashboard).toMatchObject({ x: 72, y: 790, height: 44 });
-  expect(demo).toMatchObject({ y: 790, height: 44 });
+  expect(dashboard).toMatchObject({ x: 72, y: 788, height: 44 });
+  expect(demo).toMatchObject({ y: 788, height: 44 });
   expect(demo.x).toBeCloseTo(dashboard.x + dashboard.width + 8, 1);
   expect(demo.x + demo.width).toBeCloseTo(370, 1);
   expect(demo.width).toBeCloseTo(dashboard.width, 1);
@@ -731,8 +754,12 @@ test('the small-screen menu fills the window: the list, channels opening in plac
   await page.waitForTimeout(200);
   expect(await scrolled(page)).toBe(600);
 
-  // One list in one size: channels, use cases, pricing.
+  // One list in one size, from right under the header's line: channels, use cases, pricing.
   const channels = navigation.getByRole('button', { name: 'channels', exact: true });
+  expect((await box(channels)).y).toBe(51);
+  // Each row is 56px with its line, so the next starts 56px on.
+  expect((await box(navigation.getByRole('link', { name: 'use cases', exact: true }))).y).toBe(107);
+  expect((await box(navigation.getByRole('link', { name: 'pricing', exact: true }))).y).toBe(163);
   for (const row of [
     channels,
     navigation.getByRole('link', { name: 'use cases', exact: true }),
@@ -756,15 +783,28 @@ test('the small-screen menu fills the window: the list, channels opening in plac
   await expect(agents(page, 'Email').getByRole('link')).toHaveText(['OpenClaw']);
   await expect(agents(page, 'Telegram').getByRole('link')).toHaveText(['OpenClaw', 'Claude Code', 'Hermes']);
   await expect(agents(page, 'Slack').getByRole('link')).toHaveText(['Claude Code', 'OpenClaw', 'Codex', 'Cursor']);
+  // Figma `1693:5378`: 12px in, a channel's row with its arrow at the far end, then its agents one to a line
+  // under their label, each a 34px row with an 18px tile; 32px between one channel and the next.
+  const email = await box(navigation.getByRole('link', { name: /^Email Its own/ }));
+  expect(email).toEqual({ x: 32, y: 111, width: 326, height: 39 });
+  const arrow = await box(
+    navigation
+      .getByRole('link', { name: /^Email Its own/ })
+      .locator('img')
+      .last()
+  );
+  expect(arrow).toMatchObject({ x: 342, width: 16, height: 16 });
+  await expect(navigation.getByText('Connect an agent', { exact: true })).toHaveCount(3);
   for (const agent of await navigation
     .getByRole('list', { name: /^Connect an agent/ })
     .getByRole('link')
     .all()) {
-    const place = await box(agent);
-    expect(place.height).toBe(36);
-    expect(place.x).toBeGreaterThanOrEqual(78);
-    expect(place.x + place.width).toBeLessThanOrEqual(370);
+    expect(await box(agent)).toMatchObject({ x: 32, width: 326, height: 34 });
+    expect(await box(agent.locator('span').first())).toMatchObject({ x: 32, width: 18, height: 18 });
   }
+  const telegram = await box(navigation.getByRole('link', { name: /^Telegram Its own/ }));
+  const lastOfEmail = await box(agents(page, 'Email').getByRole('link').last());
+  expect(telegram.y - (lastOfEmail.y + lastOfEmail.height)).toBeCloseTo(32, 0);
   await expect(page).toHaveURL(/\/use-cases$/);
 
   // A channel is one tap to its page.

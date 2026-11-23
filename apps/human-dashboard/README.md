@@ -60,10 +60,9 @@ Neither changes how the dashboard looks. The dither effect on `/` is vendored (`
 `src/data/site-navigation.ts`.
 
 - The header stays at the top of the window. From 1024px it is a row: the channels menu, use cases, pricing, then
-  GitHub, the dashboard and the demo booking. Below that the Menu button opens a panel the height of the window:
-  channels, use cases and pricing as one list, and the row's buttons at its foot. Channels opens in place, each
-  channel a link to its page with its agents under it. Figma doesn't draw that panel; its order follows the mobile
-  menus of comparable sites (novu.co among them).
+  GitHub, the dashboard and the demo booking. Below that the Menu button opens a panel the height of the window
+  (Figma section `1694:9934`): channels, use cases and pricing as one list, and the row's buttons at its foot.
+  Channels opens in place: each channel a link to its page, with its agents under it, one to a line.
 - The channels menu opens under the pointer and closes when it leaves; a click or the keyboard opens it until Escape,
   a second click, a click elsewhere, or the focus moving on. Pointing at a channel, or focusing it, shows the agents
   to connect there. A finger can't point first, so its first tap on a channel shows the agents and its next tap opens

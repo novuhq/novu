@@ -183,9 +183,13 @@ export function SiteChannelsMenu({
         closeTimer.current = setTimeout(hide, CLOSE_DELAY);
       }}
       onFocus={(event) => {
-        // The keyboard's focus in the panel holds the menu open: closing it would drop the focus with it.
+        // The keyboard's focus in the panel holds the menu open: closing it would drop the focus with it. That
+        // goes for a close already on its way, from a pointer that left just before.
         const focused: Element = event.target;
-        if (focused !== trigger.current && focused.matches(':focus-visible')) setPinned(true);
+        if (focused !== trigger.current && focused.matches(':focus-visible')) {
+          clearTimeout(closeTimer.current);
+          setPinned(true);
+        }
       }}
       onBlur={(event) => {
         // Focus that went to another control closes the menu; a click on the panel's own surface doesn't.
