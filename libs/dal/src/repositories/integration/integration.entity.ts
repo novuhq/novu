@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IConfigurations, ICredentials, IntegrationKindEnum } from '@novu/shared';
+import { ChannelTypeEnum, IConfigurations, ICredentials, IIntegrationHealth, IntegrationKindEnum } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { StepFilter } from '../notification-template';
@@ -63,6 +63,9 @@ export class IntegrationEntity {
   rules?: object | null;
 
   connected?: boolean;
+
+  /** Last known provider health. Missing means healthy (no history before rollout). */
+  health?: IIntegrationHealth;
 
   _parentId?: string;
 }

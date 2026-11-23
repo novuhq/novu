@@ -776,8 +776,12 @@ export class SendMessageChat extends SendMessageBase {
         await this.persistProviderIdentifier(result.id, message, command, assignedAgentId);
       }
 
+      await this.recordIntegrationSendSuccess(integration);
+
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
     } catch (error) {
+      await this.recordIntegrationSendFailure(integration, error);
+
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
     }
   }
