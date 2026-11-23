@@ -5,14 +5,16 @@ import jwt from 'jsonwebtoken';
 import { SubscriberLoginProfile, TokenVerification } from '../../../shared/services/novu-tokens.service';
 import { invalidHmacHashError } from '../../utils/encryption';
 
-export interface SubscriberLoginGrant {
-  environmentId: string;
-  subscriberId: string;
-  expiresAt: number;
-  isExpired: boolean;
-  profile?: SubscriberLoginProfile;
-  context?: ContextPayload;
-}
+export type SubscriberLoginGrant =
+  | { isExpired: true; environmentId: string }
+  | {
+      isExpired: false;
+      environmentId: string;
+      subscriberId: string;
+      expiresAt: number;
+      profile?: SubscriberLoginProfile;
+      context?: ContextPayload;
+    };
 
 export function subscriberTokenExpiredError(): UnauthorizedException {
   return new UnauthorizedException({
@@ -22,10 +24,6 @@ export function subscriberTokenExpiredError(): UnauthorizedException {
   });
 }
 
-/**
- * Throws the bad-hash error for every invalid token, so a caller cannot tell why a token was refused.
- * An expired token still yields its grant: the caller reports expiry only after its environment and flag checks pass.
- */
 export function parseSubscriberLoginGrant(verification: TokenVerification): SubscriberLoginGrant {
   if (!verification.ok && verification.reason === 'invalid') {
     throw invalidHmacHashError();
@@ -43,17 +41,20 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     throw invalidHmacHashError();
   }
 
+  if (!verification.ok) {
+    return { isExpired: true, environmentId: claims.iss };
+  }
+
   return {
+    isExpired: false,
     environmentId: claims.iss,
     subscriberId: claims.sub,
     expiresAt: claims.exp,
-    isExpired: !verification.ok,
     profile: claims.subscriber,
     context: claims.context,
   };
 }
 
-/** The widget session JWT, ending when the login token does. */
 export function signTokenSession(subscriber: SubscriberEntity, contextKeys: string[], expiresAt: number): string {
   return jwt.sign(
     {

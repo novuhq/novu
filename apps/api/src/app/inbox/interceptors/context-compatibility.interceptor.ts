@@ -64,7 +64,6 @@ export class ContextCompatibilityInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    // Token sessions carry their signed context to every client version.
     if (subscriberSession.authMethod === SubscriberSessionAuthMethodEnum.TOKEN) {
       return next.handle();
     }

@@ -310,7 +310,6 @@ export class Session {
       command.requestData.subscriberHash
     );
 
-    // Before the checks below, so a hash rejected because its key no longer signs is recorded too.
     await this.apiKeyRevocationService.recordOldKeySubscriberHash({
       organizationId: environment._organizationId,
       environmentId: environment._id,
@@ -346,7 +345,6 @@ export class Session {
     };
   }
 
-  /** Identity comes only from the verified token; the browser's subscriber, context and hashes are ignored. */
   private async resolveTokenIdentity(token: string, applicationIdentifier?: string): Promise<SessionIdentity> {
     const grant = parseSubscriberLoginGrant(this.novuTokens.verify('subscriberLogin', token));
 
