@@ -2,18 +2,10 @@
   "name": "@novu/ee-ai",
   "sourceRoot": "enterprise/packages/ai/src",
   "projectType": "library",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "{workspaceRoot}/.source/ai/src/**/*", "sharedGlobals"]
+  },
   "targets": {
-    "build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
     "test": {
       "cache": false
     },
