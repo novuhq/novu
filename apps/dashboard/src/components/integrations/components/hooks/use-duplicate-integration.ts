@@ -1,4 +1,5 @@
 import {
+  CredentialsKeyEnum,
   EnvironmentTypeEnum,
   getUnusedTwilioAuthCredentialKeys,
   type ICredentials,
@@ -25,6 +26,19 @@ export type DuplicateResult = {
   /** Secrets weren't copied (or weren't readable), so the copy is paused until they're pasted. */
   needsSecrets: boolean;
 };
+
+/**
+ * Credentials that stay in live environments: what the API encrypts at rest (including `headers`, which can carry
+ * an auth token), plus provider material it stores as plain settings — Azure SMS connection strings and MessageBird
+ * keys (`accessKey`) and custom SMTP client keys (`tlsOptions`).
+ */
+const SECRET_CREDENTIAL_KEYS = new Set<string>([
+  ...secureCredentials,
+  CredentialsKeyEnum.AccessKey,
+  CredentialsKeyEnum.TlsOptions,
+]);
+/** Settings that are secrets too: the key the provider signs inbound delivery webhooks with. */
+const SECRET_CONFIGURATION_KEYS = new Set<string>(['inboundWebhookSigningKey']);
 
 const isLive = (environment?: IEnvironment) => environment?.type === EnvironmentTypeEnum.PROD;
 
@@ -73,8 +87,7 @@ export function useDuplicateIntegration({
       if (!integration || !provider) throw new Error('Integration not found');
 
       const copySecrets = shouldCopySecrets(sourceEnvironment, target);
-      // The keys the API encrypts at rest, so `headers` (which can carry an auth token) is left behind too.
-      const secretKeys = new Set<string>(secureCredentials);
+      const secretKeys = SECRET_CREDENTIAL_KEYS;
       const source = Object.entries(integration.credentials ?? {}).filter(([, value]) => hasValue(value));
       const credentials = Object.fromEntries(source.filter(([key]) => copySecrets || !secretKeys.has(key)));
 
@@ -91,6 +104,12 @@ export function useDuplicateIntegration({
           secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
       );
       const needsSecrets = droppedSecret || missingRequiredSecret;
+      // Without its signing key the copy still sends; inbound delivery events wait until it's pasted.
+      const configurations = Object.fromEntries(
+        Object.entries(integration.configurations ?? {}).filter(
+          ([key]) => copySecrets || !SECRET_CONFIGURATION_KEYS.has(key)
+        )
+      ) as Record<string, string>;
 
       const { data } = await createIntegration(
         {
@@ -100,7 +119,7 @@ export function useDuplicateIntegration({
           name: integration.name,
           identifier: integration.identifier,
           credentials,
-          configurations: integration.configurations as Record<string, string> | undefined,
+          configurations,
           // Without its secrets the copy can't send, so it waits paused instead of failing every step.
           active: integration.active && !needsSecrets,
           _environmentId: target._id,
