@@ -9,6 +9,8 @@ import type { ReactNode } from 'react';
 import {
   RiArrowRightSLine,
   RiArrowRightUpLine,
+  RiBarChartBoxLine,
+  RiClipboardLine,
   RiDeleteBin2Line,
   RiFlashlightLine,
   RiInformationLine,
@@ -23,12 +25,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
 import { SheetHeader, SheetTitle } from '@/components/primitives/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
+import type { DuplicateTarget } from './hooks/use-duplicate-integration';
 import type { IntegrationHealth } from './hooks/use-integration-health';
 import { ProviderIcon } from './provider-icon';
 import { CHANNEL_LABELS } from './utils/helpers';
@@ -87,21 +93,82 @@ export function HealthDot({ tone }: { tone: IntegrationHealth['tone'] }) {
   );
 }
 
+/** "Duplicate to…": the other environments, live ones under their own heading, and what gets copied. */
+function DuplicateSubmenu({
+  targets,
+  note,
+  isDuplicating,
+  onDuplicate,
+}: {
+  targets: DuplicateTarget[];
+  note: string;
+  isDuplicating: boolean;
+  onDuplicate: (environment: IEnvironment) => void;
+}) {
+  const development = targets.filter((target) => target.environment.type !== EnvironmentTypeEnum.PROD);
+  const live = targets.filter((target) => target.environment.type === EnvironmentTypeEnum.PROD);
+
+  const renderRow = ({ environment, existing }: DuplicateTarget) => (
+    <DropdownMenuItem
+      key={environment._id}
+      disabled={!!existing || isDuplicating}
+      onSelect={() => onDuplicate(environment)}
+      className="group/env h-8 gap-2 rounded-lg px-2 py-1.5 focus:bg-[#f5f7fa] data-[disabled]:opacity-100"
+    >
+      <EnvironmentBranchIcon environment={environment} size="xs" />
+      <span className="text-label-sm text-text-strong group-data-[disabled]/env:text-text-soft flex-1 truncate">
+        {environment.name}
+      </span>
+      <span className="text-label-xs text-text-soft shrink-0">{existing ? 'Already set up' : 'Not set up'}</span>
+    </DropdownMenuItem>
+  );
+
+  return (
+    <DropdownMenuSubContent
+      sideOffset={6}
+      className="bg-bg-white flex w-64 flex-col gap-0.5 rounded-xl border-0 p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]"
+    >
+      {development.map(renderRow)}
+      {live.length > 0 && (
+        <>
+          <span className="text-text-soft px-2 pb-1 pt-1.5 text-[11px] font-medium uppercase leading-5 tracking-wide">
+            Live environments
+          </span>
+          {live.map(renderRow)}
+        </>
+      )}
+      <p className="text-label-xs text-text-soft px-2 pb-1 pt-1.5">{note}</p>
+    </DropdownMenuSubContent>
+  );
+}
+
 export function ManageIntegrationHeader({
   integration,
   provider,
   canVerify,
   canDelete,
+  duplicateTargets,
+  duplicateNote,
+  isDuplicating,
   onVerify,
+  onDuplicate,
   onCopyIdentifier,
+  onViewActivity,
   onDelete,
 }: {
   integration: IIntegration;
   provider: IProviderConfig;
   canVerify: boolean;
   canDelete: boolean;
+  /** The environments it can be copied into; empty hides "Duplicate to…". */
+  duplicateTargets: DuplicateTarget[];
+  duplicateNote: string;
+  isDuplicating: boolean;
   onVerify: () => void;
+  onDuplicate: (environment: IEnvironment) => void;
   onCopyIdentifier: () => void;
+  /** Hidden when the member can't read the activity feed. */
+  onViewActivity?: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -124,10 +191,37 @@ export function ManageIntegrationHeader({
               Verify integration
             </DropdownMenuItem>
           )}
+          {duplicateTargets.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger
+                className={cn(
+                  ITEM_CLASS,
+                  // The design has no submenu chevron.
+                  'data-[state=open]:text-text-strong data-[state=open]:bg-[#f4f4f5] [&>svg:last-child]:hidden'
+                )}
+                disabled={isDuplicating}
+              >
+                <RiClipboardLine />
+                {isDuplicating ? 'Duplicating…' : 'Duplicate to…'}
+              </DropdownMenuSubTrigger>
+              <DuplicateSubmenu
+                targets={duplicateTargets}
+                note={duplicateNote}
+                isDuplicating={isDuplicating}
+                onDuplicate={onDuplicate}
+              />
+            </DropdownMenuSub>
+          )}
           <DropdownMenuItem className={ITEM_CLASS} onSelect={onCopyIdentifier}>
             <RiStackLine />
             Copy identifier
           </DropdownMenuItem>
+          {onViewActivity && (
+            <DropdownMenuItem className={ITEM_CLASS} onSelect={onViewActivity}>
+              <RiBarChartBoxLine />
+              View activity
+            </DropdownMenuItem>
+          )}
           {canDelete && (
             <>
               <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
