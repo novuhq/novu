@@ -177,6 +177,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _conversationId: conversationId,
         platformMessageId: { $in: ids },
         type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+        accessRefused: { $ne: true },
       },
       '*'
     );
@@ -778,6 +779,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     senderName?: string;
     sequence?: number;
     type?: ConversationActivityTypeEnum;
+    accessRefused?: boolean;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -795,6 +797,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
       ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
+      ...(params.accessRefused ? { accessRefused: true } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

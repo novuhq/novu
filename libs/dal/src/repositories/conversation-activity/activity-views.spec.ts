@@ -91,6 +91,7 @@ describe('activity-views', () => {
       {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        accessRefused: { $ne: true },
       },
       {
         type: ConversationActivityTypeEnum.MESSAGE,
@@ -99,6 +100,7 @@ describe('activity-views', () => {
       {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+        accessRefused: { $ne: true },
       },
     ]);
   });

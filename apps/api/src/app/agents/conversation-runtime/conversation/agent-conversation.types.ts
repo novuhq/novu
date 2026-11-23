@@ -18,6 +18,7 @@ export interface PersistInboundMessageParams {
   identifier?: string;
   /** Pre-allocated conversation event sequence; minted at persist time when absent */
   sequence?: number;
+  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }
@@ -29,6 +30,7 @@ export interface UpdateInboundMessageParams {
   richContent?: Record<string, unknown>;
   hasPlatformAttachments?: boolean;
   editedAt?: string;
+  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }
@@ -39,6 +41,7 @@ export interface DeleteInboundMessageParams {
   /** Last-known body from the channel. Falls back to the stored message row. */
   content?: string;
   richContent?: Record<string, unknown>;
+  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }

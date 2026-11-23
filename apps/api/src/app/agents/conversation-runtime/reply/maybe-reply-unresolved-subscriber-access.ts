@@ -7,6 +7,16 @@ import type { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { postUnresolvedSubscriberAccessReply } from './post-unresolved-subscriber-access-reply';
 
+/** Restricted access refuses a message or edit from anyone who is not a resolved subscriber. */
+export function isRefusedByRestrictedAccess(turn: ConversationTurn): boolean {
+  return (
+    turn.config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED &&
+    (turn.event === AgentEventEnum.ON_MESSAGE || turn.event === AgentEventEnum.ON_MESSAGE_UPDATED) &&
+    turn.subscriberResolution !== undefined &&
+    turn.subscriberResolution.outcome !== 'resolved'
+  );
+}
+
 /**
  * Message-only subscriber-access gate shared by managed and custom-code.
  * Returns true when the turn was answered or intentionally dropped and must not dispatch.

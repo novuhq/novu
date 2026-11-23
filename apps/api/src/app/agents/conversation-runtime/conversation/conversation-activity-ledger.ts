@@ -182,6 +182,7 @@ export class ConversationActivityLedger {
         richContent: params.richContent,
         platformMessageId: params.platformMessageId,
         sequence,
+        accessRefused: params.accessRefused,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       });
@@ -1061,6 +1062,7 @@ export class ConversationActivityLedger {
     richContent?: Record<string, unknown>;
     hasPlatformAttachments?: boolean;
     editedAt?: string;
+    accessRefused?: boolean;
   }): Promise<ConversationActivityEntity | null> {
     const existing = await this.activityRepository.findByPlatformMessageId(
       params.environmentId,
@@ -1109,6 +1111,7 @@ export class ConversationActivityLedger {
       platformMessageId: string;
       type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
       editedAt?: string;
+      accessRefused?: boolean;
     },
     content: string,
     richContent?: Record<string, unknown>
@@ -1138,6 +1141,7 @@ export class ConversationActivityLedger {
         platformMessageId: params.platformMessageId,
         type: params.type,
         sequence,
+        accessRefused: params.accessRefused,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       });
