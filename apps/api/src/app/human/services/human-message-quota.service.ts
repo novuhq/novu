@@ -5,11 +5,14 @@ import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from 
 
 const DAY_TTL_BUFFER_SECONDS = 60 * 60;
 const MONTH_TTL_BUFFER_SECONDS = 24 * 60 * 60;
+/** A notice that didn't reach the operator is tried again by a refusal this long after. */
+const NOTICE_RETRY_SECONDS = 5 * 60;
 
 /**
  * Check both windows before either increment so a monthly rejection cannot
  * leave a daily credit held. INCRBY + EXPIRE stay inside this script so two
- * reservations at the boundary cannot both pass.
+ * reservations at the boundary cannot both pass. The month is checked first:
+ * when both windows are used up, the refusal names the later reset.
  */
 const RESERVE_SCRIPT = `
 local count = tonumber(ARGV[1])
@@ -19,11 +22,11 @@ local dailyTtl = tonumber(ARGV[4])
 local monthlyTtl = tonumber(ARGV[5])
 local daily = tonumber(redis.call('GET', KEYS[1]) or '0')
 local monthly = tonumber(redis.call('GET', KEYS[2]) or '0')
-if daily + count > dailyLimit then
-  return 'daily'
-end
 if monthly + count > monthlyLimit then
   return 'monthly'
+end
+if daily + count > dailyLimit then
+  return 'daily'
 end
 local newDaily = redis.call('INCRBY', KEYS[1], count)
 if newDaily == count then
@@ -145,7 +148,8 @@ export class HumanMessageQuotaService {
 
   /**
    * Whether this refusal is the one that tells the operator: every credit of the window is spent, and nobody was
-   * told yet. A send to several people can be refused while a few credits remain; that isn't the limit yet.
+   * told yet. A send to several people can be refused while a few credits remain; that isn't the limit yet. Never
+   * throws: without the cache, or on its error, nobody is told.
    */
   async claimLimitNotice(organizationId: string, refusal: HumanMessageQuotaExceededException): Promise<boolean> {
     if (!this.cacheService.cacheEnabled()) {
@@ -153,17 +157,16 @@ export class HumanMessageQuotaService {
     }
 
     const now = new Date();
-    const keys = humanMessageQuotaKeys(organizationId, now);
-    const daily = refusal.cap === 'daily';
-    const counter = daily ? keys.daily : keys.monthly;
-    const ttl = daily
-      ? secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS
-      : secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS;
+    const { counter, notice } = limitNoticeKeys(organizationId, refusal.cap, now);
+    const ttl =
+      refusal.cap === 'daily'
+        ? secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS
+        : secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS;
 
     try {
       const claimed = await this.cacheService.eval<number>(
         CLAIM_NOTICE_SCRIPT,
-        [counter, `${counter}:notice`],
+        [counter, notice],
         [refusal.limit, ttl]
       );
 
@@ -172,6 +175,25 @@ export class HumanMessageQuotaService {
       this.logger.warn({ err, organizationId }, 'Failed to claim the message limit notice');
 
       return false;
+    }
+  }
+
+  /**
+   * The notice didn't reach the operator: a refusal a few minutes later tries again, instead of none until the
+   * window starts over.
+   */
+  async retryLimitNoticeLater(organizationId: string, refusal: HumanMessageQuotaExceededException): Promise<void> {
+    if (!this.cacheService.cacheEnabled()) {
+      return;
+    }
+
+    try {
+      await this.cacheService.set(limitNoticeKeys(organizationId, refusal.cap, new Date()).notice, 1, {
+        ttl: NOTICE_RETRY_SECONDS,
+        jitter: false,
+      });
+    } catch (err) {
+      this.logger.warn({ err, organizationId }, 'Failed to let the message limit notice be tried again');
     }
   }
 
@@ -305,6 +327,14 @@ export function humanMessageQuotaKeys(organizationId: string, now: Date): { dail
     daily: `human-message:{${organizationId}}:day:${year}-${month}-${day}`,
     monthly: `human-message:{${organizationId}}:month:${year}-${month}`,
   };
+}
+
+/** The window's counter, and next to it, in the same slot, the key saying that the operator was told. */
+function limitNoticeKeys(organizationId: string, cap: HumanMessageCap, now: Date): { counter: string; notice: string } {
+  const keys = humanMessageQuotaKeys(organizationId, now);
+  const counter = cap === 'daily' ? keys.daily : keys.monthly;
+
+  return { counter, notice: `${counter}:notice` };
 }
 
 function nextUtcDay(now: Date): Date {

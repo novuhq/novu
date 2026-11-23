@@ -172,7 +172,8 @@ export class CreateInteraction {
 
   /**
    * A new thread with each contact, or the one they already have on a channel with a single thread per person. A
-   * notice about the message limit (`outsideLimit`) neither counts against it nor counts as the agent's message.
+   * notice about the message limit (`outsideLimit`) counts against neither the message limit nor the email limit,
+   * nor as the agent's message.
    */
   private async sendToContacts(
     command: CreateInteractionCommand,
@@ -201,17 +202,24 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
 
     try {
-      ({ credits, emailCapError } = await this.reserveEmailCredits(
-        command.organizationId,
-        emailCount,
-        emailCount < resolved.length
-      ));
+      if (outsideLimit) {
+        credits = this.inboxQuota.uncountedCredits(command.organizationId);
+      } else {
+        const emailOnly = emailCount === resolved.length;
+        // Every message of an email-only send is an email, so both limits run out together there. The message
+        // limit goes first: its refusal is the one that tells the operator.
+        if (emailOnly) {
+          messageCredits = await this.reserveMessageCredits(command, agent, resolved.length);
+        }
 
-      if (!outsideLimit) {
-        // Capped email recipients are not delivered, so they stay out of this
-        // hold. Counting them would reject the other channels when one credit remains.
-        const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
-        messageCredits = await this.reserveMessageCredits(command, agent, messageCount);
+        ({ credits, emailCapError } = await this.reserveEmailCredits(command.organizationId, emailCount, !emailOnly));
+
+        if (!emailOnly) {
+          // Capped email recipients are not delivered, so they stay out of this
+          // hold. Counting them would reject the other channels when one credit remains.
+          const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
+          messageCredits = await this.reserveMessageCredits(command, agent, messageCount);
+        }
       }
 
       const interaction = await this.humanInteractionRepository.create(
@@ -718,18 +726,19 @@ export class CreateInteraction {
 
   /**
    * Tells the agent's operator that the account ran out of messages: once in the day or month, from the agent whose
-   * send was refused, the way any message to them goes, and outside the limit. The refusal stands either way.
+   * send was refused, the way any message to them goes, and outside the limits. When it doesn't reach them, a refusal
+   * a few minutes later tries again. The refusal stands either way.
    */
   private async tellOperatorAboutLimit(
     command: CreateInteractionCommand,
     agent: AgentEntity,
     refusal: HumanMessageQuotaExceededException
   ): Promise<void> {
-    try {
-      if (!(await this.messageQuota.claimLimitNotice(command.organizationId, refusal))) {
-        return;
-      }
+    if (!(await this.messageQuota.claimLimitNotice(command.organizationId, refusal))) {
+      return;
+    }
 
+    try {
       const operator = await this.humanContactRepository.findOperator(command.environmentId, agent._id);
       if (!operator) {
         return;
@@ -754,6 +763,7 @@ export class CreateInteraction {
         { err, organizationId: command.organizationId, agentId: agent._id },
         'Failed to tell the operator that the message limit was reached'
       );
+      await this.messageQuota.retryLimitNoticeLater(command.organizationId, refusal);
     }
   }
 

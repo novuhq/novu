@@ -38,12 +38,12 @@ function applyReserve(store: CounterStore, keys: string[], args: Array<string | 
   const daily = store.get(keys[0]) ?? 0;
   const monthly = store.get(keys[1]) ?? 0;
 
-  if (daily + count > dailyLimit) {
-    return 'daily';
-  }
-
   if (monthly + count > monthlyLimit) {
     return 'monthly';
+  }
+
+  if (daily + count > dailyLimit) {
+    return 'daily';
   }
 
   store.set(keys[0], daily + count);
@@ -82,6 +82,7 @@ describe('HumanMessageQuotaService', () => {
   let store: CounterStore;
   let cacheEnabled: boolean;
   let evalStub: sinon.SinonStub;
+  let setStub: sinon.SinonStub;
   let service: HumanMessageQuotaService;
 
   const dailyCount = () => store.get(humanMessageQuotaKeys(organizationId, new Date()).daily);
@@ -103,8 +104,13 @@ describe('HumanMessageQuotaService', () => {
       return applyRelease(store, keys, args);
     });
     const mget = async (keys: string[]) => keys.map((key) => (store.has(key) ? String(store.get(key)) : null));
+    setStub = sinon.stub().callsFake(async (key: string, value: number) => {
+      store.set(key, value);
+
+      return 'OK';
+    });
     service = new HumanMessageQuotaService(
-      { cacheEnabled: () => cacheEnabled, eval: evalStub, mget } as never,
+      { cacheEnabled: () => cacheEnabled, eval: evalStub, mget, set: setStub } as never,
       { findById: sinon.stub().resolves({ apiServiceLevel: ApiServiceLevelEnum.FREE }) } as never,
       { setContext: sinon.stub(), warn: sinon.stub() } as never
     );
@@ -134,6 +140,13 @@ describe('HumanMessageQuotaService', () => {
 
     store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 0);
     store.set(humanMessageQuotaKeys(organizationId, new Date()).monthly, 300);
+    await expectQuotaRejection(service, 'monthly', 'human_message_monthly_cap');
+  });
+
+  it('names the month when the day and the month are used up at once, as the later reset', async () => {
+    store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 50);
+    store.set(humanMessageQuotaKeys(organizationId, new Date()).monthly, 300);
+
     await expectQuotaRejection(service, 'monthly', 'human_message_monthly_cap');
   });
 
@@ -187,6 +200,17 @@ describe('HumanMessageQuotaService', () => {
 
       expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
       expect(await service.claimLimitNotice(organizationId, refusal('monthly', 300))).to.equal(true);
+    });
+
+    it('is tried again after a few minutes, not the rest of the window, when it did not reach the operator', async () => {
+      const keys = humanMessageQuotaKeys(organizationId, new Date());
+      store.set(keys.daily, 50);
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
+
+      await service.retryLimitNoticeLater(organizationId, refusal('daily', 50));
+
+      expect(setStub.firstCall.args).to.deep.equal([`${keys.daily}:notice`, 1, { ttl: 5 * 60, jitter: false }]);
+      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
     });
   });
 
