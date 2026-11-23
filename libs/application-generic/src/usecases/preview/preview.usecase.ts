@@ -290,7 +290,7 @@ export class PreviewUsecase {
     resolvedOutputs?: Record<string, unknown>
   ): Promise<string | undefined> {
     try {
-      const secretKey = await this.getDecryptedSecretKey.execute(
+      const secretKeys = await this.getDecryptedSecretKey.executeAll(
         GetDecryptedSecretKeyCommand.create({ environmentId })
       );
 
@@ -299,7 +299,7 @@ export class PreviewUsecase {
       const bodyRecord = resolveHttpRequestBody(body);
       const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
 
-      return buildNovuSignatureHeader(secretKey, payload);
+      return buildNovuSignatureHeader(secretKeys, payload);
     } catch {
       return undefined;
     }

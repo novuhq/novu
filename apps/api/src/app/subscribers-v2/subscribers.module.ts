@@ -33,10 +33,12 @@ import {
 import { InboxModule } from '../inbox/inbox.module';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
+import { SharedModule } from '../shared/shared.module';
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
 import { SubscribersController } from './subscribers.controller';
+import { CreateSubscriberToken } from './usecases/create-subscriber-token/create-subscriber-token.usecase';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
@@ -64,6 +66,7 @@ const USE_CASES = [
   GetSubscriberTemplatePreference,
   UpsertPreferences,
   GetWorkflowByIdsUseCase,
+  CreateSubscriberToken,
 ];
 
 const DAL_MODELS = [
@@ -81,7 +84,7 @@ const DAL_MODELS = [
 ];
 
 @Module({
-  imports: [TopicsV2Module, InboxModule, OutboundWebhooksModule.forRoot()],
+  imports: [SharedModule, TopicsV2Module, InboxModule, OutboundWebhooksModule.forRoot()],
   controllers: [SubscribersController],
   providers: [
     ...USE_CASES,

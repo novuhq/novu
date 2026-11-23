@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Update a topic
  *
  * @remarks
- * Update a topic name by its unique key identifier **topicKey**
+ * Update a topic name or data by its unique key identifier **topicKey**
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

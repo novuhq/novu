@@ -285,6 +285,12 @@ function WorkflowCanvasPane({
       );
     }
     case 'web-chat-popover':
+      return (
+        <div className="relative flex-1">
+          {canvas}
+          <CopilotWebChatCanvasToast />
+        </div>
+      );
     case 'pending-web-chat-popover':
     case null:
       return <div className="relative flex-1">{canvas}</div>;

@@ -19,6 +19,7 @@ export const MessagesControllerDeleteMessagesByTransactionIdQueryParamChannel =
     Sms: "sms",
     Chat: "chat",
     Push: "push",
+    Tool: "tool",
   } as const;
 /**
  * The channel of the message to be deleted

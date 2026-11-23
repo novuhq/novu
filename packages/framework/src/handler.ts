@@ -434,12 +434,13 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureNotFoundError();
     }
 
-    if (!this.client.secretKey) {
+    const secretKeys = this.client.verificationSecretKeys;
+    if (secretKeys.length === 0) {
       throw new SigningKeyNotFoundError();
     }
 
     const parsed = parseSignatureHeader(hmacHeader);
-    if (!parsed.v1 || parsed.t === undefined) {
+    if (parsed.v1s.length === 0 || parsed.t === undefined) {
       throw new SignatureInvalidError();
     }
 
@@ -448,10 +449,36 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureExpiredError();
     }
 
-    const localHash = await createHmacSubtle(this.client.secretKey, `${parsed.t}.${JSON.stringify(payload)}`);
+    const signedPayload = `${parsed.t}.${JSON.stringify(payload)}`;
+    const matched = await this.signatureMatchesAnyKey(secretKeys, signedPayload, parsed.v1s);
 
-    if (!timingSafeEqual(localHash, parsed.v1)) {
+    if (!matched) {
       throw new SignatureMismatchError();
     }
+  }
+
+  /**
+   * Compare every signature against every active key. A match on any pair is
+   * enough, which is what lets a bridge keep the new key while Novu still
+   * signs with the original key as well.
+   */
+  private async signatureMatchesAnyKey(
+    secretKeys: readonly string[],
+    signedPayload: string,
+    candidates: readonly string[]
+  ): Promise<boolean> {
+    let matched = false;
+
+    for (const secretKey of secretKeys) {
+      const localHash = await createHmacSubtle(secretKey, signedPayload);
+
+      for (const candidate of candidates) {
+        if (timingSafeEqual(localHash, candidate)) {
+          matched = true;
+        }
+      }
+    }
+
+    return matched;
   }
 }

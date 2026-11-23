@@ -33,6 +33,10 @@ export type CreateMsTeamsChannelEndpointDto = {
    * The subscriber ID to which the channel endpoint is linked
    */
   subscriberId: string;
+  /**
+   * When true, the subscriber is created if it does not exist yet (existing subscribers are never modified). When false or omitted, an unknown subscriberId returns 404.
+   */
+  createSubscriberIfMissing?: boolean | undefined;
   context?:
     | { [k: string]: CreateMsTeamsChannelEndpointDtoContext2 | string }
     | undefined;
@@ -111,6 +115,7 @@ export function createMsTeamsChannelEndpointDtoContextToJSON(
 export type CreateMsTeamsChannelEndpointDto$Outbound = {
   identifier?: string | undefined;
   subscriberId: string;
+  createSubscriberIfMissing: boolean;
   context?: {
     [k: string]: CreateMsTeamsChannelEndpointDtoContext2$Outbound | string;
   } | undefined;
@@ -128,6 +133,7 @@ export const CreateMsTeamsChannelEndpointDto$outboundSchema: z.ZodType<
 > = z.object({
   identifier: z.string().optional(),
   subscriberId: z.string(),
+  createSubscriberIfMissing: z.boolean().default(false),
   context: z.record(
     z.union([
       z.lazy(() => CreateMsTeamsChannelEndpointDtoContext2$outboundSchema),

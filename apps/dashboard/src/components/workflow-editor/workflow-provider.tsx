@@ -16,6 +16,7 @@ import {
 } from '@/components/primitives/dialog';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { parseWorkflowLimitError, type WorkflowLimitError } from '@/hooks/use-create-workflow';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useInvocationQueue } from '@/hooks/use-invocation-queue';
@@ -26,6 +27,7 @@ import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { findDigestStepBeforeCurrent } from './step-utils';
 import { showErrorToast } from './toasts';
+import { WorkflowLimitUpgradeDialog } from './workflow-limit-upgrade-dialog';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
 export type DraftStep = StepCreateDto & {
@@ -61,6 +63,20 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { workflowSlug = '', stepSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
   const navigate = useNavigate();
   const [lastSaveError, setLastSaveError] = useState<unknown | null>(null);
+  const [activeWorkflowLimitError, setActiveWorkflowLimitError] = useState<WorkflowLimitError | null>(null);
+
+  /** Plan-limit rejections (only raised when activating a workflow) open the upgrade dialog instead of a toast. */
+  const handleSaveError = useCallback((error: unknown) => {
+    const limitError = parseWorkflowLimitError(error);
+
+    if (limitError) {
+      setActiveWorkflowLimitError(limitError);
+
+      return;
+    }
+
+    showErrorToast(undefined, error);
+  }, []);
 
   const { workflow, isPending, error, refetch } = useFetchWorkflow({
     workflowSlug: workflowSlug !== 'new' ? workflowSlug : undefined,
@@ -89,7 +105,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     },
     onError: (error) => {
       setLastSaveError(error);
-      showErrorToast(undefined, error);
+      handleSaveError(error);
     },
     onSuccess: () => {
       setLastSaveError(null);
@@ -103,7 +119,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     },
     onError: (error) => {
       setLastSaveError(error);
-      showErrorToast(undefined, error);
+      handleSaveError(error);
     },
     onSuccess: () => {
       setLastSaveError(null);
@@ -129,12 +145,12 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
           } catch (error) {
             setLastSaveError(error);
             options?.onError?.(error);
-            showErrorToast(undefined, error);
+            handleSaveError(error);
           }
         });
       }
     },
-    [enqueue, updateWorkflow, workflowRef]
+    [enqueue, updateWorkflow, workflowRef, handleSaveError]
   );
 
   const isUpdatePatchPending = isPatchPending || isUpdatePending || hasPendingItems;
@@ -223,6 +239,11 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
         isOpen={blocker.state === 'blocked'}
         isUpdatePatchPending={isUpdatePatchPending}
         onCancel={handleCancelNavigation}
+      />
+      <WorkflowLimitUpgradeDialog
+        action="activate"
+        error={activeWorkflowLimitError}
+        onClose={() => setActiveWorkflowLimitError(null)}
       />
       <WorkflowContext.Provider value={value}>
         <WorkflowSchemaProvider>{children}</WorkflowSchemaProvider>

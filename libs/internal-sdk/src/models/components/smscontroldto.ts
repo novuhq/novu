@@ -3,9 +3,6 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type SmsControlDto = {
   /**
@@ -18,15 +15,6 @@ export type SmsControlDto = {
   body?: string | undefined;
 };
 
-/** @internal */
-export const SmsControlDto$inboundSchema: z.ZodType<
-  SmsControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
 /** @internal */
 export type SmsControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -45,13 +33,4 @@ export const SmsControlDto$outboundSchema: z.ZodType<
 
 export function smsControlDtoToJSON(smsControlDto: SmsControlDto): string {
   return JSON.stringify(SmsControlDto$outboundSchema.parse(smsControlDto));
-}
-export function smsControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsControlDto' from JSON`,
-  );
 }

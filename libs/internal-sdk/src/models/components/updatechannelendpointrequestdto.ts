@@ -19,6 +19,11 @@ import {
   SlackUserEndpointDto$outboundSchema,
 } from "./slackuserendpointdto.js";
 import {
+  ToolWebhookEndpointDto,
+  ToolWebhookEndpointDto$Outbound,
+  ToolWebhookEndpointDto$outboundSchema,
+} from "./toolwebhookendpointdto.js";
+import {
   WebexPersonEndpointDto,
   WebexPersonEndpointDto$Outbound,
   WebexPersonEndpointDto$outboundSchema,
@@ -43,6 +48,7 @@ export type UpdateChannelEndpointRequestDtoEndpoint =
   | WebhookEndpointDto
   | PhoneEndpointDto
   | WebexRoomEndpointDto
+  | ToolWebhookEndpointDto
   | WebexPersonEndpointDto;
 
 export type UpdateChannelEndpointRequestDto = {
@@ -55,6 +61,7 @@ export type UpdateChannelEndpointRequestDto = {
     | WebhookEndpointDto
     | PhoneEndpointDto
     | WebexRoomEndpointDto
+    | ToolWebhookEndpointDto
     | WebexPersonEndpointDto;
 };
 
@@ -65,6 +72,7 @@ export type UpdateChannelEndpointRequestDtoEndpoint$Outbound =
   | WebhookEndpointDto$Outbound
   | PhoneEndpointDto$Outbound
   | WebexRoomEndpointDto$Outbound
+  | ToolWebhookEndpointDto$Outbound
   | WebexPersonEndpointDto$Outbound;
 
 /** @internal */
@@ -78,6 +86,7 @@ export const UpdateChannelEndpointRequestDtoEndpoint$outboundSchema: z.ZodType<
   WebhookEndpointDto$outboundSchema,
   PhoneEndpointDto$outboundSchema,
   WebexRoomEndpointDto$outboundSchema,
+  ToolWebhookEndpointDto$outboundSchema,
   WebexPersonEndpointDto$outboundSchema,
 ]);
 
@@ -100,6 +109,7 @@ export type UpdateChannelEndpointRequestDto$Outbound = {
     | WebhookEndpointDto$Outbound
     | PhoneEndpointDto$Outbound
     | WebexRoomEndpointDto$Outbound
+    | ToolWebhookEndpointDto$Outbound
     | WebexPersonEndpointDto$Outbound;
 };
 
@@ -115,6 +125,7 @@ export const UpdateChannelEndpointRequestDto$outboundSchema: z.ZodType<
     WebhookEndpointDto$outboundSchema,
     PhoneEndpointDto$outboundSchema,
     WebexRoomEndpointDto$outboundSchema,
+    ToolWebhookEndpointDto$outboundSchema,
     WebexPersonEndpointDto$outboundSchema,
   ]),
 });

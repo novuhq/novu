@@ -20,7 +20,17 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
       'An API url is required for the sync command, please omit the configuration option entirely or supply a valid API url when running the command'
     );
   }
-  const syncResult = await executeSync(apiUrl, bridgeUrl, secretKey);
+  let syncResult: Awaited<ReturnType<typeof executeSync>>;
+  try {
+    syncResult = await executeSync(apiUrl, bridgeUrl, secretKey);
+  } catch (error) {
+    /*
+     * Only print the message: the full AxiosError carries the request config and headers,
+     * which include the secret key.
+     */
+    console.error(new Error(`Failed to sync with the Novu API: ${(error as Error)?.message || 'unknown error'}`));
+    process.exit(1);
+  }
 
   if (syncResult.status >= 400) {
     console.error(new Error(JSON.stringify(syncResult.data)));
@@ -45,6 +55,8 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
         'Content-Type': 'application/json',
         Authorization: `ApiKey ${secretKey}`,
       },
+      // Resolve non-2xx responses so `sync` can report the API error body instead of throwing
+      validateStatus: () => true,
     }
   );
 }

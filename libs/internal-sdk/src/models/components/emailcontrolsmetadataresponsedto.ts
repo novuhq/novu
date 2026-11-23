@@ -3,14 +3,79 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  EmailControlDto,
-  EmailControlDto$inboundSchema,
-} from "./emailcontroldto.js";
+  EmailFromControlDto,
+  EmailFromControlDto$inboundSchema,
+} from "./emailfromcontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Type of editor to use for the body.
+ */
+export const EmailControlsMetadataResponseDtoEditorType = {
+  Block: "block",
+  Html: "html",
+} as const;
+/**
+ * Type of editor to use for the body.
+ */
+export type EmailControlsMetadataResponseDtoEditorType = ClosedEnum<
+  typeof EmailControlsMetadataResponseDtoEditorType
+>;
+
+/**
+ * Control values specific to Email
+ */
+export type EmailControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Subject of the email.
+   */
+  subject: string;
+  /**
+   * Body content of the email, either a valid Maily JSON object, or html string.
+   */
+  body: string;
+  /**
+   * Type of editor to use for the body.
+   */
+  editorType: EmailControlsMetadataResponseDtoEditorType;
+  /**
+   * Disable sanitization of the output.
+   */
+  disableOutputSanitization: boolean;
+  /**
+   * Layout ID to use for the email. Null means no layout, undefined means default layout.
+   */
+  layoutId?: string | null | undefined;
+  /**
+   * Sender name and email overrides for this step.
+   */
+  from?: EmailFromControlDto | undefined;
+  /**
+   * When true, sender name/email use the primary email integration defaults and skip workflow agent defaults.
+   */
+  useProviderDefaults?: boolean | undefined;
+  /**
+   * Step-level Reply-To override. When unset, inherits the workflow agent reply-to.
+   */
+  replyTo?: string | undefined;
+  /**
+   * One-line inbox preview text shown next to the subject.
+   */
+  preheader?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type EmailControlsMetadataResponseDto = {
   /**
@@ -24,8 +89,47 @@ export type EmailControlsMetadataResponseDto = {
   /**
    * Control values specific to Email
    */
-  values: EmailControlDto;
+  values?: EmailControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const EmailControlsMetadataResponseDtoEditorType$inboundSchema:
+  z.ZodNativeEnum<typeof EmailControlsMetadataResponseDtoEditorType> = z
+    .nativeEnum(EmailControlsMetadataResponseDtoEditorType);
+
+/** @internal */
+export const EmailControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  EmailControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    subject: z.string(),
+    body: z.string().default(""),
+    editorType: EmailControlsMetadataResponseDtoEditorType$inboundSchema
+      .default("block"),
+    disableOutputSanitization: z.boolean().default(false),
+    layoutId: z.nullable(z.string()).optional(),
+    from: EmailFromControlDto$inboundSchema.optional(),
+    useProviderDefaults: z.boolean().optional(),
+    replyTo: z.string().optional(),
+    preheader: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function emailControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<EmailControlsMetadataResponseDtoValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      EmailControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'EmailControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const EmailControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +139,8 @@ export const EmailControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: EmailControlDto$inboundSchema,
+  values: z.lazy(() => EmailControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function emailControlsMetadataResponseDtoFromJSON(

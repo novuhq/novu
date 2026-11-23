@@ -74,7 +74,8 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
    * saying which host runs it when `host` names one, and which way it came in when `via` does (a host's plugin).
    */
   function connect(agent: string, code: string, from: string = network, host?: string, via?: string) {
-    let request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('X-Forwarded-For', from);
+    // Cloudflare's header: getClientIp trusts only it when run as Novu Cloud, and request-ip reads it otherwise.
+    let request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('CF-Connecting-IP', from);
     if (host) {
       request = request.set(AGENT_INBOX_HOST_HEADER, host);
     }

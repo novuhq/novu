@@ -34,6 +34,7 @@ export const ActivityNotificationJobResponseDtoType = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
   Digest: "digest",
   Trigger: "trigger",
   Delay: "delay",
@@ -47,11 +48,6 @@ export const ActivityNotificationJobResponseDtoType = {
 export type ActivityNotificationJobResponseDtoType = ClosedEnum<
   typeof ActivityNotificationJobResponseDtoType
 >;
-
-/**
- * Optional payload for the job
- */
-export type ActivityNotificationJobResponseDtoPayload = {};
 
 export type ActivityNotificationJobResponseDto = {
   /**
@@ -81,9 +77,9 @@ export type ActivityNotificationJobResponseDto = {
   /**
    * Optional payload for the job
    */
-  payload?: ActivityNotificationJobResponseDtoPayload | undefined;
+  payload?: { [k: string]: any } | undefined;
   /**
-   * Provider ID of the job
+   * Provider ID of the execution
    */
   providerId: ProvidersIdEnum;
   /**
@@ -107,29 +103,6 @@ export const ActivityNotificationJobResponseDtoType$inboundSchema:
   );
 
 /** @internal */
-export const ActivityNotificationJobResponseDtoPayload$inboundSchema: z.ZodType<
-  ActivityNotificationJobResponseDtoPayload,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function activityNotificationJobResponseDtoPayloadFromJSON(
-  jsonString: string,
-): SafeParseResult<
-  ActivityNotificationJobResponseDtoPayload,
-  SDKValidationError
-> {
-  return safeParse(
-    jsonString,
-    (x) =>
-      ActivityNotificationJobResponseDtoPayload$inboundSchema.parse(
-        JSON.parse(x),
-      ),
-    `Failed to parse 'ActivityNotificationJobResponseDtoPayload' from JSON`,
-  );
-}
-
-/** @internal */
 export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
   ActivityNotificationJobResponseDto,
   z.ZodTypeDef,
@@ -143,8 +116,7 @@ export const ActivityNotificationJobResponseDto$inboundSchema: z.ZodType<
   ),
   step: ActivityNotificationStepResponseDto$inboundSchema,
   overrides: z.record(z.any()).optional(),
-  payload: z.lazy(() => ActivityNotificationJobResponseDtoPayload$inboundSchema)
-    .optional(),
+  payload: z.record(z.any()).optional(),
   providerId: ProvidersIdEnum$inboundSchema,
   status: z.string(),
   updatedAt: z.string().optional(),

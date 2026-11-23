@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 export const toolControlZodSchema = z
   .object({
@@ -13,7 +11,7 @@ export const toolControlZodSchema = z
 
 export type ToolControlType = z.infer<typeof toolControlZodSchema>;
 
-export const toolControlSchema = zodToJsonSchema(toolControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const toolControlSchema = toControlJsonSchema(toolControlZodSchema);
 export const toolUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.TOOL,
   properties: {

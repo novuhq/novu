@@ -40,12 +40,14 @@ import {
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import TruncatedText from '@/components/truncated-text';
+import { WorkflowLimitUpgradeDialog } from '@/components/workflow-editor/workflow-limit-upgrade-dialog';
 import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { IS_SELF_HOSTED, LEGACY_DASHBOARD_URL, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { parseWorkflowLimitError, type WorkflowLimitError } from '@/hooks/use-create-workflow';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -122,9 +124,11 @@ const WorkflowLinkTableCell = (props: WorkflowLinkTableCellProps) => {
   );
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing row component already over the limit; splitting it is out of scope here
 export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [activeWorkflowLimitError, setActiveWorkflowLimitError] = useState<WorkflowLimitError | null>(null);
   const { currentEnvironment } = useEnvironment();
   const { isUserLoaded } = useAuth();
   const has = useHasPermission();
@@ -198,7 +202,15 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         options: toastOptions,
       });
     },
-    onError: (_, { workflow }) => {
+    onError: (error, { workflow }) => {
+      const limitError = workflow.active ? parseWorkflowLimitError(error) : null;
+
+      if (limitError) {
+        setActiveWorkflowLimitError(limitError);
+
+        return;
+      }
+
       showToast({
         children: () => (
           <>
@@ -235,7 +247,8 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       return;
     }
 
-    onPauseWorkflow();
+    // Failures are surfaced by the mutation's onError (toast or upgrade dialog)
+    onPauseWorkflow().catch(() => undefined);
   };
 
   const shouldRenderLink = !(isV0Workflow && IS_SELF_HOSTED);
@@ -541,6 +554,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         description={<PauseModalDescription workflowName={workflow.name} />}
         confirmButtonText="Proceed"
         isLoading={isPauseWorkflowPending}
+      />
+      <WorkflowLimitUpgradeDialog
+        action="activate"
+        error={activeWorkflowLimitError}
+        onClose={() => setActiveWorkflowLimitError(null)}
       />
       <PromoteConfirmModal />
     </>

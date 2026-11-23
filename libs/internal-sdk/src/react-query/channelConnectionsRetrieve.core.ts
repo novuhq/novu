@@ -78,7 +78,7 @@ export function queryKeyChannelConnectionsRetrieve(
 ): QueryKey {
   return [
     "@novu/api",
-    "Channel Connections",
+    "ChannelConnections",
     "retrieve",
     identifier,
     parameters,

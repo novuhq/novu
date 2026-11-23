@@ -22,6 +22,7 @@ function detailsFor(page: SitePage): SitemapDetails {
     case 'sapien':
       return { changeFrequency: 'weekly', priority: 0.8 };
     case 'pricing':
+    case 'useCases':
       return { changeFrequency: 'monthly', priority: 0.7 };
     default: {
       const exhaustive: never = page;

@@ -6,14 +6,14 @@ import * as z from "zod/v3";
 import { ClosedEnum } from "../../types/enums.js";
 
 /**
- * Type of button for the action result
+ * Type of the button
  */
 export const ButtonTypeEnum = {
   Primary: "primary",
   Secondary: "secondary",
 } as const;
 /**
- * Type of button for the action result
+ * Type of the button
  */
 export type ButtonTypeEnum = ClosedEnum<typeof ButtonTypeEnum>;
 

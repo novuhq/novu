@@ -903,4 +903,52 @@ describe('FcmPushProvider', () => {
     });
     expect(sendSpy).not.toHaveBeenCalled();
   });
+
+  describe('failed sends and invalid tokens', () => {
+    const sendOptions = { title: 'Test', content: 'Test push', target: ['dead-token'], payload: {}, subscriber, step };
+
+    const rejectWith = (error: { message: string; code?: string }) =>
+      spy.mockImplementation(
+        async () => ({ successCount: 0, failureCount: 1, responses: [{ success: false, error }] }) as any
+      );
+
+    test('keeps the Firebase error code in the thrown message and on code', async () => {
+      rejectWith({ message: 'Device unregistered.', code: 'messaging/registration-token-not-registered' });
+
+      const error = await provider.sendMessage(sendOptions).catch((e) => e);
+
+      expect(error.message).toBe(
+        'Sending message failed due to "Device unregistered." (messaging/registration-token-not-registered)'
+      );
+      expect(error.code).toBe('messaging/registration-token-not-registered');
+      expect(provider.isTokenInvalid(error.message)).toBe(true);
+    });
+
+    test('omits the code suffix when Firebase gives none', async () => {
+      rejectWith({ message: 'Something broke' });
+
+      await expect(provider.sendMessage(sendOptions)).rejects.toThrow(
+        /^Sending message failed due to "Something broke"$/
+      );
+    });
+
+    test.each([
+      'Sending message failed due to "Requested entity was not found."',
+      'Sending message failed due to "Device unregistered."',
+      'Sending message failed due to "Device unregistered." (messaging/registration-token-not-registered)',
+      'Sending message failed due to "whatever wording" (messaging/registration-token-not-registered)',
+      'Sending message failed due to "bad token" (messaging/invalid-registration-token)',
+    ])('treats "%s" as an invalid token', (message) => {
+      expect(provider.isTokenInvalid(message)).toBe(true);
+    });
+
+    test.each([
+      'Sending message failed due to "APNs device token is not valid" (messaging/invalid-argument)',
+      'Sending message failed due to "Auth error from APNS or Web Push Service" (messaging/third-party-auth-error)',
+      'Sending message failed due to "Internal error" (messaging/internal-error)',
+      '',
+    ])('does not treat "%s" as an invalid token', (message) => {
+      expect(provider.isTokenInvalid(message)).toBe(false);
+    });
+  });
 });

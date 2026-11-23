@@ -11,7 +11,6 @@ import { NovuCore } from "../core.js";
 import { agentsIntegrationsCreate } from "../funcs/agentsIntegrationsCreate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -29,9 +28,7 @@ import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
 export type AgentsIntegrationsCreateMutationVariables = {
-  addAgentIntegrationRequestDto: components.AddAgentIntegrationRequestDto;
-  identifier: string;
-  idempotencyKey?: string | undefined;
+  request: operations.AgentIntegrationsControllerAddAgentIntegrationRequest;
   options?: RequestOptions;
 };
 
@@ -90,9 +87,7 @@ export function buildAgentsIntegrationsCreateMutation(
   return {
     mutationKey: mutationKeyAgentsIntegrationsCreate(),
     mutationFn: function agentsIntegrationsCreateMutationFn({
-      addAgentIntegrationRequestDto,
-      identifier,
-      idempotencyKey,
+      request,
       options,
     }): Promise<AgentsIntegrationsCreateMutationData> {
       const mergedOptions = {
@@ -109,9 +104,7 @@ export function buildAgentsIntegrationsCreateMutation(
       };
       return unwrapAsync(agentsIntegrationsCreate(
         client$,
-        addAgentIntegrationRequestDto,
-        identifier,
-        idempotencyKey,
+        request,
         mergedOptions,
       ));
     },

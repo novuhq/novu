@@ -97,10 +97,10 @@ Every request from Novu includes a `novu-signature` header to prove authenticity
 Format: `t=TIMESTAMP,v1=SIGNATURE`
 
 To verify:
-1. Parse the header: split on comma, extract `t` (timestamp) and `v1` (HMAC)
+1. Parse the header: split on comma, extract `t` (timestamp) and every `v1` (HMAC). During a secret key rotation the header contains one `v1` per active key.
 2. Build the signed string: timestamp dot JSON.stringify(requestBody)
 3. Compute HMAC-SHA256 of that string using your Novu secret key
-4. Compare (constant-time) your computed HMAC against the `v1` value
+4. Compare (constant-time) your computed HMAC against each `v1` value. Accept the request when any one matches.
 5. Reject requests where the timestamp is more than 5 minutes old
 
 Reference: https://docs.novu.co/platform/workflow/add-and-configure-steps/configure-action-steps/http-step
@@ -134,10 +134,12 @@ export async function POST(req: NextRequest) {
 
   const parts = headers["novu-signature"].split(",");
   const timestampPart = parts.find((p) => p.startsWith("t="));
-  const signaturePart = parts.find((p) => p.startsWith("v1="));
+  const providedSignatures = parts
+    .filter((p) => p.startsWith("v1="))
+    .map((p) => p.split("=")[1])
+    .filter((signature): signature is string => Boolean(signature));
 
   const timestamp = Number(timestampPart?.split("=")[1]);
-  const providedSignature = signaturePart?.split("=")[1];
 
   // Verify the timestamp is not stale
   const currentTimestampTime = Date.now();
@@ -151,13 +153,14 @@ export async function POST(req: NextRequest) {
   const generatedSignature = createHmac("sha256", novuSecretKey)
     .update(`${timestamp}.${JSON.stringify(body)}`)
     .digest("hex");
-
-  // Verify the signature
-  const providedBuf = Buffer.from(providedSignature, "hex");
   const generatedBuf = Buffer.from(generatedSignature, "hex");
-  const valid =
-    providedBuf.length === generatedBuf.length &&
-    timingSafeEqual(generatedBuf, providedBuf);
+
+  // Accept a match on any v1. Rotation sends one signature per active secret key.
+  const valid = providedSignatures.some((providedSignature) => {
+    const providedBuf = Buffer.from(providedSignature, "hex");
+
+    return providedBuf.length === generatedBuf.length && timingSafeEqual(generatedBuf, providedBuf);
+  });
 
   // If the signature is not valid, return a 401 error
   if (!valid) {

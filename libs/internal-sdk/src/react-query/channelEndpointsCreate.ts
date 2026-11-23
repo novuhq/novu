@@ -74,7 +74,7 @@ export function useChannelEndpointsCreateMutation(
 }
 
 export function mutationKeyChannelEndpointsCreate(): MutationKey {
-  return ["@novu/api", "Channel Endpoints", "create"];
+  return ["@novu/api", "ChannelEndpoints", "create"];
 }
 
 export function buildChannelEndpointsCreateMutation(

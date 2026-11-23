@@ -40,6 +40,7 @@ const EXACT_PATHS = new Set([
   '/sign-in',
   '/sign-up',
   '/sitemap.xml',
+  '/use-cases',
   ...CHANNEL_IDS.map((channel) => `/${channel}`),
   ...agentPagePairs().map(({ channel, agent }) => `/${channel}/${agent}`),
 ]);

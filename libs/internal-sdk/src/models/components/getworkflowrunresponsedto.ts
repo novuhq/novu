@@ -64,11 +64,6 @@ export type GetWorkflowRunResponseDtoSeverity = ClosedEnum<
   typeof GetWorkflowRunResponseDtoSeverity
 >;
 
-/**
- * Trigger payload
- */
-export type Payload = {};
-
 export type GetWorkflowRunResponseDto = {
   /**
    * Workflow run id
@@ -139,13 +134,17 @@ export type GetWorkflowRunResponseDto = {
    */
   topics?: Array<TopicResponseDto> | undefined;
   /**
+   * Workflow run whose active digest this run was merged into
+   */
+  digestedWorkflowRunId?: string | undefined;
+  /**
    * Step runs
    */
   steps: Array<StepRunDto>;
   /**
    * Trigger payload
    */
-  payload: Payload;
+  payload: { [k: string]: any };
   /**
    * Trigger overrides passed to the original workflow trigger
    */
@@ -166,20 +165,6 @@ export const GetWorkflowRunResponseDtoDeliveryLifecycleStatus$inboundSchema:
 export const GetWorkflowRunResponseDtoSeverity$inboundSchema: z.ZodNativeEnum<
   typeof GetWorkflowRunResponseDtoSeverity
 > = z.nativeEnum(GetWorkflowRunResponseDtoSeverity);
-
-/** @internal */
-export const Payload$inboundSchema: z.ZodType<Payload, z.ZodTypeDef, unknown> =
-  z.object({});
-
-export function payloadFromJSON(
-  jsonString: string,
-): SafeParseResult<Payload, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Payload$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Payload' from JSON`,
-  );
-}
 
 /** @internal */
 export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<
@@ -205,8 +190,9 @@ export const GetWorkflowRunResponseDto$inboundSchema: z.ZodType<
   critical: z.boolean(),
   contextKeys: z.array(z.string()).optional(),
   topics: z.array(TopicResponseDto$inboundSchema).optional(),
+  digestedWorkflowRunId: z.string().optional(),
   steps: z.array(StepRunDto$inboundSchema),
-  payload: z.lazy(() => Payload$inboundSchema),
+  payload: z.record(z.any()),
   overrides: z.record(z.any()).optional(),
 });
 
