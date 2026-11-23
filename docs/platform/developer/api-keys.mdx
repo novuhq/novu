@@ -46,6 +46,8 @@ You need permission to manage API keys. Without it, **Generate new key**, **Dele
 
 An environment can have at most **two active secret keys** at a time, and at least one key must always exist.
 
+Rotation replaces only the secret key. The [application identifier](#application-identifier) stays the same, so you don't need to update `<Inbox />` or other client SDKs. Update only the server code, bridge endpoints, and integrations that use the secret key.
+
 | Method | What happens to the old key | When to use it |
 | --- | --- | --- |
 | [Rolling rotation](#rolling-rotation) (recommended) | It stays valid until you delete it | You can update your applications before the old key is cut off |
