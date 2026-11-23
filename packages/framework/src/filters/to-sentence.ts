@@ -22,6 +22,21 @@ const ARG_INDEX_TO_ARG_NAME: Record<number, string> = {
 };
 
 /**
+ * The input type a Zod issue refers to. Zod v3 issues name it in `type`, Zod v4 issues in `origin`.
+ * The filter runs with the customer's own `zod`, so both shapes must be handled.
+ */
+function getIssueInputType(issue: object): string {
+  if ('type' in issue && typeof issue.type === 'string') {
+    return issue.type;
+  }
+  if ('origin' in issue && typeof issue.origin === 'string') {
+    return issue.origin;
+  }
+
+  return 'string';
+}
+
+/**
  * Format a list of items for digest notifications with configurable behavior
  * Default formatting:
  * - 1 item: "John"
@@ -134,12 +149,9 @@ export function toSentenceArgsValidator(
 
   if (!result.success) {
     for (const error of result.error.issues) {
-      let type = 'string';
-      if ('type' in error) {
-        type = error.type;
-      }
+      const type = getIssueInputType(error);
 
-      const path = error.path[0];
+      const path = String(error.path[0]);
       const argIndexToArgName = Object.entries(ARG_INDEX_TO_ARG_NAME).find(([_, argName]) => argName === path);
       const argIndex = argIndexToArgName ? parseInt(argIndexToArgName[0], 10) : null;
       const token = typeof argIndex === 'number' ? args[argIndex] : null;
