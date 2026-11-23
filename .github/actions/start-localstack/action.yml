@@ -17,16 +17,6 @@ runs:
       working-directory: docker/local
       run: |
         docker compose -f docker-compose.e2e.yml up -d
-        sleep 10
-        max_retry=30
-        counter=0
-        until $command
-        do
-          sleep 1
-          [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-          aws --endpoint-url=http://127.0.0.1:4566 s3 ls
-          echo "Trying again. Try #$counter"
-          ((counter++))
-        done
+        timeout 60 bash -c 'until curl -s http://127.0.0.1:4566/health | grep -q "\"s3\": \"running\""; do sleep 1; done'
         docker compose -f docker-compose.e2e.yml logs --tail="all"
         aws --endpoint-url=http://127.0.0.1:4566 --cli-connect-timeout 600 s3 mb s3://novu-test

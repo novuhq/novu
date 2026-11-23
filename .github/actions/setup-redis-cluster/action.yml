@@ -5,11 +5,6 @@ description: Sets up a Redis Cluster instance needed to run the tests
 runs:
   using: composite
   steps:
-    - uses: vishnudxb/redis-cluster@b8d87ca4b6704ea41731a583f980ad4366a741ff # 1.0.5
-      with:
-        master1-port: 7000
-        master2-port: 7001
-        master3-port: 7002
-        slave1-port: 7003
-        slave2-port: 7004
-        slave3-port: 7005
+    - name: Start Redis Cluster
+      shell: bash
+      run: docker run -d --name redis-cluster -p 7000:6379 -p 7001:6380 -p 7002:6381 -p 7003:6382 -p 7004:6383 -p 7005:6384 vishnunair/docker-redis-cluster:latest
