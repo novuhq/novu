@@ -70,7 +70,12 @@ function buildReport({ root, rawPath, assignedFiles, meta, exitCode }) {
 
   const flaky = tests
     .filter((test) => test.state === 'passed' && test.attempts > 1)
-    .map((test) => ({ file: test.file, title: test.title, error: test.retryErrors[0] || null }));
+    .map((test) => ({
+      file: test.file,
+      title: test.title,
+      attempts: test.attempts,
+      error: test.retryErrors[0] || null,
+    }));
 
   const failures = [
     ...tests
@@ -119,7 +124,7 @@ function renderSummary(report) {
     '',
     `${ran} of ${report.files.length} files ran in ${formatSeconds(report.durationMs)}. ` +
       `${report.tests.length} tests, ${report.failures.length} failures (tests and hooks), ` +
-      `${report.flaky.length} passed only on the retry.`,
+      `${report.flaky.length} passed only on a retry.`,
   ];
 
   if (!report.complete) {
@@ -130,12 +135,13 @@ function renderSummary(report) {
 
   if (report.flaky.length > 0) {
     lines.push(
-      `**Flaky: failed first, passed on the retry (${report.flaky.length})**`,
+      `**Flaky: failed first, passed on a retry (${report.flaky.length})**`,
       '',
-      '| File | Test | First error |',
-      '|---|---|---|',
+      '| File | Test | Attempts | First error |',
+      '|---|---|---:|---|',
       ...report.flaky.map(
-        (test) => `| \`${escapeCell(test.file)}\` | ${escapeCell(test.title)} | ${escapeCell(test.error)} |`
+        (test) =>
+          `| \`${escapeCell(test.file)}\` | ${escapeCell(test.title)} | ${test.attempts} | ${escapeCell(test.error)} |`
       ),
       ''
     );
