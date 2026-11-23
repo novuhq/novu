@@ -13,12 +13,12 @@ import { useState } from 'react';
 import { RiArrowRightSLine, RiLockStarLine, RiStarFill, RiStarLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { setAsPrimaryIntegration } from '@/api/integrations';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Badge } from '@/components/primitives/badge';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
@@ -29,6 +29,7 @@ import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { TableIntegration } from '../types';
 import { getHealthReason, isIntegrationFailing } from '../utils/integration-health';
 import { IntegrationCardActions } from './integration-card-actions';
+import { MakePrimaryModal } from './modals/make-primary-modal';
 import { ProviderIcon } from './provider-icon';
 import {
   CHANNEL_LABELS,
@@ -248,12 +249,21 @@ function IntegrationTitleTags({ integration, provider }: { integration: IIntegra
   );
 }
 
-/** Filled for the primary integration; clicking makes this one primary (after confirming if it has conditions). */
+/** Filled for the primary integration; clicking asks to make this one primary, then does. */
 function PrimaryStarButton({ integration, provider }: { integration: IIntegration; provider: IProviderConfig }) {
   const has = useHasPermission();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, environments = [] } = useEnvironment();
+  const { integrations = [] } = useFetchIntegrations();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  // The primary this one takes over from, in the same environment and channel.
+  const currentPrimary = integrations.find(
+    (other) =>
+      other.primary &&
+      other._id !== integration._id &&
+      other.channel === integration.channel &&
+      other._environmentId === integration._environmentId
+  );
   const canSetPrimary = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const isPrimary = integration.primary;
 
@@ -286,8 +296,7 @@ function PrimaryStarButton({ integration, provider }: { integration: IIntegratio
             aria-label={isPrimary ? 'Primary integration' : 'Set as primary integration'}
             onClick={(event) => {
               event.stopPropagation();
-              if (hasRoutingConditions(integration)) setIsConfirmOpen(true);
-              else setPrimary();
+              setIsConfirmOpen(true);
             }}
           >
             {isPrimary ? (
@@ -299,14 +308,18 @@ function PrimaryStarButton({ integration, provider }: { integration: IIntegratio
         </TooltipTrigger>
         <TooltipContent>{tooltip}</TooltipContent>
       </Tooltip>
-      <ConfirmationModal
-        open={isConfirmOpen}
-        onOpenChange={setIsConfirmOpen}
-        onConfirm={() => setPrimary()}
+      <MakePrimaryModal
+        isOpen={isConfirmOpen}
+        newPrimaryName={integration.name}
+        currentPrimaryName={currentPrimary?.name}
+        channel={integration.channel}
+        environment={currentEnvironment}
+        environments={environments}
+        removesConditions={hasRoutingConditions(integration)}
         isLoading={isPending}
-        title="Remove conditions?"
-        description="A primary integration cannot have conditions. Making this integration primary will remove its conditions."
-        confirmButtonText="Remove conditions"
+        centerOn="page"
+        onCancel={() => setIsConfirmOpen(false)}
+        onConfirm={() => setPrimary()}
       />
     </>
   );
