@@ -1,0 +1,58 @@
+name: Test line budget
+
+# Warns when a pull request adds more net test lines than the budget, unless the PR description
+# has a "Test budget: <reason>" line. Its own workflow, not a job in on-pr.yml, so a description
+# edit re-runs only this check, not the full PR suite.
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  # Net test lines (added - removed) a PR can add without a reason.
+  TEST_LINE_BUDGET: 400
+  # 'false': over budget without a reason only warns.
+  # To block: set this to 'true'. The job then fails over budget without a reason. To make the
+  # failure block merges, also add "Check test line budget" to the required checks of `next`
+  # (on-pr.yml's pr-checks-passed only aggregates jobs of on-pr.yml).
+  TEST_LINE_BUDGET_BLOCKING: 'false'
+
+jobs:
+  test-line-budget:
+    name: Check test line budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout the budget script
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/workflows/scripts/test-line-budget.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: List the PR's files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Per-file additions and deletions from the API, every page. A failure leaves no file,
+          # and the next step warns that it could not count.
+          if ! gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" > "$RUNNER_TEMP/pr-files.json"; then
+            rm -f "$RUNNER_TEMP/pr-files.json"
+          fi
+
+      - name: Count net test lines
+        env:
+          PR_CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+          # Untrusted text: the script reads it as data from the environment.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: PR_FILES_JSON="$RUNNER_TEMP/pr-files.json" node .github/workflows/scripts/test-line-budget.mjs
