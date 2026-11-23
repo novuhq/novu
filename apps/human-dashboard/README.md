@@ -143,7 +143,10 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
   `Idempotency-Key`, `If-None-Match`, `If-Modified-Since`, `Novu-Application-Identifier`, `Novu-Analytics-Source` and
   `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
 - The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
-  per-IP limits (keyless setups, one-time codes) count each caller, not this site.
+  per-IP limits (keyless setups, one-time codes) count each caller, not this site. On Novu Cloud the API reads the
+  caller from Cloudflare, which sees this site, so with `AGENT_INBOX_DASHBOARD_API_SECRET` set the IP also goes on as
+  `X-Agent-Inbox-Client-IP`, signed in `X-Agent-Inbox-Client-IP-Signature` (`src/lib/client-ip-signature.ts`). The
+  API takes a signature for five minutes.
 - The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration
