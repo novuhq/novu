@@ -489,3 +489,12 @@ export function getUserMessageText(message: AgentMessage): string {
     .join('')
     .trim();
 }
+
+/** Links into the dashboard itself, such as the Copilot's Activity links, open without the external-link prompt. */
+export function isDashboardLink(url: string, origin: string): boolean {
+  try {
+    return new URL(url, origin).origin === origin;
+  } catch {
+    return false;
+  }
+}
