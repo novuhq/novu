@@ -1,5 +1,5 @@
-import { expect } from 'chai';
 import { CommandValidationException } from '@novu/application-generic';
+import { expect } from 'chai';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 describe('UpdateIntegrationCommand', () => {

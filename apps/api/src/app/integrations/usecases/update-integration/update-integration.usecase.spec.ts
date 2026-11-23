@@ -183,6 +183,12 @@ describe('UpdateIntegration - health on reconnect', () => {
     expect(savedHealth()?.status).to.equal(IntegrationHealthStatusEnum.HEALTHY);
   });
 
+  it('clears the Error when a credential is removed', async () => {
+    await execute({ credentials: { apiKey: 'SG.old-key' } });
+
+    expect(savedHealth()?.status).to.equal(IntegrationHealthStatusEnum.HEALTHY);
+  });
+
   it('keeps the Error when the same credentials are saved with another edit, such as a rename', async () => {
     await execute({ name: 'Renamed', credentials: { apiKey: 'SG.old-key', from: 'team@example.com' } });
 
