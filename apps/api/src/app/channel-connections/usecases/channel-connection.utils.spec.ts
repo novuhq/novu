@@ -108,7 +108,7 @@ describe('canCallerManageChannelConnection', () => {
     expect(canCallerManageChannelConnection({ subscriberId: undefined, contextKeys: [] }, caller)).to.equal(false);
     expect(
       canCallerManageChannelConnection(
-        { subscriberId: undefined, contextKeys: undefined },
+        { subscriberId: undefined, contextKeys: [] },
         {
           subscriberId: 'sub-1',
           contextKeys: [],

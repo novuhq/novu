@@ -779,7 +779,7 @@ export class InboxController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         identifier,
-        subscriberId: channelConnection.subscriberId ?? null,
+        channelConnectionId: channelConnection._id,
       })
     );
   }

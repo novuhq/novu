@@ -1,4 +1,4 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class DeleteChannelConnectionCommand extends EnvironmentCommand {
@@ -7,11 +7,12 @@ export class DeleteChannelConnectionCommand extends EnvironmentCommand {
   identifier: string;
 
   /**
-   * Restricts the delete to the connection's owner: a subscriber id deletes only that
-   * subscriber's connection, `null` only a shared one. Omitted, any connection with the
-   * identifier in the environment matches (admin API).
+   * Restricts the delete to this exact record, for callers that already loaded and
+   * authorized it (Inbox), so a connection recreated under the same identifier in the
+   * meantime is never deleted. Omitted, any connection with the identifier in the
+   * environment matches (admin API).
    */
   @IsOptional()
-  @IsString()
-  subscriberId?: string | null;
+  @IsMongoId()
+  channelConnectionId?: string;
 }
