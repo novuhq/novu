@@ -3,7 +3,7 @@
  *
  * The report is one JSON file per shard with stable keys, so a later script can merge many runs:
  * - files: the time of each test file the shard was given (durationMs is null when the file did not run, e.g. after
- *   --bail stopped the run);
+ *   --bail stopped the run, or when its suites were registered under another file that imports it);
  * - tests: the time, result and attempt count of each test;
  * - flaky: tests that failed, then passed on the retry;
  * - failures: tests and hooks that failed.
@@ -90,8 +90,10 @@ function buildReport({ root, rawPath, assignedFiles, meta, exitCode }) {
     startedAt: raw?.startedAt ?? null,
     durationMs: raw?.durationMs ?? null,
     exitCode,
-    // False when mocha crashed before writing results, or when some files never ran (e.g. after --bail).
-    complete: Boolean(raw) && files.every((file) => file.durationMs !== null),
+    // False when mocha crashed before writing results, or when it failed with files left that never ran (--bail).
+    // A passing run is complete even if a file has no time: its suites can be registered under the file that
+    // imports it (generate-preview.e2e.ts imports workflow.controller.e2e.ts).
+    complete: Boolean(raw) && (exitCode === 0 || files.every((file) => file.durationMs !== null)),
     files,
     tests: tests.map(({ retryErrors, ...test }) => test),
     flaky,
