@@ -40,6 +40,7 @@ const SESSION_CLIENT_RE = /^@novu\/([a-z0-9-]{1,32})@(0|[1-9]\d{0,3})\.(0|[1-9]\
 export enum SubscriberSessionAuthMethodEnum {
   HMAC = 'hmac',
   NONE = 'none',
+  TOKEN = 'token',
 }
 
 export enum SubscriberSessionSourceEnum {
@@ -62,7 +63,7 @@ export interface SubscriberSessionAuthCount {
 
 export interface RecordSubscriberSessionParams {
   environmentId: string;
-  hmacValid: boolean;
+  authMethod: SubscriberSessionAuthMethodEnum;
   clientVersion?: string;
   source: SubscriberSessionSourceEnum;
 }
@@ -81,7 +82,7 @@ export class SubscriberSessionAuthStatsService {
       return;
     }
 
-    const authMethod = params.hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE;
+    const { authMethod } = params;
     const parsedClient = parseSessionClient(params.clientVersion);
     const client = parsedClient ?? FALLBACK_CLIENT[params.source];
 

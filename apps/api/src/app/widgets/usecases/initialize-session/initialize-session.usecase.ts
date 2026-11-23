@@ -13,6 +13,7 @@ import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-ke
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import {
+  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';
@@ -94,7 +95,7 @@ export class InitializeSession {
 
     void this.subscriberSessionAuthStatsService.record({
       environmentId: environment._id,
-      hmacValid,
+      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
       clientVersion: command.clientVersion,
       source: SubscriberSessionSourceEnum.LEGACY_WIDGET,
     });

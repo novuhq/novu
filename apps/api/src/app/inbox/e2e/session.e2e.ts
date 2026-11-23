@@ -1520,7 +1520,12 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     const stats = testServer.getService(SubscriberSessionAuthStatsService);
     const environmentId = `cap-${randomBytes(8).toString('hex')}`;
     const record = (clientVersion?: string) =>
-      stats.record({ environmentId, hmacValid: false, clientVersion, source: SubscriberSessionSourceEnum.INBOX });
+      stats.record({
+        environmentId,
+        authMethod: SubscriberSessionAuthMethodEnum.NONE,
+        clientVersion,
+        source: SubscriberSessionSourceEnum.INBOX,
+      });
 
     for (let i = 0; i < 105; i += 1) {
       await record(`@novu/js@1.0.${i}`);
