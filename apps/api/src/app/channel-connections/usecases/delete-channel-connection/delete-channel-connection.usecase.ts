@@ -9,10 +9,13 @@ export class DeleteChannelConnection {
 
   @InstrumentUsecase()
   async execute(command: DeleteChannelConnectionCommand): Promise<void> {
+    const ownerFilter = command.subscriberId !== undefined ? { subscriberId: command.subscriberId } : {};
+
     const channelConnection = await this.channelConnectionRepository.findOne({
       identifier: command.identifier,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
+      ...ownerFilter,
     });
 
     if (!channelConnection) {
@@ -23,6 +26,7 @@ export class DeleteChannelConnection {
       _id: channelConnection._id,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
+      ...ownerFilter,
     });
   }
 }
