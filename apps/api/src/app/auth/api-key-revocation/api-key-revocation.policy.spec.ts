@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import {
   ApiKeyRevocationModeEnum,
   ApiKeyRevocationPolicy,
+  canSignWithApiKey,
   DEFAULT_ALLOWED_ROUTES,
   evaluateApiKeyRequest,
   getApiKeyCreatedAt,
@@ -207,6 +208,46 @@ describe('API key revocation policy', () => {
     it('treats a key without a known creation time as created before the cutoff', () => {
       expect(requiresRotation(blockAll, null)).to.equal(true);
       expect(evaluateApiKeyRequest(blockAll, null, 'POST', '/v1/events/trigger').blocked).to.equal(true);
+    });
+  });
+
+  describe('canSignWithApiKey', () => {
+    it('keeps every key signing outside block_all mode while the HMAC block is off', () => {
+      for (const mode of ['off', 'warn', 'block_except_allowed']) {
+        const policy = policyFor({ mode, keysCreatedBefore: CUTOFF });
+
+        expect(canSignWithApiKey(policy, BEFORE_CUTOFF, false), mode).to.equal(true);
+        expect(canSignWithApiKey(policy, null, false), mode).to.equal(true);
+      }
+    });
+
+    it('stops keys created before the cutoff from signing in block_all mode', () => {
+      const blockAll = policyFor({ mode: 'block_all', keysCreatedBefore: CUTOFF });
+
+      for (const isHmacBlockEnabled of [false, true]) {
+        expect(canSignWithApiKey(blockAll, BEFORE_CUTOFF, isHmacBlockEnabled)).to.equal(false);
+        expect(canSignWithApiKey(blockAll, null, isHmacBlockEnabled)).to.equal(false);
+        expect(canSignWithApiKey(blockAll, AFTER_CUTOFF, isHmacBlockEnabled)).to.equal(true);
+        expect(canSignWithApiKey(blockAll, new Date(CUTOFF), isHmacBlockEnabled)).to.equal(true);
+      }
+    });
+
+    it('stops keys created before the cutoff from signing in block_except_allowed while the HMAC block is on', () => {
+      const triggerOnly = policyFor({ mode: 'block_except_allowed', keysCreatedBefore: CUTOFF });
+
+      expect(canSignWithApiKey(triggerOnly, BEFORE_CUTOFF, true)).to.equal(false);
+      expect(canSignWithApiKey(triggerOnly, null, true)).to.equal(false);
+      expect(canSignWithApiKey(triggerOnly, AFTER_CUTOFF, true)).to.equal(true);
+      expect(canSignWithApiKey(triggerOnly, new Date(CUTOFF), true)).to.equal(true);
+    });
+
+    it('ignores the HMAC block while the policy is off or in warn mode', () => {
+      for (const mode of ['off', 'warn']) {
+        const policy = policyFor({ mode, keysCreatedBefore: CUTOFF });
+
+        expect(canSignWithApiKey(policy, BEFORE_CUTOFF, true), mode).to.equal(true);
+        expect(canSignWithApiKey(policy, null, true), mode).to.equal(true);
+      }
     });
   });
 

@@ -314,6 +314,14 @@ export enum FeatureFlagsKeysEnum {
    * `IS_SUBSCRIBER_TOKENS_ENABLED=true` for the API when self-hosted. Default off.
    */
   IS_SUBSCRIBER_TOKENS_ENABLED = 'IS_SUBSCRIBER_TOKENS_ENABLED',
+  /**
+   * Organization-scoped: while `API_KEY_REVOCATION_POLICY` is in `block_except_allowed`, secret keys created before its
+   * cutoff also stop signing subscriber and context hashes (Inbox and notification center sessions, chat connect
+   * links and web chat), as they do in `block_all`. The allowed routes keep working. `off` and `warn` ignore it.
+   * Create the boolean in LaunchDarkly for cloud, or set `IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED=true` for the API
+   * when self-hosted. Default off.
+   */
+  IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED = 'IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED',
 
   // String flags
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
@@ -324,8 +332,10 @@ export enum FeatureFlagsKeysEnum {
    * `{ "mode": "off" | "warn" | "block_except_allowed" | "block_all", "keysCreatedBefore": "<UTC date-time>",
    * "allowedRoutes": ["POST /v1/events/trigger"] }`. `warn` only asks for rotation in the dashboard,
    * `block_except_allowed` keeps `allowedRoutes` working (the event trigger and agent reply routes when omitted) and
-   * rejects everything else, `block_all` rejects every call. Keys created at or after `keysCreatedBefore` are never
-   * limited. Missing, invalid or `off` changes nothing. Set it as an environment variable when self-hosted.
+   * rejects everything else, `block_all` rejects every call and stops the keys' subscriber and context hashes from
+   * counting (`IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED` does that in `block_except_allowed` too). Keys created at or
+   * after `keysCreatedBefore` are never limited. Missing, invalid or `off` changes nothing. Set it as an environment
+   * variable when self-hosted.
    */
   API_KEY_REVOCATION_POLICY = 'API_KEY_REVOCATION_POLICY',
 

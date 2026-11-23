@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
+// Zod v3 schemas, as built by customers on `zod@3`. Zod v4 schemas are covered in `zod.validator.test.ts`.
+import { z } from 'zod/v3';
 import { JsonSchema, Schema, ZodSchema } from '../types/schema.types';
 import { transformSchema, validateData } from './base.validator';
 

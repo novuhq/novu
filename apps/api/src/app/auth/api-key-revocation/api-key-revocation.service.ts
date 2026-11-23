@@ -3,14 +3,21 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { LRUCache } from 'lru-cache';
-import { addNewRelicApiKeyRevocationAttributes } from '../services/passport/newrelic.util';
+import { isHmacValidForAnyKey } from '../../shared/helpers/is-valid-hmac';
+import { SubscriberSessionSourceEnum } from '../../shared/services/subscriber-session-auth-stats.service';
+import {
+  addNewRelicApiKeyRevocationAttributes,
+  addNewRelicOldKeyHashAttributes,
+} from '../services/passport/newrelic.util';
 import {
   ApiKeyRevocationModeEnum,
   ApiKeyRevocationPolicy,
+  canSignWithApiKey,
   evaluateApiKeyRequest,
   getApiKeyCreatedAt,
   getRevokedApiKeyMessage,
   hashApiKeyFromHeader,
+  normalizeRoutePath,
   parseApiKeyRevocationPolicy,
   requiresRotation,
 } from './api-key-revocation.policy';
@@ -29,6 +36,21 @@ const keyCreatedAtCache = new LRUCache<string, { createdAt: Date | null }>({ max
  * once it passes, and keeps a bad value from being logged on every call.
  */
 const parsedPolicyCache = new LRUCache<string, ApiKeyRevocationPolicy>({ max: 100, ttl: 60 * 1000 });
+
+/*
+ * Calls made with a key created before the cutoff that were logged in the last ten minutes, by key, route and outcome.
+ * At first nearly every key is that old, so a line per call would log most of the API's traffic. One line per ten
+ * minutes and instance still shows which environments use such a key and where; the New Relic transaction attributes
+ * keep the exact counts.
+ */
+const loggedOldKeyCalls = new LRUCache<string, true>({ max: 50_000, ttl: 10 * 60 * 1000 });
+
+/*
+ * Subscriber hashes signed with a key created before the cutoff that were logged in the last ten minutes, by
+ * environment, session source and outcome. Inbox sessions are frequent, so one line per ten minutes and instance is
+ * enough to list the environments that still sign with such a key; the New Relic attributes keep the exact counts.
+ */
+const loggedOldKeyHashes = new LRUCache<string, true>({ max: 50_000, ttl: 10 * 60 * 1000 });
 
 type RevocationRequest = {
   organizationId: string;
@@ -76,6 +98,91 @@ export class ApiKeyRevocationService {
     return requiresRotation(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id));
   }
 
+  /**
+   * The environment's stored (encrypted) keys whose subscriber and context hashes still count. A key created before
+   * the cutoff is left out in `block_all`, and in `block_except_allowed` while
+   * `IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED` is on, so a leaked key can no longer open an Inbox or update a
+   * subscriber through it.
+   */
+  async getSigningKeys({
+    organizationId,
+    environmentId,
+    apiKeys,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    apiKeys: IApiKey[];
+  }): Promise<string[]> {
+    const [policy, isHmacBlockEnabled] = await Promise.all([
+      this.getPolicy({ organizationId, environmentId }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_API_KEY_REVOCATION_HMAC_BLOCK_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+        environment: { _id: environmentId },
+        component: 'api',
+      }),
+    ]);
+
+    return apiKeys
+      .filter((apiKey) =>
+        canSignWithApiKey(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id), isHmacBlockEnabled)
+      )
+      .map((apiKey) => apiKey.key);
+  }
+
+  /**
+   * Records a session whose subscriber hash was signed with a key created before the cutoff, so the organizations
+   * still signing with such a key can be counted: New Relic attributes on every such session and a throttled log line.
+   * `signingKeys` are the keys the session accepted (`getSigningKeys`), which tells whether the old key still counted
+   * or the hash was rejected. A missing or wrong hash, or one signed with a newer key, is not recorded.
+   */
+  async recordOldKeySubscriberHash({
+    organizationId,
+    environmentId,
+    apiKeys,
+    signingKeys,
+    subscriberId,
+    subscriberHash,
+    source,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    apiKeys: IApiKey[];
+    signingKeys: string[];
+    subscriberId: string;
+    subscriberHash: string | undefined;
+    source: SubscriberSessionSourceEnum;
+  }): Promise<void> {
+    if (!subscriberHash) {
+      return;
+    }
+
+    try {
+      const policy = await this.getPolicy({ organizationId, environmentId });
+      const oldKey = apiKeys.find(
+        (apiKey) =>
+          requiresRotation(policy, getApiKeyCreatedAt((apiKey as StoredApiKey)._id)) &&
+          isHmacValidForAnyKey([apiKey.key], subscriberId, subscriberHash)
+      );
+
+      if (!oldKey) {
+        return;
+      }
+
+      const blocked = !signingKeys.includes(oldKey.key);
+
+      addNewRelicOldKeyHashAttributes({ blocked, source, organizationId, environmentId });
+      this.logOldKeyHash({ organizationId, environmentId, source, mode: policy.mode, blocked });
+    } catch (err) {
+      // Recording must never fail the session it describes.
+      this.logger.error(
+        { err, organizationId, environmentId },
+        'Failed to record a subscriber hash signed with an old key'
+      );
+    }
+  }
+
   /** Throws when the policy revokes the key the request was authenticated with, for this route. */
   async assertRequestAllowed({
     organizationId,
@@ -99,6 +206,15 @@ export class ApiKeyRevocationService {
     }
 
     addNewRelicApiKeyRevocationAttributes({ blocked: evaluation.blocked });
+    this.logOldKeyCall({
+      organizationId,
+      environmentId,
+      apiKeyHash,
+      method,
+      routePath,
+      mode: policy.mode,
+      blocked: evaluation.blocked,
+    });
 
     if (evaluation.blocked) {
       throw new UnauthorizedException(getRevokedApiKeyMessage(policy));
@@ -130,6 +246,79 @@ export class ApiKeyRevocationService {
     keyCreatedAtCache.set(apiKeyHash, { createdAt });
 
     return createdAt;
+  }
+
+  /** Logs the flags the New Relic transaction gets, once per key, route and outcome in ten minutes. */
+  private logOldKeyCall({
+    organizationId,
+    environmentId,
+    apiKeyHash,
+    method,
+    routePath,
+    mode,
+    blocked,
+  }: Omit<RevocationRequest, 'authorization'> & {
+    apiKeyHash: string | null;
+    mode: ApiKeyRevocationModeEnum;
+    blocked: boolean;
+  }): void {
+    const route = `${method.toUpperCase()} ${normalizeRoutePath(routePath)}`;
+    const loggedCallKey = `${apiKeyHash} ${route} ${blocked}`;
+
+    if (loggedOldKeyCalls.has(loggedCallKey)) {
+      return;
+    }
+
+    loggedOldKeyCalls.set(loggedCallKey, true);
+    this.logger.warn(
+      {
+        apiKeyRequiresRotation: true,
+        apiKeyRevocationBlocked: blocked,
+        apiKeyRevocationMode: mode,
+        organizationId,
+        environmentId,
+        route,
+      },
+      blocked
+        ? 'Rejected a call made with a revoked secret key'
+        : 'Allowed a call made with a secret key that has to be replaced'
+    );
+  }
+
+  /** Logs the New Relic flags of a subscriber hash signed with an old key, once per environment, source and outcome. */
+  private logOldKeyHash({
+    organizationId,
+    environmentId,
+    source,
+    mode,
+    blocked,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    source: SubscriberSessionSourceEnum;
+    mode: ApiKeyRevocationModeEnum;
+    blocked: boolean;
+  }): void {
+    const loggedHashKey = `${environmentId} ${source} ${blocked}`;
+
+    if (loggedOldKeyHashes.has(loggedHashKey)) {
+      return;
+    }
+
+    loggedOldKeyHashes.set(loggedHashKey, true);
+    this.logger.warn(
+      {
+        apiKeyRequiresRotation: true,
+        apiKeyRevocationBlocked: blocked,
+        apiKeyRevocationMode: mode,
+        apiKeyRevocationHashSource: source,
+        organizationId,
+        environmentId,
+      },
+      blocked
+        ? 'Rejected a subscriber hash signed with a revoked secret key'
+        : 'Accepted a subscriber hash signed with a secret key that has to be replaced'
+    );
   }
 
   private toPolicy(raw: unknown): ApiKeyRevocationPolicy {

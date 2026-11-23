@@ -108,7 +108,7 @@ describe('API key revocation in a Nest app', () => {
             }),
           } as never,
           { findOne: sinon.stub().resolves({ apiKeys: storedKeys }) } as never,
-          { setContext: sinon.stub(), error: sinon.stub() } as never
+          { setContext: sinon.stub(), error: sinon.stub(), warn: sinon.stub() } as never
         );
 
         const moduleRef = await Test.createTestingModule({
