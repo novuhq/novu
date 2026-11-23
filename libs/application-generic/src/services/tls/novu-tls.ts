@@ -1,6 +1,7 @@
 import { X509Certificate } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import * as tls from 'node:tls';
+import { env } from '../../config/env';
 import { parseBooleanString } from '../secrets-manager/secrets-manager.service';
 
 /**
@@ -25,11 +26,11 @@ export interface NovuTlsConfig {
  * exactly one of the two keeps a stale leftover variable from silently shadowing
  * the value the operator actually meant to use.
  */
-function readMaterial(variablePrefix: string): string {
-  const base64Variable = `${variablePrefix}_BASE64`;
-  const fileVariable = `${variablePrefix}_FILE`;
-  const base64Value = process.env[base64Variable]?.trim();
-  const fileValue = process.env[fileVariable]?.trim();
+function readMaterial(variablePrefix: 'NOVU_TLS_CERT' | 'NOVU_TLS_KEY' | 'NOVU_TLS_CA'): string {
+  const base64Variable = `${variablePrefix}_BASE64` as const;
+  const fileVariable = `${variablePrefix}_FILE` as const;
+  const base64Value = env[base64Variable]?.trim();
+  const fileValue = env[fileVariable]?.trim();
 
   if (base64Value && fileValue) {
     throw new Error(`${base64Variable} and ${fileVariable} are both set. Provide exactly one of them.`);
@@ -59,11 +60,14 @@ function readMaterial(variablePrefix: string): string {
 
 /** True when the operator asked for TLS, regardless of whether the material is valid. */
 export function isNovuTlsEnabled(): boolean {
-  return parseBooleanString(process.env.NOVU_TLS_ENABLED);
+  return parseBooleanString(env.NOVU_TLS_ENABLED);
 }
 
 function assertEnterpriseSelfHosted(): void {
-  if (!parseBooleanString(process.env.NOVU_ENTERPRISE) || !parseBooleanString(process.env.IS_SELF_HOSTED)) {
+  // biome-ignore lint/plugin: parseBooleanString also accepts "1" and "yes", which env.IS_SELF_HOSTED reads as false
+  const isSelfHosted = parseBooleanString(process.env.IS_SELF_HOSTED);
+
+  if (!parseBooleanString(env.NOVU_ENTERPRISE) || !isSelfHosted) {
     throw new Error(
       'NOVU_TLS_ENABLED is only supported on enterprise self-hosted deployments. Set NOVU_ENTERPRISE=true and IS_SELF_HOSTED=true, or unset NOVU_TLS_ENABLED.'
     );
@@ -92,7 +96,7 @@ export function loadNovuTlsConfig(): NovuTlsConfig | undefined {
   const cert = readMaterial('NOVU_TLS_CERT');
   const key = readMaterial('NOVU_TLS_KEY');
   const ca = readMaterial('NOVU_TLS_CA');
-  const passphrase = process.env.NOVU_TLS_KEY_PASSPHRASE || undefined;
+  const passphrase = env.NOVU_TLS_KEY_PASSPHRASE || undefined;
 
   /*
    * Fail at boot instead of on the first TLS handshake: createSecureContext is what
@@ -126,7 +130,7 @@ export function getNovuServiceCa(): string[] | undefined {
     return undefined;
   }
 
-  const source = `${process.env.NOVU_TLS_CA_BASE64 ?? ''}\n${process.env.NOVU_TLS_CA_FILE ?? ''}`;
+  const source = `${env.NOVU_TLS_CA_BASE64 ?? ''}\n${env.NOVU_TLS_CA_FILE ?? ''}`;
   if (serviceCaCache?.source !== source) {
     serviceCaCache = { source, bundle: [...tls.getCACertificates('default'), readMaterial('NOVU_TLS_CA')] };
   }
@@ -141,7 +145,7 @@ export function getNovuServiceCa(): string[] | undefined {
  * runtime, so the API checks this at boot.
  */
 export function assertNovuTlsCoversLoopback(config: NovuTlsConfig): void {
-  if (process.env.API_INTERNAL_ORIGIN) {
+  if (env.API_INTERNAL_ORIGIN) {
     return;
   }
 

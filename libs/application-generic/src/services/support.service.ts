@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { PlainClient, UpsertResult } from '@team-plain/typescript-sdk';
+import { env } from '../config/env';
 
 const LOG_CONTEXT = 'SupportService';
 
@@ -7,7 +8,7 @@ export class SupportService {
   private plainClient: PlainClient;
   private readonly plainKey: string;
   constructor() {
-    this.plainKey = process.env.PLAIN_SUPPORT_KEY;
+    this.plainKey = env.PLAIN_SUPPORT_KEY;
     if (this.plainKey) {
       this.plainClient = new PlainClient({ apiKey: this.plainKey });
       Logger.log(`Initialized PlainClient`, LOG_CONTEXT);

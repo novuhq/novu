@@ -1,8 +1,9 @@
 import { createAppEnv } from '@novu/application-generic';
 
 /**
- * Variables only the worker reads, added to the shared ones in
- * libs/application-generic/src/config/env.schema.ts. Read both with `env.X` from this file.
+ * Variables only the worker uses, added to the shared ones in libs/application-generic/src/config/env.schema.ts.
+ * Together the two files list every variable the worker uses. Read both with `env.X` from this file; entries
+ * with `readBy` are read by that dependency instead and have no `env.X`.
  */
 export const { env, warnDeprecatedEnv } = createAppEnv({
   ACTIVE_WORKERS: {

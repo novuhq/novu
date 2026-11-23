@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
+import { env } from '../../../config/env';
 import { convertStringValues } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
@@ -43,18 +44,18 @@ export interface IMemoryDbClusterProviderConfig {
 
 export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConfig => {
   const redisClusterConfig: IMemoryDbClusterConfig = {
-    host: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
-    port: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PORT),
-    ttl: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_TTL),
-    username: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME),
-    password: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD),
-    connectTimeout: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT),
-    keepAlive: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE),
-    family: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
-    keyPrefix: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX),
-    tls: (process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
+    host: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_HOST),
+    port: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_PORT),
+    ttl: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_TTL),
+    username: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_USERNAME),
+    password: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD),
+    connectTimeout: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT),
+    keepAlive: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE),
+    family: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
+    keyPrefix: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX),
+    tls: (env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
       ? {
-          servername: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
+          servername: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_HOST),
         }
       : {},
   };
@@ -91,8 +92,10 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
 export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, username, tls, connectTimeout } = getMemoryDbClusterProviderConfig();
 
-  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+  const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
+  // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
+  // biome-ignore lint/plugin: Existing loose type is outside this change.
   const redisOptions: any = {
     maxRetriesPerRequest: null,
     tls,
@@ -123,7 +126,7 @@ export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | un
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack: env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 10000,
   };
 

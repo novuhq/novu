@@ -5,7 +5,7 @@ export const metricsServiceList = {
   useFactory: (newRelicMetricsService: NewRelicMetricsService, otelMetricsService: OtelMetricsService) => {
     const allMetricsServices = [newRelicMetricsService, otelMetricsService];
 
-    return allMetricsServices.filter((service) => service.isActive(process.env));
+    return allMetricsServices.filter((service) => service.isActive());
   },
   inject: [NewRelicMetricsService, OtelMetricsService],
 };

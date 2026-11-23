@@ -2,6 +2,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../../config/env';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { ClickHouseBatchService } from '../clickhouse-batch.service';
@@ -13,8 +14,8 @@ import { ORDER_BY, StepRun, stepRunSchema, TABLE_NAME } from './step-run.schema'
 type StepRunInsertData = Omit<StepRun, 'id' | 'expires_at'>;
 
 const STEP_RUN_INSERT_OPTIONS: InsertOptions = getInsertOptions(
-  process.env.STEP_RUNS_ASYNC_INSERT,
-  process.env.STEP_RUNS_WAIT_ASYNC_INSERT
+  env.STEP_RUNS_ASYNC_INSERT,
+  env.STEP_RUNS_WAIT_ASYNC_INSERT
 );
 
 type StepOptions = {

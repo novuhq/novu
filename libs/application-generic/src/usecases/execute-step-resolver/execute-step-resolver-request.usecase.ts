@@ -8,6 +8,7 @@ import {
   State,
 } from '@novu/framework/internal';
 import got, { HTTPError } from 'got';
+import { env } from '../../config/env';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { RETRYABLE_ERROR_CODES } from '../../services/http-client';
@@ -103,8 +104,8 @@ export class ExecuteStepResolverRequest {
   @InstrumentUsecase()
   async execute(command: ExecuteBridgeRequestCommand): Promise<ExecuteOutput> {
     const startTime = performance.now();
-    const dispatchUrl = process.env.STEP_RESOLVER_DISPATCH_URL;
-    const hmacSecret = process.env.STEP_RESOLVER_HMAC_SECRET;
+    const dispatchUrl = env.STEP_RESOLVER_DISPATCH_URL;
+    const hmacSecret = env.STEP_RESOLVER_HMAC_SECRET;
 
     if (!dispatchUrl) {
       throw new NotFoundException('Step resolver dispatch URL is not configured');

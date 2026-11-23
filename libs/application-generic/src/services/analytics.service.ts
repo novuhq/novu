@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { IOrganizationEntity } from '@novu/shared';
 import { Analytics } from '@segment/analytics-node';
 import Mixpanel from 'mixpanel';
+import { env } from '../config/env';
 
 interface IUser {
   _id?: string | null;
@@ -30,14 +31,14 @@ export class AnalyticsService {
       });
     }
 
-    if (process.env.MIXPANEL_TOKEN) {
+    if (env.MIXPANEL_TOKEN) {
       const options: Mixpanel.InitConfig = {};
 
-      if (process.env.MIXPANEL_HOST) {
-        options.host = process.env.MIXPANEL_HOST;
+      if (env.MIXPANEL_HOST) {
+        options.host = env.MIXPANEL_HOST;
       }
 
-      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN, options);
+      this.mixpanel = Mixpanel.init(env.MIXPANEL_TOKEN, options);
     }
   }
 
@@ -65,6 +66,7 @@ export class AnalyticsService {
     }
 
     this.segment.group({
+      // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
       userId: user?._id as any,
       groupId: organizationId,
       traits,
@@ -99,6 +101,7 @@ export class AnalyticsService {
       return;
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     const githubToken = (user as any).tokens?.find((token) => token.provider === 'github');
 
     this.segment.identify({
@@ -143,6 +146,7 @@ export class AnalyticsService {
         event: name,
         properties: data,
       });
+      // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     } catch (error: any) {
       Logger.error(
         {
@@ -166,6 +170,7 @@ export class AnalyticsService {
         distinct_id: userId,
         ...data,
       });
+      // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     } catch (error: any) {
       Logger.error(
         {
@@ -180,11 +185,11 @@ export class AnalyticsService {
   }
 
   private get segmentEnabled() {
-    return process.env.NODE_ENV !== 'test' && this.segment;
+    return env.NODE_ENV !== 'test' && this.segment;
   }
 
   private get mixpanelEnabled() {
-    return process.env.NODE_ENV !== 'test' && this.mixpanel;
+    return env.NODE_ENV !== 'test' && this.mixpanel;
   }
 
   private convertToIsoDate(createdAt: string | number | null): string {

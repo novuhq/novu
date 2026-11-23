@@ -7,6 +7,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ProvidersIdEnum } from '@novu/shared';
 import axios from 'axios';
+import { env } from '../config/env';
 import {
   type ChannelConnectionAuth,
   decryptChannelConnectionAuth,
@@ -393,8 +394,8 @@ export class RotatingConnectionTokenService {
   ): { clientId?: string; secretKey?: string } {
     if (integration.providerId === ChatProviderIdEnum.Novu) {
       return {
-        clientId: process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
-        secretKey: process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
+        clientId: env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
+        secretKey: env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
       };
     }
 

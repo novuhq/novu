@@ -1,5 +1,6 @@
 import { init, LDClient, LDMultiKindContext } from '@launchdarkly/node-server-sdk';
 import { Injectable } from '@nestjs/common';
+import { env } from '../../config/env';
 import type { FeatureFlagContext, FeatureFlagContextBase, IFeatureFlagsService } from './types';
 
 @Injectable()
@@ -8,7 +9,7 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
   public isEnabled: boolean;
 
   public async initialize(): Promise<void> {
-    const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
+    const launchDarklySdkKey = env.LAUNCH_DARKLY_SDK_KEY;
     if (!launchDarklySdkKey) {
       throw new Error('Missing Launch Darkly SDK key');
     }
@@ -70,7 +71,7 @@ export class LaunchDarklyFeatureFlagsService implements IFeatureFlagsService {
       };
     }
 
-    const region = process.env.NOVU_REGION;
+    const region = env.NOVU_REGION;
     if (region) {
       mappedContext.region = {
         key: region,

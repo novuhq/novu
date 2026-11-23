@@ -2,6 +2,7 @@ import Redis, { RedisOptions, ScanStream } from 'ioredis';
 import newrelic from 'newrelic';
 import { ConnectionOptions } from 'tls';
 
+import { env } from '../../../config/env';
 import { convertStringValues } from './variable-mappers';
 
 export { Redis, RedisOptions, ScanStream };
@@ -44,18 +45,18 @@ export interface IRedisProviderConfig {
 
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
-    db: convertStringValues(process.env.REDIS_DB_INDEX),
-    host: convertStringValues(process.env.REDIS_HOST),
-    port: convertStringValues(process.env.REDIS_PORT),
-    ttl: convertStringValues(process.env.REDIS_TTL),
-    password: convertStringValues(process.env.REDIS_PASSWORD),
-    connectTimeout: convertStringValues(process.env.REDIS_CONNECT_TIMEOUT),
-    keepAlive: convertStringValues(process.env.REDIS_KEEP_ALIVE),
-    family: convertStringValues(process.env.REDIS_FAMILY),
-    keyPrefix: convertStringValues(process.env.REDIS_PREFIX),
-    tls: process.env.REDIS_TLS
+    db: convertStringValues(env.REDIS_DB_INDEX),
+    host: convertStringValues(env.REDIS_HOST),
+    port: convertStringValues(env.REDIS_PORT),
+    ttl: convertStringValues(env.REDIS_TTL),
+    password: convertStringValues(env.REDIS_PASSWORD),
+    connectTimeout: convertStringValues(env.REDIS_CONNECT_TIMEOUT),
+    keepAlive: convertStringValues(env.REDIS_KEEP_ALIVE),
+    family: convertStringValues(env.REDIS_FAMILY),
+    keyPrefix: convertStringValues(env.REDIS_PREFIX),
+    tls: env.REDIS_TLS
       ? {
-          servername: convertStringValues(process.env.REDIS_HOST),
+          servername: convertStringValues(env.REDIS_HOST),
         }
       : undefined,
   };
@@ -88,7 +89,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
 export const getRedisInstance = (): Redis | undefined => {
   const { port, host, ...configOptions } = getRedisProviderConfig();
 
-  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+  const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
   const options = {
     ...configOptions,
@@ -97,13 +98,13 @@ export const getRedisInstance = (): Redis | undefined => {
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack: env.NODE_ENV !== 'production',
   };
 
   if (port && host) {
     const redisInstance = new Redis(port, host, options);
     const isNewRelicEnabled = typeof newrelic !== 'undefined' && newrelic.instrumentDatastore;
-    const isNewRelicEnvSet = process.env.NEW_RELIC_LICENSE_KEY && process.env.NEW_RELIC_APP_NAME;
+    const isNewRelicEnvSet = env.NEW_RELIC_LICENSE_KEY && env.NEW_RELIC_APP_NAME;
 
     if (isNewRelicEnabled && isNewRelicEnvSet) {
       newrelic.instrumentDatastore('Redis', () => redisInstance);

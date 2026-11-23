@@ -1,10 +1,11 @@
 import { ClickHouseClient, ClickHouseSettings, createClient, PingResult } from '@clickhouse/client';
 import { BeforeApplicationShutdown, Injectable } from '@nestjs/common';
+import { env } from '../../config/env';
 
 export { ClickHouseClient };
 
 export function isClickHouseConfigured(): boolean {
-  return Boolean(process.env.CLICK_HOUSE_URL && process.env.CLICK_HOUSE_DATABASE);
+  return Boolean(env.CLICK_HOUSE_URL && env.CLICK_HOUSE_DATABASE);
 }
 
 export type InsertOptions = {
@@ -29,7 +30,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       return;
     }
 
-    if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'local' || env.NODE_ENV === 'test') {
       const defaultClient = createClient({
         url: 'http://localhost:8123',
         username: 'default',
@@ -39,24 +40,22 @@ export class ClickHouseService implements BeforeApplicationShutdown {
 
       try {
         await defaultClient.command({
-          query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
+          query: `CREATE DATABASE IF NOT EXISTS \`${env.CLICK_HOUSE_DATABASE}\``,
         });
-        if (!process.env.CI) {
-          console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        if (!env.CI) {
+          console.log(`Database "${env.CLICK_HOUSE_DATABASE}" ensured.`);
         }
       } catch (error) {
-        console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+        console.error(`Failed to create database ${env.CLICK_HOUSE_DATABASE}:`, error);
       }
     }
 
     this._client = createClient({
-      url: process.env.CLICK_HOUSE_URL,
-      username: process.env.CLICK_HOUSE_USER,
-      password: process.env.CLICK_HOUSE_PASSWORD,
-      database: process.env.CLICK_HOUSE_DATABASE,
-      max_open_connections: process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS
-        ? parseInt(process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS, 10)
-        : 10,
+      url: env.CLICK_HOUSE_URL,
+      username: env.CLICK_HOUSE_USER,
+      password: env.CLICK_HOUSE_PASSWORD,
+      database: env.CLICK_HOUSE_DATABASE,
+      max_open_connections: env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS,
     });
   }
 

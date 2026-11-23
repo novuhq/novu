@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { InsertOptions } from './clickhouse.service';
 
 /*
@@ -10,7 +11,7 @@ import { InsertOptions } from './clickhouse.service';
 export const getInsertOptions = (asyncInsertVariable: string, waitForAsyncInsertVariable: string): InsertOptions => {
   return {
     asyncInsert: (() => {
-      if (process.env.NODE_ENV === 'test') {
+      if (env.NODE_ENV === 'test') {
         return false;
       }
       if (asyncInsertVariable !== undefined) {
@@ -20,7 +21,7 @@ export const getInsertOptions = (asyncInsertVariable: string, waitForAsyncInsert
       return true;
     })(),
     waitForAsyncInsert: (() => {
-      if (process.env.NODE_ENV === 'test') {
+      if (env.NODE_ENV === 'test') {
         return true;
       }
       if (waitForAsyncInsertVariable !== undefined) {

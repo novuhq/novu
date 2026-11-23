@@ -2,6 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { addDays } from 'date-fns';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../config/env';
 import { generateObjectId } from '../../utils/generate-id';
 import { Prettify } from '../../utils/prettify.type';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
@@ -87,10 +88,10 @@ export interface UnsafeWhere<T> {
 
 export type Where<T> = EnforcedWhere<T> | UnsafeWhere<T>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
 export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnhancedType> {
   readonly table: string;
   readonly identifierPrefix: string;
@@ -107,7 +108,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
   }
 
   private async initialize() {
-    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
+    if (env.NODE_ENV !== 'local' && env.NODE_ENV !== 'test') {
       return;
     }
 
@@ -180,6 +181,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     params: Record<string, unknown>;
   } {
     // Cast enhanced type to raw schema type only at this lowest level
+    // biome-ignore lint/plugin: Existing type assertion is outside this change.
     const rawWhere = where as unknown as Where<InferClickhouseSchemaType<TSchema>>;
     let allConditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[] = [];
 
@@ -219,6 +221,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const params: Record<string, unknown> = {};
     let paramIndex = 0;
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing complexity is outside this change.
     const buildSingleCondition = (condition: WhereCondition<InferClickhouseSchemaType<TSchema>>): string => {
       // Handle OR conditions
       if ('$or' in condition) {
@@ -346,11 +349,13 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const defaultMaxBatchSize = 500;
     const defaultFlushIntervalMs = 3000; // 3 seconds
 
+    // biome-ignore lint/plugin: reads <TABLE>_BATCH_SIZE by table name, documented in env.schema.ts
     const maxBatchSizeEnv = process.env[`${tableName}_BATCH_SIZE`];
     const parsedMaxBatchSize = maxBatchSizeEnv ? parseInt(maxBatchSizeEnv, 10) : defaultMaxBatchSize;
     const maxBatchSize =
       Number.isFinite(parsedMaxBatchSize) && parsedMaxBatchSize > 0 ? parsedMaxBatchSize : defaultMaxBatchSize;
 
+    // biome-ignore lint/plugin: reads <TABLE>_FLUSH_INTERVAL_MS by table name, documented in env.schema.ts
     const flushIntervalMsEnv = process.env[`${tableName}_FLUSH_INTERVAL_MS`];
     const parsedFlushIntervalMs = flushIntervalMsEnv ? parseInt(flushIntervalMsEnv, 10) : defaultFlushIntervalMs;
     const flushIntervalMs =
@@ -576,6 +581,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     const isoString = date.toISOString();
 
     // Remove the 'Z' suffix since ClickHouse DateTime64 with UTC timezone handles it
+    // biome-ignore lint/plugin: Existing type assertion is outside this change.
     return isoString.slice(0, -1) as unknown as Date;
   }
 }
@@ -727,7 +733,7 @@ export class QueryBuilder<T> {
   whereHasAny<K extends keyof T>(field: K, values: T[K]): this {
     // Type assertion needed because where() expects T[K][] for ArrayOperators,
     // but for array fields T[K] is already an array (e.g., string[])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     return this.where(field, 'hasAny', values as any);
   }
 
@@ -748,7 +754,7 @@ export class QueryBuilder<T> {
   whereHasAll<K extends keyof T>(field: K, values: T[K]): this {
     // Type assertion needed because where() expects T[K][] for ArrayOperators,
     // but for array fields T[K] is already an array (e.g., string[])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     return this.where(field, 'hasAll', values as any);
   }
 

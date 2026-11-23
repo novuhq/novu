@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { AzureBlobStorageService, GCSStorageService, S3StorageService, StorageService } from './storage.service';
 
 export * from './storage-helper.service';
@@ -15,7 +16,7 @@ export function resolveStorageServiceClass(service?: string) {
 
 export const storageService = {
   provide: StorageService,
-  useClass: resolveStorageServiceClass(process.env.STORAGE_SERVICE),
+  useClass: resolveStorageServiceClass(env.STORAGE_SERVICE),
 };
 
 export { StorageService };

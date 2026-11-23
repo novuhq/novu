@@ -9,6 +9,7 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
+import { env } from '../../config/env';
 import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
@@ -226,7 +227,7 @@ export class InboundDomainRouteDelivery {
       originToken: params.originToken,
     });
     const signature = buildNovuSignatureHeader(secretKey, payload);
-    const apiBaseUrl = process.env.API_ROOT_URL;
+    const apiBaseUrl = env.API_ROOT_URL;
 
     if (!apiBaseUrl) {
       this.throwError('API_ROOT_URL environment variable is not set — cannot forward inbound email to agent webhook');

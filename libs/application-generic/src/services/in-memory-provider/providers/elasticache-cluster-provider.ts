@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
+import { env } from '../../../config/env';
 import { convertStringValues } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
@@ -41,17 +42,17 @@ export interface IElasticacheClusterProviderConfig {
 
 export const getElasticacheClusterProviderConfig = (): IElasticacheClusterProviderConfig => {
   const redisClusterConfig: IElasticacheClusterConfig = {
-    host: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_HOST),
-    port: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_PORT),
-    ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
-    connectTimeout: convertStringValues(process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
-    keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
-    family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
-    keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: (process.env.ELASTICACHE_CLUSTER_SERVICE_TLS as ConnectionOptions)
+    host: convertStringValues(env.ELASTICACHE_CLUSTER_SERVICE_HOST),
+    port: convertStringValues(env.ELASTICACHE_CLUSTER_SERVICE_PORT),
+    ttl: convertStringValues(env.REDIS_CLUSTER_TTL),
+    password: convertStringValues(env.REDIS_CLUSTER_PASSWORD),
+    connectTimeout: convertStringValues(env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
+    keepAlive: convertStringValues(env.REDIS_CLUSTER_KEEP_ALIVE),
+    family: convertStringValues(env.REDIS_CLUSTER_FAMILY),
+    keyPrefix: convertStringValues(env.REDIS_CLUSTER_KEY_PREFIX),
+    tls: (env.ELASTICACHE_CLUSTER_SERVICE_TLS as ConnectionOptions)
       ? {
-          servername: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_HOST),
+          servername: convertStringValues(env.ELASTICACHE_CLUSTER_SERVICE_HOST),
         }
       : {},
   };
@@ -86,7 +87,7 @@ export const getElasticacheClusterProviderConfig = (): IElasticacheClusterProvid
 export const getElasticacheCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, tls } = getElasticacheClusterProviderConfig();
 
-  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+  const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
   const redisOptions = {
     tls,
@@ -105,7 +106,7 @@ export const getElasticacheCluster = (enableAutoPipelining?: boolean): Cluster |
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack: env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 10000,
   };
 

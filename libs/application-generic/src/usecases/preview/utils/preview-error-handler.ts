@@ -1,6 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { captureException } from '@sentry/node';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../../config/env';
 import { GeneratePreviewResponseDto } from '../../../dtos/workflow/generate-preview-response.dto';
 import { LOG_CONTEXT } from '../preview.constants';
 import { FrameworkError, GeneratePreviewError } from '../preview.types';
@@ -90,7 +91,7 @@ export class PreviewErrorHandler {
         LOG_CONTEXT
       );
 
-      if (process.env.SENTRY_DSN) {
+      if (env.SENTRY_DSN) {
         captureException(error);
       }
 
@@ -106,9 +107,11 @@ export class PreviewErrorHandler {
       },
       previewPayloadExample: {},
       schema: null,
+      // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
     } as any;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
   isFrameworkError(obj: any): obj is FrameworkError {
     return typeof obj === 'object' && obj.status === '400' && obj.name === 'BridgeRequestError';
   }

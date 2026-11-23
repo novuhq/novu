@@ -1,8 +1,9 @@
 import { createAppEnv } from '@novu/application-generic';
 
 /**
- * Variables only inbound-mail reads, added to the shared ones in
- * libs/application-generic/src/config/env.schema.ts. Read both with `env.X` from this file.
+ * Variables only inbound-mail uses, added to the shared ones in libs/application-generic/src/config/env.schema.ts.
+ * Together the two files list every variable inbound-mail uses. Read both with `env.X` from this file; entries
+ * with `readBy` are read by that dependency instead and have no `env.X`.
  */
 export const { env, warnDeprecatedEnv } = createAppEnv({
   HOST: {
@@ -18,6 +19,10 @@ export const { env, warnDeprecatedEnv } = createAppEnv({
     type: 'boolean',
     description:
       'Answers SMTP 451 when an attachment fails to upload to S3, so the sender retries, instead of embedding it inline.',
+  },
+  INBOUND_MAIL_CONTEXT_PATH: {
+    readBy: '@novu/shared',
+    description: 'Route prefix of inbound-mail, after GLOBAL_CONTEXT_PATH. Read by getContextPath.',
   },
   PATH: {
     description: 'System PATH. Only logged, to debug a missing Python binary for DKIM and SPF checks.',

@@ -20,6 +20,7 @@ import {
   TriggerTypeEnum,
 } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../config/env';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { AnalyticsService, ContentService } from '../../services';
@@ -103,7 +104,7 @@ export class CreateWorkflowV0 {
 
     try {
       if (
-        (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
+        (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) &&
         storedWorkflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1
       ) {
         if (!this.moduleRef.get(TRANSLATIONS_SERVICE, { strict: false })) {
@@ -142,8 +143,8 @@ export class CreateWorkflowV0 {
     workflowEntity: WorkflowWithPreferencesResponseDto,
     session?: ClientSession | null
   ) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

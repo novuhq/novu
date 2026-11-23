@@ -1,3 +1,5 @@
+import { env } from '../config/env';
+
 class ErrorContext {
   timestamp: string;
   service: string;
@@ -5,21 +7,32 @@ class ErrorContext {
   traceId?: string;
 }
 
+type ErrorDetails = {
+  type: string;
+  message?: string;
+  name?: string;
+  value?: string;
+  cause?: unknown;
+  code?: unknown;
+  details?: unknown;
+  stack?: string[];
+};
+
 export function parseErrorInformation(
   error: unknown,
   context?: Partial<ErrorContext>
 ): {
   level: string;
   message: string;
-  error: Record<string, any>;
+  error: ErrorDetails;
   context?: ErrorContext;
 } {
   try {
     // Prepare default context
     const defaultContext: ErrorContext = {
       timestamp: new Date().toISOString(),
-      service: process.env.SERVICE_NAME || 'unknown-service',
-      environment: process.env.NODE_ENV || 'unknown-env',
+      service: env.SERVICE_NAME,
+      environment: env.NODE_ENV || 'unknown-env',
     };
 
     // Merge provided context with default
@@ -27,14 +40,15 @@ export function parseErrorInformation(
 
     // Handle Error objects
     if (error instanceof Error) {
-      const errorDetails: Record<string, any> = {
+      const { code, details } = error as Error & { code?: unknown; details?: unknown };
+      const errorDetails: ErrorDetails = {
         message: error.message,
         name: error.name,
         type: 'Error',
         // Optional additional properties
         ...('cause' in error && error.cause && { cause: error.cause }),
-        ...((error as any).code && { code: (error as any).code }),
-        ...((error as any).details && { details: (error as any).details }),
+        ...(code && { code }),
+        ...(details && { details }),
         stack: error.stack?.split('\n').slice(0, 5),
       };
 

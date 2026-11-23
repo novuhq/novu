@@ -1,5 +1,6 @@
 import { DalService } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../config/env';
 import {
   AnalyticsService,
   CacheInMemoryProviderService,
@@ -44,7 +45,7 @@ export const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    await service.connect(String(process.env.MONGO_URL));
+    await service.connect(String(env.MONGO_URL));
 
     return service;
   },
@@ -53,7 +54,7 @@ export const dalService = {
 export const analyticsService = {
   provide: AnalyticsService,
   useFactory: async () => {
-    const service = new AnalyticsService(process.env.SEGMENT_TOKEN);
+    const service = new AnalyticsService(env.SEGMENT_TOKEN);
     await service.initialize();
 
     return service;

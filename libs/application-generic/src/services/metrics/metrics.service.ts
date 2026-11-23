@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as otelApi from '@opentelemetry/api';
+import { env } from '../../config/env';
 import { IMetricsService } from './metrics.interface';
 
 const nr = require('newrelic');
@@ -38,7 +39,7 @@ export class NewRelicMetricsService implements IMetricsService {
     nr.recordMetric(name, value);
   }
 
-  isActive(env: Record<string, string>): boolean {
+  isActive(): boolean {
     return !!env.NEW_RELIC_LICENSE_KEY;
   }
 }
@@ -59,7 +60,7 @@ export class NewRelicMetricsService implements IMetricsService {
  */
 @Injectable()
 export class OtelMetricsService implements IMetricsService {
-  private readonly meter = otelApi.metrics.getMeter('novu', process.env.npm_package_version);
+  private readonly meter = otelApi.metrics.getMeter('novu', env.npm_package_version);
   private readonly queueGauge = this.meter.createGauge('novu.queue.jobs', {
     description: 'Current number of jobs in each BullMQ queue by state',
     unit: '{jobs}',
@@ -75,9 +76,9 @@ export class OtelMetricsService implements IMetricsService {
 
     if (parts[0] === 'Queue' && parts.length === 4) {
       this.queueGauge.record(value, {
-        'deployment': parts[1],
-        'queue': parts[2],
-        'state': parts[3],
+        deployment: parts[1],
+        queue: parts[2],
+        state: parts[3],
       });
 
       return;
@@ -85,9 +86,9 @@ export class OtelMetricsService implements IMetricsService {
 
     if (parts[0] === 'Cron' && parts.length === 4) {
       this.cronGauge.record(value, {
-        'deployment': parts[1],
-        'job': parts[2],
-        'event': parts[3],
+        deployment: parts[1],
+        job: parts[2],
+        event: parts[3],
       });
 
       return;
@@ -104,7 +105,7 @@ export class OtelMetricsService implements IMetricsService {
     gauge?.record(value);
   }
 
-  isActive(env: Record<string, string>): boolean {
-    return env.ENABLE_OTEL === 'true';
+  isActive(): boolean {
+    return env.ENABLE_OTEL;
   }
 }

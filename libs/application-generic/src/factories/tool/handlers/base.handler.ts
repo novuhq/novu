@@ -1,5 +1,6 @@
 import { ICredentials, ToolProviderIdEnum } from '@novu/shared';
 import { IToolOptions, IToolProvider } from '@novu/stateless';
+import { env } from '../../../config/env';
 import { BaseHandler } from '../../shared/interfaces';
 import { IToolHandler } from '../interfaces';
 
@@ -11,7 +12,7 @@ export abstract class BaseToolHandler extends BaseHandler<IToolProvider> impleme
   }
 
   async send(options: IToolOptions) {
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       return {};
     }
 

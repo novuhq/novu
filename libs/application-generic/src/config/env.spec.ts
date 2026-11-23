@@ -9,6 +9,7 @@ const schema = {
   TEST_ENV_BOOLEAN: { type: 'boolean', description: 'Boolean.' },
   TEST_ENV_BOOLEAN_ON: { type: 'boolean', default: true, description: 'Boolean that is on by default.' },
   TEST_ENV_DEPRECATED: { deprecated: 'Use TEST_ENV_STRING instead.', description: 'Old name.' },
+  TEST_ENV_READ_BY: { readBy: '@novu/test-dependency', description: 'Read by a dependency.' },
 } satisfies Record<string, EnvVarDefinition>;
 
 const testEnv = createEnv(schema);
@@ -76,6 +77,18 @@ describe('env', () => {
     process.env.TEST_ENV_BOOLEAN_ON = 'no';
     expect(testEnv.TEST_ENV_BOOLEAN).toBe(false);
     expect(testEnv.TEST_ENV_BOOLEAN_ON).toBe(true);
+  });
+
+  it('should leave variables only a dependency reads out of env', () => {
+    process.env.TEST_ENV_READ_BY = 'value';
+
+    // @ts-expect-error a variable only a dependency reads has no env.X
+    expect(testEnv.TEST_ENV_READ_BY).toBeUndefined();
+    expect(Object.keys(testEnv)).not.toContain('TEST_ENV_READ_BY');
+
+    const withDefault = { readBy: '@novu/test-dependency', default: 'x', description: 'Read by a dependency.' };
+    // @ts-expect-error a variable only a dependency reads has no type or default
+    createEnv({ TEST_ENV_READ_BY: withDefault });
   });
 
   it('should build an app env from the shared schema plus the app variables', () => {

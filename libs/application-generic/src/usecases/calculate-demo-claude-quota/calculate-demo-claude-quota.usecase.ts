@@ -3,6 +3,7 @@ import { AgentRepository, ConversationRepository, IntegrationRepository } from '
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
+import { env } from '../../config/env';
 import { areNovuManagedClaudeCredentialsSet } from '../../utils/novu-integrations';
 import { CalculateDemoClaudeQuotaCommand } from './calculate-demo-claude-quota.command';
 
@@ -16,12 +17,9 @@ export type DemoClaudeQuotaResult = {
 
 @Injectable()
 export class CalculateDemoClaudeQuota {
-  static MAX_CONVERSATIONS = parseInt(process.env.MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS || '10', 10);
+  static MAX_CONVERSATIONS = env.MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS;
 
-  static MAX_TOKENS_PER_CONVERSATION = parseInt(
-    process.env.MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION || '100000',
-    10
-  );
+  static MAX_TOKENS_PER_CONVERSATION = env.MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION;
 
   constructor(
     private readonly integrationRepository: IntegrationRepository,

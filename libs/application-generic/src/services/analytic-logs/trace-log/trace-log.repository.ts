@@ -1,6 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../../config/env';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { ClickHouseBatchService } from '../clickhouse-batch.service';
@@ -17,10 +18,7 @@ import {
   WorkflowRunTraceInput,
 } from './trace-log.schema';
 
-const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
-  process.env.TRACES_ASYNC_INSERT,
-  process.env.TRACES_WAIT_ASYNC_INSERT
-);
+const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(env.TRACES_ASYNC_INSERT, env.TRACES_WAIT_ASYNC_INSERT);
 
 const WORKFLOW_RUN_FIELD_DEFAULTS = {
   step_run_type: '' as const,

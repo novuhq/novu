@@ -1,12 +1,15 @@
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 import { isClusterModeEnabled } from '../services/in-memory-provider/utils';
+import type { env as libEnv } from './env';
 
 /**
  * Queue URL env var per topic. Shared by `SqsService` and the per-process
  * validators so the name a deployment sets and the name a boot check demands
  * cannot drift.
  */
-export const SQS_QUEUE_URL_ENV_BY_TOPIC: Partial<Record<JobTopicNameEnum, string>> = {
+export const SQS_QUEUE_URL_ENV_BY_TOPIC: Partial<
+  Record<JobTopicNameEnum, Extract<keyof typeof libEnv, `SQS_QUEUE_URL_${string}`>>
+> = {
   [JobTopicNameEnum.STANDARD]: 'SQS_QUEUE_URL_STANDARD',
   [JobTopicNameEnum.WORKFLOW]: 'SQS_QUEUE_URL_WORKFLOW',
   [JobTopicNameEnum.PROCESS_SUBSCRIBER]: 'SQS_QUEUE_URL_PROCESS_SUBSCRIBER',
@@ -31,6 +34,7 @@ function isQueueBackend(value: string): value is QueueBackend {
  * between cases, and the cost is a property lookup on a path that already does
  * Redis or AWS I/O.
  */
+// biome-ignore lint/plugin: checks the raw environment like the validators, and tests pass their own
 export function getQueueBackend(env: NodeJS.ProcessEnv = process.env): QueueBackend {
   const raw = env.QUEUE_BACKEND?.trim();
 
@@ -112,6 +116,7 @@ export function collectQueueBackendConfigErrors({
   topics,
   requiresScheduler = false,
   requiresPayloadOffload = false,
+  // biome-ignore lint/plugin: checks the raw environment like the validators, and tests pass their own
   env = process.env,
 }: {
   topics: JobTopicNameEnum[];

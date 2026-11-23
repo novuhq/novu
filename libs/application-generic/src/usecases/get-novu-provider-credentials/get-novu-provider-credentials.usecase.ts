@@ -7,6 +7,7 @@ import {
   ICredentials,
   SmsProviderIdEnum,
 } from '@novu/shared';
+import { env } from '../../config/env';
 import { FeatureFlagsService } from '../../services';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
@@ -65,7 +66,7 @@ export class GetNovuProviderCredentials {
 
     if (integration.providerId === EmailProviderIdEnum.Novu) {
       return {
-        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        apiKey: env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from: 'no-reply@novu.co',
         senderName: 'Novu',
         ipPoolName: 'Demo',
@@ -74,16 +75,16 @@ export class GetNovuProviderCredentials {
 
     if (integration.providerId === SmsProviderIdEnum.Novu) {
       return {
-        accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
-        token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
-        from: process.env.NOVU_SMS_INTEGRATION_SENDER,
+        accountSid: env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
+        token: env.NOVU_SMS_INTEGRATION_TOKEN,
+        from: env.NOVU_SMS_INTEGRATION_SENDER,
       };
     }
 
     if (integration.providerId === ChatProviderIdEnum.Novu) {
       return {
-        clientId: process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
-        secretKey: process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
+        clientId: env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
+        secretKey: env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
       };
     }
 

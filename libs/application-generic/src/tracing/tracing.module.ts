@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { OpenTelemetryModule } from 'nestjs-otel';
+import { env } from '../config/env';
 import { TracingService } from './tracing.service';
 
 const OtelModule = OpenTelemetryModule.forRoot({
@@ -16,7 +17,7 @@ const OtelModule = OpenTelemetryModule.forRoot({
 @Module({})
 export class TracingModule {
   static register(serviceName: string, _version: string): DynamicModule {
-    const otelEnabled = process.env.ENABLE_OTEL === 'true';
+    const otelEnabled = env.ENABLE_OTEL;
 
     return {
       module: TracingModule,

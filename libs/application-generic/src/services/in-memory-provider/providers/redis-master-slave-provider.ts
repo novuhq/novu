@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
+import { env } from '../../../config/env';
 import { convertStringValues, isTlsFlagEnabled } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
@@ -47,19 +48,19 @@ export interface IRedisMasterSlaveProviderConfig {
 
 export const getRedisMasterSlaveProviderConfig = (): IRedisMasterSlaveProviderConfig => {
   const redisMasterSlaveConfig: IRedisMasterSlaveConfig = {
-    masterHost: convertStringValues(process.env.REDIS_MASTER_HOST),
-    masterPort: convertStringValues(process.env.REDIS_MASTER_PORT),
-    slaveHost: convertStringValues(process.env.REDIS_SLAVE_HOST),
-    slavePort: convertStringValues(process.env.REDIS_SLAVE_PORT),
-    ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
-    connectTimeout: convertStringValues(process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
-    keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
-    family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
-    keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: isTlsFlagEnabled(process.env.REDIS_CLUSTER_TLS)
+    masterHost: convertStringValues(env.REDIS_MASTER_HOST),
+    masterPort: convertStringValues(env.REDIS_MASTER_PORT),
+    slaveHost: convertStringValues(env.REDIS_SLAVE_HOST),
+    slavePort: convertStringValues(env.REDIS_SLAVE_PORT),
+    ttl: convertStringValues(env.REDIS_CLUSTER_TTL),
+    password: convertStringValues(env.REDIS_CLUSTER_PASSWORD),
+    connectTimeout: convertStringValues(env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
+    keepAlive: convertStringValues(env.REDIS_CLUSTER_KEEP_ALIVE),
+    family: convertStringValues(env.REDIS_CLUSTER_FAMILY),
+    keyPrefix: convertStringValues(env.REDIS_CLUSTER_KEY_PREFIX),
+    tls: isTlsFlagEnabled(env.REDIS_CLUSTER_TLS)
       ? {
-          servername: convertStringValues(process.env.REDIS_MASTER_HOST),
+          servername: convertStringValues(env.REDIS_MASTER_HOST),
         }
       : undefined,
   };
@@ -116,7 +117,7 @@ export const getRedisMasterSlaveProviderConfig = (): IRedisMasterSlaveProviderCo
 export const getRedisMasterSlaveCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, tls } = getRedisMasterSlaveProviderConfig();
 
-  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+  const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
   const redisOptions = {
     tls,
@@ -135,7 +136,7 @@ export const getRedisMasterSlaveCluster = (enableAutoPipelining?: boolean): Clus
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack: env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 10000,
   };
 

@@ -11,15 +11,30 @@ interface EnvVarBase {
 }
 
 /**
+ * A variable our code reads through `env.X`:
  * - string (default): returned as-is, including an empty string, like `process.env`.
  *   With a `default`, unset and empty both read as the default.
  * - number: unset, empty or not a finite number reads as the default (or undefined).
  * - boolean: `true` only for 'true', `false` only for 'false', anything else reads as the default (or false).
  */
-export type EnvVarDefinition =
-  | (EnvVarBase & { type?: 'string'; default?: string })
-  | (EnvVarBase & { type: 'number'; default?: number })
-  | (EnvVarBase & { type: 'boolean'; default?: boolean });
+type ReadEnvVarDefinition =
+  | (EnvVarBase & { type?: 'string'; default?: string; readBy?: never })
+  | (EnvVarBase & { type: 'number'; default?: number; readBy?: never })
+  | (EnvVarBase & { type: 'boolean'; default?: boolean; readBy?: never });
+
+/**
+ * A variable only a dependency reads, such as '@novu/dal', '@novu/framework', an enterprise package
+ * or an SDK. It is declared so the app's variables are all in one place, but it has no `env.X`,
+ * type or default: the description says what the dependency does with it, including its default.
+ */
+interface DependencyEnvVarDefinition extends EnvVarBase {
+  /** The dependency that reads the variable, e.g. '@novu/dal'. */
+  readBy: string;
+  type?: never;
+  default?: never;
+}
+
+export type EnvVarDefinition = ReadEnvVarDefinition | DependencyEnvVarDefinition;
 
 type EnvSchema = Readonly<Record<string, EnvVarDefinition>>;
 
@@ -30,12 +45,14 @@ type EnvValue<T extends EnvVarDefinition> = T extends { type: 'number' }
     : string;
 
 export type Env<S extends EnvSchema> = {
-  readonly [K in keyof S]: S[K] extends { type: 'boolean' } | { default: string | number }
+  readonly [K in keyof S as S[K] extends { readBy: string } ? never : K]: S[K] extends
+    | { type: 'boolean' }
+    | { default: string | number }
     ? EnvValue<S[K]>
     : EnvValue<S[K]> | undefined;
 };
 
-function readEnvVar(name: string, definition: EnvVarDefinition): string | number | boolean | undefined {
+function readEnvVar(name: string, definition: ReadEnvVarDefinition): string | number | boolean | undefined {
   const raw = process.env[name];
 
   if (definition.type === 'number') {
@@ -59,18 +76,30 @@ function readEnvVar(name: string, definition: EnvVarDefinition): string | number
   return raw;
 }
 
-/**
- * Builds a typed, read-only view of `schema`. Every read parses the current `process.env`
- * value, so secrets hydrated at boot and values set by tests are always picked up.
- */
-export function createEnv<S extends EnvSchema>(schema: S): Env<S> {
+function isReadByDependency(definition: EnvVarDefinition): definition is DependencyEnvVarDefinition {
+  return definition.readBy !== undefined;
+}
+
+/** One getter per variable our code reads, so every read parses the current `process.env` value. */
+function defineEnv(schema: EnvSchema): object {
   const properties: PropertyDescriptorMap = {};
 
   for (const [name, definition] of Object.entries(schema)) {
-    properties[name] = { enumerable: true, get: () => readEnvVar(name, definition) };
+    if (!isReadByDependency(definition)) {
+      properties[name] = { enumerable: true, get: () => readEnvVar(name, definition) };
+    }
   }
 
-  return Object.defineProperties({}, properties) as Env<S>;
+  return Object.defineProperties({}, properties);
+}
+
+/**
+ * Builds a typed, read-only view of `schema`, without the variables only a dependency reads.
+ * Every read parses the current `process.env` value, so secrets hydrated at boot and values
+ * set by tests are always picked up.
+ */
+export function createEnv<S extends EnvSchema>(schema: S): Env<S> {
+  return defineEnv(schema) as Env<S>;
 }
 
 /** Typed access to the shared variables in `env.schema.ts`. Apps read through their own `config/env.ts`. */
@@ -99,5 +128,8 @@ export function createAppEnv<S extends EnvSchema & { readonly [K in keyof typeof
 ): { env: Env<typeof envSchema> & Env<S>; warnDeprecatedEnv: () => void } {
   const schema = { ...envSchema, ...appSchema };
 
-  return { env: createEnv(schema), warnDeprecatedEnv: () => warnDeprecatedEnv(schema) };
+  return {
+    env: defineEnv(schema) as Env<typeof envSchema> & Env<S>,
+    warnDeprecatedEnv: () => warnDeprecatedEnv(schema),
+  };
 }

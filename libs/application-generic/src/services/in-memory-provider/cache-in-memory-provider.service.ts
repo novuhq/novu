@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { env } from '../../config/env';
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum, ScanStream } from './types';
 import { isClusterModeEnabled } from './utils';
@@ -13,7 +14,7 @@ export class CacheInMemoryProviderService {
     const provider = this.selectProvider();
     this.isCluster = this.isClusterMode();
 
-    const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    const enableAutoPipelining = env.REDIS_CACHE_ENABLE_AUTOPIPELINING;
 
     this.inMemoryProviderService = new InMemoryProviderService(provider, this.isCluster, enableAutoPipelining);
   }
@@ -28,12 +29,12 @@ export class CacheInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
+    if (env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'false') {
       return InMemoryProviderEnum.REDIS;
     }
 
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'true') {
-      if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST && process.env.ELASTICACHE_CLUSTER_SERVICE_PORT) {
+    if (env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'true') {
+      if (env.ELASTICACHE_CLUSTER_SERVICE_HOST && env.ELASTICACHE_CLUSTER_SERVICE_PORT) {
         return InMemoryProviderEnum.ELASTICACHE;
       }
 

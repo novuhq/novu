@@ -13,6 +13,7 @@ import { MetricReader, PeriodicExportingMetricReader } from '@opentelemetry/sdk-
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
+import { env } from '../config/env';
 
 let sdk: NodeSDK | undefined;
 
@@ -26,10 +27,10 @@ let sdk: NodeSDK | undefined;
  */
 function buildResource(serviceName: string, version: string) {
   return resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? serviceName,
-    [ATTR_SERVICE_VERSION]: process.env.OTEL_SERVICE_VERSION ?? version,
+    [ATTR_SERVICE_NAME]: env.OTEL_SERVICE_NAME ?? serviceName,
+    [ATTR_SERVICE_VERSION]: env.OTEL_SERVICE_VERSION ?? version,
     'service.group': 'novu',
-    'deployment.environment': process.env.NODE_ENV ?? 'development',
+    'deployment.environment': env.NODE_ENV ?? 'development',
   });
 }
 
@@ -73,7 +74,7 @@ function buildResource(serviceName: string, version: string) {
  *                                             production if queries contain sensitive data.)
  */
 export function startOtel(serviceName: string, version: string): NodeSDK | undefined {
-  if (process.env.ENABLE_OTEL !== 'true') {
+  if (!env.ENABLE_OTEL) {
     return undefined;
   }
 
@@ -81,7 +82,7 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
     return sdk;
   }
 
-  const diagLevel = (process.env.OTEL_LOG_LEVEL ?? 'warn').toLowerCase();
+  const diagLevel = env.OTEL_LOG_LEVEL.toLowerCase();
   const levelMap: Record<string, DiagLogLevel> = {
     none: DiagLogLevel.NONE,
     error: DiagLogLevel.ERROR,
@@ -92,8 +93,8 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
     all: DiagLogLevel.ALL,
   };
 
-  const prometheusPort = parseInt(process.env.OTEL_PROMETHEUS_PORT ?? '9464', 10);
-  const captureDbStatements = process.env.OTEL_CAPTURE_DB_STATEMENTS === 'true';
+  const prometheusPort = env.OTEL_PROMETHEUS_PORT;
+  const captureDbStatements = env.OTEL_CAPTURE_DB_STATEMENTS;
 
   /*
    * Metrics readers — both run simultaneously:
@@ -108,8 +109,8 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
    *    Useful for self-hosted setups running their own Prometheus/Grafana stack.
    *    Set OTEL_DISABLE_PROMETHEUS=true to skip starting the server.
    */
-  const metricExportIntervalMs = parseInt(process.env.OTEL_METRIC_EXPORT_INTERVAL ?? '60000', 10);
-  const metricExportTimeoutMs = parseInt(process.env.OTEL_METRIC_EXPORT_TIMEOUT ?? '30000', 10);
+  const metricExportIntervalMs = env.OTEL_METRIC_EXPORT_INTERVAL;
+  const metricExportTimeoutMs = env.OTEL_METRIC_EXPORT_TIMEOUT;
 
   const metricReaders: MetricReader[] = [
     new PeriodicExportingMetricReader({
@@ -119,7 +120,7 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
     }),
   ];
 
-  if (process.env.OTEL_DISABLE_PROMETHEUS !== 'true') {
+  if (!env.OTEL_DISABLE_PROMETHEUS) {
     metricReaders.push(
       new PrometheusExporter({
         port: prometheusPort,
@@ -139,8 +140,7 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
    * When ENABLE_OTEL_LOGS=true the PinoInstrumentation bridge (below) will
    * forward every pino log record to this exporter automatically.
    */
-  const logRecordProcessors =
-    process.env.ENABLE_OTEL_LOGS === 'true' ? [new BatchLogRecordProcessor(new OTLPLogExporter())] : [];
+  const logRecordProcessors = env.ENABLE_OTEL_LOGS ? [new BatchLogRecordProcessor(new OTLPLogExporter())] : [];
 
   sdk = new NodeSDK({
     resource: buildResource(serviceName, version),

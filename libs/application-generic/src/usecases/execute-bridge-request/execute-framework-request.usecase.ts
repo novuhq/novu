@@ -9,6 +9,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
+import { env } from '../../config/env';
 import { decryptApiKey } from '../../encryption';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
@@ -110,7 +111,7 @@ export class ExecuteFrameworkRequest {
     }
 
     const url = bridgeActionUrl.toString();
-    const timeout = bridgeUrl?.includes(process.env.API_INTERNAL_ORIGIN) ? 60_000 : DEFAULT_TIMEOUT;
+    const timeout = bridgeUrl?.includes(env.API_INTERNAL_ORIGIN) ? 60_000 : DEFAULT_TIMEOUT;
     const method = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(command.action as PostActionEnum)
       ? 'POST'
       : 'GET';
@@ -330,9 +331,9 @@ export class ExecuteFrameworkRequest {
    */
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
     const tlsEnabled = isNovuTlsEnabled();
-    const useLoopback = action === PostActionEnum.PREVIEW && !(tlsEnabled && process.env.API_INTERNAL_ORIGIN);
-    const loopbackOrigin = `${tlsEnabled ? 'https' : 'http'}://localhost:${process.env.PORT}`;
-    const baseUrl = useLoopback ? loopbackOrigin : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+    const useLoopback = action === PostActionEnum.PREVIEW && !(tlsEnabled && env.API_INTERNAL_ORIGIN);
+    const loopbackOrigin = `${tlsEnabled ? 'https' : 'http'}://localhost:${env.PORT}`;
+    const baseUrl = useLoopback ? loopbackOrigin : env.API_INTERNAL_ORIGIN || env.API_ROOT_URL;
 
     if (!baseUrl) {
       throw new Error('API URL is not properly configured');
@@ -340,7 +341,7 @@ export class ExecuteFrameworkRequest {
 
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
-    const contextPath = [process.env.GLOBAL_CONTEXT_PATH, useLoopback ? process.env.API_CONTEXT_PATH : undefined]
+    const contextPath = [env.GLOBAL_CONTEXT_PATH, useLoopback ? env.API_CONTEXT_PATH : undefined]
       .filter(Boolean)
       .join('/');
 

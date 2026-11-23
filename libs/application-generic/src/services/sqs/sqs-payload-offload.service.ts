@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { Readable } from 'stream';
 
+import { env } from '../../config/env';
 import { SQS_DEFAULT_PAYLOAD_SIZE_THRESHOLD } from './types';
 
 const LOG_CONTEXT = 'SqsPayloadOffloadService';
@@ -24,10 +25,8 @@ export class SqsPayloadOffloadService {
   private readonly threshold: number;
 
   constructor(region: string, endpoint?: string) {
-    this.bucket = process.env.SQS_PAYLOAD_OFFLOAD_BUCKET;
-    this.threshold = process.env.SQS_PAYLOAD_SIZE_THRESHOLD
-      ? Number(process.env.SQS_PAYLOAD_SIZE_THRESHOLD)
-      : SQS_DEFAULT_PAYLOAD_SIZE_THRESHOLD;
+    this.bucket = env.SQS_PAYLOAD_OFFLOAD_BUCKET;
+    this.threshold = env.SQS_PAYLOAD_SIZE_THRESHOLD ?? SQS_DEFAULT_PAYLOAD_SIZE_THRESHOLD;
 
     if (this.bucket) {
       const config: Record<string, unknown> = { region };
