@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   EnvironmentId,
   FilterParts,
+  IIntegrationHealth,
   IntegrationKindEnum,
   OrganizationId,
 } from '../../types';
@@ -61,4 +62,7 @@ export interface IIntegration {
   rules?: Record<string, unknown> | null;
 
   connected?: boolean;
+
+  /** Missing means healthy. */
+  health?: IIntegrationHealth;
 }

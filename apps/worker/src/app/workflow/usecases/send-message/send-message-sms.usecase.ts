@@ -383,10 +383,14 @@ export class SendMessageSms extends SendMessageBase {
         },
       ]);
 
+      await this.recordIntegrationSendSuccess(integration);
+
       return {
         status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
+      await this.recordIntegrationSendFailure(integration, e);
+
       await this.sendErrorStatus(
         message,
         'error',

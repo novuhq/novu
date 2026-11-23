@@ -8,6 +8,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DataSourcesEmptyState } from '../components/integrations/components/data-sources-empty-state';
+import { IntegrationHealthBanners } from '../components/integrations/components/integration-health-banners';
 import { IntegrationSearchInput } from '../components/integrations/components/integration-search-input';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
@@ -80,6 +81,7 @@ export function IntegrationsListPage() {
             </PermissionButton>
           </div>
         </div>
+        <IntegrationHealthBanners />
         <TabsContent value="channels" className="mt-0! p-2.5">
           <IntegrationsList
             onItemClick={onItemClick}

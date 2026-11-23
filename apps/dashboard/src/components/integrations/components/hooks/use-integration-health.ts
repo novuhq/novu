@@ -3,13 +3,17 @@ import {
   type IEnvironment,
   type IIntegration,
   IntegrationConnectionStatusEnum,
+  IntegrationHealthErrorCodeEnum,
   type ITestIntegrationConnectionResponse,
+  providers,
 } from '@novu/shared';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { testIntegrationConnection } from '@/api/integrations';
+import { QueryKeys } from '@/utils/query-keys';
+import { formatHealthDate, isIntegrationFailing } from '../../utils/integration-health';
 import { isDemoIntegration } from '../utils/helpers';
 
-/** How an integration is doing, from its own state and the last "Verify integration" check. */
+/** How an integration is doing: its stored health (from sends and checks) and the last "Verify integration" result. */
 export type IntegrationHealth = {
   tone: 'success' | 'error' | 'warning' | 'neutral';
   /** Short status, e.g. "Connected" or "Verification failed". */
@@ -36,6 +40,9 @@ function toHealth(
 ): IntegrationHealth {
   if (!integration.active) return { tone: 'neutral', label: 'Paused', needsReconnect: false };
   if (isChecking) return { tone: 'neutral', label: 'Verifying…', needsReconnect: false };
+  if (isIntegrationFailing(integration) && result?.status !== IntegrationConnectionStatusEnum.VALID) {
+    return getStoredErrorHealth(integration);
+  }
 
   switch (result?.status) {
     case IntegrationConnectionStatusEnum.VALID:
@@ -51,6 +58,33 @@ function toHealth(
       // which is all we know, so it isn't shown as delivering.
       return { tone: 'neutral', label: 'Active', needsReconnect: false };
   }
+}
+
+function describeFailure(integration: IIntegration) {
+  const providerName = providers.find((item) => item.id === integration.providerId)?.displayName ?? integration.name;
+  const date = formatHealthDate(integration.health?.failedAt);
+  const on = date ? ` on ${date}` : '';
+
+  switch (integration.health?.code) {
+    case IntegrationHealthErrorCodeEnum.TOKEN_REVOKED:
+      return `${providerName} revoked the token${on}.`;
+    case IntegrationHealthErrorCodeEnum.TOKEN_EXPIRED:
+      return `The ${providerName} token expired${on}.`;
+    default:
+      return `${providerName} rejected the credentials${on}.`;
+  }
+}
+
+/** The provider rejected the stored credentials on a send or a check, so saving new ones is a reconnect. */
+function getStoredErrorHealth(integration: IIntegration): IntegrationHealth {
+  const date = formatHealthDate(integration.health?.failedAt);
+
+  return {
+    tone: 'error',
+    label: date ? `Failing since ${date}` : 'Failing',
+    message: describeFailure(integration),
+    needsReconnect: true,
+  };
 }
 
 const HEALTH_CACHE_TIME_MS = 10 * 60_000;
@@ -92,8 +126,8 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
     })
   );
 
-  const verify = (integration: IIntegration) =>
-    queryClient.fetchQuery({
+  const verify = async (integration: IIntegration) => {
+    const result = await queryClient.fetchQuery({
       queryKey: getIntegrationHealthQueryKey(integration._id),
       queryFn: () => runCheck(integration),
       staleTime: 0,
@@ -101,6 +135,11 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
       retry: false,
       meta: HEALTH_QUERY_META,
     });
+    // A valid or invalid answer is saved as the integration's health, which the cards and banners read.
+    queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
+
+    return result;
+  };
 
   return { healthById, verify };
 }

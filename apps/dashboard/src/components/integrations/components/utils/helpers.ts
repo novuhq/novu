@@ -117,3 +117,18 @@ export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/c
 export function usesProviderSetupLayout(providerId?: string) {
   return providerId === ChatProviderIdEnum.Slack;
 }
+
+const SECURE_CREDENTIALS = [
+  CredentialsKeyEnum.ApiKey,
+  CredentialsKeyEnum.ApiToken,
+  CredentialsKeyEnum.SecretKey,
+  CredentialsKeyEnum.Token,
+  CredentialsKeyEnum.Password,
+  CredentialsKeyEnum.ServiceAccount,
+  CredentialsKeyEnum.SigningSecret,
+];
+
+/** Secrets: masked in the form, and the fields a Reconnect asks the user to replace. */
+export function isSecureCredential(credential: IConfigCredential) {
+  return SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum);
+}
