@@ -67,30 +67,46 @@ function pnpmRun(...args) {
   });
 }
 
+function isProjectList(value) {
+  return Array.isArray(value) && value.every((project) => typeof project === 'string');
+}
+
+function parseProjectList(text) {
+  try {
+    const value = JSON.parse(text);
+
+    return isProjectList(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+// CI decides which test jobs start from this list, so output that holds no project list is an error, not "no projects":
+// an empty list would skip test jobs without anyone noticing.
 function getAffectedCommandResult(str) {
-  const outputLines = str.trim().split(/\r?\n/);
+  const outputLines = str
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.trim());
 
-  // Find the line that contains the JSON array (starts with [ and ends with ])
   for (const line of outputLines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('[') && trimmedLine.endsWith(']')) {
-      return trimmedLine;
+    if (line.startsWith('[') && line.endsWith(']')) {
+      const projects = parseProjectList(line);
+      if (projects) return projects;
     }
   }
 
-  // Fallback: look for any line that contains JSON-like content
+  // Fallback: a JSON array printed on the same line as other text.
   for (const line of outputLines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine.includes('[') && trimmedLine.includes(']')) {
-      // Extract just the JSON part from the line
-      const jsonStart = trimmedLine.indexOf('[');
-      const jsonEnd = trimmedLine.lastIndexOf(']') + 1;
-      return trimmedLine.substring(jsonStart, jsonEnd);
+    const jsonStart = line.indexOf('[');
+    const jsonEnd = line.lastIndexOf(']') + 1;
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      const projects = parseProjectList(line.substring(jsonStart, jsonEnd));
+      if (projects) return projects;
     }
   }
 
-  // If no JSON found, return empty array
-  return '[]';
+  throw new Error(`Nx printed no JSON project list:\n${str}`);
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
@@ -117,7 +133,7 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
   // console.log("nx output:\n" + affectedCommandResult)
 
   // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
-  let result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
+  let result = getAffectedCommandResult(affectedCommandResult);
 
   // Nx maps the `.source` submodule pointer to no project, so a bump of it, which is how most enterprise changes
   // reach this repo, would otherwise affect nothing.
@@ -153,7 +169,7 @@ function isEnterpriseSourceChanged(baseBranch) {
 async function enterpriseProjectsContainingTask(taskName) {
   const commandResult = await pnpmRun('nx', 'show', 'projects', '--withTarget', taskName, '--json');
 
-  return JSON.parse(getAffectedCommandResult(commandResult)).filter((project) => project.startsWith('@novu/ee-'));
+  return getAffectedCommandResult(commandResult).filter((project) => project.startsWith('@novu/ee-'));
 }
 
 async function allProjectsContainingTask(taskName) {
@@ -179,7 +195,7 @@ async function allProjectsContainingTask(taskName) {
     '--json'
   );
 
-  const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
+  const result = getAffectedCommandResult(affectedCommandResult);
 
   writeFileSync(cachePath, JSON.stringify(result));
 
