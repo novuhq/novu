@@ -117,6 +117,7 @@ export function setSubscribersNotificationsListData(
       limit?: number | undefined;
       after?: string | undefined;
       offset?: number | undefined;
+      tags?: Array<string> | undefined;
       read?: boolean | undefined;
       archived?: boolean | undefined;
       snoozed?: boolean | undefined;
@@ -145,6 +146,7 @@ export function invalidateSubscribersNotificationsList(
         limit?: number | undefined;
         after?: string | undefined;
         offset?: number | undefined;
+        tags?: Array<string> | undefined;
         read?: boolean | undefined;
         archived?: boolean | undefined;
         snoozed?: boolean | undefined;

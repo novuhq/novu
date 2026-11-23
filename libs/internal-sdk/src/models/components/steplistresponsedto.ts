@@ -14,7 +14,7 @@ export type StepListResponseDto = {
    */
   slug: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: string;
   /**

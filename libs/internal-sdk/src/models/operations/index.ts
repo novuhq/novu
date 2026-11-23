@@ -98,6 +98,7 @@ export * from "./subscriberscontrollerarchivenotification.js";
 export * from "./subscriberscontrollerbulkupdatesubscriberpreferences.js";
 export * from "./subscriberscontrollercompletenotificationaction.js";
 export * from "./subscriberscontrollercreatesubscriber.js";
+export * from "./subscriberscontrollercreatesubscribertoken.js";
 export * from "./subscriberscontrollerdeleteallnotifications.js";
 export * from "./subscriberscontrollerdeletenotification.js";
 export * from "./subscriberscontrollergetsubscriber.js";

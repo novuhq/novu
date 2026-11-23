@@ -110,9 +110,6 @@ export type NotificationFeedItemDto = {
    * The subject line for email notifications, if applicable.
    */
   subject?: string | null | undefined;
-  /**
-   * Channel type through which the message is sent
-   */
   channel: ChannelTypeEnum;
   /**
    * Indicates whether the notification has been read by the subscriber.

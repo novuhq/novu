@@ -23,9 +23,6 @@ export type AgentIntegrationResponseIntegrationDto = {
   identifier: string;
   name: string;
   providerId: string;
-  /**
-   * Channel type through which the message is sent
-   */
   channel?: ChannelTypeEnum | undefined;
   active: boolean;
   /**

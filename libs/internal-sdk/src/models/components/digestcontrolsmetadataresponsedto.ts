@@ -3,14 +3,85 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  DigestControlDto,
-  DigestControlDto$inboundSchema,
-} from "./digestcontroldto.js";
+  LookBackWindowDto,
+  LookBackWindowDto$inboundSchema,
+} from "./lookbackwindowdto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
+export const DigestControlsMetadataResponseDtoType = {
+  Regular: "regular",
+  Timed: "timed",
+} as const;
+/**
+ * The type of digest strategy. Determines which fields are applicable.
+ */
+export type DigestControlsMetadataResponseDtoType = ClosedEnum<
+  typeof DigestControlsMetadataResponseDtoType
+>;
+
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
+export const DigestControlsMetadataResponseDtoUnit = {
+  Seconds: "seconds",
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+  Weeks: "weeks",
+  Months: "months",
+} as const;
+/**
+ * The unit of time for the digest interval (for REGULAR type).
+ */
+export type DigestControlsMetadataResponseDtoUnit = ClosedEnum<
+  typeof DigestControlsMetadataResponseDtoUnit
+>;
+
+/**
+ * Control values specific to Digest
+ */
+export type DigestControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * The type of digest strategy. Determines which fields are applicable.
+   */
+  type?: DigestControlsMetadataResponseDtoType | undefined;
+  /**
+   * The amount of time for the digest interval (for REGULAR type). Min 1.
+   */
+  amount?: number | undefined;
+  /**
+   * The unit of time for the digest interval (for REGULAR type).
+   */
+  unit?: DigestControlsMetadataResponseDtoUnit | undefined;
+  /**
+   * Configuration for look-back window (for REGULAR type).
+   */
+  lookBackWindow?: LookBackWindowDto | undefined;
+  /**
+   * Cron expression for TIMED digest. Min length 1.
+   */
+  cron?: string | undefined;
+  /**
+   * Specify a custom key for digesting events instead of the default event key.
+   */
+  digestKey?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type DigestControlsMetadataResponseDto = {
   /**
@@ -24,8 +95,55 @@ export type DigestControlsMetadataResponseDto = {
   /**
    * Control values specific to Digest
    */
-  values: DigestControlDto;
+  values?: DigestControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const DigestControlsMetadataResponseDtoType$inboundSchema:
+  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoType> = z.nativeEnum(
+    DigestControlsMetadataResponseDtoType,
+  );
+
+/** @internal */
+export const DigestControlsMetadataResponseDtoUnit$inboundSchema:
+  z.ZodNativeEnum<typeof DigestControlsMetadataResponseDtoUnit> = z.nativeEnum(
+    DigestControlsMetadataResponseDtoUnit,
+  );
+
+/** @internal */
+export const DigestControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  DigestControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    type: DigestControlsMetadataResponseDtoType$inboundSchema.optional(),
+    amount: z.number().optional(),
+    unit: DigestControlsMetadataResponseDtoUnit$inboundSchema.optional(),
+    lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
+    cron: z.string().optional(),
+    digestKey: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function digestControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  DigestControlsMetadataResponseDtoValues,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      DigestControlsMetadataResponseDtoValues$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'DigestControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +153,8 @@ export const DigestControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: DigestControlDto$inboundSchema,
+  values: z.lazy(() => DigestControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function digestControlsMetadataResponseDtoFromJSON(

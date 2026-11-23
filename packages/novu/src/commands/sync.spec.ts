@@ -18,6 +18,7 @@ describe('sync command', () => {
   describe('sync function', () => {
     afterEach(() => {
       vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
 
     it('happy case of execute sync functions', async () => {
@@ -81,35 +82,54 @@ describe('sync command', () => {
       );
     });
 
-    it('syncState - network error on sync', async () => {
-      const bridgeUrl = 'https://bridge.novu.co';
-      const secretKey = 'your-api-key';
-      const apiUrl = 'https://api.novu.co';
+    it('prints the API error body and exits on a non-2xx response without leaking the secret key', async () => {
+      const secretKey = 'not-a-real-key';
+      const errorBody = { statusCode: 400, message: ['bridgeUrl is not reachable'], error: 'Bad Request' };
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+        throw new Error(`process.exit(${code})`);
+      }) as never);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      (axios.post as MockedFunction<typeof axios.post>).mockRejectedValueOnce(new Error('Network error'));
+      (axios.post as MockedFunction<typeof axios.post>).mockResolvedValueOnce({ status: 400, data: errorBody });
 
-      try {
-        await sync(bridgeUrl, secretKey, apiUrl);
-      } catch (error) {
-        expect(error.message).toBe('Network error');
-      }
+      await expect(sync('https://bridge.novu.co', secretKey, 'https://api.novu.co')).rejects.toThrow('process.exit(1)');
+
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.anything(),
+        expect.objectContaining({ validateStatus: expect.any(Function) })
+      );
+      const validateStatus = (axios.post as MockedFunction<typeof axios.post>).mock.calls[0][2]?.validateStatus;
+      expect(validateStatus?.(400)).toBe(true);
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      const printed = String(consoleErrorSpy.mock.calls[0][0]);
+      expect(printed).toBe(`Error: ${JSON.stringify(errorBody)}`);
+      expect(printed).not.toContain(secretKey);
+      expect(axios.put).not.toHaveBeenCalled();
     });
 
-    it('syncState - unexpected error', async () => {
-      const bridgeUrl = 'https://bridge.novu.co';
-      const secretKey = 'your-api-key';
-      const apiUrl = 'https://api.novu.co';
-
-      (axios.get as MockedFunction<typeof axios.get>).mockResolvedValueOnce({ data: {} });
-      (axios.post as MockedFunction<typeof axios.post>).mockImplementationOnce(() => {
-        throw new Error('Unexpected error');
+    it('prints only the error message and exits on a network error without leaking the secret key', async () => {
+      const secretKey = 'not-a-real-key';
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+        throw new Error(`process.exit(${code})`);
+      }) as never);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const networkError = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:4999'), {
+        config: { headers: { Authorization: `ApiKey ${secretKey}` } },
       });
 
-      try {
-        await sync(bridgeUrl, secretKey, apiUrl);
-      } catch (error) {
-        expect(error.message).toBe('Unexpected error');
-      }
+      (axios.post as MockedFunction<typeof axios.post>).mockRejectedValueOnce(networkError);
+
+      await expect(sync('https://bridge.novu.co', secretKey, 'https://api.novu.co')).rejects.toThrow('process.exit(1)');
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      const printed = consoleErrorSpy.mock.calls[0][0];
+      expect(printed).toBeInstanceOf(Error);
+      expect(printed).not.toBe(networkError);
+      expect((printed as Error).message).toBe('Failed to sync with the Novu API: connect ECONNREFUSED 127.0.0.1:4999');
+      expect(Object.keys(printed as Error)).toEqual([]);
     });
   });
 

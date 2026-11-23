@@ -18,6 +18,7 @@ import { NovuNotifications } from "./novunotifications.js";
 import { NovuTopics } from "./novutopics.js";
 import { Preferences } from "./preferences.js";
 import { Properties } from "./properties.js";
+import { Tokens } from "./tokens.js";
 
 export class Subscribers extends ClientSDK {
   private _notifications?: NovuNotifications;
@@ -33,6 +34,11 @@ export class Subscribers extends ClientSDK {
   private _topics?: NovuTopics;
   get topics(): NovuTopics {
     return (this._topics ??= new NovuTopics(this._options));
+  }
+
+  private _tokens?: Tokens;
+  get tokens(): Tokens {
+    return (this._tokens ??= new Tokens(this._options));
   }
 
   private _credentials?: Credentials;

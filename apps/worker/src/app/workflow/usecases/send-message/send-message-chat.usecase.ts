@@ -55,7 +55,12 @@ import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
 } from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
-import { combineProviderOverrides, SendMessageBase } from './send-message.base';
+import {
+  combineProviderOverrides,
+  omitBlankPhoneDestination,
+  resolvePhoneDestination,
+  SendMessageBase,
+} from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -102,6 +107,11 @@ const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
   ChatProviderIdEnum.Sendblue,
   ChatProviderIdEnum.PhotonImessage,
 ];
+
+type ActivePhoneIntegration = {
+  providerId: ChatProviderIdEnum;
+  integrationIdentifier?: string;
+};
 
 type UnifiedChannel = {
   type: 'new' | 'legacy';
@@ -413,27 +423,40 @@ export class SendMessageChat extends SendMessageBase {
       ) || [];
 
     /*
-     * Phone-based chat providers (WhatsApp Business, Sendblue) deliver to the subscriber's phone
-     * number. Auto-resolve a channel from `subscriber.phone` for each such provider that has an
-     * active integration, so we only attempt providers the environment is actually configured for.
+     * Phone-based chat providers (WhatsApp Business, Sendblue) deliver to a phone number. Auto-resolve
+     * a channel for each such provider that has an active integration, so we only attempt providers
+     * the environment is actually configured for. The recipient is the provider override `to` when
+     * set, else `subscriber.phone` — a subscriber may own several numbers, so the trigger can pick one
+     * per message even when no phone is stored on the subscriber.
      * Skip providers that already have a legacy channel OR a new channel-endpoint group — otherwise
      * the same phone number is notified twice (once via endpoints, once via this synthetic channel).
      */
-    if (subscriber.phone) {
-      const activePhoneProviders = await this.getActivePhoneBasedProviders(command);
+    if (subscriber.phone || this.hasPhoneBasedProviderOverrides(command)) {
+      const activePhoneIntegrations = await this.getActivePhoneBasedIntegrations(command);
       const existingProviderIds = new Set<string>([
         ...chatChannels.map((channel) => channel.providerId),
         ...channelEndpointGroups.map((group) => group.providerId),
       ]);
 
-      for (const providerId of activePhoneProviders) {
+      for (const { providerId, integrationIdentifier } of activePhoneIntegrations) {
         if (existingProviderIds.has(providerId)) continue;
+
+        const providerOverrides = combineProviderOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          providerId,
+          integrationIdentifier
+        );
+        const phoneNumber = resolvePhoneDestination(providerOverrides.to, subscriber.phone);
+
+        if (!phoneNumber) continue;
 
         // @ts-expect-error - Adding a phone-based channel without _integrationId
         chatChannels.push({
           providerId,
           credentials: {
-            phoneNumber: subscriber.phone,
+            phoneNumber,
           },
         });
       }
@@ -443,13 +466,28 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   /**
+   * Cheap, in-memory gate: true when the bridge output or the trigger carries overrides for any
+   * phone-based chat provider. Lets subscribers without a stored phone skip the integration lookups
+   * unless an override could supply the recipient.
+   */
+  private hasPhoneBasedProviderOverrides(command: SendMessageChannelCommand): boolean {
+    const bridgeProviders = (command.bridgeData as { providers?: Record<string, unknown> } | undefined)?.providers;
+    const triggerProviders = command.overrides?.providers;
+    const stepProviders = command.step.stepId ? command.overrides?.steps?.[command.step.stepId]?.providers : undefined;
+
+    return PHONE_BASED_CHAT_PROVIDERS.some(
+      (providerId) => bridgeProviders?.[providerId] || triggerProviders?.[providerId] || stepProviders?.[providerId]
+    );
+  }
+
+  /**
    * Returns the phone-based chat providers that have an active integration selectable for this job,
    * mirroring the selection performed later by {@link getAndValidateIntegration}.
    */
-  private async getActivePhoneBasedProviders(command: SendMessageChannelCommand): Promise<ChatProviderIdEnum[]> {
+  private async getActivePhoneBasedIntegrations(command: SendMessageChannelCommand): Promise<ActivePhoneIntegration[]> {
     const results = await Promise.all(
-      PHONE_BASED_CHAT_PROVIDERS.map(async (providerId) => {
-        const integration = await this.selectIntegration.execute(
+      PHONE_BASED_CHAT_PROVIDERS.map(async (providerId): Promise<ActivePhoneIntegration | null> => {
+        const selection = await this.selectIntegration.execute(
           SelectIntegrationCommand.create({
             organizationId: command.organizationId,
             environmentId: command.environmentId,
@@ -460,11 +498,11 @@ export class SendMessageChat extends SendMessageBase {
           })
         );
 
-        return integration ? providerId : null;
+        return selection ? { providerId, integrationIdentifier: selection.integration?.identifier } : null;
       })
     );
 
-    return results.filter((providerId): providerId is ChatProviderIdEnum => providerId !== null);
+    return results.filter((result): result is ActivePhoneIntegration => result !== null);
   }
 
   /**
@@ -571,6 +609,16 @@ export class SendMessageChat extends SendMessageBase {
       integration.providerId,
       integration.identifier
     );
+
+    /*
+     * Auto-resolved phone channels (no _integrationId) picked their recipient from the overrides of the
+     * integration selected at resolution time. Agent gating may have bound another integration since,
+     * so re-resolve against the integration actually sending.
+     */
+    if (isPhoneBased && !subscriberChannel._integrationId) {
+      const phoneNumber = resolvePhoneDestination(combinedOverrides.to, command.compileContext.subscriber.phone);
+      subscriberChannel = { ...subscriberChannel, credentials: { ...subscriberChannel.credentials, phoneNumber } };
+    }
 
     const chatWebhookUrl =
       combinedOverrides?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
@@ -735,13 +783,17 @@ export class SendMessageChat extends SendMessageBase {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
 
-    const combinedOverrides = combineProviderOverrides(
+    const providerOverrides = combineProviderOverrides(
       command.bridgeData,
       command.overrides,
       command.step.stepId,
       integration.providerId,
       integration.identifier
     );
+    // Phone-based providers merge this over the resolved phone; a blank `to` would erase it.
+    const combinedOverrides = PHONE_BASED_CHAT_PROVIDERS.includes(integration.providerId as ChatProviderIdEnum)
+      ? omitBlankPhoneDestination(providerOverrides)
+      : providerOverrides;
 
     // Apply channel data overrides if present for this specific endpoint
     const overriddenChannelData = this.applyEndpointSpecificOverrides(channelData, combinedOverrides);

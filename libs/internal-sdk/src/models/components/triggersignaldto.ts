@@ -15,7 +15,7 @@ export type To3 = string | { [k: string]: any };
 /**
  * Recipient(s). Accepts a subscriberId string, subscriber object, topic object, or an array of those. When omitted, Novu falls back to the conversation subscriber.
  */
-export type To =
+export type TriggerSignalDtoTo =
   | string
   | { [k: string]: any }
   | Array<string | { [k: string]: any }>;
@@ -57,21 +57,28 @@ export function to3ToJSON(to3: To3): string {
 }
 
 /** @internal */
-export type To$Outbound =
+export type TriggerSignalDtoTo$Outbound =
   | string
   | { [k: string]: any }
   | Array<string | { [k: string]: any }>;
 
 /** @internal */
-export const To$outboundSchema: z.ZodType<To$Outbound, z.ZodTypeDef, To> = z
-  .union([
-    z.string(),
-    z.record(z.any()),
-    z.array(z.union([z.string(), z.record(z.any())])),
-  ]);
+export const TriggerSignalDtoTo$outboundSchema: z.ZodType<
+  TriggerSignalDtoTo$Outbound,
+  z.ZodTypeDef,
+  TriggerSignalDtoTo
+> = z.union([
+  z.string(),
+  z.record(z.any()),
+  z.array(z.union([z.string(), z.record(z.any())])),
+]);
 
-export function toToJSON(to: To): string {
-  return JSON.stringify(To$outboundSchema.parse(to));
+export function triggerSignalDtoToToJSON(
+  triggerSignalDtoTo: TriggerSignalDtoTo,
+): string {
+  return JSON.stringify(
+    TriggerSignalDtoTo$outboundSchema.parse(triggerSignalDtoTo),
+  );
 }
 
 /** @internal */

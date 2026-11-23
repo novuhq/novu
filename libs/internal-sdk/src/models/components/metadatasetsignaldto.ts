@@ -26,7 +26,9 @@ export type Action = ClosedEnum<typeof Action>;
 /**
  * JSON-serializable value to store.
  */
-export type MetadataSetSignalDtoValue = {};
+export type MetadataSetSignalDtoValue = string | number | boolean | {
+  [k: string]: any;
+} | Array<any>;
 
 export type MetadataSetSignalDto = {
   type: MetadataSetSignalDtoType;
@@ -41,7 +43,7 @@ export type MetadataSetSignalDto = {
   /**
    * JSON-serializable value to store.
    */
-  value: MetadataSetSignalDtoValue;
+  value: string | number | boolean | { [k: string]: any } | Array<any>;
 };
 
 /** @internal */
@@ -54,14 +56,22 @@ export const Action$outboundSchema: z.ZodNativeEnum<typeof Action> = z
   .nativeEnum(Action);
 
 /** @internal */
-export type MetadataSetSignalDtoValue$Outbound = {};
+export type MetadataSetSignalDtoValue$Outbound = string | number | boolean | {
+  [k: string]: any;
+} | Array<any>;
 
 /** @internal */
 export const MetadataSetSignalDtoValue$outboundSchema: z.ZodType<
   MetadataSetSignalDtoValue$Outbound,
   z.ZodTypeDef,
   MetadataSetSignalDtoValue
-> = z.object({});
+> = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.record(z.any()),
+  z.array(z.any()),
+]);
 
 export function metadataSetSignalDtoValueToJSON(
   metadataSetSignalDtoValue: MetadataSetSignalDtoValue,
@@ -76,7 +86,7 @@ export type MetadataSetSignalDto$Outbound = {
   type: string;
   action: string;
   key: string;
-  value: MetadataSetSignalDtoValue$Outbound;
+  value: string | number | boolean | { [k: string]: any } | Array<any>;
 };
 
 /** @internal */
@@ -88,7 +98,13 @@ export const MetadataSetSignalDto$outboundSchema: z.ZodType<
   type: MetadataSetSignalDtoType$outboundSchema,
   action: Action$outboundSchema.default("set"),
   key: z.string(),
-  value: z.lazy(() => MetadataSetSignalDtoValue$outboundSchema),
+  value: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.record(z.any()),
+    z.array(z.any()),
+  ]),
 });
 
 export function metadataSetSignalDtoToJSON(

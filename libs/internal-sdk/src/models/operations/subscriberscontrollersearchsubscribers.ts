@@ -50,7 +50,7 @@ export type SubscribersControllerSearchSubscribersRequest = {
    */
   includeCursor?: boolean | undefined;
   /**
-   * Email address of the subscriber to filter results.
+   * Exact email address of the subscriber. The value must match the stored email field.
    */
   email?: string | undefined;
   /**
@@ -58,7 +58,7 @@ export type SubscribersControllerSearchSubscribersRequest = {
    */
   name?: string | undefined;
   /**
-   * Phone number of the subscriber to filter results.
+   * Exact phone number of the subscriber. The value must match the stored phone field.
    */
   phone?: string | undefined;
   /**

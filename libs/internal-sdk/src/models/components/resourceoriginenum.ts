@@ -6,7 +6,7 @@ import * as z from "zod/v3";
 import { ClosedEnum } from "../../types/enums.js";
 
 /**
- * Origin of the layout
+ * Origin of the workflow
  */
 export const ResourceOriginEnum = {
   NovuCloud: "novu-cloud",
@@ -14,7 +14,7 @@ export const ResourceOriginEnum = {
   External: "external",
 } as const;
 /**
- * Origin of the layout
+ * Origin of the workflow
  */
 export type ResourceOriginEnum = ClosedEnum<typeof ResourceOriginEnum>;
 
