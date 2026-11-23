@@ -7,14 +7,40 @@ import type { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { postUnresolvedSubscriberAccessReply } from './post-unresolved-subscriber-access-reply';
 
-/** Restricted access refuses a message or edit from anyone who is not a resolved subscriber. */
-export function isRefusedByRestrictedAccess(turn: ConversationTurn): boolean {
-  return (
-    turn.config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED &&
-    (turn.event === AgentEventEnum.ON_MESSAGE || turn.event === AgentEventEnum.ON_MESSAGE_UPDATED) &&
-    turn.subscriberResolution !== undefined &&
-    turn.subscriberResolution.outcome !== 'resolved'
-  );
+export type UnresolvedSubscriberAccess = 'admit' | 'drop' | 'refuse';
+
+/** What the subscriber-access gate does with a sender. Decides both dispatch and whether the agent may read the row. */
+export function decideUnresolvedSubscriberAccess(
+  turn: Pick<ConversationTurn, 'event' | 'config' | 'subscriberResolution'>,
+  emailSenderUnverified: boolean
+): UnresolvedSubscriberAccess {
+  if (turn.event !== AgentEventEnum.ON_MESSAGE && turn.event !== AgentEventEnum.ON_MESSAGE_UPDATED) {
+    return 'admit';
+  }
+
+  // Keyless email demos stay ungated; keyless non-email still hits this gate.
+  const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
+  if (isKeylessEmailDemo) {
+    return 'admit';
+  }
+
+  const resolution = turn.subscriberResolution;
+  if (!resolution || resolution.outcome === 'resolved') {
+    return 'admit';
+  }
+
+  // Open + not_found (verified): custom-code Pass null to the bridge; managed
+  // leftovers (e.g. Telegram group) skip silently — no denial spam into groups,
+  // and managed dispatch requires a subscriber anyway.
+  if (
+    turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+    resolution.outcome === 'not_found' &&
+    !emailSenderUnverified
+  ) {
+    return turn.config.isManaged ? 'drop' : 'admit';
+  }
+
+  return 'refuse';
 }
 
 /**
@@ -30,55 +56,34 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
 }): Promise<boolean> {
   const { turn, logger, outboundGateway, conversationService, emailSenderUnverified } = params;
 
-  if (turn.event !== AgentEventEnum.ON_MESSAGE && turn.event !== AgentEventEnum.ON_MESSAGE_UPDATED) {
-    return false;
-  }
-
-  // Keyless email demos stay ungated; keyless non-email still hits this gate.
-  const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
-  if (isKeylessEmailDemo) {
-    return false;
-  }
-
-  const resolution = turn.subscriberResolution;
-  if (!resolution || resolution.outcome === 'resolved') {
-    return false;
-  }
-
-  // Open + not_found (verified): custom-code Pass null to the bridge; managed
-  // leftovers (e.g. Telegram group) skip silently — no denial spam into groups,
-  // and managed dispatch requires a subscriber anyway.
-  if (
-    turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-    resolution.outcome === 'not_found' &&
-    !emailSenderUnverified
-  ) {
-    if (!turn.config.isManaged) {
+  switch (decideUnresolvedSubscriberAccess(turn, emailSenderUnverified)) {
+    case 'admit':
       return false;
-    }
 
-    logger.warn(
-      {
-        agentId: turn.agentId,
-        environmentId: turn.config.environmentId,
-        organizationId: turn.config.organizationId,
-        platform: turn.config.platform,
-        conversationId: turn.conversation._id,
-        senderPlatformUserId: turn.message?.author?.userId,
-      },
-      'Managed open-access leftover without subscriber — skipping dispatch without denial reply'
-    );
+    case 'drop':
+      logger.warn(
+        {
+          agentId: turn.agentId,
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+          platform: turn.config.platform,
+          conversationId: turn.conversation._id,
+          senderPlatformUserId: turn.message?.author?.userId,
+        },
+        'Managed open-access leftover without subscriber — skipping dispatch without denial reply'
+      );
 
-    return true;
+      return true;
+
+    case 'refuse':
+      await postUnresolvedSubscriberAccessReply({
+        turn,
+        logger,
+        replyOnThread: (thread, msg, opts) => outboundGateway.replyOnThread(thread, msg, opts),
+        getPrimaryChannel: (conversation) => conversationService.getPrimaryChannel(conversation),
+        emailSenderUnverified,
+      });
+
+      return true;
   }
-
-  await postUnresolvedSubscriberAccessReply({
-    turn,
-    logger,
-    replyOnThread: (thread, msg, opts) => outboundGateway.replyOnThread(thread, msg, opts),
-    getPrimaryChannel: (conversation) => conversationService.getPrimaryChannel(conversation),
-    emailSenderUnverified,
-  });
-
-  return true;
 }

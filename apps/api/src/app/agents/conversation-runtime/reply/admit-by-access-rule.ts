@@ -17,8 +17,20 @@ export type AccessRuleRefusal = { kind: 'unresolved' } | { kind: 'denied' } | { 
 
 export type AccessRuleAdmission = { admitted: true } | { admitted: false; refusal: AccessRuleRefusal };
 
+export type AccessRuleInput = Pick<
+  ConversationTurn,
+  | 'agentId'
+  | 'config'
+  | 'conversation'
+  | 'event'
+  | 'subscriber'
+  | 'context'
+  | 'contextLookupFailed'
+  | 'subscriberResolution'
+>;
+
 export async function admitByAccessRule(
-  turn: ConversationTurn,
+  turn: AccessRuleInput,
   deps: { logger: Pick<PinoLogger, 'warn'>; featureFlagsService: Pick<FeatureFlagsService, 'getFlag'> }
 ): Promise<AccessRuleAdmission> {
   if (turn.config.subscriberAccess !== AgentSubscriberAccessEnum.RULE) {
@@ -48,7 +60,7 @@ export async function admitByAccessRule(
 }
 
 async function findRefusal(
-  turn: ConversationTurn,
+  turn: AccessRuleInput,
   featureFlagsService: Pick<FeatureFlagsService, 'getFlag'>
 ): Promise<AccessRuleRefusal | null> {
   const tokensEnabled = await isSubscriberTokensEnabled({

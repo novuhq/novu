@@ -42,7 +42,6 @@ export const ACTIVITY_KINDS = [
   'run_finish.aborted',
   'run_error',
   'custom',
-  'refused',
 ] as const;
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -78,8 +77,6 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   'run_finish.aborted': ['agent_handoff'],
   run_error: ['client_events'],
   custom: ['client_events', 'operator_timeline'],
-  // What a refused sender sent stays visible to them and the operator, and out of every view the agent reads.
-  refused: ['client_events', 'operator_timeline'],
 };
 
 export function getKindsForView(view: ActivityView): ActivityKind[] {
@@ -96,15 +93,12 @@ export function viewFoldsRevisions(view: ActivityView): boolean {
   return view === 'llm_transcript' || view === 'agent_handoff';
 }
 
-const ADMITTED = { accessRefused: { $ne: true } } as const;
-
 function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBModel> {
   switch (kind) {
     case 'message.subscriber':
       return {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        ...ADMITTED,
       };
 
     case 'message.agent':
@@ -117,7 +111,6 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
       return {
         type: ConversationActivityTypeEnum.MESSAGE,
         senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
-        ...ADMITTED,
       };
 
     case 'message.system':
@@ -127,10 +120,10 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
       };
 
     case 'edit':
-      return { type: ConversationActivityTypeEnum.EDIT, ...ADMITTED };
+      return { type: ConversationActivityTypeEnum.EDIT };
 
     case 'delete':
-      return { type: ConversationActivityTypeEnum.DELETE, ...ADMITTED };
+      return { type: ConversationActivityTypeEnum.DELETE };
 
     case 'reaction':
       return { type: ConversationActivityTypeEnum.REACTION };
@@ -191,15 +184,18 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'custom':
       return { type: ConversationActivityTypeEnum.CUSTOM };
-
-    case 'refused':
-      return { accessRefused: true };
   }
+}
+
+/** Views the agent reads. What a sender the access setting refused stays visible to them and the operator only. */
+function viewHidesAccessRefused(view: ActivityView): boolean {
+  return view === 'llm_transcript' || view === 'agent_handoff' || view === 'approval_activities';
 }
 
 /** Mongo match for rows visible in a named activity view. */
 export function compileActivityViewMatch(view: ActivityView): FilterQuery<ConversationActivityDBModel> {
   return {
     $or: getKindsForView(view).map((kind) => matchForKind(kind)),
+    ...(viewHidesAccessRefused(view) ? { accessRefused: { $ne: true } } : {}),
   };
 }
