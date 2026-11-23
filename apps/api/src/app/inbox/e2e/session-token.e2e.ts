@@ -1,14 +1,22 @@
-import { buildDefaultSubscriptionIdentifier, createContextHash, createHash } from '@novu/application-generic';
+import {
+  buildDefaultSubscriptionIdentifier,
+  createContextHash,
+  createHash,
+  peekOAuthStatePayload,
+} from '@novu/application-generic';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ContextPayload,
+  InAppProviderIdEnum,
+  SubscriberSessionAuthMethodEnum,
+} from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { NovuTokens } from '../../shared/services/novu-tokens.service';
-import {
-  SubscriberSessionAuthMethodEnum,
-  SubscriberSessionAuthStatsService,
-} from '../../shared/services/subscriber-session-auth-stats.service';
+import { SubscriberSessionAuthStatsService } from '../../shared/services/subscriber-session-auth-stats.service';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberRepository = new SubscriberRepository();
@@ -232,6 +240,90 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
       setEnv('IS_SUBSCRIBER_TOKENS_ENABLED', 'false');
 
       await expectInvalidHash({ subscriberToken });
+    });
+
+    it('with an expired token when subscriber tokens are turned off', async () => {
+      const subscriberToken = await mint('sub-expired-flag-off', { expiresIn: 1 });
+      setEnv('IS_SUBSCRIBER_TOKENS_ENABLED', 'false');
+      await new Promise((resolve) => setTimeout(resolve, 2100));
+
+      await expectInvalidHash({ subscriberToken });
+    });
+  });
+
+  describe('chat connect routes take context only from the token', () => {
+    const BROWSER_CONTEXT: ContextPayload = { tenant: 'globex' };
+    let slackIdentifier: string;
+
+    beforeEach(async () => {
+      slackIdentifier = `slack-token-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      await integrationRepository.create({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        providerId: ChatProviderIdEnum.Slack,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: { clientId: 'test-client-id' },
+        active: true,
+        identifier: slackIdentifier,
+      });
+    });
+
+    async function oauthState(path: string, sessionToken: string, body: Record<string, unknown>) {
+      const res = await session.testAgent
+        .post(path)
+        .set('Authorization', `Bearer ${sessionToken}`)
+        .send({ integrationIdentifier: slackIdentifier, ...body });
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      const state = new URL(res.body.data.url).searchParams.get('state') as string;
+
+      return peekOAuthStatePayload<{ subscriberId: string; context?: ContextPayload; contextKeys?: string[] }>(state);
+    }
+
+    async function tokenSession(subscriberId: string, mintBody: Record<string, unknown> = {}) {
+      const res = await exchange({ subscriberToken: await mint(subscriberId, mintBody) });
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+      return res.body.data.token as string;
+    }
+
+    it('should drop the browser context when the token has none', async () => {
+      const token = await tokenSession('sub-connect');
+
+      const connect = await oauthState('/v1/inbox/channel-connections/oauth', token, { context: BROWSER_CONTEXT });
+      const linkUser = await oauthState('/v1/inbox/channel-endpoints/oauth', token, {
+        subscriberId: 'sub-connect',
+        context: BROWSER_CONTEXT,
+      });
+
+      for (const state of [connect, linkUser]) {
+        expect(state.subscriberId).to.equal('sub-connect');
+        expect(state.context).to.equal(undefined);
+        expect(state.contextKeys).to.equal(undefined);
+      }
+    });
+
+    it("should use the token's context instead of the browser's", async () => {
+      const token = await tokenSession('sub-connect-ctx', { context: CONTEXT });
+
+      const state = await oauthState('/v1/inbox/channel-connections/oauth', token, { context: BROWSER_CONTEXT });
+
+      expect(state.context).to.equal(undefined);
+      expect(state.contextKeys).to.have.members(CONTEXT_KEYS);
+    });
+
+    it('should keep using the browser context for a session without a token', async () => {
+      await setHmac(session, false);
+      const hashSession = await exchange({
+        applicationIdentifier: session.environment.identifier,
+        subscriberId: 'sub-connect-hash',
+      });
+      expect(hashSession.status).to.equal(201);
+
+      const state = await oauthState('/v1/inbox/channel-connections/oauth', hashSession.body.data.token, {
+        context: BROWSER_CONTEXT,
+      });
+
+      expect(state.context).to.deep.equal(BROWSER_CONTEXT);
     });
   });
 

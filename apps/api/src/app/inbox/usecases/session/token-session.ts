@@ -1,6 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { SubscriberEntity } from '@novu/dal';
-import { ContextPayload } from '@novu/shared';
+import { ContextPayload, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import jwt from 'jsonwebtoken';
 import { SubscriberLoginProfile, TokenVerification } from '../../../shared/services/novu-tokens.service';
 import { invalidHmacHashError } from '../../utils/encryption';
@@ -9,6 +9,7 @@ export interface SubscriberLoginGrant {
   environmentId: string;
   subscriberId: string;
   expiresAt: number;
+  isExpired: boolean;
   profile?: SubscriberLoginProfile;
   context?: ContextPayload;
 }
@@ -21,10 +22,13 @@ export function subscriberTokenExpiredError(): UnauthorizedException {
   });
 }
 
-/** Throws the bad-hash error for every invalid token, so a caller cannot tell why a token was refused. */
+/**
+ * Throws the bad-hash error for every invalid token, so a caller cannot tell why a token was refused.
+ * An expired token still yields its grant: the caller reports expiry only after its environment and flag checks pass.
+ */
 export function parseSubscriberLoginGrant(verification: TokenVerification): SubscriberLoginGrant {
-  if (!verification.ok) {
-    throw verification.reason === 'expired' ? subscriberTokenExpiredError() : invalidHmacHashError();
+  if (!verification.ok && verification.reason === 'invalid') {
+    throw invalidHmacHashError();
   }
 
   const { claims } = verification;
@@ -43,6 +47,7 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     environmentId: claims.iss,
     subscriberId: claims.sub,
     expiresAt: claims.exp,
+    isExpired: !verification.ok,
     profile: claims.subscriber,
     context: claims.context,
   };
@@ -60,7 +65,7 @@ export function signTokenSession(subscriber: SubscriberEntity, contextKeys: stri
       environmentId: subscriber._environmentId,
       subscriberId: subscriber.subscriberId,
       contextKeys,
-      authMethod: 'token',
+      authMethod: SubscriberSessionAuthMethodEnum.TOKEN,
       exp: expiresAt,
     },
     `${process.env.JWT_SECRET}`,

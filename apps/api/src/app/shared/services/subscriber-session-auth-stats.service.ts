@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { SubscriberSessionAuthMethodEnum } from '@novu/shared';
 
 const DAY_SECONDS = 24 * 60 * 60;
 const RETENTION_DAYS = 35;
@@ -36,12 +37,6 @@ return 1
 `;
 
 const SESSION_CLIENT_RE = /^@novu\/([a-z0-9-]{1,32})@(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})(?:[-+].*)?$/;
-
-export enum SubscriberSessionAuthMethodEnum {
-  HMAC = 'hmac',
-  NONE = 'none',
-  TOKEN = 'token',
-}
 
 export enum SubscriberSessionSourceEnum {
   INBOX = 'inbox',

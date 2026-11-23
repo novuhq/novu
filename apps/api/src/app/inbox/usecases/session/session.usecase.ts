@@ -56,6 +56,7 @@ import {
   ResourceTypeEnum,
   Schedule,
   StepTypeEnum,
+  SubscriberSessionAuthMethodEnum,
 } from '@novu/shared';
 import { isSubscriberTokensEnabled } from '../../../agents/shared/assert-subscriber-tokens-enabled';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
@@ -71,7 +72,6 @@ import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { NovuTokens, SubscriberLoginProfile } from '../../../shared/services/novu-tokens.service';
 import {
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';
@@ -90,7 +90,7 @@ import { NotificationsCount } from '../notifications-count/notifications-count.u
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
-import { parseSubscriberLoginGrant, signTokenSession } from './token-session';
+import { parseSubscriberLoginGrant, signTokenSession, subscriberTokenExpiredError } from './token-session';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const MAX_NOTIFICATIONS_COUNT = 100;
@@ -165,7 +165,8 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data,
         timezone: subscriber.timezone,
-        allowUpdate: auth.method !== SubscriberSessionAuthMethodEnum.NONE,
+        allowUpdate:
+          auth.method === SubscriberSessionAuthMethodEnum.HMAC || auth.method === SubscriberSessionAuthMethodEnum.TOKEN,
       })
     );
 
@@ -361,6 +362,10 @@ export class Session {
     });
     if (!enabled) {
       throw invalidHmacHashError();
+    }
+
+    if (grant.isExpired) {
+      throw subscriberTokenExpiredError();
     }
 
     return {

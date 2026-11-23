@@ -8,12 +8,11 @@ import {
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import {
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';

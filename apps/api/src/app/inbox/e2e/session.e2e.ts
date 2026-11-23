@@ -1,6 +1,13 @@
 import { CacheService, createContextHash, createHash } from '@novu/application-generic';
 import { ContextRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ContextPayload,
+  InAppProviderIdEnum,
+  SeverityLevelEnum,
+  StepTypeEnum,
+  SubscriberSessionAuthMethodEnum,
+} from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -8,7 +15,6 @@ import sinon from 'sinon';
 import { AuthService } from '../../auth/services/auth.service';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import {
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../shared/services/subscriber-session-auth-stats.service';

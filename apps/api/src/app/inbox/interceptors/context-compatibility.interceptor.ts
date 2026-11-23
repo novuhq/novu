@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { Observable } from 'rxjs';
 
 /**
@@ -64,7 +65,7 @@ export class ContextCompatibilityInterceptor implements NestInterceptor {
     }
 
     // Token sessions carry their signed context to every client version.
-    if (subscriberSession.authMethod === 'token') {
+    if (subscriberSession.authMethod === SubscriberSessionAuthMethodEnum.TOKEN) {
       return next.handle();
     }
 
