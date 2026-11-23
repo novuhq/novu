@@ -7,6 +7,7 @@ import {
   HumanMessageQuotaExceededException,
   HumanMessageQuotaService,
   humanMessageQuotaKeys,
+  type UsedUpWindow,
 } from './human-message-quota.service';
 
 async function expectQuotaRejection(
@@ -52,14 +53,22 @@ function applyReserve(store: CounterStore, keys: string[], args: Array<string | 
   return 'ok';
 }
 
-function applyClaim(store: CounterStore, keys: string[], args: Array<string | number>): number {
-  if ((store.get(keys[0]) ?? 0) < Number(args[0]) || store.has(keys[1])) {
-    return 0;
+function applyClaim(store: CounterStore, keys: string[], args: Array<string | number>): string {
+  const [daily, monthly, dailyNotice, monthlyNotice] = keys;
+  let cap = 'none';
+  if ((store.get(monthly) ?? 0) >= Number(args[1])) {
+    cap = 'monthly';
+  } else if ((store.get(daily) ?? 0) >= Number(args[0])) {
+    cap = 'daily';
+  }
+  const notice = cap === 'monthly' ? monthlyNotice : dailyNotice;
+  if (cap === 'none' || store.has(notice)) {
+    return 'none';
   }
 
-  store.set(keys[1], 1);
+  store.set(notice, 1);
 
-  return 1;
+  return cap;
 }
 
 function applyRelease(store: CounterStore, keys: string[], args: Array<string | number>): number {
@@ -177,40 +186,52 @@ describe('HumanMessageQuotaService', () => {
   });
 
   describe('the notice that the limit was reached', () => {
-    const refusal = (cap: 'daily' | 'monthly', limit: number) =>
-      new HumanMessageQuotaExceededException(cap, limit, 3600, '2026-11-21T00:00:00.000Z');
-
     it('is claimed once, when the last credit of the day is spent', async () => {
       store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 50);
 
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
+      expect(await service.claimLimitNotice(organizationId)).to.include({ cap: 'daily', limit: 50 });
+      expect(await service.claimLimitNotice(organizationId)).to.equal(null);
     });
 
     it('is not claimed while credits remain, when a send to several people needed more of them', async () => {
       store.set(humanMessageQuotaKeys(organizationId, new Date()).daily, 48);
 
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
+      expect(await service.claimLimitNotice(organizationId)).to.equal(null);
     });
 
-    it('is claimed for the month apart from the day', async () => {
+    it('names the month once it is used up too, and only once', async () => {
       const keys = humanMessageQuotaKeys(organizationId, new Date());
       store.set(keys.daily, 50);
       store.set(keys.monthly, 300);
 
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
-      expect(await service.claimLimitNotice(organizationId, refusal('monthly', 300))).to.equal(true);
+      const usedUp = await service.claimLimitNotice(organizationId);
+
+      expect(usedUp).to.include({ cap: 'monthly', limit: 300 });
+      expect(Date.parse(usedUp?.resetsAt ?? '')).to.be.greaterThan(Date.now());
+      expect(await service.claimLimitNotice(organizationId)).to.equal(null);
+    });
+
+    it('names the day when only the day ran out, also for a send refused over the month', async () => {
+      const keys = humanMessageQuotaKeys(organizationId, new Date());
+      store.set(keys.daily, 50);
+      store.set(keys.monthly, 299);
+
+      const refused = await service.reserveCredits(organizationId, 2).catch((err: unknown) => err);
+      expect(refused).to.be.instanceOf(HumanMessageQuotaExceededException);
+      expect((refused as HumanMessageQuotaExceededException).cap).to.equal('monthly');
+      expect(await service.claimLimitNotice(organizationId)).to.include({ cap: 'daily', limit: 50 });
     });
 
     it('is tried again after a few minutes, not the rest of the window, when it did not reach the operator', async () => {
       const keys = humanMessageQuotaKeys(organizationId, new Date());
       store.set(keys.daily, 50);
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(true);
+      const usedUp = await service.claimLimitNotice(organizationId);
+      expect(usedUp).to.include({ cap: 'daily' });
 
-      await service.retryLimitNoticeLater(organizationId, refusal('daily', 50));
+      await service.retryLimitNoticeLater(organizationId, usedUp as UsedUpWindow);
 
       expect(setStub.firstCall.args).to.deep.equal([`${keys.daily}:notice`, 1, { ttl: 5 * 60, jitter: false }]);
-      expect(await service.claimLimitNotice(organizationId, refusal('daily', 50))).to.equal(false);
+      expect(await service.claimLimitNotice(organizationId)).to.equal(null);
     });
   });
 

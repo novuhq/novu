@@ -90,7 +90,7 @@ describe('CreateInteraction', () => {
     };
     const messageQuota = {
       reserveCredits: sinon.stub().resolves(messageCredits),
-      claimLimitNotice: sinon.stub().resolves(false),
+      claimLimitNotice: sinon.stub().resolves(null),
       retryLimitNoticeLater: sinon.stub().resolves(),
       messageCredits,
     };
@@ -1241,7 +1241,7 @@ describe('CreateInteraction', () => {
       const env = setup();
       env.agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl', name: 'JunoX' });
       env.messageQuota.reserveCredits.rejects(refusal());
-      env.messageQuota.claimLimitNotice.resolves(true);
+      env.messageQuota.claimLimitNotice.resolves({ cap: 'daily', limit: 50, resetsAt: '2026-10-14T00:00:00.000Z' });
       env.humanContactRepository.findOperator.resolves({ subscriberId: 'operator-1' });
 
       return env;
@@ -1274,6 +1274,18 @@ describe('CreateInteraction', () => {
       expect(messageQuota.retryLimitNoticeLater.called).to.equal(false);
     });
 
+    it('tells about the window that ran out, whichever one refused the send', async () => {
+      const { usecase, command, messageQuota, humanInteractionRepository } = outOfMessages();
+      messageQuota.reserveCredits.rejects(
+        new HumanMessageQuotaExceededException('monthly', 300, 3600, '2026-11-01T00:00:00.000Z')
+      );
+
+      await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any).catch(() => undefined);
+
+      const notice = humanInteractionRepository.create.firstCall.args[0];
+      expect(notice.content.cardChrome.title).to.match(/^JunoX reached today’s limit of 50 messages/);
+    });
+
     it('tells the operator of an email-only account by email, outside the email limit too', async () => {
       const { usecase, command, deliveryService, inboxQuota, humanInteractionRepository } = outOfMessages();
       deliveryService.resolveChannel.resolves({
@@ -1300,7 +1312,7 @@ describe('CreateInteraction', () => {
     it('tells nobody again once the operator heard it in this window', async () => {
       const { usecase, command, humanInteractionRepository, deliveryService, messageQuota, humanContactRepository } =
         outOfMessages();
-      messageQuota.claimLimitNotice.resolves(false);
+      messageQuota.claimLimitNotice.resolves(null);
 
       const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
 

@@ -1,4 +1,4 @@
-import type { HumanMessageQuotaExceededException } from './human-message-quota.service';
+import type { UsedUpWindow } from './human-message-quota.service';
 
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -6,21 +6,19 @@ const DAY_MS = 24 * HOUR_MS;
 
 const MONTH_DAY = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
-type Refusal = Pick<HumanMessageQuotaExceededException, 'cap' | 'limit' | 'resetsAt'>;
-
 /**
  * What the operator gets when the account runs out of messages: which limit, until when the agent can't write to
  * anyone, and that messages to it still come in. The windows are UTC days and months, so the time is UTC too, with
  * how far off it is for anyone elsewhere.
  */
-export function limitReachedNotice(agentName: string, refusal: Refusal, now: Date): string {
-  const resetsAt = new Date(refusal.resetsAt);
-  const daily = refusal.cap === 'daily';
+export function limitReachedNotice(agentName: string, usedUp: UsedUpWindow, now: Date): string {
+  const resetsAt = new Date(usedUp.resetsAt);
+  const daily = usedUp.cap === 'daily';
   const window = daily ? 'today’s' : 'this month’s';
   const until = daily ? '00:00 UTC' : `${MONTH_DAY.format(resetsAt)}, 00:00 UTC`;
 
   return (
-    `${agentName} reached ${window} limit of ${refusal.limit} messages, so its replies to you and your contacts ` +
+    `${agentName} reached ${window} limit of ${usedUp.limit} messages, so its replies to you and your contacts ` +
     `won’t arrive until ${until}, ${fromNow(resetsAt, now)}. Messages to ${agentName} still come in.`
   );
 }

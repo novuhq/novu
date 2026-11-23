@@ -717,7 +717,7 @@ export class CreateInteraction {
       return await this.messageQuota.reserveCredits(command.organizationId, count);
     } catch (err) {
       if (err instanceof HumanMessageQuotaExceededException) {
-        await this.tellOperatorAboutLimit(command, agent, err);
+        await this.tellOperatorAboutLimit(command, agent);
       }
 
       throw err;
@@ -725,16 +725,13 @@ export class CreateInteraction {
   }
 
   /**
-   * Tells the agent's operator that the account ran out of messages: once in the day or month, from the agent whose
-   * send was refused, the way any message to them goes, and outside the limits. When it doesn't reach them, a refusal
-   * a few minutes later tries again. The refusal stands either way.
+   * Tells the agent's operator that the account ran out of messages: once in the day or month, about the window that
+   * ran out, from the agent whose send was refused, the way any message to them goes, and outside the limits. When it
+   * doesn't reach them, a refusal a few minutes later tries again. The refusal stands either way.
    */
-  private async tellOperatorAboutLimit(
-    command: CreateInteractionCommand,
-    agent: AgentEntity,
-    refusal: HumanMessageQuotaExceededException
-  ): Promise<void> {
-    if (!(await this.messageQuota.claimLimitNotice(command.organizationId, refusal))) {
+  private async tellOperatorAboutLimit(command: CreateInteractionCommand, agent: AgentEntity): Promise<void> {
+    const usedUp = await this.messageQuota.claimLimitNotice(command.organizationId);
+    if (!usedUp) {
       return;
     }
 
@@ -744,7 +741,7 @@ export class CreateInteraction {
         return;
       }
 
-      const title = limitReachedNotice(agent.name || agent.identifier, refusal, new Date());
+      const title = limitReachedNotice(agent.name || agent.identifier, usedUp, new Date());
       const notice = CreateInteractionCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
@@ -763,7 +760,7 @@ export class CreateInteraction {
         { err, organizationId: command.organizationId, agentId: agent._id },
         'Failed to tell the operator that the message limit was reached'
       );
-      await this.messageQuota.retryLimitNoticeLater(command.organizationId, refusal);
+      await this.messageQuota.retryLimitNoticeLater(command.organizationId, usedUp);
     }
   }
 

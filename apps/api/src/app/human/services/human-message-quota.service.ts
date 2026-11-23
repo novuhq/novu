@@ -53,21 +53,33 @@ return 1
 `;
 
 /**
- * The operator hears that the account ran out of messages once per window, when its last credit is spent. The
- * notice's own key sits next to the window's counter, in the same Redis Cluster slot.
+ * The operator hears that the account ran out of messages once per window, when its last credit is spent: the
+ * month's when it is used up, which outlasts the day's, else the day's. Each notice's own key sits next to its
+ * window's counter, in the same Redis Cluster slot.
  */
 const CLAIM_NOTICE_SCRIPT = `
-local used = tonumber(redis.call('GET', KEYS[1]) or '0')
-if used < tonumber(ARGV[1]) then
-  return 0
+local daily = tonumber(redis.call('GET', KEYS[1]) or '0')
+local monthly = tonumber(redis.call('GET', KEYS[2]) or '0')
+local cap = 'none'
+local notice = KEYS[3]
+local ttl = tonumber(ARGV[3])
+if monthly >= tonumber(ARGV[2]) then
+  cap = 'monthly'
+  notice = KEYS[4]
+  ttl = tonumber(ARGV[4])
+elseif daily >= tonumber(ARGV[1]) then
+  cap = 'daily'
 end
-if redis.call('SET', KEYS[2], '1', 'NX', 'EX', tonumber(ARGV[2])) then
-  return 1
+if cap ~= 'none' and redis.call('SET', notice, '1', 'NX', 'EX', ttl) then
+  return cap
 end
-return 0
+return 'none'
 `;
 
 export type HumanMessageCap = 'daily' | 'monthly';
+
+/** A window the account used up: which one, its limit, and when it starts over. */
+export type UsedUpWindow = { cap: HumanMessageCap; limit: number; resetsAt: string };
 
 export class HumanMessageQuotaExceededException extends HttpException {
   constructor(
@@ -147,34 +159,43 @@ export class HumanMessageQuotaService {
   }
 
   /**
-   * Whether this refusal is the one that tells the operator: every credit of the window is spent, and nobody was
-   * told yet. A send to several people can be refused while a few credits remain; that isn't the limit yet. Never
-   * throws: without the cache, or on its error, nobody is told.
+   * The window a refused send tells the operator about, when it is the one to: a window whose every credit is spent,
+   * and nobody was told yet. Whichever window refused the send: a send to two people refused for the month while
+   * today's credits are what ran out tells them about today. A send refused while a few credits remain finds neither
+   * used up. Never throws: without the cache, or on its error, nobody is told.
    */
-  async claimLimitNotice(organizationId: string, refusal: HumanMessageQuotaExceededException): Promise<boolean> {
+  async claimLimitNotice(organizationId: string): Promise<UsedUpWindow | null> {
     if (!this.cacheService.cacheEnabled()) {
-      return false;
+      return null;
     }
 
     const now = new Date();
-    const { counter, notice } = limitNoticeKeys(organizationId, refusal.cap, now);
-    const ttl =
-      refusal.cap === 'daily'
-        ? secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS
-        : secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS;
+    const keys = humanMessageQuotaKeys(organizationId, now);
 
     try {
-      const claimed = await this.cacheService.eval<number>(
+      const limits = await this.limitsFor(organizationId);
+      const claimed = await this.cacheService.eval<string>(
         CLAIM_NOTICE_SCRIPT,
-        [counter, notice],
-        [refusal.limit, ttl]
+        [keys.daily, keys.monthly, noticeKey(keys.daily), noticeKey(keys.monthly)],
+        [
+          limits.daily,
+          limits.monthly,
+          secondsUntilNextUtcDay(now) + DAY_TTL_BUFFER_SECONDS,
+          secondsUntilNextUtcMonth(now) + MONTH_TTL_BUFFER_SECONDS,
+        ]
       );
 
-      return claimed === 1;
+      if (claimed === 'monthly') {
+        return { cap: 'monthly', limit: limits.monthly, resetsAt: nextUtcMonth(now).toISOString() };
+      }
+
+      return claimed === 'daily'
+        ? { cap: 'daily', limit: limits.daily, resetsAt: nextUtcDay(now).toISOString() }
+        : null;
     } catch (err) {
       this.logger.warn({ err, organizationId }, 'Failed to claim the message limit notice');
 
-      return false;
+      return null;
     }
   }
 
@@ -182,13 +203,15 @@ export class HumanMessageQuotaService {
    * The notice didn't reach the operator: a refusal a few minutes later tries again, instead of none until the
    * window starts over.
    */
-  async retryLimitNoticeLater(organizationId: string, refusal: HumanMessageQuotaExceededException): Promise<void> {
+  async retryLimitNoticeLater(organizationId: string, window: UsedUpWindow): Promise<void> {
     if (!this.cacheService.cacheEnabled()) {
       return;
     }
 
+    const keys = humanMessageQuotaKeys(organizationId, new Date());
+
     try {
-      await this.cacheService.set(limitNoticeKeys(organizationId, refusal.cap, new Date()).notice, 1, {
+      await this.cacheService.set(noticeKey(window.cap === 'daily' ? keys.daily : keys.monthly), 1, {
         ttl: NOTICE_RETRY_SECONDS,
         jitter: false,
       });
@@ -329,12 +352,9 @@ export function humanMessageQuotaKeys(organizationId: string, now: Date): { dail
   };
 }
 
-/** The window's counter, and next to it, in the same slot, the key saying that the operator was told. */
-function limitNoticeKeys(organizationId: string, cap: HumanMessageCap, now: Date): { counter: string; notice: string } {
-  const keys = humanMessageQuotaKeys(organizationId, now);
-  const counter = cap === 'daily' ? keys.daily : keys.monthly;
-
-  return { counter, notice: `${counter}:notice` };
+/** Next to a window's counter, in the same slot, the key saying that the operator was told. */
+function noticeKey(counter: string): string {
+  return `${counter}:notice`;
 }
 
 function nextUtcDay(now: Date): Date {
