@@ -24,7 +24,6 @@ import { cn } from '../../../utils/ui';
 import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { IntegrationFormData } from '../types';
-import { isIntegrationFailing } from '../utils/integration-health';
 import { CredentialSection } from './credential-section';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
@@ -45,7 +44,7 @@ import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } fr
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
-import { isDemoIntegration, isSecureCredential, usesProviderSetupLayout } from './utils/helpers';
+import { isDemoIntegration, usesProviderSetupLayout } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -162,7 +161,6 @@ export function IntegrationSettings({
   const [searchParams] = useSearchParams();
   const { currentEnvironment, environments } = useEnvironment();
 
-  const isFailing = !!integration && isIntegrationFailing(integration);
   const form = useForm<IntegrationFormData>({
     mode: 'all',
     reValidateMode: 'onChange',
@@ -368,11 +366,6 @@ export function IntegrationSettings({
                   control={control}
                   isReadOnly={isReadOnly}
                   integrationId={integration?._id}
-                  rejectedMessage={
-                    isFailing && isSecureCredential(credential)
-                      ? `${provider.displayName} rejected this ${credential.displayName.toLowerCase()}. Paste a new one to reconnect.`
-                      : undefined
-                  }
                 />
               </div>
             ))}

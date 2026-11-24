@@ -221,41 +221,6 @@ export interface ITestIntegrationConnectionResponse {
   attempts: number;
 }
 
-/** Whether an integration's provider is accepting its credentials, as last seen on a send or a connection test. */
-export enum IntegrationHealthStatusEnum {
-  HEALTHY = 'healthy',
-  ERROR = 'error',
-}
-
-/** Why an integration is in error. Fixed codes so the dashboard can word them and pick the credential to replace. */
-export enum IntegrationHealthErrorCodeEnum {
-  /** The provider rejected the credentials (HTTP 401 or the provider's own "invalid key" answer). */
-  INVALID_CREDENTIALS = 'invalid_credentials',
-  /** The token was revoked at the provider (e.g. the Slack app was uninstalled). */
-  TOKEN_REVOKED = 'token_revoked',
-  /** The token or key expired at the provider. */
-  TOKEN_EXPIRED = 'token_expired',
-}
-
-export enum IntegrationHealthSourceEnum {
-  SEND = 'send',
-  CHECK = 'check',
-}
-
-/**
- * Last known health of an integration. Missing means healthy: health starts at rollout with no history.
- * Never holds upstream error text, which can carry request URLs or keys.
- */
-export interface IIntegrationHealth {
-  status: IntegrationHealthStatusEnum;
-  code?: IntegrationHealthErrorCodeEnum;
-  /** When the integration first failed since it was last healthy. */
-  failedAt?: string;
-  /** When the status last changed. */
-  updatedAt?: string;
-  source?: IntegrationHealthSourceEnum;
-}
-
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
 export enum IntegrationKindEnum {
   DELIVERY = 'delivery',

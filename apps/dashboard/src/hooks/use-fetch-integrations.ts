@@ -7,11 +7,9 @@ import { QueryKeys } from '../utils/query-keys';
 export function useFetchIntegrations({
   refetchInterval,
   refetchOnWindowFocus,
-  enabled = true,
 }: {
   refetchInterval?: number;
   refetchOnWindowFocus?: boolean;
-  enabled?: boolean;
 } = {}) {
   const { currentEnvironment } = useEnvironment();
 
@@ -24,7 +22,7 @@ export function useFetchIntegrations({
     },
     refetchInterval,
     refetchOnWindowFocus,
-    enabled: enabled && !!currentEnvironment?._id,
+    enabled: !!currentEnvironment?._id,
   });
 
   return {

@@ -160,16 +160,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       required: false,
     },
     connected: Schema.Types.Boolean,
-    health: {
-      status: {
-        type: Schema.Types.String,
-        enum: ['healthy', 'error'],
-      },
-      code: Schema.Types.String,
-      failedAt: Schema.Types.String,
-      updatedAt: Schema.Types.String,
-      source: Schema.Types.String,
-    },
     _parentId: {
       type: Schema.Types.ObjectId,
       required: false,

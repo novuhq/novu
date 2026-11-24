@@ -1,5 +1,5 @@
 import { FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
-import { SVGProps, useMemo } from 'react';
+import { SVGProps } from 'react';
 import {
   RiBarChartBoxLine,
   RiBuildingLine,
@@ -30,7 +30,6 @@ import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
-import { useFailingIntegrations } from '../integrations/components/hooks/use-failing-integrations';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown, LOCAL_ENVIRONMENT_VALUE } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
@@ -137,12 +136,6 @@ export const LegacySideNavigation = () => {
   const canUseLocalMode = has({ permission: PermissionsEnum.BRIDGE_WRITE });
   const showLocalEntry = canUseLocalMode && Boolean(localMode.session);
 
-  const failingIntegrations = useFailingIntegrations();
-  const failingEnvironmentIds = useMemo(
-    () => new Set(failingIntegrations.map((integration) => integration._environmentId)),
-    [failingIntegrations]
-  );
-
   const onEnvironmentChange = (value: string) => {
     if (value === LOCAL_ENVIRONMENT_VALUE) {
       if (localMode.session) {
@@ -175,7 +168,6 @@ export const LegacySideNavigation = () => {
           onChange={onEnvironmentChange}
           localEntry={showLocalEntry ? { status: localMode.healthStatus } : undefined}
           isLocalSelected={localMode.isLocalRoute}
-          failingEnvironmentIds={failingEnvironmentIds}
         />
         <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">

@@ -314,7 +314,6 @@ function InputControl({
   disabledSwitchMessage,
   integrationId,
   tooltip,
-  isRejected,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -324,7 +323,6 @@ function InputControl({
   disabledSwitchMessage?: string;
   integrationId?: string;
   tooltip?: ReactNode;
-  isRejected?: boolean;
 }) {
   if (credential.type === 'pushResources') {
     return <PushResources credential={credential} integrationId={integrationId} />;
@@ -358,7 +356,7 @@ function InputControl({
         field={field}
         isReadOnly={isReadOnly}
         tooltip={tooltip}
-        hasError={!!fieldState.error || isRejected}
+        hasError={!!fieldState.error}
       />
     );
   }
@@ -382,7 +380,6 @@ export function CredentialSection({
   disabledSwitchMessage,
   name = 'credentials',
   integrationId,
-  rejectedMessage,
 }: {
   credential: IConfigCredential;
   control: Control<IntegrationFormData>;
@@ -391,8 +388,6 @@ export function CredentialSection({
   disabledSwitchMessage?: string;
   name?: 'credentials' | 'configurations';
   integrationId?: string;
-  /** The provider rejected this stored secret; shown until the user types a new one. */
-  rejectedMessage?: string;
 }) {
   return (
     <FormField
@@ -410,8 +405,6 @@ export function CredentialSection({
           : undefined,
       }}
       render={({ field, fieldState }) => {
-        const isRejected = !!rejectedMessage && !fieldState.isDirty;
-
         return (
           <FormItem className="mb-2">
             <InputControl
@@ -423,12 +416,10 @@ export function CredentialSection({
               disabledSwitchMessage={disabledSwitchMessage}
               integrationId={integrationId}
               tooltip={getCredentialTooltip(credential)}
-              isRejected={isRejected}
             />
 
             {/* The explanation sits behind the label's "i"; only a validation error shows under the field. */}
             {fieldState.error?.message && <FormMessage>{fieldState.error.message}</FormMessage>}
-            {!fieldState.error && isRejected && <p className="text-paragraph-xs text-error-base">{rejectedMessage}</p>}
           </FormItem>
         );
       }}
