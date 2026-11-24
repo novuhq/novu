@@ -1,6 +1,7 @@
 import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  EnvironmentTypeEnum,
   PermissionsEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
@@ -111,7 +112,10 @@ function OrbitRing({ size, className }: { size: number; className: string }) {
 function InboxCard() {
   const { currentEnvironment } = useEnvironment();
   const [isCopied, setIsCopied] = useState(false);
-  const prompt = buildInboxSetupPrompt(currentEnvironment?.identifier ?? 'YOUR_APPLICATION_IDENTIFIER');
+  // New Production environments turn on HMAC for the Inbox, so the prompt explains the subscriber hash there.
+  const prompt = buildInboxSetupPrompt(currentEnvironment?.identifier ?? 'YOUR_APPLICATION_IDENTIFIER', {
+    requiresHmac: currentEnvironment?.type === EnvironmentTypeEnum.PROD,
+  });
 
   const copyPrompt = async () => {
     try {

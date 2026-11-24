@@ -4,6 +4,7 @@ import {
   type IIntegration,
   IntegrationConnectionStatusEnum,
   IntegrationHealthErrorCodeEnum,
+  IntegrationHealthStatusEnum,
   type ITestIntegrationConnectionResponse,
   providers,
 } from '@novu/shared';
@@ -50,6 +51,11 @@ function toHealth(
     case IntegrationConnectionStatusEnum.VALID:
       return { tone: 'success', label: 'Connected', needsReconnect: false };
     case IntegrationConnectionStatusEnum.INVALID:
+      // The stored health turned healthy after this check ran (e.g. a send went through), so it's out of date.
+      if (hasRecoveredSince(integration, checkedAt)) {
+        return { tone: 'neutral', label: 'Active', needsReconnect: false };
+      }
+
       return { tone: 'error', label: 'Verification failed', message: result.message, needsReconnect: true };
     case IntegrationConnectionStatusEnum.UNREACHABLE:
       return { tone: 'warning', label: 'Provider unreachable', message: result.message, needsReconnect: false };
@@ -72,6 +78,14 @@ function isNewerValidCheck(
   const failedAt = Date.parse(integration.health?.failedAt ?? '');
 
   return Number.isFinite(failedAt) && checkedAt > failedAt;
+}
+
+/** The stored health changed to something other than Error after `checkedAt`. */
+function hasRecoveredSince(integration: IIntegration, checkedAt: number) {
+  if (!integration.health || integration.health.status === IntegrationHealthStatusEnum.ERROR) return false;
+  const changedAt = Date.parse(integration.health.updatedAt ?? '');
+
+  return Number.isFinite(changedAt) && changedAt > checkedAt;
 }
 
 function describeFailure(integration: IIntegration) {

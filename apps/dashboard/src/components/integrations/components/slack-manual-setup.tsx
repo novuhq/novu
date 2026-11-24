@@ -7,6 +7,8 @@ import { getAgentApiBaseUrl } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 
 const SLACK_APPS_URL = 'https://api.slack.com/apps';
+/** Slack's limit for an app name in a manifest. */
+const SLACK_APP_NAME_MAX_LENGTH = 35;
 const SLACK_NOTIFICATIONS_DEFAULT_DESCRIPTION = 'Notifications sent with Novu';
 /** Same as the API's `SLACK_DEFAULT_OAUTH_SCOPES` plus `incoming-webhook`, as in the Quick setup manifest. */
 const SLACK_NOTIFICATION_BOT_SCOPES = [
@@ -23,9 +25,9 @@ function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-/** Slack rejects names that contain the word "slack". */
+/** Slack rejects names that contain the word "slack" or run past its length limit. */
 function sanitizeAppName(name: string): string {
-  const sanitized = name.replace(/slack/gi, '').trim();
+  const sanitized = name.replace(/slack/gi, '').trim().slice(0, SLACK_APP_NAME_MAX_LENGTH).trim();
 
   return sanitized.length > 0 ? sanitized : 'Novu Bot';
 }

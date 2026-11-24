@@ -19,8 +19,19 @@ function getServerProps(): string {
 }
 
 /** Prompt for a coding agent: install Novu and add `<Inbox />` to whatever app it is run in. */
-export function buildInboxSetupPrompt(applicationIdentifier: string): string {
+export function buildInboxSetupPrompt(
+  applicationIdentifier: string,
+  { requiresHmac = false }: { requiresHmac?: boolean } = {}
+): string {
   const serverProps = getServerProps();
+  const hashProp = requiresHmac ? ' subscriberHash="SUBSCRIBER_HASH"' : '';
+  const hmacSection = requiresHmac
+    ? `
+
+## Subscriber hash
+
+This environment requires HMAC. On the server, compute \`subscriberHash\` as the hex HMAC-SHA256 of the subscriber id, keyed with the Novu secret key read from an environment variable (\`NOVU_SECRET_KEY\`), and pass it to the client. Never put the secret key in browser code. Docs: https://docs.novu.co/platform/inbox/prepare-for-production`
+    : '';
 
   return `# Add the Novu Inbox to this app
 
@@ -35,12 +46,12 @@ Use the package for the framework (\`@novu/nextjs\`, \`@novu/react\`, \`@novu/re
 ## Component
 
 \`\`\`tsx
-<Inbox applicationIdentifier="${applicationIdentifier}" subscriber="SUBSCRIBER_ID"${serverProps} />
+<Inbox applicationIdentifier="${applicationIdentifier}" subscriber="SUBSCRIBER_ID"${hashProp}${serverProps} />
 \`\`\`
 
 ## Subscriber ID
 
-Use the app's existing auth (Clerk, NextAuth, Firebase, Supabase or custom) to pass the signed-in user's unique id as \`subscriber\`.
+Use the app's existing auth (Clerk, NextAuth, Firebase, Supabase or custom) to pass the signed-in user's unique id as \`subscriber\`.${hmacSection}
 
 ## Rules
 

@@ -33,6 +33,8 @@ export type CreateIntegrationData = {
   primary?: boolean;
   _environmentId?: string;
   rules?: Record<string, unknown> | null;
+  /** Legacy routing filters; the API ignores them when `rules` is set. */
+  conditions?: IIntegration['conditions'];
 };
 
 export enum CheckIntegrationResponseEnum {

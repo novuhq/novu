@@ -7,6 +7,7 @@ import {
   type IEnvironment,
   type IIntegration,
   type IProviderConfig,
+  PushProviderIdEnum,
   SmsProviderIdEnum,
   secureCredentials,
 } from '@novu/shared';
@@ -38,6 +39,8 @@ const SECRET_CREDENTIAL_KEYS = new Set<string>([
   CredentialsKeyEnum.AccessKey,
   CredentialsKeyEnum.TlsOptions,
 ]);
+/** Legacy FCM integrations keep the whole service account JSON, private key included, in `user`. */
+const FCM_SECRET_CREDENTIAL_KEYS = new Set<string>([...SECRET_CREDENTIAL_KEYS, CredentialsKeyEnum.User]);
 /** Settings that are secrets too: the key the provider signs inbound delivery webhooks with. */
 const SECRET_CONFIGURATION_KEYS = new Set<string>(['inboundWebhookSigningKey']);
 
@@ -69,6 +72,37 @@ function hasValue(value: ICredentials[keyof ICredentials]) {
   return value !== undefined && value !== null && value !== '';
 }
 
+/** The credentials the copy gets, and whether it still needs secrets pasted before it can send. */
+function getCopiedCredentials(integration: IIntegration, provider: IProviderConfig, copySecrets: boolean) {
+  const secretKeys = provider.id === PushProviderIdEnum.FCM ? FCM_SECRET_CREDENTIAL_KEYS : SECRET_CREDENTIAL_KEYS;
+  const source = Object.entries(integration.credentials ?? {}).filter(([, value]) => hasValue(value));
+  const credentials = Object.fromEntries(source.filter(([key]) => copySecrets || !secretKeys.has(key)));
+
+  // A secret the source uses didn't come along, even an optional one (MS Teams' bot app needs its secretKey).
+  const droppedSecret = source.some(([key]) => !hasValue(credentials[key]));
+  // Members who can't read credentials get them back empty. Twilio needs only its chosen auth method's keys.
+  const unusedKeys = new Set<string>(
+    provider.id === SmsProviderIdEnum.Twilio
+      ? getUnusedTwilioAuthCredentialKeys(credentials.authMethod as string | undefined)
+      : []
+  );
+  const missingRequiredSecret = provider.credentials.some(
+    (cred) => secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
+  );
+  const needsSecrets = droppedSecret || missingRequiredSecret;
+  // The API rejects Twilio's API key method without its key and secret, so a copy without them starts on the
+  // default method; the member picks API key again when they paste the secrets.
+  if (
+    provider.id === SmsProviderIdEnum.Twilio &&
+    credentials.authMethod === 'apiKey' &&
+    (!hasValue(credentials.apiKey) || !hasValue(credentials.secretKey))
+  ) {
+    delete credentials.authMethod;
+  }
+
+  return { credentials, needsSecrets };
+}
+
 /** Creates the same integration — provider, name, identifier, settings and credentials — in another environment. */
 export function useDuplicateIntegration({
   integration,
@@ -88,23 +122,7 @@ export function useDuplicateIntegration({
       if (!integration || !provider) throw new Error('Integration not found');
 
       const copySecrets = shouldCopySecrets(sourceEnvironment, target);
-      const secretKeys = SECRET_CREDENTIAL_KEYS;
-      const source = Object.entries(integration.credentials ?? {}).filter(([, value]) => hasValue(value));
-      const credentials = Object.fromEntries(source.filter(([key]) => copySecrets || !secretKeys.has(key)));
-
-      // A secret the source uses didn't come along, even an optional one (MS Teams' bot app needs its secretKey).
-      const droppedSecret = source.some(([key]) => !hasValue(credentials[key]));
-      // Members who can't read credentials get them back empty. Twilio needs only its chosen auth method's keys.
-      const unusedKeys = new Set<string>(
-        provider.id === SmsProviderIdEnum.Twilio
-          ? getUnusedTwilioAuthCredentialKeys(credentials.authMethod as string | undefined)
-          : []
-      );
-      const missingRequiredSecret = provider.credentials.some(
-        (cred) =>
-          secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
-      );
-      const needsSecrets = droppedSecret || missingRequiredSecret;
+      const { credentials, needsSecrets } = getCopiedCredentials(integration, provider, copySecrets);
       const configurations: IConfigurations = Object.fromEntries(
         Object.entries(integration.configurations ?? {}).filter(
           ([key]) => copySecrets || !SECRET_CONFIGURATION_KEYS.has(key)
@@ -128,6 +146,9 @@ export function useDuplicateIntegration({
           configurations: configurations as Record<string, string>,
           // Without its secrets the copy can't send, so it waits paused instead of failing every step.
           active: integration.active && !needsSecrets,
+          // The same routing, so a conditional integration keeps matching only the traffic it was meant for.
+          rules: integration.rules ?? null,
+          ...(!integration.rules && integration.conditions?.length ? { conditions: integration.conditions } : {}),
           _environmentId: target._id,
         },
         currentEnvironment

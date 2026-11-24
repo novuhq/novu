@@ -192,11 +192,14 @@ export function IntegrationSettings({
   const { handleSubmit, control, setValue, formState } = form;
 
   // Primary can change outside the form (the drawer's "Make primary"), so the toggle follows it unless it was edited.
+  // Making it primary also clears its rules on the server; keeping the old ones would send them back on the next
+  // save, and the server would take primary away again.
   const savedPrimary = integration?.primary ?? false;
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when the saved value changes
   useEffect(() => {
-    if (!integration || form.getFieldState('primary').isDirty) return;
-    form.resetField('primary', { defaultValue: savedPrimary });
+    if (!integration) return;
+    if (!form.getFieldState('primary').isDirty) form.resetField('primary', { defaultValue: savedPrimary });
+    if (!form.getFieldState('rules').isDirty) form.resetField('rules', { defaultValue: integration.rules ?? null });
   }, [savedPrimary]);
 
   const usesSetupLayout =
