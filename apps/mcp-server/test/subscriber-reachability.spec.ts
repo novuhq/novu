@@ -369,6 +369,32 @@ describe("computeSubscriberReachability", () => {
 		});
 	});
 
+	it("blocks a legacy chat webhook bound to an inactive integration, even when another one is active", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				subscriber: subscriber({
+					channels: [
+						{
+							deviceTokenCount: 0,
+							hasPhoneNumber: false,
+							hasWebhookUrl: true,
+							integrationId: "slack-old-id",
+							providerId: "slack",
+						},
+					],
+					hasPhone: false,
+				}),
+			},
+			"chat",
+		);
+
+		expect(chat).toMatchObject({
+			reasons: ["slack webhook is bound to an integration that is inactive or deleted"],
+			state: "blocked",
+		});
+	});
+
 	it("keeps a channel partly reachable when critical workflows still send on it", () => {
 		const sms = channelOf(
 			{
@@ -756,6 +782,15 @@ describe("get_subscriber_reachability", () => {
 		const { result } = await checkReachability({});
 
 		expect(textOf(result)).toContain("At least one query parameter is required");
+	});
+
+	it("treats a blank name as not given instead of matching any subscriber", async () => {
+		const fetchMock = stubApi(setupRoutes());
+
+		const { result } = await checkReachability({ name: "   " });
+
+		expect(textOf(result)).toContain("At least one query parameter is required");
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });
 

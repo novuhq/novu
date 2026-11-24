@@ -57,7 +57,8 @@ export function registerSubscriberReachabilityTool(server: McpServer, accessors:
 	ToolFactory.createTool(server, accessors, {
 		description:
 			"Check which channels (email, in-app, SMS, push, chat) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
-		handler: async (input, context) => {
+		handler: async (rawInput, context) => {
+			const input = withoutBlankValues(rawInput);
 			const validationError = ValidationUtils.validateAtLeastOneParam(input, [
 				"subscriberId",
 				"email",
@@ -136,6 +137,21 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 
 	// The phone number stays out of the result, even the one the caller searched for.
 	return notFound(field, field === "phone" ? undefined : values[0]);
+}
+
+/**
+ * A blank value would become an empty filter, which the API ignores and answers with the
+ * environment's first subscribers; treat it as not given.
+ */
+function withoutBlankValues(input: ReachabilityInput): ReachabilityInput {
+	const given = (value?: string) => (value?.trim() ? value : undefined);
+
+	return {
+		email: given(input.email),
+		name: given(input.name),
+		phone: given(input.phone),
+		subscriberId: given(input.subscriberId),
+	};
 }
 
 function searchAttempts(input: ReachabilityInput): {

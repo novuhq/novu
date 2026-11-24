@@ -461,17 +461,25 @@ function chatChannel(
 	for (const channel of input.subscriber.channels.filter(
 		(candidate) => candidate.deviceTokenCount === 0,
 	)) {
+		// Like push, a legacy chat channel sends only through the integration it's bound to; phone-based
+		// providers pick their integration by provider instead (send-message-chat).
+		const bound = PHONE_BASED_CHAT_PROVIDERS.includes(channel.providerId)
+			? null
+			: channel.integrationId;
 		const integration = activeIntegrations.find(
-			(candidate) => candidate.providerId === channel.providerId,
+			(candidate) =>
+				candidate.providerId === channel.providerId && (!bound || candidate.id === bound),
 		);
 		if (!integration) {
 			const isChatProvider = input.integrations.some(
 				(candidate) =>
 					candidate.channel === "chat" && candidate.providerId === channel.providerId,
 			);
-			if (isChatProvider && channel.hasWebhookUrl) {
+			if (channel.hasWebhookUrl && (isChatProvider || bound)) {
 				problems.push(
-					`${channel.providerId} webhook, but ${channel.providerId} has no active integration`,
+					bound
+						? `${channel.providerId} webhook is bound to an integration that is inactive or deleted`
+						: `${channel.providerId} webhook, but ${channel.providerId} has no active integration`,
 				);
 			}
 			continue;
