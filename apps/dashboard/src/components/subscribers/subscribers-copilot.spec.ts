@@ -1,6 +1,10 @@
 import { CopilotViewingResourceEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { buildSubscriberViewing } from './subscribers-copilot';
+import {
+  buildSubscriberPageView,
+  buildSubscriberViewing,
+  SUBSCRIBER_REACHABILITY_QUESTION,
+} from './subscribers-copilot';
 
 describe('buildSubscriberViewing', () => {
   it('labels the open subscriber with their id before the profile loads', () => {
@@ -18,5 +22,30 @@ describe('buildSubscriberViewing', () => {
 
   it('falls back to the id when the subscriber has no name', () => {
     expect(buildSubscriberViewing('sub_8f21', { firstName: '', lastName: '  ' }).resource?.label).toBe('sub_8f21');
+  });
+});
+
+describe('buildSubscriberPageView', () => {
+  it('registers the subscriber by id, with the question, while the subscriber loads', () => {
+    expect(buildSubscriberPageView('sub_8f21', { isError: false })).toEqual({
+      viewing: { resource: { type: CopilotViewingResourceEnum.SUBSCRIBER, id: 'sub_8f21', label: 'sub_8f21' } },
+      question: SUBSCRIBER_REACHABILITY_QUESTION,
+    });
+  });
+
+  it('labels the loaded subscriber with their name', () => {
+    const view = buildSubscriberPageView('sub_8f21', {
+      subscriber: { firstName: 'Jane', lastName: 'Alvarez' },
+      isError: false,
+    });
+
+    expect(view.viewing?.resource?.label).toBe('Jane Alvarez');
+    expect(view.question).toBe(SUBSCRIBER_REACHABILITY_QUESTION);
+  });
+
+  // A deleted subscriber or a mistyped id: there is nothing open to ask about.
+  it('registers no subscriber and no question when the fetch failed', () => {
+    expect(buildSubscriberPageView('sub_8f21', { isError: true })).toEqual({});
+    expect(buildSubscriberPageView('sub_8f21', { subscriber: { firstName: 'Jane' }, isError: true })).toEqual({});
   });
 });

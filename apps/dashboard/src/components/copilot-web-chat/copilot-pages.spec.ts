@@ -18,7 +18,7 @@ describe('matchCopilotPage', () => {
     expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.ACTIVITY);
   });
 
-  it.each(['/env/dev-env/subscribers', '/env/dev-env/subscribers/sub_8f21'])(
+  it.each(['/env/dev-env/subscribers', '/env/dev-env/subscribers/create', '/env/dev-env/subscribers/sub_8f21'])(
     'matches %s to Subscribers',
     (pathname) => {
       expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.SUBSCRIBERS);
@@ -110,6 +110,10 @@ describe('getCopilotPageCopy', () => {
         ],
       }
     );
+  });
+
+  it('returns nothing for a page without an entry', () => {
+    expect(getCopilotPageCopy('unknown' as CopilotPageEnum)).toBeUndefined();
   });
 });
 

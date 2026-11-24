@@ -50,7 +50,7 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
     ],
   },
   [CopilotPageEnum.SUBSCRIBERS]: {
-    routes: [ROUTES.SUBSCRIBERS, ROUTES.EDIT_SUBSCRIBER],
+    routes: [ROUTES.SUBSCRIBERS, ROUTES.CREATE_SUBSCRIBER, ROUTES.EDIT_SUBSCRIBER],
     emptyState: {
       title: 'Ask about subscribers',
       body: 'I check which channels can reach a subscriber and why not. Every answer names the environment it used.',
