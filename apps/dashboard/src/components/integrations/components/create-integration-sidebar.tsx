@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum, CopilotPageEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -29,6 +29,10 @@ export type CreateIntegrationSidebarProps = {
 export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarProps) {
   const navigate = useNavigate();
   const { providerId } = useParams();
+  // A Copilot setup link's environment stays while the user goes back and picks another provider.
+  const [searchParams] = useSearchParams();
+  const linkedEnvironmentId = searchParams.get('environmentId');
+  const search = linkedEnvironmentId ? `?${new URLSearchParams({ environmentId: linkedEnvironmentId })}` : '';
 
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
@@ -37,11 +41,13 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const [isSheetOpen, setIsSheetOpen] = useState(isOpened);
 
   const handleIntegrationSelect = (integrationId: string) => {
-    navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
+    navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }) + search, {
+      replace: true,
+    });
   };
 
   const handleBack = () => {
-    navigate(ROUTES.INTEGRATIONS_CONNECT, { replace: true });
+    navigate(ROUTES.INTEGRATIONS_CONNECT + search, { replace: true });
   };
 
   const { selectedIntegration, step, searchQuery, setSearchQuery, onIntegrationSelect, onBack } =
