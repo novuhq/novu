@@ -91,7 +91,7 @@ export type Overrides = {
    */
   layoutIdentifier?: string | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity?: SeverityLevelEnum | undefined;
 };
@@ -152,9 +152,17 @@ export type TriggerEventRequestDto = {
    */
   payload?: { [k: string]: any } | undefined;
   /**
+   * Optional Bridge Endpoint URL used to route this trigger to a specific Bridge application. Useful during local development when multiple engineers share an organization: set this to your personal tunnel URL from `npx novu@latest dev` (for example via NOVU_BRIDGE_URL) so app-fired triggers hit your machine instead of the environment's synced Bridge URL. Must be a publicly reachable https URL — private or localhost addresses are rejected.
+   */
+  bridgeUrl?: string | undefined;
+  /**
    * This could be used to override provider specific configurations
    */
   overrides?: Overrides | undefined;
+  /**
+   * Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.
+   */
+  agentId?: string | null | undefined;
   /**
    * The recipients list of people who will receive the notification. Maximum number of recipients can be 100.
    */
@@ -375,7 +383,9 @@ export function triggerEventRequestDtoContextToJSON(
 export type TriggerEventRequestDto$Outbound = {
   name: string;
   payload?: { [k: string]: any } | undefined;
+  bridgeUrl?: string | undefined;
   overrides?: Overrides$Outbound | undefined;
+  agentId?: string | null | undefined;
   to:
     | TopicPayloadDto$Outbound
     | SubscriberPayloadDto$Outbound
@@ -397,7 +407,9 @@ export const TriggerEventRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   workflowId: z.string(),
   payload: z.record(z.any()).optional(),
+  bridgeUrl: z.string().optional(),
   overrides: z.lazy(() => Overrides$outboundSchema).optional(),
+  agentId: z.nullable(z.string()).optional(),
   to: z.union([
     TopicPayloadDto$outboundSchema,
     SubscriberPayloadDto$outboundSchema,

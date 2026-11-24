@@ -140,6 +140,7 @@ describe("get_workflow_runs", () => {
 		expect(query.get("createdGte")).toBe("2026-11-01");
 		expect(query.get("limit")).toBe("10");
 		expect(result).toEqual({
+			dashboardPath: expect.stringMatching(/^\/activity\/workflow-runs\?/),
 			filters: {
 				createdAfter: "2026-11-01",
 				statuses: ["completed", "error"],
@@ -151,6 +152,7 @@ describe("get_workflow_runs", () => {
 			runs: [
 				{
 					createdAt: "2026-11-20T10:00:00.000Z",
+					dashboardPath: "/activity/workflow-runs?activityItemId=run-1",
 					deliveryLifecycleDetail: "preference",
 					deliveryLifecycleStatus: "skipped",
 					id: "run-1",
@@ -163,6 +165,64 @@ describe("get_workflow_runs", () => {
 				},
 			],
 		});
+	});
+
+	it("links to the runs page with the workflow _id, never the trigger identifier", async () => {
+		fakeApi(
+			path("/v2/workflows/password-reset", {
+				data: { _id: WORKFLOW_DB_ID, workflowId: "password-reset" },
+			}),
+			path("/v1/activity/workflow-runs", { data: [], next: null }),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_workflow_runs", {
+				channels: ["email", "sms"],
+				createdAfter: "2026-11-23",
+				createdBefore: "2026-11-23T23:59:59.999Z",
+				statuses: ["error"],
+				subscriberId: "user_123",
+				workflowId: "password-reset",
+			}),
+		);
+
+		const link = new URL(result.dashboardPath, "https://dashboard.test");
+		expect(link.pathname).toBe("/activity/workflow-runs");
+		expect(Object.fromEntries(link.searchParams)).toEqual({
+			after: "2026-11-23T00:00:00.000Z",
+			before: "2026-11-23T23:59:59.999Z",
+			channels: "email,sms",
+			dateRange: "custom",
+			subscriberId: "user_123",
+			workflows: WORKFLOW_DB_ID,
+		});
+	});
+
+	it("filters and links by severity, context and subscription, as the page does", async () => {
+		const api = fakeApi(path("/v1/activity/workflow-runs", { data: [], next: null }));
+
+		const result = output(
+			await callTool(await client(), "get_workflow_runs", {
+				contextKeys: ["tenant:acme", "region:eu"],
+				severity: ["high", "none"],
+				subscriptionId: "sub_1",
+			}),
+		);
+
+		const query = api.urls[0].searchParams;
+		expect(query.getAll("contextKeys")).toEqual(["tenant:acme", "region:eu"]);
+		expect(query.getAll("severity")).toEqual(["high", "none"]);
+		expect(query.get("subscriptionId")).toBe("sub_1");
+		expect(result.filters).toEqual({
+			contextKeys: ["tenant:acme", "region:eu"],
+			severity: ["high", "none"],
+			subscriptionId: "sub_1",
+		});
+
+		const link = new URL(result.dashboardPath, "https://dashboard.test");
+		expect(link.searchParams.getAll("contextKeys")).toEqual(["tenant:acme", "region:eu"]);
+		expect(link.searchParams.get("severity")).toBe("high,none");
+		expect(link.searchParams.get("subscriptionId")).toBe("sub_1");
 	});
 
 	it("uses a database _id as is, so runs of a deleted workflow stay reachable", async () => {
@@ -303,7 +363,13 @@ describe("get_workflow_run", () => {
 	it("returns step errors, trimmed execution details and the trigger request", async () => {
 		const api = fakeApi(
 			path("/v1/activity/workflow-runs/run-1", { data: failedRun }),
-			path("/v1/activity/requests", { data: [requestRow()], page: 0, pageSize: 5, total: 1 }),
+			path("/v1/activity/requests", {
+				// The API matches transactionId as a substring: txn-10 is another trigger.
+				data: [requestRow({ id: "req-10", transactionId: "txn-10" }), requestRow()],
+				page: 0,
+				pageSize: 50,
+				total: 2,
+			}),
 		);
 
 		const result = output(
@@ -311,9 +377,10 @@ describe("get_workflow_run", () => {
 		);
 
 		expect(api.urls[1].searchParams.get("transactionId")).toBe("txn-1");
-		expect(api.urls[1].searchParams.get("limit")).toBe("5");
+		expect(api.urls[1].searchParams.get("limit")).toBe("50");
 		expect(result.run).toEqual({
 			createdAt: "2026-11-20T10:00:00.000Z",
+			dashboardPath: "/activity/workflow-runs?activityItemId=run-1",
 			deliveryLifecycleStatus: "errored",
 			id: "run-1",
 			status: "completed",
@@ -351,6 +418,7 @@ describe("get_workflow_run", () => {
 		expect(result.triggerRequests).toEqual([
 			{
 				createdAt: "2026-11-20T10:00:00.000Z",
+				dashboardPath: "/activity/requests?transactionId=txn-1&selectedLogId=req-1",
 				id: "req-1",
 				statusCode: 201,
 				urlPattern: "/v1/events/trigger",
@@ -395,6 +463,47 @@ describe("get_workflow_run", () => {
 		expect(kept[0].detail).toBe("Provider rejected");
 		expect(kept.at(-1).detail).toBe("Detail 14");
 		expect(result.steps[0].executionDetailsOmitted).toBe(5);
+	});
+
+	it("redacts credentials, the query and secret-looking path parts of URLs in provider messages", async () => {
+		fakeApi(
+			path("/v1/activity/workflow-runs/run-1", {
+				data: run({
+					steps: [
+						{
+							executionDetails: [
+								{
+									_id: "e1",
+									createdAt: "2026-11-20T10:00:01.000Z",
+									detail: "HTTP request returned a non-object response",
+									raw: JSON.stringify({
+										message:
+											"Expected an object from https://user:pw@api.example.com/hooks/T0123456789ABCDEFG/handle?token=short-secret-123",
+									}),
+									status: "Warning",
+								},
+							],
+							status: "completed",
+							stepId: "http-step",
+							stepType: "http_request",
+						},
+					],
+				}),
+			}),
+			path("/v1/activity/requests", { data: [], total: 0 }),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_workflow_run", { workflowRunId: "run-1" }),
+		);
+
+		expect(result.steps[0].executionDetails[0].providerResponse).toEqual({
+			message:
+				"Expected an object from https://api.example.com/hooks/[redacted]/handle?[redacted]",
+		});
+		for (const secret of ["short-secret-123", "user:pw", "T0123456789ABCDEFG"]) {
+			expect(JSON.stringify(result), secret).not.toContain(secret);
+		}
 	});
 
 	it("says the trigger request lookup failed instead of failing the tool", async () => {
@@ -473,9 +582,13 @@ describe("get_trigger_requests", () => {
 		expect(query.get("urlPattern")).toBeNull();
 		expect(query.get("createdGte")).toBe(String(Date.parse("2026-11-20T00:00:00Z")));
 		expect(query.get("limit")).toBe("20");
+		expect(result.dashboardPath).toBe(
+			`/activity/requests?createdGte=${Date.parse("2026-11-20T00:00:00Z")}`,
+		);
 		expect(result.requests).toEqual([
 			{
 				createdAt: "2026-11-20T10:00:00.000Z",
+				dashboardPath: "/activity/requests?transactionId=txn-1&selectedLogId=req-1",
 				id: "req-1",
 				statusCode: 201,
 				transactionId: "txn-1",
@@ -558,9 +671,59 @@ describe("get_trigger_requests", () => {
 			"object-to",
 			"array-to",
 			"bulk",
-			"truncated",
 		]);
 		expect(result.requests[3].workflow).toBe("welcome, password-reset");
+		// A truncated body could pair values from different events, so it is counted, not matched.
+		expect(result.truncatedBodiesNotChecked).toBe(1);
+		expect(result.note).toContain("1 request bodies were too large to store whole");
+	});
+
+	it("gets one request by id, with its traces and without its bodies", async () => {
+		const api = fakeApi(
+			path("/v1/activity/requests/req-1", {
+				data: {
+					request: requestRow(),
+					traces: [
+						{
+							createdAt: "2026-11-20T10:00:00.100Z",
+							entityId: "req-1",
+							eventType: "request_invalid_recipients",
+							externalSubscriberId: "user_123",
+							message:
+								"Subscriber has no email, see https://hooks.example.com/x?token=s3cr3t",
+							rawData: '{"secret":"s3cr3t"}',
+							status: "error",
+							title: "Invalid recipients",
+						},
+					],
+				},
+			}),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_trigger_requests", {
+				requestId: "req-1",
+				statusCodes: [500],
+			}),
+		);
+
+		expect(api.urls).toHaveLength(1);
+		expect(result.request).toMatchObject({
+			id: "req-1",
+			statusCode: 201,
+			workflow: "password-reset",
+		});
+		expect(result.traces).toEqual([
+			{
+				createdAt: "2026-11-20T10:00:00.100Z",
+				eventType: "request_invalid_recipients",
+				message: "Subscriber has no email, see https://hooks.example.com/x?[redacted]",
+				status: "error",
+				subscriberId: "user_123",
+				title: "Invalid recipients",
+			},
+		]);
+		expect(JSON.stringify(result)).not.toContain("s3cr3t");
 	});
 
 	it("scans at most 500 requests and reports when the cap was hit", async () => {

@@ -65,6 +65,9 @@ export type ActivityNotificationResponseDto = {
    * Last updated time of the notification
    */
   updatedAt?: string | undefined;
+  /**
+   * Channels of the notification
+   */
   channels?: Array<string> | undefined;
   /**
    * Subscriber of the notification
@@ -83,6 +86,10 @@ export type ActivityNotificationResponseDto = {
    */
   payload?: { [k: string]: any } | undefined;
   /**
+   * Trigger overrides of the notification, as passed to the original workflow trigger
+   */
+  overrides?: { [k: string]: any } | undefined;
+  /**
    * Tags associated with the notification
    */
   tags?: Array<string> | undefined;
@@ -99,7 +106,7 @@ export type ActivityNotificationResponseDto = {
    */
   topics?: Array<ActivityTopicDto> | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity?: SeverityLevelEnum | undefined;
   /**
@@ -133,6 +140,7 @@ export const ActivityNotificationResponseDto$inboundSchema: z.ZodType<
   template: ActivityNotificationTemplateResponseDto$inboundSchema.optional(),
   jobs: z.array(ActivityNotificationJobResponseDto$inboundSchema).optional(),
   payload: z.record(z.any()).optional(),
+  overrides: z.record(z.any()).optional(),
   tags: z.array(z.string()).optional(),
   controls: z.record(z.any()).optional(),
   to: z.record(z.any()).optional(),

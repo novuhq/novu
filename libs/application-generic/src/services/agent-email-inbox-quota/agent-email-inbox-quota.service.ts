@@ -82,7 +82,7 @@ export function isAgentEmailInboxQuotaExceeded(err: unknown): err is AgentEmailI
 interface AgentEmailInboxReservation {
   organizationId: string;
   remaining: number;
-  /** Self-hosted, or Redis unavailable. Nothing was incremented. */
+  /** Self-hosted, Redis unavailable, or credits outside the windows. Nothing was incremented. */
   unlimited: boolean;
   /** Set when credits were incremented, so a release hits the same windows. */
   dailyKey?: string;
@@ -148,6 +148,20 @@ export class AgentEmailInboxQuotaService {
     return {
       run: <T>(fn: () => Promise<T>) => this.reservationContext.run(reservation, fn),
       release: () => this.releaseRemaining(reservation),
+    };
+  }
+
+  /**
+   * Credits outside both windows: sends inside their `run` are neither counted nor refused. Only for a notice that
+   * has to reach the account's own operator however much email the account used, such as the one saying that its
+   * messages ran out.
+   */
+  uncountedCredits(organizationId: string): AgentEmailInboxCredits {
+    const reservation: AgentEmailInboxReservation = { organizationId, remaining: 0, unlimited: true };
+
+    return {
+      run: <T>(fn: () => Promise<T>) => this.reservationContext.run(reservation, fn),
+      release: async () => undefined,
     };
   }
 

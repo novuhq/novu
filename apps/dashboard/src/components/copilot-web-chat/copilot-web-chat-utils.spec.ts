@@ -8,6 +8,7 @@ import {
   getCopilotTypingLabel,
   getOpenReviewActions,
   getTryAgainPrompt,
+  isDashboardLink,
   loadTryAgainPrompt,
   orderStoppedTurns,
 } from './copilot-web-chat-utils';
@@ -522,5 +523,21 @@ describe('getCopilotContextLabel', () => {
     expect(
       getCopilotContextLabel({ page: CopilotPageEnum.ACTIVITY, viewing: { filters: { workflows: 'welcome' } } })
     ).toBe('');
+  });
+});
+
+describe('isDashboardLink', () => {
+  const origin = 'https://dashboard.novu.co';
+
+  it('accepts links on the dashboard origin', () => {
+    expect(isDashboardLink(`${origin}/env/dev_env_1/activity/workflow-runs?activityItemId=run_1`, origin)).toBe(true);
+    expect(isDashboardLink('/env/dev_env_1/activity/requests', origin)).toBe(true);
+  });
+
+  it('rejects other origins and invalid links', () => {
+    expect(isDashboardLink('https://docs.novu.co/platform', origin)).toBe(false);
+    expect(isDashboardLink('https://dashboard.novu.co.evil.com/env', origin)).toBe(false);
+    expect(isDashboardLink('javascript:alert(1)', origin)).toBe(false);
+    expect(isDashboardLink('http://[invalid', origin)).toBe(false);
   });
 });

@@ -3,14 +3,24 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  CustomControlDto,
-  CustomControlDto$inboundSchema,
-} from "./customcontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Control values specific to Custom step
+ */
+export type CustomControlsMetadataResponseDtoValues = {
+  /**
+   * Custom control values for the step.
+   */
+  custom?: { [k: string]: any } | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type CustomControlsMetadataResponseDto = {
   /**
@@ -24,8 +34,37 @@ export type CustomControlsMetadataResponseDto = {
   /**
    * Control values specific to Custom step
    */
-  values: CustomControlDto;
+  values?: CustomControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const CustomControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  CustomControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    custom: z.record(z.any()).optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function customControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  CustomControlsMetadataResponseDtoValues,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      CustomControlsMetadataResponseDtoValues$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'CustomControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const CustomControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +74,8 @@ export const CustomControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: CustomControlDto$inboundSchema,
+  values: z.lazy(() => CustomControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function customControlsMetadataResponseDtoFromJSON(

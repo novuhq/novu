@@ -26,6 +26,10 @@ export type PatchPreferenceChannelsDto = {
    * Chat channel preference
    */
   chat?: boolean | undefined;
+  /**
+   * Tool channel preference
+   */
+  tool?: boolean | undefined;
 };
 
 /** @internal */
@@ -35,6 +39,7 @@ export type PatchPreferenceChannelsDto$Outbound = {
   in_app?: boolean | undefined;
   push?: boolean | undefined;
   chat?: boolean | undefined;
+  tool?: boolean | undefined;
 };
 
 /** @internal */
@@ -48,6 +53,7 @@ export const PatchPreferenceChannelsDto$outboundSchema: z.ZodType<
   inApp: z.boolean().optional(),
   push: z.boolean().optional(),
   chat: z.boolean().optional(),
+  tool: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     inApp: "in_app",

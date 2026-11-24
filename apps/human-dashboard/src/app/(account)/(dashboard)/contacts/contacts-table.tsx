@@ -3,7 +3,7 @@
 import { Link as LinkIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type MouseEvent, type ReactNode, useEffect, useOptimistic, useRef, useState, useTransition } from 'react';
+import { type MouseEvent, type ReactNode, useEffect, useRef, useState, useTransition } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonClassName, SMALL_BUTTON } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { ContactAvatar } from './contact-avatar';
 import { ContactCardDrawer, type ContactCardSetup, type ContactCardStart } from './contact-card-drawer';
 import { DialogMark } from './dialog-mark';
 import { ShortDate } from './short-date';
+import { useSavedSwitch } from './use-saved-switch';
 import { useWhatsAppWindow } from './use-whatsapp-window';
 
 const COLUMN_COUNT = 7;
@@ -65,8 +66,6 @@ const COLUMNS = {
   added: 'w-25',
   actions: 'w-36.5 pr-4',
 };
-
-const SAVE_FAILED = 'Couldn’t save that. Try again.';
 
 /**
  * The small copy icon after an id or an email. It fades in on hover of the row, and whenever the keyboard
@@ -450,15 +449,11 @@ function EmailCell({ contact }: { contact: Contact }) {
  * a toast says why. The operator's own row is always on and can't be turned: the agent always listens to them.
  */
 function ListenToSwitch({ contact, agentHandle }: { contact: Contact; agentHandle: string }) {
-  // What was saved last: the page's, or what a save answered before the page caught up.
-  const [saved, setSaved] = useState(contact.listenTo);
-  const [synced, setSynced] = useState(contact.listenTo);
-  if (contact.listenTo !== synced) {
-    setSynced(contact.listenTo);
-    setSaved(contact.listenTo);
-  }
-  const [shown, show] = useOptimistic(saved, (_: boolean, next: boolean) => next);
-  const [saving, startSaving] = useTransition();
+  const { shown, saving, change } = useSavedSwitch(
+    contact.listenTo,
+    (next) => setListenToAction(contact.id, next),
+    (error) => toast(error, 'error')
+  );
   const label = `${agentHandle} listens to ${contact.name}`;
 
   if (contact.isOperator) {
@@ -472,28 +467,12 @@ function ListenToSwitch({ contact, agentHandle }: { contact: Contact; agentHandl
     );
   }
 
-  function change(next: boolean) {
-    startSaving(async () => {
-      show(next);
-      const result = await setListenToAction(contact.id, next).catch(() => ({
-        ok: false as const,
-        error: SAVE_FAILED,
-      }));
-
-      if (result.ok) {
-        setSaved(next);
-      } else {
-        toast(result.error, 'error');
-      }
-    });
-  }
-
   return (
     <Tooltip
       label={
         shown
-          ? `Listening to ${contact.name}: their messages start a host`
-          : `Listen to ${contact.name}’s messages, so they start a host`
+          ? `Listening to ${contact.name}: they can talk with your agent and use only what you allow`
+          : `Listen to ${contact.name}’s messages: they can talk with your agent and use only what you allow`
       }
     >
       <span className="inline-flex">

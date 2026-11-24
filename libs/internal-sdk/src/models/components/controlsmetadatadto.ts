@@ -17,6 +17,10 @@ export type ControlsMetadataDto = {
    * UI Schema for rendering
    */
   uiSchema?: UiSchema | undefined;
+  /**
+   * Resolved control values for the step
+   */
+  values?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -27,6 +31,7 @@ export const ControlsMetadataDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
+  values: z.record(z.any()).optional(),
 });
 
 export function controlsMetadataDtoFromJSON(

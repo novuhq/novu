@@ -4,12 +4,16 @@ import type { ApiResponse } from "../types";
 import {
 	asRecord,
 	asString,
+	hasTransactionId,
 	listRows,
+	matchTriggerRequest,
 	TRIGGER_URL_PATTERNS,
 	toRunDetail,
 	toRunSummary,
+	toTriggerRequestDetail,
 	toTriggerRequestSummary,
-	triggerRequestMatches,
+	triggerRequestsDashboardPath,
+	workflowRunsDashboardPath,
 } from "../utils/activity-format";
 import { NovuApiUtils } from "../utils/api";
 import type { ToolAccessors } from "../utils/tool-accessors";
@@ -23,6 +27,8 @@ const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: 
 const DEFAULT_RUNS_LIMIT = 10;
 const DEFAULT_REQUESTS_LIMIT = 20;
 const RUN_REQUESTS_LIMIT = 5;
+// The API matches transactionId as a substring, so fetch more and keep the exact matches.
+const RUN_REQUESTS_SCAN = 50;
 const REQUESTS_PAGE_SIZE = 100;
 const REQUESTS_SCAN_CAP = 500;
 const OBJECT_ID = /^[a-f\d]{24}$/i;
@@ -41,15 +47,29 @@ const getWorkflowRunsSchema = z.object({
 		.array(z.enum(["in_app", "email", "sms", "chat", "push"]))
 		.optional()
 		.describe("Only runs with a step on one of these channels"),
+	contextKeys: z
+		.array(z.string())
+		.optional()
+		.describe("Only runs with all of these contexts, as type:id (e.g. tenant:acme)"),
 	createdAfter: isoDate("Only runs created at or after this ISO 8601 date"),
 	createdBefore: isoDate("Only runs created at or before this ISO 8601 date"),
 	cursor: z.string().optional().describe("next from the previous call, for the next page"),
 	limit: z.number().int().min(1).max(50).optional().describe("Runs to return (default 10)"),
+	severity: z
+		.array(z.enum(["high", "medium", "low", "none"]))
+		.optional()
+		.describe("Only runs of workflows with one of these severities"),
 	statuses: z
 		.array(z.enum(["processing", "completed", "error"]))
 		.optional()
-		.describe("Only runs with one of these statuses"),
+		.describe(
+			"Only runs with one of these statuses. A run with a failed step can stay processing, so to find failed runs omit this and check step statuses",
+		),
 	subscriberId: z.string().optional().describe("Only runs for this subscriberId"),
+	subscriptionId: z
+		.string()
+		.optional()
+		.describe("Only runs delivered through this topic subscription identifier"),
 	topicKey: z.string().optional().describe("Only runs triggered to this topic key"),
 	transactionId: z.string().optional().describe("Only runs of this trigger transactionId"),
 	workflowId: z
@@ -71,6 +91,10 @@ const getTriggerRequestsSchema = z.object({
 		.max(50)
 		.optional()
 		.describe("Matching requests to return (default 20)"),
+	requestId: z
+		.string()
+		.optional()
+		.describe("One request by id (req_…), with its traces; the other filters are ignored"),
 	statusCodes: z
 		.array(z.number().int().min(100).max(599))
 		.optional()
@@ -180,7 +204,7 @@ function emptyRunsNote(input: z.infer<typeof getWorkflowRunsSchema>): string {
 async function triggerRequestsForRun(context: ToolContext, transactionId: string | undefined) {
 	if (!transactionId) return {};
 
-	const query = NovuApiUtils.buildQueryParams({ limit: RUN_REQUESTS_LIMIT, transactionId });
+	const query = NovuApiUtils.buildQueryParams({ limit: RUN_REQUESTS_SCAN, transactionId });
 	try {
 		const result = await ToolFactory.callApi(context, {
 			endpoint: `/v1/activity/requests?${query}`,
@@ -194,17 +218,31 @@ async function triggerRequestsForRun(context: ToolContext, transactionId: string
 		}
 
 		return {
-			triggerRequests: listRows(result.data).map((row) => {
-				const { createdAt, id, statusCode, urlPattern } = toTriggerRequestSummary(row);
+			triggerRequests: listRows(result.data)
+				.filter((row) => hasTransactionId(row, transactionId))
+				.slice(0, RUN_REQUESTS_LIMIT)
+				.map((row) => {
+					const { createdAt, dashboardPath, id, statusCode, urlPattern } =
+						toTriggerRequestSummary(row);
 
-				return { createdAt, id, statusCode, urlPattern };
-			}),
+					return { createdAt, dashboardPath, id, statusCode, urlPattern };
+				}),
 		};
 	} catch (error) {
 		return {
 			triggerRequestsError: `Could not look up the trigger request: ${error instanceof Error ? error.message : "Unknown error"}`,
 		};
 	}
+}
+
+async function getTriggerRequest(context: ToolContext, requestId: string): Promise<ApiResponse> {
+	const result = await ToolFactory.callApi(context, {
+		endpoint: `/v1/activity/requests/${encodeURIComponent(requestId)}`,
+		method: "GET",
+	});
+	if (!result.ok) return activityError(`get request ${requestId}`, result);
+
+	return json(toTriggerRequestDetail(result.data));
 }
 
 export function registerActivityTools(server: McpServer, accessors: ToolAccessors) {
@@ -219,12 +257,15 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 
 			const query = NovuApiUtils.buildQueryParams({
 				channels: input.channels,
+				contextKeys: input.contextKeys,
 				createdGte: input.createdAfter,
 				createdLte: input.createdBefore,
 				cursor: input.cursor,
 				limit: input.limit ?? DEFAULT_RUNS_LIMIT,
+				severity: input.severity,
 				statuses: input.statuses,
 				subscriberIds: input.subscriberId,
+				subscriptionId: input.subscriptionId,
 				topicKey: input.topicKey,
 				transactionIds: input.transactionId,
 				workflowIds: workflow?.id,
@@ -239,12 +280,16 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 			const runs = listRows(result.data).map(toRunSummary);
 
 			return json({
+				dashboardPath: workflowRunsDashboardPath({ ...input, workflowId: workflow?.id }),
 				filters: {
 					channels: input.channels,
+					contextKeys: input.contextKeys,
 					createdAfter: input.createdAfter,
 					createdBefore: input.createdBefore,
+					severity: input.severity,
 					statuses: input.statuses,
 					subscriberId: input.subscriberId,
+					subscriptionId: input.subscriptionId,
 					topicKey: input.topicKey,
 					transactionId: input.transactionId,
 					workflowId: workflow?.id,
@@ -289,12 +334,15 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 		annotations: READ_ONLY,
 		description: `List trigger API requests (events/trigger, bulk and broadcast), newest first, with status code, workflow and error, without bodies. Use it when ${GET_WORKFLOW_RUNS} finds no run, to see whether the trigger arrived or was rejected. workflowId and subscriberId are matched in request bodies, scanning at most 500 requests.`,
 		handler: async (input, context) => {
+			if (input.requestId) return getTriggerRequest(context, input.requestId);
+
 			const limit = input.limit ?? DEFAULT_REQUESTS_LIMIT;
 			const matchBody = Boolean(input.workflowId || input.subscriberId);
 			const pageSize = matchBody ? REQUESTS_PAGE_SIZE : limit;
 			const createdGte = input.createdAfter ? Date.parse(input.createdAfter) : undefined;
 			const matches: Record<string, unknown>[] = [];
 			let scanned = 0;
+			let unchecked = 0;
 			let total: number | undefined;
 			let exhausted = false;
 
@@ -325,7 +373,10 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 					const isTriggerRoute = (TRIGGER_URL_PATTERNS as readonly unknown[]).includes(
 						row.urlPattern,
 					);
-					if (isTriggerRoute && triggerRequestMatches(row, input)) matches.push(row);
+					if (!isTriggerRoute) continue;
+					const match = matchTriggerRequest(row, input);
+					if (match === "match") matches.push(row);
+					if (match === "unchecked") unchecked++;
 				}
 				if (rows.length < pageSize) {
 					exhausted = true;
@@ -341,6 +392,7 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 			const requests = matches.map(toTriggerRequestSummary);
 
 			return json({
+				dashboardPath: triggerRequestsDashboardPath(input),
 				filters: {
 					createdAfter: input.createdAfter,
 					statusCodes: input.statusCodes,
@@ -350,15 +402,23 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 					workflowId: input.workflowId,
 				},
 				note:
-					requests.length > 0
-						? undefined
-						: scanLimitReached
-							? `No trigger requests matched among the ${scanned} most recent scanned. Narrow createdAfter, statusCodes or transactionId to search further back.`
-							: "No trigger requests matched these filters.",
+					[
+						requests.length > 0
+							? undefined
+							: scanLimitReached
+								? `No trigger requests matched among the ${scanned} most recent scanned. Narrow createdAfter, statusCodes or transactionId to search further back.`
+								: "No trigger requests matched these filters.",
+						unchecked > 0
+							? `${unchecked} request bodies were too large to store whole, so they could not be checked for this workflow or subscriber.`
+							: undefined,
+					]
+						.filter(Boolean)
+						.join(" ") || undefined,
 				requests,
 				scanLimitReached,
 				scanned,
 				total,
+				truncatedBodiesNotChecked: unchecked > 0 ? unchecked : undefined,
 			});
 		},
 		name: GET_TRIGGER_REQUESTS,

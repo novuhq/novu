@@ -1,7 +1,7 @@
 import { type CopilotPageEnum, FeatureFlagsKeysEnum, parseCopilotPages } from '@novu/shared';
 import { useLocation } from 'react-router-dom';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
-import { useFeatureFlag, useParsedFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFeatureFlag, useLaunchDarklyIdentified, useParsedFeatureFlag } from '@/hooks/use-feature-flag';
 import { resolveActiveCopilotPage } from './copilot-pages';
 
 const NO_PAGES: CopilotPageEnum[] = [];
@@ -11,9 +11,11 @@ export function useCopilotPages(): CopilotPageEnum[] {
   const pages = useParsedFeatureFlag(FeatureFlagsKeysEnum.COPILOT_PAGES, parseCopilotPages);
   const isWebChatEnabled =
     useFeatureFlag(FeatureFlagsKeysEnum.IS_COPILOT_WEB_CHAT_ENABLED, false) && IS_AI_FEATURES_ENABLED;
+  // Both flags target organizations: until LaunchDarkly identifies the current one, they can be the previous one's.
+  const isLaunchDarklyIdentified = useLaunchDarklyIdentified();
 
   // Every page stays off while web chat is off.
-  return isWebChatEnabled ? pages : NO_PAGES;
+  return isWebChatEnabled && isLaunchDarklyIdentified ? pages : NO_PAGES;
 }
 
 export function useCopilotPageEnabled(page: CopilotPageEnum): boolean {

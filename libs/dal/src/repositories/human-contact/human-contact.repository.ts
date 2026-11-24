@@ -85,7 +85,10 @@ export class HumanContactRepository extends BaseRepositoryV2<
     return params.subscriberId;
   }
 
-  /** Turns a contact's "Listen to" switch on or off for one relay agent, making their row when they have none yet. */
+  /**
+   * Turns a contact's "Listen to" switch on or off for one relay agent, making their row when they have none yet.
+   * Turning it off turns their "Full access" off too, so turning it on again later doesn't bring that back unasked.
+   */
   async setListenTo(params: {
     environmentId: string;
     organizationId: string;
@@ -98,11 +101,12 @@ export class HumanContactRepository extends BaseRepositoryV2<
       _agentId: params.agentId,
       subscriberId: params.subscriberId,
     };
+    const set = params.listenTo ? { listenTo: true } : { listenTo: false, fullAccess: false };
 
     try {
       await this.findOneAndUpdate(
         filter,
-        { $set: { listenTo: params.listenTo }, $setOnInsert: { _organizationId: params.organizationId } },
+        { $set: set, $setOnInsert: { _organizationId: params.organizationId } },
         { upsert: true }
       );
     } catch (err) {
@@ -111,17 +115,45 @@ export class HumanContactRepository extends BaseRepositoryV2<
         throw err;
       }
 
-      await this.findOneAndUpdate(filter, { $set: { listenTo: params.listenTo } });
+      await this.findOneAndUpdate(filter, { $set: set });
     }
   }
 
-  /** The contacts of a relay agent whose "Listen to" switch is on, by subscriberId. */
-  async findListenToSubscriberIds(environmentId: string, agentId: string): Promise<string[]> {
+  /**
+   * Turns a contact's "Full access" switch on or off for one relay agent. It only turns on while their "Listen to"
+   * switch is on, checked in the same write: false when it couldn't, because they aren't listened to.
+   */
+  async setFullAccess(params: {
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    fullAccess: boolean;
+  }): Promise<boolean> {
+    const updated = await this.findOneAndUpdate(
+      {
+        _environmentId: params.environmentId,
+        _agentId: params.agentId,
+        subscriberId: params.subscriberId,
+        ...(params.fullAccess ? { listenTo: true } : {}),
+      },
+      { $set: { fullAccess: params.fullAccess } }
+    );
+
+    // Turning it off needs no row: missing reads as off.
+    return updated !== null || !params.fullAccess;
+  }
+
+  /** The contacts of a relay agent whose "Listen to" switch is on, with whether they have full access. */
+  async findListenedTo(
+    environmentId: string,
+    agentId: string
+  ): Promise<Array<{ subscriberId: string; fullAccess: boolean }>> {
     const rows = await this.find({ _environmentId: environmentId, _agentId: agentId, listenTo: true }, [
       'subscriberId',
+      'fullAccess',
     ]);
 
-    return rows.map((row) => row.subscriberId);
+    return rows.map((row) => ({ subscriberId: row.subscriberId, fullAccess: row.fullAccess === true }));
   }
 
   /**
