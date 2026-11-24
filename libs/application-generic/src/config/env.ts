@@ -62,8 +62,9 @@ interface EnvVarBase {
 interface ReadEnvVarBase extends EnvVarBase {
   readBy?: never;
   /**
-   * Deprecated name of this variable. While this one is unset or empty, `env.X` reads the old one, so
-   * deployments that still set only the old name keep working.
+   * Deprecated name of this variable, so deployments that still set only the old name keep working:
+   * while this one is unset or empty, `env.X` reads the old one. A boolean reads `true` when either name
+   * is 'true', because committed env files can set the new name to 'false' under a deployment's old one.
    */
   replaces?: string;
 }
@@ -87,8 +88,9 @@ type ReadEnvVarDefinition =
  */
 interface DependencyEnvVarDefinition extends EnvVarBase {
   /**
-   * What reads the variable instead of our code. Workspace packages ('@novu/…') must still read it,
-   * which each app's `env.reference.spec.ts` checks. Anything else, such as an SDK, is documentation.
+   * What reads the variable instead of our code. A workspace package ('@novu/…') must still read it,
+   * which `src/config/env.spec.ts` checks in each app that depends on that package. Anything else,
+   * such as an SDK, is documentation.
    */
   readBy: readonly string[];
   type?: never;
@@ -119,12 +121,9 @@ export type Env<S extends EnvSchema> = {
 
 function readRawEnvVar(name: string, definition: ReadEnvVarDefinition): string | undefined {
   const raw = process.env[name];
+  const fallsBack = definition.type === 'boolean' ? raw !== 'true' : raw === undefined || raw === '';
 
-  if (definition.replaces && (raw === undefined || raw === '')) {
-    return process.env[definition.replaces];
-  }
-
-  return raw;
+  return definition.replaces && fallsBack ? process.env[definition.replaces] : raw;
 }
 
 function readEnvVar(name: string, definition: ReadEnvVarDefinition): string | number | boolean | undefined {

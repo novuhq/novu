@@ -208,7 +208,7 @@ export const envSchema = {
   IN_MEMORY_CLUSTER_MODE_ENABLED: {
     type: 'boolean',
     deprecated: 'Use IS_IN_MEMORY_CLUSTER_MODE_ENABLED instead.',
-    description: 'Legacy name of IS_IN_MEMORY_CLUSTER_MODE_ENABLED, read while that one is unset.',
+    description: 'Legacy name of IS_IN_MEMORY_CLUSTER_MODE_ENABLED. "true" still turns cluster mode on.',
   },
   IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT: {
     type: 'number',
@@ -237,7 +237,7 @@ export const envSchema = {
     replaces: 'IN_MEMORY_CLUSTER_MODE_ENABLED',
     boot: { api: 'checked', worker: 'checked', ws: 'checked', 'inbound-mail': 'checked' },
     description:
-      'Connects to Redis in cluster mode (ElastiCache, MemoryDB or Azure) instead of a standalone instance. Unset reads IN_MEMORY_CLUSTER_MODE_ENABLED.',
+      'Connects to Redis in cluster mode (ElastiCache, MemoryDB or Azure) instead of a standalone instance. Also on while the legacy IN_MEMORY_CLUSTER_MODE_ENABLED is "true".',
   },
   IS_SELF_HOSTED: {
     type: 'boolean',

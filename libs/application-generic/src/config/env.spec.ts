@@ -11,6 +11,8 @@ const schema = {
   TEST_ENV_BOOLEAN_ON: { type: 'boolean', default: true, description: 'Boolean that is on by default.' },
   TEST_ENV_DEPRECATED: { type: 'boolean', deprecated: 'Use TEST_ENV_RENAMED instead.', description: 'Old name.' },
   TEST_ENV_RENAMED: { type: 'boolean', replaces: 'TEST_ENV_DEPRECATED', description: 'New name.' },
+  TEST_ENV_OLD_URL: { deprecated: 'Use TEST_ENV_URL instead.', description: 'Old URL name.' },
+  TEST_ENV_URL: { replaces: 'TEST_ENV_OLD_URL', description: 'New URL name.' },
   TEST_ENV_READ_BY: { readBy: ['@novu/test-dependency'], description: 'Read by a dependency.' },
 } satisfies Record<string, EnvVarDefinition>;
 
@@ -102,14 +104,29 @@ describe('env', () => {
   });
 
   it('should read the replaced name while the new one is unset or empty', () => {
+    process.env.TEST_ENV_OLD_URL = 'https://old.example';
+    expect(testEnv.TEST_ENV_URL).toBe('https://old.example');
+
+    process.env.TEST_ENV_URL = '';
+    expect(testEnv.TEST_ENV_URL).toBe('https://old.example');
+
+    process.env.TEST_ENV_URL = 'https://new.example';
+    expect(testEnv.TEST_ENV_URL).toBe('https://new.example');
+  });
+
+  it('should read a replaced boolean as true when either name is "true"', () => {
     process.env.TEST_ENV_DEPRECATED = 'true';
     expect(testEnv.TEST_ENV_RENAMED).toBe(true);
 
-    process.env.TEST_ENV_RENAMED = '';
+    // A committed env file can set the new name to false under a deployment that sets only the old one.
+    process.env.TEST_ENV_RENAMED = 'false';
     expect(testEnv.TEST_ENV_RENAMED).toBe(true);
 
-    process.env.TEST_ENV_RENAMED = 'false';
+    process.env.TEST_ENV_DEPRECATED = 'false';
     expect(testEnv.TEST_ENV_RENAMED).toBe(false);
+
+    process.env.TEST_ENV_RENAMED = 'true';
+    expect(testEnv.TEST_ENV_RENAMED).toBe(true);
   });
 
   it('should build an app env from the shared schema plus the app variables', () => {
