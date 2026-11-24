@@ -10,6 +10,13 @@ export const DEFAULT_DASHBOARD_URL = "https://dashboard.novu.co";
 const OBJECT_ID = /^[a-f0-9]{24}$/i;
 const PROVIDER_ID = /^[a-z0-9][a-z0-9_-]*$/i;
 
+// The providers whose dashboard settings show activity tracking (the `inboundWebhook` groups in @novu/shared). Novu
+// processes delivery events only for email and push, and AppIO delivers into the IO app, which can't report them.
+const EMAIL_PROVIDERS_WITH_TRACKING = new Set(["anypost", "mailgun", "resend", "sendgrid", "ses"]);
+const PUSH_PROVIDERS_WITHOUT_TRACKING = new Set(["appio"]);
+const PUSH_TRACKING_GUIDE_URL =
+	"https://docs.novu.co/platform/integrations/push/push-activity-tracking";
+
 type Integration = Record<string, unknown> & {
 	_id?: string;
 	_environmentId?: string;
@@ -62,6 +69,13 @@ function describeIntegration(integration: Integration): string {
 	return `"${integration.name ?? integration._id}" (${integration.providerId})`;
 }
 
+function supportsActivityTracking({ channel, providerId = "" }: Integration): boolean {
+	if (channel === "email") return EMAIL_PROVIDERS_WITH_TRACKING.has(providerId);
+	if (channel === "push") return !PUSH_PROVIDERS_WITHOUT_TRACKING.has(providerId);
+
+	return false;
+}
+
 function dashboardUrl(accessors: ToolAccessors): string {
 	return (accessors.getDashboardUrl?.() || DEFAULT_DASHBOARD_URL).replace(/\/$/, "");
 }
@@ -69,6 +83,11 @@ function dashboardUrl(accessors: ToolAccessors): string {
 /** The dashboard page with an existing integration's settings, credentials included. */
 function integrationSettingsUrl(accessors: ToolAccessors, integrationId: string): string {
 	return `${dashboardUrl(accessors)}/integrations/${encodeURIComponent(integrationId)}/update`;
+}
+
+/** Push events come from the customer's app, so Novu records none until their app and backend forward them. */
+function pushTrackingSteps(accessors: ToolAccessors, integration: Integration): string {
+	return ` Novu records push events only once the app sends them to the customer's backend and the backend forwards them to Novu with environment ID ${integration._environmentId} and integration ID ${integration._id}. The guide: ${PUSH_TRACKING_GUIDE_URL}. The integration's settings: ${integrationSettingsUrl(accessors, integration._id ?? "")}`;
 }
 
 export function registerIntegrationTools(server: McpServer, accessors: ToolAccessors) {
@@ -194,7 +213,7 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 
 	ToolFactory.createTool(server, accessors, {
 		description:
-			"Turn activity tracking (provider delivery events in Activity) on or off for an email, SMS, chat or push integration. Turning it on sets up the provider's webhook when it can, or returns the URL to add.",
+			"Turn activity tracking (provider delivery events in Activity) on or off for an email or push integration. Turning it on sets up the provider's webhook when it can, or returns the URL to add.",
 		handler: async ({ enabled, integrationId }, context) => {
 			const listed = await ToolFactory.callApi(context, {
 				endpoint: "/v1/integrations",
@@ -220,15 +239,23 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 					status: 400,
 				});
 			}
+			// Turning it off stays allowed, so a flag set some other way can still be cleared.
+			if (enabled && !supportsActivityTracking(integration)) {
+				return ToolFactory.errorResult({
+					message: `${describeIntegration(integration)} has no activity tracking. Novu records delivery events only for ${[...EMAIL_PROVIDERS_WITH_TRACKING].join(", ")} email integrations and for push integrations other than AppIO.`,
+					status: 400,
+				});
+			}
 
 			const label = describeIntegration(integration);
 			const configurations = redactIntegration(integration).configurations ?? {};
 			if (Boolean(configurations.inboundWebhookEnabled) === enabled) {
 				// Set-up isn't rerun: SendGrid adds another event webhook on every auto-configure call.
-				const setUpHint =
-					enabled && integration.channel !== "push"
-						? ` If its delivery events don't reach Novu, the integration's settings have the webhook URL and the manual set-up guide: ${integrationSettingsUrl(accessors, integrationId)}. Turning it off and on again reruns the automatic set-up.`
-						: "";
+				const setUpHint = !enabled
+					? ""
+					: integration.channel === "push"
+						? pushTrackingSteps(accessors, integration)
+						: ` If its delivery events don't reach Novu, the integration's settings have the webhook URL and the manual set-up guide: ${integrationSettingsUrl(accessors, integrationId)}. Turning it off and on again reruns the automatic set-up.`;
 
 				return textResult(
 					`Activity tracking is already ${enabled ? "on" : "off"} for ${label}.${setUpHint}`,
@@ -261,7 +288,9 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 			}
 			// The dashboard doesn't set up a webhook for push providers either.
 			if (integration.channel === "push") {
-				return textResult(`Activity tracking is on for ${label}.`);
+				return textResult(
+					`Activity tracking is on for ${label}.${pushTrackingSteps(accessors, integration)}`,
+				);
 			}
 
 			const configured = await ToolFactory.callApi(context, {

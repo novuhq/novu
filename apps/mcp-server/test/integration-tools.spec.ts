@@ -317,17 +317,65 @@ describe("integration tools", () => {
 			expect(requests.map((request) => request.method)).toEqual(["GET"]);
 		});
 
-		it("sets no webhook up for a push provider", async () => {
+		it("sets no webhook up for a push provider, and gives the steps left for the customer's app", async () => {
 			const { requests } = fakeIntegrationsApi();
 			const client = await connectAllTools(tokenAccessors("api-key"));
 
-			await callTool(client, "set_activity_tracking", {
-				enabled: true,
-				integrationId: FCM_ID,
-			});
+			const text = textOf(
+				await callTool(client, "set_activity_tracking", {
+					enabled: true,
+					integrationId: FCM_ID,
+				}),
+			);
 
 			expect(requests.map((request) => request.method)).toEqual(["GET", "PUT"]);
+			expect(text).toContain("Activity tracking is on");
+			expect(text).toContain(`environment ID ${DEVELOPMENT_ID}`);
+			expect(text).toContain(`integration ID ${FCM_ID}`);
+			expect(text).toContain("/platform/integrations/push/push-activity-tracking");
+			expect(text).toContain(`/integrations/${FCM_ID}/update`);
 		});
+
+		it("gives the push steps when it's already on", async () => {
+			const integrations = integrationsFixture();
+			integrations[1].configurations.inboundWebhookEnabled = true;
+			fakeIntegrationsApi(undefined, integrations);
+			const client = await connectAllTools(tokenAccessors("api-key"));
+
+			const text = textOf(
+				await callTool(client, "set_activity_tracking", {
+					enabled: true,
+					integrationId: FCM_ID,
+				}),
+			);
+
+			expect(text).toContain("already on");
+			expect(text).toContain("/platform/integrations/push/push-activity-tracking");
+		});
+
+		it.each([
+			["push", "appio"],
+			["sms", "twilio"],
+			["email", "nodemailer"],
+		])(
+			"refuses to turn it on for a %s provider Novu tracks nothing for (%s)",
+			async (channel, providerId) => {
+				const integrations = integrationsFixture();
+				Object.assign(integrations[1], { channel, providerId });
+				const { requests } = fakeIntegrationsApi(undefined, integrations);
+				const client = await connectAllTools(tokenAccessors("api-key"));
+
+				const result = await callTool(client, "set_activity_tracking", {
+					enabled: true,
+					integrationId: FCM_ID,
+				});
+
+				expect(result.isError).toBe(true);
+				expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+				expect(textOf(result)).toContain("has no activity tracking");
+				expect(requests.map((request) => request.method)).toEqual(["GET"]);
+			},
+		);
 
 		it("refuses an in-app integration", async () => {
 			fakeIntegrationsApi();
