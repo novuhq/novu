@@ -23,13 +23,14 @@ export function buildSubscriberViewing(
 
 /**
  * What the subscriber page registers with the Copilot: the open subscriber and the question about them, while the
- * subscriber loads and once it has. Nothing when the fetch failed, such as a deleted subscriber or a mistyped id.
+ * subscriber loads and once it has, including after a failed refetch that keeps the loaded subscriber. Nothing when
+ * the fetch failed before any subscriber loaded, such as a deleted subscriber or a mistyped id.
  */
 export function buildSubscriberPageView(
   subscriberId: string,
   { subscriber, isError }: { subscriber?: { firstName?: string | null; lastName?: string | null }; isError: boolean }
 ): CopilotPageView {
-  if (isError) return {};
+  if (isError && !subscriber) return {};
 
   return { viewing: buildSubscriberViewing(subscriberId, subscriber), question: SUBSCRIBER_REACHABILITY_QUESTION };
 }
