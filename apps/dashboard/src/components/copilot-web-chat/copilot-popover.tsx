@@ -8,6 +8,7 @@ import { useCopilotPopoverTitle } from './copilot-popover-title';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { COPILOT_POPOVER_ID, COPILOT_SHEET_LIFT_PX, COPILOT_SHEET_LIFT_TRANSITION } from './copilot-web-chat-utils';
+import { useModalDialogOpen } from './use-modal-dialog-open';
 
 // Mirrors the Popover primitive: fade, zoom from 95% and an 8px rise, growing out of the launcher.
 const POPOVER_HIDDEN = { opacity: 0, scale: 0.95, y: 8 };
@@ -44,6 +45,8 @@ export function CopilotPopover() {
   const title = useCopilotPopoverTitle(chat);
   // Above a sheet (z-50) and its overlay, with the launcher, as the design shows it.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
+  // Back under a modal dialog opened over the sheet, which dims and blocks everything else.
+  const isModalDialogOpen = useModalDialogOpen();
   const shouldReduceMotion = useReducedMotion();
   // 66px puts it 12px above the launcher; it rises with the launcher over a sheet.
   const bottom = 66 + (isOverSheet ? COPILOT_SHEET_LIFT_PX : 0);
@@ -66,7 +69,8 @@ export function CopilotPopover() {
           }}
           className={cn(
             'fixed right-4 flex h-[600px] w-[400px] origin-bottom-right flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]',
-            isOverSheet ? 'z-[51] max-h-[min(600px,calc(100vh-139px))]' : 'z-40 max-h-[min(600px,calc(100vh-82px))]'
+            isOverSheet && !isModalDialogOpen ? 'z-[51]' : 'z-40',
+            isOverSheet ? 'max-h-[min(600px,calc(100vh-139px))]' : 'max-h-[min(600px,calc(100vh-82px))]'
           )}
         >
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">

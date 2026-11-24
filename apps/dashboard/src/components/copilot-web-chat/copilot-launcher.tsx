@@ -14,6 +14,7 @@ import {
   deriveLauncherState,
   type LauncherState,
 } from './copilot-web-chat-utils';
+import { useModalDialogOpen } from './use-modal-dialog-open';
 
 // Same timing as the popover, so the launcher folds into a circle while the popover grows out of it.
 const LAUNCHER_TRANSITION = { duration: 0.15, ease: 'easeOut' } as const;
@@ -72,6 +73,8 @@ export function CopilotLauncher() {
   const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
   // Over a sheet it stays visible above it, as the design shows, rising clear of the sheet's footer so its buttons stay usable.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
+  // Back under a modal dialog opened over the sheet, with the popover.
+  const isModalDialogOpen = useModalDialogOpen();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(isOpen);
   const shouldReduceMotion = useReducedMotion();
@@ -111,7 +114,7 @@ export function CopilotLauncher() {
       aria-keyshortcuts={isOpen || isOff ? undefined : 'Meta+J Control+J'}
       className={cn(
         'fixed right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
-        isOverSheet ? 'z-[51]' : 'z-40',
+        isOverSheet && !isModalDialogOpen ? 'z-[51]' : 'z-40',
         isOpen ? 'pl-2.5' : 'pl-3',
         isOff
           ? 'cursor-not-allowed bg-bg-weak'
