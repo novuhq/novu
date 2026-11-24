@@ -8,4 +8,4 @@ runs:
     - name: Start Redis Cluster
       shell: bash
       working-directory: docker/local
-      run: docker compose -f docker-compose.ci.yml up --wait --wait-timeout 60 redis-cluster
+      run: docker compose -f docker-compose.ci.yml up -d redis-cluster

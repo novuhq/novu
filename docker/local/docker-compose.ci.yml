@@ -31,6 +31,7 @@ services:
       interval: 1s
       retries: 60
 
+  # No healthcheck: the cluster takes about 12 s to form, and jobs reach it only after a build of several minutes.
   redis-cluster:
     image: vishnunair/docker-redis-cluster:latest
     ports:
@@ -40,10 +41,6 @@ services:
       - '7003:6382'
       - '7004:6383'
       - '7005:6384'
-    healthcheck:
-      test: ['CMD-SHELL', 'redis-cli cluster info | grep -q cluster_state:ok']
-      interval: 1s
-      retries: 60
 
   localstack:
     image: localstack/localstack:0.14.5
