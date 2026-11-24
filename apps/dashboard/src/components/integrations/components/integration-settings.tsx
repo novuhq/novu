@@ -93,6 +93,8 @@ type IntegrationConfigurationProps = {
   whatsAppQuickSetup?: {
     /** True once the signup finished and the credentials are saved on the server. */
     isConnected: boolean;
+    /** True while a signup is being saved; a second one can't start until it ends. */
+    isConnecting: boolean;
     connectedPhone?: string;
     /** True once the signup has started: the integration belongs to that environment from then on. */
     isEnvironmentLocked: boolean;
@@ -114,6 +116,21 @@ function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (mode === 'quick') return '~2 min';
 
   return providerId === ChatProviderIdEnum.WhatsAppBusiness ? '~10 min' : '~5 min';
+}
+
+function resolveSetupMode({
+  hasQuickSetup,
+  isLocked,
+  selected,
+}: {
+  hasQuickSetup: boolean;
+  isLocked: boolean;
+  selected: ProviderSetupMode;
+}): ProviderSetupMode {
+  if (!hasQuickSetup) return 'manual';
+  if (isLocked) return 'quick';
+
+  return selected;
 }
 
 function generateSlug(name: string): string {
@@ -251,7 +268,11 @@ export function IntegrationSettings({
   const [selectedSetupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
   // Only providers with a Quick setup have the two modes; the rest set up one way.
   const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup;
-  const setupMode: ProviderSetupMode = hasQuickSetup ? selectedSetupMode : 'manual';
+  // A number connected by Embedded Signup runs on Novu's Meta app. Credentials typed in Manual would be saved
+  // onto that same integration and still resolve to Novu's app, so the mode stays on Quick setup from then on.
+  const isSetupModeLocked = !!whatsAppQuickSetup?.isConnected;
+  const hasSetupModeSwitch = hasQuickSetup && !isSetupModeLocked;
+  const setupMode = resolveSetupMode({ hasQuickSetup, isLocked: isSetupModeLocked, selected: selectedSetupMode });
   // Quick setup saves the credentials on the server, so the form is ready once that has happened.
   const isQuickSetupMode = usesSetupLayout && hasQuickSetup && setupMode === 'quick';
   const isQuickSetupDone = !!slackQuickSetup?.appId || !!whatsAppQuickSetup?.isConnected;
@@ -534,8 +555,8 @@ export function IntegrationSettings({
             title={`Set up ${provider.displayName}`}
             duration={getSetupDuration(provider.id, setupMode)}
             // Telegram has one way to set up: its token field takes the token or the whole BotFather message.
-            mode={hasQuickSetup ? setupMode : undefined}
-            onModeChange={hasQuickSetup ? setSetupMode : undefined}
+            mode={hasSetupModeSwitch ? setupMode : undefined}
+            onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
                 {isWhatsApp ? (
@@ -585,6 +606,7 @@ export function IntegrationSettings({
                 <WhatsAppQuickSetup
                   isConnected={whatsAppQuickSetup.isConnected}
                   connectedPhone={whatsAppQuickSetup.connectedPhone}
+                  isConnecting={whatsAppQuickSetup.isConnecting}
                   canConnect={!isReadOnly && !!name?.trim()}
                   completeSignup={(completion) => whatsAppQuickSetup.completeSignup(form.getValues(), completion)}
                 />

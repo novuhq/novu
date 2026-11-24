@@ -9,6 +9,8 @@ import {
 type WhatsAppQuickSetupProps = {
   /** True once Meta's signup finished and the credentials are saved. */
   isConnected: boolean;
+  /** True while a finished signup is being saved. Outlives this component, which unmounts on a switch to Manual. */
+  isConnecting: boolean;
   /** The number that was connected, as Meta displays it. */
   connectedPhone?: string;
   /** False while the form can't create the integration yet, e.g. its name is empty. */
@@ -22,6 +24,7 @@ type WhatsAppQuickSetupProps = {
  */
 export function WhatsAppQuickSetup({
   isConnected,
+  isConnecting,
   connectedPhone,
   canConnect,
   completeSignup,
@@ -41,10 +44,10 @@ export function WhatsAppQuickSetup({
           isConnected ? null : (
             <WhatsAppEmbeddedSignupCoreButton
               completeSignup={completeSignup}
-              disabled={!canConnect}
+              disabled={!canConnect || isConnecting}
               renderButton={({ isLoading, disabled, onClick }) => (
                 <SetupButton onClick={onClick} disabled={disabled || isLoading} className="self-start">
-                  {isLoading ? 'Logging in…' : 'Log in with Facebook'}
+                  {isLoading || isConnecting ? 'Logging in…' : 'Log in with Facebook'}
                   <RiArrowRightUpLine className="ml-1.5 size-3 shrink-0" />
                 </SetupButton>
               )}

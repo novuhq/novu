@@ -5,7 +5,7 @@ import {
   type IIntegration,
   type IProviderConfig,
 } from '@novu/shared';
-import { type Dispatch, type MutableRefObject, type SetStateAction, useState } from 'react';
+import { type Dispatch, type MutableRefObject, type SetStateAction, useRef, useState } from 'react';
 import {
   type CreateIntegrationData,
   completeWhatsAppEmbeddedSignup,
@@ -59,6 +59,8 @@ export function useWhatsAppStoreSignup({
     useFeatureFlag(FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED, false) &&
     isWhatsAppEmbeddedSignupConfigured();
   const [isConnecting, setIsConnecting] = useState(false);
+  // A ref, not the state: two calls in the same render would both read the state as false.
+  const isConnectingRef = useRef(false);
 
   async function completeSignup(
     data: IntegrationFormData,
@@ -70,7 +72,10 @@ export function useWhatsAppStoreSignup({
     const environmentId = quickSetupResult?.environmentId ?? data.environmentId;
     const environment = environments?.find((env) => env._id === environmentId);
     if (!provider || !environment) throw new Error('Pick an environment first.');
+    // Two signups would save onto the same integration, and the slower reply could show the wrong number.
+    if (isConnectingRef.current) throw new Error('A WhatsApp signup is already being saved. Wait for it to finish.');
 
+    isConnectingRef.current = true;
     setIsConnecting(true);
 
     try {
@@ -110,6 +115,7 @@ export function useWhatsAppStoreSignup({
 
       return result;
     } finally {
+      isConnectingRef.current = false;
       setIsConnecting(false);
     }
   }
@@ -119,6 +125,7 @@ export function useWhatsAppStoreSignup({
     enabled && isAvailable && provider?.id === ChatProviderIdEnum.WhatsAppBusiness
       ? {
           isConnected: !!quickSetupResult?.isWhatsAppConnected,
+          isConnecting,
           connectedPhone: quickSetupResult?.connectedPhone,
           isEnvironmentLocked: isConnecting || !!quickSetupResult,
           completeSignup,
