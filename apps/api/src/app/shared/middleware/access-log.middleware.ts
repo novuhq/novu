@@ -25,20 +25,22 @@ const KNOWN_AUTH_SCHEMES: ReadonlySet<string> = new Set([...Object.values(ApiAut
 const UNKNOWN_AUTH_SCHEME = 'unknown';
 const MAX_HEADER_LENGTH = 256;
 const MIN_API_KEY_LENGTH = 16;
+// Every value the environment validation reads as false.
+const DISABLED_VALUES: ReadonlySet<string> = new Set(['false', 'f', 'no', 'off', '0']);
 
 /*
- * Routes that get no access line. Health checks and the socket service's presence calls say nothing about a caller.
- * The trigger, Inbox and widget routes run once per notification or per Inbox render, so a line per call would be
- * most of the API's traffic, and trigger calls are already kept in the ClickHouse `requests` table. All of them still
- * get the New Relic attributes.
+ * Requests that get no access line, all of which still get the New Relic attributes. Health checks and the socket
+ * service's presence calls say nothing about a caller. A trigger and every Inbox and widget call run once per
+ * notification or per Inbox render, so a line per call would be most of the API's traffic. Cancelling a trigger and a
+ * broadcast are rare and keep their line.
  */
-const ROUTES_WITHOUT_ACCESS_LOG: readonly string[] = [
-  '/v1/health-check',
-  '/v1/internal/subscriber-online-state',
-  '/v1/events/trigger',
-  '/v1/inbox',
-  '/v1/widgets',
-];
+const REQUESTS_WITHOUT_ACCESS_LOG: ReadonlySet<string> = new Set([
+  'GET /v1/health-check',
+  'POST /v1/internal/subscriber-online-state',
+  'POST /v1/events/trigger',
+  'POST /v1/events/trigger/bulk',
+]);
+const ROUTE_PREFIXES_WITHOUT_ACCESS_LOG: readonly string[] = ['/v1/inbox/', '/v1/widgets/'];
 
 /**
  * What one access line says about a request: who called which route, from where, and how it ended. Only the fields
@@ -97,7 +99,7 @@ export function accessLogMiddleware(req: AccessLogRequest, res: ServerResponse, 
 
   res.once('close', () => {
     try {
-      if (process.env.IS_API_ACCESS_LOG_ENABLED === 'false' || !hasAccessLog(getRoute(req))) {
+      if (DISABLED_VALUES.has(process.env.IS_API_ACCESS_LOG_ENABLED ?? '') || !hasAccessLog(req)) {
         return;
       }
 
@@ -121,8 +123,17 @@ function getRoute(req: AccessLogRequest): string | undefined {
 }
 
 /** Decided on the matched route and not on the URL, so no path or query string can hide a request. */
-function hasAccessLog(route: string | undefined): boolean {
-  return !ROUTES_WITHOUT_ACCESS_LOG.some((prefix) => route === prefix || route?.startsWith(`${prefix}/`));
+function hasAccessLog(req: AccessLogRequest): boolean {
+  const route = getRoute(req);
+
+  if (!route) {
+    return true;
+  }
+
+  return (
+    !REQUESTS_WITHOUT_ACCESS_LOG.has(`${req.method} ${route}`) &&
+    !ROUTE_PREFIXES_WITHOUT_ACCESS_LOG.some((prefix) => route.startsWith(prefix))
+  );
 }
 
 /** A header value, cut short because the caller writes it. */

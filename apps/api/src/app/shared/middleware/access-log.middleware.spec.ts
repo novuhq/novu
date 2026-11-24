@@ -20,15 +20,16 @@ const USER_SESSION = {
 };
 
 type RequestParts = {
+  method?: string;
   headers?: Record<string, string>;
   routePath?: string;
   authScheme?: string;
   user?: Record<string, unknown>;
 };
 
-function buildRequest({ headers = {}, routePath, authScheme, user }: RequestParts = {}) {
+function buildRequest({ method = 'GET', headers = {}, routePath, authScheme, user }: RequestParts = {}) {
   return {
-    method: 'GET',
+    method,
     url: '/v1/environments/env-id/api-keys?token=query-secret',
     originalUrl: '/v1/environments/env-id/api-keys?token=query-secret',
     headers,
@@ -264,34 +265,50 @@ describe('accessLogMiddleware', () => {
     expect(info.firstCall.args[0]).to.include({ statusCode: 404 });
   });
 
-  for (const routePath of [
-    '/v1/health-check',
-    '/v1/internal/subscriber-online-state',
-    '/v1/events/trigger',
-    '/v1/events/trigger/bulk',
-    '/v1/inbox/notifications',
-    '/v1/widgets/session/initialize',
-    '/api/v1/events/trigger',
+  for (const [method, routePath] of [
+    ['GET', '/v1/health-check'],
+    ['POST', '/v1/internal/subscriber-online-state'],
+    ['POST', '/v1/events/trigger'],
+    ['POST', '/v1/events/trigger/bulk'],
+    ['POST', '/api/v1/events/trigger'],
+    ['GET', '/v1/inbox/notifications'],
+    ['POST', '/v1/widgets/session/initialize'],
   ]) {
-    it(`writes no line for ${routePath}`, () => {
-      handle(buildRequest({ user: USER_SESSION })).close(routePath);
+    it(`writes no line for ${method} ${routePath}`, () => {
+      handle(buildRequest({ method, user: USER_SESSION })).close(routePath);
 
       expect(info.called).to.equal(false);
     });
   }
 
-  it('writes a line for a route that only starts like one without a line', () => {
-    handle(buildRequest({ user: USER_SESSION })).close('/v1/inbox-settings');
+  for (const [method, routePath] of [
+    ['DELETE', '/v1/events/trigger/:transactionId'],
+    ['POST', '/v1/events/trigger/broadcast'],
+    ['GET', '/v1/inbox-settings'],
+  ]) {
+    it(`writes a line for ${method} ${routePath}`, () => {
+      handle(buildRequest({ method, user: USER_SESSION })).close(routePath);
 
-    expect(info.calledOnce).to.equal(true);
-  });
+      expect(info.calledOnce).to.equal(true);
+    });
+  }
 
-  it('writes no line when IS_API_ACCESS_LOG_ENABLED is false', () => {
-    process.env.IS_API_ACCESS_LOG_ENABLED = 'false';
+  for (const value of ['false', 'f', 'no', 'off', '0']) {
+    it(`writes no line when IS_API_ACCESS_LOG_ENABLED is ${value}`, () => {
+      process.env.IS_API_ACCESS_LOG_ENABLED = value;
+
+      handle(buildRequest({ user: USER_SESSION })).close('/v1/environments');
+
+      expect(info.called).to.equal(false);
+    });
+  }
+
+  it('writes a line when IS_API_ACCESS_LOG_ENABLED is true', () => {
+    process.env.IS_API_ACCESS_LOG_ENABLED = 'true';
 
     handle(buildRequest({ user: USER_SESSION })).close('/v1/environments');
 
-    expect(info.called).to.equal(false);
+    expect(info.calledOnce).to.equal(true);
   });
 
   it('adds the caller to the New Relic transaction on every route, whatever the flag says', () => {
