@@ -54,13 +54,14 @@ function watchAzureSetup(
     // Nothing is saved until the Microsoft sign-in finishes, so early checks can fail. Keep polling.
     const result = await getMsTeamsHealthCheck(integrationId, environment).catch(() => undefined);
     // The app registration is the first thing Novu creates; its client ID is what the app package needs.
-    // Read on every poll, not once: a retried setup saves another one over it.
-    const clientId = result?.appRegistration === 'ready' ? await readClientId(integrationId, environment) : undefined;
+    // Read until this attempt's ID shows up, then no more: the list holds every integration of the environment.
+    const clientId =
+      result?.appRegistration === 'ready' && !lastClientId ? await readClientId(integrationId, environment) : undefined;
     if (isCancelled) return;
 
     if (result) handlers.onHealth(result);
 
-    if (clientId && clientId !== staleClientId && clientId !== lastClientId) {
+    if (clientId && clientId !== staleClientId) {
       lastClientId = clientId;
       handlers.onAppId(clientId);
     }
@@ -236,6 +237,11 @@ export function useMsTeamsStoreSetup({
           setQuickSetupResult({ integrationId: startedId, environmentId: targetEnvironment._id });
         }
 
+        // On a retry, what the earlier attempt saved is still there until this one replaces it. Read it now,
+        // so the watcher can tell the two apart even if it never saw the earlier one.
+        const savedBefore =
+          action.isAzureSetup && existingId ? await readClientId(startedId, targetEnvironment) : undefined;
+
         openIn(tab, await action.getUrl(startedId, targetEnvironment));
         onSaved();
 
@@ -248,7 +254,7 @@ export function useMsTeamsStoreSetup({
             return {
               integrationId: startedId,
               environmentId: targetEnvironment._id,
-              staleAppId: earlier?.appId ?? earlier?.staleAppId,
+              staleAppId: savedBefore ?? earlier?.appId ?? earlier?.staleAppId,
               isAzureSetupStarted: true,
               azureSetupAttempt: (earlier?.azureSetupAttempt ?? 0) + 1,
             };
