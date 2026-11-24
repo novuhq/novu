@@ -42,28 +42,30 @@ async function readClientId(integrationId: string, environment: IEnvironment): P
 function watchAzureSetup(
   integrationId: string,
   environment: IEnvironment,
-  handlers: { onHealth: (health: MsTeamsHealthCheckResult) => void; onAppId: (clientId: string) => void }
+  handlers: { onHealth: (health: MsTeamsHealthCheckResult) => void; onAppId: (clientId: string) => void },
+  /** The client ID an earlier attempt saved. It stays on the integration until this attempt replaces it. */
+  staleClientId?: string
 ): () => void {
   let isCancelled = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let hasAppId = false;
+  let lastClientId: string | undefined;
 
   const poll = async () => {
     // Nothing is saved until the Microsoft sign-in finishes, so early checks can fail. Keep polling.
     const result = await getMsTeamsHealthCheck(integrationId, environment).catch(() => undefined);
     // The app registration is the first thing Novu creates; its client ID is what the app package needs.
-    const clientId =
-      result?.appRegistration === 'ready' && !hasAppId ? await readClientId(integrationId, environment) : undefined;
+    // Read on every poll, not once: a retried setup saves another one over it.
+    const clientId = result?.appRegistration === 'ready' ? await readClientId(integrationId, environment) : undefined;
     if (isCancelled) return;
 
     if (result) handlers.onHealth(result);
 
-    if (clientId) {
-      hasAppId = true;
+    if (clientId && clientId !== staleClientId && clientId !== lastClientId) {
+      lastClientId = clientId;
       handlers.onAppId(clientId);
     }
 
-    if (result?.allReady && hasAppId) return;
+    if (result?.allReady && lastClientId) return;
 
     timer = setTimeout(poll, HEALTH_POLL_INTERVAL_MS);
   };
@@ -158,7 +160,10 @@ export function useMsTeamsStoreSetup({
   const isStarted = !!quickSetupResult?.isAzureSetupStarted;
   const environment = environments?.find((env) => env._id === quickSetupResult?.environmentId);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: restarts only for another integration or environment
+  const azureSetupAttempt = quickSetupResult?.azureSetupAttempt;
+  const staleAppId = quickSetupResult?.staleAppId;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: restarts only for another integration, environment or attempt
   useEffect(() => {
     if (!isActive || !integrationId || !environment || !isStarted) {
       setHealth(undefined);
@@ -166,16 +171,23 @@ export function useMsTeamsStoreSetup({
       return;
     }
 
-    return watchAzureSetup(integrationId, environment, {
-      onHealth: setHealth,
-      onAppId: (clientId) => {
-        setQuickSetupResult((previous) =>
-          previous?.integrationId === integrationId ? { ...previous, appId: clientId } : previous
-        );
-        onSaved();
+    setHealth(undefined);
+
+    return watchAzureSetup(
+      integrationId,
+      environment,
+      {
+        onHealth: setHealth,
+        onAppId: (clientId) => {
+          setQuickSetupResult((previous) =>
+            previous?.integrationId === integrationId ? { ...previous, appId: clientId } : previous
+          );
+          onSaved();
+        },
       },
-    });
-  }, [isActive, integrationId, environment?._id, isStarted]);
+      staleAppId
+    );
+  }, [isActive, integrationId, environment?._id, isStarted, azureSetupAttempt]);
 
   /**
    * Opens a Microsoft page that needs the integration to exist: creates it first, or saves the typed
@@ -228,12 +240,19 @@ export function useMsTeamsStoreSetup({
         onSaved();
 
         if (action.isAzureSetup && isCurrent()) {
-          setQuickSetupResult((previous) => ({
-            integrationId: startedId,
-            environmentId: targetEnvironment._id,
-            appId: previous?.integrationId === startedId ? previous.appId : undefined,
-            isAzureSetupStarted: true,
-          }));
+          // A retry creates another app registration: forget the earlier client ID, so the app package
+          // waits for this attempt's.
+          setQuickSetupResult((previous) => {
+            const earlier = previous?.integrationId === startedId ? previous : undefined;
+
+            return {
+              integrationId: startedId,
+              environmentId: targetEnvironment._id,
+              staleAppId: earlier?.appId ?? earlier?.staleAppId,
+              isAzureSetupStarted: true,
+              azureSetupAttempt: (earlier?.azureSetupAttempt ?? 0) + 1,
+            };
+          });
         }
       } catch (error) {
         tab?.close();
