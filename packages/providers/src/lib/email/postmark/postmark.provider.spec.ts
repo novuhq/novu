@@ -132,6 +132,75 @@ test('should trigger postmark correctly with _passthrough', async () => {
   });
 });
 
+test('should send a Postmark-hosted template when _passthrough sets TemplateId', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const sendEmailSpy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => ({}));
+  const sendTemplateSpy = vi
+    .spyOn((provider as any).client, 'sendEmailWithTemplate')
+    .mockImplementation(async () => ({ MessageID: 'template-message-id', SubmittedAt: '2026-11-23T00:00:00Z' }));
+
+  const response = await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        TemplateId: 1234567,
+        TemplateModel: { firstName: 'Jane' },
+        MessageStream: 'outbound',
+      },
+    },
+  });
+
+  expect(sendEmailSpy).not.toHaveBeenCalled();
+  expect(sendTemplateSpy).toHaveBeenCalledWith({
+    From: mockConfig.from,
+    To: mockNovuMessage.to[0],
+    TemplateId: 1234567,
+    TemplateModel: { firstName: 'Jane' },
+    MessageStream: 'outbound',
+    Attachments: [
+      {
+        Name: 'test.txt',
+        Content: Buffer.from('test').toString('base64'),
+        ContentID: null,
+        ContentType: 'text/plain',
+      },
+    ],
+  });
+  expect(response.id).toBe('template-message-id');
+});
+
+test('should send a Postmark-hosted template by TemplateAlias with an empty TemplateModel by default', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const sendTemplateSpy = vi
+    .spyOn((provider as any).client, 'sendEmailWithTemplate')
+    .mockImplementation(async () => ({}));
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: { body: { TemplateAlias: 'welcome' } },
+  });
+
+  const sent = sendTemplateSpy.mock.calls[0][0] as Record<string, unknown>;
+  expect(sent.TemplateAlias).toBe('welcome');
+  expect(sent.TemplateModel).toEqual({});
+  expect(sent).not.toHaveProperty('HtmlBody');
+  expect(sent).not.toHaveProperty('TextBody');
+  expect(sent).not.toHaveProperty('Subject');
+});
+
+test('should keep using /email for passthrough without a template', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const sendEmailSpy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => ({}));
+  const sendTemplateSpy = vi.spyOn((provider as any).client, 'sendEmailWithTemplate');
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: { body: { MessageStream: 'broadcast', Tag: 'welcome' } },
+  });
+
+  expect(sendTemplateSpy).not.toHaveBeenCalled();
+  expect(sendEmailSpy).toHaveBeenCalledWith(
+    expect.objectContaining({ MessageStream: 'broadcast', Tag: 'welcome', Subject: mockNovuMessage.subject })
+  );
+});
+
 test('should get message ID', () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   expect(provider.getMessageId(mockMessage)).toEqual(['883953f4-6105-42a2-a16a-77a8eac79483']);
