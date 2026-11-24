@@ -9,21 +9,30 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
- * Cross-platform emoji name for resolved conversations (e.g. "check", "star"). Set to null to disable. Default: "check"
- */
-export type ReactionOnResolved = {};
-
-/**
- * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".
+ * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). "rule" requires a known subscriber and accessRule must evaluate truthy for every message, edit, delete, click and reaction; unknown senders, an invalid rule and an evaluation error are refused; a missing field evaluates as JSON Logic says. Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; self-hosted create defaults to "restricted".
  */
 export const SubscriberAccess = {
   Open: "open",
   Restricted: "restricted",
+  Rule: "rule",
 } as const;
 /**
- * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".
+ * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). "rule" requires a known subscriber and accessRule must evaluate truthy for every message, edit, delete, click and reaction; unknown senders, an invalid rule and an evaluation error are refused; a missing field evaluates as JSON Logic says. Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; self-hosted create defaults to "restricted".
  */
 export type SubscriberAccess = ClosedEnum<typeof SubscriberAccess>;
+
+/**
+ * How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. "auto_reply" replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. "smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else or another agent joins, or the incumbent @mentions another teammate. Create persists "smart". An omitted field on existing agents still means "auto_reply". DMs always reply without a mention. Optional on update (partial PATCH).
+ */
+export const ReplyPolicy = {
+  MentionOnly: "mention_only",
+  AutoReply: "auto_reply",
+  Smart: "smart",
+} as const;
+/**
+ * How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. "auto_reply" replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. "smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else or another agent joins, or the incumbent @mentions another teammate. Create persists "smart". An omitted field on existing agents still means "auto_reply". DMs always reply without a mention. Optional on update (partial PATCH).
+ */
+export type ReplyPolicy = ClosedEnum<typeof ReplyPolicy>;
 
 export type AgentBehaviorDto = {
   /**
@@ -33,45 +42,20 @@ export type AgentBehaviorDto = {
   /**
    * Cross-platform emoji name for resolved conversations (e.g. "check", "star"). Set to null to disable. Default: "check"
    */
-  reactionOnResolved?: ReactionOnResolved | null | undefined;
+  reactionOnResolved?: string | null | undefined;
   /**
-   * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".
+   * Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. "open" on managed agents auto-creates a lightweight subscriber so the agent can reply; on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. "restricted" rejects unknown senders with a managed denial reply (any runtime). "rule" requires a known subscriber and accessRule must evaluate truthy for every message, edit, delete, click and reaction; unknown senders, an invalid rule and an evaluation error are refused; a missing field evaluates as JSON Logic says. Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; self-hosted create defaults to "restricted".
    */
   subscriberAccess?: SubscriberAccess | undefined;
+  /**
+   * JSON Logic rule evaluated over subscriber.* and context.* when subscriberAccess is "rule". Present only when subscriberAccess is "rule". A missing field evaluates as JSON Logic says, so `null` is less than any positive number. "==" and "!=" compare strictly, without type coercion. At most 16 KB, with objects and arrays nested at most 32 levels deep.
+   */
+  accessRule?: { [k: string]: any } | undefined;
+  /**
+   * How the agent replies in shared rooms. "mention_only" requires an @mention in every shared room. "auto_reply" replies to unmentioned follow-ups in a nested Slack or Teams thread after the agent has joined. "smart" behaves like auto_reply while one person is talking to the agent in a thread, then requires an @mention there once someone else or another agent joins, or the incumbent @mentions another teammate. Create persists "smart". An omitted field on existing agents still means "auto_reply". DMs always reply without a mention. Optional on update (partial PATCH).
+   */
+  replyPolicy?: ReplyPolicy | undefined;
 };
-
-/** @internal */
-export const ReactionOnResolved$inboundSchema: z.ZodType<
-  ReactionOnResolved,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-/** @internal */
-export type ReactionOnResolved$Outbound = {};
-
-/** @internal */
-export const ReactionOnResolved$outboundSchema: z.ZodType<
-  ReactionOnResolved$Outbound,
-  z.ZodTypeDef,
-  ReactionOnResolved
-> = z.object({});
-
-export function reactionOnResolvedToJSON(
-  reactionOnResolved: ReactionOnResolved,
-): string {
-  return JSON.stringify(
-    ReactionOnResolved$outboundSchema.parse(reactionOnResolved),
-  );
-}
-export function reactionOnResolvedFromJSON(
-  jsonString: string,
-): SafeParseResult<ReactionOnResolved, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ReactionOnResolved$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ReactionOnResolved' from JSON`,
-  );
-}
 
 /** @internal */
 export const SubscriberAccess$inboundSchema: z.ZodNativeEnum<
@@ -83,21 +67,31 @@ export const SubscriberAccess$outboundSchema: z.ZodNativeEnum<
 > = SubscriberAccess$inboundSchema;
 
 /** @internal */
+export const ReplyPolicy$inboundSchema: z.ZodNativeEnum<typeof ReplyPolicy> = z
+  .nativeEnum(ReplyPolicy);
+/** @internal */
+export const ReplyPolicy$outboundSchema: z.ZodNativeEnum<typeof ReplyPolicy> =
+  ReplyPolicy$inboundSchema;
+
+/** @internal */
 export const AgentBehaviorDto$inboundSchema: z.ZodType<
   AgentBehaviorDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
   acknowledgeOnReceived: z.boolean().default(true),
-  reactionOnResolved: z.nullable(z.lazy(() => ReactionOnResolved$inboundSchema))
-    .optional(),
+  reactionOnResolved: z.nullable(z.string().default("check")),
   subscriberAccess: SubscriberAccess$inboundSchema.optional(),
+  accessRule: z.record(z.any()).optional(),
+  replyPolicy: ReplyPolicy$inboundSchema.default("auto_reply"),
 });
 /** @internal */
 export type AgentBehaviorDto$Outbound = {
   acknowledgeOnReceived: boolean;
-  reactionOnResolved?: ReactionOnResolved$Outbound | null | undefined;
+  reactionOnResolved: string | null;
   subscriberAccess?: string | undefined;
+  accessRule?: { [k: string]: any } | undefined;
+  replyPolicy: string;
 };
 
 /** @internal */
@@ -107,10 +101,10 @@ export const AgentBehaviorDto$outboundSchema: z.ZodType<
   AgentBehaviorDto
 > = z.object({
   acknowledgeOnReceived: z.boolean().default(true),
-  reactionOnResolved: z.nullable(
-    z.lazy(() => ReactionOnResolved$outboundSchema),
-  ).optional(),
+  reactionOnResolved: z.nullable(z.string().default("check")),
   subscriberAccess: SubscriberAccess$outboundSchema.optional(),
+  accessRule: z.record(z.any()).optional(),
+  replyPolicy: ReplyPolicy$outboundSchema.default("auto_reply"),
 });
 
 export function agentBehaviorDtoToJSON(

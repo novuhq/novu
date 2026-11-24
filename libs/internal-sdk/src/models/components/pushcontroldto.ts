@@ -3,9 +3,6 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type PushControlDto = {
   /**
@@ -22,16 +19,6 @@ export type PushControlDto = {
   body?: string | undefined;
 };
 
-/** @internal */
-export const PushControlDto$inboundSchema: z.ZodType<
-  PushControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string().optional(),
-  body: z.string().optional(),
-});
 /** @internal */
 export type PushControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
@@ -52,13 +39,4 @@ export const PushControlDto$outboundSchema: z.ZodType<
 
 export function pushControlDtoToJSON(pushControlDto: PushControlDto): string {
   return JSON.stringify(PushControlDto$outboundSchema.parse(pushControlDto));
-}
-export function pushControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<PushControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PushControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushControlDto' from JSON`,
-  );
 }

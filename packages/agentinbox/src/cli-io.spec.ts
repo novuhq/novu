@@ -1,6 +1,15 @@
 import { PassThrough } from 'node:stream';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { askOffering, pickTyped, readAnswer, readPick } from './cli-io';
+
+// Readline edits a line only on a terminal that isn't `dumb`, and CI runners report a dumb one.
+beforeEach(() => {
+  vi.stubEnv('TERM', 'xterm-256color');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 /** A terminal to type on, and everything `readAnswer` reports. */
 function terminal() {

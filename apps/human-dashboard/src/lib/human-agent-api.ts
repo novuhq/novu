@@ -8,6 +8,7 @@ import type { HumanAccount } from './human-account';
 import { isHumanApiNotFound } from './human-api-error';
 import { requestForAccount } from './human-api-key';
 import { type AgentLook, lookOf } from './look';
+import type { HostVia } from './onboarding';
 
 /** The relay agent `setup` creates; the claim keeps its identifier. */
 export const RELAY_AGENT_IDENTIFIER = 'human-relay';
@@ -43,7 +44,7 @@ export type RelayAgent = {
 };
 
 /** The first time a host showed the agent's card (`agent_card`, `agentinbox card`): when, how and which host. */
-export type CardShown = { at: string; via?: 'cli' | 'mcp'; host?: HostId };
+export type CardShown = { at: string; via?: HostVia; host?: HostId };
 
 type ApiAgent = Omit<
   RelayAgent,
@@ -182,7 +183,7 @@ export function cardShownOf(value: HumanApiAgent['cardShown'] | null | undefined
 
   return {
     at: value.at,
-    ...(value.via === 'cli' || value.via === 'mcp' ? { via: value.via } : {}),
+    ...(value.via === 'cli' || value.via === 'mcp' || value.via === 'plugin' ? { via: value.via } : {}),
     ...(isHostId(value.host) ? { host: value.host } : {}),
   };
 }

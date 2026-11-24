@@ -12,11 +12,6 @@ import {
 } from "./severitylevelenum.js";
 
 /**
- * Custom data associated with the workflow
- */
-export type SubscriptionPreferenceDtoData = {};
-
-/**
  * Workflow information if this is a template-level preference
  */
 export type SubscriptionPreferenceDtoWorkflow = {
@@ -43,9 +38,9 @@ export type SubscriptionPreferenceDtoWorkflow = {
   /**
    * Custom data associated with the workflow
    */
-  data?: SubscriptionPreferenceDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity: SeverityLevelEnum;
 };
@@ -70,23 +65,6 @@ export type SubscriptionPreferenceDto = {
 };
 
 /** @internal */
-export const SubscriptionPreferenceDtoData$inboundSchema: z.ZodType<
-  SubscriptionPreferenceDtoData,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-export function subscriptionPreferenceDtoDataFromJSON(
-  jsonString: string,
-): SafeParseResult<SubscriptionPreferenceDtoData, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SubscriptionPreferenceDtoData$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SubscriptionPreferenceDtoData' from JSON`,
-  );
-}
-
-/** @internal */
 export const SubscriptionPreferenceDtoWorkflow$inboundSchema: z.ZodType<
   SubscriptionPreferenceDtoWorkflow,
   z.ZodTypeDef,
@@ -97,7 +75,7 @@ export const SubscriptionPreferenceDtoWorkflow$inboundSchema: z.ZodType<
   name: z.string(),
   critical: z.boolean(),
   tags: z.array(z.string()).optional(),
-  data: z.lazy(() => SubscriptionPreferenceDtoData$inboundSchema).optional(),
+  data: z.record(z.any()).optional(),
   severity: SeverityLevelEnum$inboundSchema,
 });
 

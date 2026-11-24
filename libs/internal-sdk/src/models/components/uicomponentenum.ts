@@ -11,6 +11,7 @@ import { OpenEnum } from "../../types/enums.js";
  */
 export const UiComponentEnum = {
   EmailEditorSelect: "EMAIL_EDITOR_SELECT",
+  ChatEditorSelect: "CHAT_EDITOR_SELECT",
   LayoutSelect: "LAYOUT_SELECT",
   BlockEditor: "BLOCK_EDITOR",
   EmailBody: "EMAIL_BODY",
@@ -43,6 +44,7 @@ export const UiComponentEnum = {
   SmsBody: "SMS_BODY",
   ChatBody: "CHAT_BODY",
   PushBody: "PUSH_BODY",
+  ToolBody: "TOOL_BODY",
   PushSubject: "PUSH_SUBJECT",
   QueryEditor: "QUERY_EDITOR",
   Data: "DATA",

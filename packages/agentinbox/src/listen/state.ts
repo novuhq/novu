@@ -95,9 +95,13 @@ export interface ListenState {
   own: string[];
   /**
    * The host's session for each conversation, and the round it belongs to: once the conversation is resolved,
-   * its messages come with a later round, which starts a fresh session.
+   * its messages come with a later round, which starts a fresh session. `contact`: its runs aren't the operator's own
+   * (`contact-guard.ts`); `fullAccess`: they are a contact's with full access. A run of answers alone goes on as that.
    */
-  sessions: Record<string, { sessionId: string; round: number; lastRunAt: string }>;
+  sessions: Record<
+    string,
+    { sessionId: string; round: number; lastRunAt: string; contact?: boolean; fullAccess?: boolean }
+  >;
   /** When runs started within the last hour. */
   runs: string[];
   /**

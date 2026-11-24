@@ -1,5 +1,5 @@
 import { type Host, type HostId, hostOf } from '@/lib/hosts';
-import { NPX_CLI } from '@/lib/onboarding';
+import { type HostVia, NPX_CLI } from '@/lib/onboarding';
 
 /**
  * How the agent says hi, by the way its host came in: a chat app signed in (ChatGPT, Claude, Grok Bot), a coding
@@ -14,7 +14,7 @@ export const SAY_HI_PROMPT = 'Introduce yourself and share your agent card.';
 /** What the operator runs where the agent's commands run, after a CLI connection. */
 export const CARD_COMMAND = `${NPX_CLI} card`;
 
-export function sayHiWayOf(hostId: HostId, via: 'cli' | 'mcp' | null): SayHiWay {
+export function sayHiWayOf(hostId: HostId, via: HostVia | null): SayHiWay {
   if (via === 'cli') {
     return 'cli';
   }

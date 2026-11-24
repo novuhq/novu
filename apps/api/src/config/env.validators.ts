@@ -113,7 +113,7 @@ export const envValidators = {
   NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
   NOVU_TLS_CA_BASE64: str({ default: undefined }),
   NOVU_TLS_CA_FILE: str({ default: undefined }),
-  // Single-IP header the edge proxy overwrites, e.g. `cf-connecting-ip`. See getClientIp.
+  // Single-IP header the edge proxy overwrites. Novu Cloud defaults to `cf-connecting-ip`, empty opts out. See getClientIp.
   CLIENT_IP_HEADER: str({ default: undefined }),
   JWT_SECRET: str(),
   // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.

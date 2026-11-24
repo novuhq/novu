@@ -58,7 +58,12 @@ import {
   toStoredContent,
 } from '../../services/human-interaction-lifecycle';
 import { HumanKeylessCapService, isHumanBrowserLoginAvailable } from '../../services/human-keyless-cap.service';
-import { type HumanMessageCredits, HumanMessageQuotaService } from '../../services/human-message-quota.service';
+import { limitReachedNotice } from '../../services/human-message-limit-notice';
+import {
+  type HumanMessageCredits,
+  HumanMessageQuotaExceededException,
+  HumanMessageQuotaService,
+} from '../../services/human-message-quota.service';
 import { WHATSAPP_WINDOW_CLOSED, WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
@@ -165,12 +170,17 @@ export class CreateInteraction {
     }
   }
 
-  /** A new thread with each contact, or the one they already have on a channel with a single thread per person. */
+  /**
+   * A new thread with each contact, or the one they already have on a channel with a single thread per person. A
+   * notice about the message limit (`outsideLimit`) counts against neither the message limit nor the email limit,
+   * nor as the agent's message.
+   */
   private async sendToContacts(
     command: CreateInteractionCommand,
     agent: AgentEntity,
     recipients: ExplicitRecipient[],
-    title: string
+    title: string,
+    { outsideLimit = false }: { outsideLimit?: boolean } = {}
   ): Promise<InteractionResponseDto> {
     const subscriberIds = [...new Set(recipients.map((recipient) => recipient.subscriberId))];
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
@@ -192,17 +202,24 @@ export class CreateInteraction {
     let emailCapError: HttpException | undefined;
 
     try {
-      ({ credits, emailCapError } = await this.reserveEmailCredits(
-        command.organizationId,
-        emailCount,
-        emailCount < resolved.length
-      ));
+      if (outsideLimit) {
+        credits = this.inboxQuota.uncountedCredits(command.organizationId);
+      } else {
+        const emailOnly = emailCount === resolved.length;
+        // Every message of an email-only send is an email, so both limits run out together there. The message
+        // limit goes first: its refusal is the one that tells the operator.
+        if (emailOnly) {
+          messageCredits = await this.reserveMessageCredits(command, agent, resolved.length);
+        }
 
-      if (!isKeylessOrganization(command.organizationId)) {
-        // Capped email recipients are not delivered, so they stay out of this
-        // hold. Counting them would reject the other channels when one credit remains.
-        const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
-        messageCredits = await this.messageQuota.reserveCredits(command.organizationId, messageCount);
+        ({ credits, emailCapError } = await this.reserveEmailCredits(command.organizationId, emailCount, !emailOnly));
+
+        if (!emailOnly) {
+          // Capped email recipients are not delivered, so they stay out of this
+          // hold. Counting them would reject the other channels when one credit remains.
+          const messageCount = emailCapError ? resolved.length - emailCount : resolved.length;
+          messageCredits = await this.reserveMessageCredits(command, agent, messageCount);
+        }
       }
 
       const interaction = await this.humanInteractionRepository.create(
@@ -231,8 +248,10 @@ export class CreateInteraction {
       const delivered = credits ? await credits.run(deliver) : await deliver();
 
       // Each contact gets the message in a thread of their own, so each delivery is one message sent.
-      for (const { platform } of delivered.interaction.deliveries ?? []) {
-        this.trackMessageSent(command, agent, platform);
+      if (!outsideLimit) {
+        for (const { platform } of delivered.interaction.deliveries ?? []) {
+          this.trackMessageSent(command, agent, platform);
+        }
       }
 
       await this.activityRecorder.recordRequest(delivered.interaction);
@@ -425,10 +444,7 @@ export class CreateInteraction {
     }
 
     const integrationIdentifier = await this.inbox.resolveIntegrationIdentifier(scope, channel);
-    let messageCredits: HumanMessageCredits | undefined;
-    if (!isKeylessOrganization(command.organizationId)) {
-      messageCredits = await this.messageQuota.reserveCredits(command.organizationId, recipients.length);
-    }
+    const messageCredits = await this.reserveMessageCredits(command, agent, recipients.length);
 
     const threads: InteractionThreadDto[] = [];
     const reached = new Set<string>();
@@ -682,6 +698,70 @@ export class CreateInteraction {
       { userId: command.userId, organizationId: command.organizationId },
       { agentId: agent._id, type: command.kind, channel, source: command.analyticsSource }
     );
+  }
+
+  /**
+   * A message credit for each person the send reaches. Once the account has none left, the send is refused, and
+   * the operator hears it (`tellOperatorAboutLimit`): an agent that goes quiet would leave them guessing.
+   */
+  private async reserveMessageCredits(
+    command: CreateInteractionCommand,
+    agent: AgentEntity,
+    count: number
+  ): Promise<HumanMessageCredits | undefined> {
+    if (isKeylessOrganization(command.organizationId)) {
+      return undefined;
+    }
+
+    try {
+      return await this.messageQuota.reserveCredits(command.organizationId, count);
+    } catch (err) {
+      if (err instanceof HumanMessageQuotaExceededException) {
+        await this.tellOperatorAboutLimit(command, agent);
+      }
+
+      throw err;
+    }
+  }
+
+  /**
+   * Tells the agent's operator that the account ran out of messages: once in the day or month, about the window that
+   * ran out, from the agent whose send was refused, the way any message to them goes, and outside the limits. When it
+   * doesn't reach them, a refusal a few minutes later tries again. The refusal stands either way.
+   */
+  private async tellOperatorAboutLimit(command: CreateInteractionCommand, agent: AgentEntity): Promise<void> {
+    const usedUp = await this.messageQuota.claimLimitNotice(command.organizationId);
+    if (!usedUp) {
+      return;
+    }
+
+    try {
+      const operator = await this.humanContactRepository.findOperator(command.environmentId, agent._id);
+      if (!operator) {
+        return;
+      }
+
+      const title = limitReachedNotice(agent.name || agent.identifier, usedUp, new Date());
+      const notice = CreateInteractionCommand.create({
+        userId: command.userId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        kind: HumanInteractionKindEnum.TELL,
+        card: { title },
+        to: operator.subscriberId,
+        agentIdentifier: agent.identifier,
+      });
+
+      await this.sendToContacts(notice, agent, [{ subscriberId: operator.subscriberId }], title, {
+        outsideLimit: true,
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, organizationId: command.organizationId, agentId: agent._id },
+        'Failed to tell the operator that the message limit was reached'
+      );
+      await this.messageQuota.retryLimitNoticeLater(command.organizationId, usedUp);
+    }
   }
 
   /**

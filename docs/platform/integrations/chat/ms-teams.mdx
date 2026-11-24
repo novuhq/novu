@@ -11,7 +11,7 @@ You create and host a Microsoft Teams bot in your Azure environment, and your cu
 Once a customer connects their workspace, Novu establishes a secure channel connection using your bot's credentials. You then map specific destinations, whether the destinations involve public channels or individual users to channel endpoints, allowing Novu to route notifications dynamically to the correct tenant and conversation context.
 
 <Note>
-  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Use provider overrides when you need Teams-native payloads beyond the shared card model.
+  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Provider overrides apply only to messages sent to a [Workflows webhook](/platform/integrations/chat/ms-teams-workflows) endpoint. Messages that the bot sends to a channel or user endpoint use the Chat step content and ignore provider overrides.
 </Note>
 
 ## Choose a path
@@ -36,6 +36,17 @@ Once a customer connects their workspace, Novu establishes a secure channel conn
     Connect the same bot to a managed or custom-code agent.
   </Card>
 </Columns>
+
+## File attachments
+
+Novu does not upload files such as PDFs or CSVs to Microsoft Teams. A workflow notification is sent as plain text or as an Adaptive Card.
+
+In the Teams message format, `attachments` is the field that carries the Adaptive Card. It does not carry files.
+
+To share a file in a Teams notification:
+
+- **Link to the file.** Host the file yourself and add the URL to the message as a link or a link button.
+- **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or the `Image` element in a [Framework card](/framework/typescript/steps/chat#rich-card). The URL must be absolute and reachable by Teams.
 
 ## Agent conversations vs. workflow notifications
 

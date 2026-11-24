@@ -46,6 +46,7 @@ export function buildSubscribersNotificationsListQuery(
       limit: request.limit,
       after: request.after,
       offset: request.offset,
+      tags: request.tags,
       read: request.read,
       archived: request.archived,
       snoozed: request.snoozed,
@@ -86,6 +87,7 @@ export function queryKeySubscribersNotificationsList(
     limit?: number | undefined;
     after?: string | undefined;
     offset?: number | undefined;
+    tags?: Array<string> | undefined;
     read?: boolean | undefined;
     archived?: boolean | undefined;
     snoozed?: boolean | undefined;

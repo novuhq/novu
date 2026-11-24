@@ -22,6 +22,10 @@ export type TopicResponseDto = {
    */
   name?: string | undefined;
   /**
+   * Additional custom data associated with the topic
+   */
+  data?: { [k: string]: any } | undefined;
+  /**
    * The date the topic was created
    */
   createdAt?: string | undefined;
@@ -40,6 +44,7 @@ export const TopicResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   key: z.string(),
   name: z.string().optional(),
+  data: z.record(z.any()).optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 }).transform((v) => {

@@ -3,18 +3,13 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
   ActionDto,
-  ActionDto$inboundSchema,
   ActionDto$Outbound,
   ActionDto$outboundSchema,
 } from "./actiondto.js";
 import {
   RedirectDto,
-  RedirectDto$inboundSchema,
   RedirectDto$Outbound,
   RedirectDto$outboundSchema,
 } from "./redirectdto.js";
@@ -59,22 +54,6 @@ export type InAppControlDto = {
 };
 
 /** @internal */
-export const InAppControlDto$inboundSchema: z.ZodType<
-  InAppControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-  subject: z.string().optional(),
-  avatar: z.string().optional(),
-  primaryAction: ActionDto$inboundSchema.optional(),
-  secondaryAction: ActionDto$inboundSchema.optional(),
-  redirect: RedirectDto$inboundSchema.optional(),
-  disableOutputSanitization: z.boolean().default(false),
-  data: z.record(z.any()).optional(),
-});
-/** @internal */
 export type InAppControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
@@ -108,13 +87,4 @@ export function inAppControlDtoToJSON(
   inAppControlDto: InAppControlDto,
 ): string {
   return JSON.stringify(InAppControlDto$outboundSchema.parse(inAppControlDto));
-}
-export function inAppControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppControlDto' from JSON`,
-  );
 }

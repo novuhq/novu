@@ -29,12 +29,14 @@ export class Agents extends ClientSDK {
    */
   async create(
     createAgentRequestDto: components.CreateAgentRequestDto,
+    novuAnalyticsSource: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.AgentsControllerCreateAgentResponse> {
     return unwrapAsync(agentsCreate(
       this,
       createAgentRequestDto,
+      novuAnalyticsSource,
       idempotencyKey,
       options,
     ));
@@ -61,10 +63,9 @@ export class Agents extends ClientSDK {
    * Send an agent reply
    *
    * @remarks
-   * Send a message or side-effect into an existing agent conversation from your backend.
-   *
-   * Use this endpoint when you are not using `@novu/framework` (for example Python, Go, PHP, .NET, or Java SDKs),
-   * or when a server process outside the bridge needs to post into a live conversation.
+   * **Deprecated** — use `POST /v1/agents/events/ingest` (AgentEvent protocol).
+   * This route stays live for old `@novu/framework` and existing OpenAPI `sendReply` clients.
+   * Do not use it for new integrations.
    *
    * **Message actions**
    * - `reply` — markdown, interactive card, or tool-approval card (optional `files`)
@@ -84,6 +85,8 @@ export class Agents extends ClientSDK {
    *
    * Returns `{ data: { messageId, platformThreadId } }` when a reply or edit is delivered;
    * otherwise `{ data: null }`.
+   *
+   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   async sendReply(
     agentReplyPayloadDto: components.AgentReplyPayloadDto,
@@ -144,7 +147,7 @@ export class Agents extends ClientSDK {
    * Delete an agent
    *
    * @remarks
-   * Delete an agent by identifier and remove all agent-integration links. For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). By default only the Novu record is deleted and the provider agent is left intact.
+   * Delete an agent by identifier, remove all agent-integration links, and clear the agent assignment from any workflows that reference it. For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). By default only the Novu record is deleted and the provider agent is left intact.
    */
   async delete(
     identifier: string,

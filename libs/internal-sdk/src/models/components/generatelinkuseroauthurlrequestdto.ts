@@ -36,6 +36,10 @@ export type GenerateLinkUserOauthUrlRequestDto = {
     | { [k: string]: GenerateLinkUserOauthUrlRequestDtoContext2 | string }
     | undefined;
   /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment secret key (the same "Inbox with context" signing scheme). Required when the integration has HMAC validation enabled and the session did not already HMAC-verify the context, so the per-user link carries a trustworthy subscriber/tenant binding.
+   */
+  contextHash?: string | undefined;
+  /**
    * **Slack only**: User-level OAuth scopes for "Sign in with Slack". Defaults to: identity.basic. **Webex**: Optional Webex scopes for people/me; defaults to spark:people_read. **MS Teams**: ignored — uses delegated OpenID scopes (openid, profile, User.Read).
    */
   userScope?: Array<string> | undefined;
@@ -104,6 +108,7 @@ export type GenerateLinkUserOauthUrlRequestDto$Outbound = {
   context?: {
     [k: string]: GenerateLinkUserOauthUrlRequestDtoContext2$Outbound | string;
   } | undefined;
+  contextHash?: string | undefined;
   userScope?: Array<string> | undefined;
 };
 
@@ -122,6 +127,7 @@ export const GenerateLinkUserOauthUrlRequestDto$outboundSchema: z.ZodType<
       z.string(),
     ]),
   ).optional(),
+  contextHash: z.string().optional(),
   userScope: z.array(z.string()).optional(),
 });
 

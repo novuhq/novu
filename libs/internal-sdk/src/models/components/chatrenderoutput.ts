@@ -9,9 +9,13 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type ChatRenderOutput = {
   /**
-   * Body of the chat message
+   * Body of the chat message. Mutually exclusive with `card`.
    */
-  body: string;
+  body?: string | undefined;
+  /**
+   * Rich Chat: compiled provider-agnostic card DSL. Mutually exclusive with `body`.
+   */
+  card?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -20,7 +24,8 @@ export const ChatRenderOutput$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  body: z.string(),
+  body: z.string().optional(),
+  card: z.record(z.any()).optional(),
 });
 
 export function chatRenderOutputFromJSON(

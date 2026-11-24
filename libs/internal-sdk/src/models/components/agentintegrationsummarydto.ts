@@ -19,9 +19,6 @@ export type AgentIntegrationSummaryDto = {
   providerId: string;
   name: string;
   identifier: string;
-  /**
-   * Channel type through which the message is sent
-   */
   channel?: ChannelTypeEnum | undefined;
   active: boolean;
 };

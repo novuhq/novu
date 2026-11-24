@@ -37,10 +37,13 @@ export const HANDLE_MAX_LENGTH = 32;
 export const PLACEHOLDER_NAME = 'Your agent';
 export const PLACEHOLDER_HANDLE = 'your-agent';
 
-/** How a host reached the agent: the CLI in a terminal, or a connector in ChatGPT or Claude. */
-export type HostVia = 'cli' | 'mcp';
+/**
+ * How a host reached the agent: the CLI in a terminal, a connector in ChatGPT or Claude (the MCP server), or
+ * Agent Inbox's own plugin in Hermes's or OpenClaw's gateway.
+ */
+export type HostVia = 'cli' | 'mcp' | 'plugin';
 
-export const HOST_LABELS: Record<HostVia, string> = { cli: 'CLI', mcp: 'MCP' };
+export const HOST_LABELS: Record<HostVia, string> = { cli: 'CLI', mcp: 'MCP', plugin: 'Plugin' };
 
 /**
  * The address a name turns into: "Atlas Prime" becomes `atlas-prime`. Letters, digits and single

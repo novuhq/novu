@@ -11,6 +11,7 @@ import type {
   HostQuestion,
   HostSession,
   OpenOptions,
+  PermissionAnswer,
   PermissionOption,
   PermissionQuestion,
   SessionHandlers,
@@ -38,6 +39,13 @@ import {
   withAccount,
   within,
 } from './host-program';
+import {
+  contactConfigContent,
+  contactSessionRules,
+  decideOpenCodeCall,
+  type OpenCodeFolder,
+  readOpenCodeFolder,
+} from './opencode-folder';
 
 /** OpenCode's own install command for macOS and Linux, as its docs give it. */
 const INSTALL_COMMAND = 'curl -fsSL https://opencode.ai/install | bash';
@@ -46,8 +54,15 @@ const SETUP_DOCS_URL = 'https://opencode.ai/docs';
 
 export const OPENCODE_MISSING_HELP = `OpenCode isn’t installed on this computer, or isn’t on its PATH. Install it with \`${INSTALL_COMMAND}\` (or see ${SETUP_DOCS_URL}), then run this again.`;
 
-/** How long OpenCode may take to start its server and open the session, before it counts as stuck. */
-const OPEN_TIMEOUT_MS = 60_000;
+/**
+ * How long OpenCode may take to start its server and open the session, before it counts as stuck. OpenCode 2 sets up
+ * the folder on its first request, watching every folder above it and starting its plugins, which took it close to a
+ * minute on a busy Mac.
+ */
+const OPEN_TIMEOUT_MS = 120_000;
+
+/** How long the start waits to ask again while OpenCode still sets up the folder. */
+const SETTING_UP_RETRY_MS = 1_000;
 
 /** How long the check waits for each of OpenCode's commands. */
 const CHECK_TIMEOUT_MS = 30_000;
@@ -196,6 +211,8 @@ export interface Rule {
  *   experimental); without it, MCP tools are plain tools again. And on OpenCode 1 subagents
  *   (`task`): there a subagent keeps only the session's denies, so it would run commands without asking. OpenCode 2's
  *   keep the session's rules.
+ *
+ * A contact's session works by the folder's own rules instead (`opencode-folder.ts`).
  */
 export function sessionRules(major: 1 | 2, agentRules: readonly Rule[]): Rule[] {
   return [
@@ -399,6 +416,11 @@ export function sessionScope(always: readonly string[]): string {
     : `Allow for this session lets ${always.map((pattern) => `\`${pattern}\``).join(', ')} through until the session ends.`;
 }
 
+/** What the agent of a contact's run is told when the listener refuses a call of its: why, and not to look further. */
+function contactRefusal(why: string): string {
+  return `Refused, as ${why}. In a contact’s conversation only what this folder’s settings allow works, so don’t look for another way.`;
+}
+
 /** The files a request names: the path its tool was given, else what OpenCode asks for. */
 function filesOf(said: Record<string, unknown>, patterns: string[]): string[] {
   const path = stringOf(said.filepath) ?? stringOf(said.filePath) ?? stringOf(said.path);
@@ -518,6 +540,14 @@ class HttpError extends Error {
   ) {
     super(message);
   }
+}
+
+/**
+ * How OpenCode answers while it still sets up the folder: a 503 ("Location plugins did not finish activating"), or
+ * nothing before the request's own time runs out. Either way it goes on setting it up, so asking again gets there.
+ */
+function stillSettingUp(err: unknown): boolean {
+  return (err instanceof HttpError && err.status === 503) || (err instanceof Error && err.name === 'TimeoutError');
 }
 
 /** What differs between OpenCode 1's API and OpenCode 2's, besides how messages become turns. */
@@ -1376,6 +1406,8 @@ class OpenCodeSession implements HostSession {
    */
   private mcpServers: string[] = [];
   private mcpListing: Promise<void> = Promise.resolve();
+  /** In a contact's run, what the folder's own settings allow: the listener decides by it what OpenCode asks. */
+  private folder?: OpenCodeFolder;
   private stopping = false;
   private closing = false;
   private gone = false;
@@ -1484,8 +1516,14 @@ class OpenCodeSession implements HostSession {
       this.base = await this.serve(api);
       await this.listen(api);
       const call = this.call;
-      const [agentRules] = await Promise.all([api.agentRules(call), this.listMcpServers()]);
-      const rules = sessionRules(api.major, agentRules);
+      // One question at a time while OpenCode starts: asked its agents and its MCP servers together, OpenCode 2.2 can
+      // take a minute over both and answer neither in time; one after the other, it answers both in seconds.
+      const agentRules = await this.onceSetUp(() => api.agentRules(call));
+      await this.listMcpServers();
+      this.folder = this.options.contact
+        ? readOpenCodeFolder(this.options.project, api.major, homedir(), (this.options.env ?? process.env).INBOX_CONFIG)
+        : undefined;
+      const rules = this.folder ? contactSessionRules(api.major, this.folder) : sessionRules(api.major, agentRules);
       if (resume) {
         await api.resume(call, resume, rules);
       }
@@ -1508,6 +1546,20 @@ class OpenCodeSession implements HostSession {
       return false;
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  /** Asks OpenCode its first question again while it still sets up the folder, until the start's own time runs out. */
+  private async onceSetUp<T>(ask: () => Promise<T>): Promise<T> {
+    for (;;) {
+      try {
+        return await ask();
+      } catch (err) {
+        if (this.gone || this.closing || !stillSettingUp(err)) {
+          throw err;
+        }
+      }
+      await delay(SETTING_UP_RETRY_MS);
     }
   }
 
@@ -1556,10 +1608,17 @@ class OpenCodeSession implements HostSession {
     const env = Object.fromEntries(
       Object.entries(programEnv(this.options.env ?? process.env)).filter(([name]) => !SERVER_VARIABLES.includes(name))
     );
+    const { contact } = this.options;
     // OpenCode 1 lets its tools see the password too: a command that would use it asks the operator first, as any does.
+    // A contact's run gets its own conversation tools as an MCP server of the settings OpenCode takes from its
+    // environment.
     const child = spawn(this.options.program.command, [...this.options.program.args, ...api.serve], {
       cwd: this.options.project,
-      env: { ...env, [api.passwordVariable]: this.password },
+      env: {
+        ...env,
+        [api.passwordVariable]: this.password,
+        ...(contact ? { OPENCODE_CONFIG_CONTENT: contactConfigContent(api.major, contact.tools, env) } : {}),
+      },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     this.child = child;
@@ -1700,7 +1759,8 @@ class OpenCodeSession implements HostSession {
   /**
    * Puts a permission OpenCode asks for to the core, and answers OpenCode: `once`, `always` where it lasts only as
    * long as this server (OpenCode 1), or `reject` with the words the core has for the agent. Only a turn running asks;
-   * anything else is a question left over from a turn that stopped, and is denied.
+   * anything else is a question left over from a turn that stopped, and is denied. In a contact's run, what the
+   * folder's settings decide of files and commands (`decideOpenCodeCall`) is answered here, with no card.
    */
   private async onPermission(asked: Asked): Promise<void> {
     const api = this.api;
@@ -1719,7 +1779,8 @@ class OpenCodeSession implements HostSession {
       const answer =
         this.stopping || !this.turns?.working
           ? { optionId: DENY.id }
-          : await this.handlers.askPermission(question, controller.signal);
+          : (this.contactAnswer(api, asked, question) ??
+            (await this.handlers.askPermission(question, controller.signal)));
       if (controller.signal.aborted || this.gone || this.closing) {
         return;
       }
@@ -1736,6 +1797,32 @@ class OpenCodeSession implements HostSession {
     } finally {
       this.asking.delete(asked.id);
     }
+  }
+
+  /**
+   * In a contact's run, what the listener answers itself when OpenCode asks about files and commands, by the folder's
+   * own settings (`decideOpenCodeCall`): allowed, or refused and why. Undefined for what goes to a person.
+   */
+  private contactAnswer(api: OpenCodeApi, asked: Asked, question: PermissionQuestion): PermissionAnswer | undefined {
+    const verdict =
+      this.folder &&
+      decideOpenCodeCall(api.major, this.folder, {
+        name: asked.name,
+        patterns: asked.patterns,
+        input: (asked.callId && this.tools.get(asked.callId)?.input) || {},
+        metadata: asked.metadata,
+      });
+    if (verdict?.decision === 'allow') {
+      return { optionId: ALLOW_ONCE.id };
+    }
+    if (verdict?.decision !== 'deny') {
+      return undefined;
+    }
+
+    const why = verdict.why ?? 'the folder’s settings don’t allow it';
+    this.handlers.refused(question.subject, why);
+
+    return { optionId: DENY.id, message: contactRefusal(why) };
   }
 
   /**

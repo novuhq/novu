@@ -133,6 +133,7 @@ function open(
         told.lost.push({ error, sessionGone });
         losing.shift()?.();
       },
+      refused: () => undefined,
     }
   );
   const turn = () =>
@@ -808,6 +809,18 @@ describe('a session of OpenCode 2', { timeout: 15_000 }, () => {
     expect((await turn()).text).toBe('Used create_issue (once).');
     expect(told.asked[0]?.subject).toMatchObject({ kind: 'mcp', server: 'AgentInbox', tool: 'create_issue' });
     await session.close();
+  });
+
+  it('asks again while OpenCode still sets up the folder, and opens the session once it has', async () => {
+    vi.stubEnv('FAKE_OPENCODE_ACTIVATING', '2');
+    const { session, told, turn } = open();
+
+    session.send(message('m1', 'hello'));
+
+    expect(await turn()).toEqual({ inputIds: ['m1'], outcome: 'completed', text: 'Echo: hello' });
+    expect(logged('activating')).toHaveLength(2);
+    await session.close();
+    expect(told.lost).toEqual([]);
   });
 
   it('keeps the listener’s instructions with the session', async () => {

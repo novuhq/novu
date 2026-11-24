@@ -362,7 +362,7 @@
                                 }
                             ]
                         },
-                        "description": "Compares workflows and other resources between the source and target environments, returning detailed diff information including additions, modifications, and deletions."
+                        "description": "Compares workflows and other resources between the development and target environments, returning detailed diff information including additions, modifications, and deletions."
                     }
                 },
                 {
@@ -409,7 +409,7 @@
                                 }
                             ]
                         },
-                        "description": "Publishes all workflows and resources from the source environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes."
+                        "description": "Publishes all workflows and resources from the development environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes."
                     }
                 },
                 {
@@ -1465,7 +1465,7 @@
                                 }
                             ]
                         },
-                        "description": "Update a topic name by its unique key identifier **topicKey**"
+                        "description": "Update a topic name or data by its unique key identifier **topicKey**"
                     }
                 },
                 {
@@ -2071,7 +2071,343 @@
             "description": "All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system."
         },
         {
-            "name": "Channel Connections",
+            "name": "Agents",
+            "item": [
+                {
+                    "name": "Create an agent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Novu-Analytics-Source",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents"
+                            ]
+                        },
+                        "description": "Create an agent scoped to the current environment. The identifier must be unique per environment. Set `runtime` to `managed` and supply `managedRuntime` to provision a provider-hosted agent brain."
+                    }
+                },
+                {
+                    "name": "List all agents",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents"
+                            ],
+                            "query": [
+                                {
+                                    "key": "after",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "7991.59",
+                                    "type": "number"
+                                },
+                                {
+                                    "key": "orderDirection",
+                                    "value": "ASC",
+                                    "type": "enum"
+                                },
+                                {
+                                    "key": "orderBy",
+                                    "value": "<value>",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "includeCursor",
+                                    "value": false,
+                                    "type": "boolean"
+                                },
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Retrieve a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters."
+                    }
+                },
+                {
+                    "name": "Send an agent reply",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents/{agentId}/reply",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents",
+                                ":agentId",
+                                "reply"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "agentId",
+                                    "value": "support-agent",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "**Deprecated** — use `POST /v1/agents/events/ingest` (AgentEvent protocol).\nThis route stays live for old `@novu/framework` and existing OpenAPI `sendReply` clients.\nDo not use it for new integrations.\n\n**Message actions**\n- `reply` — markdown, interactive card, or tool-approval card (optional `files`)\n- `edit` — update a previously delivered message in place\n- `deleteMessages` — remove rendered platform messages (history is kept)\n- `addReactions` — add emoji reactions to existing messages\n\n**Turn control**\n- `typing` — `{ status?: string }` to set status, or `\"stop\"` to clear\n- `resolve` — mark the conversation resolved (optionally with a final reply)\n- `error: true` — report a customer-runtime failure (cannot combine with other actions)\n\n**Signals & tools**\n- `signals` — metadata set/delete/clear, or trigger a Novu workflow\n- `toolResults` — persist tool outputs into conversation history\n- `toolApprovalRequest` — ledger a gated tool call (pair with an approval card reply)\n\nReturns `{ data: { messageId, platformThreadId } }` when a reply or edit is delivered;\notherwise `{ data: null }`."
+                    }
+                },
+                {
+                    "name": "Retrieve an agent",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Retrieve an agent by its external identifier (not the internal MongoDB id)."
+                    }
+                },
+                {
+                    "name": "Update an agent",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents",
+                                ":identifier"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Update an agent by its external identifier."
+                    }
+                },
+                {
+                    "name": "Delete an agent",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents/{identifier}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents",
+                                ":identifier"
+                            ],
+                            "query": [
+                                {
+                                    "key": "deleteFromProvider",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Delete an agent by identifier, remove all agent-integration links, and clear the agent assignment from any workflows that reference it. For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). By default only the Novu record is deleted and the provider agent is left intact."
+                    }
+                },
+                {
+                    "name": "Update an agent bridge",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/agents/{identifier}/bridge",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "agents",
+                                ":identifier",
+                                "bridge"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "identifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Update the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments."
+                    }
+                }
+            ],
+            "description": "Agents are conversational assistants that receive inbound messages from connected channels and respond through a custom code bridge or a managed runtime provider."
+        },
+        {
+            "name": "ChannelConnections",
             "item": [
                 {
                     "name": "List all channel connections",
@@ -2111,12 +2447,12 @@
                                 },
                                 {
                                     "key": "limit",
-                                    "value": "7991.59",
+                                    "value": "1182.74",
                                     "type": "number"
                                 },
                                 {
                                     "key": "orderDirection",
-                                    "value": "ASC",
+                                    "value": "DESC",
                                     "type": "enum"
                                 },
                                 {
@@ -2126,7 +2462,7 @@
                                 },
                                 {
                                     "key": "includeCursor",
-                                    "value": false,
+                                    "value": true,
                                     "type": "boolean"
                                 },
                                 {
@@ -2135,13 +2471,18 @@
                                     "type": "string"
                                 },
                                 {
+                                    "key": "connectionMode",
+                                    "value": "shared",
+                                    "type": "enum"
+                                },
+                                {
                                     "key": "channel",
-                                    "value": "in_app",
+                                    "value": "chat",
                                     "type": "enum"
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "unifonic",
+                                    "value": "termii",
                                     "type": "enum"
                                 },
                                 {
@@ -2323,7 +2664,7 @@
             ]
         },
         {
-            "name": "Channel Endpoints",
+            "name": "ChannelEndpoints",
             "item": [
                 {
                     "name": "List all channel endpoints",
@@ -2363,7 +2704,7 @@
                                 },
                                 {
                                     "key": "limit",
-                                    "value": "1433.53",
+                                    "value": "2645.56",
                                     "type": "number"
                                 },
                                 {
@@ -2378,7 +2719,7 @@
                                 },
                                 {
                                     "key": "includeCursor",
-                                    "value": false,
+                                    "value": true,
                                     "type": "boolean"
                                 },
                                 {
@@ -2396,12 +2737,12 @@
                                 },
                                 {
                                     "key": "channel",
-                                    "value": "sms",
+                                    "value": "chat",
                                     "type": "enum"
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "nexmo",
+                                    "value": "emailjs",
                                     "type": "enum"
                                 },
                                 {
@@ -2620,12 +2961,12 @@
                                 },
                                 {
                                     "key": "limit",
-                                    "value": "7742.34",
+                                    "value": "6176.35",
                                     "type": "number"
                                 },
                                 {
                                     "key": "orderDirection",
-                                    "value": "ASC",
+                                    "value": "DESC",
                                     "type": "enum"
                                 },
                                 {
@@ -3504,7 +3845,7 @@
                                 "oauth"
                             ]
                         },
-                        "description": "Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). \n    The generated URL expires after 5 minutes."
+                        "description": "Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install, MS Teams admin consent, or Webex integration authorization).\n    The generated URL expires after 5 minutes."
                     }
                 },
                 {
@@ -3584,7 +3925,7 @@
                                 "oauth"
                             ]
                         },
-                        "description": "Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). \n    The generated URL expires after 5 minutes."
+                        "description": "Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).\n    The generated URL expires after 5 minutes."
                     }
                 },
                 {
@@ -3624,7 +3965,7 @@
                                 "oauth"
                             ]
                         },
-                        "description": "**Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.\n    Generate an OAuth URL for chat integrations like Slack and MS Teams. \n    This URL allows subscribers to authorize the integration, enabling the system to send messages \n    through their chat workspace. The generated URL expires after 5 minutes."
+                        "description": "**Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.\n    Generate an OAuth URL for chat integrations like Slack, MS Teams, and Webex.\n    This URL allows subscribers to authorize the integration, enabling the system to send messages \n    through their chat workspace. The generated URL expires after 5 minutes."
                     }
                 }
             ],
@@ -3661,7 +4002,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "in_app",
+                                    "value": "tool",
                                     "type": "enum"
                                 },
                                 {
@@ -3770,7 +4111,7 @@
                             "query": [
                                 {
                                     "key": "channel",
-                                    "value": "chat",
+                                    "value": "push",
                                     "type": "enum"
                                 }
                             ],

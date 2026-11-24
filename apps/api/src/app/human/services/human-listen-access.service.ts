@@ -4,8 +4,15 @@ import { isAgentProvisionedSubscriber } from '../../agents/conversation-runtime/
 import type { InboxRelayAgent, InboxScope } from './human-inbox.service';
 import { HumanOperatorService } from './human-operator.service';
 
-/** Someone the agent listens to: the operator, or a contact the operator turned "Listen to" on for. */
-export type ListenedPerson = { id: string; name?: string; isOperator: boolean };
+/**
+ * Someone the agent listens to: the operator, or a contact the operator turned "Listen to" on for. `fullAccess` is
+ * only ever set on a contact the operator also gave full access: their messages start the hosts with everything the
+ * operator's get, and the hosts ask them, not the operator.
+ */
+export type ListenedPerson = { id: string; name?: string; isOperator: boolean; fullAccess?: true };
+
+/** A contact with "Listen to" on, and whether they have full access too. */
+type ListenedContact = { subscriberId: string; fullAccess: boolean };
 
 /** Everyone the agent listens to right now, by subscriberId. */
 export type ListenedTo = ReadonlyMap<string, ListenedPerson>;
@@ -28,7 +35,7 @@ export class HumanListenAccessService {
   async whoIsListenedTo(scope: InboxScope, agent: Pick<InboxRelayAgent, '_id'>): Promise<ListenedTo> {
     const [operatorId, allowed] = await Promise.all([
       this.humanOperator.findForAgent({ ...scope, agentId: agent._id }),
-      this.humanContactRepository.findListenToSubscriberIds(scope.environmentId, agent._id),
+      this.humanContactRepository.findListenedTo(scope.environmentId, agent._id),
     ]);
 
     return this.contactsAmong(scope, operatorId, allowed);
@@ -49,14 +56,14 @@ export class HumanListenAccessService {
       this.humanOperator.findForAgent({ ...scope, agentId: agent._id }),
       this.humanContactRepository.find(
         { _environmentId: scope.environmentId, _agentId: agent._id, subscriberId: { $in: asked }, listenTo: true },
-        ['subscriberId']
+        ['subscriberId', 'fullAccess']
       ),
     ]);
 
     return this.contactsAmong(
       scope,
       operatorId && asked.includes(operatorId) ? operatorId : null,
-      rows.map((row) => row.subscriberId)
+      rows.map((row) => ({ subscriberId: row.subscriberId, fullAccess: row.fullAccess === true }))
     );
   }
 
@@ -64,16 +71,34 @@ export class HumanListenAccessService {
     return (await this.whichAreListenedTo(scope, agent, [subscriberId])).has(subscriberId);
   }
 
+  /** Whether the agent listens to them, and whether they have full access: both always for the operator. */
+  async switchesOf(
+    scope: InboxScope,
+    agent: Pick<InboxRelayAgent, '_id'>,
+    subscriberId: string
+  ): Promise<{ listenTo: boolean; fullAccess: boolean }> {
+    const person = (await this.whichAreListenedTo(scope, agent, [subscriberId])).get(subscriberId);
+
+    return { listenTo: person !== undefined, fullAccess: person?.isOperator === true || person?.fullAccess === true };
+  }
+
   /**
    * The operator and the allowed contacts that are still contacts: a subscriber the agent made up for someone
    * who wrote unasked is a stranger, whatever their switch says, and one that is gone can't write anymore.
    */
-  private async contactsAmong(scope: InboxScope, operatorId: string | null, allowed: string[]): Promise<ListenedTo> {
-    const ids = [...new Set([...(operatorId ? [operatorId] : []), ...allowed])];
+  private async contactsAmong(
+    scope: InboxScope,
+    operatorId: string | null,
+    allowed: ListenedContact[]
+  ): Promise<ListenedTo> {
+    const ids = [...new Set([...(operatorId ? [operatorId] : []), ...allowed.map((contact) => contact.subscriberId)])];
     if (ids.length === 0) {
       return new Map();
     }
 
+    const withFullAccess = new Set(
+      allowed.filter((contact) => contact.fullAccess).map((contact) => contact.subscriberId)
+    );
     const subscribers = await this.subscriberRepository.find(
       { _environmentId: scope.environmentId, _organizationId: scope.organizationId, subscriberId: { $in: ids } },
       'subscriberId firstName lastName data'
@@ -84,13 +109,16 @@ export class HumanListenAccessService {
         .filter((subscriber) => !isAgentProvisionedSubscriber(subscriber))
         .map((subscriber): [string, ListenedPerson] => {
           const name = [subscriber.firstName, subscriber.lastName].filter(Boolean).join(' ').trim();
+          const isOperator = subscriber.subscriberId === operatorId;
 
           return [
             subscriber.subscriberId,
             {
               id: subscriber.subscriberId,
               ...(name ? { name } : {}),
-              isOperator: subscriber.subscriberId === operatorId,
+              isOperator,
+              // The operator always has everything; the switch is for contacts only.
+              ...(!isOperator && withFullAccess.has(subscriber.subscriberId) ? { fullAccess: true as const } : {}),
             },
           ];
         })
