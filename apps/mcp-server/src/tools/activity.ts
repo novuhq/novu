@@ -47,10 +47,18 @@ const getWorkflowRunsSchema = z.object({
 		.array(z.enum(["in_app", "email", "sms", "chat", "push"]))
 		.optional()
 		.describe("Only runs with a step on one of these channels"),
+	contextKeys: z
+		.array(z.string())
+		.optional()
+		.describe("Only runs with all of these contexts, as type:id (e.g. tenant:acme)"),
 	createdAfter: isoDate("Only runs created at or after this ISO 8601 date"),
 	createdBefore: isoDate("Only runs created at or before this ISO 8601 date"),
 	cursor: z.string().optional().describe("next from the previous call, for the next page"),
 	limit: z.number().int().min(1).max(50).optional().describe("Runs to return (default 10)"),
+	severity: z
+		.array(z.enum(["high", "medium", "low", "none"]))
+		.optional()
+		.describe("Only runs of workflows with one of these severities"),
 	statuses: z
 		.array(z.enum(["processing", "completed", "error"]))
 		.optional()
@@ -58,6 +66,10 @@ const getWorkflowRunsSchema = z.object({
 			"Only runs with one of these statuses. A run with a failed step can stay processing, so to find failed runs omit this and check step statuses",
 		),
 	subscriberId: z.string().optional().describe("Only runs for this subscriberId"),
+	subscriptionId: z
+		.string()
+		.optional()
+		.describe("Only runs delivered through this topic subscription identifier"),
 	topicKey: z.string().optional().describe("Only runs triggered to this topic key"),
 	transactionId: z.string().optional().describe("Only runs of this trigger transactionId"),
 	workflowId: z
@@ -245,12 +257,15 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 
 			const query = NovuApiUtils.buildQueryParams({
 				channels: input.channels,
+				contextKeys: input.contextKeys,
 				createdGte: input.createdAfter,
 				createdLte: input.createdBefore,
 				cursor: input.cursor,
 				limit: input.limit ?? DEFAULT_RUNS_LIMIT,
+				severity: input.severity,
 				statuses: input.statuses,
 				subscriberIds: input.subscriberId,
+				subscriptionId: input.subscriptionId,
 				topicKey: input.topicKey,
 				transactionIds: input.transactionId,
 				workflowIds: workflow?.id,
@@ -268,10 +283,13 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 				dashboardPath: workflowRunsDashboardPath({ ...input, workflowId: workflow?.id }),
 				filters: {
 					channels: input.channels,
+					contextKeys: input.contextKeys,
 					createdAfter: input.createdAfter,
 					createdBefore: input.createdBefore,
+					severity: input.severity,
 					statuses: input.statuses,
 					subscriberId: input.subscriberId,
+					subscriptionId: input.subscriptionId,
 					topicKey: input.topicKey,
 					transactionId: input.transactionId,
 					workflowId: workflow?.id,

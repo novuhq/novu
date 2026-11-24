@@ -220,9 +220,12 @@ function toIsoDate(value: string | undefined): string | undefined {
 export function workflowRunsDashboardPath(
 	filters: {
 		channels?: string[];
+		contextKeys?: string[];
 		createdAfter?: string;
 		createdBefore?: string;
+		severity?: string[];
 		subscriberId?: string;
+		subscriptionId?: string;
 		topicKey?: string;
 		transactionId?: string;
 		workflowId?: string;
@@ -238,6 +241,10 @@ export function workflowRunsDashboardPath(
 		["channels", filters.channels?.join(",")],
 		["transactionId", filters.transactionId],
 		["topicKey", filters.topicKey],
+		["subscriptionId", filters.subscriptionId],
+		["severity", filters.severity?.join(",")],
+		// The page repeats this param, one per context.
+		...(filters.contextKeys ?? []).map((key): [string, string] => ["contextKeys", key]),
 		["dateRange", after ? "custom" : undefined],
 		["after", after],
 		["before", before],

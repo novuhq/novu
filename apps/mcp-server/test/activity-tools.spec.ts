@@ -198,6 +198,33 @@ describe("get_workflow_runs", () => {
 		});
 	});
 
+	it("filters and links by severity, context and subscription, as the page does", async () => {
+		const api = fakeApi(path("/v1/activity/workflow-runs", { data: [], next: null }));
+
+		const result = output(
+			await callTool(await client(), "get_workflow_runs", {
+				contextKeys: ["tenant:acme", "region:eu"],
+				severity: ["high", "none"],
+				subscriptionId: "sub_1",
+			}),
+		);
+
+		const query = api.urls[0].searchParams;
+		expect(query.getAll("contextKeys")).toEqual(["tenant:acme", "region:eu"]);
+		expect(query.getAll("severity")).toEqual(["high", "none"]);
+		expect(query.get("subscriptionId")).toBe("sub_1");
+		expect(result.filters).toEqual({
+			contextKeys: ["tenant:acme", "region:eu"],
+			severity: ["high", "none"],
+			subscriptionId: "sub_1",
+		});
+
+		const link = new URL(result.dashboardPath, "https://dashboard.test");
+		expect(link.searchParams.getAll("contextKeys")).toEqual(["tenant:acme", "region:eu"]);
+		expect(link.searchParams.get("severity")).toBe("high,none");
+		expect(link.searchParams.get("subscriptionId")).toBe("sub_1");
+	});
+
 	it("uses a database _id as is, so runs of a deleted workflow stay reachable", async () => {
 		const api = fakeApi(path("/v1/activity/workflow-runs", { data: [run()], next: null }));
 
