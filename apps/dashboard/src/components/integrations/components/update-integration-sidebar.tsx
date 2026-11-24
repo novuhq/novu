@@ -72,7 +72,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
       isOpened && integration
         ? { resource: { type: CopilotViewingResourceEnum.INTEGRATION, id: integration._id, label: integration.name } }
         : undefined,
-    overSheet: isOpened,
+    // Only once the sheet renders: it's null until the integration loads.
+    overSheet: isOpened && !!integration && !!provider,
   });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
