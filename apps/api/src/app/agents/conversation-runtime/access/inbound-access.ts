@@ -1,7 +1,10 @@
 import type { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
+import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { isSubscriberTokensEnabled } from '../../shared/assert-subscriber-tokens-enabled';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { evaluateAgentAccessRule } from '../../shared/util/agent-access-rule';
 import {
   SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
@@ -9,84 +12,87 @@ import {
 } from '../../shared/util/agent-inbound-replies';
 import type { AgentConversationService } from '../conversation/agent-conversation.service';
 import type { OutboundGateway } from '../egress/outbound.gateway';
+import { postUnresolvedSubscriberAccessReply } from '../reply/post-unresolved-subscriber-access-reply';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
-import { postUnresolvedSubscriberAccessReply } from './post-unresolved-subscriber-access-reply';
 
-export type AccessRuleRefusal = { kind: 'unresolved' } | { kind: 'denied' } | { kind: 'error'; reason: string };
+export type InboundRefusal = { kind: 'unresolved' } | { kind: 'denied' } | { kind: 'error'; reason: string };
 
-export type AccessRuleAdmission = { admitted: true } | { admitted: false; refusal: AccessRuleRefusal };
+export type InboundAccess =
+  | { verdict: 'admit' }
+  /** A managed open-access leftover with no subscriber: no reply and no dispatch. */
+  | { verdict: 'drop' }
+  | { verdict: 'refuse'; refusal: InboundRefusal };
 
-export type AccessRuleInput = Pick<
+export type InboundSender = Pick<
   ConversationTurn,
-  | 'agentId'
-  | 'config'
-  | 'conversation'
-  | 'event'
-  | 'subscriber'
-  | 'context'
-  | 'contextLookupFailed'
-  | 'subscriberResolution'
+  'subscriber' | 'context' | 'bridgeUrlOverride' | 'contextLookupFailed'
 >;
 
-export async function admitByAccessRule(
-  turn: AccessRuleInput,
-  deps: { logger: Pick<PinoLogger, 'warn'>; featureFlagsService: Pick<FeatureFlagsService, 'getFlag'> }
-): Promise<AccessRuleAdmission> {
-  if (turn.config.subscriberAccess !== AgentSubscriberAccessEnum.RULE) {
-    return { admitted: true };
+export async function decideInboundAccess(
+  input: {
+    event: AgentEventEnum;
+    config: ResolvedAgentConfig;
+    resolution: SubscriberResolution | undefined;
+    sender: InboundSender;
+    emailSenderUnverified: boolean;
+  },
+  featureFlagsService: Pick<FeatureFlagsService, 'getFlag'>
+): Promise<InboundAccess> {
+  const { config, resolution } = input;
+
+  if (config.subscriberAccess === AgentSubscriberAccessEnum.RULE) {
+    const refusal = await findRuleRefusal(input, featureFlagsService);
+
+    return refusal ? { verdict: 'refuse', refusal } : { verdict: 'admit' };
   }
 
-  const refusal = await findRefusal(turn, deps.featureFlagsService);
-  if (!refusal) {
-    return { admitted: true };
+  const isKeylessEmailDemo = config.isKeyless && config.platform === AgentPlatformEnum.EMAIL;
+  if (isKeylessEmailDemo || !resolution || resolution.outcome === 'resolved') {
+    return { verdict: 'admit' };
   }
 
-  deps.logger.warn(
-    {
-      agentId: turn.agentId,
-      environmentId: turn.config.environmentId,
-      platform: turn.config.platform,
-      conversationId: turn.conversation._id,
-      event: turn.event,
-      subscriberId: turn.subscriber?.subscriberId,
-      refusal: refusal.kind,
-      ...(refusal.kind === 'error' ? { reason: refusal.reason } : {}),
-    },
-    'Agent access rule refused inbound event'
-  );
+  if (
+    config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+    resolution.outcome === 'not_found' &&
+    !input.emailSenderUnverified
+  ) {
+    // A managed runtime needs a subscriber, and a denial in a shared group would only be noise.
+    return config.isManaged ? { verdict: 'drop' } : { verdict: 'admit' };
+  }
 
-  return { admitted: false, refusal };
+  return { verdict: 'refuse', refusal: { kind: 'unresolved' } };
 }
 
-async function findRefusal(
-  turn: AccessRuleInput,
+async function findRuleRefusal(
+  input: Parameters<typeof decideInboundAccess>[0],
   featureFlagsService: Pick<FeatureFlagsService, 'getFlag'>
-): Promise<AccessRuleRefusal | null> {
+): Promise<InboundRefusal | null> {
+  const { config, resolution, sender } = input;
   const tokensEnabled = await isSubscriberTokensEnabled({
     featureFlagsService,
-    organizationId: turn.config.organizationId,
-    environmentId: turn.config.environmentId,
+    organizationId: config.organizationId,
+    environmentId: config.environmentId,
   });
   if (!tokensEnabled) {
     return { kind: 'error', reason: 'subscriber tokens disabled' };
   }
 
-  if (turn.subscriberResolution && turn.subscriberResolution.outcome !== 'resolved') {
+  if (resolution && resolution.outcome !== 'resolved') {
     return { kind: 'unresolved' };
   }
 
-  if (turn.contextLookupFailed) {
+  if (sender.contextLookupFailed) {
     return { kind: 'error', reason: 'context lookup failed' };
   }
 
-  if (!turn.subscriber) {
+  if (!sender.subscriber) {
     return { kind: 'error', reason: 'subscriber missing' };
   }
 
-  const verdict = evaluateAgentAccessRule(turn.config.accessRule, {
-    subscriber: turn.subscriber,
-    context: turn.context,
+  const verdict = evaluateAgentAccessRule(config.accessRule, {
+    subscriber: sender.subscriber,
+    context: sender.context,
   });
 
   switch (verdict.outcome) {
@@ -99,18 +105,19 @@ async function findRefusal(
   }
 }
 
-/** Replies to a refused message, edit or click. A refused reaction or delete stays silent. */
-export async function postAccessRuleRefusal(
+/** Replies to a refused message, edit or click. A refused reaction or delete stays silent, and so does a silent caller. */
+export async function replyToRefusal(
   turn: ConversationTurn,
-  refusal: AccessRuleRefusal,
+  refusal: InboundRefusal,
   deps: {
     logger: Pick<PinoLogger, 'warn'>;
     outboundGateway: Pick<OutboundGateway, 'replyOnThread'>;
     conversationService: Pick<AgentConversationService, 'getPrimaryChannel'>;
-    emailSenderUnverified?: boolean;
+    emailSenderUnverified: boolean;
+    silent?: boolean;
   }
 ): Promise<void> {
-  if (!refusalSpeaks(turn.event)) {
+  if (deps.silent || !refusalSpeaks(turn.event)) {
     return;
   }
 
