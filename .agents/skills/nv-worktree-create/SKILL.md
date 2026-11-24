@@ -1,16 +1,17 @@
 ---
 name: nv-worktree-create
 description: >-
-  Create a sibling git worktree and a new branch with the same name, copy local
-  `.env` files, optionally initialize the enterprise submodule (`--enterprise`),
-  and move the agent into the worktree. Use when the user asks for a worktree,
-  parallel branch checkout, or `/worktree` with a branch name.
+  Create a git worktree under the repo's gitignored `.claude/worktrees/` folder
+  and a new branch with the same name, copy local `.env` files, optionally
+  initialize the enterprise submodule (`--enterprise`), and move the agent into
+  the worktree. Use when the user asks for a worktree, parallel branch checkout,
+  or `/worktree` with a branch name.
 disable-model-invocation: true
 ---
 
-# Create a sibling git worktree
+# Create a git worktree
 
-**Goal:** one name → new branch + sibling worktree at `../<name>`, ready to work in.
+**Goal:** one name → new branch + worktree at `<main-repo-root>/.claude/worktrees/<name>`, ready to work in. Claude Code enters worktrees in that folder without asking; it asks for approval on every entry to a path outside it, and no permission rule turns that off. The folder is gitignored.
 
 For git command details and path naming, read `nv-worktree-commands`. For cleanup, read `nv-worktree-cleanup`.
 
@@ -44,7 +45,7 @@ Use the name as-is for the git branch. Use the sanitized name for the directory 
 
 4. **Enterprise submodule** — **only with `--enterprise`**; otherwise skip and continue in OSS mode. From the worktree root (best-effort; do not block handoff):
    - Skip if `.source` already exists or is linked.
-   - Prefer linking an existing `packages-enterprise` clone before submodule init — same candidates as `.cursor/scripts/install.sh` (sibling `../packages-enterprise`, parent checkout `.source`, `/agent/repos/packages-enterprise`, etc.).
+   - Prefer linking an existing `packages-enterprise` clone before submodule init — same candidates as `.cursor/scripts/install.sh` (`<main-repo-root>/../packages-enterprise`, the main checkout's `.source`, `/agent/repos/packages-enterprise`, etc.). Resolve them from the main checkout, not from the worktree: `../` from the worktree points inside `.claude/worktrees/`.
    - Else configure HTTPS git fallback when SSH is unavailable, then shallow-init `.source` (matches `install.sh`):
      ```bash
      git config --global url."https://github.com/".insteadOf "git@github.com:"
@@ -57,9 +58,11 @@ Use the name as-is for the git branch. Use the sanitized name for the directory 
      ```
    - If enterprise setup fails, warn and continue in OSS mode — do not block the worktree. For troubleshooting, read `enterprise-submodule`.
 
-5. **Hand off** — `move_agent_to_root` with the absolute worktree path. Not `move_agent_to_cloned_root`.
+5. **Hand off** — move the agent into the absolute worktree path:
+   - Cursor: `move_agent_to_root`. Not `move_agent_to_cloned_root`.
+   - Claude Code: `EnterWorktree` with `path`.
 
-6. **Confirm** — branch name, worktree path, base ref, copied env files, enterprise submodule status (or "skipped").
+6. **Confirm** — branch name, worktree path, base ref, copied env files, enterprise submodule status (or "skipped"). Mention that until `pnpm install` runs in the worktree, Node and `npx` find packages in the main checkout's root `node_modules` (a parent folder), so commands can run with the main checkout's dependency versions instead of failing.
 
 ## Example
 
@@ -67,11 +70,11 @@ User: `/worktree branch=more-dcr-oauths`
 
 ```text
 Branch:     more-dcr-oauths
-Path:       ../more-dcr-oauths
-Command:    git worktree add -b more-dcr-oauths ../more-dcr-oauths
+Path:       .claude/worktrees/more-dcr-oauths
+Command:    git worktree add -b more-dcr-oauths .claude/worktrees/more-dcr-oauths
 ```
 
-Then copy `.env`, `move_agent_to_root`. Add `--enterprise` to also wire `.source` + `pnpm symlink:submodules`.
+Then copy `.env` and hand off (`move_agent_to_root` or `EnterWorktree`). Add `--enterprise` to also wire `.source` + `pnpm symlink:submodules`.
 
 ## Do not
 
