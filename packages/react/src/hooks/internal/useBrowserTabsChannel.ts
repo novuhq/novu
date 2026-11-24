@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useDataRef } from './useDataRef';
 
 export const useBrowserTabsChannel = <T = unknown>({
   channelName,
@@ -9,28 +10,33 @@ export const useBrowserTabsChannel = <T = unknown>({
   onMessage: (args: T) => void;
   enabled?: boolean;
 }) => {
-  const [tabsChannel] = useState(
-    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(channelName) : undefined
-  );
+  const tabsChannelRef = useRef<BroadcastChannel | undefined>(undefined);
+  const onMessageRef = useDataRef(onMessage);
 
-  const postMessage = (data: T) => {
-    if (!enabled) return;
-    tabsChannel?.postMessage(data);
-  };
-
+  // Follow channelName: when the provider swaps to another subscriber or context, events must go to that channel
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || typeof BroadcastChannel === 'undefined') return;
 
+    const tabsChannel = new BroadcastChannel(channelName);
     const listener = (event: MessageEvent<T>) => {
-      onMessage(event.data);
+      onMessageRef.current(event.data);
     };
 
-    tabsChannel?.addEventListener('message', listener);
+    tabsChannel.addEventListener('message', listener);
+    tabsChannelRef.current = tabsChannel;
 
     return () => {
-      tabsChannel?.removeEventListener('message', listener);
+      tabsChannel.removeEventListener('message', listener);
+      tabsChannel.close();
+      if (tabsChannelRef.current === tabsChannel) {
+        tabsChannelRef.current = undefined;
+      }
     };
-  }, [enabled]);
+  }, [enabled, channelName]);
+
+  const postMessage = (data: T) => {
+    tabsChannelRef.current?.postMessage(data);
+  };
 
   return { postMessage };
 };
