@@ -2,18 +2,10 @@
   "name": "@novu/ee-api",
   "sourceRoot": "enterprise/packages/api/src",
   "projectType": "library",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "{workspaceRoot}/.source/api/src/**/*", "sharedGlobals"]
+  },
   "targets": {
-    "build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

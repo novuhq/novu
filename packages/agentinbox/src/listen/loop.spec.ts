@@ -12,7 +12,7 @@ import { FakeApi } from './fake-api.fixture';
 import { anyOf, type ListenLoopOptions, type ListenTiming, type LoopEnd, runListenLoop } from './loop';
 import { opencode } from './opencode';
 import { type ListenConnection, type ListenState, memoryState, newState } from './state';
-import { connectionChangedMessage, KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
+import { ACCESS_CHANGED_REPLY, connectionChangedMessage, KEY_CHANGED_MESSAGE, STOPPED_REPLY } from './words';
 
 const FAKE_CLAUDE = fileURLToPath(new URL('./fake-claude.fixture.mjs', import.meta.url));
 const FAKE_CODEX = fileURLToPath(new URL('./fake-codex.fixture.mjs', import.meta.url));
@@ -62,6 +62,17 @@ async function asked(api: FakeApi, title: string): Promise<string> {
   let id: string | undefined;
   await eventually(() => {
     id = api.interactions.find((interaction) => interaction.card.title === title)?.id;
+    expect(id).toBeDefined();
+  });
+
+  return id as string;
+}
+
+/** The id of the first `approve` the listener sent, once it has. */
+async function approveCard(api: FakeApi): Promise<string> {
+  let id: string | undefined;
+  await eventually(() => {
+    id = api.interactions.find((interaction) => interaction.kind === 'approve')?.id;
     expect(id).toBeDefined();
   });
 
@@ -1443,7 +1454,7 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
 
     it('starts as the operator’s own run would, and asks Carol, in her chat, what its settings don’t allow', async () => {
       const { api, starts, logs } = await start();
-      api.decide = () => 'approved';
+      api.decide = () => ({ status: 'approved', by: CAROL });
 
       api.deliver({ text: 'ask:npm publish', from: CAROL });
 
@@ -1466,6 +1477,60 @@ describe('runListenLoop', { timeout: 20_000 }, () => {
       api.deliver({ text: 'ask:npm publish', from: CAROL });
 
       await eventually(() => expect(api.sentInto('conv_1')).toContain('Not allowed: Carol said no.'));
+    });
+
+    it('refuses Carol’s Allow once her full access is off, and stops the run', async () => {
+      const { api, logs } = await start();
+      // Her answer comes as the API gives it: with the switch as it is now.
+      api.decide = () => ({ status: 'approved', by: { ...CAROL, fullAccess: false } });
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain(ACCESS_CHANGED_REPLY));
+      expect(api.sentInto('conv_1')).not.toContain('Ran npm publish.');
+      expect(logs).toContainEqual(expect.stringMatching(/^conv_1: Carol has no full access any more, so denied: /));
+      expect(logs).toContain('conv_1: stopped (revoked).');
+      // Her own answer says it: nothing else is asked.
+      expect(api.calls.some((call) => call.path === '/v1/contacts/carol')).toBe(false);
+    });
+
+    it('asks Agent Inbox about an Allow found by looking, and takes it while Carol has full access', async () => {
+      const { api } = await start();
+      api.contacts.set('carol', { listenTo: true, fullAccess: true });
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+      api.answer(await approveCard(api), 'approved', true);
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Ran npm publish.'));
+      expect(api.calls.some((call) => call.path === '/v1/contacts/carol')).toBe(true);
+    });
+
+    it('refuses an Allow found by looking once Agent Inbox says Carol’s full access is off', async () => {
+      const { api, logs } = await start();
+      api.contacts.set('carol', { listenTo: true, fullAccess: false });
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+      api.answer(await approveCard(api), 'approved', true);
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain(ACCESS_CHANGED_REPLY));
+      expect(api.sentInto('conv_1')).not.toContain('Ran npm publish.');
+      expect(logs).toContain('conv_1: stopped (revoked).');
+    });
+
+    it('refuses an Allow when it can’t check Carol’s full access, and goes on with the run', async () => {
+      const { api, logs } = await start();
+
+      api.deliver({ text: 'ask:npm publish', from: CAROL });
+      // Someone else's answer, and Agent Inbox doesn't know Carol: nothing says she still has full access.
+      api.answer(await approveCard(api), 'approved', false, { id: 'dave', name: 'Dave', isOperator: false });
+
+      await eventually(() =>
+        expect(api.sentInto('conv_1')).toContain(
+          'Not allowed: Carol’s full access couldn’t be checked, so it isn’t allowed.'
+        )
+      );
+      expect(logs).toContainEqual(expect.stringMatching(/^conv_1: couldn’t check whether Carol has full access /));
+      expect(api.sentInto('conv_1')).not.toContain(ACCESS_CHANGED_REPLY);
     });
 
     it('is a contact’s run again once the switch is off, in a fresh session', async () => {
@@ -2060,6 +2125,20 @@ describe.each([
         type: 'local',
         command: expect.arrayContaining(['conversation-tools', '--conversation', 'conv_1']),
       });
+    });
+
+    // OpenCode 1 keeps a message that comes while a turn runs for a turn of its own, after it.
+    it.runIf(major === 1)('leaves its conversation open while a newer message waits for its answer', async () => {
+      const { api, logs } = await start({}, {}, undefined, opencodeOnly);
+
+      api.deliver({ text: 'call:this_conversation_resolve 1000', from: BEN });
+      await eventually(() => expect(api.calls.some((call) => call.path === '/v1/listen/typing')).toBe(true));
+      api.deliver({ text: 'one more thing', from: BEN });
+
+      await eventually(() => expect(api.sentInto('conv_1')).toContain('Echo: one more thing'));
+      expect(api.sentInto('conv_1')).toContain('Called this_conversation_resolve (rules).');
+      expect(logs).toContain('conv_1: not resolved, as a newer message waits for its answer.');
+      expect(api.calls.some((call) => call.path === '/v1/inbox/conv_1/resolve')).toBe(false);
     });
   });
 });

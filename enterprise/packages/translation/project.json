@@ -2,19 +2,10 @@
   "name": "@novu/ee-translation",
   "sourceRoot": "enterprise/packages/translation/src",
   "projectType": "library",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "{workspaceRoot}/.source/translation/src/**/*", "sharedGlobals"]
+  },
   "targets": {
-    "build": {
-      "cache": false,
-      "dependsOn": ["^build"],
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

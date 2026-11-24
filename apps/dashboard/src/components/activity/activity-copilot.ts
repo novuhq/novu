@@ -2,8 +2,11 @@ import { type CopilotViewing, CopilotViewingResourceEnum } from '@novu/shared';
 
 type ViewingFilters = NonNullable<CopilotViewing['filters']>;
 
-/** How a tab keeps a filter in its URL: one value per param, or a comma-separated list. */
-type FilterParamFormat = 'value' | 'list';
+/**
+ * How a tab keeps a filter in its URL: one value per param, a comma-separated list, or contexts, where an empty value
+ * is a filter of its own (runs without a context).
+ */
+type FilterParamFormat = 'value' | 'list' | 'contexts';
 
 /** The workflow-runs tab's filter params, as `use-activity-url-state.ts` writes them. */
 const WORKFLOW_RUNS_FILTER_PARAMS: Record<string, FilterParamFormat> = {
@@ -17,7 +20,7 @@ const WORKFLOW_RUNS_FILTER_PARAMS: Record<string, FilterParamFormat> = {
   after: 'value',
   before: 'value',
   severity: 'list',
-  contextKeys: 'value',
+  contextKeys: 'contexts',
 };
 
 /** The requests tab's filter params, as `use-logs-url-state.ts` writes them. */
@@ -46,7 +49,11 @@ function readViewingFilters(
       .map((value) => value.trim())
       .filter(Boolean);
 
-    if (values.length > 0) filters[param] = values.length === 1 ? values[0] : values;
+    if (values.length > 0) {
+      filters[param] = values.length === 1 ? values[0] : values;
+    } else if (format === 'contexts' && searchParams.has(param)) {
+      filters[param] = '';
+    }
   }
 
   return Object.keys(filters).length > 0 ? filters : undefined;

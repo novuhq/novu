@@ -76,14 +76,15 @@ export function mapTraceToResponseDto({
 }
 
 export function mapTraceToExecutionDetailDto(
-  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at' | 'event_type'>[]
+  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at' | 'event_type'>[],
+  includeRaw: boolean
 ): StepExecutionDetailDto[] {
   return traces.map((trace) => ({
     _id: trace.id,
     createdAt: new Date(`${trace.created_at} UTC`).toISOString(),
     status: mapTraceStatusToExecutionDetailsStatus(trace.status),
     detail: trace.title,
-    raw: trace.raw_data,
+    raw: includeRaw ? trace.raw_data : undefined,
     eventType: trace.event_type,
   }));
 }

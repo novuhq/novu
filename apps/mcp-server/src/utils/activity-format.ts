@@ -41,6 +41,8 @@ const UNSAFE_KEY =
 const CREDENTIAL_VALUE = /\b(Bearer|Basic|ApiKey|Token)\s+[\w\-.~+/=]+/gi;
 const LONG_TOKEN = /[A-Za-z0-9_\-+=]{40,}/g;
 const URL_IN_TEXT = /\bhttps?:\/\/[^\s"'<>]+/gi;
+// A failed context lookup on trigger appends the whole trigger context, data included, to its error message.
+const CONTEXT_SUFFIX = /\s*\| Context: [\s\S]*$/;
 /** A path segment that reads like an id or secret, such as the last parts of a chat webhook URL. */
 const SECRET_LIKE_SEGMENT = /^(?=[^/]*\d)(?=[^/]*[A-Za-z])[\w\-.~]{16,}$/;
 
@@ -91,6 +93,7 @@ function redactUrl(text: string): string {
 function scrub(value: string): string {
 	return truncate(
 		value
+			.replace(CONTEXT_SUFFIX, "")
 			.replace(URL_IN_TEXT, redactUrl)
 			.replace(CREDENTIAL_VALUE, "$1 [redacted]")
 			.replace(LONG_TOKEN, "[redacted]"),
@@ -151,7 +154,10 @@ function toExecutionDetail(detail: JsonRecord) {
 	return {
 		createdAt: asString(detail.createdAt),
 		detail: asString(detail.detail),
-		providerResponse: safeProviderResponse(detail.raw),
+		// Only a failure or warning carries a provider response; a success's raw can be the message itself.
+		providerResponse: ATTENTION_STATUSES.has(String(detail.status))
+			? safeProviderResponse(detail.raw)
+			: undefined,
 		status: asString(detail.status),
 	};
 }
@@ -199,7 +205,8 @@ const REQUESTS_PATH = "/activity/requests";
 function toDashboardPath(path: string, params: [string, string | undefined][]): string {
 	const search = new URLSearchParams();
 	for (const [key, value] of params) {
-		if (value) search.append(key, value);
+		// An empty `contextKeys` is a filter of its own: runs without a context.
+		if (value || (key === "contextKeys" && value === "")) search.append(key, value);
 	}
 	const query = search.toString();
 

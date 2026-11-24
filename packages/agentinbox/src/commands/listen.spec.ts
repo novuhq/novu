@@ -523,7 +523,7 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     await expect(listenOn('hermes', {}, listener)).rejects.toThrow(
       [
         'Hermes listens in its own gateway, with Agent Inbox’s plugin for it. On the computer Hermes runs on:',
-        '  hermes plugins install agentinboxhq/hermes-plugin --enable',
+        '  hermes plugins install agentinbox --enable',
         '  hermes agentinbox setup <agent> --code <code>',
         '  hermes gateway restart',
         'The code is a one-time code from agentinbox.md: Configure › Connect another agent.',
@@ -538,9 +538,7 @@ describe('listen <host>', { timeout: 20_000 }, () => {
     await expect(listenOn('openclaw', {}, agent)).rejects.toThrow(
       '  openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities\n'
     );
-    await expect(listenOn('hermes', {}, agent)).rejects.toThrow(
-      '  hermes plugins install agentinboxhq/hermes-plugin --enable\n'
-    );
+    await expect(listenOn('hermes', {}, agent)).rejects.toThrow('  hermes plugins install agentinbox --enable\n');
   });
 
   it('needs the computer connected first', async () => {

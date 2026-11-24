@@ -3,6 +3,7 @@ import {
   type CreateInteractionInput,
   cancelInteraction,
   createInteraction,
+  getContact,
   getInteraction,
   type Interaction,
 } from '../api/agent-inbox';
@@ -51,6 +52,7 @@ import {
 } from './state';
 import { Typing } from './typing';
 import {
+  ACCESS_CHANGED_REPLY,
   clipCard,
   connectionChangedMessage,
   hostInstructions,
@@ -186,8 +188,11 @@ interface ActiveRun {
   lookingUp: boolean;
   /** The conversation's latest message before the host's turn: whatever the agent sent after it is the host's. */
   watermark?: string;
-  /** Why the run stops before its work is done: `access` when a message came with less access than it has. */
-  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown' | 'access';
+  /**
+   * Why the run stops before its work is done: `access` when a message came with less access than it has, `revoked`
+   * when a full-access contact's Allow came after their full access was turned off.
+   */
+  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown' | 'access' | 'revoked';
   /** Nothing more joins: the run is winding down. */
   closing: boolean;
   /** What the turns that failed said. */
@@ -199,13 +204,16 @@ interface ActiveRun {
   finish?: (outcome: RunOutcome) => void;
 }
 
-/** What became of a question: the answer, or why there is none. */
+/** What became of a question: the answer, and who gave it when it came with the messages, or why there is none. */
 type QuestionOutcome =
-  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string }
+  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string; by?: ListenMessage['from'] }
   | { status: 'unanswered' | 'withdrawn' };
 
 /** The answer to one of the listener's own questions, as it came with the messages. */
 type StreamAnswer = NonNullable<ListenMessage['answer']>;
+
+/** An answer as the listener found it: with the messages, and then who gave it, or by a lookup, which doesn't say. */
+type FoundAnswer = { status: string; optionId?: string; text?: string; by?: ListenMessage['from'] };
 
 /**
  * Keeps an agent listening on this computer until it is stopped: holds the lease, waits for messages, starts the
@@ -223,7 +231,7 @@ class ListenLoop {
   private readonly log: (line: string) => void;
   private readonly abort = new AbortController();
   /** The listener's own questions waiting for an answer, which the messages may bring before a lookup does. */
-  private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
+  private readonly questions = new Map<string, (answer: StreamAnswer, by: ListenMessage['from']) => void>();
   /** Answers to the host's questions being looked up: whatever else needs one waits for that look. */
   private readonly lookups = new Map<string, Promise<boolean>>();
   /** The runs going on, by conversation: never two for one, and at most `runsAtOnce` of them. */
@@ -487,7 +495,7 @@ class ListenLoop {
         // An answer to the listener's own question: it settles the question, and starts nothing.
         this.markHandled(message);
         if (message.answer) {
-          this.questions.get(message.answersMessageId)?.(message.answer);
+          this.questions.get(message.answersMessageId)?.(message.answer, message.from);
         }
         continue;
       }
@@ -1020,13 +1028,19 @@ class ListenLoop {
     }
     if (active.resolveAsked && turn.outcome === 'completed') {
       // After its reply, and only once it is out: a message into a resolved conversation would open it again, and an
-      // answer that never went out would leave it resolved with no answer.
+      // answer that never went out would leave it resolved with no answer. Nor while a newer message waits for its
+      // answer, in the session or for the next run: its turn may ask again.
       active.resolveAsked = false;
-      active.replies = delivered.then((out) =>
-        out
-          ? this.resolveAsAsked(active)
-          : this.log(`${active.conversationId}: not resolved, as the agent’s reply didn’t go out.`)
-      );
+      const newer = active.pending.size > 0;
+      active.replies = delivered.then(async (out) => {
+        if (!out) {
+          this.log(`${active.conversationId}: not resolved, as the agent’s reply didn’t go out.`);
+        } else if (newer || this.state.queue.some((message) => message.conversationId === active.conversationId)) {
+          this.log(`${active.conversationId}: not resolved, as a newer message waits for its answer.`);
+        } else {
+          await this.resolveAsAsked(active);
+        }
+      });
     }
 
     if (active.pending.size === 0 && !active.closing) {
@@ -1059,6 +1073,8 @@ class ListenLoop {
         await this.reply(active.conversationId, STOPPED_REPLY);
       } else if (active.stopping === 'limit') {
         await this.reply(active.conversationId, runLimitReply(this.state.limits.maxRunSeconds));
+      } else if (active.stopping === 'revoked') {
+        await this.reply(active.conversationId, ACCESS_CHANGED_REPLY);
       }
 
       return;
@@ -1442,12 +1458,53 @@ class ListenLoop {
       await this.withdraw(interaction.id);
     }
 
+    if (fullAccess && outcome.status === 'approved') {
+      const still = await this.hasFullAccessNow(active, outcome.by);
+      if (still === undefined) {
+        // Not knowing is a no, for this Allow: the run goes on, and asks again about what comes next.
+        return { optionId: deny.id, message: `${decider}’s full access couldn’t be checked, so it isn’t allowed.` };
+      }
+      if (!still) {
+        // Their switch went off while the card waited: their Allow doesn't count, and the run, which has everything
+        // the operator's runs get, stops. Their next message starts one with less.
+        this.log(`${active.conversationId}: ${asked} has no full access any more, so denied: ${action}`);
+        void this.stopRun(active, 'revoked');
+
+        return { optionId: deny.id, message: `${decider} has no full access any more, so it isn’t allowed.` };
+      }
+    }
+
     return permissionAnswer(
       outcome,
       { allowOnce: allowOnce.id, allowSession: allowSession?.id, deny: deny.id },
       decider,
       timeoutSeconds
     );
+  }
+
+  /**
+   * Whether the contact of a full-access run still has full access, as their Allow needs: their own answer says, as
+   * Agent Inbox gave it with the messages, or else Agent Inbox does when asked now. Undefined when that fails.
+   */
+  private async hasFullAccessNow(
+    active: ActiveRun,
+    by: ListenMessage['from'] | undefined
+  ): Promise<boolean | undefined> {
+    const contact = active.startedWith.from;
+    if (by && by.id === contact.id && !by.isOperator) {
+      return by.fullAccess === true;
+    }
+
+    try {
+      return (await getContact(this.options.client, contact.id, this.options.agentIdentifier)).fullAccess === true;
+    } catch (err) {
+      this.log(
+        `${active.conversationId}: couldn’t check whether ${startedBy(active.startedWith)} has full access (${describeError(err)}).`
+      );
+      await this.onErrorDuringRun(err);
+
+      return undefined;
+    }
   }
 
   /**
@@ -1501,10 +1558,10 @@ class ListenLoop {
   /** Waits for an answer to one of the listener's questions: as it comes with the messages, or as a lookup finds it. */
   private async waitForAnswer(id: string, signal: AbortSignal): Promise<QuestionOutcome> {
     const deadline = Date.now() + this.timing.questionTimeoutMs;
-    let streamed: StreamAnswer | undefined;
+    let streamed: FoundAnswer | undefined;
     const nudge = new AbortController();
-    this.questions.set(id, (answer) => {
-      streamed = answer;
+    this.questions.set(id, (answer, by) => {
+      streamed = { status: answer.status, optionId: answer.optionId, text: answer.text, by };
       nudge.abort();
     });
     // One for the whole wait: each look at the answer waits on it, and adds nothing to the listener's own signal.
@@ -1516,12 +1573,10 @@ class ListenLoop {
           return { status: 'withdrawn' };
         }
 
-        const found = streamed
-          ? { status: streamed.status, optionId: streamed.optionId, text: streamed.text }
-          : await this.lookUp(id);
+        const found = streamed ?? (await this.lookUp(id));
         if (found && found.status !== 'pending') {
           return found.status === 'approved' || found.status === 'denied' || found.status === 'answered'
-            ? { status: found.status, optionId: found.optionId, text: found.text }
+            ? { status: found.status, optionId: found.optionId, text: found.text, by: found.by }
             : // Expired or canceled: no answer.
               { status: 'unanswered' };
         }
@@ -1537,7 +1592,7 @@ class ListenLoop {
     }
   }
 
-  private async lookUp(id: string): Promise<{ status: string; optionId?: string; text?: string } | undefined> {
+  private async lookUp(id: string): Promise<FoundAnswer | undefined> {
     try {
       const interaction = await getInteraction(this.options.client, id);
 

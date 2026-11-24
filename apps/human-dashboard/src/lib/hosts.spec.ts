@@ -279,7 +279,7 @@ describe('the Markdown for agents', () => {
     expect(hostMarkdown(hostOf('hermes'))).toContain(
       '# 2. Sign in to Agent Inbox in the browser, and say yes when Hermes asks to enable the tools'
     );
-    expect(hostMarkdown(hostOf('hermes'))).toContain('$ hermes plugins install agentinboxhq/hermes-plugin --enable');
+    expect(hostMarkdown(hostOf('hermes'))).toContain('$ hermes plugins install agentinbox --enable');
     expect(hostMarkdown(hostOf('hermes'))).toContain('ask your operator to run `hermes gateway restart`');
     expect(hostMarkdown(hostOf('openclaw'))).toContain(
       '$ openclaw mcp add AgentInbox --url https://mcp.agentinbox.md --transport streamable-http --auth oauth'

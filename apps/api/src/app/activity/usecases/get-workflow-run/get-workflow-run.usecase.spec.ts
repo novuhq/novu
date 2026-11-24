@@ -11,6 +11,7 @@ describe('GetWorkflowRun', () => {
     organizationId: 'organization-id',
     userId: 'user-id',
     workflowRunId: 'workflow-run-id',
+    includeRawTraces: true,
   });
 
   function workflowRunRow(overrides: Record<string, unknown> = {}) {
@@ -58,10 +59,14 @@ describe('GetWorkflowRun', () => {
     };
   }
 
-  function buildUsecase(workflowRun: Record<string, unknown>, stepRuns: Record<string, unknown>[]) {
+  function buildUsecase(
+    workflowRun: Record<string, unknown>,
+    stepRuns: Record<string, unknown>[],
+    traces: Record<string, unknown>[] = []
+  ) {
     const workflowRunRepository = { findOne: stub().resolves({ data: workflowRun }) };
     const stepRunRepository = { find: stub().resolves({ data: stepRuns }) };
-    const traceLogRepository = { find: stub().resolves({ data: [] }) };
+    const traceLogRepository = { find: stub().resolves({ data: traces }) };
     const jobRepository = { find: stub().resolves([]) };
     const notificationRepository = { findOne: stub().resolves({ overrides: { email: { from: 'a@b.c' } } }) };
     const logger = { setContext: stub(), debug: stub(), warn: stub(), error: stub() };
@@ -89,6 +94,27 @@ describe('GetWorkflowRun', () => {
       providerId: 'sendgrid',
       status: 'failed',
     });
+  });
+
+  it('keeps raw provider traces only when the caller may read them', async () => {
+    const trace = {
+      entity_id: 'step-run-id',
+      id: 'trace-1',
+      status: 'error',
+      title: 'Message sending failed',
+      raw_data: '{"config":{"headers":{"api-key":"provider-secret"}}}',
+      created_at: '2026-11-20 10:00:00.500',
+      event_type: 'message_sending_failed',
+    };
+    const usecase = buildUsecase(workflowRunRow(), [stepRunRow()], [trace]);
+
+    const withRaw = await usecase.execute(command);
+    const withoutRaw = await usecase.execute(
+      Object.assign(new GetWorkflowRunCommand(), command, { includeRawTraces: false })
+    );
+
+    expect(withRaw.steps[0].executionDetails[0].raw).to.equal(trace.raw_data);
+    expect(withoutRaw.steps[0].executionDetails[0]).to.include({ detail: 'Message sending failed', raw: undefined });
   });
 
   it('leaves the error fields out of a step that recorded none', async () => {
