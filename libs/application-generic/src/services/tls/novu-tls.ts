@@ -21,14 +21,20 @@ export interface NovuTlsConfig {
   passphrase?: string;
 }
 
+/** The two variables each PEM blob can come from, spelled out so searches and the env reference find them. */
+const MATERIAL_VARIABLES = {
+  NOVU_TLS_CERT: ['NOVU_TLS_CERT_BASE64', 'NOVU_TLS_CERT_FILE'],
+  NOVU_TLS_KEY: ['NOVU_TLS_KEY_BASE64', 'NOVU_TLS_KEY_FILE'],
+  NOVU_TLS_CA: ['NOVU_TLS_CA_BASE64', 'NOVU_TLS_CA_FILE'],
+} as const;
+
 /**
  * Reads one PEM blob from either `<prefix>_BASE64` or `<prefix>_FILE`. Requiring
  * exactly one of the two keeps a stale leftover variable from silently shadowing
  * the value the operator actually meant to use.
  */
-function readMaterial(variablePrefix: 'NOVU_TLS_CERT' | 'NOVU_TLS_KEY' | 'NOVU_TLS_CA'): string {
-  const base64Variable = `${variablePrefix}_BASE64` as const;
-  const fileVariable = `${variablePrefix}_FILE` as const;
+function readMaterial(variablePrefix: keyof typeof MATERIAL_VARIABLES): string {
+  const [base64Variable, fileVariable] = MATERIAL_VARIABLES[variablePrefix];
   const base64Value = env[base64Variable]?.trim();
   const fileValue = env[fileVariable]?.trim();
 

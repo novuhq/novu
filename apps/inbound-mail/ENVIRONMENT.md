@@ -120,11 +120,11 @@ To regenerate after changing a schema or a read, run the spec with `UPDATE_ENV_R
 | `NOVU_SMS_INTEGRATION_TOKEN` | Twilio auth token behind the built-in Novu SMS integration. | string |  |  | shared | `@novu/application-generic` |
 | `NOVU_TLS_CA_BASE64` | Private CA as base64 PEM, trusted only for calls to Novu itself. Set this or NOVU_TLS_CA_FILE when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
 | `NOVU_TLS_CA_FILE` | Path to the private CA PEM. Set this or NOVU_TLS_CA_BASE64 when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
-| `NOVU_TLS_CERT_BASE64` | TLS certificate as base64 PEM. Set this or NOVU_TLS_CERT_FILE when NOVU_TLS_ENABLED is on. | string |  |  | shared |  |
-| `NOVU_TLS_CERT_FILE` | Path to the TLS certificate PEM. Set this or NOVU_TLS_CERT_BASE64 when NOVU_TLS_ENABLED is on. | string |  |  | shared |  |
+| `NOVU_TLS_CERT_BASE64` | TLS certificate as base64 PEM. Set this or NOVU_TLS_CERT_FILE when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
+| `NOVU_TLS_CERT_FILE` | Path to the TLS certificate PEM. Set this or NOVU_TLS_CERT_BASE64 when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
 | `NOVU_TLS_ENABLED` | Serves HTTPS when "true", "1" or "yes". Enterprise self-hosted only. Kept as a string because those three values all count. | boolean |  |  | shared | `@novu/application-generic` |
-| `NOVU_TLS_KEY_BASE64` | TLS private key as base64 PEM. Set this or NOVU_TLS_KEY_FILE when NOVU_TLS_ENABLED is on. | string |  |  | shared |  |
-| `NOVU_TLS_KEY_FILE` | Path to the TLS private key PEM. Set this or NOVU_TLS_KEY_BASE64 when NOVU_TLS_ENABLED is on. | string |  |  | shared |  |
+| `NOVU_TLS_KEY_BASE64` | TLS private key as base64 PEM. Set this or NOVU_TLS_KEY_FILE when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
+| `NOVU_TLS_KEY_FILE` | Path to the TLS private key PEM. Set this or NOVU_TLS_KEY_BASE64 when NOVU_TLS_ENABLED is on. | string |  |  | shared | `@novu/application-generic` |
 | `NOVU_TLS_KEY_PASSPHRASE` | Passphrase of the TLS private key, if it has one. | string |  |  | shared | `@novu/application-generic` |
 | `OTEL_CAPTURE_DB_STATEMENTS` | Records database statements in OpenTelemetry spans. | boolean | `false` |  | shared | `@novu/application-generic` |
 | `OTEL_DISABLE_PROMETHEUS` | Skips the Prometheus scrape endpoint that runs next to the OTLP metrics exporter. | boolean | `false` |  | shared | `@novu/application-generic` |
