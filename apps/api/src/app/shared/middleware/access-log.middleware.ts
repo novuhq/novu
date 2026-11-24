@@ -130,8 +130,11 @@ function hasAccessLog(req: AccessLogRequest): boolean {
     return true;
   }
 
+  // Express answers HEAD with the GET handler, so an uptime check with HEAD matches the GET entry.
+  const method = req.method === 'HEAD' ? 'GET' : req.method;
+
   return (
-    !REQUESTS_WITHOUT_ACCESS_LOG.has(`${req.method} ${route}`) &&
+    !REQUESTS_WITHOUT_ACCESS_LOG.has(`${method} ${route}`) &&
     !ROUTE_PREFIXES_WITHOUT_ACCESS_LOG.some((prefix) => route.startsWith(prefix))
   );
 }

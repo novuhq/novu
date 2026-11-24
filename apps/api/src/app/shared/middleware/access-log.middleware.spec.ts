@@ -267,6 +267,7 @@ describe('accessLogMiddleware', () => {
 
   for (const [method, routePath] of [
     ['GET', '/v1/health-check'],
+    ['HEAD', '/v1/health-check'],
     ['POST', '/v1/internal/subscriber-online-state'],
     ['POST', '/v1/events/trigger'],
     ['POST', '/v1/events/trigger/bulk'],
