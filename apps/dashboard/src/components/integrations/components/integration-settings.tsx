@@ -34,6 +34,7 @@ import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
+import { mergeSavedValues } from './utils/merge-saved-values';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -117,15 +118,22 @@ export function IntegrationSettings({
 
   const { handleSubmit, control, setValue, formState } = form;
 
-  // The Copilot can change the integration while its sheet is open: take the new values, keeping what the user edited,
+  // The Copilot can change the integration while its sheet is open: take the new values, keeping what the user changed,
   // so saving doesn't send the old ones back.
   const savedValuesKey = integration ? JSON.stringify(toFormValues(integration)) : undefined;
-  const savedValuesKeyRef = useRef(savedValuesKey);
+  const savedValuesRef = useRef(integration ? toFormValues(integration) : undefined);
   useEffect(() => {
-    if (!integration || savedValuesKey === savedValuesKeyRef.current) return;
+    const saved = savedValuesRef.current;
+    if (!integration || savedValuesKey === JSON.stringify(saved)) return;
 
-    savedValuesKeyRef.current = savedValuesKey;
-    form.reset(toFormValues(integration), { keepDirtyValues: true });
+    const next = toFormValues(integration);
+    savedValuesRef.current = next;
+    if (!saved) return;
+
+    const values = mergeSavedValues(saved, form.getValues(), next) as IntegrationFormData;
+    // The new saved values become the defaults, so the form stays dirty only with the user's own changes.
+    form.reset(next);
+    form.reset(values, { keepDefaultValues: true });
   }, [integration, savedValuesKey, form]);
 
   // A setup link opened cold mounts the form before the environments load, with no environment to connect in yet.
