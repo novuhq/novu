@@ -17,18 +17,30 @@ const READ_PATTERNS = [
   /process\.env\.([A-Za-z_]\w*)/g,
   /process\.env\[\s*['"`]([A-Za-z_]\w*)['"`]\s*\]/g,
   /\benv\.([A-Za-z_]\w*)/g,
-  // A quoted upper-case name: lookups by a computed name, such as the SQS queue URL per topic.
-  /['"]([A-Z][A-Z0-9]*_[A-Z0-9_]+)['"]/g,
+  /getEnvVariable\(\s*['"`]([A-Za-z_]\w*)['"`]/g,
+  // A name kept in a constant for a computed lookup, such as `PRODUCTION_ENV_KEY = 'NOVU_SAFE_OUTBOUND_ALLOW'`.
+  /_ENV(?:_KEY)?\s*=\s*['"]([A-Z][A-Z0-9_]+)['"]/g,
 ];
+/**
+ * Any quoted upper-case name. Our own code looks some variables up by a computed name, such as the SQS
+ * queue URL per topic, so there it counts as a read. In dependencies it doesn't, so a `readBy` stays
+ * checked against real reads instead of any string that happens to match.
+ */
+const QUOTED_NAME = /['"]([A-Z][A-Z0-9]*_[A-Z0-9_]+)['"]/g;
 const DESTRUCTURED = /\{([^{}]*)\}\s*=\s*process\.env\b/g;
-/** Block and line comments, so names they mention don't count as reads. `://` in URLs is not a comment. */
-const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:])\/\/.*$/gm;
+/**
+ * Block comments that start a line, and line comments after whitespace, so names they mention don't count
+ * as reads. Anchoring keeps `'*\/*'` or `https://` inside a string from starting a comment.
+ */
+const COMMENTS = /^[ \t]*\/\*[\s\S]*?\*\/|(^|\s)\/\/.*$/gm;
 
 interface EnvReaderSource {
   /** The app's service name, or a package name such as '@novu/dal'. */
   label: string;
   dir: string;
   enterprise: boolean;
+  /** The app and application-generic, whose quoted names count as reads. */
+  ours: boolean;
 }
 
 export interface EnvReferenceOptions {
@@ -41,7 +53,7 @@ export interface EnvReferenceResult {
   /** `apps/<service>/ENVIRONMENT.md`. */
   file: string;
   markdown: string;
-  /** Whether the file on disk matches `markdown`, after writing it when `update` is set. */
+  /** Whether the file on disk matches `markdown`, apart from enterprise readers, after writing it when `update` is set. */
   upToDate: boolean;
   /** `readBy` entries that name a workspace package which no longer reads the variable. */
   problems: string[];
@@ -62,8 +74,9 @@ function walk(dir: string, files: string[] = []): string[] {
 }
 
 /** Every name the source tree reads, in any of the forms our code and our dependencies use. */
-function namesReadIn(dir: string): Set<string> {
+function namesReadIn({ dir, ours }: EnvReaderSource): Set<string> {
   const names = new Set<string>();
+  const patterns = ours ? [...READ_PATTERNS, QUOTED_NAME] : READ_PATTERNS;
 
   for (const file of walk(dir)) {
     if (DECLARATION_FILES.test(file)) {
@@ -72,7 +85,7 @@ function namesReadIn(dir: string): Set<string> {
 
     const text = readFileSync(file, 'utf8').replace(COMMENTS, '$1');
 
-    for (const pattern of READ_PATTERNS) {
+    for (const pattern of patterns) {
       for (const match of text.matchAll(pattern)) {
         names.add(match[1]);
       }
@@ -101,7 +114,7 @@ function readerSources(repoRoot: string, service: EnvService): EnvReaderSource[]
   const appDir = path.join(repoRoot, 'apps', service);
   const { dependencies = {}, optionalDependencies = {} } = readPackageJson(appDir);
   const dependencyNames = new Set([...Object.keys(dependencies), ...Object.keys(optionalDependencies)]);
-  const sources: EnvReaderSource[] = [{ label: service, dir: path.join(appDir, 'src'), enterprise: false }];
+  const sources: EnvReaderSource[] = [{ label: service, dir: path.join(appDir, 'src'), enterprise: false, ours: true }];
 
   for (const root of PACKAGE_ROOTS) {
     for (const entry of readdirSync(path.join(repoRoot, root), { withFileTypes: true })) {
@@ -110,7 +123,12 @@ function readerSources(repoRoot: string, service: EnvService): EnvReaderSource[]
       const enterprise = Boolean(name?.startsWith(ENTERPRISE_PREFIX));
 
       if (name && dependencyNames.has(name) && (enterprise || SCANNED_PACKAGES.has(name))) {
-        sources.push({ label: name, dir: path.join(dir, 'src'), enterprise });
+        sources.push({
+          label: name,
+          dir: path.join(dir, 'src'),
+          enterprise,
+          ours: name === '@novu/application-generic',
+        });
       }
     }
   }
@@ -149,7 +167,7 @@ function findReaders(sources: EnvReaderSource[], schema: EnvSchema, previous: st
 
   for (const source of sources) {
     if (existsSync(source.dir)) {
-      for (const name of namesReadIn(source.dir)) {
+      for (const name of namesReadIn(source)) {
         readers.get(name)?.add(source.label);
       }
     } else if (source.enterprise) {
@@ -275,7 +293,7 @@ function renderReference(
     `- **Read by**: the code that reads the variable, found by scanning \`${service}\` and the workspace packages it depends on, plus the SDKs listed in \`readBy\`.`,
     '- Feature flags (`FeatureFlagsKeysEnum` in `@novu/shared`) and other families read by a computed name are described in the schema headers instead.',
     '',
-    `To regenerate after changing a schema or a read, run the spec with \`UPDATE_ENV_REFERENCE=true\`. Without \`.source\` checked out, enterprise readers are kept as listed.`,
+    `To regenerate after changing a schema or a read, run the spec with \`UPDATE_ENV_REFERENCE=true\`. Enterprise readers refresh whenever the file is regenerated with \`.source\` checked out, but they alone never make it stale: \`.source\` bumps don't run the app specs.`,
     '',
     '| Variable | Description | Format | Default | Boot | Declared in | Read by |',
     '| --- | --- | --- | --- | --- | --- | --- |',
@@ -285,9 +303,28 @@ function renderReference(
 }
 
 /**
+ * The reference without enterprise readers. A `.source` bump can change them without running any app spec,
+ * so they would otherwise fail the next unrelated app change.
+ */
+function withoutEnterpriseReaders(markdown: string): string {
+  return markdown
+    .split('\n')
+    .map((line) =>
+      line.startsWith('| `')
+        ? line.replace(/\| ([^|]*) \|$/, (_cell, readers: string) => {
+            const kept = readers.split(', ').filter((reader) => !reader.startsWith('`@novu/ee-'));
+
+            return `| ${kept.join(', ')} |`;
+          })
+        : line
+    )
+    .join('\n');
+}
+
+/**
  * Builds `apps/<service>/ENVIRONMENT.md` from the shared and app schemas plus the code that reads each
  * variable, and checks every `readBy` workspace package still reads its variable. With `update`, writes
- * the file when it changed.
+ * the file when it changed. Differences in enterprise readers alone don't make it stale.
  */
 export function syncEnvReference(options: EnvReferenceOptions & { update?: boolean }): EnvReferenceResult {
   const { repoRoot, service, appSchema } = options;
@@ -305,7 +342,7 @@ export function syncEnvReference(options: EnvReferenceOptions & { update?: boole
   return {
     file,
     markdown,
-    upToDate: Boolean(options.update) || markdown === previous,
+    upToDate: Boolean(options.update) || withoutEnterpriseReaders(markdown) === withoutEnterpriseReaders(previous),
     problems: staleReadBy(schema, sources, readers),
   };
 }

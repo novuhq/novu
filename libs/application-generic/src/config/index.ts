@@ -1,6 +1,5 @@
 export * from './app-env';
 export * from './env';
-export * from './env-reference';
 export * from './env-reporter';
 export * from './env-validation';
 export * from './metrics';

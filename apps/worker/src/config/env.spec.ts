@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { syncEnvReference } from '@novu/application-generic';
+// Deep import: the reference generator is test tooling, kept out of the package's runtime exports.
+import { syncEnvReference } from '@novu/application-generic/build/main/config/env-reference';
 import { expect } from 'chai';
 import { appEnvSchema, validateEnv } from './env';
 

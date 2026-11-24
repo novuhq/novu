@@ -8,7 +8,7 @@ Every variable `api` uses, declared in `libs/application-generic/src/config/env.
 - **Read by**: the code that reads the variable, found by scanning `api` and the workspace packages it depends on, plus the SDKs listed in `readBy`.
 - Feature flags (`FeatureFlagsKeysEnum` in `@novu/shared`) and other families read by a computed name are described in the schema headers instead.
 
-To regenerate after changing a schema or a read, run the spec with `UPDATE_ENV_REFERENCE=true`. Without `.source` checked out, enterprise readers are kept as listed.
+To regenerate after changing a schema or a read, run the spec with `UPDATE_ENV_REFERENCE=true`. Enterprise readers refresh whenever the file is regenerated with `.source` checked out, but they alone never make it stale: `.source` bumps don't run the app specs.
 
 | Variable | Description | Format | Default | Boot | Declared in | Read by |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -98,13 +98,13 @@ To regenerate after changing a schema or a read, run the spec with `UPDATE_ENV_R
 | `INBOUND_PARSE_MAIL_WORKER_CONCURRENCY` | Concurrency of the inbound-parse-mail worker. Unset uses WORKER_DEFAULT_CONCURRENCY, then the built-in value. | number |  |  | shared | `@novu/application-generic` |
 | `INSTANCE_ADMIN_EMAILS` | Comma-separated emails of the instance admins on self-hosted enterprise. They need a verified email. | string |  |  | api | `@novu/ee-auth` |
 | `INTERNAL_SERVICES_API_KEY` | API key sent to the Cloudflare socket worker at SOCKET_WORKER_URL. | string |  |  | shared | `@novu/application-generic` |
-| `IN_MEMORY_CLUSTER_MODE_ENABLED` | **Deprecated:** Use IS_IN_MEMORY_CLUSTER_MODE_ENABLED instead. Legacy name of IS_IN_MEMORY_CLUSTER_MODE_ENABLED, read while that one is unset. | boolean |  |  | shared |  |
+| `IN_MEMORY_CLUSTER_MODE_ENABLED` | **Deprecated:** Use IS_IN_MEMORY_CLUSTER_MODE_ENABLED instead. Legacy name of IS_IN_MEMORY_CLUSTER_MODE_ENABLED. "true" still turns cluster mode on. | boolean |  |  | shared |  |
 | `IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT` | Milliseconds between Redis readiness checks at boot. | number | `100` |  | shared | `@novu/application-generic` |
 | `IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT_RETRIES` | Redis readiness checks at boot before the service carries on without a ready client. | number | `10` |  | shared | `@novu/application-generic` |
 | `IS_ANALYTICS_LOGS_ENABLED` | Writes analytics logs. Inbound mail also needs IS_INBOUND_ANALYTICS_LOGS_ENABLED. | boolean | `false` |  | shared | `@novu/application-generic`, `api` |
 | `IS_DOCKER_HOSTED` | "true" skips quota throttling, as on a Docker self-hosted deployment. | string |  |  | shared | `@novu/ee-billing` |
 | `IS_INBOUND_ANALYTICS_LOGS_ENABLED` | Writes analytics logs for inbound mail, together with IS_ANALYTICS_LOGS_ENABLED. | boolean | `false` |  | shared | `@novu/application-generic` |
-| `IS_IN_MEMORY_CLUSTER_MODE_ENABLED` | Connects to Redis in cluster mode (ElastiCache, MemoryDB or Azure) instead of a standalone instance. Unset reads IN_MEMORY_CLUSTER_MODE_ENABLED. | boolean | `false` | checked | shared | `@novu/application-generic` |
+| `IS_IN_MEMORY_CLUSTER_MODE_ENABLED` | Connects to Redis in cluster mode (ElastiCache, MemoryDB or Azure) instead of a standalone instance. Also on while the legacy IN_MEMORY_CLUSTER_MODE_ENABLED is "true". | boolean | `false` | checked | shared | `@novu/application-generic` |
 | `IS_SELF_HOSTED` | Marks a self-hosted deployment, as opposed to Novu Cloud. | boolean | `false` |  | shared | `@novu/application-generic`, `@novu/dal`, `@novu/ee-agents`, `@novu/ee-auth`, `@novu/ee-billing`, `@novu/shared`, `api` |
 | `JWT_SECRET` | Secret that signs and verifies user session JWTs. | string |  | required | shared | `@novu/ee-auth`, `api` |
 | `KEYLESS_DEMO_REPLY_CAP` | Agent replies in a keyless demo conversation. Unset or not a non-negative integer uses the built-in cap. | string |  |  | api | `api` |

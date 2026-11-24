@@ -52,7 +52,6 @@
     "date-fns": "^2.29.2",
     "date-fns-tz": "^2.0.1",
     "dotenv": "^16.6.1",
-    "envalid": "^8.2.0",
     "helmet": "^8.2.0",
     "i18next": "^23.7.6",
     "inline-css": "^4.0.3",
