@@ -41,7 +41,7 @@ export interface EnvReferenceResult {
   /** `apps/<service>/ENVIRONMENT.md`. */
   file: string;
   markdown: string;
-  /** Whether the committed file already matches `markdown`. */
+  /** Whether the file on disk matches `markdown`, after writing it when `update` is set. */
   upToDate: boolean;
   /** `readBy` entries that name a workspace package which no longer reads the variable. */
   problems: string[];
@@ -302,5 +302,10 @@ export function syncEnvReference(options: EnvReferenceOptions & { update?: boole
     writeFileSync(file, markdown);
   }
 
-  return { file, markdown, upToDate: markdown === previous, problems: staleReadBy(schema, sources, readers) };
+  return {
+    file,
+    markdown,
+    upToDate: Boolean(options.update) || markdown === previous,
+    problems: staleReadBy(schema, sources, readers),
+  };
 }
