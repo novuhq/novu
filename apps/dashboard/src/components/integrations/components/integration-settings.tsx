@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CredentialsKeyEnum,
+  EmailProviderIdEnum,
   getUnusedTwilioAuthCredentialKeys,
   IIntegration,
   IProviderConfig,
@@ -42,6 +43,7 @@ import {
   SetupDocsLink,
   SetupTip,
 } from './provider-setup-layout';
+import { ResendSetup } from './resend-setup';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { SlackManualSetup } from './slack-manual-setup';
 import { SlackQuickSetup } from './slack-quick-setup';
@@ -135,7 +137,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
   'https://docs.novu.co/platform/integrations/chat/telegram#from-your-app-with-@novu/react';
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
-  if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+  if (providerId === ChatProviderIdEnum.Telegram || providerId === EmailProviderIdEnum.Resend) return '~1 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
 
@@ -543,6 +545,7 @@ export function IntegrationSettings({
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
     const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
     const isMsTeams = provider.id === ChatProviderIdEnum.MsTeams;
+    const isResend = provider.id === EmailProviderIdEnum.Resend;
 
     const generalSettings = (
       <GeneralSettings
@@ -604,6 +607,15 @@ export function IntegrationSettings({
                     </a>
                     .
                   </SetupTip>
+                ) : isResend ? (
+                  <SetupTip>
+                    Novu emails each subscriber’s <code className="font-code">email</code>. Set it when you create or
+                    identify subscribers.{' '}
+                    <a href={SUBSCRIBERS_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
                 ) : isWhatsApp ? (
                   <SetupTip>
                     Novu messages each subscriber’s <code className="font-code">phone</code>. Set it when you create or
@@ -643,6 +655,27 @@ export function IntegrationSettings({
                   setValue={setValue}
                   environment={environments?.find((environment) => environment._id === environmentId)}
                   isReadOnly={isReadOnly}
+                />
+              </Protect>
+            )}
+            {isResend && (
+              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                <ResendSetup
+                  setValue={setValue}
+                  isReadOnly={isReadOnly}
+                  credentialFields={
+                    <div className="flex flex-col gap-3">
+                      {providerCredentials.map((credential) => (
+                        <CredentialSection
+                          key={credential.key}
+                          credential={credential}
+                          control={control}
+                          isReadOnly={isReadOnly}
+                          integrationId={integration?._id}
+                        />
+                      ))}
+                    </div>
+                  }
                 />
               </Protect>
             )}
