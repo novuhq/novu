@@ -118,6 +118,7 @@ export function usesProviderSetupLayout(providerId?: string) {
   return (
     providerId === ChatProviderIdEnum.Slack ||
     providerId === ChatProviderIdEnum.Telegram ||
+    providerId === ChatProviderIdEnum.MsTeams ||
     providerId === ChatProviderIdEnum.WhatsAppBusiness
   );
 }
