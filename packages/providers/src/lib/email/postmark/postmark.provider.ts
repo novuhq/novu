@@ -9,7 +9,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { Errors, Message, Models, ServerClient } from 'postmark';
+import { Errors, Message, Models, ServerClient, TemplatedMessage } from 'postmark';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -34,9 +34,14 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const response = await this.client.sendEmail(
-      this.transform<Message>(bridgeProviderData, mailData as unknown as Record<string, unknown>).body
+    const { body } = this.transform<PostmarkRequestBody, Record<string, unknown>, Message>(
+      bridgeProviderData,
+      mailData
     );
+
+    const response = isTemplatedMessage(body)
+      ? await this.client.sendEmailWithTemplate(toTemplatedMessage(body))
+      : await this.client.sendEmail(body);
 
     return {
       id: response.MessageID,
@@ -97,6 +102,7 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     return mailData;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Postmark webhook payloads are untyped
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.MessageID);
@@ -105,6 +111,7 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     return [body.MessageID];
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Postmark webhook payloads are untyped
   parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       body = body.find((item) => item.MessageID === identifier);
@@ -149,6 +156,27 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
     }
   }
 }
+
+/**
+ * A Postmark-hosted template is selected with `TemplateId` or `TemplateAlias`
+ * (usually via `_passthrough.body`). Those must go to `/email/withTemplate`.
+ */
+type PostmarkRequestBody = Message &
+  Partial<Pick<TemplatedMessage, 'TemplateId' | 'TemplateAlias' | 'TemplateModel' | 'InlineCss'>>;
+
+const isTemplatedMessage = (body: PostmarkRequestBody): boolean =>
+  body.TemplateId !== undefined || body.TemplateAlias !== undefined;
+
+/**
+ * The hosted template supplies the subject and content, so the Novu step's
+ * `Subject`, `HtmlBody` and `TextBody` are dropped. `TemplateModel` is required
+ * by Postmark, so it defaults to an empty object.
+ */
+const toTemplatedMessage = (body: PostmarkRequestBody): TemplatedMessage => {
+  const { HtmlBody: _html, TextBody: _text, Subject: _subject, TemplateModel, ...rest } = body;
+
+  return { ...rest, TemplateModel: TemplateModel ?? {} };
+};
 
 const getFormattedTo = (to: string | string[]): string => {
   if (Array.isArray(to)) return to.join(', ');

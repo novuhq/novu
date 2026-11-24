@@ -6,6 +6,8 @@ import {
   connectorSteps,
   formatScript,
   type HostWay,
+  hostPluginCaption,
+  hostPluginScript,
   mcpCaption,
   mcpScript,
   pluginCaption,
@@ -19,6 +21,7 @@ import {
   type ChatApp,
   type CommandHost,
   type Host,
+  type HostPlugin,
   hostPath,
   listenCommand,
   MCP_SERVER_NAME,
@@ -62,9 +65,14 @@ function commandSections(host: CommandHost): string[] {
   // Without a terminal, the skills CLI installs nothing unless it's told for which agent, and not to ask.
   const skillsLine = host.skillsAgent ? skillsCommand(host) : `${INSTALL_SKILLS_COMMAND} --agent <your id> -y`;
 
+  const intro = host.plugin
+    ? `The first steps below are the ones the dashboard shows, in the same order. Run them in a terminal, ${where}. The CLI after them isn't in the dashboard, but connects ${host.name} too: \`${NPX_CLI}\`, which needs nothing installed first.`
+    : `The steps below are the same ones the dashboard shows, in the same order. Run them in a terminal, ${where}. The CLI is \`${NPX_CLI}\`, which needs nothing installed first.`;
+
   return [
-    `The steps below are the same ones the dashboard shows, in the same order. Run them in a terminal, ${where}. The CLI is \`${NPX_CLI}\`, which needs nothing installed first.`,
+    intro,
     ...waysOf(host).flatMap((way) => commandWay(host, way, runner)),
+    ...(host.plugin ? cliBesidePlugin(host) : []),
     '## No code yet: set yourself up',
     'Only when your operator asks you to set up Agent Inbox. When they already have an Agent Inbox account, ask them for a one-time code instead.',
     [
@@ -117,6 +125,10 @@ function cliWay(host: CommandHost, runner: string): string[] {
 }
 
 function pluginWay(host: CommandHost): string[] {
+  if (host.plugin) {
+    return hostPluginWay(host, host.plugin);
+  }
+
   const alternative = host.alternative;
   if (alternative?.kind !== 'plugin') {
     return [];
@@ -127,6 +139,32 @@ function pluginWay(host: CommandHost): string[] {
     pluginCaption(host),
     fence(formatScript(pluginScript(host))),
     ...(alternative.agentNotes ?? []),
+  ];
+}
+
+/** Agent Inbox's own plugin for the host's gateway, as the dashboard's Plugin tab gives it. */
+function hostPluginWay(host: CommandHost, plugin: HostPlugin): string[] {
+  return [
+    `## ${wayLabel(host, 'plugin')}`,
+    `Agent Inbox's plugin for ${host.name}'s gateway: a message to the agent reaches ${host.name} within seconds, and its answer goes back in the same conversation. Your operator signs in on ${AGENT_DOMAIN} and copies these from Configure, under "Connect another agent", with the agent and the code filled in.`,
+    fence(formatScript(hostPluginScript(host, { handle: '<agent>', code: '<code>' }, 'agent'))),
+    hostPluginCaption(host),
+    '`<agent>` is the agent’s address before the `@`, such as `atlas`. The code works once, for 10 minutes: ask your operator for a new one rather than guessing. Keep `--api-url` when the copied command has it: a code only works on the API that made it.',
+    ...(plugin.agentNotes ?? []),
+    `The plugin's code: ${plugin.url}`,
+  ];
+}
+
+/**
+ * The CLI, which the dashboard leaves out for a host with Agent Inbox's own plugin, but which still connects it:
+ * the host then works the inbox through the CLI's commands, and nothing listens for messages.
+ */
+function cliBesidePlugin(host: CommandHost): string[] {
+  return [
+    `## ${wayLabel(host, 'cli')}`,
+    `The dashboard leaves the CLI out for ${host.name}, but it connects ${host.name} too, with the same code: ${host.name} then works the inbox through the CLI's commands, and nothing listens for messages.`,
+    fence(formatScript(cliScript(host, { handle: '<agent>', code: '<code>' }))),
+    cliCaption(host),
   ];
 }
 

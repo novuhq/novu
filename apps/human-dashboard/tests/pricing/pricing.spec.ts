@@ -110,9 +110,9 @@ test('all FAQ disclosures work with keyboard input and reduced motion', async ({
   }
 });
 
-test('the shared footer discovers pricing and the hero uses the reviewed title', async ({ page }) => {
+test('the shared header discovers pricing and the hero uses the reviewed title', async ({ page }) => {
   await page.goto('/sapien');
-  await page.locator('footer').getByRole('link', { name: 'pricing', exact: true }).click();
+  await page.locator('header').getByRole('link', { name: 'pricing', exact: true }).click();
   await expect(page).toHaveURL(/\/pricing$/);
   await expect(page.locator('h1')).toHaveText('Built for agents. Priced by conversation');
   await expect(page.getByRole('link', { name: 'Compare all features' })).toHaveCount(0);
@@ -135,7 +135,7 @@ test('shared landing footers still fit at narrow and tablet widths', async ({ pa
     await page.setViewportSize({ width, height: 900 });
     for (const route of ['/sapien', '/telegram', '/telegram/openclaw']) {
       await page.goto(route);
-      await expect(page.locator('footer').getByRole('link', { name: 'pricing', exact: true })).toBeVisible();
+      await expect(page.locator('footer').getByRole('link', { name: 'for robots', exact: true })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       expect(await page.locator('footer p').evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
     }

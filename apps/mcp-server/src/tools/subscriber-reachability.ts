@@ -16,8 +16,9 @@ import {
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
 import { ValidationUtils } from "../utils/validation";
+import { SUBSCRIBER_REACHABILITY_TOOL_NAMES } from "./tool-names";
 
-export const SUBSCRIBER_REACHABILITY_TOOL_NAME = "get_subscriber_reachability";
+export const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
 
 const SEARCH_LIMIT = 10;
 const ENDPOINTS_LIMIT = 100;

@@ -17,9 +17,10 @@ export const CONNECT_AGENT_GONE = 'connect_agent_gone';
 /**
  * `agentinbox connect <agent> --code <code>`: trades a one-time code for the key of the agent's account,
  * the same key `agentinbox login` saves, so the CLI on that computer acts as the agent from then on. The
- * code is used up first, so a key is handed out at most once per code. The host counts as connected
- * through the CLI from here, before it has looked at the inbox: the host the CLI said it runs in, else the
- * one the code was made for, else `general`.
+ * code is used up first, so a key is handed out at most once per code. A host's own plugin (Hermes's and
+ * OpenClaw's gateways) trades its code the same way. The host counts as connected from here, the way the
+ * request said it came in (the CLI when it didn't say), before it has looked at the inbox: the host the
+ * request said it runs in, else the one the code was made for, else `general`.
  */
 @Injectable()
 export class ConnectHost {
@@ -61,7 +62,7 @@ export class ConnectHost {
 
     const apiKey = decryptApiKey(current.key);
     const host = connectingHost(command.host, target.host);
-    await this.hostStatus.recordConnected(scope, agent._id, { via: 'cli', id: host });
+    await this.hostStatus.recordConnected(scope, agent._id, { via: command.via ?? 'cli', id: host });
 
     return {
       apiKey,

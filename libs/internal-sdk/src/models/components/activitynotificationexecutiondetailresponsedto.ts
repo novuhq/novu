@@ -46,7 +46,7 @@ export type ActivityNotificationExecutionDetailResponseDto = {
    */
   isTest: boolean;
   /**
-   * Provider ID of the job
+   * Provider ID of the execution
    */
   providerId?: ProvidersIdEnum | undefined;
   /**

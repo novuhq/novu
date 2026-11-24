@@ -3,9 +3,21 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import { ClosedEnum } from "../../types/enums.js";
+
+/**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export const ChatControlDtoEditorType = {
+  Block: "block",
+  Text: "text",
+} as const;
+/**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export type ChatControlDtoEditorType = ClosedEnum<
+  typeof ChatControlDtoEditorType
+>;
 
 export type ChatControlDto = {
   /**
@@ -16,21 +28,22 @@ export type ChatControlDto = {
    * Content of the chat message.
    */
   body?: string | undefined;
+  /**
+   * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+   */
+  editorType?: ChatControlDtoEditorType | undefined;
 };
 
 /** @internal */
-export const ChatControlDto$inboundSchema: z.ZodType<
-  ChatControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
+export const ChatControlDtoEditorType$outboundSchema: z.ZodNativeEnum<
+  typeof ChatControlDtoEditorType
+> = z.nativeEnum(ChatControlDtoEditorType);
+
 /** @internal */
 export type ChatControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
+  editorType?: string | undefined;
 };
 
 /** @internal */
@@ -41,17 +54,9 @@ export const ChatControlDto$outboundSchema: z.ZodType<
 > = z.object({
   skip: z.record(z.any()).optional(),
   body: z.string().optional(),
+  editorType: ChatControlDtoEditorType$outboundSchema.optional(),
 });
 
 export function chatControlDtoToJSON(chatControlDto: ChatControlDto): string {
   return JSON.stringify(ChatControlDto$outboundSchema.parse(chatControlDto));
-}
-export function chatControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ChatControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatControlDto' from JSON`,
-  );
 }

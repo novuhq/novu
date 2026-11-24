@@ -528,7 +528,7 @@ describe('Agent Inbox agent settings (who can reach, acknowledge, pause, delete)
       const connect = await session.testAgent
         .post('/v1/human/connect')
         .set('Authorization', '')
-        .set('X-Forwarded-For', '198.18.40.39')
+        .set('CF-Connecting-IP', '198.18.40.39')
         .send({ agent: issued.body.data.handle, code: issued.body.data.code });
 
       expect(connect.status).to.equal(404, JSON.stringify(connect.body));

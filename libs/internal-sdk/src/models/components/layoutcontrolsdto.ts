@@ -6,10 +6,6 @@ import * as z from "zod/v3";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  LayoutControlValuesDto,
-  LayoutControlValuesDto$inboundSchema,
-} from "./layoutcontrolvaluesdto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
 
 export type LayoutControlsDto = {
@@ -24,7 +20,7 @@ export type LayoutControlsDto = {
   /**
    * Email layout controls
    */
-  values: LayoutControlValuesDto;
+  values?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -35,7 +31,7 @@ export const LayoutControlsDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: LayoutControlValuesDto$inboundSchema,
+  values: z.record(z.any()).optional(),
 });
 
 export function layoutControlsDtoFromJSON(

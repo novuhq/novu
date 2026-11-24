@@ -2,7 +2,7 @@ import { IntegrationEntity } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { AuthDto } from '../dtos/shared.dto';
-import { validateAndNormalizeConnectionAuth } from './channel-connection.utils';
+import { canCallerManageChannelConnection, validateAndNormalizeConnectionAuth } from './channel-connection.utils';
 
 function buildIntegration(overrides: Partial<IntegrationEntity> = {}): IntegrationEntity {
   return {
@@ -68,5 +68,52 @@ describe('validateAndNormalizeConnectionAuth', () => {
     );
 
     expect(result.expiresAt).to.be.a('string');
+  });
+});
+
+describe('canCallerManageChannelConnection', () => {
+  const caller = { subscriberId: 'sub-1', contextKeys: ['tenant:a'] };
+
+  it('allows the owning subscriber in the same context', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: 'sub-1', contextKeys: ['tenant:a'] }, caller)).to.equal(
+      true
+    );
+  });
+
+  it('refuses another subscriber connection', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: 'sub-2', contextKeys: ['tenant:a'] }, caller)).to.equal(
+      false
+    );
+  });
+
+  it('refuses the owning subscriber in a different context', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: 'sub-1', contextKeys: ['tenant:b'] }, caller)).to.equal(
+      false
+    );
+  });
+
+  it('allows a shared connection scoped to the caller exact context', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: undefined, contextKeys: ['tenant:a'] }, caller)).to.equal(
+      true
+    );
+  });
+
+  it('refuses a shared connection scoped to another context', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: undefined, contextKeys: ['tenant:b'] }, caller)).to.equal(
+      false
+    );
+  });
+
+  it('refuses an environment-wide shared connection, even for a caller without context', () => {
+    expect(canCallerManageChannelConnection({ subscriberId: undefined, contextKeys: [] }, caller)).to.equal(false);
+    expect(
+      canCallerManageChannelConnection(
+        { subscriberId: undefined, contextKeys: [] },
+        {
+          subscriberId: 'sub-1',
+          contextKeys: [],
+        }
+      )
+    ).to.equal(false);
   });
 });

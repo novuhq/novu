@@ -14,3 +14,17 @@ export const WORKFLOW_TOOL_NAMES = {
 } as const;
 
 export type WorkflowToolName = (typeof WORKFLOW_TOOL_NAMES)[keyof typeof WORKFLOW_TOOL_NAMES];
+
+/** Every tool `registerActivityTools` registers, by public MCP name. All are read-only. */
+export const ACTIVITY_TOOL_NAMES = [
+	"get_workflow_runs",
+	"get_workflow_run",
+	"get_trigger_requests",
+] as const;
+
+export type ActivityToolName = (typeof ACTIVITY_TOOL_NAMES)[number];
+
+/** Every tool `registerSubscriberReachabilityTool` registers, by public MCP name. All are read-only. */
+export const SUBSCRIBER_REACHABILITY_TOOL_NAMES = ["get_subscriber_reachability"] as const;
+
+export type SubscriberReachabilityToolName = (typeof SUBSCRIBER_REACHABILITY_TOOL_NAMES)[number];

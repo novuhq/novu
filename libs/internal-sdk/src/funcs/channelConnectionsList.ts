@@ -102,6 +102,7 @@ async function $do(
     "after": payload.after,
     "before": payload.before,
     "channel": payload.channel,
+    "connectionMode": payload.connectionMode,
     "contextKeys": payload.contextKeys,
     "includeCursor": payload.includeCursor,
     "integrationIdentifier": payload.integrationIdentifier,

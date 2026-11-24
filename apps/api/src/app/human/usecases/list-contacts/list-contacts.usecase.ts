@@ -34,6 +34,8 @@ interface ContactReach {
   storedEmail?: HumanContactChannelAddresses;
   /** The operator turned their "Listen to" switch on. */
   listenTo?: boolean;
+  /** The operator gave them full access too. */
+  fullAccess?: boolean;
 }
 
 interface PageReach {
@@ -128,7 +130,7 @@ export class ListContacts {
       }),
       this.humanContactRepository.find(
         { _environmentId: command.environmentId, _agentId: agent._id, subscriberId: { $in: subscriberIds } },
-        ['subscriberId', 'addresses', 'listenTo']
+        ['subscriberId', 'addresses', 'listenTo', 'fullAccess']
       ),
       this.humanOperator.findForAgent({
         environmentId: command.environmentId,
@@ -142,6 +144,11 @@ export class ListContacts {
     const listenedTo = new Set(
       stored.filter((contact) => contact.listenTo === true).map(({ subscriberId }) => subscriberId)
     );
+    const withFullAccess = new Set(
+      stored
+        .filter((contact) => contact.listenTo === true && contact.fullAccess === true)
+        .map(({ subscriberId }) => subscriberId)
+    );
 
     for (const subscriberId of subscriberIds) {
       contacts.set(subscriberId, {
@@ -150,6 +157,7 @@ export class ListContacts {
         invite: invites.get(subscriberId),
         storedEmail: storedEmails.get(subscriberId),
         listenTo: listenedTo.has(subscriberId),
+        fullAccess: withFullAccess.has(subscriberId),
       });
     }
 
@@ -179,6 +187,7 @@ function toContact(
     isOperator,
     // The operator always can; a stranger never does, whatever their row says.
     listenTo: isOperator || (reach?.listenTo === true && !isAgentProvisionedSubscriber(subscriber)),
+    fullAccess: isOperator || (reach?.fullAccess === true && !isAgentProvisionedSubscriber(subscriber)),
     ...(reach?.invite
       ? {
           invite: {

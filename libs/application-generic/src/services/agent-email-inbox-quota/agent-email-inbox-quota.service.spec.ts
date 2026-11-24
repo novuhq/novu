@@ -168,6 +168,22 @@ describe('AgentEmailInboxQuotaService', () => {
     expect(dailyCount()).toBe(1);
   });
 
+  it('neither counts nor refuses a send inside uncounted credits, with both windows used up', async () => {
+    store.set(quotaKeys(organizationId, new Date()).daily, 50);
+    store.set(quotaKeys(organizationId, new Date()).monthly, 300);
+    const credits = service.uncountedCredits(organizationId);
+
+    await credits.run(async () => {
+      const attempt = await service.beginSend(organizationId);
+      attempt.accept();
+    });
+    await credits.release();
+
+    expect(evalImpl).not.toHaveBeenCalled();
+    expect(dailyCount()).toBe(50);
+    expect(monthlyCount()).toBe(300);
+  });
+
   it('fails open when Redis is unavailable', async () => {
     cacheEnabled = false;
     await service.reserveCredits(organizationId, 1);

@@ -11,6 +11,8 @@ import { ClosedEnum } from "../../types/enums.js";
 export const DependencyReasonEnum = {
   LayoutRequiredForWorkflow: "LAYOUT_REQUIRED_FOR_WORKFLOW",
   LayoutExistsInTarget: "LAYOUT_EXISTS_IN_TARGET",
+  AgentRequiredForWorkflow: "AGENT_REQUIRED_FOR_WORKFLOW",
+  AgentExistsInTarget: "AGENT_EXISTS_IN_TARGET",
 } as const;
 /**
  * Reason for the dependency

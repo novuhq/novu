@@ -19,6 +19,8 @@ export type GetContactResult = {
   channels: HumanContactChannelStatus[];
   /** Whether the agent listens to them: always to the operator. */
   listenTo: boolean;
+  /** Whether their messages start its hosts with everything the operator's get: always for the operator. */
+  fullAccess: boolean;
 };
 
 /**
@@ -58,16 +60,16 @@ export class GetContact {
     );
 
     const scope = { environmentId: command.environmentId, organizationId: command.organizationId };
-    const [channels, listenTo]: [HumanContactChannelStatus[], boolean] = agent
+    const [channels, switches]: [HumanContactChannelStatus[], { listenTo: boolean; fullAccess: boolean }] = agent
       ? await Promise.all([
           this.deliveryService.describeContactChannels({
             ...scope,
             agentId: agent._id,
             subscriberId: command.subscriberId,
           }),
-          this.listenAccess.listenTo(scope, agent, command.subscriberId),
+          this.listenAccess.switchesOf(scope, agent, command.subscriberId),
         ])
-      : [[], false];
+      : [[], { listenTo: false, fullAccess: false }];
 
     return {
       id: subscriber.subscriberId,
@@ -79,7 +81,7 @@ export class GetContact {
       createdAt: subscriber.createdAt,
       updatedAt: subscriber.updatedAt,
       channels,
-      listenTo,
+      ...switches,
     };
   }
 }

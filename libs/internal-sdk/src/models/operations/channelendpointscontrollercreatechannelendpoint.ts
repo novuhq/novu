@@ -22,7 +22,11 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequestBody =
   | components.CreateTelegramChatEndpointDto
   | components.CreateWebexRoomEndpointDto
   | components.CreateWebexPersonEndpointDto
-  | components.CreateLineUserEndpointDto;
+  | components.CreateLineUserEndpointDto
+  | components.CreatePagerDutyServiceEndpointDto
+  | components.CreateOpsgenieIntegrationEndpointDto
+  | components.CreateGrafanaOnCallIntegrationEndpointDto
+  | components.CreateToolWebhookEndpointDto;
 
 export type ChannelEndpointsControllerCreateChannelEndpointRequest = {
   /**
@@ -42,7 +46,11 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequest = {
     | components.CreateTelegramChatEndpointDto
     | components.CreateWebexRoomEndpointDto
     | components.CreateWebexPersonEndpointDto
-    | components.CreateLineUserEndpointDto;
+    | components.CreateLineUserEndpointDto
+    | components.CreatePagerDutyServiceEndpointDto
+    | components.CreateOpsgenieIntegrationEndpointDto
+    | components.CreateGrafanaOnCallIntegrationEndpointDto
+    | components.CreateToolWebhookEndpointDto;
 };
 
 export type ChannelEndpointsControllerCreateChannelEndpointResponse = {
@@ -61,7 +69,11 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequestBody$Outbound 
   | components.CreateTelegramChatEndpointDto$Outbound
   | components.CreateWebexRoomEndpointDto$Outbound
   | components.CreateWebexPersonEndpointDto$Outbound
-  | components.CreateLineUserEndpointDto$Outbound;
+  | components.CreateLineUserEndpointDto$Outbound
+  | components.CreatePagerDutyServiceEndpointDto$Outbound
+  | components.CreateOpsgenieIntegrationEndpointDto$Outbound
+  | components.CreateGrafanaOnCallIntegrationEndpointDto$Outbound
+  | components.CreateToolWebhookEndpointDto$Outbound;
 
 /** @internal */
 export const ChannelEndpointsControllerCreateChannelEndpointRequestBody$outboundSchema:
@@ -80,6 +92,10 @@ export const ChannelEndpointsControllerCreateChannelEndpointRequestBody$outbound
     components.CreateWebexRoomEndpointDto$outboundSchema,
     components.CreateWebexPersonEndpointDto$outboundSchema,
     components.CreateLineUserEndpointDto$outboundSchema,
+    components.CreatePagerDutyServiceEndpointDto$outboundSchema,
+    components.CreateOpsgenieIntegrationEndpointDto$outboundSchema,
+    components.CreateGrafanaOnCallIntegrationEndpointDto$outboundSchema,
+    components.CreateToolWebhookEndpointDto$outboundSchema,
   ]);
 
 export function channelEndpointsControllerCreateChannelEndpointRequestBodyToJSON(
@@ -105,7 +121,11 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequest$Outbound = {
     | components.CreateTelegramChatEndpointDto$Outbound
     | components.CreateWebexRoomEndpointDto$Outbound
     | components.CreateWebexPersonEndpointDto$Outbound
-    | components.CreateLineUserEndpointDto$Outbound;
+    | components.CreateLineUserEndpointDto$Outbound
+    | components.CreatePagerDutyServiceEndpointDto$Outbound
+    | components.CreateOpsgenieIntegrationEndpointDto$Outbound
+    | components.CreateGrafanaOnCallIntegrationEndpointDto$Outbound
+    | components.CreateToolWebhookEndpointDto$Outbound;
 };
 
 /** @internal */
@@ -127,6 +147,10 @@ export const ChannelEndpointsControllerCreateChannelEndpointRequest$outboundSche
       components.CreateWebexRoomEndpointDto$outboundSchema,
       components.CreateWebexPersonEndpointDto$outboundSchema,
       components.CreateLineUserEndpointDto$outboundSchema,
+      components.CreatePagerDutyServiceEndpointDto$outboundSchema,
+      components.CreateOpsgenieIntegrationEndpointDto$outboundSchema,
+      components.CreateGrafanaOnCallIntegrationEndpointDto$outboundSchema,
+      components.CreateToolWebhookEndpointDto$outboundSchema,
     ]),
   }).transform((v) => {
     return remap$(v, {

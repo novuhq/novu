@@ -13,7 +13,7 @@ import {
 
 export type MessageButton = {
   /**
-   * Type of button for the action result
+   * Type of the button
    */
   type: ButtonTypeEnum;
   /**

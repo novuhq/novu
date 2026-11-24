@@ -3,11 +3,28 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import { SmsControlDto, SmsControlDto$inboundSchema } from "./smscontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Control values specific to SMS
+ */
+export type SmsControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Content of the SMS message.
+   */
+  body?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type SmsControlsMetadataResponseDto = {
   /**
@@ -21,8 +38,33 @@ export type SmsControlsMetadataResponseDto = {
   /**
    * Control values specific to SMS
    */
-  values: SmsControlDto;
+  values?: SmsControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const SmsControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  SmsControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    body: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function smsControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<SmsControlsMetadataResponseDtoValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      SmsControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'SmsControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -32,7 +74,8 @@ export const SmsControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: SmsControlDto$inboundSchema,
+  values: z.lazy(() => SmsControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function smsControlsMetadataResponseDtoFromJSON(

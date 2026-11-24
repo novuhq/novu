@@ -9,7 +9,7 @@ type ChannelConnectionLike = {
 type ChannelEndpointLike = {
   type?: string;
   contextKeys?: string[];
-  endpoint?: Record<string, string>;
+  endpoint?: Record<string, unknown>;
 };
 
 export function hasConnectContext(context?: ContextPayload): boolean {

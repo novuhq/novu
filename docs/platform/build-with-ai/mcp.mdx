@@ -315,6 +315,10 @@ Trigger my welcome-email workflow for subscriber test-user-123 with payload cont
 Show recent failed notifications in the last 24 hours and help me debug delivery issues.
 </Prompt>
 
+<Prompt description="Find out why a subscriber missed a notification" icon="bot" actions={["copy", "cursor"]}>
+Why didn't subscriber user_123 get the password-reset notification? Check their workflow runs and the trigger requests.
+</Prompt>
+
 ### Agents and conversations
 
 <Prompt description="Create a managed agent and connect a channel" icon="bot" actions={["copy", "cursor"]}>
@@ -367,6 +371,9 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Conversations | `get_conversation_activities` | Inspect a conversation timeline |
 | Notifications | `get_notification` | Get a notification with execution logs |
 | Notifications | `get_notifications` | Fetch notifications with filtering |
+| Activity | `get_workflow_runs` | List workflow runs by workflow, subscriber, status, channel, topic, transaction or date |
+| Activity | `get_workflow_run` | Get a run's step statuses, errors, trimmed execution details and trigger request |
+| Activity | `get_trigger_requests` | List trigger requests with status code, workflow and error |
 | Integrations | `get_integrations` | List channel integrations |
 | Integrations | `get_active_integrations` | List active integrations |
 | Integrations | `delete_integration` | Delete an integration |

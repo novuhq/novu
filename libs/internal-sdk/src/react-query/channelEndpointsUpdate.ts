@@ -75,7 +75,7 @@ export function useChannelEndpointsUpdateMutation(
 }
 
 export function mutationKeyChannelEndpointsUpdate(): MutationKey {
-  return ["@novu/api", "Channel Endpoints", "update"];
+  return ["@novu/api", "ChannelEndpoints", "update"];
 }
 
 export function buildChannelEndpointsUpdateMutation(

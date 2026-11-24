@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { ApiResponse, TriggerWorkflowRequest } from "../types";
 import { NovuApiUtils } from "./api";
@@ -36,6 +37,11 @@ interface ToolConfig<T extends z.ZodObject<z.ZodRawShape>> {
 	description: string;
 	schema: T;
 	handler: (input: z.infer<T>, context: ToolContext) => Promise<ApiResponse>;
+	/** All three hints, plus `title`: OpenAI's app review rejects an annotated tool missing any. */
+	annotations?: Required<
+		Pick<ToolAnnotations, "destructiveHint" | "openWorldHint" | "readOnlyHint">
+	>;
+	title?: string;
 }
 
 interface ApiRequestConfig {
@@ -80,40 +86,52 @@ export class ToolFactory {
 			idempotencyKey: idempotencyKeySchema,
 		});
 
-		server.tool(
-			config.name,
-			config.description,
-			schemaWithEnvironment.shape,
-			async (rawInput) => {
-				if (!getAuthorization) {
-					const authError = ValidationUtils.validateToken(getToken());
-					if (authError) {
-						return authError;
-					}
+		const callback = async (rawInput: Record<string, unknown>) => {
+			if (!getAuthorization) {
+				const authError = ValidationUtils.validateToken(getToken());
+				if (authError) {
+					return authError;
 				}
+			}
 
-				const parsed = schemaWithEnvironment.parse(rawInput) as z.infer<T> & {
-					environmentId?: string;
-					idempotencyKey?: string;
-				};
-				const { environmentId, idempotencyKey, ...toolInput } = parsed;
+			const parsed = schemaWithEnvironment.parse(rawInput) as z.infer<T> & {
+				environmentId?: string;
+				idempotencyKey?: string;
+			};
+			const { environmentId, idempotencyKey, ...toolInput } = parsed;
 
-				try {
-					return await config.handler(toolInput as z.infer<T>, {
-						apiUrl: getApiUrl(),
-						environmentId,
-						getAuthorization,
-						idempotencyKey,
-						token: getToken() ?? "",
-					});
-				} catch (error) {
-					console.error(`Error in ${config.name}:`, error);
-					return ToolFactory.errorResult({
-						message: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
-					});
-				}
-			},
-		);
+			try {
+				return await config.handler(toolInput as z.infer<T>, {
+					apiUrl: getApiUrl(),
+					environmentId,
+					getAuthorization,
+					idempotencyKey,
+					token: getToken() ?? "",
+				});
+			} catch (error) {
+				console.error(`Error in ${config.name}:`, error);
+				return ToolFactory.errorResult({
+					message: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
+				});
+			}
+		};
+
+		if (config.annotations) {
+			server.registerTool(
+				config.name,
+				{
+					annotations: config.annotations,
+					description: config.description,
+					inputSchema: schemaWithEnvironment.shape,
+					title: config.title,
+				},
+				callback,
+			);
+
+			return;
+		}
+
+		server.tool(config.name, config.description, schemaWithEnvironment.shape, callback);
 	}
 
 	/**
@@ -141,10 +159,18 @@ export class ToolFactory {
 		return headers;
 	}
 
-	/** Send one request to the Novu API and unwrap the `data` envelope. */
+	/**
+	 * Send one request to the Novu API and unwrap the `data` envelope. Pass
+	 * `unwrapData: false` for a paginated list, whose cursor or total sits next to `data`.
+	 */
 	static async callApi(
 		context: ToolContext,
-		request: { method: ApiRequestConfig["method"]; endpoint: string; body?: unknown },
+		request: {
+			method: ApiRequestConfig["method"];
+			endpoint: string;
+			body?: unknown;
+			unwrapData?: boolean;
+		},
 		idempotencyKey?: string,
 	): Promise<ApiCallResult> {
 		const response = await fetch(`${context.apiUrl}${request.endpoint}`, {
@@ -164,7 +190,7 @@ export class ToolFactory {
 		const text = response.status === 204 ? "" : await response.text();
 		const json = text ? JSON.parse(text) : undefined;
 		const data =
-			json && typeof json === "object" && "data" in json
+			request.unwrapData !== false && json && typeof json === "object" && "data" in json
 				? (json as { data: unknown }).data
 				: json;
 

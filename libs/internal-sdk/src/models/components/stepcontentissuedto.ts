@@ -10,6 +10,10 @@ import {
   ContentIssueEnum,
   ContentIssueEnum$inboundSchema,
 } from "./contentissueenum.js";
+import {
+  StepIssueSeverityEnum,
+  StepIssueSeverityEnum$inboundSchema,
+} from "./stepissueseverityenum.js";
 
 export type StepContentIssueDto = {
   /**
@@ -24,6 +28,10 @@ export type StepContentIssueDto = {
    * Detailed message describing the issue
    */
   message: string;
+  /**
+   * Blocking severity of the issue. `error` (default when omitted) blocks save; `warning` is a non-blocking notice.
+   */
+  severity?: StepIssueSeverityEnum | undefined;
 };
 
 /** @internal */
@@ -35,6 +43,7 @@ export const StepContentIssueDto$inboundSchema: z.ZodType<
   issueType: ContentIssueEnum$inboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
+  severity: StepIssueSeverityEnum$inboundSchema.optional(),
 });
 
 export function stepContentIssueDtoFromJSON(

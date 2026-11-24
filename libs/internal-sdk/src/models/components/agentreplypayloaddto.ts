@@ -25,6 +25,11 @@ import {
   EditPayloadDto$outboundSchema,
 } from "./editpayloaddto.js";
 import {
+  HumanSignalDto,
+  HumanSignalDto$Outbound,
+  HumanSignalDto$outboundSchema,
+} from "./humansignaldto.js";
+import {
   MarkdownReplyContentDto,
   MarkdownReplyContentDto$Outbound,
   MarkdownReplyContentDto$outboundSchema,
@@ -84,6 +89,7 @@ export type Reply =
   | ToolApprovalCardReplyContentDto;
 
 export type Signals =
+  | HumanSignalDto
   | MetadataSetSignalDto
   | MetadataDeleteSignalDto
   | MetadataClearSignalDto
@@ -135,10 +141,11 @@ export type AgentReplyPayloadDto = {
    */
   resolve?: ResolveDto | undefined;
   /**
-   * Side-effect signals executed during this turn: conversation metadata mutations or Novu workflow triggers.
+   * Side-effect signals executed during this turn: conversation metadata mutations, Novu workflow triggers, or human-in-the-loop interactions.
    */
   signals?:
     | Array<
+      | HumanSignalDto
       | MetadataSetSignalDto
       | MetadataDeleteSignalDto
       | MetadataClearSignalDto
@@ -190,6 +197,7 @@ export function replyToJSON(reply: Reply): string {
 
 /** @internal */
 export type Signals$Outbound =
+  | HumanSignalDto$Outbound
   | MetadataSetSignalDto$Outbound
   | MetadataDeleteSignalDto$Outbound
   | MetadataClearSignalDto$Outbound
@@ -201,6 +209,7 @@ export const Signals$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Signals
 > = z.union([
+  HumanSignalDto$outboundSchema,
   MetadataSetSignalDto$outboundSchema,
   MetadataDeleteSignalDto$outboundSchema,
   MetadataClearSignalDto$outboundSchema,
@@ -243,6 +252,7 @@ export type AgentReplyPayloadDto$Outbound = {
   resolve?: ResolveDto$Outbound | undefined;
   signals?:
     | Array<
+      | HumanSignalDto$Outbound
       | MetadataSetSignalDto$Outbound
       | MetadataDeleteSignalDto$Outbound
       | MetadataClearSignalDto$Outbound
@@ -274,6 +284,7 @@ export const AgentReplyPayloadDto$outboundSchema: z.ZodType<
   resolve: ResolveDto$outboundSchema.optional(),
   signals: z.array(
     z.union([
+      HumanSignalDto$outboundSchema,
       MetadataSetSignalDto$outboundSchema,
       MetadataDeleteSignalDto$outboundSchema,
       MetadataClearSignalDto$outboundSchema,

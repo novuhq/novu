@@ -11,6 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type AgentIntegrationsControllerAddAgentIntegrationRequest = {
   identifier: string;
+  novuAnalyticsSource: string;
   /**
    * A header for idempotency purposes
    */
@@ -26,6 +27,7 @@ export type AgentIntegrationsControllerAddAgentIntegrationResponse = {
 /** @internal */
 export type AgentIntegrationsControllerAddAgentIntegrationRequest$Outbound = {
   identifier: string;
+  "Novu-Analytics-Source": string;
   "idempotency-key"?: string | undefined;
   AddAgentIntegrationRequestDto:
     components.AddAgentIntegrationRequestDto$Outbound;
@@ -39,11 +41,13 @@ export const AgentIntegrationsControllerAddAgentIntegrationRequest$outboundSchem
     AgentIntegrationsControllerAddAgentIntegrationRequest
   > = z.object({
     identifier: z.string(),
+    novuAnalyticsSource: z.string(),
     idempotencyKey: z.string().optional(),
     addAgentIntegrationRequestDto:
       components.AddAgentIntegrationRequestDto$outboundSchema,
   }).transform((v) => {
     return remap$(v, {
+      novuAnalyticsSource: "Novu-Analytics-Source",
       idempotencyKey: "idempotency-key",
       addAgentIntegrationRequestDto: "AddAgentIntegrationRequestDto",
     });

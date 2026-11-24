@@ -3,14 +3,47 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  ChatControlDto,
-  ChatControlDto$inboundSchema,
-} from "./chatcontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export const ChatControlsMetadataResponseDtoEditorType = {
+  Block: "block",
+  Text: "text",
+} as const;
+/**
+ * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+ */
+export type ChatControlsMetadataResponseDtoEditorType = ClosedEnum<
+  typeof ChatControlsMetadataResponseDtoEditorType
+>;
+
+/**
+ * Control values specific to Chat
+ */
+export type ChatControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Content of the chat message.
+   */
+  body?: string | undefined;
+  /**
+   * Type of editor to use for the body. When omitted, inferred from the body: Maily JSON is "block", otherwise "text".
+   */
+  editorType?: ChatControlsMetadataResponseDtoEditorType | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type ChatControlsMetadataResponseDto = {
   /**
@@ -24,8 +57,40 @@ export type ChatControlsMetadataResponseDto = {
   /**
    * Control values specific to Chat
    */
-  values: ChatControlDto;
+  values?: ChatControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const ChatControlsMetadataResponseDtoEditorType$inboundSchema:
+  z.ZodNativeEnum<typeof ChatControlsMetadataResponseDtoEditorType> = z
+    .nativeEnum(ChatControlsMetadataResponseDtoEditorType);
+
+/** @internal */
+export const ChatControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  ChatControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    body: z.string().optional(),
+    editorType: ChatControlsMetadataResponseDtoEditorType$inboundSchema
+      .optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function chatControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<ChatControlsMetadataResponseDtoValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      ChatControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ChatControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +100,8 @@ export const ChatControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: ChatControlDto$inboundSchema,
+  values: z.lazy(() => ChatControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function chatControlsMetadataResponseDtoFromJSON(
