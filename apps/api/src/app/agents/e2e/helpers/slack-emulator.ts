@@ -287,9 +287,10 @@ function emulatorClientOptions(opts?: Record<string, unknown>): Record<string, u
 type WebClientInstance = {
   slackApiUrl?: string;
   axios?: { defaults?: { baseURL?: string } };
+  retryConfig?: Record<string, unknown>;
 };
 
-/** Points a client constructed before the patch at the emulator too. */
+/** Points a client constructed before the patch at the emulator too, with no retries. */
 function redirectToEmulator(client: WebClientInstance): void {
   const apiUrl = process.env.SLACK_API_URL;
   if (!apiUrl) return;
@@ -300,6 +301,12 @@ function redirectToEmulator(client: WebClientInstance): void {
   }
   if (client.axios?.defaults && client.axios.defaults.baseURL !== normalized) {
     client.axios.defaults.baseURL = normalized;
+  }
+  // Such a client keeps the production `fiveRetriesInFiveMinutes`. The emulator 404s
+  // `assistant.threads.setStatus`, so typing calls would retry for minutes inside
+  // `/v1/agents/events/ingest`, and the API couldn't close before the root `after` hook times out.
+  if (client.retryConfig?.retries !== 0) {
+    client.retryConfig = { ...client.retryConfig, retries: 0 };
   }
 }
 

@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApiResponse } from "../types/index";
+import { asRecord } from "../utils/activity-format";
 import {
 	computeSubscriberReachability,
 	type ReachabilityConnection,
@@ -16,14 +17,18 @@ import {
 } from "../utils/subscriber-reachability";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
-import { ValidationUtils } from "../utils/validation";
 import { SUBSCRIBER_REACHABILITY_TOOL_NAMES } from "./tool-names";
 
 export const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
 
+const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: true } as const;
+
 const SEARCH_LIMIT = 10;
 const ENDPOINTS_LIMIT = 100;
 const MAX_CONNECTION_LOOKUPS = 10;
+
+const MISSING_IDENTIFIER =
+	"Error: Give one of subscriberId, email, phone or name, with a non-blank value, to find the subscriber.";
 
 type Json = Record<string, unknown>;
 type FailedCall = Extract<ApiCallResult, { ok: false }>;
@@ -32,7 +37,7 @@ const reachabilitySchema = z.object({
 	email: z
 		.string()
 		.optional()
-		.describe("Email address, matched exactly; a lowercase retry is automatic"),
+		.describe("Email address, matched exactly; trimmed and lowercase retries are automatic"),
 	name: z
 		.string()
 		.optional()
@@ -55,17 +60,13 @@ type ReachabilityInput = z.infer<typeof reachabilitySchema>;
  */
 export function registerSubscriberReachabilityTool(server: McpServer, accessors: ToolAccessors) {
 	ToolFactory.createTool(server, accessors, {
+		annotations: READ_ONLY,
 		description:
 			"Check which channels (email, in-app, SMS, push, chat) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
-		handler: async (input, context) => {
-			const validationError = ValidationUtils.validateAtLeastOneParam(input, [
-				"subscriberId",
-				"email",
-				"phone",
-				"name",
-			]);
-			if (validationError) {
-				return validationError;
+		handler: async (rawInput, context) => {
+			const input = withoutBlankValues(rawInput);
+			if (!input.subscriberId && !input.email && !input.phone && !input.name) {
+				return ToolFactory.errorResult({ message: MISSING_IDENTIFIER, status: 400 });
 			}
 
 			const lookup = await findSubscriber(input, context);
@@ -80,6 +81,7 @@ export function registerSubscriberReachabilityTool(server: McpServer, accessors:
 		},
 		name: SUBSCRIBER_REACHABILITY_TOOL_NAME,
 		schema: reachabilitySchema,
+		title: "Get subscriber reachability",
 	});
 }
 
@@ -106,12 +108,16 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 	const { field, values } = searchAttempts(input);
 	for (const value of values) {
 		const query = new URLSearchParams({ [field]: value, limit: String(SEARCH_LIMIT) });
-		const response = await read(context, `/v2/subscribers?${query.toString()}`);
+		// The page keeps its envelope: `next` sits beside `data`.
+		const response = await read(context, `/v2/subscribers?${query.toString()}`, {
+			unwrapData: false,
+		});
 		if (!response.ok) {
 			return { failure: response, kind: "error" };
 		}
 
-		const matches = asArray(response.data);
+		const page = asRecord(response.data);
+		const matches = asArray(page?.data);
 		if (matches.length === 1) {
 			return { kind: "found", subscriber: matches[0] };
 		}
@@ -128,6 +134,7 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 						}),
 						subscriberId: String(match.subscriberId),
 					})),
+					hasMore: Boolean(page?.next) || matches.length >= SEARCH_LIMIT,
 					status: "ambiguous",
 				},
 			};
@@ -138,12 +145,29 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 	return notFound(field, field === "phone" ? undefined : values[0]);
 }
 
+/**
+ * A blank value would become an empty filter, which the API ignores and answers with the
+ * environment's first subscribers; treat it as not given. The subscriberId is trimmed for the lookup.
+ */
+function withoutBlankValues(input: ReachabilityInput): ReachabilityInput {
+	const given = (value?: string) => (value?.trim() ? value : undefined);
+
+	return {
+		email: given(input.email),
+		name: given(input.name),
+		phone: given(input.phone),
+		subscriberId: input.subscriberId?.trim() || undefined,
+	};
+}
+
 function searchAttempts(input: ReachabilityInput): {
 	field: "email" | "phone" | "name";
 	values: string[];
 } {
 	if (input.email) {
-		return { field: "email", values: unique([input.email, input.email.trim().toLowerCase()]) };
+		const trimmed = input.email.trim();
+
+		return { field: "email", values: unique([input.email, trimmed, trimmed.toLowerCase()]) };
 	}
 	if (input.phone) {
 		return {
@@ -184,11 +208,12 @@ async function checkReachability(
 	]);
 
 	const endpointList = endpoints.ok ? asArray(endpoints.data).map(toEndpoint) : [];
-	const connectionIds = unique(
+	const referencedConnectionIds = unique(
 		endpointList
 			.map((endpoint) => endpoint.connectionIdentifier)
 			.filter((identifier): identifier is string => Boolean(identifier)),
-	).slice(0, MAX_CONNECTION_LOOKUPS);
+	);
+	const connectionIds = referencedConnectionIds.slice(0, MAX_CONNECTION_LOOKUPS);
 	const connectionReads = await Promise.all(
 		connectionIds.map((identifier) =>
 			read(context, `/v1/channel-connections/${encodeURIComponent(identifier)}`),
@@ -227,15 +252,24 @@ async function checkReachability(
 					)
 					.map(toIntegration)
 			: [],
+		// One page of endpoints and a capped number of connection lookups: what's left over is "not checked".
+		limits: {
+			endpointsTruncated: endpointList.length >= ENDPOINTS_LIMIT,
+			uncheckedConnectionIds: referencedConnectionIds.slice(MAX_CONNECTION_LOOKUPS),
+		},
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
 }
 
 /** One GET that never throws: a network error comes back as a failed call with status 0. */
-async function read(context: ToolContext, endpoint: string): Promise<ApiCallResult> {
+async function read(
+	context: ToolContext,
+	endpoint: string,
+	options: { unwrapData?: boolean } = {},
+): Promise<ApiCallResult> {
 	try {
-		return await ToolFactory.callApi(context, { endpoint, method: "GET" });
+		return await ToolFactory.callApi(context, { endpoint, method: "GET", ...options });
 	} catch (error) {
 		return {
 			errorText: error instanceof Error ? error.message : "Request failed",
@@ -278,6 +312,7 @@ function toSubscriber(raw: Json): ReachabilitySubscriber {
 					.length,
 				hasPhoneNumber: Boolean(credentials.phoneNumber),
 				hasWebhookUrl: Boolean(credentials.webhookUrl),
+				integrationId: stringOrNull(channel._integrationId),
 				integrationIdentifier: stringOrNull(channel.integrationIdentifier),
 				providerId: String(channel.providerId ?? ""),
 			};
@@ -301,6 +336,7 @@ function toIntegration(raw: Json): ReachabilityIntegration {
 		channel: String(raw.channel ?? ""),
 		hasConditions: Array.isArray(raw.conditions) && raw.conditions.length > 0,
 		hasRules: Boolean(rules && Object.keys(rules).length > 0),
+		id: String(raw._id ?? ""),
 		identifier: String(raw.identifier ?? ""),
 		primary: raw.primary === true,
 		providerId: String(raw.providerId ?? ""),
@@ -331,12 +367,6 @@ function toConnection(raw: Json): ReachabilityConnection {
 
 function toPreferences(data: unknown): ReachabilityPreferences | undefined {
 	return asRecord(data) as ReachabilityPreferences | undefined;
-}
-
-function asRecord(value: unknown): Json | undefined {
-	return value && typeof value === "object" && !Array.isArray(value)
-		? (value as Json)
-		: undefined;
 }
 
 function asArray(value: unknown): Json[] {

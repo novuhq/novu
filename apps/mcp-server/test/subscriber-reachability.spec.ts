@@ -45,6 +45,7 @@ function integration(
 		channel,
 		hasConditions: false,
 		hasRules: false,
+		id: `${providerId}-id`,
 		identifier: `${providerId}-1`,
 		primary: channel === "email" || channel === "sms",
 		providerId,
@@ -130,7 +131,9 @@ describe("computeSubscriberReachability", () => {
 			subscriberId: "sub_8f21",
 		});
 		expect(channelOf({}, "push").details).toEqual(["2 devices on fcm"]);
-		expect(channelOf({}, "chat").details).toContain("Slack user endpoint (slack-1)");
+		expect(channelOf({}, "chat").details).toContain(
+			"Slack user endpoint (slack-1), only for triggers without a context",
+		);
 	});
 
 	it("blocks SMS when the subscriber has no phone number", () => {
@@ -284,6 +287,137 @@ describe("computeSubscriberReachability", () => {
 		expect(chat.details).toContain("whatsapp-business to the phone number on file");
 	});
 
+	it("lists the phone number on file once per phone-based provider", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				integrations: [
+					...INTEGRATIONS,
+					integration("chat", "whatsapp-business"),
+					integration("chat", "whatsapp-business", {
+						id: "whatsapp-2-id",
+						identifier: "whatsapp-business-2",
+					}),
+				],
+			},
+			"chat",
+		);
+
+		expect(
+			chat.details.filter((detail) => detail.startsWith("whatsapp-business to the phone")),
+		).toEqual(["whatsapp-business to the phone number on file"]);
+	});
+
+	it("doesn't use the phone number on file for a provider with a stored channel", () => {
+		const withStoredChannel = (hasPhoneNumber: boolean) =>
+			channelOf(
+				{
+					endpoints: [],
+					integrations: [...INTEGRATIONS, integration("chat", "whatsapp-business")],
+					subscriber: subscriber({
+						channels: [
+							{
+								deviceTokenCount: 0,
+								hasPhoneNumber,
+								hasWebhookUrl: false,
+								integrationId: "whatsapp-business-id",
+								providerId: "whatsapp-business",
+							},
+						],
+					}),
+				},
+				"chat",
+			);
+
+		expect(withStoredChannel(false)).toMatchObject({
+			details: [],
+			reasons: [
+				"whatsapp-business channel has no phone number, and it replaces the phone number on file",
+			],
+			state: "blocked",
+		});
+		expect(withStoredChannel(true)).toMatchObject({
+			details: ["whatsapp-business phone number"],
+			state: "reachable",
+		});
+	});
+
+	it("uses the phone number on file only when no endpoint of that provider matches the trigger context", () => {
+		const whatsappEndpoint = endpoint({
+			connectionIdentifier: null,
+			integrationIdentifier: "whatsapp-business-1",
+			providerId: "whatsapp-business",
+			type: "phone",
+		});
+		const integrations = [...INTEGRATIONS, integration("chat", "whatsapp-business")];
+
+		expect(channelOf({ endpoints: [whatsappEndpoint], integrations }, "chat")).toMatchObject({
+			details: [
+				"Phone endpoint (whatsapp-business-1), only for triggers without a context",
+				"whatsapp-business to the phone number on file, when no whatsapp-business endpoint matches the trigger context",
+			],
+			state: "reachable",
+		});
+
+		// The worker drops endpoints of an inactive integration, so the phone number on file still applies.
+		const inactive = integrations.map((candidate) =>
+			candidate.providerId === "whatsapp-business"
+				? { ...candidate, active: false }
+				: candidate,
+		);
+		expect(
+			channelOf(
+				{
+					endpoints: [whatsappEndpoint],
+					integrations: [
+						...inactive,
+						integration("chat", "whatsapp-business", {
+							id: "whatsapp-2-id",
+							identifier: "whatsapp-business-2",
+						}),
+					],
+				},
+				"chat",
+			).details,
+		).toContain("whatsapp-business to the phone number on file");
+	});
+
+	it("never sends email through the agent email inbox", () => {
+		const inbox = integration("email", "agent-email-inbox", { primary: true });
+		const nonPrimary = INTEGRATIONS.map((candidate) =>
+			candidate.channel === "email" ? { ...candidate, primary: false } : candidate,
+		);
+
+		expect(channelOf({ integrations: [...nonPrimary, inbox] }, "email")).toMatchObject({
+			reasons: ["No primary email integration"],
+			state: "blocked",
+		});
+		expect(
+			channelOf(
+				{
+					integrations: [
+						...INTEGRATIONS.filter((candidate) => candidate.channel !== "email"),
+						inbox,
+					],
+				},
+				"email",
+			),
+		).toMatchObject({ reasons: ["No active email integration"], state: "blocked" });
+	});
+
+	it("reports a failed connections read on the chat verdict, not in the notes", () => {
+		const result = computeSubscriberReachability(
+			input({ connections: [], failures: { connections: { status: 500 } } }),
+		);
+
+		expect(result.notes).toEqual([]);
+		expect(result.channels.find((verdict) => verdict.channel === "chat")).toMatchObject({
+			reasons: ["Couldn't check channel connections (500)"],
+			state: "unknown",
+		});
+		expect(result.checked).not.toContain("channel connections");
+	});
+
 	it("blocks email without a primary integration unless one has conditions", () => {
 		const noPrimary = INTEGRATIONS.map((candidate) =>
 			candidate.channel === "email" ? { ...candidate, primary: false } : candidate,
@@ -337,8 +471,182 @@ describe("computeSubscriberReachability", () => {
 			"tool",
 		);
 		expect(tool).toMatchObject({
-			reasons: ["No tool endpoint for this subscriber"],
+			reasons: ["No pagerduty endpoint for this subscriber"],
 			state: "blocked",
+		});
+	});
+
+	it("says a tool endpoint without context keys only serves triggers without a context", () => {
+		const tool = channelOf(
+			{
+				endpoints: [
+					endpoint({
+						channel: "tool",
+						connectionIdentifier: null,
+						integrationIdentifier: "pagerduty-1",
+						providerId: "pagerduty",
+						type: "pagerduty_service",
+					}),
+				],
+				integrations: [...INTEGRATIONS, integration("tool", "pagerduty")],
+			},
+			"tool",
+		);
+
+		expect(tool).toMatchObject({
+			details: ["1 endpoint for pagerduty-1, only for triggers without a context"],
+			state: "reachable",
+		});
+	});
+
+	it("blocks push tokens bound to an inactive integration, even when another one is active", () => {
+		const push = channelOf(
+			{
+				subscriber: subscriber({
+					channels: [
+						{
+							deviceTokenCount: 1,
+							hasPhoneNumber: false,
+							hasWebhookUrl: false,
+							integrationId: "fcm-old-id",
+							providerId: "fcm",
+						},
+					],
+				}),
+			},
+			"push",
+		);
+
+		expect(push).toMatchObject({
+			reasons: [
+				"Device tokens for fcm are bound to an integration that is inactive or deleted",
+			],
+			state: "blocked",
+		});
+	});
+
+	it("blocks a legacy chat webhook bound to an inactive integration, even when another one is active", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				subscriber: subscriber({
+					channels: [
+						{
+							deviceTokenCount: 0,
+							hasPhoneNumber: false,
+							hasWebhookUrl: true,
+							integrationId: "slack-old-id",
+							providerId: "slack",
+						},
+					],
+					hasPhone: false,
+				}),
+			},
+			"chat",
+		);
+
+		expect(chat).toMatchObject({
+			reasons: ["slack webhook is bound to an integration that is inactive or deleted"],
+			state: "blocked",
+		});
+	});
+
+	it("keeps a channel partly reachable when critical workflows still send on it", () => {
+		const sms = channelOf(
+			{
+				criticalPreferences: {
+					workflows: [{ channels: { sms: true }, workflow: { name: "Login code" } }],
+				},
+				preferences: preferences({
+					global: { channels: { sms: false }, enabled: true },
+					workflows: [],
+				}),
+			},
+			"sms",
+		);
+
+		expect(sms).toMatchObject({
+			reasons: ["Off globally, but critical workflows still send: Login code"],
+			state: "partly",
+		});
+	});
+
+	it("reaches chat through Photon iMessage and the phone number", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				integrations: [...INTEGRATIONS, integration("chat", "photon-imessage")],
+			},
+			"chat",
+		);
+
+		expect(chat.state).toBe("reachable");
+		expect(chat.details).toContain("photon-imessage to the phone number on file");
+	});
+
+	it("can't tell whether a tool webhook without an endpoint reaches the subscriber", () => {
+		const tool = channelOf(
+			{ integrations: [...INTEGRATIONS, integration("tool", "tool-webhook")] },
+			"tool",
+		);
+
+		expect(tool.state).toBe("unknown");
+		expect(tool.reasons[0]).toContain(
+			"Couldn't tell whether the tool-webhook-1 webhook sends per subscriber",
+		);
+	});
+
+	it("only counts a tool endpoint with context keys for a matching trigger context", () => {
+		const tool = channelOf(
+			{
+				endpoints: [
+					endpoint({
+						channel: "tool",
+						connectionIdentifier: null,
+						contextKeys: ["tenant:acme"],
+						integrationIdentifier: "pagerduty-1",
+						providerId: "pagerduty",
+						type: "pagerduty_service",
+					}),
+				],
+				integrations: [...INTEGRATIONS, integration("tool", "pagerduty")],
+			},
+			"tool",
+		);
+
+		expect(tool).toMatchObject({
+			reasons: ["Only reachable for triggers with a matching context"],
+			state: "partly",
+		});
+		expect(tool.details).toContain(
+			"pagerduty-1, only when the trigger context is exactly tenant:acme",
+		);
+	});
+
+	it("reports routes past the read limits as not checked instead of missing", () => {
+		const uncheckedConnection = channelOf(
+			{
+				connections: [],
+				limits: { uncheckedConnectionIds: ["slack-conn"] },
+			},
+			"chat",
+		);
+		expect(uncheckedConnection).toMatchObject({
+			reasons: ["Slack user endpoint's connection wasn't checked (lookup limit)"],
+			state: "unknown",
+		});
+
+		const truncated = channelOf(
+			{
+				endpoints: [],
+				limits: { endpointsTruncated: true },
+				subscriber: subscriber({ hasPhone: false }),
+			},
+			"chat",
+		);
+		expect(truncated).toMatchObject({
+			reasons: ["Only the first 100 endpoints were read; others weren't checked"],
+			state: "unknown",
 		});
 	});
 });
@@ -595,8 +903,74 @@ describe("get_subscriber_reachability", () => {
 					subscriberId: "sub_1c09",
 				},
 			],
+			hasMore: false,
 			status: "ambiguous",
 		});
+	});
+
+	it("says when more subscribers may match than the candidates listed", async () => {
+		const page = (count: number, next: string | null) => ({
+			body: {
+				data: Array.from({ length: count }, (_, index) =>
+					rawSubscriber({ subscriberId: `sub_${index}` }),
+				),
+				next,
+			},
+			status: 200,
+		});
+
+		stubApi(setupRoutes({ [search("name", "Jane")]: page(2, "cursor-2") }));
+		expect((await checkReachability({ name: "Jane" })).reachability).toMatchObject({
+			hasMore: true,
+			status: "ambiguous",
+		});
+
+		stubApi(setupRoutes({ [search("name", "Jane")]: page(10, null) }));
+		expect((await checkReachability({ name: "Jane" })).reachability).toMatchObject({
+			hasMore: true,
+			status: "ambiguous",
+		});
+	});
+
+	it("is advertised as read-only, with a title", async () => {
+		const client = await connectAllTools(tokenAccessors("api-key"));
+		const { tools } = await client.listTools();
+		const tool = tools.find((candidate) => candidate.name === "get_subscriber_reachability");
+
+		expect(tool?.title).toBe("Get subscriber reachability");
+		expect(tool?.annotations).toEqual({
+			destructiveHint: false,
+			openWorldHint: false,
+			readOnlyHint: true,
+		});
+	});
+
+	it("trims the subscriberId before the lookup", async () => {
+		const fetchMock = stubApi(setupRoutes());
+
+		const { reachability } = await checkReachability({ subscriberId: "  sub_8f21 " });
+
+		expect(reachability.status).toBe("found");
+		expect(String(fetchMock.mock.calls[0][0])).toBe(`${API_URL}/v2/subscribers/sub_8f21`);
+	});
+
+	it("tries an email as given, trimmed, then trimmed in lowercase", async () => {
+		const fetchMock = stubApi(
+			setupRoutes({
+				[search("email", " Jane@Acme.com ")]: [],
+				[search("email", "Jane@Acme.com")]: [],
+				[search("email", "jane@acme.com")]: [rawSubscriber()],
+			}),
+		);
+
+		const { reachability } = await checkReachability({ email: " Jane@Acme.com " });
+
+		expect(reachability.status).toBe("found");
+		expect(
+			fetchMock.mock.calls
+				.slice(0, 3)
+				.map(([url]) => new URL(String(url)).searchParams.get("email")),
+		).toEqual([" Jane@Acme.com ", "Jane@Acme.com", "jane@acme.com"]);
 	});
 
 	it("retries an email in lowercase", async () => {
@@ -624,12 +998,26 @@ describe("get_subscriber_reachability", () => {
 		expect(result.structuredContent).toMatchObject({ error: { status: 500 } });
 	});
 
-	it("asks for an identifier when none is given", async () => {
+	it("fails with a 400 that asks for an identifier when none is given", async () => {
 		stubApi(setupRoutes());
 
 		const { result } = await checkReachability({});
 
-		expect(textOf(result)).toContain("At least one query parameter is required");
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		expect(textOf(result)).toContain("Give one of subscriberId, email, phone or name");
+	});
+
+	it("treats blank values as not given instead of matching any subscriber", async () => {
+		const fetchMock = stubApi(setupRoutes());
+
+		for (const args of [{ name: "   " }, { email: "  " }, { subscriberId: " " }]) {
+			const { result } = await checkReachability(args);
+
+			expect(result.isError, JSON.stringify(args)).toBe(true);
+			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
+		}
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });
 

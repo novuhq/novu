@@ -25,10 +25,16 @@ describe('matchCopilotPage', () => {
     }
   );
 
+  it.each(['/integrations', '/integrations/connect', '/integrations/connect/sendgrid', '/integrations/int_123/update'])(
+    'matches %s to Integrations',
+    (pathname) => {
+      expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.INTEGRATIONS);
+    }
+  );
+
   it.each([
     '/env/dev-env/workflows',
     '/env/dev-env/topics',
-    '/integrations',
     '/env/dev-env/activity/unknown-tab',
     '/env/dev-env/workflows/welcome_wf_123/activity',
   ])('matches no page at %s', (pathname) => {
@@ -104,10 +110,6 @@ describe('getCopilotPageCopy', () => {
         ],
       }
     );
-  });
-
-  it('returns nothing for a page without an entry', () => {
-    expect(getCopilotPageCopy(CopilotPageEnum.INTEGRATIONS)).toBeUndefined();
   });
 });
 

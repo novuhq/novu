@@ -1,21 +1,34 @@
-import type { CopilotPageEnum } from '@novu/shared';
+import { CopilotPageEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useContext, useEffect } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { QueryKeys } from '@/utils/query-keys';
 import { useCopilotPageView } from './copilot-page-view-store';
 import { CopilotPopoverMount } from './copilot-popover';
 import { CopilotRegisterContext } from './copilot-web-chat-context';
 import { CopilotWebChatProvider } from './copilot-web-chat-provider';
 import { useActiveCopilotPage } from './use-copilot-pages';
 
+/** What each page shows that the Copilot can change, refetched after every run so the page and its open sheet catch up. */
+const REFETCHED_QUERIES: Partial<Record<CopilotPageEnum, string[]>> = {
+  [CopilotPageEnum.INTEGRATIONS]: [QueryKeys.fetchIntegrations],
+};
+
 /** Hands the provider the page and what its tab or panel registered in the page-view store. */
 function CopilotPageContextSync({ page }: { page: CopilotPageEnum }) {
   const registerPageContext = useContext(CopilotRegisterContext);
   const view = useCopilotPageView();
+  const queryClient = useQueryClient();
 
   useEffect(
-    () => registerPageContext({ page, viewing: view?.viewing, question: view?.question }),
-    [registerPageContext, page, view]
+    () =>
+      registerPageContext({ page, viewing: view?.viewing, question: view?.question }, () => {
+        for (const key of REFETCHED_QUERIES[page] ?? []) {
+          queryClient.invalidateQueries({ queryKey: [key] });
+        }
+      }),
+    [registerPageContext, page, view, queryClient]
   );
 
   return null;

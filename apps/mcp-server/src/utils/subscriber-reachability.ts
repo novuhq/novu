@@ -26,6 +26,8 @@ export interface ReadFailure {
 
 export interface ReachabilitySubscriberChannel {
 	providerId: string;
+	/** The integration the channel is bound to (`_integrationId`); the push worker sends only through it. */
+	integrationId?: string | null;
 	integrationIdentifier?: string | null;
 	/** Only presence is read: the token count and whether a webhook URL or phone number is set. */
 	deviceTokenCount: number;
@@ -46,6 +48,7 @@ export interface ReachabilitySubscriber {
 }
 
 export interface ReachabilityIntegration {
+	id: string;
 	identifier: string;
 	providerId: string;
 	channel: string;
@@ -94,6 +97,13 @@ export interface SubscriberReachabilityInput {
 	endpoints: ReachabilityEndpoint[];
 	connections: ReachabilityConnection[];
 	failures?: Partial<Record<ReachabilitySource, ReadFailure>>;
+	/** What the tool's read caps left out, so it isn't reported as missing setup. */
+	limits?: {
+		/** More endpoints may exist than the one page that was read. */
+		endpointsTruncated?: boolean;
+		/** Connections the endpoints reference but that weren't looked up. */
+		uncheckedConnectionIds?: string[];
+	};
 }
 
 export interface ChannelReachability {
@@ -130,10 +140,32 @@ export type SubscriberReachabilityResult =
 			checked: string[];
 	  }
 	| { status: "not_found"; searched: { field: string; value?: string } }
-	| { status: "ambiguous"; candidates: SubscriberReachabilityCandidate[] };
+	| {
+			status: "ambiguous";
+			candidates: SubscriberReachabilityCandidate[];
+			/** More subscribers may match than the candidates listed. */
+			hasMore: boolean;
+	  };
 
 /** Chat providers that deliver to `subscriber.phone` (send-message-chat `PHONE_BASED_CHAT_PROVIDERS`). */
-const PHONE_BASED_CHAT_PROVIDERS = ["whatsapp-business", "sendblue"];
+const PHONE_BASED_CHAT_PROVIDERS = ["whatsapp-business", "sendblue", "photon-imessage"];
+
+/** Integrations workflows never send through (SelectIntegration `isHiddenFromWorkflows`). */
+const HIDDEN_FROM_WORKFLOWS_PROVIDERS = ["agent-email-inbox"];
+
+/** Tool providers that only send to a subscriber's endpoint (shared `ENDPOINT_ROUTED_TOOL_PROVIDERS`). */
+const ENDPOINT_ROUTED_TOOL_PROVIDERS = ["pagerduty", "opsgenie", "grafana"];
+
+/**
+ * The tool webhook needs an endpoint only with `routingMode: "dynamic"`, which sits in credentials
+ * the API doesn't return to this caller (shared `isEndpointRoutedToolProvider`).
+ */
+const TOOL_WEBHOOK_PROVIDER = "tool-webhook";
+
+const ENDPOINTS_READ_LIMIT_NOTE = "Only the first 100 endpoints were read; others weren't checked";
+
+/** Endpoints match the trigger context exactly, so one without context keys only serves triggers without one. */
+const CONTEXT_FREE_NOTE = "only for triggers without a context";
 
 /** Endpoint types whose token comes from a linked connection (resolve-channel-endpoints). */
 const CONNECTION_TOKEN_TYPES = ["slack_channel", "slack_user", "webex_room", "webex_person"];
@@ -236,7 +268,10 @@ export function computeSubscriberReachability(
 	const { subscriber } = input;
 	const active = (channel: ReachabilityChannel) =>
 		input.integrations.filter(
-			(integration) => integration.active && integration.channel === channel,
+			(integration) =>
+				integration.active &&
+				integration.channel === channel &&
+				!HIDDEN_FROM_WORKFLOWS_PROVIDERS.includes(integration.providerId),
 		);
 
 	const verdicts: Verdict[] = [
@@ -258,7 +293,12 @@ export function computeSubscriberReachability(
 	}
 
 	for (const verdict of verdicts) {
-		applyPreferences(verdict, input.preferences, failures.preferences);
+		applyPreferences(
+			verdict,
+			input.preferences,
+			failures.preferences,
+			input.criticalPreferences,
+		);
 	}
 
 	return {
@@ -353,22 +393,29 @@ function pushChannel(
 
 	const withTokens = input.subscriber.channels.filter((channel) => channel.deviceTokenCount > 0);
 	const devicesByProvider = new Map<string, number>();
-	const orphanProviders = new Set<string>();
+	const orphans = new Set<string>();
 
 	for (const channel of withTokens) {
+		// The worker sends through the integration the channel is bound to, never a sibling of the same provider.
 		const integration = activeIntegrations.find(
 			(candidate) =>
 				candidate.providerId === channel.providerId &&
-				(!channel.integrationIdentifier ||
-					candidate.identifier === channel.integrationIdentifier),
+				(channel.integrationId
+					? candidate.id === channel.integrationId
+					: !channel.integrationIdentifier ||
+						candidate.identifier === channel.integrationIdentifier),
 		);
 		if (integration) {
 			devicesByProvider.set(
 				channel.providerId,
 				(devicesByProvider.get(channel.providerId) ?? 0) + channel.deviceTokenCount,
 			);
+		} else if (channel.integrationId) {
+			orphans.add(
+				`Device tokens for ${channel.providerId} are bound to an integration that is inactive or deleted`,
+			);
 		} else {
-			orphanProviders.add(channel.providerId);
+			orphans.add(`Device tokens for ${channel.providerId}, which has no active integration`);
 		}
 	}
 
@@ -376,9 +423,7 @@ function pushChannel(
 		verdict.details.push(`${count} ${count === 1 ? "device" : "devices"} on ${providerId}`);
 	}
 
-	const orphanReasons = [...orphanProviders].map(
-		(providerId) => `Device tokens for ${providerId}, which has no active integration`,
-	);
+	const orphanReasons = [...orphans];
 
 	if (devicesByProvider.size > 0) {
 		verdict.partial.push(...orphanReasons);
@@ -430,23 +475,39 @@ function chatChannel(
 	for (const channel of input.subscriber.channels.filter(
 		(candidate) => candidate.deviceTokenCount === 0,
 	)) {
+		// Like push, a legacy chat channel sends only through the integration it's bound to; phone-based
+		// providers pick their integration by provider instead (send-message-chat).
+		const isPhoneBased = PHONE_BASED_CHAT_PROVIDERS.includes(channel.providerId);
+		const bound = isPhoneBased ? null : channel.integrationId;
 		const integration = activeIntegrations.find(
-			(candidate) => candidate.providerId === channel.providerId,
+			(candidate) =>
+				candidate.providerId === channel.providerId && (!bound || candidate.id === bound),
 		);
 		if (!integration) {
 			const isChatProvider = input.integrations.some(
 				(candidate) =>
 					candidate.channel === "chat" && candidate.providerId === channel.providerId,
 			);
-			if (isChatProvider && channel.hasWebhookUrl) {
+			if (channel.hasWebhookUrl && (isChatProvider || bound)) {
 				problems.push(
-					`${channel.providerId} webhook, but ${channel.providerId} has no active integration`,
+					bound
+						? `${channel.providerId} webhook is bound to an integration that is inactive or deleted`
+						: `${channel.providerId} webhook, but ${channel.providerId} has no active integration`,
 				);
 			}
 			continue;
 		}
 
-		if (channel.hasWebhookUrl || channel.hasPhoneNumber) {
+		if (isPhoneBased) {
+			// A stored channel sends only to its own number; without one the worker fails it (CHAT_MISSING_PHONE_NUMBER).
+			if (channel.hasPhoneNumber) {
+				routes.push(`${channel.providerId} phone number`);
+			} else {
+				problems.push(
+					`${channel.providerId} channel has no phone number, and it replaces the phone number on file`,
+				);
+			}
+		} else if (channel.hasWebhookUrl || channel.hasPhoneNumber) {
 			routes.push(
 				`${channel.providerId} ${channel.hasWebhookUrl ? "webhook" : "phone number"}`,
 			);
@@ -455,13 +516,7 @@ function chatChannel(
 		}
 	}
 
-	if (input.subscriber.hasPhone) {
-		for (const integration of activeIntegrations) {
-			if (PHONE_BASED_CHAT_PROVIDERS.includes(integration.providerId)) {
-				routes.push(`${integration.providerId} to the phone number on file`);
-			}
-		}
-	}
+	if (input.subscriber.hasPhone) routes.push(...phoneOnFileRoutes(input, activeIntegrations));
 
 	verdict.details.push(...routes, ...conditionalRoutes);
 
@@ -471,6 +526,7 @@ function chatChannel(
 		if (failures.endpoints) {
 			verdict.details.push(describeReadFailure("endpoints", failures.endpoints));
 		}
+		if (input.limits?.endpointsTruncated) verdict.details.push(ENDPOINTS_READ_LIMIT_NOTE);
 
 		return verdict;
 	}
@@ -478,6 +534,7 @@ function chatChannel(
 	if (failures.endpoints) {
 		verdict.unknowns.push(describeReadFailure("endpoints", failures.endpoints));
 	}
+	if (input.limits?.endpointsTruncated) verdict.unknowns.push(ENDPOINTS_READ_LIMIT_NOTE);
 	verdict.unknowns.push(...unverified);
 
 	if (conditionalRoutes.length > 0) {
@@ -491,6 +548,44 @@ function chatChannel(
 	}
 
 	return verdict;
+}
+
+/**
+ * The phone number on file, once per phone-based provider with an active integration. The worker
+ * skips it for a provider with a stored channel, and for one with an endpoint matching the trigger
+ * context (send-message-chat `getLegacyChatChannels`).
+ */
+function phoneOnFileRoutes(
+	input: SubscriberReachabilityInput,
+	activeIntegrations: ReachabilityIntegration[],
+): string[] {
+	const storedProviders = new Set(input.subscriber.channels.map((channel) => channel.providerId));
+	const providers = new Set(
+		activeIntegrations
+			.map((integration) => integration.providerId)
+			.filter(
+				(providerId) =>
+					PHONE_BASED_CHAT_PROVIDERS.includes(providerId) &&
+					!storedProviders.has(providerId),
+			),
+	);
+
+	return [...providers].map((providerId) => {
+		// Endpoints of an inactive integration are dropped before grouping, so they don't replace it.
+		const hasEndpoint = input.endpoints.some(
+			(endpoint) =>
+				endpoint.channel === "chat" &&
+				endpoint.providerId === providerId &&
+				activeIntegrations.some(
+					(integration) => integration.identifier === endpoint.integrationIdentifier,
+				),
+		);
+		const route = `${providerId} to the phone number on file`;
+
+		return hasEndpoint
+			? `${route}, when no ${providerId} endpoint matches the trigger context`
+			: route;
+	});
 }
 
 function checkEndpoint(
@@ -523,8 +618,13 @@ function checkEndpoint(
 			)
 		: undefined;
 	const connectionsFailure = input.failures?.connections;
+	const connectionUnchecked =
+		!!endpoint.connectionIdentifier &&
+		(input.limits?.uncheckedConnectionIds ?? []).includes(endpoint.connectionIdentifier);
+	const uncheckedConnection = `${label} endpoint's connection wasn't checked (lookup limit)`;
 
 	if (CONNECTION_TOKEN_TYPES.includes(endpoint.type) && !connection) {
+		if (connectionUnchecked) return { route, unverified: uncheckedConnection };
 		if (endpoint.connectionIdentifier && connectionsFailure) {
 			return { route, unverified: describeReadFailure("connections", connectionsFailure) };
 		}
@@ -537,6 +637,7 @@ function checkEndpoint(
 		!connection?.hasWorkspaceId &&
 		!endpoint.hasTenantId
 	) {
+		if (connectionUnchecked) return { route, unverified: uncheckedConnection };
 		if (endpoint.connectionIdentifier && connectionsFailure) {
 			return { route, unverified: describeReadFailure("connections", connectionsFailure) };
 		}
@@ -556,34 +657,79 @@ function checkEndpoint(
 		};
 	}
 
-	return { detail, route };
+	return { detail, route: `${route}, ${CONTEXT_FREE_NOTE}` };
 }
 
-/** Tool: endpoint-routed providers skip subscribers with no endpoint (send-message-tool). */
+/**
+ * Tool: endpoint-routed providers skip subscribers with no endpoint, and only an endpoint whose
+ * context keys match the trigger exactly is used (send-message-tool, resolve-channel-endpoints).
+ * Other tool providers send through the integration itself.
+ */
 function toolChannel(
 	verdict: Verdict,
 	input: SubscriberReachabilityInput,
 	activeIntegrations: ReachabilityIntegration[],
 ): Verdict {
-	if (input.failures?.endpoints) {
-		verdict.unknowns.push(describeReadFailure("endpoints", input.failures.endpoints));
+	const routes: string[] = [];
+	const conditionalRoutes: string[] = [];
+	const unknowns = new Set<string>();
+	const missing: string[] = [];
+
+	for (const integration of activeIntegrations) {
+		const isWebhook = integration.providerId === TOOL_WEBHOOK_PROVIDER;
+		if (!isWebhook && !ENDPOINT_ROUTED_TOOL_PROVIDERS.includes(integration.providerId)) {
+			routes.push(`${integration.identifier} sends without a subscriber endpoint`);
+			continue;
+		}
+
+		if (input.failures?.endpoints) {
+			unknowns.add(describeReadFailure("endpoints", input.failures.endpoints));
+			continue;
+		}
+
+		const endpoints = input.endpoints.filter(
+			(endpoint) =>
+				endpoint.channel === "tool" &&
+				endpoint.integrationIdentifier === integration.identifier,
+		);
+		const contextual = endpoints.filter((endpoint) => endpoint.contextKeys.length > 0);
+
+		if (endpoints.length > contextual.length) {
+			const count = endpoints.length - contextual.length;
+			routes.push(
+				`${count} ${pluralize(count, "endpoint")} for ${integration.identifier}, ${CONTEXT_FREE_NOTE}`,
+			);
+		} else if (contextual.length > 0) {
+			const contexts = contextual.map((endpoint) => endpoint.contextKeys.join(", "));
+			conditionalRoutes.push(
+				`${integration.identifier}, only when the trigger context is exactly ${contexts.join(" or ")}`,
+			);
+		} else if (isWebhook) {
+			unknowns.add(
+				`Couldn't tell whether the ${integration.identifier} webhook sends per subscriber (its routing mode isn't visible); if it does, this subscriber has no endpoint for it`,
+			);
+		} else if (input.limits?.endpointsTruncated) {
+			unknowns.add(ENDPOINTS_READ_LIMIT_NOTE);
+		} else {
+			missing.push(`No ${integration.providerId} endpoint for this subscriber`);
+		}
+	}
+
+	verdict.details.push(...routes, ...conditionalRoutes);
+
+	if (routes.length > 0) {
+		verdict.partial.push(...missing);
+		verdict.details.push(...unknowns);
 
 		return verdict;
 	}
 
-	const identifiers = new Set(activeIntegrations.map((integration) => integration.identifier));
-	const endpoints = input.endpoints.filter(
-		(endpoint) =>
-			endpoint.channel === "tool" &&
-			endpoint.integrationIdentifier !== null &&
-			identifiers.has(endpoint.integrationIdentifier),
-	);
-
-	if (endpoints.length === 0) {
-		verdict.blockers.push("No tool endpoint for this subscriber");
-	} else {
-		verdict.details.push(
-			`${endpoints.length} tool ${endpoints.length === 1 ? "endpoint" : "endpoints"}`,
+	verdict.unknowns.push(...unknowns);
+	if (conditionalRoutes.length > 0) {
+		verdict.partial.push(...missing, "Only reachable for triggers with a matching context");
+	} else if (verdict.unknowns.length === 0) {
+		verdict.blockers.push(
+			...(missing.length > 0 ? missing : ["No tool endpoint for this subscriber"]),
 		);
 	}
 
@@ -599,6 +745,7 @@ function applyPreferences(
 	verdict: Verdict,
 	preferences: ReachabilityPreferences | undefined,
 	failure: ReadFailure | undefined,
+	criticalPreferences?: ReachabilityPreferences,
 ): void {
 	if (failure) {
 		if (verdict.blockers.length === 0) {
@@ -625,14 +772,28 @@ function applyPreferences(
 		(workflow) => workflow.enabled === false || workflow.channels?.[channel] === false,
 	);
 
+	// Critical workflows ignore subscriber preferences, so they still send on a channel the subscriber turned off.
+	const criticalSending = (criticalPreferences?.workflows ?? []).filter(
+		(workflow) => workflow.channels?.[channel] === true,
+	);
+	const preferencesBlock = (reason: string) => {
+		if (criticalSending.length > 0) {
+			verdict.partial.push(
+				`${reason}, but critical workflows still send: ${listNames(criticalSending)}`,
+			);
+		} else {
+			verdict.blockers.push(reason);
+		}
+	};
+
 	if (workflows.length === 0) {
-		if (globalOffReason) verdict.blockers.push(globalOffReason);
+		if (globalOffReason) preferencesBlock(globalOffReason);
 
 		return;
 	}
 
 	if (off.length === workflows.length) {
-		verdict.blockers.push(
+		preferencesBlock(
 			globalOffReason ??
 				`Off for all ${workflows.length} ${pluralize(workflows.length, "workflow")} that use ${CHANNEL_LABELS[channel]}`,
 		);
@@ -668,11 +829,6 @@ function preferenceNotes(input: SubscriberReachabilityInput): string[] {
 		notes.push(
 			`A delivery schedule is on: non-critical ${SCHEDULED_CHANNELS} steps outside it are skipped or wait for it`,
 		);
-	}
-
-	for (const source of ["connections"] as const) {
-		const failure = failures[source];
-		if (failure) notes.push(describeReadFailure(source, failure));
 	}
 
 	return notes;

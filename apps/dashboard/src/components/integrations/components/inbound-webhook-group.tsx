@@ -108,6 +108,7 @@ export function InboundWebhookGroup({
         });
 
   useEffect(() => {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing auto-configure flow; splitting it is out of scope here
     const handleIntegrationCreationOrUpdate = async () => {
       // Check if this is a toggle change from false to true
       const wasToggleJustEnabled = prevIsEnabledRef.current === false && isEnabled === true;
@@ -182,6 +183,7 @@ export function InboundWebhookGroup({
                 {provider?.channel !== ChannelTypeEnum.PUSH && (
                   <InboundWebhookUrl
                     integrationId={integrationId}
+                    integrationEnvironmentId={formData?.environmentId}
                     autoConfigureState={autoConfigureState}
                     provider={provider}
                     group={group}
