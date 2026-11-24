@@ -71,8 +71,9 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    // The integration store connects a number with no agent: the credentials are saved, and the webhook is
-    // registered later, when an agent is linked to the integration.
+    // The integration store connects a number with no agent: only the credentials are saved. Linking an agent
+    // does not register the webhook by itself; the agent setup guide does (ConfigureWhatsAppWebhook, or this
+    // use case run again with the agent). A webhook the business account already had is left as it was.
     const agentIdentifier = command.agentIdentifier;
     const { agent, integration } = agentIdentifier
       ? await resolveWhatsAppAgentIntegration({
