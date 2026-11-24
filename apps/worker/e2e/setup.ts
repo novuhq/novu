@@ -8,9 +8,9 @@ const dalService = new DalService();
 
 function createClickHouseTestClient(database?: string): ClickHouseClient {
   return createClickHouseClient({
-    host: 'http://localhost:8123',
-    username: 'default',
-    password: '',
+    host: process.env.CLICK_HOUSE_URL || 'http://localhost:8123',
+    username: process.env.CLICK_HOUSE_USER || 'default',
+    password: process.env.CLICK_HOUSE_PASSWORD || '',
     database: database || 'default',
   });
 }

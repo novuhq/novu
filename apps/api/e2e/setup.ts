@@ -88,9 +88,9 @@ async function closeDatabaseConnection(): Promise<void> {
 
 function createClickHouseTestClient(database?: string): ClickHouseClient {
   return createClickHouseClient({
-    url: 'http://localhost:8123',
-    username: 'default',
-    password: '',
+    url: process.env.CLICK_HOUSE_URL || 'http://localhost:8123',
+    username: process.env.CLICK_HOUSE_USER || 'default',
+    password: process.env.CLICK_HOUSE_PASSWORD || '',
     database: database || 'default',
   });
 }
