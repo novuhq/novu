@@ -121,6 +121,7 @@ export function setChannelConnectionsListData(
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       subscriberId?: string | undefined;
+      connectionMode?: operations.ConnectionMode | undefined;
       channel?: operations.Channel | undefined;
       providerId?: components.ProvidersIdEnum | undefined;
       integrationIdentifier?: string | undefined;
@@ -148,6 +149,7 @@ export function invalidateChannelConnectionsList(
       orderBy?: string | undefined;
       includeCursor?: boolean | undefined;
       subscriberId?: string | undefined;
+      connectionMode?: operations.ConnectionMode | undefined;
       channel?: operations.Channel | undefined;
       providerId?: components.ProvidersIdEnum | undefined;
       integrationIdentifier?: string | undefined;
@@ -159,7 +161,7 @@ export function invalidateChannelConnectionsList(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Connections", "list", ...queryKeyBase],
+    queryKey: ["@novu/api", "ChannelConnections", "list", ...queryKeyBase],
   });
 }
 
@@ -169,6 +171,6 @@ export function invalidateAllChannelConnectionsList(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Channel Connections", "list"],
+    queryKey: ["@novu/api", "ChannelConnections", "list"],
   });
 }

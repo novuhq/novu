@@ -10,6 +10,7 @@ import {
   type ContactChannelVia,
   changeOperatorEmail,
   removeContact,
+  setContactFullAccess,
   setContactListenTo,
   setOperatorDefaultChannel,
 } from '@/lib/human-contacts-api';
@@ -121,6 +122,38 @@ export async function setListenToAction(contactId: string, listenTo: boolean): P
     return { ok: true };
   } catch (error) {
     console.error('Failed to change whom the agent listens to', error);
+
+    return { ok: false, error: describeError(error, 'Couldn’t save that. Try again.') };
+  } finally {
+    revalidatePath(CONTACTS_PATH);
+  }
+}
+
+/**
+ * Turns a contact's "Full access" switch on or off: whether their messages start the agent's hosts with everything
+ * the operator's get, the hosts asking them, not the operator. Only while the agent listens to them; the operator
+ * always has everything, so their own card has no switch.
+ */
+export async function setFullAccessAction(contactId: string, fullAccess: boolean): Promise<ContactCardResult> {
+  const account = await readSignedInAccount();
+  if (!account) {
+    return { ok: false, error: SESSION_ENDED };
+  }
+
+  if (typeof contactId !== 'string' || !contactId || typeof fullAccess !== 'boolean') {
+    return { ok: false, error: 'This switch can’t be changed.' };
+  }
+
+  try {
+    if ((await findOperatorContactId(account)) === contactId) {
+      return { ok: false, error: 'You always have full access.' };
+    }
+
+    await setContactFullAccess(account, contactId, fullAccess);
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to change who has full access', error);
 
     return { ok: false, error: describeError(error, 'Couldn’t save that. Try again.') };
   } finally {

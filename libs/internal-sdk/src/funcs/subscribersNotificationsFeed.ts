@@ -109,6 +109,7 @@ async function $do(
   );
 
   const query = encodeFormQuery({
+    "feedIdentifier": payload.feedIdentifier,
     "limit": payload.limit,
     "page": payload.page,
     "payload": payload.payload,

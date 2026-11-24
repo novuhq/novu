@@ -58,22 +58,33 @@ export function validateConnectionMode({
 }
 
 /**
+ * Whether a subscriber-session caller may change (reconnect or delete) a connection. A
+ * connection with a subscriber belongs to that subscriber in its exact context; a
+ * connection without one belongs to its exact, non-empty context. Environment-wide shared
+ * connections (no subscriber, no context) belong to the tenant's admins only, who manage
+ * them through the `INTEGRATION_WRITE` API.
+ */
+export function canCallerManageChannelConnection(
+  connection: Pick<ChannelConnectionEntity, 'subscriberId' | 'contextKeys'>,
+  caller: { subscriberId?: string; contextKeys: string[] }
+): boolean {
+  const connectionContextKeys = connection.contextKeys ?? [];
+  const isSameContext = haveSameKeys(connectionContextKeys, caller.contextKeys);
+
+  return connection.subscriberId
+    ? connection.subscriberId === caller.subscriberId && isSameContext
+    : connectionContextKeys.length > 0 && isSameContext;
+}
+
+/**
  * Guards an OAuth reconnect that names an existing connection by identifier, so a caller
- * can only replace the auth of a connection created for them. A connection with a
- * subscriber belongs to that subscriber in its exact context; a connection without one
- * belongs to its exact, non-empty context.
+ * can only replace the auth of a connection created for them.
  */
 export function assertCanReconnectChannelConnection(
   connection: Pick<ChannelConnectionEntity, 'identifier' | 'subscriberId' | 'contextKeys'>,
   caller: { subscriberId?: string; contextKeys: string[] }
 ): void {
-  const connectionContextKeys = connection.contextKeys ?? [];
-  const isSameContext = haveSameKeys(connectionContextKeys, caller.contextKeys);
-  const canReconnect = connection.subscriberId
-    ? connection.subscriberId === caller.subscriberId && isSameContext
-    : connectionContextKeys.length > 0 && isSameContext;
-
-  if (!canReconnect) {
+  if (!canCallerManageChannelConnection(connection, caller)) {
     throw new ConflictException(
       `Channel connection "${connection.identifier}" already exists for a different subscriber or context`
     );

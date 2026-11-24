@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { SlackSetup } from '@/components/channels/slack-setup';
 import { TelegramSetup } from '@/components/channels/telegram-setup';
 import { WhatsAppSetup } from '@/components/channels/whatsapp-setup';
+import { MessageUsageMeter } from '@/components/dashboard/message-usage';
 import { CONFIGURE_DRAWER_PARAM } from '@/components/dashboard/nav';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { useNow } from '@/hooks/use-now';
@@ -18,6 +19,7 @@ import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import type { WhatsAppSetupState } from '@/lib/human-whatsapp-setup';
 import type { AgentLook } from '@/lib/look';
+import type { MessageUsage } from '@/lib/message-usage';
 import { firstMessageBadge } from '@/lib/whatsapp-first-message';
 
 import { AgentSettingsCard } from './agent-settings';
@@ -58,6 +60,8 @@ type ConfigureViewProps = {
   channelPrompts: Record<'telegram' | 'slack', string>;
   /** Whether a host reads the agent's mail, or `null` when that couldn't be read: it then reads as not connected. */
   hostStatus: HostStatus | null;
+  /** How much of the day's and the month's messages the account used, or `null` when that couldn't be read. */
+  messageUsage: MessageUsage | null;
   /** When the server rendered the page, so "2m ago" starts out as the server said it. */
   renderedAt: string;
   /** The API the account lives on, which the CLI is pointed at when it isn't its default. */
@@ -87,6 +91,7 @@ export function ConfigureView({
   slackAppName,
   channelPrompts,
   hostStatus,
+  messageUsage,
   renderedAt,
   apiUrl,
   docsUrl,
@@ -143,11 +148,14 @@ export function ConfigureView({
         />
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-5">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-xl leading-7 font-medium tracking-[-0.3px] text-foreground">
-              Configure {agent.handle}
-            </h1>
-            <p className="text-[13px] leading-4.5 text-secondary">Channels, agents and settings.</p>
+          <header className="flex flex-wrap items-end gap-x-6 gap-y-3">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl leading-7 font-medium tracking-[-0.3px] text-foreground">
+                Configure {agent.handle}
+              </h1>
+              <p className="text-[13px] leading-4.5 text-secondary">Channels, agents and settings.</p>
+            </div>
+            {messageUsage && <MessageUsageMeter usage={messageUsage} renderedAt={renderedAt} className="ml-auto" />}
           </header>
           <ChannelList
             handle={agent.handle}

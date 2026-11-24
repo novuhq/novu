@@ -7,7 +7,6 @@ import { agentsIntegrationsDelete } from "../funcs/agentsIntegrationsDelete.js";
 import { agentsIntegrationsList } from "../funcs/agentsIntegrationsList.js";
 import { agentsIntegrationsUpdate } from "../funcs/agentsIntegrationsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
-import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 
@@ -19,18 +18,14 @@ export class NovuIntegrations extends ClientSDK {
    * Create a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).
    */
   async create(
-    addAgentIntegrationRequestDto: components.AddAgentIntegrationRequestDto,
-    identifier: string,
-    idempotencyKey?: string | undefined,
+    request: operations.AgentIntegrationsControllerAddAgentIntegrationRequest,
     options?: RequestOptions,
   ): Promise<
     operations.AgentIntegrationsControllerAddAgentIntegrationResponse
   > {
     return unwrapAsync(agentsIntegrationsCreate(
       this,
-      addAgentIntegrationRequestDto,
-      identifier,
-      idempotencyKey,
+      request,
       options,
     ));
   }

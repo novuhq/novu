@@ -11,7 +11,7 @@ import {
 
 export type PublishEnvironmentRequestDto = {
   /**
-   * Source environment ID to sync from. Defaults to the Development environment if not provided.
+   * Source environment ID. Only the Development environment is currently supported; defaults to Development if omitted.
    */
   sourceEnvironmentId?: string | undefined;
   /**

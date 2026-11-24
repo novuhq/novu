@@ -1016,7 +1016,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
         channel: ChannelTypeEnum.EMAIL,
       },
       undefined,
-      { sort: { priority: -1, createdAt: -1 } }
+      { sort: { priority: -1, _id: -1 } }
     );
 
     expect(first._id).to.equal(primaryIntegration._id);
@@ -1114,7 +1114,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
         channel: ChannelTypeEnum.EMAIL,
       },
       undefined,
-      { sort: { priority: -1, createdAt: -1 } }
+      { sort: { priority: -1, _id: -1 } }
     );
 
     expect(first._id).to.equal(activeIntegrationOne._id);

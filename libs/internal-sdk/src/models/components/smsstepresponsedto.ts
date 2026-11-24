@@ -45,6 +45,17 @@ export type SmsStepResponseDto = {
    */
   controlValues?: SmsStepResponseDtoControlValues | undefined;
   /**
+   * Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Keys are ChatProviderIdEnum / ToolProviderIdEnum values (e.g. `slack`, `whatsapp-business`, `pagerduty`).
+   */
+  providerOverrides?: { [k: string]: { [k: string]: any } } | null | undefined;
+  /**
+   * Per-integration content overrides keyed by providerId, then by integration identifier. Each entry is merged over the matching providerOverrides entry, only for sends through that integration. Trigger-time overrides still take precedence. Entries whose integration does not exist in the environment are kept but not applied.
+   */
+  integrationOverrides?:
+    | { [k: string]: { [k: string]: { [k: string]: any } } }
+    | null
+    | undefined;
+  /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
   variables: { [k: string]: any };
@@ -65,11 +76,11 @@ export type SmsStepResponseDto = {
    */
   slug: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "sms";
   /**
-   * Origin of the layout
+   * Origin of the workflow
    */
   origin: ResourceOriginEnum;
   /**
@@ -122,6 +133,9 @@ export const SmsStepResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   controls: SmsControlsMetadataResponseDto$inboundSchema,
   controlValues: z.lazy(() => SmsStepResponseDtoControlValues$inboundSchema)
+    .optional(),
+  providerOverrides: z.nullable(z.record(z.record(z.any()))).optional(),
+  integrationOverrides: z.nullable(z.record(z.record(z.record(z.any()))))
     .optional(),
   variables: z.record(z.any()),
   stepId: z.string(),

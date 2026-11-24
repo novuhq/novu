@@ -111,6 +111,7 @@ function open(
         return options.question ? options.question(question) : undefined;
       },
       lost: (error, sessionGone) => told.lost.push({ error, sessionGone }),
+      refused: () => undefined,
     }
   );
   const turn = () =>
@@ -147,6 +148,86 @@ describe('claudeArgs', () => {
     ]);
   });
 
+  it('gives a contact’s run only what the folder’s own settings give it, and its conversation tools', () => {
+    const contact = {
+      conversationId: 'conv_1',
+      tools: { command: 'node', args: ['cli.js', 'conversation-tools'] },
+      check: { command: 'node', args: ['cli.js', 'contact-check', '--host', 'claude-code'] },
+    };
+    const folder = {
+      project: '/work/app',
+      allow: [{ tool: 'Bash', specifier: 'npm test' }, { tool: 'mcp__docs__search' }],
+      ask: [{ tool: 'WebFetch' }],
+      deny: [],
+      skills: ['refunds'],
+      mcpServers: { docs: { command: 'docs-mcp' } },
+      guard: { home: '/home/ada', places: ['/home/ada/.agentinbox', '/work/app/inbox.json'], links: [] },
+    };
+    const args = claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder });
+
+    expect(args.slice(0, 7)).toEqual([
+      '--setting-sources',
+      'project',
+      '--tools',
+      'AskUserQuestion,Bash,WebFetch,Skill',
+      '--strict-mcp-config',
+      '--mcp-config',
+      JSON.stringify({
+        mcpServers: {
+          docs: { command: 'docs-mcp' },
+          this_conversation: { type: 'stdio', command: 'node', args: ['cli.js', 'conversation-tools'] },
+        },
+      }),
+    ]);
+    // Where the key is stays closed, the file INBOX_CONFIG points at too.
+    expect(args.slice(7, 9)).toEqual([
+      '--settings',
+      JSON.stringify({
+        permissions: {
+          deny: [
+            'Read(~/.agentinbox/**)',
+            'Edit(~/.agentinbox/**)',
+            'Read(//home/ada/.agentinbox)',
+            'Edit(//home/ada/.agentinbox)',
+            'Read(//home/ada/.agentinbox/**)',
+            'Edit(//home/ada/.agentinbox/**)',
+            'Read(//work/app/inbox.json)',
+            'Edit(//work/app/inbox.json)',
+            'Read(//work/app/inbox.json/**)',
+            'Edit(//work/app/inbox.json/**)',
+          ],
+        },
+      }),
+    ]);
+    expect(args).toEqual(expect.arrayContaining(['--permission-mode', 'default']));
+
+    const operator = claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false });
+    expect(operator).not.toContain('--settings');
+    expect(operator).not.toContain('--setting-sources');
+    expect(operator).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']));
+  });
+
+  it('keeps the key’s folder closed to a contact’s run even when a rule names it', () => {
+    const contact = {
+      conversationId: 'conv_1',
+      tools: { command: 'node', args: [] },
+      check: { command: 'node', args: [] },
+    };
+    const folder = {
+      project: '/work/app',
+      allow: [{ tool: 'Read', specifier: '~/.agentinbox/**' }],
+      ask: [],
+      deny: [],
+      skills: [],
+      mcpServers: {},
+      guard: { home: '/home/ada', places: ['/home/ada/.agentinbox'], links: [] },
+    };
+
+    expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: false, contact, folder })).toContain(
+      '--settings'
+    );
+  });
+
   it('goes on with a session it is given', () => {
     expect(claudeArgs({ instructions: 'Started.', sessionId: 'abc', resume: true }).slice(-2)).toEqual([
       '--resume',
@@ -170,6 +251,10 @@ describe('describeAction and subjectOf', () => {
     const notes = join(homedir(), 'notes', 'todo.md');
     expect(describeAction({ tool_name: 'Edit', input: { file_path: notes } })).toBe('edit ~/notes/todo.md');
     expect(subjectOf({ tool_name: 'Edit', input: { file_path: notes } })).toEqual({ kind: 'files', paths: [notes] });
+    expect(subjectOf({ tool_name: 'Skill', input: { skill: 'agentinbox:agentinbox' } })).toEqual({
+      kind: 'skill',
+      name: 'agentinbox:agentinbox',
+    });
     expect(describeAction({ tool_name: 'WebFetch', input: { url: 'https://example.com/a' } })).toBe(
       'fetch https://example.com/a'
     );

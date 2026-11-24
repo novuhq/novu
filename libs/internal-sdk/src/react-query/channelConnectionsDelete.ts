@@ -74,7 +74,7 @@ export function useChannelConnectionsDeleteMutation(
 }
 
 export function mutationKeyChannelConnectionsDelete(): MutationKey {
-  return ["@novu/api", "Channel Connections", "delete"];
+  return ["@novu/api", "ChannelConnections", "delete"];
 }
 
 export function buildChannelConnectionsDeleteMutation(

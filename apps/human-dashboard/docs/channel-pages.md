@@ -134,7 +134,8 @@ intermediate frames, interrupted selection and reduced motion.
 The refinement corrects card padding and text positions, use-case command sizing,
 selected tab appearance, exact reference copy, isolated vector logo exports,
 transparent CTA artwork and template-specific header destinations. Header and
-mobile-menu items are opt-in; Sapien retains its existing default navigation.
+mobile-menu items were opt-in then, and Sapien kept its own; every page has had
+one shared navigation since (README, "Header and footer").
 
 The collector now counts lines on text/control nodes, leaving structural frames
 nonapplicable. It also converts native CSS Lab/sRGB colors into equivalent RGBA

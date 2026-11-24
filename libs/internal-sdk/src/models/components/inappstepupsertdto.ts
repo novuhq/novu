@@ -31,7 +31,7 @@ export type InAppStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "in_app";
   /**

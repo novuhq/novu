@@ -108,6 +108,9 @@ const humanContactSchema = new Schema<HumanContactDBModel>(
     listenTo: {
       type: Schema.Types.Boolean,
     },
+    fullAccess: {
+      type: Schema.Types.Boolean,
+    },
   },
   schemaOptions
 );

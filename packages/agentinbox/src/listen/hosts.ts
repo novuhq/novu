@@ -3,7 +3,8 @@ import type { HostAdapter } from './host-adapter';
 
 /**
  * The hosts listen can start, each loaded only once it is used, so `connect` and the other commands don't
- * carry them. Hermes and OpenClaw start through their own gateways' plugins instead (NV-9152).
+ * carry them. Hermes and OpenClaw listen through Agent Inbox's plugin for their own gateway instead
+ * (`GATEWAY_PLUGINS`).
  */
 const ADAPTERS: Partial<Record<ListenHostId, () => Promise<HostAdapter>>> = {
   'claude-code': async () => (await import('./claude-code')).claudeCode,
@@ -19,6 +20,31 @@ const NAMES: Record<ListenHostId, string> = {
   cursor: 'Cursor',
   hermes: 'Hermes',
   openclaw: 'OpenClaw',
+};
+
+/**
+ * How to install a gateway's plugin and connect it. `agentInstall` is the install an agent runs, when that differs:
+ * nobody is at its terminal to answer what the host asks while it installs.
+ */
+export type GatewayPlugin = { install: string; agentInstall?: string; setup: string; restart: string };
+
+/**
+ * The hosts whose gateway listens itself, with Agent Inbox's plugin for it: how to install it and connect it. A
+ * one-time code from agentinbox.md connects it, as it connects this CLI.
+ */
+export const GATEWAY_PLUGINS: Partial<Record<ListenHostId, GatewayPlugin>> = {
+  hermes: {
+    install: 'hermes plugins install agentinboxhq/hermes-plugin --enable',
+    setup: 'hermes agentinbox setup <agent> --code <code>',
+    restart: 'hermes gateway restart',
+  },
+  openclaw: {
+    install: 'openclaw plugins install clawhub:@agentinbox/openclaw',
+    // OpenClaw asks the person at the terminal to agree to what the plugin may do; an agent agrees ahead.
+    agentInstall: 'openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities',
+    setup: 'openclaw agentinbox setup <agent> --code <code>',
+    restart: 'openclaw gateway restart',
+  },
 };
 
 export function isListenHostId(value: unknown): value is ListenHostId {
