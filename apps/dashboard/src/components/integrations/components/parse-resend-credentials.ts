@@ -13,8 +13,10 @@ const ASSIGNMENT_PATTERN = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*[=:]\s*(.*
 function unquote(value: string): string {
   const trimmed = value.trim();
   const quote = trimmed[0];
-  if ((quote === '"' || quote === "'" || quote === '`') && trimmed.endsWith(quote) && trimmed.length > 1) {
-    return trimmed.slice(1, -1).trim();
+  if (quote === '"' || quote === "'" || quote === '`') {
+    // The value ends at its closing quote: a `#` inside the quotes is part of it, anything after is a comment.
+    const closingIndex = trimmed.indexOf(quote, 1);
+    if (closingIndex > 0) return trimmed.slice(1, closingIndex).trim();
   }
 
   // An unquoted value ends where an inline comment starts.
@@ -51,12 +53,17 @@ export function isLikelyResendCredentialsBlock(text: string): boolean {
  */
 export function parseResendCredentials(text: string): ParsedResendCredentials {
   const parsed: ParsedResendCredentials = {};
+  // Commented-out lines often hold an old key or sender, so they are not read.
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => !line.startsWith('#'));
 
-  const apiKey = text.match(API_KEY_PATTERN)?.[0];
+  const apiKey = lines.join('\n').match(API_KEY_PATTERN)?.[0];
   if (apiKey) parsed[CredentialsKeyEnum.ApiKey] = apiKey;
 
-  for (const line of text.split(/\r?\n/)) {
-    const assignment = line.trim().match(ASSIGNMENT_PATTERN);
+  for (const line of lines) {
+    const assignment = line.match(ASSIGNMENT_PATTERN);
     if (!assignment) continue;
 
     const name = assignment[1].toUpperCase();
