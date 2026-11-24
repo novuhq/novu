@@ -42,7 +42,7 @@ function HeaderButton({
 export function CopilotPopover() {
   const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
   const title = useCopilotPopoverTitle(chat);
-  // Above a sheet (z-50) and its overlay, as the design shows it; the launcher stays under so the sheet's footer stays usable.
+  // Above a sheet (z-50) and its overlay, with the open launcher, as the design shows it.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
   const shouldReduceMotion = useReducedMotion();
   const hidden = shouldReduceMotion ? { opacity: 0 } : POPOVER_HIDDEN;

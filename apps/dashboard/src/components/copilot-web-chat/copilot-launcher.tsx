@@ -1,9 +1,10 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef } from 'react';
-import { RiArrowUpSLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowUpSLine, RiErrorWarningFill } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IconCmd, Kbd } from '@/components/primitives/kbd';
 import { cn } from '@/utils/ui';
+import { useCopilotPageView } from './copilot-page-view-store';
 import { DotGrid } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { COPILOT_POPOVER_ID, deriveLauncherState, type LauncherState } from './copilot-web-chat-utils';
@@ -63,6 +64,8 @@ function LauncherIcon({ state }: { state: LauncherState }) {
 
 export function CopilotLauncher() {
   const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
+  // Over a sheet, the open launcher sits above it with the popover, as the design shows; closed, it stays under so the sheet's footer stays usable.
+  const isOverSheet = !!useCopilotPageView()?.overSheet;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(isOpen);
   const shouldReduceMotion = useReducedMotion();
@@ -86,7 +89,7 @@ export function CopilotLauncher() {
 
   return (
     // Closed, it is named by its visible text, so the status (Working…, Answer ready, Couldn’t finish) is read out with it.
-    // One button for both states, so opening folds the label away and leaves the icon as a close circle.
+    // One button for both states, so opening folds the label away and leaves a chevron-down close circle.
     <button
       ref={buttonRef}
       type="button"
@@ -98,14 +101,15 @@ export function CopilotLauncher() {
       aria-expanded={isOpen}
       aria-keyshortcuts={isOpen || isOff ? undefined : 'Meta+J Control+J'}
       className={cn(
-        'fixed bottom-4 right-4 z-40 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
+        'fixed bottom-4 right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
+        isOpen && isOverSheet ? 'z-[51]' : 'z-40',
         isOpen ? 'pl-2.5' : 'pl-3',
         isOff
           ? 'cursor-not-allowed bg-bg-weak'
           : 'bg-bg-white shadow-[0_8px_12px_rgba(15,23,41,0.04),0_1px_1px_rgba(15,23,41,0.04)] hover:bg-bg-weak'
       )}
     >
-      {isOpen ? <BroomSparkle className="size-4" isAnimating={isBusy} /> : <LauncherIcon state={state} />}
+      {isOpen ? <RiArrowDownSLine className="size-4 text-text-sub" /> : <LauncherIcon state={state} />}
       <motion.span
         initial={false}
         animate={isOpen ? { width: 0, opacity: 0 } : { width: 'auto', opacity: 1 }}
