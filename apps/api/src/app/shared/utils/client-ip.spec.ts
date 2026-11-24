@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import { expect } from 'chai';
-import { getClientIp } from './client-ip';
+import sinon from 'sinon';
+import { AGENT_INBOX_CLIENT_IP_HEADER, AGENT_INBOX_CLIENT_IP_SIGNATURE_HEADER, getClientIp } from './client-ip';
 
 function buildRequest(headers: Record<string, string>, remoteAddress = '10.0.0.5'): IncomingMessage {
   return { headers, socket: { remoteAddress } } as unknown as IncomingMessage;
@@ -8,7 +9,17 @@ function buildRequest(headers: Record<string, string>, remoteAddress = '10.0.0.5
 
 const SPOOFED_HEADERS = { 'x-client-ip': '1.2.3.4', 'x-forwarded-for': '5.6.7.8, 198.51.100.10' };
 
-const ENV_KEYS = ['CLIENT_IP_HEADER', 'IS_SELF_HOSTED', 'NOVU_ENTERPRISE'] as const;
+const ENV_KEYS = ['AGENT_INBOX_DASHBOARD_API_SECRET', 'CLIENT_IP_HEADER', 'IS_SELF_HOSTED', 'NOVU_ENTERPRISE'] as const;
+
+/** The same vector as Agent Inbox's `client-ip-signature.spec.ts`, so the two sides can't drift apart. */
+const AGENT_INBOX_SECRET = 'agent-inbox-test-secret';
+const SIGNED_AT_MS = Date.UTC(2026, 10, 23);
+const SIGNED_VISITOR_HEADERS = {
+  [AGENT_INBOX_CLIENT_IP_HEADER]: '203.0.113.7',
+  [AGENT_INBOX_CLIENT_IP_SIGNATURE_HEADER]:
+    '1795392000.efc2847df3540c3a90a333020cec69c6546fe930cd22611656ae6cd214da4828',
+};
+const VERCEL_EGRESS = { 'cf-connecting-ip': '76.76.21.9', 'x-forwarded-for': '203.0.113.7, 76.76.21.9' };
 
 type ClientIpEnv = Partial<Record<(typeof ENV_KEYS)[number], string>>;
 
@@ -79,6 +90,47 @@ describe('getClientIp', () => {
       process.env.CLIENT_IP_HEADER = '';
 
       expect(getClientIp(buildRequest({ ...SPOOFED_HEADERS, 'cf-connecting-ip': '203.0.113.7' }))).to.equal('1.2.3.4');
+    });
+  });
+
+  describe('on calls the Agent Inbox site forwards to Novu Cloud', () => {
+    let clock: sinon.SinonFakeTimers;
+
+    beforeEach(() => {
+      setEnv({ AGENT_INBOX_DASHBOARD_API_SECRET: AGENT_INBOX_SECRET, NOVU_ENTERPRISE: 'true' });
+      clock = sinon.useFakeTimers(SIGNED_AT_MS + 30_000);
+    });
+
+    afterEach(() => {
+      clock.restore();
+    });
+
+    it('trusts the visitor IP the site signed over cf-connecting-ip', () => {
+      expect(getClientIp(buildRequest({ ...VERCEL_EGRESS, ...SIGNED_VISITOR_HEADERS }))).to.equal('203.0.113.7');
+    });
+
+    it('ignores a signed IP that was changed on the way', () => {
+      const tampered = { ...SIGNED_VISITOR_HEADERS, [AGENT_INBOX_CLIENT_IP_HEADER]: '198.51.100.20' };
+
+      expect(getClientIp(buildRequest({ ...VERCEL_EGRESS, ...tampered }))).to.equal('76.76.21.9');
+    });
+
+    it('ignores a signature made with another secret', () => {
+      process.env.AGENT_INBOX_DASHBOARD_API_SECRET = 'another-secret';
+
+      expect(getClientIp(buildRequest({ ...VERCEL_EGRESS, ...SIGNED_VISITOR_HEADERS }))).to.equal('76.76.21.9');
+    });
+
+    it('ignores a signature more than five minutes old', () => {
+      clock.setSystemTime(SIGNED_AT_MS + 5 * 60_000 + 1000);
+
+      expect(getClientIp(buildRequest({ ...VERCEL_EGRESS, ...SIGNED_VISITOR_HEADERS }))).to.equal('76.76.21.9');
+    });
+
+    it('ignores the signed headers when AGENT_INBOX_DASHBOARD_API_SECRET is unset', () => {
+      delete process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+
+      expect(getClientIp(buildRequest({ ...VERCEL_EGRESS, ...SIGNED_VISITOR_HEADERS }))).to.equal('76.76.21.9');
     });
   });
 
