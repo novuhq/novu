@@ -10,8 +10,9 @@ export const DEFAULT_DASHBOARD_URL = "https://dashboard.novu.co";
 const OBJECT_ID = /^[a-f0-9]{24}$/i;
 const PROVIDER_ID = /^[a-z0-9][a-z0-9_-]*$/i;
 
-// The providers whose dashboard settings show activity tracking (the `inboundWebhook` groups in @novu/shared). Novu
-// processes delivery events only for email and push, and AppIO delivers into the IO app, which can't report them.
+// The providers Novu records delivery events for: the email and push providers whose dashboard settings show activity
+// tracking. The inbound webhook accepts only email and push, so Photon's toggle records nothing yet, and AppIO delivers
+// into the IO app, which can't report events.
 const EMAIL_PROVIDERS_WITH_TRACKING = new Set(["anypost", "mailgun", "resend", "sendgrid", "ses"]);
 const PUSH_PROVIDERS_WITHOUT_TRACKING = new Set(["appio"]);
 const PUSH_TRACKING_GUIDE_URL =
