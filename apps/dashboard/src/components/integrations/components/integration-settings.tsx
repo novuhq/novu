@@ -10,7 +10,7 @@ import {
   slackConfig,
   ToolProviderIdEnum,
 } from '@novu/shared';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -62,6 +62,19 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+function toFormValues(integration: IIntegration): Omit<IntegrationFormData, 'check'> {
+  return {
+    name: integration.name,
+    identifier: integration.identifier,
+    active: integration.active,
+    primary: integration.primary ?? false,
+    credentials: integration.credentials as Record<string, string>,
+    configurations: integration.configurations as Record<string, string>,
+    environmentId: integration._environmentId,
+    rules: integration.rules ?? null,
+  };
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing per-provider settings form; splitting it is out of scope here
 export function IntegrationSettings({
   provider,
@@ -89,16 +102,7 @@ export function IntegrationSettings({
     mode: 'all',
     reValidateMode: 'onChange',
     defaultValues: integration
-      ? {
-          name: integration.name,
-          identifier: integration.identifier,
-          active: integration.active,
-          primary: integration.primary ?? false,
-          credentials: integration.credentials as Record<string, string>,
-          configurations: integration.configurations as Record<string, string>,
-          environmentId: integration._environmentId,
-          rules: integration.rules ?? null,
-        }
+      ? toFormValues(integration)
       : {
           name: provider?.displayName ?? '',
           identifier: generateSlug(provider?.displayName ?? ''),
@@ -112,6 +116,17 @@ export function IntegrationSettings({
   });
 
   const { handleSubmit, control, setValue, formState } = form;
+
+  // The Copilot can change the integration while its sheet is open: take the new values, keeping what the user edited,
+  // so saving doesn't send the old ones back.
+  const savedValuesKey = integration ? JSON.stringify(toFormValues(integration)) : undefined;
+  const savedValuesKeyRef = useRef(savedValuesKey);
+  useEffect(() => {
+    if (!integration || savedValuesKey === savedValuesKeyRef.current) return;
+
+    savedValuesKeyRef.current = savedValuesKey;
+    form.reset(toFormValues(integration), { keepDirtyValues: true });
+  }, [integration, savedValuesKey, form]);
 
   // A setup link opened cold mounts the form before the environments load, with no environment to connect in yet.
   useEffect(() => {
