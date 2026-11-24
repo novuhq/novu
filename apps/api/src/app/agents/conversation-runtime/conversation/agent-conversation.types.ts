@@ -41,7 +41,6 @@ export interface DeleteInboundMessageParams {
   /** Last-known body from the channel. Falls back to the stored message row. */
   content?: string;
   richContent?: Record<string, unknown>;
-  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }

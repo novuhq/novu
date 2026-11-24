@@ -176,8 +176,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _conversationId: conversationId,
         platformMessageId: { $in: ids },
-        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
-        accessRefused: { $ne: true },
+        $or: [
+          { type: ConversationActivityTypeEnum.DELETE },
+          { type: ConversationActivityTypeEnum.EDIT, accessRefused: { $ne: true } },
+        ],
       },
       '*'
     );

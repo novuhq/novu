@@ -2048,7 +2048,6 @@ export class AgentInboundHandler implements OnModuleInit {
         conversationId: conversation._id,
         platformMessageId: event.messageId,
         content: event.previousMessage?.text ?? current?.content,
-        accessRefused: access.verdict === 'refuse',
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });

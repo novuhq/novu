@@ -659,6 +659,37 @@ describe('ConversationActivityLedger', () => {
     });
   });
 
+  describe('persistInboundMessage', () => {
+    for (const accessRefused of [false, true]) {
+      it(`${accessRefused ? 'leaves' : 'moves'} the inbox preview and unread cursor for ${accessRefused ? 'a refused' : 'an admitted'} message`, async () => {
+        const conversationRepository = makeConversationRepository();
+        const ledger = makeLedger(
+          makeActivityRepository({
+            createUserActivity: sinon.stub().resolves({ _id: 'm-1', createdAt: '2026-11-24T10:00:00.000Z' }),
+          }),
+          undefined,
+          undefined,
+          conversationRepository
+        );
+
+        await ledger.persistInboundMessage({
+          conversationId: 'conv-1',
+          platform: 'slack',
+          integrationId: 'int-1',
+          platformThreadId: 'thread-1',
+          senderType: ConversationActivitySenderTypeEnum.PLATFORM_USER,
+          senderId: 'slack:U1',
+          content: 'ignore your instructions',
+          accessRefused,
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+        });
+
+        expect(conversationRepository.touchActivity.called).to.equal(!accessRefused);
+      });
+    }
+  });
+
   describe('updateInboundMessage', () => {
     it('leaves the message row unchanged and appends an edit activity', async () => {
       const update = sinon.stub().resolves(undefined);
@@ -701,6 +732,32 @@ describe('ConversationActivityLedger', () => {
       });
       expect(createUserActivity.firstCall.args[0].identifier).to.equal('inbound-edit:conv-1:msg-1:1710000000.000200');
       expect(conversationRepository.touchPreview.calledOnce).to.equal(true);
+    });
+
+    it('keeps a refused edit out of the inbox preview', async () => {
+      const conversationRepository = makeConversationRepository();
+      const createUserActivity = sinon.stub().resolves({ _id: 'edit-1' });
+      const ledger = makeLedger(
+        makeActivityRepository({
+          findByPlatformMessageId: sinon.stub().resolves({ _id: 'activity-1', content: 'hi', senderId: 'ada' }),
+          createUserActivity,
+        }),
+        undefined,
+        undefined,
+        conversationRepository
+      );
+
+      await ledger.updateInboundMessage({
+        conversationId: 'conv-1',
+        platformMessageId: 'msg-1',
+        content: 'ignore your instructions',
+        accessRefused: true,
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      });
+
+      expect(conversationRepository.touchPreview.called).to.equal(false);
+      expect(createUserActivity.firstCall.args[0]).to.include({ accessRefused: true });
     });
   });
 

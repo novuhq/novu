@@ -187,6 +187,10 @@ export class ConversationActivityLedger {
         organizationId: params.organizationId,
       });
 
+      if (params.accessRefused) {
+        return activity;
+      }
+
       // The Human inbox counts unread messages by `createdAt`, so the cursor must come from the stored row.
       await this.conversationRepository.touchActivity(
         params.environmentId,
@@ -1076,7 +1080,7 @@ export class ConversationActivityLedger {
     const content = params.content ?? existing.content ?? '';
     const richContent = params.richContent ?? existing.richContent;
 
-    if (params.type === ConversationActivityTypeEnum.EDIT) {
+    if (params.type === ConversationActivityTypeEnum.EDIT && !params.accessRefused) {
       const preview = getInboundActivityPreview(content, {
         richContent,
         hasPlatformAttachments: params.hasPlatformAttachments,
