@@ -59,12 +59,15 @@ function watchAzureSetup(
       result?.appRegistration === 'ready' && !lastClientId ? await readClientId(integrationId, environment) : undefined;
     if (isCancelled) return;
 
-    if (result) handlers.onHealth(result);
-
     if (clientId && clientId !== staleClientId) {
       lastClientId = clientId;
       handlers.onAppId(clientId);
     }
+
+    // With no credentials yet the health check answers "failed" for everything, and on a retry it still
+    // describes the earlier attempt. Neither is this attempt failing, so its checks read as waiting until
+    // its credentials are there.
+    if (result && lastClientId) handlers.onHealth(result);
 
     if (result?.allReady && lastClientId) return;
 
@@ -112,6 +115,29 @@ async function saveIntegration(
   }
 
   return existingId;
+}
+
+/** The setup state after a Microsoft page was opened for the integration. */
+function nextSetupResult(
+  previous: QuickSetupResult | undefined,
+  opened: { integrationId: string; environmentId: string; isAzureSetup: boolean; savedBefore?: string }
+): QuickSetupResult {
+  const base = { integrationId: opened.integrationId, environmentId: opened.environmentId };
+
+  // Manual just replaced whatever credentials Quick setup had saved: its client ID and progress no longer
+  // describe this integration, so Quick setup starts over.
+  if (!opened.isAzureSetup) return base;
+
+  const earlier = previous?.integrationId === opened.integrationId ? previous : undefined;
+
+  // A retry creates another app registration: forget the earlier client ID, so the app package waits for
+  // this attempt's.
+  return {
+    ...base,
+    staleAppId: opened.savedBefore ?? earlier?.appId ?? earlier?.staleAppId,
+    isAzureSetupStarted: true,
+    azureSetupAttempt: (earlier?.azureSetupAttempt ?? 0) + 1,
+  };
 }
 
 /** Sends the tab opened on the click to the URL, or opens a new one if it was blocked or closed. */
@@ -245,20 +271,15 @@ export function useMsTeamsStoreSetup({
         openIn(tab, await action.getUrl(startedId, targetEnvironment));
         onSaved();
 
-        if (action.isAzureSetup && isCurrent()) {
-          // A retry creates another app registration: forget the earlier client ID, so the app package
-          // waits for this attempt's.
-          setQuickSetupResult((previous) => {
-            const earlier = previous?.integrationId === startedId ? previous : undefined;
-
-            return {
+        if (isCurrent()) {
+          setQuickSetupResult((previous) =>
+            nextSetupResult(previous, {
               integrationId: startedId,
               environmentId: targetEnvironment._id,
-              staleAppId: savedBefore ?? earlier?.appId ?? earlier?.staleAppId,
-              isAzureSetupStarted: true,
-              azureSetupAttempt: (earlier?.azureSetupAttempt ?? 0) + 1,
-            };
-          });
+              isAzureSetup: action.isAzureSetup,
+              savedBefore,
+            })
+          );
         }
       } catch (error) {
         tab?.close();
