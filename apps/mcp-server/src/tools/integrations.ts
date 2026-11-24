@@ -224,8 +224,14 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 			const label = describeIntegration(integration);
 			const configurations = redactIntegration(integration).configurations ?? {};
 			if (Boolean(configurations.inboundWebhookEnabled) === enabled) {
+				// Set-up isn't rerun: SendGrid adds another event webhook on every auto-configure call.
+				const setUpHint =
+					enabled && integration.channel !== "push"
+						? ` If its delivery events don't reach Novu, the integration's settings have the webhook URL and the manual set-up guide: ${integrationSettingsUrl(accessors, integrationId)}. Turning it off and on again reruns the automatic set-up.`
+						: "";
+
 				return textResult(
-					`Activity tracking is already ${enabled ? "on" : "off"} for ${label}.`,
+					`Activity tracking is already ${enabled ? "on" : "off"} for ${label}.${setUpHint}`,
 				);
 			}
 
@@ -266,8 +272,13 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 				| { success?: boolean; message?: string; webhookUrl?: string }
 				| undefined;
 			if (outcome?.success) {
+				// A set-up can succeed and still leave a manual step, like Mailgun's signing key when it can't be read.
+				const providerNote = outcome.message
+					? ` The provider says: "${outcome.message}". The integration's settings: ${integrationSettingsUrl(accessors, integrationId)}`
+					: "";
+
 				return textResult(
-					`Activity tracking is on for ${label}, and the provider now sends delivery events to Novu${outcome.webhookUrl ? ` at ${outcome.webhookUrl}` : ""}.`,
+					`Activity tracking is on for ${label}, and the provider now sends delivery events to Novu${outcome.webhookUrl ? ` at ${outcome.webhookUrl}` : ""}.${providerNote}`,
 				);
 			}
 

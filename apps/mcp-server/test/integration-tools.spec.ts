@@ -52,8 +52,8 @@ function integrationsFixture(): Json[] {
 /** A fake integrations API: the list, the environments, updates and auto-configure. */
 function fakeIntegrationsApi(
 	autoConfigure: Json = { success: true, webhookUrl: "https://api.novu.co/v2/hook" },
+	integrations: Json[] = integrationsFixture(),
 ) {
-	const integrations = integrationsFixture();
 	const requests: Array<{ method: string; path: string; body?: Json }> = [];
 	const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
 		const { pathname } = new URL(url);
@@ -63,6 +63,8 @@ function fakeIntegrationsApi(
 
 		if (method === "GET" && pathname === "/v1/integrations")
 			return json({ data: integrations });
+		if (method === "GET" && pathname === "/v1/integrations/active")
+			return json({ data: integrations.filter((integration) => integration.active) });
 		if (method === "GET" && pathname === "/v1/environments") {
 			return json({
 				data: [
@@ -142,6 +144,8 @@ describe("integration tools", () => {
 
 		const text = textOf(await callTool(client, "get_active_integrations"));
 
+		expect(text).toContain("Successfully fetched active integrations");
+		expect(text).toContain(SENDGRID_ID);
 		expect(text).not.toContain(SIGNING_KEY);
 		expect(text).not.toContain("SG.planted");
 	});
@@ -258,6 +262,44 @@ describe("integration tools", () => {
 			expect(text).toContain(
 				`https://eu.dashboard.novu.co/integrations/${SENDGRID_ID}/update`,
 			);
+		});
+
+		it("passes on a manual step the provider still asks for after setting up its webhook", async () => {
+			fakeIntegrationsApi({
+				message: "Please add your HTTP Webhook Signing Key from Mailgun Control Panel.",
+				success: true,
+				webhookUrl: "https://api.novu.co/v2/hook",
+			});
+			const client = await connectAllTools(tokenAccessors("api-key"));
+
+			const text = textOf(
+				await callTool(client, "set_activity_tracking", {
+					enabled: true,
+					integrationId: SENDGRID_ID,
+				}),
+			);
+
+			expect(text).toContain("Activity tracking is on");
+			expect(text).toContain("Please add your HTTP Webhook Signing Key");
+			expect(text).toContain(`/integrations/${SENDGRID_ID}/update`);
+		});
+
+		it("gives the manual set-up steps when it's already on, without setting the webhook up again", async () => {
+			const integrations = integrationsFixture();
+			integrations[0].configurations.inboundWebhookEnabled = true;
+			const { requests } = fakeIntegrationsApi(undefined, integrations);
+			const client = await connectAllTools(tokenAccessors("api-key"));
+
+			const text = textOf(
+				await callTool(client, "set_activity_tracking", {
+					enabled: true,
+					integrationId: SENDGRID_ID,
+				}),
+			);
+
+			expect(text).toContain("already on");
+			expect(text).toContain(`/integrations/${SENDGRID_ID}/update`);
+			expect(requests.map((request) => request.method)).toEqual(["GET"]);
 		});
 
 		it("changes nothing when it's already in that state", async () => {

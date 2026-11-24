@@ -113,6 +113,13 @@ export function IntegrationSettings({
 
   const { handleSubmit, control, setValue, formState } = form;
 
+  // A setup link opened cold mounts the form before the environments load, with no environment to connect in yet.
+  useEffect(() => {
+    if (mode === 'create' && defaultEnvironmentId && !form.getValues('environmentId')) {
+      setValue('environmentId', defaultEnvironmentId);
+    }
+  }, [mode, defaultEnvironmentId, form, setValue]);
+
   // Notify parent component of form state changes
   useEffect(() => {
     if (onFormStateChange) {
