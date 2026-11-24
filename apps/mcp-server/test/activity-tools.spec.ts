@@ -726,6 +726,39 @@ describe("get_trigger_requests", () => {
 		expect(JSON.stringify(result)).not.toContain("s3cr3t");
 	});
 
+	it("leaves out the trigger context a failed context lookup appends to its error", async () => {
+		const contextError =
+			'Failed to resolve context: not found | Context: {"tenant":{"id":"acme","data":{"email":"jane@acme.test"}}}';
+		fakeApi(
+			path("/v1/activity/requests/req-1", {
+				data: {
+					request: requestRow({
+						responseBody: JSON.stringify({ message: contextError, statusCode: 400 }),
+						statusCode: 400,
+					}),
+					traces: [
+						{
+							createdAt: "2026-11-20T10:00:00.100Z",
+							entityId: "req-1",
+							eventType: "workflow_execution_failed",
+							message: contextError,
+							status: "error",
+							title: "Workflow execution failed",
+						},
+					],
+				},
+			}),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_trigger_requests", { requestId: "req-1" }),
+		);
+
+		expect(result.request.error).toBe("Failed to resolve context: not found");
+		expect(result.traces[0].message).toBe("Failed to resolve context: not found");
+		expect(JSON.stringify(result)).not.toContain("jane@acme.test");
+	});
+
 	it("scans at most 500 requests and reports when the cap was hit", async () => {
 		const api = fakeApi((url) =>
 			url.pathname === "/v1/activity/requests"
