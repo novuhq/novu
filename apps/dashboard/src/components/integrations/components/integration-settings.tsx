@@ -98,6 +98,8 @@ type IntegrationConfigurationProps = {
     health?: MsTeamsHealthCheckResult;
     isStarting: boolean;
     isStarted: boolean;
+    /** True when the sign-in tab is gone and nothing was saved. */
+    isStalled: boolean;
     /** True once the setup has started: the integration belongs to that environment from then on. */
     isEnvironmentLocked: boolean;
     onSetUpAzure: (data: IntegrationFormData) => void;
@@ -651,6 +653,7 @@ export function IntegrationSettings({
                   health={msTeamsQuickSetup.health}
                   isStarting={msTeamsQuickSetup.isStarting}
                   isStarted={msTeamsQuickSetup.isStarted}
+                  isStalled={msTeamsQuickSetup.isStalled}
                   canStart={!isReadOnly && !!name?.trim()}
                   appName={name?.trim() ?? ''}
                   onSetUpAzure={() => msTeamsQuickSetup.onSetUpAzure(form.getValues())}

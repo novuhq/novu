@@ -12,6 +12,8 @@ type MsTeamsQuickSetupProps = {
   isStarting: boolean;
   /** True once the Microsoft sign-in was opened. */
   isStarted: boolean;
+  /** True when the sign-in tab is gone and nothing was saved: it was closed, denied, or the setup failed. */
+  isStalled: boolean;
   /** False while the form can't create the integration yet, e.g. its name is empty. */
   canStart: boolean;
   /** The integration's name, used as the bot's name in the app package. */
@@ -40,6 +42,7 @@ export function MsTeamsQuickSetup({
   health,
   isStarting,
   isStarted,
+  isStalled,
   canStart,
   appName,
   onSetUpAzure,
@@ -90,6 +93,11 @@ export function MsTeamsQuickSetup({
                   );
                 })}
               </ul>
+            )}
+            {isStalled && (
+              <p className="text-label-xs text-error-base" role="alert">
+                Microsoft sign-in ended and nothing was saved. If it was closed or denied, run Set Up Azure again.
+              </p>
             )}
           </>
         }
