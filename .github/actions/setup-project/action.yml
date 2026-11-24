@@ -33,10 +33,8 @@ runs:
     - name: Start Redis, MongoDB and ClickHouse
       if: ${{ inputs.slim == 'false' }}
       shell: bash
-      run: |
-        docker run -d --name redis -p 6379:6379 redis:latest
-        docker run -d --name mongodb -p 27017:27017 mongo:8
-        docker run -d --name clickhouse -p 9000:9000 -p 8123:8123 -e CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1 clickhouse/clickhouse-server:24.3-alpine
+      working-directory: docker/local
+      run: docker compose -f docker-compose.ci.yml up -d redis mongodb clickhouse
 
     - name: 🛟 Install dependencies
       shell: bash
@@ -46,10 +44,8 @@ runs:
     - name: Wait for Redis, MongoDB and ClickHouse
       if: ${{ inputs.slim == 'false' }}
       shell: bash
-      run: |
-        timeout 30 bash -c 'until docker exec redis redis-cli ping; do sleep 1; done'
-        timeout 30 bash -c 'until docker exec mongodb mongosh --quiet --eval "db.runCommand({ ping: 1 })"; do sleep 1; done'
-        timeout 30 bash -c 'until curl -sf http://127.0.0.1:8123/ping; do sleep 1; done'
+      working-directory: docker/local
+      run: docker compose -f docker-compose.ci.yml up --wait --wait-timeout 60 redis mongodb clickhouse
 
     - name: Install wait-on plugin
       shell: bash

@@ -7,4 +7,5 @@ runs:
   steps:
     - name: Start Redis Cluster
       shell: bash
-      run: docker run -d --name redis-cluster -p 7000:6379 -p 7001:6380 -p 7002:6381 -p 7003:6382 -p 7004:6383 -p 7005:6384 vishnunair/docker-redis-cluster:latest
+      working-directory: docker/local
+      run: docker compose -f docker-compose.ci.yml up --wait --wait-timeout 60 redis-cluster
