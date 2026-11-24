@@ -88,7 +88,9 @@ type IntegrationConfigurationProps = {
 };
 
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
-const TELEGRAM_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/telegram';
+/** The TelegramConnectButton section of the Telegram integration docs: how subscribers link their chat. */
+const TELEGRAM_CONNECT_DOCS_URL =
+  'https://docs.novu.co/platform/integrations/chat/telegram#from-your-app-with-@novu/react';
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
@@ -466,21 +468,6 @@ export function IntegrationSettings({
 
   if (usesSetupLayout) {
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
-    const credentialList = (
-      <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-        <div className="flex flex-col gap-2 pb-4">
-          {providerCredentials.map((credential) => (
-            <CredentialSection
-              key={credential.key}
-              credential={credential}
-              control={control}
-              isReadOnly={isReadOnly}
-              integrationId={integration?._id}
-            />
-          ))}
-        </div>
-      </Protect>
-    );
 
     const generalSettings = (
       <GeneralSettings
@@ -522,8 +509,9 @@ export function IntegrationSettings({
           <SetupCard
             title={`Set up ${provider.displayName}`}
             duration={getSetupDuration(provider.id, setupMode)}
-            mode={setupMode}
-            onModeChange={setSetupMode}
+            // Telegram has one way to set up: its token field takes the token or the whole BotFather message.
+            mode={isTelegram ? undefined : setupMode}
+            onModeChange={isTelegram ? undefined : setSetupMode}
             footer={
               <>
                 {isTelegram ? (
@@ -549,19 +537,16 @@ export function IntegrationSettings({
               </>
             }
           >
-            {isTelegram &&
-              (setupMode === 'quick' ? (
-                <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                  <TelegramQuickSetup
-                    control={control}
-                    setValue={setValue}
-                    environment={environments?.find((environment) => environment._id === environmentId)}
-                    isReadOnly={isReadOnly}
-                  />
-                </Protect>
-              ) : (
-                credentialList
-              ))}
+            {isTelegram && (
+              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                <TelegramQuickSetup
+                  control={control}
+                  setValue={setValue}
+                  environment={environments?.find((environment) => environment._id === environmentId)}
+                  isReadOnly={isReadOnly}
+                />
+              </Protect>
+            )}
             {slackQuickSetup &&
               (setupMode === 'quick' ? (
                 <SlackQuickSetup
