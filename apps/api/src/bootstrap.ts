@@ -12,6 +12,7 @@ import {
   RequestLogRepository,
   toNovuTlsServerOptions,
 } from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
@@ -21,8 +22,8 @@ import { setupSwagger } from './app/shared/framework/swagger/swagger.controller'
 import { RequestIdMiddleware } from './app/shared/middleware/request-id.middleware';
 
 import { AppModule } from './app.module';
-import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
-import { env, warnDeprecatedEnv } from './config/env';
+import { CONTEXT_PATH, corsOptionsDelegate } from './config';
+import { env, validateEnv, warnDeprecatedEnv } from './config/env';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
@@ -41,8 +42,21 @@ const extendedBodySizeRoutes = [
   '/v2/workflows',
 ];
 
-// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
-validateEnv();
+/*
+ * Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
+ *
+ * The API only produces, and only to these three - inbound parse is enqueued
+ * by the SMTP service and process-subscriber by the worker, so demanding
+ * their queue urls here would block boot on config the API never reads.
+ *
+ * It needs the scheduler once BullMQ is gone because snooze puts a delayed
+ * job on the standard queue, and a snooze beyond 900s can then only be
+ * delivered by EventBridge.
+ */
+validateEnv({
+  topics: [JobTopicNameEnum.STANDARD, JobTopicNameEnum.WORKFLOW, JobTopicNameEnum.WEB_SOCKETS],
+  requiresScheduler: true,
+});
 warnDeprecatedEnv();
 class BootstrapOptions {
   internalSdkGeneration?: boolean;

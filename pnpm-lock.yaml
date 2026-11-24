@@ -2919,6 +2919,9 @@ importers:
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@2.29.3)
+      envalid:
+        specifier: ^8.2.0
+        version: 8.2.0
       es-toolkit:
         specifier: ^1.47.0
         version: 1.47.0

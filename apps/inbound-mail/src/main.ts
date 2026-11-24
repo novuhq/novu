@@ -13,10 +13,15 @@ void runWithHydratedSecrets(async () => {
   // After env.config so the dotenv files are loaded, and before the server so a
   // queue backend that cannot be reached fails the boot instead of surfacing as
   // rejected SMTP transactions.
-  const { validateEnv } = await import('./config/env.validators');
-  validateEnv();
+  const { env, validateEnv, warnDeprecatedEnv } = await import('./config/env');
+  const { JobTopicNameEnum } = await import('@novu/shared');
 
-  const { env, warnDeprecatedEnv } = await import('./config/env');
+  /*
+   * Payload offload is mandatory rather than optional here: a single inbound
+   * attachment can reach 5 MB against the 1 MiB SQS message ceiling, so without
+   * a bucket the mail would be accepted over SMTP and then fail to enqueue.
+   */
+  validateEnv({ topics: [JobTopicNameEnum.INBOUND_PARSE_MAIL], requiresPayloadOffload: true });
   warnDeprecatedEnv();
 
   const { default: mailin } = await import('./server/index');

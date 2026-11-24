@@ -13,7 +13,7 @@ type WorkerClass =
 
 /*
  * The topic list and its queue dependencies live in `worker-topics` so
- * `env.validators` can read them without importing these worker classes, which
+ * boot validation can read them without importing these worker classes, which
  * would drag the Nest graph in before the env has been validated.
  */
 const WORKER_CLASS_BY_TOPIC: Record<JobTopicNameEnum, WorkerClass | undefined> = {

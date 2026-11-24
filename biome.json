@@ -480,7 +480,6 @@
         "libs/application-generic/src/**/*.ts",
         "!libs/application-generic/src/config/env.ts",
         "!**/config/env.config.ts",
-        "!**/config/env.validators.ts",
         "!**/instrument.ts",
         "!**/newrelic.ts",
         "!**/*.spec.ts",

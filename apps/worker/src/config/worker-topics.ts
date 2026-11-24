@@ -1,10 +1,11 @@
+import type { IQueueBackendRequirements } from '@novu/application-generic';
 import { JobTopicNameEnum, QueueBackend } from '@novu/shared';
 import { env } from './env';
 
 /**
  * Queues each worker produces to, on top of the topic it consumes.
  *
- * Kept free of worker-class imports so `env.validators` can resolve the topics
+ * Kept free of worker-class imports so boot validation can resolve the topics
  * a process needs without pulling the whole Nest graph in before the env has
  * been checked.
  */
@@ -48,7 +49,7 @@ function isAcceptedActiveWorker(value: string): value is JobTopicNameEnum {
  * Workers this process runs, from `ACTIVE_WORKERS`. Empty means all of them.
  *
  * Validated here rather than where the worker classes are wired up, because
- * `env.validators` derives the SQS queue urls it demands from this list. An
+ * boot validation derives the SQS queue urls it demands from this list. An
  * unrecognised name resolving to no topics would let a misconfigured process
  * pass boot validation with nothing checked at all, and only fail later when
  * the module graph is built.
@@ -115,4 +116,21 @@ export function getRequiredWorkerTopics(active: JobTopicNameEnum[] = workersToPr
   const topics = active.length > 0 ? sqsWorkers : ALL_WORKER_TOPICS;
 
   return [...new Set(topics.flatMap((topic) => [topic, ...(WORKER_QUEUE_DEPENDENCIES[topic] ?? [])]))];
+}
+
+/**
+ * Queue backend settings this worker process needs at boot. Scheduler config is
+ * demanded here and not in ws or inbound-mail because the standard queue is the
+ * only topic that ever carries a delay. Payload offload is only mandatory for a
+ * worker that parses inbound mail, whose attachments can exceed the SQS message
+ * limit.
+ */
+export function getWorkerQueueBackendRequirements(
+  topics: JobTopicNameEnum[] = getRequiredWorkerTopics()
+): IQueueBackendRequirements {
+  return {
+    topics,
+    requiresScheduler: topics.includes(JobTopicNameEnum.STANDARD),
+    requiresPayloadOffload: topics.includes(JobTopicNameEnum.INBOUND_PARSE_MAIL),
+  };
 }

@@ -13,13 +13,14 @@ import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import { AppModule } from './app.module';
-import { CONTEXT_PATH, validateEnv } from './config';
-import { env, warnDeprecatedEnv } from './config/env';
+import { CONTEXT_PATH } from './config';
+import { env, validateEnv, warnDeprecatedEnv } from './config/env';
+import { getWorkerQueueBackendRequirements } from './config/worker-topics';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
-validateEnv();
+validateEnv(getWorkerQueueBackendRequirements());
 warnDeprecatedEnv();
 
 export async function bootstrap(tlsConfig?: NovuTlsConfig): Promise<INestApplication> {

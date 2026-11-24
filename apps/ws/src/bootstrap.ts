@@ -1,15 +1,20 @@
 import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { getErrorInterceptor, Logger, type NovuTlsConfig, toNovuTlsServerOptions } from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { CONTEXT_PATH, validateEnv } from './config';
-import { env, warnDeprecatedEnv } from './config/env';
+import { CONTEXT_PATH } from './config';
+import { env, validateEnv, warnDeprecatedEnv } from './config/env';
 import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 
-// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
-validateEnv();
+/*
+ * Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
+ * Sockets are the only topic this service touches, and they never carry a
+ * delay, so no scheduler config is required here.
+ */
+validateEnv({ topics: [JobTopicNameEnum.WEB_SOCKETS] });
 warnDeprecatedEnv();
 
 export async function bootstrap(tlsConfig?: NovuTlsConfig) {

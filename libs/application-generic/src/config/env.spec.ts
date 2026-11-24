@@ -1,4 +1,5 @@
-import { createAppEnv, createEnv, type EnvVarDefinition } from './env';
+import { createAppEnv } from './app-env';
+import { createEnv, type EnvVarDefinition } from './env';
 import { envSchema } from './env.schema';
 
 const schema = {
@@ -8,8 +9,9 @@ const schema = {
   TEST_ENV_NUMBER_DEFAULT: { type: 'number', default: 5, description: 'Number with a default.' },
   TEST_ENV_BOOLEAN: { type: 'boolean', description: 'Boolean.' },
   TEST_ENV_BOOLEAN_ON: { type: 'boolean', default: true, description: 'Boolean that is on by default.' },
-  TEST_ENV_DEPRECATED: { deprecated: 'Use TEST_ENV_STRING instead.', description: 'Old name.' },
-  TEST_ENV_READ_BY: { readBy: '@novu/test-dependency', description: 'Read by a dependency.' },
+  TEST_ENV_DEPRECATED: { type: 'boolean', deprecated: 'Use TEST_ENV_RENAMED instead.', description: 'Old name.' },
+  TEST_ENV_RENAMED: { type: 'boolean', replaces: 'TEST_ENV_DEPRECATED', description: 'New name.' },
+  TEST_ENV_READ_BY: { readBy: ['@novu/test-dependency'], description: 'Read by a dependency.' },
 } satisfies Record<string, EnvVarDefinition>;
 
 const testEnv = createEnv(schema);
@@ -79,22 +81,42 @@ describe('env', () => {
     expect(testEnv.TEST_ENV_BOOLEAN_ON).toBe(true);
   });
 
-  it('should leave variables only a dependency reads out of env', () => {
+  it('should leave variables only dependencies read out of env', () => {
     process.env.TEST_ENV_READ_BY = 'value';
 
-    // @ts-expect-error a variable only a dependency reads has no env.X
+    // @ts-expect-error a variable only dependencies read has no env.X
     expect(testEnv.TEST_ENV_READ_BY).toBeUndefined();
     expect(Object.keys(testEnv)).not.toContain('TEST_ENV_READ_BY');
 
-    const withDefault = { readBy: '@novu/test-dependency', default: 'x', description: 'Read by a dependency.' };
-    // @ts-expect-error a variable only a dependency reads has no type or default
+    const withDefault = { readBy: ['@novu/test-dependency'], default: 'x', description: 'Read by a dependency.' };
+    // @ts-expect-error a variable only dependencies read has no type or default
     createEnv({ TEST_ENV_READ_BY: withDefault });
   });
 
+  it('should leave deprecated variables out of env, so new code cannot read them', () => {
+    process.env.TEST_ENV_DEPRECATED = 'true';
+
+    // @ts-expect-error a deprecated variable has no env.X
+    expect(testEnv.TEST_ENV_DEPRECATED).toBeUndefined();
+    expect(Object.keys(testEnv)).not.toContain('TEST_ENV_DEPRECATED');
+  });
+
+  it('should read the replaced name while the new one is unset or empty', () => {
+    process.env.TEST_ENV_DEPRECATED = 'true';
+    expect(testEnv.TEST_ENV_RENAMED).toBe(true);
+
+    process.env.TEST_ENV_RENAMED = '';
+    expect(testEnv.TEST_ENV_RENAMED).toBe(true);
+
+    process.env.TEST_ENV_RENAMED = 'false';
+    expect(testEnv.TEST_ENV_RENAMED).toBe(false);
+  });
+
   it('should build an app env from the shared schema plus the app variables', () => {
-    const appEnv = createAppEnv({
-      TEST_ENV_APP_FLAG: { type: 'boolean', default: true, description: 'App-only boolean.' },
-    }).env;
+    const appEnv = createAppEnv(
+      { TEST_ENV_APP_FLAG: { type: 'boolean', default: true, description: 'App-only boolean.' } },
+      { service: 'api' }
+    ).env;
 
     expectTypeOf(appEnv.TEST_ENV_APP_FLAG).toEqualTypeOf<boolean>();
     expectTypeOf(appEnv.NODE_ENV).toEqualTypeOf<string | undefined>();
@@ -102,12 +124,12 @@ describe('env', () => {
     expect(appEnv.NODE_ENV).toBe(process.env.NODE_ENV);
 
     // @ts-expect-error an app cannot redeclare a shared variable
-    createAppEnv({ NODE_ENV: { description: 'Shadows the shared NODE_ENV.' } });
+    createAppEnv({ NODE_ENV: { description: 'Shadows the shared NODE_ENV.' } }, { service: 'api' });
   });
 
   it('should log deprecated variables that are still set, without their value', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const { warnDeprecatedEnv } = createAppEnv(schema);
+    const { warnDeprecatedEnv } = createAppEnv(schema, { service: 'api' });
     const warnings = () => warn.mock.calls.map(([message]) => String(message)).filter((m) => m.includes('TEST_ENV_'));
 
     warnDeprecatedEnv();
@@ -115,12 +137,26 @@ describe('env', () => {
 
     process.env.TEST_ENV_DEPRECATED = 'secret-value';
     warnDeprecatedEnv();
-    expect(warnings()).toEqual(['[Env] TEST_ENV_DEPRECATED is deprecated and still set. Use TEST_ENV_STRING instead.']);
+    expect(warnings()).toEqual([
+      '[Env] TEST_ENV_DEPRECATED is deprecated and still set. Use TEST_ENV_RENAMED instead.',
+    ]);
   });
 
   it('should keep the schema keys sorted so each variable has one obvious place', () => {
     const keys = Object.keys(envSchema);
 
     expect(keys).toEqual([...keys].sort());
+  });
+
+  it('should only replace shared variables that are declared and deprecated', () => {
+    const definitions: Record<string, EnvVarDefinition> = envSchema;
+    const replaced = Object.values(definitions).flatMap((definition) =>
+      definition.replaces ? [definition.replaces] : []
+    );
+
+    expect(replaced.length).toBeGreaterThan(0);
+    for (const name of replaced) {
+      expect(definitions[name]?.deprecated, name).toBeTruthy();
+    }
   });
 });
