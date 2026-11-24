@@ -171,6 +171,22 @@ export async function listWabaPhoneNumbers(
   });
 }
 
+export type WabaSubscribedAppsResponse = {
+  data?: Array<{
+    whatsapp_business_api_data?: { id?: string; name?: string };
+    /** Present when the app's webhook for this business account was pointed at its own callback. */
+    override_callback_uri?: string;
+  }>;
+} & MetaErrorBody;
+
+/** The apps subscribed to a business account's webhooks, each with the callback it overrides to, if any. */
+export async function listWabaSubscribedApps(
+  accessToken: string,
+  wabaId: string
+): Promise<{ body: WabaSubscribedAppsResponse; statusCode: number }> {
+  return metaGraphGet<WabaSubscribedAppsResponse>(`/${encodeURIComponent(wabaId)}/subscribed_apps`, accessToken);
+}
+
 export async function subscribeWabaMessagesField(args: {
   accessToken: string;
   wabaId: string;

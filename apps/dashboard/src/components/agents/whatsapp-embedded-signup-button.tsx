@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { RiLoader4Line } from 'react-icons/ri';
 import type { WhatsAppEmbeddedSignupResult } from '@/api/integrations';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -210,6 +210,8 @@ export type WhatsAppEmbeddedSignupCoreButtonProps = {
   disabled?: boolean;
   onSuccess?: (result: WhatsAppEmbeddedSignupResult) => void;
   onError?: (message: string) => void;
+  /** Replaces the blue Facebook button, e.g. with the integration store's setup button. */
+  renderButton?: (props: MetaFacebookLoginButtonProps) => ReactNode;
 };
 
 export function WhatsAppEmbeddedSignupCoreButton({
@@ -217,6 +219,7 @@ export function WhatsAppEmbeddedSignupCoreButton({
   disabled = false,
   onSuccess,
   onError,
+  renderButton,
 }: WhatsAppEmbeddedSignupCoreButtonProps) {
   const [isLaunching, setIsLaunching] = useState(false);
   const pendingSessionRef = useRef<EmbeddedSignupSession | null>(null);
@@ -363,15 +366,17 @@ export function WhatsAppEmbeddedSignupCoreButton({
     }
   }, [cleanupMessageListener, onError, tryCompleteSignup]);
 
-  return (
-    <MetaFacebookLoginButton
-      isLoading={isLaunching}
-      disabled={disabled}
-      onClick={() => {
-        void handleConnect();
-      }}
-    />
-  );
+  const buttonProps: MetaFacebookLoginButtonProps = {
+    isLoading: isLaunching,
+    disabled,
+    onClick: () => {
+      void handleConnect();
+    },
+  };
+
+  if (renderButton) return <>{renderButton(buttonProps)}</>;
+
+  return <MetaFacebookLoginButton {...buttonProps} />;
 }
 
 export type WhatsAppEmbeddedSignupButtonProps = {

@@ -14,6 +14,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import type { WhatsAppEmbeddedSignupResult } from '@/api/integrations';
+import type { EmbeddedSignupCompletion } from '@/components/agents/whatsapp-embedded-signup-button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
@@ -49,6 +51,8 @@ import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-
 import { isDemoIntegration, isSecureCredential, usesProviderSetupLayout } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
+import { WhatsAppManualSetup } from './whatsapp-manual-setup';
+import { WhatsAppQuickSetup } from './whatsapp-quick-setup';
 
 type IntegrationConfigurationProps = {
   provider: IProviderConfig;
@@ -85,8 +89,23 @@ type IntegrationConfigurationProps = {
     isEnvironmentLocked: boolean;
     onCreateApp: (data: IntegrationFormData, configToken: string, appName: string) => void;
   };
+  /** WhatsApp's Quick setup: Meta's Embedded Signup. Leave out where it isn't available; only Manual shows then. */
+  whatsAppQuickSetup?: {
+    /** True once the signup finished and the credentials are saved on the server. */
+    isConnected: boolean;
+    /** True while a signup is being saved; a second one can't start until it ends. */
+    isConnecting: boolean;
+    connectedPhone?: string;
+    /** True once the signup has started: the integration belongs to that environment from then on. */
+    isEnvironmentLocked: boolean;
+    completeSignup: (
+      data: IntegrationFormData,
+      completion: EmbeddedSignupCompletion
+    ) => Promise<WhatsAppEmbeddedSignupResult>;
+  };
 };
 
+const SUBSCRIBERS_DOCS_URL = 'https://docs.novu.co/platform/concepts/subscribers';
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
 /** The TelegramConnectButton section of the Telegram integration docs: how subscribers link their chat. */
 const TELEGRAM_CONNECT_DOCS_URL =
@@ -94,8 +113,24 @@ const TELEGRAM_CONNECT_DOCS_URL =
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+  if (mode === 'quick') return '~2 min';
 
-  return mode === 'quick' ? '~2 min' : '~5 min';
+  return providerId === ChatProviderIdEnum.WhatsAppBusiness ? '~10 min' : '~5 min';
+}
+
+function resolveSetupMode({
+  hasQuickSetup,
+  isLocked,
+  selected,
+}: {
+  hasQuickSetup: boolean;
+  isLocked: boolean;
+  selected: ProviderSetupMode;
+}): ProviderSetupMode {
+  if (!hasQuickSetup) return 'manual';
+  if (isLocked) return 'quick';
+
+  return selected;
 }
 
 function generateSlug(name: string): string {
@@ -169,6 +204,7 @@ export function IntegrationSettings({
   onRequestPrimary,
   setupLayout,
   slackQuickSetup,
+  whatsAppQuickSetup,
   layout = 'default',
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -229,10 +265,18 @@ export function IntegrationSettings({
     usesProviderSetupLayout(provider.id) &&
     !!setupLayout &&
     !(agentOnboarding || searchParams.get('agent_onboarding') === 'true');
-  const [setupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
-  // Quick setup saves the credentials on the server, so the form is ready once the app exists.
-  const isQuickSetupMode = usesSetupLayout && !!slackQuickSetup && setupMode === 'quick';
-  const isFormReady = isQuickSetupMode ? !!slackQuickSetup?.appId : formState.isValid;
+  const [selectedSetupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
+  // Only providers with a Quick setup have the two modes; the rest set up one way.
+  const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup;
+  // A number connected by Embedded Signup runs on Novu's Meta app. Credentials typed in Manual would be saved
+  // onto that same integration and still resolve to Novu's app, so the mode stays on Quick setup from then on.
+  const isSetupModeLocked = !!whatsAppQuickSetup?.isConnected;
+  const hasSetupModeSwitch = hasQuickSetup && !isSetupModeLocked;
+  const setupMode = resolveSetupMode({ hasQuickSetup, isLocked: isSetupModeLocked, selected: selectedSetupMode });
+  // Quick setup saves the credentials on the server, so the form is ready once that has happened.
+  const isQuickSetupMode = usesSetupLayout && hasQuickSetup && setupMode === 'quick';
+  const isQuickSetupDone = !!slackQuickSetup?.appId || !!whatsAppQuickSetup?.isConnected;
+  const isFormReady = isQuickSetupMode ? isQuickSetupDone : formState.isValid;
 
   const changedFields = describeChangedFields(formState.dirtyFields, provider);
   // Joined so the effect runs when the list changes, not on every new dirtyFields object.
@@ -468,6 +512,7 @@ export function IntegrationSettings({
 
   if (usesSetupLayout) {
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
+    const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
 
     const generalSettings = (
       <GeneralSettings
@@ -504,17 +549,26 @@ export function IntegrationSettings({
             selectedId={environmentId}
             onSelect={(id) => setValue('environmentId', id, { shouldDirty: true })}
             // The integration is created with the app, so its environment is settled from then on.
-            disabled={isReadOnly || !!slackQuickSetup?.isEnvironmentLocked}
+            disabled={isReadOnly || !!slackQuickSetup?.isEnvironmentLocked || !!whatsAppQuickSetup?.isEnvironmentLocked}
           />
           <SetupCard
             title={`Set up ${provider.displayName}`}
             duration={getSetupDuration(provider.id, setupMode)}
             // Telegram has one way to set up: its token field takes the token or the whole BotFather message.
-            mode={isTelegram ? undefined : setupMode}
-            onModeChange={isTelegram ? undefined : setSetupMode}
+            mode={hasSetupModeSwitch ? setupMode : undefined}
+            onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {isTelegram ? (
+                {isWhatsApp ? (
+                  <SetupTip>
+                    Novu messages each subscriber’s <code className="font-code">phone</code>. Set it when you create or
+                    identify subscribers.{' '}
+                    <a href={SUBSCRIBERS_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : isTelegram ? (
                   <SetupTip>
                     Add <code className="font-code">&lt;TelegramConnectButton /&gt;</code> to your app so subscribers
                     can link their Telegram chat.{' '}
@@ -547,6 +601,34 @@ export function IntegrationSettings({
                 />
               </Protect>
             )}
+            {isWhatsApp &&
+              (whatsAppQuickSetup && setupMode === 'quick' ? (
+                <WhatsAppQuickSetup
+                  isConnected={whatsAppQuickSetup.isConnected}
+                  connectedPhone={whatsAppQuickSetup.connectedPhone}
+                  isConnecting={whatsAppQuickSetup.isConnecting}
+                  canConnect={!isReadOnly && !!name?.trim()}
+                  completeSignup={(completion) => whatsAppQuickSetup.completeSignup(form.getValues(), completion)}
+                />
+              ) : (
+                <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                  <WhatsAppManualSetup
+                    credentialFields={
+                      <div className="flex flex-col gap-3">
+                        {providerCredentials.map((credential) => (
+                          <CredentialSection
+                            key={credential.key}
+                            credential={credential}
+                            control={control}
+                            isReadOnly={isReadOnly}
+                            integrationId={integration?._id}
+                          />
+                        ))}
+                      </div>
+                    }
+                  />
+                </Protect>
+              ))}
             {slackQuickSetup &&
               (setupMode === 'quick' ? (
                 <SlackQuickSetup
