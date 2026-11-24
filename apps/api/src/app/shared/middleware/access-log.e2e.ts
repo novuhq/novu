@@ -103,13 +103,17 @@ describe('Access log #novu-v2', () => {
     expect(JSON.stringify(line)).not.to.include(session.apiKey);
   });
 
-  it('records no line for a trigger call', async () => {
+  it("records no line for a trigger call or the worker's bridge call", async () => {
     await session.testAgent
       .post('/v1/events/trigger')
       .set(HttpRequestHeaderKeysEnum.AUTHORIZATION, `${ApiAuthSchemeEnum.API_KEY} ${session.apiKey}`)
       .set(HttpRequestHeaderKeysEnum.USER_AGENT, userAgent)
       .send({ name: 'workflow-that-does-not-exist', to: 'subscriber-1', payload: {} });
-    // Responses close in order, so once this line is in, the trigger call has had its turn.
+    await session.testAgent
+      .post(`/v1/environments/${session.environment._id}/bridge?action=execute`)
+      .set(HttpRequestHeaderKeysEnum.USER_AGENT, userAgent)
+      .send({});
+    // Responses close in order, so once this line is in, the calls above have had their turn.
     await session.testAgent.get('/v1/environments').set(HttpRequestHeaderKeysEnum.USER_AGENT, userAgent);
     const lines = await accessLines(1);
 

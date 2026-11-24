@@ -272,6 +272,7 @@ describe('accessLogMiddleware', () => {
     ['POST', '/v1/events/trigger'],
     ['POST', '/v1/events/trigger/bulk'],
     ['POST', '/api/v1/events/trigger'],
+    ['POST', '/v1/environments/:environmentId/bridge'],
     ['GET', '/v1/inbox/notifications'],
     ['POST', '/v1/widgets/session/initialize'],
   ]) {

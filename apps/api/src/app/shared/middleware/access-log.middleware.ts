@@ -31,14 +31,16 @@ const DISABLED_VALUES: ReadonlySet<string> = new Set(['false', 'f', 'no', 'off',
 /*
  * Requests that get no access line, all of which still get the New Relic attributes. Health checks and the socket
  * service's presence calls say nothing about a caller. A trigger and every Inbox and widget call run once per
- * notification or per Inbox render, so a line per call would be most of the API's traffic. Cancelling a trigger and a
- * broadcast are rare and keep their line.
+ * notification or per Inbox render, and the worker calls the bridge of a dashboard workflow once per subscriber and
+ * step, so a line per call would be most of the API's traffic. Cancelling a trigger and a broadcast are rare and keep
+ * their line.
  */
 const REQUESTS_WITHOUT_ACCESS_LOG: ReadonlySet<string> = new Set([
   'GET /v1/health-check',
   'POST /v1/internal/subscriber-online-state',
   'POST /v1/events/trigger',
   'POST /v1/events/trigger/bulk',
+  'POST /v1/environments/:environmentId/bridge',
 ]);
 const ROUTE_PREFIXES_WITHOUT_ACCESS_LOG: readonly string[] = ['/v1/inbox/', '/v1/widgets/'];
 
