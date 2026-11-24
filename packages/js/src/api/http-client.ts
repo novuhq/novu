@@ -1,7 +1,22 @@
+import { isJwtExpired } from '../utils/jwt';
+
 export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
   headers?: Record<string, string>;
+};
+
+/**
+ * Gets a new session token. Resolves to `true` when the client now holds a new token.
+ */
+export type SessionRefresher = () => Promise<boolean>;
+
+export type HttpRequestOptions = RequestInit & {
+  /**
+   * Do not refresh the session and retry when the request answers 401.
+   * Set for the session request itself, which would otherwise wait on its own refresh.
+   */
+  skipSessionRefresh?: boolean;
 };
 
 export const DEFAULT_API_VERSION = 'v1';
@@ -10,11 +25,14 @@ const DEFAULT_CLIENT_VERSION = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
 export class HttpClient {
   // Environment variable for local development that overrides the default API endpoint without affecting the Inbox DX
   private DEFAULT_BACKEND_URL =
-    (typeof window !== 'undefined' && (window as any).NOVU_LOCAL_BACKEND_URL) || 'https://api.novu.co';
+    (typeof window !== 'undefined' &&
+      (window as Window & { NOVU_LOCAL_BACKEND_URL?: string }).NOVU_LOCAL_BACKEND_URL) ||
+    'https://api.novu.co';
 
   private apiUrl: string;
   private apiVersion: string;
   private headers: Record<string, string>;
+  private sessionRefresher?: SessionRefresher;
 
   constructor(options: HttpClientOptions = {}) {
     const { apiVersion = DEFAULT_API_VERSION, apiUrl = this.DEFAULT_BACKEND_URL, headers = {} } = options || {};
@@ -30,6 +48,14 @@ export class HttpClient {
 
   setAuthorizationToken(token: string) {
     this.headers.Authorization = `Bearer ${token}`;
+  }
+
+  /**
+   * Called when a request fails with 401 because its subscriber token expired.
+   * The request is retried once after the refresh succeeds.
+   */
+  setSessionRefresher(refresher: SessionRefresher) {
+    this.sessionRefresher = refresher;
   }
 
   setKeylessHeader(identifier?: string) {
@@ -62,7 +88,7 @@ export class HttpClient {
     });
   }
 
-  async post<T>(path: string, body?: any, options?: RequestInit) {
+  async post<T>(path: string, body?: unknown, options?: HttpRequestOptions) {
     return this.doFetch<T>({
       path,
       options: {
@@ -70,10 +96,11 @@ export class HttpClient {
         body,
         headers: options?.headers,
       },
+      allowSessionRefresh: !options?.skipSessionRefresh,
     });
   }
 
-  async patch<T>(path: string, body?: any) {
+  async patch<T>(path: string, body?: unknown) {
     return this.doFetch<T>({
       path,
       options: {
@@ -83,7 +110,7 @@ export class HttpClient {
     });
   }
 
-  async delete<T>(path: string, body?: any) {
+  async delete<T>(path: string, body?: unknown) {
     return this.doFetch<T>({
       path,
       options: {
@@ -98,20 +125,30 @@ export class HttpClient {
     searchParams,
     options,
     unwrapEnvelope = true,
+    allowSessionRefresh = true,
   }: {
     path: string;
     searchParams?: URLSearchParams;
-    options?: RequestInit;
+    options?: Omit<RequestInit, 'body'> & { body?: unknown };
     unwrapEnvelope?: boolean;
-  }) {
+    allowSessionRefresh?: boolean;
+  }): Promise<T> {
     const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
+    const headers: Record<string, string> = {
+      ...this.headers,
+      ...((options?.headers as Record<string, string>) || {}),
+    };
     const reqInit = {
       method: options?.method || 'GET',
-      headers: { ...this.headers, ...(options?.headers || {}) },
+      headers,
       body: options?.body ? JSON.stringify(options.body) : undefined,
     };
 
     const response = await fetch(fullUrl, reqInit);
+
+    if (response.status === 401 && allowSessionRefresh && (await this.refreshSessionAfter401(headers.Authorization))) {
+      return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, allowSessionRefresh: false });
+    }
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -123,12 +160,37 @@ export class HttpClient {
       throw error;
     }
     if (response.status === 204) {
-      return undefined as unknown as T;
+      return undefined as T;
     }
 
     const res = await response.json();
 
-    return (unwrapEnvelope ? res.data : res) as Promise<T>;
+    return (unwrapEnvelope ? res.data : res) as T;
+  }
+
+  /**
+   * Decides whether a request that answered 401 should be sent again.
+   * Only an expired subscriber token is refreshed; other 401s are returned to the caller as before.
+   */
+  private async refreshSessionAfter401(sentAuthorization: string | undefined): Promise<boolean> {
+    if (!sentAuthorization || !this.sessionRefresher) {
+      return false;
+    }
+
+    // Another request already refreshed the token while this one was in flight: retry with the new token.
+    if (this.headers.Authorization !== sentAuthorization) {
+      return true;
+    }
+
+    if (!isJwtExpired(sentAuthorization.replace(/^Bearer /, ''))) {
+      return false;
+    }
+
+    try {
+      return await this.sessionRefresher();
+    } catch {
+      return false;
+    }
   }
 }
 

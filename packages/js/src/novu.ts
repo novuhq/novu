@@ -138,6 +138,8 @@ export class Novu {
     );
 
     this.#session.initialize();
+    const refreshSession = () => this.#session.refresh();
+    this.#httpClient.setSessionRefresher(refreshSession);
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
@@ -168,6 +170,7 @@ export class Novu {
       socketOptions: options.socketOptions,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
+      refreshSession,
     });
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {

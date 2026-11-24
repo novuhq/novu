@@ -1,7 +1,7 @@
 import 'event-target-polyfill';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocket } from 'partysocket';
-import { InboxService } from '../api';
+import type { InboxService, SessionRefresher } from '../api';
 import { BaseModule } from '../base-module';
 import {
   NotificationReceivedEvent,
@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { NovuError } from '../utils/errors';
 import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
+import { isJwtExpired } from '../utils/jwt';
 import type { BaseSocketInterface } from './base-socket';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
@@ -130,17 +131,20 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #hasGivenUp = false;
   /** Set once 'socket.disconnect.resolved' went out for the current outage, cleared on 'open' */
   #disconnectEmitted = false;
+  #refreshSession?: SessionRefresher;
 
   constructor({
     socketUrl,
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
+    refreshSession,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
+    refreshSession?: SessionRefresher;
   }) {
     super({
       eventEmitterInstance,
@@ -149,6 +153,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
+    this.#refreshSession = refreshSession;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -278,6 +283,21 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#lastRetryCount = socket.retryCount;
   }
 
+  /**
+   * The socket only checks the token when it connects, so an open socket keeps working after the token expires.
+   * A reconnect with the expired token would be rejected on every attempt, so get a new token first.
+   */
+  #getSocketUrl = async (): Promise<string> => {
+    if (this.#refreshSession && isJwtExpired(this.#token)) {
+      await this.#refreshSession().catch(() => false);
+    }
+
+    const url = new URL(this.#socketUrl);
+    url.searchParams.set('token', this.#token);
+
+    return url.toString();
+  };
+
   async #initializeSocket(): Promise<void> {
     if (this.#partySocket && this.#hasGivenUp) {
       const deadSocket = this.#partySocket;
@@ -292,10 +312,8 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     const args = { socketUrl: this.#socketUrl };
     this.#emitter.emit('socket.connect.pending', { args });
 
-    const url = new URL(this.#socketUrl);
-    url.searchParams.set('token', this.#token);
-
-    this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
+    // PartySocket calls the URL provider before every connection attempt, including reconnects.
+    this.#partySocket = new WebSocket(this.#getSocketUrl, undefined, this.#socketOptions);
 
     const socket = this.#partySocket;
     this.#lastRetryCount = socket.retryCount;

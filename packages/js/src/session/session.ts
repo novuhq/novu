@@ -7,6 +7,7 @@ export class Session {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
   #options: InitializeSessionArgs;
+  #inFlight: Promise<boolean> | undefined;
 
   constructor(
     options: InitializeSessionArgs,
@@ -79,10 +80,35 @@ export class Session {
       return;
     }
 
+    // Let a request that is already running finish first, so its token cannot overwrite the new one.
+    while (this.#inFlight) {
+      await this.#inFlight;
+    }
+
+    if (options) {
+      this.#options = options;
+    }
+
+    await this.refresh();
+  }
+
+  /**
+   * Asks the server for a new token for the current subscriber, for example after the old one expired.
+   * Callers that ask while a session request is already running share that request.
+   * Resolves to `true` when a new token was stored.
+   */
+  public refresh(): Promise<boolean> {
+    if (!this.#inFlight) {
+      this.#inFlight = this.#requestSession().finally(() => {
+        this.#inFlight = undefined;
+      });
+    }
+
+    return this.#inFlight;
+  }
+
+  async #requestSession(): Promise<boolean> {
     try {
-      if (options) {
-        this.#options = options;
-      }
       const { subscriber, subscriberHash, contextHash, applicationIdentifier, defaultSchedule, context } =
         this.#options;
       let currentTimezone: string | undefined;
@@ -123,8 +149,12 @@ export class Session {
       }
 
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });
+
+      return true;
     } catch (error) {
       this.#emitter.emit('session.initialize.resolved', { args: this.#options, error });
+
+      return false;
     }
   }
 }
