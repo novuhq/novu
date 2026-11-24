@@ -4,12 +4,12 @@ import { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
-  WebChatAgentEvent,
   NotificationReceivedEvent,
   NotificationUnreadEvent,
   NotificationUnseenEvent,
   NovuEventEmitter,
   SocketEventNames,
+  WebChatAgentEvent,
 } from '../event-emitter';
 import { Notification } from '../notifications';
 import {
@@ -71,8 +71,10 @@ const mapToNotification = ({
     email: subscriber?.email,
     phone: subscriber?.phone,
   };
-  const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
-  const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
+  const primaryCta = cta.action?.buttons?.find((button: { type?: string }) => button.type === ActionTypeEnum.PRIMARY);
+  const secondaryCta = cta.action?.buttons?.find(
+    (button: { type?: string }) => button.type === ActionTypeEnum.SECONDARY
+  );
   const actionType = cta.action?.result?.type;
   const actionStatus = cta.action?.status;
 
@@ -260,7 +262,23 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     }, HIBERNATION_HEARTBEAT_MS);
   }
 
+  /**
+   * partysocket stops retrying for good once a caller-provided `maxRetries` is used up, and its `reconnect()`
+   * cannot restart it from there.
+   */
+  #hasGivenUp(socket: WebSocket): boolean {
+    const maxRetries = Number(this.#socketOptions?.maxRetries ?? Number.POSITIVE_INFINITY);
+
+    return socket.readyState === WebSocket.CLOSED && socket.retryCount >= maxRetries;
+  }
+
   async #initializeSocket(): Promise<void> {
+    if (this.#partySocket && this.#hasGivenUp(this.#partySocket)) {
+      const deadSocket = this.#partySocket;
+      this.#clearCurrentSocket();
+      deadSocket.close();
+    }
+
     if (this.#partySocket) {
       return;
     }
@@ -289,7 +307,12 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
         return;
       }
 
-      this.#clearCurrentSocket();
+      /*
+       * Keep the reference: partysocket reconnects this same instance on its own, and the 'open' listener
+       * restarts the heartbeat. Dropping it here made the next connect() open a second socket while this one
+       * kept reconnecting in the background, never to be closed.
+       */
+      this.#clearHibernationHeartbeat();
       this.#emitter.emit('socket.disconnect.resolved', { args });
     });
 

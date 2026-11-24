@@ -61,6 +61,8 @@ export class NovuUI {
   #setPreferencesSort: Setter<PreferencesSort | undefined>;
   #novu: Accessor<Novu | undefined>;
   #setNovu: Setter<Novu | undefined>;
+  /** The instance this engine built from its options; a caller-provided `novu` belongs to the caller. */
+  #ownedNovu: Novu | undefined;
   id: string;
   readonly stores: EngineStores;
 
@@ -121,7 +123,18 @@ export class NovuUI {
     return createRoot((dispose) => {
       this.#disposeStores = dispose;
 
-      const novu = createMemo(() => this.#novu() ?? new Novu(this.#options()));
+      const novu = createMemo(() => {
+        const provided = this.#novu();
+        const next = provided ?? new Novu(this.#options());
+
+        // An instance replaced on options change would otherwise keep its socket open and reconnecting
+        if (this.#ownedNovu && this.#ownedNovu !== next) {
+          this.#ownedNovu.socket.disconnect();
+        }
+        this.#ownedNovu = provided ? undefined : next;
+
+        return next;
+      });
       const appearance = createAppearanceStore({
         id: this.id,
         appearance: this.#appearance,
@@ -262,5 +275,7 @@ export class NovuUI {
     this.#dispose = null;
     this.#rootElement?.remove();
     this.#disposeStores();
+    this.#ownedNovu?.socket.disconnect();
+    this.#ownedNovu = undefined;
   }
 }
