@@ -19,4 +19,11 @@ export class AutoConfigureIntegrationResponseDto {
     type: Object,
   })
   integration?: IntegrationResponseDto;
+
+  @ApiPropertyOptional({
+    description:
+      'The URL the provider sends delivery events to. Set it in the provider yourself when auto-configuration fails.',
+    type: String,
+  })
+  webhookUrl?: string;
 }

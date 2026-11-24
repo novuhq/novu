@@ -31,6 +31,24 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       'Which workflows had errors today?',
     ],
   },
+  [CopilotPageEnum.INTEGRATIONS]: {
+    routes: [
+      ROUTES.INTEGRATIONS,
+      ROUTES.INTEGRATIONS_CONNECT,
+      ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
+      ROUTES.INTEGRATIONS_UPDATE,
+    ],
+    emptyState: {
+      title: 'Ask about integrations',
+      body: 'I check which providers are set up, active and primary in each environment. Credentials never go through this chat.',
+    },
+    placeholder: 'Ask anything about integrations…',
+    suggestions: [
+      'Is push set up in Production?',
+      'Which email provider is primary in each environment?',
+      'Turn on activity tracking for my email provider',
+    ],
+  },
 };
 
 const CONFIGURED_PAGES = Object.keys(COPILOT_PAGE_CONFIGS) as CopilotPageEnum[];
