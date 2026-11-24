@@ -10,7 +10,7 @@ describe('buildSubscriberViewing', () => {
   });
 
   it('labels the open subscriber with their name once loaded', () => {
-    expect(buildSubscriberViewing('sub_8f21', { firstName: ' Jane ', lastName: 'Alvarez' }).resource?.label).toBe(
+    expect(buildSubscriberViewing('sub_8f21', { firstName: ' Jane', lastName: 'Alvarez ' }).resource?.label).toBe(
       'Jane Alvarez'
     );
     expect(buildSubscriberViewing('sub_8f21', { firstName: 'Jane', lastName: null }).resource?.label).toBe('Jane');
