@@ -1,5 +1,5 @@
 import { Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { TraceResponseDto } from '../dtos/get-request.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 import { StepExecutionDetailDto } from '../dtos/workflow-run-response.dto';
@@ -17,6 +17,13 @@ export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEn
     default:
       return WorkflowRunStatusDtoEnum.PROCESSING;
   }
+}
+
+const DELIVERY_LIFECYCLE_DETAILS = new Set<string>(Object.values(DeliveryLifecycleDetail));
+
+/** ClickHouse stores an unset detail as ''; only known values reach the response. */
+export function toDeliveryLifecycleDetail(value: string | null | undefined): DeliveryLifecycleDetail | undefined {
+  return value && DELIVERY_LIFECYCLE_DETAILS.has(value) ? (value as DeliveryLifecycleDetail) : undefined;
 }
 
 export function mapTraceToResponseDto({
@@ -69,14 +76,15 @@ export function mapTraceToResponseDto({
 }
 
 export function mapTraceToExecutionDetailDto(
-  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at' | 'event_type'>[]
+  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at' | 'event_type'>[],
+  includeRaw: boolean
 ): StepExecutionDetailDto[] {
   return traces.map((trace) => ({
     _id: trace.id,
     createdAt: new Date(`${trace.created_at} UTC`).toISOString(),
     status: mapTraceStatusToExecutionDetailsStatus(trace.status),
     detail: trace.title,
-    raw: trace.raw_data,
+    raw: includeRaw ? trace.raw_data : undefined,
     eventType: trace.event_type,
   }));
 }

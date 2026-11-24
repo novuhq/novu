@@ -123,7 +123,8 @@ type ConnectedState = Pick<
 
 /**
  * Hosts one Copilot conversation for the whole workflow editor so it survives canvas and step
- * editor navigation. The web-chat connection lives in a sibling bridge (rendered once Novu's
+ * editor navigation, or for the dashboard pages `COPILOT_PAGES` turns on (`CopilotPageMount`).
+ * The web-chat connection lives in a sibling bridge (rendered once Novu's
  * tenant context is minted, never on self-hosted) so children are never remounted when it
  * becomes ready; until then the context reports `isAvailable: false` ("Copilot is off") and, until
  * the bridge mounts, `isConnecting: true`.
@@ -136,7 +137,7 @@ export function CopilotWebChatProvider({
   children: ReactNode;
   /** Where the conversation is shown, or `null` to not connect; picks the hotkeys and tags every Copilot telemetry event. */
   surface: CopilotSurface | null;
-  /** Account, environment, and workflow the thread belongs to; it is resumed after a reload and reset when the scope changes. */
+  /** Account, environment, and workflow (or the pages) the thread belongs to; it is resumed after a reload and reset when the scope changes. */
   conversationScope?: string;
 }) {
   const shell = useShellState(surface);
@@ -294,6 +295,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
           outcome: event.outcome,
           agentId: NOVU_COPILOT_AGENT_ID,
           surface,
+          page: pageContextRef.current?.page,
         });
         // A stopped run has no answer to come back to.
         if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
@@ -303,7 +305,12 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         readyPromptLookupRef.current++;
         setReadyPrompt(undefined);
         setPendingReviewMessageId(undefined);
-        track(TelemetryEvent.COPILOT_GENERATION_ERROR, { code: event.code, agentId: NOVU_COPILOT_AGENT_ID, surface });
+        track(TelemetryEvent.COPILOT_GENERATION_ERROR, {
+          code: event.code,
+          agentId: NOVU_COPILOT_AGENT_ID,
+          surface,
+          page: pageContextRef.current?.page,
+        });
         setRunError(true);
       } else if (event.type === 'custom' && event.name === COPILOT_TRY_AGAIN_READY_EVENT) {
         const cardSourceMessageId = tryAgainCardRef.current;
@@ -369,13 +376,15 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       setReadyPrompt(undefined);
 
       const isNewChat = chatRef.current.messages.length === 0;
+      const page = pageContextRef.current?.page;
       track(TelemetryEvent.COPILOT_MESSAGE_SENT, {
         agentId: NOVU_COPILOT_AGENT_ID,
         isNewChat,
         messageLength: trimmed.length,
         surface,
+        page,
       });
-      if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID, surface });
+      if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID, surface, page });
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
@@ -441,7 +450,11 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   }, []);
 
   const stop = useCallback(async () => {
-    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, { agentId: NOVU_COPILOT_AGENT_ID, surface });
+    track(TelemetryEvent.COPILOT_GENERATION_STOPPED, {
+      agentId: NOVU_COPILOT_AGENT_ID,
+      surface,
+      page: pageContextRef.current?.page,
+    });
     // Nothing is owed after a stop: drop the send → run-start bridge, a queued Try again resend and the locked review card.
     setAwaitingReply(false);
     tryAgainCardRef.current = undefined;
@@ -502,7 +515,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const isAvailable = !!connectContext;
   // A reveal nothing can show yet would wait for the next sidebar and steal the focus then (e.g. ⌘J on the Activity tab).
   const canReveal = surface === 'popover' || hasSidebar;
-  const isEntryEnabled = isAvailable && !!pageContext?.workflowId && canReveal;
+  const hasPageContext = !!pageContext?.workflowId || !!pageContext?.page;
+  const isEntryEnabled = isAvailable && hasPageContext && canReveal;
   useCopilotHotkey({ surface, isEnabled: isEntryEnabled, isOpen, open, toggle, close });
   useEffect(() => (isEntryEnabled ? registerCopilotEntry(open) : undefined), [isEntryEnabled, open]);
 

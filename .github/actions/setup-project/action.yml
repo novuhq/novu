@@ -30,27 +30,22 @@ runs:
         node-version: '22.23.5'
         cache: 'pnpm'
 
-    - name: 💵 Start Redis
+    - name: Start Redis, MongoDB and ClickHouse
       if: ${{ inputs.slim == 'false' }}
-      uses: supercharge/redis-github-action@f63fe516254d0af5df91755a4488274c2e71e38c # 1.5.0
-
-    - name: 📚 Start MongoDB
-      if: ${{ inputs.slim == 'false' }}
-      uses: supercharge/mongodb-github-action@5a87bd81f88e2a8b195f8b7b656f5cda1350815a # 1.11.0
-      with:
-        mongodb-version: 8.0
-
-    - name: 🔍 Start ClickHouse
-      if: ${{ inputs.slim == 'false' }}
-      uses: praneeth527/clickhouse-server-action@f09502165f8075d2a11c4fbc9e93ccea9b2a821b # v1.0.0
-      env:
-        CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-      with:
-        tag: '24.3-alpine'
+      shell: bash
+      working-directory: docker/local
+      run: docker compose -f docker-compose.ci.yml up -d redis mongodb clickhouse
 
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm ci
+
+    # Checked after the install so the services boot while dependencies install.
+    - name: Wait for Redis, MongoDB and ClickHouse
+      if: ${{ inputs.slim == 'false' }}
+      shell: bash
+      working-directory: docker/local
+      run: docker compose -f docker-compose.ci.yml up --wait --wait-timeout 60 redis mongodb clickhouse
 
     - name: Install wait-on plugin
       shell: bash

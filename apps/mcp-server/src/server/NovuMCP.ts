@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
 // Import all tool registration functions
+import { registerActivityTools } from "../tools/activity";
 import { registerAgentTools } from "../tools/agents";
 import { registerAuthTools } from "../tools/auth";
 import { registerConversationTools } from "../tools/conversations";
@@ -59,6 +60,7 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 		registerEnvironmentTools(this.server, accessors);
 		registerSubscriberTools(this.server, accessors);
 		registerNotificationTools(this.server, accessors);
+		registerActivityTools(this.server, accessors);
 		registerPreferenceTools(this.server, accessors);
 		registerIntegrationTools(this.server, accessors);
 		registerFeedbackTool(this.server, this.env.CLERK_SECRET_KEY);

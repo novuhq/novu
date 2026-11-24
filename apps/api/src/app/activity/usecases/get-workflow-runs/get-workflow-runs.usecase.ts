@@ -16,7 +16,7 @@ import { SeverityLevelEnum } from '@novu/shared';
 import { ActivityRetentionRange, ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
-import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { mapWorkflowRunStatusToDto, toDeliveryLifecycleDetail } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
 type CursorData = {
@@ -38,6 +38,7 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'delivery_lifecycle_detail',
   'severity',
   'critical',
   'context_keys',
@@ -477,6 +478,7 @@ export class GetWorkflowRuns {
       subscriberId: workflowRun.external_subscriber_id || undefined,
       status: mapWorkflowRunStatusToDto(workflowRun.status),
       deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
+      deliveryLifecycleDetail: toDeliveryLifecycleDetail(workflowRun.delivery_lifecycle_detail),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

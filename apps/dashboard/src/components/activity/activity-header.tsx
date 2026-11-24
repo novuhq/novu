@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { RiCloseLine, RiRouteFill } from 'react-icons/ri';
 import { getActivityList } from '@/api/activity';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -40,6 +41,8 @@ type ActivityHeaderProps = {
   isPlaceholder?: boolean;
   onTransactionIdChange?: (transactionId: string, activityId: string) => void;
   onClose?: () => void;
+  /** Opens the page Copilot with a question about this run; the button shows only when it is passed. */
+  onAskCopilot?: () => void;
 };
 
 export const ActivityHeader = ({
@@ -48,6 +51,7 @@ export const ActivityHeader = ({
   isPlaceholder = false,
   onTransactionIdChange,
   onClose,
+  onAskCopilot,
 }: ActivityHeaderProps) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -146,6 +150,19 @@ export const ActivityHeader = ({
       </div>
 
       <div className="flex items-center gap-1.5">
+        {onAskCopilot && (
+          <Button
+            variant="secondary"
+            mode="ghost"
+            size="2xs"
+            onClick={onAskCopilot}
+            className="h-[20px]"
+            type="button"
+            leadingIcon={BroomSparkle}
+          >
+            Ask Copilot
+          </Button>
+        )}
         {activity && workflowExists && (
           <Button
             variant="secondary"
