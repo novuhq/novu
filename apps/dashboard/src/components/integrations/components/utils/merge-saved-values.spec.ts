@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeSavedValues } from './merge-saved-values';
+import { mergeSavedValues, withoutUndefinedKeys } from './merge-saved-values';
 
 const saved = {
   name: 'Webhook',
@@ -38,5 +38,13 @@ describe('mergeSavedValues', () => {
       check: true,
       credentials: { method: 'POST', routingMode: 'static' },
     });
+  });
+
+  it('matches the new saved values when the integration was saved without configurations', () => {
+    const { configurations: _, ...savedWithout } = saved;
+    const next = { ...savedWithout, name: 'Renamed', configurations: undefined };
+    const merged = mergeSavedValues({ ...savedWithout, configurations: undefined }, savedWithout, next);
+
+    expect(merged).toStrictEqual(withoutUndefinedKeys(next));
   });
 });

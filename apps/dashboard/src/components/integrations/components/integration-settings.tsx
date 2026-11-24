@@ -34,7 +34,7 @@ import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
-import { mergeSavedValues } from './utils/merge-saved-values';
+import { mergeSavedValues, withoutUndefinedKeys } from './utils/merge-saved-values';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
@@ -131,8 +131,9 @@ export function IntegrationSettings({
     if (!saved) return;
 
     const values = mergeSavedValues(saved, form.getValues(), next) as IntegrationFormData;
-    // The new saved values become the defaults, so the form stays dirty only with the user's own changes.
-    form.reset(next);
+    // The new saved values become the defaults, so the form stays dirty only with the user's own changes. They drop
+    // undefined keys (an integration saved without configurations) as the merged values do, or the two never match.
+    form.reset(withoutUndefinedKeys(next));
     form.reset(values, { keepDefaultValues: true });
   }, [integration, savedValuesKey, form]);
 

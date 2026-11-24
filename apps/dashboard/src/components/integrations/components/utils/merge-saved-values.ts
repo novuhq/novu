@@ -28,6 +28,11 @@ function mergeRecord(saved: unknown, current: unknown, next: unknown): FormValue
   return merged;
 }
 
+/** Drops the keys whose value is undefined: react-hook-form counts them, and would call an untouched form dirty. */
+export function withoutUndefinedKeys<T extends FormValues>(values: T): T {
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)) as T;
+}
+
 /**
  * The form values once the integration was saved again elsewhere (by the Copilot): the newly saved values, except
  * where the form changed a value from the one saved before. Compares values rather than react-hook-form's dirty
