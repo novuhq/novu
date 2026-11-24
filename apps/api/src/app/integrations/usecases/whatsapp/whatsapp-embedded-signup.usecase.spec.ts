@@ -29,6 +29,7 @@ describe('WhatsAppEmbeddedSignup', () => {
   };
 
   let calls: Call[];
+  let answers: Record<string, { statusCode: number; body: unknown }>;
   let agentRepository: { findOne: sinon.SinonStub };
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let integrationRepository: { findOne: sinon.SinonStub };
@@ -65,13 +66,14 @@ describe('WhatsAppEmbeddedSignup', () => {
     process.env.NOVU_WHATSAPP_CONFIG_ID = 'config';
 
     calls = [];
-    const answers: Record<string, { statusCode: number; body: unknown }> = {
+    answers = {
       'GET access_token': { statusCode: 200, body: { access_token: ACCESS_TOKEN } },
       [`GET ${PHONE_NUMBER_ID}`]: {
         statusCode: 200,
         body: { id: PHONE_NUMBER_ID, display_phone_number: DISPLAY_PHONE },
       },
       'GET phone_numbers': { statusCode: 200, body: { data: [{ id: PHONE_NUMBER_ID }] } },
+      'GET subscribed_apps': { statusCode: 200, body: { data: [{ whatsapp_business_api_data: { id: 'novu-app' } }] } },
       'POST register': { statusCode: 200, body: { success: true } },
     };
 
@@ -168,8 +170,89 @@ describe('WhatsAppEmbeddedSignup', () => {
 
       expect(agentRepository.findOne.called).to.equal(false);
       expect(agentIntegrationRepository.findOne.called).to.equal(false);
+      expect(callsTo('subscribed_apps')).to.have.length(1);
       expect(businessProfile.apply.called).to.equal(false);
       expect(configureWhatsAppWebhook.execute.called).to.equal(false);
+    });
+
+    it('refuses when the business account already delivers to another agent webhook', async () => {
+      answers['GET subscribed_apps'] = {
+        statusCode: 200,
+        body: { data: [{ override_callback_uri: `https://api.novu.co/v1/agents/${AGENT_ID}/webhook/other-whatsapp` }] },
+      };
+
+      const result = await usecase.execute(commandWith());
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: {
+          code: 'webhook_in_use',
+          message:
+            'This WhatsApp Business Account already delivers its messages to another Novu agent. Disconnect it there first, or use Manual setup with your own Meta app.',
+        },
+      });
+      expect(updateIntegration.execute.called).to.equal(false);
+      expect(callsTo('register', 'POST')).to.have.length(0);
+    });
+
+    it('refuses a webhook with this identifier whose agent is not linked to this integration', async () => {
+      answers['GET subscribed_apps'] = {
+        statusCode: 200,
+        body: {
+          data: [
+            { override_callback_uri: `https://api.novu.co/v1/agents/${AGENT_ID}/webhook/${INTEGRATION_IDENTIFIER}` },
+          ],
+        },
+      };
+      agentIntegrationRepository.findOne.resolves(null);
+
+      const result = await usecase.execute(commandWith());
+
+      expect(result.error?.code).to.equal('webhook_in_use');
+      expect(agentIntegrationRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: ENVIRONMENT_ID,
+        _organizationId: ORGANIZATION_ID,
+        _agentId: AGENT_ID,
+        _integrationId: INTEGRATION_ID,
+      });
+      expect(updateIntegration.execute.called).to.equal(false);
+    });
+
+    it('accepts the webhook of an agent linked to this integration', async () => {
+      answers['GET subscribed_apps'] = {
+        statusCode: 200,
+        body: {
+          data: [
+            { override_callback_uri: `https://api.novu.co/v1/agents/${AGENT_ID}/webhook/${INTEGRATION_IDENTIFIER}` },
+          ],
+        },
+      };
+
+      const result = await usecase.execute(commandWith());
+
+      expect(result.success).to.equal(true);
+      expect(updateIntegration.execute.calledOnce).to.equal(true);
+    });
+
+    it('ignores a callback that is not a Novu agent webhook', async () => {
+      answers['GET subscribed_apps'] = {
+        statusCode: 200,
+        body: { data: [{ override_callback_uri: 'https://hooks.example.com/whatsapp' }] },
+      };
+
+      const result = await usecase.execute(commandWith());
+
+      expect(result.success).to.equal(true);
+    });
+
+    it('refuses when the webhook of the business account cannot be read', async () => {
+      answers['GET subscribed_apps'] = { statusCode: 400, body: { error: { message: 'No permission.' } } };
+
+      const result = await usecase.execute(commandWith());
+
+      expect(result.success).to.equal(false);
+      expect(result.error?.code).to.equal('meta_validation_failed');
+      expect(updateIntegration.execute.called).to.equal(false);
     });
 
     it('rejects an integration of another provider', async () => {
@@ -200,6 +283,8 @@ describe('WhatsAppEmbeddedSignup', () => {
       expect(updateIntegration.execute.calledOnce).to.equal(true);
       expect(callsTo('register', 'POST')).to.have.length(1);
 
+      // The agent path rewrites the callback, so it has no conflict to look for.
+      expect(callsTo('subscribed_apps')).to.have.length(0);
       expect(configureWhatsAppWebhook.execute.calledOnce).to.equal(true);
       const webhook = configureWhatsAppWebhook.execute.firstCall.args[0];
       expect(webhook.agentIdentifier).to.equal(AGENT_IDENTIFIER);

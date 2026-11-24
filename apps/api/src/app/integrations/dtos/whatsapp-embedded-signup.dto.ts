@@ -47,6 +47,7 @@ export type WhatsAppEmbeddedSignupFailure = {
     | 'integration_not_found'
     | 'phone_registration_failed'
     | 'webhook_configuration_failed'
+    | 'webhook_in_use'
     | 'unknown';
   message: string;
 };
