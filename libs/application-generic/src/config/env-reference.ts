@@ -179,8 +179,9 @@ function staleReadBy(schema: EnvSchema, sources: EnvReaderSource[], readers: Map
   return problems;
 }
 
+/** Text that stays inside one Markdown table cell: escaped backslashes and pipes, on one line. */
 function cell(text: string): string {
-  return text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
+  return text.replace(/[\\|]/g, '\\$&').replace(/\s*\n\s*/g, ' ');
 }
 
 const FORMAT_LABELS = {

@@ -49,7 +49,7 @@ export const ENV_CONDITIONS: Record<EnvCondition, EnvConditionDefinition> = {
 };
 
 /** A boot rule resolved for the current environment. */
-export interface EnvCheck {
+interface EnvCheck {
   format: EnvFormat | 'string';
   required: boolean;
   choices?: readonly string[];
