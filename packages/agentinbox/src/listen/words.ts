@@ -288,6 +288,9 @@ export const STOPPED_REPLY = 'Stopped.';
 
 export const NOTHING_TO_STOP_REPLY = 'Nothing was running.';
 
+/** Said in a full-access contact's conversation when they allowed something after their full access was turned off. */
+export const ACCESS_CHANGED_REPLY = 'Stopped: your access changed. Send another message to go on.';
+
 /** Said in the conversation when a run went on longer than it may. */
 export function runLimitReply(maxRunSeconds: number): string {
   return `Stopped after ${spanWords(maxRunSeconds)}, the longest one run may take here. Send another message to go on.`;

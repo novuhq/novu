@@ -7,9 +7,9 @@ import {
   commandNames,
   commandReachesKey,
   type Decision,
+  decidingCheck,
   type KeyGuard,
   keyGuardFor,
-  pathIn,
   reachesKey,
   realTarget,
 } from './contact-guard';
@@ -192,7 +192,7 @@ export function decideForContact(
         : 'deny';
 
   // Changing what decides the next run is the operator's, whatever allows it.
-  return decision === 'allow' && EDIT_TOOLS.has(tool) && target.paths.some((path) => deciding(path, place))
+  return decision === 'allow' && EDIT_TOOLS.has(tool) && target.paths.some(decidingCheck(place.project, DECIDING))
     ? 'ask'
     : decision;
 }
@@ -452,15 +452,12 @@ function touchesKey(target: Target, guard: KeyGuard): boolean {
 
 /**
  * Whether a command names one of the folder's files that decide what a run does: by its words, or by a path that
- * leads there through a link, from where it runs (`cwd`).
+ * leads there through a link, from where it runs (`cwd`), or that a link among them leads to.
  */
 function commandTouchesDeciding(command: string, cwd: string, place: Place): boolean {
-  return commandNames(command, DECIDING) || commandLeadsTo(command, cwd, place.home, (path) => deciding(path, place));
-}
-
-/** Whether a path is one of the folder's files that decide what a run does. */
-function deciding(path: string, place: Place): boolean {
-  return pathIn(path, place.project, DECIDING);
+  return (
+    commandNames(command, DECIDING) || commandLeadsTo(command, cwd, place.home, decidingCheck(place.project, DECIDING))
+  );
 }
 
 function expand(path: string, place: Place): string {
