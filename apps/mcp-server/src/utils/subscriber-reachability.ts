@@ -140,10 +140,18 @@ export type SubscriberReachabilityResult =
 			checked: string[];
 	  }
 	| { status: "not_found"; searched: { field: string; value?: string } }
-	| { status: "ambiguous"; candidates: SubscriberReachabilityCandidate[] };
+	| {
+			status: "ambiguous";
+			candidates: SubscriberReachabilityCandidate[];
+			/** More subscribers may match than the candidates listed. */
+			hasMore: boolean;
+	  };
 
 /** Chat providers that deliver to `subscriber.phone` (send-message-chat `PHONE_BASED_CHAT_PROVIDERS`). */
 const PHONE_BASED_CHAT_PROVIDERS = ["whatsapp-business", "sendblue", "photon-imessage"];
+
+/** Integrations workflows never send through (SelectIntegration `isHiddenFromWorkflows`). */
+const HIDDEN_FROM_WORKFLOWS_PROVIDERS = ["agent-email-inbox"];
 
 /** Tool providers that only send to a subscriber's endpoint (shared `ENDPOINT_ROUTED_TOOL_PROVIDERS`). */
 const ENDPOINT_ROUTED_TOOL_PROVIDERS = ["pagerduty", "opsgenie", "grafana"];
@@ -155,6 +163,9 @@ const ENDPOINT_ROUTED_TOOL_PROVIDERS = ["pagerduty", "opsgenie", "grafana"];
 const TOOL_WEBHOOK_PROVIDER = "tool-webhook";
 
 const ENDPOINTS_READ_LIMIT_NOTE = "Only the first 100 endpoints were read; others weren't checked";
+
+/** Endpoints match the trigger context exactly, so one without context keys only serves triggers without one. */
+const CONTEXT_FREE_NOTE = "only for triggers without a context";
 
 /** Endpoint types whose token comes from a linked connection (resolve-channel-endpoints). */
 const CONNECTION_TOKEN_TYPES = ["slack_channel", "slack_user", "webex_room", "webex_person"];
@@ -257,7 +268,10 @@ export function computeSubscriberReachability(
 	const { subscriber } = input;
 	const active = (channel: ReachabilityChannel) =>
 		input.integrations.filter(
-			(integration) => integration.active && integration.channel === channel,
+			(integration) =>
+				integration.active &&
+				integration.channel === channel &&
+				!HIDDEN_FROM_WORKFLOWS_PROVIDERS.includes(integration.providerId),
 		);
 
 	const verdicts: Verdict[] = [
@@ -463,9 +477,8 @@ function chatChannel(
 	)) {
 		// Like push, a legacy chat channel sends only through the integration it's bound to; phone-based
 		// providers pick their integration by provider instead (send-message-chat).
-		const bound = PHONE_BASED_CHAT_PROVIDERS.includes(channel.providerId)
-			? null
-			: channel.integrationId;
+		const isPhoneBased = PHONE_BASED_CHAT_PROVIDERS.includes(channel.providerId);
+		const bound = isPhoneBased ? null : channel.integrationId;
 		const integration = activeIntegrations.find(
 			(candidate) =>
 				candidate.providerId === channel.providerId && (!bound || candidate.id === bound),
@@ -485,7 +498,16 @@ function chatChannel(
 			continue;
 		}
 
-		if (channel.hasWebhookUrl || channel.hasPhoneNumber) {
+		if (isPhoneBased) {
+			// A stored channel sends only to its own number; without one the worker fails it (CHAT_MISSING_PHONE_NUMBER).
+			if (channel.hasPhoneNumber) {
+				routes.push(`${channel.providerId} phone number`);
+			} else {
+				problems.push(
+					`${channel.providerId} channel has no phone number, and it replaces the phone number on file`,
+				);
+			}
+		} else if (channel.hasWebhookUrl || channel.hasPhoneNumber) {
 			routes.push(
 				`${channel.providerId} ${channel.hasWebhookUrl ? "webhook" : "phone number"}`,
 			);
@@ -494,13 +516,7 @@ function chatChannel(
 		}
 	}
 
-	if (input.subscriber.hasPhone) {
-		for (const integration of activeIntegrations) {
-			if (PHONE_BASED_CHAT_PROVIDERS.includes(integration.providerId)) {
-				routes.push(`${integration.providerId} to the phone number on file`);
-			}
-		}
-	}
+	if (input.subscriber.hasPhone) routes.push(...phoneOnFileRoutes(input, activeIntegrations));
 
 	verdict.details.push(...routes, ...conditionalRoutes);
 
@@ -532,6 +548,44 @@ function chatChannel(
 	}
 
 	return verdict;
+}
+
+/**
+ * The phone number on file, once per phone-based provider with an active integration. The worker
+ * skips it for a provider with a stored channel, and for one with an endpoint matching the trigger
+ * context (send-message-chat `getLegacyChatChannels`).
+ */
+function phoneOnFileRoutes(
+	input: SubscriberReachabilityInput,
+	activeIntegrations: ReachabilityIntegration[],
+): string[] {
+	const storedProviders = new Set(input.subscriber.channels.map((channel) => channel.providerId));
+	const providers = new Set(
+		activeIntegrations
+			.map((integration) => integration.providerId)
+			.filter(
+				(providerId) =>
+					PHONE_BASED_CHAT_PROVIDERS.includes(providerId) &&
+					!storedProviders.has(providerId),
+			),
+	);
+
+	return [...providers].map((providerId) => {
+		// Endpoints of an inactive integration are dropped before grouping, so they don't replace it.
+		const hasEndpoint = input.endpoints.some(
+			(endpoint) =>
+				endpoint.channel === "chat" &&
+				endpoint.providerId === providerId &&
+				activeIntegrations.some(
+					(integration) => integration.identifier === endpoint.integrationIdentifier,
+				),
+		);
+		const route = `${providerId} to the phone number on file`;
+
+		return hasEndpoint
+			? `${route}, when no ${providerId} endpoint matches the trigger context`
+			: route;
+	});
 }
 
 function checkEndpoint(
@@ -603,7 +657,7 @@ function checkEndpoint(
 		};
 	}
 
-	return { detail, route };
+	return { detail, route: `${route}, ${CONTEXT_FREE_NOTE}` };
 }
 
 /**
@@ -642,7 +696,9 @@ function toolChannel(
 
 		if (endpoints.length > contextual.length) {
 			const count = endpoints.length - contextual.length;
-			routes.push(`${count} ${pluralize(count, "endpoint")} for ${integration.identifier}`);
+			routes.push(
+				`${count} ${pluralize(count, "endpoint")} for ${integration.identifier}, ${CONTEXT_FREE_NOTE}`,
+			);
 		} else if (contextual.length > 0) {
 			const contexts = contextual.map((endpoint) => endpoint.contextKeys.join(", "));
 			conditionalRoutes.push(
@@ -773,11 +829,6 @@ function preferenceNotes(input: SubscriberReachabilityInput): string[] {
 		notes.push(
 			`A delivery schedule is on: non-critical ${SCHEDULED_CHANNELS} steps outside it are skipped or wait for it`,
 		);
-	}
-
-	for (const source of ["connections"] as const) {
-		const failure = failures[source];
-		if (failure) notes.push(describeReadFailure(source, failure));
 	}
 
 	return notes;
