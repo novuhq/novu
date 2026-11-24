@@ -44,6 +44,13 @@ export class SubscriberDto {
     nullable: true,
   })
   email?: string;
+
+  @ApiPropertyOptional({
+    description: 'Custom subscriber data',
+    example: { customField: 'customValue' },
+    type: Object,
+  })
+  data?: Record<string, any>;
 }
 
 export class TopicSubscriptionResponseDto {
