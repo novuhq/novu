@@ -7,6 +7,8 @@ export type CopilotPageView = {
   viewing?: CopilotViewing;
   /** The question about the open resource; leads the suggestions. Not sent to the agent. */
   question?: string;
+  /** A sheet covers the page, so the popover opens above it; the launcher stays under it. Not sent to the agent. */
+  overSheet?: boolean;
 };
 
 let view: CopilotPageView | undefined;

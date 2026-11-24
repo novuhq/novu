@@ -58,6 +58,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   // The provider whose connect form is open: a filter, since no integration exists yet.
   useRegisterCopilotPageView(CopilotPageEnum.INTEGRATIONS, {
     viewing: isOpened && provider ? { filters: { provider: provider.id } } : undefined,
+    overSheet: isOpened,
   });
 
   const searchInputRef = useRef<HTMLInputElement>(null);

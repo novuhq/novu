@@ -306,16 +306,17 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 			description:
 				"Dashboard link where the user enters credentials: the connect form for providerId, or an integration's settings for integrationId. Give it instead of asking for credentials. Calls no API.",
 			inputSchema: {
-				environmentId: z
+				integrationId: z.string().optional().describe("_id from get_integrations"),
+				providerId: z.string().optional().describe('Provider id, e.g. "sendgrid"'),
+				// Not `environmentId`: that's every tool's environment to act in, which the Copilot sets itself and hides.
+				targetEnvironmentId: z
 					.string()
 					.optional()
 					.describe("With providerId: environment _id to connect in"),
-				integrationId: z.string().optional().describe("_id from get_integrations"),
-				providerId: z.string().optional().describe('Provider id, e.g. "sendgrid"'),
 			},
 			title: "Get integration setup link",
 		},
-		async ({ environmentId, integrationId, providerId }) => {
+		async ({ integrationId, providerId, targetEnvironmentId }) => {
 			if (!integrationId === !providerId) {
 				return ToolFactory.errorResult({
 					message:
@@ -341,15 +342,16 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 					status: 400,
 				});
 			}
-			if (environmentId !== undefined && !OBJECT_ID.test(environmentId)) {
+			if (targetEnvironmentId !== undefined && !OBJECT_ID.test(targetEnvironmentId)) {
 				return ToolFactory.errorResult({
-					message: "environmentId must be an environment _id from get_environments.",
+					message:
+						"targetEnvironmentId must be an environment _id, such as an integration's _environmentId from get_integrations.",
 					status: 400,
 				});
 			}
 
-			const query = environmentId
-				? `?environmentId=${encodeURIComponent(environmentId)}`
+			const query = targetEnvironmentId
+				? `?environmentId=${encodeURIComponent(targetEnvironmentId)}`
 				: "";
 
 			return textResult(

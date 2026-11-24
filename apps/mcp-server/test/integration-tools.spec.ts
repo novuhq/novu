@@ -363,8 +363,8 @@ describe("integration tools", () => {
 
 			const text = textOf(
 				await callTool(client, "get_integration_setup_link", {
-					environmentId: PRODUCTION_ID,
 					providerId: "sendgrid",
+					targetEnvironmentId: PRODUCTION_ID,
 				}),
 			);
 
@@ -396,7 +396,7 @@ describe("integration tools", () => {
 			[{ integrationId: SENDGRID_ID, providerId: "sendgrid" }, "either integrationId"],
 			[{ providerId: "../billing" }, "provider id"],
 			[{ integrationId: "not-an-id" }, "integration _id"],
-			[{ environmentId: "prod", providerId: "sendgrid" }, "environment _id"],
+			[{ providerId: "sendgrid", targetEnvironmentId: "prod" }, "environment _id"],
 		])("refuses %j", async (args, message) => {
 			const client = await connectAllTools(tokenAccessors("api-key"));
 

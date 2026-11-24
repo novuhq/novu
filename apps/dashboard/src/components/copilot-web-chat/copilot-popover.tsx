@@ -1,7 +1,9 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RiAddLine, RiCloseLine } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
+import { cn } from '@/utils/ui';
 import { CopilotLauncher } from './copilot-launcher';
+import { useCopilotPageView } from './copilot-page-view-store';
 import { useCopilotPopoverTitle } from './copilot-popover-title';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
@@ -40,6 +42,8 @@ function HeaderButton({
 export function CopilotPopover() {
   const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
   const title = useCopilotPopoverTitle(chat);
+  // Above a sheet (z-50) and its overlay, as the design shows it; the launcher stays under so the sheet's footer stays usable.
+  const isOverSheet = !!useCopilotPageView()?.overSheet;
   const shouldReduceMotion = useReducedMotion();
   const hidden = shouldReduceMotion ? { opacity: 0 } : POPOVER_HIDDEN;
   const shown = shouldReduceMotion ? { opacity: 1 } : POPOVER_SHOWN;
@@ -55,7 +59,10 @@ export function CopilotPopover() {
           animate={shown}
           exit={hidden}
           transition={POPOVER_TRANSITION}
-          className="fixed bottom-[66px] right-4 z-40 flex h-[600px] max-h-[min(600px,calc(100vh-82px))] w-[400px] origin-bottom-right flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]"
+          className={cn(
+            'fixed bottom-[66px] right-4 flex h-[600px] max-h-[min(600px,calc(100vh-82px))] w-[400px] origin-bottom-right flex-col overflow-hidden rounded-xl border border-stroke-soft bg-bg-white shadow-[0_2px_4px_rgba(15,18,26,0.04),0_12px_32px_-8px_rgba(15,18,26,0.08)]',
+            isOverSheet ? 'z-[51]' : 'z-40'
+          )}
         >
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
             <BroomSparkle className="size-4 shrink-0" isAnimating={isBusy} />
