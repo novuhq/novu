@@ -3,11 +3,12 @@ import {
   type CreateInteractionInput,
   cancelInteraction,
   createInteraction,
+  getContact,
   getInteraction,
   type Interaction,
 } from '../api/agent-inbox';
 import type { ApiClient } from '../api/client';
-import { type ConversationView, getConversation } from '../api/inbox';
+import { type ConversationView, getConversation, resolveConversation } from '../api/inbox';
 import {
   AGENT_PAUSED_CODE,
   errorCode,
@@ -25,9 +26,12 @@ import {
   waitForListenMessages,
 } from '../api/listen';
 import { projectLabel, shortPath } from './computer';
+import { type RunLevel, runLevel } from './contact-guard';
+import { CONVERSATION_TOOLS_SERVER, RESOLVE_TOOL } from './conversation-tools';
 import type {
   HostAdapter,
   HostAnswer,
+  HostProgram,
   HostQuestion,
   HostSession,
   PermissionAnswer,
@@ -48,6 +52,7 @@ import {
 } from './state';
 import { Typing } from './typing';
 import {
+  ACCESS_CHANGED_REPLY,
   clipCard,
   connectionChangedMessage,
   hostInstructions,
@@ -65,6 +70,7 @@ import {
   STOPPED_REPLY,
   spanWords,
   startedBy,
+  subjectNote,
   TOO_LONG_TO_ASK,
 } from './words';
 
@@ -138,6 +144,13 @@ export interface ListenLoopOptions {
    * so once this computer is connected anew it stops: they would answer with the new connection.
    */
   savedConnection?: () => ListenConnection | null;
+  /**
+   * How a host starts the conversation tools of a contact's run (`conversation-tools.ts`): by default this program,
+   * as `agentinbox conversation-tools`.
+   */
+  conversationTools?: (conversationId: string) => HostProgram;
+  /** How a host runs the listener's check of a contact's tool calls (`contact-check`); this program's by default. */
+  contactCheck?: () => HostProgram;
 }
 
 export type LoopEnd = { reason: 'signal' } | { reason: StopReason; message: string };
@@ -154,6 +167,13 @@ interface ActiveRun {
   startedBy: string;
   /** The message that started it: a contact's run says on the operator's cards whose it is, and how it began. */
   startedWith: ListenMessage;
+  /**
+   * Whom it answers to (`contact-guard.ts`): a contact's run may do only what the folder's own settings allow; a
+   * full-access contact's asks them, not the operator.
+   */
+  level: RunLevel;
+  /** The agent asked to resolve the conversation this turn: the listener does, once the turn's reply is out. */
+  resolveAsked?: boolean;
   /** Every message this run carries, so a run can start again with them. */
   messages: ListenMessage[];
   session?: HostSession;
@@ -168,7 +188,11 @@ interface ActiveRun {
   lookingUp: boolean;
   /** The conversation's latest message before the host's turn: whatever the agent sent after it is the host's. */
   watermark?: string;
-  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown';
+  /**
+   * Why the run stops before its work is done: `access` when a message came with less access than it has, `revoked`
+   * when a full-access contact's Allow came after their full access was turned off.
+   */
+  stopping?: 'stop' | 'limit' | 'paused' | 'shutdown' | 'access' | 'revoked';
   /** Nothing more joins: the run is winding down. */
   closing: boolean;
   /** What the turns that failed said. */
@@ -180,13 +204,16 @@ interface ActiveRun {
   finish?: (outcome: RunOutcome) => void;
 }
 
-/** What became of a question: the answer, or why there is none. */
+/** What became of a question: the answer, and who gave it when it came with the messages, or why there is none. */
 type QuestionOutcome =
-  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string }
+  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string; by?: ListenMessage['from'] }
   | { status: 'unanswered' | 'withdrawn' };
 
 /** The answer to one of the listener's own questions, as it came with the messages. */
 type StreamAnswer = NonNullable<ListenMessage['answer']>;
+
+/** An answer as the listener found it: with the messages, and then who gave it, or by a lookup, which doesn't say. */
+type FoundAnswer = { status: string; optionId?: string; text?: string; by?: ListenMessage['from'] };
 
 /**
  * Keeps an agent listening on this computer until it is stopped: holds the lease, waits for messages, starts the
@@ -204,7 +231,7 @@ class ListenLoop {
   private readonly log: (line: string) => void;
   private readonly abort = new AbortController();
   /** The listener's own questions waiting for an answer, which the messages may bring before a lookup does. */
-  private readonly questions = new Map<string, (answer: StreamAnswer) => void>();
+  private readonly questions = new Map<string, (answer: StreamAnswer, by: ListenMessage['from']) => void>();
   /** Answers to the host's questions being looked up: whatever else needs one waits for that look. */
   private readonly lookups = new Map<string, Promise<boolean>>();
   /** The runs going on, by conversation: never two for one, and at most `runsAtOnce` of them. */
@@ -468,7 +495,7 @@ class ListenLoop {
         // An answer to the listener's own question: it settles the question, and starts nothing.
         this.markHandled(message);
         if (message.answer) {
-          this.questions.get(message.answersMessageId)?.(message.answer);
+          this.questions.get(message.answersMessageId)?.(message.answer, message.from);
         }
         continue;
       }
@@ -637,6 +664,13 @@ class ListenLoop {
         }
         break;
       }
+      // Full access turned off since the run started: the run stops, and the message waits for a fresh one with less.
+      const level = runLevel([...active.messages, message], active.level);
+      if (level !== active.level) {
+        this.log(`${active.conversationId}: ${levelChange(active.level, level)}, so the run stops for a fresh one.`);
+        void this.stopRun(active, 'access');
+        break;
+      }
       if (!this.sendInto(active, message)) {
         // The run is ending: the message waits for the next one.
         break;
@@ -742,6 +776,8 @@ class ListenLoop {
       channel: first.channel,
       startedBy: startedBy(first),
       startedWith: first,
+      // Known once its messages are; until then, the narrowest.
+      level: 'contact',
       messages: this.state.queue.filter((message) => this.belongs(message, conversationId, round)),
       pending: new Set(),
       waiting: new Set(),
@@ -795,8 +831,7 @@ class ListenLoop {
       this.state.inProgress = [...(this.state.inProgress ?? []), { conversationId, at: startedAt }];
       this.save();
       // The session goes on in the same round; a resolve since then starts a fresh one.
-      const kept = this.state.sessions[conversationId];
-      const resume = kept && kept.round === round ? kept.sessionId : undefined;
+      const resume = this.sessionToResume(active);
       let outcome = await this.runOnce(active, resume);
       if (outcome.kind === 'lost' && outcome.sessionGone && resume && !active.stopping) {
         // The host no longer has that session (it cleans up old ones): the conversation starts a fresh one.
@@ -818,6 +853,31 @@ class ListenLoop {
       this.active.delete(conversationId);
       this.pump();
     }
+  }
+
+  /**
+   * Sets the run's level, and says which kept session it goes on with, if any. The session goes on in the same round
+   * (a resolve since then starts a fresh one), and only at the level it was kept at: a contact's session would hold a
+   * full-access run to the limits it was told, and a full-access one would show a contact's run what only full access
+   * could read, a key say. When the switch changed since, or the session was kept without its level (by a CLI from
+   * before levels, whose runs had the operator's settings), the run starts a fresh session.
+   */
+  private sessionToResume(active: ActiveRun): string | undefined {
+    const kept = this.state.sessions[active.conversationId];
+    const keptHere = kept && kept.round === active.round ? kept : undefined;
+    const keptLevel = savedLevel(keptHere);
+    active.level = runLevel(active.messages, keptHere ? keptLevel : undefined);
+    if (!keptHere) {
+      return undefined;
+    }
+
+    if (keptLevel !== active.level) {
+      this.log(`${active.conversationId}: ${levelChange(keptLevel, active.level)}, so the session starts fresh.`);
+
+      return undefined;
+    }
+
+    return keptHere.sessionId;
   }
 
   private async runOnce(active: ActiveRun, resume: string | undefined): Promise<RunOutcome> {
@@ -851,7 +911,17 @@ class ListenLoop {
           channel: active.channel,
           project: this.project,
           alongside: this.state.limits.runsAtOnce > 1,
+          level: active.level,
+          person: startedBy(active.startedWith),
         }),
+        contact:
+          active.level === 'contact'
+            ? {
+                conversationId: active.conversationId,
+                tools: this.conversationTools(active.conversationId),
+                check: this.contactCheck(),
+              }
+            : undefined,
       },
       {
         progress: (note, subject, toolId) => {
@@ -863,6 +933,9 @@ class ListenLoop {
           if (toolId && waitsForAnswerIn(subject, active.conversationId)) {
             active.waiting.add(toolId);
           }
+          if (active.level === 'contact' && subject.kind === 'mcp' && isResolveTool(subject.server, subject.tool)) {
+            active.resolveAsked = true;
+          }
         },
         toolEnded: (toolId) => {
           // Once no command waits, an answer that came meanwhile may join.
@@ -872,9 +945,13 @@ class ListenLoop {
         },
         turnEnded: (turn) => this.onTurn(active, session, turn),
         askPermission: (question, signal) =>
-          this.withoutTyping(active, () => this.askOperator(active, question, signal)),
+          this.withoutTyping(active, () => this.askToAllow(active, question, signal)),
         askQuestion: (question, signal) => this.withoutTyping(active, () => this.askPerson(active, question, signal)),
         lost: (error, sessionGone) => active.finish?.({ kind: 'lost', error, sessionGone }),
+        refused: (subject, why) =>
+          this.log(
+            `${active.conversationId}: refused, as this folder’s settings don’t allow it: ${subjectNote(subject)} (${why})`
+          ),
       }
     );
     active.session = session;
@@ -941,11 +1018,29 @@ class ListenLoop {
     // A turn ran, so the session exists: the conversation's next run in this round goes on with it.
     this.keepSession(active, session.id);
 
+    let delivered = active.replies.then(() => true);
     if (turn.outcome === 'completed' && turn.text) {
       const text = turn.text;
-      active.replies = active.replies.then(() => this.deliver(active, text));
+      delivered = active.replies.then(() => this.deliver(active, text));
+      active.replies = delivered.then(() => undefined);
     } else if (turn.outcome === 'failed') {
       active.failures.push(turn.error ?? 'the turn failed');
+    }
+    if (active.resolveAsked && turn.outcome === 'completed') {
+      // After its reply, and only once it is out: a message into a resolved conversation would open it again, and an
+      // answer that never went out would leave it resolved with no answer. Nor while a newer message waits for its
+      // answer, in the session or for the next run: its turn may ask again.
+      active.resolveAsked = false;
+      const newer = active.pending.size > 0;
+      active.replies = delivered.then(async (out) => {
+        if (!out) {
+          this.log(`${active.conversationId}: not resolved, as the agent’s reply didn’t go out.`);
+        } else if (newer || this.state.queue.some((message) => message.conversationId === active.conversationId)) {
+          this.log(`${active.conversationId}: not resolved, as a newer message waits for its answer.`);
+        } else {
+          await this.resolveAsAsked(active);
+        }
+      });
     }
 
     if (active.pending.size === 0 && !active.closing) {
@@ -978,6 +1073,8 @@ class ListenLoop {
         await this.reply(active.conversationId, STOPPED_REPLY);
       } else if (active.stopping === 'limit') {
         await this.reply(active.conversationId, runLimitReply(this.state.limits.maxRunSeconds));
+      } else if (active.stopping === 'revoked') {
+        await this.reply(active.conversationId, ACCESS_CHANGED_REPLY);
       }
 
       return;
@@ -992,6 +1089,8 @@ class ListenLoop {
       sessionId,
       round: active.round,
       lastRunAt: new Date().toISOString(),
+      contact: active.level !== 'operator',
+      ...(active.level === 'fullAccess' ? { fullAccess: true } : {}),
     };
     const recent = Object.entries(this.state.sessions)
       .sort(([, a], [, b]) => b.lastRunAt.localeCompare(a.lastRunAt))
@@ -1042,10 +1141,10 @@ class ListenLoop {
   /**
    * A turn's last words go into the conversation, unless the agent already replied there itself during the
    * turn, as its instructions ask. That is looked at again before each try, so a try that got through without
-   * hearing back isn't posted twice.
+   * hearing back isn't posted twice. Says whether the conversation has its answer.
    */
-  private async deliver(active: ActiveRun, text: string): Promise<void> {
-    await this.keepTrying(`${active.conversationId}: couldn’t reply`, async () => {
+  private async deliver(active: ActiveRun, text: string): Promise<boolean> {
+    return this.keepTrying(`${active.conversationId}: couldn’t reply`, async () => {
       const since = active.watermark;
       const after = await this.messagesAfter(active.conversationId, since);
       active.watermark = after[after.length - 1]?.id ?? since;
@@ -1153,9 +1252,9 @@ class ListenLoop {
   /**
    * Tries a send again while Agent Inbox can't be reached, each wait twice the one before, for as long as
    * `resendForMs`. Anything else ends the trying at once, and is only logged: a refusal, a paused agent, a changed
-   * key, or the program stopping.
+   * key, or the program stopping. Says whether it got through.
    */
-  private async keepTrying(failed: string, attempt: () => Promise<void>): Promise<void> {
+  private async keepTrying(failed: string, attempt: () => Promise<void>): Promise<boolean> {
     const until = Date.now() + this.timing.resendForMs;
     let wait = this.timing.resendAfterMs;
 
@@ -1163,25 +1262,25 @@ class ListenLoop {
       try {
         await attempt();
 
-        return;
+        return true;
       } catch (err) {
         await this.onErrorDuringRun(err);
         const left = until - Date.now();
         if (!isOutage(err) || this.end) {
           this.log(`${failed} (${describeError(err)}).`);
 
-          return;
+          return false;
         }
         if (left <= 0) {
           this.log(`${failed} (${describeError(err)}); gave up after ${spanWords(this.timing.resendForMs / 1000)}.`);
 
-          return;
+          return false;
         }
 
         this.log(`${failed} (${describeError(err)}); trying again in ${spanWords(Math.min(wait, left) / 1000)}.`);
         await this.sleep(Math.min(wait, left));
         if (this.end) {
-          return;
+          return false;
         }
         wait = Math.min(wait * 2, RESEND_MOST_MS);
       }
@@ -1191,6 +1290,42 @@ class ListenLoop {
   /** A question the listener asked that isn't wanted any more comes off the person's phone. */
   private async withdraw(id: string): Promise<void> {
     await cancelInteraction(this.options.client, id).catch(() => undefined);
+  }
+
+  /** How the host starts a contact's run's conversation tools: this program, unless the options say otherwise. */
+  private contactCheck(): HostProgram {
+    return (
+      this.options.contactCheck?.() ?? {
+        command: process.execPath,
+        args: [process.argv[1] ?? '', 'contact-check', '--host', this.options.host.id],
+      }
+    );
+  }
+
+  private conversationTools(conversationId: string): HostProgram {
+    return (
+      this.options.conversationTools?.(conversationId) ?? {
+        command: process.execPath,
+        args: [
+          process.argv[1] ?? '',
+          'conversation-tools',
+          '--conversation',
+          conversationId,
+          '--host',
+          this.options.host.id,
+        ],
+      }
+    );
+  }
+
+  /** The agent of a contact's run asked to resolve its conversation: done once the turn's reply is out. */
+  private async resolveAsAsked(active: ActiveRun): Promise<void> {
+    try {
+      await resolveConversation(this.options.client, active.conversationId, this.options.agentIdentifier);
+      this.log(`${active.conversationId}: resolved, as the agent asked.`);
+    } catch (err) {
+      this.log(`${active.conversationId}: couldn’t resolve: ${describeError(err)}`);
+    }
   }
 
   /**
@@ -1216,31 +1351,57 @@ class ListenLoop {
   }
 
   /**
+   * What the listener decides about a permission question by itself: in the operator's runs, the agent's own reading
+   * and replying in its conversation goes ahead, unless it could run other code than Agent Inbox's (then `details`
+   * says so for the operator's card). Undefined: the operator decides. A contact's run asks only what the folder's
+   * settings say to ask: its host refused the rest already.
+   */
+  private settledWithoutAsking(
+    active: ActiveRun,
+    question: PermissionQuestion,
+    details: string[]
+  ): 'allow' | undefined {
+    const action = oneLine(question.action);
+    const mayAllow = question.options.some((option) => option.kind === 'allow_once');
+    if (active.level !== 'contact' && mayAllow && isOwnReplySubject(question.subject, active.conversationId)) {
+      const swap = this.cliSwap(question.subject);
+      if (!swap) {
+        this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
+
+        return 'allow';
+      }
+
+      this.log(`${active.conversationId}: the agent’s own ${action} asks the operator: ${swap}.`);
+      details.push(`It is Agent Inbox’s own command, but ${swap}, so it may run other code than Agent Inbox’s.`);
+    }
+
+    return undefined;
+  }
+
+  /**
    * The host wants to do what its settings don't allow. The agent's own reading and replying in its
    * conversation goes ahead, unless it could run other code than Agent Inbox's; anything else is the operator's to
-   * decide, with an `approve`, even when a contact's message started the host. No answer in time is a Deny.
+   * decide, with an `approve`, even when a contact's message started the host. A full-access contact's run asks that
+   * contact instead, in their own chat, as the operator gave them. No answer in time is a Deny.
    */
-  private async askOperator(
+  private async askToAllow(
     active: ActiveRun,
     question: PermissionQuestion,
     signal: AbortSignal
   ): Promise<PermissionAnswer> {
+    const fullAccess = active.level === 'fullAccess';
+    // Who decides: in the log, and as the host is told.
+    const asked = fullAccess ? startedBy(active.startedWith) : 'the operator';
+    const decider = fullAccess ? asked : 'Your operator';
     const allowOnce = question.options.find((option) => option.kind === 'allow_once');
     const allowSession = question.options.find((option) => option.kind === 'allow_session');
     const deny = question.options.find((option) => option.kind === 'deny') ?? { id: 'deny' };
 
     const action = oneLine(question.action);
     const details = [...question.details];
-    if (allowOnce && isOwnReplySubject(question.subject, active.conversationId)) {
-      const swap = this.cliSwap(question.subject);
-      if (!swap) {
-        this.log(`${active.conversationId}: allowed the agent’s own ${action}`);
-
-        return { optionId: allowOnce.id };
-      }
-
-      this.log(`${active.conversationId}: the agent’s own ${action} asks the operator: ${swap}.`);
-      details.push(`It is Agent Inbox’s own command, but ${swap}, so it may run other code than Agent Inbox’s.`);
+    const settled = this.settledWithoutAsking(active, question, details);
+    if (settled === 'allow') {
+      return { optionId: allowOnce?.id ?? deny.id };
     }
 
     if (!allowOnce) {
@@ -1255,18 +1416,19 @@ class ListenLoop {
       detail: details.join(' ') || undefined,
       project: this.project,
       computerName: this.options.computerName,
-      startedBy: runStarter(active.startedWith),
+      // The card goes to them: it is for their message, as the operator's own are.
+      startedBy: fullAccess ? 'you' : runStarter(active.startedWith),
       timeoutSeconds,
     });
     if (!card) {
-      this.log(`${active.conversationId}: too long to ask the operator, so denied: ${action}`);
+      this.log(`${active.conversationId}: too long to ask ${asked}, so denied: ${action}`);
 
       return { optionId: deny.id, message: TOO_LONG_TO_ASK };
     }
 
-    let asked: Interaction;
+    let interaction: Interaction;
     try {
-      asked = await this.send({
+      interaction = await this.send({
         kind: 'approve',
         card: {
           ...card,
@@ -1275,47 +1437,74 @@ class ListenLoop {
           // Only for as long as the session lasts: the listener never writes the host's settings for the operator.
           ...(allowSession ? { extraActions: [{ id: allowSession.id, label: allowSession.label }] } : {}),
         },
-        to: this.options.operatorId,
+        // A full-access contact gets it in the chat they wrote in.
+        ...(fullAccess ? { thread: active.conversationId } : { to: this.options.operatorId }),
         from: this.options.host.name,
         // A late tap can't allow what was already denied: the card expires with the wait.
         ttlSeconds: Math.max(60, Math.ceil(timeoutSeconds)),
       });
     } catch (err) {
-      this.log(`${active.conversationId}: couldn’t ask the operator (${describeError(err)}): denied.`);
+      this.log(`${active.conversationId}: couldn’t ask ${asked} (${describeError(err)}): denied.`);
       await this.onErrorDuringRun(err);
 
-      return { optionId: deny.id, message: 'Your operator couldn’t be asked, so it isn’t allowed.' };
+      return { optionId: deny.id, message: `${decider} couldn’t be asked, so it isn’t allowed.` };
     }
 
-    this.log(`${active.conversationId}: asked the operator to allow: ${action}`);
-    const outcome = await this.waitForAnswer(asked.id, signal);
+    this.log(`${active.conversationId}: asked ${asked} to allow: ${action}`);
+    const outcome = await this.waitForAnswer(interaction.id, signal);
     this.log(`${active.conversationId}: ${action}: ${outcome.status}.`);
 
-    if (outcome.status === 'approved') {
-      return { optionId: allowSession && outcome.optionId === allowSession.id ? allowSession.id : allowOnce.id };
-    }
     if (outcome.status === 'withdrawn' || outcome.status === 'unanswered') {
-      await this.withdraw(asked.id);
-    }
-    if (outcome.status === 'withdrawn') {
-      return { optionId: deny.id, message: 'The run was stopped.' };
-    }
-    if (outcome.status === 'unanswered') {
-      return {
-        optionId: deny.id,
-        message: `Nobody answered within ${spanWords(timeoutSeconds)}, which counts as Deny.`,
-      };
+      await this.withdraw(interaction.id);
     }
 
-    if (outcome.status === 'answered' && outcome.text) {
-      // Words instead of a button: not an Allow, but what they wrote may say what to do instead.
-      return {
-        optionId: deny.id,
-        message: `Your operator answered in words instead of allowing it: “${clipCard(outcome.text)}”. It isn’t allowed; follow what they wrote if it says what to do instead.`,
-      };
+    if (fullAccess && outcome.status === 'approved') {
+      const still = await this.hasFullAccessNow(active, outcome.by);
+      if (still === undefined) {
+        // Not knowing is a no, for this Allow: the run goes on, and asks again about what comes next.
+        return { optionId: deny.id, message: `${decider}’s full access couldn’t be checked, so it isn’t allowed.` };
+      }
+      if (!still) {
+        // Their switch went off while the card waited: their Allow doesn't count, and the run, which has everything
+        // the operator's runs get, stops. Their next message starts one with less.
+        this.log(`${active.conversationId}: ${asked} has no full access any more, so denied: ${action}`);
+        void this.stopRun(active, 'revoked');
+
+        return { optionId: deny.id, message: `${decider} has no full access any more, so it isn’t allowed.` };
+      }
     }
 
-    return { optionId: deny.id, message: 'Your operator said no.' };
+    return permissionAnswer(
+      outcome,
+      { allowOnce: allowOnce.id, allowSession: allowSession?.id, deny: deny.id },
+      decider,
+      timeoutSeconds
+    );
+  }
+
+  /**
+   * Whether the contact of a full-access run still has full access, as their Allow needs: their own answer says, as
+   * Agent Inbox gave it with the messages, or else Agent Inbox does when asked now. Undefined when that fails.
+   */
+  private async hasFullAccessNow(
+    active: ActiveRun,
+    by: ListenMessage['from'] | undefined
+  ): Promise<boolean | undefined> {
+    const contact = active.startedWith.from;
+    if (by && by.id === contact.id && !by.isOperator) {
+      return by.fullAccess === true;
+    }
+
+    try {
+      return (await getContact(this.options.client, contact.id, this.options.agentIdentifier)).fullAccess === true;
+    } catch (err) {
+      this.log(
+        `${active.conversationId}: couldn’t check whether ${startedBy(active.startedWith)} has full access (${describeError(err)}).`
+      );
+      await this.onErrorDuringRun(err);
+
+      return undefined;
+    }
   }
 
   /**
@@ -1369,10 +1558,10 @@ class ListenLoop {
   /** Waits for an answer to one of the listener's questions: as it comes with the messages, or as a lookup finds it. */
   private async waitForAnswer(id: string, signal: AbortSignal): Promise<QuestionOutcome> {
     const deadline = Date.now() + this.timing.questionTimeoutMs;
-    let streamed: StreamAnswer | undefined;
+    let streamed: FoundAnswer | undefined;
     const nudge = new AbortController();
-    this.questions.set(id, (answer) => {
-      streamed = answer;
+    this.questions.set(id, (answer, by) => {
+      streamed = { status: answer.status, optionId: answer.optionId, text: answer.text, by };
       nudge.abort();
     });
     // One for the whole wait: each look at the answer waits on it, and adds nothing to the listener's own signal.
@@ -1384,12 +1573,10 @@ class ListenLoop {
           return { status: 'withdrawn' };
         }
 
-        const found = streamed
-          ? { status: streamed.status, optionId: streamed.optionId, text: streamed.text }
-          : await this.lookUp(id);
+        const found = streamed ?? (await this.lookUp(id));
         if (found && found.status !== 'pending') {
           return found.status === 'approved' || found.status === 'denied' || found.status === 'answered'
-            ? { status: found.status, optionId: found.optionId, text: found.text }
+            ? { status: found.status, optionId: found.optionId, text: found.text, by: found.by }
             : // Expired or canceled: no answer.
               { status: 'unanswered' };
         }
@@ -1405,7 +1592,7 @@ class ListenLoop {
     }
   }
 
-  private async lookUp(id: string): Promise<{ status: string; optionId?: string; text?: string } | undefined> {
+  private async lookUp(id: string): Promise<FoundAnswer | undefined> {
     try {
       const interaction = await getInteraction(this.options.client, id);
 
@@ -1479,4 +1666,67 @@ function oneLine(text: string, length = 300): string {
 
 function describeError(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** The `resolve` tool of a contact's run's own conversation tools, by the name the host gives their server. */
+function isResolveTool(server: string, tool: string): boolean {
+  return server === CONVERSATION_TOOLS_SERVER && tool === RESOLVE_TOOL;
+}
+
+/**
+ * What a permission question's outcome tells the host: allowed (once, or for the session), or why not, in the words of
+ * whoever decided (`decider`: "Your operator", or a full-access contact's name).
+ */
+function permissionAnswer(
+  outcome: QuestionOutcome,
+  ids: { allowOnce: string; allowSession?: string; deny: string },
+  decider: string,
+  timeoutSeconds: number
+): PermissionAnswer {
+  switch (outcome.status) {
+    case 'approved':
+      return { optionId: ids.allowSession && outcome.optionId === ids.allowSession ? ids.allowSession : ids.allowOnce };
+    case 'withdrawn':
+      return { optionId: ids.deny, message: 'The run was stopped.' };
+    case 'unanswered':
+      return {
+        optionId: ids.deny,
+        message: `Nobody answered within ${spanWords(timeoutSeconds)}, which counts as Deny.`,
+      };
+    default:
+      break;
+  }
+
+  if (outcome.status === 'answered' && outcome.text) {
+    // Words instead of a button: not an Allow, but what they wrote may say what to do instead.
+    return {
+      optionId: ids.deny,
+      message: `${decider} answered in words instead of allowing it: “${clipCard(outcome.text)}”. It isn’t allowed; follow what they wrote if it says what to do instead.`,
+    };
+  }
+
+  return { optionId: ids.deny, message: `${decider} said no.` };
+}
+
+/** "Full access was turned on": why a conversation's session ends with a change of level, for the log. */
+function levelChange(from: RunLevel | undefined, to: RunLevel): string {
+  if (from === undefined) {
+    return 'its session was kept by an older version, without what its runs could do';
+  }
+  if (to === 'fullAccess') {
+    return 'full access was turned on';
+  }
+
+  return from === 'fullAccess'
+    ? 'full access was turned off'
+    : `its runs are ${to === 'contact' ? 'a contact’s' : 'yours'} now`;
+}
+
+/** The level a kept session's runs had, or undefined when it was kept without one. */
+function savedLevel(kept: ListenState['sessions'][string] | undefined): RunLevel | undefined {
+  if (kept?.contact === undefined) {
+    return undefined;
+  }
+
+  return kept.fullAccess ? 'fullAccess' : kept.contact ? 'contact' : 'operator';
 }

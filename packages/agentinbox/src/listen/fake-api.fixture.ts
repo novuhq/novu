@@ -12,11 +12,14 @@ export interface FakeCall {
   host?: string;
 }
 
-/** How a question is answered: a button, or with the option picked or the words written. */
+/**
+ * How a question is answered: a button, or with the option picked or the words written; `by` is who answers, as
+ * {@link FakeApi.answer} takes it.
+ */
 export type FakeDecision =
   | 'approved'
   | 'denied'
-  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string };
+  | { status: 'approved' | 'denied' | 'answered'; optionId?: string; text?: string; by?: ListenMessage['from'] };
 
 interface FakeInteraction {
   id: string;
@@ -86,10 +89,14 @@ export class FakeApi {
   down = false;
   /** The next send goes through, but its answer is lost on the way back, as when the connection drops. */
   loseNextAnswer = false;
+  /** Agent Inbox refuses what is said in a conversation (a send with a `thread`), as it would one too long. */
+  refuseReplies = false;
   /** How long an interaction takes to come back once it was asked for: the read it is happens at once. */
   showDelayMs = 0;
   /** Answers each new question (`approve`, `choose`, `ask`) as it comes, or leaves it pending (undefined). */
   decide: (interaction: FakeInteraction) => FakeDecision | undefined = () => undefined;
+  /** The contacts' switches as `GET /v1/contacts/:id` gives them now; one not here isn't found. */
+  readonly contacts = new Map<string, { listenTo: boolean; fullAccess: boolean }>();
   private server?: Server;
   private waiters: Array<() => void> = [];
 
@@ -260,6 +267,11 @@ export class FakeApi {
 
       return;
     }
+    if (this.refuseReplies && call.method === 'POST' && call.path === '/v1/inbox/messages' && call.body.thread) {
+      send(400, { statusCode: 400, message: 'The message is too long.' });
+
+      return;
+    }
     // A paused agent's hosts may still see where it is listening and let go of the lease (`listen status`, `listen stop`).
     const openWhilePaused =
       call.path === '/v1/listen/lease' ? call.method === 'GET' : call.path === '/v1/listen/lease/release';
@@ -303,6 +315,7 @@ export class FakeApi {
       },
     ],
     ['GET', /^\/v1\/inbox\/([^/]+)$/, (call, match, send) => this.showConversation(call, match[1], send)],
+    ['GET', /^\/v1\/contacts\/([^/]+)$/, (_call, match, send) => this.showContact(decodeURIComponent(match[1]), send)],
   ];
 
   private async route(call: FakeCall, send: Send): Promise<void> {
@@ -457,7 +470,20 @@ export class FakeApi {
     send(201, { data: this.interactionView(interaction, conversation.id) });
 
     const decided = interaction.kind === 'tell' ? undefined : this.decide(interaction);
-    if (decided) setTimeout(() => this.answer(interaction.id, decided), 20);
+    const by = typeof decided === 'object' ? decided.by : undefined;
+    if (decided) setTimeout(() => this.answer(interaction.id, decided, false, by), 20);
+  }
+
+  private showContact(id: string, send: Send): void {
+    const switches = this.contacts.get(id);
+    if (!switches) {
+      send(404, { message: `Contact "${id}" not found.` });
+
+      return;
+    }
+
+    const now = new Date().toISOString();
+    send(200, { data: { id, channels: [], ...switches, createdAt: now, updatedAt: now } });
   }
 
   private cancel(id: string, send: Send): void {

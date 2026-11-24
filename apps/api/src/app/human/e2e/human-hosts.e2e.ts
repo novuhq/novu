@@ -71,13 +71,19 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
 
   /**
    * `agentinbox connect`: no credentials, only the agent and the code, from this test's network by default,
-   * saying which host runs it when `host` names one.
+   * saying which host runs it when `host` names one, and which way it came in when `via` does (a host's plugin).
    */
-  function connect(agent: string, code: string, from: string = network, host?: string) {
+  function connect(agent: string, code: string, from: string = network, host?: string, via?: string) {
     // Cloudflare's header: getClientIp trusts only it when run as Novu Cloud, and request-ip reads it otherwise.
-    const request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('CF-Connecting-IP', from);
+    let request = session.testAgent.post('/v1/human/connect').set('Authorization', '').set('CF-Connecting-IP', from);
+    if (host) {
+      request = request.set(AGENT_INBOX_HOST_HEADER, host);
+    }
+    if (via) {
+      request = request.set(AGENT_INBOX_VIA_HEADER, via);
+    }
 
-    return (host ? request.set(AGENT_INBOX_HOST_HEADER, host) : request).send({ agent, code });
+    return request.send({ agent, code });
   }
 
   async function hostStatus(): Promise<Record<string, any>> {
@@ -581,6 +587,22 @@ describe('Agent Inbox hosts (one-time codes and host status) #novu-v2', () => {
       expect(res.status).to.equal(200, JSON.stringify(res.body));
       expect(res.body.data.host).to.equal('codex');
       expect((await hostStatus()).hosts.map((host: { id: string }) => host.id)).to.deep.equal(['codex']);
+    });
+
+    it('counts a host whose own plugin used the code as connected through the plugin', async () => {
+      const { code } = await issueCode('hermes');
+
+      const res = await connect(handle, code, network, 'hermes', 'plugin');
+
+      expect(res.status).to.equal(200, JSON.stringify(res.body));
+      expect((await hostStatus()).hosts[0]).to.include({ id: 'hermes', via: 'plugin', lastCheckedAt: null });
+
+      await listInbox('plugin', {}, 'hermes');
+      const checked = await hostStatus();
+      expect(checked.lastCheckedVia).to.equal('plugin');
+      expect(checked.hosts.map((host: { id: string; via: string }) => [host.id, host.via])).to.deep.equal([
+        ['hermes', 'plugin'],
+      ]);
     });
 
     it('is only made for a host Agent Inbox knows', async () => {

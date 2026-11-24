@@ -74,9 +74,15 @@ describe('CreateInteraction', () => {
       run: sinon.stub().callsFake((fn: () => Promise<unknown>) => fn()),
       release: sinon.stub().resolves(),
     };
+    const uncounted = {
+      run: sinon.stub().callsFake((fn: () => Promise<unknown>) => fn()),
+      release: sinon.stub().resolves(),
+    };
     const inboxQuota = {
       reserveCredits: sinon.stub().resolves(credits),
+      uncountedCredits: sinon.stub().returns(uncounted),
       credits,
+      uncounted,
     };
     const messageCredits = {
       accept: sinon.stub(),
@@ -84,6 +90,8 @@ describe('CreateInteraction', () => {
     };
     const messageQuota = {
       reserveCredits: sinon.stub().resolves(messageCredits),
+      claimLimitNotice: sinon.stub().resolves(null),
+      retryLimitNoticeLater: sinon.stub().resolves(),
       messageCredits,
     };
     const conversation = {
@@ -133,6 +141,7 @@ describe('CreateInteraction', () => {
       create: sinon.stub().resolves({ subscriberId: 'ada' }),
     };
     const analyticsService = { track: sinon.stub() };
+    const humanOperator = { findForAgent: sinon.stub().resolves(null) };
     const usecase = new CreateInteraction(
       humanInteractionRepository as any,
       agentRepository as any,
@@ -155,7 +164,8 @@ describe('CreateInteraction', () => {
       humanContactRepository as any,
       subscriberRepository as any,
       analyticsService as any,
-      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never)
+      new HumanChannelGate({ getFlag: sinon.stub().resolves(whatsAppEnabled) } as never),
+      humanOperator as any
     );
     const command = {
       userId: 'user1',
@@ -184,6 +194,7 @@ describe('CreateInteraction', () => {
       humanContactRepository,
       subscriberRepository,
       analyticsService,
+      humanOperator,
     };
   }
 
@@ -1147,7 +1158,8 @@ describe('CreateInteraction', () => {
   });
 
   it('rejects an email-only interaction with 429 and does not create it when the inbox cap is exhausted', async () => {
-    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota } = setup();
+    const { usecase, command, agentRepository, deliveryService, humanInteractionRepository, inboxQuota, messageQuota } =
+      setup();
     agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl' });
     deliveryService.resolveChannel.resolves({
       integrationIdentifier: 'inbox',
@@ -1163,6 +1175,9 @@ describe('CreateInteraction', () => {
     expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
     expect(humanInteractionRepository.create.called).to.equal(false);
     expect(deliveryService.deliver.called).to.equal(false);
+    // The message limit was checked first, and gives its credit back.
+    expect(messageQuota.reserveCredits.firstCall.args).to.deep.equal(['org1', 1]);
+    expect(messageQuota.messageCredits.release.calledOnce).to.equal(true);
   });
 
   it('still delivers Telegram when the email slice of a fan-out is over the cap', async () => {
@@ -1219,6 +1234,152 @@ describe('CreateInteraction', () => {
     expect(body.message.toLowerCase()).to.not.include('plan');
     expect(humanInteractionRepository.create.called).to.equal(false);
     expect(deliveryService.deliver.called).to.equal(false);
+  });
+
+  describe('when the account runs out of messages', () => {
+    const refusal = () => new HumanMessageQuotaExceededException('daily', 50, 3600, '2026-10-14T00:00:00.000Z');
+
+    function outOfMessages() {
+      const env = setup();
+      env.agentRepository.findOne.resolves({ _id: 'agent-hitl', identifier: 'human-hitl', name: 'JunoX' });
+      env.messageQuota.reserveCredits.rejects(refusal());
+      env.messageQuota.claimLimitNotice.resolves({ cap: 'daily', limit: 50, resetsAt: '2026-10-14T00:00:00.000Z' });
+      env.humanOperator.findForAgent.resolves('operator-1');
+
+      return env;
+    }
+
+    it('still refuses the send, and tells the operator from the agent in a message the limit leaves out', async () => {
+      const {
+        usecase,
+        command,
+        humanInteractionRepository,
+        deliveryService,
+        messageQuota,
+        humanOperator,
+        analyticsService,
+      } = outOfMessages();
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+      expect(messageQuota.reserveCredits.calledOnce).to.equal(true);
+      expect(messageQuota.claimLimitNotice.firstCall.args[0]).to.equal('org1');
+      // The operator as every other Agent Inbox call finds them: recorded on another agent, or by the CLI, too.
+      expect(humanOperator.findForAgent.firstCall.args[0]).to.deep.equal({
+        environmentId: 'env1',
+        organizationId: 'org1',
+        agentId: 'agent-hitl',
+      });
+      expect(humanInteractionRepository.create.calledOnce).to.equal(true);
+      const notice = humanInteractionRepository.create.firstCall.args[0];
+      expect(notice).to.include({ kind: HumanInteractionKindEnum.TELL, _agentId: 'agent-hitl' });
+      expect(notice.subscriberIds).to.deep.equal(['operator-1']);
+      expect(notice.content.cardChrome.title).to.match(/^JunoX reached today’s limit of 50 messages, so its replies/);
+      expect(deliveryService.deliver.calledOnce).to.equal(true);
+      expect(analyticsService.track.called).to.equal(false);
+      expect(messageQuota.retryLimitNoticeLater.called).to.equal(false);
+    });
+
+    it('tells about the window that ran out, whichever one refused the send', async () => {
+      const { usecase, command, messageQuota, humanInteractionRepository } = outOfMessages();
+      messageQuota.reserveCredits.rejects(
+        new HumanMessageQuotaExceededException('monthly', 300, 3600, '2026-11-01T00:00:00.000Z')
+      );
+
+      await usecase.execute({ ...command, to: ['sub-1', 'sub-2'] } as any).catch(() => undefined);
+
+      const notice = humanInteractionRepository.create.firstCall.args[0];
+      expect(notice.content.cardChrome.title).to.match(/^JunoX reached today’s limit of 50 messages/);
+    });
+
+    it('tells the operator of an email-only account by email, outside the email limit too', async () => {
+      const { usecase, command, deliveryService, inboxQuota, humanInteractionRepository } = outOfMessages();
+      deliveryService.resolveChannel.resolves({
+        integrationIdentifier: 'inbox',
+        platform: HumanChannelViaEnum.EMAIL,
+        platformUserId: 'ada@example.com',
+      });
+      // Every message there was an email: the email allowance is gone as well.
+      inboxQuota.reserveCredits.rejects(
+        new AgentEmailInboxQuotaExceededException('daily', 50, 3600, '2026-10-14T00:00:00.000Z')
+      );
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect((thrown.getResponse() as { code: string }).code).to.equal('human_message_daily_cap');
+      expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['operator-1']);
+      expect(inboxQuota.reserveCredits.called).to.equal(false);
+      expect(inboxQuota.uncountedCredits.calledOnceWith('org1')).to.equal(true);
+      expect(inboxQuota.uncounted.run.calledOnce).to.equal(true);
+      expect(deliveryService.deliver.calledOnce).to.equal(true);
+      expect(deliveryService.deliver.firstCall.args[1].platform).to.equal(HumanChannelViaEnum.EMAIL);
+    });
+
+    it('tells nobody again once the operator heard it in this window', async () => {
+      const { usecase, command, humanInteractionRepository, deliveryService, messageQuota, humanOperator } =
+        outOfMessages();
+      messageQuota.claimLimitNotice.resolves(null);
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+      expect(humanOperator.findForAgent.called).to.equal(false);
+      expect(humanInteractionRepository.create.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
+    });
+
+    it('keeps the notice for a later refusal while the agent has no operator yet', async () => {
+      const { usecase, command, humanInteractionRepository, deliveryService, messageQuota, humanOperator } =
+        outOfMessages();
+      humanOperator.findForAgent.resolves(null);
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+      expect(humanInteractionRepository.create.called).to.equal(false);
+      expect(deliveryService.deliver.called).to.equal(false);
+      expect(messageQuota.retryLimitNoticeLater.calledOnce).to.equal(true);
+      expect(messageQuota.retryLimitNoticeLater.firstCall.args[1]).to.include({ cap: 'daily', limit: 50 });
+    });
+
+    it('still refuses the send when the notice cannot reach the operator, and tries the notice again later', async () => {
+      const { usecase, command, deliveryService, messageQuota } = outOfMessages();
+      const contactChannel = await deliveryService.resolveChannel();
+      deliveryService.resolveChannel.callsFake(async ({ subscriberId }: { subscriberId: string }) => {
+        if (subscriberId === 'operator-1') {
+          throw new NotFoundException('No channel for operator-1');
+        }
+
+        return contactChannel;
+      });
+
+      const thrown = (await usecase.execute(command as any).catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+      expect(deliveryService.deliver.called).to.equal(false);
+      expect(messageQuota.retryLimitNoticeLater.calledOnce).to.equal(true);
+      expect(messageQuota.retryLimitNoticeLater.firstCall.args[0]).to.equal('org1');
+      expect(messageQuota.retryLimitNoticeLater.firstCall.args[1]).to.include({ cap: 'daily', limit: 50 });
+    });
+
+    it('tells the operator about a refused reply into a thread too', async () => {
+      const { usecase, command, humanInteractionRepository, createConversationInteraction } = outOfMessages();
+
+      const thrown = (await usecase
+        .execute({
+          ...command,
+          kind: HumanInteractionKindEnum.TELL,
+          card: { title: 'On it.' },
+          to: undefined,
+          thread: 'conv_abc',
+        } as any)
+        .catch((error) => error)) as HttpException;
+
+      expect(thrown.getStatus()).to.equal(HttpStatus.TOO_MANY_REQUESTS);
+      expect(createConversationInteraction.execute.called).to.equal(false);
+      expect(humanInteractionRepository.create.firstCall.args[0].subscriberIds).to.deep.equal(['operator-1']);
+    });
   });
 
   it('charges one message credit per recipient that was delivered', async () => {
