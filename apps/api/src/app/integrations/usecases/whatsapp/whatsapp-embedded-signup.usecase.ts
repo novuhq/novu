@@ -12,6 +12,7 @@ import { UpdateIntegration } from '../update-integration/update-integration.usec
 import {
   type ResolvedWhatsAppAgentIntegration,
   resolveWhatsAppAgentIntegration,
+  resolveWhatsAppIntegration,
 } from './resolve-whatsapp-agent-integration.utils';
 import { WhatsAppBusinessProfile } from './whatsapp-business-profile.service';
 import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
@@ -70,15 +71,28 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const { agent, integration } = await resolveWhatsAppAgentIntegration({
-      agentRepository: this.agentRepository,
-      integrationRepository: this.integrationRepository,
-      agentIntegrationRepository: this.agentIntegrationRepository,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentIdentifier: command.agentIdentifier,
-      integrationIdentifier: command.integrationIdentifier,
-    });
+    // The integration store connects a number with no agent: the credentials are saved, and the webhook is
+    // registered later, when an agent is linked to the integration.
+    const agentIdentifier = command.agentIdentifier;
+    const { agent, integration } = agentIdentifier
+      ? await resolveWhatsAppAgentIntegration({
+          agentRepository: this.agentRepository,
+          integrationRepository: this.integrationRepository,
+          agentIntegrationRepository: this.agentIntegrationRepository,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+        })
+      : {
+          agent: undefined,
+          integration: await resolveWhatsAppIntegration({
+            integrationRepository: this.integrationRepository,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            integrationIdentifier: command.integrationIdentifier,
+          }),
+        };
 
     const exchanged = await this.exchangeCode(platformConfig, command.code, integration._id);
     if (typeof exchanged !== 'string') {
@@ -131,6 +145,17 @@ export class WhatsAppEmbeddedSignup {
 
     const phoneRegistrationWarning = await this.registerNumber(accessToken, phoneNumberId, integration._id);
 
+    if (!agent || !agentIdentifier) {
+      return {
+        success: true,
+        integrationId: integration._id,
+        integrationIdentifier: integration.identifier,
+        wabaId,
+        displayPhoneNumber: businessDisplayPhone,
+        phoneRegistrationWarning,
+      };
+    }
+
     await this.applyRelayProfile(agent, integration._id, command, { accessToken, phoneNumberId, isNovuManaged: true });
 
     const webhookResult = await this.configureWhatsAppWebhook.execute(
@@ -138,7 +163,7 @@ export class WhatsAppEmbeddedSignup {
         userId: command.userId,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        agentIdentifier: command.agentIdentifier,
+        agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
       })
     );

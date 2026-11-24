@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import type { ConfigureWhatsAppWebhookFailure } from '../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 
@@ -27,10 +27,15 @@ export class WhatsAppEmbeddedSignupRequestDto {
   @IsNotEmpty()
   integrationIdentifier: string;
 
-  @ApiProperty({ type: String, description: 'Agent identifier used to configure the webhook callback URL' })
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Agent identifier used to configure the webhook callback URL. Leave out to only save the credentials, as the integration store does.',
+  })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  agentIdentifier: string;
+  agentIdentifier?: string;
 }
 
 export type WhatsAppEmbeddedSignupFailure = {

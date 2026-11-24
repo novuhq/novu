@@ -17,6 +17,7 @@ import { AddProviderPicker } from './add-provider-picker';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
+import { type QuickSetupResult, useWhatsAppStoreSignup } from './hooks/use-whatsapp-store-signup';
 import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
@@ -67,11 +68,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
    * The integration "Create app" made, with the environment it lives in. "Connect provider" then saves the
    * rest of the form onto it, and a retry after a failed Slack call reuses it.
    */
-  const [quickSetupResult, setQuickSetupResult] = useState<{
-    integrationId: string;
-    environmentId: string;
-    appId?: string;
-  }>();
+  const [quickSetupResult, setQuickSetupResult] = useState<QuickSetupResult>();
   /** Bumped on every reset, so a reply from an abandoned setup can tell it is stale and do nothing. */
   const setupAttemptRef = useRef(0);
 
@@ -135,6 +132,17 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
     },
     onError: (error: unknown) =>
       showErrorToast(error instanceof Error ? error.message : "Couldn't create the Slack app. Try again."),
+  });
+
+  const whatsAppSignup = useWhatsAppStoreSignup({
+    enabled: usesSetupLayout,
+    provider,
+    environments,
+    quickSetupResult,
+    setQuickSetupResult,
+    setupAttemptRef,
+    createIntegration,
+    onSaved: refreshIntegrations,
   });
 
   /** Saves the general settings, and any credentials typed in Manual, onto the integration "Create app" made. */
@@ -347,6 +355,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                       }
                     : undefined
                 }
+                whatsAppQuickSetup={whatsAppSignup.quickSetup}
               />
             </div>
             {usesSetupLayout ? (
@@ -355,7 +364,9 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 onCancel={handleClose}
                 formId={`integration-configuration-form-${provider.id}`}
                 isSubmitting={isPending || isSettingPrimary || isFinishingQuickSetup}
-                canSubmit={formState.isValid && !isCreatingSlackApp && !isFinishingQuickSetup}
+                canSubmit={
+                  formState.isValid && !isCreatingSlackApp && !whatsAppSignup.isConnecting && !isFinishingQuickSetup
+                }
               />
             ) : (
               <div className="bg-background flex justify-end gap-2 border-t p-3">

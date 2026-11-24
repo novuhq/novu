@@ -179,7 +179,8 @@ export type WhatsAppEmbeddedSignupParams = {
   wabaId: string;
   phoneNumberId: string;
   integrationIdentifier: string;
-  agentIdentifier: string;
+  /** Leave out to only save the credentials, with no agent webhook, as the integration store does. */
+  agentIdentifier?: string;
 };
 
 export type WhatsAppEmbeddedSignupResult = {
