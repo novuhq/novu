@@ -123,6 +123,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   #refreshSession?: SessionRefresher;
   /** The token sent with the latest connection attempt. */
   #handshakeToken: string | undefined;
+  #tokenRetryTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor({
     socketUrl,
@@ -186,16 +187,25 @@ export class Socket extends BaseModule implements BaseSocketInterface {
    * the socket, and socket.io does not reconnect after a server disconnect, so get a new token and connect again.
    */
   async #reconnectWithFreshToken(socket: SocketIO): Promise<void> {
+    this.#tokenRetryTimeout = undefined;
     const refreshSession = this.#refreshSession;
-    if (!refreshSession || !isJwtExpired(this.#handshakeToken)) {
+    if (!refreshSession || socket !== this.#socketIo || !isJwtExpired(this.#handshakeToken)) {
       return;
     }
 
-    if (isJwtExpired(this.#token) && !(await refreshSession().catch(() => false))) {
-      return;
-    }
+    const hasFreshToken = !isJwtExpired(this.#token) || (await refreshSession().catch(() => false));
 
     if (socket !== this.#socketIo) {
+      return;
+    }
+
+    if (!hasFreshToken) {
+      // socket.io stopped retrying after the server disconnect, so keep trying here until a token comes back.
+      this.#tokenRetryTimeout = setTimeout(
+        () => void this.#reconnectWithFreshToken(socket),
+        socket.io.reconnectionDelayMax()
+      );
+
       return;
     }
 
@@ -270,6 +280,8 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
   async #handleDisconnectSocket(): Result<void> {
     try {
+      clearTimeout(this.#tokenRetryTimeout);
+      this.#tokenRetryTimeout = undefined;
       this.#socketIo?.disconnect();
       this.#socketIo = undefined;
 

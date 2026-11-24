@@ -7,9 +7,10 @@ export type HttpClientOptions = {
 };
 
 /**
- * Gets a new session token. Resolves to `true` when the client now holds a new token.
+ * Gets a new session token. Resolves to `true` when the client now holds a token newer than `staleToken`
+ * for the same subscriber and context, so a request sent with `staleToken` can be retried.
  */
-export type SessionRefresher = () => Promise<boolean>;
+export type SessionRefresher = (staleToken?: string) => Promise<boolean>;
 
 export type HttpRequestOptions = RequestInit & {
   /**
@@ -177,17 +178,18 @@ export class HttpClient {
       return false;
     }
 
-    // Another request already refreshed the token while this one was in flight: retry with the new token.
-    if (this.headers.Authorization !== sentAuthorization) {
-      return true;
-    }
-
-    if (!isJwtExpired(sentAuthorization.replace(/^Bearer /, ''))) {
+    const sentToken = sentAuthorization.replace(/^Bearer /, '');
+    if (!isJwtExpired(sentToken)) {
       return false;
     }
 
+    /*
+     * The session decides whether a retry is safe: it renews only a token of the current subscriber and context.
+     * After `changeSubscriber` or `changeContext` the request belongs to the previous one and must not be resent
+     * with the new token, which would apply it to the new subscriber.
+     */
     try {
-      return await this.sessionRefresher();
+      return await this.sessionRefresher(sentToken);
     } catch {
       return false;
     }

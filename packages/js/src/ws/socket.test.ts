@@ -20,6 +20,7 @@ const fakeSocketIo = vi.hoisted(() => {
       io: {
         opts: {} as { query?: Record<string, string> },
         on: (event: string, handler: Handler) => managerHandlers.set(event, handler),
+        reconnectionDelayMax: () => 10,
       },
     };
   };
@@ -125,5 +126,41 @@ describe('Socket (socket.io)', () => {
     socket.managerHandlers.get('reconnect_attempt')?.();
 
     expect(socket.io.opts.query?.token).toBe(newToken);
+  });
+
+  it('keeps trying to get a token when the refresh fails after a server disconnect', async () => {
+    const { client, refreshSession } = createClient();
+    const refreshesThenRecovers = refreshSession.getMockImplementation()!;
+    refreshSession.mockImplementationOnce(async () => false);
+    await client.connect();
+    const socket = fakeSocketIo.current!;
+
+    now += 2 * HOUR_MS;
+    socket.handlers.get('disconnect')?.('io server disconnect');
+    await flush();
+    expect(socket.connect).not.toHaveBeenCalled();
+
+    refreshSession.mockImplementation(refreshesThenRecovers);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(refreshSession).toHaveBeenCalledTimes(2);
+    expect(socket.connect).toHaveBeenCalledTimes(1);
+    expect(socket.io.opts.query?.token).toBe(newToken);
+  });
+
+  it('stops trying after the socket is disconnected', async () => {
+    const { client, refreshSession } = createClient();
+    refreshSession.mockImplementation(async () => false);
+    await client.connect();
+    const socket = fakeSocketIo.current!;
+
+    now += 2 * HOUR_MS;
+    socket.handlers.get('disconnect')?.('io server disconnect');
+    await flush();
+    await client.disconnect();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(socket.connect).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,10 @@ export class Session {
   #inboxService: InboxService;
   #options: InitializeSessionArgs;
   #inFlight: Promise<boolean> | undefined;
+  /** The latest token issued for the current subscriber and context. */
+  #token: string | undefined;
+  /** Every token issued for the current subscriber and context; cleared when either changes. */
+  #tokens = new Set<string>();
 
   constructor(
     options: InitializeSessionArgs,
@@ -80,37 +84,67 @@ export class Session {
       return;
     }
 
+    // Record the change right away, so a later change compares against it and the tokens of the old
+    // subscriber or context stop counting as renewable.
+    if (options) {
+      this.#options = options;
+      this.#tokens.clear();
+    }
+    const requested = this.#options;
+
     // Let a request that is already running finish first, so its token cannot overwrite the new one.
     while (this.#inFlight) {
       await this.#inFlight;
     }
 
-    if (options) {
-      this.#options = options;
+    // A newer change was made while this one waited; that one sends the request.
+    if (requested !== this.#options) {
+      return;
     }
 
-    await this.refresh();
+    await this.#start(false);
   }
 
   /**
-   * Asks the server for a new token for the current subscriber, for example after the old one expired.
+   * Asks the server for a new token for the current subscriber and context, for example after the old one expired.
    * Callers that ask while a session request is already running share that request.
-   * Resolves to `true` when a new token was stored.
+   *
+   * Pass `staleToken` (the token a failed request was sent with) to renew only that session: when it belonged to
+   * a subscriber or context that has been replaced since, nothing is requested and the result is `false`.
+   *
+   * Resolves to `true` when the current token is newer than the stale one.
    */
-  public refresh(): Promise<boolean> {
-    if (!this.#inFlight) {
-      this.#inFlight = this.#requestSession().finally(() => {
-        this.#inFlight = undefined;
-      });
+  public refresh(staleToken?: string): Promise<boolean> {
+    if (staleToken !== undefined) {
+      if (!this.#tokens.has(staleToken)) {
+        return Promise.resolve(false);
+      }
+
+      if (staleToken !== this.#token) {
+        return Promise.resolve(true);
+      }
     }
 
-    return this.#inFlight;
+    return this.#inFlight ?? this.#start(true);
   }
 
-  async #requestSession(): Promise<boolean> {
+  #start(renew: boolean): Promise<boolean> {
+    const request = this.#requestSession(renew).finally(() => {
+      this.#inFlight = undefined;
+    });
+    this.#inFlight = request;
+
+    return request;
+  }
+
+  /**
+   * With `renew`, only the subscriber's identity is sent: the profile fields given at start-up would otherwise
+   * overwrite changes made on the server since then.
+   */
+  async #requestSession(renew: boolean): Promise<boolean> {
+    const options = this.#options;
     try {
-      const { subscriber, subscriberHash, contextHash, applicationIdentifier, defaultSchedule, context } =
-        this.#options;
+      const { subscriber, subscriberHash, contextHash, applicationIdentifier, defaultSchedule, context } = options;
       let currentTimezone: string | undefined;
       if (isBrowser()) {
         currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -125,20 +159,27 @@ export class Session {
       } else {
         this.handleApplicationIdentifier('delete');
       }
-      this.#emitter.emit('session.initialize.pending', { args: this.#options });
+      this.#emitter.emit('session.initialize.pending', { args: options });
 
       const response = await this.#inboxService.initializeSession({
         applicationIdentifier: finalApplicationIdentifier,
         subscriberHash,
         contextHash,
-        subscriber: {
-          ...subscriber,
-          subscriberId: subscriber?.subscriberId ?? '',
-          timezone: subscriber?.timezone ?? currentTimezone,
-        },
-        defaultSchedule,
+        subscriber: renew
+          ? { subscriberId: subscriber?.subscriberId ?? '' }
+          : {
+              ...subscriber,
+              subscriberId: subscriber?.subscriberId ?? '',
+              timezone: subscriber?.timezone ?? currentTimezone,
+            },
+        defaultSchedule: renew ? undefined : defaultSchedule,
         context,
       });
+
+      if (options === this.#options) {
+        this.#token = response.token;
+        this.#tokens.add(response.token);
+      }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
         this.handleApplicationIdentifier('store', response.applicationIdentifier);
@@ -148,11 +189,11 @@ export class Session {
         this.handleApplicationIdentifier('delete');
       }
 
-      this.#emitter.emit('session.initialize.resolved', { args: this.#options, data: response });
+      this.#emitter.emit('session.initialize.resolved', { args: options, data: response });
 
       return true;
     } catch (error) {
-      this.#emitter.emit('session.initialize.resolved', { args: this.#options, error });
+      this.#emitter.emit('session.initialize.resolved', { args: options, error });
 
       return false;
     }

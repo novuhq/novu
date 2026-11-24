@@ -62,7 +62,11 @@ const createFakeApi = () => {
   let now = Date.now();
   const issuedTokens: string[] = [];
   const notificationRequests: string[] = [];
+  const sessionBodies: Array<{ subscriber: Record<string, unknown>; defaultSchedule?: unknown }> = [];
+  /** The subscriber each issued token belongs to. */
+  const tokenSubscribers = new Map<string, string>();
   let sessionResponseDelayMs = 0;
+  let notificationResponseDelayMs = 0;
   let tokenLifetimeMs = HOUR_MS;
 
   vi.spyOn(Date, 'now').mockImplementation(() => now);
@@ -72,9 +76,12 @@ const createFakeApi = () => {
       ({ ok: status < 400, status, json: async () => body }) as unknown as Response;
 
     if (url.includes('/inbox/session')) {
+      const body = JSON.parse(init.body as string);
+      sessionBodies.push(body);
       await wait(sessionResponseDelayMs);
       const token = createJwt(`token-${issuedTokens.length + 1}`, now + tokenLifetimeMs);
       issuedTokens.push(token);
+      tokenSubscribers.set(token, body.subscriber.subscriberId);
 
       return json(200, { data: { token, unreadCount: { total: 0, severity: {} } } });
     }
@@ -82,6 +89,7 @@ const createFakeApi = () => {
     const authorization = (init.headers as Record<string, string>).Authorization ?? '';
     const token = authorization.replace(/^Bearer /, '');
     notificationRequests.push(token);
+    await wait(notificationResponseDelayMs);
     const issuedAt = issuedTokens.indexOf(token);
     if (issuedAt === -1 || now >= JSON.parse(atob(token.split('.')[1])).exp * 1000) {
       return json(401, { message: 'Unauthorized', statusCode: 401 });
@@ -94,12 +102,17 @@ const createFakeApi = () => {
   return {
     issuedTokens,
     notificationRequests,
+    sessionBodies,
+    subscriberOf: (token: string) => tokenSubscribers.get(token),
     sessionCalls: () => fetchMock.mock.calls.filter(([url]) => url.includes('/inbox/session')).length,
     advanceTime: (ms: number) => {
       now += ms;
     },
     delaySessionResponses: (ms: number) => {
       sessionResponseDelayMs = ms;
+    },
+    delayNotificationResponses: (ms: number) => {
+      notificationResponseDelayMs = ms;
     },
     issueExpiredTokens: () => {
       tokenLifetimeMs = -HOUR_MS;
@@ -110,7 +123,8 @@ const createFakeApi = () => {
 const createNovu = () =>
   new Novu({
     applicationIdentifier: 'app',
-    subscriber: { subscriberId: 'subscriber_1' },
+    subscriber: { subscriberId: 'subscriber_1', firstName: 'Ada', email: 'ada@example.com' },
+    defaultSchedule: { isEnabled: true },
     useCache: false,
     socketOptions: { minReconnectionDelay: 10, maxReconnectionDelay: 20 },
   });
@@ -227,5 +241,56 @@ describe('session refresh after the subscriber token expires', () => {
 
     expect(error).toBeDefined();
     expect(api.sessionCalls()).toBe(1);
+  });
+
+  it('renews with the subscriber identity only, so profile fields changed on the server are kept', async () => {
+    const api = createFakeApi();
+    const novu = createNovu();
+    await novu.notifications.list();
+
+    api.advanceTime(2 * HOUR_MS);
+    await novu.notifications.list();
+
+    expect(api.sessionBodies[0].subscriber).toMatchObject({ subscriberId: 'subscriber_1', firstName: 'Ada' });
+    expect(api.sessionBodies[0].defaultSchedule).toBeDefined();
+    expect(api.sessionBodies[1].subscriber).toEqual({ subscriberId: 'subscriber_1' });
+    expect(api.sessionBodies[1].defaultSchedule).toBeUndefined();
+  });
+
+  it('does not resend a request of the previous subscriber with the new subscriber token', async () => {
+    const api = createFakeApi();
+    const novu = createNovu();
+    await novu.notifications.list();
+
+    api.advanceTime(2 * HOUR_MS);
+    api.delayNotificationResponses(30);
+    // Sent with the expired token of subscriber_1; it answers 401 after the switch to subscriber_2
+    const pending = novu.notifications.list();
+    await novu.changeSubscriber({ subscriber: { subscriberId: 'subscriber_2' } });
+    const { error } = await pending;
+
+    expect(error).toBeDefined();
+    expect(api.notificationRequests.map(api.subscriberOf)).toEqual(['subscriber_1', 'subscriber_1']);
+    expect(api.sessionBodies.map((body) => body.subscriber.subscriberId)).toEqual(['subscriber_1', 'subscriber_2']);
+  });
+
+  it('ends on the latest subscriber after switching away and back while a refresh runs', async () => {
+    const api = createFakeApi();
+    const novu = createNovu();
+    await novu.notifications.list();
+
+    api.advanceTime(2 * HOUR_MS);
+    api.delaySessionResponses(30);
+    const refreshing = novu.notifications.list();
+    await wait(10); // the 401 came back and the refresh for subscriber_1 is in flight
+    expect(api.sessionBodies).toHaveLength(2);
+    const toSecond = novu.changeSubscriber({ subscriber: { subscriberId: 'subscriber_2' } });
+    const backToFirst = novu.changeSubscriber({ subscriber: { subscriberId: 'subscriber_1' } });
+    await Promise.all([refreshing, toSecond, backToFirst]);
+
+    expect(novu.subscriberId).toBe('subscriber_1');
+    await novu.notifications.list();
+    expect(api.subscriberOf(api.notificationRequests.at(-1) ?? '')).toBe('subscriber_1');
+    expect(api.sessionBodies.map((body) => body.subscriber.subscriberId)).not.toContain('subscriber_2');
   });
 });

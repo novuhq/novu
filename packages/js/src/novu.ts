@@ -138,7 +138,7 @@ export class Novu {
     );
 
     this.#session.initialize();
-    const refreshSession = () => this.#session.refresh();
+    const refreshSession = (staleToken?: string) => this.#session.refresh(staleToken);
     this.#httpClient.setSessionRefresher(refreshSession);
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
