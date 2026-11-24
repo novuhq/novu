@@ -225,6 +225,26 @@ describe("get_workflow_runs", () => {
 		expect(link.searchParams.get("subscriptionId")).toBe("sub_1");
 	});
 
+	it("filters and links runs without a context, and runs with a tool step", async () => {
+		const api = fakeApi(path("/v1/activity/workflow-runs", { data: [], next: null }));
+
+		const result = output(
+			await callTool(await client(), "get_workflow_runs", {
+				channels: ["tool"],
+				contextKeys: [""],
+			}),
+		);
+
+		expect(api.urls[0].search).toContain("contextKeys=");
+		expect(api.urls[0].searchParams.getAll("contextKeys")).toEqual([""]);
+		expect(api.urls[0].searchParams.getAll("channels")).toEqual(["tool"]);
+		expect(
+			new URL(result.dashboardPath, "https://dashboard.test").searchParams.getAll(
+				"contextKeys",
+			),
+		).toEqual([""]);
+	});
+
 	it("uses a database _id as is, so runs of a deleted workflow stay reachable", async () => {
 		const api = fakeApi(path("/v1/activity/workflow-runs", { data: [run()], next: null }));
 
@@ -358,6 +378,42 @@ describe("get_workflow_run", () => {
 				stepType: "email",
 			},
 		],
+	});
+
+	it("reads a provider response only from failed and warning details, never the stored message", async () => {
+		fakeApi(
+			path("/v1/activity/workflow-runs/run-1", {
+				data: run({
+					steps: [
+						{
+							createdAt: "2026-11-20T10:00:00.000Z",
+							executionDetails: [
+								{
+									_id: "e1",
+									createdAt: "2026-11-20T10:00:01.000Z",
+									detail: "Message created",
+									raw: JSON.stringify({ message: "Your reset code is 123456" }),
+									status: "Success",
+								},
+							],
+							status: "completed",
+							stepId: "sms-step",
+							stepType: "sms",
+						},
+					],
+				}),
+			}),
+			path("/v1/activity/requests", { data: [], total: 0 }),
+		);
+
+		const result = output(
+			await callTool(await client(), "get_workflow_run", { workflowRunId: "run-1" }),
+		);
+
+		expect(result.steps[0].executionDetails).toEqual([
+			{ createdAt: "2026-11-20T10:00:01.000Z", detail: "Message created", status: "Success" },
+		]);
+		expect(JSON.stringify(result)).not.toContain("123456");
 	});
 
 	it("returns step errors, trimmed execution details and the trigger request", async () => {

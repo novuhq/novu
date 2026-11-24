@@ -44,13 +44,15 @@ const isoDate = (description: string) =>
 
 const getWorkflowRunsSchema = z.object({
 	channels: z
-		.array(z.enum(["in_app", "email", "sms", "chat", "push"]))
+		.array(z.enum(["in_app", "email", "sms", "chat", "push", "tool"]))
 		.optional()
 		.describe("Only runs with a step on one of these channels"),
 	contextKeys: z
 		.array(z.string())
 		.optional()
-		.describe("Only runs with all of these contexts, as type:id (e.g. tenant:acme)"),
+		.describe(
+			'Only runs with all of these contexts, as type:id (e.g. tenant:acme); [""] for runs without a context',
+		),
 	createdAfter: isoDate("Only runs created at or after this ISO 8601 date"),
 	createdBefore: isoDate("Only runs created at or before this ISO 8601 date"),
 	cursor: z.string().optional().describe("next from the previous call, for the next page"),

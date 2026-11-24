@@ -154,7 +154,10 @@ function toExecutionDetail(detail: JsonRecord) {
 	return {
 		createdAt: asString(detail.createdAt),
 		detail: asString(detail.detail),
-		providerResponse: safeProviderResponse(detail.raw),
+		// Only a failure or warning carries a provider response; a success's raw can be the message itself.
+		providerResponse: ATTENTION_STATUSES.has(String(detail.status))
+			? safeProviderResponse(detail.raw)
+			: undefined,
 		status: asString(detail.status),
 	};
 }
@@ -202,7 +205,8 @@ const REQUESTS_PATH = "/activity/requests";
 function toDashboardPath(path: string, params: [string, string | undefined][]): string {
 	const search = new URLSearchParams();
 	for (const [key, value] of params) {
-		if (value) search.append(key, value);
+		// An empty `contextKeys` is a filter of its own: runs without a context.
+		if (value || (key === "contextKeys" && value === "")) search.append(key, value);
 	}
 	const query = search.toString();
 
