@@ -1,14 +1,29 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Optional } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
+import { getInsertOptions } from '../shared';
 import { STEP_RUNS_V2_DDL, StepRunV2ReadRow, StepRunV2Row, TABLE_NAME } from './step-run-v2.schema';
 
 export const STEP_RUNS_V2_MAX_READ_LIMIT = 1000;
 
-const STEP_RUNS_V2_INSERT_OPTIONS: InsertOptions = {
-  asyncInsert: true,
-  waitForAsyncInsert: true,
-};
+/**
+ * Async insert without waiting for the server-side flush (sync and waiting under test), like the other log tables.
+ * Waiting held one of the process's ClickHouse connections open for every job status change.
+ */
+const STEP_RUNS_V2_INSERT_OPTIONS: InsertOptions = getInsertOptions(
+  process.env.STEP_RUNS_V2_ASYNC_INSERT,
+  process.env.STEP_RUNS_V2_WAIT_ASYNC_INSERT
+);
+
+const DEFAULT_BATCH_SIZE = 1000;
+const DEFAULT_FLUSH_INTERVAL_MS = 1000;
+
+function readPositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = value ? parseInt(value, 10) : fallback;
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 export const FIND_BY_WORKFLOW_RUN_IDS_QUERY = `
 SELECT workflow_run_id, step_run_id, step_id, step_identifier, step_name, step_type, status,
@@ -35,9 +50,16 @@ export type FindStepRunsV2ByWorkflowRunIdsParams = {
 
 @Injectable()
 export class StepRunV2Repository implements OnModuleInit {
+  private readonly batchConfig = {
+    maxBatchSize: readPositiveInt(process.env.STEP_RUNS_V2_BATCH_SIZE, DEFAULT_BATCH_SIZE),
+    flushIntervalMs: readPositiveInt(process.env.STEP_RUNS_V2_FLUSH_INTERVAL_MS, DEFAULT_FLUSH_INTERVAL_MS),
+    insertOptions: STEP_RUNS_V2_INSERT_OPTIONS,
+  };
+
   constructor(
     private readonly clickhouseService: ClickHouseService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    @Optional() private readonly batchService?: ClickHouseBatchService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -58,8 +80,20 @@ export class StepRunV2Repository implements OnModuleInit {
     return Boolean(this.clickhouseService.client);
   }
 
+  /**
+   * Where the batch service is provided (the worker), rows are buffered in the process and flushed as one insert
+   * per batch, so a job status change costs no ClickHouse request of its own. Rows reach ClickHouse up to
+   * `flushIntervalMs` later; order within and across batches does not matter because the highest `version` wins.
+   * Tests insert directly so a read right after a write sees the row.
+   */
   async insertMany(rows: StepRunV2Row[]): Promise<void> {
     if (rows.length === 0) {
+      return;
+    }
+
+    if (this.batchService && process.env.NODE_ENV !== 'test') {
+      await Promise.all(rows.map((row) => this.batchService?.add(TABLE_NAME, row, this.batchConfig)));
+
       return;
     }
 
