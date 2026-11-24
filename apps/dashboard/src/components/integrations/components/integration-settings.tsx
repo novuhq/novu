@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { WhatsAppEmbeddedSignupResult } from '@/api/integrations';
+import type { MsTeamsHealthCheckResult, WhatsAppEmbeddedSignupResult } from '@/api/integrations';
 import type { EmbeddedSignupCompletion } from '@/components/agents/whatsapp-embedded-signup-button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
@@ -30,6 +30,8 @@ import { isIntegrationFailing } from '../utils/integration-health';
 import { CredentialSection } from './credential-section';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
+import { MsTeamsManualSetup } from './msteams-manual-setup';
+import { MsTeamsQuickSetup } from './msteams-quick-setup';
 import { ProviderDeprecationNotice } from './provider-deprecation';
 import {
   AdvancedSettings,
@@ -89,6 +91,24 @@ type IntegrationConfigurationProps = {
     isEnvironmentLocked: boolean;
     onCreateApp: (data: IntegrationFormData, configToken: string, appName: string) => void;
   };
+  /** Microsoft Teams' Quick setup: Novu creates the Azure resources. Leave out where it isn't available. */
+  msTeamsQuickSetup?: {
+    /** The client ID of the app registration Novu created, once its credentials are saved. */
+    appId?: string;
+    health?: MsTeamsHealthCheckResult;
+    isStarting: boolean;
+    isStarted: boolean;
+    /** True once the setup has started: the integration belongs to that environment from then on. */
+    isEnvironmentLocked: boolean;
+    onSetUpAzure: (data: IntegrationFormData) => void;
+  };
+  /** Microsoft Teams' Manual setup: "Deploy to Azure" saves the typed credentials on a new integration first. */
+  msTeamsManualSetup?: {
+    isDeploying: boolean;
+    /** True once the integration exists: it belongs to that environment from then on. */
+    isEnvironmentLocked: boolean;
+    onDeployBot: (data: IntegrationFormData) => void;
+  };
   /** WhatsApp's Quick setup: Meta's Embedded Signup. Leave out where it isn't available; only Manual shows then. */
   whatsAppQuickSetup?: {
     /** True once the signup finished and the credentials are saved on the server. */
@@ -106,6 +126,7 @@ type IntegrationConfigurationProps = {
 };
 
 const SUBSCRIBERS_DOCS_URL = 'https://docs.novu.co/platform/concepts/subscribers';
+const TEAMS_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/ms-teams-connect';
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
 /** The TelegramConnectButton section of the Telegram integration docs: how subscribers link their chat. */
 const TELEGRAM_CONNECT_DOCS_URL =
@@ -113,6 +134,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+  if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
 
   return providerId === ChatProviderIdEnum.WhatsAppBusiness ? '~10 min' : '~5 min';
@@ -205,6 +227,8 @@ export function IntegrationSettings({
   setupLayout,
   slackQuickSetup,
   whatsAppQuickSetup,
+  msTeamsQuickSetup,
+  msTeamsManualSetup,
   layout = 'default',
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -267,7 +291,7 @@ export function IntegrationSettings({
     !(agentOnboarding || searchParams.get('agent_onboarding') === 'true');
   const [selectedSetupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
   // Only providers with a Quick setup have the two modes; the rest set up one way.
-  const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup;
+  const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup || !!msTeamsQuickSetup;
   // A number connected by Embedded Signup runs on Novu's Meta app. Credentials typed in Manual would be saved
   // onto that same integration and still resolve to Novu's app, so the mode stays on Quick setup from then on.
   const isSetupModeLocked = !!whatsAppQuickSetup?.isConnected;
@@ -275,7 +299,7 @@ export function IntegrationSettings({
   const setupMode = resolveSetupMode({ hasQuickSetup, isLocked: isSetupModeLocked, selected: selectedSetupMode });
   // Quick setup saves the credentials on the server, so the form is ready once that has happened.
   const isQuickSetupMode = usesSetupLayout && hasQuickSetup && setupMode === 'quick';
-  const isQuickSetupDone = !!slackQuickSetup?.appId || !!whatsAppQuickSetup?.isConnected;
+  const isQuickSetupDone = !!slackQuickSetup?.appId || !!whatsAppQuickSetup?.isConnected || !!msTeamsQuickSetup?.appId;
   const isFormReady = isQuickSetupMode ? isQuickSetupDone : formState.isValid;
 
   const changedFields = describeChangedFields(formState.dirtyFields, provider);
@@ -302,6 +326,9 @@ export function IntegrationSettings({
   const environmentId = useWatch({ control, name: 'environmentId' });
   const authMethod = useWatch({ control, name: `credentials.${CredentialsKeyEnum.AuthMethod}` });
   const slackAppId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.ApplicationId}` });
+  const typedClientId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.ClientId}` });
+  const typedSecretKey = useWatch({ control, name: `credentials.${CredentialsKeyEnum.SecretKey}` });
+  const typedTenantId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.TenantId}` });
   const unusedCredentialKeys = useMemo(
     () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
     [provider.id, authMethod]
@@ -513,6 +540,7 @@ export function IntegrationSettings({
   if (usesSetupLayout) {
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
     const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
+    const isMsTeams = provider.id === ChatProviderIdEnum.MsTeams;
 
     const generalSettings = (
       <GeneralSettings
@@ -549,17 +577,32 @@ export function IntegrationSettings({
             selectedId={environmentId}
             onSelect={(id) => setValue('environmentId', id, { shouldDirty: true })}
             // The integration is created with the app, so its environment is settled from then on.
-            disabled={isReadOnly || !!slackQuickSetup?.isEnvironmentLocked || !!whatsAppQuickSetup?.isEnvironmentLocked}
+            disabled={
+              isReadOnly ||
+              !!slackQuickSetup?.isEnvironmentLocked ||
+              !!whatsAppQuickSetup?.isEnvironmentLocked ||
+              !!msTeamsQuickSetup?.isEnvironmentLocked ||
+              !!msTeamsManualSetup?.isEnvironmentLocked
+            }
           />
           <SetupCard
-            title={`Set up ${provider.displayName}`}
+            title={`Set up ${isMsTeams ? 'Microsoft Teams' : provider.displayName}`}
             duration={getSetupDuration(provider.id, setupMode)}
             // Telegram has one way to set up: its token field takes the token or the whole BotFather message.
             mode={hasSetupModeSwitch ? setupMode : undefined}
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {isWhatsApp ? (
+                {isMsTeams ? (
+                  <SetupTip>
+                    Add <code className="font-code">&lt;MsTeamsConnectButton /&gt;</code> to your app so subscribers can
+                    connect their Teams workspace.{' '}
+                    <a href={TEAMS_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : isWhatsApp ? (
                   <SetupTip>
                     Novu messages each subscriber’s <code className="font-code">phone</code>. Set it when you create or
                     identify subscribers.{' '}
@@ -601,6 +644,44 @@ export function IntegrationSettings({
                 />
               </Protect>
             )}
+            {isMsTeams &&
+              (msTeamsQuickSetup && setupMode === 'quick' ? (
+                <MsTeamsQuickSetup
+                  appId={msTeamsQuickSetup.appId}
+                  health={msTeamsQuickSetup.health}
+                  isStarting={msTeamsQuickSetup.isStarting}
+                  isStarted={msTeamsQuickSetup.isStarted}
+                  canStart={!isReadOnly && !!name?.trim()}
+                  appName={name?.trim() ?? ''}
+                  onSetUpAzure={() => msTeamsQuickSetup.onSetUpAzure(form.getValues())}
+                />
+              ) : (
+                <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                  <MsTeamsManualSetup
+                    appId={typeof typedClientId === 'string' ? typedClientId : undefined}
+                    appName={name?.trim() ?? ''}
+                    canDeploy={!isReadOnly && !!name?.trim() && !!typedClientId && !!typedSecretKey && !!typedTenantId}
+                    isDeploying={!!msTeamsManualSetup?.isDeploying}
+                    onDeployBot={() => msTeamsManualSetup?.onDeployBot(form.getValues())}
+                    credentialFields={
+                      <div className="flex flex-col gap-3">
+                        {providerCredentials
+                          // Where the admin lands after consent; optional, and editable later in the drawer.
+                          .filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl)
+                          .map((credential) => (
+                            <CredentialSection
+                              key={credential.key}
+                              credential={credential}
+                              control={control}
+                              isReadOnly={isReadOnly}
+                              integrationId={integration?._id}
+                            />
+                          ))}
+                      </div>
+                    }
+                  />
+                </Protect>
+              ))}
             {isWhatsApp &&
               (whatsAppQuickSetup && setupMode === 'quick' ? (
                 <WhatsAppQuickSetup

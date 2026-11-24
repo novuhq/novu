@@ -16,6 +16,7 @@ import { IntegrationFormData } from '../types';
 import { AddProviderPicker } from './add-provider-picker';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { useMsTeamsStoreSetup } from './hooks/use-msteams-store-setup';
 import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
 import { type QuickSetupResult, useWhatsAppStoreSignup } from './hooks/use-whatsapp-store-signup';
 import { IntegrationSettings } from './integration-settings';
@@ -135,6 +136,16 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   });
 
   const whatsAppSignup = useWhatsAppStoreSignup({
+    enabled: usesSetupLayout,
+    provider,
+    environments,
+    quickSetupResult,
+    setQuickSetupResult,
+    setupAttemptRef,
+    createIntegration,
+    onSaved: refreshIntegrations,
+  });
+  const msTeamsSetup = useMsTeamsStoreSetup({
     enabled: usesSetupLayout,
     provider,
     environments,
@@ -356,6 +367,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                     : undefined
                 }
                 whatsAppQuickSetup={whatsAppSignup.quickSetup}
+                msTeamsQuickSetup={msTeamsSetup.quickSetup}
+                msTeamsManualSetup={msTeamsSetup.manualSetup}
               />
             </div>
             {usesSetupLayout ? (
@@ -365,7 +378,11 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 formId={`integration-configuration-form-${provider.id}`}
                 isSubmitting={isPending || isSettingPrimary || isFinishingQuickSetup}
                 canSubmit={
-                  formState.isValid && !isCreatingSlackApp && !whatsAppSignup.isConnecting && !isFinishingQuickSetup
+                  formState.isValid &&
+                  !isCreatingSlackApp &&
+                  !whatsAppSignup.isConnecting &&
+                  !msTeamsSetup.isStarting &&
+                  !isFinishingQuickSetup
                 }
               />
             ) : (

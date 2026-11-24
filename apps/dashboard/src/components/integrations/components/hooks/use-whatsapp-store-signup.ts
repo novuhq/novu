@@ -21,8 +21,10 @@ import type { IntegrationFormData } from '../../types';
 export type QuickSetupResult = {
   integrationId: string;
   environmentId: string;
-  /** Slack: the app Novu created. */
+  /** Slack: the app Novu created. Microsoft Teams: the client ID of the app registration Novu created. */
   appId?: string;
+  /** Microsoft Teams: true once the Microsoft sign-in was opened, from when the Azure resources are polled. */
+  isAzureSetupStarted?: boolean;
   /** WhatsApp: what Embedded Signup saves the credentials onto, and the number once it has. */
   integrationIdentifier?: string;
   isWhatsAppConnected?: boolean;
