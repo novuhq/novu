@@ -1107,6 +1107,30 @@ export class IntegrationsController {
     }
   }
 
+  // Declared before '/:integrationIdentifier/mobile-link', which would otherwise take 'telegram' as an identifier.
+  @Post('/telegram/mobile-link')
+  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
+    description:
+      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async createTelegramMobileLink(
+    @UserSession() user: UserSessionData
+  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
+    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
+      IssueIntegrationStoreTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
   @Post('/:integrationIdentifier/mobile-link')
   @ExternalApiAccessible()
   @KeylessAccessible()
@@ -1157,29 +1181,6 @@ export class IntegrationsController {
           `Provider "${providerId}" does not support mobile setup links via this endpoint.`
         );
     }
-  }
-
-  @Post('/telegram/mobile-link')
-  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
-  @ApiOperation({
-    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
-    description:
-      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
-  })
-  @ApiExcludeEndpoint()
-  @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
-  @HttpCode(HttpStatus.OK)
-  async createTelegramMobileLink(
-    @UserSession() user: UserSessionData
-  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
-    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
-      IssueIntegrationStoreTelegramMobileLinkCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-      })
-    );
   }
 
   @Post('/:integrationId/slack-quick-setup')

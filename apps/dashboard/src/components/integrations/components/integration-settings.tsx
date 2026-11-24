@@ -42,6 +42,7 @@ import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { SlackManualSetup } from './slack-manual-setup';
 import { SlackQuickSetup } from './slack-quick-setup';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
+import { TelegramQuickSetup } from './telegram-quick-setup';
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
@@ -73,7 +74,9 @@ type IntegrationConfigurationProps = {
   onRequestPrimary?: () => void;
   /** "manage": the sections of the manage drawer, for an existing integration. */
   layout?: 'default' | 'manage';
-  /** Turns on the Quick setup / Manual layout for Slack in the create flow. */
+  /** Turns on the Quick setup / Manual layout in the create flow, for providers that have it. */
+  setupLayout?: boolean;
+  /** Slack's Quick setup, which creates the app and the integration on the server. */
   slackQuickSetup?: {
     /** The Slack app Novu created, once "Create app" has run. */
     appId?: string;
@@ -85,6 +88,13 @@ type IntegrationConfigurationProps = {
 };
 
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
+const TELEGRAM_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/telegram';
+
+function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
+  if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+
+  return mode === 'quick' ? '~2 min' : '~5 min';
+}
 
 function generateSlug(name: string): string {
   return name
@@ -155,6 +165,7 @@ export function IntegrationSettings({
   testSubscriberId,
   onFormStateChange,
   onRequestPrimary,
+  setupLayout,
   slackQuickSetup,
   layout = 'default',
 }: IntegrationConfigurationProps) {
@@ -191,6 +202,15 @@ export function IntegrationSettings({
 
   const { handleSubmit, control, setValue, formState } = form;
 
+  // Opening the sheet from a link can render the form before the environment has loaded; start in it once it has.
+  const currentEnvironmentId = currentEnvironment?._id;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when the current environment loads
+  useEffect(() => {
+    if (integration || !currentEnvironmentId || form.getValues('environmentId')) return;
+    // setValue, not resetField: no input registers environmentId, and resetField skips unregistered fields.
+    form.setValue('environmentId', currentEnvironmentId);
+  }, [currentEnvironmentId]);
+
   // Primary can change outside the form (the drawer's "Make primary"), so the toggle follows it unless it was edited.
   // Making it primary also clears its rules on the server; keeping the old ones would send them back on the next
   // save, and the server would take primary away again.
@@ -205,11 +225,11 @@ export function IntegrationSettings({
   const usesSetupLayout =
     mode === 'create' &&
     usesProviderSetupLayout(provider.id) &&
-    !!slackQuickSetup &&
+    !!setupLayout &&
     !(agentOnboarding || searchParams.get('agent_onboarding') === 'true');
   const [setupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
   // Quick setup saves the credentials on the server, so the form is ready once the app exists.
-  const isQuickSetupMode = usesSetupLayout && setupMode === 'quick';
+  const isQuickSetupMode = usesSetupLayout && !!slackQuickSetup && setupMode === 'quick';
   const isFormReady = isQuickSetupMode ? !!slackQuickSetup?.appId : formState.isValid;
 
   const changedFields = describeChangedFields(formState.dirtyFields, provider);
@@ -444,7 +464,24 @@ export function IntegrationSettings({
     );
   }
 
-  if (usesSetupLayout && slackQuickSetup) {
+  if (usesSetupLayout) {
+    const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
+    const credentialList = (
+      <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+        <div className="flex flex-col gap-2 pb-4">
+          {providerCredentials.map((credential) => (
+            <CredentialSection
+              key={credential.key}
+              credential={credential}
+              control={control}
+              isReadOnly={isReadOnly}
+              integrationId={integration?._id}
+            />
+          ))}
+        </div>
+      </Protect>
+    );
+
     const generalSettings = (
       <GeneralSettings
         control={control}
@@ -480,59 +517,84 @@ export function IntegrationSettings({
             selectedId={environmentId}
             onSelect={(id) => setValue('environmentId', id, { shouldDirty: true })}
             // The integration is created with the app, so its environment is settled from then on.
-            disabled={isReadOnly || slackQuickSetup.isEnvironmentLocked}
+            disabled={isReadOnly || !!slackQuickSetup?.isEnvironmentLocked}
           />
           <SetupCard
             title={`Set up ${provider.displayName}`}
-            duration={setupMode === 'quick' ? '~2 min' : '~5 min'}
+            duration={getSetupDuration(provider.id, setupMode)}
             mode={setupMode}
             onModeChange={setSetupMode}
             footer={
               <>
-                <SetupTip>
-                  Add <code className="font-code">&lt;SlackConnectButton /&gt;</code> to your app so subscribers can
-                  connect their Slack workspace.{' '}
-                  <a href={SLACK_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
-                    Read docs
-                  </a>
-                  .
-                </SetupTip>
+                {isTelegram ? (
+                  <SetupTip>
+                    Add <code className="font-code">&lt;TelegramConnectButton /&gt;</code> to your app so subscribers
+                    can link their Telegram chat.{' '}
+                    <a href={TELEGRAM_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : (
+                  <SetupTip>
+                    Add <code className="font-code">&lt;SlackConnectButton /&gt;</code> to your app so subscribers can
+                    connect their Slack workspace.{' '}
+                    <a href={SLACK_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                )}
                 {provider.docReference && <SetupDocsLink href={provider.docReference} />}
               </>
             }
           >
-            {setupMode === 'quick' ? (
-              <SlackQuickSetup
-                appId={slackQuickSetup.appId}
-                isCreating={slackQuickSetup.isCreating}
-                canCreate={!isReadOnly && !!name?.trim()}
-                onCreateApp={(configToken, appName) =>
-                  slackQuickSetup.onCreateApp(form.getValues(), configToken, appName)
-                }
-              />
-            ) : (
-              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <SlackManualSetup
-                  appId={slackAppId}
-                  credentialFields={
-                    <div className="flex flex-col gap-3">
-                      {providerCredentials
-                        // The redirect URL is optional and the manifest already sets Novu's callback.
-                        .filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl)
-                        .map((credential) => (
-                          <CredentialSection
-                            key={credential.key}
-                            credential={credential}
-                            control={control}
-                            isReadOnly={isReadOnly}
-                            integrationId={integration?._id}
-                          />
-                        ))}
-                    </div>
+            {isTelegram &&
+              (setupMode === 'quick' ? (
+                <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                  <TelegramQuickSetup
+                    control={control}
+                    setValue={setValue}
+                    environment={environments?.find((environment) => environment._id === environmentId)}
+                    isReadOnly={isReadOnly}
+                  />
+                </Protect>
+              ) : (
+                credentialList
+              ))}
+            {slackQuickSetup &&
+              (setupMode === 'quick' ? (
+                <SlackQuickSetup
+                  appId={slackQuickSetup.appId}
+                  isCreating={slackQuickSetup.isCreating}
+                  canCreate={!isReadOnly && !!name?.trim()}
+                  onCreateApp={(configToken, appName) =>
+                    slackQuickSetup.onCreateApp(form.getValues(), configToken, appName)
                   }
                 />
-              </Protect>
-            )}
+              ) : (
+                <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                  <SlackManualSetup
+                    appId={slackAppId}
+                    credentialFields={
+                      <div className="flex flex-col gap-3">
+                        {providerCredentials
+                          // The redirect URL is optional and the manifest already sets Novu's callback.
+                          .filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl)
+                          .map((credential) => (
+                            <CredentialSection
+                              key={credential.key}
+                              credential={credential}
+                              control={control}
+                              isReadOnly={isReadOnly}
+                              integrationId={integration?._id}
+                            />
+                          ))}
+                      </div>
+                    }
+                  />
+                </Protect>
+              ))}
           </SetupCard>
           <AdvancedSettings>
             {generalSettings}

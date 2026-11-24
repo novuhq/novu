@@ -115,7 +115,7 @@ export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/c
 
 /** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
 export function usesProviderSetupLayout(providerId?: string) {
-  return providerId === ChatProviderIdEnum.Slack;
+  return providerId === ChatProviderIdEnum.Slack || providerId === ChatProviderIdEnum.Telegram;
 }
 
 const SECURE_CREDENTIALS = [
