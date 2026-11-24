@@ -307,6 +307,17 @@ When the same field is set in more than one place, Novu merges the objects in th
 
 A higher layer replaces the same field. Fields it leaves unset keep the value from the layer below. Arrays replace as a whole. Trigger overrides are keyed by provider id, so `overrides.providers.slack` applies to every Slack integration that sends the step. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
+## File attachments
+
+Chat steps do not have an attachments field, and Novu does not upload files such as PDFs or CSVs to chat providers. This differs from email steps, which accept [attachments](/platform/integrations/email#sending-attachments).
+
+To share a file in a chat message:
+
+- **Link to the file.** Host the file yourself, for example behind a signed URL, and add the URL to the message as a link or a link button.
+- **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or the `Image` element in a [Framework card](/framework/typescript/steps/chat#rich-card). The URL must be absolute and reachable by the chat provider.
+
+Some providers accept media in their own message format, such as WhatsApp `image` and `document` messages. You can send those fields with a [provider content override](#provider-content-overrides) or a [trigger override](/platform/integrations/trigger-overrides). What is possible depends on the provider's API, so check the provider's page. Slack and Microsoft Teams do not support file attachments through Novu. See [Slack](/platform/integrations/chat/slack#file-attachments) and [Microsoft Teams](/platform/integrations/chat/ms-teams#file-attachments).
+
 ## Supported providers
 
 Here are the chat providers that are currently supported by Novu. Select any provider to see its detailed setup guide.
