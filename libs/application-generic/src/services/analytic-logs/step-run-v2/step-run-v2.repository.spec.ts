@@ -50,7 +50,7 @@ describe('StepRunV2Repository', () => {
       vi.unstubAllEnvs();
     });
 
-    it('inserts directly when no batch service is provided', async () => {
+    it('inserts directly without waiting for the flush when no batch service is provided', async () => {
       vi.stubEnv('NODE_ENV', 'production');
       const { repository, clickhouseService } = buildRepository();
       const rows = [{ step_run_id: 'job-1' } as StepRunV2Row];
@@ -58,7 +58,10 @@ describe('StepRunV2Repository', () => {
       await repository.insertMany(rows);
 
       expect(clickhouseService.insert).toHaveBeenCalledTimes(1);
-      expect(clickhouseService.insert.mock.calls[0].slice(0, 2)).toEqual(['step_runs_v2', rows]);
+      expect(clickhouseService.insert).toHaveBeenCalledWith('step_runs_v2', rows, {
+        asyncInsert: true,
+        waitForAsyncInsert: false,
+      });
     });
 
     it('buffers each row in the batch service instead of inserting', async () => {
@@ -68,15 +71,35 @@ describe('StepRunV2Repository', () => {
 
       await repository.insertMany(rows);
 
+      const batchConfig = {
+        maxBatchSize: 1000,
+        flushIntervalMs: 1000,
+        insertOptions: { asyncInsert: true, waitForAsyncInsert: false },
+      };
       expect(clickhouseService.insert).not.toHaveBeenCalled();
-      expect(batchService.add.mock.calls.map(([table, row]) => [table, row])).toEqual([
-        ['step_runs_v2', rows[0]],
-        ['step_runs_v2', rows[1]],
+      expect(batchService.add.mock.calls).toEqual([
+        ['step_runs_v2', rows[0], batchConfig],
+        ['step_runs_v2', rows[1], batchConfig],
       ]);
-      expect(batchService.add.mock.calls[0][2]).toMatchObject({ maxBatchSize: 1000, flushIntervalMs: 1000 });
     });
 
-    it('inserts directly under test even with a batch service, so reads see the row at once', async () => {
+    it('reads batch size, flush interval and insert options from the environment', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('STEP_RUNS_V2_BATCH_SIZE', '250');
+      vi.stubEnv('STEP_RUNS_V2_FLUSH_INTERVAL_MS', '5000');
+      vi.stubEnv('STEP_RUNS_V2_WAIT_ASYNC_INSERT', 'true');
+      const { repository, batchService } = buildRepository({ withBatchService: true });
+
+      await repository.insertMany([{ step_run_id: 'job-1' } as StepRunV2Row]);
+
+      expect(batchService.add.mock.calls[0][2]).toEqual({
+        maxBatchSize: 250,
+        flushIntervalMs: 5000,
+        insertOptions: { asyncInsert: true, waitForAsyncInsert: true },
+      });
+    });
+
+    it('inserts synchronously under test even with a batch service, so reads see the row at once', async () => {
       vi.stubEnv('NODE_ENV', 'test');
       const { repository, clickhouseService, batchService } = buildRepository({ withBatchService: true });
       const rows = [{ step_run_id: 'job-1' } as StepRunV2Row];
@@ -84,7 +107,10 @@ describe('StepRunV2Repository', () => {
       await repository.insertMany(rows);
 
       expect(batchService.add).not.toHaveBeenCalled();
-      expect(clickhouseService.insert).toHaveBeenCalledTimes(1);
+      expect(clickhouseService.insert).toHaveBeenCalledWith('step_runs_v2', rows, {
+        asyncInsert: false,
+        waitForAsyncInsert: true,
+      });
     });
 
     it('skips empty batches', async () => {

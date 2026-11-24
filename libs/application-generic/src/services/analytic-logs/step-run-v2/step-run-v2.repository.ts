@@ -7,15 +7,6 @@ import { STEP_RUNS_V2_DDL, StepRunV2ReadRow, StepRunV2Row, TABLE_NAME } from './
 
 export const STEP_RUNS_V2_MAX_READ_LIMIT = 1000;
 
-/**
- * Async insert without waiting for the server-side flush (sync and waiting under test), like the other log tables.
- * Waiting held one of the process's ClickHouse connections open for every job status change.
- */
-const STEP_RUNS_V2_INSERT_OPTIONS: InsertOptions = getInsertOptions(
-  process.env.STEP_RUNS_V2_ASYNC_INSERT,
-  process.env.STEP_RUNS_V2_WAIT_ASYNC_INSERT
-);
-
 const DEFAULT_BATCH_SIZE = 1000;
 const DEFAULT_FLUSH_INTERVAL_MS = 1000;
 
@@ -50,10 +41,19 @@ export type FindStepRunsV2ByWorkflowRunIdsParams = {
 
 @Injectable()
 export class StepRunV2Repository implements OnModuleInit {
+  /**
+   * Async insert without waiting for the server-side flush (sync and waiting under test), like the other log
+   * tables. Waiting held one of the process's ClickHouse connections open for every job status change.
+   */
+  private readonly insertOptions: InsertOptions = getInsertOptions(
+    process.env.STEP_RUNS_V2_ASYNC_INSERT,
+    process.env.STEP_RUNS_V2_WAIT_ASYNC_INSERT
+  );
+
   private readonly batchConfig = {
     maxBatchSize: readPositiveInt(process.env.STEP_RUNS_V2_BATCH_SIZE, DEFAULT_BATCH_SIZE),
     flushIntervalMs: readPositiveInt(process.env.STEP_RUNS_V2_FLUSH_INTERVAL_MS, DEFAULT_FLUSH_INTERVAL_MS),
-    insertOptions: STEP_RUNS_V2_INSERT_OPTIONS,
+    insertOptions: this.insertOptions,
   };
 
   constructor(
@@ -97,7 +97,7 @@ export class StepRunV2Repository implements OnModuleInit {
       return;
     }
 
-    await this.clickhouseService.insert(TABLE_NAME, rows, STEP_RUNS_V2_INSERT_OPTIONS);
+    await this.clickhouseService.insert(TABLE_NAME, rows, this.insertOptions);
   }
 
   async findByWorkflowRunIds({
