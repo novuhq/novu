@@ -25,6 +25,11 @@ import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.use
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
+/**
+ * Callers that never get raw traces: a failed send's trace can hold the provider's request headers, credentials
+ * included, which API keys and OAuth never get. The dashboard keeps them, and so does the Copilot's internal token,
+ * whose tools trim them.
+ */
 const RAW_TRACE_EXCLUDED_SCHEMES = new Set<string>([
   ApiAuthSchemeEnum.API_KEY,
   ApiAuthSchemeEnum.KEYLESS,
@@ -85,6 +90,7 @@ export class ActivityController {
         requestId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
+        includeRawTraces: !RAW_TRACE_EXCLUDED_SCHEMES.has(user.scheme),
       })
     );
   }
@@ -138,8 +144,6 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        // Raw provider traces can hold the provider's credentials (a failed send's request headers), which API keys and
-        // OAuth never get. The dashboard keeps them, and so does the Copilot's internal token, whose tools trim them.
         includeRawTraces: !RAW_TRACE_EXCLUDED_SCHEMES.has(user.scheme),
       })
     );
