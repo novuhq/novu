@@ -375,6 +375,30 @@ describe('decideOpenCodeCall', () => {
     expect(decideOpenCodeCall(2, linked, tool('edit', { filePath: notes }, [notes]))).toEqual({ decision: 'allow' });
   });
 
+  it('refuses an edit or a command that reaches where a link inside what decides a run leads', () => {
+    // `.opencode` is the folder's own, and its settings are a link to a file kept elsewhere in the project.
+    mkdirSync(join(project, '.opencode'));
+    writeFileSync(join(project, 'docs', 'oc.json'), '{}');
+    symlinkSync('../docs/oc.json', join(project, '.opencode', 'opencode.json'));
+    writeFileSync(
+      join(project, 'opencode.json'),
+      JSON.stringify({ permission: { edit: 'allow', bash: { 'cp *': 'allow' } } })
+    );
+    const linked = readOpenCodeFolder(project, 2, home);
+    const settings = join(project, 'docs', 'oc.json');
+    const readme = join(project, 'docs', 'a.md');
+
+    for (const call of [tool('edit', { filePath: settings }, ['docs/oc.json']), shell('cp docs/a.md docs/oc.json')]) {
+      expect(decideOpenCodeCall(2, linked, call), call.name).toEqual({
+        decision: 'deny',
+        why: 'it reaches what decides a run',
+      });
+    }
+    expect(decideOpenCodeCall(2, linked, tool('edit', { filePath: readme }, ['docs/a.md']))).toEqual({
+      decision: 'allow',
+    });
+  });
+
   it('leaves what the shell works out for itself to a rule for every command', () => {
     expect(decideOpenCodeCall(2, folder, shell('cat docs/a.md | sh'))).toEqual({
       decision: 'deny',

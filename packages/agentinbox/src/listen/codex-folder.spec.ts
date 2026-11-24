@@ -273,6 +273,22 @@ describe('decideCodexTool: commands', () => {
     ).toBe('allow');
   });
 
+  it('refuses a change to where a link inside what decides a run leads', async () => {
+    // `.codex` is the folder's own, and its config is a link to a file kept elsewhere in the project.
+    const project = join(dir, 'app');
+    const at = (command: string) => ({ ...bash(command), cwd: project });
+    const check = rules({ cp: 'allow' });
+    mkdirSync(join(project, '.codex'));
+    writeFileSync(join(project, 'codex.toml'), '');
+    symlinkSync('../codex.toml', join(project, '.codex', 'config.toml'));
+
+    expect(await decideCodexTool(folder(), at('cp evil.toml codex.toml'), check)).toMatchObject({
+      decision: 'deny',
+      why: 'it would change the folder’s own settings or instructions',
+    });
+    expect((await decideCodexTool(folder(), at('cp a.md notes.md'), check)).decision).toBe('allow');
+  });
+
   it('reads the folder’s skills without a rule, and nothing past them', async () => {
     const none = rules({});
     const project = join(dir, 'app');

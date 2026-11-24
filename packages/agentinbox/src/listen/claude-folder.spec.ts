@@ -287,6 +287,17 @@ describe('decideForContact', () => {
     expect(decide(given, 'Edit', { file_path: join(root, 'shared', 'notes.md') })).toBe('allow');
   });
 
+  it('asks before changing where a link inside what decides a run leads', () => {
+    // `.claude` is the folder's own, and its settings are a link to a file kept elsewhere in the project.
+    writeFileSync(join(project, 'shared-settings.json'), '{}');
+    symlinkSync('../shared-settings.json', join(project, '.claude', 'settings.json'));
+    const given = folder({ allow: ['Edit', 'Bash(cp:*)'] });
+
+    expect(decide(given, 'Edit', { file_path: join(project, 'shared-settings.json') })).toBe('ask');
+    expect(decide(given, 'Bash', { command: 'cp evil.json shared-settings.json' })).toBe('ask');
+    expect(decide(given, 'Edit', { file_path: join(project, 'notes.md') })).toBe('allow');
+  });
+
   it('lets the folder’s skills, the MCP tools and the web hosts its rules name through', () => {
     const given = folder({
       allow: ['mcp__docs__search', 'mcp__crm', 'WebFetch(domain:docs.example.com)', 'Skill(release-notes)'],

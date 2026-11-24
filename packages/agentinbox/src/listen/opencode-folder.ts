@@ -2,11 +2,11 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import {
-  behindLink,
   chainParts,
   commandLeadsTo,
   commandReachesKey,
   type Decision,
+  decidingCheck,
   type KeyGuard,
   keyGuardFor,
   reachesKey,
@@ -220,8 +220,8 @@ export function decideOpenCodeCall(
   }
   if (
     isShell
-      ? commandLeadsTo(command, cwd, folder.guard.home, (path) => decidesRun(path, folder, DECIDING_WORDS))
-      : WRITES.includes(call.name) && pathsOf(call, folder).some((path) => decidesRun(path, folder, DECIDING_EDITS))
+      ? commandLeadsTo(command, cwd, folder.guard.home, decidesRun(folder, DECIDING_WORDS))
+      : WRITES.includes(call.name) && pathsOf(call, folder).some(decidesRun(folder, DECIDING_EDITS))
   ) {
     return { decision: 'deny', why: 'it reaches what decides a run' };
   }
@@ -285,18 +285,19 @@ const SEARCHES = ['glob', 'grep', 'list'];
 const WRITES = ['edit', 'write', 'patch'];
 
 /**
- * Whether a path, its links followed, is one of the files that decide a run, as the session's denies name them
- * (`patterns`): what they see is the name a call gives, which a link can hide. Where one of the folder's own leads
- * through a link counts too, outside the folder as well.
+ * A check of whether a path, its links followed, is one of the files that decide a run, as the session's denies name
+ * them (`patterns`): what they see is the name a call gives, which a link can hide. Where a link among the folder's
+ * own leads counts too, outside the folder as well.
  */
-function decidesRun(path: string, folder: OpenCodeFolder, patterns: readonly string[]): boolean {
+function decidesRun(folder: OpenCodeFolder, patterns: readonly string[]): (path: string) => boolean {
   const project = realPathOf(folder.project);
-  const real = realTarget(path);
+  const linked = decidingCheck(project, DECIDING_NAMES);
 
-  return (
-    patterns.some((pattern) => fitsPattern(relative(project, real), pattern)) ||
-    behindLink(real, project, DECIDING_NAMES)
-  );
+  return (path) => {
+    const real = realTarget(path);
+
+    return patterns.some((pattern) => fitsPattern(relative(project, real), pattern)) || linked(real);
+  };
 }
 
 /** The tools that reach files and commands, which the listener decides for a contact's session. */
