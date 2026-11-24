@@ -118,6 +118,7 @@ export function setSubscribersNotificationsFeedData(
     parameters: {
       page?: number | undefined;
       limit?: number | undefined;
+      feedIdentifier?: Array<string> | undefined;
       read?: boolean | undefined;
       seen?: boolean | undefined;
       payload?: string | undefined;
@@ -139,6 +140,7 @@ export function invalidateSubscribersNotificationsFeed(
       parameters: {
         page?: number | undefined;
         limit?: number | undefined;
+        feedIdentifier?: Array<string> | undefined;
         read?: boolean | undefined;
         seen?: boolean | undefined;
         payload?: string | undefined;

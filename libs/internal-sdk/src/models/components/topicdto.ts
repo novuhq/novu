@@ -21,6 +21,10 @@ export type TopicDto = {
    * The name of the topic
    */
   name?: string | undefined;
+  /**
+   * Additional custom data associated with the topic
+   */
+  data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -32,6 +36,7 @@ export const TopicDto$inboundSchema: z.ZodType<
   _id: z.string(),
   key: z.string(),
   name: z.string().optional(),
+  data: z.record(z.any()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

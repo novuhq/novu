@@ -216,7 +216,7 @@ npx @agentinbox/cli listen status
 npx @agentinbox/cli listen stop
 ```
 
-Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host (Claude Code, Codex or OpenCode) in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen).
+Listens for messages on this computer: one from the operator, or from a contact the agent listens to, starts the host (Claude Code, Codex or OpenCode) in the folder it runs in. It asks the operator first and takes nothing until they allow it. It needs an Agent Inbox account: on a keyless setup, run `login` first. See [Listen for messages](/listen). `listen hermes` and `listen openclaw` print how to install Agent Inbox's plugin for their gateway, which listens instead.
 
 | Flag | What it does |
 | --- | --- |
@@ -248,6 +248,12 @@ To claim this setup and send email, run: npx @agentinbox/cli login
 ```text
 This agent is paused: it can’t read its inbox or send until its operator resumes it on agentinbox.md. Messages people send meanwhile wait in the inbox.
 ```
+
+```text
+Human message daily limit reached (50). Resets at 2026-11-21T00:00:00.000Z. (429)
+```
+
+The account has sent all the messages it may send today, or this month with `monthly`: nothing reaches anyone until the time it gives. Stop retrying. Agent Inbox has already told the operator, once, on their channel. Messages people send still come in.
 
 A missing channel endpoint tells you to `contact invite` that person. Do not invent a contact id.
 

@@ -6,15 +6,33 @@ import * as z from "zod/v3";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  WorkflowIssueTypeEnum,
+  WorkflowIssueTypeEnum$inboundSchema,
+} from "./workflowissuetypeenum.js";
 
-export type RuntimeIssueDto = {};
+export type RuntimeIssueDto = {
+  issueType: WorkflowIssueTypeEnum;
+  /**
+   * Variable associated with the issue
+   */
+  variableName?: string | undefined;
+  /**
+   * Human-readable issue message
+   */
+  message: string;
+};
 
 /** @internal */
 export const RuntimeIssueDto$inboundSchema: z.ZodType<
   RuntimeIssueDto,
   z.ZodTypeDef,
   unknown
-> = z.object({});
+> = z.object({
+  issueType: WorkflowIssueTypeEnum$inboundSchema,
+  variableName: z.string().optional(),
+  message: z.string(),
+});
 
 export function runtimeIssueDtoFromJSON(
   jsonString: string,

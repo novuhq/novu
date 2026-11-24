@@ -51,6 +51,7 @@ export function buildChannelConnectionsListQuery(
       orderBy: request.orderBy,
       includeCursor: request.includeCursor,
       subscriberId: request.subscriberId,
+      connectionMode: request.connectionMode,
       channel: request.channel,
       providerId: request.providerId,
       integrationIdentifier: request.integrationIdentifier,
@@ -91,6 +92,7 @@ export function queryKeyChannelConnectionsList(
     orderBy?: string | undefined;
     includeCursor?: boolean | undefined;
     subscriberId?: string | undefined;
+    connectionMode?: operations.ConnectionMode | undefined;
     channel?: operations.Channel | undefined;
     providerId?: components.ProvidersIdEnum | undefined;
     integrationIdentifier?: string | undefined;
@@ -98,5 +100,5 @@ export function queryKeyChannelConnectionsList(
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {
-  return ["@novu/api", "Channel Connections", "list", parameters];
+  return ["@novu/api", "ChannelConnections", "list", parameters];
 }

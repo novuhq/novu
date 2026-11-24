@@ -45,6 +45,7 @@ export function buildSubscribersNotificationsFeedQuery(
     queryKey: queryKeySubscribersNotificationsFeed(request.subscriberId, {
       page: request.page,
       limit: request.limit,
+      feedIdentifier: request.feedIdentifier,
       read: request.read,
       seen: request.seen,
       payload: request.payload,
@@ -78,6 +79,7 @@ export function queryKeySubscribersNotificationsFeed(
   parameters: {
     page?: number | undefined;
     limit?: number | undefined;
+    feedIdentifier?: Array<string> | undefined;
     read?: boolean | undefined;
     seen?: boolean | undefined;
     payload?: string | undefined;

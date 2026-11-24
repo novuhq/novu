@@ -10,6 +10,7 @@ import {
   cliScript,
   connectorSteps,
   formatScript,
+  hostPluginScript,
   mcpScript,
   pluginScript,
   promptText,
@@ -36,7 +37,8 @@ function scriptOf(host: CommandHost, way: ReturnType<typeof waysOf>[number]) {
     case 'cli':
       return cliScript(host, { handle: '<agent>', code: '<code>' });
     case 'plugin':
-      return pluginScript(host);
+      // The Markdown is for agents: a gateway plugin's install is the one an agent runs with nobody to answer.
+      return host.plugin ? hostPluginScript(host, { handle: '<agent>', code: '<code>' }, 'agent') : pluginScript(host);
     case 'mcp':
       return mcpScript(host, MCP_URL);
     case 'connector':
@@ -85,7 +87,7 @@ describe('the host list', () => {
     }
   });
 
-  it('gives the plugin hosts a plugin, OpenCode, Cursor and Hermes the MCP server, and OpenClaw and General nothing more', () => {
+  it('gives the plugin hosts a plugin, OpenCode, Cursor, Hermes and OpenClaw the MCP server, and General nothing more', () => {
     const second = Object.fromEntries(
       HOSTS.filter((host): host is CommandHost => host.group === 'commands').map((host) => [
         host.id,
@@ -99,9 +101,14 @@ describe('the host list', () => {
       opencode: 'mcp-config',
       cursor: 'mcp-config',
       hermes: 'mcp-config',
-      openclaw: null,
+      openclaw: 'mcp-config',
       general: null,
     });
+    // Agent Inbox's own plugin for their gateway, which the box offers first.
+    expect(HOSTS.filter((host) => host.group === 'commands' && host.plugin).map((host) => host.id)).toEqual([
+      'hermes',
+      'openclaw',
+    ]);
   });
 
   it('never takes an address the site already has', () => {
@@ -141,6 +148,7 @@ describe('the host list', () => {
       'opencode',
       'cursor',
       'hermes',
+      'openclaw',
       'claude',
       'chatgpt',
       'grok',
@@ -271,6 +279,23 @@ describe('the Markdown for agents', () => {
     expect(hostMarkdown(hostOf('hermes'))).toContain(
       '# 2. Sign in to Agent Inbox in the browser, and say yes when Hermes asks to enable the tools'
     );
+    expect(hostMarkdown(hostOf('hermes'))).toContain('$ hermes plugins install agentinboxhq/hermes-plugin --enable');
+    expect(hostMarkdown(hostOf('hermes'))).toContain('ask your operator to run `hermes gateway restart`');
+    expect(hostMarkdown(hostOf('openclaw'))).toContain(
+      '$ openclaw mcp add AgentInbox --url https://mcp.agentinbox.md --transport streamable-http --auth oauth'
+    );
+    expect(hostMarkdown(hostOf('openclaw'))).toContain('$ openclaw mcp login AgentInbox');
+  });
+
+  it('gives Hermes and OpenClaw the CLI after the dashboard’s ways, since it still connects them', () => {
+    for (const id of ['hermes', 'openclaw'] as const) {
+      const markdown = hostMarkdown(hostOf(id));
+
+      expect(markdown).toContain('## CLI');
+      expect(markdown).toContain('npx @agentinbox/cli connect <agent> --code <code> --yes');
+      expect(markdown.indexOf('## Plugin')).toBeLessThan(markdown.indexOf('## MCP'));
+      expect(markdown.indexOf('## MCP')).toBeLessThan(markdown.indexOf('## CLI'));
+    }
   });
 
   it('prints each way as the dashboard’s setup box does', () => {

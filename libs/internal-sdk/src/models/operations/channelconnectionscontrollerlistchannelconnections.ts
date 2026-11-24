@@ -27,6 +27,18 @@ export type ChannelConnectionsControllerListChannelConnectionsQueryParamOrderDir
   >;
 
 /**
+ * Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned connections, `shared` returns only shared (workspace-level) connections. Omit to return both.
+ */
+export const ConnectionMode = {
+  Subscriber: "subscriber",
+  Shared: "shared",
+} as const;
+/**
+ * Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned connections, `shared` returns only shared (workspace-level) connections. Omit to return both.
+ */
+export type ConnectionMode = ClosedEnum<typeof ConnectionMode>;
+
+/**
  * Filter by channel type (email, sms, push, chat, etc.).
  */
 export const Channel = {
@@ -35,6 +47,7 @@ export const Channel = {
   Sms: "sms",
   Chat: "chat",
   Push: "push",
+  Tool: "tool",
 } as const;
 /**
  * Filter by channel type (email, sms, push, chat, etc.).
@@ -73,6 +86,10 @@ export type ChannelConnectionsControllerListChannelConnectionsRequest = {
    */
   subscriberId?: string | undefined;
   /**
+   * Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned connections, `shared` returns only shared (workspace-level) connections. Omit to return both.
+   */
+  connectionMode?: ConnectionMode | undefined;
+  /**
    * Filter by channel type (email, sms, push, chat, etc.).
    */
   channel?: Channel | undefined;
@@ -108,6 +125,11 @@ export const ChannelConnectionsControllerListChannelConnectionsQueryParamOrderDi
   );
 
 /** @internal */
+export const ConnectionMode$outboundSchema: z.ZodNativeEnum<
+  typeof ConnectionMode
+> = z.nativeEnum(ConnectionMode);
+
+/** @internal */
 export const Channel$outboundSchema: z.ZodNativeEnum<typeof Channel> = z
   .nativeEnum(Channel);
 
@@ -121,6 +143,7 @@ export type ChannelConnectionsControllerListChannelConnectionsRequest$Outbound =
     orderBy?: string | undefined;
     includeCursor?: boolean | undefined;
     subscriberId?: string | undefined;
+    connectionMode?: string | undefined;
     channel?: string | undefined;
     providerId?: string | undefined;
     integrationIdentifier?: string | undefined;
@@ -144,6 +167,7 @@ export const ChannelConnectionsControllerListChannelConnectionsRequest$outboundS
     orderBy: z.string().optional(),
     includeCursor: z.boolean().optional(),
     subscriberId: z.string().optional(),
+    connectionMode: ConnectionMode$outboundSchema.optional(),
     channel: Channel$outboundSchema.optional(),
     providerId: components.ProvidersIdEnum$outboundSchema.optional(),
     integrationIdentifier: z.string().optional(),

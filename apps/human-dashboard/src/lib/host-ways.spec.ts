@@ -4,13 +4,16 @@ import {
   chatPrompt,
   cliCaption,
   cliScript,
+  codeScript,
   connectorSteps,
   copiesAlone,
   formatScript,
+  hostPluginScript,
   mcpCaption,
   mcpScript,
   pluginScript,
   promptText,
+  usesCode,
   wayLabel,
   waysOf,
 } from './host-ways';
@@ -33,14 +36,15 @@ describe('the picker', () => {
 });
 
 describe('the ways in', () => {
-  it('opens a coding agent on its plugin or MCP config, any other host on its commands, a chat app on the server', () => {
+  it('opens a coding agent on its plugin or MCP config, Hermes and OpenClaw on their own plugin, any other host on its commands, a chat app on the server', () => {
     expect(Object.fromEntries(HOSTS.map((host) => [host.id, waysOf(host)]))).toEqual({
       'claude-code': ['plugin', 'cli'],
       codex: ['plugin', 'cli'],
       opencode: ['mcp', 'cli'],
       cursor: ['mcp', 'cli'],
-      hermes: ['cli', 'mcp'],
-      openclaw: ['cli'],
+      // Their CLI still connects them, but the box leaves it out.
+      hermes: ['plugin', 'mcp'],
+      openclaw: ['plugin', 'mcp'],
       general: ['cli'],
       claude: ['connector', 'prompt'],
       chatgpt: ['connector', 'prompt'],
@@ -51,8 +55,81 @@ describe('the ways in', () => {
   it('names each tab as its host does', () => {
     expect(wayLabel(chatApp('claude'), 'connector')).toBe('Connector');
     expect(wayLabel(chatApp('chatgpt'), 'connector')).toBe('Plugin');
-    expect(wayLabel(commandHost('hermes'), 'cli')).toBe('CLI');
+    expect(wayLabel(commandHost('hermes'), 'plugin')).toBe('Plugin');
+    expect(wayLabel(commandHost('general'), 'cli')).toBe('CLI');
     expect(wayLabel(chatApp('grok'), 'prompt')).toBe('Prompt');
+  });
+
+  it('puts the one-time code in the CLI’s commands and in Hermes’s and OpenClaw’s plugin, and nowhere else', () => {
+    expect(usesCode(commandHost('general'), 'cli')).toBe(true);
+    expect(usesCode(commandHost('hermes'), 'plugin')).toBe(true);
+    expect(usesCode(commandHost('openclaw'), 'plugin')).toBe(true);
+    expect(usesCode(commandHost('hermes'), 'mcp')).toBe(false);
+    // Claude Code's plugin signs in in the browser.
+    expect(usesCode(commandHost('claude-code'), 'plugin')).toBe(false);
+    expect(usesCode(chatApp('claude'), 'connector')).toBe(false);
+  });
+});
+
+describe('a host’s own plugin', () => {
+  it('installs it, connects it with the code, and restarts the gateway, asking nothing on the way', () => {
+    const script = hostPluginScript(commandHost('hermes'), DETAILS);
+
+    expect(formatScript(script)).toBe(
+      [
+        '# 1. Install the Agent Inbox plugin for Hermes',
+        '$ hermes plugins install agentinboxhq/hermes-plugin --enable',
+        '',
+        '# 2. Connect it to atlas',
+        '$ hermes agentinbox setup atlas --code BCDF-GHJK --yes --api-url https://www.agentinbox.md/api',
+        '',
+        '# 3. Restart the gateway, so messages to the agent reach it',
+        '$ hermes gateway restart',
+      ].join('\n')
+    );
+    // Pasted together: none of them asks a question that would take the next one as its answer.
+    expect(script.copy).toBe(
+      [
+        'hermes plugins install agentinboxhq/hermes-plugin --enable',
+        'hermes agentinbox setup atlas --code BCDF-GHJK --yes --api-url https://www.agentinbox.md/api',
+        'hermes gateway restart',
+      ].join('\n')
+    );
+    expect(codeScript(commandHost('hermes'), 'plugin', DETAILS)).toEqual(script);
+  });
+
+  it('installs OpenClaw’s from ClawHub, which OpenClaw installs from without asking', () => {
+    expect(hostPluginScript(commandHost('openclaw'), DETAILS).copy).toBe(
+      [
+        'openclaw plugins install clawhub:@agentinbox/openclaw',
+        'openclaw agentinbox setup atlas --code BCDF-GHJK --yes --api-url https://www.agentinbox.md/api',
+        'openclaw gateway restart',
+      ].join('\n')
+    );
+  });
+
+  it('gives an agent OpenClaw’s install that agrees ahead, and a person the one that asks them', () => {
+    const forAgent = hostPluginScript(commandHost('openclaw'), DETAILS, 'agent');
+
+    expect(forAgent.copy.split('\n')[0]).toBe(
+      'openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities'
+    );
+    expect(forAgent.lines).toContainEqual({
+      kind: 'command',
+      text: 'openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities',
+      prompt: '$',
+    });
+    expect(hostPluginScript(commandHost('openclaw'), DETAILS).copy).not.toContain('--accept-capabilities');
+    // Hermes asks nothing while it installs: the same for both.
+    expect(hostPluginScript(commandHost('hermes'), DETAILS, 'agent').copy).toBe(
+      hostPluginScript(commandHost('hermes'), DETAILS).copy
+    );
+  });
+
+  it('leaves the API out where the page doesn’t know it', () => {
+    expect(hostPluginScript(commandHost('hermes'), { handle: '<agent>', code: '<code>' }).copy).toContain(
+      'hermes agentinbox setup <agent> --code <code> --yes\n'
+    );
   });
 });
 

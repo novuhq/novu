@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Compare resources between environments
  *
  * @remarks
- * Compares workflows and other resources between the source and target environments, returning detailed diff information including additions, modifications, and deletions.
+ * Compares workflows and other resources between the development and target environments, returning detailed diff information including additions, modifications, and deletions.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

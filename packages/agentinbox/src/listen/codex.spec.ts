@@ -1,4 +1,4 @@
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,11 +7,13 @@ import {
   CODEX_MISSING_HELP,
   CODEX_SIGNED_OUT_HELP,
   codex,
+  contactThreadParams,
   providerOf,
   SANDBOX_NOTE,
   threadParams,
   unwrapShell,
 } from './codex';
+import type { CodexFolder } from './codex-folder';
 import type {
   HostAnswer,
   HostQuestion,
@@ -22,6 +24,7 @@ import type {
 } from './host-adapter';
 
 const FAKE_CODEX = fileURLToPath(new URL('./fake-codex.fixture.mjs', import.meta.url));
+const FAKE_HOOK = fileURLToPath(new URL('./fake-codex-hook.fixture.mjs', import.meta.url));
 
 let dir: string;
 
@@ -47,6 +50,19 @@ function installFake(): string {
   return bin;
 }
 
+/** Each start of the fake, with its arguments and the folder the listener gave its hook. */
+function starts(): Array<{ argv: string[]; folder?: CodexFolder }> {
+  try {
+    return readFileSync(join(dir, 'codex.log'), 'utf8')
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line))
+      .filter((entry) => entry.event === 'start');
+  } catch {
+    return [];
+  }
+}
+
 /** Each thread the fake opened or went on with, and how. */
 function threads(): Array<{ method: string; params: Record<string, unknown> }> {
   try {
@@ -70,6 +86,7 @@ interface Told {
   asked: PermissionQuestion[];
   questions: HostQuestion[];
   lost: Array<{ error: string; sessionGone: boolean }>;
+  refused: Array<{ subject: PermissionQuestion['subject']; why: string }>;
 }
 
 /** A session of the fake `codex app-server`, with what it told the core. */
@@ -78,6 +95,8 @@ function open(
     resume?: string;
     permission?: (question: PermissionQuestion, signal: AbortSignal) => Promise<PermissionAnswer>;
     question?: (question: HostQuestion) => Promise<HostAnswer | undefined>;
+    /** A contact's run, its tool calls checked by the stand-in for the listener's check. */
+    contact?: boolean;
   } = {}
 ): { session: HostSession; told: Told; turn: () => Promise<TurnEnded>; lost: () => Promise<void> } {
   const told: Told = {
@@ -89,6 +108,7 @@ function open(
     asked: [],
     questions: [],
     lost: [],
+    refused: [],
   };
   const waiting: Array<(turn: TurnEnded) => void> = [];
   const losing: Array<() => void> = [];
@@ -98,6 +118,15 @@ function open(
       project: dir,
       resume: options.resume,
       instructions: 'Agent Inbox started you.',
+      ...(options.contact
+        ? {
+            contact: {
+              conversationId: 'conv_1',
+              tools: { command: '/usr/local/bin/agentinbox', args: ['conversation-tools', '--conversation', 'conv_1'] },
+              check: { command: process.execPath, args: [FAKE_HOOK] },
+            },
+          }
+        : {}),
     },
     {
       progress: (note, subject, toolId) => {
@@ -126,6 +155,7 @@ function open(
         told.lost.push({ error, sessionGone });
         losing.shift()?.();
       },
+      refused: (subject, why) => told.refused.push({ subject, why }),
     }
   );
   const turn = () =>
@@ -167,6 +197,60 @@ describe('threadParams', () => {
       threadParams({ project: '/work/app', instructions: 'Agent Inbox started you.', own: 'Answer in French.' })
         .developerInstructions
     ).toBe(`Answer in French.\n\nAgent Inbox started you.\n\n${SANDBOX_NOTE}`);
+  });
+});
+
+describe('contactThreadParams', () => {
+  const folder: CodexFolder = {
+    project: '/work/app',
+    rules: [],
+    skills: [],
+    servers: ['docs'],
+    otherServers: ['AgentInbox', 'github'],
+    otherSkills: ['/Users/ada/.codex/skills/mine/SKILL.md'],
+    otherHooks: [],
+    features: ['view_image'],
+    instructions: 'Answer in French.',
+  };
+  const helper = { command: '/usr/local/bin/agentinbox', args: ['conversation-tools', '--conversation', 'conv_1'] };
+
+  it('asks before every command its rules don’t allow, writes nothing by itself, and keeps only the folder’s instructions', () => {
+    expect(
+      contactThreadParams({ project: '/work/app', instructions: 'Agent Inbox started you.' }, folder, helper)
+    ).toMatchObject({
+      cwd: '/work/app',
+      approvalPolicy: 'untrusted',
+      approvalsReviewer: 'user',
+      sandbox: 'read-only',
+      developerInstructions: 'Answer in French.\n\nAgent Inbox started you.',
+    });
+  });
+
+  it('goes without what the folder doesn’t give it, and gets its own conversation tools', () => {
+    const { config } = contactThreadParams({ project: '/work/app', instructions: 'Hi.' }, folder, helper) as {
+      config: Record<string, Record<string, unknown>>;
+    };
+
+    expect(config.features).toMatchObject({ apps: false, plugins: false, multi_agent: false, shell_tool: false });
+    expect(config.features).not.toHaveProperty('view_image');
+    expect(config.web_search).toBe('disabled');
+    expect(config.mcp_servers).toEqual({
+      AgentInbox: { enabled: false },
+      github: { enabled: false },
+      this_conversation: { ...helper, env_vars: ['INBOX_CONFIG'] },
+    });
+    expect(config.skills).toEqual({ config: [{ path: '/Users/ada/.codex/skills/mine/SKILL.md', enabled: false }] });
+  });
+
+  it('keeps the shell when the folder has rules or skills, and the folder’s own web search', () => {
+    const { config } = contactThreadParams(
+      { project: '/work/app', instructions: 'Hi.' },
+      { ...folder, rules: ['/work/app/.codex/rules/default.rules'], webSearch: 'live' },
+      helper
+    ) as { config: Record<string, Record<string, unknown>> };
+
+    expect(config.features).not.toHaveProperty('shell_tool');
+    expect(config.web_search).toBe('live');
   });
 });
 
@@ -585,5 +669,166 @@ describe('a Codex session', { timeout: 15_000 }, () => {
 
     expect((await turn()).text).toBe('Parent marks: none.');
     await session.close();
+  });
+});
+
+describe('a contact’s Codex session', { timeout: 15_000 }, () => {
+  const REFUSED_REST =
+    'In a contact’s conversation only what this folder’s settings allow works, so don’t look for another way.';
+
+  /** The folder's own Codex settings: its rules, and its settings as the fake reads them. */
+  function folderWith(rules: string[], settings: Record<string, unknown> = {}): void {
+    mkdirSync(join(dir, '.codex', 'rules'), { recursive: true });
+    writeFileSync(join(dir, '.codex', 'rules', 'default.rules'), rules.join('\n'));
+    writeFileSync(join(dir, '.codex', 'fake-config.json'), JSON.stringify(settings));
+  }
+
+  it('reads what the folder allows first, then runs with the listener’s check, trusted, and the operator’s own hooks off', async () => {
+    vi.stubEnv('FAKE_CODEX_USER_HOOK', '1');
+    vi.stubEnv('FAKE_CODEX_MCP_SERVERS', JSON.stringify({ github: { url: 'https://api.githubcopilot.com/mcp/' } }));
+    folderWith(['prefix_rule(pattern = ["npm", "test"], decision = "allow")'], {
+      mcp_servers: { docs: { command: 'docs-mcp' } },
+    });
+    const { session, turn } = open({ contact: true });
+
+    session.send(message('m1', 'hello'));
+    expect((await turn()).text).toBe('Echo: hello');
+
+    const [read, run] = starts();
+    const hook = JSON.stringify(`${process.execPath} ${FAKE_HOOK}`);
+    expect(read.argv).toEqual([
+      'app-server',
+      '-c',
+      'features.hooks=true',
+      '-c',
+      `hooks.PreToolUse=[{matcher="*",hooks=[{type="command",command=${hook},timeout=60}]}]`,
+    ]);
+    expect(read.folder).toBeUndefined();
+    expect(run.argv.slice(0, 5)).toEqual(read.argv);
+    expect(run.argv.at(-1)).toMatch(
+      /^hooks\.state=\{"\/<session-flags>\/config\.toml:pre_tool_use:0:0"=\{trusted_hash="sha256:[0-9a-f]+"\},"\/fake-home\/\.codex\/config\.toml:permission_request:0:0"=\{enabled=false\}\}$/
+    );
+    const project = realpathSync(dir);
+    expect(run.folder).toMatchObject({
+      rules: [join(project, '.codex', 'rules', 'default.rules')],
+      servers: ['docs'],
+      otherServers: ['github'],
+    });
+    expect(threads()[0].params).toMatchObject({
+      approvalPolicy: 'untrusted',
+      sandbox: 'read-only',
+      config: {
+        web_search: 'disabled',
+        mcp_servers: { github: { enabled: false }, this_conversation: { command: '/usr/local/bin/agentinbox' } },
+      },
+    });
+  });
+
+  it('refuses what the check refuses, without asking anyone, and logs it', async () => {
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'ask:cat .env'));
+
+    expect((await turn()).text).toBe(
+      `Blocked: Refused: \`cat .env\`, as no rule in the folder’s Codex settings allows it. ${REFUSED_REST}`
+    );
+    expect(told.asked).toEqual([]);
+    expect(told.refused).toEqual([
+      { subject: { kind: 'tool', name: '`cat .env`' }, why: 'no rule in the folder’s Codex settings allows it' },
+    ]);
+  });
+
+  it('runs what a rule allows without asking, and asks the operator what a rule says to ask', async () => {
+    vi.stubEnv('FAKE_HOOK_ALLOW', '^npm ');
+    folderWith([
+      'prefix_rule(pattern = ["npm", "test"], decision = "allow")',
+      'prefix_rule(pattern = ["npm", "publish"], decision = "prompt")',
+    ]);
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'ask:npm test'));
+    expect((await turn()).text).toBe('Ran npm test (accept).');
+    expect(told.asked).toEqual([]);
+    session.send(message('m2', 'ask:npm publish'));
+    expect((await turn()).text).toBe('Ran npm publish (accept).');
+    expect(told.asked.map((question) => question.action)).toEqual(['run `npm publish`']);
+  });
+
+  it('refuses what Codex asks about that no rule allows, should the check have let it through, and tells the agent', async () => {
+    vi.stubEnv('FAKE_HOOK_ALLOW', '^git ');
+    folderWith([]);
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'ask:git push'));
+
+    expect((await turn()).text).toBe(
+      `Not allowed (decline). Told: Refused: \`git push\`, as no rule in the folder’s Codex settings allows it. ${REFUSED_REST}`
+    );
+    expect(told.asked).toEqual([]);
+    expect(told.refused).toEqual([
+      { subject: { kind: 'command', command: 'git push' }, why: 'no rule in the folder’s Codex settings allows it' },
+    ]);
+  });
+
+  it('reads the folder’s skills without asking, and nothing else that way', async () => {
+    vi.stubEnv('FAKE_HOOK_ALLOW', '^cat ');
+    mkdirSync(join(dir, '.agents', 'skills', 'hello'), { recursive: true });
+    writeFileSync(join(dir, '.agents', 'skills', 'hello', 'SKILL.md'), '# Hello');
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'ask:cat .agents/skills/hello/SKILL.md'));
+    expect((await turn()).text).toBe('Ran cat .agents/skills/hello/SKILL.md (accept).');
+    session.send(message('m2', 'ask:cat notes.txt'));
+    expect((await turn()).text).toMatch(/^Not allowed \(decline\)\. Told: Refused: `cat notes.txt`/);
+    expect(told.asked).toEqual([]);
+  });
+
+  it('refuses edits, which no rule of Codex’s allows', async () => {
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'edit:notes.txt'));
+
+    expect((await turn()).text).toBe(
+      `Edit: decline. Told: Refused: editing notes.txt, as Codex has no rule that allows edits. ${REFUSED_REST}`
+    );
+    expect(told.asked).toEqual([]);
+  });
+
+  it('uses its own conversation tools without asking anyone', async () => {
+    const { session, told, turn } = open({ contact: true });
+
+    session.send(message('m1', 'call:this_conversation.resolve'));
+
+    expect((await turn()).text).toBe('Called resolve of this_conversation.');
+    expect(told.subjects).toContainEqual({ kind: 'mcp', server: 'this_conversation', tool: 'resolve', input: {} });
+    expect(told.refused).toEqual([]);
+  });
+
+  it('has nothing but the conversation when Codex doesn’t load the folder’s settings', async () => {
+    vi.stubEnv('FAKE_CODEX_UNTRUSTED', '1');
+    folderWith(['prefix_rule(pattern = ["npm", "test"], decision = "allow")'], { web_search: 'live' });
+    const { session, turn } = open({ contact: true });
+
+    session.send(message('m1', 'hello'));
+    await turn();
+
+    expect(starts()[1].folder).toMatchObject({ rules: [], servers: [], features: [] });
+    expect(threads()[0].params.config).toMatchObject({ web_search: 'disabled', features: { shell_tool: false } });
+  });
+
+  it('gives the run up when Codex doesn’t trust the listener’s check', async () => {
+    vi.stubEnv('FAKE_CODEX_HOOKS_UNTRUSTED', '1');
+    const { session, told, lost } = open({ contact: true });
+
+    session.send(message('m1', 'hello'));
+    await lost();
+
+    expect(told.lost).toEqual([
+      {
+        error: 'Codex didn’t take the listener’s check for a contact’s conversation: it is untrusted.',
+        sessionGone: false,
+      },
+    ]);
+    expect(threads()).toEqual([]);
   });
 });

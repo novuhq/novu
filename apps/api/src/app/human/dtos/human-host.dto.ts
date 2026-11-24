@@ -123,7 +123,8 @@ export class HumanHostDto {
 
   @ApiProperty({
     enum: [...AGENT_HOST_VIAS],
-    description: 'The way it came in last: the `agentinbox` CLI, or the hosted MCP server.',
+    description:
+      'The way it came in last: the `agentinbox` CLI, the hosted MCP server, or the host’s own plugin (Hermes, OpenClaw).',
   })
   via: AgentHostVia;
 

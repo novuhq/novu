@@ -172,7 +172,27 @@ test('template header keeps the same destinations in its mobile menu', async ({ 
   const menu = page.locator('header').getByRole('button', { name: 'Menu', exact: true });
   await menu.click();
   const navigation = page.locator('header').getByRole('navigation', { name: 'Header navigation' });
-  await expect(navigation.getByRole('link')).toHaveText(['for robots', 'npm', 'github']);
+  await navigation.getByRole('button', { name: 'channels', exact: true }).click();
+  expect(
+    await navigation.getByRole('link').evaluateAll((links) => links.map((link) => link.getAttribute('href')))
+  ).toEqual([
+    '/email',
+    '/email/openclaw',
+    '/telegram',
+    '/telegram/openclaw',
+    '/telegram/claude-code',
+    '/telegram/hermes',
+    '/slack',
+    '/slack/claude-code',
+    '/slack/openclaw',
+    '/slack/codex',
+    '/slack/cursor',
+    '/use-cases',
+    '/pricing',
+    'https://github.com/novuhq/novu/tree/next/packages/agentinbox',
+    '/inbox',
+    'https://cal.com/team/novu/novu-meeting',
+  ]);
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await expect(menu).toBeFocused();

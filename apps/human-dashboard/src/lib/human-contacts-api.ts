@@ -32,6 +32,11 @@ export type Contact = {
    * operator; to anyone else once the operator turns it on here.
    */
   listenTo: boolean;
+  /**
+   * Whether their messages start the agent's hosts with everything the operator's get, the hosts asking them, not
+   * the operator. Always for the operator; for anyone else only while `listenTo` is on and the operator turned it on.
+   */
+  fullAccess: boolean;
   /** The newest invite link that still works. Missing when none was sent, or it expired or was declined. */
   invite?: ContactInvite;
   createdAt: string;
@@ -97,11 +102,12 @@ export type EmailLinkSent = {
   retryAfterSeconds: number;
 };
 
-type ApiContact = Omit<Contact, 'name' | 'channels' | 'status' | 'isOperator' | 'listenTo'> & {
+type ApiContact = Omit<Contact, 'name' | 'channels' | 'status' | 'isOperator' | 'listenTo' | 'fullAccess'> & {
   channels?: ContactChannel[];
   status?: ContactStatus;
   isOperator?: boolean;
   listenTo?: boolean;
+  fullAccess?: boolean;
 };
 
 /** One page of the operator's contacts. */
@@ -146,6 +152,22 @@ export function setContactListenTo(
 }
 
 /**
+ * Turns a contact's "Full access" switch on or off: whether their messages start the agent's hosts with everything
+ * the operator's get, the hosts asking them, not the operator. It only turns on while the agent listens to them
+ * (400 `contact_not_listened_to`). Only the dashboard may, as with "Listen to".
+ */
+export function setContactFullAccess(
+  account: HumanAccount,
+  contactId: string,
+  fullAccess: boolean
+): Promise<{ id: string; listenTo: boolean; fullAccess: boolean }> {
+  return requestForAccount(account, `/v1/human/contacts/${encodeURIComponent(contactId)}`, {
+    method: 'PATCH',
+    body: { fullAccess },
+  });
+}
+
+/**
  * Makes one of the channels the operator is connected on the one agents use when a message names none.
  * The API turns down a channel they aren't connected on (400 `channel_not_connected`).
  */
@@ -179,6 +201,8 @@ function toContact(contact: ApiContact): Contact {
     isOperator: contact.isOperator === true,
     // An older API doesn't say; the agent always listens to the operator.
     listenTo: contact.isOperator === true || contact.listenTo === true,
+    // An older API doesn't say: off for everyone but the operator, who always has everything.
+    fullAccess: contact.isOperator === true || contact.fullAccess === true,
     invite: contact.invite,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,

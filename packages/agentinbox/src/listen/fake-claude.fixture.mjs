@@ -3,11 +3,15 @@
 // `system/init` with the session at each turn, `command_lifecycle` for each message, `can_use_tool` control
 // requests (with `permission_suggestions`) answered with `control_response`, `control_cancel_request` for an
 // open question on an interrupt, `interrupt` with `cancel_queued`, and one `result` per turn listing the
-// messages it answered. `--session-id` names a new session; `--resume` goes on with a kept one.
+// messages it answered. `--session-id` names a new session; `--resume` goes on with a kept one. An `initialize`
+// control request with `PreToolUse` hooks is answered (with an error when FAKE_CLAUDE_INITIALIZE is `error`, and
+// never when it is `never`), and then each tool it uses goes past them first, as a `hook_callback`: a `deny`
+// blocks it, the ones its settings allow too.
 //
 // What it does depends on the words in the person's message:
 //   ask:<command>        asks to run <command> and reports what it was told
 //   ask-twice:<command>  asks for <command> twice in one turn; a grant for the session skips the second
+//   allowed:<command>    runs <command>, which its settings allow: only the hooks see it first
 //   sleep:<ms>           works for <ms> (a tool that doesn't ask); messages that come meanwhile join the turn
 //   reply-myself[:<ms>]  asks to run `npx @agentinbox/cli reply <conversation> …`, then replies through the
 //                        fake API, as that command would; with <ms>, works that long more after replying
@@ -158,6 +162,40 @@ function control(request) {
   });
 }
 
+/** The `PreToolUse` hooks the client gave with `initialize`: their callback ids. */
+let preToolUse = [];
+
+/**
+ * What the hooks said of the last tool, besides a deny: `allow` runs it without asking, as Claude Code does, and
+ * `ask` asks even when its settings allow it.
+ */
+let hookSaid;
+
+/**
+ * Runs a tool past the client's `PreToolUse` hooks, as Claude Code does before anything else, the tools its
+ * settings allow too: the reason when one denies it, `aborted` on an interrupt, or undefined.
+ */
+async function hooked(toolName, toolInput, interruptible) {
+  hookSaid = undefined;
+  for (const callbackId of preToolUse) {
+    const answer = await interruptible(
+      control({
+        subtype: 'hook_callback',
+        callback_id: callbackId,
+        input: { hook_event_name: 'PreToolUse', tool_name: toolName, tool_input: toolInput },
+        tool_use_id: `toolu_${randomUUID()}`,
+      })
+    );
+    if (answer === 'aborted') return 'aborted';
+    const said = answer?.hookSpecificOutput;
+    if (said?.permissionDecision === 'deny')
+      return `PreToolUse:${toolName} hook error: ${said.permissionDecisionReason}`;
+    if (said?.permissionDecision === 'allow' || said?.permissionDecision === 'ask') hookSaid = said.permissionDecision;
+  }
+
+  return undefined;
+}
+
 function permission(command) {
   return control({
     subtype: 'can_use_tool',
@@ -180,7 +218,9 @@ function permission(command) {
 
 /** Asks to run `command` unless the session was given it; true when it may run. */
 async function mayRun(command, interruptible) {
-  if (granted.has(command)) return true;
+  const blocked = await hooked('Bash', { command }, interruptible);
+  if (blocked) return blocked === 'aborted' ? 'aborted' : { behavior: 'deny', message: blocked };
+  if (granted.has(command) || hookSaid === 'allow') return true;
   const decision = await interruptible(permission(command));
   if (decision === 'aborted' || decision?.behavior !== 'allow') return decision === 'aborted' ? 'aborted' : decision;
   for (const update of decision.updatedPermissions ?? []) {
@@ -250,10 +290,31 @@ const BEHAVIORS = [
     async (rest, { interruptible }) => {
       const command = rest.trim();
       tool(command);
+      const blocked = await hooked('Bash', { command }, interruptible);
+      if (blocked === 'aborted') return {};
+      if (blocked) return { answer: `Not allowed: ${blocked}` };
+      if (hookSaid === 'allow') return { answer: `Ran ${command}.` };
       const decision = await interruptible(permission(command));
       if (decision === 'aborted') return {};
 
       return { answer: decision.behavior === 'allow' ? `Ran ${command}.` : `Not allowed: ${decision.message}` };
+    },
+  ],
+  [
+    'allowed:',
+    async (rest, { interruptible }) => {
+      // A command its settings allow: nothing asks, but the hooks see it first.
+      const command = rest.trim();
+      tool(command);
+      const blocked = await hooked('Bash', { command }, interruptible);
+      if (blocked === 'aborted') return {};
+      if (!blocked && hookSaid === 'ask') {
+        const decision = await interruptible(permission(command));
+        if (decision === 'aborted') return {};
+        if (decision.behavior !== 'allow') return { answer: `Not allowed: ${decision.message}` };
+      }
+
+      return { answer: blocked ? `Not allowed: ${blocked}` : `Ran ${command}, which its settings allow.` };
     },
   ],
   [
@@ -271,6 +332,9 @@ const BEHAVIORS = [
       const conversation = conversationOf(content);
       const command = `npx @agentinbox/cli reply ${conversation} "I replied myself; all good."`;
       tool(command);
+      const blocked = await hooked('Bash', { command }, interruptible);
+      if (blocked === 'aborted') return {};
+      if (blocked) return { answer: `Not allowed: ${blocked}` };
       const decision = await interruptible(permission(command));
       if (decision === 'aborted') return {};
       if (decision.behavior !== 'allow') return { answer: `Not allowed: ${decision.message}` };
@@ -295,6 +359,18 @@ const BEHAVIORS = [
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
         session_id: sessionId,
       });
+      // Its settings allow it, so nothing asks; the hooks still see it first.
+      const blocked = await hooked('Bash', { command }, interruptible);
+      if (blocked === 'aborted') return {};
+      if (blocked) {
+        out({
+          type: 'user',
+          message: { content: [{ type: 'tool_result', tool_use_id: id, content: blocked, is_error: true }] },
+          session_id: sessionId,
+        });
+
+        return { answer: `Not allowed: ${blocked}` };
+      }
       await interruptible(sleep(Number(rest)));
       out({
         type: 'user',
@@ -348,6 +424,9 @@ const BEHAVIORS = [
         message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
         session_id: sessionId,
       });
+      const blocked = await hooked('Bash', { command }, interruptible);
+      if (blocked === 'aborted') return {};
+      if (blocked) return { answer: `Not allowed: ${blocked}` };
       // It reaches someone else, so it isn't one of its own commands: the operator allows it first.
       const decision = await interruptible(permission(command));
       if (decision === 'aborted') return {};
@@ -385,18 +464,24 @@ const BEHAVIORS = [
         message: { content: [{ type: 'tool_use', name: toolName, input }] },
         session_id: sessionId,
       });
-      const decision = await interruptible(
-        control({
-          subtype: 'can_use_tool',
-          tool_name: toolName,
-          display_name: toolName.split('__').pop(),
-          input,
-          tool_use_id: `toolu_${randomUUID()}`,
-          permission_suggestions: [
-            { type: 'addRules', rules: [{ toolName }], behavior: 'allow', destination: 'localSettings' },
-          ],
-        })
-      );
+      const blocked = await hooked(toolName, input, interruptible);
+      if (blocked === 'aborted') return {};
+      if (blocked) return { answer: `Not allowed: ${blocked}` };
+      const decision =
+        hookSaid === 'allow'
+          ? { behavior: 'allow' }
+          : await interruptible(
+              control({
+                subtype: 'can_use_tool',
+                tool_name: toolName,
+                display_name: toolName.split('__').pop(),
+                input,
+                tool_use_id: `toolu_${randomUUID()}`,
+                permission_suggestions: [
+                  { type: 'addRules', rules: [{ toolName }], behavior: 'allow', destination: 'localSettings' },
+                ],
+              })
+            );
       if (decision === 'aborted') return {};
       if (decision.behavior !== 'allow') return { answer: `Not allowed: ${decision.message}` };
       if (toolName.endsWith('__inbox_reply')) {
@@ -594,6 +679,47 @@ if (leftover) {
   });
 }
 
+/** Takes the client's hooks and says so, or turns them down, as FAKE_CLAUDE_INITIALIZE says. */
+function initialize(message) {
+  const answer = process.env.FAKE_CLAUDE_INITIALIZE;
+  if (answer !== 'error') {
+    preToolUse = (message.request.hooks?.PreToolUse ?? []).flatMap((matcher) => matcher.hookCallbackIds ?? []);
+  }
+  if (answer === 'never') return;
+  out({
+    type: 'control_response',
+    response:
+      answer === 'error'
+        ? { subtype: 'error', request_id: message.request_id, error: 'Hooks are off here.' }
+        : { subtype: 'success', request_id: message.request_id, response: {} },
+  });
+}
+
+/** Stops the turn, as Claude Code does on `interrupt`: open questions withdrawn, queued messages dropped if asked. */
+function interrupt(message) {
+  // Open questions are withdrawn first, as Claude Code does.
+  for (const requestId of turn?.open ?? []) {
+    if (controlAnswers.has(requestId)) {
+      out({ type: 'control_cancel_request', request_id: requestId });
+      controlAnswers.delete(requestId);
+    }
+  }
+  const cancelled = message.request.cancel_queued ? queued.splice(0).map((queuedMessage) => queuedMessage.uuid) : [];
+  out({
+    type: 'control_response',
+    response: {
+      subtype: 'success',
+      request_id: message.request_id,
+      response: { still_queued: queued.map((queuedMessage) => queuedMessage.uuid), cancelled },
+    },
+  });
+  for (const uuid of cancelled) lifecycle(uuid, 'cancelled');
+  if (turn) {
+    turn.aborted = true;
+    turn.abort?.();
+  }
+}
+
 createInterface({ input: process.stdin })
   .on('line', (line) => {
     if (!line.trim()) return;
@@ -614,30 +740,10 @@ createInterface({ input: process.stdin })
       controlAnswers.delete(message.response.request_id);
       // A success carries its answer; an error is the answer.
       answer?.(message.response.response ?? message.response);
+    } else if (message.type === 'control_request' && message.request.subtype === 'initialize') {
+      initialize(message);
     } else if (message.type === 'control_request' && message.request.subtype === 'interrupt') {
-      // Open questions are withdrawn first, as Claude Code does.
-      for (const requestId of turn?.open ?? []) {
-        if (controlAnswers.has(requestId)) {
-          out({ type: 'control_cancel_request', request_id: requestId });
-          controlAnswers.delete(requestId);
-        }
-      }
-      const cancelled = message.request.cancel_queued
-        ? queued.splice(0).map((queuedMessage) => queuedMessage.uuid)
-        : [];
-      out({
-        type: 'control_response',
-        response: {
-          subtype: 'success',
-          request_id: message.request_id,
-          response: { still_queued: queued.map((queuedMessage) => queuedMessage.uuid), cancelled },
-        },
-      });
-      for (const uuid of cancelled) lifecycle(uuid, 'cancelled');
-      if (turn) {
-        turn.aborted = true;
-        turn.abort?.();
-      }
+      interrupt(message);
     }
   })
   .on('close', () => {

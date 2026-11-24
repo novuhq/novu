@@ -60,6 +60,11 @@ export interface OpenOptions {
   resume?: string;
   /** What the host is told for the whole session about being started for a message: who writes, how to answer them. */
   instructions: string;
+  /**
+   * A contact's run (`contact-guard.ts`): it may do only what the folder's own settings allow, never the operator's
+   * own settings, and it reads and resolves its conversation with the tools `contact.tools` serves.
+   */
+  contact?: ContactRun;
   /** Where the host's environment comes from; the process's by default. */
   env?: NodeJS.ProcessEnv;
 }
@@ -106,6 +111,21 @@ export interface SessionHandlers {
   askQuestion(question: HostQuestion, signal: AbortSignal): Promise<HostAnswer | undefined>;
   /** The host's process ended by itself. `sessionGone`: the session to go on with doesn't exist any more. */
   lost(error: string, sessionGone: boolean): void;
+  /** In a contact's run, the host refused this by the folder's settings, without asking anyone: for the log. */
+  refused(subject: PermissionQuestion['subject'], why: string): void;
+}
+
+/** A contact's run: what its session needs besides the folder's own settings. */
+export interface ContactRun {
+  /** The conversation the run answers: the only one its tools read and resolve. */
+  conversationId: string;
+  /** How the host starts the MCP server with those tools (`conversation-tools.ts`), over stdio. */
+  tools: HostProgram;
+  /**
+   * How a host that checks each tool call with a program of its own runs the listener's check
+   * (`agentinbox contact-check`): Codex, as its hook.
+   */
+  check: HostProgram;
 }
 
 export interface TurnEnded {
@@ -125,6 +145,8 @@ export interface PermissionQuestion {
     | { kind: 'network'; hosts: string[] }
     /** A tool of an MCP server, by the name the host gave the server, with what it is called with. */
     | { kind: 'mcp'; server: string; tool: string; input: Record<string, unknown> }
+    /** A skill the agent loads, by its name. */
+    | { kind: 'skill'; name: string }
     | { kind: 'tool'; name: string }
     | { kind: 'other' };
   /** What the host wants to do, as the operator reads it: "run `npm publish`", "edit ~/notes/todo.md". */

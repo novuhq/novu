@@ -2,7 +2,7 @@
 
 import { Check, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, type ReactNode, useEffect, useRef, useState, useTransition } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState, useTransition } from 'react';
 
 import { DRAWER_HEADER, FOCUSED_INPUT } from '@/components/channels/setup-parts';
 import { SlackSetup } from '@/components/channels/slack-setup';
@@ -24,11 +24,13 @@ import type { SlackSetupState } from '@/lib/human-slack-setup';
 import type { TelegramSetupState } from '@/lib/human-telegram-setup';
 import { cn } from '@/lib/utils';
 import type { WhatsAppWindow } from '@/lib/whatsapp-window';
+import { Switch } from '../configure/agent-settings';
 import { ChannelLogo } from '../configure/channel-logo';
 import { CrossFade } from '../inbox/cross-fade';
-import { sendEmailLinkAction, setDefaultChannelAction } from './actions';
+import { sendEmailLinkAction, setDefaultChannelAction, setFullAccessAction, setListenToAction } from './actions';
 import { ContactAvatar } from './contact-avatar';
 import { ShortDate } from './short-date';
+import { useSavedSwitch } from './use-saved-switch';
 import { useWhatsAppWindow } from './use-whatsapp-window';
 
 /** The order the card lists the channels in, as the design does. */
@@ -269,9 +271,15 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
 
   const card = <IdCard contact={contact} agentHandle={agentHandle} connected={connected} defaultVia={defaultVia} />;
 
-  // Someone else's card has nothing to change: their default and their email are theirs.
+  // On someone else's card, only what they may have the agent do is the operator's to change: their default and their
+  // email are theirs.
   if (!contact.isOperator) {
-    return card;
+    return (
+      <>
+        {card}
+        <ContactSwitches contact={contact} agentHandle={agentHandle} />
+      </>
+    );
   }
 
   return (
@@ -327,6 +335,109 @@ function ContactCardBody({ contact, agentHandle, signInEmail, start, open, onAdd
 
       <EmailNote contact={contact} agentHandle={agentHandle} signInEmail={signInEmail} />
     </>
+  );
+}
+
+/**
+ * What the operator decides about someone else, under their card. "Listen to", as in the table: whether their messages
+ * start the agent. "Full access": whether those messages start it with everything the operator's get, the agent asking
+ * them, not the operator, before doing what needs an OK. Full access only turns on while the agent listens to them,
+ * and turning that off turns it off too. A change shows at once and is saved behind it; when saving fails the switch
+ * goes back and its row says why.
+ */
+function ContactSwitches({ contact, agentHandle }: { contact: Contact; agentHandle: string }) {
+  const fullAccess = useSavedSwitch(contact.fullAccess, (next) => setFullAccessAction(contact.id, next));
+  const listenTo = useSavedSwitch(contact.listenTo, async (next) => {
+    const result = await setListenToAction(contact.id, next);
+    if (result.ok && !next) {
+      // The API turned full access off with it. The page may never show that on its own: saves made one after the
+      // other can reach it together, and then it goes from off straight to off.
+      fullAccess.reset(false);
+    }
+
+    return result;
+  });
+  const listening = listenTo.shown;
+  const agent = agentHandle.charAt(0).toUpperCase() + agentHandle.slice(1);
+
+  return (
+    <ul className="overflow-hidden rounded-xl border border-border">
+      <SwitchRow
+        title="Listen to"
+        hint={`${contact.name} can talk with ${agentHandle} and use only what you allow.`}
+        on={listening}
+        busy={listenTo.saving}
+        error={listenTo.error}
+        onChange={listenTo.change}
+      />
+      <SwitchRow
+        title="Full access"
+        hint={
+          listening
+            ? `${contact.name} can have ${agentHandle} do anything you can, and approves what it asks. Only for someone you’d trust with ${agentHandle}’s key.`
+            : `${agent} needs to listen to ${contact.name} first.`
+        }
+        on={listening && fullAccess.shown}
+        busy={fullAccess.saving}
+        // Not before "Listen to" is saved: the API turns full access on only for someone the agent listens to.
+        disabled={!listening || listenTo.saving}
+        error={fullAccess.error}
+        onChange={fullAccess.change}
+      />
+    </ul>
+  );
+}
+
+type SwitchRowProps = {
+  title: string;
+  hint: string;
+  on: boolean;
+  busy: boolean;
+  disabled?: boolean;
+  /** Why the row's last change couldn't be saved. It folds in under the hint. */
+  error?: string;
+  onChange: (next: boolean) => void;
+};
+
+/** One row of the card's switches, as the rows of Configure's settings: the title, the hint, and the switch. */
+function SwitchRow({ title, hint, on, busy, disabled = false, error, onChange }: SwitchRowProps) {
+  // The last error stays in place while it folds away.
+  const [lastError, setLastError] = useState(error);
+  if (error && error !== lastError) {
+    setLastError(error);
+  }
+  const id = useId();
+
+  return (
+    <li className="flex items-center gap-3 border-b border-border px-4 py-3.25 last:border-b-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 id={`${id}-title`} className="text-[13px] leading-4.5 font-medium text-foreground">
+          {title}
+        </h3>
+        {/* Keyed by its words, so new words fade in. */}
+        <p
+          key={hint}
+          id={`${id}-hint`}
+          className="animate-overlay-in text-xs leading-4 text-secondary motion-reduce:animate-none"
+        >
+          {hint}
+        </p>
+        {/* Folded, it gives back the gap above it. */}
+        <Fold open={Boolean(error)} closedClassName="-mt-0.5">
+          <p role="alert" className="text-xs leading-4 text-danger">
+            {lastError}
+          </p>
+        </Fold>
+      </div>
+      <Switch
+        labelledBy={`${id}-title`}
+        describedBy={`${id}-hint`}
+        on={on}
+        busy={busy}
+        disabled={disabled}
+        onChange={onChange}
+      />
+    </li>
   );
 }
 
