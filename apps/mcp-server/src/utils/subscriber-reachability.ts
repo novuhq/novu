@@ -322,7 +322,7 @@ export function computeSubscriberReachability(
 
 	return {
 		channels: verdicts.map((verdict) => verdict.toResult()),
-		checked: checkedSources(failures),
+		checked: checkedSources(failures, input),
 		dashboardPath: subscriberDashboardPath(subscriber.subscriberId),
 		environmentId: subscriber.environmentId ?? null,
 		notes: preferenceNotes(input),
@@ -900,7 +900,10 @@ function preferenceNotes(input: SubscriberReachabilityInput): string[] {
 	return notes;
 }
 
-function checkedSources(failures: Partial<Record<ReachabilitySource, ReadFailure>>): string[] {
+function checkedSources(
+	failures: Partial<Record<ReachabilitySource, ReadFailure>>,
+	input: SubscriberReachabilityInput,
+): string[] {
 	const sources: ReachabilitySource[] = [
 		"integrations",
 		"preferences",
@@ -908,10 +911,16 @@ function checkedSources(failures: Partial<Record<ReachabilitySource, ReadFailure
 		"endpoints",
 		"connections",
 	];
+	// Connections were checked only when the endpoints reference some and the lookup cap skipped none.
+	const connectionsRead =
+		input.endpoints.some((endpoint) => endpoint.connectionIdentifier) &&
+		(input.limits?.uncheckedConnectionIds ?? []).length === 0;
 
 	return [
 		"profile",
-		...sources.filter((source) => !failures[source]).map((source) => SOURCE_LABELS[source]),
+		...sources
+			.filter((source) => !failures[source] && (source !== "connections" || connectionsRead))
+			.map((source) => SOURCE_LABELS[source]),
 	];
 }
 

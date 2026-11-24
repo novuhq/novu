@@ -435,6 +435,22 @@ describe("computeSubscriberReachability", () => {
 		expect(result.checked).not.toContain("channel connections");
 	});
 
+	it("lists connections as checked only when every referenced one was read", () => {
+		const checked = (overrides: Partial<SubscriberReachabilityInput>) =>
+			computeSubscriberReachability(input(overrides)).checked;
+
+		expect(checked({})).toContain("channel connections");
+		// No endpoint references a connection, or the endpoints read failed: none was read.
+		expect(checked({ endpoints: [] })).not.toContain("channel connections");
+		expect(checked({ endpoints: [], failures: { endpoints: { status: 500 } } })).not.toContain(
+			"channel connections",
+		);
+		// The lookup cap skipped one; its endpoint says so.
+		expect(
+			checked({ connections: [], limits: { uncheckedConnectionIds: ["slack-conn"] } }),
+		).not.toContain("channel connections");
+	});
+
 	it("only leaves an endpoint unverified when its own connection read failed", () => {
 		const chat = channelOf(
 			{
@@ -1187,6 +1203,37 @@ describe("get_subscriber_reachability", () => {
 		).toEqual([" Jane@Acme.com ", "Jane@Acme.com", "jane@acme.com"]);
 	});
 
+	it("takes endpoint truncation from the page's next cursor, not the page size", async () => {
+		const page = (next: string | null) => ({
+			body: {
+				data: Array.from({ length: 100 }, (_, index) => ({
+					channel: "chat",
+					connectionIdentifier: "slack-conn",
+					contextKeys: [],
+					identifier: `ep-${index}`,
+					integrationIdentifier: "slack-1",
+					providerId: "slack",
+					type: "slack_channel",
+				})),
+				next,
+			},
+			status: 200,
+		});
+		const chatDetails = async (next: string | null) => {
+			stubApi(setupRoutes({ "/v1/channel-endpoints": page(next) }));
+			const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
+
+			return reachability.channels.find(
+				(verdict: { channel: string }) => verdict.channel === "chat",
+			).details;
+		};
+		const note = "Only the first 100 endpoints were read; others weren't checked";
+
+		// Exactly 100 endpoints: the API returns no next cursor.
+		expect(await chatDetails(null)).not.toContain(note);
+		expect(await chatDetails("cursor-2")).toContain(note);
+	});
+
 	it("retries an email in lowercase", async () => {
 		const fetchMock = stubApi(
 			setupRoutes({
@@ -1294,6 +1341,22 @@ describe("subscriber tools", () => {
 		const [, init] = fetchMock.mock.calls[0];
 		expect(init?.method).toBe("PATCH");
 		expect(JSON.parse(String(init?.body))).toEqual({ channels: { sms: false } });
+	});
+
+	it("logs the subscriberId once when preferences are updated", async () => {
+		stubApi({ "/v2/subscribers/sub_8f21/preferences": { global: {} } });
+		const log = vi.spyOn(console, "log").mockImplementation(() => {});
+		const client = await connectAllTools(tokenAccessors("api-key"));
+
+		await callTool(client, "update_subscriber_preferences", {
+			channels: { sms: false },
+			subscriberId: "sub_8f21",
+		});
+
+		expect(log).toHaveBeenCalledWith(
+			"Successfully updated subscriber preferences for sub_8f21",
+		);
+		log.mockRestore();
 	});
 
 	it("still accepts all five channels and refuses none", async () => {

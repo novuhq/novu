@@ -204,10 +204,12 @@ async function checkReachability(
 		read(context, "/v1/integrations"),
 		read(context, `/v2/subscribers/${subscriberId}/preferences`),
 		read(context, `/v2/subscribers/${subscriberId}/preferences?criticality=critical`),
-		read(context, `/v1/channel-endpoints?${endpointsQuery.toString()}`),
+		// The page keeps its envelope: `next` says whether more endpoints exist.
+		read(context, `/v1/channel-endpoints?${endpointsQuery.toString()}`, { unwrapData: false }),
 	]);
 
-	const endpointList = endpoints.ok ? asArray(endpoints.data).map(toEndpoint) : [];
+	const endpointsPage = endpoints.ok ? asRecord(endpoints.data) : undefined;
+	const endpointList = asArray(endpointsPage?.data).map(toEndpoint);
 	const referencedConnectionIds = unique(
 		endpointList
 			.map((endpoint) => endpoint.connectionIdentifier)
@@ -257,7 +259,7 @@ async function checkReachability(
 			: [],
 		// One page of endpoints and a capped number of connection lookups: what's left over is "not checked".
 		limits: {
-			endpointsTruncated: endpointList.length >= ENDPOINTS_LIMIT,
+			endpointsTruncated: Boolean(endpointsPage?.next),
 			uncheckedConnectionIds: referencedConnectionIds.slice(MAX_CONNECTION_LOOKUPS),
 		},
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
