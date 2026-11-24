@@ -4,12 +4,14 @@ import {
   IChatOptions,
   IChatProvider,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
 import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { ILineSentMessagesResponse } from './line.types';
 
 type LineMessageType = 'text' | 'flex' | 'image' | 'sticker';
@@ -30,6 +32,15 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  /** Reads the bot's own profile (`GET /v2/bot/info`), which any valid channel access token can do. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get('https://api.line.me/v2/bot/info', {
+        headers: { Authorization: `Bearer ${this.config.channelAccessToken}` },
+      })
+    );
   }
 
   async sendMessage(

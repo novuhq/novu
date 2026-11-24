@@ -1,5 +1,7 @@
+import type { IIntegration } from '@novu/shared';
 import {
   AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
   ChatProviderIdEnum,
   ConfigConfiguration,
   CredentialsKeyEnum,
@@ -7,6 +9,15 @@ import {
   IConfigCredential,
   SmsProviderIdEnum,
 } from '@novu/shared';
+
+export const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
+  [ChannelTypeEnum.IN_APP]: 'In-app',
+  [ChannelTypeEnum.EMAIL]: 'Email',
+  [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.CHAT]: 'Chat',
+  [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.TOOL]: 'Tool',
+};
 
 export function isDemoIntegration(providerId: string) {
   return (
@@ -89,4 +100,35 @@ export function cleanCredentials(credentials: Record<string, unknown>): Record<s
   }
 
   return cleaned;
+}
+
+/** Primary integrations can't have routing conditions; making one primary removes them. */
+export function hasRoutingConditions(integration: IIntegration) {
+  return (
+    (!!integration.rules && Object.keys(integration.rules).length > 0) ||
+    (!!integration.conditions && integration.conditions.length > 0)
+  );
+}
+
+// Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
+export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
+
+/** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
+export function usesProviderSetupLayout(providerId?: string) {
+  return providerId === ChatProviderIdEnum.Slack;
+}
+
+const SECURE_CREDENTIALS = [
+  CredentialsKeyEnum.ApiKey,
+  CredentialsKeyEnum.ApiToken,
+  CredentialsKeyEnum.SecretKey,
+  CredentialsKeyEnum.Token,
+  CredentialsKeyEnum.Password,
+  CredentialsKeyEnum.ServiceAccount,
+  CredentialsKeyEnum.SigningSecret,
+];
+
+/** Secrets: masked in the form, and the fields a Reconnect asks the user to replace. */
+export function isSecureCredential(credential: IConfigCredential) {
+  return SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum);
 }

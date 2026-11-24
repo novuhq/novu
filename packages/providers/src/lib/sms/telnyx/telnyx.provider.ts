@@ -5,12 +5,15 @@ import {
   ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
+  IVerifyCredentialsResponse,
   SmsEventStatusEnum,
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { ITelnyxCLient } from './telnyx.interface';
 
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
@@ -30,11 +33,21 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     this.telnyxClient = Telnyx(config.apiKey);
   }
 
+  /** Reads the account balance (`GET /v2/balance`): read-only, and any valid API key can call it. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get('https://api.telnyx.com/v2/balance', {
+        headers: { Authorization: `Bearer ${this.config.apiKey}` },
+      })
+    );
+  }
+
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const telynxResponse = await this.telnyxClient.messages.create(
+      // biome-ignore lint/suspicious/noExplicitAny: pre-existing; provider SDK request type differs from the transformed body
       this.transform<any>(bridgeProviderData, {
         to: options.to,
         text: options.content,
@@ -49,6 +62,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     };
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; untyped provider webhook payload
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.data.id);
@@ -57,6 +71,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.data.id];
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; untyped provider webhook payload
   parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       body = body.find((item) => item.data.id === identifier);

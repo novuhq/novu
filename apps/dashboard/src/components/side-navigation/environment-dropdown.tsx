@@ -29,7 +29,16 @@ type EnvironmentDropdownProps = {
   localEntry?: LocalEnvironmentEntry;
   /** Whether the Local pseudo-environment is the active selection. */
   isLocalSelected?: boolean;
+  /** Environments with an integration whose provider rejects its credentials. */
+  failingEnvironmentIds?: ReadonlySet<string>;
 };
+
+/** Red dot for an environment with a failing integration. */
+const FailingDot = ({ label }: { label: string }) => (
+  <span className="bg-error-base/15 ml-auto flex size-4 shrink-0 items-center justify-center rounded-full">
+    <span className="bg-error-base size-1.5 rounded-full" role="img" aria-label={label} />
+  </span>
+);
 
 /**
  * Mirrors `EnvironmentBranchIcon`'s rounded-square badge so the Local entry
@@ -67,7 +76,10 @@ export const EnvironmentDropdown = ({
   disabled,
   localEntry,
   isLocalSelected,
+  failingEnvironmentIds,
 }: EnvironmentDropdownProps) => {
+  const isFailing = (environment: IEnvironment) => !!failingEnvironmentIds?.has(environment._id);
+  const hasFailingEnvironment = !!failingEnvironmentIds?.size;
   const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   const developmentEnvironments = data?.filter((env) => env.type === EnvironmentTypeEnum.DEV) || [];
@@ -95,6 +107,11 @@ export const EnvironmentDropdown = ({
               </div>
             )}
           </SelectValue>
+          {hasFailingEnvironment && !isLocalSelected && (
+            <span className="ml-auto group-focus-within:hidden group-hover:hidden">
+              <FailingDot label="An environment has a failing integration" />
+            </span>
+          )}
           <SelectIcon asChild>
             <RiExpandUpDownLine className="ml-auto size-4 opacity-0 transition duration-300 ease-out group-focus-within:opacity-100 group-hover:opacity-100" />
           </SelectIcon>
@@ -111,6 +128,7 @@ export const EnvironmentDropdown = ({
               <div className="flex items-center gap-2">
                 <EnvironmentBranchIcon size="sm" environment={environment} />
                 <TruncatedText className="max-w-[190px]">{environment.name}</TruncatedText>
+                {isFailing(environment) && <FailingDot label="Has a failing integration" />}
               </div>
             </SelectItem>
           ))}
@@ -128,6 +146,7 @@ export const EnvironmentDropdown = ({
                   <div className="flex items-center gap-2">
                     <EnvironmentBranchIcon size="sm" environment={environment} />
                     <TruncatedText className="max-w-[190px]">{environment.name}</TruncatedText>
+                    {isFailing(environment) && <FailingDot label="Has a failing integration" />}
                   </div>
                 </SelectItem>
               ))}

@@ -5,12 +5,15 @@ import {
   ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
+  IVerifyCredentialsResponse,
   SmsEventStatusEnum,
 } from '@novu/stateless';
 
 import { Client as PlivoClient } from 'plivo';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Plivo;
@@ -27,6 +30,18 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
   ) {
     super();
     this.plivoClient = new PlivoClient(config.accountSid, config.authToken);
+  }
+
+  /** Reads the account details (`GET /v1/Account/{authId}/`), which any valid Auth ID/token pair can do. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    const authId = this.config.accountSid ?? '';
+
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(
+        `https://api.plivo.com/v1/Account/${encodeURIComponent(authId)}/`,
+        { auth: { username: authId, password: this.config.authToken ?? '' } }
+      )
+    );
   }
 
   async sendMessage(
@@ -52,6 +67,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     };
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; untyped provider webhook payload
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.messageUuid);
@@ -60,6 +76,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.messageUuid];
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; untyped provider webhook payload
   parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       body = body.find((item) => item.messageUuid === identifier);

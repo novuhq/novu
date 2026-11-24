@@ -26,6 +26,7 @@ export * from './http-client';
 export * from './in-memory-lru-cache';
 export * from './in-memory-provider';
 export * from './inbound-mail-logging';
+export { IntegrationHealthService } from './integration-health/integration-health.service';
 export {
   MessageInteractionResult,
   MessageInteractionService,

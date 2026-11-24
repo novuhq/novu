@@ -7,7 +7,9 @@ import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { AgentsEarlyAccessDto } from './dtos/agents-early-access.dto';
 import { CreateSupportThreadDto } from './dtos/create-thread.dto';
+import { DataSourcesEarlyAccessDto } from './dtos/data-sources-early-access.dto';
 import { PlainCardRequestDto } from './dtos/plain-card.dto';
+import { ProviderRequestDto } from './dtos/provider-request.dto';
 import { PlainCardsGuard } from './guards/plain-cards.guard';
 import { CreateSupportThreadUsecase, PlainCardsUsecase } from './usecases';
 import { CreateSupportThreadCommand } from './usecases/create-thread.command';
@@ -34,21 +36,58 @@ export class SupportController {
   @RequireAuthentication()
   @Post('agents-early-access')
   async submitAgentsEarlyAccess(@Body() body: AgentsEarlyAccessDto, @UserSession() user: UserSessionData) {
-    const organization = await this.organizationRepository.findById(user.organizationId);
-    const organizationName = organization?.name ?? '';
+    await this.triggerEarlyAccessEmail('early-access-request-agents-internal-email', user, {
+      howAgentRunsToday: body.howAgentRunsToday.label,
+      whatAgentDoes: body.whatAgentDoes,
+      plannedProviders: body.plannedProviders.map((p) => p.label),
+    });
 
+    return {
+      success: true,
+    };
+  }
+
+  @RequireAuthentication()
+  @Post('data-sources-early-access')
+  async submitDataSourcesEarlyAccess(@Body() body: DataSourcesEarlyAccessDto, @UserSession() user: UserSessionData) {
+    await this.triggerEarlyAccessEmail('early-access-request-data-sources-internal-email', user, {
+      plannedSources: body.plannedSources.map((source) => source.label),
+      useCase: body.useCase,
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  @RequireAuthentication()
+  @Post('provider-request')
+  async submitProviderRequest(@Body() body: ProviderRequestDto, @UserSession() user: UserSessionData) {
+    await this.triggerEarlyAccessEmail('provider-request-internal-email', user, {
+      providerName: body.providerName,
+      useCase: body.useCase ?? '',
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  /** Emails the team about a request from the dashboard, with the requester's organization and email added. */
+  private async triggerEarlyAccessEmail(
+    workflowId: string,
+    user: UserSessionData,
+    payload: Record<string, string | string[]>
+  ) {
     const secretKey = process.env.NOVU_INTERNAL_SECRET_KEY;
 
     if (!secretKey) {
-      this.logger.warn(
-        'NOVU_INTERNAL_SECRET_KEY is not set; skipping early-access-request-agents-internal-email trigger'
-      );
+      this.logger.warn(`NOVU_INTERNAL_SECRET_KEY is not set; skipping ${workflowId} trigger`);
 
-      return {
-        success: true,
-      };
+      return;
     }
 
+    const organization = await this.organizationRepository.findById(user.organizationId);
     const novu = new Novu({
       security: {
         secretKey,
@@ -56,24 +95,18 @@ export class SupportController {
     });
 
     await novu.trigger({
-      workflowId: 'early-access-request-agents-internal-email',
+      workflowId,
       to: {
         subscriberId: 'dima-internal',
         email: 'dima@novu.co',
       },
       payload: {
-        howAgentRunsToday: body.howAgentRunsToday.label,
-        whatAgentDoes: body.whatAgentDoes,
-        plannedProviders: body.plannedProviders.map((p) => p.label),
+        ...payload,
         organizationId: user.organizationId,
-        organizationName,
+        organizationName: organization?.name ?? '',
         userEmail: user.email ?? '',
       },
     });
-
-    return {
-      success: true,
-    };
   }
 
   @RequireAuthentication()

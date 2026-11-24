@@ -7,12 +7,15 @@ import {
   IChatProvider,
   IChatRenderResult,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
   isChannelDataOfType,
+  VerifyCredentialsStatusEnum,
 } from '@novu/stateless';
 import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { cardToTelegramHtml } from './card-render.utils';
 import { ISendMessageRes } from './types/telegram.types';
 
@@ -44,6 +47,17 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
       content: cardToTelegramHtml(card),
       validation: [],
     };
+  }
+
+  /**
+   * Calls `getMe`, the Bot API's read-only identity check. Telegram answers 401 for a revoked token
+   * and 404 for one that isn't a token at all, so both count as invalid.
+   */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(
+      () => this.axiosInstance.get(`${this.baseUrl}/getMe`, { timeout: VERIFY_CREDENTIALS_TIMEOUT_MS }),
+      (httpStatus) => (httpStatus === 404 ? VerifyCredentialsStatusEnum.INVALID : undefined)
+    );
   }
 
   async sendMessage(

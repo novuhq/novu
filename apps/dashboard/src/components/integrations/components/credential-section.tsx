@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum, IConfigCredential } from '@novu/shared';
+import { IConfigCredential } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Control, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -19,17 +19,21 @@ import {
 import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
-import { credentialValueToInputString } from './utils/helpers';
+import { credentialValueToInputString, isSecureCredential } from './utils/helpers';
 
-const SECURE_CREDENTIALS = [
-  CredentialsKeyEnum.ApiKey,
-  CredentialsKeyEnum.ApiToken,
-  CredentialsKeyEnum.SecretKey,
-  CredentialsKeyEnum.Token,
-  CredentialsKeyEnum.Password,
-  CredentialsKeyEnum.ServiceAccount,
-  CredentialsKeyEnum.SigningSecret,
-];
+/** The field's explanation for the "i" next to its label: its tooltip and its description, when it has them. */
+function getCredentialTooltip(credential: IConfigCredential): ReactNode {
+  const parts = [credential.tooltip?.text, credential.description].filter((part): part is string => !!part);
+  if (parts.length === 0) return undefined;
+
+  return (
+    <div className="flex max-w-[280px] flex-col gap-1">
+      {parts.map((part) => (
+        <DescriptionWithLinks key={part} description={part} links={credential.links} />
+      ))}
+    </div>
+  );
+}
 
 function FormLabel({ credential, tooltip }: { credential: IConfigCredential; tooltip?: ReactNode }) {
   return (
@@ -146,14 +150,16 @@ function TextareaInput({
   credential,
   field,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <Textarea
           id={credential.key}
@@ -172,16 +178,20 @@ function SecretInputControl({
   credential,
   field,
   isReadOnly,
+  tooltip,
+  hasError,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
+  hasError?: boolean;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <SecretInput
           id={credential.key}
@@ -189,6 +199,7 @@ function SecretInputControl({
           value={stringValue}
           onChange={field.onChange}
           disabled={isReadOnly}
+          hasError={hasError}
         />
       </FormControl>
     </>
@@ -200,17 +211,19 @@ function TextInputControl({
   field,
   fieldState,
   isReadOnly,
+  tooltip,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   fieldState: ControllerFieldState;
   isReadOnly?: boolean;
+  tooltip?: ReactNode;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
   return (
     <>
-      <FormLabel credential={credential} />
+      <FormLabel credential={credential} tooltip={tooltip} />
       <FormControl>
         <Input
           size={'md'}
@@ -301,6 +314,7 @@ function InputControl({
   disabledSwitchMessage,
   integrationId,
   tooltip,
+  isRejected,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -310,6 +324,7 @@ function InputControl({
   disabledSwitchMessage?: string;
   integrationId?: string;
   tooltip?: ReactNode;
+  isRejected?: boolean;
 }) {
   if (credential.type === 'pushResources') {
     return <PushResources credential={credential} integrationId={integrationId} />;
@@ -333,14 +348,30 @@ function InputControl({
   }
 
   if (credential.type === 'textarea') {
-    return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} />;
+    return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
   }
 
-  if (SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum)) {
-    return <SecretInputControl credential={credential} field={field} isReadOnly={isReadOnly} />;
+  if (isSecureCredential(credential)) {
+    return (
+      <SecretInputControl
+        credential={credential}
+        field={field}
+        isReadOnly={isReadOnly}
+        tooltip={tooltip}
+        hasError={!!fieldState.error || isRejected}
+      />
+    );
   }
 
-  return <TextInputControl credential={credential} field={field} fieldState={fieldState} isReadOnly={isReadOnly} />;
+  return (
+    <TextInputControl
+      credential={credential}
+      field={field}
+      fieldState={fieldState}
+      isReadOnly={isReadOnly}
+      tooltip={tooltip}
+    />
+  );
 }
 
 export function CredentialSection({
@@ -351,6 +382,7 @@ export function CredentialSection({
   disabledSwitchMessage,
   name = 'credentials',
   integrationId,
+  rejectedMessage,
 }: {
   credential: IConfigCredential;
   control: Control<IntegrationFormData>;
@@ -359,6 +391,8 @@ export function CredentialSection({
   disabledSwitchMessage?: string;
   name?: 'credentials' | 'configurations';
   integrationId?: string;
+  /** The provider rejected this stored secret; shown until the user types a new one. */
+  rejectedMessage?: string;
 }) {
   return (
     <FormField
@@ -375,31 +409,29 @@ export function CredentialSection({
             }
           : undefined,
       }}
-      render={({ field, fieldState }) => (
-        <FormItem className="mb-2">
-          <InputControl
-            credential={credential}
-            field={field}
-            fieldState={fieldState}
-            isReadOnly={isReadOnly}
-            isDisabledWithSwitch={isDisabledWithSwitch}
-            disabledSwitchMessage={disabledSwitchMessage}
-            integrationId={integrationId}
-            tooltip={
-              credential.tooltip?.text ? (
-                <DescriptionWithLinks description={credential.tooltip?.text} links={credential.links} />
-              ) : undefined
-            }
-          />
+      render={({ field, fieldState }) => {
+        const isRejected = !!rejectedMessage && !fieldState.isDirty;
 
-          <FormMessage>
-            {fieldState.error?.message ||
-              (credential.description && (
-                <DescriptionWithLinks description={credential.description} links={credential.links} />
-              ))}
-          </FormMessage>
-        </FormItem>
-      )}
+        return (
+          <FormItem className="mb-2">
+            <InputControl
+              credential={credential}
+              field={field}
+              fieldState={fieldState}
+              isReadOnly={isReadOnly}
+              isDisabledWithSwitch={isDisabledWithSwitch}
+              disabledSwitchMessage={disabledSwitchMessage}
+              integrationId={integrationId}
+              tooltip={getCredentialTooltip(credential)}
+              isRejected={isRejected}
+            />
+
+            {/* The explanation sits behind the label's "i"; only a validation error shows under the field. */}
+            {fieldState.error?.message && <FormMessage>{fieldState.error.message}</FormMessage>}
+            {!fieldState.error && isRejected && <p className="text-paragraph-xs text-error-base">{rejectedMessage}</p>}
+          </FormItem>
+        );
+      }}
     />
   );
 }

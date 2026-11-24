@@ -1,10 +1,17 @@
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+  IVerifyCredentialsResponse,
+} from '@novu/stateless';
 import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { providerFetch } from '../../../utils/http';
+import { createProviderHttpClient, providerFetch } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BrevoSms;
@@ -19,6 +26,15 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
+  }
+
+  /** Reads the account (`GET /v3/account`), which any valid API key can do. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(`${this.BASE_URL}/account`, {
+        headers: { 'api-key': this.config.apiKey, accept: 'application/json' },
+      })
+    );
   }
 
   async sendMessage(

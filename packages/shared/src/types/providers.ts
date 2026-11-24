@@ -198,6 +198,64 @@ export enum ToolProviderIdEnum {
   Webhook = 'tool-webhook',
 }
 
+/**
+ * Result of "Test connection" on an integration.
+ * - VALID: the provider accepted the stored credentials.
+ * - INVALID: the provider rejected them on every attempt.
+ * - UNREACHABLE: the provider couldn't be reached reliably (timeouts, 429, 5xx), so nothing is concluded.
+ * - INCONCLUSIVE: the provider answered, but the answer doesn't prove the credentials either way.
+ * - UNSUPPORTED: this provider has no connection test yet.
+ */
+export enum IntegrationConnectionStatusEnum {
+  VALID = 'valid',
+  INVALID = 'invalid',
+  UNREACHABLE = 'unreachable',
+  INCONCLUSIVE = 'inconclusive',
+  UNSUPPORTED = 'unsupported',
+}
+
+export interface ITestIntegrationConnectionResponse {
+  status: IntegrationConnectionStatusEnum;
+  message: string;
+  /** How many times the provider was called before reaching the result. */
+  attempts: number;
+}
+
+/** Whether an integration's provider is accepting its credentials, as last seen on a send or a connection test. */
+export enum IntegrationHealthStatusEnum {
+  HEALTHY = 'healthy',
+  ERROR = 'error',
+}
+
+/** Why an integration is in error. Fixed codes so the dashboard can word them and pick the credential to replace. */
+export enum IntegrationHealthErrorCodeEnum {
+  /** The provider rejected the credentials (HTTP 401 or the provider's own "invalid key" answer). */
+  INVALID_CREDENTIALS = 'invalid_credentials',
+  /** The token was revoked at the provider (e.g. the Slack app was uninstalled). */
+  TOKEN_REVOKED = 'token_revoked',
+  /** The token or key expired at the provider. */
+  TOKEN_EXPIRED = 'token_expired',
+}
+
+export enum IntegrationHealthSourceEnum {
+  SEND = 'send',
+  CHECK = 'check',
+}
+
+/**
+ * Last known health of an integration. Missing means healthy: health starts at rollout with no history.
+ * Never holds upstream error text, which can carry request URLs or keys.
+ */
+export interface IIntegrationHealth {
+  status: IntegrationHealthStatusEnum;
+  code?: IntegrationHealthErrorCodeEnum;
+  /** When the integration first failed since it was last healthy. */
+  failedAt?: string;
+  /** When the status last changed. */
+  updatedAt?: string;
+  source?: IntegrationHealthSourceEnum;
+}
+
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
 export enum IntegrationKindEnum {
   DELIVERY = 'delivery',

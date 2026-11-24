@@ -18,6 +18,10 @@ import { humanRelayProfile } from '../../../agents/human-relay/human-relay-ident
 import { AgentInboxFeaturesService } from '../../../human/services/agent-inbox-features.service';
 import { agentPictureOrDefaultUrl, type MascotLook } from '../../../human/services/agent-picture-url';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
+import {
+  GenerateSlackOauthUrl,
+  SLACK_DEFAULT_OAUTH_SCOPES,
+} from '../generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 import { SlackQuickSetupCommand } from './slack-quick-setup.command';
 
 type SlackManifestError = {
@@ -44,7 +48,9 @@ type SlackIconSetResponse = {
   error?: string;
 };
 
-export type SlackQuickSetupResult = Record<string, never>;
+export type SlackQuickSetupResult = { appId?: string };
+
+const SLACK_NOTIFICATIONS_DEFAULT_DESCRIPTION = 'Notifications sent with Novu';
 
 /** The longest short description Slack takes in an app manifest. */
 const SLACK_DESCRIPTION_MAX_LENGTH = 140;
@@ -82,58 +88,60 @@ export class SlackQuickSetup {
       throw new BadRequestException('Slack quick setup is only supported for Slack integrations');
     }
 
-    const agent = await this.findAgent(command);
+    const { agentId } = command;
+    const agent = agentId ? await this.findAgent(command, agentId) : null;
     const nameFallback = agent?.runtime === 'human_relay' ? 'Agent' : 'Novu Bot';
-    const manifest = this.buildManifest(
-      integration.name ?? nameFallback,
-      integration.identifier,
-      command.agentId,
-      this.resolveDescription(agent),
-      nameFallback
-    );
+    const appName = command.appName?.trim() || integration.name || nameFallback;
+    const manifest = agentId
+      ? this.buildManifest(appName, integration.identifier, agentId, this.resolveDescription(agent), nameFallback)
+      : this.buildNotificationManifest(appName, nameFallback);
 
     this.logger.info(`Slack quick setup: creating app for integrationId=${command.integrationId}`);
 
     const slackResponse = await this.callManifestCreate(command.configToken, manifest);
 
     if (!slackResponse.ok || !slackResponse.credentials || !slackResponse.app_id) {
-      const errorDetails =
-        slackResponse.errors && slackResponse.errors.length > 0
-          ? ` Details: ${slackResponse.errors.map((e) => `${e.pointer}: ${e.message}`).join('; ')}`
-          : '';
-      const baseError = slackResponse.error ?? 'unknown error';
-      const hint =
-        baseError === 'invalid_token' || baseError === 'token_expired'
-          ? ' Make sure your App Configuration Token is valid and has not expired.'
-          : baseError === 'invalid_manifest'
-            ? ' The manifest schema was rejected by Slack.'
-            : '';
-
-      throw new BadRequestException(`Slack app creation failed: ${baseError}.${hint}${errorDetails}`);
+      throw new BadRequestException(this.describeCreateFailure(slackResponse));
     }
 
     const { client_id, client_secret, signing_secret } = slackResponse.credentials;
 
-    await this.ensureAgentIntegrationLink(command);
+    if (agentId) await this.ensureAgentIntegrationLink(command, agentId);
     await this.saveCredentials(command, client_id, client_secret, signing_secret, slackResponse.app_id);
 
     this.logger.info(`Slack quick setup: credentials saved for integrationId=${command.integrationId}`);
 
-    if (agent?.runtime === 'human_relay') {
+    if (agentId && agent?.runtime === 'human_relay') {
       // Only an agent with no picture of its own shows its mascot, so only then is its look asked for.
       const look = agent.picture?.storageKey
         ? null
         : await this.agentInboxFeatures.mascotLookOf({ _organizationId: command.organizationId, look: agent.look });
-      await this.setAppIcon(command, slackResponse.app_id, agent.picture, look);
+      await this.setAppIcon(command, agentId, slackResponse.app_id, agent.picture, look);
     }
 
-    return {};
+    return { appId: slackResponse.app_id };
   }
 
-  private async ensureAgentIntegrationLink(command: SlackQuickSetupCommand): Promise<void> {
+  private describeCreateFailure(slackResponse: SlackManifestCreateResponse): string {
+    const errorDetails =
+      slackResponse.errors && slackResponse.errors.length > 0
+        ? ` Details: ${slackResponse.errors.map((e) => `${e.pointer}: ${e.message}`).join('; ')}`
+        : '';
+    const baseError = slackResponse.error ?? 'unknown error';
+    let hint = '';
+    if (baseError === 'invalid_token' || baseError === 'token_expired') {
+      hint = ' Make sure your App Configuration Token is valid and has not expired.';
+    } else if (baseError === 'invalid_manifest') {
+      hint = ' The manifest schema was rejected by Slack.';
+    }
+
+    return `Slack app creation failed: ${baseError}.${hint}${errorDetails}`;
+  }
+
+  private async ensureAgentIntegrationLink(command: SlackQuickSetupCommand, agentId: string): Promise<void> {
     const existing = await this.agentIntegrationRepository.findOne(
       {
-        _agentId: command.agentId,
+        _agentId: agentId,
         _integrationId: command.integrationId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -161,7 +169,7 @@ export class SlackQuickSetup {
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
     await this.agentIntegrationRepository.createOrReviveLink({
-      agentId: command.agentId,
+      agentId,
       integrationId: command.integrationId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -179,10 +187,11 @@ export class SlackQuickSetup {
   }
 
   private async findAgent(
-    command: SlackQuickSetupCommand
+    command: SlackQuickSetupCommand,
+    agentId: string
   ): Promise<Pick<AgentEntity, 'runtime' | 'description' | 'picture' | 'look'> | null> {
     return this.agentRepository.findOne(
-      { _id: command.agentId, _environmentId: command.environmentId, _organizationId: command.organizationId },
+      { _id: agentId, _environmentId: command.environmentId, _organizationId: command.organizationId },
       ['runtime', 'description', 'picture', 'look']
     );
   }
@@ -202,6 +211,40 @@ export class SlackQuickSetup {
     }
 
     return SLACK_AGENT_DEFAULT_DESCRIPTION;
+  }
+
+  /**
+   * A notifications app only sends messages: it installs through Novu's OAuth callback with the scopes Novu
+   * asks for when a subscriber connects Slack, and has no event or interactivity webhook.
+   */
+  private buildNotificationManifest(botName: string, nameFallback: string): object {
+    const displayName = this.sanitizeBotDisplayName(botName, nameFallback);
+
+    return {
+      display_information: {
+        name: displayName,
+        description: SLACK_NOTIFICATIONS_DEFAULT_DESCRIPTION,
+      },
+      features: {
+        bot_user: {
+          display_name: displayName,
+          always_online: true,
+        },
+      },
+      oauth_config: {
+        // The same callback the OAuth link sends Slack back to, so the installation isn't rejected.
+        redirect_urls: [GenerateSlackOauthUrl.buildRedirectUri()],
+        scopes: {
+          bot: [...SLACK_DEFAULT_OAUTH_SCOPES, 'incoming-webhook'],
+        },
+      },
+      settings: {
+        org_deploy_enabled: false,
+        socket_mode_enabled: false,
+        // Notification tokens are long-lived, the same as an app set up by hand.
+        token_rotation_enabled: false,
+      },
+    };
   }
 
   private buildManifest(
@@ -298,15 +341,13 @@ export class SlackQuickSetup {
    */
   private async setAppIcon(
     command: SlackQuickSetupCommand,
+    agentId: string,
     appId: string,
     picture: AgentPicture | undefined,
     look: MascotLook | null
   ): Promise<void> {
     try {
-      const url = agentPictureOrDefaultUrl(
-        { _id: command.agentId, _environmentId: command.environmentId, picture },
-        look
-      );
+      const url = agentPictureOrDefaultUrl({ _id: agentId, _environmentId: command.environmentId, picture }, look);
       const params = new URLSearchParams({ token: command.configToken, app_id: appId, url });
 
       const { data } = await axios.post<SlackIconSetResponse>(this.SLACK_ICON_SET_URL, params.toString(), {

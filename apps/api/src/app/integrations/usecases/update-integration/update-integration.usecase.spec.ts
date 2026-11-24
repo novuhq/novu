@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   ControlValuesEntity,
   ControlValuesRepository,
@@ -7,7 +7,13 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, ControlValuesLevelEnum, ToolProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ControlValuesLevelEnum,
+  EmailProviderIdEnum,
+  IntegrationHealthStatusEnum,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { UpdateIntegrationCommand } from './update-integration.command';
@@ -126,5 +132,66 @@ describe('UpdateIntegration - step integration overrides', () => {
 
     expect(error).to.be.instanceOf(ConflictException);
     expect(controlValuesRepository.update.called).to.equal(false);
+  });
+});
+
+describe('UpdateIntegration - health on reconnect', () => {
+  let useCase: UpdateIntegration;
+  let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+
+  const failingIntegration = {
+    ...existingIntegration,
+    providerId: EmailProviderIdEnum.SendGrid,
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: encryptCredentials({ apiKey: 'SG.old-key', from: 'team@example.com' }),
+    health: { status: IntegrationHealthStatusEnum.ERROR, failedAt: '2026-11-14T06:58:31.000Z' },
+  } as IntegrationEntity;
+
+  beforeEach(() => {
+    integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    integrationRepository.findOne.callsFake(async (query) =>
+      'identifier' in query ? null : ({ ...failingIntegration } as IntegrationEntity)
+    );
+    integrationRepository.withTransaction.callsFake(async (callback) => callback(null));
+    integrationRepository.update.resolves({ matched: 1, modified: 1 });
+
+    useCase = new UpdateIntegration(
+      integrationRepository as unknown as IntegrationRepository,
+      sinon.createStubInstance(AnalyticsService) as unknown as AnalyticsService,
+      sinon.createStubInstance(EnvironmentRepository) as unknown as EnvironmentRepository,
+      { setContext: sinon.stub(), trace: sinon.stub() } as unknown as PinoLogger,
+      sinon.createStubInstance(ControlValuesRepository) as unknown as ControlValuesRepository
+    );
+  });
+
+  function execute(fields: Partial<UpdateIntegrationCommand>) {
+    return useCase.execute({
+      userId: 'user-id',
+      organizationId: ORGANIZATION_ID,
+      integrationId: INTEGRATION_ID,
+      ...fields,
+    } as UpdateIntegrationCommand);
+  }
+
+  function savedHealth() {
+    return integrationRepository.update.firstCall.args[1].$set?.health;
+  }
+
+  it('clears the Error when a credential changes', async () => {
+    await execute({ credentials: { apiKey: 'SG.new-key', from: 'team@example.com' } });
+
+    expect(savedHealth()?.status).to.equal(IntegrationHealthStatusEnum.HEALTHY);
+  });
+
+  it('clears the Error when a credential is removed', async () => {
+    await execute({ credentials: { apiKey: 'SG.old-key' } });
+
+    expect(savedHealth()?.status).to.equal(IntegrationHealthStatusEnum.HEALTHY);
+  });
+
+  it('keeps the Error when the same credentials are saved with another edit, such as a rename', async () => {
+    await execute({ name: 'Renamed', credentials: { apiKey: 'SG.old-key', from: 'team@example.com' } });
+
+    expect(savedHealth()).to.equal(undefined);
   });
 });

@@ -14,7 +14,8 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum, IntegrationHealthStatusEnum } from '@novu/shared';
+import { isEqual } from 'lodash';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
@@ -23,6 +24,13 @@ import { CheckIntegration } from '../check-integration/check-integration.usecase
 import { applyManagedCredentialsOnUpdate } from '../managed-credentials';
 import { maybeStampWhatsNextCompletedAt } from '../whatsapp/whatsapp-whats-next-stamp.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
+
+/** Credentials without empty values, so a missing key and a blank one compare equal. */
+function withoutBlanks(credentials: object | undefined): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(credentials ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  );
+}
 
 @Injectable()
 export class UpdateIntegration {
@@ -276,6 +284,17 @@ export class UpdateIntegration {
         nextCredentials: managedCredentials,
       });
       updatePayload.credentials = encryptCredentials(stampedCredentials);
+
+      // New credentials are the Reconnect fix: clear the Error. The next send or test confirms or re-flags it.
+      // The dashboard always submits every credential, so a rename alone mustn't count as a reconnect. The saved
+      // credentials are replaced whole, so a removed one (e.g. SMTP login turned off) is a change too.
+      const credentialsChanged = !isEqual(withoutBlanks(stampedCredentials), withoutBlanks(existingCredentials));
+      if (credentialsChanged && existingIntegration.health?.status === IntegrationHealthStatusEnum.ERROR) {
+        updatePayload.health = {
+          status: IntegrationHealthStatusEnum.HEALTHY,
+          updatedAt: new Date().toISOString(),
+        };
+      }
     }
 
     if (command.configurations) {

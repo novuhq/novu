@@ -11,13 +11,19 @@ export class SlackQuickSetupCommand extends OrganizationCommand {
   @IsMongoId()
   integrationId: string;
 
-  @IsDefined()
+  /** Omitted for a notifications app, which has no agent webhook. */
+  @IsOptional()
   @IsMongoId()
-  agentId: string;
+  agentId?: string;
 
   @IsDefined()
   @IsString()
   configToken: string;
+
+  /** Overrides the integration name as the Slack app's name. */
+  @IsOptional()
+  @IsString()
+  appName?: string;
 
   @IsOptional()
   @IsString()

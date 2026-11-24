@@ -9,6 +9,7 @@ import {
   GetNovuProviderCredentials,
   Instrument,
   type IntegrationFilterData,
+  IntegrationHealthService,
   type IntegrationSelectionResult,
   SelectIntegration,
   SelectIntegrationCommand,
@@ -16,7 +17,13 @@ import {
   SelectVariantCommand,
   SendWebhookMessage,
 } from '@novu/application-generic';
-import { JobEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  JobEntity,
+  MessageRepository,
+  MessageTemplateEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -395,6 +402,34 @@ export abstract class SendMessageBase extends SendMessageType {
     }
 
     await Promise.all(details.map((detail) => this.createExecutionDetailBestEffort(detail)));
+  }
+
+  /**
+   * Marks the integration Error when the provider rejected its credentials. No read; writes only on the flip.
+   * Never throws, so it can't fail the send.
+   */
+  protected async recordIntegrationSendFailure(integration: IntegrationEntity | undefined, error: unknown) {
+    if (!integration) return;
+
+    await this.getIntegrationHealthService()?.recordSendFailure(integration, error);
+  }
+
+  /** Clears an Error after a successful send. No I/O unless the integration was in Error. */
+  protected async recordIntegrationSendSuccess(integration: IntegrationEntity | undefined) {
+    if (!integration) return;
+
+    await this.getIntegrationHealthService()?.recordSendSuccess(integration);
+  }
+
+  private getIntegrationHealthService(): IntegrationHealthService | undefined {
+    try {
+      const service = this.moduleRef.get(IntegrationHealthService, { strict: false });
+
+      // Unit tests hand in a bare ModuleRef stub; health tracking is skipped there.
+      return service instanceof IntegrationHealthService ? service : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private async createExecutionDetailBestEffort(command: CreateExecutionDetailsCommand): Promise<void> {
