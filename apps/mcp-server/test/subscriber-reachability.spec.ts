@@ -94,7 +94,7 @@ function preferences(overrides: Partial<ReachabilityPreferences> = {}): Reachabi
 
 function input(overrides: Partial<SubscriberReachabilityInput> = {}): SubscriberReachabilityInput {
 	return {
-		connections: [{ hasWorkspaceId: true, identifier: "slack-conn" }],
+		connections: [{ contextKeys: [], hasWorkspaceId: true, identifier: "slack-conn" }],
 		criticalPreferences: { workflows: [] },
 		endpoints: [endpoint()],
 		integrations: INTEGRATIONS,
@@ -265,7 +265,19 @@ describe("computeSubscriberReachability", () => {
 	});
 
 	it("only counts an endpoint with context keys for a matching trigger context", () => {
-		const chat = channelOf({ endpoints: [endpoint({ contextKeys: ["tenant:acme"] })] }, "chat");
+		const chat = channelOf(
+			{
+				connections: [
+					{
+						contextKeys: ["tenant:acme"],
+						hasWorkspaceId: true,
+						identifier: "slack-conn",
+					},
+				],
+				endpoints: [endpoint({ contextKeys: ["tenant:acme"] })],
+			},
+			"chat",
+		);
 
 		expect(chat.state).toBe("partly");
 		expect(chat.reasons).toEqual(["Only reachable for triggers with a matching context"]);
@@ -407,7 +419,12 @@ describe("computeSubscriberReachability", () => {
 
 	it("reports a failed connections read on the chat verdict, not in the notes", () => {
 		const result = computeSubscriberReachability(
-			input({ connections: [], failures: { connections: { status: 500 } } }),
+			input({
+				connectionFailures: { "slack-conn": { status: 500 } },
+				connections: [],
+				// Two endpoints on the same unreadable connection give one reason.
+				endpoints: [endpoint(), endpoint({ identifier: "ep-2", type: "slack_channel" })],
+			}),
 		);
 
 		expect(result.notes).toEqual([]);
@@ -418,7 +435,148 @@ describe("computeSubscriberReachability", () => {
 		expect(result.checked).not.toContain("channel connections");
 	});
 
-	it("blocks email without a primary integration unless one has conditions", () => {
+	it("only leaves an endpoint unverified when its own connection read failed", () => {
+		const chat = channelOf(
+			{
+				connectionFailures: { "other-conn": { status: 500 } },
+				connections: [],
+				endpoints: [
+					endpoint(),
+					endpoint({
+						connectionIdentifier: "other-conn",
+						identifier: "ep-2",
+						type: "slack_channel",
+					}),
+				],
+				integrations: [...INTEGRATIONS, integration("chat", "whatsapp-business")],
+			},
+			"chat",
+		);
+
+		// slack-conn has no failed read (a 404 leaves none), so its endpoint has no connection.
+		expect(chat).toMatchObject({
+			details: [
+				"whatsapp-business to the phone number on file",
+				"Couldn't check channel connections (500)",
+			],
+			reasons: ["Slack endpoint has no connection"],
+			state: "partly",
+		});
+	});
+
+	it("only counts a connection whose context matches its endpoint's exactly", () => {
+		const acmeConnection = {
+			contextKeys: ["tenant:acme"],
+			hasWorkspaceId: true,
+			identifier: "slack-conn",
+		};
+
+		expect(channelOf({ connections: [acmeConnection] }, "chat")).toMatchObject({
+			reasons: [
+				"Slack endpoint's connection only applies to triggers with context tenant:acme",
+			],
+			state: "blocked",
+		});
+
+		const teams = (hasTenantId: boolean) =>
+			channelOf(
+				{
+					connections: [{ ...acmeConnection, identifier: "teams-conn" }],
+					endpoints: [
+						endpoint({
+							connectionIdentifier: "teams-conn",
+							hasTenantId,
+							integrationIdentifier: "msteams-1",
+							providerId: "msteams",
+							type: "ms_teams_user",
+						}),
+					],
+					integrations: [...INTEGRATIONS, integration("chat", "msteams")],
+				},
+				"chat",
+			);
+		expect(teams(false)).toMatchObject({
+			reasons: [
+				"MS Teams endpoint's connection only applies to triggers with context tenant:acme",
+			],
+			state: "blocked",
+		});
+		// The endpoint's own tenant ID doesn't need the connection.
+		expect(teams(true).state).toBe("reachable");
+	});
+
+	it("counts endpoints on an integration with rules as conditional routes", () => {
+		const withRules = INTEGRATIONS.map((candidate) =>
+			candidate.providerId === "slack" ? { ...candidate, hasRules: true } : candidate,
+		);
+
+		expect(channelOf({ integrations: withRules }, "chat")).toMatchObject({
+			details: [
+				"Slack user endpoint (slack-1), only for triggers without a context, when slack-1's conditions match",
+			],
+			reasons: ["Only for triggers that match the integration's conditions"],
+			state: "partly",
+		});
+
+		const tool = channelOf(
+			{
+				endpoints: [
+					endpoint({
+						channel: "tool",
+						connectionIdentifier: null,
+						contextKeys: ["tenant:acme"],
+						integrationIdentifier: "pagerduty-1",
+						providerId: "pagerduty",
+						type: "pagerduty_service",
+					}),
+				],
+				integrations: [
+					...INTEGRATIONS,
+					integration("tool", "pagerduty", { hasRules: true }),
+				],
+			},
+			"tool",
+		);
+		expect(tool).toMatchObject({
+			details: [
+				"pagerduty-1, only when the trigger context is exactly tenant:acme, when pagerduty-1's conditions match",
+			],
+			reasons: [
+				"Only reachable for triggers with a matching context",
+				"Only for triggers that match the integration's conditions",
+			],
+			state: "partly",
+		});
+	});
+
+	it("reports the tool channel as unknown when integrations can't be read but tool endpoints exist", () => {
+		const toolEndpoint = endpoint({
+			channel: "tool",
+			connectionIdentifier: null,
+			integrationIdentifier: "pagerduty-1",
+			providerId: "pagerduty",
+			type: "pagerduty_service",
+		});
+		const result = computeSubscriberReachability(
+			input({
+				endpoints: [toolEndpoint],
+				failures: { integrations: { status: 500 } },
+				integrations: [],
+			}),
+		);
+
+		expect(result.channels.find((verdict) => verdict.channel === "tool")).toMatchObject({
+			reasons: ["Couldn't check integrations (500)"],
+			state: "unknown",
+		});
+		expect(
+			computeSubscriberReachability(
+				input({ failures: { integrations: { status: 500 } }, integrations: [] }),
+			).channels.map((verdict) => verdict.channel),
+		).not.toContain("tool");
+	});
+
+	it("blocks email without a primary integration, and only partly reaches it through conditions", () => {
 		const noPrimary = INTEGRATIONS.map((candidate) =>
 			candidate.channel === "email" ? { ...candidate, primary: false } : candidate,
 		);
@@ -431,8 +589,19 @@ describe("computeSubscriberReachability", () => {
 			candidate.channel === "email" ? { ...candidate, hasConditions: true } : candidate,
 		);
 		expect(channelOf({ integrations: conditioned }, "email")).toMatchObject({
-			details: ["Depends on integration conditions"],
-			state: "reachable",
+			details: [],
+			reasons: ["Only for triggers that match the integration's conditions"],
+			state: "partly",
+		});
+
+		const withRules = noPrimary.map((candidate) =>
+			candidate.channel === "sms"
+				? { ...candidate, hasRules: true, primary: false }
+				: candidate,
+		);
+		expect(channelOf({ integrations: withRules }, "sms")).toMatchObject({
+			reasons: ["Only for triggers that match the integration's conditions"],
+			state: "partly",
 		});
 	});
 
@@ -832,6 +1001,51 @@ describe("get_subscriber_reachability", () => {
 		]);
 	});
 
+	it("reads each connection's context and tracks failed reads per connection", async () => {
+		const slackEndpoint = (identifier: string, connectionIdentifier: string) => ({
+			channel: "chat",
+			connectionIdentifier,
+			contextKeys: [],
+			identifier,
+			integrationIdentifier: "slack-1",
+			providerId: "slack",
+			type: "slack_channel",
+		});
+		stubApi(
+			setupRoutes({
+				"/v1/channel-connections/acme-conn": {
+					contextKeys: ["tenant:acme"],
+					identifier: "acme-conn",
+					workspace: { id: "T1" },
+				},
+				"/v1/channel-connections/broken-conn": { body: { message: "boom" }, status: 500 },
+				"/v1/channel-connections/deleted-conn": { body: { message: "gone" }, status: 404 },
+				"/v1/channel-endpoints": [
+					slackEndpoint("ep-acme", "acme-conn"),
+					slackEndpoint("ep-deleted", "deleted-conn"),
+					slackEndpoint("ep-broken", "broken-conn"),
+				],
+			}),
+		);
+
+		const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
+
+		// The legacy Slack webhook still reaches the subscriber, so each endpoint's finding is listed.
+		expect(
+			reachability.channels.find(
+				(verdict: { channel: string }) => verdict.channel === "chat",
+			),
+		).toMatchObject({
+			details: ["slack webhook", "Couldn't check channel connections (500)"],
+			reasons: [
+				"Slack endpoint's connection only applies to triggers with context tenant:acme",
+				"Slack endpoint has no connection",
+			],
+			state: "partly",
+		});
+		expect(reachability.checked).not.toContain("channel connections");
+	});
+
 	it("never returns credentials, custom data or the phone number", async () => {
 		stubApi(setupRoutes());
 
@@ -1037,6 +1251,35 @@ describe("subscriber tools", () => {
 		expect(text).not.toContain("hooks.slack.com");
 		expect(text).toContain("fcm-••••••••••••••");
 		expect(text).toContain("jane@acme.com");
+	});
+
+	it("masks only channel credentials, so custom data can be sent back unchanged", async () => {
+		const customData = {
+			devices: { deviceTokens: ["custom-token"] },
+			plan: "enterprise-secret-data",
+			webhookUrl: "https://hooks.example.com/custom",
+		};
+		stubApi({
+			"/v2/subscribers": {
+				body: { data: [rawSubscriber({ data: customData })], next: null },
+				status: 200,
+			},
+			"/v2/subscribers/sub_8f21": rawSubscriber({ data: customData }),
+		});
+		const client = await connectAllTools(tokenAccessors("api-key"));
+
+		for (const [tool, args] of [
+			["get_subscriber", { subscriberId: "sub_8f21" }],
+			["find_subscribers", { email: "jane@acme.com" }],
+		] as const) {
+			const text = textOf(await callTool(client, tool, args));
+			const body = JSON.parse(text.slice(text.indexOf("{")));
+			const [found] = Array.isArray(body.data) ? body.data : [body.data];
+
+			expect(found.data, tool).toEqual(customData);
+			expect(text, tool).not.toContain("fcm-token-secret-1");
+			expect(text, tool).not.toContain("hooks.slack.com");
+		}
 	});
 
 	it("updates only the preference channels it is given", async () => {

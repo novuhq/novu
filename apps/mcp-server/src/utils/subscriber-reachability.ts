@@ -8,6 +8,8 @@
  * each is present.
  */
 
+import { asRecord } from "./activity-format";
+
 export type ReachabilityChannel = "email" | "in_app" | "sms" | "push" | "chat" | "tool";
 
 export type ReachabilityState = "reachable" | "partly" | "blocked" | "unknown";
@@ -87,6 +89,7 @@ export interface ReachabilityEndpoint {
 export interface ReachabilityConnection {
 	identifier: string;
 	hasWorkspaceId: boolean;
+	contextKeys: string[];
 }
 
 export interface SubscriberReachabilityInput {
@@ -97,6 +100,8 @@ export interface SubscriberReachabilityInput {
 	endpoints: ReachabilityEndpoint[];
 	connections: ReachabilityConnection[];
 	failures?: Partial<Record<ReachabilitySource, ReadFailure>>;
+	/** Connection reads that failed with a status other than 404, by connection identifier. */
+	connectionFailures?: Record<string, ReadFailure>;
 	/** What the tool's read caps left out, so it isn't reported as missing setup. */
 	limits?: {
 		/** More endpoints may exist than the one page that was read. */
@@ -166,6 +171,10 @@ const ENDPOINTS_READ_LIMIT_NOTE = "Only the first 100 endpoints were read; other
 
 /** Endpoints match the trigger context exactly, so one without context keys only serves triggers without one. */
 const CONTEXT_FREE_NOTE = "only for triggers without a context";
+
+const CONTEXT_REASON = "Only reachable for triggers with a matching context";
+
+const CONDITIONS_REASON = "Only for triggers that match the integration's conditions";
 
 /** Endpoint types whose token comes from a linked connection (resolve-channel-endpoints). */
 const CONNECTION_TOKEN_TYPES = ["slack_channel", "slack_user", "webex_room", "webex_person"];
@@ -264,7 +273,10 @@ class Verdict {
 export function computeSubscriberReachability(
 	input: SubscriberReachabilityInput,
 ): Extract<SubscriberReachabilityResult, { status: "found" }> {
-	const failures = input.failures ?? {};
+	const failures = { ...input.failures };
+	// Any failed connection read means connections weren't fully checked.
+	const [connectionFailure] = Object.values(input.connectionFailures ?? {});
+	if (connectionFailure && !failures.connections) failures.connections = connectionFailure;
 	const { subscriber } = input;
 	const active = (channel: ReachabilityChannel) =>
 		input.integrations.filter(
@@ -288,7 +300,14 @@ export function computeSubscriberReachability(
 		chatChannel(new Verdict("chat"), input, active("chat")),
 	];
 
-	if (!failures.integrations && active("tool").length > 0) {
+	if (failures.integrations) {
+		// Tool endpoints show the channel is in use even when its integrations can't be read.
+		if (input.endpoints.some((endpoint) => endpoint.channel === "tool")) {
+			const tool = new Verdict("tool");
+			tool.unknowns.push(describeReadFailure("integrations", failures.integrations));
+			verdicts.push(tool);
+		}
+	} else if (active("tool").length > 0) {
 		verdicts.push(toolChannel(new Verdict("tool"), input, active("tool")));
 	}
 
@@ -346,7 +365,8 @@ function primaryChannel(
 	} else if (
 		activeIntegrations.some((integration) => integration.hasConditions || integration.hasRules)
 	) {
-		verdict.details.push("Depends on integration conditions");
+		// Without a primary to fall back to, a trigger that matches no integration's conditions isn't sent.
+		verdict.partial.push(CONDITIONS_REASON);
 	} else {
 		verdict.blockers.push(`No primary ${label} integration`);
 	}
@@ -460,16 +480,19 @@ function chatChannel(
 
 	const routes: string[] = [];
 	const conditionalRoutes: string[] = [];
+	const conditionReasons = new Set<string>();
 	const problems: string[] = [];
-	const unverified: string[] = [];
+	const unverified = new Set<string>();
 
 	for (const endpoint of input.endpoints.filter((candidate) => candidate.channel === "chat")) {
 		const check = checkEndpoint(endpoint, activeIntegrations, input);
-		if (check.problem) problems.push(check.problem);
-		else if (check.unverified) unverified.push(check.unverified);
-		else if (check.conditional) conditionalRoutes.push(check.conditional);
-		else routes.push(check.route);
-		if (check.detail) verdict.details.push(check.detail);
+		if (check.kind === "route") routes.push(check.text);
+		else if (check.kind === "problem") problems.push(check.text);
+		else if (check.kind === "unverified") unverified.add(check.text);
+		else {
+			conditionalRoutes.push(check.text);
+			for (const reason of check.reasons) conditionReasons.add(reason);
+		}
 	}
 
 	for (const channel of input.subscriber.channels.filter(
@@ -538,7 +561,7 @@ function chatChannel(
 	verdict.unknowns.push(...unverified);
 
 	if (conditionalRoutes.length > 0) {
-		verdict.partial.push(...problems, "Only reachable for triggers with a matching context");
+		verdict.partial.push(...problems, ...conditionReasons);
 	} else if (verdict.unknowns.length === 0) {
 		verdict.blockers.push(
 			...(problems.length > 0
@@ -588,48 +611,60 @@ function phoneOnFileRoutes(
 	});
 }
 
+type EndpointCheck =
+	| { kind: "route"; text: string }
+	| { kind: "problem"; text: string }
+	| { kind: "unverified"; text: string }
+	| { kind: "conditional"; text: string; reasons: string[] };
+
 function checkEndpoint(
 	endpoint: ReachabilityEndpoint,
 	activeIntegrations: ReachabilityIntegration[],
 	input: SubscriberReachabilityInput,
-): {
-	route: string;
-	problem?: string;
-	unverified?: string;
-	conditional?: string;
-	detail?: string;
-} {
+): EndpointCheck {
 	const label = ENDPOINT_TYPE_LABELS[endpoint.type] ?? endpoint.type;
+	const provider = label.split(" ").slice(0, -1).join(" ") || label;
 	const integration = activeIntegrations.find(
 		(candidate) => candidate.identifier === endpoint.integrationIdentifier,
 	);
-	const route = `${label} endpoint (${endpoint.integrationIdentifier ?? endpoint.providerId})`;
 
 	if (!integration) {
 		return {
-			problem: `${label} endpoint uses an inactive or missing integration (${endpoint.integrationIdentifier})`,
-			route,
+			kind: "problem",
+			text: `${label} endpoint uses an inactive or missing integration (${endpoint.integrationIdentifier})`,
 		};
 	}
 
-	const connection = endpoint.connectionIdentifier
-		? input.connections.find(
-				(candidate) => candidate.identifier === endpoint.connectionIdentifier,
-			)
+	const connectionId = endpoint.connectionIdentifier;
+	const found = connectionId
+		? input.connections.find((candidate) => candidate.identifier === connectionId)
 		: undefined;
-	const connectionsFailure = input.failures?.connections;
-	const connectionUnchecked =
-		!!endpoint.connectionIdentifier &&
-		(input.limits?.uncheckedConnectionIds ?? []).includes(endpoint.connectionIdentifier);
-	const uncheckedConnection = `${label} endpoint's connection wasn't checked (lookup limit)`;
-
-	if (CONNECTION_TOKEN_TYPES.includes(endpoint.type) && !connection) {
-		if (connectionUnchecked) return { route, unverified: uncheckedConnection };
-		if (endpoint.connectionIdentifier && connectionsFailure) {
-			return { route, unverified: describeReadFailure("connections", connectionsFailure) };
+	// The worker loads a connection only when its context matches the trigger's exactly, as the endpoint's must.
+	const connection =
+		found && sameKeys(found.contextKeys, endpoint.contextKeys) ? found : undefined;
+	const missingConnection = (problem: string): EndpointCheck => {
+		if (connectionId && (input.limits?.uncheckedConnectionIds ?? []).includes(connectionId)) {
+			return {
+				kind: "unverified",
+				text: `${label} endpoint's connection wasn't checked (lookup limit)`,
+			};
+		}
+		const failure = connectionId ? input.connectionFailures?.[connectionId] : undefined;
+		if (failure) {
+			return { kind: "unverified", text: describeReadFailure("connections", failure) };
+		}
+		if (found) {
+			return {
+				kind: "problem",
+				text: `${provider} endpoint's connection only applies to ${triggersWithContext(found.contextKeys)}`,
+			};
 		}
 
-		return { problem: `${label.split(" ")[0]} endpoint has no connection`, route };
+		return { kind: "problem", text: problem };
+	};
+
+	if (CONNECTION_TOKEN_TYPES.includes(endpoint.type) && !connection) {
+		return missingConnection(`${provider} endpoint has no connection`);
 	}
 
 	if (
@@ -637,33 +672,57 @@ function checkEndpoint(
 		!connection?.hasWorkspaceId &&
 		!endpoint.hasTenantId
 	) {
-		if (connectionUnchecked) return { route, unverified: uncheckedConnection };
-		if (endpoint.connectionIdentifier && connectionsFailure) {
-			return { route, unverified: describeReadFailure("connections", connectionsFailure) };
-		}
-
-		return { problem: "MS Teams endpoint has no connection or tenant ID", route };
+		return missingConnection("MS Teams endpoint has no connection or tenant ID");
 	}
 
-	const detail = integration.hasRules
-		? `${integration.identifier} depends on integration rules`
-		: undefined;
+	const contexts = endpoint.contextKeys.length > 0 ? [endpoint.contextKeys.join(", ")] : [];
+	const { reasons, scope } = endpointScope(contexts, integration);
+	const text = `${label} endpoint (${endpoint.integrationIdentifier ?? endpoint.providerId}), ${scope}`;
 
-	if (endpoint.contextKeys.length > 0) {
-		return {
-			conditional: `${route}, only when the trigger context is exactly ${endpoint.contextKeys.join(", ")}`,
-			detail,
-			route,
-		};
-	}
+	return reasons.length > 0 ? { kind: "conditional", reasons, text } : { kind: "route", text };
+}
 
-	return { detail, route: `${route}, ${CONTEXT_FREE_NOTE}` };
+/**
+ * When an integration's endpoints are used (resolve-channel-endpoints): the trigger context must
+ * match one endpoint's keys exactly, and an integration with rules must match them. `contexts`
+ * holds each endpoint's joined keys; empty means context-free endpoints.
+ */
+function endpointScope(
+	contexts: string[],
+	integration: ReachabilityIntegration,
+): { reasons: string[]; scope: string } {
+	const reasons = [
+		...(contexts.length > 0 ? [CONTEXT_REASON] : []),
+		...(integration.hasRules ? [CONDITIONS_REASON] : []),
+	];
+	const context =
+		contexts.length > 0
+			? `only when the trigger context is exactly ${contexts.join(" or ")}`
+			: CONTEXT_FREE_NOTE;
+
+	return {
+		reasons,
+		scope: integration.hasRules
+			? `${context}, when ${integration.identifier}'s conditions match`
+			: context,
+	};
+}
+
+function triggersWithContext(contextKeys: string[]): string {
+	return contextKeys.length > 0
+		? `triggers with context ${contextKeys.join(", ")}`
+		: "triggers without a context";
+}
+
+/** Order-independent, like the worker's `$all` + `$size` match. */
+function sameKeys(left: string[], right: string[]): boolean {
+	return JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
 }
 
 /**
  * Tool: endpoint-routed providers skip subscribers with no endpoint, and only an endpoint whose
- * context keys match the trigger exactly is used (send-message-tool, resolve-channel-endpoints).
- * Other tool providers send through the integration itself.
+ * context keys match the trigger exactly, on an integration whose rules match, is used
+ * (send-message-tool, resolve-channel-endpoints). Other tool providers send through the integration itself.
  */
 function toolChannel(
 	verdict: Verdict,
@@ -672,6 +731,7 @@ function toolChannel(
 ): Verdict {
 	const routes: string[] = [];
 	const conditionalRoutes: string[] = [];
+	const conditionReasons = new Set<string>();
 	const unknowns = new Set<string>();
 	const missing: string[] = [];
 
@@ -694,16 +754,22 @@ function toolChannel(
 		);
 		const contextual = endpoints.filter((endpoint) => endpoint.contextKeys.length > 0);
 
-		if (endpoints.length > contextual.length) {
+		if (endpoints.length > 0) {
 			const count = endpoints.length - contextual.length;
-			routes.push(
-				`${count} ${pluralize(count, "endpoint")} for ${integration.identifier}, ${CONTEXT_FREE_NOTE}`,
+			const { reasons, scope } = endpointScope(
+				count > 0 ? [] : contextual.map((endpoint) => endpoint.contextKeys.join(", ")),
+				integration,
 			);
-		} else if (contextual.length > 0) {
-			const contexts = contextual.map((endpoint) => endpoint.contextKeys.join(", "));
-			conditionalRoutes.push(
-				`${integration.identifier}, only when the trigger context is exactly ${contexts.join(" or ")}`,
-			);
+			const text =
+				count > 0
+					? `${count} ${pluralize(count, "endpoint")} for ${integration.identifier}, ${scope}`
+					: `${integration.identifier}, ${scope}`;
+			if (reasons.length > 0) {
+				conditionalRoutes.push(text);
+				for (const reason of reasons) conditionReasons.add(reason);
+			} else {
+				routes.push(text);
+			}
 		} else if (isWebhook) {
 			unknowns.add(
 				`Couldn't tell whether the ${integration.identifier} webhook sends per subscriber (its routing mode isn't visible); if it does, this subscriber has no endpoint for it`,
@@ -726,7 +792,7 @@ function toolChannel(
 
 	verdict.unknowns.push(...unknowns);
 	if (conditionalRoutes.length > 0) {
-		verdict.partial.push(...missing, "Only reachable for triggers with a matching context");
+		verdict.partial.push(...missing, ...conditionReasons);
 	} else if (verdict.unknowns.length === 0) {
 		verdict.blockers.push(
 			...(missing.length > 0 ? missing : ["No tool endpoint for this subscriber"]),
@@ -885,30 +951,55 @@ export function maskCredentialValue(value: string): string {
 }
 
 /**
- * Masks subscriber channel credentials (`deviceTokens`, `webhookUrl`) anywhere in an API response:
- * one subscriber, a list, or either inside the `{ data }` envelope.
+ * Masks `deviceTokens` and `webhookUrl` in each subscriber's `channels[].credentials`: one
+ * subscriber, a list, or either inside the `{ data }` envelope. Everything else, including the
+ * subscriber's custom `data`, is returned as is, so it can be sent back unchanged.
  */
 export function maskSubscriberCredentials<T>(value: T): T {
-	if (Array.isArray(value)) {
-		return value.map((item) => maskSubscriberCredentials(item)) as T;
+	const envelope = asRecord(value);
+	if (envelope && !isSubscriber(envelope) && "data" in envelope) {
+		return { ...envelope, data: maskSubscribers(envelope.data) } as T;
 	}
 
-	if (!value || typeof value !== "object") {
+	return maskSubscribers(value) as T;
+}
+
+function maskSubscribers(value: unknown): unknown {
+	return Array.isArray(value) ? value.map(maskSubscriber) : maskSubscriber(value);
+}
+
+function maskSubscriber(value: unknown): unknown {
+	const subscriber = asRecord(value);
+	if (!subscriber || !isSubscriber(subscriber) || !Array.isArray(subscriber.channels)) {
 		return value;
 	}
 
-	const masked: Record<string, unknown> = {};
-	for (const [key, entry] of Object.entries(value)) {
-		if (key === "deviceTokens" && Array.isArray(entry)) {
-			masked[key] = entry.map((token) =>
-				typeof token === "string" ? maskCredentialValue(token) : token,
-			);
-		} else if (key === "webhookUrl" && typeof entry === "string") {
-			masked[key] = maskCredentialValue(entry);
-		} else {
-			masked[key] = maskSubscriberCredentials(entry);
-		}
-	}
+	return {
+		...subscriber,
+		channels: subscriber.channels.map((entry) => {
+			const channel = asRecord(entry);
+			const credentials = asRecord(channel?.credentials);
+			if (!channel || !credentials) return entry;
 
-	return masked as T;
+			return { ...channel, credentials: maskChannelCredentials(credentials) };
+		}),
+	};
+}
+
+function maskChannelCredentials(credentials: Record<string, unknown>): Record<string, unknown> {
+	const { deviceTokens, webhookUrl } = credentials;
+
+	return {
+		...credentials,
+		...(Array.isArray(deviceTokens) && {
+			deviceTokens: deviceTokens.map((token) =>
+				typeof token === "string" ? maskCredentialValue(token) : token,
+			),
+		}),
+		...(typeof webhookUrl === "string" && { webhookUrl: maskCredentialValue(webhookUrl) }),
+	};
+}
+
+function isSubscriber(record: Record<string, unknown>): boolean {
+	return typeof record.subscriberId === "string" || Array.isArray(record.channels);
 }

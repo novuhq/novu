@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApiResponse } from "../types/index";
-import { asRecord } from "../utils/activity-format";
+import { asRecord, asString } from "../utils/activity-format";
 import {
 	computeSubscriberReachability,
 	type ReachabilityConnection,
@@ -62,7 +62,7 @@ export function registerSubscriberReachabilityTool(server: McpServer, accessors:
 	ToolFactory.createTool(server, accessors, {
 		annotations: READ_ONLY,
 		description:
-			"Check which channels (email, in-app, SMS, push, chat) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
+			"Check which channels (email, in-app, SMS, push, chat, tool) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
 		handler: async (rawInput, context) => {
 			const input = withoutBlankValues(rawInput);
 			if (!input.subscriberId && !input.email && !input.phone && !input.name) {
@@ -127,10 +127,10 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 				result: {
 					candidates: matches.map((match) => ({
 						dashboardPath: subscriberDashboardPath(String(match.subscriberId)),
-						email: stringOrNull(match.email),
+						email: asString(match.email) ?? null,
 						name: subscriberDisplayName({
-							firstName: stringOrNull(match.firstName),
-							lastName: stringOrNull(match.lastName),
+							firstName: asString(match.firstName) ?? null,
+							lastName: asString(match.lastName) ?? null,
 						}),
 						subscriberId: String(match.subscriberId),
 					})),
@@ -228,12 +228,15 @@ async function checkReachability(
 		if (!response.ok) failures[source] = toReadFailure(response);
 	}
 	// A deleted connection is a finding ("no connection"), not a failed read.
-	const failedConnection = connectionReads.find(
-		(response): response is FailedCall => !response.ok && response.status !== 404,
-	);
-	if (failedConnection) failures.connections = toReadFailure(failedConnection);
+	const connectionFailures: Record<string, ReadFailure> = {};
+	connectionReads.forEach((response, index) => {
+		if (!response.ok && response.status !== 404) {
+			connectionFailures[connectionIds[index]] = toReadFailure(response);
+		}
+	});
 
 	return computeSubscriberReachability({
+		connectionFailures,
 		connections: connectionReads.flatMap((response) =>
 			response.ok ? [toConnection(asRecord(response.data) ?? {})] : [],
 		),
@@ -312,18 +315,18 @@ function toSubscriber(raw: Json): ReachabilitySubscriber {
 					.length,
 				hasPhoneNumber: Boolean(credentials.phoneNumber),
 				hasWebhookUrl: Boolean(credentials.webhookUrl),
-				integrationId: stringOrNull(channel._integrationId),
-				integrationIdentifier: stringOrNull(channel.integrationIdentifier),
+				integrationId: asString(channel._integrationId) ?? null,
+				integrationIdentifier: asString(channel.integrationIdentifier) ?? null,
 				providerId: String(channel.providerId ?? ""),
 			};
 		}),
-		email: stringOrNull(raw.email),
-		environmentId: stringOrNull(raw._environmentId),
-		firstName: stringOrNull(raw.firstName),
+		email: asString(raw.email) ?? null,
+		environmentId: asString(raw._environmentId) ?? null,
+		firstName: asString(raw.firstName) ?? null,
 		hasPhone: typeof raw.phone === "string" && raw.phone.trim().length > 0,
 		isOnline: typeof raw.isOnline === "boolean" ? raw.isOnline : null,
-		lastName: stringOrNull(raw.lastName),
-		lastOnlineAt: stringOrNull(raw.lastOnlineAt),
+		lastName: asString(raw.lastName) ?? null,
+		lastOnlineAt: asString(raw.lastOnlineAt) ?? null,
 		subscriberId: String(raw.subscriberId ?? ""),
 	};
 }
@@ -345,24 +348,30 @@ function toIntegration(raw: Json): ReachabilityIntegration {
 
 function toEndpoint(raw: Json): ReachabilityEndpoint {
 	return {
-		channel: stringOrNull(raw.channel),
-		connectionIdentifier: stringOrNull(raw.connectionIdentifier),
-		contextKeys: Array.isArray(raw.contextKeys)
-			? raw.contextKeys.filter((key): key is string => typeof key === "string")
-			: [],
+		channel: asString(raw.channel) ?? null,
+		connectionIdentifier: asString(raw.connectionIdentifier) ?? null,
+		contextKeys: contextKeysOf(raw),
 		hasTenantId: Boolean(asRecord(raw.endpoint)?.tenantId),
 		identifier: String(raw.identifier ?? ""),
-		integrationIdentifier: stringOrNull(raw.integrationIdentifier),
-		providerId: stringOrNull(raw.providerId),
+		integrationIdentifier: asString(raw.integrationIdentifier) ?? null,
+		providerId: asString(raw.providerId) ?? null,
 		type: String(raw.type ?? ""),
 	};
 }
 
 function toConnection(raw: Json): ReachabilityConnection {
 	return {
+		contextKeys: contextKeysOf(raw),
 		hasWorkspaceId: Boolean(asRecord(raw.workspace)?.id),
 		identifier: String(raw.identifier ?? ""),
 	};
+}
+
+/** Endpoints and connections stored before contexts have no `contextKeys`; that's the empty context. */
+function contextKeysOf(raw: Json): string[] {
+	return Array.isArray(raw.contextKeys)
+		? raw.contextKeys.filter((key): key is string => typeof key === "string")
+		: [];
 }
 
 function toPreferences(data: unknown): ReachabilityPreferences | undefined {
@@ -373,10 +382,6 @@ function asArray(value: unknown): Json[] {
 	return Array.isArray(value)
 		? value.filter((item): item is Json => Boolean(asRecord(item)))
 		: [];
-}
-
-function stringOrNull(value: unknown): string | null {
-	return typeof value === "string" && value ? value : null;
 }
 
 function unique(values: string[]): string[] {
