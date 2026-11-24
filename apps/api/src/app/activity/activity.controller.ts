@@ -1,7 +1,7 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions, UserSession } from '@novu/application-generic';
-import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -24,6 +24,12 @@ import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+
+const RAW_TRACE_EXCLUDED_SCHEMES = new Set<string>([
+  ApiAuthSchemeEnum.API_KEY,
+  ApiAuthSchemeEnum.KEYLESS,
+  ApiAuthSchemeEnum.OAUTH2,
+]);
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -132,6 +138,9 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
+        // Raw provider traces can hold the provider's credentials (a failed send's request headers), which API keys and
+        // OAuth never get. The dashboard keeps them, and so does the Copilot's internal token, whose tools trim them.
+        includeRawTraces: !RAW_TRACE_EXCLUDED_SCHEMES.has(user.scheme),
       })
     );
   }

@@ -126,7 +126,7 @@ export class GetWorkflowRun {
         this.getStepRunsForWorkflowRun(command, workflowRun),
         this.getOverrides(workflowRun.transaction_id, command),
       ]);
-      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides);
+      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides, command.includeRawTraces);
 
       return workflowRunDto;
     } catch (error) {
@@ -360,7 +360,7 @@ export class GetWorkflowRun {
     }
   }
 
-  private mapStepRunToDto(stepRun: IStepRunWithDetails): StepRunDto {
+  private mapStepRunToDto(stepRun: IStepRunWithDetails, includeRawTraces: boolean): StepRunDto {
     return {
       stepRunId: stepRun.step_run_id,
       stepId: stepRun.step_id,
@@ -372,7 +372,7 @@ export class GetWorkflowRun {
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
-      executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
+      executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || [], includeRawTraces),
       scheduleExtensionsCount: stepRun.schedule_extensions_count,
     };
   }
@@ -380,7 +380,8 @@ export class GetWorkflowRun {
   private mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
     stepRuns: IStepRunWithDetails[],
-    overrides: Record<string, unknown>
+    overrides: Record<string, unknown>,
+    includeRawTraces: boolean
   ): GetWorkflowRunResponseDto {
     return {
       id: workflowRun.workflow_run_id,
@@ -398,7 +399,7 @@ export class GetWorkflowRun {
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
-      steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
+      steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun, includeRawTraces)),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,

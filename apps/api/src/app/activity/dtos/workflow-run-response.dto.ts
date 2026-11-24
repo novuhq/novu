@@ -34,7 +34,10 @@ export class StepExecutionDetailDto {
   @IsString()
   providerId?: string;
 
-  @ApiPropertyOptional({ description: 'Raw data of the execution' })
+  @ApiPropertyOptional({
+    description:
+      'Raw data of the execution. Left out for API key and OAuth requests, since it can hold provider credentials.',
+  })
   @IsOptional()
   @IsString()
   raw?: string | null;
