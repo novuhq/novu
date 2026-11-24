@@ -764,7 +764,7 @@ allowBuilds:
   fsevents: true
   iframe-resizer: true
   msgpackr-extract: true
-  nestjs-pino: true
+  nestjs-pino: false
   nice-napi: true
   nx: true
   protobufjs: true
