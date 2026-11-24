@@ -7,7 +7,13 @@ import { cn } from '@/utils/ui';
 import { useCopilotPageView } from './copilot-page-view-store';
 import { DotGrid } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { COPILOT_POPOVER_ID, deriveLauncherState, type LauncherState } from './copilot-web-chat-utils';
+import {
+  COPILOT_POPOVER_ID,
+  COPILOT_SHEET_LIFT_PX,
+  COPILOT_SHEET_LIFT_TRANSITION,
+  deriveLauncherState,
+  type LauncherState,
+} from './copilot-web-chat-utils';
 
 // Same timing as the popover, so the launcher folds into a circle while the popover grows out of it.
 const LAUNCHER_TRANSITION = { duration: 0.15, ease: 'easeOut' } as const;
@@ -64,7 +70,7 @@ function LauncherIcon({ state }: { state: LauncherState }) {
 
 export function CopilotLauncher() {
   const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
-  // Over a sheet, the open launcher sits above it with the popover, as the design shows; closed, it stays under so the sheet's footer stays usable.
+  // Over a sheet it stays visible above it, as the design shows, rising clear of the sheet's footer so its buttons stay usable.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(isOpen);
@@ -90,9 +96,12 @@ export function CopilotLauncher() {
   return (
     // Closed, it is named by its visible text, so the status (Working…, Answer ready, Couldn’t finish) is read out with it.
     // One button for both states, so opening folds the label away and leaves a chevron-down close circle.
-    <button
+    <motion.button
       ref={buttonRef}
       type="button"
+      initial={false}
+      animate={{ bottom: 16 + (isOverSheet ? COPILOT_SHEET_LIFT_PX : 0) }}
+      transition={shouldReduceMotion ? { duration: 0 } : COPILOT_SHEET_LIFT_TRANSITION}
       disabled={isOff}
       onClick={isOpen ? close : () => open()}
       aria-label={isOpen ? 'Close Copilot' : undefined}
@@ -101,8 +110,8 @@ export function CopilotLauncher() {
       aria-expanded={isOpen}
       aria-keyshortcuts={isOpen || isOff ? undefined : 'Meta+J Control+J'}
       className={cn(
-        'fixed bottom-4 right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
-        isOpen && isOverSheet ? 'z-[51]' : 'z-40',
+        'fixed right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
+        isOverSheet ? 'z-[51]' : 'z-40',
         isOpen ? 'pl-2.5' : 'pl-3',
         isOff
           ? 'cursor-not-allowed bg-bg-weak'
@@ -123,6 +132,6 @@ export function CopilotLauncher() {
           <LauncherStatus state={state} />
         </span>
       </motion.span>
-    </button>
+    </motion.button>
   );
 }
