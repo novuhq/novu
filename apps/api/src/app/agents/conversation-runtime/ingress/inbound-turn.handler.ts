@@ -896,6 +896,23 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin,
       conversationService: this.conversationService,
       logger: this.logger,
+      isRefused: async (platformUserId) => {
+        const authorResolution = await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId,
+          operation: 'resolve-subscriber-thread-history',
+        });
+        const access = await this.decideInboundAccess({
+          event: AgentEventEnum.ON_MESSAGE,
+          config,
+          resolution: authorResolution,
+          sender: await this.loadTurnSender({ config, conversation, resolution: authorResolution, platformUserId }),
+          emailSenderUnverified: false,
+        });
+
+        return access.verdict === 'refuse';
+      },
     });
 
     const [subscriber, agent] = await Promise.all([

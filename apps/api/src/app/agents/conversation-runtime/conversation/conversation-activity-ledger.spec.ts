@@ -312,6 +312,7 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Ada',
             content: 'oldest',
             platformMessageId: '1',
+            accessRefused: false,
           },
           {
             identifier: 'slack_hist_conv-1_2',
@@ -319,6 +320,7 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Bob',
             content: 'newest',
             platformMessageId: '2',
+            accessRefused: true,
           },
           {
             identifier: 'slack_hist_conv-1_agent-reply',
@@ -326,6 +328,7 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Agent',
             content: 'already persisted outbound',
             platformMessageId: 'agent-reply',
+            accessRefused: false,
           },
         ],
         environmentId: 'env-1',
@@ -338,6 +341,10 @@ describe('ConversationActivityLedger', () => {
       expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal(
         ['1', '2']
       );
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.accessRefused)).to.deep.equal([
+        false,
+        true,
+      ]);
       expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 2, null)).to.equal(true);
     });
   });

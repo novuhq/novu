@@ -816,6 +816,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         content: string;
         platformMessageId: string;
         sequence: number;
+        accessRefused: boolean;
       }>;
       environmentId: string;
       organizationId: string;
@@ -847,6 +848,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
             content: message.content,
             platformMessageId: message.platformMessageId,
             sequence: message.sequence,
+            ...(message.accessRefused ? { accessRefused: true } : {}),
             _environmentId: environmentId,
             _organizationId: organizationId,
             createdAt: new Date(firstCreatedAt + index),

@@ -67,6 +67,8 @@ export async function seedSlackThreadHistory(params: {
   workflowOrigin?: WorkflowOriginSnapshot | null;
   conversationService: Pick<AgentConversationService, 'importInboundMessages'>;
   logger: Pick<PinoLogger, 'warn'>;
+  /** Whether the agent's access setting refuses this Slack user. */
+  isRefused: (authorUserId: string) => Promise<boolean>;
 }): Promise<UnseenThreadMessage[]> {
   const { agentId, config, conversation, thread, message, platformThreadId, workflowOrigin } = params;
 
@@ -81,26 +83,42 @@ export async function seedSlackThreadHistory(params: {
       originPlatformMessageId: workflowOrigin?.data.platformMessageId,
     });
 
+    const refusedAuthors = new Map<string, Promise<boolean>>();
+    const isRefused = (authorUserId: string) => {
+      let refused = refusedAuthors.get(authorUserId);
+      if (!refused) {
+        refused = params.isRefused(authorUserId);
+        refusedAuthors.set(authorUserId, refused);
+      }
+
+      return refused;
+    };
+
     const imported = await params.conversationService.importInboundMessages({
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
       platformThreadId,
-      messages: prior.map((msg) => ({
-        senderId: `${config.platform}:${msg.author.userId}`,
-        senderName: msg.author.fullName,
-        content: msg.text,
-        platformMessageId: msg.id,
-        identifier: `slack_hist_${conversation._id}_${msg.id}`,
-      })),
+      messages: await Promise.all(
+        prior.map(async (msg) => ({
+          senderId: `${config.platform}:${msg.author.userId}`,
+          senderName: msg.author.fullName,
+          content: msg.text,
+          platformMessageId: msg.id,
+          identifier: `slack_hist_${conversation._id}_${msg.id}`,
+          accessRefused: await isRefused(msg.author.userId),
+        }))
+      ),
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
 
-    const importedIds = new Set(imported.map((entry) => entry.platformMessageId));
+    const admittedIds = new Set(
+      imported.filter((entry) => !entry.accessRefused).map((entry) => entry.platformMessageId)
+    );
 
     return prior
-      .filter((msg) => importedIds.has(msg.id) && msg.author.isBot !== true)
+      .filter((msg) => admittedIds.has(msg.id) && msg.author.isBot !== true)
       .map((msg) => ({ senderName: msg.author.fullName, content: msg.text }));
   } catch (err) {
     params.logger.warn(err, `[agent:${agentId}] Failed to seed Slack thread history; continuing without it`);

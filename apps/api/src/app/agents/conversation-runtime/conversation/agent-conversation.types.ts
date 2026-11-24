@@ -63,6 +63,7 @@ export interface ImportInboundMessage {
   senderName?: string;
   content: string;
   platformMessageId: string;
+  accessRefused: boolean;
 }
 
 export interface ImportInboundMessagesParams {
