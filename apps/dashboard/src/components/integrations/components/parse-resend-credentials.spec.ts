@@ -70,6 +70,18 @@ describe('parseResendCredentials', () => {
     });
   });
 
+  it('reads past escaped quotes inside a quoted value', () => {
+    const name = [`RESEND_API_KEY=${KEY}`, 'SENDER_NAME="Acme \\"Billing\\"" # team'].join('\n');
+    expect(parseResendCredentials(name)[CredentialsKeyEnum.SenderName]).toBe('Acme "Billing"');
+
+    const address = [`RESEND_API_KEY=${KEY}`, 'EMAIL_FROM="\\"Acme\\" <hello@acme.com>"'].join('\n');
+    expect(parseResendCredentials(address)).toEqual({
+      [CredentialsKeyEnum.ApiKey]: KEY,
+      [CredentialsKeyEnum.From]: 'hello@acme.com',
+      [CredentialsKeyEnum.SenderName]: 'Acme',
+    });
+  });
+
   it('returns nothing for unrelated text', () => {
     expect(parseResendCredentials('DATABASE_URL=postgres://localhost')).toEqual({});
   });
