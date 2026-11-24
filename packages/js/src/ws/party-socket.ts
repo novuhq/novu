@@ -125,6 +125,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
   #hibernationHeartbeatIntervalId: ReturnType<typeof setInterval> | undefined;
+  /** partysocket's retryCount at the last open or close, to tell a scheduled retry from giving up */
+  #lastRetryCount = 0;
+  #hasGivenUp = false;
+  /** Set once 'socket.disconnect.resolved' went out for the current outage, cleared on 'open' */
+  #disconnectEmitted = false;
 
   constructor({
     socketUrl,
@@ -263,17 +268,18 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   }
 
   /**
-   * partysocket stops retrying for good once a caller-provided `maxRetries` is used up, and its `reconnect()`
-   * cannot restart it from there.
+   * partysocket bumps retryCount when a close schedules another attempt. At a caller-provided `maxRetries` it
+   * leaves the count as it was and stops for good; its `reconnect()` cannot restart it from there.
    */
-  #hasGivenUp(socket: WebSocket): boolean {
+  #trackGiveUp(socket: WebSocket): void {
     const maxRetries = Number(this.#socketOptions?.maxRetries ?? Number.POSITIVE_INFINITY);
 
-    return socket.readyState === WebSocket.CLOSED && socket.retryCount >= maxRetries;
+    this.#hasGivenUp = socket.retryCount >= maxRetries && socket.retryCount === this.#lastRetryCount;
+    this.#lastRetryCount = socket.retryCount;
   }
 
   async #initializeSocket(): Promise<void> {
-    if (this.#partySocket && this.#hasGivenUp(this.#partySocket)) {
+    if (this.#partySocket && this.#hasGivenUp) {
       const deadSocket = this.#partySocket;
       this.#clearCurrentSocket();
       deadSocket.close();
@@ -292,8 +298,13 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
 
     const socket = this.#partySocket;
+    this.#lastRetryCount = socket.retryCount;
+    this.#hasGivenUp = false;
+    this.#disconnectEmitted = false;
 
     socket.addEventListener('open', () => {
+      this.#lastRetryCount = socket.retryCount;
+      this.#disconnectEmitted = false;
       this.#startHibernationHeartbeat();
       this.#emitter.emit('socket.connect.resolved', { args });
     });
@@ -313,7 +324,12 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
        * kept reconnecting in the background, never to be closed.
        */
       this.#clearHibernationHeartbeat();
-      this.#emitter.emit('socket.disconnect.resolved', { args });
+      this.#trackGiveUp(socket);
+
+      if (!this.#disconnectEmitted) {
+        this.#disconnectEmitted = true;
+        this.#emitter.emit('socket.disconnect.resolved', { args });
+      }
     });
 
     socket.addEventListener('message', this.#handleMessage);
@@ -335,9 +351,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       this.#clearCurrentSocket();
       socket?.close();
 
-      if (socket) {
+      // A drop already reported this outage; the socket was only reconnecting
+      if (socket && !this.#disconnectEmitted) {
         this.#emitter.emit('socket.disconnect.resolved', { args: { socketUrl: this.#socketUrl } });
       }
+      this.#disconnectEmitted = false;
 
       return {};
     } catch (error) {

@@ -8,6 +8,10 @@ export const isDeepEqual = (a: unknown, b: unknown): boolean => {
     return true;
   }
 
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((item, index) => isDeepEqual(item, b[index]));
   }
@@ -27,7 +31,8 @@ export const isDeepEqual = (a: unknown, b: unknown): boolean => {
 
 /**
  * Returns the previous reference for as long as the value stays deep-equal, so object props written inline
- * (`subscriber={{ ... }}`) keep their identity across re-renders. Functions and class instances compare by reference.
+ * (`subscriber={{ ... }}`) keep their identity across re-renders. Dates compare by time; functions and other class
+ * instances compare by reference.
  */
 export const useStableValue = <T>(value: T): T => {
   const ref = useRef(value);

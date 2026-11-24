@@ -108,6 +108,39 @@ describe('PartySocketClient', () => {
     expect(openSockets()).toHaveLength(0);
   });
 
+  it('reports one disconnect when disconnected while reconnecting after a drop', async () => {
+    const { client, emitter } = createClient();
+    const disconnected = vi.fn();
+    emitter.on('socket.disconnect.resolved', disconnected);
+
+    await client.connect();
+    await wait();
+    openSockets()[0].drop();
+    await client.disconnect();
+
+    expect(disconnected).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a socket whose last allowed retry is still scheduled', async () => {
+    const { client } = createClient({ maxRetries: 2 });
+
+    await client.connect();
+    await wait();
+    openSockets()[0].drop();
+    await wait();
+    // This drop schedules the second and last allowed retry, which waits out its backoff
+    openSockets()[0].drop();
+
+    await client.connect();
+    expect(FakeWebSocket.instances).toHaveLength(2);
+
+    await wait();
+    expect(FakeWebSocket.instances).toHaveLength(3);
+    expect(openSockets()).toHaveLength(1);
+
+    await client.disconnect();
+  });
+
   it('restarts a socket that used up a caller-provided maxRetries', async () => {
     const { client } = createClient({ maxRetries: 1 });
 

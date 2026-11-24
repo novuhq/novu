@@ -1,6 +1,8 @@
 import { act, render } from '@testing-library/react';
 import React, { StrictMode, useMemo } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NovuProvider } from '../hooks/NovuProvider';
+import { useCounts } from '../hooks/useCounts';
 import { Inbox } from './Inbox';
 
 class FakeWebSocket extends EventTarget {
@@ -202,5 +204,52 @@ describe('Inbox realtime socket lifecycle', () => {
     const reconnects = FakeWebSocket.instances.slice(before);
     expect(reconnects.map((ws) => ws.token)).toEqual([`token-${RERENDERS + 1}`]);
     expect(openSockets()).toHaveLength(1);
+  });
+
+  it('reuses one session when inline subscriber data holds an equal Date', async () => {
+    const DateApp = ({ tick }: { tick: number }) => (
+      <div data-tick={tick}>
+        <Inbox
+          applicationIdentifier="app"
+          subscriber={{ subscriberId: 'user_1', data: { signedUpAt: new Date('2026-01-01T00:00:00Z') } }}
+        />
+      </div>
+    );
+
+    const view = render(<DateApp tick={0} />);
+    await flush();
+
+    for (let tick = 1; tick <= RERENDERS; tick += 1) {
+      view.rerender(<DateApp tick={tick} />);
+      await flush();
+    }
+
+    expect(sessionCount).toBe(1);
+    expect(openSockets()).toHaveLength(1);
+  });
+});
+
+describe('useCounts realtime subscription', () => {
+  const Counts = () => {
+    useCounts({ filters: [{ read: false }] });
+
+    return null;
+  };
+
+  const ProviderApp = ({ tenant }: { tenant: string }) => (
+    <NovuProvider applicationIdentifier="app" subscriberId="user_1" context={{ tenant: { id: tenant } }}>
+      <Counts />
+    </NovuProvider>
+  );
+
+  it('moves to the new instance socket when the context changes', async () => {
+    const view = render(<ProviderApp tenant="org_1" />);
+    await flush();
+    expect(openSockets().map((ws) => ws.token)).toEqual(['token-1']);
+
+    view.rerender(<ProviderApp tenant="org_2" />);
+    await flush();
+
+    expect(openSockets().map((ws) => ws.token)).toEqual(['token-2']);
   });
 });
