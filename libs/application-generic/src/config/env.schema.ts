@@ -65,7 +65,7 @@ export const envSchema = {
     description: 'Azure Cache for Redis cluster port.',
   },
   AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_TLS: {
-    description: 'Any value connects to Azure Cache for Redis over TLS.',
+    description: 'Connects to Azure Cache for Redis over TLS, also when unset, unless false, 0, no or off.',
   },
   AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_USERNAME: {
     description: 'Azure Cache for Redis cluster username.',
@@ -129,7 +129,7 @@ export const envSchema = {
     description: 'ElastiCache cluster port, set together with ELASTICACHE_CLUSTER_SERVICE_HOST.',
   },
   ELASTICACHE_CLUSTER_SERVICE_TLS: {
-    description: 'Any value connects to ElastiCache over TLS.',
+    description: 'Connects to ElastiCache over TLS, also when unset, unless false, 0, no or off.',
   },
   ENABLE_OTEL: {
     type: 'boolean',
@@ -283,7 +283,7 @@ export const envSchema = {
     description: 'MemoryDB cluster port, set together with MEMORY_DB_CLUSTER_SERVICE_HOST.',
   },
   MEMORY_DB_CLUSTER_SERVICE_TLS: {
-    description: 'Any value connects to MemoryDB over TLS.',
+    description: 'Connects to MemoryDB over TLS, also when unset, unless false, 0, no or off.',
   },
   MEMORY_DB_CLUSTER_SERVICE_TTL: {
     description: 'Default key TTL in seconds for MemoryDB.',
@@ -565,7 +565,7 @@ export const envSchema = {
     description: 'Replica port of the Redis master/replica cache.',
   },
   REDIS_TLS: {
-    description: 'Any value connects to single-node Redis over TLS.',
+    description: 'Connects to single-node Redis over TLS when set, unless false, 0, no or off.',
   },
   REDIS_TTL: {
     description: 'Default key TTL in seconds for single-node Redis.',

@@ -3,7 +3,7 @@ import newrelic from 'newrelic';
 import { ConnectionOptions } from 'tls';
 
 import { env } from '../../../config/env';
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues, isTlsFlagEnabled } from './variable-mappers';
 
 export { Redis, RedisOptions, ScanStream };
 
@@ -54,7 +54,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     keepAlive: convertStringValues(env.REDIS_KEEP_ALIVE),
     family: convertStringValues(env.REDIS_FAMILY),
     keyPrefix: convertStringValues(env.REDIS_PREFIX),
-    tls: env.REDIS_TLS
+    tls: isTlsFlagEnabled(env.REDIS_TLS)
       ? {
           servername: convertStringValues(env.REDIS_HOST),
         }

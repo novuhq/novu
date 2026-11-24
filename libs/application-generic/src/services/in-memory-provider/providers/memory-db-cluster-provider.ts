@@ -3,7 +3,7 @@ import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
 import { env } from '../../../config/env';
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues, getDefaultOnTlsOptions } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
 
@@ -53,11 +53,10 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
     keepAlive: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE),
     family: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
     keyPrefix: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX),
-    tls: (env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
-      ? {
-          servername: convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_HOST),
-        }
-      : {},
+    tls: getDefaultOnTlsOptions(
+      env.MEMORY_DB_CLUSTER_SERVICE_TLS,
+      convertStringValues(env.MEMORY_DB_CLUSTER_SERVICE_HOST)
+    ),
   };
 
   const { host } = redisClusterConfig;
@@ -94,25 +93,24 @@ export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | un
 
   const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
-  // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
-  // biome-ignore lint/plugin: Existing loose type is outside this change.
-  const redisOptions: any = {
+  if (username && !password) {
+    throw new Error('MemoryDB misconfiguration: username provided without password');
+  }
+
+  if (username) {
+    Logger.log('Configuring MemoryDB with ACL authentication');
+  } else if (password) {
+    Logger.log('Configuring MemoryDB with legacy password-only authentication');
+  }
+
+  const redisOptions = {
     maxRetriesPerRequest: null,
     tls,
     connectTimeout,
     skipVersionCheck,
+    ...(username && { username }),
+    ...(password && { password }),
   };
-
-  if (username && password) {
-    redisOptions.username = username;
-    redisOptions.password = password;
-    Logger.log('Configuring MemoryDB with ACL authentication');
-  } else if (password) {
-    redisOptions.password = password;
-    Logger.log('Configuring MemoryDB with legacy password-only authentication');
-  } else if (username) {
-    throw new Error('MemoryDB misconfiguration: username provided without password');
-  }
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),

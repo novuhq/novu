@@ -3,7 +3,7 @@ import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
 import { env } from '../../../config/env';
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues, getDefaultOnTlsOptions } from './variable-mappers';
 
 export { Cluster, ClusterOptions };
 
@@ -50,11 +50,10 @@ export const getElasticacheClusterProviderConfig = (): IElasticacheClusterProvid
     keepAlive: convertStringValues(env.REDIS_CLUSTER_KEEP_ALIVE),
     family: convertStringValues(env.REDIS_CLUSTER_FAMILY),
     keyPrefix: convertStringValues(env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: (env.ELASTICACHE_CLUSTER_SERVICE_TLS as ConnectionOptions)
-      ? {
-          servername: convertStringValues(env.ELASTICACHE_CLUSTER_SERVICE_HOST),
-        }
-      : {},
+    tls: getDefaultOnTlsOptions(
+      env.ELASTICACHE_CLUSTER_SERVICE_TLS,
+      convertStringValues(env.ELASTICACHE_CLUSTER_SERVICE_HOST)
+    ),
   };
 
   const { host } = redisClusterConfig;
