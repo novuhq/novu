@@ -36,6 +36,10 @@ describe('buildWorkflowRunsViewing', () => {
       },
     });
   });
+
+  it('keeps an empty contextKeys, which filters for runs without a context', () => {
+    expect(buildWorkflowRunsViewing(new URLSearchParams('contextKeys='))).toEqual({ filters: { contextKeys: '' } });
+  });
 });
 
 describe('buildRequestsViewing', () => {
