@@ -1,6 +1,6 @@
 import { CredentialsKeyEnum, IConfigCredential } from '@novu/shared';
 import { ReactNode } from 'react';
-import { Control, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
+import { Control, ControllerFieldState, ControllerRenderProps, useWatch } from 'react-hook-form';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
@@ -229,9 +229,18 @@ function TextInputControl({
   );
 }
 
-function PushResources({ credential, integrationId }: { credential: IConfigCredential; integrationId?: string }) {
+function PushResources({
+  credential,
+  integrationId,
+  integrationEnvironmentId,
+}: {
+  credential: IConfigCredential;
+  integrationId?: string;
+  integrationEnvironmentId?: string;
+}) {
   const { currentEnvironment } = useEnvironment();
-  const environmentId = currentEnvironment?._id || '';
+  // The integration's own environment, which the open environment isn't when it was opened from another one.
+  const environmentId = integrationEnvironmentId || currentEnvironment?._id || '';
 
   const resources = [
     {
@@ -300,6 +309,7 @@ function InputControl({
   isDisabledWithSwitch,
   disabledSwitchMessage,
   integrationId,
+  integrationEnvironmentId,
   tooltip,
 }: {
   credential: IConfigCredential;
@@ -309,10 +319,17 @@ function InputControl({
   isDisabledWithSwitch?: boolean;
   disabledSwitchMessage?: string;
   integrationId?: string;
+  integrationEnvironmentId?: string;
   tooltip?: ReactNode;
 }) {
   if (credential.type === 'pushResources') {
-    return <PushResources credential={credential} integrationId={integrationId} />;
+    return (
+      <PushResources
+        credential={credential}
+        integrationId={integrationId}
+        integrationEnvironmentId={integrationEnvironmentId}
+      />
+    );
   }
 
   if (credential.type === 'switch') {
@@ -360,6 +377,8 @@ export function CredentialSection({
   name?: 'credentials' | 'configurations';
   integrationId?: string;
 }) {
+  const integrationEnvironmentId = useWatch({ control, name: 'environmentId' });
+
   return (
     <FormField
       key={`${credential.key}-${integrationId || 'no-id'}`}
@@ -385,6 +404,7 @@ export function CredentialSection({
             isDisabledWithSwitch={isDisabledWithSwitch}
             disabledSwitchMessage={disabledSwitchMessage}
             integrationId={integrationId}
+            integrationEnvironmentId={integrationEnvironmentId}
             tooltip={
               credential.tooltip?.text ? (
                 <DescriptionWithLinks description={credential.tooltip?.text} links={credential.links} />

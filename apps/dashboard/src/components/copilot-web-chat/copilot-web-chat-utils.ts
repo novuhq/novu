@@ -123,6 +123,10 @@ export function writeStoredConversationId(scope: string | undefined, conversatio
 /** DOM id of the popover, so the launcher can tell when the focus sits in it while it animates out. */
 export const COPILOT_POPOVER_ID = 'copilot-popover';
 
+/** Over a sheet, the launcher and popover rise clear of its 57px footer, gliding with the sheet's 500ms slide-in. */
+export const COPILOT_SHEET_LIFT_PX = 57;
+export const COPILOT_SHEET_LIFT_TRANSITION = { duration: 0.5, ease: 'easeInOut' } as const;
+
 export type LauncherState = 'idle' | 'working' | 'ready' | 'error' | 'off';
 
 export function deriveLauncherState(input: {

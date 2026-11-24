@@ -105,7 +105,7 @@ How requests map to a Novu environment depends on how you authenticate:
 - **OAuth** — the token is bound to your **organization**, and the Novu API
   defaults to the **Development** environment.
 
-For OAuth sessions, every tool except `whoami`, `get_step_schema` and `submit_feedback` accepts an optional `environmentId` parameter to
+For OAuth sessions, every tool except `whoami`, `get_step_schema`, `get_integration_setup_link` and `submit_feedback` accepts an optional `environmentId` parameter to
 target a specific environment (forwarded to the Novu API as the
 `Novu-Environment-Id` header). Call `get_environments` first to list your
 environments, then pass the `_id` of the one you want — for example, to inspect
@@ -205,8 +205,11 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `bulk_trigger_workflow` | Trigger several workflows in one call |
 | `submit_feedback` | Report a missing, broken or confusing tool to the Novu team (hosted only; registered when `CLERK_SECRET_KEY` is set) |
 | `cancel_triggered_event` | Cancel a pending (delayed or digested) event by `transactionId` |
-| `get_integrations` | List configured provider integrations across channels |
+| `get_integrations` | List configured provider integrations across channels, with each one's environment name; never credentials or webhook signing keys |
 | `get_active_integrations` | List only the active integrations |
+| `update_integration` | Rename an integration, change its identifier, or turn it on or off |
+| `set_activity_tracking` | Turn delivery event tracking on or off, setting up the provider's webhook when Novu can |
+| `get_integration_setup_link` | Get the dashboard link where the user enters an integration's credentials (calls no API) |
 | `set_primary_integration` | Make an integration the primary one for its channel |
 | `delete_integration` | Delete an integration |
 
