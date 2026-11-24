@@ -30,7 +30,6 @@
     "@sentry/profiling-node": "^10.63.0",
     "bluebird": "^2.9.30",
     "dotenv": "^16.4.5",
-    "envalid": "^8.2.0",
     "extend": "^2.0.1",
     "html-to-text": "^9.0.5",
     "languagedetect": "^1.1.1",

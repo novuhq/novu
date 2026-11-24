@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-
+import { env } from '../../../config/env';
 import { ExpectedDnsRecordDto } from '../dtos/expected-dns-record.dto';
 
 export function getMailServerDomain(): string | undefined {
-  return process.env.MAIL_SERVER_DOMAIN?.replace(/^https?:\/\//i, '').replace(/\/+$/, '') || undefined;
+  return env.MAIL_SERVER_DOMAIN?.replace(/^https?:\/\//i, '').replace(/\/+$/, '') || undefined;
 }
 
 export function buildExpectedDnsRecords(domainName: string): ExpectedDnsRecordDto[] {

@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Producer } from 'sqs-producer';
 
+import { env } from '../../config/env';
 import { SQS_QUEUE_URL_ENV_BY_TOPIC } from '../../config/queue-backend';
 import { SqsPartialSendError } from './sqs-partial-send.error';
 import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
@@ -120,8 +121,8 @@ export class SqsService {
   }
 
   private initializeClient(): void {
-    const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
-    const endpoint = process.env.SQS_ENDPOINT;
+    const region = env.AWS_REGION || env.NOVU_REGION || 'us-east-1';
+    const endpoint = env.SQS_ENDPOINT;
 
     const clientConfig: SQSClientConfig = {
       region,
@@ -135,8 +136,8 @@ export class SqsService {
   }
 
   private initializePayloadOffload(): void {
-    const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
-    const endpoint = process.env.SQS_ENDPOINT;
+    const region = env.AWS_REGION || env.NOVU_REGION || 'us-east-1';
+    const endpoint = env.SQS_ENDPOINT;
     this.payloadOffload = new SqsPayloadOffloadService(region, endpoint);
   }
 
@@ -146,10 +147,7 @@ export class SqsService {
 
   private loadQueueUrls(): void {
     this.queueUrls = new Map(
-      Object.entries(SQS_QUEUE_URL_ENV_BY_TOPIC).map(([topic, envVar]) => [
-        topic as JobTopicNameEnum,
-        process.env[envVar],
-      ])
+      Object.entries(SQS_QUEUE_URL_ENV_BY_TOPIC).map(([topic, envVar]) => [topic as JobTopicNameEnum, env[envVar]])
     );
   }
 

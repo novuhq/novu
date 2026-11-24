@@ -16,6 +16,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
+import { env } from '../../../../config/env';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
@@ -210,7 +211,7 @@ export class ChatOauthCallback {
     routing: ResolvedCallbackRouting,
     integrationCredentials: ICredentialsDto
   ): Promise<string> {
-    let redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${routing.subscriberId}/credentials/${
+    let redirectUri = `${env.API_ROOT_URL}/v1/subscribers/${routing.subscriberId}/credentials/${
       routing.providerId
     }/oauth/callback?environmentId=${routing.environmentId}`;
 

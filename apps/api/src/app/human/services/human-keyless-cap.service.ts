@@ -2,6 +2,7 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { HumanInteractionRepository } from '@novu/dal';
 import { HumanChannelViaEnum } from '@novu/shared';
+import { env } from '../../../config/env';
 import type { ReplyContentDto } from '../../agents/shared/dtos/agent-reply-payload.dto';
 import { ConnectClaimTokenService } from '../../connect/services/connect-claim-token.service';
 import { resolveKeylessHumanInteractionCap } from '../../keyless/keyless-abuse.constants';
@@ -14,7 +15,7 @@ export const KEYLESS_HUMAN_CAP_REACHED_CODE = 'KEYLESS_HUMAN_CAP_REACHED';
 
 /** `human login` is approved on the Human dashboard, so it only works where one is configured (not self-hosted). */
 export function isHumanBrowserLoginAvailable(): boolean {
-  return Boolean(process.env.HUMAN_DASHBOARD_URL?.trim());
+  return Boolean(env.HUMAN_DASHBOARD_URL?.trim());
 }
 
 export interface KeylessHumanCapParams {

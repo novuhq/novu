@@ -10,6 +10,7 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
+import { env } from '../../config/env';
 import { SqsService } from '../sqs';
 import {
   DeferReasonEnum,
@@ -44,20 +45,20 @@ export class EventBridgeSchedulerService {
   private readonly maxEventAgeSeconds: number;
 
   constructor(private readonly sqsService: SqsService) {
-    this.groupPrefix = normalizeEnv(process.env.EVENTBRIDGE_SCHEDULER_GROUP_PREFIX);
-    this.roleArn = normalizeEnv(process.env.EVENTBRIDGE_SCHEDULER_ROLE_ARN);
-    this.dlqArn = normalizeEnv(process.env.EVENTBRIDGE_SCHEDULER_DLQ_ARN);
+    this.groupPrefix = normalizeEnv(env.EVENTBRIDGE_SCHEDULER_GROUP_PREFIX);
+    this.roleArn = normalizeEnv(env.EVENTBRIDGE_SCHEDULER_ROLE_ARN);
+    this.dlqArn = normalizeEnv(env.EVENTBRIDGE_SCHEDULER_DLQ_ARN);
     this.maxRetryAttempts = toPositiveInt(
-      process.env.EVENTBRIDGE_SCHEDULER_MAX_RETRY_ATTEMPTS,
+      env.EVENTBRIDGE_SCHEDULER_MAX_RETRY_ATTEMPTS,
       SCHEDULER_DEFAULT_MAX_RETRY_ATTEMPTS
     );
     this.maxEventAgeSeconds = toPositiveInt(
-      process.env.EVENTBRIDGE_SCHEDULER_MAX_EVENT_AGE_SECONDS,
+      env.EVENTBRIDGE_SCHEDULER_MAX_EVENT_AGE_SECONDS,
       SCHEDULER_DEFAULT_MAX_EVENT_AGE_SECONDS
     );
 
     if (this.hasCredentials()) {
-      const region = process.env.AWS_REGION || process.env.NOVU_REGION || 'us-east-1';
+      const region = env.AWS_REGION || env.NOVU_REGION || 'us-east-1';
       this.client = new SchedulerClient({ region });
       Logger.log({ groupPrefix: this.groupPrefix, region }, 'EventBridge Scheduler service initialized', LOG_CONTEXT);
     } else {

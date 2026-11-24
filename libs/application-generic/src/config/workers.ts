@@ -1,3 +1,5 @@
+import { env } from './env';
+
 enum WorkerEnum {
   INBOUND_PARSE_MAIL = 'InboundParseMailWorker',
   SUBSCRIBER_PROCESS = 'SubscriberProcessWorker',
@@ -6,7 +8,7 @@ enum WorkerEnum {
   WORKFLOW = 'WorkflowWorker',
 }
 
-const WORKER_CONCURRENCY_ENV_MAP: Record<WorkerEnum, string> = {
+const WORKER_CONCURRENCY_ENV_MAP: Record<WorkerEnum, Extract<keyof typeof env, `${string}_WORKER_CONCURRENCY`>> = {
   [WorkerEnum.INBOUND_PARSE_MAIL]: 'INBOUND_PARSE_MAIL_WORKER_CONCURRENCY',
   [WorkerEnum.SUBSCRIBER_PROCESS]: 'SUBSCRIBER_PROCESS_WORKER_CONCURRENCY',
   [WorkerEnum.STANDARD]: 'STANDARD_WORKER_CONCURRENCY',
@@ -19,47 +21,33 @@ interface IWorkerConfig {
   lockDuration: number;
 }
 
-const getDefaultConcurrency = () =>
-  process.env.WORKER_DEFAULT_CONCURRENCY ? Number(process.env.WORKER_DEFAULT_CONCURRENCY) : undefined;
-
-const getDefaultLockDuration = () =>
-  process.env.WORKER_DEFAULT_LOCK_DURATION ? Number(process.env.WORKER_DEFAULT_LOCK_DURATION) : undefined;
-
 function getWorkerConcurrency(worker: WorkerEnum, hardcodedDefault: number): number {
-  const envKey = WORKER_CONCURRENCY_ENV_MAP[worker];
-  const perQueueValue = process.env[envKey] ? Number(process.env[envKey]) : undefined;
-
-  return perQueueValue ?? getDefaultConcurrency() ?? hardcodedDefault;
+  return env[WORKER_CONCURRENCY_ENV_MAP[worker]] ?? env.WORKER_DEFAULT_CONCURRENCY ?? hardcodedDefault;
 }
 
-export const getSqsDefaultConcurrency = () =>
-  process.env.SQS_DEFAULT_CONCURRENCY ? Number(process.env.SQS_DEFAULT_CONCURRENCY) : undefined;
+export const getSqsDefaultConcurrency = () => env.SQS_DEFAULT_CONCURRENCY;
 
 export const getSqsDefaultVisibilityTimeout = () => {
-  const value = process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT
-    ? Number(process.env.SQS_DEFAULT_VISIBILITY_TIMEOUT)
-    : undefined;
+  const value = env.SQS_DEFAULT_VISIBILITY_TIMEOUT;
 
   return value ? Math.min(value, 43200) : undefined;
 };
 
 export const getSqsDefaultBatchSize = () => {
-  const value = process.env.SQS_DEFAULT_BATCH_SIZE ? Number(process.env.SQS_DEFAULT_BATCH_SIZE) : undefined;
+  const value = env.SQS_DEFAULT_BATCH_SIZE;
 
   return value ? Math.min(value, 10) : undefined;
 };
 
 export const getSqsDefaultWaitTimeSeconds = () => {
-  const value = process.env.SQS_DEFAULT_WAIT_TIME_SECONDS
-    ? Number(process.env.SQS_DEFAULT_WAIT_TIME_SECONDS)
-    : undefined;
+  const value = env.SQS_DEFAULT_WAIT_TIME_SECONDS;
 
   return value ? Math.min(value, 20) : undefined;
 };
 
 const getWorkerConfig = (worker: WorkerEnum, hardcodedConcurrency: number): IWorkerConfig => ({
   concurrency: getWorkerConcurrency(worker, hardcodedConcurrency),
-  lockDuration: getDefaultLockDuration() ?? 90000,
+  lockDuration: env.WORKER_DEFAULT_LOCK_DURATION,
 });
 
 export const getInboundParseMailWorkerOptions = () => getWorkerConfig(WorkerEnum.INBOUND_PARSE_MAIL, 200);

@@ -7,6 +7,7 @@ import {
   NestModule,
   Type,
 } from '@nestjs/common';
+import { env } from '../../config/env';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
 import { ChangesController } from './changes.controller';
@@ -15,7 +16,7 @@ import { PromoteNotificationTemplateChange } from './usecases/promote-notificati
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+  if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
     }

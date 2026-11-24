@@ -38,6 +38,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { createHash } from 'crypto';
+import { env } from '../../../config/env';
 import type { WrapperType } from '../../shared/wrapper-type';
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.command';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -210,7 +211,7 @@ export class CommunityAuthService implements IAuthService {
         contextKeys,
       },
       {
-        expiresIn: process.env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME || '15 days',
+        expiresIn: env.SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME,
         issuer: 'novu_api',
         audience: 'widget_user',
       }

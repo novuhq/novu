@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
 import type { Agent } from '@novu/framework';
+import { env } from '../../../config/env';
 
 /**
  * Minimal structural view of `@novu/ee-agents`' `NovuAgentsRegistry`. The concrete class is loaded
@@ -37,7 +38,7 @@ export class NovuAgentsBridgeService {
       return [];
     }
 
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true' && !env.CI_EE_TEST) {
       return [];
     }
 

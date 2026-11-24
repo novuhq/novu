@@ -1,5 +1,6 @@
 import { EmailProviderIdEnum, slugify } from '@novu/shared';
 import { customAlphabet } from 'nanoid';
+import { env } from '../config/env';
 
 /**
  * Helpers for the cloud-only "agent default shared inbox" feature.
@@ -29,9 +30,6 @@ import { customAlphabet } from 'nanoid';
  * DomainRoute flow.
  */
 
-const SHARED_AGENT_DOMAIN_ENV = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
-const AGENT_INBOX_DOMAIN_ENV = 'NOVU_AGENT_INBOX_INBOUND_DOMAIN';
-
 /**
  * Routing-key alphabet — lowercase letters + digits. Lowercase-only so the
  * inbound worker's `localPart.toLowerCase()` normalization never destroys the
@@ -50,8 +48,8 @@ const generateRoutingKeyNanoid = customAlphabet(ROUTING_KEY_ALPHABET, ROUTING_KE
  * (e.g. `apps/api/src/app/layouts-v2/usecases/upsert-layout/upsert-layout.usecase.ts`).
  */
 export function isAgentSharedInboxEnabled(): boolean {
-  const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-  const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+  const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+  const isSelfHosted = env.IS_SELF_HOSTED;
   const hasDomain = !!getSharedAgentDomainOrNull();
 
   return isEnterprise && !isSelfHosted && hasDomain;
@@ -77,8 +75,8 @@ export function isAgentSharedInboxEnabled(): boolean {
  * a per-tenant verified Domain + DomainRoute(type=AGENT).
  */
 export function isAgentEmailEnabled(): boolean {
-  const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-  const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+  const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+  const isSelfHosted = env.IS_SELF_HOSTED;
   const hasDomain = !!getSharedAgentDomainOrNull();
 
   return isEnterprise && (isSelfHosted || hasDomain);
@@ -92,7 +90,7 @@ export function isAgentEmailEnabled(): boolean {
 export function getSharedAgentDomain(): string {
   const domain = getSharedAgentDomainOrNull();
   if (!domain) {
-    throw new Error(`${SHARED_AGENT_DOMAIN_ENV} is not configured.`);
+    throw new Error('NOVU_AGENT_SHARED_INBOUND_DOMAIN is not configured.');
   }
 
   return domain;
@@ -122,7 +120,7 @@ function readConfiguredDomain(raw: string | null | undefined): string | null {
 }
 
 function getSharedAgentDomainOrNull(): string | null {
-  return readConfiguredDomain(process.env[SHARED_AGENT_DOMAIN_ENV]);
+  return readConfiguredDomain(env.NOVU_AGENT_SHARED_INBOUND_DOMAIN);
 }
 
 /**
@@ -131,7 +129,7 @@ function getSharedAgentDomainOrNull(): string | null {
  * This never gates `isAgentSharedInboxEnabled()` — the Connect domain does.
  */
 export function getAgentInboxSharedDomainOrNull(): string | null {
-  return readConfiguredDomain(process.env[AGENT_INBOX_DOMAIN_ENV]);
+  return readConfiguredDomain(env.NOVU_AGENT_INBOX_INBOUND_DOMAIN);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
+import { env } from '../../config/env';
 import { PinoLogger } from '../../logging';
 import { generateObjectId } from '../../utils/generate-id';
 import {
@@ -75,7 +76,7 @@ export class InboundMailRequestLogger {
   }
 
   isEnabled(): boolean {
-    return process.env.IS_ANALYTICS_LOGS_ENABLED === 'true' && process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED === 'true';
+    return env.IS_ANALYTICS_LOGS_ENABLED && env.IS_INBOUND_ANALYTICS_LOGS_ENABLED;
   }
 
   /**

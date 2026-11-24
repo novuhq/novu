@@ -29,6 +29,7 @@ import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import { assertSafeOutboundUrl, SsrfBlockedError } from '@novu/shared/utils/ssrf-url-validation';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { get as lodashGet } from 'lodash';
+import { env } from '../../config/env';
 import { decryptApiKey } from '../../encryption';
 import { PinoLogger } from '../../logging';
 import { buildSubscriberKey, CachedResponse, FeatureFlagsService } from '../../services';
@@ -352,7 +353,7 @@ export class ConditionsFilter extends Filter {
   }
 
   private async buildHmac(command: ConditionsFilterCommand): Promise<string | null> {
-    if (process.env.NODE_ENV === 'test') return null;
+    if (env.NODE_ENV === 'test') return null;
 
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
@@ -371,7 +372,7 @@ export class ConditionsFilter extends Filter {
   }
 
   private async buildPayload(variables: IFilterVariables, command: ConditionsFilterCommand) {
-    if (process.env.NODE_ENV === 'test') return variables;
+    if (env.NODE_ENV === 'test') return variables;
 
     const payload: Partial<{
       subscriber: SubscriberEntity | null;
@@ -414,7 +415,7 @@ export class ConditionsFilter extends Filter {
       let passed = false;
 
       if (child.on === FilterPartTypeEnum.WEBHOOK) {
-        if (process.env.NODE_ENV === 'test') return true;
+        if (env.NODE_ENV === 'test') return true;
         child.value = await this.compileFilter(child.value, variables, command.job);
         const res = await this.getWebhookResponse(child, variables, command);
         passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);

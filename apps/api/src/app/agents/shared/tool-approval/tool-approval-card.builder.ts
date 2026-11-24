@@ -1,6 +1,7 @@
 import { getMcpIconUrl, MCP_ICON_DEFAULT_ID, resolveMcpCatalogIdByName } from '@novu/shared';
 import type { Block } from '@slack/types';
 import type { ActionsElement, ButtonElement, CardChild, CardElement, DividerElement } from 'chat';
+import { env } from '../../../../config/env';
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 
 const SLACK_INPUT_SUMMARY_MAX = 80;
@@ -53,7 +54,7 @@ export interface ApprovalCardSpec {
 }
 
 export function resolveDashboardBaseUrl(): string {
-  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+  for (const candidate of [env.DASHBOARD_URL, env.FRONT_BASE_URL]) {
     const trimmed = candidate?.trim();
 
     if (!trimmed || trimmed.startsWith('^')) {

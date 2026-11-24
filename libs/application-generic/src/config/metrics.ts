@@ -1,3 +1,4 @@
+import { env } from './env';
 /**
  * Whether anything is listening for the metrics this deployment records.
  *
@@ -7,8 +8,5 @@
  * repeating job whose output is discarded.
  */
 export function hasMetricsBackend(): boolean {
-  return (
-    (process.env.NOVU_MANAGED_SERVICE === 'true' && !!process.env.NEW_RELIC_LICENSE_KEY) ||
-    process.env.ENABLE_OTEL === 'true'
-  );
+  return (env.NOVU_MANAGED_SERVICE && !!env.NEW_RELIC_LICENSE_KEY) || env.ENABLE_OTEL;
 }

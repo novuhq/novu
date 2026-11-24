@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateOrUpdateSubscriberUseCase, createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ConnectionMode, ContextPayload } from '@novu/shared';
+import { env } from '../../../../../config/env';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureSubscriberProvisioned } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
@@ -198,7 +199,7 @@ export class GenerateWebexOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    const rootUrl = env.AGENT_API_HOSTNAME ?? env.API_ROOT_URL;
     if (!rootUrl) {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
     }

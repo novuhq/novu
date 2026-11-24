@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { ResourceOriginEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { UpsertLayout, UpsertLayoutCommand, UpsertLayoutDataCommand } from '../upsert-layout';
 import { LayoutSyncToEnvironmentCommand } from './layout-sync-to-environment.command';
 
@@ -91,8 +92,8 @@ export class LayoutSyncToEnvironmentUseCase {
     resourceType: LocalizationResourceEnum,
     command: LayoutSyncToEnvironmentCommand
   ): Promise<void> {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

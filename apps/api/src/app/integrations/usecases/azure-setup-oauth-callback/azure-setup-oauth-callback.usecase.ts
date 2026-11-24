@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { buildZip, createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
+import { env } from '../../../../config/env';
 import { buildAgentApiRootUrl } from '../../../agents/shared/util/agent-api-root-url';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { buildMsTeamsManifest } from '../../utils/msteams-manifest';
@@ -162,8 +163,8 @@ export class AzureSetupOauthCallback {
   }
 
   private async exchangeCodeForToken(code: string): Promise<TokenResponse> {
-    const clientId = process.env.NOVU_AZURE_CLIENT_ID;
-    const clientSecret = process.env.NOVU_AZURE_CLIENT_SECRET;
+    const clientId = env.NOVU_AZURE_CLIENT_ID;
+    const clientSecret = env.NOVU_AZURE_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       throw new NotFoundException('Azure Quick Setup is not configured on this Novu instance');
@@ -202,8 +203,8 @@ export class AzureSetupOauthCallback {
    * Microsoft issues tokens per-resource, so a separate exchange is needed for management.azure.com.
    */
   private async exchangeRefreshTokenForManagementToken(refreshToken: string): Promise<string> {
-    const clientId = process.env.NOVU_AZURE_CLIENT_ID;
-    const clientSecret = process.env.NOVU_AZURE_CLIENT_SECRET;
+    const clientId = env.NOVU_AZURE_CLIENT_ID;
+    const clientSecret = env.NOVU_AZURE_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       throw new Error('Azure credentials not configured');

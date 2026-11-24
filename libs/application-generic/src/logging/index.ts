@@ -2,6 +2,7 @@ import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import { getLoggerToken, Logger, LoggerErrorInterceptor, LoggerModule, Params, PinoLogger } from 'nestjs-pino';
 import { Store, storage } from 'nestjs-pino/storage';
 import type { Options as PinoHttpOptions } from 'pino-http';
+import { env } from '../config/env';
 import { sensitiveFields } from './masking';
 
 export * from './LogDecorator';
@@ -23,14 +24,7 @@ const loggingLevelSet = {
 const loggingLevelArr = Object.keys(loggingLevelSet);
 
 export function getLogLevel() {
-  let logLevel = null;
-
-  if (process.env.LOGGING_LEVEL || process.env.LOG_LEVEL) {
-    logLevel = process.env.LOGGING_LEVEL || process.env.LOG_LEVEL;
-  } else {
-    console.log(`Environment variable LOG_LEVEL is not set. Falling back to info level.`);
-    logLevel = 'info';
-  }
+  const logLevel = env.LOGGING_LEVEL || env.LOG_LEVEL;
 
   if (!loggingLevelArr.includes(logLevel)) {
     console.log(`${logLevel}is not a valid log level of ${loggingLevelArr}. Falling back to info level.`);
@@ -58,9 +52,9 @@ export function createNestLoggingModuleOptions(settings: {
   }
 
   const configSet = {
-    transport: ['local', 'test', 'debug'].includes(process.env.NODE_ENV) ? { target: 'pino-pretty' } : undefined,
-    platform: process.env.HOSTING_PLATFORM ?? 'Docker',
-    tenant: process.env.TENANT ?? 'OS',
+    transport: ['local', 'test', 'debug'].includes(env.NODE_ENV) ? { target: 'pino-pretty' } : undefined,
+    platform: env.HOSTING_PLATFORM,
+    tenant: env.TENANT,
     level: getLogLevel(),
     levels: loggingLevelSet,
   };
@@ -68,7 +62,7 @@ export function createNestLoggingModuleOptions(settings: {
   if (!settings.silent) {
     console.log('Logging Configuration:', {
       level: configSet.level,
-      environment: process.env.NODE_ENV,
+      environment: env.NODE_ENV,
       transport: !configSet.transport ? 'None' : 'pino-pretty',
       platform: configSet.platform,
       tenant: configSet.tenant,

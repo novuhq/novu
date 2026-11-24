@@ -11,6 +11,7 @@ import {
   WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 import { version } from '../../../package.json';
+import { env } from '../../config/env';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ApiCommonResponses, ApiCreatedResponse } from '../shared/framework/response.decorator';
 import { DocumentationIgnore, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -52,7 +53,7 @@ export class HealthController {
       checks.push(async () => this.workflowQueueHealthIndicator.isHealthy());
     }
 
-    if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
+    if (env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
       checks.push(async () => this.cacheHealthIndicator.isHealthy());
     }
 
@@ -68,7 +69,7 @@ export class HealthController {
   @Post('/test-idempotency')
   @SkipPermissionsCheck()
   async testIdempotency(@Body() body: IdempotencyTestingDto): Promise<IdempotenceTestingResponse> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const randomNumber = Math.random();
     if (body.expectedBehavior === IdempotencyBehaviorEnum.IMMEDIATE_RESPONSE) {
@@ -95,7 +96,7 @@ export class HealthController {
   @Get('/test-idempotency')
   @SkipPermissionsCheck()
   async generateRandomNumber(): Promise<IdempotenceTestingResponse> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const randomNumber = Math.random();
 

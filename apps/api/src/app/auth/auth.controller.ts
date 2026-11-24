@@ -21,6 +21,7 @@ import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { buildOauthRedirectUrl, PinoLogger } from '@novu/application-generic';
 import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
+import { env } from '../../config/env';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { LoginBodyDto } from './dtos/login.dto';
@@ -67,7 +68,7 @@ export class AuthController {
   githubAuth() {
     this.logger.trace('Checking Github Auth');
 
-    if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
+    if (!env.GITHUB_OAUTH_CLIENT_ID || !env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new BadRequestException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
@@ -179,7 +180,7 @@ export class AuthController {
 
   @Get('/test/token/:userId')
   async authenticateTest(@Param('userId') userId: string, @Query('organizationId') organizationId: string) {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
     if (!user) throw new BadRequestException('No user found');

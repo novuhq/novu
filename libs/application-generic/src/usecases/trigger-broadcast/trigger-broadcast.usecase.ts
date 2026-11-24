@@ -4,6 +4,8 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { SubscriberSourceEnum } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
+
+import { env } from '../../config/env';
 import { InstrumentUsecase } from '../../instrumentation';
 import { CacheService, FeatureFlagsService } from '../../services';
 import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
@@ -12,7 +14,7 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 
-const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
+const QUEUE_CHUNK_SIZE = env.BROADCAST_QUEUE_CHUNK_SIZE || 100;
 
 @Injectable()
 export class TriggerBroadcast extends TriggerBase {

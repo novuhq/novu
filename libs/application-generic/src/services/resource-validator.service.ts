@@ -21,6 +21,7 @@ import {
   ResourceTypeEnum,
   UNLIMITED_VALUE,
 } from '@novu/shared';
+import { env } from '../config/env';
 import { NotificationStep } from '../value-objects/notification.step';
 import { FeatureFlagsService } from './feature-flags';
 import { resolveTierLimit, throwPlanLimitExceeded } from './plan-limits';
@@ -130,7 +131,7 @@ export class ResourceValidatorService {
    * Call it only when a workflow goes from inactive to active.
    */
   async validateActiveWorkflowLimit(environmentId: string, workflowId: string): Promise<void> {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return;
     }
 
@@ -193,7 +194,7 @@ export class ResourceValidatorService {
     environment: EnvironmentEntity,
     organization: OrganizationEntity
   ): Promise<number | undefined> {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return UNLIMITED_VALUE;
     }
 
@@ -217,7 +218,7 @@ export class ResourceValidatorService {
     organizationId: string,
     newStepsCount: number
   ): Promise<void> {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return;
     }
 
@@ -246,7 +247,7 @@ export class ResourceValidatorService {
   }
 
   async getStepResolversAvailableSlots(environmentId: string, organizationId: string): Promise<number> {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return UNLIMITED_VALUE;
     }
 
@@ -288,7 +289,7 @@ export class ResourceValidatorService {
   }
 
   private async getMaxStepResolversTierLimit(organization: OrganizationEntity) {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return UNLIMITED_VALUE;
     }
 
@@ -358,7 +359,7 @@ export class ResourceValidatorService {
   }
 
   private async getMaxLayoutsTierLimit(organization) {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return UNLIMITED_VALUE;
     }
 
@@ -418,7 +419,7 @@ export class ResourceValidatorService {
    *     contact the Novu team (409).
    */
   async validateCustomEmailDomainsLimit(organizationId: string): Promise<void> {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (env.IS_SELF_HOSTED) {
       return;
     }
 

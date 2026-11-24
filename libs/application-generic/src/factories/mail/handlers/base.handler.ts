@@ -1,5 +1,6 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { IEmailEventBody, IEmailOptions, IEmailProvider } from '@novu/stateless';
+import { env } from '../../../config/env';
 import { PlatformException } from '../../../utils/exceptions';
 import { BaseHandler } from '../../shared/interfaces';
 import { IMailHandler } from '../interfaces';
@@ -14,7 +15,7 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
   abstract buildProvider(credentials, options);
 
   async send(mailData: IEmailOptions) {
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       return {};
     }
 
@@ -31,7 +32,7 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     return !!(this.provider.getMessageId && this.provider.parseEventBody);
   }
 
-  public getMessageId(body: any): string[] {
+  public getMessageId(body: unknown): string[] {
     if (!this.provider.getMessageId) {
       return [];
     }
@@ -44,8 +45,8 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     headers,
     rawBody,
   }: {
-    rawBody: any;
-    body: any;
+    rawBody: unknown;
+    body: Record<string, unknown>;
     headers: Record<string, string>;
   }): Promise<{
     success: boolean;
@@ -59,7 +60,7 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     return this.provider.verifySignature({ body, headers, rawBody });
   }
 
-  public parseEventBody(body: any, identifier: string, eventIndex?: number): IEmailEventBody | undefined {
+  public parseEventBody(body: unknown, identifier: string, eventIndex?: number): IEmailEventBody | undefined {
     if (!this.provider.parseEventBody) {
       return undefined;
     }

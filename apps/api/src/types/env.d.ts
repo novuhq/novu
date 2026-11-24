@@ -1,14 +1,13 @@
-import type { FeatureFlagsKeysEnum, ApiRateLimitEnvVarFormat } from '@novu/shared';
-import type { ValidatedEnv } from '../config';
+import type { ApiRateLimitEnvVarFormat } from '@novu/shared';
 
+/*
+ * The rate-limit usecases read the API_RATE_LIMIT_* family from `process.env` by computed name.
+ * Every other variable is read through `env` from config/env.ts.
+ */
 type ApiRateLimitEnvVars = Record<ApiRateLimitEnvVarFormat, `${number}`>;
-
-type TypedEnvVars = ValidatedEnv & ApiRateLimitEnvVars;
 
 declare global {
   namespace NodeJS {
-    interface ProcessEnv extends TypedEnvVars {
-      NODE_ENV: 'test' | 'production' | 'dev' | 'ci' | 'local';
-    }
+    interface ProcessEnv extends ApiRateLimitEnvVars {}
   }
 }

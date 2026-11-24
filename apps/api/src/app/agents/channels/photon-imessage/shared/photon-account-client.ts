@@ -1,13 +1,7 @@
 import axios, { AxiosError } from 'axios';
+import { env } from '../../../../../config/env';
 
 const PHOTON_API_TIMEOUT_MS = 10_000;
-const DEFAULT_DASHBOARD_API_URL = 'https://app.photon.codes';
-/**
- * Device client ids are public identifiers (compiled into the Photon CLI
- * binary), gated server-side by an allow-list. `photon-cli` is allow-listed
- * today; override with a dedicated Novu client id once Photon adds one.
- */
-const DEFAULT_DEVICE_CLIENT_ID = 'photon-cli';
 const DEVICE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code';
 const DEVICE_SCOPE = 'openid profile email';
 
@@ -35,16 +29,16 @@ export interface PhotonProjectCredentials {
 }
 
 function dashboardApiUrl(): string {
-  return (process.env.PHOTON_DASHBOARD_API_URL ?? DEFAULT_DASHBOARD_API_URL).replace(/\/$/, '');
+  return env.PHOTON_DASHBOARD_API_URL.replace(/\/$/, '');
 }
 
 function deviceClientId(): string {
-  return process.env.PHOTON_DEVICE_CLIENT_ID ?? DEFAULT_DEVICE_CLIENT_ID;
+  return env.PHOTON_DEVICE_CLIENT_ID;
 }
 
 /** Connect is on by default (all endpoints are live in production); opt out with PHOTON_CONNECT_ENABLED=false. */
 export function isPhotonConnectEnabled(): boolean {
-  return process.env.PHOTON_CONNECT_ENABLED !== 'false';
+  return env.PHOTON_CONNECT_ENABLED;
 }
 
 function absolutizeVerificationUri(uri: string | undefined): string | undefined {

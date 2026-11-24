@@ -16,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { MANAGE_TRANSLATIONS } from '../../../shared/constants';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 
@@ -180,8 +181,8 @@ export class PatchWorkflowUsecase {
   }
 
   private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: PatchWorkflowCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

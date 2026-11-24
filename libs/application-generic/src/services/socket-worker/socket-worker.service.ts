@@ -3,6 +3,7 @@ import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
 import got, { HTTPError, RequestError } from 'got';
 
+import { env } from '../../config/env';
 import { FeatureFlagsService } from '../feature-flags';
 
 const LOG_CONTEXT = 'SocketWorkerService';
@@ -20,6 +21,7 @@ type UnseenCountPaginationIndication = {
 export interface SendMessageParams {
   userId: string;
   event: string;
+  // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
   data: any;
   organizationId?: string;
   environmentId?: string;
@@ -41,8 +43,8 @@ export class SocketWorkerService {
     private featureFlagsService: FeatureFlagsService,
     private messageRepository: MessageRepository
   ) {
-    this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
-    this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
+    this.socketWorkerUrl = env.SOCKET_WORKER_URL;
+    this.socketWorkerApiKey = env.INTERNAL_SERVICES_API_KEY;
   }
 
   async sendMessage(params: SendMessageParams): Promise<void> {
@@ -327,7 +329,7 @@ export class SocketWorkerService {
       return false;
     }
 
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true') {
       return false;
     }
 

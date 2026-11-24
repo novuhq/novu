@@ -1,10 +1,11 @@
 import type { SentMessageInfo } from '@novu/framework/internal';
-import { WebClient } from '@slack/web-api';
+import { WebClient, type WebClientOptions } from '@slack/web-api';
 import type {
   ChannelAndBlocks,
   ChatPostMessageArguments,
   ChatUpdateArguments,
 } from '@slack/web-api/dist/types/request/chat';
+import { env } from '../../../../config/env';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 
 export type SlackNativeDelivery = Required<Omit<ChannelAndBlocks, 'channel'>>;
@@ -31,9 +32,12 @@ export function getSlackApiErrorCode(err: unknown): string | undefined {
 }
 
 function createSlackWebClient(token: string): WebClient {
-  return new WebClient(token, {
-    ...(process.env.SLACK_API_URL ? { slackApiUrl: process.env.SLACK_API_URL } : {}),
-  });
+  const options: WebClientOptions = {};
+  if (env.SLACK_API_URL) {
+    options.slackApiUrl = env.SLACK_API_URL;
+  }
+
+  return new WebClient(token, options);
 }
 
 export async function postSlackNativeBlocks(params: {

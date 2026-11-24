@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../../config/env';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { STEP_RUNS_V2_DDL, StepRunV2ReadRow, StepRunV2Row, TABLE_NAME } from './step-run-v2.schema';
 
@@ -43,7 +44,7 @@ export class StepRunV2Repository implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
-    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
+    if (env.NODE_ENV !== 'local' && env.NODE_ENV !== 'test') {
       return;
     }
 

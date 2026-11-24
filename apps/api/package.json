@@ -111,7 +111,6 @@
     "deep-object-diff": "^1.1.9",
     "dotenv": "^16.6.1",
     "entities": "^7.0.0",
-    "envalid": "^8.2.0",
     "es-toolkit": "^1.47.0",
     "eventsource-parser": "^3.1.0",
     "express": "^5.2.1",

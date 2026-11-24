@@ -98,7 +98,7 @@ async function cleanupClickHouseDatabase(): Promise<void> {
 
 before(async () => {
   await testServer.create(await bootstrap());
-  await dalService.connect(process.env.MONGO_URL);
+  await dalService.connect(process.env.MONGO_URL ?? '');
   await cleanupClickHouseDatabase();
 });
 

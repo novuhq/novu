@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { IBrandColor, IBrandLogo } from '@novu/shared';
 import ContextDev from 'context.dev';
+import { env } from '../../../../config/env';
 
 export interface BrandData {
   industry?: { industry: string; subindustry: string }[];
@@ -47,7 +48,7 @@ export class BrandRetrievalService {
   }
 
   async initialize(): Promise<void> {
-    const apiKey = process.env.CONTEXT_DEV_API_KEY;
+    const apiKey = env.CONTEXT_DEV_API_KEY;
     if (!apiKey) {
       this.logger.warn('CONTEXT_DEV_API_KEY not configured, brand enrichment will be unavailable', LOG_CONTEXT);
 

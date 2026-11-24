@@ -1,14 +1,21 @@
 import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { getErrorInterceptor, Logger, type NovuTlsConfig, toNovuTlsServerOptions } from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { CONTEXT_PATH, validateEnv } from './config';
+import { CONTEXT_PATH } from './config';
+import { env, validateEnv, warnDeprecatedEnv } from './config/env';
 import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 
-// Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
-validateEnv();
+/*
+ * Validate the ENV variables after launching SENTRY, so missing variables will report to sentry.
+ * Sockets are the only topic this service touches, and they never carry a
+ * delay, so no scheduler config is required here.
+ */
+validateEnv({ topics: [JobTopicNameEnum.WEB_SOCKETS] });
+warnDeprecatedEnv();
 
 export async function bootstrap(tlsConfig?: NovuTlsConfig) {
   // abortOnError: false so init errors reach runWithHydratedSecrets instead of process.abort(), which drops New Relic data.
@@ -47,7 +54,7 @@ export async function bootstrap(tlsConfig?: NovuTlsConfig) {
 
   await startAppInfra(app);
 
-  await app.listen(process.env.PORT as string);
+  await app.listen(env.PORT as string);
 
-  app.get(Logger).log(`[@novu/ws]: Listening on port ${process.env.PORT} over ${tlsConfig ? 'https' : 'http'}`);
+  app.get(Logger).log(`[@novu/ws]: Listening on port ${env.PORT} over ${tlsConfig ? 'https' : 'http'}`);
 }

@@ -8,6 +8,7 @@ import {
   ResourceLimitSource,
   UNLIMITED_VALUE,
 } from '@novu/shared';
+import { env } from '../config/env';
 import { PinoLogger } from '../logging';
 import { FeatureFlagsService } from './feature-flags';
 import { resolveTierLimit } from './plan-limits';
@@ -174,7 +175,7 @@ export class AgentEntitlementsService {
   }
 
   private get isSelfHosted(): boolean {
-    return process.env.IS_SELF_HOSTED === 'true';
+    return env.IS_SELF_HOSTED;
   }
 
   async getAgentLimit(organizationId: string): Promise<number> {

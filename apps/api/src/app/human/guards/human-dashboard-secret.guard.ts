@@ -7,6 +7,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { env } from '../../../config/env';
 import { areHexDigestsEqual } from '../../shared/helpers/timing-safe-equal';
 import { HumanBackingAccounts } from '../services/human-backing-accounts.service';
 
@@ -22,7 +23,7 @@ export class HumanDashboardSecretGuard implements CanActivate {
   constructor(private readonly humanBackingAccounts: HumanBackingAccounts) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const expectedSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+    const expectedSecret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
     if (!expectedSecret || !this.humanBackingAccounts.isAvailable()) {
       throw new NotFoundException();
     }
@@ -41,7 +42,7 @@ export class HumanDashboardSecretGuard implements CanActivate {
  * holding the same key.
  */
 export function carriesHumanDashboardSecret(headers: Record<string, unknown> | undefined): boolean {
-  const expectedSecret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+  const expectedSecret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
   const providedSecret = headers?.[AGENT_INBOX_DASHBOARD_SECRET_HEADER];
 
   return (

@@ -472,6 +472,25 @@
       "plugins": ["./biome-plugins/pino-logger-arg-order.grit"]
     },
     {
+      "includes": [
+        "apps/api/src/**/*.ts",
+        "apps/inbound-mail/src/**/*.ts",
+        "apps/worker/src/**/*.ts",
+        "apps/ws/src/**/*.ts",
+        "libs/application-generic/src/**/*.ts",
+        "!libs/application-generic/src/config/env.ts",
+        "!**/config/env.config.ts",
+        "!**/instrument.ts",
+        "!**/newrelic.ts",
+        "!**/*.spec.ts",
+        "!**/*.test-helpers.ts",
+        "!**/*.e2e.ts",
+        "!**/*.e2e-ee.ts",
+        "!**/e2e/**"
+      ],
+      "plugins": ["./biome-plugins/no-process-env.grit"]
+    },
+    {
       "includes": ["**/*.dto.ts"],
       "plugins": [
         "./biome-plugins/api-property-record-type.grit",

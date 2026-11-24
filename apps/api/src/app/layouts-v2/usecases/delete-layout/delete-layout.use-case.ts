@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { DeleteLayoutCommand } from './delete-layout.command';
 
 @Injectable()
@@ -43,6 +44,7 @@ export class DeleteLayoutUseCase {
     }
 
     await this.removeLayoutReferencesFromStepControls({
+      // biome-ignore lint/style/noNonNullAssertion: Existing layout id typing is outside this change.
       layoutId: layout.layoutId!,
       environmentId,
       organizationId,
@@ -50,11 +52,13 @@ export class DeleteLayoutUseCase {
 
     await this.deleteTranslationGroup(layout, command);
 
+    // biome-ignore lint/style/noNonNullAssertion: Existing layout id typing is outside this change.
     await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId);
 
     await this.controlValuesRepository.delete({
       _environmentId: environmentId,
       _organizationId: organizationId,
+      // biome-ignore lint/style/noNonNullAssertion: Existing layout id typing is outside this change.
       _layoutId: layout._id!,
       level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     });
@@ -62,6 +66,7 @@ export class DeleteLayoutUseCase {
     this.analyticsService.track('Delete layout - [Layouts]', userId, {
       _organizationId: organizationId,
       _environmentId: environmentId,
+      // biome-ignore lint/style/noNonNullAssertion: Existing layout id typing is outside this change.
       layoutId: layout._id!,
     });
   }
@@ -87,8 +92,8 @@ export class DeleteLayoutUseCase {
   }
 
   private async deleteTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

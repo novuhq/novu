@@ -22,6 +22,7 @@ export class GetApiRateLimitAlgorithmConfig {
     const mergedConfig: IApiRateLimitAlgorithm = { ...DEFAULT_API_RATE_LIMIT_ALGORITHM_CONFIG };
 
     // Read process environment only once for performance
+    // biome-ignore lint/plugin: reads API_RATE_LIMIT_ALGORITHM_* by computed name, typed by ApiRateLimitAlgorithmEnvVarFormat
     const processEnv = process.env;
 
     Object.values(ApiRateLimitAlgorithmEnum).forEach((algorithmOption) => {

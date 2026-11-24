@@ -2,6 +2,7 @@ import child_process from 'node:child_process';
 import path from 'node:path';
 import shell from 'shelljs';
 import Spamc from 'spamc';
+import { env } from '../config/env';
 import logger from './logger';
 
 const LOG_CONTEXT = 'MailUtilities';
@@ -67,7 +68,7 @@ const resolvedPython = shell.which('python3') || shell.which('python');
 const pythonBin = resolvedPython ? resolvedPython.toString() : null;
 if (!pythonBin) {
   logger.warn(
-    { context: LOG_CONTEXT, path: process.env.PATH },
+    { context: LOG_CONTEXT, path: env.PATH },
     'Python is not available. Dkim and spf checking is disabled — every inbound email will carry dkim/spf "failed" verdicts.'
   );
 } else {

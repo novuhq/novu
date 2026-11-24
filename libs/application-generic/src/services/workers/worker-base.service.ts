@@ -1,5 +1,6 @@
 import { BadRequestException, HttpException, Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
+import { env } from '../../config/env';
 import { isBullMqEnabled } from '../../config/queue-backend';
 import {
   getSqsDefaultBatchSize,
@@ -376,7 +377,7 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   public async resume(): Promise<void> {
     await this.bullMqService.resumeWorker();
 
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       await this.bullMqService.waitUntilWorkerIsReady();
     }
 

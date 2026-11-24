@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { env } from '../../config/env';
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum, ScanStream } from './types';
 import { isClusterModeEnabled } from './utils';
@@ -25,7 +26,7 @@ export class WebSocketsInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
+    if (env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'false') {
       return InMemoryProviderEnum.REDIS;
     }
 

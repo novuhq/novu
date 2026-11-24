@@ -1,10 +1,11 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { env } from '../config/env';
 
 const IV_LENGTH = 16;
 const CIPHER_ALGO = 'aes-256-cbc';
 
 export function encrypt(text) {
-  const ENCRYPTION_KEY = process.env.STORE_ENCRYPTION_KEY;
+  const ENCRYPTION_KEY = env.STORE_ENCRYPTION_KEY;
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(CIPHER_ALGO, Buffer.from(ENCRYPTION_KEY), iv);
   let encrypted = cipher.update(text);
@@ -15,7 +16,7 @@ export function encrypt(text) {
 }
 
 export function decrypt(text) {
-  const ENCRYPTION_KEY = process.env.STORE_ENCRYPTION_KEY;
+  const ENCRYPTION_KEY = env.STORE_ENCRYPTION_KEY;
   const textParts = text.split(':');
   const iv = Buffer.from(textParts.shift(), 'hex');
   const encryptedText = Buffer.from(textParts.join(':'), 'hex');

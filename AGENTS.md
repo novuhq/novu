@@ -21,6 +21,18 @@ When writing or reviewing a change, check these and call them out in the PR desc
 - Hot path: see above.
 - Edition gating: see Novu Distribution below.
 
+## Environment variables
+
+Every backend variable is declared once, with a description of what it controls. An app's variables are its `src/config/env.ts` (`api`, `worker`, `ws`, `inbound-mail`) plus the shared ones in `libs/application-generic/src/config/env.schema.ts`: those application-generic reads, more than one app reads, or a dependency every app loads reads. Code reads them through a typed `env`.
+- Read: in an app, `import { env } from '<relative path>/config/env'`; in `libs/application-generic`, its own `env`. Then `env.MY_VAR`. An undeclared name does not compile.
+- Add: a sorted key with a `description`, in the app's `config/env.ts` if only that app uses it, otherwise in the shared schema. Redeclaring a shared key in an app does not compile; when shared code starts reading an app key, move it to the shared schema. Put `type: 'number' | 'boolean'` and `default` in the declaration instead of parsing or falling back at the call site.
+- Check at boot: `boot: { <service>: 'required' | 'checked' }` for each service that needs it, where `checked` means a set value must match its format. Add `format` (`port`, `url`, `json`…) or `choices` when the value has one; `type` already checks numbers and booleans. A rule that depends on the deployment takes a condition from `ENV_CONDITIONS` (`libs/application-generic/src/config/env-validation.ts`): `{ required: 'storage-aws' }` or `{ when: 'novu-cloud' }`. The bootstrap's `validateEnv(...)` applies them; there is no separate validator list.
+- Read by dependencies: a variable only dependencies read (`@novu/dal`, `@novu/framework`, `@novu/shared`, an enterprise package, an SDK) is still declared, with `readBy: ['<dependency>']` instead of `type` and `default`. Say in the description what the dependency does with it and its default. It has no `env.X`.
+- Deprecate: `deprecated: 'Use NEW_VAR instead.'` plus a `/** @deprecated */` JSDoc on the key, and `replaces: 'OLD_VAR'` on the new key so it reads the old name while unset. A deprecated key has no `env.X`, so new code can't read it. Boot warns while it is set. Delete the key once deployments stopped setting it.
+- Reference: `apps/<app>/ENVIRONMENT.md` is generated from the schemas and the code that reads each variable. The app's `src/config/env.spec.ts` fails while it is stale, or while a `readBy` workspace package no longer reads its variable; rerun that spec with `UPDATE_ENV_REFERENCE=true` to regenerate it. Enterprise readers refresh on regeneration but never make it stale on their own.
+- Lint: `biome-plugins/no-process-env.grit` blocks `process.env` in the four apps' `src` and in `libs/application-generic/src`.
+- Keep `process.env` in dotenv loaders (`config/env.config.ts`), boot validation and the raw-environment queue checks it calls, APM preloads (`instrument.ts`, `newrelic.ts`), secrets hydration, `libs/dal` and `packages/*` (they sit below application-generic), enterprise packages, and tests (`env.X` reads values tests set on `process.env`). A family read by a computed name, such as feature flags or `API_RATE_LIMIT_*`, also keeps `process.env`, with `// biome-ignore lint/plugin: <why>` at the read and a line in the schema file's header instead of one key per name.
+
 ## AI Boundaries
 
 ### Always

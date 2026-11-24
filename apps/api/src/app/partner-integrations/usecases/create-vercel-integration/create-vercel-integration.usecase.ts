@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationRepository, PartnerTypeEnum } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
-
+import { env } from '../../../../config/env';
 import { CreateVercelIntegrationResponseDto } from '../../dtos/create-vercel-integration-response.dto';
 import { CreateVercelIntegrationCommand } from './create-vercel-integration.command';
 
@@ -52,13 +52,13 @@ export class CreateVercelIntegration {
     try {
       const postData = new URLSearchParams({
         code: code as string,
-        client_id: process.env.VERCEL_CLIENT_ID as string,
-        client_secret: process.env.VERCEL_CLIENT_SECRET as string,
-        redirect_uri: process.env.VERCEL_REDIRECT_URI as string,
+        client_id: env.VERCEL_CLIENT_ID as string,
+        client_secret: env.VERCEL_CLIENT_SECRET as string,
+        redirect_uri: env.VERCEL_REDIRECT_URI as string,
       });
 
       const response = await lastValueFrom(
-        this.httpService.post(`${process.env.VERCEL_BASE_URL}/v2/oauth/access_token`, postData, {
+        this.httpService.post(`${env.VERCEL_BASE_URL}/v2/oauth/access_token`, postData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },

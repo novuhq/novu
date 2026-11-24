@@ -21,6 +21,7 @@ import {
   isDashboardWebChatSubscriberId,
 } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, MessageContext, MessageDeletedEvent, Thread } from 'chat';
+import { env } from '../../../../config/env';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
@@ -126,7 +127,7 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(env.KEYLESS_DEMO_REPLY_CAP, 3);
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.

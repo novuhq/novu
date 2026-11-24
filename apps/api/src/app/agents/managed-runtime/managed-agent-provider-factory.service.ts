@@ -11,6 +11,7 @@ import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { cloudflare, thalamus, type WebhookProvider } from '@novu/thalamus';
 import type { CloudflareEdgeObserver } from '@novu/thalamus/durable';
 import { LRUCache } from 'lru-cache';
+import { env } from '../../../config/env';
 
 export interface ResolvedRuntime {
   provider: WebhookProvider;
@@ -184,24 +185,24 @@ export class ManagedAgentProviderFactory {
   }
 
   private buildDurableBackend(): CloudflareEdgeObserver {
-    const cfUrl = process.env.THALAMUS_CF_URL;
+    const cfUrl = env.THALAMUS_CF_URL;
     if (!cfUrl) {
       throw new Error('THALAMUS_CF_URL is required for managed agents');
     }
 
-    const webhookSecret = process.env.THALAMUS_WEBHOOK_SECRET;
+    const webhookSecret = env.THALAMUS_WEBHOOK_SECRET;
     if (!webhookSecret) {
       throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
     }
 
-    const webhookBaseUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    const webhookBaseUrl = env.AGENT_API_HOSTNAME ?? env.API_ROOT_URL;
     if (!webhookBaseUrl) {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL is required for managed agents');
     }
 
     return cloudflare({
       url: cfUrl,
-      apiKey: process.env.THALAMUS_CF_API_KEY,
+      apiKey: env.THALAMUS_CF_API_KEY,
       webhook: {
         url: `${webhookBaseUrl}/v1/agents/events`,
         secret: webhookSecret,

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { env } from '../../config/env';
 import { CacheInMemoryProviderService, WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { buildThrottleGroupingSuffix } from './resolve-throttle-grouping';
 import { IThrottleReservationParams, IThrottleReservationResult } from './throttle.types';
@@ -63,7 +64,7 @@ export class RedisThrottleService implements OnModuleDestroy {
   `;
 
   constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {
-    this.ttlBufferMs = Number(process.env.THROTTLE_REDIS_TTL_BUFFER_MS) || 30000;
+    this.ttlBufferMs = env.THROTTLE_REDIS_TTL_BUFFER_MS || 30000;
   }
 
   /**

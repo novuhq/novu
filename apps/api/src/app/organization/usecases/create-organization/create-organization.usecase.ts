@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
-
+import { env } from '../../../../config/env';
 import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
@@ -26,8 +26,8 @@ export class CreateOrganization {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
 
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = env.IS_SELF_HOSTED;
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
     const defaultApiServiceLevel =
       isSelfHosted && isEnterprise ? ApiServiceLevelEnum.UNLIMITED : ApiServiceLevelEnum.FREE;
 

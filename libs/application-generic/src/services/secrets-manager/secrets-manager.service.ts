@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { reportFatalErrorAndExit } from '../../tracing/fatal-exit';
 import { AwsSecretsManagerService } from './aws-secrets-manager.service';
 import { ProcessEnvSecretsService } from './process-env.service';
@@ -34,9 +35,9 @@ export class SecretsManagerService {
    *     of the remote store.
    */
   private static resolveProvider(): ISecretsManagerService {
-    const isEnterprise = parseBooleanString(process.env.NOVU_ENTERPRISE);
-    const secretName = process.env.SECRET_NAME;
-    const region = process.env.NOVU_REGION;
+    const isEnterprise = parseBooleanString(env.NOVU_ENTERPRISE);
+    const secretName = env.SECRET_NAME;
+    const region = env.NOVU_REGION;
 
     if (!isEnterprise || !secretName) {
       return new ProcessEnvSecretsService();
@@ -53,15 +54,13 @@ export class SecretsManagerService {
 
   /** Human-readable deployment mode for boot logs. */
   private static resolveDeploymentMode(): string {
-    const isEnterprise = parseBooleanString(process.env.NOVU_ENTERPRISE);
+    const isEnterprise = parseBooleanString(env.NOVU_ENTERPRISE);
 
     if (!isEnterprise) {
       return 'community';
     }
 
-    const isSelfHosted = parseBooleanString(process.env.IS_SELF_HOSTED);
-
-    return isSelfHosted ? 'enterprise self-hosted' : 'enterprise cloud';
+    return env.IS_SELF_HOSTED ? 'enterprise self-hosted' : 'enterprise cloud';
   }
 
   /**
@@ -83,9 +82,8 @@ export class SecretsManagerService {
       const keys = Object.keys(secrets);
 
       for (const key of keys) {
-        if (process.env[key] === undefined) {
-          process.env[key] = secrets[key];
-        }
+        // biome-ignore lint/plugin: hydration writes the fetched secrets into process.env, which env reads
+        process.env[key] ??= secrets[key];
       }
 
       if (keys.length > 0) {

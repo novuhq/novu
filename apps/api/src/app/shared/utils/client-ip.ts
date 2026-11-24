@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import { isIP } from 'node:net';
 import { getClientIp as getClientIpFromProxyHeaders } from 'request-ip';
+import { env } from '../../../config/env';
 import { areHexDigestsEqual } from '../helpers/timing-safe-equal';
 
 /** Cloudflare sets and overwrites it on every request that reaches the Novu Cloud API. */
@@ -34,7 +35,7 @@ export function getClientIp(req: IncomingMessage): string | undefined {
     return agentInboxClientIp;
   }
 
-  const trustedHeader = (process.env.CLIENT_IP_HEADER ?? defaultClientIpHeader())?.trim().toLowerCase();
+  const trustedHeader = (env.CLIENT_IP_HEADER ?? defaultClientIpHeader())?.trim().toLowerCase();
 
   if (!trustedHeader) {
     return getClientIpFromProxyHeaders(req) ?? undefined;
@@ -51,7 +52,7 @@ export function getClientIp(req: IncomingMessage): string | undefined {
 }
 
 function defaultClientIpHeader(): string | undefined {
-  const isNovuCloud = process.env.IS_SELF_HOSTED !== 'true' && process.env.NOVU_ENTERPRISE === 'true';
+  const isNovuCloud = !env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'true';
 
   return isNovuCloud ? NOVU_CLOUD_CLIENT_IP_HEADER : undefined;
 }
@@ -61,7 +62,7 @@ function defaultClientIpHeader(): string | undefined {
  * "<unix seconds>.<ip>">`, and it must check and be at most five minutes old.
  */
 function readAgentInboxClientIp(req: IncomingMessage): string | undefined {
-  const secret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+  const secret = env.AGENT_INBOX_DASHBOARD_API_SECRET;
   const clientIp = req.headers[AGENT_INBOX_CLIENT_IP_HEADER];
   const signature = req.headers[AGENT_INBOX_CLIENT_IP_SIGNATURE_HEADER];
 

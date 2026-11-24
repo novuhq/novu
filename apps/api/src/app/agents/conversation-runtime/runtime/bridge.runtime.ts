@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
+import { env } from '../../../../config/env';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -114,7 +115,7 @@ export class BridgeRuntime implements AgentRuntime {
 
     const creationSource = turn.config.creationSource;
     let dashboardUrl: string | undefined;
-    const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    const dashboardBase = env.DASHBOARD_URL || env.FRONT_BASE_URL;
 
     // CLI onboarding users finish setup in the terminal — skip the dashboard CTA entirely.
     if (creationSource !== 'cli' && dashboardBase) {

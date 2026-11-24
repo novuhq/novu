@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { LayoutDto, PinoLogger } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
+import { env } from '../../../../config/env';
 import { FullPayloadForRender } from './render-command';
 
 type TranslationContext = {
@@ -42,7 +43,7 @@ export class ControlsTranslationService {
     resourceEntity,
     organization,
   }: ProcessTranslationsArgs): Promise<Record<string, unknown>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true' && !env.CI_EE_TEST) {
       return controls;
     }
 
@@ -78,7 +79,7 @@ export class ControlsTranslationService {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true' && !env.CI_EE_TEST) {
       return content;
     }
 
@@ -111,7 +112,7 @@ export class ControlsTranslationService {
     organization?: OrganizationEntity;
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
   }): Promise<TranslationContext | null> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true' && !env.CI_EE_TEST) {
       return null;
     }
 
@@ -170,7 +171,7 @@ export class ControlsTranslationService {
     content: string;
     variables: FullPayloadForRender;
   }): Promise<string> {
-    if ((process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') || !context) {
+    if ((env.NOVU_ENTERPRISE !== 'true' && !env.CI_EE_TEST) || !context) {
       return content;
     }
 

@@ -8,6 +8,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { ENDPOINT_TYPES, type ICredentials } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { buildAgentWebhookUrl } from '../../../agents/channels/shared/resolve-agent-integration-webhook.util';
 import { provedWhatsAppNumberOf } from '../../../agents/human-relay/whatsapp-number-proof';
 import {
@@ -68,7 +69,7 @@ export class GetHumanWhatsAppSetup {
     ]);
     const platform = availability.available ? getNovuWhatsAppPlatformConfig() : undefined;
     // Checked present by the platform config above; the browser's FB.login needs it next to the app id.
-    const configId = process.env.NOVU_WHATSAPP_CONFIG_ID?.trim();
+    const configId = env.NOVU_WHATSAPP_CONFIG_ID?.trim();
     const credentials = integration ? decryptCredentials(integration.credentials ?? {}) : undefined;
     const businessConnected = credentials ? hasWhatsAppSendCredentials(credentials) : false;
     const displayPhoneNumber =

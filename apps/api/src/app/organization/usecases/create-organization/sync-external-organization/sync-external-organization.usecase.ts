@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { ApiAuthSchemeEnum, MemberRoleEnum } from '@novu/shared';
+import { env } from '../../../../../config/env';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -39,8 +40,8 @@ export class SyncExternalOrganization {
   }
 
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = env.IS_SELF_HOSTED;
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
 
     const organization = await this.organizationRepository.create(
       {
@@ -184,7 +185,7 @@ export class SyncExternalOrganization {
 
   private async createCustomer(billingEmail: string, organizationId: string) {
     try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST) {
         if (!require('@novu/ee-billing')?.GetOrCreateCustomer) {
           throw new BadRequestException('Billing module is not loaded');
         }

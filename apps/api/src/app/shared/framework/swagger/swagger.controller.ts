@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SecuritySchemeObject, SwaggerModule } from '@nestjs/swagger';
 import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import packageJson from '../../../../../package.json';
+import { env } from '../../../../config/env';
 import metadata from '../../../../metadata';
 import { generateWebhookDefinitions } from '../../../outbound-webhooks/webhook-openapi';
 import { webhookEvents } from '../../../outbound-webhooks/webhooks.const';
@@ -136,7 +137,7 @@ function publishLegacyOpenApiDoc(app: INestApplication, document: OpenAPIObject)
   SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',
-    explorer: process.env.NODE_ENV !== 'production',
+    explorer: env.NODE_ENV !== 'production',
   });
 }
 
@@ -204,7 +205,7 @@ function publishSdkSpecificDocumentAndReturnDocument(
   SwaggerModule.setup('openapi.sdk', app, sdkDocument, {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',
-    explorer: process.env.NODE_ENV !== 'production',
+    explorer: env.NODE_ENV !== 'production',
   });
   return sdkDocument;
 }

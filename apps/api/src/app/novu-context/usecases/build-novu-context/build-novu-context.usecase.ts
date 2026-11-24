@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createContextHash, createHash } from '@novu/application-generic';
 import type { ContextPayload } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { BuildNovuContextCommand } from './build-novu-context.command';
 
 /** Context key the dashboard connection is bound to (read back inbound as `ctx.context.tenant`). */
@@ -31,7 +32,7 @@ export class BuildNovuContext {
       },
     };
 
-    const novuSecretApiKey = process.env.NOVU_SECRET_API_KEY;
+    const novuSecretApiKey = env.NOVU_SECRET_API_KEY;
     if (!novuSecretApiKey?.trim()) {
       throw new Error('NOVU_SECRET_API_KEY must be configured to mint a Novu connect context.');
     }

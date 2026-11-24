@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { decryptCredentials, resolvePublishedAgentInboxAddress } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { type AgentInboxProviderId, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { env } from '../../../config/env';
 import { resolveAgentEmailIpPoolName } from './agent-email-ip-pool';
 
 export type ResolvedAgentOutboundEmail = {
@@ -119,7 +120,7 @@ async function findSenderIntegration(
     return {
       ...configured,
       credentials: {
-        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        apiKey: env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from: delivery.agentInboundFrom ?? 'no-reply@novu.co',
         senderName: delivery.senderName,
         ipPoolName: resolveAgentEmailIpPoolName(providerId),

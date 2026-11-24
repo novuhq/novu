@@ -16,6 +16,7 @@ import {
   classifyActivationReason,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, UNLIMITED_VALUE } from '@novu/shared';
+import { env } from '../../../../config/env';
 import {
   trackAgentActiveConversationCounted,
   trackAgentActiveConversationLimitReached,
@@ -128,11 +129,11 @@ export class ConversationActivationService {
   }
 
   private get isSelfHosted(): boolean {
-    return process.env.IS_SELF_HOSTED === 'true';
+    return env.IS_SELF_HOSTED;
   }
 
   private get isEnterpriseBillingEnabled(): boolean {
-    return process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    return env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
   }
 
   /** Month-anchored period key (YYYY-MM, UTC). Stable across a Stripe cycle and a calendar fallback in the same month. */

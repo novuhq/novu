@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { env } from '../../config/env';
 import { PinoLogger } from '../../logging';
 import { CacheService } from '../cache/cache.service';
 
@@ -171,7 +172,7 @@ export class AgentEmailInboxQuotaService {
    * Self-hosted and a disabled cache fail open.
    */
   private async reserve(organizationId: string, count: number): Promise<AgentEmailInboxReservation> {
-    if (count <= 0 || process.env.IS_SELF_HOSTED === 'true') {
+    if (count <= 0 || env.IS_SELF_HOSTED) {
       return { organizationId, remaining: 0, unlimited: true };
     }
 

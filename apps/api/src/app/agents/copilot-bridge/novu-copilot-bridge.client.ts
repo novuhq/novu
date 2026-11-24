@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import type { Request, Response } from 'express';
+import { env } from '../../../config/env';
 import { NovuAgentsBridgeService } from '../novu-agents-bridge/novu-agents-bridge.service';
 
 /*
@@ -22,7 +23,7 @@ export class NovuCopilotBridgeClient {
   ) {}
 
   public async handleRequest(req: Request, res: Response) {
-    const novuSecretApiKey = process.env.NOVU_SECRET_API_KEY;
+    const novuSecretApiKey = env.NOVU_SECRET_API_KEY;
     if (!novuSecretApiKey?.trim()) {
       res.status(404).json({
         error: 'Novu Copilot bridge is not configured',

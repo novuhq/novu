@@ -25,6 +25,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import type { Request } from 'express';
+import { env } from '../../../config/env';
 import { isKeylessApplicationIdentifierHeader, isResolvedKeylessAuthScheme } from '../../shared/utils/auth.utils';
 import { getClientIp } from '../../shared/utils/client-ip';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
@@ -336,5 +337,5 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
 function getKeylessCost() {
   // For test environment, we use a higher cost to ensure tests can run without rate limiting issues
-  return process.env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
+  return env.NODE_ENV === 'test' ? defaultApiRateLimitCost : ApiRateLimitCostEnum.KEYLESS;
 }

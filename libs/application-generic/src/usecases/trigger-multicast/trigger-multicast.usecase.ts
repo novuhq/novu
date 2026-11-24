@@ -11,6 +11,8 @@ import {
 } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
+
+import { env } from '../../config/env';
 import { SubscriberTopicPreference } from '../../dtos';
 import { InstrumentUsecase } from '../../instrumentation';
 import { CacheService, FeatureFlagsService } from '../../services';
@@ -21,8 +23,8 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 
-const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
-const SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE = Number(process.env.SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) || 100;
+const QUEUE_CHUNK_SIZE = env.MULTICAST_QUEUE_CHUNK_SIZE || 100;
+const SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE = env.SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE || 100;
 
 const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
   (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;

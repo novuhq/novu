@@ -7,6 +7,7 @@ import {
   AgentRuntimeUnauthorizedError,
 } from '@novu/application-generic';
 import { captureException } from '@sentry/node';
+import { env } from '../../../../config/env';
 
 export interface AgentSentryContext {
   component: string;
@@ -20,7 +21,7 @@ export interface AgentSentryContext {
 }
 
 function isSentryEnabled(): boolean {
-  return Boolean(process.env.SENTRY_DSN);
+  return Boolean(env.SENTRY_DSN);
 }
 
 function toError(err: unknown): Error {

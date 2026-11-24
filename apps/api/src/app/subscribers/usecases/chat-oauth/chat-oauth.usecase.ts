@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
+import { env } from '../../../../config/env';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
@@ -115,7 +116,7 @@ export class ChatOauth {
     // The redirect URI is registered with the provider and rebuilt verbatim by
     // the callback for the token exchange — it must stay byte-identical.
     let redirectUri = `${
-      process.env.API_ROOT_URL
+      env.API_ROOT_URL
     }/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
 
     if (integrationIdentifier) {

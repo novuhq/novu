@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { env } from '../../config/env';
 import { LaunchDarklyFeatureFlagsService } from './launch-darkly.service';
 import { ProcessEnvFeatureFlagsService } from './process-env.service';
-
 import { FeatureFlagContext, IFeatureFlagsService } from './types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
@@ -11,7 +11,7 @@ export class FeatureFlagsService {
   public service: IFeatureFlagsService;
 
   public async initialize(): Promise<void> {
-    const Service = process.env.LAUNCH_DARKLY_SDK_KEY ? LaunchDarklyFeatureFlagsService : ProcessEnvFeatureFlagsService;
+    const Service = env.LAUNCH_DARKLY_SDK_KEY ? LaunchDarklyFeatureFlagsService : ProcessEnvFeatureFlagsService;
 
     this.service = new Service();
 

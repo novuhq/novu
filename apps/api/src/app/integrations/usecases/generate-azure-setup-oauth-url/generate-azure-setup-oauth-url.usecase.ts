@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { buildAgentApiRootUrl } from '../../../agents/shared/util/agent-api-root-url';
 import { encodeOAuthState } from '../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateAzureSetupOauthUrlCommand } from './generate-azure-setup-oauth-url.command';
@@ -93,7 +94,7 @@ export class GenerateAzureSetupOauthUrl {
   }
 
   private getNovuAzureClientId(): string {
-    const clientId = process.env.NOVU_AZURE_CLIENT_ID;
+    const clientId = env.NOVU_AZURE_CLIENT_ID;
 
     if (!clientId) {
       throw new NotFoundException(

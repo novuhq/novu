@@ -2,6 +2,7 @@ import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { ProductFeature, ResourceCategory } from '@novu/application-generic';
 import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
+import { env } from '../../config/env';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
@@ -13,7 +14,7 @@ export class TestingController {
   @Get('/product-feature')
   @ProductFeature(ProductFeatureKeyEnum.TRANSLATIONS)
   async productFeatureGet(): Promise<{ number: number }> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     return { number: Math.random() };
   }
@@ -21,7 +22,7 @@ export class TestingController {
   @ExternalApiAccessible()
   @Get('/resource-limiting-default')
   async resourceLimitingDefaultGet(): Promise<{ number: number }> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     return { number: Math.random() };
   }
@@ -30,7 +31,7 @@ export class TestingController {
   @Get('/resource-limiting-events')
   @ResourceCategory(ResourceEnum.EVENTS)
   async resourceLimitingEventsGet(): Promise<{ number: number }> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (env.NODE_ENV !== 'test') throw new NotFoundException();
 
     return { number: Math.random() };
   }

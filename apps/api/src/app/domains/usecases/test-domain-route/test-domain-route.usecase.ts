@@ -3,7 +3,7 @@ import { InboundDomainRouteDelivery, type InboundDomainRouteMailInput } from '@n
 import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum } from '@novu/shared';
 import { nanoid } from 'nanoid';
-
+import { env } from '../../../../config/env';
 import { TestDomainRouteResponseDto } from '../../dtos/test-domain-route-response.dto';
 import { resolveDomainName } from '../domain-route.utils';
 import { TestDomainRouteCommand } from './test-domain-route.command';
@@ -57,12 +57,13 @@ export class TestDomainRoute {
           matched: true,
           type: DomainRouteTypeEnum.WEBHOOK,
           wouldDeliverTo: 'configured outbound webhooks for this environment',
+          // biome-ignore lint/plugin: Existing route payload typing is outside this change.
           payload: payload as unknown as Record<string, unknown>,
         };
       }
 
       const agentPayload = this.inboundDomainRouteDelivery.previewAgentMailPayload(mail, { domain, route });
-      const apiBaseUrl = process.env.API_ROOT_URL ?? '';
+      const apiBaseUrl = env.API_ROOT_URL ?? '';
       const agentId = route.destination ?? '';
       const wouldDeliverTo =
         apiBaseUrl && agentId
@@ -74,6 +75,7 @@ export class TestDomainRoute {
         matched: true,
         type: DomainRouteTypeEnum.AGENT,
         wouldDeliverTo,
+        // biome-ignore lint/plugin: Existing route payload typing is outside this change.
         payload: agentPayload as unknown as Record<string, unknown>,
       };
     }

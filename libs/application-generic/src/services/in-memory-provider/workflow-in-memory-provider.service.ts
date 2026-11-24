@@ -1,16 +1,16 @@
 import { Logger } from '@nestjs/common';
+import { env } from '../../config/env';
 import { isBullMqEnabled } from '../../config/queue-backend';
-
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum } from './types';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
 
-const isSelfHosted = (): boolean => process.env.IS_SELF_HOSTED === 'true';
-const isEnterprise = (): boolean => process.env.NOVU_ENTERPRISE === 'true';
+const isSelfHosted = (): boolean => env.IS_SELF_HOSTED;
+const isEnterprise = (): boolean => env.NOVU_ENTERPRISE === 'true';
 const isMemoryDbConfigured = (): boolean =>
-  !!(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST && process.env.MEMORY_DB_CLUSTER_SERVICE_PORT);
+  !!(env.MEMORY_DB_CLUSTER_SERVICE_HOST && env.MEMORY_DB_CLUSTER_SERVICE_PORT);
 
 /**
  * Rules for the provider selection:

@@ -1,3 +1,5 @@
+import { env } from '../../../config/env';
+
 /**
  * Builds the Microsoft Teams app manifest for a Novu agent bot.
  *
@@ -15,13 +17,13 @@ export type MsTeamsPublisherInfo = {
 };
 
 export function resolveMsTeamsPublisherInfo(): MsTeamsPublisherInfo {
-  const websiteUrl = process.env.NOVU_MSTEAMS_PUBLISHER_WEBSITE_URL || 'https://novu.co';
+  const websiteUrl = env.NOVU_MSTEAMS_PUBLISHER_WEBSITE_URL;
 
   return {
-    name: process.env.NOVU_MSTEAMS_PUBLISHER_NAME || 'Novu',
+    name: env.NOVU_MSTEAMS_PUBLISHER_NAME,
     websiteUrl,
-    privacyUrl: process.env.NOVU_MSTEAMS_PUBLISHER_PRIVACY_URL || 'https://novu.co/privacy',
-    termsOfUseUrl: process.env.NOVU_MSTEAMS_PUBLISHER_TERMS_URL || 'https://novu.co/terms',
+    privacyUrl: env.NOVU_MSTEAMS_PUBLISHER_PRIVACY_URL,
+    termsOfUseUrl: env.NOVU_MSTEAMS_PUBLISHER_TERMS_URL,
   };
 }
 

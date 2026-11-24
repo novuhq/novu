@@ -6,6 +6,7 @@ import {
   TimezoneEnum,
 } from '@novu/shared';
 import { captureException } from '@sentry/node';
+import { env } from '../../config/env';
 import { MetricsService } from '../metrics';
 import { CronJobData, CronJobProcessor, CronMetrics, CronMetricsEventEnum, CronOptions } from './cron.types';
 
@@ -29,7 +30,7 @@ const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute in milliseconds
 
 @Injectable()
 export abstract class CronService implements OnApplicationBootstrap, OnApplicationShutdown {
-  private deploymentName = process.env.FLEET_NAME ?? 'default';
+  private deploymentName = env.FLEET_NAME;
   protected abstract cronServiceName: string;
 
   constructor(
@@ -242,7 +243,7 @@ export abstract class CronService implements OnApplicationBootstrap, OnApplicati
     const logMessage = `${eventName}: '${jobName}' job`;
 
     if (error) {
-      if (process.env.SENTRY_DSN) {
+      if (env.SENTRY_DSN) {
         captureException(error, { tags: { jobName, event, eventName } });
       }
       Logger.error(logMessage, error, LOG_CONTEXT);

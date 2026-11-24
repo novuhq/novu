@@ -13,6 +13,7 @@ import {
 } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
+import { env } from '../../../config/env';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { ClickHouseBatchService } from '../clickhouse-batch.service';
@@ -56,8 +57,8 @@ type WorkflowRunColumns = keyof InferClickhouseSchemaType<typeof workflowRunSche
 type SelectedWorkflowRun<T extends readonly WorkflowRunColumns[]> = Pick<WorkflowRun, T[number]>;
 
 const WORKFLOW_RUN_INSERT_OPTIONS: InsertOptions = getInsertOptions(
-  process.env.WORKFLOW_RUNS_ASYNC_INSERT,
-  process.env.WORKFLOW_RUNS_WAIT_ASYNC_INSERT
+  env.WORKFLOW_RUNS_ASYNC_INSERT,
+  env.WORKFLOW_RUNS_WAIT_ASYNC_INSERT
 );
 
 @Injectable()
@@ -293,6 +294,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * Handles timestamp collisions by using both created_at and workflow_run_id.
    * All queries are secure by default with mandatory tenant isolation.
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing complexity is outside this change.
   async findWithCursor<T extends readonly WorkflowRunColumns[] | '*'>(options: {
     where: Where<WorkflowRun>;
     cursor?: {

@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { env } from '../../../config/env';
 import { getMachineInfo, loadOrCreateMachineId } from '../utils/machine.utils';
 import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 
@@ -21,7 +22,7 @@ export class MachineInfoService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
+    if (env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'false') {
       this.machineId = loadOrCreateMachineId();
       await this.sendMachineTelemetry('Initial Setup - [OS Telemetry]');
     }
@@ -29,7 +30,7 @@ export class MachineInfoService implements OnApplicationBootstrap {
 
   @Cron(CronExpression.EVERY_HOUR)
   private async sendRegularTelemetry() {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
+    if (env.IS_SELF_HOSTED && env.NOVU_ENTERPRISE === 'false') {
       await this.sendMachineTelemetry('Regular Beacon - [OS Telemetry]');
     }
   }

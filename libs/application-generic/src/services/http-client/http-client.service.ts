@@ -20,6 +20,7 @@ import got, {
   UnsupportedProtocolError,
   UploadError,
 } from 'got';
+import { env } from '../../config/env';
 import { PinoLogger } from '../../logging';
 import {
   HttpClientError,
@@ -30,7 +31,7 @@ import {
   RETRYABLE_HTTP_CODES,
 } from './http-client.types';
 
-const inTestEnv = process.env.NODE_ENV === 'test';
+const inTestEnv = env.NODE_ENV === 'test';
 const RETRY_BASE_INTERVAL_IN_MS = inTestEnv ? 50 : 500;
 
 type GotRequestParams = {

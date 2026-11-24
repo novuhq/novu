@@ -48,7 +48,6 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "dotenv": "^16.6.1",
-    "envalid": "^8.2.0",
     "helmet": "^8.2.0",
     "ioredis": "5.11.1",
     "jsonwebtoken": "9.0.3",

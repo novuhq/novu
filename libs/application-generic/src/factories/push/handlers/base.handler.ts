@@ -1,5 +1,6 @@
 import { ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { IPushOptions, IPushProvider } from '@novu/stateless';
+import { env } from '../../../config/env';
 import { BaseHandler } from '../../shared/interfaces';
 import { IPushHandler } from '../interfaces';
 
@@ -11,7 +12,7 @@ export abstract class BasePushHandler extends BaseHandler<IPushProvider> impleme
   }
 
   async send(options: IPushOptions) {
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       return {};
     }
 

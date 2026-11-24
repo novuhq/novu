@@ -101,6 +101,7 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
   @Instrument()
   private buildApiRateLimitRecord(): IApiRateLimitServiceMaximum {
     // Read process environment only once for performance
+    // biome-ignore lint/plugin: reads API_RATE_LIMIT_MAXIMUM_* by computed name, typed by ApiRateLimitServiceMaximumEnvVarFormat
     const processEnv = process.env;
 
     return Object.values(ApiServiceLevelEnum).reduce((acc, apiServiceLevel) => {

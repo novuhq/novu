@@ -1,10 +1,12 @@
+import { env } from '../../../config/env';
+
 /**
  * Base URL of the Human dashboard (`apps/human-dashboard`), which hosts the pages
  * that `human contact invite` links point to. `HUMAN_DASHBOARD_URL` wins, falling back
  * to agentinbox.md. The trailing slash is stripped so callers can append paths.
  */
 export function resolveHumanDashboardBaseUrl(): string {
-  return (process.env.HUMAN_DASHBOARD_URL || 'https://agentinbox.md').replace(/\/$/, '');
+  return (env.HUMAN_DASHBOARD_URL || 'https://agentinbox.md').replace(/\/$/, '');
 }
 
 /** A page on the Human dashboard, with `params` in its query. */
@@ -26,7 +28,7 @@ export function buildHumanDashboardUrl(path: string, params: Record<string, stri
  * login without it.
  */
 export function buildHumanCliLoginUrl(userCode?: string): string | undefined {
-  if (!process.env.HUMAN_DASHBOARD_URL?.trim()) {
+  if (!env.HUMAN_DASHBOARD_URL?.trim()) {
     return undefined;
   }
 

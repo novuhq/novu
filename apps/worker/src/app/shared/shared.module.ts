@@ -70,6 +70,7 @@ import {
 
 import { JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+import { env } from '../../config/env';
 import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 import { ActiveJobsMetricService } from '../workflow/services';
 
@@ -99,7 +100,7 @@ const dalService = {
   provide: DalService,
   useFactory: async () => {
     const service = new DalService();
-    const mongoUrl = process.env.MONGO_URL;
+    const mongoUrl = env.MONGO_URL;
 
     if (!mongoUrl) {
       throw new Error('MONGO_URL is required to connect the worker to MongoDB');

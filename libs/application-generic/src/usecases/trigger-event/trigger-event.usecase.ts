@@ -15,6 +15,7 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { toMerged } from 'es-toolkit';
+import { env } from '../../config/env';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import type { EventType, RequestTraceInput } from '../../services/analytic-logs';
@@ -32,7 +33,7 @@ import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { TriggerEventCommand } from './trigger-event.command';
 
 function getActiveWorker() {
-  return process.env.ACTIVE_WORKER;
+  return env.ACTIVE_WORKER;
 }
 
 @Injectable()

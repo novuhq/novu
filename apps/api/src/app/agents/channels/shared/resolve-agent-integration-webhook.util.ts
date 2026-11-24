@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { env } from '../../../../config/env';
 
 export interface ResolvedAgentIntegrationWebhook {
   agent: { _id: string; identifier: string };
@@ -15,7 +16,7 @@ const AGENT_WEBHOOK_URL_PATTERN = /\/v1\/agents\/[^/]+\/webhook\/[^/]+\/?$/;
 export function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
   // Prefer `AGENT_API_HOSTNAME` (a publicly reachable HTTPS host chat platforms can call back
   // to — typically a tunnel URL in dev) and fall back to the standard `API_ROOT_URL`.
-  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+  const base = (env.AGENT_API_HOSTNAME ?? env.API_ROOT_URL ?? '').replace(/\/$/, '');
 
   if (!base) {
     throw new Error(

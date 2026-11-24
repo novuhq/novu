@@ -1,6 +1,7 @@
 import { cardToFallbackMarkdown } from '@novu/providers';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { CardElement, IChatOptions, IChatProvider } from '@novu/stateless';
+import { env } from '../../../config/env';
 import { BaseHandler } from '../../shared/interfaces';
 import { IChatHandler, ResolvedChatCard } from '../interfaces';
 
@@ -14,7 +15,7 @@ export abstract class BaseChatHandler extends BaseHandler<IChatProvider> impleme
   abstract buildProvider(credentials);
 
   async send(chatContent: IChatOptions) {
-    if (process.env.NODE_ENV === 'test') {
+    if (env.NODE_ENV === 'test') {
       return {};
     }
 

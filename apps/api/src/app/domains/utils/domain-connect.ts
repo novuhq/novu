@@ -1,6 +1,7 @@
 import { createSign } from 'node:crypto';
 import { DomainEntity } from '@novu/dal';
 import { parse } from 'tldts';
+import { env } from '../../../config/env';
 import { getMailServerDomain } from './dns-records';
 
 export const DOMAIN_CONNECT_PROVIDER_ID = 'novu.co';
@@ -57,7 +58,7 @@ export function getDomainConnectConfig(): DomainConnectConfig {
   return {
     providerId: DOMAIN_CONNECT_PROVIDER_ID,
     serviceId: DOMAIN_CONNECT_SERVICE_ID,
-    privateKey: normalizeDomainConnectPrivateKey(process.env.DOMAIN_CONNECT_PRIVATE_KEY),
+    privateKey: normalizeDomainConnectPrivateKey(env.DOMAIN_CONNECT_PRIVATE_KEY),
     keyHost: DOMAIN_CONNECT_KEY_HOST,
     redirectBaseUrl: getDomainConnectRedirectBaseUrl(),
   };
@@ -323,9 +324,9 @@ function applyDomainPlaceholders(value: string, domain: DomainEntity): string {
     .split('{domainId}')
     .join(domain._id)
     .split('{environmentId}')
-    .join(domain._environmentId as unknown as string)
+    .join(String(domain._environmentId))
     .split('{organizationId}')
-    .join(domain._organizationId as unknown as string);
+    .join(String(domain._organizationId));
 }
 
 function buildStateToken(domain: DomainEntity): string {
@@ -392,7 +393,7 @@ function getDomainConnectHostname(value: string): string {
 }
 
 function getDomainConnectRedirectBaseUrl(): string | undefined {
-  const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+  const dashboardBaseUrl = env.DASHBOARD_URL || env.FRONT_BASE_URL;
 
   if (!dashboardBaseUrl) {
     return undefined;

@@ -12,6 +12,7 @@ import {
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions, isAgentInboxProvider } from '@novu/shared';
+import { env } from '../../../config/env';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
@@ -288,7 +289,7 @@ export class AgentEmailSender {
     const demoIntegration: IntegrationEntity = {
       ...integration,
       credentials: {
-        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        apiKey: env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from,
         senderName,
         ipPoolName: resolveAgentEmailIpPoolName(config.providerId),

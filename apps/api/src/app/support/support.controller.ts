@@ -4,6 +4,7 @@ import { Novu } from '@novu/api';
 import { PinoLogger, UserSession } from '@novu/application-generic';
 import { OrganizationRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import { env } from '../../config/env';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { AgentsEarlyAccessDto } from './dtos/agents-early-access.dto';
 import { CreateSupportThreadDto } from './dtos/create-thread.dto';
@@ -37,7 +38,7 @@ export class SupportController {
     const organization = await this.organizationRepository.findById(user.organizationId);
     const organizationName = organization?.name ?? '';
 
-    const secretKey = process.env.NOVU_INTERNAL_SECRET_KEY;
+    const secretKey = env.NOVU_INTERNAL_SECRET_KEY;
 
     if (!secretKey) {
       this.logger.warn(
@@ -95,7 +96,7 @@ export class SupportController {
   async mobileSetup(@UserSession() user: UserSessionData) {
     const novu = new Novu({
       security: {
-        secretKey: process.env.NOVU_INTERNAL_SECRET_KEY,
+        secretKey: env.NOVU_INTERNAL_SECRET_KEY,
       },
     });
 

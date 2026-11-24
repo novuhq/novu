@@ -8,6 +8,7 @@ import {
   EnvironmentRepository,
   MemberRepository,
 } from '@novu/dal';
+import { env } from '../../../../config/env';
 import { Sync } from '../../../bridge/usecases/sync';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
@@ -130,8 +131,8 @@ export class ProcessVercelWebhook {
     return true;
   }
 
-  private verifySignature(signature: string, body: any): void {
-    const secret = process.env.VERCEL_CLIENT_SECRET;
+  private verifySignature(signature: string, body: unknown): void {
+    const secret = env.VERCEL_CLIENT_SECRET;
 
     if (!signature || !secret) {
       throw new BadRequestException('Missing signature or secret');

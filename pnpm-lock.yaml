@@ -592,9 +592,6 @@ importers:
       entities:
         specifier: ^7.0.0
         version: 7.0.0
-      envalid:
-        specifier: ^8.2.0
-        version: 8.2.0
       es-toolkit:
         specifier: ^1.47.0
         version: 1.47.0
@@ -1439,9 +1436,6 @@ importers:
       dotenv:
         specifier: ^16.4.5
         version: 16.5.0
-      envalid:
-        specifier: ^8.2.0
-        version: 8.2.0
       extend:
         specifier: ^2.0.1
         version: 2.0.2
@@ -1784,9 +1778,6 @@ importers:
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
-      envalid:
-        specifier: ^8.2.0
-        version: 8.2.0
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
@@ -1978,9 +1969,6 @@ importers:
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
-      envalid:
-        specifier: ^8.2.0
-        version: 8.2.0
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
@@ -2919,6 +2907,9 @@ importers:
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@2.29.3)
+      envalid:
+        specifier: ^8.2.0
+        version: 8.2.0
       es-toolkit:
         specifier: ^1.47.0
         version: 1.47.0

@@ -3,6 +3,7 @@ import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail, SignUpOriginEnum } from '@novu/shared';
 import { hash } from 'bcrypt';
+import { env } from '../../../../config/env';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { AuthService } from '../../services/auth.service';
@@ -18,7 +19,7 @@ export class UserRegister {
   ) {}
 
   async execute(command: UserRegisterCommand) {
-    if (process.env.DISABLE_USER_REGISTRATION === 'true') throw new BadRequestException('Account creation is disabled');
+    if (env.DISABLE_USER_REGISTRATION) throw new BadRequestException('Account creation is disabled');
 
     const email = normalizeEmail(command.email);
     const existingUser = await this.userRepository.findByEmail(email);

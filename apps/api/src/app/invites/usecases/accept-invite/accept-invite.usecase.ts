@@ -3,6 +3,7 @@ import { Novu } from '@novu/api';
 import { capitalize, PinoLogger } from '@novu/application-generic';
 import { MemberEntity, MemberRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AcceptInviteCommand } from './accept-invite.command';
 
@@ -55,11 +56,11 @@ export class AcceptInvite {
     if (!member.invite) return;
 
     try {
-      if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
+      if ((env.NODE_ENV === 'dev' || env.NODE_ENV === 'production') && env.NOVU_API_KEY) {
+        const novu = new Novu({ security: { secretKey: env.NOVU_API_KEY } });
 
         await novu.trigger({
-          workflowId: process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E',
+          workflowId: env.NOVU_TEMPLATEID_INVITE_ACCEPTED,
           to: [
             {
               subscriberId: inviter._id,

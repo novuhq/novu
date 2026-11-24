@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { env } from '../../../config/env';
 
 interface ResolveActivityRetentionRangeOptions {
   organizationId: string;
@@ -44,7 +45,7 @@ function assertValidChronology(after?: Date, before?: Date) {
 }
 
 function getActivityRetentionPolicy(organization: OrganizationEntity): ActivityRetentionPolicy {
-  if (process.env.IS_SELF_HOSTED === 'true') {
+  if (env.IS_SELF_HOSTED) {
     return { kind: 'unlimited' };
   }
 
@@ -101,7 +102,7 @@ export class ActivityRetentionService {
     );
 
     if (
-      process.env.NODE_ENV !== 'local' &&
+      env.NODE_ENV !== 'local' &&
       (resolvedAfterDate < bufferedEarliestAllowedDate || resolvedBeforeDate < bufferedEarliestAllowedDate)
     ) {
       throw new HttpException(

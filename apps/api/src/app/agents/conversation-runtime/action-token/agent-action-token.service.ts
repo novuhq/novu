@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { HUMAN_INTERACTION_MAX_TTL_SECONDS } from '@novu/shared';
 import type { ButtonElement, CardElement } from 'chat';
+import { env } from '../../../../config/env';
 import { callbackPayloadNeedsTokenization, forEachCallbackButton } from './card-callback-button.walker';
 import { buildOpaqueStorageKey, isMintedOpaqueActionId, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
 
@@ -37,7 +38,7 @@ export class AgentActionTokenService {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    this.ttlSeconds = parseTtlFromEnv(process.env.AGENT_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
+    this.ttlSeconds = parseTtlFromEnv(env.AGENT_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
   }
 
   isActionToken(actionId: string | undefined): boolean {

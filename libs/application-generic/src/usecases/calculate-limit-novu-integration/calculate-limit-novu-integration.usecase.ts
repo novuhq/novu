@@ -3,6 +3,7 @@ import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
+import { env } from '../../config/env';
 import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '../../utils/novu-integrations';
 import { CalculateLimitNovuIntegrationCommand } from './calculate-limit-novu-integration.command';
 
@@ -10,11 +11,11 @@ import { CalculateLimitNovuIntegrationCommand } from './calculate-limit-novu-int
 export class CalculateLimitNovuIntegration {
   constructor(private messageRepository: MessageRepository) {}
 
-  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
+  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS;
 
-  static MAX_NOVU_INTEGRATION_SMS_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_SMS_REQUESTS || '20', 10);
+  static MAX_NOVU_INTEGRATION_SMS_REQUESTS = env.MAX_NOVU_INTEGRATION_SMS_REQUESTS;
 
-  static MAX_NOVU_INTEGRATION_CHAT_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_CHAT_REQUESTS || '300', 10);
+  static MAX_NOVU_INTEGRATION_CHAT_REQUESTS = env.MAX_NOVU_INTEGRATION_CHAT_REQUESTS;
 
   async execute(command: CalculateLimitNovuIntegrationCommand): Promise<{ limit: number; count: number } | undefined> {
     const { channelType } = command;

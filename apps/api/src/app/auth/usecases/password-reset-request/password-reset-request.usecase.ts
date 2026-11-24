@@ -4,6 +4,7 @@ import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import { env } from '../../../../config/env';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 
 @Injectable()
@@ -36,7 +37,7 @@ export class PasswordResetRequest {
       const resetTokenCount = this.getUpdatedRequestCount(foundUser);
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
-      if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
+      if ((env.NODE_ENV === 'dev' || env.NODE_ENV === 'production') && env.NOVU_API_KEY) {
         const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, foundUser, command.src);
       }
     }
@@ -49,7 +50,7 @@ export class PasswordResetRequest {
   private static getResetRedirectLink(token: string, user: UserEntity, src?: PasswordResetFlowEnum): string {
     // ensure that only users without passwords are allowed to reset
     if (src === PasswordResetFlowEnum.USER_PROFILE && !user.password) {
-      return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
+      return `${env.DASHBOARD_URL || env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
     }
 
     /**
@@ -58,7 +59,7 @@ export class PasswordResetRequest {
      * 2. When src is explicitly FORGOT_PASSWORD
      * 3. User already has a password
      */
-    return `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/auth/reset/${token}`;
+    return `${env.DASHBOARD_URL || env.FRONT_BASE_URL}/auth/reset/${token}`;
   }
 
   private isRequestBlocked(user: UserEntity) {

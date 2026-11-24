@@ -56,6 +56,7 @@ import {
   Schedule,
   StepTypeEnum,
 } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
@@ -87,7 +88,7 @@ import { UpdatePreferencesCommand } from '../update-preferences/update-preferenc
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
 
-const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
+const ALLOWED_ORIGINS_REGEX = new RegExp(env.FRONT_BASE_URL || '');
 const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
@@ -304,7 +305,7 @@ export class Session {
     }
 
     // An empty FRONT_BASE_URL builds a regex that matches every origin, which would drop all customer sessions.
-    const isDashboardSession = Boolean(process.env.FRONT_BASE_URL) && isOriginFromNovu;
+    const isDashboardSession = Boolean(env.FRONT_BASE_URL) && isOriginFromNovu;
     if (!isDashboardSession) {
       void this.subscriberSessionAuthStatsService.record({
         environmentId: environment._id,
@@ -479,7 +480,7 @@ export class Session {
   }
 
   private async getMaxSnoozeDurationHours(apiServiceLevel: ApiServiceLevelEnum) {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true') {
       return 0;
     }
 
@@ -493,11 +494,11 @@ export class Session {
   }
 
   async processKeyless(): Promise<EnvironmentResponseDto> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (env.NOVU_ENTERPRISE !== 'true') {
       throw new BadRequestException('Keyless is not supported in community edition');
     }
 
-    const keylessOrganizationId = process.env.KEYLESS_ORGANIZATION_ID;
+    const keylessOrganizationId = env.KEYLESS_ORGANIZATION_ID;
     if (!keylessOrganizationId) {
       throw new InternalServerErrorException('Keyless Organization ID is not configured');
     }
@@ -537,7 +538,7 @@ export class Session {
       );
     }
 
-    const keylessUserEmail = process.env.KEYLESS_USER_EMAIL;
+    const keylessUserEmail = env.KEYLESS_USER_EMAIL;
     if (!keylessUserEmail) {
       throw new InternalServerErrorException('Keyless User email is not configured');
     }

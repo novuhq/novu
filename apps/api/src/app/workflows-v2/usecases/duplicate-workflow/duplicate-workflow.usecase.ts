@@ -16,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import { LocalizationResourceEnum, PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { DuplicateWorkflowDto } from '../../dtos';
 import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
@@ -148,8 +149,8 @@ export class DuplicateWorkflowUseCase {
     targetResourceId: string;
     command: DuplicateWorkflowCommand;
   }) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

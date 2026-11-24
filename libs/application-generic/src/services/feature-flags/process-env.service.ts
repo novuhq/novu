@@ -13,6 +13,7 @@ export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
   }
 
   async getFlag<T_Result>(context: FeatureFlagContext<T_Result>): Promise<T_Result> {
+    // biome-ignore lint/plugin: reads each FeatureFlagsKeysEnum key by name, documented in env.schema.ts
     const processEnvValue = process.env[context.key];
     if (!processEnvValue) {
       return context.defaultValue as T_Result;

@@ -2,6 +2,7 @@ import { BeforeApplicationShutdown, Injectable, OnModuleDestroy, OnModuleInit } 
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import PQueue from 'p-queue';
+import { env } from '../../config/env';
 import { QueueBaseService } from '../queues';
 import { SqsConsumerService } from '../sqs';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
@@ -12,7 +13,7 @@ const noopNewRelic = {
   getTransaction: () => noopTransaction,
   noticeError: (_error: unknown) => {},
 };
-const shouldDisableNewRelic = !!process.env.CI && process.env.NODE_ENV === 'test';
+const shouldDisableNewRelic = !!env.CI && env.NODE_ENV === 'test';
 const nr = shouldDisableNewRelic ? noopNewRelic : require('newrelic');
 
 type Row = Record<string, unknown>;

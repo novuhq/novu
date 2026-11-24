@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { ControlValuesRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
+import { env } from '../../../../config/env';
 import { UpsertLayout, UpsertLayoutCommand } from '../upsert-layout';
 import { DuplicateLayoutCommand } from './duplicate-layout.command';
 
@@ -39,6 +40,7 @@ export class DuplicateLayoutUseCase {
     const originalControlValues = await this.controlValuesRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      // biome-ignore lint/style/noNonNullAssertion: Existing V0 layout id typing is outside this change.
       _layoutId: originalLayout._id!,
       level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     });
@@ -60,6 +62,7 @@ export class DuplicateLayoutUseCase {
     this.analyticsService.track('Duplicate layout - [Layouts]', command.userId, {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
+      // biome-ignore lint/style/noNonNullAssertion: Existing V0 layout id typing is outside this change.
       originalLayoutId: originalLayout._id!,
       duplicatedLayoutId: duplicatedLayout._id,
     });
@@ -84,8 +87,8 @@ export class DuplicateLayoutUseCase {
     targetResourceId: string;
     command: DuplicateLayoutCommand;
   }) {
-    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isEnterprise = env.NOVU_ENTERPRISE === 'true' || env.CI_EE_TEST;
+    const isSelfHosted = env.IS_SELF_HOSTED;
 
     if (!isEnterprise || isSelfHosted) {
       return;

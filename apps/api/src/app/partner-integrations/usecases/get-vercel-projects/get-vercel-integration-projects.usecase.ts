@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { OrganizationRepository } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
-
+import { env } from '../../../../config/env';
 import { GetVercelIntegrationProjectsCommand } from './get-vercel-integration-projects.command';
 
 @Injectable()
@@ -72,7 +72,7 @@ export class GetVercelIntegrationProjects {
     }
 
     const response = await lastValueFrom(
-      this.httpService.get(`${process.env.VERCEL_BASE_URL}/v10/projects?${queryParams.toString()}`, {
+      this.httpService.get(`${env.VERCEL_BASE_URL}/v10/projects?${queryParams.toString()}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

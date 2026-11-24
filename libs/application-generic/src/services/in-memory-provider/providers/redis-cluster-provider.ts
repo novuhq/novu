@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import Redis, { ChainableCommander, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
+import { env } from '../../../config/env';
 import { convertStringValues, isTlsFlagEnabled } from './variable-mappers';
 
 export { ChainableCommander, Cluster, ClusterOptions };
@@ -100,19 +101,19 @@ export const buildRedisClusterInstances = (hosts: string[], ports: number[]): Cl
 
 export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => {
   const redisClusterConfig: IRedisClusterConfig = {
-    host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
-    port: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORT),
-    ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
-    ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    username: convertStringValues(process.env.REDIS_CLUSTER_USERNAME),
-    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
-    connectTimeout: convertStringValues(process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
-    keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
-    family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
-    keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: isTlsFlagEnabled(process.env.REDIS_CLUSTER_TLS)
+    host: convertStringValues(env.REDIS_CLUSTER_SERVICE_HOST),
+    port: convertStringValues(env.REDIS_CLUSTER_SERVICE_PORT),
+    ports: convertStringValues(env.REDIS_CLUSTER_SERVICE_PORTS),
+    ttl: convertStringValues(env.REDIS_CLUSTER_TTL),
+    username: convertStringValues(env.REDIS_CLUSTER_USERNAME),
+    password: convertStringValues(env.REDIS_CLUSTER_PASSWORD),
+    connectTimeout: convertStringValues(env.REDIS_CLUSTER_CONNECTION_TIMEOUT),
+    keepAlive: convertStringValues(env.REDIS_CLUSTER_KEEP_ALIVE),
+    family: convertStringValues(env.REDIS_CLUSTER_FAMILY),
+    keyPrefix: convertStringValues(env.REDIS_CLUSTER_KEY_PREFIX),
+    tls: isTlsFlagEnabled(env.REDIS_CLUSTER_TLS)
       ? {
-          servername: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST)?.split(',')[0]?.trim(),
+          servername: convertStringValues(env.REDIS_CLUSTER_SERVICE_HOST)?.split(',')[0]?.trim(),
         }
       : undefined,
   };
@@ -148,8 +149,10 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
 export const getRedisCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, username, tls, connectTimeout } = getRedisClusterProviderConfig();
 
-  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+  const skipVersionCheck = env.REDIS_SKIP_VERSION_CHECK;
 
+  // biome-ignore lint/suspicious/noExplicitAny: Existing any is outside this change.
+  // biome-ignore lint/plugin: Existing loose type is outside this change.
   const redisOptions: any = {
     maxRetriesPerRequest: null,
     ...(tls && { tls }),
@@ -185,7 +188,7 @@ export const getRedisCluster = (enableAutoPipelining?: boolean): Cluster | undef
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack: env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 2000,
   };
 
