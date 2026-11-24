@@ -46,7 +46,7 @@ function UseCaseRow({ example }: { example: UseCase }) {
       id={example.id}
       aria-labelledby={heading}
       tabIndex={-1}
-      className="section-rails grid scroll-mt-4 items-center gap-8 border-t border-sapien-border px-4 py-14 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/70 md:grid-cols-[minmax(0,440fr)_minmax(0,406fr)] md:gap-x-8 md:px-8 md:py-20 lg:gap-x-12"
+      className="section-rails grid scroll-mt-[67px] items-center gap-8 border-t border-sapien-border px-4 py-14 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent/70 md:grid-cols-[minmax(0,440fr)_minmax(0,406fr)] md:gap-x-8 md:px-8 md:py-20 lg:gap-x-12"
     >
       <div className="min-w-0 text-[14px] leading-[19px] tracking-tight text-sapien-foreground/60">
         <p className="font-sapien-mono text-[11px] leading-none text-accent">{example.label}</p>
