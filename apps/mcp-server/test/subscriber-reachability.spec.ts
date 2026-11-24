@@ -45,6 +45,7 @@ function integration(
 		channel,
 		hasConditions: false,
 		hasRules: false,
+		id: `${providerId}-id`,
 		identifier: `${providerId}-1`,
 		primary: channel === "email" || channel === "sms",
 		providerId,
@@ -337,8 +338,133 @@ describe("computeSubscriberReachability", () => {
 			"tool",
 		);
 		expect(tool).toMatchObject({
-			reasons: ["No tool endpoint for this subscriber"],
+			reasons: ["No pagerduty endpoint for this subscriber"],
 			state: "blocked",
+		});
+	});
+
+	it("blocks push tokens bound to an inactive integration, even when another one is active", () => {
+		const push = channelOf(
+			{
+				subscriber: subscriber({
+					channels: [
+						{
+							deviceTokenCount: 1,
+							hasPhoneNumber: false,
+							hasWebhookUrl: false,
+							integrationId: "fcm-old-id",
+							providerId: "fcm",
+						},
+					],
+				}),
+			},
+			"push",
+		);
+
+		expect(push).toMatchObject({
+			reasons: [
+				"Device tokens for fcm are bound to an integration that is inactive or deleted",
+			],
+			state: "blocked",
+		});
+	});
+
+	it("keeps a channel partly reachable when critical workflows still send on it", () => {
+		const sms = channelOf(
+			{
+				criticalPreferences: {
+					workflows: [{ channels: { sms: true }, workflow: { name: "Login code" } }],
+				},
+				preferences: preferences({
+					global: { channels: { sms: false }, enabled: true },
+					workflows: [],
+				}),
+			},
+			"sms",
+		);
+
+		expect(sms).toMatchObject({
+			reasons: ["Off globally, but critical workflows still send: Login code"],
+			state: "partly",
+		});
+	});
+
+	it("reaches chat through Photon iMessage and the phone number", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				integrations: [...INTEGRATIONS, integration("chat", "photon-imessage")],
+			},
+			"chat",
+		);
+
+		expect(chat.state).toBe("reachable");
+		expect(chat.details).toContain("photon-imessage to the phone number on file");
+	});
+
+	it("can't tell whether a tool webhook without an endpoint reaches the subscriber", () => {
+		const tool = channelOf(
+			{ integrations: [...INTEGRATIONS, integration("tool", "tool-webhook")] },
+			"tool",
+		);
+
+		expect(tool.state).toBe("unknown");
+		expect(tool.reasons[0]).toContain(
+			"Couldn't tell whether the tool-webhook-1 webhook sends per subscriber",
+		);
+	});
+
+	it("only counts a tool endpoint with context keys for a matching trigger context", () => {
+		const tool = channelOf(
+			{
+				endpoints: [
+					endpoint({
+						channel: "tool",
+						connectionIdentifier: null,
+						contextKeys: ["tenant:acme"],
+						integrationIdentifier: "pagerduty-1",
+						providerId: "pagerduty",
+						type: "pagerduty_service",
+					}),
+				],
+				integrations: [...INTEGRATIONS, integration("tool", "pagerduty")],
+			},
+			"tool",
+		);
+
+		expect(tool).toMatchObject({
+			reasons: ["Only reachable for triggers with a matching context"],
+			state: "partly",
+		});
+		expect(tool.details).toContain(
+			"pagerduty-1, only when the trigger context is exactly tenant:acme",
+		);
+	});
+
+	it("reports routes past the read limits as not checked instead of missing", () => {
+		const uncheckedConnection = channelOf(
+			{
+				connections: [],
+				limits: { uncheckedConnectionIds: ["slack-conn"] },
+			},
+			"chat",
+		);
+		expect(uncheckedConnection).toMatchObject({
+			reasons: ["Slack user endpoint's connection wasn't checked (lookup limit)"],
+			state: "unknown",
+		});
+
+		const truncated = channelOf(
+			{
+				endpoints: [],
+				limits: { endpointsTruncated: true },
+				subscriber: subscriber({ hasPhone: false }),
+			},
+			"chat",
+		);
+		expect(truncated).toMatchObject({
+			reasons: ["Only the first 100 endpoints were read; others weren't checked"],
+			state: "unknown",
 		});
 	});
 });

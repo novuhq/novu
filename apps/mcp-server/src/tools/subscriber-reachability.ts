@@ -184,11 +184,12 @@ async function checkReachability(
 	]);
 
 	const endpointList = endpoints.ok ? asArray(endpoints.data).map(toEndpoint) : [];
-	const connectionIds = unique(
+	const referencedConnectionIds = unique(
 		endpointList
 			.map((endpoint) => endpoint.connectionIdentifier)
 			.filter((identifier): identifier is string => Boolean(identifier)),
-	).slice(0, MAX_CONNECTION_LOOKUPS);
+	);
+	const connectionIds = referencedConnectionIds.slice(0, MAX_CONNECTION_LOOKUPS);
 	const connectionReads = await Promise.all(
 		connectionIds.map((identifier) =>
 			read(context, `/v1/channel-connections/${encodeURIComponent(identifier)}`),
@@ -227,6 +228,11 @@ async function checkReachability(
 					)
 					.map(toIntegration)
 			: [],
+		// One page of endpoints and a capped number of connection lookups: what's left over is "not checked".
+		limits: {
+			endpointsTruncated: endpointList.length >= ENDPOINTS_LIMIT,
+			uncheckedConnectionIds: referencedConnectionIds.slice(MAX_CONNECTION_LOOKUPS),
+		},
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
@@ -278,6 +284,7 @@ function toSubscriber(raw: Json): ReachabilitySubscriber {
 					.length,
 				hasPhoneNumber: Boolean(credentials.phoneNumber),
 				hasWebhookUrl: Boolean(credentials.webhookUrl),
+				integrationId: stringOrNull(channel._integrationId),
 				integrationIdentifier: stringOrNull(channel.integrationIdentifier),
 				providerId: String(channel.providerId ?? ""),
 			};
@@ -301,6 +308,7 @@ function toIntegration(raw: Json): ReachabilityIntegration {
 		channel: String(raw.channel ?? ""),
 		hasConditions: Array.isArray(raw.conditions) && raw.conditions.length > 0,
 		hasRules: Boolean(rules && Object.keys(rules).length > 0),
+		id: String(raw._id ?? ""),
 		identifier: String(raw.identifier ?? ""),
 		primary: raw.primary === true,
 		providerId: String(raw.providerId ?? ""),
