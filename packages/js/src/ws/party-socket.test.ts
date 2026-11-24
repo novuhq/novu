@@ -57,7 +57,7 @@ const createClient = (socketOptions: Record<string, unknown> = {}) => {
     eventEmitterInstance: emitter,
   });
   emitter.emit('session.initialize.resolved', {
-    args: { applicationIdentifier: 'app' },
+    args: { applicationIdentifier: 'app', subscriber: { subscriberId: 'user_1' } },
     data: { token: 'token-1' } as Session,
   });
 

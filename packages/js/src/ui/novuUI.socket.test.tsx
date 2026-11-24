@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Novu } from '../novu';
 import { NovuUI } from './novuUI';
-import { createFakeNovu } from './testing/fakes';
+import { createFakeNovu, createFakeSocket } from './testing/fakes';
 
 const created: Novu[] = [];
 
 vi.mock('../novu', async () => {
-  const { createFakeNovu: createFake } = await import('./testing/fakes');
+  const fakes = await import('./testing/fakes');
 
   return {
     Novu: vi.fn(function FakeNovu() {
-      const novu = createFake({ socket: { disconnect: vi.fn(), connect: vi.fn(), isSocketEvent: vi.fn() } });
+      const novu = fakes.createFakeNovu({ socket: fakes.createFakeSocket() });
       created.push(novu);
 
       return novu;
@@ -41,15 +41,13 @@ describe('NovuUI socket ownership', () => {
   });
 
   it('leaves a caller-provided instance connected', () => {
-    const disconnect = vi.fn();
-    const provided = createFakeNovu({
-      socket: { disconnect, connect: vi.fn(), isSocketEvent: vi.fn() } as unknown as Novu['socket'],
-    });
+    const socket = createFakeSocket();
+    const provided = createFakeNovu({ socket });
     const novuUI = new NovuUI({ options, novu: provided });
 
     novuUI.updateNovu(createFakeNovu());
     novuUI.unmount();
 
-    expect(disconnect).not.toHaveBeenCalled();
+    expect(socket.disconnect).not.toHaveBeenCalled();
   });
 });
