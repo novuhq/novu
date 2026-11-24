@@ -11,6 +11,7 @@ import {
 	type ReachabilitySubscriber,
 	type ReadFailure,
 	type SubscriberReachabilityResult,
+	subscriberDashboardPath,
 	subscriberDisplayName,
 } from "../utils/subscriber-reachability";
 import type { ToolAccessors } from "../utils/tool-accessors";
@@ -119,6 +120,7 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 				kind: "done",
 				result: {
 					candidates: matches.map((match) => ({
+						dashboardPath: subscriberDashboardPath(String(match.subscriberId)),
 						email: stringOrNull(match.email),
 						name: subscriberDisplayName({
 							firstName: stringOrNull(match.firstName),

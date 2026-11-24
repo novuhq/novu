@@ -109,12 +109,15 @@ export interface SubscriberReachabilityCandidate {
 	subscriberId: string;
 	name: string | null;
 	email: string | null;
+	dashboardPath: string;
 }
 
 export type SubscriberReachabilityResult =
 	| {
 			status: "found";
 			environmentId: string | null;
+			/** The subscriber's page, as a path under `/env/<environment>` in the dashboard. */
+			dashboardPath: string;
 			subscriber: {
 				subscriberId: string;
 				name: string | null;
@@ -171,6 +174,11 @@ const ENDPOINT_TYPE_LABELS: Record<string, string> = {
 	webex_room: "Webex room",
 	webhook: "Webhook",
 };
+
+/** The dashboard's subscriber page, as a path under `/env/<environment>`. */
+export function subscriberDashboardPath(subscriberId: string): string {
+	return `/subscribers/${encodeURIComponent(subscriberId)}`;
+}
 
 export function subscriberDisplayName(subscriber: {
 	firstName?: string | null;
@@ -256,6 +264,7 @@ export function computeSubscriberReachability(
 	return {
 		channels: verdicts.map((verdict) => verdict.toResult()),
 		checked: checkedSources(failures),
+		dashboardPath: subscriberDashboardPath(subscriber.subscriberId),
 		environmentId: subscriber.environmentId ?? null,
 		notes: preferenceNotes(input),
 		status: "found",

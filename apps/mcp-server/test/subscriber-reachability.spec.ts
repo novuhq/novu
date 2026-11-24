@@ -8,6 +8,7 @@ import {
 	type ReachabilityPreferences,
 	type ReachabilitySubscriber,
 	type SubscriberReachabilityInput,
+	subscriberDashboardPath,
 } from "../src/utils/subscriber-reachability";
 import { API_URL, callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
@@ -342,6 +343,13 @@ describe("computeSubscriberReachability", () => {
 	});
 });
 
+describe("subscriberDashboardPath", () => {
+	it("encodes the subscriberId into the subscriber page path", () => {
+		expect(subscriberDashboardPath("jane@acme.com")).toBe("/subscribers/jane%40acme.com");
+		expect(subscriberDashboardPath("team/42")).toBe("/subscribers/team%2F42");
+	});
+});
+
 describe("maskCredentialValue", () => {
 	it("keeps a four-character prefix", () => {
 		expect(maskCredentialValue("abcdefgh")).toBe("abcd••••");
@@ -501,6 +509,7 @@ describe("get_subscriber_reachability", () => {
 		]);
 		expect(reachability.status).toBe("found");
 		expect(reachability.environmentId).toBe("env-1");
+		expect(reachability.dashboardPath).toBe("/subscribers/sub_8f21");
 		expect(
 			reachability.channels.map(({ channel, state }: { channel: string; state: string }) => [
 				channel,
@@ -573,8 +582,18 @@ describe("get_subscriber_reachability", () => {
 
 		expect(reachability).toEqual({
 			candidates: [
-				{ email: "jane@acme.com", name: "Jane Alvarez", subscriberId: "sub_8f21" },
-				{ email: "jane.doe@acme.com", name: "Jane Doe", subscriberId: "sub_1c09" },
+				{
+					dashboardPath: "/subscribers/sub_8f21",
+					email: "jane@acme.com",
+					name: "Jane Alvarez",
+					subscriberId: "sub_8f21",
+				},
+				{
+					dashboardPath: "/subscribers/sub_1c09",
+					email: "jane.doe@acme.com",
+					name: "Jane Doe",
+					subscriberId: "sub_1c09",
+				},
 			],
 			status: "ambiguous",
 		});
