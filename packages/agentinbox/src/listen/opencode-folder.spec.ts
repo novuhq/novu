@@ -353,6 +353,28 @@ describe('decideOpenCodeCall', () => {
     }
   });
 
+  it('refuses an edit or a command that reaches where a link among what decides a run leads, out of the folder too', () => {
+    // The folder's `.opencode` is a link to settings kept elsewhere: OpenCode reads them through it.
+    const shared = join(dir, 'shared', 'opencode');
+    mkdirSync(shared, { recursive: true });
+    symlinkSync(shared, join(project, '.opencode'));
+    writeFileSync(
+      join(project, 'opencode.json'),
+      JSON.stringify({ permission: { edit: 'allow', external_directory: 'allow', bash: { 'cp *': 'allow' } } })
+    );
+    const linked = readOpenCodeFolder(project, 2, home);
+    const agent = join(shared, 'agents', 'helper.md');
+    const notes = join(dir, 'shared', 'notes.md');
+
+    for (const call of [tool('edit', { filePath: agent }, [agent]), shell(`cp notes.md ${agent}`)]) {
+      expect(decideOpenCodeCall(2, linked, call), call.name).toEqual({
+        decision: 'deny',
+        why: 'it reaches what decides a run',
+      });
+    }
+    expect(decideOpenCodeCall(2, linked, tool('edit', { filePath: notes }, [notes]))).toEqual({ decision: 'allow' });
+  });
+
   it('leaves what the shell works out for itself to a rule for every command', () => {
     expect(decideOpenCodeCall(2, folder, shell('cat docs/a.md | sh'))).toEqual({
       decision: 'deny',
@@ -426,5 +448,15 @@ describe('parseJsonc', () => {
     ).toEqual({ url: 'https://example.com/*not-a-comment*/', list: [1, 2] });
     expect(parseJsonc('{ "a": "say \\"hi\\" // still a string" }')).toEqual({ a: 'say "hi" // still a string' });
     expect(parseJsonc('{ broken')).toBeUndefined();
+  });
+
+  it('keeps a comma before a `}` or `]` inside a string, as in a rule for a command', () => {
+    expect(
+      parseJsonc(`{
+        "permission": { "bash": { "printf 'x,}'": "allow", "cp file{a, }": "ask", "echo [1,]": "deny", }, },
+      }`)
+    ).toEqual({ permission: { bash: { "printf 'x,}'": 'allow', 'cp file{a, }': 'ask', 'echo [1,]': 'deny' } } });
+    // A comment between the comma and the end doesn't keep the comma.
+    expect(parseJsonc('{ "a": 1, // the last one\n}')).toEqual({ a: 1 });
   });
 });

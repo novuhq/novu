@@ -257,6 +257,22 @@ describe('decideCodexTool: commands', () => {
     }
   });
 
+  it('refuses a change to where a link among what decides a run leads, out of the folder too', async () => {
+    // The folder's `.codex` is a link to settings kept elsewhere: Codex reads them through it.
+    const project = join(dir, 'app');
+    const shared = join(dir, 'shared', 'codex');
+    mkdirSync(shared, { recursive: true });
+    symlinkSync(shared, join(project, '.codex'));
+    const check = rules({ cp: 'allow' });
+
+    expect(
+      await decideCodexTool(folder(), bash(`cp evil.rules ${join(shared, 'default.rules')}`), check)
+    ).toMatchObject({ decision: 'deny', why: 'it would change the folder’s own settings or instructions' });
+    expect(
+      (await decideCodexTool(folder(), bash(`cp notes.md ${join(dir, 'shared', 'notes.md')}`), check)).decision
+    ).toBe('allow');
+  });
+
   it('reads the folder’s skills without a rule, and nothing past them', async () => {
     const none = rules({});
     const project = join(dir, 'app');

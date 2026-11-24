@@ -3,6 +3,7 @@ import { readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import {
+  behindLink,
   chainFolders,
   chainParts,
   commandNames,
@@ -409,7 +410,11 @@ function sedPrints(words: string[]): string[] | undefined {
 function namesDeciding(raw: string, words: string[], cwd: string, folder: CodexFolder): boolean {
   return (
     commandNames(raw, DECIDING) ||
-    namesPathTo(words, cwd, folder.guard.home, (path) => pathIn(path, realPathOf(folder.project), DECIDING))
+    namesPathTo(words, cwd, folder.guard.home, (path) => {
+      const project = realPathOf(folder.project);
+
+      return pathIn(path, project, DECIDING) || behindLink(path, project, DECIDING);
+    })
   );
 }
 

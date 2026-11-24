@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import {
+  behindLink,
   chainParts,
   commandLeadsTo,
   commandNames,
@@ -458,9 +459,9 @@ function commandTouchesDeciding(command: string, cwd: string, place: Place): boo
   return commandNames(command, DECIDING) || commandLeadsTo(command, cwd, place.home, (path) => deciding(path, place));
 }
 
-/** Whether a path is one of the folder's files that decide what a run does. */
+/** Whether a path is one of the folder's files that decide what a run does, or where one of them leads. */
 function deciding(path: string, place: Place): boolean {
-  return pathIn(path, place.project, DECIDING);
+  return pathIn(path, place.project, DECIDING) || behindLink(path, place.project, DECIDING);
 }
 
 function expand(path: string, place: Place): string {

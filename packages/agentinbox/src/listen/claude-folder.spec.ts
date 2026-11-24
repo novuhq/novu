@@ -273,6 +273,20 @@ describe('decideForContact', () => {
     expect(decide(given, 'Edit', { file_path: join(project, 'docs', 'guide.md') })).toBe('ask');
   });
 
+  it('asks before changing where a link among what decides a run leads, out of the folder too', () => {
+    // The folder's `.claude` is a link to settings kept elsewhere: the run reads them through it.
+    const shared = join(root, 'shared', 'claude');
+    mkdirSync(shared, { recursive: true });
+    rmSync(join(project, '.claude'), { recursive: true });
+    symlinkSync(shared, join(project, '.claude'));
+    const given = folder({ allow: ['Edit', 'Bash(cp:*)'] });
+
+    expect(decide(given, 'Edit', { file_path: join(project, '.claude', 'settings.json') })).toBe('ask');
+    expect(decide(given, 'Edit', { file_path: join(shared, 'settings.json') })).toBe('ask');
+    expect(decide(given, 'Bash', { command: `cp evil.json ${join(shared, 'settings.json')}` })).toBe('ask');
+    expect(decide(given, 'Edit', { file_path: join(root, 'shared', 'notes.md') })).toBe('allow');
+  });
+
   it('lets the folder’s skills, the MCP tools and the web hosts its rules name through', () => {
     const given = folder({
       allow: ['mcp__docs__search', 'mcp__crm', 'WebFetch(domain:docs.example.com)', 'Skill(release-notes)'],

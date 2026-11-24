@@ -290,6 +290,20 @@ export function pathIn(path: string, project: string, names: readonly string[]):
   return names.some((name) => inProject === name || inProject.startsWith(`${name}${sep}`));
 }
 
+/**
+ * Whether a path, its links followed, is where one of these files or folders of the project (`project`, its links
+ * followed) leads through a link, outside the project too. A run reads them through the link, so for what decides a
+ * run, changing what it leads to is changing them.
+ */
+export function behindLink(path: string, project: string, names: readonly string[]): boolean {
+  return names.some((name) => {
+    const own = join(project, name);
+    const real = realTarget(own);
+
+    return real !== own && within(path, real);
+  });
+}
+
 /** The path with its links followed, through the nearest folder of it that exists when it doesn't yet. */
 export function realTarget(path: string): string {
   if (existsSync(path)) {

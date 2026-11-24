@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import {
+  behindLink,
   chainParts,
   commandLeadsTo,
   commandReachesKey,
@@ -108,6 +109,17 @@ const DECIDING_WORDS = [
   '*.agents*',
 ];
 const DECIDING_EDITS = [...DECIDING_FILES, ...DECIDING_FOLDERS];
+/** The same, by their names in the folder: where one of them leads through a link decides the run too. */
+const DECIDING_NAMES = [
+  'opencode.json',
+  'opencode.jsonc',
+  '.opencode',
+  'AGENTS.md',
+  'CLAUDE.md',
+  '.git',
+  '.claude',
+  '.agents',
+];
 
 /**
  * Reads what the folder's own OpenCode settings say. Settings that can't be read count as saying nothing. The key is
@@ -274,12 +286,17 @@ const WRITES = ['edit', 'write', 'patch'];
 
 /**
  * Whether a path, its links followed, is one of the files that decide a run, as the session's denies name them
- * (`patterns`): what they see is the name a call gives, which a link can hide.
+ * (`patterns`): what they see is the name a call gives, which a link can hide. Where one of the folder's own leads
+ * through a link counts too, outside the folder as well.
  */
 function decidesRun(path: string, folder: OpenCodeFolder, patterns: readonly string[]): boolean {
-  const fromProject = relative(realPathOf(folder.project), realTarget(path));
+  const project = realPathOf(folder.project);
+  const real = realTarget(path);
 
-  return patterns.some((pattern) => fitsPattern(fromProject, pattern));
+  return (
+    patterns.some((pattern) => fitsPattern(relative(project, real), pattern)) ||
+    behindLink(real, project, DECIDING_NAMES)
+  );
 }
 
 /** The tools that reach files and commands, which the listener decides for a contact's session. */
@@ -353,12 +370,30 @@ export function contactConfigContent(major: 1 | 2, helper: HostProgram, env: Nod
  */
 export function parseJsonc(text: string): Record<string, unknown> | undefined {
   try {
-    const parsed = JSON.parse(withoutComments(text).replace(/,(\s*[}\]])/g, '$1')) as Record<string, unknown> | null;
+    const parsed = JSON.parse(withoutTrailingCommas(withoutComments(text))) as Record<string, unknown> | null;
 
     return isRecord(parsed) ? parsed : undefined;
   } catch {
     return undefined;
   }
+}
+
+/** The text without the commas JSON doesn't take, just before a `}` or `]`; strings left as they are. */
+function withoutTrailingCommas(text: string): string {
+  let plain = '';
+  for (let at = 0; at < text.length; ) {
+    const end = text[at] === '"' ? stringEnd(text, at) : at;
+    if (end > at) {
+      plain += text.slice(at, end);
+      at = end;
+    } else {
+      const trailing = text[at] === ',' && /^\s*[}\]]/.test(text.slice(at + 1));
+      plain += trailing ? '' : text[at];
+      at += 1;
+    }
+  }
+
+  return plain;
 }
 
 /** The text without its `//` and `/* … *\/` comments, strings left as they are. */
