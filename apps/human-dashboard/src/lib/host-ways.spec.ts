@@ -78,7 +78,7 @@ describe('a host’s own plugin', () => {
     expect(formatScript(script)).toBe(
       [
         '# 1. Install the Agent Inbox plugin for Hermes',
-        '$ hermes plugins install agentinboxhq/hermes-plugin --enable',
+        '$ hermes plugins install agentinbox --enable',
         '',
         '# 2. Connect it to atlas',
         '$ hermes agentinbox setup atlas --code BCDF-GHJK --yes --api-url https://www.agentinbox.md/api',
@@ -90,7 +90,7 @@ describe('a host’s own plugin', () => {
     // Pasted together: none of them asks a question that would take the next one as its answer.
     expect(script.copy).toBe(
       [
-        'hermes plugins install agentinboxhq/hermes-plugin --enable',
+        'hermes plugins install agentinbox --enable',
         'hermes agentinbox setup atlas --code BCDF-GHJK --yes --api-url https://www.agentinbox.md/api',
         'hermes gateway restart',
       ].join('\n')
