@@ -335,8 +335,9 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 onSubmit={handleSubmitWithPrimaryCheck}
                 mode="create"
                 onFormStateChange={setFormState}
+                setupLayout={usesSetupLayout}
                 slackQuickSetup={
-                  usesSetupLayout
+                  usesSetupLayout && provider.id === ChatProviderIdEnum.Slack
                     ? {
                         appId: quickSetupResult?.appId,
                         isCreating: isCreatingSlackApp,

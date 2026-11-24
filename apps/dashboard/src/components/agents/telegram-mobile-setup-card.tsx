@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { RiFileCopyLine, RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
 import { QRCode } from 'react-qr-code';
 import { requestTelegramMobileLink, type TelegramMobileLink } from '@/api/agents';
-import { type IntegrationStoreTelegramMobileLink, requestIntegrationStoreTelegramMobileLink } from '@/api/integrations';
 import { Button } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
+import { useIntegrationStoreTelegramMobileLink } from './use-integration-store-telegram-mobile-link';
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const TOKEN_TTL_MS = 5 * 60 * 1000;
@@ -185,18 +185,7 @@ export function IntegrationStoreTelegramMobileSetupCard({
   layout = 'stacked',
 }: IntegrationStoreTelegramMobileSetupCardProps) {
   const { currentEnvironment } = useEnvironment();
-  const environmentId = currentEnvironment?._id;
-
-  const linkQuery = useQuery<IntegrationStoreTelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, 'integration-store', environmentId],
-    queryFn: () =>
-      requestIntegrationStoreTelegramMobileLink(requireEnvironment(currentEnvironment, 'No environment selected')),
-    enabled: !disabled && Boolean(environmentId),
-    refetchInterval: REFRESH_INTERVAL_MS,
-    refetchOnWindowFocus: true,
-    staleTime: REFRESH_INTERVAL_MS,
-    meta: { showError: false },
-  });
+  const linkQuery = useIntegrationStoreTelegramMobileLink({ environment: currentEnvironment, enabled: !disabled });
 
   return (
     <TelegramMobileSetupCardShell
