@@ -3,6 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type CallToolResult, CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { registerFeedbackTool } from "../src/server/feedback";
+import { registerActivityTools } from "../src/tools/activity";
 import { registerAgentTools } from "../src/tools/agents";
 import { registerAuthTools } from "../src/tools/auth";
 import { registerConversationTools } from "../src/tools/conversations";
@@ -30,6 +31,7 @@ export async function connectAllTools(accessors: ToolAccessors, region = "us"): 
 	registerEnvironmentTools(server, accessors);
 	registerSubscriberTools(server, accessors);
 	registerNotificationTools(server, accessors);
+	registerActivityTools(server, accessors);
 	registerPreferenceTools(server, accessors);
 	registerIntegrationTools(server, accessors);
 	registerFeedbackTool(server, "sk_test_feedback");

@@ -1,8 +1,10 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions, UserSession } from '@novu/application-generic';
-import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { GetChartsRequestDto } from './dtos/get-charts.request.dto';
 import { GetChartsResponseDto } from './dtos/get-charts.response.dto';
@@ -23,6 +25,17 @@ import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.use
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
+/**
+ * Callers that never get raw traces: a failed send's trace can hold the provider's request headers, credentials
+ * included, which API keys and OAuth never get. The dashboard keeps them, and so does the Copilot's internal token,
+ * whose tools trim them.
+ */
+const RAW_TRACE_EXCLUDED_SCHEMES = new Set<string>([
+  ApiAuthSchemeEnum.API_KEY,
+  ApiAuthSchemeEnum.KEYLESS,
+  ApiAuthSchemeEnum.OAUTH2,
+]);
+
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
@@ -37,6 +50,10 @@ export class ActivityController {
   ) {}
 
   @Get('requests')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiOkResponse({ type: GetRequestsResponseDto })
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.Requests')
   @SdkMethodName('list')
@@ -56,6 +73,10 @@ export class ActivityController {
   }
 
   @Get('requests/:requestId')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiResponse(GetRequestResponseDto)
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.Requests')
   @SdkMethodName('retrieve')
@@ -69,11 +90,16 @@ export class ActivityController {
         requestId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
+        includeRawTraces: !RAW_TRACE_EXCLUDED_SCHEMES.has(user.scheme),
       })
     );
   }
 
   @Get('workflow-runs')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiOkResponse({ type: GetWorkflowRunsResponseDto })
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
   @SdkMethodName('list')
@@ -97,6 +123,10 @@ export class ActivityController {
   }
 
   @Get('workflow-runs/:workflowRunId')
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @ApiCommonResponses()
+  @ApiResponse(GetWorkflowRunResponseDto)
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @SdkGroupName('Activity.WorkflowRuns')
   @SdkMethodName('retrieve')
@@ -114,6 +144,7 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
+        includeRawTraces: !RAW_TRACE_EXCLUDED_SCHEMES.has(user.scheme),
       })
     );
   }

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RiAddLine, RiCloseLine } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
+import { CopilotLauncher } from './copilot-launcher';
 import { useCopilotPopoverTitle } from './copilot-popover-title';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
@@ -70,5 +71,19 @@ export function CopilotPopover() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Shows the launcher/popover only once a page registered its context: the canvas or step editor, or a Copilot page. */
+export function CopilotPopoverMount() {
+  const { pageContext } = useCopilotWebChat();
+
+  if (!pageContext?.workflowId && !pageContext?.page) return null;
+
+  return (
+    <>
+      <CopilotLauncher />
+      <CopilotPopover />
+    </>
   );
 }
