@@ -41,7 +41,7 @@ export function UseCasesHero() {
       </div>
       <div className="mt-16 grid border-t border-sapien-border sm:grid-cols-2 md:mt-25 lg:grid-cols-[2fr_1fr_1fr]">
         <div className="relative flex min-h-55 flex-col items-start justify-between gap-10 overflow-hidden px-4 pt-5 pb-8 sm:col-span-2 md:px-8 lg:col-span-1 lg:min-h-[296px]">
-          <div aria-hidden="true" className={styles.heroDither} />
+          <div aria-hidden="true" data-hero-dither="" className={styles.heroDither} />
           <ul className="relative flex flex-wrap gap-1.5">
             {examples.map((label) => (
               <li
@@ -68,7 +68,7 @@ export function UseCasesHero() {
           </p>
           <ChannelStack />
         </div>
-        <div className="relative min-h-64 overflow-hidden border-t border-sapien-border pt-6 px-6 lg:border-t-0 lg:px-8">
+        <div className="relative min-h-64 overflow-hidden border-t border-sapien-border pt-6 px-6 lg:border-t-0">
           <p className="relative text-base leading-[1.4] tracking-tight text-sapien-foreground/60">
             From a <span className="text-sapien-foreground">$240 refund</span> to a{' '}
             <span className="text-sapien-foreground">2 a.m. rollback</span>, these are the moments an agent needs a
@@ -83,7 +83,7 @@ export function UseCasesHero() {
 
 function ChannelStack() {
   return (
-    <ul className="grid h-[83px] w-full max-w-56 justify-items-center">
+    <ul className="grid h-[83px] w-full max-w-[193px] justify-items-center">
       {(['slack', 'telegram', 'email'] as const).map((channel, index) => (
         <li
           key={channel}
@@ -119,13 +119,13 @@ function Pulse() {
       className="pointer-events-none absolute inset-x-0 bottom-0 flex h-33 items-end justify-center"
     >
       <div className="absolute inset-x-0 bottom-0 h-28 bg-[radial-gradient(ellipse_at_bottom,rgba(255,92,48,0.21),transparent_73%)]" />
-      <div className="relative mb-16 h-11 w-60">
+      <div className="relative mb-16 h-11 w-60 shrink-0">
         <Image
           src="/images/use-cases/hero-pulse.svg"
           alt=""
-          width={413}
-          height={46}
-          className="absolute -left-20 max-w-none"
+          width={763}
+          height={44}
+          className="absolute -left-[275px] max-w-none"
           unoptimized
         />
         {[
