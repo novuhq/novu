@@ -70,6 +70,9 @@ export enum CredentialsKeyEnum {
   RoutingMode = 'routingMode',
   /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
   HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
+  ServiceId = 'serviceId',
+  ServicePassword = 'servicePassword',
+  SpaceId = 'spaceId',
   /** Twilio: which credentials authenticate requests. */
   AuthMethod = 'authMethod',
 }
@@ -146,6 +149,7 @@ export enum SmsProviderIdEnum {
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
   RuachSms = 'ruach-sms',
+  SfrSms = 'sfr-sms',
 }
 
 export enum ChatProviderIdEnum {
