@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { NotificationsCache } from '../../cache';
+import type { SocketEventNames } from '../../event-emitter';
 import type { Notification, Notifications } from '../../notifications';
 import type { FiltersCountResponse } from '../../notifications/types';
 import type { Novu } from '../../novu';
@@ -36,6 +37,12 @@ export const createFakeNotificationsApi = (overrides: Partial<Notifications> = {
 
   return notifications as Notifications;
 };
+
+export const createFakeSocket = (): Novu['socket'] => ({
+  connect: vi.fn(async () => ({})),
+  disconnect: vi.fn(async () => ({})),
+  isSocketEvent: (eventName: string): eventName is SocketEventNames => false,
+});
 
 export const createFakeNovu = (overrides: Partial<Novu> = {}): Novu => {
   const novu: Partial<Novu> = {
