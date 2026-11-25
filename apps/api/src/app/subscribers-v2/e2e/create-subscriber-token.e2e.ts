@@ -2,7 +2,7 @@ import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import jwt from 'jsonwebtoken';
-import { NovuTokens } from '../../shared/services/novu-tokens.service';
+import { NovuTokens, TokenKind } from '../../shared/services/novu-tokens.service';
 
 describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) #novu-v2', () => {
   let session: UserSession;
@@ -32,8 +32,8 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     return body === undefined ? request : request.send(body);
   }
 
-  function verifyClaims(token: string) {
-    const verification = new NovuTokens().verify('subscriberLogin', token);
+  function verifyClaims(token: string, kind: TokenKind = 'subscriberLogin') {
+    const verification = new NovuTokens().verify(kind, token);
     if (!verification.ok) {
       throw new Error(`token did not verify: ${verification.reason}`);
     }
@@ -76,6 +76,34 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     expect(claims.scope).to.deep.equal([]);
     expect(claims).not.to.have.property('context');
     expect(claims).not.to.have.property('subscriber');
+  });
+
+  it('should mint a one-minute topic grant carrying only the environment, subscriber and topic', async () => {
+    const res = await mint('sub-ada', { topic: 'ticket:1' });
+
+    expect(res.status).to.equal(201);
+    const { token, expiresAt } = res.body.data;
+    const claims = verifyClaims(token, 'subscriberTopicGrant');
+    const header = jwt.decode(token, { complete: true })?.header;
+
+    expect(header?.typ).to.equal('novu-subscriber-topic-grant+jwt');
+    expect(claims.iss).to.equal(session.environment._id);
+    expect(claims.aud).to.equal('novu');
+    expect(claims.sub).to.equal('sub-ada');
+    expect(claims.topic).to.equal('ticket:1');
+    expect(claims.jti).to.be.a('string').and.not.be.empty;
+    expect(claims).not.to.have.any.keys('scope', 'subscriber', 'context');
+    expect(claims.exp! - claims.iat!).to.equal(60);
+    expect(expiresAt).to.equal(new Date(claims.exp! * 1000).toISOString());
+    expect(new NovuTokens().verify('subscriberLogin', token)).to.deep.equal({ ok: false, reason: 'invalid' });
+  });
+
+  it('should mint a topic grant with a shorter lifetime', async () => {
+    const res = await mint('sub-ada', { topic: 'ticket:1', expiresIn: 10 });
+
+    expect(res.status).to.equal(201);
+    const claims = verifyClaims(res.body.data.token, 'subscriberTopicGrant');
+    expect(claims.exp! - claims.iat!).to.equal(10);
   });
 
   it('should give every token its own jti', async () => {
@@ -128,7 +156,13 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
       { subscriber: { firstName: 'Alice', subscriberId: 'sub-mallory' } },
     ],
     ['channels inside the profile', 'channels', { subscriber: { firstName: 'Alice', channels: [] } }],
-    ['a topic before topic grants exist', 'topic', { topic: 'ticket:1' }],
+    ['a topic with a scope', 'topic', { topic: 'ticket:1', scope: ['channels:shared'] }],
+    ['a topic with a profile', 'topic', { topic: 'ticket:1', subscriber: { firstName: 'Ada' } }],
+    ['a topic with a context', 'topic', { topic: 'ticket:1', context: { tenant: 'acme' } }],
+    ['a topic grant longer than a minute', 'expiresIn', { topic: 'ticket:1', expiresIn: 61 }],
+    ['an invalid topic key', 'topic', { topic: 'ticket 1!' }],
+    ['an empty topic key', 'topic', { topic: '' }],
+    ['a topic key longer than 100 characters', 'topic', { topic: 'a'.repeat(101) }],
     ['a misspelled field', 'expiresin', { expiresin: 600 }],
   ];
 
@@ -141,13 +175,18 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     });
   }
 
-  it('should return 404 when subscriber tokens are disabled', async () => {
-    process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
+  for (const [name, body] of [
+    ['login token', {}],
+    ['topic grant', { topic: 'ticket:1' }],
+  ] as const) {
+    it(`should return 404 for a ${name} when subscriber tokens are disabled`, async () => {
+      process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
 
-    const res = await mint('sub-flag-off', {});
+      const res = await mint('sub-flag-off', body);
 
-    expect(res.status).to.equal(404);
-  });
+      expect(res.status).to.equal(404);
+    });
+  }
 
   it('should return 401 without an API key', async () => {
     const res = await session.testAgent.post('/v2/subscribers/sub-anon/tokens').set('Authorization', '').send({});

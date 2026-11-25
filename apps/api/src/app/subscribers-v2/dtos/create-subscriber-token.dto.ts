@@ -1,12 +1,53 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload } from '@novu/shared';
+import { ContextPayload, VALID_ID_REGEX } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { ArrayUnique, IsArray, IsEnum, IsInt, IsOptional, Max, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayUnique,
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  Min,
+  ValidateBy,
+  ValidateNested,
+} from 'class-validator';
 import { BaseSubscriberFieldsDto } from '../../shared/dtos/base-subscriber-fields.dto';
 import { SubscriberTokenScopeEnum, TOKEN_KINDS } from '../../shared/services/novu-tokens.service';
 
-const MAX_EXPIRES_IN_SECONDS = TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds;
+const LOGIN_MAX_SECONDS = TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds;
+const TOPIC_GRANT_MAX_SECONDS = TOKEN_KINDS.subscriberTopicGrant.maxLifetimeSeconds;
+const LOGIN_FIELDS = ['scope', 'subscriber', 'context'] as const;
+
+function IsNotCombinedWithLoginFields() {
+  return ValidateBy({
+    name: 'isNotCombinedWithLoginFields',
+    validator: {
+      validate: (_value, args) => {
+        const request = args?.object as CreateSubscriberTokenRequestDto;
+
+        return LOGIN_FIELDS.every((field) => request[field] === undefined);
+      },
+      defaultMessage: () => `topic cannot be combined with ${LOGIN_FIELDS.join(', ')}`,
+    },
+  });
+}
+
+function IsWithinTopicGrantLifetime() {
+  return ValidateBy({
+    name: 'isWithinTopicGrantLifetime',
+    validator: {
+      validate: (value, args) =>
+        (args?.object as CreateSubscriberTokenRequestDto).topic === undefined ||
+        (typeof value === 'number' && value <= TOPIC_GRANT_MAX_SECONDS),
+      defaultMessage: () => `expiresIn must not be greater than ${TOPIC_GRANT_MAX_SECONDS} for a topic grant`,
+    },
+  });
+}
 
 export class CreateSubscriberTokenRequestDto {
   @ApiContextPayload()
@@ -38,16 +79,35 @@ export class CreateSubscriberTokenRequestDto {
   scope?: SubscriberTokenScopeEnum[];
 
   @ApiPropertyOptional({
+    type: 'string',
+    maxLength: 100,
+    description:
+      'Topic key the subscriber may subscribe to. When set, the token is a topic grant instead of a login token: the browser sends it with its subscribe request for this topic, and it lasts at most ' +
+      `${TOPIC_GRANT_MAX_SECONDS} seconds. Cannot be combined with ${LOGIN_FIELDS.join(', ')}.`,
+    example: 'ticket:12345',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  @Matches(VALID_ID_REGEX, {
+    message:
+      'topic must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address',
+  })
+  @IsNotCombinedWithLoginFields()
+  topic?: string;
+
+  @ApiPropertyOptional({
     type: 'integer',
     minimum: 1,
-    maximum: MAX_EXPIRES_IN_SECONDS,
-    default: MAX_EXPIRES_IN_SECONDS,
-    description: `Token lifetime in seconds, from 1 to ${MAX_EXPIRES_IN_SECONDS}.`,
+    maximum: LOGIN_MAX_SECONDS,
+    default: LOGIN_MAX_SECONDS,
+    description: `Token lifetime in seconds, from 1 to ${LOGIN_MAX_SECONDS} for a login token (default ${LOGIN_MAX_SECONDS}), or from 1 to ${TOPIC_GRANT_MAX_SECONDS} for a topic grant (default ${TOPIC_GRANT_MAX_SECONDS}).`,
     example: 600,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(MAX_EXPIRES_IN_SECONDS)
+  @Max(LOGIN_MAX_SECONDS)
+  @IsWithinTopicGrantLifetime()
   expiresIn?: number;
 }

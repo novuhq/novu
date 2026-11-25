@@ -12,6 +12,7 @@ interface TokenKindSpec {
 
 export const TOKEN_KINDS = {
   subscriberLogin: { typ: 'novu-subscriber-login+jwt', maxLifetimeSeconds: 60 * 60 },
+  subscriberTopicGrant: { typ: 'novu-subscriber-topic-grant+jwt', maxLifetimeSeconds: 60 },
 } as const satisfies Record<string, TokenKindSpec>;
 
 export type TokenKind = keyof typeof TOKEN_KINDS;
@@ -32,8 +33,17 @@ export type SubscriberLoginClaims = {
   jti: string;
 };
 
+export type SubscriberTopicGrantClaims = {
+  iss: EnvironmentId;
+  aud: 'novu';
+  sub: SubscriberId;
+  topic: string;
+  jti: string;
+};
+
 type TokenClaims = {
   subscriberLogin: SubscriberLoginClaims;
+  subscriberTopicGrant: SubscriberTopicGrantClaims;
 };
 
 export type TokenVerification =
