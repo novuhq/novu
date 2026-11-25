@@ -96,14 +96,15 @@ export function useCopilotWebChat(): CopilotWebChatContextValue {
 }
 
 /**
- * Registers the current page's workflow/step with the Copilot and the callback that refreshes
- * the page after the agent edits the workflow. No-ops outside a `CopilotWebChatProvider`.
+ * Registers the current page's workflow/step and its new-chat suggestions with the Copilot, and the callback that
+ * refreshes the page after the agent edits the workflow. No-ops outside a `CopilotWebChatProvider`.
  */
 export function useRegisterCopilotContext({
   workflowId,
   stepId,
   workflowLabel,
   stepLabel,
+  suggestions,
   onRefetch,
   enabled = true,
 }: CopilotPageContext & { onRefetch?: () => void; enabled?: boolean }) {
@@ -114,6 +115,8 @@ export function useRegisterCopilotContext({
   useEffect(() => {
     if (!enabled) return;
 
-    return registerPageContext({ workflowId, stepId, workflowLabel, stepLabel }, () => onRefetchRef.current?.());
-  }, [enabled, registerPageContext, workflowId, stepId, workflowLabel, stepLabel]);
+    return registerPageContext({ workflowId, stepId, workflowLabel, stepLabel, suggestions }, () =>
+      onRefetchRef.current?.()
+    );
+  }, [enabled, registerPageContext, workflowId, stepId, workflowLabel, stepLabel, suggestions]);
 }
