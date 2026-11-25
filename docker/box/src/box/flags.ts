@@ -31,11 +31,12 @@ async function writeFlags(flags: FlagOverrides): Promise<void> {
   for (const key of Object.keys(flags))
     if (!/^[A-Z][A-Z0-9_]*$/.test(key)) throw new Error(`${key}: a flag key is like IS_SOMETHING_ENABLED`);
   const text = JSON.stringify(flags, null, 2);
+  const read = (file: string) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : JSON.stringify({}, null, 2));
+  // FLAGS unlike what the apps last restarted with means a `flag` stopped before its restart, and any restart since
+  // (an apply, a wake) may have read FLAGS. So it skips the restart only when FLAGS, that and the new flags all match.
+  const settled = read(FLAGS) === read(FLAGS_APPLIED);
   fs.writeFileSync(FLAGS, text);
-  // Compared with what the apps last restarted with, not with the old FLAGS: a `flag` stopped after writing FLAGS
-  // but before the restart is finished by the next one.
-  const applied = fs.existsSync(FLAGS_APPLIED) ? fs.readFileSync(FLAGS_APPLIED, 'utf8') : JSON.stringify({}, null, 2);
-  if (text === applied) return log(`forced flags: ${JSON.stringify(flags)}`);
+  if (settled && text === read(FLAGS_APPLIED)) return log(`forced flags: ${JSON.stringify(flags)}`);
   prepareDashboard();
   await step('restart api worker', async () => {
     await pc(['process', 'restart', 'api']);
