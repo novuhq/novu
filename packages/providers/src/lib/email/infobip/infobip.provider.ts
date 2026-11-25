@@ -7,10 +7,13 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class InfobipEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
@@ -36,15 +39,37 @@ export class InfobipEmailProvider extends BaseProvider implements IEmailProvider
     });
   }
 
+  /** Reads the account balance, as the Infobip SMS provider does: read-only, and no email is sent. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl).replace(/\/+$/, '');
+
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(`${baseUrl}/account/1/balance`, {
+        headers: { Authorization: `App ${this.config.apiKey}` },
+      })
+    );
+  }
+
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
-      await this.infobipClient.channels.email.send({
+      // The SDK resolves with the request error instead of throwing, so the response has to be read.
+      const response = await this.infobipClient.channels.email.send({
         to: options.to,
         from: this.config.from || options.from,
         subject: options.subject,
         text: options.text,
         html: options.html,
       });
+
+      if (response instanceof Error || !Array.isArray(response?.data?.messages)) {
+        const httpStatus = response?.response?.status;
+
+        return {
+          success: false,
+          message: 'Infobip did not accept the request',
+          code: httpStatus === 401 ? CheckIntegrationResponseEnum.BAD_CREDENTIALS : CheckIntegrationResponseEnum.FAILED,
+        };
+      }
 
       return {
         success: true,

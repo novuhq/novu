@@ -134,6 +134,8 @@ const DETECTED: ProviderCase[] = [
   email('sparkpost'),
   email('anypost'),
   email('mailtrap'),
+  // Rejects with `{ statusCode, body }`, which carries the 401.
+  email('mailersend'),
   email('braze', { credentials: { apiURL: 'https://rest.iad-01.braze.com', appID: 'app' } }),
   email('ses'),
   email('ses', {
@@ -224,7 +226,6 @@ const NOT_DETECTED: ProviderCase[] = [
   email('mandrill', { expected: undefined }),
   email('infobip-email', { expected: undefined, credentials: { baseUrl: 'https://xyz.api.infobip.com' } }),
   sms('infobip-sms', { expected: undefined, credentials: { baseUrl: 'https://xyz.api.infobip.com' } }),
-  email('mailersend', { expected: undefined }),
   sms('telnyx', { expected: undefined }),
   sms('sms77', { expected: undefined }),
   // Map every non-2xx answer to a generic "Unknown status code" error.

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MailgunHandler } from './mailgun.handler';
 import { MailjetHandler } from './mailjet.handler';
 import { PostmarkHandler } from './postmark.handler';
+import { ResendHandler } from './resend.handler';
 
 type CheckResult = { success: boolean; message: string; code: CheckIntegrationResponseEnum };
 
@@ -72,6 +73,27 @@ describe('BaseEmailHandler.verifyCredentials', () => {
     const result = await postmark(new Error('ETIMEDOUT')).verifyCredentials();
 
     expect(result?.status).toBe(VerifyCredentialsStatusEnum.UNREACHABLE);
+  });
+
+  it("uses the provider's own read-only check when it has one, and never sends the test email", async () => {
+    const handler = new ResendHandler();
+    handler.buildProvider({ apiKey: 're_made_up_key' }, 'hello@example.com');
+    const provider = handler.getProvider() as unknown as {
+      checkIntegration: unknown;
+      resendClient: { domains: { list: unknown } };
+    };
+    const checkIntegration = vi.fn();
+    provider.checkIntegration = checkIntegration;
+    // The Resend SDK returns a refusal instead of throwing; this is its answer for a made-up key.
+    provider.resendClient.domains.list = vi.fn().mockResolvedValue({
+      data: null,
+      error: { statusCode: 400, name: 'validation_error', message: 'API key is invalid' },
+    });
+
+    const result = await handler.verifyCredentials();
+
+    expect(result?.status).toBe(VerifyCredentialsStatusEnum.INVALID);
+    expect(checkIntegration).not.toHaveBeenCalled();
   });
 
   it('is unsupported for providers whose check never calls the provider', async () => {

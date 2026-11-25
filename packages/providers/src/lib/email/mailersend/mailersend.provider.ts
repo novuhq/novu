@@ -60,8 +60,8 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
       .setHtml(options.html)
       .setText(options.text)
       .setAttachments(attachments)
-      .setPersonalization(options.customData.personalization)
-      .setTemplateId(options.customData.templateId);
+      .setPersonalization(options.customData?.personalization)
+      .setTemplateId(options.customData?.templateId);
 
     if (options.cc && Array.isArray(options.cc)) {
       emailParams.setCc(options.cc.map((ccItem) => new Recipient(ccItem)));
@@ -91,7 +91,10 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const emailParams = this.transform(bridgeProviderData, this.createMailData(options)).body as unknown as EmailParams;
+    const emailParams = this.transform<EmailParams, Record<string, unknown>, EmailParams>(
+      bridgeProviderData,
+      this.createMailData(options)
+    ).body;
     const response = await this.mailerSend.email.send(emailParams);
 
     /**
@@ -106,7 +109,16 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     const emailParams = this.createMailData(options);
-    const emailSendResponse = await this.mailerSend.email.send(emailParams);
+    let emailSendResponse: { statusCode: number; body?: { message?: string } };
+    try {
+      emailSendResponse = await this.mailerSend.email.send(emailParams);
+    } catch (error) {
+      // The SDK rejects with `{ statusCode, body }` when MailerSend refuses the request.
+      const statusCode = (error as { statusCode?: unknown })?.statusCode;
+      if (typeof statusCode !== 'number') throw error;
+
+      emailSendResponse = error as { statusCode: number; body?: { message?: string } };
+    }
     const code = this.mapResponse(emailSendResponse.statusCode);
 
     if (code === CheckIntegrationResponseEnum.SUCCESS) {
@@ -134,8 +146,9 @@ export class MailersendEmailProvider extends BaseProvider implements IEmailProvi
       case 204: // The request was accepted and there is no content to return.
         return CheckIntegrationResponseEnum.SUCCESS;
       case 401: // The provided API token is invalid.
-      case 403: // The action is denied for that account or a particular API token.
         return CheckIntegrationResponseEnum.BAD_CREDENTIALS;
+      // 403 (the action is denied for that account or token) is a permission problem with a token MailerSend
+      // knows, so it is a failure but not a rejected credential.
 
       default:
         return CheckIntegrationResponseEnum.FAILED;
