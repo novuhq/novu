@@ -25,10 +25,15 @@ import { SelectPrimaryIntegrationModal } from './modals/select-primary-integrati
 import { ProviderSetupFooter } from './provider-setup-layout';
 import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-available';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { cleanCredentials, RESEND_TRACKING_ENABLER, usesProviderSetupLayout } from './utils/helpers';
+import {
+  ACTIVITY_TRACKING_ENABLER,
+  cleanCredentials,
+  isEmailSetupProvider,
+  usesProviderSetupLayout,
+} from './utils/helpers';
 
 function isTrackingOn(data: IntegrationFormData) {
-  const value = data.configurations?.[RESEND_TRACKING_ENABLER];
+  const value = data.configurations?.[ACTIVITY_TRACKING_ENABLER];
 
   return Boolean(value) && value !== 'false';
 }
@@ -300,18 +305,18 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 
-      if (usesSetupLayout && provider.id === EmailProviderIdEnum.Resend && isTrackingAvailable && isTrackingOn(data)) {
+      if (usesSetupLayout && isEmailSetupProvider(provider.id) && isTrackingAvailable && isTrackingOn(data)) {
         const isWebhookAdded = await addDeliveryWebhook(integration.data._id, data.environmentId);
         setIsSheetOpen(false);
 
         if (isWebhookAdded) {
-          showSuccessToast('Resend connected. Delivery tracking is on.');
+          showSuccessToast(`${provider.displayName} connected. Delivery tracking is on.`);
           navigate(ROUTES.INTEGRATIONS);
         } else {
-          // The key can't manage webhooks: the integration's drawer shows the URL to add in Resend.
+          // Novu couldn't add the webhook: the integration's drawer shows the URL to add in the provider.
           showWarningToast(
-            'Copy the webhook URL from the integration and add it in Resend to track delivery.',
-            'Resend connected'
+            `Copy the webhook URL from the integration and add it in ${provider.displayName} to track delivery.`,
+            `${provider.displayName} connected`
           );
           navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: integration.data._id }));
         }
