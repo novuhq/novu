@@ -14,7 +14,7 @@ import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
   FindToolCallParams,
-  ImportInboundMessage,
+  ImportedInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -48,6 +48,7 @@ export {
 
 export type {
   ConversationActivityContext,
+  ImportedInboundMessage,
   ImportInboundMessage,
   ImportInboundMessagesParams,
   MetadataOp,
@@ -376,7 +377,7 @@ export class AgentConversationService {
     return this.ledger.persistInboundReaction(params);
   }
 
-  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportedInboundMessage[]> {
     return this.ledger.importInboundMessages(params);
   }
 
