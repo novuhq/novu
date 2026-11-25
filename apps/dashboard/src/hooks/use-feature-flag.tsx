@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
+import { FeatureFlagsKeysEnum, parseFeatureFlagOverrides, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/context/auth/hooks';
@@ -95,10 +95,16 @@ export function useLaunchDarklyIdentified(): boolean {
   return !!currentOrganization && identifiedId === currentOrganization._id;
 }
 
+const runtimeEnv = (window as Window & { _env_?: Record<string, string> })._env_;
+
+// Flags forced to a value whatever LaunchDarkly serves; a Novu Box forces one on for itself only.
+const overrides = parseFeatureFlagOverrides(runtimeEnv?.VITE_FEATURE_FLAG_OVERRIDES);
+const isForced = (key: FeatureFlagsKeysEnum) => key in overrides;
+
 function getFeatureFlagEnvValue(key: FeatureFlagsKeysEnum): string | undefined {
   return (
     // Check runtime env first (for self-hosted flexibility)
-    (window as Window & { _env_?: Record<string, string> })._env_?.[`VITE_${key}`] ??
+    runtimeEnv?.[`VITE_${key}`] ??
     // Check if the feature flag is exported as an environment variable
     import.meta.env[`VITE_${key}`] ??
     // Then check process.env if process exists
@@ -108,6 +114,10 @@ function getFeatureFlagEnvValue(key: FeatureFlagsKeysEnum): string | undefined {
 
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {
   const flags = useFlags();
+
+  if (isForced(key)) {
+    return overrides[key] === true;
+  }
 
   if (!isLaunchDarklyEnabled()) {
     return prepareBooleanStringFeatureFlag(getFeatureFlagEnvValue(key), defaultValue);
@@ -122,13 +132,17 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
  */
 export const useParsedFeatureFlag = <T,>(key: FeatureFlagsKeysEnum, parse: (value: unknown) => T): T => {
   const flags = useFlags();
-  const value = isLaunchDarklyEnabled() ? flags[key] : getFeatureFlagEnvValue(key);
+  const value = isForced(key) ? overrides[key] : isLaunchDarklyEnabled() ? flags[key] : getFeatureFlagEnvValue(key);
 
   return useMemo(() => parse(value), [parse, value]);
 };
 
 export const useNumericFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = 0): number => {
   const flags = useFlags();
+
+  if (isForced(key)) {
+    return typeof overrides[key] === 'number' ? overrides[key] : defaultValue;
+  }
 
   if (!isLaunchDarklyEnabled()) {
     const envValue =

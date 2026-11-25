@@ -7,7 +7,7 @@ import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
 import { Subscriptions } from './subscriptions';
-import type { Context, NovuOptions, Subscriber } from './types';
+import type { Context, NovuOptions, Session as SessionData, Subscriber } from './types';
 import { buildContextKey } from './utils/build-context-key';
 import { buildSubscriber } from './utils/build-subscriber';
 import type { WebChat } from './web-chat';
@@ -59,6 +59,15 @@ export class Novu {
 
   public get contextKey() {
     return buildContextKey(this.#session.context);
+  }
+
+  /**
+   * The latest session the server returned for the current subscriber and context (branding, development mode,
+   * snooze limit, context keys), or `undefined` until it has resolved. Read it when you start listening after
+   * `session.initialize.resolved` may already have fired.
+   */
+  public get session(): SessionData | undefined {
+    return this.#session.data;
   }
 
   /**

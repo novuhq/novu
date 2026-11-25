@@ -11,6 +11,9 @@ const NOVU_V2_TAG = '#novu-v2';
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
+// Seconds per file, measured on CI with the json-stream reporter. Files without an entry use their test count.
+const FILE_SECONDS = require('./novu-v2-e2e-timings.json');
+const SECONDS_PER_TEST_CASE = 0.3;
 
 // CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
 // pinning, Stripe billing periods, RBAC permissions, translations, novu-app MCP)
@@ -185,7 +188,7 @@ function collectWeightedFiles(ceOnly) {
 
       return {
         relativePath,
-        weight: countTestCases(source),
+        weight: FILE_SECONDS[relativePath] ?? countTestCases(source) * SECONDS_PER_TEST_CASE,
       };
     })
     .filter(Boolean)
@@ -233,7 +236,7 @@ function getShard(weightedFiles, shardIndex, totalShards) {
 function printShardSummary(shardIndex, totalShards, shard, ceOnly) {
   const suiteLabel = ceOnly ? 'Novu V2 CE E2E' : 'Novu V2 E2E';
   console.log(
-    `Running ${suiteLabel} shard ${shardIndex}/${totalShards} with ${shard.files.length} files (weight ${shard.weight}).`
+    `Running ${suiteLabel} shard ${shardIndex}/${totalShards} with ${shard.files.length} files (about ${Math.round(shard.weight)}s).`
   );
 }
 
