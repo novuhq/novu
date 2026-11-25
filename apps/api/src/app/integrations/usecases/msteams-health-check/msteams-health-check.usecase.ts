@@ -3,6 +3,7 @@ import { GetDecryptedIntegrations, MsTeamsTokenService, PinoLogger } from '@novu
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
+import { findOrgCatalogTeamsAppIds } from '../../utils/msteams-app-catalog';
 import { MsTeamsHealthCheckCommand } from './msteams-health-check.command';
 
 export type HealthCheckStatus = 'ready' | 'pending' | 'failed';
@@ -35,8 +36,10 @@ export class MsTeamsHealthCheck {
   private readonly MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 
   /**
-   * The Graph app roles we expect to find granted on the bot's service principal.
-   * These match REQUIRED_GRAPH_PERMISSIONS in azure-setup-oauth-callback.usecase.ts.
+   * The Graph app roles we expect to find granted on the bot's service principal: the messaging
+   * roles from REQUIRED_GRAPH_PERMISSIONS in azure-setup-oauth-callback.usecase.ts.
+   * Files.ReadWrite.All (file attachments) is left out on purpose, so integrations set up before
+   * Quick Setup requested it, and manual setups that don't send files, still count as ready.
    */
   private readonly EXPECTED_ROLE_IDS = new Set([
     '7ab1d382-f21e-4acd-a863-ba3e13f7da61', // Directory.Read.All
@@ -142,7 +145,7 @@ export class MsTeamsHealthCheck {
 
   /**
    * Check 3: Is the Teams app published to the org catalog?
-   * Queries Graph for the app by externalId (the bot's clientId) with org distribution.
+   * Finds the org-published app by its manifest ID or its bot ID (see findOrgCatalogTeamsAppIds).
    */
   private async checkTeamsAppCatalog(
     clientId: string,
@@ -156,13 +159,9 @@ export class MsTeamsHealthCheck {
         return 'pending';
       }
 
-      const filter = encodeURIComponent(`externalId eq '${clientId}' and distributionMethod eq 'organization'`);
-      const response = await axios.get<{ value: unknown[] }>(
-        `${this.MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=${filter}`,
-        { headers: { Authorization: `Bearer ${graphToken}` }, timeout: 10_000 }
-      );
+      const appIds = await findOrgCatalogTeamsAppIds(graphToken, clientId);
 
-      return response.data.value.length > 0 ? 'ready' : 'pending';
+      return appIds.length > 0 ? 'ready' : 'pending';
     } catch (error) {
       this.logger.warn(`Health check: teamsAppCatalog failed clientId=${clientId} error="${(error as Error).message}"`);
 

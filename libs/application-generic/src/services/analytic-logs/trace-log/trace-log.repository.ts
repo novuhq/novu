@@ -561,6 +561,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Fell back to subscriber chat channels';
     case 'chat_agent_platform_thread_persist_failed':
       return 'Chat agent platform thread persist failed';
+    case 'chat_files_sent':
+      return 'Chat files sent';
+    case 'chat_files_not_sent':
+      return 'Chat files not sent';
 
     // MS Teams events
     case 'msteams_bot_not_installed':
