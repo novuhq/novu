@@ -1,6 +1,7 @@
 import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { TOOLSETS, type ToolsetName } from "../src/server/toolsets";
 import { stepTypeSchema, workflowStepSchema } from "../src/utils/workflow-schemas";
 import { fakeWorkflowsApi } from "./fake-api";
 import { dashboardEmailBodies } from "./fixtures/dashboard-email-bodies";
@@ -11,8 +12,13 @@ import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
  * 5,000 tokens. Tool inputs advertise the input side of a `loose.pipe(strict)`
  * schema; if that ever flips back to the strict side, tools/list returns to
  * about 2.3 MB and these budgets fail first.
+ *
+ * Clients load every listed schema into each conversation, so the list a plain
+ * server URL serves (the default toolsets) is held to MAX_TOOLS_LIST_BYTES. New
+ * tools go in an opt-in toolset, each held to MAX_OPT_IN_TOOLSET_BYTES.
  */
 const MAX_TOOLS_LIST_BYTES = 100_000;
+const MAX_OPT_IN_TOOLSET_BYTES = 10_000;
 const MAX_INPUT_SCHEMA_BYTES = 12_288;
 const MAX_TOOL_BYTES = 16_000;
 const MAX_SCHEMA_DEPTH = 16;
@@ -30,8 +36,27 @@ type Json = Record<string, any>;
 
 const ajv = new AjvJsonSchemaValidator();
 
+const ALL_TOOLSETS = Object.keys(TOOLSETS) as ToolsetName[];
+const OPT_IN_TOOLSETS = ALL_TOOLSETS.filter((toolset) => !TOOLSETS[toolset].default);
+
+/** The default toolsets, as a plain server URL lists them. */
 async function client(token: string | null = "api-key") {
 	return connectAllTools(tokenAccessors(token));
+}
+
+async function listTools(toolsets: readonly ToolsetName[]) {
+	const { tools } = await (
+		await connectAllTools(tokenAccessors("api-key"), "us", toolsets)
+	).listTools();
+
+	return tools;
+}
+
+/** The tools `toolset` adds to a session, without the ones every selection has. */
+async function toolsetTools(toolset: ToolsetName) {
+	const always = new Set((await listTools([])).map((tool) => tool.name));
+
+	return (await listTools([toolset])).filter((tool) => !always.has(tool.name));
 }
 
 function bytes(value: unknown): number {
@@ -106,9 +131,20 @@ async function stepSchema(stepType: string): Promise<Json> {
 describe("advertised tool schemas", () => {
 	it.runIf(process.env.MCP_TOOLS_REPORT)("print the size report", async () => {
 		const { tools } = await (await client()).listTools();
-		const rows = tools
+		const allTools = await listTools(ALL_TOOLSETS);
+		const rows = allTools
 			.map((tool) => ({ input: bytes(tool.inputSchema), name: tool.name, tool: bytes(tool) }))
 			.sort((a, b) => b.tool - a.tool);
+		const toolsets = await Promise.all(
+			ALL_TOOLSETS.map(async (toolset) => {
+				const added = await toolsetTools(toolset);
+				const budget = TOOLSETS[toolset].default
+					? "default"
+					: `budget ${MAX_OPT_IN_TOOLSET_BYTES}`;
+
+				return `${toolset} | ${added.length} tools | ${bytes(added)} bytes | ${budget}`;
+			}),
+		);
 		const stepSchemas = await Promise.all(
 			stepTypeSchema.options.map(async (stepType) => {
 				const result = await callTool(await client(), "get_step_schema", { stepType });
@@ -120,7 +156,10 @@ describe("advertised tool schemas", () => {
 
 		console.log(
 			[
-				`tools/list: ${tools.length} tools, ${total} bytes (~${Math.round(total / 4)} tokens), budget ${MAX_TOOLS_LIST_BYTES}`,
+				`tools/list (default toolsets): ${tools.length} tools, ${total} bytes (~${Math.round(total / 4)} tokens), budget ${MAX_TOOLS_LIST_BYTES}`,
+				`tools/list (?toolsets=all): ${allTools.length} tools, ${bytes({ tools: allTools })} bytes`,
+				"toolset | tools | bytes it adds | budget",
+				...toolsets,
 				`budgets per tool: inputSchema ${MAX_INPUT_SCHEMA_BYTES} bytes, tool ${MAX_TOOL_BYTES} bytes`,
 				"tool | tool bytes | inputSchema bytes | ~tokens",
 				...rows.map(
@@ -132,10 +171,19 @@ describe("advertised tool schemas", () => {
 		);
 	});
 
-	it("keep tools/list and every tool within the sizes MCP clients load", async () => {
+	it("keep the default tools/list within the size MCP clients load", async () => {
 		const { tools } = await (await client()).listTools();
 
 		expect(bytes({ tools })).toBeLessThan(MAX_TOOLS_LIST_BYTES);
+	});
+
+	it.each(OPT_IN_TOOLSETS)("keep the opt-in %s toolset within its budget", async (toolset) => {
+		expect(bytes(await toolsetTools(toolset))).toBeLessThan(MAX_OPT_IN_TOOLSET_BYTES);
+	});
+
+	it("keep every tool of every toolset within the sizes MCP clients load", async () => {
+		const tools = await listTools(ALL_TOOLSETS);
+
 		for (const tool of tools) {
 			expect(bytes(tool.inputSchema), tool.name).toBeLessThan(MAX_INPUT_SCHEMA_BYTES);
 			expect(bytes(tool), tool.name).toBeLessThan(MAX_TOOL_BYTES);
@@ -144,7 +192,7 @@ describe("advertised tool schemas", () => {
 	});
 
 	it("inline every schema, since several clients cannot resolve $ref", async () => {
-		const { tools } = await (await client()).listTools();
+		const tools = await listTools(ALL_TOOLSETS);
 
 		for (const tool of tools) {
 			const keys = keysAnywhere(tool.inputSchema);
@@ -155,7 +203,7 @@ describe("advertised tool schemas", () => {
 	});
 
 	it("compile as JSON Schema", async () => {
-		const { tools } = await (await client()).listTools();
+		const tools = await listTools(ALL_TOOLSETS);
 
 		for (const tool of tools) {
 			expect(() => ajv.getValidator(tool.inputSchema), tool.name).not.toThrow();
@@ -163,7 +211,7 @@ describe("advertised tool schemas", () => {
 	});
 
 	it("give every annotated tool a title and all three hints, as OpenAI's app review requires", async () => {
-		const { tools } = await (await client()).listTools();
+		const tools = await listTools(ALL_TOOLSETS);
 		const annotated = tools.filter((tool) => tool.annotations);
 
 		expect(annotated.map((tool) => tool.name)).toContain("get_step_schema");

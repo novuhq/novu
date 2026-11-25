@@ -277,6 +277,30 @@ API keys are already bound to one environment, so `environmentId` has no effect 
 List my Novu environments, then show notifications from Production (not Development).
 </Prompt>
 
+## Toolsets
+
+The MCP tools come in toolsets. Your AI tool loads every tool it's given into each conversation, so you can load only the toolsets you use by adding a `toolsets` query parameter to the MCP URL:
+
+```text
+https://mcp.novu.co/?toolsets=subscribers,activity
+```
+
+| Toolset | Loaded by default | Tools |
+| --- | --- | --- |
+| `workflows` | Yes | Workflow tools, including triggers and `get_step_schema` |
+| `subscribers` | Yes | Subscriber and preference tools, including `get_subscriber_reachability` |
+| `activity` | Yes | Activity and notification tools |
+| `integrations` | Yes | Integration tools |
+| `agents` | Yes | Agent and conversation tools |
+
+- Without the parameter, the server loads the default toolsets. `default` stands for them in a list, for example `?toolsets=default,<toolset>`.
+- `?toolsets=all` loads every toolset, including toolsets that aren't loaded by default.
+- `whoami`, `get_environments` and `submit_feedback` are available with every selection.
+- A session keeps the toolsets it connected with. To change them, edit the URL and reconnect.
+- An unknown toolset name fails the connection with an error that lists the valid names.
+
+When your session leaves toolsets out, the server tells your assistant which ones, so it can tell you what to add.
+
 ## Example prompts
 
 After connecting the Novu MCP server, copy or open these prompts in Cursor to verify the connection and perform common tasks.

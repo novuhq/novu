@@ -1,42 +1,27 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type CallToolResult, CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
-import { registerFeedbackTool } from "../src/server/feedback";
-import { registerActivityTools } from "../src/tools/activity";
-import { registerAgentTools } from "../src/tools/agents";
-import { registerAuthTools } from "../src/tools/auth";
-import { registerConversationTools } from "../src/tools/conversations";
-import { registerEnvironmentTools } from "../src/tools/environments";
-import { registerIntegrationTools } from "../src/tools/integrations";
-import { registerNotificationTools } from "../src/tools/notifications";
-import { registerPreferenceTools } from "../src/tools/preferences";
-import { registerSubscriberReachabilityTool } from "../src/tools/subscriber-reachability";
-import { registerSubscriberTools } from "../src/tools/subscribers";
-import { registerWorkflowTools } from "../src/tools/workflows";
+import { createNovuMcpServer, DEFAULT_TOOLSETS, type ToolsetName } from "../src/server/toolsets";
 import type { ToolAccessors } from "../src/utils/tool-accessors";
 
 export const API_URL = "https://api.example.test";
 
 /**
- * Registers every tool module the way `NovuMCP.registerAllTools` does, without
- * the Durable Object (which needs the Workers runtime), and connects a client
- * over an in-memory transport.
+ * Builds the hosted server the way `NovuMCP.init` does, without the Durable
+ * Object (which needs the Workers runtime), and connects a client over an
+ * in-memory transport. `toolsets` defaults to what a plain server URL loads.
  */
-export async function connectAllTools(accessors: ToolAccessors, region = "us"): Promise<Client> {
-	const server = new McpServer({ name: "Novu MCP Server", version: "1.0.0" });
-	registerAuthTools(server, accessors, () => region);
-	registerAgentTools(server, accessors);
-	registerConversationTools(server, accessors);
-	registerWorkflowTools(server, accessors);
-	registerEnvironmentTools(server, accessors);
-	registerSubscriberTools(server, accessors);
-	registerSubscriberReachabilityTool(server, accessors);
-	registerNotificationTools(server, accessors);
-	registerActivityTools(server, accessors);
-	registerPreferenceTools(server, accessors);
-	registerIntegrationTools(server, accessors);
-	registerFeedbackTool(server, "sk_test_feedback");
+export async function connectAllTools(
+	accessors: ToolAccessors,
+	region = "us",
+	toolsets: readonly ToolsetName[] = DEFAULT_TOOLSETS,
+): Promise<Client> {
+	const server = createNovuMcpServer(toolsets, {
+		accessors,
+		feedbackSecretKey: "sk_test_feedback",
+		getRegion: () => region,
+	});
 
 	return connect(server);
 }

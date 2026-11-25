@@ -9,6 +9,7 @@ import { REGION_HOSTS } from "./regions";
 import type { NovuProps } from "./server/NovuMCP";
 import { NovuMCP } from "./server/NovuMCP";
 import { assignMcpProps, syncSessionProps } from "./server/props";
+import { readRequestedToolsets } from "./server/toolsets";
 
 export { NovuMCP };
 
@@ -86,8 +87,18 @@ export default {
 			return discovery;
 		}
 
+		const requested = readRequestedToolsets(request);
+		if ("rejection" in requested) {
+			return requested.rejection;
+		}
+
 		const token = extractBearerToken(request);
-		const props: NovuProps = { apiUrl: env.NOVU_API_URL, region, token };
+		const props: NovuProps = {
+			apiUrl: env.NOVU_API_URL,
+			region,
+			token,
+			toolsets: requested.toolsets,
+		};
 		assignMcpProps(ctx, props);
 
 		const url = new URL(request.url);
