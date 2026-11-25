@@ -12,6 +12,7 @@ export { toSavedControlValues, type WorkflowResponse } from "../utils/workflow-r
 export {
 	HIDDEN_SECRET,
 	redactHttpRequestControlValues,
+	redactStepSecrets,
 	redactWorkflowSecrets,
 	restoreStepSecrets,
 } from "../utils/workflow-secrets";

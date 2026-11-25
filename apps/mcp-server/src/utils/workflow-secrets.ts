@@ -57,7 +57,8 @@ const MIN_TOKEN_SEGMENT_LENGTH = 16;
 
 const URL_PATTERN = /^((?:[a-z][a-z\d+.-]*:)?\/\/)?([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
 
-type KeyValue = { key: string; value: unknown };
+/** `shown` is how a stored pair reads once redacted, when that isn't the pair's own redaction (`toBodyPairs`). */
+type KeyValue = { key: string; value: unknown; shown?: unknown };
 
 type StepLike = {
 	_id?: string;
@@ -100,10 +101,11 @@ function redactWorkflow(value: unknown): unknown {
 	const workflow = asRecord(value);
 	if (!workflow || !Array.isArray(workflow.steps)) return value;
 
-	return { ...workflow, steps: workflow.steps.map(redactStep) };
+	return { ...workflow, steps: workflow.steps.map(redactStepSecrets) };
 }
 
-function redactStep(value: unknown): unknown {
+/** A step with its secrets hidden when it is an HTTP request step, in its control values and its controls metadata. */
+export function redactStepSecrets<T>(value: T): T {
 	const step = asRecord(value);
 	if (step?.type !== HTTP_REQUEST_STEP_TYPE) return value;
 
@@ -118,7 +120,7 @@ function redactStep(value: unknown): unknown {
 		redacted.controls = { ...controls, values: redactHttpRequestControlValues(values) };
 	}
 
-	return redacted;
+	return redacted as T;
 }
 
 /** An HTTP request step's control values with its headers, body and URL redacted; the other values are kept. */
@@ -200,6 +202,19 @@ export function restoreHttpRequestSecrets(
 	}
 	if (hasHiddenSecret(controlValues.url) && controlValues.url === redactUrl(saved?.url)) {
 		restored.url = saved?.url;
+	}
+
+	// A hidden header or body value stays with the host it was written for: an edit that points the step at another
+	// host would otherwise send the stored credential there.
+	const keepsHiddenValues =
+		hasHiddenSecret(controlValues.headers) || hasHiddenSecret(controlValues.body);
+	if (keepsHiddenValues && originOf(restored.url) !== originOf(saved?.url)) {
+		const step = stepLabel ? `HTTP request step "${stepLabel}"` : "the HTTP request step";
+
+		return {
+			error: `The URL of ${step} now points at another host, so its hidden header and body values ("${HIDDEN_SECRET}") can't move with it. Keep the URL's host, or have the user enter the secrets for the new host in the dashboard.`,
+			ok: false,
+		};
 	}
 
 	const field = (["headers", "body", "url"] as const).find((key) =>
@@ -314,6 +329,17 @@ function redactAuthority(authority: string): string {
 	return `${isTemplateOnly(userInfo) ? userInfo : HIDDEN_SECRET}${authority.slice(at)}`;
 }
 
+/** The scheme and host a URL sends to, without its user info; a templated host compares as written. */
+function originOf(url: unknown): string | undefined {
+	if (typeof url !== "string") return undefined;
+	const match = URL_PATTERN.exec(url.trim());
+	if (!match) return undefined;
+
+	const [, scheme = "", authority = ""] = match;
+
+	return `${scheme}${authority.slice(authority.lastIndexOf("@") + 1)}`.toLowerCase();
+}
+
 /** A path segment, with its `;key=value` parameters redacted like query values. */
 function redactPathSegment(segment: string): string {
 	const [name, ...parameters] = segment.split(";");
@@ -382,9 +408,10 @@ function restoreKeyValues(
 		if (!isKeyValue(pair) || !hasHiddenSecret(pair.value)) return pair;
 
 		const stored = findStored(pair.key);
+		const shown = stored && ("shown" in stored ? stored.shown : redact(stored).value);
 
-		return stored && redact(stored).value === pair.value
-			? { ...pair, value: stored.value }
+		return stored && sameJson(shown, pair.value)
+			? { key: pair.key, value: stored.value }
 			: pair;
 	});
 }
@@ -398,9 +425,24 @@ function toBodyPairs(savedBody: unknown): unknown {
 
 	const parsed = asRecord(parseJsonContainer(savedBody));
 
-	return Object.entries(parsed ?? {})
-		.filter(([, value]) => typeof value === "string")
-		.map(([key, value]) => ({ key, value }));
+	// A nested object or array goes as its JSON text, which is how the model can send it back as a pair's value.
+	return Object.entries(parsed ?? {}).map(
+		([key, value]): KeyValue =>
+			typeof value === "string"
+				? { key, value }
+				: { key, shown: JSON.stringify(redactJson(value)), value: JSON.stringify(value) },
+	);
+}
+
+/** Two values that are the same text, or the same JSON written with different spacing. */
+function sameJson(a: unknown, b: unknown): boolean {
+	const normalize = (value: unknown) => {
+		const parsed = typeof value === "string" ? parseJsonContainer(value) : undefined;
+
+		return parsed === undefined ? value : JSON.stringify(parsed);
+	};
+
+	return normalize(a) === normalize(b);
 }
 
 function restoreBody(body: unknown, savedBody: unknown): unknown {

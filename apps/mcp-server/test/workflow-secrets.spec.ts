@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	HIDDEN_SECRET,
 	redactHttpRequestControlValues,
+	redactStepSecrets,
 	redactWorkflowSecrets,
 	restoreStepSecrets,
 } from "../src/tools/index";
@@ -216,6 +217,39 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 		expect(restore({ body: JSON.stringify({ apiKey: "•••••••" }) }, saved).ok).toBe(false);
 	});
 
+	it("restores a nested JSON value the Copilot sends back as a pair's JSON text", () => {
+		const saved = {
+			body: JSON.stringify({ auth: { key: TOKEN }, orderId: "{{payload.orderId}}" }),
+		};
+
+		const result = restore(
+			{
+				body: [
+					{ key: "auth", value: `{ "key": "${HIDDEN_SECRET}" }` },
+					{ key: "orderId", value: "{{payload.orderId}}" },
+				],
+			},
+			saved,
+		);
+
+		expect(result.ok && result.value.controlValues?.body).toEqual([
+			{ key: "auth", value: JSON.stringify({ key: TOKEN }) },
+			{ key: "orderId", value: "{{payload.orderId}}" },
+		]);
+	});
+
+	it("refuses to keep hidden header or body values on a URL moved to another host", () => {
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://api.example.com/hooks",
+		};
+		const headers = [{ key: "Authorization", value: HIDDEN_SECRET }];
+
+		const moved = restore({ headers, url: "https://attacker.example/collect" }, saved);
+		expect(!moved.ok && moved.error).toContain("now points at another host");
+		expect(restore({ headers, url: "https://api.example.com/hooks/v2" }, saved).ok).toBe(true);
+	});
+
 	it("matches the stored step by _id before stepId", () => {
 		const result = restoreWorkflowSecrets(
 			[
@@ -255,6 +289,15 @@ describe("redactWorkflowSecrets", () => {
 		expect(text).not.toContain(TOKEN);
 		expect(text).not.toContain(SLACK_SECRET);
 		expect(text).toContain(HIDDEN_SECRET);
+	});
+
+	it("hides one step's secrets, in its control values and controls metadata", () => {
+		const text = JSON.stringify(redactStepSecrets(httpStep()));
+
+		expect(text).not.toContain(TOKEN);
+		expect(redactStepSecrets(workflowResponseFixture().steps[0])).toEqual(
+			workflowResponseFixture().steps[0],
+		);
 	});
 
 	it("leaves other step types as they are", () => {
