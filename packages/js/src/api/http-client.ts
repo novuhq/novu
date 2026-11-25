@@ -1,5 +1,3 @@
-import { isJwtExpired } from '../utils/jwt';
-
 export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
@@ -12,13 +10,31 @@ export type HttpClientOptions = {
  */
 export type SessionRefresher = (staleToken?: string) => Promise<boolean>;
 
+/** The session's say over each request; it owns when a token is renewed and whether a request may be resent. */
+export type SessionGuard = {
+  /** Resolves to the token to send a request with; rejects when the request must not go out at all. */
+  tokenForRequest: (currentToken: string | undefined) => Promise<string | undefined>;
+  refresh: SessionRefresher;
+};
+
 export type HttpRequestOptions = RequestInit & {
   /**
-   * Do not refresh the session and retry when the request answers 401.
+   * Do not refresh the session before sending, nor retry when the request answers 401.
    * Set for the session request itself, which would otherwise wait on its own refresh.
    */
   skipSessionRefresh?: boolean;
 };
+
+export class HttpError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(message: string, status: number, body: unknown) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
 
 export const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_CLIENT_VERSION = `${PACKAGE_NAME}@${PACKAGE_VERSION}`;
@@ -33,7 +49,7 @@ export class HttpClient {
   private apiUrl: string;
   private apiVersion: string;
   private headers: Record<string, string>;
-  private sessionRefresher?: SessionRefresher;
+  private session?: SessionGuard;
 
   constructor(options: HttpClientOptions = {}) {
     const { apiVersion = DEFAULT_API_VERSION, apiUrl = this.DEFAULT_BACKEND_URL, headers = {} } = options || {};
@@ -51,12 +67,8 @@ export class HttpClient {
     this.headers.Authorization = `Bearer ${token}`;
   }
 
-  /**
-   * Called when a request fails with 401 because its subscriber token expired.
-   * The request is retried once after the refresh succeeds.
-   */
-  setSessionRefresher(refresher: SessionRefresher) {
-    this.sessionRefresher = refresher;
+  setSession(session: SessionGuard) {
+    this.session = session;
   }
 
   setKeylessHeader(identifier?: string) {
@@ -135,8 +147,11 @@ export class HttpClient {
     allowSessionRefresh?: boolean;
   }): Promise<T> {
     const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
+    const currentToken = this.headers.Authorization?.replace(/^Bearer /, '');
+    const token = allowSessionRefresh && this.session ? await this.session.tokenForRequest(currentToken) : currentToken;
     const headers: Record<string, string> = {
       ...this.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...((options?.headers as Record<string, string>) || {}),
     };
     const reqInit = {
@@ -153,12 +168,11 @@ export class HttpClient {
 
     if (!response.ok) {
       const errorData = await response.json();
-      const error = new Error(
-        `${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${errorData.message}`
-      ) as Error & { status?: number; body?: unknown };
-      error.status = response.status;
-      error.body = errorData;
-      throw error;
+      throw new HttpError(
+        `${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${errorData.message}`,
+        response.status,
+        errorData
+      );
     }
     if (response.status === 204) {
       return undefined as T;
@@ -170,16 +184,11 @@ export class HttpClient {
   }
 
   /**
-   * Decides whether a request that answered 401 should be sent again.
-   * Only an expired subscriber token is refreshed; other 401s are returned to the caller as before.
+   * Called when a request fails with 401, for example because its token expired.
+   * The request is retried once after the refresh succeeds.
    */
   private async refreshSessionAfter401(sentAuthorization: string | undefined): Promise<boolean> {
-    if (!sentAuthorization || !this.sessionRefresher) {
-      return false;
-    }
-
-    const sentToken = sentAuthorization.replace(/^Bearer /, '');
-    if (!isJwtExpired(sentToken)) {
+    if (!sentAuthorization || !this.session) {
       return false;
     }
 
@@ -188,8 +197,9 @@ export class HttpClient {
      * After `changeSubscriber` or `changeContext` the request belongs to the previous one and must not be resent
      * with the new token, which would apply it to the new subscriber.
      */
+    const sentToken = sentAuthorization.replace(/^Bearer /, '');
     try {
-      return await this.sessionRefresher(sentToken);
+      return await this.session.refresh(sentToken);
     } catch {
       return false;
     }

@@ -1,4 +1,5 @@
 import type { RulesLogic } from 'json-logic-js';
+import type { GetToken } from './session/token-source';
 import { NovuError } from './utils/errors';
 
 export type { FiltersCountResponse, ListNotificationsResponse } from './notifications';
@@ -315,12 +316,9 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 
 type KeylessNovuOptions = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
 
-export type StandardNovuOptions = {
+type CommonNovuOptions = {
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
-  applicationIdentifier: string;
-  subscriberHash?: string;
-  contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   /**
@@ -332,20 +330,61 @@ export type StandardNovuOptions = {
   socketOptions?: NovuSocketOptions;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
-  context?: Context;
-} & (
-  | {
-      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-      /** @deprecated Use subscriber prop instead */
-      subscriberId: string;
-      subscriber?: never;
-    }
-  | {
-      subscriber: Subscriber | string;
-      subscriberId?: never;
-    }
-);
+};
 
-export type NovuOptions = KeylessNovuOptions | StandardNovuOptions;
+export type StandardNovuOptions = CommonNovuOptions & {
+  applicationIdentifier: string;
+  subscriberHash?: string;
+  contextHash?: string;
+  context?: Context;
+  tokenEndpoint?: never;
+  getToken?: never;
+  initialToken?: never;
+} & (
+    | {
+        // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+        /** @deprecated Use subscriber prop instead */
+        subscriberId: string;
+        subscriber?: never;
+      }
+    | {
+        subscriber: Subscriber | string;
+        subscriberId?: never;
+      }
+  );
+
+type TokenSourceOptions =
+  | {
+      /**
+       * Your backend route that answers `POST` with `{ token, expiresAt }` for the signed-in user.
+       * It is called with the browser's cookies whenever a new token is needed.
+       */
+      tokenEndpoint: string;
+      getToken?: never;
+    }
+  | {
+      /** Returns a new subscriber token from your backend whenever one is needed. */
+      getToken: GetToken;
+      tokenEndpoint?: never;
+    };
+
+export type TokenNovuOptions = CommonNovuOptions &
+  TokenSourceOptions & {
+    applicationIdentifier: string;
+    /** A token rendered by your server, used for the first session so the Inbox loads without a round trip. */
+    initialToken?: string;
+    /** Ignored with a warning: the token decides who the user is. */
+    subscriber?: Subscriber | string;
+    /** Ignored with a warning: the token decides who the user is. */
+    subscriberId?: string;
+    /** Ignored with a warning: the token decides the context. */
+    context?: Context;
+    /** Ignored with a warning: the token replaces HMAC hashes. */
+    subscriberHash?: string;
+    /** Ignored with a warning: the token replaces HMAC hashes. */
+    contextHash?: string;
+  };
+
+export type NovuOptions = KeylessNovuOptions | StandardNovuOptions | TokenNovuOptions;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

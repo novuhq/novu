@@ -141,8 +141,10 @@ export class InboxService {
     subscriber,
     defaultSchedule,
     context,
+    subscriberToken,
   }: {
     applicationIdentifier?: string;
+    subscriberToken?: string;
     subscriberHash?: string;
     contextHash?: string;
     subscriber?: Subscriber;
@@ -158,6 +160,7 @@ export class InboxService {
         subscriber,
         defaultSchedule,
         context,
+        subscriberToken,
       },
       { skipSessionRefresh: true }
     )) as Session;

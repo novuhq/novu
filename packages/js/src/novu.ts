@@ -6,10 +6,9 @@ import { NovuEventEmitter } from './event-emitter';
 import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
+import { resolveSessionIdentity, warnOnce } from './session/identity';
 import { Subscriptions } from './subscriptions';
 import type { Context, NovuOptions, Session as SessionData, Subscriber } from './types';
-import { buildContextKey } from './utils/build-context-key';
-import { buildSubscriber } from './utils/build-subscriber';
 import type { WebChat } from './web-chat';
 import { createSocket } from './ws';
 import type { BaseSocketInterface } from './ws/base-socket';
@@ -58,7 +57,7 @@ export class Novu {
   }
 
   public get contextKey() {
-    return buildContextKey(this.#session.context);
+    return this.#session.contextKey;
   }
 
   /**
@@ -131,24 +130,24 @@ export class Novu {
       httpClient: this.#httpClient,
     });
     this.#emitter = new NovuEventEmitter();
-    const subscriber = buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber });
-    const contextKey = buildContextKey(options.context);
+    const { identity, warnings } = resolveSessionIdentity(options);
+    warnings.forEach(warnOnce);
     this.#session = new Session(
       {
-        applicationIdentifier: options.applicationIdentifier || '',
-        subscriberHash: options.subscriberHash,
-        subscriber,
+        identity,
         defaultSchedule: options.defaultSchedule,
-        context: options.context,
-        contextHash: options.contextHash,
+        onSubscriberChange: () => void this.#resetForNewSubscriber(),
       },
       this.#inboxService,
       this.#emitter
     );
 
-    this.#session.initialize();
+    this.#session.start();
     const refreshSession = (staleToken?: string) => this.#session.refresh(staleToken);
-    this.#httpClient.setSessionRefresher(refreshSession);
+    this.#httpClient.setSession({
+      tokenForRequest: (currentToken) => this.#session.tokenForRequest(currentToken),
+      refresh: refreshSession,
+    });
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
@@ -160,8 +159,7 @@ export class Novu {
       eventEmitterInstance: this.#emitter,
     });
     this.subscriptions = new Subscriptions({
-      subscriber,
-      contextKey,
+      session: this.#session,
       useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
@@ -206,23 +204,10 @@ export class Novu {
     this.#webChat?.clearCache();
   }
 
-  /**
-   * @deprecated
-   */
-  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
-    await this.#session.initialize({
-      applicationIdentifier: this.#session.applicationIdentifier || '',
-      subscriberHash: options.subscriberHash,
-      subscriber: options.subscriber,
-      // Preserve existing context and contextHash
-      context: this.#session.context,
-      contextHash: this.#session.contextHash,
-    });
-
-    // Clear cache and reconnect socket with new token
+  /** Drops the previous subscriber's data and reconnects the socket with the new session token. */
+  async #resetForNewSubscriber(): Promise<void> {
     this.clearCache();
 
-    // Disconnect and reconnect socket to use new JWT token
     const disconnectResult = await this.socket.disconnect();
     if (!disconnectResult.error) {
       await this.socket.connect();
@@ -232,28 +217,26 @@ export class Novu {
   /**
    * @deprecated
    */
-  public async changeContext(options: { context: Context; contextHash?: string }): Promise<void> {
-    const currentSubscriber = this.#session.subscriber;
-    if (!currentSubscriber) {
-      throw new Error('Cannot change context without an active subscriber');
-    }
+  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
+    await this.#session.changeIdentity((current) => ({
+      ...current,
+      subscriber: options.subscriber,
+      subscriberHash: options.subscriberHash,
+    }));
 
-    await this.#session.initialize({
-      applicationIdentifier: this.#session.applicationIdentifier || '',
-      // Preserve existing subscriber and subscriberHash
-      subscriberHash: this.#session.subscriberHash,
-      subscriber: currentSubscriber,
+    await this.#resetForNewSubscriber();
+  }
+
+  /**
+   * @deprecated
+   */
+  public async changeContext(options: { context: Context; contextHash?: string }): Promise<void> {
+    await this.#session.changeIdentity((current) => ({
+      ...current,
       context: options.context,
       contextHash: options.contextHash,
-    });
+    }));
 
-    // Clear cache and reconnect socket with new token
-    this.clearCache();
-
-    // Disconnect and reconnect socket to use new JWT token
-    const disconnectResult = await this.socket.disconnect();
-    if (!disconnectResult.error) {
-      await this.socket.connect();
-    }
+    await this.#resetForNewSubscriber();
   }
 }
