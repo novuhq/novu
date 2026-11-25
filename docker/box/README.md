@@ -63,11 +63,9 @@ PRs get none.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
   tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
-  this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
-  the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
-  test at a time) and `Full: account` (sign up, onboard, delete). They start through their group webhooks, so
-  TesterArmy posts their failures to Slack (#eng-feed-deployments; passing runs too if the project's Slack settings
-  say so); it never posts runs started through its API, like the PRs'.
+  this repo. Its other groups, `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one test at
+  a time) and `Full: account` (sign up, onboard, delete), no longer run from CI. `ci.ts full` still starts them
+  through their group webhooks on `nightly-<run id>`, a fresh copy of `base`, but no workflow calls it.
 - Closing the PR deletes the box, and so does turning it into a draft, moving it off `next` or removing the label
   when it then no longer gets one; the nightly cleanup deletes any such box an event missed. At most 50 PR boxes
   exist at once. PRs from forks get no box.
@@ -205,8 +203,7 @@ only code on the current image, set `BOX_IMAGE` to the image's reference (from `
 list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
-head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
-on `nightly-<run id>`; next to that it deletes the boxes of PRs that are closed or no longer get one, and those of
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow; next to that it deletes the boxes of PRs that are closed or no longer get one, and those of
 earlier runs (`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
 separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
 snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
