@@ -31,7 +31,8 @@
 //   wait-for:<ms>        runs `npx @agentinbox/cli reply <conversation> ask …`, which waits <ms> for the answer
 //   fail                 ends the turn as failed
 //   remember             says how many messages its session has seen
-//   call:<tool>          calls a tool by the name the model sees, an MCP server's as `<server>_<tool>`
+//   call:<tool> [<ms>]   calls a tool by the name the model sees, an MCP server's as `<server>_<tool>`; with <ms>,
+//                        works that long more after it
 //   skill:<name>         loads a skill
 //   read:<path>          reads a file
 //   rules                says the session's rules
@@ -537,9 +538,10 @@ const BEHAVIORS = [
     'call:',
     async (rest, turn) => {
       // A tool by its name as the model sees it: an MCP server's is `<server>_<tool>`.
-      const name = rest.trim();
+      const [name, ms] = rest.trim().split(/\s+/);
       const decision = await tool(turn, name, {}, { name, patterns: ['*'] });
       if (decision === 'aborted') return {};
+      if (ms && (await Promise.race([sleep(Number(ms)), turn.stopped])) === 'aborted') return {};
 
       return {
         answer: decision.allowed

@@ -2,18 +2,10 @@
   "name": "@novu/ee-auth",
   "sourceRoot": "enterprise/packages/auth/src",
   "projectType": "library",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "{workspaceRoot}/.source/auth/src/**/*", "sharedGlobals"]
+  },
   "targets": {
-    "build": {
-      "cache": false,
-      "inputs": [
-        "default",
-        "{projectRoot}/**/*",
-        "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-        "!{projectRoot}/tsconfig.spec.json",
-        "!{projectRoot}/jest.config.[jt]s"
-      ],
-      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
-    },
     "test": {
       "cache": false
     },

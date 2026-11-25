@@ -383,6 +383,10 @@ export interface Contact {
   channels?: ContactChannel[];
   /** Channel used when a message to the contact names none. */
   defaultVia?: string;
+  /** Whether the agent listens to them, as their switch is now: always to the operator. */
+  listenTo?: boolean;
+  /** Whether their messages start its hosts with everything the operator's get: always the operator's. */
+  fullAccess?: boolean;
   createdAt: string;
   updatedAt: string;
 }

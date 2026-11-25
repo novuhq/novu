@@ -6,6 +6,7 @@ import {
   commandLeadsTo,
   commandReachesKey,
   type Decision,
+  decidingCheck,
   type KeyGuard,
   keyGuardFor,
   reachesKey,
@@ -108,6 +109,17 @@ const DECIDING_WORDS = [
   '*.agents*',
 ];
 const DECIDING_EDITS = [...DECIDING_FILES, ...DECIDING_FOLDERS];
+/** The same, by their names in the folder: where one of them leads through a link decides the run too. */
+const DECIDING_NAMES = [
+  'opencode.json',
+  'opencode.jsonc',
+  '.opencode',
+  'AGENTS.md',
+  'CLAUDE.md',
+  '.git',
+  '.claude',
+  '.agents',
+];
 
 /**
  * Reads what the folder's own OpenCode settings say. Settings that can't be read count as saying nothing. The key is
@@ -208,8 +220,8 @@ export function decideOpenCodeCall(
   }
   if (
     isShell
-      ? commandLeadsTo(command, cwd, folder.guard.home, (path) => decidesRun(path, folder, DECIDING_WORDS))
-      : WRITES.includes(call.name) && pathsOf(call, folder).some((path) => decidesRun(path, folder, DECIDING_EDITS))
+      ? commandLeadsTo(command, cwd, folder.guard.home, decidesRun(folder, DECIDING_WORDS))
+      : WRITES.includes(call.name) && pathsOf(call, folder).some(decidesRun(folder, DECIDING_EDITS))
   ) {
     return { decision: 'deny', why: 'it reaches what decides a run' };
   }
@@ -273,13 +285,19 @@ const SEARCHES = ['glob', 'grep', 'list'];
 const WRITES = ['edit', 'write', 'patch'];
 
 /**
- * Whether a path, its links followed, is one of the files that decide a run, as the session's denies name them
- * (`patterns`): what they see is the name a call gives, which a link can hide.
+ * A check of whether a path, its links followed, is one of the files that decide a run, as the session's denies name
+ * them (`patterns`): what they see is the name a call gives, which a link can hide. Where a link among the folder's
+ * own leads counts too, outside the folder as well.
  */
-function decidesRun(path: string, folder: OpenCodeFolder, patterns: readonly string[]): boolean {
-  const fromProject = relative(realPathOf(folder.project), realTarget(path));
+function decidesRun(folder: OpenCodeFolder, patterns: readonly string[]): (path: string) => boolean {
+  const project = realPathOf(folder.project);
+  const linked = decidingCheck(project, DECIDING_NAMES);
 
-  return patterns.some((pattern) => fitsPattern(fromProject, pattern));
+  return (path) => {
+    const real = realTarget(path);
+
+    return patterns.some((pattern) => fitsPattern(relative(project, real), pattern)) || linked(real);
+  };
 }
 
 /** The tools that reach files and commands, which the listener decides for a contact's session. */
@@ -353,12 +371,30 @@ export function contactConfigContent(major: 1 | 2, helper: HostProgram, env: Nod
  */
 export function parseJsonc(text: string): Record<string, unknown> | undefined {
   try {
-    const parsed = JSON.parse(withoutComments(text).replace(/,(\s*[}\]])/g, '$1')) as Record<string, unknown> | null;
+    const parsed = JSON.parse(withoutTrailingCommas(withoutComments(text))) as Record<string, unknown> | null;
 
     return isRecord(parsed) ? parsed : undefined;
   } catch {
     return undefined;
   }
+}
+
+/** The text without the commas JSON doesn't take, just before a `}` or `]`; strings left as they are. */
+function withoutTrailingCommas(text: string): string {
+  let plain = '';
+  for (let at = 0; at < text.length; ) {
+    const end = text[at] === '"' ? stringEnd(text, at) : at;
+    if (end > at) {
+      plain += text.slice(at, end);
+      at = end;
+    } else {
+      const trailing = text[at] === ',' && /^\s*[}\]]/.test(text.slice(at + 1));
+      plain += trailing ? '' : text[at];
+      at += 1;
+    }
+  }
+
+  return plain;
 }
 
 /** The text without its `//` and `/* … *\/` comments, strings left as they are. */

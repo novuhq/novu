@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { CommandPalette } from '@/components/command-palette';
 import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
+import { CopilotPageMount, useActiveCopilotPage } from '@/components/copilot-web-chat';
 import { HelpPanelProvider } from '@/components/help-panel';
 import { Toaster } from '@/components/primitives/sonner';
 import { useAuth } from '@/context/auth/hooks';
@@ -22,6 +23,16 @@ function DashboardProvisioningDismiss() {
   return null;
 }
 
+// The page Copilot's launcher sits at bottom-4 and is 38px tall, so toasts stack 8px above it. Sonner applies one
+// offset to every edge of the screen.
+const ABOVE_COPILOT_LAUNCHER_OFFSET = 62;
+
+function DashboardToaster() {
+  const copilotPage = useActiveCopilotPage();
+
+  return <Toaster offset={copilotPage ? ABOVE_COPILOT_LAUNCHER_OFFSET : undefined} />;
+}
+
 export const DashboardRoute = () => {
   return (
     <ProtectedRoute>
@@ -31,8 +42,10 @@ export const DashboardRoute = () => {
           <HelpPanelProvider>
             <CommandPaletteProvider>
               <Outlet />
+              {/* Beside the page, not around it: it mounts and unmounts with the route without remounting the page. */}
+              <CopilotPageMount />
               <CommandPalette />
-              <Toaster />
+              <DashboardToaster />
             </CommandPaletteProvider>
           </HelpPanelProvider>
         </LocalModeProvider>

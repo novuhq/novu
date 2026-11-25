@@ -3,6 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { AnimatePresence, motion } from 'motion/react';
 import * as React from 'react';
 import { RiCloseLine } from 'react-icons/ri';
+import { isInCopilotSurface } from '@/components/copilot-web-chat/copilot-surface';
 import { cn } from '@/utils/ui';
 import { CompactButton } from './button-compact';
 
@@ -55,10 +56,20 @@ interface SheetContentProps
     VariantProps<typeof sheetVariants> {}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = 'right', className, children, ...props }, ref) => (
+  ({ side = 'right', className, children, onInteractOutside, ...props }, ref) => (
     <SheetPortal>
       <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+        {...props}
+        // Radix calls this for a pointer-down and for a focus outside the sheet. The Copilot floats above sheets, so
+        // clicking or focusing it (Cmd/Ctrl+J focuses its composer) must not close a non-modal one.
+        onInteractOutside={(event) => {
+          onInteractOutside?.(event);
+          if (isInCopilotSurface(event.target)) event.preventDefault();
+        }}
+      >
         <SheetPrimitive.Close className="absolute right-3.5 top-3.5" asChild>
           <CompactButton size="md" variant="ghost" icon={RiCloseLine} data-close-button>
             <span className="sr-only">Close</span>

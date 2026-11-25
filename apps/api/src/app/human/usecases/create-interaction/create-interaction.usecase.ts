@@ -64,6 +64,7 @@ import {
   HumanMessageQuotaExceededException,
   HumanMessageQuotaService,
 } from '../../services/human-message-quota.service';
+import { HumanOperatorService } from '../../services/human-operator.service';
 import { WHATSAPP_WINDOW_CLOSED, WhatsAppUndeliverableException } from '../../services/whatsapp-delivery.errors';
 import { CreateConversationInteractionCommand } from '../create-conversation-interaction/create-conversation-interaction.command';
 import { CreateConversationInteraction } from '../create-conversation-interaction/create-conversation-interaction.usecase';
@@ -110,7 +111,8 @@ export class CreateInteraction {
     private readonly humanContactRepository: HumanContactRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService,
-    private readonly channelGate: HumanChannelGate
+    private readonly channelGate: HumanChannelGate,
+    private readonly humanOperator: HumanOperatorService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -736,8 +738,15 @@ export class CreateInteraction {
     }
 
     try {
-      const operator = await this.humanContactRepository.findOperator(command.environmentId, agent._id);
-      if (!operator) {
+      const operatorId = await this.humanOperator.findForAgent({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentId: agent._id,
+      });
+      if (!operatorId) {
+        // Nobody to tell yet: the notice isn't used up, so a refusal a few minutes later tries again.
+        await this.messageQuota.retryLimitNoticeLater(command.organizationId, usedUp);
+
         return;
       }
 
@@ -748,13 +757,11 @@ export class CreateInteraction {
         organizationId: command.organizationId,
         kind: HumanInteractionKindEnum.TELL,
         card: { title },
-        to: operator.subscriberId,
+        to: operatorId,
         agentIdentifier: agent.identifier,
       });
 
-      await this.sendToContacts(notice, agent, [{ subscriberId: operator.subscriberId }], title, {
-        outsideLimit: true,
-      });
+      await this.sendToContacts(notice, agent, [{ subscriberId: operatorId }], title, { outsideLimit: true });
     } catch (err) {
       this.logger.warn(
         { err, organizationId: command.organizationId, agentId: agent._id },

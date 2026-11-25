@@ -1,6 +1,13 @@
-import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  CopilotPageEnum,
+  CopilotViewingResourceEnum,
+  providers as novuProviders,
+  PermissionsEnum,
+} from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { Button } from '@/components/primitives/button';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -59,6 +66,15 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   });
 
   const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
+
+  useRegisterCopilotPageView(CopilotPageEnum.INTEGRATIONS, {
+    viewing:
+      isOpened && integration
+        ? { resource: { type: CopilotViewingResourceEnum.INTEGRATION, id: integration._id, label: integration.name } }
+        : undefined,
+    // Only once the sheet renders: it's null until the integration loads.
+    overSheet: isOpened && !!integration && !!provider,
+  });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;

@@ -1,11 +1,14 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
+import type { CreateSubscriberRequestDto } from '@novu/api/models/components';
+import { CopilotPageEnum } from '@novu/shared';
 import { useForm } from 'react-hook-form';
 import { RiGroup2Line, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { z } from 'zod';
 import { NovuApiError } from '@/api/api.client';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
@@ -30,6 +33,8 @@ const toastOptions: ExternalToast = {
 export function CreateSubscriberPage() {
   const track = useTelemetry();
   const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
+  // The form renders in the subscriber drawer, so the Copilot sits above it. No subscriber exists yet to register.
+  useRegisterCopilotPageView(CopilotPageEnum.SUBSCRIBERS, { overSheet: true });
 
   const form = useForm({
     defaultValues: {
@@ -72,7 +77,7 @@ export function CreateSubscriberPage() {
   const onSubmit = async (formData: z.infer<typeof CreateSubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
 
-    const dirtyPayload = Object.keys(dirtyFields).reduce<Record<string, any>>((acc, key) => {
+    const dirtyPayload = Object.keys(dirtyFields).reduce<Partial<CreateSubscriberRequestDto>>((acc, key) => {
       const typedKey = key as keyof typeof formData;
 
       if (typedKey === 'data') {

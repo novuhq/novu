@@ -58,6 +58,7 @@ import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
 import {
   assertEnvironmentScopedAccess,
   isEnvironmentScopedAuthScheme,
+  isEnvironmentScopedListScheme,
   isInternalAuthScheme,
 } from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
@@ -202,7 +203,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+        scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
   }
@@ -231,7 +232,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+        scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
   }
@@ -309,7 +310,9 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return GetDecryptedIntegrations.withoutConfigurationSecrets(
+        integrationWithoutCredentials
+      ) as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -366,7 +369,9 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return GetDecryptedIntegrations.withoutConfigurationSecrets(
+        integrationWithoutCredentials
+      ) as IntegrationResponseDto;
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -403,7 +408,17 @@ export class IntegrationsController {
       })
     );
 
-    return result;
+    if (!result.integration || (await this.canUserAccessCredentials(user))) {
+      return result;
+    }
+
+    return {
+      ...result,
+      integration: {
+        ...GetDecryptedIntegrations.withoutConfigurationSecrets(result.integration),
+        credentials: {},
+      },
+    };
   }
 
   @Post('/:integrationId/set-primary')
@@ -445,7 +460,9 @@ export class IntegrationsController {
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-    return integrationWithoutCredentials as IntegrationResponseDto;
+    return GetDecryptedIntegrations.withoutConfigurationSecrets(
+      integrationWithoutCredentials
+    ) as IntegrationResponseDto;
   }
 
   @Delete('/:integrationId')
@@ -464,13 +481,24 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto[]> {
-    return await this.removeIntegrationUsecase.execute(
+    await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+      })
+    );
+
+    // The environment's remaining integrations as the route documents them: no credentials or signing keys, for any caller.
+    return await this.getIntegrationsUsecase.execute(
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        returnCredentials: false,
+        scopeToEnvironment: true,
       })
     );
   }

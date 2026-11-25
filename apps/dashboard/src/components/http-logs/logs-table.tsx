@@ -1,7 +1,10 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { CopilotPageEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { buildRequestsViewing } from '@/components/activity/activity-copilot';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import {
   Table,
@@ -86,6 +89,13 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
   }, [totalCount, limit, currentPage]);
 
   const selectedLog = selectedLogId ? logsData.find((log: RequestLog) => log.id === selectedLogId) : undefined;
+  const [searchParams] = useSearchParams();
+  useRegisterCopilotPageView(CopilotPageEnum.ACTIVITY, {
+    viewing: buildRequestsViewing(
+      searchParams,
+      selectedLogId ? { id: selectedLogId, method: selectedLog?.method, path: selectedLog?.path } : undefined
+    ),
+  });
 
   const handleRowClick = (log: RequestLog) => {
     const logId = log.id;

@@ -45,7 +45,10 @@ export class GetDecryptedIntegrations {
            * "no credentials" semantics while keeping previously released
            * SDK clients working.
            */
-          return { ...integration, credentials: {} as ICredentialsEntity };
+          return {
+            ...GetDecryptedIntegrations.withoutConfigurationSecrets(integration),
+            credentials: {} as ICredentialsEntity,
+          };
         }
 
         return GetDecryptedIntegrations.getDecryptedCredentials(integration);
@@ -56,5 +59,21 @@ export class GetDecryptedIntegrations {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;
+  }
+
+  /**
+   * The integration without the secrets stored in plain text on `configurations` (the inbound webhook signing key),
+   * for callers that may not see credentials.
+   */
+  public static withoutConfigurationSecrets<T extends { configurations?: object }>(integration: T): T {
+    if (!integration.configurations || !('inboundWebhookSigningKey' in integration.configurations)) {
+      return integration;
+    }
+
+    const { inboundWebhookSigningKey: _signingKey, ...configurations } = integration.configurations as {
+      inboundWebhookSigningKey?: string;
+    };
+
+    return { ...integration, configurations };
   }
 }

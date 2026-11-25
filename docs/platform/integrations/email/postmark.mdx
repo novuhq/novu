@@ -35,6 +35,46 @@ Postmark allows the authentication of the sender's identity using one of the fol
 - Click on the **Update** button.
 - Now is possible to send notifications using Postmark in Novu.
 
+## Use a Postmark-hosted template
+
+If you manage your email layout as a [template in Postmark](https://postmarkapp.com/support/article/1077-what-are-templates), you can have Novu send through Postmark's template endpoint instead of the content from the workflow's Email step. Pass the template selector as a [provider override](/platform/integrations/trigger-overrides#provider-overrides) under `_passthrough.body`:
+
+- Select the template with either `TemplateId` (numeric) or `TemplateAlias` (string).
+- Supply the template's variables with `TemplateModel`.
+
+When a `TemplateId` or `TemplateAlias` is present, Novu sends the email via Postmark's `/email/withTemplate` endpoint. The hosted template supplies the subject and content, so the Email step's `Subject`, `HtmlBody`, and `TextBody` are dropped.
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId" },
+  payload: {},
+  overrides: {
+    providers: {
+      postmark: {
+        _passthrough: {
+          body: {
+            TemplateAlias: "welcome",
+            TemplateModel: {
+              name: "Alan",
+              product_url: "https://example.com",
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+
+<Note>
+  `_passthrough` fields are passed directly to the Postmark SDK and are not validated by Novu. See [Sending provider specific extra fields](/platform/integrations/email#sending-provider-specific-extra-fields).
+</Note>
+
 ## Next Steps
 
 <Columns cols={2}>

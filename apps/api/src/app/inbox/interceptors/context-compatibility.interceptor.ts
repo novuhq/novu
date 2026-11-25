@@ -1,4 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { Observable } from 'rxjs';
 
 /**
@@ -60,6 +61,10 @@ export class ContextCompatibilityInterceptor implements NestInterceptor {
 
     // No session or no contextKeys = nothing to do
     if (!subscriberSession?.contextKeys || subscriberSession.contextKeys.length === 0) {
+      return next.handle();
+    }
+
+    if (subscriberSession.authMethod === SubscriberSessionAuthMethodEnum.TOKEN) {
       return next.handle();
     }
 

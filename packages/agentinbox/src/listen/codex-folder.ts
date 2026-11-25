@@ -8,10 +8,10 @@ import {
   commandNames,
   commandReachesKey,
   type Decision,
+  decidingCheck,
   type KeyGuard,
   keyGuardFor,
   namesPathTo,
-  pathIn,
   realTarget,
   within,
 } from './contact-guard';
@@ -405,11 +405,14 @@ function sedPrints(words: string[]): string[] | undefined {
   return options.length > 0 && options.every((option) => option === '-n') && printsOnly ? files : undefined;
 }
 
-/** Whether one command of a chain names what decides a run: by its words, or by a path that leads there through a link. */
+/**
+ * Whether one command of a chain names what decides a run: by its words, or by a path that leads there through a
+ * link, or that a link among it leads to.
+ */
 function namesDeciding(raw: string, words: string[], cwd: string, folder: CodexFolder): boolean {
   return (
     commandNames(raw, DECIDING) ||
-    namesPathTo(words, cwd, folder.guard.home, (path) => pathIn(path, realPathOf(folder.project), DECIDING))
+    namesPathTo(words, cwd, folder.guard.home, decidingCheck(realPathOf(folder.project), DECIDING))
   );
 }
 

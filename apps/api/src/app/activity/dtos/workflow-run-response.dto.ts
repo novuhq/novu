@@ -34,7 +34,10 @@ export class StepExecutionDetailDto {
   @IsString()
   providerId?: string;
 
-  @ApiPropertyOptional({ description: 'Raw data of the execution' })
+  @ApiPropertyOptional({
+    description:
+      'Raw data of the execution. Left out for API key and OAuth requests, since it can hold provider credentials.',
+  })
   @IsOptional()
   @IsString()
   raw?: string | null;
@@ -75,6 +78,18 @@ export class StepRunDto {
   ] satisfies StepRunStatus[])
   status: StepRunStatus;
 
+  @ApiPropertyOptional({
+    description: 'Error code recorded when the step failed, e.g. send_message_failed or job_failed',
+  })
+  @IsOptional()
+  @IsString()
+  errorCode?: string;
+
+  @ApiPropertyOptional({ description: 'Error message recorded when the step failed' })
+  @IsOptional()
+  @IsString()
+  errorMessage?: string;
+
   @ApiProperty({ description: 'Creation timestamp' })
   @IsDate()
   createdAt: Date;
@@ -105,7 +120,7 @@ export class GetWorkflowRunResponseDto extends GetWorkflowRunResponseBaseDto {
   @Type(() => StepRunDto)
   steps: StepRunDto[];
 
-  @ApiProperty({ description: 'Trigger payload' })
+  @ApiProperty({ description: 'Trigger payload', type: 'object', additionalProperties: true })
   @IsObject()
   payload: Record<string, unknown>;
 

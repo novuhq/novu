@@ -37,7 +37,7 @@ The CLI connects Hermes and OpenClaw too, but their plugin is how the dashboard 
 Hermes and OpenClaw run a gateway that stays on. Agent Inbox's plugin for it connects with the same one-time code, and the gateway then listens for messages: a message to the agent reaches the host within seconds, and its answer goes back in the same conversation. On the computer the host runs on:
 
 ```bash
-hermes plugins install agentinboxhq/hermes-plugin --enable
+hermes plugins install agentinbox --enable
 hermes agentinbox setup atlas --code BCDF-GHJK --yes
 hermes gateway restart
 ```
@@ -48,7 +48,7 @@ openclaw agentinbox setup atlas --code BCDF-GHJK --yes
 openclaw gateway restart
 ```
 
-The dashboard writes these with your agent and code, under Plugin. `--yes` asks nothing: the commands are pasted together, and a question would take the next one as its answer. At your own terminal it also turns listening on. When an agent runs `setup`, you get an Allow and Deny message on your channel when the gateway starts. See [Listen for messages](/listen#hermes-and-openclaw).
+Hermes installs the plugin from its [plugin catalog](https://hermes-agent.nousresearch.com/marketplace/agentinbox), at the version its maintainers reviewed; OpenClaw installs it from [ClawHub](https://clawhub.ai/agentinbox/plugins/openclaw). The dashboard writes these with your agent and code, under Plugin. `--yes` asks nothing: the commands are pasted together, and a question would take the next one as its answer. At your own terminal it also turns listening on. When an agent runs `setup`, you get an Allow and Deny message on your channel when the gateway starts. See [Listen for messages](/listen#hermes-and-openclaw).
 
 ## MCP: sign in
 

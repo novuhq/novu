@@ -1071,7 +1071,7 @@ describe('SendMessagePush - provider content overrides', () => {
   });
 
   describe('invalid device token removal', () => {
-    function buildRemovalUsecase(isTokenInvalid: boolean, isRemovalEnabled: boolean) {
+    function buildRemovalUsecase(isTokenInvalid: boolean) {
       const sendStub = sinon
         .stub()
         .rejects(
@@ -1106,7 +1106,7 @@ describe('SendMessagePush - provider content overrides', () => {
         } as never,
         { execute: sendWebhookExecute } as never,
         invalidateCache as never,
-        { getFlag: sinon.stub().resolves(isRemovalEnabled) } as never
+        { getFlag: sinon.stub().resolves(false) } as never
       );
 
       return { usecase, getHandlerStub, isTokenInvalidStub, subscriberRepository, sendWebhookExecute };
@@ -1114,7 +1114,7 @@ describe('SendMessagePush - provider content overrides', () => {
 
     it('pulls the token from the subscriber and reuses the send handler', async () => {
       const { usecase, getHandlerStub, isTokenInvalidStub, subscriberRepository, sendWebhookExecute } =
-        buildRemovalUsecase(true, true);
+        buildRemovalUsecase(true);
 
       const result = await usecase.execute(buildCommand());
 
@@ -1132,16 +1132,8 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(sendWebhookExecute.firstCall.args[0].payload.error.push.reason).to.equal('token_invalid');
     });
 
-    it('keeps the token while expired-token removal is disabled', async () => {
-      const { usecase, subscriberRepository } = buildRemovalUsecase(true, false);
-
-      await usecase.execute(buildCommand());
-
-      sinon.assert.notCalled(subscriberRepository.update);
-    });
-
     it('keeps the token when the provider does not flag it as invalid', async () => {
-      const { usecase, subscriberRepository, sendWebhookExecute } = buildRemovalUsecase(false, true);
+      const { usecase, subscriberRepository, sendWebhookExecute } = buildRemovalUsecase(false);
 
       await usecase.execute(buildCommand());
 

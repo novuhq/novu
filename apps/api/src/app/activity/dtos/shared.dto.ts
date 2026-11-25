@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
@@ -60,6 +60,15 @@ export class GetWorkflowRunResponseBaseDto {
   })
   @IsIn(Object.values(DeliveryLifecycleStatusEnum))
   deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
+
+  @ApiPropertyOptional({
+    description:
+      'Why the run reached its delivery lifecycle status, e.g. preference or missing_email. Absent when no reason was recorded.',
+    enum: DeliveryLifecycleDetail,
+  })
+  @IsOptional()
+  @IsIn(Object.values(DeliveryLifecycleDetail))
+  deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 
   @ApiProperty({ description: 'Trigger identifier' })
   @IsString()

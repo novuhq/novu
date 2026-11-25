@@ -349,7 +349,8 @@ export const HOSTS: readonly Host[] = [
     afterCommands: 'Then start a new Hermes session with /reset, so it loads the skills.',
     docsUrl: 'https://hermes-agent.nousresearch.com/docs/user-guide/features/skills',
     plugin: {
-      install: 'hermes plugins install agentinboxhq/hermes-plugin --enable',
+      // From Hermes's plugin catalog: the commit its maintainers reviewed, as the catalog pins it.
+      install: 'hermes plugins install agentinbox --enable',
       setup: ({ handle, code, apiUrl }) =>
         `hermes agentinbox setup ${handle} --code ${code} --yes${apiUrlFlag(apiUrl)}`,
       restart: 'hermes gateway restart',
