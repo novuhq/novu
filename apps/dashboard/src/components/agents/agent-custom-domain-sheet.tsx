@@ -13,14 +13,7 @@ import { Button } from '@/components/primitives/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/primitives/sheet';
+import { NonModalSheet, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/primitives/sheet';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import {
   useFetchDomain,
@@ -298,162 +291,159 @@ export function AgentCustomDomainSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
-          <SheetHeader className="border-stroke-soft border-b">
-            <SheetTitle>Custom domains</SheetTitle>
-            <SheetDescription>{description}</SheetDescription>
-          </SheetHeader>
+      <NonModalSheet open={open} onOpenChange={onOpenChange} className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+        <SheetHeader className="border-stroke-soft border-b">
+          <SheetTitle>Custom domains</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
+        </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-5">
-            {view === 'list' && (
-              <DomainListView
-                domains={domains}
-                configuredAddresses={configuredAddresses}
-                onSelectDomain={openDomain}
-                onAddDomain={goToAdd}
-              />
-            )}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {view === 'list' && (
+            <DomainListView
+              domains={domains}
+              configuredAddresses={configuredAddresses}
+              onSelectDomain={openDomain}
+              onAddDomain={goToAdd}
+            />
+          )}
 
-            {view === 'add' && (
-              <div className="flex flex-col gap-4">
-                <BackButton onClick={goToList} />
-                <Form {...form}>
-                  <form id={formId} onSubmit={handleCreate} className="flex flex-col gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      rules={{
-                        required: 'Domain name is required',
-                        pattern: {
-                          value: DOMAIN_NAME_PATTERN,
-                          message: 'Enter a valid domain name (e.g. example.com)',
-                        },
-                      }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Domain</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="inbound.acme.com"
-                              {...field}
-                              onChange={(event) => {
-                                field.onChange(event);
+          {view === 'add' && (
+            <div className="flex flex-col gap-4">
+              <BackButton onClick={goToList} />
+              <Form {...form}>
+                <form id={formId} onSubmit={handleCreate} className="flex flex-col gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    rules={{
+                      required: 'Domain name is required',
+                      pattern: {
+                        value: DOMAIN_NAME_PATTERN,
+                        message: 'Enter a valid domain name (e.g. example.com)',
+                      },
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domain</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="inbound.acme.com"
+                            {...field}
+                            onChange={(event) => {
+                              field.onChange(event);
 
-                                if (form.formState.errors.name) {
-                                  form.clearErrors('name');
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {isApexInboundDomain(watchedName) && <ApexDomainMxWarning />}
-                  </form>
-                </Form>
+                              if (form.formState.errors.name) {
+                                form.clearErrors('name');
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {isApexInboundDomain(watchedName) && <ApexDomainMxWarning />}
+                </form>
+              </Form>
+            </div>
+          )}
+
+          {view === 'domain' && !selectedDomain && (
+            <div className="flex flex-col gap-5">
+              <BackButton onClick={goToList} />
+              <div className="flex items-center justify-center py-10">
+                <LoadingIndicator size="md" />
               </div>
-            )}
+            </div>
+          )}
 
-            {view === 'domain' && !selectedDomain && (
-              <div className="flex flex-col gap-5">
-                <BackButton onClick={goToList} />
-                <div className="flex items-center justify-center py-10">
-                  <LoadingIndicator size="md" />
+          {view === 'domain' && selectedDomain && (
+            <div className="flex flex-col gap-5">
+              <BackButton onClick={goToList} />
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <span className="text-text-soft text-label-xs font-medium uppercase tracking-wide">Domain</span>
+                  <span className="text-text-strong text-label-sm truncate font-medium">{selectedDomain.name}</span>
                 </div>
+                <StatusBadge verified={isSelectedVerified} />
               </div>
-            )}
 
-            {view === 'domain' && selectedDomain && (
-              <div className="flex flex-col gap-5">
-                <BackButton onClick={goToList} />
-
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="text-text-soft text-label-xs font-medium uppercase tracking-wide">Domain</span>
-                    <span className="text-text-strong text-label-sm truncate font-medium">{selectedDomain.name}</span>
+              {isSelectedVerified ? (
+                <div className="flex flex-col gap-5">
+                  <div className="text-success-base flex items-center gap-2 text-paragraph-sm">
+                    <RiCheckboxCircleFill className="size-5 shrink-0" aria-hidden />
+                    <span>
+                      <span className="font-medium">{selectedDomain.name}</span> is verified and ready to receive mail.
+                    </span>
                   </div>
-                  <StatusBadge verified={isSelectedVerified} />
+                  <DomainAddressStep
+                    domain={selectedDomain}
+                    existingAddresses={selectedDomainAddresses}
+                    onAdd={handleAddAddress}
+                  />
                 </div>
+              ) : (
+                <div className="flex flex-col gap-5">
+                  <DomainDnsRecords
+                    domain={fetchedDomain ?? selectedDomain}
+                    isLoading={isDomainLoading && !fetchedDomain}
+                  />
 
-                {isSelectedVerified ? (
-                  <div className="flex flex-col gap-5">
-                    <div className="text-success-base flex items-center gap-2 text-paragraph-sm">
-                      <RiCheckboxCircleFill className="size-5 shrink-0" aria-hidden />
-                      <span>
-                        <span className="font-medium">{selectedDomain.name}</span> is verified and ready to receive
-                        mail.
-                      </span>
-                    </div>
-                    <DomainAddressStep
-                      domain={selectedDomain}
-                      existingAddresses={selectedDomainAddresses}
-                      onAdd={handleAddAddress}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-5">
-                    <DomainDnsRecords
-                      domain={fetchedDomain ?? selectedDomain}
-                      isLoading={isDomainLoading && !fetchedDomain}
-                    />
-
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      mode="outline"
+                      size="xs"
+                      leadingIcon={RiRefreshLine}
+                      isLoading={verifyDomain.isPending}
+                      onClick={() => verifyDomain.mutate()}
+                    >
+                      Refresh status
+                    </Button>
+                    {isDomainConnectEnabled && autoConfigure?.available ? (
                       <Button
                         type="button"
                         variant="secondary"
                         mode="outline"
                         size="xs"
-                        leadingIcon={RiRefreshLine}
-                        isLoading={verifyDomain.isPending}
-                        onClick={() => verifyDomain.mutate()}
+                        isLoading={startAutoConfigure.isPending}
+                        onClick={handleAutoConfigure}
                       >
-                        Refresh status
+                        Auto configure DNS
                       </Button>
-                      {isDomainConnectEnabled && autoConfigure?.available ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          mode="outline"
-                          size="xs"
-                          isLoading={startAutoConfigure.isPending}
-                          onClick={handleAutoConfigure}
-                        >
-                          Auto configure DNS
-                        </Button>
-                      ) : null}
-                    </div>
-
-                    <div className="text-text-soft flex items-center gap-2 text-paragraph-xs leading-4">
-                      <LoadingIndicator size="sm" />
-                      <span>Checking automatically. Once the MX record is detected, your domain is ready to use.</span>
-                    </div>
+                    ) : null}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          <SheetFooter className="border-stroke-soft border-t">
-            {view === 'list' && (
-              <Button type="button" size="sm" leadingIcon={RiAddLine} onClick={goToAdd}>
-                Add new domain
-              </Button>
-            )}
-            {view === 'add' && (
-              <Button type="submit" form={formId} size="sm" isLoading={createDomain.isPending}>
-                Add domain
-              </Button>
-            )}
-            {view === 'domain' && (
-              <Button type="button" size="sm" variant="secondary" mode="outline" onClick={() => onOpenChange(false)}>
-                Done
-              </Button>
-            )}
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+                  <div className="text-text-soft flex items-center gap-2 text-paragraph-xs leading-4">
+                    <LoadingIndicator size="sm" />
+                    <span>Checking automatically. Once the MX record is detected, your domain is ready to use.</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <SheetFooter className="border-stroke-soft border-t">
+          {view === 'list' && (
+            <Button type="button" size="sm" leadingIcon={RiAddLine} onClick={goToAdd}>
+              Add new domain
+            </Button>
+          )}
+          {view === 'add' && (
+            <Button type="submit" form={formId} size="sm" isLoading={createDomain.isPending}>
+              Add domain
+            </Button>
+          )}
+          {view === 'domain' && (
+            <Button type="button" size="sm" variant="secondary" mode="outline" onClick={() => onOpenChange(false)}>
+              Done
+            </Button>
+          )}
+        </SheetFooter>
+      </NonModalSheet>
 
       {limitError ? (
         <DomainLimitDialog

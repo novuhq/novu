@@ -26,8 +26,7 @@ import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Input } from '@/components/primitives/input';
 import {
-  Sheet,
-  SheetContent,
+  NonModalSheet,
   SheetDescription,
   SheetFooter,
   SheetHeader,
@@ -470,98 +469,95 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetContent
-          className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onInteractOutside={handleCloseAttempt}
-          onEscapeKeyDown={handleCloseAttempt}
-        >
-          <SheetHeader className="bg-bg-weak border-stroke-soft space-y-1 border-b p-3 pr-10 text-left sm:text-left">
-            <SheetTitle className="text-text-strong text-label-md font-medium">
-              Configure external Claude MCPs
-            </SheetTitle>
-            <SheetDescription className="text-text-soft text-paragraph-xs leading-4">
-              Configure external MCPs to let your agent communicate with the tools you use.{' '}
-              <ExternalLink href="https://docs.claude.com/en/docs/agents-and-tools/mcp">Learn more</ExternalLink>
-            </SheetDescription>
-          </SheetHeader>
+      <NonModalSheet
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+        className="flex w-full flex-col gap-0 p-0 sm:max-w-[400px]"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onEscapeKeyDown={handleCloseAttempt}
+      >
+        <SheetHeader className="bg-bg-weak border-stroke-soft space-y-1 border-b p-3 pr-10 text-left sm:text-left">
+          <SheetTitle className="text-text-strong text-label-md font-medium">Configure external Claude MCPs</SheetTitle>
+          <SheetDescription className="text-text-soft text-paragraph-xs leading-4">
+            Configure external MCPs to let your agent communicate with the tools you use.{' '}
+            <ExternalLink href="https://docs.claude.com/en/docs/agents-and-tools/mcp">Learn more</ExternalLink>
+          </SheetDescription>
+        </SheetHeader>
 
-          <div className="bg-bg-white p-3">
-            <Input
-              leadingIcon={RiSearchLine}
-              placeholder="Search MCPs..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+        <div className="bg-bg-white p-3">
+          <Input
+            leadingIcon={RiSearchLine}
+            placeholder="Search MCPs..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="xs"
+            aria-label="Search MCP servers"
+          />
+        </div>
+
+        <SheetMain className="bg-bg-white flex-1 p-0">
+          {enabledList.length === 0 && availableList.length === 0 ? (
+            <div className="text-text-soft text-label-xs p-6 text-center">No MCP servers match your search.</div>
+          ) : (
+            <div className="flex flex-col pb-3">
+              {enabledList.length > 0 ? (
+                <McpSection title="Enabled MCPs">
+                  {enabledList.map((entry) => (
+                    <McpRow
+                      key={`enabled-${entry.id}`}
+                      entry={entry}
+                      action="remove"
+                      disabled={!canEdit || isSaving}
+                      badgeKindOptions={badgeKindOptions}
+                      pendingProviderManagedId={pendingProviderManagedId}
+                      pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
+                      onStagedAdd={handleStagedAdd}
+                      onProviderManagedAdd={handleProviderManagedAdd}
+                      onRemove={handleRemove}
+                    />
+                  ))}
+                </McpSection>
+              ) : null}
+
+              {availableList.length > 0 ? (
+                <McpSection title="Available MCPs" withTopSpacing={enabledList.length > 0}>
+                  {availableList.map((entry) => (
+                    <McpRow
+                      key={`available-${entry.id}`}
+                      entry={entry}
+                      action="add"
+                      disabled={!canEdit || isSaving}
+                      badgeKindOptions={badgeKindOptions}
+                      pendingProviderManagedId={pendingProviderManagedId}
+                      pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
+                      onStagedAdd={handleStagedAdd}
+                      onProviderManagedAdd={handleProviderManagedAdd}
+                      onRemove={handleRemove}
+                    />
+                  ))}
+                </McpSection>
+              ) : null}
+            </div>
+          )}
+        </SheetMain>
+
+        <SheetFooter className="bg-bg-weak border-stroke-soft flex flex-row! items-center justify-between gap-4 border-t p-3 sm:justify-between!">
+          {consoleUrl ? <ExternalLink href={consoleUrl}>View in Claude</ExternalLink> : <span />}
+          {canEdit ? (
+            <Button
+              type="button"
+              variant="secondary"
+              mode="filled"
               size="xs"
-              aria-label="Search MCP servers"
-            />
-          </div>
-
-          <SheetMain className="bg-bg-white flex-1 p-0">
-            {enabledList.length === 0 && availableList.length === 0 ? (
-              <div className="text-text-soft text-label-xs p-6 text-center">No MCP servers match your search.</div>
-            ) : (
-              <div className="flex flex-col pb-3">
-                {enabledList.length > 0 ? (
-                  <McpSection title="Enabled MCPs">
-                    {enabledList.map((entry) => (
-                      <McpRow
-                        key={`enabled-${entry.id}`}
-                        entry={entry}
-                        action="remove"
-                        disabled={!canEdit || isSaving}
-                        badgeKindOptions={badgeKindOptions}
-                        pendingProviderManagedId={pendingProviderManagedId}
-                        pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
-                        onStagedAdd={handleStagedAdd}
-                        onProviderManagedAdd={handleProviderManagedAdd}
-                        onRemove={handleRemove}
-                      />
-                    ))}
-                  </McpSection>
-                ) : null}
-
-                {availableList.length > 0 ? (
-                  <McpSection title="Available MCPs" withTopSpacing={enabledList.length > 0}>
-                    {availableList.map((entry) => (
-                      <McpRow
-                        key={`available-${entry.id}`}
-                        entry={entry}
-                        action="add"
-                        disabled={!canEdit || isSaving}
-                        badgeKindOptions={badgeKindOptions}
-                        pendingProviderManagedId={pendingProviderManagedId}
-                        pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
-                        onStagedAdd={handleStagedAdd}
-                        onProviderManagedAdd={handleProviderManagedAdd}
-                        onRemove={handleRemove}
-                      />
-                    ))}
-                  </McpSection>
-                ) : null}
-              </div>
-            )}
-          </SheetMain>
-
-          <SheetFooter className="bg-bg-weak border-stroke-soft flex flex-row! items-center justify-between gap-4 border-t p-3 sm:justify-between!">
-            {consoleUrl ? <ExternalLink href={consoleUrl}>View in Claude</ExternalLink> : <span />}
-            {canEdit ? (
-              <Button
-                type="button"
-                variant="secondary"
-                mode="filled"
-                size="xs"
-                onClick={handleSave}
-                isLoading={isSaving}
-                disabled={!hasUnsavedChanges || isSaving}
-              >
-                Save changes
-              </Button>
-            ) : null}
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+              onClick={handleSave}
+              isLoading={isSaving}
+              disabled={!hasUnsavedChanges || isSaving}
+            >
+              Save changes
+            </Button>
+          ) : null}
+        </SheetFooter>
+      </NonModalSheet>
 
       <UnsavedChangesAlertDialog
         show={showUnsavedDialog}
