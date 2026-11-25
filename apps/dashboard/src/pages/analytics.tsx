@@ -1,9 +1,9 @@
 import { useOrganization } from '@clerk/react';
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { CopilotPageEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   type ActiveSubscribersTrendDataPoint,
   type ProviderVolumeDataPoint,
@@ -19,11 +19,20 @@ import {
   useAnalyticsDateFilter,
   useMetricData,
 } from '../components/analytics';
+import { buildUsagePageView } from '../components/analytics/analytics-copilot';
 import { ActiveSubscribersTrendChart } from '../components/analytics/charts/active-subscribers-trend-chart';
 import { ProvidersByVolume } from '../components/analytics/charts/providers-by-volume';
 import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
+import {
+  isWorkflowFilterCarriedOver,
+  readAnalyticsUrlFilters,
+  type WorkflowFilterOrigin,
+  withAnalyticsUrlFilters,
+  workflowFilterOptions,
+} from '../components/analytics/utils/analytics-url-filters';
 import type { ComparePlansLocationState } from '../components/billing/plan';
 import { UsageTierSuggestionBanner } from '../components/billing/usage-limits/usage-tier-suggestion-banner';
+import { useRegisterCopilotPageView } from '../components/copilot-web-chat/copilot-page-view-store';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { Badge } from '../components/primitives/badge';
@@ -43,21 +52,60 @@ export function AnalyticsPage() {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { environmentSlug } = useParams<{ environmentSlug: string }>();
   const navigate = useNavigate();
   const isWorkflowFilterEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_WORKFLOW_FILTER_ENABLED);
 
   const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
+  // react-router keeps `searchParams` the same object until the query string changes.
+  const urlFilters = useMemo(() => readAnalyticsUrlFilters(searchParams), [searchParams]);
 
-  const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange, selectedPeriodLabel } =
-    useAnalyticsDateFilter({
-      organization,
-      subscription,
-      upgradeCtaIcon: AnalyticsUpgradeCtaIcon,
-    });
+  const { selectedDateRange, dateFilterOptions, chartsDateRange, selectedPeriodLabel } = useAnalyticsDateFilter({
+    organization,
+    subscription,
+    upgradeCtaIcon: AnalyticsUpgradeCtaIcon,
+    preferredDateRange: urlFilters.period,
+  });
 
-  const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
+  // Without the workflow filter on, a `workflows` param from a shared link is ignored, as the page shows no filter.
+  const selectedWorkflows = useMemo(
+    () => (isWorkflowFilterEnabled ? urlFilters.workflowIds : []),
+    [isWorkflowFilterEnabled, urlFilters]
+  );
   const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
+
+  const updateUrlFilters = useCallback(
+    (filters: { period?: string; workflowIds?: string[] }) => {
+      setSearchParams(
+        (current) => {
+          const currentFilters = readAnalyticsUrlFilters(current);
+
+          return withAnalyticsUrlFilters(current, {
+            period: filters.period ?? currentFilters.period,
+            workflowIds: filters.workflowIds ?? currentFilters.workflowIds,
+          });
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  // An environment switch keeps the query string and this page mounted. The slug and the filter come from one
+  // location, so a switch and a link to another environment's Usage page are told apart in the same render.
+  const filterOriginRef = useRef<WorkflowFilterOrigin>({ environmentSlug, workflowIds: urlFilters.workflowIds });
+  useEffect(() => {
+    const origin = { environmentSlug, workflowIds: urlFilters.workflowIds };
+    const previousOrigin = filterOriginRef.current;
+    filterOriginRef.current = origin;
+    if (isWorkflowFilterCarriedOver(previousOrigin, origin)) updateUrlFilters({ workflowIds: [] });
+  }, [environmentSlug, urlFilters.workflowIds, updateUrlFilters]);
+
+  useRegisterCopilotPageView(
+    CopilotPageEnum.USAGE,
+    buildUsagePageView({ period: selectedDateRange, workflowIds: selectedWorkflows })
+  );
 
   // Define report types for each section
   // Request 1: Metrics
@@ -164,7 +212,7 @@ export function AnalyticsPage() {
               title="Time period"
               options={dateFilterOptions}
               selected={[selectedDateRange]}
-              onSelect={(values) => setSelectedDateRange(values[0])}
+              onSelect={(values) => updateUrlFilters({ period: values[0] })}
               icon={CalendarIcon}
             />
             {isWorkflowFilterEnabled && (
@@ -172,14 +220,9 @@ export function AnalyticsPage() {
                 size="small"
                 type="multi"
                 title="Workflows"
-                options={
-                  workflowTemplates?.workflows?.map((workflow) => ({
-                    label: workflow.name,
-                    value: workflow._id,
-                  })) || []
-                }
+                options={workflowFilterOptions(workflowTemplates?.workflows, selectedWorkflows)}
                 selected={selectedWorkflows}
-                onSelect={(values) => setSelectedWorkflows(values)}
+                onSelect={(values) => updateUrlFilters({ workflowIds: values })}
               />
             )}
           </motion.div>
