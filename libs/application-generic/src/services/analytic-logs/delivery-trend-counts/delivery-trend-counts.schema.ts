@@ -6,7 +6,7 @@ const schemaDefinition = {
   date: { type: CHDate() },
   organization_id: { type: CHString() },
   environment_id: { type: CHString() },
-  workflow_id: { type: CHString() },
+  workflow_id: { type: CHString('') },
   step_type: { type: CHLowCardinality(CHString()) },
   count: { type: CHUInt64() },
   expires_at: { type: CHDate() },
@@ -23,7 +23,7 @@ export const DELIVERY_TREND_COUNTS_ORDER_BY: (keyof typeof schemaDefinition)[] =
 const clickhouseSchemaOptions = {
   table_name: DELIVERY_TREND_COUNTS_TABLE_NAME,
   engine: 'SummingMergeTree',
-  order_by: `(${DELIVERY_TREND_COUNTS_ORDER_BY.join(', ')})` as any,
+  order_by: `(${DELIVERY_TREND_COUNTS_ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(date)', 'TTL expires_at'],
 };
 
