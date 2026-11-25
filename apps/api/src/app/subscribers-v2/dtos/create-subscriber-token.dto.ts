@@ -14,6 +14,7 @@ import {
   Max,
   Min,
   ValidateBy,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { BaseSubscriberFieldsDto } from '../../shared/dtos/base-subscriber-fields.dto';
@@ -86,7 +87,7 @@ export class CreateSubscriberTokenRequestDto {
       `${TOPIC_GRANT_MAX_SECONDS} seconds. Cannot be combined with ${LOGIN_FIELDS.join(', ')}.`,
     example: 'ticket:12345',
   })
-  @IsOptional()
+  @ValidateIf((request: CreateSubscriberTokenRequestDto) => request.topic !== undefined)
   @IsString()
   @Length(1, 100)
   @Matches(VALID_ID_REGEX, {

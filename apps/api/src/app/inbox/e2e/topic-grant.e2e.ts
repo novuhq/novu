@@ -98,14 +98,17 @@ describe('Subscribe with a topic grant - /inbox/topics/:topicKey/subscriptions (
     expect(res.body).to.include(INVALID_GRANT);
   });
 
-  it('should refuse an expired grant with topic_grant_expired', async () => {
+  it('should refuse an expired grant as expired, and an expired grant for another topic as invalid', async () => {
     const topicGrant = await mint(session, 'sub-ada', { topic: 'ticket:1', expiresIn: 1 });
     await new Promise((resolve) => setTimeout(resolve, 2100));
 
-    const res = await subscribe('ticket:1', { topicGrant });
+    const expired = await subscribe('ticket:1', { topicGrant });
+    const otherTopic = await subscribe('ticket:2', { topicGrant });
 
-    expect(res.status).to.equal(403);
-    expect(res.body).to.include({ statusCode: 403, error: 'topic_grant_expired' });
+    expect(expired.status).to.equal(403);
+    expect(expired.body).to.include({ statusCode: 403, error: 'topic_grant_expired' });
+    expect(otherTopic.status).to.equal(403);
+    expect(otherTopic.body).to.include(INVALID_GRANT);
   });
 
   it('should refuse a grant sent as the subscriber token for an Inbox session', async () => {

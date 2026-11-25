@@ -162,6 +162,7 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     ['a topic grant longer than a minute', 'expiresIn', { topic: 'ticket:1', expiresIn: 61 }],
     ['an invalid topic key', 'topic', { topic: 'ticket 1!' }],
     ['an empty topic key', 'topic', { topic: '' }],
+    ['a null topic with a scope', 'topic', { topic: null, scope: ['channels:shared'] }],
     ['a topic key longer than 100 characters', 'topic', { topic: 'a'.repeat(101) }],
     ['a misspelled field', 'expiresin', { expiresin: 600 }],
   ];

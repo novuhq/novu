@@ -57,25 +57,25 @@ export class SubscribeToTopic {
 
   private assertTopicGrant(command: SubscribeToTopicCommand, topicGrant: string): void {
     const verification = this.novuTokens.verify('subscriberTopicGrant', topicGrant);
-    if (!verification.ok && verification.reason === 'expired') {
-      throw new ForbiddenException({
-        statusCode: 403,
-        message: 'The topic grant has expired.',
-        error: 'topic_grant_expired',
-      });
-    }
-
-    const claims = verification.ok ? verification.claims : undefined;
-    if (
-      claims?.aud !== 'novu' ||
-      claims.iss !== command.environmentId ||
-      claims.sub !== command.subscriberId ||
-      claims.topic !== command.topicKey
-    ) {
+    const isForThisSubscription =
+      'claims' in verification &&
+      verification.claims.aud === 'novu' &&
+      verification.claims.iss === command.environmentId &&
+      verification.claims.sub === command.subscriberId &&
+      verification.claims.topic === command.topicKey;
+    if (!isForThisSubscription) {
       throw new ForbiddenException({
         statusCode: 403,
         message: 'The topic grant does not allow this subscription.',
         error: 'topic_grant_invalid',
+      });
+    }
+
+    if (!verification.ok) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        message: 'The topic grant has expired.',
+        error: 'topic_grant_expired',
       });
     }
   }

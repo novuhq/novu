@@ -19376,7 +19376,7 @@
             "secretKey": []
           }
         ],
-        "summary": "Create a subscriber login token",
+        "summary": "Create a subscriber token",
         "tags": ["Subscribers"],
         "x-speakeasy-group": "Subscribers.Tokens",
         "x-speakeasy-name-override": "create"

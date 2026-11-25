@@ -4,20 +4,12 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   NovuTokens,
-  SignedToken,
   SubscriberLoginClaims,
   SubscriberTopicGrantClaims,
   TOKEN_KINDS,
 } from '../../../shared/services/novu-tokens.service';
 import { CreateSubscriberTokenResponseDto } from '../../dtos/create-subscriber-token-response.dto';
 import { CreateSubscriberTokenCommand } from './create-subscriber-token.command';
-
-interface MintedToken {
-  signed: SignedToken;
-  jti: string;
-  logFields: Record<string, unknown>;
-  logMessage: string;
-}
 
 @Injectable()
 export class CreateSubscriberToken {
@@ -40,28 +32,12 @@ export class CreateSubscriberToken {
       throw new NotFoundException();
     }
 
-    const { signed, jti, logFields, logMessage } =
-      command.request.topic === undefined
-        ? this.mintLogin(command)
-        : this.mintTopicGrant(command, command.request.topic);
-    const expiresAt = signed.expiresAt.toISOString();
-
-    this.logger.info(
-      {
-        jti,
-        subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        ...logFields,
-        expiresAt,
-      },
-      logMessage
-    );
-
-    return { token: signed.token, expiresAt };
+    return command.request.topic === undefined
+      ? this.mintLogin(command)
+      : this.mintTopicGrant(command, command.request.topic);
   }
 
-  private mintLogin(command: CreateSubscriberTokenCommand): MintedToken {
+  private mintLogin(command: CreateSubscriberTokenCommand): CreateSubscriberTokenResponseDto {
     const { context, subscriber, expiresIn } = command.request;
     const scope = command.request.scope ?? [];
     const claims: SubscriberLoginClaims = {
@@ -78,11 +54,24 @@ export class CreateSubscriberToken {
       claims,
       expiresIn ?? TOKEN_KINDS.subscriberLogin.maxLifetimeSeconds
     );
+    const expiresAt = signed.expiresAt.toISOString();
 
-    return { signed, jti: claims.jti, logFields: { scope }, logMessage: 'Subscriber login token created' };
+    this.logger.info(
+      {
+        jti: claims.jti,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        scope,
+        expiresAt,
+      },
+      'Subscriber login token created'
+    );
+
+    return { token: signed.token, expiresAt };
   }
 
-  private mintTopicGrant(command: CreateSubscriberTokenCommand, topic: string): MintedToken {
+  private mintTopicGrant(command: CreateSubscriberTokenCommand, topic: string): CreateSubscriberTokenResponseDto {
     const claims: SubscriberTopicGrantClaims = {
       iss: command.environmentId,
       aud: 'novu',
@@ -95,7 +84,20 @@ export class CreateSubscriberToken {
       claims,
       command.request.expiresIn ?? TOKEN_KINDS.subscriberTopicGrant.maxLifetimeSeconds
     );
+    const expiresAt = signed.expiresAt.toISOString();
 
-    return { signed, jti: claims.jti, logFields: { topic }, logMessage: 'Subscriber topic grant created' };
+    this.logger.info(
+      {
+        jti: claims.jti,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        topic,
+        expiresAt,
+      },
+      'Subscriber topic grant created'
+    );
+
+    return { token: signed.token, expiresAt };
   }
 }

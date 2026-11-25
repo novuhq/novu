@@ -468,7 +468,7 @@ export class SubscribersController {
   @ExcludeFromIdempotency()
   @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
   @ApiOperation({
-    summary: 'Create a subscriber login token',
+    summary: 'Create a subscriber token',
     description: `Create a short-lived, Novu-signed login token for the subscriber identified by **subscriberId**.
     Call it from your backend with your secret key, then pass the token to the browser, which exchanges it for an Inbox session.
     Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.
