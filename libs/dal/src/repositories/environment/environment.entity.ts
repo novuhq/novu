@@ -56,6 +56,8 @@ export class EnvironmentEntity {
 
   webhookAppId?: string;
 
+  subscriberTokens?: { requiredAt: Date };
+
   createdAt?: string;
 
   updatedAt?: string;

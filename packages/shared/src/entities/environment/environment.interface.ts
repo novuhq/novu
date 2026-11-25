@@ -30,8 +30,21 @@ export interface IEnvironment {
 
   webhookAppId?: string;
 
+  subscriberTokens?: ISubscriberTokensSettings;
+
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Present only while the environment requires signed subscriber tokens; absent means off. */
+export interface ISubscriberTokensSettings {
+  requiredAt: string | Date;
+}
+
+export function isSubscriberTokensRequired(
+  environment: { subscriberTokens?: { requiredAt?: unknown } | null } | null | undefined
+): boolean {
+  return Boolean(environment?.subscriberTokens?.requiredAt);
 }
 
 export interface IWidgetSettings {
