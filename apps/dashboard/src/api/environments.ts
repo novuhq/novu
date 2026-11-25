@@ -115,6 +115,25 @@ export async function updateBridgeUrl({ environment, url }: { environment: IEnvi
   return put(`/environments/${environment._id}`, { body: { bridge: { url } } });
 }
 
+export type SubscriberTokensSetting = {
+  required: boolean;
+  requiredAt?: string;
+};
+
+export async function updateSubscriberTokensSetting({
+  environment,
+  required,
+}: {
+  environment: IEnvironment;
+  required: boolean;
+}): Promise<SubscriberTokensSetting> {
+  const { data } = await put<{ data: SubscriberTokensSetting }>(`/environments/${environment._id}/subscriber-tokens`, {
+    body: { required },
+  });
+
+  return data;
+}
+
 export async function getApiKeys({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
   // TODO: This is a technical debt on the API side.
   // This endpoints should be /environments/:environmentId/api-keys

@@ -11,6 +11,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
+import { SubscriberTokensCard } from '@/components/subscriber-tokens/subscriber-tokens-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getRegionConfig, useRegion } from '@/context/region';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -54,6 +55,7 @@ export function ApiKeysPage() {
   const has = useHasPermission();
   const canRegenerateApiKeys = has({ permission: PermissionsEnum.API_KEY_WRITE });
   const isMultipleSecretKeysAllowed = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTIPLE_SECRET_KEYS_ALLOWED);
+  const isSubscriberTokensEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBER_TOKENS_ENABLED);
   const hasMaxSecretKeys = (apiKeys?.length ?? 0) >= MAX_SECRET_KEYS;
 
   const form = useForm<ApiKeysFormData>({
@@ -132,6 +134,7 @@ export function ApiKeysPage() {
                 </div>
               </CardContent>
             </Card>
+            {isSubscriberTokensEnabled && <SubscriberTokensCard environment={currentEnvironment} />}
             <Card className="w-full overflow-hidden shadow-none">
               <CardHeader>
                 Secret Keys
