@@ -7,8 +7,6 @@ import {
   Job,
   PinoLogger,
   SqsService,
-  Store,
-  storage,
   TriggerEvent,
   WorkerOptions,
   WorkerProcessor,
@@ -16,6 +14,7 @@ import {
   WorkflowWorkerService,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { runInJobTelemetryContext } from './job-telemetry-context';
 
 const nr = require('newrelic');
 
@@ -101,7 +100,9 @@ export class WorkflowWorker extends WorkflowWorkerService {
           function processTask() {
             const transaction = nr.getTransaction();
 
-            storage.run(new Store(PinoLogger.root), () => {
+            const { organizationId, environmentId, transactionId } = data;
+
+            runInJobTelemetryContext({ organizationId, environmentId, transactionId }, () => {
               _this.triggerEventUsecase
                 .execute(data)
                 .then(resolve)

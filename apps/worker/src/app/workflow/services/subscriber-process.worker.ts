@@ -7,15 +7,14 @@ import {
   Job,
   PinoLogger,
   SqsService,
-  Store,
   SubscriberProcessWorkerService,
-  storage,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
+import { runInJobTelemetryContext } from './job-telemetry-context';
 
 const nr = require('newrelic');
 
@@ -107,7 +106,9 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
           function processTask() {
             const transaction = nr.getTransaction();
 
-            storage.run(new Store(PinoLogger.root), () => {
+            const { organizationId, environmentId, transactionId } = data;
+
+            runInJobTelemetryContext({ organizationId, environmentId, transactionId }, () => {
               _this.subscriberJobBoundUsecase
                 .execute(data)
                 .then(resolve)
