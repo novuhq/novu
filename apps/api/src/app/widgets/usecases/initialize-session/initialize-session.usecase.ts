@@ -8,7 +8,7 @@ import {
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
@@ -94,7 +94,7 @@ export class InitializeSession {
 
     void this.subscriberSessionAuthStatsService.record({
       environmentId: environment._id,
-      hmacValid,
+      authMethod: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE,
       clientVersion: command.clientVersion,
       source: SubscriberSessionSourceEnum.LEGACY_WIDGET,
     });

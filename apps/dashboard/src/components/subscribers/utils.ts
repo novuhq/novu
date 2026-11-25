@@ -1,9 +1,12 @@
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, ISubscriberResponseDto } from '@novu/shared';
 
+/** The first and last name, joined by a space; empty when the subscriber has neither. */
+export const getSubscriberFullName = (subscriber: { firstName?: string | null; lastName?: string | null }) =>
+  `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
+
 export const getSubscriberTitle = (subscriber: ISubscriberResponseDto | SubscriberResponseDto) => {
-  const fullName = `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  return fullName || subscriber.email || subscriber.phone || subscriber.subscriberId;
+  return getSubscriberFullName(subscriber) || subscriber.email || subscriber.phone || subscriber.subscriberId;
 };
 
 /**

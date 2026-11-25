@@ -119,6 +119,7 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import { sessionConnectContext } from './utils/session-connect-context';
 import {
   stripHiddenChannelsFromInboxPreference,
   stripHiddenPreferenceChannels,
@@ -888,13 +889,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
-        // A session that already carries resolved `contextKeys` is the trusted
-        // context source; the raw `body.context` is only used (and re-verified via
-        // `contextHash`) when the session has none.
-        context: body.context,
-        contextKeys: subscriberSession.contextKeys,
-        contextHash: body.contextHash,
-        isContextValidated: !!subscriberSession.contextKeys?.length,
+        ...sessionConnectContext(subscriberSession, body),
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -917,13 +912,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
-        // A session that already carries resolved `contextKeys` is the trusted
-        // context source; the raw `body.context` is only used (and re-verified via
-        // `contextHash`) when the session has none.
-        context: body.context,
-        contextKeys: subscriberSession.contextKeys,
-        contextHash: body.contextHash,
-        isContextValidated: !!subscriberSession.contextKeys?.length,
+        ...sessionConnectContext(subscriberSession, body),
         userScope: body.userScope,
       })
     );
@@ -968,13 +957,7 @@ export class InboxController {
             organizationId: subscriberSession._organizationId,
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: subscriberSession.subscriberId,
-            // A session that already carries resolved `contextKeys` is the trusted
-            // context source; the raw `body.context` is only used (and re-verified via
-            // `contextHash`) when the session has none.
-            context: body.context,
-            contextKeys: subscriberSession.contextKeys,
-            contextHash: body.contextHash,
-            isContextValidated: !!subscriberSession.contextKeys?.length,
+            ...sessionConnectContext(subscriberSession, body),
           })
         );
 

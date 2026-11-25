@@ -11,8 +11,6 @@ import {
   SqsService,
   StandardWorkerService,
   StepRunV2Writer,
-  Store,
-  storage,
   UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -28,6 +26,7 @@ import {
   SetJobAsFailedCommand,
   WebhookFilterBackoffStrategy,
 } from '../usecases';
+import { runInJobTelemetryContext } from './job-telemetry-context';
 
 const nr = require('newrelic');
 
@@ -153,7 +152,11 @@ export class StandardWorker extends StandardWorkerService {
       const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
 
       if (isKillSwitchEnabled) {
-        Logger.log(`Kill switch enabled for organizationId ${data._organizationId}. Skipping job.`, LOG_CONTEXT);
+        Logger.log(
+          { organizationId: data._organizationId, environmentId: data._environmentId },
+          `Kill switch enabled for organizationId ${data._organizationId}. Skipping job.`,
+          LOG_CONTEXT
+        );
 
         return;
       }
@@ -176,7 +179,10 @@ export class StandardWorker extends StandardWorkerService {
         nr.startBackgroundTransaction(transactionName, 'Jobs Worker', function processTask() {
           const transaction = nr.getTransaction();
 
-          storage.run(new Store(PinoLogger.root), () => {
+          const { organizationId, environmentId } = minimalJobData;
+
+          // RunJob adds the transaction and job ids once it has loaded the job.
+          runInJobTelemetryContext({ organizationId, environmentId }, () => {
             _this.runJob
               .execute(RunJobCommand.create({ ...minimalJobData, job: job ?? undefined }))
               .then(resolve)

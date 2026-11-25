@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
-import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
+import { EnvironmentRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { EmailBlockTypeEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -11,6 +11,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
   let novuClient: Novu;
   const environmentRepository = new EnvironmentRepository();
   const workflowRepository = new NotificationTemplateRepository();
+  const layoutRepository = new LayoutRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -477,6 +478,56 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     // Should process all available resources (fallback to full publish)
     expect(body.data.summary.resources).to.equal(1);
     expect(body.data.summary.skipped).to.equal(1); // Dry run skips
+  });
+
+  it('should create a layout once when several email steps of a new workflow share it', async () => {
+    const prodEnv = await environmentRepository.findOne({
+      _parentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    if (!prodEnv) {
+      throw new Error('Production environment not found');
+    }
+
+    const { result: layout } = await novuClient.layouts.create({
+      layoutId: 'shared-layout',
+      name: 'Shared Layout',
+    });
+
+    const emailStep = (name: string) => ({
+      name,
+      type: 'email' as const,
+      controlValues: {
+        subject: `${name} subject`,
+        body: `${name} body`,
+        layoutId: layout.layoutId,
+      },
+    });
+
+    await createWorkflow({
+      name: 'Workflow With Shared Layout',
+      workflowId: 'workflow-with-shared-layout',
+      active: true,
+      steps: [emailStep('First Email'), emailStep('Second Email'), emailStep('Third Email')],
+      source: WorkflowCreationSourceEnum.Editor,
+    });
+
+    await session.testAgent
+      .post(`/v2/environments/${prodEnv._id}/publish`)
+      .send({
+        sourceEnvironmentId: session.environment._id,
+        dryRun: false,
+      })
+      .expect(200);
+
+    const prodLayouts = await layoutRepository.find({
+      _environmentId: prodEnv._id,
+      _organizationId: session.organization._id,
+      identifier: layout.layoutId,
+    });
+
+    expect(prodLayouts).to.have.lengthOf(1);
   });
 
   /*

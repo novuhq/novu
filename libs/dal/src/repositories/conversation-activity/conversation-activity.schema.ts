@@ -66,6 +66,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     toolData: {
       type: Schema.Types.Mixed,
     },
+    accessRefused: {
+      type: Schema.Types.Boolean,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

@@ -1,11 +1,11 @@
-import { type FC, type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useRef, useState } from 'react';
-import type { IconType } from 'react-icons';
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { type CopilotPanelCopy, getCopilotPanelCopy } from './copilot-pages';
 import {
   CopilotAssistantMessage,
   CopilotErrorNotice,
@@ -15,51 +15,71 @@ import {
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
 
-export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };
+// The raised white surface of the hero's icon tile and the suggestions list.
+const RAISED_SURFACE_SHADOW =
+  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
 
-const DEFAULT_SUGGESTIONS: CopilotSuggestion[] = [{ label: 'Autocomplete workflow' }, { label: 'Audit this workflow' }];
+/** A faint 24px grid and glow behind the icon tile, fading out from the middle. */
+function EmptyHeroBackdrop() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 -top-[60px] h-[300px] overflow-hidden opacity-40 [mask-image:radial-gradient(closest-side,black,rgb(0_0_0/0.4)_55%,transparent)]"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--stroke-soft))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--stroke-soft))_1px,transparent_1px)] bg-[size:24px_24px] bg-[position:12px_12px] opacity-20" />
+      <div className="absolute left-1/2 top-10 h-40 w-[220px] -translate-x-1/2 rounded-full bg-feature-base opacity-[0.03] blur-[30px]" />
+    </div>
+  );
+}
 
 function EmptyState({
+  copy,
   suggestions,
   onSuggestion,
 }: {
-  suggestions: CopilotSuggestion[];
+  copy: CopilotPanelCopy['emptyState'];
+  suggestions: CopilotPanelCopy['suggestions'];
   onSuggestion: (text: string) => void;
 }) {
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
-      <div className="relative flex flex-1 flex-col items-center justify-center gap-2 px-4 py-6 text-center">
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--stroke-soft))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--stroke-soft))_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
-        />
-        <div className="relative flex size-11 items-center justify-center rounded-xl border border-stroke-soft bg-bg-white shadow-xs">
-          <BroomSparkle className="size-6" />
+    // `my-auto` rather than `justify-center`, which would push the top out of reach once a short panel scrolls.
+    <div className="flex flex-1 flex-col overflow-y-auto px-4 pb-3 pt-4">
+      <div className="my-auto flex flex-col gap-4">
+        <div className="relative flex flex-col items-center gap-3 px-4 pb-5 pt-10 text-center">
+          <EmptyHeroBackdrop />
+          <div
+            className={cn(
+              'relative flex size-11 items-center justify-center rounded-xl bg-bg-white',
+              RAISED_SURFACE_SHADOW
+            )}
+          >
+            <BroomSparkle className="size-[22px]" />
+          </div>
+          <div className="relative flex w-full flex-col gap-1">
+            <div className="text-label-md text-text-strong">{copy.title}</div>
+            <p className="text-label-xs text-text-soft">{copy.body}</p>
+          </div>
         </div>
-        <div className="relative text-label-sm text-text-strong">Novu Copilot</div>
-        <p className="relative text-xs leading-4 text-text-soft">
-          Suggests improvements, fills gaps, and applies best practices as you build.
-        </p>
-      </div>
-      <div className="flex flex-col rounded-lg border border-stroke-soft bg-bg-white">
-        <div className="px-3 pb-1 pt-2.5 text-[10px] font-medium uppercase leading-4 tracking-wider text-text-soft">
-          Try asking
-        </div>
-        <div className="flex flex-col divide-y divide-stroke-soft">
-          {suggestions.map(({ label, icon: Icon }) => (
-            <button
-              key={label}
-              type="button"
-              title={label}
-              onClick={() => onSuggestion(label)}
-              className="flex h-9 items-center gap-2 px-3 text-left text-xs leading-4 text-text-sub outline-none last:rounded-b-lg hover:bg-bg-weak hover:text-text-strong focus-visible:bg-bg-weak focus-visible:text-text-strong"
-            >
-              {Icon && <Icon className="size-3.5 shrink-0 text-text-soft" />}
-              <span className="min-w-0 flex-1 truncate">{label}</span>
-              <RiArrowRightSLine className="size-4 shrink-0 text-text-soft" />
-            </button>
-          ))}
-        </div>
+        {suggestions.length > 0 && (
+          <div className="relative flex flex-col rounded-[10px] border border-stroke-white bg-bg-weak p-1">
+            <div className="px-2 py-1.5 font-code text-code-xs uppercase text-text-sub">Try asking</div>
+            <div className={cn('flex flex-col overflow-hidden rounded-md bg-bg-white', RAISED_SURFACE_SHADOW)}>
+              {suggestions.map(({ label, icon: Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  title={label}
+                  onClick={() => onSuggestion(label)}
+                  className="flex items-center gap-2.5 border-t border-stroke-weak py-2 pl-3 pr-2.5 text-left outline-none first:border-t-0 hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-stroke-strong"
+                >
+                  {Icon && <Icon className="size-5 shrink-0 text-text-sub" />}
+                  <span className="min-w-0 flex-1 truncate text-label-xs text-text-strong">{label}</span>
+                  <RiArrowRightSLine className="size-3.5 shrink-0 text-text-sub" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -104,14 +124,21 @@ function SendFailureStrip({
   );
 }
 
-function Composer({ hasMessages }: { hasMessages: boolean }) {
+function Composer({
+  hasMessages,
+  placeholder,
+  chip,
+}: {
+  hasMessages: boolean;
+  placeholder: string;
+  chip: CopilotPanelCopy['chip'];
+}) {
   const {
     isAvailable,
     chat,
     sendMessage,
     retry,
     stop,
-    pageContext,
     draft: value,
     setDraft: setValue,
     isBusy,
@@ -124,7 +151,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
   // The failure stays until retried, dismissed or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
-  const contextLabel = [pageContext?.workflowLabel, pageContext?.stepLabel].filter(Boolean).join(' / ');
+  const ChipIcon = chip?.icon;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -170,7 +197,7 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
       ) : (
         <CopilotSlackConnectBanner />
       )}
-      <div className="flex flex-col gap-2 rounded-md bg-bg-white p-2 shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
+      <div className="flex flex-col rounded-md bg-bg-white shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
         <textarea
           ref={textareaRef}
           value={value}
@@ -178,13 +205,14 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
           aria-label="Message Copilot"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask anything about this page…'}
-          className="min-h-8 w-full resize-none bg-transparent text-xs leading-4 text-text-strong outline-none placeholder:text-text-soft"
+          placeholder={hasMessages ? 'Ask a follow-up…' : placeholder}
+          className="w-full resize-none bg-transparent px-3 pt-3 text-label-xs text-text-strong outline-none placeholder:text-text-soft"
         />
-        <div className="flex items-center justify-between gap-2">
-          {contextLabel ? (
-            <span className="max-w-[260px] truncate rounded-md bg-bg-weak px-1.5 py-0.5 font-mono text-[10px] leading-4 text-text-sub">
-              {contextLabel}
+        <div className="flex items-center justify-between gap-2 p-1.5">
+          {chip ? (
+            <span className="flex min-w-0 max-w-[260px] items-center gap-1 rounded-md bg-bg-weak py-1 pl-1.5 pr-2 text-label-xs text-text-sub">
+              {ChipIcon && <ChipIcon className="size-3 shrink-0" aria-hidden />}
+              <span className="truncate">{chip.label}</span>
             </span>
           ) : (
             <span />
@@ -209,10 +237,10 @@ function Composer({ hasMessages }: { hasMessages: boolean }) {
               onClick={submit}
               className={cn(
                 'flex size-6 items-center justify-center rounded-md',
-                canSend ? 'bg-bg-strong text-text-white hover:opacity-90' : 'bg-bg-soft text-text-soft'
+                canSend ? 'bg-bg-strong text-text-white hover:opacity-90' : 'bg-bg-weak text-text-disabled'
               )}
             >
-              <RiCornerDownLeftLine className="size-3.5" />
+              <RiCornerDownLeftLine className="size-4" />
             </button>
           )}
         </div>
@@ -294,8 +322,16 @@ function CenteredStatus({ children }: { children: ReactNode }) {
   return <div className="flex flex-1 items-center justify-center">{children}</div>;
 }
 
-function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; suggestions: CopilotSuggestion[] }) {
-  const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface } = useCopilotWebChat();
+function ThreadBody({
+  hasMessages,
+  emptyState,
+  suggestions,
+}: {
+  hasMessages: boolean;
+  emptyState: CopilotPanelCopy['emptyState'];
+  suggestions: CopilotPanelCopy['suggestions'];
+}) {
+  const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface, pageContext } = useCopilotWebChat();
   const track = useTelemetry();
 
   if (hasMessages || hasRunError) return <Thread />;
@@ -326,24 +362,29 @@ function ThreadBody({ hasMessages, suggestions }: { hasMessages: boolean; sugges
 
   return (
     <EmptyState
+      copy={emptyState}
       suggestions={suggestions}
       onSuggestion={(text) => {
-        track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: text, surface });
+        track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: text, surface, page: pageContext?.page });
         void sendMessage(text);
       }}
     />
   );
 }
 
-/** The conversation, its empty state and the composer, shared by the popover and the sidebar. */
-export function CopilotThreadPanel({ suggestions = DEFAULT_SUGGESTIONS }: { suggestions?: CopilotSuggestion[] }) {
-  const { chat } = useCopilotWebChat();
+/**
+ * The conversation, its empty state and the composer, shared by the popover and the sidebar. On a Copilot page the
+ * page's copy and suggestions replace the workflow editor's.
+ */
+export function CopilotThreadPanel() {
+  const { chat, pageContext } = useCopilotWebChat();
   const hasMessages = (chat?.messages.length ?? 0) > 0;
+  const copy = getCopilotPanelCopy(pageContext);
 
   return (
     <>
-      <ThreadBody hasMessages={hasMessages} suggestions={suggestions} />
-      <Composer hasMessages={hasMessages} />
+      <ThreadBody hasMessages={hasMessages} emptyState={copy.emptyState} suggestions={copy.suggestions} />
+      <Composer hasMessages={hasMessages} placeholder={copy.placeholder} chip={copy.chip} />
     </>
   );
 }

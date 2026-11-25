@@ -1,6 +1,6 @@
-import { Accessor, createEffect, createMemo, createSignal, Setter } from 'solid-js';
+import { Accessor, createEffect, createMemo, createSignal, Setter, untrack } from 'solid-js';
 import type { Novu } from '../../../novu';
-import { NotificationFilter, Redirect } from '../../../types';
+import { NotificationFilter, Redirect, Session } from '../../../types';
 import { isValidInAppRedirectTarget, isValidInAppRedirectUrl } from '../../../utils/in-app-redirect-url';
 import {
   NotificationStatus,
@@ -166,10 +166,7 @@ export const createInboxStore = (args: CreateInboxStoreArgs): InboxStore => {
     setPreferencesSort(() => args.preferencesSort());
   });
 
-  createNovuEventEffect(args.novu, 'session.initialize.resolved', ({ data }) => {
-    if (!data) {
-      return;
-    }
+  const applySession = (data: Session) => {
     const storedKeylessIdentifier = window.localStorage.getItem('novu_keyless_application_identifier');
 
     setHideBranding(data.removeNovuBranding);
@@ -189,6 +186,23 @@ export const createInboxStore = (args: CreateInboxStoreArgs): InboxStore => {
       setIsKeyless(false);
       setApplicationIdentifier(configuredIdentifier);
     }
+  };
+
+  // The session may have resolved before this Inbox mounted (a `NovuProvider` that opens it at page load, an Inbox
+  // shown on a click), so apply the one already there before listening for the next.
+  createEffect(() => {
+    const session = args.novu().session;
+    if (session) {
+      untrack(() => applySession(session));
+    }
+  });
+
+  createNovuEventEffect(args.novu, 'session.initialize.resolved', ({ data }) => {
+    if (!data) {
+      return;
+    }
+
+    applySession(data);
   });
 
   return {

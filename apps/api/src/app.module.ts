@@ -54,6 +54,7 @@ import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { AnalyticsLogsGuard } from './app/shared/framework/analytics-logs.guard';
 import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
+import { TelemetryContextInterceptor } from './app/shared/framework/telemetry-context.interceptor';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { SharedModule } from './app/shared/shared.module';
 import { StepResolversModule } from './app/step-resolvers/step-resolvers.module';
@@ -196,7 +197,12 @@ const providers: Provider[] = [
     provide: APP_GUARD,
     useClass: AnalyticsLogsGuard,
   },
-  // First, so a revoked key is rejected before rate limits, idempotency or any handler run.
+  // First, so every later interceptor, the handler and the exception filter log with the organization and environment.
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: TelemetryContextInterceptor,
+  },
+  // Before the rest, so a revoked key is rejected before rate limits, idempotency or any handler run.
   {
     provide: APP_INTERCEPTOR,
     useClass: ApiKeyRevocationInterceptor,

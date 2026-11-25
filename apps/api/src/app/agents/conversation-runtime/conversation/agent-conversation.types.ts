@@ -18,6 +18,7 @@ export interface PersistInboundMessageParams {
   identifier?: string;
   /** Pre-allocated conversation event sequence; minted at persist time when absent */
   sequence?: number;
+  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }
@@ -29,6 +30,7 @@ export interface UpdateInboundMessageParams {
   richContent?: Record<string, unknown>;
   hasPlatformAttachments?: boolean;
   editedAt?: string;
+  accessRefused?: boolean;
   environmentId: string;
   organizationId: string;
 }
@@ -60,6 +62,12 @@ export interface ImportInboundMessage {
   senderName?: string;
   content: string;
   platformMessageId: string;
+  /** The author's platform user id, for the access check. */
+  authorUserId: string;
+}
+
+export interface ImportedInboundMessage extends ImportInboundMessage {
+  accessRefused: boolean;
 }
 
 export interface ImportInboundMessagesParams {
@@ -68,6 +76,8 @@ export interface ImportInboundMessagesParams {
   integrationId: string;
   platformThreadId: string;
   messages: ImportInboundMessage[];
+  /** Runs only for messages that are not stored yet. */
+  isRefused: (authorUserId: string) => Promise<boolean>;
   environmentId: string;
   organizationId: string;
 }

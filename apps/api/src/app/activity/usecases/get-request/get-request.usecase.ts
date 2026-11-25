@@ -67,7 +67,7 @@ export class GetRequest {
         eventType: trace.event_type,
         title: trace.title,
         message: trace.message ?? '',
-        rawData: trace.raw_data ?? '',
+        rawData: command.includeRawTraces ? (trace.raw_data ?? '') : '',
         status: trace.status,
         entityType: trace.entity_type,
         entityId: trace.entity_id,

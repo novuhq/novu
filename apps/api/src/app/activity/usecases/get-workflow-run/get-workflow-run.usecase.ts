@@ -13,7 +13,11 @@ import { JobEntity, JobRepository, NotificationEntity, NotificationRepository } 
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
-import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import {
+  mapTraceToExecutionDetailDto,
+  mapWorkflowRunStatusToDto,
+  toDeliveryLifecycleDetail,
+} from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
@@ -40,6 +44,7 @@ const workflowRunSelectColumns = [
   'created_at',
   'updated_at',
   'delivery_lifecycle_status',
+  'delivery_lifecycle_detail',
   'severity',
   'critical',
   'context_keys',
@@ -121,7 +126,7 @@ export class GetWorkflowRun {
         this.getStepRunsForWorkflowRun(command, workflowRun),
         this.getOverrides(workflowRun.transaction_id, command),
       ]);
-      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides);
+      const workflowRunDto = this.mapWorkflowRunToDto(workflowRun, stepRuns, overrides, command.includeRawTraces);
 
       return workflowRunDto;
     } catch (error) {
@@ -355,17 +360,19 @@ export class GetWorkflowRun {
     }
   }
 
-  private mapStepRunToDto(stepRun: IStepRunWithDetails): StepRunDto {
+  private mapStepRunToDto(stepRun: IStepRunWithDetails, includeRawTraces: boolean): StepRunDto {
     return {
       stepRunId: stepRun.step_run_id,
       stepId: stepRun.step_id,
       stepType: stepRun.step_type,
       providerId: stepRun.provider_id || undefined,
       status: stepRun.status,
+      errorCode: stepRun.error_code || undefined,
+      errorMessage: stepRun.error_message || undefined,
       createdAt: new Date(stepRun.created_at),
       updatedAt: new Date(stepRun.updated_at),
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
-      executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
+      executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || [], includeRawTraces),
       scheduleExtensionsCount: stepRun.schedule_extensions_count,
     };
   }
@@ -373,7 +380,8 @@ export class GetWorkflowRun {
   private mapWorkflowRunToDto(
     workflowRun: WorkflowRunFetchResult,
     stepRuns: IStepRunWithDetails[],
-    overrides: Record<string, unknown>
+    overrides: Record<string, unknown>,
+    includeRawTraces: boolean
   ): GetWorkflowRunResponseDto {
     return {
       id: workflowRun.workflow_run_id,
@@ -385,12 +393,13 @@ export class GetWorkflowRun {
       subscriberId: workflowRun.external_subscriber_id || undefined,
       status: mapWorkflowRunStatusToDto(workflowRun.status),
       deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
+      deliveryLifecycleDetail: toDeliveryLifecycleDetail(workflowRun.delivery_lifecycle_detail),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
-      steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
+      steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun, includeRawTraces)),
       severity: workflowRun.severity,
       critical: workflowRun.critical,
       contextKeys: workflowRun.context_keys,

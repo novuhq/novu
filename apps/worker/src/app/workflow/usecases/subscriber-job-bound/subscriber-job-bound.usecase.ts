@@ -79,12 +79,8 @@ export class SubscriberJobBound {
 
   @InstrumentUsecase()
   async execute(command: SubscriberJobBoundCommand) {
-    this.logger.assign({
-      transactionId: command.transactionId,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      contextKeys: command.contextKeys,
-    });
+    // The subscriber-process worker binds the transaction, environment and organization ids when the job starts.
+    this.logger.assign({ contextKeys: command.contextKeys });
 
     const {
       subscriber,

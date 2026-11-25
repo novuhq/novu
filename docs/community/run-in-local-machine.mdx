@@ -102,6 +102,7 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
     - `API_ROOT_URL` - Public base URL for the API
     - `FRONT_BASE_URL` / `DASHBOARD_URL` - Dashboard URL (default local dev: `http://127.0.0.1:4201`)
     - `DISABLE_USER_REGISTRATION` (default: false) - If users should not be able to create new accounts
+    - `IS_API_ACCESS_LOG_ENABLED` (default: true) - Writes one log line per API request with the route, status, caller IP, and organization. Set to `false` to turn it off
     - `MONGO_URL` - MongoDB connection string
     - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB_INDEX` - Redis queue connection
     - `REDIS_CACHE_SERVICE_HOST`, `REDIS_CACHE_SERVICE_PORT` - Optional Redis cache instance

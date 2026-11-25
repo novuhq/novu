@@ -1,6 +1,13 @@
 import { CacheService, createContextHash, createHash } from '@novu/application-generic';
 import { ContextRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ContextPayload, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ContextPayload,
+  InAppProviderIdEnum,
+  SeverityLevelEnum,
+  StepTypeEnum,
+  SubscriberSessionAuthMethodEnum,
+} from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -8,7 +15,6 @@ import sinon from 'sinon';
 import { AuthService } from '../../auth/services/auth.service';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import {
-  SubscriberSessionAuthMethodEnum,
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../shared/services/subscriber-session-auth-stats.service';
@@ -1520,7 +1526,12 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     const stats = testServer.getService(SubscriberSessionAuthStatsService);
     const environmentId = `cap-${randomBytes(8).toString('hex')}`;
     const record = (clientVersion?: string) =>
-      stats.record({ environmentId, hmacValid: false, clientVersion, source: SubscriberSessionSourceEnum.INBOX });
+      stats.record({
+        environmentId,
+        authMethod: SubscriberSessionAuthMethodEnum.NONE,
+        clientVersion,
+        source: SubscriberSessionSourceEnum.INBOX,
+      });
 
     for (let i = 0; i < 105; i += 1) {
       await record(`@novu/js@1.0.${i}`);

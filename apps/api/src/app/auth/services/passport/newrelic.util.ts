@@ -12,7 +12,7 @@ try {
   nr = null;
 }
 
-export function addNewRelicTraceAttributes(session: UserSessionData) {
+export function addNewRelicTraceAttributes(session: Pick<UserSessionData, 'organizationId' | 'environmentId'>) {
   if (!nr || typeof nr.addCustomAttributes !== 'function') return;
 
   try {
@@ -22,6 +22,30 @@ export function addNewRelicTraceAttributes(session: UserSessionData) {
     });
   } catch {
     // swallow – NR failures must never break authentication
+  }
+}
+
+/**
+ * Marks a transaction with the caller's network and the ending of the secret key it sent. Routes that are too busy
+ * for an access line can then still be watched per IP and per key.
+ */
+export function addNewRelicRequestAttributes(attributes: {
+  clientIp?: string;
+  country?: string;
+  apiKeyLast4?: string;
+}) {
+  if (!nr || typeof nr.addCustomAttributes !== 'function') return;
+
+  const known: Record<string, string> = {};
+
+  for (const [name, value] of Object.entries(attributes)) {
+    if (value !== undefined) known[name] = value;
+  }
+
+  try {
+    nr.addCustomAttributes(known);
+  } catch {
+    // swallow – NR failures must never break a request
   }
 }
 

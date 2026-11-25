@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { SubscriberSessionAuthMethodEnum } from '@novu/shared';
 
 const DAY_SECONDS = 24 * 60 * 60;
 const RETENTION_DAYS = 35;
@@ -37,11 +38,6 @@ return 1
 
 const SESSION_CLIENT_RE = /^@novu\/([a-z0-9-]{1,32})@(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})(?:[-+].*)?$/;
 
-export enum SubscriberSessionAuthMethodEnum {
-  HMAC = 'hmac',
-  NONE = 'none',
-}
-
 export enum SubscriberSessionSourceEnum {
   INBOX = 'inbox',
   LEGACY_WIDGET = 'legacy-widget',
@@ -62,7 +58,7 @@ export interface SubscriberSessionAuthCount {
 
 export interface RecordSubscriberSessionParams {
   environmentId: string;
-  hmacValid: boolean;
+  authMethod: SubscriberSessionAuthMethodEnum;
   clientVersion?: string;
   source: SubscriberSessionSourceEnum;
 }
@@ -81,7 +77,7 @@ export class SubscriberSessionAuthStatsService {
       return;
     }
 
-    const authMethod = params.hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE;
+    const { authMethod } = params;
     const parsedClient = parseSessionClient(params.clientVersion);
     const client = parsedClient ?? FALLBACK_CLIENT[params.source];
 
