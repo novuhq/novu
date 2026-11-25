@@ -20,6 +20,8 @@ type PaginatedActivities = {
 	next: string | null;
 	previous: string | null;
 	totalCount?: number;
+	/** The API stopped counting: `totalCount` is a lower bound. */
+	totalCountCapped?: boolean;
 };
 
 function asRecord(value: unknown): ActivityRecord | null {
@@ -49,18 +51,41 @@ function fence(value: string, cap: number): string {
 /** A value that is only a phone number: 7 or more digits, with the usual separators. */
 const PHONE_ONLY = /^\+?[\d\s().-]{7,}$/;
 
+/** Platforms whose user id is the phone number (`AgentPlatformEnum`). */
+const PHONE_ID_PLATFORMS = new Set(["whatsapp", "sendblue", "photon_imessage", "sms"]);
+
+/** Row types whose `content` is what a participant wrote; other rows hold Novu-generated text. */
+const MESSAGE_TYPES = new Set(["message", "edit"]);
+
 /**
  * A participant or sender id with a phone number hidden. Platform users are `platform:userId`, and
- * WhatsApp, SMS and iMessage use the phone number as the user id. Emails and platform ids stay.
+ * WhatsApp and iMessage use the phone number as the user id; other platforms' numeric ids (Telegram,
+ * Discord) stay. A value without a platform is hidden when it is only a phone number.
  */
 export function maskContact(value: string): string {
 	const separator = value.indexOf(":");
-	const platform = separator > 0 ? value.slice(0, separator) : undefined;
-	const user = separator > 0 ? value.slice(separator + 1) : value;
-	const isPhone = PHONE_ONLY.test(user) && user.replace(/\D/g, "").length >= 7;
-	const masked = isPhone ? "[phone hidden]" : user;
+	if (separator <= 0) {
+		return isPhoneOnly(value) ? "[phone hidden]" : value;
+	}
 
-	return platform ? `${platform}:${masked}` : masked;
+	const platform = value.slice(0, separator);
+
+	return PHONE_ID_PLATFORMS.has(platform) ? `${platform}:[phone hidden]` : value;
+}
+
+function isPhoneOnly(value: string): boolean {
+	return PHONE_ONLY.test(value) && value.replace(/\D/g, "").length >= 7;
+}
+
+/** A participant's message text; `undefined` for rows whose content Novu wrote. */
+function readMessageContent(activity: ActivityRecord): string | undefined {
+	return MESSAGE_TYPES.has(String(activity.type)) ? asString(activity.content) : undefined;
+}
+
+function fenceOptional(value: unknown): string | undefined {
+	const text = asString(value);
+
+	return text ? fence(text, CONTENT_CAP) : undefined;
 }
 
 function countOf(value: unknown): number | undefined {
@@ -81,6 +106,7 @@ export function unwrapActivityList(payload: unknown): PaginatedActivities {
 		next: asString(root.next) ?? null,
 		previous: asString(root.previous) ?? null,
 		totalCount: typeof root.totalCount === "number" ? root.totalCount : undefined,
+		totalCountCapped: root.totalCountCapped === true ? true : undefined,
 	};
 }
 
@@ -109,7 +135,7 @@ function formatActivityLine(activity: ActivityRecord): string {
 	const time = asString(activity.createdAt) ?? "";
 	const type = asString(activity.type) ?? "unknown";
 	const senderType = asString(activity.senderType);
-	const content = asString(activity.content);
+	const content = readMessageContent(activity);
 	const parts = [time, type];
 
 	if (senderType && type === "message") {
@@ -147,7 +173,7 @@ function formatActivityLine(activity: ActivityRecord): string {
 			lifeBits.push(`finishReason=${lifecycle.finishReason}`);
 		if (asString(lifecycle.code)) lifeBits.push(`code=${lifecycle.code}`);
 		if (asString(lifecycle.message))
-			lifeBits.push(truncate(String(lifecycle.message), CONTENT_CAP));
+			lifeBits.push(fence(String(lifecycle.message), CONTENT_CAP));
 		if (lifeBits.length > 0) {
 			parts.push(lifeBits.join(" "));
 		}
@@ -166,7 +192,7 @@ function formatActivityLine(activity: ActivityRecord): string {
 		if (asString(mcpConnection.actionId)) mcpBits.push(`action=${mcpConnection.actionId}`);
 		if (asString(mcpConnection.status)) mcpBits.push(`status=${mcpConnection.status}`);
 		if (asString(mcpConnection.message))
-			mcpBits.push(truncate(String(mcpConnection.message), CONTENT_CAP));
+			mcpBits.push(fence(String(mcpConnection.message), CONTENT_CAP));
 		if (mcpBits.length > 0) {
 			parts.push(mcpBits.join(" "));
 		}
@@ -216,8 +242,11 @@ export function diagnoseActivities(activities: ActivityRecord[]): string[] {
 		const lifecycle = readLifecycle(activity);
 
 		if (type === "run_error") {
-			const message =
-				asString(lifecycle?.message) ?? asString(activity.content) ?? "unknown error";
+			// Bridge errors can echo user input or an upstream response, so the message is fenced and capped.
+			const message = fence(
+				asString(lifecycle?.message) ?? asString(activity.content) ?? "unknown error",
+				CONTENT_CAP,
+			);
 			const code = asString(lifecycle?.code);
 			findings.push(code ? `Run error (${code}): ${message}` : `Run error: ${message}`);
 		}
@@ -285,6 +314,7 @@ export function formatConversationActivitiesDigest(
 			next: list.next,
 			previous: list.previous,
 			totalCount: list.totalCount,
+			totalCountCapped: list.totalCountCapped,
 		};
 
 		return [
@@ -295,13 +325,17 @@ export function formatConversationActivitiesDigest(
 	}
 
 	const findings = diagnoseActivities(list.data);
+	const total =
+		list.totalCount != null
+			? `, totalCount=${list.totalCount}${list.totalCountCapped ? " or more" : ""}`
+			: "";
 	const header =
 		findings.length > 0
 			? [
-					`Diagnosis (this page only, ${list.data.length} activities${list.totalCount != null ? `, totalCount=${list.totalCount}` : ""}):`,
+					`Diagnosis (this page only, ${list.data.length} activities${total}):`,
 					...findings.map((finding) => `- ${finding}`),
 				].join("\n")
-			: `No blocking issues detected on this page (${list.data.length} activities${list.totalCount != null ? `, totalCount=${list.totalCount}` : ""}).`;
+			: `No blocking issues detected on this page (${list.data.length} activities${total}).`;
 
 	const timeline =
 		list.data.length === 0
@@ -341,15 +375,41 @@ export function formatConversationList(payload: unknown, input: { agentId?: stri
 			next: asString(root?.next) ?? null,
 			previous: asString(root?.previous) ?? null,
 			totalCount: typeof root?.totalCount === "number" ? root.totalCount : undefined,
+			totalCountCapped: root?.totalCountCapped === true ? true : undefined,
 		}),
 	);
 
 	return lines.join("\n\n");
 }
 
-/** The dashboard's conversation panel, as a path under `/env/<environment>`. */
-export function conversationDashboardPath(identifier: string): string {
-	return `/activity/conversations?${new URLSearchParams({ conversationItemId: identifier }).toString()}`;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The dashboard's date ranges (`ACTIVITY_DATE_RANGE_OPTIONS`), shortest first, with the age each one covers. */
+const DATE_RANGES: Array<[string, number]> = [
+	["7d", 7 * DAY_MS],
+	["30d", 30 * DAY_MS],
+	["3M", 90 * DAY_MS],
+	["12M", 365 * DAY_MS],
+];
+
+/**
+ * The dashboard's conversation panel, as a path under `/env/<environment>`. The list it opens in starts
+ * at the last 24 hours and shows the panel only for a conversation it lists, so an older conversation
+ * gets the shortest date range that covers when it was created.
+ */
+export function conversationDashboardPath(
+	identifier: string,
+	createdAt?: string,
+	now: Date = new Date(),
+): string {
+	const params = new URLSearchParams({ conversationItemId: identifier });
+	const created = createdAt ? Date.parse(createdAt) : Number.NaN;
+	const age = now.getTime() - created;
+	if (!Number.isNaN(created) && age > DAY_MS) {
+		params.set("dateRange", DATE_RANGES.find(([, covers]) => age <= covers)?.[0] ?? "all");
+	}
+
+	return `/activity/conversations?${params.toString()}`;
 }
 
 /** One conversation, as `get_conversations` returns it. */
@@ -425,7 +485,7 @@ export function toConversationRow(value: unknown): ConversationRow | undefined {
 	return withoutUndefined({
 		agent,
 		createdAt: asString(record.createdAt),
-		dashboardPath: conversationDashboardPath(identifier),
+		dashboardPath: conversationDashboardPath(identifier, asString(record.createdAt)),
 		identifier,
 		lastActivityAt: asString(record.lastActivityAt),
 		messageCount: typeof record.messageCount === "number" ? record.messageCount : undefined,
@@ -443,7 +503,7 @@ function toActivityDetail(activity: ActivityRecord): ActivityRecord {
 	const lifecycle = readLifecycle(activity);
 	const connection = readMcpConnection(activity);
 	const richContent = asRecord(activity.richContent);
-	const content = asString(activity.content);
+	const content = readMessageContent(activity);
 	const senderName = asString(activity.senderName);
 
 	return withoutUndefined({
@@ -456,14 +516,14 @@ function toActivityDetail(activity: ActivityRecord): ActivityRecord {
 			? withoutUndefined({
 					code: asString(lifecycle.code),
 					finishReason: asString(lifecycle.finishReason),
-					message: asString(lifecycle.message),
+					message: fenceOptional(lifecycle.message),
 					outcome: asString(lifecycle.outcome),
 				})
 			: undefined,
 		mcpConnection: connection
 			? withoutUndefined({
 					actionId: asString(connection.actionId),
-					message: asString(connection.message),
+					message: fenceOptional(connection.message),
 					name: asString(connection.displayName) ?? asString(connection.mcpId),
 					status: asString(connection.status),
 				})

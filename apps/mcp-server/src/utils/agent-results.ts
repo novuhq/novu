@@ -53,6 +53,8 @@ export type AgentList = {
 	next: string | null;
 	previous: string | null;
 	totalCount?: number;
+	/** The API stopped counting: `totalCount` is a lower bound. */
+	totalCountCapped?: boolean;
 	planUsage?: { used?: number; limit?: number };
 };
 
@@ -90,8 +92,9 @@ export function unwrapRecord(payload: unknown): Json | undefined {
 }
 
 /**
- * A URL without its user info, query string or fragment, any of which can carry a token. Bridge URLs
- * may be saved without a scheme, so one without stays without.
+ * A URL without its user info, path parameters (`;jsessionid=…`), query string or fragment, any of
+ * which can carry a token. A token written into the path itself stays. Bridge URLs may be saved
+ * without a scheme, so one without stays without.
  */
 export function redactUrl(value: unknown): string | undefined {
 	const raw = asString(value)?.trim();
@@ -105,7 +108,8 @@ export function redactUrl(value: unknown): string | undefined {
 		return "[invalid URL]";
 	}
 
-	const path = url.pathname === "/" ? "" : url.pathname;
+	const [pathname] = url.pathname.split(";");
+	const path = pathname === "/" ? "" : pathname;
 
 	return hasScheme ? `${url.protocol}//${url.host}${path}` : `${url.host}${path}`;
 }
@@ -201,5 +205,6 @@ export function toAgentList(payload: unknown): AgentList {
 			: undefined,
 		previous: asString(root?.previous) ?? null,
 		totalCount: asNumber(root?.totalCount),
+		totalCountCapped: root?.totalCountCapped === true ? true : undefined,
 	});
 }
