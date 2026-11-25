@@ -645,6 +645,22 @@ describe('Agent access rule #novu-v2', () => {
         } as never);
       }
 
+      async function react(userId: string, message: SlackMessage) {
+        await testServer.getService(AgentInboundHandler).handleReaction(ctx.agentId, await resolveConfig(), {
+          emoji: {
+            name: 'thumbs_up',
+            toJSON: () => '{{emoji:thumbs_up}}',
+            toString: () => '{{emoji:thumbs_up}}',
+          } as never,
+          added: true,
+          messageId: message.id,
+          message: message as never,
+          thread: sharedThread() as never,
+          user: { userId },
+          raw: { type: 'reaction_added', user: userId, team: 'W_TEAM', item: { type: 'message', ts: message.id } },
+        });
+      }
+
       async function inboundHistory(view: 'agent_handoff' | 'llm_transcript' | 'operator_timeline') {
         const conversation = must(
           await conversationRepository.findOne(
@@ -695,12 +711,15 @@ describe('Agent access rule #novu-v2', () => {
           { $set: { 'data.tier': 'silver' } }
         );
 
-        await post('U_SHARED_DOWNGRADED', injection);
+        const refused = await post('U_SHARED_DOWNGRADED', injection);
         await edit(order, injection);
         await remove(damage);
         await post('U_SHARED_GOLD', 'What is the status of the ticket?');
+        await react('U_SHARED_GOLD', refused);
 
-        expect(bridgeCalls).to.have.length(3);
+        expect(bridgeCalls).to.have.length(4);
+        const reaction = must(bridgeCalls[3].reaction, 'reaction on the refused message');
+        expect(JSON.stringify(reaction)).to.not.include(injection);
         expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY, SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
         for (const view of ['agent_handoff', 'llm_transcript'] as const) {
           expect(await inboundHistory(view), view).to.deep.equal([
