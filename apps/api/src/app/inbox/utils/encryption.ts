@@ -2,6 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { ContextPayload } from '@novu/shared';
 import { isContextHmacValidForAnyKey, isHmacValidForAnyKey } from '../../shared/helpers/is-valid-hmac';
 
+export function invalidHmacHashError(): BadRequestException {
+  return new BadRequestException('Please provide a valid HMAC hash');
+}
+
 export function validateHmacEncryption({
   apiKeys,
   subscriberId,
@@ -12,7 +16,7 @@ export function validateHmacEncryption({
   subscriberHash?: string;
 }) {
   if (!isHmacValidForAnyKey(apiKeys, subscriberId, subscriberHash)) {
-    throw new BadRequestException('Please provide a valid HMAC hash');
+    throw invalidHmacHashError();
   }
 }
 
