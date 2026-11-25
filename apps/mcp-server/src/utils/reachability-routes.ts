@@ -9,6 +9,7 @@ import {
 	CONDITIONS_REASON,
 	type ConnectionLookup,
 	describeReadFailure,
+	ENDPOINTS_READ_LIMIT,
 	pluralize,
 	type ReachabilityEndpoint,
 	type ReachabilityIntegration,
@@ -30,7 +31,7 @@ const ENDPOINT_ROUTED_TOOL_PROVIDERS = ["pagerduty", "opsgenie", "grafana"];
  */
 const TOOL_WEBHOOK_PROVIDER = "tool-webhook";
 
-const ENDPOINTS_READ_LIMIT_NOTE = "Only the first 100 endpoints were read; others weren't checked";
+const ENDPOINTS_READ_LIMIT_NOTE = `Only the first ${ENDPOINTS_READ_LIMIT} endpoints were read; others weren't checked`;
 
 /** Endpoints match the trigger context exactly, so one without context keys only serves triggers without one. */
 const CONTEXT_FREE_NOTE = "only for triggers without a context";
@@ -125,8 +126,9 @@ export function toolInUse({ active, input }: RuleContext): boolean {
 
 /**
  * Always-on routes reach the subscriber whatever else is wrong, so the rest only narrows the verdict.
- * Without one, anything unverified (and `gaps`, what the reads left out) leaves it unknown,
- * conditional routes leave it partly reachable, and otherwise the problems, or `none`, block it.
+ * Without one, anything unverified (and `gaps`, what the reads left out) leaves it unknown, and
+ * conditional routes leave it partly reachable; either way the problems are kept as partial
+ * reasons. With neither, the problems, or `none`, block it.
  */
 function settleRoutes(
 	v: Verdict,
@@ -148,11 +150,12 @@ function settleRoutes(
 		return;
 	}
 
-	v.unknowns.push(...o.gaps, ...unverified);
+	const unknowns = [...o.gaps, ...unverified];
+	v.unknowns.push(...unknowns);
 
-	if (conditional.length > 0) {
+	if (conditional.length > 0 || unknowns.length > 0) {
 		v.partial.push(...problems, ...new Set(conditional.flatMap((route) => route.conditions)));
-	} else if (v.unknowns.length === 0) {
+	} else {
 		v.blockers.push(...(problems.length > 0 ? problems : [o.none]));
 	}
 }
@@ -167,15 +170,7 @@ function deviceFindings({ active, input }: RuleContext): RouteFinding[] {
 	const orphans = new Set<string>();
 
 	for (const channel of input.subscriber.channels.filter((entry) => entry.deviceTokenCount > 0)) {
-		// The worker sends through the integration the channel is bound to, never a sibling of the same provider.
-		const integration = active.find(
-			(candidate) =>
-				candidate.providerId === channel.providerId &&
-				(channel.integrationId
-					? candidate.id === channel.integrationId
-					: !channel.integrationIdentifier ||
-						candidate.identifier === channel.integrationIdentifier),
-		);
+		const integration = boundIntegration(active, channel.providerId, channel.integrationId);
 		if (integration) {
 			devicesByProvider.set(
 				channel.providerId,
@@ -202,6 +197,30 @@ function deviceFindings({ active, input }: RuleContext): RouteFinding[] {
 	];
 }
 
+/**
+ * The active integration a stored channel sends through: the one it's bound to (`_integrationId`),
+ * never a sibling of the same provider, or any of the provider's when it's bound to none.
+ */
+function boundIntegration(
+	active: ReachabilityIntegration[],
+	providerId: string,
+	integrationId: string | null | undefined,
+): ReachabilityIntegration | undefined {
+	return active.find(
+		(candidate) =>
+			candidate.providerId === providerId &&
+			(!integrationId || candidate.id === integrationId),
+	);
+}
+
+/** The active integration an endpoint belongs to; the worker drops endpoints of any other. */
+function endpointIntegration(
+	endpoint: ReachabilityEndpoint,
+	active: ReachabilityIntegration[],
+): ReachabilityIntegration | undefined {
+	return active.find((candidate) => candidate.identifier === endpoint.integrationIdentifier);
+}
+
 function endpointFindings(ctx: RuleContext): RouteFinding[] {
 	return ctx.input.endpoints
 		.filter((endpoint) => endpoint.channel === "chat")
@@ -210,9 +229,7 @@ function endpointFindings(ctx: RuleContext): RouteFinding[] {
 
 function endpointFinding(endpoint: ReachabilityEndpoint, { active }: RuleContext): RouteFinding {
 	const type = ENDPOINT_TYPES[endpoint.type] ?? { label: endpoint.type, provider: endpoint.type };
-	const integration = active.find(
-		(candidate) => candidate.identifier === endpoint.integrationIdentifier,
-	);
+	const integration = endpointIntegration(endpoint, active);
 
 	if (!integration) {
 		return {
@@ -230,7 +247,7 @@ function endpointFinding(endpoint: ReachabilityEndpoint, { active }: RuleContext
 	return {
 		conditions,
 		kind: "route",
-		text: `${type.label} endpoint (${endpoint.integrationIdentifier ?? endpoint.providerId}), ${scope}`,
+		text: `${type.label} endpoint (${integration.identifier}), ${scope}`,
 	};
 }
 
@@ -297,9 +314,7 @@ function storedChannelFinding(
 	const { providerId } = channel;
 	const isPhoneBased = PHONE_BASED_CHAT_PROVIDERS.includes(providerId);
 	const bound = isPhoneBased ? null : channel.integrationId;
-	const integration = active.find(
-		(candidate) => candidate.providerId === providerId && (!bound || candidate.id === bound),
-	);
+	const integration = boundIntegration(active, providerId, bound);
 
 	if (!integration) {
 		const isChatProvider = input.integrations.some(
@@ -361,9 +376,7 @@ function phoneOnFileFindings({ active, input }: RuleContext): RouteFinding[] {
 			(endpoint) =>
 				endpoint.channel === "chat" &&
 				endpoint.providerId === providerId &&
-				active.some(
-					(integration) => integration.identifier === endpoint.integrationIdentifier,
-				),
+				endpointIntegration(endpoint, active) !== undefined,
 		);
 		const route = `${providerId} to the phone number on file`;
 

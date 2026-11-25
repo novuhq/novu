@@ -16,11 +16,12 @@ import {
 	CHANNEL_LABELS,
 	CONDITIONS_REASON,
 	describeReadFailure,
+	REACHABILITY_SOURCES,
 	type ReachabilityChannel,
-	type ReachabilitySource,
 	type ReachabilitySubscriber,
 	type RuleContext,
 	SOURCE_LABELS,
+	type SubscriberReachabilityCandidate,
 	type SubscriberReachabilityInput,
 	type SubscriberReachabilityResult,
 	Verdict,
@@ -59,20 +60,24 @@ const CHANNEL_RULES: ChannelRule[] = [
 /** Integrations workflows never send through (SelectIntegration `isHiddenFromWorkflows`). */
 const HIDDEN_FROM_WORKFLOWS_PROVIDERS = ["agent-email-inbox"];
 
-const SOURCES: ReachabilitySource[] = [
-	"integrations",
-	"preferences",
-	"criticalPreferences",
-	"endpoints",
-	"connections",
-];
-
 /** The dashboard's subscriber page, as a path under `/env/<environment>`. */
 export function subscriberDashboardPath(subscriberId: string): string {
 	return `/subscribers/${encodeURIComponent(subscriberId)}`;
 }
 
-export function subscriberDisplayName(subscriber: {
+/** One of several subscribers a search matched, for the caller to choose from. */
+export function subscriberCandidate(
+	subscriber: ReachabilitySubscriber,
+): SubscriberReachabilityCandidate {
+	return {
+		dashboardPath: subscriberDashboardPath(subscriber.subscriberId),
+		email: subscriber.email || null,
+		name: subscriberDisplayName(subscriber),
+		subscriberId: subscriber.subscriberId,
+	};
+}
+
+function subscriberDisplayName(subscriber: {
 	firstName?: string | null;
 	lastName?: string | null;
 }): string | null {
@@ -186,7 +191,7 @@ function checkedSources(input: SubscriberReachabilityInput): string[] {
 
 	return [
 		"profile",
-		...SOURCES.filter((source) =>
+		...REACHABILITY_SOURCES.filter((source) =>
 			source === "connections" ? connectionsRead : !failures[source],
 		).map((source) => SOURCE_LABELS[source]),
 	];

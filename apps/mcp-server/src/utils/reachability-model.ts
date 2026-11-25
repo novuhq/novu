@@ -8,12 +8,19 @@ export type ReachabilityChannel = "email" | "in_app" | "sms" | "push" | "chat" |
 
 export type ReachabilityState = "reachable" | "partly" | "blocked" | "unknown";
 
-export type ReachabilitySource =
-	| "integrations"
-	| "preferences"
-	| "criticalPreferences"
-	| "endpoints"
-	| "connections";
+/** What the verdicts are read from, in the order the result's `checked` lists them. */
+export const REACHABILITY_SOURCES = [
+	"integrations",
+	"preferences",
+	"criticalPreferences",
+	"endpoints",
+	"connections",
+] as const;
+
+export type ReachabilitySource = (typeof REACHABILITY_SOURCES)[number];
+
+/** The tool reads one page of this many endpoints; more may exist. */
+export const ENDPOINTS_READ_LIMIT = 100;
 
 export interface ReadFailure {
 	/** HTTP status of the failed read; absent for network errors. */
@@ -25,9 +32,8 @@ export type ReadFailures = Partial<Record<Exclude<ReachabilitySource, "connectio
 
 export interface ReachabilitySubscriberChannel {
 	providerId: string;
-	/** The integration the channel is bound to (`_integrationId`); the push worker sends only through it. */
+	/** The integration the channel is bound to (`_integrationId`); the worker sends only through it. */
 	integrationId?: string | null;
-	integrationIdentifier?: string | null;
 	/** Only presence is read: the token count and whether a webhook URL or phone number is set. */
 	deviceTokenCount: number;
 	hasWebhookUrl: boolean;

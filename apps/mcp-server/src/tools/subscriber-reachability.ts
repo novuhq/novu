@@ -2,21 +2,21 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApiResponse } from "../types/index";
 import { asRecord, asString } from "../utils/activity-format";
-import type {
-	ConnectionLookup,
-	ReachabilityConnection,
-	ReachabilityEndpoint,
-	ReachabilityIntegration,
-	ReachabilityPreferences,
-	ReachabilitySubscriber,
-	ReadFailure,
-	ReadFailures,
-	SubscriberReachabilityResult,
+import {
+	type ConnectionLookup,
+	ENDPOINTS_READ_LIMIT,
+	type ReachabilityConnection,
+	type ReachabilityEndpoint,
+	type ReachabilityIntegration,
+	type ReachabilityPreferences,
+	type ReachabilitySubscriber,
+	type ReadFailure,
+	type ReadFailures,
+	type SubscriberReachabilityResult,
 } from "../utils/reachability-model";
 import {
 	computeSubscriberReachability,
-	subscriberDashboardPath,
-	subscriberDisplayName,
+	subscriberCandidate,
 } from "../utils/subscriber-reachability";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
@@ -27,7 +27,6 @@ const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
 const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: true } as const;
 
 const SEARCH_LIMIT = 10;
-const ENDPOINTS_LIMIT = 100;
 const MAX_CONNECTION_LOOKUPS = 10;
 
 const MISSING_IDENTIFIER =
@@ -128,15 +127,7 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 			return {
 				kind: "done",
 				result: {
-					candidates: matches.map((match) => ({
-						dashboardPath: subscriberDashboardPath(String(match.subscriberId)),
-						email: asString(match.email) ?? null,
-						name: subscriberDisplayName({
-							firstName: asString(match.firstName) ?? null,
-							lastName: asString(match.lastName) ?? null,
-						}),
-						subscriberId: String(match.subscriberId),
-					})),
+					candidates: matches.map((match) => subscriberCandidate(toSubscriber(match))),
 					hasMore: Boolean(page?.next) || matches.length >= SEARCH_LIMIT,
 					status: "ambiguous",
 				},
@@ -199,7 +190,7 @@ async function checkReachability(
 	const subscriber = toSubscriber(rawSubscriber);
 	const subscriberId = encodeURIComponent(subscriber.subscriberId);
 	const endpointsQuery = new URLSearchParams({
-		limit: String(ENDPOINTS_LIMIT),
+		limit: String(ENDPOINTS_READ_LIMIT),
 		subscriberId: subscriber.subscriberId,
 	});
 
@@ -233,17 +224,21 @@ async function checkReachability(
 		failures,
 		integrations: integrations.ok
 			? asArray(integrations.data)
-					.filter(
-						(integration) =>
-							!subscriber.environmentId ||
-							!integration._environmentId ||
-							integration._environmentId === subscriber.environmentId,
-					)
+					.filter((integration) => inEnvironment(integration, subscriber.environmentId))
 					.map(toIntegration)
 			: [],
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
+}
+
+/** Whether an integration belongs to the subscriber's environment; a side without one matches any. */
+function inEnvironment(integration: Json, environmentId: string | null | undefined): boolean {
+	return (
+		!environmentId ||
+		!integration._environmentId ||
+		integration._environmentId === environmentId
+	);
 }
 
 /** One lookup per connection the endpoints link to, by identifier; those past the cap aren't read. */
@@ -334,7 +329,6 @@ function toSubscriber(raw: Json): ReachabilitySubscriber {
 				hasPhoneNumber: Boolean(credentials.phoneNumber),
 				hasWebhookUrl: Boolean(credentials.webhookUrl),
 				integrationId: asString(channel._integrationId) ?? null,
-				integrationIdentifier: asString(channel.integrationIdentifier) ?? null,
 				providerId: String(channel.providerId ?? ""),
 			};
 		}),

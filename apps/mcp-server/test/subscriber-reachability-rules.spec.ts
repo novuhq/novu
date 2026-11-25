@@ -20,7 +20,6 @@ function subscriber(overrides: Partial<ReachabilitySubscriber> = {}): Reachabili
 				deviceTokenCount: 2,
 				hasPhoneNumber: false,
 				hasWebhookUrl: false,
-				integrationIdentifier: null,
 				providerId: "fcm",
 			},
 		],
@@ -751,6 +750,38 @@ describe("computeSubscriberReachability", () => {
 		});
 	});
 
+	it("keeps a definite chat problem when the endpoints can't be read", () => {
+		const chat = channelOf(
+			{
+				endpoints: [],
+				failures: { endpoints: { status: 500 } },
+				subscriber: subscriber({
+					channels: [
+						{
+							deviceTokenCount: 0,
+							hasPhoneNumber: false,
+							hasWebhookUrl: true,
+							integrationId: "slack-old-id",
+							providerId: "slack",
+						},
+					],
+					hasPhone: false,
+				}),
+			},
+			"chat",
+		);
+
+		expect(chat).toEqual({
+			channel: "chat",
+			details: [],
+			reasons: [
+				"Couldn't check channel endpoints (500)",
+				"slack webhook is bound to an integration that is inactive or deleted",
+			],
+			state: "unknown",
+		});
+	});
+
 	it("keeps a channel partly reachable when critical workflows still send on it", () => {
 		const sms = channelOf(
 			{
@@ -794,6 +825,29 @@ describe("computeSubscriberReachability", () => {
 		expect(tool.reasons[0]).toContain(
 			"Couldn't tell whether the tool-webhook-1 webhook sends per subscriber",
 		);
+	});
+
+	it("keeps a missing tool endpoint while a tool webhook is unverified", () => {
+		const tool = channelOf(
+			{
+				integrations: [
+					...INTEGRATIONS,
+					integration("tool", "pagerduty"),
+					integration("tool", "tool-webhook"),
+				],
+			},
+			"tool",
+		);
+
+		expect(tool).toEqual({
+			channel: "tool",
+			details: [],
+			reasons: [
+				"Couldn't tell whether the tool-webhook-1 webhook sends per subscriber (its routing mode isn't visible); if it does, this subscriber has no endpoint for it",
+				"No pagerduty endpoint for this subscriber",
+			],
+			state: "unknown",
+		});
 	});
 
 	it("only counts a tool endpoint with context keys for a matching trigger context", () => {

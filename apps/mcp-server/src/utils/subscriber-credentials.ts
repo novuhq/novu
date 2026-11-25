@@ -25,13 +25,13 @@ export function maskCredentialValue(value: string): string {
  * subscriber, a list, or either inside the `{ data }` envelope. Everything else, including the
  * subscriber's custom `data`, is returned as is, so it can be sent back unchanged.
  */
-export function maskSubscriberCredentials<T>(value: T): T {
+export function maskSubscriberCredentials(value: unknown): unknown {
 	const envelope = asRecord(value);
 	if (envelope && !isSubscriber(envelope) && "data" in envelope) {
-		return { ...envelope, data: maskSubscribers(envelope.data) } as T;
+		return { ...envelope, data: maskSubscribers(envelope.data) };
 	}
 
-	return maskSubscribers(value) as T;
+	return maskSubscribers(value);
 }
 
 function maskSubscribers(value: unknown): unknown {
@@ -40,7 +40,7 @@ function maskSubscribers(value: unknown): unknown {
 
 function maskSubscriber(value: unknown): unknown {
 	const subscriber = asRecord(value);
-	if (!subscriber || !isSubscriber(subscriber) || !Array.isArray(subscriber.channels)) {
+	if (!subscriber || !Array.isArray(subscriber.channels)) {
 		return value;
 	}
 

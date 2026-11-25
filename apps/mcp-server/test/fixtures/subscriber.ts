@@ -8,7 +8,6 @@ export function rawSubscriber(overrides: Record<string, unknown> = {}) {
 		channels: [
 			{
 				credentials: { deviceTokens: ["fcm-token-secret-1", "fcm-token-secret-2"] },
-				integrationIdentifier: "fcm-1",
 				providerId: "fcm",
 			},
 			{
