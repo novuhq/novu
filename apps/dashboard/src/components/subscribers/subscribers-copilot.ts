@@ -23,14 +23,19 @@ export function buildSubscriberViewing(
 
 /**
  * What the subscriber page registers with the Copilot: the open subscriber and the question about them, while the
- * subscriber loads and once it has, including after a failed refetch that keeps the loaded subscriber. Nothing when
- * the fetch failed before any subscriber loaded, such as a deleted subscriber or a mistyped id.
+ * subscriber loads and once it has, including after a failed refetch that keeps the loaded subscriber. No subscriber
+ * when the fetch failed before any loaded, such as a deleted subscriber or a mistyped id. The page renders in the
+ * subscriber drawer, so the Copilot always sits above it (`overSheet`).
  */
 export function buildSubscriberPageView(
   subscriberId: string,
   { subscriber, isError }: { subscriber?: { firstName?: string | null; lastName?: string | null }; isError: boolean }
 ): CopilotPageView {
-  if (isError && !subscriber) return {};
+  if (isError && !subscriber) return { overSheet: true };
 
-  return { viewing: buildSubscriberViewing(subscriberId, subscriber), question: SUBSCRIBER_REACHABILITY_QUESTION };
+  return {
+    viewing: buildSubscriberViewing(subscriberId, subscriber),
+    question: SUBSCRIBER_REACHABILITY_QUESTION,
+    overSheet: true,
+  };
 }

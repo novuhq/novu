@@ -30,6 +30,7 @@ describe('buildSubscriberPageView', () => {
     expect(buildSubscriberPageView('sub_8f21', { isError: false })).toEqual({
       viewing: { resource: { type: CopilotViewingResourceEnum.SUBSCRIBER, id: 'sub_8f21', label: 'sub_8f21' } },
       question: SUBSCRIBER_REACHABILITY_QUESTION,
+      overSheet: true,
     });
   });
 
@@ -41,11 +42,12 @@ describe('buildSubscriberPageView', () => {
 
     expect(view.viewing?.resource?.label).toBe('Jane Alvarez');
     expect(view.question).toBe(SUBSCRIBER_REACHABILITY_QUESTION);
+    expect(view.overSheet).toBe(true);
   });
 
-  // A deleted subscriber or a mistyped id: there is nothing open to ask about.
+  // A deleted subscriber or a mistyped id: there is nothing open to ask about, but the drawer still covers the page.
   it('registers no subscriber and no question when the fetch failed before any subscriber loaded', () => {
-    expect(buildSubscriberPageView('sub_8f21', { isError: true })).toEqual({});
+    expect(buildSubscriberPageView('sub_8f21', { isError: true })).toEqual({ overSheet: true });
   });
 
   // TanStack Query keeps the last data when a background refetch fails, and the drawer still shows the subscriber.
@@ -53,6 +55,7 @@ describe('buildSubscriberPageView', () => {
     expect(buildSubscriberPageView('sub_8f21', { subscriber: { firstName: 'Jane' }, isError: true })).toEqual({
       viewing: { resource: { type: CopilotViewingResourceEnum.SUBSCRIBER, id: 'sub_8f21', label: 'Jane' } },
       question: SUBSCRIBER_REACHABILITY_QUESTION,
+      overSheet: true,
     });
   });
 });
