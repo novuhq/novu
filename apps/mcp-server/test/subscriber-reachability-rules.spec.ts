@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
+import type {
+	ConnectionLookup,
+	ReachabilityChannel,
+	ReachabilityEndpoint,
+	ReachabilityIntegration,
+	ReachabilityPreferences,
+	ReachabilitySubscriber,
+	SubscriberReachabilityInput,
+} from "../src/utils/reachability-model";
 import {
-	type ConnectionLookup,
 	computeSubscriberReachability,
-	type ReachabilityChannel,
-	type ReachabilityEndpoint,
-	type ReachabilityIntegration,
-	type ReachabilityPreferences,
-	type ReachabilitySubscriber,
-	type SubscriberReachabilityInput,
 	subscriberDashboardPath,
 } from "../src/utils/subscriber-reachability";
 
@@ -60,13 +62,18 @@ const INTEGRATIONS = [
 	integration("chat", "slack"),
 ];
 
+function found(contextKeys: string[] = [], hasWorkspaceId = true): ConnectionLookup {
+	return { connection: { contextKeys, hasWorkspaceId }, status: "found" };
+}
+
+const FAILED: ConnectionLookup = { failure: { status: 500 }, status: "failed" };
+
 function endpoint(overrides: Partial<ReachabilityEndpoint> = {}): ReachabilityEndpoint {
 	return {
 		channel: "chat",
-		connectionIdentifier: "slack-conn",
+		connection: found(),
 		contextKeys: [],
 		hasTenantId: false,
-		identifier: "ep-1",
 		integrationIdentifier: "slack-1",
 		providerId: "slack",
 		type: "slack_user",
@@ -91,13 +98,8 @@ function preferences(overrides: Partial<ReachabilityPreferences> = {}): Reachabi
 	};
 }
 
-function found(contextKeys: string[] = [], hasWorkspaceId = true): ConnectionLookup {
-	return { connection: { contextKeys, hasWorkspaceId }, status: "found" };
-}
-
 function input(overrides: Partial<SubscriberReachabilityInput> = {}): SubscriberReachabilityInput {
 	return {
-		connections: { "slack-conn": found() },
 		criticalPreferences: { workflows: [] },
 		endpoints: [endpoint()],
 		integrations: INTEGRATIONS,
@@ -241,7 +243,7 @@ describe("computeSubscriberReachability", () => {
 
 	it("blocks a Slack endpoint without a connection", () => {
 		expect(
-			channelOf({ connections: { "slack-conn": { status: "missing" } } }, "chat"),
+			channelOf({ endpoints: [endpoint({ connection: { status: "missing" } })] }, "chat"),
 		).toMatchObject({
 			reasons: ["Slack endpoint has no connection"],
 			state: "blocked",
@@ -251,10 +253,9 @@ describe("computeSubscriberReachability", () => {
 	it("accepts an MS Teams endpoint that only has a tenant ID", () => {
 		const chat = channelOf(
 			{
-				connections: {},
 				endpoints: [
 					endpoint({
-						connectionIdentifier: null,
+						connection: null,
 						hasTenantId: true,
 						integrationIdentifier: "msteams-1",
 						providerId: "msteams",
@@ -272,8 +273,9 @@ describe("computeSubscriberReachability", () => {
 	it("only counts an endpoint with context keys for a matching trigger context", () => {
 		const chat = channelOf(
 			{
-				connections: { "slack-conn": found(["tenant:acme"]) },
-				endpoints: [endpoint({ contextKeys: ["tenant:acme"] })],
+				endpoints: [
+					endpoint({ connection: found(["tenant:acme"]), contextKeys: ["tenant:acme"] }),
+				],
 			},
 			"chat",
 		);
@@ -355,7 +357,7 @@ describe("computeSubscriberReachability", () => {
 
 	it("uses the phone number on file only when no endpoint of that provider matches the trigger context", () => {
 		const whatsappEndpoint = endpoint({
-			connectionIdentifier: null,
+			connection: null,
 			integrationIdentifier: "whatsapp-business-1",
 			providerId: "whatsapp-business",
 			type: "phone",
@@ -419,9 +421,11 @@ describe("computeSubscriberReachability", () => {
 	it("reports a failed connections read on the chat verdict, not in the notes", () => {
 		const result = computeSubscriberReachability(
 			input({
-				connections: { "slack-conn": { failure: { status: 500 }, status: "failed" } },
 				// Two endpoints on the same unreadable connection give one reason.
-				endpoints: [endpoint(), endpoint({ identifier: "ep-2", type: "slack_channel" })],
+				endpoints: [
+					endpoint({ connection: FAILED }),
+					endpoint({ connection: FAILED, type: "slack_channel" }),
+				],
 			}),
 		);
 
@@ -444,32 +448,24 @@ describe("computeSubscriberReachability", () => {
 			"channel connections",
 		);
 		// The lookup cap skipped one; its endpoint says so.
-		expect(checked({ connections: { "slack-conn": { status: "unchecked" } } })).not.toContain(
-			"channel connections",
-		);
+		expect(
+			checked({ endpoints: [endpoint({ connection: { status: "unchecked" } })] }),
+		).not.toContain("channel connections");
 	});
 
 	it("only leaves an endpoint unverified when its own connection read failed", () => {
 		const chat = channelOf(
 			{
-				connections: {
-					"other-conn": { failure: { status: 500 }, status: "failed" },
-					"slack-conn": { status: "missing" },
-				},
 				endpoints: [
-					endpoint(),
-					endpoint({
-						connectionIdentifier: "other-conn",
-						identifier: "ep-2",
-						type: "slack_channel",
-					}),
+					endpoint({ connection: { status: "missing" } }),
+					endpoint({ connection: FAILED, type: "slack_channel" }),
 				],
 				integrations: [...INTEGRATIONS, integration("chat", "whatsapp-business")],
 			},
 			"chat",
 		);
 
-		// slack-conn is gone (404), not a failed read, so its endpoint has no connection.
+		// The first endpoint's connection is gone (404), not a failed read, so it has no connection.
 		expect(chat).toMatchObject({
 			details: [
 				"whatsapp-business to the phone number on file",
@@ -483,7 +479,9 @@ describe("computeSubscriberReachability", () => {
 	it("only counts a connection whose context matches its endpoint's exactly", () => {
 		const acmeConnection = found(["tenant:acme"]);
 
-		expect(channelOf({ connections: { "slack-conn": acmeConnection } }, "chat")).toMatchObject({
+		expect(
+			channelOf({ endpoints: [endpoint({ connection: acmeConnection })] }, "chat"),
+		).toMatchObject({
 			reasons: [
 				"Slack endpoint's connection only applies to triggers with context tenant:acme",
 			],
@@ -493,10 +491,9 @@ describe("computeSubscriberReachability", () => {
 		const teams = (hasTenantId: boolean) =>
 			channelOf(
 				{
-					connections: { "teams-conn": acmeConnection },
 					endpoints: [
 						endpoint({
-							connectionIdentifier: "teams-conn",
+							connection: acmeConnection,
 							hasTenantId,
 							integrationIdentifier: "msteams-1",
 							providerId: "msteams",
@@ -520,10 +517,9 @@ describe("computeSubscriberReachability", () => {
 	it("blocks an MS Teams endpoint whose matching connection has no workspace ID, without a tenant ID", () => {
 		const chat = channelOf(
 			{
-				connections: { "teams-conn": found([], false) },
 				endpoints: [
 					endpoint({
-						connectionIdentifier: "teams-conn",
+						connection: found([], false),
 						integrationIdentifier: "msteams-1",
 						providerId: "msteams",
 						type: "ms_teams_user",
@@ -558,7 +554,7 @@ describe("computeSubscriberReachability", () => {
 				endpoints: [
 					endpoint({
 						channel: "tool",
-						connectionIdentifier: null,
+						connection: null,
 						contextKeys: ["tenant:acme"],
 						integrationIdentifier: "pagerduty-1",
 						providerId: "pagerduty",
@@ -587,7 +583,7 @@ describe("computeSubscriberReachability", () => {
 	it("reports the tool channel as unknown when integrations can't be read but tool endpoints exist", () => {
 		const toolEndpoint = endpoint({
 			channel: "tool",
-			connectionIdentifier: null,
+			connection: null,
 			integrationIdentifier: "pagerduty-1",
 			providerId: "pagerduty",
 			type: "pagerduty_service",
@@ -686,7 +682,7 @@ describe("computeSubscriberReachability", () => {
 				endpoints: [
 					endpoint({
 						channel: "tool",
-						connectionIdentifier: null,
+						connection: null,
 						integrationIdentifier: "pagerduty-1",
 						providerId: "pagerduty",
 						type: "pagerduty_service",
@@ -806,7 +802,7 @@ describe("computeSubscriberReachability", () => {
 				endpoints: [
 					endpoint({
 						channel: "tool",
-						connectionIdentifier: null,
+						connection: null,
 						contextKeys: ["tenant:acme"],
 						integrationIdentifier: "pagerduty-1",
 						providerId: "pagerduty",
@@ -829,7 +825,7 @@ describe("computeSubscriberReachability", () => {
 
 	it("reports routes past the read limits as not checked instead of missing", () => {
 		const uncheckedConnection = channelOf(
-			{ connections: { "slack-conn": { status: "unchecked" } } },
+			{ endpoints: [endpoint({ connection: { status: "unchecked" } })] },
 			"chat",
 		);
 		expect(uncheckedConnection).toMatchObject({
@@ -840,7 +836,7 @@ describe("computeSubscriberReachability", () => {
 		const truncated = channelOf(
 			{
 				endpoints: [],
-				limits: { endpointsTruncated: true },
+				endpointsTruncated: true,
 				subscriber: subscriber({ hasPhone: false }),
 			},
 			"chat",

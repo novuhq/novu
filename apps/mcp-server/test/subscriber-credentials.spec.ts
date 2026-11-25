@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { maskCredentialValue } from "../src/utils/subscriber-credentials";
-import { stubApi } from "./fake-api";
+import { respond, stubApi } from "./fake-api";
 import { rawSubscriber } from "./fixtures/subscriber";
 import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
@@ -37,10 +37,10 @@ describe("subscriber tools", () => {
 			webhookUrl: "https://hooks.example.com/custom",
 		};
 		stubApi({
-			"/v2/subscribers": {
-				body: { data: [rawSubscriber({ data: customData })], next: null },
-				status: 200,
-			},
+			"/v2/subscribers": respond(200, {
+				data: [rawSubscriber({ data: customData })],
+				next: null,
+			}),
 			"/v2/subscribers/sub_8f21": rawSubscriber({ data: customData }),
 		});
 		const client = await connectAllTools(tokenAccessors("api-key"));

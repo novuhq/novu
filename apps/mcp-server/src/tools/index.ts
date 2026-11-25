@@ -6,21 +6,12 @@
  * `src/tools` and `src/utils`.
  */
 
-export type {
-	ChannelReachability,
-	ReachabilityChannel,
-	ReachabilityState,
-	SubscriberReachabilityResult,
-} from "../utils/subscriber-reachability";
 export type { ToolAccessors } from "../utils/tool-accessors";
 export type { ToolErrorDetails } from "../utils/tool-factory";
 export { toSavedControlValues, type WorkflowResponse } from "../utils/workflow-request";
 export { registerActivityTools } from "./activity";
 export { registerIntegrationTools } from "./integrations";
-export {
-	registerSubscriberReachabilityTool,
-	SUBSCRIBER_REACHABILITY_TOOL_NAME,
-} from "./subscriber-reachability";
+export { registerSubscriberReachabilityTool } from "./subscriber-reachability";
 export {
 	ACTIVITY_TOOL_NAMES,
 	type ActivityToolName,

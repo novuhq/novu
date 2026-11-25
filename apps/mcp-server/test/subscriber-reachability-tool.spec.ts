@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type Route, stubApi } from "./fake-api";
+import type { SubscriberReachabilityResult } from "../src/utils/reachability-model";
+import { type Routes, respond, stubApi } from "./fake-api";
 import { rawSubscriber } from "./fixtures/subscriber";
 import { API_URL, callTool, connectAllTools, textOf, tokenAccessors } from "./support";
+
+type FoundReachability = Extract<SubscriberReachabilityResult, { status: "found" }>;
 
 const SECRETS = [
 	"fcm-token-secret-1",
@@ -31,7 +34,7 @@ function search(field: string, value: string) {
 	return `/v2/subscribers?${new URLSearchParams({ [field]: value, limit: "10" }).toString()}`;
 }
 
-function setupRoutes(overrides: Record<string, Route> = {}): Record<string, Route> {
+function setupRoutes(overrides: Routes = {}): Routes {
 	return {
 		"/v1/channel-connections/slack-conn": {
 			auth: { accessToken: "xoxb-connection-secret" },
@@ -73,7 +76,8 @@ async function checkReachability(args: Record<string, unknown>) {
 	const result = await callTool(client, "get_subscriber_reachability", args);
 
 	return {
-		reachability: (result.structuredContent as { reachability?: any })?.reachability,
+		reachability: (result.structuredContent as { reachability: FoundReachability } | undefined)
+			?.reachability,
 		result,
 	};
 }
@@ -97,15 +101,10 @@ describe("get_subscriber_reachability", () => {
 			"/v1/channel-endpoints?limit=100&subscriberId=sub_8f21",
 			"/v1/channel-connections/slack-conn",
 		]);
-		expect(reachability.status).toBe("found");
-		expect(reachability.environmentId).toBe("env-1");
-		expect(reachability.dashboardPath).toBe("/subscribers/sub_8f21");
-		expect(
-			reachability.channels.map(({ channel, state }: { channel: string; state: string }) => [
-				channel,
-				state,
-			]),
-		).toEqual([
+		expect(reachability?.status).toBe("found");
+		expect(reachability?.environmentId).toBe("env-1");
+		expect(reachability?.dashboardPath).toBe("/subscribers/sub_8f21");
+		expect(reachability?.channels.map(({ channel, state }) => [channel, state])).toEqual([
 			["email", "reachable"],
 			["in_app", "reachable"],
 			["sms", "reachable"],
@@ -131,8 +130,8 @@ describe("get_subscriber_reachability", () => {
 					identifier: "acme-conn",
 					workspace: { id: "T1" },
 				},
-				"/v1/channel-connections/broken-conn": { body: { message: "boom" }, status: 500 },
-				"/v1/channel-connections/deleted-conn": { body: { message: "gone" }, status: 404 },
+				"/v1/channel-connections/broken-conn": respond(500, { message: "boom" }),
+				"/v1/channel-connections/deleted-conn": respond(404, { message: "gone" }),
 				"/v1/channel-endpoints": [
 					slackEndpoint("ep-acme", "acme-conn"),
 					slackEndpoint("ep-deleted", "deleted-conn"),
@@ -144,11 +143,7 @@ describe("get_subscriber_reachability", () => {
 		const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
 
 		// The legacy Slack webhook still reaches the subscriber, so each endpoint's finding is listed.
-		expect(
-			reachability.channels.find(
-				(verdict: { channel: string }) => verdict.channel === "chat",
-			),
-		).toMatchObject({
+		expect(reachability?.channels.find((verdict) => verdict.channel === "chat")).toMatchObject({
 			details: ["slack webhook", "Couldn't check channel connections (500)"],
 			reasons: [
 				"Slack endpoint's connection only applies to triggers with context tenant:acme",
@@ -156,7 +151,7 @@ describe("get_subscriber_reachability", () => {
 			],
 			state: "partly",
 		});
-		expect(reachability.checked).not.toContain("channel connections");
+		expect(reachability?.checked).not.toContain("channel connections");
 	});
 
 	it("never returns credentials, custom data or the phone number", async () => {
@@ -173,7 +168,7 @@ describe("get_subscriber_reachability", () => {
 	it("says when no subscriber matches", async () => {
 		stubApi(
 			setupRoutes({
-				"/v2/subscribers/missing": { body: { message: "not found" }, status: 404 },
+				"/v2/subscribers/missing": respond(404, { message: "not found" }),
 			}),
 		);
 
@@ -236,15 +231,13 @@ describe("get_subscriber_reachability", () => {
 	});
 
 	it("says when more subscribers may match than the candidates listed", async () => {
-		const page = (count: number, next: string | null) => ({
-			body: {
+		const page = (count: number, next: string | null) =>
+			respond(200, {
 				data: Array.from({ length: count }, (_, index) =>
 					rawSubscriber({ subscriberId: `sub_${index}` }),
 				),
 				next,
-			},
-			status: 200,
-		});
+			});
 
 		stubApi(setupRoutes({ [search("name", "Jane")]: page(2, "cursor-2") }));
 		expect((await checkReachability({ name: "Jane" })).reachability).toMatchObject({
@@ -277,7 +270,7 @@ describe("get_subscriber_reachability", () => {
 
 		const { reachability } = await checkReachability({ subscriberId: "  sub_8f21 " });
 
-		expect(reachability.status).toBe("found");
+		expect(reachability?.status).toBe("found");
 		expect(String(fetchMock.mock.calls[0][0])).toBe(`${API_URL}/v2/subscribers/sub_8f21`);
 	});
 
@@ -292,7 +285,7 @@ describe("get_subscriber_reachability", () => {
 
 		const { reachability } = await checkReachability({ email: " Jane@Acme.com " });
 
-		expect(reachability.status).toBe("found");
+		expect(reachability?.status).toBe("found");
 		expect(
 			fetchMock.mock.calls
 				.slice(0, 3)
@@ -301,8 +294,8 @@ describe("get_subscriber_reachability", () => {
 	});
 
 	it("takes endpoint truncation from the page's next cursor, not the page size", async () => {
-		const page = (next: string | null) => ({
-			body: {
+		const page = (next: string | null) =>
+			respond(200, {
 				data: Array.from({ length: 100 }, (_, index) => ({
 					channel: "chat",
 					connectionIdentifier: "slack-conn",
@@ -313,16 +306,12 @@ describe("get_subscriber_reachability", () => {
 					type: "slack_channel",
 				})),
 				next,
-			},
-			status: 200,
-		});
+			});
 		const chatDetails = async (next: string | null) => {
 			stubApi(setupRoutes({ "/v1/channel-endpoints": page(next) }));
 			const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
 
-			return reachability.channels.find(
-				(verdict: { channel: string }) => verdict.channel === "chat",
-			).details;
+			return reachability?.channels.find((verdict) => verdict.channel === "chat")?.details;
 		};
 		const note = "Only the first 100 endpoints were read; others weren't checked";
 
@@ -341,14 +330,12 @@ describe("get_subscriber_reachability", () => {
 
 		const { reachability } = await checkReachability({ email: "Jane@Acme.com" });
 
-		expect(reachability.status).toBe("found");
+		expect(reachability?.status).toBe("found");
 		expect(String(fetchMock.mock.calls[1][0])).toContain("email=jane%40acme.com");
 	});
 
 	it("fails with the status when the lookup fails", async () => {
-		stubApi(
-			setupRoutes({ "/v2/subscribers/sub_8f21": { body: { message: "boom" }, status: 500 } }),
-		);
+		stubApi(setupRoutes({ "/v2/subscribers/sub_8f21": respond(500, { message: "boom" }) }));
 
 		const { result } = await checkReachability({ subscriberId: "sub_8f21" });
 

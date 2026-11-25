@@ -2,17 +2,19 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApiResponse } from "../types/index";
 import { asRecord, asString } from "../utils/activity-format";
+import type {
+	ConnectionLookup,
+	ReachabilityConnection,
+	ReachabilityEndpoint,
+	ReachabilityIntegration,
+	ReachabilityPreferences,
+	ReachabilitySubscriber,
+	ReadFailure,
+	ReadFailures,
+	SubscriberReachabilityResult,
+} from "../utils/reachability-model";
 import {
-	type ConnectionLookup,
 	computeSubscriberReachability,
-	type ReachabilityConnection,
-	type ReachabilityEndpoint,
-	type ReachabilityIntegration,
-	type ReachabilityPreferences,
-	type ReachabilitySubscriber,
-	type ReadFailure,
-	type ReadFailures,
-	type SubscriberReachabilityResult,
 	subscriberDashboardPath,
 	subscriberDisplayName,
 } from "../utils/subscriber-reachability";
@@ -20,7 +22,7 @@ import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
 import { SUBSCRIBER_REACHABILITY_TOOL_NAMES } from "./tool-names";
 
-export const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
+const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
 
 const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: true } as const;
 
@@ -210,23 +212,8 @@ async function checkReachability(
 	]);
 
 	const endpointsPage = endpoints.ok ? asRecord(endpoints.data) : undefined;
-	const endpointList = asArray(endpointsPage?.data).map(toEndpoint);
-	const connectionIds = unique(
-		endpointList
-			.map((endpoint) => endpoint.connectionIdentifier)
-			.filter((identifier): identifier is string => Boolean(identifier)),
-	);
-	// A capped number of lookups: the connections past the cap are reported as not checked.
-	const connectionLookups = await Promise.all(
-		connectionIds.map(
-			async (identifier, index): Promise<[string, ConnectionLookup]> => [
-				identifier,
-				index < MAX_CONNECTION_LOOKUPS
-					? await lookUpConnection(context, identifier)
-					: { status: "unchecked" },
-			],
-		),
-	);
+	const rawEndpoints = asArray(endpointsPage?.data);
+	const connections = await lookUpConnections(context, rawEndpoints);
 
 	const failures: ReadFailures = {};
 	const sources = { criticalPreferences, endpoints, integrations, preferences };
@@ -237,11 +224,12 @@ async function checkReachability(
 	}
 
 	return computeSubscriberReachability({
-		connections: Object.fromEntries(connectionLookups),
 		criticalPreferences: criticalPreferences.ok
 			? toPreferences(criticalPreferences.data)
 			: undefined,
-		endpoints: endpointList,
+		endpoints: rawEndpoints.map((raw) => toEndpoint(raw, connections)),
+		// One page of endpoints: what's left over is "not checked".
+		endpointsTruncated: Boolean(endpointsPage?.next),
 		failures,
 		integrations: integrations.ok
 			? asArray(integrations.data)
@@ -253,11 +241,28 @@ async function checkReachability(
 					)
 					.map(toIntegration)
 			: [],
-		// One page of endpoints: what's left over is "not checked".
-		limits: { endpointsTruncated: Boolean(endpointsPage?.next) },
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
+}
+
+/** One lookup per connection the endpoints link to, by identifier; those past the cap aren't read. */
+async function lookUpConnections(
+	context: ToolContext,
+	rawEndpoints: Json[],
+): Promise<Map<string, ConnectionLookup>> {
+	const identifiers = unique(
+		rawEndpoints.flatMap((raw) => asString(raw.connectionIdentifier) ?? []),
+	);
+	const lookups = await Promise.all(
+		identifiers.map((identifier, index): Promise<ConnectionLookup> | ConnectionLookup =>
+			index < MAX_CONNECTION_LOOKUPS
+				? lookUpConnection(context, identifier)
+				: { status: "unchecked" },
+		),
+	);
+
+	return new Map(identifiers.map((identifier, index) => [identifier, lookups[index]]));
 }
 
 /** A deleted connection (404) is a finding ("no connection"), not a failed read. */
@@ -359,13 +364,14 @@ function toIntegration(raw: Json): ReachabilityIntegration {
 	};
 }
 
-function toEndpoint(raw: Json): ReachabilityEndpoint {
+function toEndpoint(raw: Json, connections: Map<string, ConnectionLookup>): ReachabilityEndpoint {
+	const connectionIdentifier = asString(raw.connectionIdentifier);
+
 	return {
 		channel: asString(raw.channel) ?? null,
-		connectionIdentifier: asString(raw.connectionIdentifier) ?? null,
+		connection: connectionIdentifier ? (connections.get(connectionIdentifier) ?? null) : null,
 		contextKeys: contextKeysOf(raw),
 		hasTenantId: Boolean(asRecord(raw.endpoint)?.tenantId),
-		identifier: String(raw.identifier ?? ""),
 		integrationIdentifier: asString(raw.integrationIdentifier) ?? null,
 		providerId: asString(raw.providerId) ?? null,
 		type: String(raw.type ?? ""),

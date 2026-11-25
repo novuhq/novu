@@ -1,7 +1,12 @@
 /** How the subscriber's preferences, and critical workflows that ignore them, change a channel's verdict. */
 
-import { CHANNEL_LABELS, describeReadFailure, pluralize } from "./reachability-text";
-import type { SubscriberReachabilityInput, Verdict } from "./subscriber-reachability";
+import {
+	CHANNEL_LABELS,
+	describeReadFailure,
+	pluralize,
+	type SubscriberReachabilityInput,
+	type Verdict,
+} from "./reachability-model";
 
 /** Channels whose non-critical steps wait for, or skip outside, the subscriber's schedule. */
 const SCHEDULED_CHANNELS = "email, SMS, push and chat";

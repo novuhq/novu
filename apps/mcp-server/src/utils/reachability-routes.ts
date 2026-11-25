@@ -1,19 +1,22 @@
 /**
- * Chat and tool reachability. Each endpoint, stored channel, phone-based provider or tool
- * integration becomes a `RouteFinding`, and `settleRoutes` turns the findings into the verdict.
- * Mirrors send-message-chat, send-message-tool and resolve-channel-endpoints in the worker.
+ * Push, chat and tool reachability. Each device group, endpoint, stored channel, phone-based
+ * provider or tool integration becomes a `RouteFinding`, and `settleRoutes` turns the findings
+ * into the verdict. Mirrors send-message-push, send-message-chat, send-message-tool and
+ * resolve-channel-endpoints in the worker.
  */
 
-import { CONDITIONS_REASON, describeReadFailure, pluralize } from "./reachability-text";
-import type {
-	ConnectionLookup,
-	ReachabilityEndpoint,
-	ReachabilityIntegration,
-	ReachabilitySubscriberChannel,
-	RuleContext,
-	SubscriberReachabilityInput,
-	Verdict,
-} from "./subscriber-reachability";
+import {
+	CONDITIONS_REASON,
+	type ConnectionLookup,
+	describeReadFailure,
+	pluralize,
+	type ReachabilityEndpoint,
+	type ReachabilityIntegration,
+	type ReachabilitySubscriberChannel,
+	type RuleContext,
+	type SubscriberReachabilityInput,
+	type Verdict,
+} from "./reachability-model";
 
 /** Chat providers that deliver to `subscriber.phone` (send-message-chat `PHONE_BASED_CHAT_PROVIDERS`). */
 const PHONE_BASED_CHAT_PROVIDERS = ["whatsapp-business", "sendblue", "photon-imessage"];
@@ -62,7 +65,7 @@ const ENDPOINT_TYPES: Record<string, EndpointType> = {
 	webhook: { label: "Webhook", provider: "Webhook" },
 };
 
-/** One way a chat or tool message could reach the subscriber, or why one can't. */
+/** One way a push, chat or tool message could reach the subscriber, or why one can't. */
 type RouteFinding =
 	| { kind: "route"; text: string; conditions: string[] } // [] = unconditional
 	| { kind: "problem"; text: string }
@@ -70,12 +73,17 @@ type RouteFinding =
 
 type Route = Extract<RouteFinding, { kind: "route" }>;
 
+/** Push: device tokens on `subscriber.channels` for a provider with an active integration (send-message-push). */
+export function pushChannel(v: Verdict, ctx: RuleContext): void {
+	settleRoutes(v, deviceFindings(ctx), { gaps: [], none: "No push device tokens" });
+}
+
 /**
  * Chat combines three sources (send-message-chat `resolveAllChannels`): channel endpoints, legacy
  * `subscriber.channels` webhooks, and the phone number for phone-based providers.
  */
 export function chatChannel(v: Verdict, ctx: RuleContext): void {
-	const { failures, limits } = ctx.input;
+	const { endpointsTruncated, failures } = ctx.input;
 
 	settleRoutes(
 		v,
@@ -85,7 +93,7 @@ export function chatChannel(v: Verdict, ctx: RuleContext): void {
 				...(failures?.endpoints
 					? [describeReadFailure("endpoints", failures.endpoints)]
 					: []),
-				...(limits?.endpointsTruncated ? [ENDPOINTS_READ_LIMIT_NOTE] : []),
+				...(endpointsTruncated ? [ENDPOINTS_READ_LIMIT_NOTE] : []),
 			],
 			none: "No chat endpoint, webhook or phone-based chat integration",
 		},
@@ -113,19 +121,6 @@ export function toolInUse({ active, input }: RuleContext): boolean {
 	return input.failures?.integrations
 		? input.endpoints.some((endpoint) => endpoint.channel === "tool")
 		: active.length > 0;
-}
-
-/**
- * The lookup of a connection the endpoints reference; an identifier without one was not found.
- * Own keys only, so an identifier such as "constructor" isn't read from the prototype.
- */
-export function connectionLookup(
-	input: SubscriberReachabilityInput,
-	identifier: string,
-): ConnectionLookup {
-	return Object.keys(input.connections).includes(identifier)
-		? input.connections[identifier]
-		: { status: "missing" };
 }
 
 /**
@@ -166,16 +161,54 @@ function textsOf(findings: RouteFinding[], kind: RouteFinding["kind"]): string[]
 	return findings.filter((finding) => finding.kind === kind).map((finding) => finding.text);
 }
 
+/** One route per provider whose tokens reach an active integration, and one problem per distinct orphan reason. */
+function deviceFindings({ active, input }: RuleContext): RouteFinding[] {
+	const devicesByProvider = new Map<string, number>();
+	const orphans = new Set<string>();
+
+	for (const channel of input.subscriber.channels.filter((entry) => entry.deviceTokenCount > 0)) {
+		// The worker sends through the integration the channel is bound to, never a sibling of the same provider.
+		const integration = active.find(
+			(candidate) =>
+				candidate.providerId === channel.providerId &&
+				(channel.integrationId
+					? candidate.id === channel.integrationId
+					: !channel.integrationIdentifier ||
+						candidate.identifier === channel.integrationIdentifier),
+		);
+		if (integration) {
+			devicesByProvider.set(
+				channel.providerId,
+				(devicesByProvider.get(channel.providerId) ?? 0) + channel.deviceTokenCount,
+			);
+		} else if (channel.integrationId) {
+			orphans.add(
+				`Device tokens for ${channel.providerId} are bound to an integration that is inactive or deleted`,
+			);
+		} else {
+			orphans.add(`Device tokens for ${channel.providerId}, which has no active integration`);
+		}
+	}
+
+	return [
+		...[...devicesByProvider].map(
+			([providerId, count]): RouteFinding => ({
+				conditions: [],
+				kind: "route",
+				text: `${count} ${pluralize(count, "device")} on ${providerId}`,
+			}),
+		),
+		...[...orphans].map((text): RouteFinding => ({ kind: "problem", text })),
+	];
+}
+
 function endpointFindings(ctx: RuleContext): RouteFinding[] {
 	return ctx.input.endpoints
 		.filter((endpoint) => endpoint.channel === "chat")
 		.map((endpoint) => endpointFinding(endpoint, ctx));
 }
 
-function endpointFinding(
-	endpoint: ReachabilityEndpoint,
-	{ active, input }: RuleContext,
-): RouteFinding {
+function endpointFinding(endpoint: ReachabilityEndpoint, { active }: RuleContext): RouteFinding {
 	const type = ENDPOINT_TYPES[endpoint.type] ?? { label: endpoint.type, provider: endpoint.type };
 	const integration = active.find(
 		(candidate) => candidate.identifier === endpoint.integrationIdentifier,
@@ -188,7 +221,7 @@ function endpointFinding(
 		};
 	}
 
-	const connectionProblem = connectionFinding(endpoint, type, input);
+	const connectionProblem = connectionFinding(endpoint, type);
 	if (connectionProblem) return connectionProblem;
 
 	const contexts = endpoint.contextKeys.length > 0 ? [endpoint.contextKeys.join(", ")] : [];
@@ -208,7 +241,6 @@ function endpointFinding(
 function connectionFinding(
 	endpoint: ReachabilityEndpoint,
 	type: EndpointType,
-	input: SubscriberReachabilityInput,
 ): RouteFinding | undefined {
 	if (!type.needs || (type.needs === "connection_or_tenant" && endpoint.hasTenantId)) {
 		return undefined;
@@ -218,9 +250,7 @@ function connectionFinding(
 		type.needs === "connection"
 			? `${type.provider} endpoint has no connection`
 			: `${type.provider} endpoint has no connection or tenant ID`;
-	const lookup: ConnectionLookup = endpoint.connectionIdentifier
-		? connectionLookup(input, endpoint.connectionIdentifier)
-		: { status: "missing" };
+	const lookup: ConnectionLookup = endpoint.connection ?? { status: "missing" };
 
 	switch (lookup.status) {
 		case "unchecked":
@@ -399,7 +429,7 @@ function toolFinding(
 		};
 	}
 
-	if (input.limits?.endpointsTruncated) {
+	if (input.endpointsTruncated) {
 		return { kind: "unverified", text: ENDPOINTS_READ_LIMIT_NOTE };
 	}
 

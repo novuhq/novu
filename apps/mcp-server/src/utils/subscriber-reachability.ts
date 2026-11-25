@@ -4,176 +4,29 @@
  * so keep them in step when it changes. Pure: the tool in `tools/subscriber-reachability.ts`
  * reads the API and drops every credential before calling this.
  *
- * Each channel has one rule in `CHANNEL_RULES`; chat and tool routes are in `reachability-routes.ts`
- * and preferences in `reachability-preferences.ts`.
+ * This module runs one rule per channel (`CHANNEL_RULES`) and holds the email, SMS and in-app
+ * rules. Push, chat and tool routes are in `reachability-routes.ts`, preferences in
+ * `reachability-preferences.ts`, and the types in `reachability-model.ts`.
  *
  * The result never carries a phone number, custom data or credential values, only whether
  * each is present.
  */
 
-import { applyPreferences, preferenceNotes } from "./reachability-preferences";
-import { chatChannel, connectionLookup, toolChannel, toolInUse } from "./reachability-routes";
 import {
 	CHANNEL_LABELS,
 	CONDITIONS_REASON,
 	describeReadFailure,
+	type ReachabilityChannel,
+	type ReachabilitySource,
+	type ReachabilitySubscriber,
+	type RuleContext,
 	SOURCE_LABELS,
-} from "./reachability-text";
-
-export { describeReadFailure } from "./reachability-text";
-
-export type ReachabilityChannel = "email" | "in_app" | "sms" | "push" | "chat" | "tool";
-
-export type ReachabilityState = "reachable" | "partly" | "blocked" | "unknown";
-
-export type ReachabilitySource =
-	| "integrations"
-	| "preferences"
-	| "criticalPreferences"
-	| "endpoints"
-	| "connections";
-
-export interface ReadFailure {
-	/** HTTP status of the failed read; absent for network errors. */
-	status?: number;
-}
-
-/** Reads that fail as a whole; connection lookups fail one at a time (`ConnectionLookup`). */
-export type ReadFailures = Partial<Record<Exclude<ReachabilitySource, "connections">, ReadFailure>>;
-
-export interface ReachabilitySubscriberChannel {
-	providerId: string;
-	/** The integration the channel is bound to (`_integrationId`); the push worker sends only through it. */
-	integrationId?: string | null;
-	integrationIdentifier?: string | null;
-	/** Only presence is read: the token count and whether a webhook URL or phone number is set. */
-	deviceTokenCount: number;
-	hasWebhookUrl: boolean;
-	hasPhoneNumber: boolean;
-}
-
-export interface ReachabilitySubscriber {
-	subscriberId: string;
-	firstName?: string | null;
-	lastName?: string | null;
-	email?: string | null;
-	hasPhone: boolean;
-	lastOnlineAt?: string | null;
-	isOnline?: boolean | null;
-	environmentId?: string | null;
-	channels: ReachabilitySubscriberChannel[];
-}
-
-export interface ReachabilityIntegration {
-	id: string;
-	identifier: string;
-	providerId: string;
-	channel: string;
-	active: boolean;
-	primary?: boolean;
-	hasConditions: boolean;
-	hasRules: boolean;
-}
-
-export type PreferenceChannels = Partial<Record<ReachabilityChannel, boolean>>;
-
-export interface ReachabilityPreferences {
-	global?: {
-		enabled?: boolean;
-		channels?: PreferenceChannels;
-		schedule?: { isEnabled?: boolean } | null;
-	};
-	workflows?: Array<{
-		enabled?: boolean;
-		channels?: PreferenceChannels;
-		workflow?: { name?: string; identifier?: string };
-	}>;
-}
-
-export interface ReachabilityEndpoint {
-	identifier: string;
-	channel: string | null;
-	providerId: string | null;
-	integrationIdentifier: string | null;
-	connectionIdentifier: string | null;
-	contextKeys: string[];
-	type: string;
-	hasTenantId: boolean;
-}
-
-export interface ReachabilityConnection {
-	hasWorkspaceId: boolean;
-	contextKeys: string[];
-}
-
-export type ConnectionLookup =
-	| { status: "found"; connection: ReachabilityConnection }
-	| { status: "missing" } // 404
-	| { status: "failed"; failure: ReadFailure }
-	| { status: "unchecked" }; // past MAX_CONNECTION_LOOKUPS
-
-export interface SubscriberReachabilityInput {
-	subscriber: ReachabilitySubscriber;
-	integrations: ReachabilityIntegration[];
-	preferences?: ReachabilityPreferences;
-	criticalPreferences?: ReachabilityPreferences;
-	endpoints: ReachabilityEndpoint[];
-	/** One lookup per connection the endpoints reference, by connection identifier. */
-	connections: Record<string, ConnectionLookup>;
-	failures?: ReadFailures;
-	/** What the tool's read caps left out, so it isn't reported as missing setup. */
-	limits?: {
-		/** More endpoints may exist than the one page that was read. */
-		endpointsTruncated?: boolean;
-	};
-}
-
-export interface ChannelReachability {
-	channel: ReachabilityChannel;
-	state: ReachabilityState;
-	/** Why the channel is blocked, unknown or only partly reachable, most severe first. */
-	reasons: string[];
-	/** How it reaches the subscriber, and conditions that don't block it. */
-	details: string[];
-}
-
-export interface SubscriberReachabilityCandidate {
-	subscriberId: string;
-	name: string | null;
-	email: string | null;
-	dashboardPath: string;
-}
-
-export type SubscriberReachabilityResult =
-	| {
-			status: "found";
-			environmentId: string | null;
-			/** The subscriber's page, as a path under `/env/<environment>` in the dashboard. */
-			dashboardPath: string;
-			subscriber: {
-				subscriberId: string;
-				name: string | null;
-				email: string | null;
-				hasPhone: boolean;
-				lastOnlineAt: string | null;
-			};
-			channels: ChannelReachability[];
-			notes: string[];
-			checked: string[];
-	  }
-	| { status: "not_found"; searched: { field: string; value?: string } }
-	| {
-			status: "ambiguous";
-			candidates: SubscriberReachabilityCandidate[];
-			/** More subscribers may match than the candidates listed. */
-			hasMore: boolean;
-	  };
-
-/** What every channel rule reads: the input, and the channel's integrations that workflows can send through. */
-export interface RuleContext {
-	input: SubscriberReachabilityInput;
-	active: ReachabilityIntegration[];
-}
+	type SubscriberReachabilityInput,
+	type SubscriberReachabilityResult,
+	Verdict,
+} from "./reachability-model";
+import { applyPreferences, preferenceNotes } from "./reachability-preferences";
+import { chatChannel, pushChannel, toolChannel, toolInUse } from "./reachability-routes";
 
 interface ChannelRule {
 	channel: ReachabilityChannel;
@@ -213,34 +66,6 @@ const SOURCES: ReachabilitySource[] = [
 	"endpoints",
 	"connections",
 ];
-
-/** One channel's verdict while it is being built: blockers win over unknowns, unknowns over partial gaps. */
-export class Verdict {
-	readonly blockers: string[] = [];
-	readonly unknowns: string[] = [];
-	readonly partial: string[] = [];
-	readonly details: string[] = [];
-
-	constructor(readonly channel: ReachabilityChannel) {}
-
-	toResult(): ChannelReachability {
-		const state: ReachabilityState =
-			this.blockers.length > 0
-				? "blocked"
-				: this.unknowns.length > 0
-					? "unknown"
-					: this.partial.length > 0
-						? "partly"
-						: "reachable";
-
-		return {
-			channel: this.channel,
-			details: this.details,
-			reasons: [...this.blockers, ...this.unknowns, ...this.partial],
-			state,
-		};
-	}
-}
 
 /** The dashboard's subscriber page, as a path under `/env/<environment>`. */
 export function subscriberDashboardPath(subscriberId: string): string {
@@ -296,14 +121,14 @@ function runRule(rule: ChannelRule, input: SubscriberReachabilityInput): Verdict
 
 	const v = new Verdict(rule.channel);
 	rule.precheck?.(v, ctx);
-	if (hasActiveIntegration(v, ctx)) rule.evaluate?.(v, ctx);
+	if (requireActiveIntegration(v, ctx)) rule.evaluate?.(v, ctx);
 	applyPreferences(v, input);
 
 	return v;
 }
 
 /** An unreadable integration list leaves the channel unknown, and an empty one blocks it. */
-function hasActiveIntegration(v: Verdict, { active, input }: RuleContext): boolean {
+function requireActiveIntegration(v: Verdict, { active, input }: RuleContext): boolean {
 	const failure = input.failures?.integrations;
 	if (failure) {
 		v.unknowns.push(describeReadFailure("integrations", failure));
@@ -350,63 +175,14 @@ function inboxPresence(v: Verdict, { input: { subscriber } }: RuleContext): void
 	else v.details.push("Never opened the Inbox");
 }
 
-/** Push: device tokens on `subscriber.channels` for a provider with an active integration (send-message-push). */
-function pushChannel(v: Verdict, { active, input }: RuleContext): void {
-	const withTokens = input.subscriber.channels.filter((channel) => channel.deviceTokenCount > 0);
-	const devicesByProvider = new Map<string, number>();
-	const orphans = new Set<string>();
-
-	for (const channel of withTokens) {
-		// The worker sends through the integration the channel is bound to, never a sibling of the same provider.
-		const integration = active.find(
-			(candidate) =>
-				candidate.providerId === channel.providerId &&
-				(channel.integrationId
-					? candidate.id === channel.integrationId
-					: !channel.integrationIdentifier ||
-						candidate.identifier === channel.integrationIdentifier),
-		);
-		if (integration) {
-			devicesByProvider.set(
-				channel.providerId,
-				(devicesByProvider.get(channel.providerId) ?? 0) + channel.deviceTokenCount,
-			);
-		} else if (channel.integrationId) {
-			orphans.add(
-				`Device tokens for ${channel.providerId} are bound to an integration that is inactive or deleted`,
-			);
-		} else {
-			orphans.add(`Device tokens for ${channel.providerId}, which has no active integration`);
-		}
-	}
-
-	for (const [providerId, count] of devicesByProvider) {
-		v.details.push(`${count} ${count === 1 ? "device" : "devices"} on ${providerId}`);
-	}
-
-	const orphanReasons = [...orphans];
-
-	if (devicesByProvider.size > 0) {
-		v.partial.push(...orphanReasons);
-	} else if (orphanReasons.length > 0) {
-		v.blockers.push(...orphanReasons);
-	} else {
-		v.blockers.push("No push device tokens");
-	}
-}
-
 /** The sources the verdicts rest on: each read that succeeded, and connections once every lookup settled. */
 function checkedSources(input: SubscriberReachabilityInput): string[] {
 	const failures = input.failures ?? {};
-	const connectionIds = input.endpoints.flatMap((endpoint) =>
-		endpoint.connectionIdentifier ? [endpoint.connectionIdentifier] : [],
-	);
+	const lookups = input.endpoints.flatMap((endpoint) => endpoint.connection ?? []);
 	// Found or gone (404) both settle a connection; a failed or skipped lookup leaves it unchecked.
 	const connectionsRead =
-		connectionIds.length > 0 &&
-		connectionIds.every((identifier) =>
-			["found", "missing"].includes(connectionLookup(input, identifier).status),
-		);
+		lookups.length > 0 &&
+		lookups.every((lookup) => lookup.status === "found" || lookup.status === "missing");
 
 	return [
 		"profile",
