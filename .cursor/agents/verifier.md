@@ -11,7 +11,7 @@ When invoked:
 2. Confirm the implementation files exist and contain the expected changes
 3. Run the relevant test suite for the affected app:
    - API/worker: `cd apps/api && pnpm test` or `cd apps/worker && pnpm test`
-   - Dashboard: `cd apps/dashboard && pnpm test:e2e` (only if dashboard is running)
+   - Dashboard: `cd apps/dashboard && pnpm test`
 4. Run `pnpm check` in the affected app to confirm no lint or type errors
 5. For API changes that touch endpoints: run `npm run lint:openapi` (requires API running)
 6. Look for edge cases that may have been missed
