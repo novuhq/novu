@@ -1,30 +1,32 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApiResponse } from "../types/index";
-import { asRecord } from "../utils/activity-format";
+import { asRecord, asString } from "../utils/activity-format";
 import {
-	computeSubscriberReachability,
+	type ConnectionLookup,
+	ENDPOINTS_READ_LIMIT,
 	type ReachabilityConnection,
 	type ReachabilityEndpoint,
 	type ReachabilityIntegration,
 	type ReachabilityPreferences,
-	type ReachabilitySource,
 	type ReachabilitySubscriber,
 	type ReadFailure,
+	type ReadFailures,
 	type SubscriberReachabilityResult,
-	subscriberDashboardPath,
-	subscriberDisplayName,
+} from "../utils/reachability-model";
+import {
+	computeSubscriberReachability,
+	subscriberCandidate,
 } from "../utils/subscriber-reachability";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
 import { SUBSCRIBER_REACHABILITY_TOOL_NAMES } from "./tool-names";
 
-export const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
+const [SUBSCRIBER_REACHABILITY_TOOL_NAME] = SUBSCRIBER_REACHABILITY_TOOL_NAMES;
 
 const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: true } as const;
 
 const SEARCH_LIMIT = 10;
-const ENDPOINTS_LIMIT = 100;
 const MAX_CONNECTION_LOOKUPS = 10;
 
 const MISSING_IDENTIFIER =
@@ -62,7 +64,7 @@ export function registerSubscriberReachabilityTool(server: McpServer, accessors:
 	ToolFactory.createTool(server, accessors, {
 		annotations: READ_ONLY,
 		description:
-			"Check which channels (email, in-app, SMS, push, chat) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
+			"Check which channels (email, in-app, SMS, push, chat, tool) can reach one subscriber and, for each one that can't, why: missing address or push token, no active integration, preferences, or a chat endpoint without a connection. Give one of subscriberId, email, phone or name; several matches return candidates to choose from. Covers setup, not delivery history: use the notification or workflow-run tools for what was sent. Never returns phone numbers, custom data or credentials.",
 		handler: async (rawInput, context) => {
 			const input = withoutBlankValues(rawInput);
 			if (!input.subscriberId && !input.email && !input.phone && !input.name) {
@@ -125,15 +127,7 @@ async function findSubscriber(input: ReachabilityInput, context: ToolContext): P
 			return {
 				kind: "done",
 				result: {
-					candidates: matches.map((match) => ({
-						dashboardPath: subscriberDashboardPath(String(match.subscriberId)),
-						email: stringOrNull(match.email),
-						name: subscriberDisplayName({
-							firstName: stringOrNull(match.firstName),
-							lastName: stringOrNull(match.lastName),
-						}),
-						subscriberId: String(match.subscriberId),
-					})),
+					candidates: matches.map((match) => subscriberCandidate(toSubscriber(match))),
 					hasMore: Boolean(page?.next) || matches.length >= SEARCH_LIMIT,
 					status: "ambiguous",
 				},
@@ -196,7 +190,7 @@ async function checkReachability(
 	const subscriber = toSubscriber(rawSubscriber);
 	const subscriberId = encodeURIComponent(subscriber.subscriberId);
 	const endpointsQuery = new URLSearchParams({
-		limit: String(ENDPOINTS_LIMIT),
+		limit: String(ENDPOINTS_READ_LIMIT),
 		subscriberId: subscriber.subscriberId,
 	});
 
@@ -204,62 +198,84 @@ async function checkReachability(
 		read(context, "/v1/integrations"),
 		read(context, `/v2/subscribers/${subscriberId}/preferences`),
 		read(context, `/v2/subscribers/${subscriberId}/preferences?criticality=critical`),
-		read(context, `/v1/channel-endpoints?${endpointsQuery.toString()}`),
+		// The page keeps its envelope: `next` says whether more endpoints exist.
+		read(context, `/v1/channel-endpoints?${endpointsQuery.toString()}`, { unwrapData: false }),
 	]);
 
-	const endpointList = endpoints.ok ? asArray(endpoints.data).map(toEndpoint) : [];
-	const referencedConnectionIds = unique(
-		endpointList
-			.map((endpoint) => endpoint.connectionIdentifier)
-			.filter((identifier): identifier is string => Boolean(identifier)),
-	);
-	const connectionIds = referencedConnectionIds.slice(0, MAX_CONNECTION_LOOKUPS);
-	const connectionReads = await Promise.all(
-		connectionIds.map((identifier) =>
-			read(context, `/v1/channel-connections/${encodeURIComponent(identifier)}`),
-		),
-	);
+	const endpointsPage = endpoints.ok ? asRecord(endpoints.data) : undefined;
+	const rawEndpoints = asArray(endpointsPage?.data);
+	const connections = await lookUpConnections(context, rawEndpoints);
 
-	const failures: Partial<Record<ReachabilitySource, ReadFailure>> = {};
+	const failures: ReadFailures = {};
 	const sources = { criticalPreferences, endpoints, integrations, preferences };
 	for (const [source, response] of Object.entries(sources) as Array<
-		[ReachabilitySource, ApiCallResult]
+		[keyof ReadFailures, ApiCallResult]
 	>) {
 		if (!response.ok) failures[source] = toReadFailure(response);
 	}
-	// A deleted connection is a finding ("no connection"), not a failed read.
-	const failedConnection = connectionReads.find(
-		(response): response is FailedCall => !response.ok && response.status !== 404,
-	);
-	if (failedConnection) failures.connections = toReadFailure(failedConnection);
 
 	return computeSubscriberReachability({
-		connections: connectionReads.flatMap((response) =>
-			response.ok ? [toConnection(asRecord(response.data) ?? {})] : [],
-		),
 		criticalPreferences: criticalPreferences.ok
 			? toPreferences(criticalPreferences.data)
 			: undefined,
-		endpoints: endpointList,
+		endpoints: rawEndpoints.map((raw) => toEndpoint(raw, connections)),
+		// One page of endpoints: what's left over is "not checked".
+		endpointsTruncated: Boolean(endpointsPage?.next),
 		failures,
 		integrations: integrations.ok
 			? asArray(integrations.data)
-					.filter(
-						(integration) =>
-							!subscriber.environmentId ||
-							!integration._environmentId ||
-							integration._environmentId === subscriber.environmentId,
-					)
+					.filter((integration) => inEnvironment(integration, subscriber.environmentId))
 					.map(toIntegration)
 			: [],
-		// One page of endpoints and a capped number of connection lookups: what's left over is "not checked".
-		limits: {
-			endpointsTruncated: endpointList.length >= ENDPOINTS_LIMIT,
-			uncheckedConnectionIds: referencedConnectionIds.slice(MAX_CONNECTION_LOOKUPS),
-		},
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
+}
+
+/** Whether an integration belongs to the subscriber's environment; a side without one matches any. */
+function inEnvironment(integration: Json, environmentId: string | null | undefined): boolean {
+	return (
+		!environmentId ||
+		!integration._environmentId ||
+		integration._environmentId === environmentId
+	);
+}
+
+/** One lookup per connection the endpoints link to, by identifier; those past the cap aren't read. */
+async function lookUpConnections(
+	context: ToolContext,
+	rawEndpoints: Json[],
+): Promise<Map<string, ConnectionLookup>> {
+	const identifiers = unique(
+		rawEndpoints.flatMap((raw) => asString(raw.connectionIdentifier) ?? []),
+	);
+	const lookups = await Promise.all(
+		identifiers.map((identifier, index): Promise<ConnectionLookup> | ConnectionLookup =>
+			index < MAX_CONNECTION_LOOKUPS
+				? lookUpConnection(context, identifier)
+				: { status: "unchecked" },
+		),
+	);
+
+	return new Map(identifiers.map((identifier, index) => [identifier, lookups[index]]));
+}
+
+/** A deleted connection (404) is a finding ("no connection"), not a failed read. */
+async function lookUpConnection(
+	context: ToolContext,
+	identifier: string,
+): Promise<ConnectionLookup> {
+	const response = await read(
+		context,
+		`/v1/channel-connections/${encodeURIComponent(identifier)}`,
+	);
+	if (response.ok) {
+		return { connection: toConnection(asRecord(response.data) ?? {}), status: "found" };
+	}
+
+	return response.status === 404
+		? { status: "missing" }
+		: { failure: toReadFailure(response), status: "failed" };
 }
 
 /** One GET that never throws: a network error comes back as a failed call with status 0. */
@@ -312,18 +328,17 @@ function toSubscriber(raw: Json): ReachabilitySubscriber {
 					.length,
 				hasPhoneNumber: Boolean(credentials.phoneNumber),
 				hasWebhookUrl: Boolean(credentials.webhookUrl),
-				integrationId: stringOrNull(channel._integrationId),
-				integrationIdentifier: stringOrNull(channel.integrationIdentifier),
+				integrationId: asString(channel._integrationId) ?? null,
 				providerId: String(channel.providerId ?? ""),
 			};
 		}),
-		email: stringOrNull(raw.email),
-		environmentId: stringOrNull(raw._environmentId),
-		firstName: stringOrNull(raw.firstName),
+		email: asString(raw.email) ?? null,
+		environmentId: asString(raw._environmentId) ?? null,
+		firstName: asString(raw.firstName) ?? null,
 		hasPhone: typeof raw.phone === "string" && raw.phone.trim().length > 0,
 		isOnline: typeof raw.isOnline === "boolean" ? raw.isOnline : null,
-		lastName: stringOrNull(raw.lastName),
-		lastOnlineAt: stringOrNull(raw.lastOnlineAt),
+		lastName: asString(raw.lastName) ?? null,
+		lastOnlineAt: asString(raw.lastOnlineAt) ?? null,
 		subscriberId: String(raw.subscriberId ?? ""),
 	};
 }
@@ -343,26 +358,32 @@ function toIntegration(raw: Json): ReachabilityIntegration {
 	};
 }
 
-function toEndpoint(raw: Json): ReachabilityEndpoint {
+function toEndpoint(raw: Json, connections: Map<string, ConnectionLookup>): ReachabilityEndpoint {
+	const connectionIdentifier = asString(raw.connectionIdentifier);
+
 	return {
-		channel: stringOrNull(raw.channel),
-		connectionIdentifier: stringOrNull(raw.connectionIdentifier),
-		contextKeys: Array.isArray(raw.contextKeys)
-			? raw.contextKeys.filter((key): key is string => typeof key === "string")
-			: [],
+		channel: asString(raw.channel) ?? null,
+		connection: connectionIdentifier ? (connections.get(connectionIdentifier) ?? null) : null,
+		contextKeys: contextKeysOf(raw),
 		hasTenantId: Boolean(asRecord(raw.endpoint)?.tenantId),
-		identifier: String(raw.identifier ?? ""),
-		integrationIdentifier: stringOrNull(raw.integrationIdentifier),
-		providerId: stringOrNull(raw.providerId),
+		integrationIdentifier: asString(raw.integrationIdentifier) ?? null,
+		providerId: asString(raw.providerId) ?? null,
 		type: String(raw.type ?? ""),
 	};
 }
 
 function toConnection(raw: Json): ReachabilityConnection {
 	return {
+		contextKeys: contextKeysOf(raw),
 		hasWorkspaceId: Boolean(asRecord(raw.workspace)?.id),
-		identifier: String(raw.identifier ?? ""),
 	};
+}
+
+/** Endpoints and connections stored before contexts have no `contextKeys`; that's the empty context. */
+function contextKeysOf(raw: Json): string[] {
+	return Array.isArray(raw.contextKeys)
+		? raw.contextKeys.filter((key): key is string => typeof key === "string")
+		: [];
 }
 
 function toPreferences(data: unknown): ReachabilityPreferences | undefined {
@@ -373,10 +394,6 @@ function asArray(value: unknown): Json[] {
 	return Array.isArray(value)
 		? value.filter((item): item is Json => Boolean(asRecord(item)))
 		: [];
-}
-
-function stringOrNull(value: unknown): string | null {
-	return typeof value === "string" && value ? value : null;
 }
 
 function unique(values: string[]): string[] {

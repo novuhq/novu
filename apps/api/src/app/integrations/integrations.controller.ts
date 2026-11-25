@@ -481,13 +481,24 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto[]> {
-    return await this.removeIntegrationUsecase.execute(
+    await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+      })
+    );
+
+    // The environment's remaining integrations as the route documents them: no credentials or signing keys, for any caller.
+    return await this.getIntegrationsUsecase.execute(
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        returnCredentials: false,
+        scopeToEnvironment: true,
       })
     );
   }

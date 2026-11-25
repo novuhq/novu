@@ -150,6 +150,8 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 		"deleted integration",
 		"integrationId",
 		"The ID of the integration to delete",
+		// The API answers with the environment's remaining integrations; the model needs only the confirmation.
+		(_data, integrationId) => `Successfully deleted integration ${integrationId}`,
 	);
 
 	ToolFactory.createTool(server, accessors, {

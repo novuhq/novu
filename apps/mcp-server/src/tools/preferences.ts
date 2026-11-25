@@ -51,7 +51,8 @@ export function registerPreferenceTools(server: McpServer, accessors: ToolAccess
 						`Successfully updated subscriber preferences for ${subscriberId} ${scopeText}.\nUpdated channels: ${channelsList}\n\nResponse:\n${JSON.stringify(data, null, 2)}`,
 					identifier: subscriberId,
 					method: "PATCH",
-					successMessage: `updated subscriber preferences for ${subscriberId}`,
+					// `identifier` appends the subscriberId to the log and error text.
+					successMessage: "updated subscriber preferences for",
 				},
 				context.idempotencyKey,
 			);

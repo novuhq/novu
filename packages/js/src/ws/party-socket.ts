@@ -1,15 +1,15 @@
 import 'event-target-polyfill';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocket } from 'partysocket';
-import { InboxService } from '../api';
+import type { InboxService, SessionRefresher } from '../api';
 import { BaseModule } from '../base-module';
 import {
-  WebChatAgentEvent,
   NotificationReceivedEvent,
   NotificationUnreadEvent,
   NotificationUnseenEvent,
   NovuEventEmitter,
   SocketEventNames,
+  WebChatAgentEvent,
 } from '../event-emitter';
 import { Notification } from '../notifications';
 import {
@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { NovuError } from '../utils/errors';
 import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
+import { isJwtExpired } from '../utils/jwt';
 import type { BaseSocketInterface } from './base-socket';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
@@ -71,8 +72,10 @@ const mapToNotification = ({
     email: subscriber?.email,
     phone: subscriber?.phone,
   };
-  const primaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.PRIMARY);
-  const secondaryCta = cta.action?.buttons?.find((button: any) => button.type === ActionTypeEnum.SECONDARY);
+  const primaryCta = cta.action?.buttons?.find((button: { type?: string }) => button.type === ActionTypeEnum.PRIMARY);
+  const secondaryCta = cta.action?.buttons?.find(
+    (button: { type?: string }) => button.type === ActionTypeEnum.SECONDARY
+  );
   const actionType = cta.action?.result?.type;
   const actionStatus = cta.action?.status;
 
@@ -123,17 +126,25 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
   #hibernationHeartbeatIntervalId: ReturnType<typeof setInterval> | undefined;
+  /** partysocket's retryCount at the last open or close, to tell a scheduled retry from giving up */
+  #lastRetryCount = 0;
+  #hasGivenUp = false;
+  /** Set once 'socket.disconnect.resolved' went out for the current outage, cleared on 'open' */
+  #disconnectEmitted = false;
+  #refreshSession?: SessionRefresher;
 
   constructor({
     socketUrl,
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
+    refreshSession,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
+    refreshSession?: SessionRefresher;
   }) {
     super({
       eventEmitterInstance,
@@ -142,6 +153,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
+    this.#refreshSession = refreshSession;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -260,7 +272,39 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     }, HIBERNATION_HEARTBEAT_MS);
   }
 
+  /**
+   * partysocket bumps retryCount when a close schedules another attempt. At a caller-provided `maxRetries` it
+   * leaves the count as it was and stops for good; its `reconnect()` cannot restart it from there.
+   */
+  #trackGiveUp(socket: WebSocket): void {
+    const maxRetries = Number(this.#socketOptions?.maxRetries ?? Number.POSITIVE_INFINITY);
+
+    this.#hasGivenUp = socket.retryCount >= maxRetries && socket.retryCount === this.#lastRetryCount;
+    this.#lastRetryCount = socket.retryCount;
+  }
+
+  /**
+   * The socket only checks the token when it connects, so an open socket keeps working after the token expires.
+   * A reconnect with the expired token would be rejected on every attempt, so get a new token first.
+   */
+  #getSocketUrl = async (): Promise<string> => {
+    if (this.#refreshSession && isJwtExpired(this.#token)) {
+      await this.#refreshSession().catch(() => false);
+    }
+
+    const url = new URL(this.#socketUrl);
+    url.searchParams.set('token', this.#token);
+
+    return url.toString();
+  };
+
   async #initializeSocket(): Promise<void> {
+    if (this.#partySocket && this.#hasGivenUp) {
+      const deadSocket = this.#partySocket;
+      this.#clearCurrentSocket();
+      deadSocket.close();
+    }
+
     if (this.#partySocket) {
       return;
     }
@@ -268,14 +312,17 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     const args = { socketUrl: this.#socketUrl };
     this.#emitter.emit('socket.connect.pending', { args });
 
-    const url = new URL(this.#socketUrl);
-    url.searchParams.set('token', this.#token);
-
-    this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
+    // PartySocket calls the URL provider before every connection attempt, including reconnects.
+    this.#partySocket = new WebSocket(this.#getSocketUrl, undefined, this.#socketOptions);
 
     const socket = this.#partySocket;
+    this.#lastRetryCount = socket.retryCount;
+    this.#hasGivenUp = false;
+    this.#disconnectEmitted = false;
 
     socket.addEventListener('open', () => {
+      this.#lastRetryCount = socket.retryCount;
+      this.#disconnectEmitted = false;
       this.#startHibernationHeartbeat();
       this.#emitter.emit('socket.connect.resolved', { args });
     });
@@ -289,8 +336,18 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
         return;
       }
 
-      this.#clearCurrentSocket();
-      this.#emitter.emit('socket.disconnect.resolved', { args });
+      /*
+       * Keep the reference: partysocket reconnects this same instance on its own, and the 'open' listener
+       * restarts the heartbeat. Dropping it here made the next connect() open a second socket while this one
+       * kept reconnecting in the background, never to be closed.
+       */
+      this.#clearHibernationHeartbeat();
+      this.#trackGiveUp(socket);
+
+      if (!this.#disconnectEmitted) {
+        this.#disconnectEmitted = true;
+        this.#emitter.emit('socket.disconnect.resolved', { args });
+      }
     });
 
     socket.addEventListener('message', this.#handleMessage);
@@ -312,9 +369,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       this.#clearCurrentSocket();
       socket?.close();
 
-      if (socket) {
+      // A drop already reported this outage; the socket was only reconnecting
+      if (socket && !this.#disconnectEmitted) {
         this.#emitter.emit('socket.disconnect.resolved', { args: { socketUrl: this.#socketUrl } });
       }
+      this.#disconnectEmitted = false;
 
       return {};
     } catch (error) {

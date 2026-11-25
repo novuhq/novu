@@ -1,6 +1,8 @@
 import { Novu, NovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
 import { createContext, ReactNode, useContext, useMemo } from 'react';
+import { useDisconnectReleasedNovu } from './internal/useDisconnectReleasedNovu';
+import { useStableValue } from './internal/useStableValue';
 
 export type NovuProviderProps = NovuOptions & {
   /**
@@ -16,7 +18,7 @@ export type NovuProviderProps = NovuOptions & {
   children: ReactNode;
 };
 
-const NovuContext = createContext<{ novu: Novu; realtime: boolean }>({ novu: undefined as any, realtime: true });
+const NovuContext = createContext<{ novu: Novu | undefined; realtime: boolean }>({ novu: undefined, realtime: true });
 
 export const NovuProvider = (props: NovuProviderProps) => {
   const { subscriberId, realtime = true, ...propsWithoutSubscriberId } = props;
@@ -47,10 +49,12 @@ export const NovuProvider = (props: NovuProviderProps) => {
  */
 export const InternalNovuProvider = (props: NovuProviderProps) => {
   const applicationIdentifier = props.applicationIdentifier || '';
-  const subscriberObj = useMemo(
-    () => buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber }),
-    [props.subscriberId, props.subscriber]
+  // Compared by value: inline objects would otherwise create a new Novu instance, session and socket on every render
+  const subscriberObj = useStableValue(
+    buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber })
   );
+  const context = useStableValue(props.context);
+  const socketOptions = useStableValue(props.socketOptions);
 
   const {
     children,
@@ -59,10 +63,8 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
     backendUrl,
     apiUrl,
     socketUrl,
-    socketOptions,
     useCache,
     defaultSchedule,
-    context,
     realtime = true,
   } = props;
 
@@ -97,6 +99,8 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
       realtime,
     ]
   );
+
+  useDisconnectReleasedNovu(value.novu);
 
   return <NovuContext.Provider value={value}>{children}</NovuContext.Provider>;
 };

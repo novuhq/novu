@@ -12,7 +12,9 @@ import sinon from 'sinon';
  * gated the same way.
  *
  * Session-token (JWT/dashboard) callers must keep receiving decrypted credentials
- * so dashboard flows continue to work.
+ * so dashboard flows continue to work. The exception is DELETE: it answers with the
+ * environment's remaining integrations, which nobody reads credentials from, so it
+ * returns none to any caller.
  */
 describe('Integration credentials exposure to API-key auth - /integrations #novu-v2', () => {
   let session: UserSession;
@@ -283,6 +285,66 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
 
       const stored = await findSendGrid();
       expect(stored.configurations?.inboundWebhookSigningKey).to.equal('');
+    });
+  });
+
+  describe('DELETE /v1/integrations/:integrationId', () => {
+    const storedKey = 'whsec_stored_on_remaining';
+    let sendgridId: string;
+    let spareId: string;
+
+    beforeEach(async () => {
+      const sendgrid = await integrationRepository.findOne({
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        providerId: EmailProviderIdEnum.SendGrid,
+      });
+      expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
+      sendgridId = sendgrid!._id;
+      await integrationRepository.update(
+        { _id: sendgridId, _environmentId: session.environment._id },
+        { $set: { configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: storedKey } } }
+      );
+
+      // The delete answers with the integrations left in the environment, so delete a spare one.
+      const { body, status } = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: { apiKey: 'key-spare', domain: 'spare.example.com' },
+        active: false,
+        check: false,
+      });
+      expect(status, 'Expected the spare integration to be created').to.equal(201);
+      spareId = body.data._id;
+    });
+
+    function expectRemainingWithoutSecrets(
+      remaining: Array<{ _id: string; credentials: unknown; configurations?: Record<string, unknown> }>
+    ) {
+      expect(remaining.length).to.be.greaterThan(0);
+      expect(remaining.map((integration) => integration._id)).to.not.include(spareId);
+      for (const integration of remaining) {
+        expect(integration.credentials).to.deep.equal({});
+        expect(integration.configurations ?? {}).to.not.have.property('inboundWebhookSigningKey');
+      }
+      const sendgrid = remaining.find((integration) => integration._id === sendgridId);
+      expect(sendgrid?.configurations?.inboundWebhookEnabled).to.equal(true);
+    }
+
+    it('should return neither credentials nor signing keys to API-key callers', async () => {
+      const { body, status } = await session.testAgent
+        .delete(`/v1/integrations/${spareId}`)
+        .set('authorization', `ApiKey ${session.apiKey}`);
+
+      expect(status).to.equal(200);
+      expectRemainingWithoutSecrets(body.data);
+    });
+
+    it('should return neither credentials nor signing keys to session tokens either', async () => {
+      const { body, status } = await session.testAgent.delete(`/v1/integrations/${spareId}`);
+
+      expect(status).to.equal(200);
+      expectRemainingWithoutSecrets(body.data);
     });
   });
 

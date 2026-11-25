@@ -2,11 +2,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { FindSubscribersParams } from "../types/index";
 import { NovuApiUtils } from "../utils/api";
-import { maskSubscriberCredentials } from "../utils/subscriber-reachability";
+import { maskSubscriberCredentials } from "../utils/subscriber-credentials";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { ToolFactory } from "../utils/tool-factory";
 import { ValidationUtils } from "../utils/validation";
-import { registerSubscriberReachabilityTool } from "./subscriber-reachability";
 
 const createSubscriberSchema = z.object({
 	avatar: z.string().optional().describe("Avatar URL or identifier"),
@@ -154,8 +153,6 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 				]),
 		},
 	);
-
-	registerSubscriberReachabilityTool(server, accessors);
 }
 
 /** Subscriber responses carry push tokens and chat webhook URLs; MCP clients get them masked. */
