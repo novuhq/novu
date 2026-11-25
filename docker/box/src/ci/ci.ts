@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
+import { FLAGS } from '../box/paths.ts';
 import { INSTALL_FILES, PATH_PROCESSES } from '../box/processes.ts';
 import { type CloudTarget, cloudTarget } from '../cli/cloud.ts';
 import { hostBoxes, hubToken } from '../cli/cloud-http.ts';
@@ -201,11 +202,10 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
     // From the API, not the event: a re-run replays the event, and edits since then count.
     const { title, body } = await github(`/repos/${REPO}/pulls/${number}`, PullText);
     const flags = boxFlagsOf(body);
-    // A box on an image older than `box flag` fails it; that only matters to a PR that asks for flags.
-    await cloud.boxOutput(['flag', '--only', ...flags]).then(log, (error: unknown) => {
-      if (flags.length) throw error;
-      log(`WARN: clearing the forced flags: ${messageOf(error)}`);
-    });
+    // A box that never forced a flag has none to clear: this skips the restart, and boxes on an image older
+    // than `box flag`. Any other failure fails the job, so TesterArmy never tests flags the PR didn't ask for.
+    if (flags.length || (await cloud.runOutput(['sh', '-c', `test -e ${FLAGS} && echo forced || true`])) === 'forced')
+      log(await cloud.boxOutput(['flag', '--only', ...flags]));
     const flagRows: Array<Row> = flags.length ? [['Flags', flags.map((key) => `\`${key}\``).join(', ')]] : [];
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
     const took = duration(Math.round((Date.now() - started) / 1000));

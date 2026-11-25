@@ -3,7 +3,7 @@ import { log } from '../node/main.ts';
 import { FlagOverrides } from '../shared/contracts.ts';
 import { prepareDashboard } from './build.ts';
 import { withLock } from './lock.ts';
-import { API_HEALTH, FLAGS, WORKER_HEALTH } from './paths.ts';
+import { API_HEALTH, FLAGS, FLAGS_APPLIED, WORKER_HEALTH } from './paths.ts';
 import { readJson, step, waitForHttp } from './runtime.ts';
 import { pc } from './supervisor.ts';
 
@@ -30,8 +30,12 @@ export async function onlyFlags(keys: ReadonlyArray<string>): Promise<void> {
 async function writeFlags(flags: FlagOverrides): Promise<void> {
   for (const key of Object.keys(flags))
     if (!/^[A-Z][A-Z0-9_]*$/.test(key)) throw new Error(`${key}: a flag key is like IS_SOMETHING_ENABLED`);
-  if (JSON.stringify(flags) === JSON.stringify(readFlags())) return log(`forced flags: ${JSON.stringify(flags)}`);
-  fs.writeFileSync(FLAGS, JSON.stringify(flags, null, 2));
+  const text = JSON.stringify(flags, null, 2);
+  fs.writeFileSync(FLAGS, text);
+  // Compared with what the apps last restarted with, not with the old FLAGS: a `flag` stopped after writing FLAGS
+  // but before the restart is finished by the next one.
+  const applied = fs.existsSync(FLAGS_APPLIED) ? fs.readFileSync(FLAGS_APPLIED, 'utf8') : JSON.stringify({}, null, 2);
+  if (text === applied) return log(`forced flags: ${JSON.stringify(flags)}`);
   prepareDashboard();
   await step('restart api worker', async () => {
     await pc(['process', 'restart', 'api']);
@@ -39,5 +43,6 @@ async function writeFlags(flags: FlagOverrides): Promise<void> {
   });
   await waitForHttp(API_HEALTH, 300);
   await waitForHttp(WORKER_HEALTH, 300);
+  fs.writeFileSync(FLAGS_APPLIED, text);
   log(`forced flags: ${JSON.stringify(flags)}`);
 }
