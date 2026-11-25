@@ -1,5 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
-import { restoreMaskedCredentials } from '@novu/shared';
+import { restoreMaskedConfigurations, restoreMaskedCredentials } from '@novu/shared';
+
+function assertAllRestored(kind: 'credentials' | 'configurations', unresolvedKeys: string[]): void {
+  if (unresolvedKeys.length > 0) {
+    throw new BadRequestException(
+      `Masked values can't be saved as ${kind}: ${unresolvedKeys.join(', ')}. Send the full secret instead.`
+    );
+  }
+}
 
 /**
  * Clients only ever see a secret as its mask, and send the mask back to keep the secret as it is.
@@ -11,12 +19,18 @@ export function restoreMaskedIntegrationCredentials<T extends object>(
   storedCredentials: object | undefined
 ): T {
   const restored = restoreMaskedCredentials(providerId, credentials, storedCredentials);
-
-  if (restored.unresolvedKeys.length > 0) {
-    throw new BadRequestException(
-      `Masked values can't be saved as credentials: ${restored.unresolvedKeys.join(', ')}. Send the full secret instead.`
-    );
-  }
+  assertAllRestored('credentials', restored.unresolvedKeys);
 
   return restored.credentials;
+}
+
+/** The same for settings, whose secret is the inbound webhook signing key. */
+export function restoreMaskedIntegrationConfigurations<T extends object>(
+  configurations: T,
+  storedConfigurations: object | undefined
+): T {
+  const restored = restoreMaskedConfigurations(configurations, storedConfigurations);
+  assertAllRestored('configurations', restored.unresolvedKeys);
+
+  return restored.configurations;
 }

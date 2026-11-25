@@ -25,6 +25,7 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
+  IConfigurations,
   ICredentialsDto,
   InAppProviderIdEnum,
   IntegrationKindEnum,
@@ -34,7 +35,10 @@ import {
 } from '@novu/shared';
 import shortid from 'shortid';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
-import { restoreMaskedIntegrationCredentials } from '../../utils/restore-masked-integration-credentials';
+import {
+  restoreMaskedIntegrationConfigurations,
+  restoreMaskedIntegrationCredentials,
+} from '../../utils/restore-masked-integration-credentials';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -187,7 +191,7 @@ export class CreateIntegration {
   private async getSecretsToCopy(
     command: CreateIntegrationCommand,
     targetEnvironment: EnvironmentEntity
-  ): Promise<ICredentialsDto | undefined> {
+  ): Promise<{ credentials: ICredentialsDto; configurations: IConfigurations | undefined } | undefined> {
     if (!command.secretsSourceIntegrationId) {
       return undefined;
     }
@@ -208,7 +212,31 @@ export class CreateIntegration {
     const leavesLiveEnvironment =
       sourceEnvironment?.type === EnvironmentTypeEnum.PROD && targetEnvironment.type !== EnvironmentTypeEnum.PROD;
 
-    return leavesLiveEnvironment ? undefined : decryptCredentials(source.credentials ?? {});
+    if (leavesLiveEnvironment) {
+      return undefined;
+    }
+
+    return { credentials: decryptCredentials(source.credentials ?? {}), configurations: source.configurations };
+  }
+
+  /** Masked values in the request stand for the secrets of the integration being duplicated; put those in. */
+  private async restoreMaskedSecrets(command: CreateIntegrationCommand, environment: EnvironmentEntity): Promise<void> {
+    const secretsToCopy = await this.getSecretsToCopy(command, environment);
+
+    if (command.credentials) {
+      command.credentials = restoreMaskedIntegrationCredentials(
+        command.providerId,
+        command.credentials,
+        secretsToCopy?.credentials
+      );
+    }
+
+    if (command.configurations) {
+      command.configurations = restoreMaskedIntegrationConfigurations(
+        command.configurations,
+        secretsToCopy?.configurations
+      );
+    }
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
@@ -220,13 +248,7 @@ export class CreateIntegration {
       throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
     }
 
-    if (command.credentials) {
-      command.credentials = restoreMaskedIntegrationCredentials(
-        command.providerId,
-        command.credentials,
-        await this.getSecretsToCopy(command, environment)
-      );
-    }
+    await this.restoreMaskedSecrets(command, environment);
 
     await this.validate(command);
     assertValidIntegrationRules(command.rules);

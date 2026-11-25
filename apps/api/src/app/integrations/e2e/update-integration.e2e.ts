@@ -456,6 +456,46 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       return decryptCredentials(stored?.credentials ?? {});
     }
 
+    it('should mask the inbound webhook signing key and keep it when the mask is sent back', async () => {
+      const SIGNING_KEY = 'whsec_abcdefghijklmnop1234';
+      const integrationId = await createSendGridIntegration();
+
+      const setResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: SIGNING_KEY },
+        check: false,
+      });
+      expect(setResponse.status).to.equal(200);
+      expect(setResponse.body.data.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
+
+      for (const authorization of [undefined, `ApiKey ${session.apiKey}`]) {
+        const request = session.testAgent.get('/v1/integrations');
+        const { body } = await (authorization ? request.set('authorization', authorization) : request);
+        const listed = body.data.find((integration) => integration._id === integrationId);
+
+        expect(listed.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
+        expect(JSON.stringify(body)).to.not.include(SIGNING_KEY);
+      }
+
+      const keepResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookEnabled: false, inboundWebhookSigningKey: maskSecret(SIGNING_KEY) },
+        check: false,
+      });
+      expect(keepResponse.status).to.equal(200);
+
+      const stored = await integrationRepository.findOne({
+        _id: integrationId,
+        _environmentId: session.environment._id,
+      });
+      expect(stored?.configurations?.inboundWebhookSigningKey).to.equal(SIGNING_KEY);
+      expect(stored?.configurations?.inboundWebhookEnabled).to.equal(false);
+
+      const mismatchResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookSigningKey: `xxx${MASKED_SECRET_FILL}0000` },
+        check: false,
+      });
+      expect(mismatchResponse.status).to.equal(400);
+    });
+
     it('should keep the stored secret when its masked value is sent back', async () => {
       const integrationId = await createSendGridIntegration();
 

@@ -40,6 +40,9 @@ export function maskSecret(value: string): string {
   return `${value.slice(0, VISIBLE_PREFIX_LENGTH)}${MASKED_SECRET_FILL}${suffix}`;
 }
 
+/** Integration settings (`configurations`) that are secrets: the key a provider signs its delivery webhooks with. */
+export const MASKED_CONFIGURATION_KEYS: readonly string[] = ['inboundWebhookSigningKey'];
+
 export function isMaskedSecret(value: unknown): value is string {
   return typeof value === 'string' && value.includes(MASKED_SECRET_FILL);
 }
@@ -53,34 +56,35 @@ function isMaskedCredential(providerId: string, key: string, value: unknown): va
   return !(providerId === ChatProviderIdEnum.WhatsAppBusiness && key === CredentialsKeyEnum.Token);
 }
 
-/** The credentials as a client may see them: every stored secret replaced by its mask. */
-export function maskSecretCredentials<T extends object>(providerId: string, credentials: T): T {
+type IsSecret = (key: string, value: unknown) => value is string;
+
+function isSecretConfiguration(key: string, value: unknown): value is string {
+  return MASKED_CONFIGURATION_KEYS.includes(key) && typeof value === 'string' && value !== '';
+}
+
+function maskValues<T extends object>(values: T, isSecret: IsSecret): T {
   const masked: Record<string, unknown> = {};
 
-  for (const [key, value] of Object.entries(credentials ?? {})) {
-    masked[key] = isMaskedCredential(providerId, key, value) ? maskSecret(value) : value;
+  for (const [key, value] of Object.entries(values ?? {})) {
+    masked[key] = isSecret(key, value) ? maskSecret(value) : value;
   }
 
   return masked as T;
 }
 
-/**
- * Puts the stored secrets back where a client sent their masks, which is how it says "unchanged".
- * A mask that matches no stored secret can't be saved; its key is reported in `unresolvedKeys`.
- */
-export function restoreMaskedCredentials<T extends object>(
-  providerId: string,
-  credentials: T,
-  storedCredentials: object | undefined
-): { credentials: T; unresolvedKeys: string[] } {
-  const stored: Record<string, unknown> = { ...storedCredentials };
+function restoreValues<T extends object>(
+  values: T,
+  storedValues: object | undefined,
+  isSecret: IsSecret
+): { values: T; unresolvedKeys: string[] } {
+  const stored: Record<string, unknown> = { ...storedValues };
   const restored: Record<string, unknown> = {};
   const unresolvedKeys: string[] = [];
 
-  for (const [key, value] of Object.entries(credentials ?? {})) {
+  for (const [key, value] of Object.entries(values ?? {})) {
     restored[key] = value;
 
-    if (!isMaskedCredential(providerId, key, value) || !isMaskedSecret(value)) {
+    if (!isSecret(key, value) || !isMaskedSecret(value)) {
       continue;
     }
 
@@ -92,5 +96,41 @@ export function restoreMaskedCredentials<T extends object>(
     }
   }
 
-  return { credentials: restored as T, unresolvedKeys };
+  return { values: restored as T, unresolvedKeys };
+}
+
+/** The credentials as a client may see them: every stored secret replaced by its mask. */
+export function maskSecretCredentials<T extends object>(providerId: string, credentials: T): T {
+  return maskValues(credentials, (key, value): value is string => isMaskedCredential(providerId, key, value));
+}
+
+/** The settings as a client may see them: the webhook signing key replaced by its mask. */
+export function maskSecretConfigurations<T extends object>(configurations: T): T {
+  return maskValues(configurations, isSecretConfiguration);
+}
+
+/**
+ * Puts the stored secrets back where a client sent their masks, which is how it says "unchanged".
+ * A mask that matches no stored secret can't be saved; its key is reported in `unresolvedKeys`.
+ */
+export function restoreMaskedCredentials<T extends object>(
+  providerId: string,
+  credentials: T,
+  storedCredentials: object | undefined
+): { credentials: T; unresolvedKeys: string[] } {
+  const { values, unresolvedKeys } = restoreValues(credentials, storedCredentials, (key, value): value is string =>
+    isMaskedCredential(providerId, key, value)
+  );
+
+  return { credentials: values, unresolvedKeys };
+}
+
+/** The same for settings: the stored webhook signing key goes back where its mask was sent. */
+export function restoreMaskedConfigurations<T extends object>(
+  configurations: T,
+  storedConfigurations: object | undefined
+): { configurations: T; unresolvedKeys: string[] } {
+  const { values, unresolvedKeys } = restoreValues(configurations, storedConfigurations, isSecretConfiguration);
+
+  return { configurations: values, unresolvedKeys };
 }

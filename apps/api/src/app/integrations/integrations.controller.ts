@@ -37,6 +37,7 @@ import {
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  maskSecretConfigurations,
   maskSecretCredentials,
   PermissionsEnum,
   UserSessionData,
@@ -211,7 +212,7 @@ export class IntegrationsController {
       })
     );
 
-    return canAccessCredentials ? integrations.map(withMaskedSecrets) : integrations;
+    return integrations.map(canAccessCredentials ? withMaskedSecrets : withMaskedConfigurations);
   }
 
   @Get('/active')
@@ -242,7 +243,7 @@ export class IntegrationsController {
       })
     );
 
-    return canAccessCredentials ? integrations.map(withMaskedSecrets) : integrations;
+    return integrations.map(canAccessCredentials ? withMaskedSecrets : withMaskedConfigurations);
   }
 
   @Get('/webhook/provider/:providerOrIntegrationId/status')
@@ -320,7 +321,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -377,7 +378,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return integrationWithoutCredentials as IntegrationResponseDto;
+      return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -414,7 +415,17 @@ export class IntegrationsController {
       })
     );
 
-    return result;
+    if (!result.integration) {
+      return result;
+    }
+
+    // The usecase works on the decrypted integration, so its secrets are masked or dropped here.
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const integration = canAccessCredentials
+      ? withMaskedSecrets(result.integration)
+      : withMaskedConfigurations({ ...result.integration, credentials: {} });
+
+    return { ...result, integration };
   }
 
   @Post('/:integrationId/set-primary')
@@ -456,7 +467,7 @@ export class IntegrationsController {
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-    return integrationWithoutCredentials as IntegrationResponseDto;
+    return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
   }
 
   @Delete('/:integrationId')
@@ -475,7 +486,7 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto[]> {
-    return await this.removeIntegrationUsecase.execute(
+    const integrations = await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -484,6 +495,8 @@ export class IntegrationsController {
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
+
+    return integrations.map(withMaskedConfigurations);
   }
 
   @Get('/:channelType/limit')
@@ -1264,13 +1277,24 @@ export class IntegrationsController {
   }
 }
 
+/** Settings as any caller gets them back: the inbound webhook signing key as a mask. */
+function withMaskedConfigurations<T extends { configurations?: object }>(integration: T): T {
+  if (!integration.configurations) {
+    return integration;
+  }
+
+  return { ...integration, configurations: maskSecretConfigurations(integration.configurations) };
+}
+
 /**
  * What a dashboard member with access to credentials gets back: the settings as stored, and each secret as a
  * mask of its first and last characters. A full secret never leaves the API.
  */
-function withMaskedSecrets<T extends { providerId: string; credentials?: object }>(integration: T): T {
-  return {
+function withMaskedSecrets<T extends { providerId: string; credentials?: object; configurations?: object }>(
+  integration: T
+): T {
+  return withMaskedConfigurations({
     ...integration,
     credentials: maskSecretCredentials(integration.providerId, decryptCredentials(integration.credentials ?? {})),
-  };
+  });
 }

@@ -382,7 +382,8 @@ function InputControl({
     return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
   }
 
-  if (isSecureCredential(credential)) {
+  // A setting the API returns masked (the webhook signing key) is a saved secret too.
+  if (isSecureCredential(credential) || !!savedValue || isMaskedSecret(field.value)) {
     return (
       <SecretInputControl
         credential={credential}

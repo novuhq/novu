@@ -4,7 +4,9 @@ import {
   isMaskedSecret,
   MASKED_SECRET_FILL,
   maskSecret,
+  maskSecretConfigurations,
   maskSecretCredentials,
+  restoreMaskedConfigurations,
   restoreMaskedCredentials,
 } from './mask-secret-credentials';
 
@@ -75,5 +77,32 @@ describe('restoreMaskedCredentials', () => {
 
     expect(restoreMaskedCredentials(SENDGRID, sent, stored).unresolvedKeys).toEqual(['apiKey']);
     expect(restoreMaskedCredentials(SENDGRID, sent, undefined).unresolvedKeys).toEqual(['apiKey']);
+  });
+});
+
+describe('configurations', () => {
+  const stored = { inboundWebhookEnabled: true, inboundWebhookSigningKey: 'whsec_abcdefghijklmnop1234' };
+  const maskedKey = `whs${MASKED_SECRET_FILL}1234`;
+
+  it('masks the webhook signing key and leaves the other settings readable', () => {
+    expect(maskSecretConfigurations(stored)).toEqual({
+      inboundWebhookEnabled: true,
+      inboundWebhookSigningKey: maskedKey,
+    });
+  });
+
+  it('puts the stored signing key back for an unchanged mask', () => {
+    const sent = { inboundWebhookEnabled: false, inboundWebhookSigningKey: maskedKey };
+
+    expect(restoreMaskedConfigurations(sent, stored)).toEqual({
+      configurations: { inboundWebhookEnabled: false, inboundWebhookSigningKey: stored.inboundWebhookSigningKey },
+      unresolvedKeys: [],
+    });
+  });
+
+  it('reports a mask that matches no stored signing key', () => {
+    const sent = { inboundWebhookSigningKey: `xxx${MASKED_SECRET_FILL}0000` };
+
+    expect(restoreMaskedConfigurations(sent, stored).unresolvedKeys).toEqual(['inboundWebhookSigningKey']);
   });
 });
