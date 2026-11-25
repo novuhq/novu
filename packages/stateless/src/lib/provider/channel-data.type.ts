@@ -112,6 +112,8 @@ export type MsTeamsChannelData = {
   identifier: string;
   subscriberTenantId: string;
   token: string;
+  /** App-only Microsoft Graph token in the subscriber's tenant. Set only when files must be uploaded. */
+  graphToken?: string;
 };
 
 export type MsTeamsUserData = {
@@ -121,6 +123,8 @@ export type MsTeamsUserData = {
   subscriberTenantId: string;
   token: string;
   clientId: string;
+  /** App-only Microsoft Graph token in the subscriber's tenant. Set only when files must be uploaded. */
+  graphToken?: string;
 };
 
 export type PagerDutyRegion = 'us' | 'eu';

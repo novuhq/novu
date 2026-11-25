@@ -355,6 +355,70 @@ describe('MsTeamsOauthCallback', () => {
       expect(callArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     });
 
+    it('should install a Teams Developer Portal app found by its bot ID when its manifest ID differs', async () => {
+      stubTokenExchange();
+      msTeamsTokenService.getGraphToken.resolves('graph-token-123');
+      axiosGet.onFirstCall().resolves({ data: { value: [] } });
+      axiosGet.onSecondCall().resolves({
+        data: { value: [{ id: 'portal-app-id', appDefinitions: [{ bot: { id: MOCK_CLIENT_ID } }] }] },
+      });
+      axiosPost.onSecondCall().resolves({});
+      createChannelEndpoint.execute.resolves({ identifier: 'ep-xyz' } as any);
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      await usecase.execute(command);
+
+      const installBody = axiosPost.secondCall.args[1] as Record<string, string>;
+      expect(installBody['teamsApp@odata.bind']).to.equal(
+        'https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/portal-app-id'
+      );
+      expect(createChannelEndpoint.execute.calledOnce).to.be.true;
+    });
+
+    it('should return an error page when no org catalog app uses the bot', async () => {
+      stubTokenExchange();
+      msTeamsTokenService.getGraphToken.resolves('graph-token-123');
+      axiosGet.resolves({ data: { value: [] } });
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(result.result).to.include('app not found in your organization catalog');
+      expect(axiosPost.callCount).to.equal(1);
+      expect(createChannelEndpoint.execute.called).to.be.false;
+    });
+
+    it('should point to the Teams app Application (client) ID when Graph refuses the install', async () => {
+      stubTokenExchange();
+      msTeamsTokenService.getGraphToken.resolves('graph-token-123');
+      axiosGet.resolves({ data: { value: [{ id: 'teams-app-id-123' }] } });
+      axiosPost
+        .onSecondCall()
+        .rejects(
+          buildAxiosError(403, { error: { code: 'Forbidden', message: 'App is not allowed to install itself' } })
+        );
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(result.result).to.include('webApplicationInfo.id');
+      expect(result.result).to.include('TeamsAppInstallation.ReadWriteSelfForUser.All');
+      expect(result.result).to.include('Microsoft Graph said: Forbidden: App is not allowed to install itself');
+      expect(createChannelEndpoint.execute.called).to.be.false;
+    });
+
     it('should throw if subscriberId is absent in link_user mode', async () => {
       const state = buildLinkUserState({ subscriberId: undefined });
 

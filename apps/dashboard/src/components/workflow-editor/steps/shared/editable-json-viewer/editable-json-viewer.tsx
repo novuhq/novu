@@ -57,6 +57,7 @@ export function EditableJsonViewer({
   }, [schema]);
 
   const validateData = useMemo(
+    // biome-ignore lint/suspicious/noExplicitAny: Existing editor data typing is outside this change.
     () => (data: any) => {
       if (!ajvValidator) {
         setValidationErrors([]);
@@ -96,6 +97,7 @@ export function EditableJsonViewer({
     [onChange, validateData]
   );
 
+  // biome-ignore lint/suspicious/noExplicitAny: Existing editor error typing is outside this change.
   const handleError = useCallback((errorData: any) => {
     const { error, path } = errorData;
     const pathString = Array.isArray(path) ? path.join('.') : path || '';
@@ -112,6 +114,7 @@ export function EditableJsonViewer({
       return [];
     }
 
+    // biome-ignore lint/plugin: Existing custom node typing is outside this change.
     const components: CustomNodeDefinition<Record<string, any>, Record<string, any>>[] = [
       {
         condition: ({ value }) => typeof value === 'string',
@@ -148,6 +151,9 @@ export function EditableJsonViewer({
         'max-h-[400px] min-h-[100px] overflow-hidden',
         'font-mono text-xs',
         'flex flex-col',
+        // The edit buttons only show on hover; keep them visible while one has keyboard focus. Important, because
+        // json-edit-react's own unlayered styles win over Tailwind's utilities layer.
+        '[&_.jer-edit-buttons:focus-within]:opacity-100!',
         className
       )}
     >

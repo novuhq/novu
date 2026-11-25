@@ -53,7 +53,8 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       resolveChannelEndpoints as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
-      { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService
+      { getFlag: sinon.stub().resolves(true) } as never, // featureFlagsService
+      {} as never // msTeamsTokenService
     );
 
     return { usecase, resolveChannelEndpoints, selectIntegration };
@@ -227,7 +228,8 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       { execute: sinon.stub().resolves(endpointGroups) } as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
-      { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService: IS_CHAT_BLOCK_EDITOR_ENABLED
+      { getFlag: sinon.stub().resolves(true) } as never, // featureFlagsService: IS_CHAT_BLOCK_EDITOR_ENABLED
+      {} as never // msTeamsTokenService
     );
 
     return usecase;
@@ -591,7 +593,8 @@ describe('SendMessageChat - agent assigned path', () => {
       } as never,
       agentRepository as never,
       agentIntegrationRepository as never,
-      featureFlagsService as never
+      featureFlagsService as never,
+      {} as never // msTeamsTokenService
     );
 
     return {
@@ -912,7 +915,8 @@ describe('SendMessageChat - agent assigned path', () => {
           .stub()
           .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
       } as never,
-      { getFlag: sinon.stub().resolves(false) } as never
+      { getFlag: sinon.stub().resolves(false) } as never,
+      {} as never // msTeamsTokenService
     );
 
     const command = buildAgentCommand({ jobAgentId: 'agent_1' });
@@ -993,7 +997,8 @@ describe('SendMessageChat - agent assigned path', () => {
           .stub()
           .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
       } as never,
-      { getFlag: sinon.stub().resolves(false) } as never
+      { getFlag: sinon.stub().resolves(false) } as never,
+      {} as never // msTeamsTokenService
     );
 
     const command = buildAgentCommand({ jobAgentId: 'agent_1' });
@@ -1082,7 +1087,8 @@ describe('SendMessageChat - agent assigned path', () => {
           .stub()
           .resolves([{ identifier: 'whatsapp-linked', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
       } as never,
-      { getFlag: sinon.stub().resolves(false) } as never
+      { getFlag: sinon.stub().resolves(false) } as never,
+      {} as never // msTeamsTokenService
     );
 
     const command = buildAgentCommand({ jobAgentId: 'agent_1' });
@@ -1148,7 +1154,8 @@ describe('SendMessageChat - agent assigned path', () => {
           .stub()
           .resolves([{ identifier: 'whatsapp-linked', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
       } as never,
-      { getFlag: sinon.stub().resolves(false) } as never
+      { getFlag: sinon.stub().resolves(false) } as never,
+      {} as never // msTeamsTokenService
     );
 
     const command = buildAgentCommand({ jobAgentId: 'agent_1' });
@@ -1229,7 +1236,8 @@ describe('SendMessageChat - phone-based provider recipient override (NV-9530)', 
       { execute: sinon.stub().resolves([]) } as never,
       { findOne: sinon.stub().resolves(null) } as never,
       { listLinkedIntegrationRefs: sinon.stub().resolves([]) } as never,
-      { getFlag: sinon.stub().resolves(false) } as never
+      { getFlag: sinon.stub().resolves(false) } as never,
+      {} as never // msTeamsTokenService
     );
 
     return { usecase, chatHandlerSend, messageRepository, selectIntegration, createExecutionDetails };
@@ -1361,5 +1369,287 @@ describe('SendMessageChat - phone-based provider recipient override (NV-9530)', 
 
     expect(result.status).to.equal(SendMessageStatus.SKIPPED);
     sinon.assert.notCalled(chatHandlerSend);
+  });
+});
+
+describe('SendMessageChat - trigger attachments marked for chat', () => {
+  const pdf = Buffer.from('%PDF-1.7 report');
+
+  const slackIntegration = {
+    _id: 'integration_1',
+    identifier: 'slack-main',
+    providerId: ChatProviderIdEnum.Slack,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+  };
+
+  const teamsIntegration = {
+    _id: 'integration_2',
+    identifier: 'teams-main',
+    providerId: ChatProviderIdEnum.MsTeams,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: { clientId: 'client_1', secretKey: 'secret_1', tenantId: 'home_tenant' },
+  };
+
+  const slackGroup = {
+    integrationIdentifier: 'slack-main',
+    providerId: ChatProviderIdEnum.Slack,
+    channelData: [
+      {
+        identifier: 'slack-endpoint',
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
+        endpoint: { channelId: 'C123' },
+        token: 'xoxb',
+      },
+    ],
+  };
+
+  const teamsGroup = {
+    integrationIdentifier: 'teams-main',
+    providerId: ChatProviderIdEnum.MsTeams,
+    channelData: [
+      {
+        identifier: 'teams-endpoint',
+        type: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
+        endpoint: { teamId: 'team_1', channelId: '19:channel@thread.tacv2' },
+        subscriberTenantId: 'customer_tenant',
+        token: 'bot-token',
+      },
+    ],
+  };
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  function buildUsecase(
+    options: {
+      integration?: Record<string, unknown>;
+      group?: Record<string, unknown>;
+      getGraphToken?: sinon.SinonStub;
+    } = {}
+  ) {
+    const { integration = slackIntegration, group = slackGroup } = options;
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const msTeamsTokenService = { getGraphToken: options.getGraphToken ?? sinon.stub().resolves('graph-token') };
+
+    const usecase = new SendMessageChat(
+      {} as never, // subscriberRepository
+      { create: sinon.stub().resolves({ _id: 'message_1' }), update: sinon.stub().resolves(undefined) } as never,
+      {} as never, // compileTemplate
+      { execute: sinon.stub().resolves({ integration }) } as never,
+      {} as never, // getNovuProviderCredentials
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {} as never, // moduleRef
+      { execute: sinon.stub().resolves(undefined) } as never, // sendWebhookMessage
+      { execute: sinon.stub().resolves([group]) } as never,
+      {} as never, // agentRepository
+      {} as never, // agentIntegrationRepository
+      { getFlag: sinon.stub().resolves(false) } as never,
+      msTeamsTokenService as never
+    );
+
+    return { usecase, createExecutionDetails, msTeamsTokenService };
+  }
+
+  function stubHandler(
+    sendFiles: sinon.SinonStub | null,
+    send = sinon.stub().resolves({ id: 'C123:1.2', channel: 'C123' })
+  ) {
+    const handler = {
+      send,
+      resolveCardContent: sinon.stub().resolves({ content: 'hello', nativePayload: {}, validation: [] }),
+      sendFiles: sendFiles ?? sinon.stub().resolves(null),
+    };
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler as never);
+
+    return handler;
+  }
+
+  function buildCommand(attachments: unknown[]) {
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: { attachments },
+      overrides: {},
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: { subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] } } as never,
+      bridgeData: { outputs: { body: 'Your report is ready' } } as never,
+      step: { stepId: 'step_1', template: { _id: 'mt_1', type: ChannelTypeEnum.CHAT, content: 'hello' } } as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.CHAT,
+        step: { stepId: 'step_1' },
+      } as never,
+    });
+  }
+
+  function fileDetails(createExecutionDetails: { execute: sinon.SinonStub }) {
+    return createExecutionDetails.execute
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter((detail) => [DetailEnum.CHAT_FILES_SENT, DetailEnum.CHAT_FILES_NOT_SENT].includes(detail.detail));
+  }
+
+  it('sends the files marked for chat right after the message, to the same place', async () => {
+    const sendFiles = sinon.stub().resolves([{ name: 'report.pdf', status: 'sent' }]);
+    const handler = stubHandler(sendFiles);
+    const { usecase, createExecutionDetails } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand([
+        { file: pdf, name: 'report.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] },
+        { file: pdf, name: 'email-only.pdf', mime: 'application/pdf' },
+      ])
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(sendFiles);
+    expect(handler.send.calledBefore(sendFiles)).to.equal(true);
+
+    const [options] = sendFiles.firstCall.args;
+    expect(options.files).to.deep.equal([{ name: 'report.pdf', mime: 'application/pdf', file: pdf }]);
+    expect(options.sentMessage).to.deep.equal({ id: 'C123:1.2', channel: 'C123' });
+    expect(options.channelData.endpoint).to.deep.equal({ channelId: 'C123' });
+
+    const [detail] = fileDetails(createExecutionDetails);
+    expect(detail.detail).to.equal(DetailEnum.CHAT_FILES_SENT);
+    expect(detail.status).to.equal(ExecutionDetailsStatusEnum.SUCCESS);
+    expect(JSON.parse(detail.raw).files).to.deep.equal([{ name: 'report.pdf', status: 'sent' }]);
+  });
+
+  it('does not touch files that are not marked for chat', async () => {
+    const sendFiles = sinon.stub().resolves([]);
+    stubHandler(sendFiles);
+    const { usecase, createExecutionDetails } = buildUsecase();
+
+    const result = await usecase.execute(buildCommand([{ file: pdf, name: 'invoice.pdf', mime: 'application/pdf' }]));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(sendFiles);
+    expect(fileDetails(createExecutionDetails)).to.have.length(0);
+  });
+
+  it('keeps the message sent and warns when the files fail', async () => {
+    stubHandler(sinon.stub().rejects(new Error('socket hang up')));
+    const { usecase, createExecutionDetails } = buildUsecase();
+
+    const result = await usecase.execute(
+      buildCommand([{ file: pdf, name: 'report.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] }])
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const [detail] = fileDetails(createExecutionDetails);
+    expect(detail.detail).to.equal(DetailEnum.CHAT_FILES_NOT_SENT);
+    expect(detail.status).to.equal(ExecutionDetailsStatusEnum.WARNING);
+    expect(JSON.parse(detail.raw).files).to.deep.equal([
+      { name: 'report.pdf', status: 'failed', reason: 'socket hang up' },
+    ]);
+  });
+
+  it('reports the files as skipped when the provider cannot send files', async () => {
+    stubHandler(null);
+    const { usecase, createExecutionDetails } = buildUsecase();
+
+    await usecase.execute(
+      buildCommand([{ file: pdf, name: 'report.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] }])
+    );
+
+    const [detail] = fileDetails(createExecutionDetails);
+    expect(detail.detail).to.equal(DetailEnum.CHAT_FILES_NOT_SENT);
+    expect(JSON.parse(detail.raw).files).to.deep.equal([
+      { name: 'report.pdf', status: 'skipped', reason: "Novu doesn't send files to slack yet." },
+    ]);
+  });
+
+  it('reports a file that storage could not load instead of sending it', async () => {
+    const sendFiles = sinon.stub().resolves([]);
+    stubHandler(sendFiles);
+    const { usecase, createExecutionDetails } = buildUsecase();
+
+    await usecase.execute(
+      buildCommand([{ file: null, name: 'gone.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] }])
+    );
+
+    sinon.assert.notCalled(sendFiles);
+    const [detail] = fileDetails(createExecutionDetails);
+    expect(JSON.parse(detail.raw).files).to.deep.equal([
+      { name: 'gone.pdf', status: 'failed', reason: "The file couldn't be loaded from Novu's storage." },
+    ]);
+  });
+
+  it('hands Teams a Microsoft Graph token for the subscriber tenant, fetched only because there are files', async () => {
+    const sendFiles = sinon.stub().resolves([{ name: 'report.pdf', status: 'sent' }]);
+    stubHandler(sendFiles, sinon.stub().resolves({ id: 'activity_1' }));
+    const { usecase, msTeamsTokenService } = buildUsecase({ integration: teamsIntegration, group: teamsGroup });
+
+    await usecase.execute(
+      buildCommand([{ file: pdf, name: 'report.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] }])
+    );
+
+    sinon.assert.calledOnceWithExactly(msTeamsTokenService.getGraphToken, 'client_1', 'secret_1', 'customer_tenant');
+    expect(sendFiles.firstCall.args[0].channelData.graphToken).to.equal('graph-token');
+  });
+
+  it('does not fetch a Graph token for Teams messages without files', async () => {
+    stubHandler(sinon.stub().resolves([]), sinon.stub().resolves({ id: 'activity_1' }));
+    const { usecase, msTeamsTokenService } = buildUsecase({ integration: teamsIntegration, group: teamsGroup });
+
+    await usecase.execute(buildCommand([]));
+
+    sinon.assert.notCalled(msTeamsTokenService.getGraphToken);
+  });
+
+  it('explains a missing Graph consent in the warning and still sends the Teams message', async () => {
+    const consentError = Object.assign(new Error('Request failed with status code 400'), {
+      response: {
+        data: {
+          error_description:
+            'AADSTS65001: The user or administrator has not consented to use the application.\r\nTrace ID: 1\r\nCorrelation ID: 2',
+        },
+      },
+    });
+    const sendFiles = sinon.stub().resolves([]);
+    stubHandler(sendFiles, sinon.stub().resolves({ id: 'activity_1' }));
+    const { usecase, createExecutionDetails } = buildUsecase({
+      integration: teamsIntegration,
+      group: teamsGroup,
+      getGraphToken: sinon.stub().rejects(consentError),
+    });
+
+    const result = await usecase.execute(
+      buildCommand([{ file: pdf, name: 'report.pdf', mime: 'application/pdf', channels: [ChannelTypeEnum.CHAT] }])
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(sendFiles);
+    const [detail] = fileDetails(createExecutionDetails);
+    expect(JSON.parse(detail.raw).files).to.deep.equal([
+      {
+        name: 'report.pdf',
+        status: 'failed',
+        reason:
+          "Couldn't get Microsoft Graph access in tenant customer_tenant: AADSTS65001: The user or administrator has not consented to use the application.",
+      },
+    ]);
   });
 });

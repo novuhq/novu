@@ -8,12 +8,13 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
+import { findOrgCatalogTeamsAppIds } from '../../../utils/msteams-app-catalog';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.command';
 import {
@@ -41,6 +42,7 @@ export class MsTeamsOauthCallback {
     this.logger.setContext(MsTeamsOauthCallback.name);
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing OAuth callback flow is outside this change.
   async execute(command: MsTeamsOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
     this.logger.info(
       `MS Teams OAuth callback received: mode=${command.adminConsent ? 'admin_consent' : 'link_user'} tenant=${command.tenant ?? 'n/a'}`
@@ -240,24 +242,18 @@ export class MsTeamsOauthCallback {
 
   private async resolveTeamsAppId(graphToken: string, azureClientId: string): Promise<string> {
     /*
-     * We scope the query to distributionMethod eq 'organization' to avoid picking up sideloaded
-     * copies of the same app. Filtering server-side guarantees a unique match: the org catalog
-     * allows only one published entry per externalId, so the combination is effectively unique.
+     * Finds the org-published app by its manifest ID, or by its bot ID for apps built in the Teams
+     * Developer Portal (see findOrgCatalogTeamsAppIds).
      *
      * Edge case — store apps: globally-published Teams store apps use distributionMethod='store'
-     * and would be missed by this filter. That is intentional here: Novu customers supply their
-     * own Azure bot (clientId + secretKey), which is always an org-published custom app. Store
-     * apps use a different identity model. If store-app support is ever needed, expand the filter
-     * to: distributionMethod eq 'organization' or distributionMethod eq 'store'.
+     * and are not matched. That is intentional here: Novu customers supply their own Azure bot
+     * (clientId + secretKey), which is always an org-published custom app. Store apps use a
+     * different identity model.
      */
-    const url = `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=externalId eq '${azureClientId}' and distributionMethod eq 'organization'`;
-
-    let response: { data: { value: Array<{ id: string }> } };
+    let apps: string[];
 
     try {
-      response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${graphToken}` },
-      });
+      apps = await findOrgCatalogTeamsAppIds(graphToken, azureClientId);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         throw new BadRequestException(
@@ -273,9 +269,7 @@ export class MsTeamsOauthCallback {
       );
     }
 
-    const apps = response.data.value;
-
-    if (!apps || apps.length === 0) {
+    if (apps.length === 0) {
       throw new BadRequestException(
         'MS Teams bot installation failed: app not found in your organization catalog. ' +
           'Please upload the Teams app manifest to your organization catalog first.'
@@ -284,11 +278,11 @@ export class MsTeamsOauthCallback {
 
     if (apps.length > 1) {
       this.logger.warn(
-        `Multiple org-published Teams apps found for clientId ${azureClientId} — using first match (id=${apps[0].id})`
+        `Multiple org-published Teams apps found for clientId ${azureClientId} — using first match (id=${apps[0]})`
       );
     }
 
-    return apps[0].id;
+    return apps[0];
   }
 
   private async installAppForUser(graphToken: string, userOid: string, teamsAppId: string): Promise<void> {
@@ -316,16 +310,26 @@ export class MsTeamsOauthCallback {
           return;
         }
 
+        const graphReason = this.logGraphInstallFailure(error, userOid, teamsAppId);
+
         if (status === 403) {
+          /*
+           * The "Self" install permission only covers a Teams app whose manifest names this Entra
+           * app in webApplicationInfo.id; apps built in the Teams Developer Portal often leave it out.
+           */
           throw new BadRequestException(
-            'MS Teams bot installation failed: the TeamsAppInstallation.ReadWriteSelfForUser.All permission has not yet propagated.'
+            'MS Teams bot installation failed: Microsoft Graph refused to install the Teams app for this user. ' +
+              "Set the Teams app's Application (client) ID (webApplicationInfo.id in its manifest) to your bot's " +
+              'Microsoft App ID, and make sure admin consent includes TeamsAppInstallation.ReadWriteSelfForUser.All.' +
+              graphReason
           );
         }
 
         if (status === 404) {
           throw new BadRequestException(
             'MS Teams bot installation failed: user or app not found. ' +
-              'Ensure the app is published to your organization catalog and the user exists in the tenant.'
+              'Ensure the app is published to your organization catalog and the user exists in the tenant.' +
+              graphReason
           );
         }
       }
@@ -334,6 +338,27 @@ export class MsTeamsOauthCallback {
         `MS Teams bot installation failed: ${axios.isAxiosError(error) ? error.message : String(error)}`
       );
     }
+  }
+
+  /**
+   * Logs Graph's own error for a refused install and returns it as a sentence for the result page,
+   * so whoever sees the page can tell which Microsoft check failed.
+   */
+  private logGraphInstallFailure(error: AxiosError, userOid: string, teamsAppId: string): string {
+    const graphError = (error.response?.data as { error?: { code?: string; message?: string } } | undefined)?.error;
+    const status = error.response?.status ?? 'n/a';
+    const code = graphError?.code ?? 'n/a';
+    const message = graphError?.message ?? error.message;
+
+    this.logger.warn(
+      `MS Teams bot install failed: userOid=${userOid} teamsAppId=${teamsAppId} status=${status} code=${code} message="${message}"`
+    );
+
+    if (!graphError?.message) {
+      return '';
+    }
+
+    return ` Microsoft Graph said: ${graphError.code ? `${graphError.code}: ` : ''}${graphError.message}`;
   }
 
   /**
