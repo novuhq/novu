@@ -122,12 +122,12 @@ async function waitForPresence(subscriber: SubscriberEntity, presence: 'online' 
 
 async function expectClosedAtExpiry(name: string, authMethod?: 'token') {
   const subscriber = await createSubscriber();
-  const exp = nowInSeconds() + 2;
+  const exp = nowInSeconds() + 3;
   const client = connect(name, signSession(subscriber, exp, authMethod));
   await within(client.connected, 2000, `${name} connect`);
   await waitForPresence(subscriber, 'online');
 
-  const { reason, at } = await within(client.disconnected, 5000, `${name} server disconnect`);
+  const { reason, at } = await within(client.disconnected, 6000, `${name} server disconnect`);
 
   expect(reason).to.equal('io server disconnect');
   const expiredAt = client.sessionExpiredAt();
@@ -187,7 +187,7 @@ describe('WSGateway session expiry', () => {
 
   it('sends nothing to a client that left before exp, and marks the subscriber offline', async () => {
     const subscriber = await createSubscriber();
-    const exp = nowInSeconds() + 2;
+    const exp = nowInSeconds() + 3;
     const client = connect('leaves-early', signSession(subscriber, exp, 'token'));
     await within(client.connected, 2000, 'leaves-early connect');
     await waitForPresence(subscriber, 'online');
