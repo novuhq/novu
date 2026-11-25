@@ -1,23 +1,20 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { type CallToolResult, CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
-import { createNovuMcpServer, DEFAULT_TOOLSETS, type ToolsetName } from "../src/server/toolsets";
+import { registerHostedTools } from "../src/server/hosted-tools";
 import type { ToolAccessors } from "../src/utils/tool-accessors";
 
 export const API_URL = "https://api.example.test";
 
 /**
- * Builds the hosted server the way `NovuMCP.init` does, without the Durable
- * Object (which needs the Workers runtime), and connects a client over an
- * in-memory transport. `toolsets` defaults to what a plain server URL loads.
+ * Registers the hosted server's tools with the function `NovuMCP` uses, without
+ * the Durable Object (which needs the Workers runtime), and connects a client
+ * over an in-memory transport.
  */
-export async function connectAllTools(
-	accessors: ToolAccessors,
-	region = "us",
-	toolsets: readonly ToolsetName[] = DEFAULT_TOOLSETS,
-): Promise<Client> {
-	const server = createNovuMcpServer(toolsets, {
+export async function connectAllTools(accessors: ToolAccessors, region = "us"): Promise<Client> {
+	const server = new McpServer({ name: "Novu MCP Server", version: "1.0.0" });
+	registerHostedTools(server, {
 		accessors,
 		feedbackSecretKey: "sk_test_feedback",
 		getRegion: () => region,
