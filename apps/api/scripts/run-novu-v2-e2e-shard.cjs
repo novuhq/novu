@@ -11,10 +11,9 @@ const NOVU_V2_TAG = '#novu-v2';
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
-// Measured seconds per file; files without an entry are weighted by their test count. To refresh, set
-// NOVU_V2_MOCHA_REPORTER to json-stream in .github/workflows/reusable-api-e2e.yml on a PR, then from apps/api:
-// gh run view <run-id> --log | jq -Rn -f scripts/novu-v2-e2e-timings.jq > scripts/novu-v2-e2e-timings.json
+// Seconds per file, measured on CI with the json-stream reporter. Files without an entry use their test count.
 const FILE_SECONDS = require('./novu-v2-e2e-timings.json');
+const SECONDS_PER_TEST_CASE = 0.3;
 
 // CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
 // pinning, Stripe billing periods, RBAC permissions, translations, novu-app MCP)
@@ -174,7 +173,8 @@ function isCeExcludedFile(relativePath) {
 
 function collectWeightedFiles(ceOnly) {
   const candidates = collectTestFileRoots(ceOnly).flatMap((dir) => collectTestFiles(ceOnly, dir));
-  const files = candidates
+
+  return candidates
     .map((relativePath) => {
       if (ceOnly && isCeExcludedFile(relativePath)) {
         return null;
@@ -188,21 +188,10 @@ function collectWeightedFiles(ceOnly) {
 
       return {
         relativePath,
-        testCases: countTestCases(source),
-        seconds: FILE_SECONDS[relativePath],
+        weight: FILE_SECONDS[relativePath] ?? countTestCases(source) * SECONDS_PER_TEST_CASE,
       };
     })
-    .filter(Boolean);
-  const timedFiles = files.filter((file) => file.seconds !== undefined);
-  const timedSeconds = timedFiles.reduce((sum, file) => sum + file.seconds, 0);
-  const timedTestCases = timedFiles.reduce((sum, file) => sum + file.testCases, 0);
-  const secondsPerTestCase = timedSeconds / timedTestCases || 1;
-
-  return files
-    .map((file) => ({
-      relativePath: file.relativePath,
-      weight: file.seconds ?? file.testCases * secondsPerTestCase,
-    }))
+    .filter(Boolean)
     .sort(compareWeightedFiles);
 }
 
