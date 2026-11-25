@@ -161,32 +161,6 @@ OAuth flow:
 
 For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 
-### Toolsets
-
-Tools come in toolsets, picked with the `toolsets` query parameter of the server
-URL, for example `https://mcp.novu.co/?toolsets=subscribers,activity`. The
-registry is [`src/server/toolsets.ts`](src/server/toolsets.ts).
-
-| Toolset | Default | Tools |
-| ------- | ------- | ----- |
-| `workflows` | yes | Workflow, step and trigger tools, `get_step_schema` |
-| `subscribers` | yes | Subscriber and preference tools, `get_subscriber_reachability` |
-| `activity` | yes | `get_workflow_runs`, `get_workflow_run`, `get_trigger_requests`, `get_notifications`, `get_notification` |
-| `integrations` | yes | Integration tools |
-| `agents` | yes | Agent and conversation tools |
-
-- No parameter (or an empty one) loads the default toolsets; `default` stands
-  for them in a list, and `all` loads every toolset.
-- `whoami`, `get_environments` and `submit_feedback` are in every selection.
-- An unknown name is a 400 `invalid_toolsets` that lists the valid names.
-- A session keeps the toolsets of its first request, also after its Durable
-  Object wakes with another request's props.
-- A session without every toolset gets server `instructions` naming the ones it
-  left out and how to add them.
-
-New tools go in an opt-in toolset (`default: false`), so the list a plain URL
-serves stays within its budget; see [`AGENTS.md`](./AGENTS.md).
-
 ## 📦 Available Tools
 
 | Tool | Description |
@@ -243,7 +217,7 @@ serves stays within its budget; see [`AGENTS.md`](./AGENTS.md).
 
 The tools that write steps advertise `controlValues` as a free-form object with a short per-step-type guide, which keeps `tools/list` small enough for clients that cap schema sizes. Every call is still validated against the full per-type schema, and `get_step_schema` returns that schema (including every Maily email-body node) on demand.
 
-Before adding or changing a tool or a tool schema, read [`AGENTS.md`](./AGENTS.md) and the [`nv-mcp-server-tools`](../../.agents/skills/nv-mcp-server-tools/SKILL.md) skill. `pnpm tools:report` prints every tool's and every toolset's size against the budgets that `test/tool-schemas.spec.ts` enforces.
+Before adding or changing a tool or a tool schema, read [`AGENTS.md`](./AGENTS.md) and the [`nv-mcp-server-tools`](../../.agents/skills/nv-mcp-server-tools/SKILL.md) skill. `pnpm tools:report` prints every tool's size against the budgets that `test/tool-schemas.spec.ts` enforces.
 
 ## 💻 Local Development
 

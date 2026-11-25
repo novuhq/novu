@@ -8,11 +8,9 @@ Before adding or changing a tool, a tool's input schema or description, or the s
 
 MCP clients load every tool's schema, and several cap it: claude.ai drops a tool whose input schema is over 16 KB, and ChatGPT rejects one over 5,000 tokens.
 
-- **Toolsets.** The hosted server's tools come in toolsets, picked with the `toolsets` query parameter of the server URL (`src/server/toolsets.ts`). A plain URL loads the default toolsets. New tools go in a new or existing opt-in toolset (`default: false`), not in a default one, so the default list stays within its budget. Making a toolset default needs the bytes to fit and a reason in the PR.
 - **Budgets.** `test/tool-schemas.spec.ts` enforces them:
-  - the default toolsets' `tools/list` under 100 KB;
-  - each opt-in toolset under 10 KB;
-  - each `inputSchema` under 12 KB and each tool under 16 KB, in every toolset;
+  - `tools/list` under 100 KB;
+  - each `inputSchema` under 12 KB and each tool under 16 KB;
   - nesting depth at most 16;
   - each `get_step_schema` result under 32,000 characters;
   - no `$ref`, `$defs` or `definitions`.

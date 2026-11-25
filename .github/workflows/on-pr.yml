@@ -78,7 +78,6 @@ jobs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-unit-services: ${{ steps.plan-jobs.outputs.test-unit-services }}
       test-unit-apps: ${{ steps.plan-jobs.outputs.test-unit-apps }}
-      test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
       test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
@@ -218,7 +217,6 @@ jobs:
             unit_target="test"
           fi
           affected test-unit "$unit_target" "$since"
-          affected test-e2e test:e2e "$since"
           affected test-e2e-ee test:e2e:ee "$since"
           affected test-cypress cypress:run "$since"
           affected test-providers test "$since" providers
@@ -615,21 +613,3 @@ jobs:
           fi
 
           echo "All required jobs passed (or were skipped because they were not affected)."
-
-  #test_e2e_dashboard:
-  #  name: E2E test Dashboard app
-  #  needs: [get-affected]
-  #  if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/dashboard') }}
-  #  uses: ./.github/workflows/reusable-dashboard-e2e.yml
-  #  secrets: inherit
-  #  with:
-  #    ee: true
-
-  # test_e2e_widget:
-  #   name: E2E test Widget
-  #   needs: [get-affected]
-  #   uses: ./.github/workflows/reusable-widget-e2e.yml
-  #   with:
-  #     ee: true
-  #   if: ${{ contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
-  #   secrets: inherit
