@@ -84,7 +84,10 @@ export class WorkflowWorker extends WorkflowWorkerService {
       const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
 
       if (isKillSwitchEnabled) {
-        this.logger.warn(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`);
+        this.logger.warn(
+          { organizationId: data.organizationId, environmentId: data.environmentId },
+          `Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`
+        );
 
         return;
       }

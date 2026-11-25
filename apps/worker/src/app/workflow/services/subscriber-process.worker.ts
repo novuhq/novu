@@ -92,7 +92,11 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
       const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
 
       if (isKillSwitchEnabled) {
-        Logger.log(`Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+        Logger.log(
+          { organizationId: data.organizationId, environmentId: data.environmentId },
+          `Kill switch enabled for organizationId ${data.organizationId}. Skipping job.`,
+          LOG_CONTEXT
+        );
 
         return;
       }

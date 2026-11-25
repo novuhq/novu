@@ -152,7 +152,11 @@ export class StandardWorker extends StandardWorkerService {
       const isKillSwitchEnabled = await this.isKillSwitchEnabled(data);
 
       if (isKillSwitchEnabled) {
-        Logger.log(`Kill switch enabled for organizationId ${data._organizationId}. Skipping job.`, LOG_CONTEXT);
+        Logger.log(
+          { organizationId: data._organizationId, environmentId: data._environmentId },
+          `Kill switch enabled for organizationId ${data._organizationId}. Skipping job.`,
+          LOG_CONTEXT
+        );
 
         return;
       }
