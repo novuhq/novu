@@ -50,6 +50,8 @@ export type AgentChannelSummary = {
 
 export type AgentList = {
 	data: AgentSummary[];
+	/** The agents list, where agents are created, as a path under `/env/<environment>`. */
+	dashboardPath: string;
 	next: string | null;
 	previous: string | null;
 	totalCount?: number;
@@ -114,9 +116,11 @@ export function redactUrl(value: unknown): string | undefined {
 	return hasScheme ? `${url.protocol}//${url.host}${path}` : `${url.host}${path}`;
 }
 
+const AGENTS_DASHBOARD_PATH = "/agents";
+
 /** The dashboard's agent page, as a path under `/env/<environment>`. */
 export function agentDashboardPath(identifier: string): string {
-	return `/agents/${encodeURIComponent(identifier)}`;
+	return `${AGENTS_DASHBOARD_PATH}/${encodeURIComponent(identifier)}`;
 }
 
 function toNames(value: unknown): string[] | undefined {
@@ -198,6 +202,7 @@ export function toAgentList(payload: unknown): AgentList {
 	const planUsage = asRecord(root?.planUsage);
 
 	return compact({
+		dashboardPath: AGENTS_DASHBOARD_PATH,
 		data: rows.flatMap((row) => toAgentSummary(row) ?? []),
 		next: asString(root?.next) ?? null,
 		planUsage: planUsage

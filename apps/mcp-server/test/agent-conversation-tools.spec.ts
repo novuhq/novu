@@ -314,6 +314,7 @@ describe("agent tools", () => {
 		expectNoSecrets(text, AGENT_SECRETS);
 		const list = JSON.parse(text.split("\n\n")[1]);
 		expect(list.next).toBe("cursor-2");
+		expect(list.dashboardPath).toBe("/agents");
 		expect(list.planUsage).toEqual({ limit: 3, used: 2 });
 		expect(list.data[0].channels).toEqual([
 			{

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { RiAddLine, RiArrowLeftSLine, RiArrowRightSLine, RiCheckboxCircleFill, RiRefreshLine } from 'react-icons/ri';
 import { NovuApiError } from '@/api/api.client';
 import type { DomainResponse } from '@/api/domains';
+import { useReportAgentSheetOpen } from '@/components/agents/agents-copilot-overlays';
 import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
 import { DomainDnsRecords } from '@/components/domains/domain-dns-records';
 import { DomainLimitDialog } from '@/components/domains/domain-limit-dialog';
@@ -132,6 +133,7 @@ export function AgentCustomDomainSheet({
   configuredAddresses,
   onAddAddress,
 }: AgentCustomDomainSheetProps) {
+  useReportAgentSheetOpen(open);
   const isDomainConnectEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED, false);
   const createDomain = useCreateDomain();
   const formId = useId();

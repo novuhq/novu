@@ -19,6 +19,7 @@ import {
   setAgentMcpServers,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { useReportAgentSheetOpen } from '@/components/agents/agents-copilot-overlays';
 import { McpIcon } from '@/components/agents/mcp-icon';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -186,6 +187,7 @@ function formatPartialFailureMessage(failures: SetAgentMcpServersFailure[]): str
 }
 
 export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, consoleUrl }: McpsSheetProps) {
+  useReportAgentSheetOpen(isOpen);
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');

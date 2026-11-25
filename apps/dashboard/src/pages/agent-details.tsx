@@ -12,17 +12,18 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { WebChatDrawer } from '@/components/agents/web-chat-panel';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
+import { useRegisterAgentCopilotView } from '@/components/agents/agents-copilot-overlays';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import {
   getWebChatIntegrationLink,
   hasAgentInboundConnection,
 } from '@/components/agents/is-agent-integration-connected';
+import { WebChatDrawer } from '@/components/agents/web-chat-panel';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -41,19 +42,19 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useWebChatPreview } from '@/hooks/use-web-chat-preview';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useWebChatPreview } from '@/hooks/use-web-chat-preview';
 import { QueryKeys } from '@/utils/query-keys';
 import {
-  WEB_CHAT_PREVIEW_PARAM,
   AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
   type AgentDetailsTab,
   buildRoute,
   parseAgentDetailsTab,
+  WEB_CHAT_PREVIEW_PARAM,
 } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -86,6 +87,7 @@ function AgentDetailsTabsSkeleton() {
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing page component already over the limit; splitting it is out of scope here
 export function AgentDetailsPage() {
   const {
     agentIdentifier = '',
@@ -184,6 +186,12 @@ export function AgentDetailsPage() {
 
   const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
+
+  useRegisterAgentCopilotView({
+    agent,
+    channelIdentifier: integrationIdentifier,
+    chatPreviewOpen: hasWebChat && isChatPreviewOpen,
+  });
 
   useEffect(() => {
     if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {

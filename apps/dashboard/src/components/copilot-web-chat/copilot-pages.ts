@@ -3,8 +3,10 @@ import type { IconType } from 'react-icons';
 import {
   RiBarChart2Line,
   RiBarChartBoxLine,
+  RiChat1Line,
   RiGroup2Line,
   RiPlugLine,
+  RiRobot2Line,
   RiStore3Line,
   RiUser3Line,
 } from 'react-icons/ri';
@@ -77,6 +79,17 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
     placeholder: 'Ask about a subscriber…',
     suggestions: ['Can we reach jane@acme.com on SMS?', "Why didn't user_123 get their last notification?"],
     suggestionIcon: RiUser3Line,
+  },
+  [CopilotPageEnum.AGENTS]: {
+    routes: [ROUTES.AGENTS, ROUTES.AGENT_DETAILS, ROUTES.AGENT_DETAILS_TAB, ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL],
+    chip: { label: 'Agents', icon: RiRobot2Line },
+    emptyState: {
+      title: 'Ask about agents',
+      body: 'I check whether an agent can reply on each channel, its bridge and its conversations. Credentials never go through this chat.',
+    },
+    placeholder: 'Ask about an agent…',
+    suggestions: ['Which channels can my agents reply on?', 'What did people ask my agents today?'],
+    suggestionIcon: RiChat1Line,
   },
 };
 
