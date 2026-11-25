@@ -18,6 +18,7 @@ import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 
+import { accessLogMiddleware } from './app/shared/middleware/access-log.middleware';
 import { RequestIdMiddleware } from './app/shared/middleware/request-id.middleware';
 
 import { AppModule } from './app.module';
@@ -111,6 +112,9 @@ export async function bootstrap(
   // Apply transaction ID middleware early in the request lifecycle
   const transactionIdMiddleware = new RequestIdMiddleware();
   app.use((req, res, next) => transactionIdMiddleware.use(req, res, next));
+
+  // Before the body parsers, so a request they reject gets an access line too.
+  app.use(accessLogMiddleware);
 
   app.useGlobalPipes(
     new ValidationPipe({
