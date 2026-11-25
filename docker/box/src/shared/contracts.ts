@@ -51,9 +51,14 @@ export const BoxState = z.object({
 });
 export type BoxState = z.infer<typeof BoxState>;
 
+// Flag key to the value the box forces (`box flag`).
+export const FlagOverrides = z.record(z.string(), z.unknown());
+export type FlagOverrides = z.infer<typeof FlagOverrides>;
+
 export const DoctorReport = z.object({
   ok: z.boolean(),
   problems: z.array(z.string()),
+  flags: FlagOverrides.optional(),
   baked: Baked.nullable(),
   applied: Applied.nullable(),
   lock: LockHolder.nullable(),

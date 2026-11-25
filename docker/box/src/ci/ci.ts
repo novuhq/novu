@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import * as z from 'zod';
+import { FLAGS } from '../box/paths.ts';
 import { INSTALL_FILES, PATH_PROCESSES } from '../box/processes.ts';
 import { type CloudTarget, cloudTarget } from '../cli/cloud.ts';
 import { hostBoxes, hubToken } from '../cli/cloud-http.ts';
@@ -27,7 +28,7 @@ import {
   TesterArmyStarted,
 } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
-import { BOX_CLI, boxOrigin, detached, OIDC_AUDIENCE, prBox, prOfBox } from '../shared/names.ts';
+import { BOX_CLI, boxFlagsOf, boxOrigin, detached, OIDC_AUDIENCE, prBox, prOfBox } from '../shared/names.ts';
 import {
   canWrite,
   comment,
@@ -198,6 +199,14 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
     await retire(box);
     if (!(await startOrReach(cloud, box, number))) return 0;
     const plan = await apply(cloud, sha);
+    // From the API, not the event: a re-run replays the event, and edits since then count.
+    const { title, body } = await github(`/repos/${REPO}/pulls/${number}`, PullText);
+    const flags = boxFlagsOf(body);
+    // A box that never forced a flag has none to clear: this skips the restart, and boxes on an image older
+    // than `box flag`. Any other failure fails the job, so TesterArmy never tests flags the PR didn't ask for.
+    if (flags.length || (await cloud.runOutput(['sh', '-c', `test -e ${FLAGS} && echo forced || true`])) === 'forced')
+      log(await cloud.boxOutput(['flag', '--only', ...flags]));
+    const flagRows: Array<Row> = flags.length ? [['Flags', flags.map((key) => `\`${key}\``).join(', ')]] : [];
     const report = await cloud.settled(Math.min(SETTLE_SECONDS, (DEADLINE - Date.now()) / 1000));
     const took = duration(Math.round((Date.now() - started) / 1000));
     const problems = report?.ok ? [] : (report?.problems ?? ['the box gave no doctor report']);
@@ -207,34 +216,29 @@ async function applyHead(number: number, pull: PullRequestEvent['pull_request'])
         .box(['logs', '--errors', '--tail', '100'])
         .catch((error: unknown) => log(`WARN: the box's logs: ${messageOf(error)}`));
     // A box that's ready stays ready when TesterArmy doesn't start. When it does, its own checks report on the PR.
-    // A re-run replays the event, so the PR's title and description come from the API: edits since then count.
     const testerArmy = problems.length
       ? []
-      : await github(`/repos/${REPO}/pulls/${number}`, PullText)
-          .then(({ title, body }) =>
-            startTesterArmy(box, {
-              number,
-              title,
-              ...(body && { description: body.slice(0, 65_536) }),
-              baseBranch: pull.base.ref,
-              headBranch: pull.head.ref,
-              commitSha: sha,
-            })
-          )
-          .then(
-            () => [],
-            (error: unknown) => {
-              log(`WARN: starting TesterArmy: ${messageOf(error)}`);
-              const [first = ''] = messageOf(error).split('\n');
+      : await startTesterArmy(box, {
+          number,
+          title,
+          ...(body && { description: body.slice(0, 65_536) }),
+          baseBranch: pull.base.ref,
+          headBranch: pull.head.ref,
+          commitSha: sha,
+        }).then(
+          () => [],
+          (error: unknown) => {
+            log(`WARN: starting TesterArmy: ${messageOf(error)}`);
+            const [first = ''] = messageOf(error).split('\n');
 
-              return [['TesterArmy', `⚠️ didn't start: ${cell(first.slice(0, 300))}`] as Row];
-            }
-          );
+            return [['TesterArmy', `⚠️ didn't start: ${cell(first.slice(0, 300))}`] as Row];
+          }
+        );
     await comment(
       number,
       card(
         problems.length ? "⚠️ Novu Box isn't healthy" : '✅ Novu Box ready',
-        [boxRow, commitRow, ['Took', `${took}${runLog}`], ...testerArmy],
+        [boxRow, commitRow, ...flagRows, ['Took', `${took}${runLog}`], ...testerArmy],
         [
           ...(problems.length
             ? [`**Problems** (\`${CLI} doctor --box ${box}\`):`, ...problems.map((problem) => `- ${problem}`), '']
