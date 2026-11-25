@@ -348,6 +348,18 @@ export function IntegrationSettings({
   const typedSecretKey = useWatch({ control, name: `credentials.${CredentialsKeyEnum.SecretKey}` });
   const typedTenantId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.TenantId}` });
   const trackingEnabled = useWatch({ control, name: `configurations.${ACTIVITY_TRACKING_ENABLER}` });
+
+  // The default values are read once, and the flags that make tracking available can load after that: turn the
+  // switch on when they do, unless the user has already set it.
+  const shouldDefaultTrackingOn = mode === 'create' && !!setupLayout && isEmailSetupProvider(provider.id);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when tracking becomes available
+  useEffect(() => {
+    if (!shouldDefaultTrackingOn || !isTrackingAvailable) return;
+    if (form.getFieldState(`configurations.${ACTIVITY_TRACKING_ENABLER}`).isDirty) return;
+    if (form.getValues(`configurations.${ACTIVITY_TRACKING_ENABLER}`) !== undefined) return;
+
+    form.setValue(`configurations.${ACTIVITY_TRACKING_ENABLER}`, 'true');
+  }, [isTrackingAvailable, shouldDefaultTrackingOn]);
   const unusedCredentialKeys = useMemo(
     () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
     [provider.id, authMethod]
