@@ -53,6 +53,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
@@ -146,16 +147,8 @@ function getSidebarCopilot(
 }
 
 function StepEditorContent() {
-  const {
-    step,
-    isSubsequentLoad,
-    editorValue,
-    workflow,
-    selectedLocale,
-    setSelectedLocale,
-    controlValues,
-    isReadOnly,
-  } = useStepEditor();
+  const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
+    useStepEditor();
   const stepResolverHint = useStepResolverHint();
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { onBlur } = useSaveForm();
@@ -163,8 +156,14 @@ function StepEditorContent() {
   const isContentStep = isContentStepType(step.type);
   const hasBody = !!step.controlValues?.body;
   const hasStepIssues = Object.keys(step.issues?.controls ?? {}).length > 0;
-  // A code workflow's step can take control overrides here, but the Copilot never changes a code workflow.
-  const isCopilotReadOnly = isReadOnly || isExternalWorkflow;
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  // Read-only as the agent decides it: outside Development, for a code workflow, or without Workflow write. The step
+  // editor's own read-only state differs (a step resolver's step, a code workflow's control overrides).
+  const isCopilotReadOnly =
+    isExternalWorkflow ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const newChatSuggestions = useMemo(
     () =>
       isCopilotReadOnly

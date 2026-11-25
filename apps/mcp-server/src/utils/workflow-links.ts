@@ -38,9 +38,18 @@ export function withWorkflowListLinks(value: unknown): unknown {
 	return envelope && "data" in envelope ? { ...envelope, data: linked } : linked;
 }
 
+/** A v1 workflow opens in the legacy dashboard, which this path doesn't reach, so it gets no link. */
+const LEGACY_WORKFLOW_ORIGIN = "novu-cloud-v1";
+
 function linkWorkflow(value: unknown): unknown {
 	const workflow = asRecord(value);
-	if (!workflow || typeof workflow.slug !== "string") return value;
+	if (
+		!workflow ||
+		typeof workflow.slug !== "string" ||
+		workflow.origin === LEGACY_WORKFLOW_ORIGIN
+	) {
+		return value;
+	}
 
 	return { ...workflow, dashboardPath: workflowDashboardPath(workflow.slug) };
 }

@@ -44,4 +44,17 @@ describe("workflow dashboard links", () => {
 			"/workflows/welcome_wf_6650f0c2a1b2c3d4e5f60718",
 		);
 	});
+
+	it("gives a v1 workflow no link, since it opens in the legacy dashboard", async () => {
+		stubApi({
+			"/v2/workflows": {
+				totalCount: 1,
+				workflows: [{ ...workflowResponseFixture(), origin: "novu-cloud-v1" }],
+			},
+		});
+
+		const text = textOf(await callTool(await client(), "get_workflows", {}));
+
+		expect(jsonOf(text).data.workflows[0]).not.toHaveProperty("dashboardPath");
+	});
 });
