@@ -9,6 +9,7 @@ import { REGION_HOSTS } from "./regions";
 import type { NovuProps } from "./server/NovuMCP";
 import { NovuMCP } from "./server/NovuMCP";
 import { assignMcpProps, syncSessionProps } from "./server/props";
+import { resolveToolsets } from "./server/toolsets";
 
 export { NovuMCP };
 
@@ -86,11 +87,29 @@ export default {
 			return discovery;
 		}
 
+		const url = new URL(request.url);
+		// `?toolsets=a,b` and `?toolsets=a&toolsets=b` ask for the same toolsets.
+		const resolved = resolveToolsets(url.searchParams.getAll("toolsets").join(","));
+		// A CORS preflight still gets its 204, so a browser client sees this error rather than a CORS failure.
+		if ("error" in resolved && request.method !== "OPTIONS") {
+			return new Response(
+				JSON.stringify({ error: "invalid_toolsets", error_description: resolved.error }),
+				{
+					headers: { "Content-Type": "application/json", ...MCP_CORS_HEADERS },
+					status: 400,
+				},
+			);
+		}
+
 		const token = extractBearerToken(request);
-		const props: NovuProps = { apiUrl: env.NOVU_API_URL, region, token };
+		const props: NovuProps = {
+			apiUrl: env.NOVU_API_URL,
+			region,
+			token,
+			toolsets: "toolsets" in resolved ? resolved.toolsets : undefined,
+		};
 		assignMcpProps(ctx, props);
 
-		const url = new URL(request.url);
 		if (url.pathname === "/") {
 			return handleMcpRequest(request, env, ctx, oauth, props);
 		}

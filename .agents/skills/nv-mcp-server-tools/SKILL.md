@@ -15,7 +15,9 @@ description: >-
 
 MCP clients load every tool's input schema, and several cap it. claude.ai drops a tool whose input schema is over 16 KB, and ChatGPT rejects one over 5,000 tokens. Several clients cannot resolve `$ref`.
 
-Before this skill, `tools/list` was 2.3 MB: five workflow tools inlined the Maily email body and 16 copies of the skip condition. It is now about 88 KB, and every call is still validated by the full schemas. Keep it that way. The evidence behind each rule is in [reference.md](./reference.md).
+Before this skill, `tools/list` was 2.3 MB: five workflow tools inlined the Maily email body and 16 copies of the skip condition. It is now about 94 KB, and every call is still validated by the full schemas. Keep it that way. The evidence behind each rule is in [reference.md](./reference.md).
+
+The hosted server's tools come in toolsets, picked with the `toolsets` query parameter of the server URL. A plain URL loads the default toolsets, whose list is held under 100 KB. **New tools go in an opt-in toolset** (`default: false` in `src/server/toolsets.ts`), each held under 10 KB, so a new tool never grows the list every client loads.
 
 ## How the package is wired
 
@@ -23,7 +25,8 @@ Before this skill, `tools/list` was 2.3 MB: five workflow tools inlined the Mail
 | --- | --- |
 | Tool registration (`ToolFactory.createTool` adds `idempotencyKey`, and `environmentId` unless `getAuthorization` is set) | [`src/utils/tool-factory.ts`](../../../apps/mcp-server/src/utils/tool-factory.ts) |
 | Workflow and step tools, `get_step_schema`, `STEP_SCHEMA_HINT` | [`src/tools/workflows.ts`](../../../apps/mcp-server/src/tools/workflows.ts), [`src/tools/workflow-steps.ts`](../../../apps/mcp-server/src/tools/workflow-steps.ts) |
-| Tool names and the hosted tool list | `WORKFLOW_STEP_TOOL_NAMES` in `src/tools/workflow-steps.ts`, `WORKFLOW_TOOL_NAMES` in [`src/tools/tool-names.ts`](../../../apps/mcp-server/src/tools/tool-names.ts), the inline snapshot in [`test/smoke.spec.ts`](../../../apps/mcp-server/test/smoke.spec.ts). Other modules register in `src/server/NovuMCP.ts` `registerAllTools`, mirrored by `test/support.ts` `connectAllTools` |
+| Tool names and the hosted tool list | `WORKFLOW_STEP_TOOL_NAMES` in `src/tools/workflow-steps.ts`, `WORKFLOW_TOOL_NAMES` in [`src/tools/tool-names.ts`](../../../apps/mcp-server/src/tools/tool-names.ts), the inline snapshot of the default toolsets in [`test/smoke.spec.ts`](../../../apps/mcp-server/test/smoke.spec.ts) |
+| Toolsets: which module is in which toolset, which toolsets are default, the server instructions | `TOOLSETS` and `TOOL_MODULES` in [`src/server/toolsets.ts`](../../../apps/mcp-server/src/server/toolsets.ts), used by `NovuMCP.init` and by `test/support.ts` `connectAllTools` |
 | Strict step control schemas, advertised step inputs, field guides, examples | [`src/utils/step-schemas.ts`](../../../apps/mcp-server/src/utils/step-schemas.ts) |
 | Maily body schema and its notes | [`src/utils/maily-schemas.ts`](../../../apps/mcp-server/src/utils/maily-schemas.ts) |
 | Skip condition (strict, advertised, errors) | [`src/utils/skip-schemas.ts`](../../../apps/mcp-server/src/utils/skip-schemas.ts) |
@@ -37,13 +40,14 @@ Before this skill, `tools/list` was 2.3 MB: five workflow tools inlined the Mail
 
 ## Workflow for any change
 
-1. **Measure first:** `cd apps/mcp-server && pnpm tools:report`. It prints every tool's bytes against the budgets, plus each `get_step_schema` size.
-2. **Pick the advertised shape** with the table below.
-3. **Write the strict schema,** then the loose side and the guide text (patterns below).
-4. **Check that errors are actionable:** invalid input must say what to send, because the model may only see the guide.
-5. **Add or update tests,** then run the checks.
-6. **Measure again** and compare with step 1. If a budget fails, move detail out of the advertised schema rather than raising the budget.
-7. **Docs:** when a tool is added or renamed, update the tool tables in `apps/mcp-server/README.md` and `docs/platform/build-with-ai/mcp.mdx`. A tool without `environmentId` also joins the "every tool except `whoami` and `get_step_schema`" sentences: one in the README, two in `mcp.mdx`.
+1. **Measure first:** `cd apps/mcp-server && pnpm tools:report`. It prints every tool's and every toolset's bytes against the budgets, plus each `get_step_schema` size.
+2. **Pick the toolset** for a new tool. Register it from its own function, listed in `TOOL_MODULES` under an opt-in toolset: a new `TOOLSETS` entry with `default: false` and a short description, or an existing opt-in one. Adding a tool to a function a default toolset registers grows the list every client loads; do that only when it fits the budget and the PR says why. The Copilot is unaffected either way: it registers its tool groups in process.
+3. **Pick the advertised shape** with the table below.
+4. **Write the strict schema,** then the loose side and the guide text (patterns below).
+5. **Check that errors are actionable:** invalid input must say what to send, because the model may only see the guide.
+6. **Add or update tests,** then run the checks.
+7. **Measure again** and compare with step 1. If a budget fails, move detail out of the advertised schema rather than raising the budget.
+8. **Docs:** when a tool is added or renamed, update the tool tables in `apps/mcp-server/README.md` and `docs/platform/build-with-ai/mcp.mdx`, and the toolset tables in both when a toolset is added or changes. A tool without `environmentId` also joins the "every tool except `whoami` and `get_step_schema`" sentences: one in the README, two in `mcp.mdx`.
 
 | Change | Advertised shape |
 | --- | --- |
@@ -152,5 +156,6 @@ Keep scratch experiments outside `apps/mcp-server/test`, and don't name them `*.
 - **`z.custom`.** `toJSONSchema` throws on it, which breaks all of `tools/list`.
 - **MCP resource templates for schemas.** Most hosts don't let models read resources; serve the data from a read-only tool.
 - **Raising a budget** to fit a schema.
+- **Trimming other tools' text** to make room in the default list. Put the new tool in an opt-in toolset instead.
 
 Known gaps that predate this skill are listed in reference.md; don't make them worse.
