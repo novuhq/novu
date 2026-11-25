@@ -12,20 +12,11 @@ import {
   WebChatAgentEvent,
 } from '../event-emitter';
 import { Notification } from '../notifications';
-import {
-  ActionTypeEnum,
-  InboxNotification,
-  NotificationActionStatus,
-  Result,
-  Session,
-  Subscriber,
-  TODO,
-  WebSocketEvent,
-} from '../types';
+import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
-import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
 import { isJwtExpired } from '../utils/jwt';
 import type { BaseSocketInterface } from './base-socket';
+import { mapToNotification } from './map-to-notification';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 
@@ -36,88 +27,6 @@ const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notifica
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
 const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
-
-const mapToNotification = ({
-  _id,
-  transactionId,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  data,
-  workflow,
-  severity,
-}: TODO): InboxNotification => {
-  const to: Subscriber = {
-    id: subscriber?._id,
-    subscriberId: subscriber?.subscriberId,
-    firstName: subscriber?.firstName,
-    lastName: subscriber?.lastName,
-    avatar: subscriber?.avatar,
-    locale: subscriber?.locale,
-    data: subscriber?.data,
-    timezone: subscriber?.timezone,
-    email: subscriber?.email,
-    phone: subscriber?.phone,
-  };
-  const primaryCta = cta.action?.buttons?.find((button: { type?: string }) => button.type === ActionTypeEnum.PRIMARY);
-  const secondaryCta = cta.action?.buttons?.find(
-    (button: { type?: string }) => button.type === ActionTypeEnum.SECONDARY
-  );
-  const actionType = cta.action?.result?.type;
-  const actionStatus = cta.action?.status;
-
-  return {
-    id: _id,
-    transactionId,
-    subject,
-    body: content as string,
-    to,
-    isRead: read,
-    isSeen: seen,
-    isArchived: archived,
-    isSnoozed: !!snoozedUntil,
-    ...(deliveredAt && {
-      deliveredAt,
-    }),
-    ...(snoozedUntil && {
-      snoozedUntil,
-    }),
-    createdAt,
-    readAt: lastReadDate,
-    firstSeenAt: firstSeenDate,
-    archivedAt,
-    avatar,
-    primaryAction: primaryCta && {
-      label: primaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
-    },
-    secondaryAction: secondaryCta && {
-      label: secondaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
-    },
-    channelType: channel,
-    tags,
-    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
-    data,
-    workflow,
-    severity,
-  };
-};
 
 export class PartySocketClient extends BaseModule implements BaseSocketInterface {
   #token: string;
