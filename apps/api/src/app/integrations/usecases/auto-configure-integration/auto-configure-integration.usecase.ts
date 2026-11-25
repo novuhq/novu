@@ -34,7 +34,9 @@ export class AutoConfigureIntegration {
       action: 'auto-configure',
     });
 
-    const integration = GetDecryptedIntegrations.getDecryptedCredentials(encryptedIntegration);
+    // A copy: decrypting in place would hand the decrypted credentials to every caller through the response.
+    const integration = GetDecryptedIntegrations.getDecryptedCredentials({ ...encryptedIntegration });
+    const webhookUrl = `${process.env.API_ROOT_URL}/v2/inbound-webhooks/delivery-providers/${integration._environmentId}/${integration._id}`;
 
     try {
       const channelHandler = this.channelFactory.getHandler(
@@ -42,7 +44,6 @@ export class AutoConfigureIntegration {
         integration.channel as 'email' | 'sms' | 'chat' | 'push'
       );
 
-      const webhookUrl = `${process.env.API_ROOT_URL}/v2/inbound-webhooks/delivery-providers/${integration._environmentId}/${integration._id}`;
       const result = await channelHandler.autoConfigureInboundWebhook({ webhookUrl });
 
       if (result.success && result.configurations) {
@@ -64,27 +65,36 @@ export class AutoConfigureIntegration {
           }
         );
 
-        this.logger.trace({
-          integrationId: command.integrationId,
-          organizationId: command.organizationId,
-          webhookUrl,
-        }, 'Auto-configuration completed successfully');
+        this.logger.trace(
+          {
+            integrationId: command.integrationId,
+            organizationId: command.organizationId,
+            webhookUrl,
+          },
+          'Auto-configuration completed successfully'
+        );
 
+        // Decrypted: the controller removes the secrets for callers that may not see credentials.
         return {
           success: true,
           message: result.message || 'Integration auto-configured successfully',
-          integration: { ...encryptedIntegration, configurations: updatedConfigurations },
+          integration: { ...integration, configurations: updatedConfigurations },
+          webhookUrl,
         };
       } else {
-        this.logger.warn({
-          integrationId: command.integrationId,
-          organizationId: command.organizationId,
-          message: result.message,
-        }, 'Auto-configuration failed');
+        this.logger.warn(
+          {
+            integrationId: command.integrationId,
+            organizationId: command.organizationId,
+            message: result.message,
+          },
+          'Auto-configuration failed'
+        );
 
         return {
           success: false,
           message: result.message || 'Auto-configuration failed',
+          webhookUrl,
         };
       }
     } catch (error) {
@@ -96,6 +106,7 @@ export class AutoConfigureIntegration {
       return {
         success: false,
         message: `Auto-configuration failed: ${error.message}`,
+        webhookUrl,
       };
     }
   }

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, type Stats } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type { ListenMessage } from '../api/listen';
 import { realPathOf, simpleCommandWords } from './own-replies';
@@ -288,6 +288,63 @@ export function pathIn(path: string, project: string, names: readonly string[]):
   }
 
   return names.some((name) => inProject === name || inProject.startsWith(`${name}${sep}`));
+}
+
+/**
+ * A check of whether a path, its links followed, is among these files and folders of the project (`project`, its
+ * links followed) that decide what a run does (`names`): in one of them, or where a link among them, or inside them,
+ * leads, outside the project too. A run reads them through the link, so changing what it leads to is changing them.
+ * The links are looked for once, when the check is made.
+ */
+export function decidingCheck(project: string, names: readonly string[]): (path: string) => boolean {
+  const linked = linkTargets(project, names);
+
+  return (path) => pathIn(path, project, names) || linked.some((target) => within(path, target));
+}
+
+/** The most entries looked at for links: what decides a run, its settings, skills and git's own files, is far less. */
+const MOST_LOOKED = 1000;
+
+/** Folders that only keep what git or a host stores, which a run doesn't read to decide what it does. */
+const STORES = new Set(['objects', 'refs', 'logs', 'lfs', 'modules', 'worktrees', 'rr-cache', 'node_modules']);
+
+/**
+ * Where the links among these files and folders of the project lead, theirs and those inside them, nearest first:
+ * a link isn't followed further, and what only stores things isn't looked through.
+ */
+function linkTargets(project: string, names: readonly string[]): string[] {
+  const targets: string[] = [];
+  const queue = names.map((name) => join(project, name));
+  for (let at = 0; at < queue.length && at < MOST_LOOKED; at++) {
+    const entry = lstatOf(queue[at]);
+    if (entry?.isSymbolicLink()) {
+      targets.push(realTarget(queue[at]));
+    } else if (entry?.isDirectory()) {
+      for (const child of childrenOf(queue[at])) {
+        if (!STORES.has(child) && queue.length < MOST_LOOKED) {
+          queue.push(join(queue[at], child));
+        }
+      }
+    }
+  }
+
+  return targets;
+}
+
+function lstatOf(path: string): Stats | undefined {
+  try {
+    return lstatSync(path);
+  } catch {
+    return undefined;
+  }
+}
+
+function childrenOf(folder: string): string[] {
+  try {
+    return readdirSync(folder);
+  } catch {
+    return [];
+  }
 }
 
 /** The path with its links followed, through the nearest folder of it that exists when it doesn't yet. */

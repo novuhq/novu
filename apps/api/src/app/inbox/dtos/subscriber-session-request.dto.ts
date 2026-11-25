@@ -37,6 +37,10 @@ export class SubscriberSessionRequestDto {
   @IsString()
   @IsOptional()
   readonly contextHash?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly subscriberToken?: string;
 }
 
 export class SubscriberDto {

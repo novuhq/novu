@@ -25,7 +25,11 @@ export class TraceResponseDto {
   @IsString()
   message?: string | null;
 
-  @ApiProperty({ description: 'Raw data associated with trace', nullable: true })
+  @ApiProperty({
+    description:
+      'Raw data associated with trace. Empty for API key and OAuth requests, since it can hold provider credentials.',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   rawData?: string | null;

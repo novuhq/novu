@@ -93,12 +93,8 @@ export class TriggerEvent {
 
       const { environmentId, identifier, organizationId, userId } = mappedCommand;
 
-      this.logger.assign({
-        transactionId: mappedCommand.transactionId,
-        environmentId: mappedCommand.environmentId,
-        organizationId: mappedCommand.organizationId,
-        contextKeys: mappedCommand.contextKeys,
-      });
+      // The workflow worker binds the transaction, environment and organization ids when the job starts.
+      this.logger.assign({ contextKeys: mappedCommand.contextKeys });
 
       Logger.debug(mappedCommand.actor);
 

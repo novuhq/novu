@@ -7,7 +7,6 @@ import { useFeatureFlag, useLaunchDarklyIdentified, useLaunchDarklyReady } from 
 import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
-import { CopilotLauncher } from './copilot-launcher';
 import {
   type CopilotMode,
   type EditorCopilotMode,
@@ -17,8 +16,7 @@ import {
   resolveCopilotMode,
 } from './copilot-mode';
 import { CopilotModeContext, useLiveCopilotMode } from './copilot-mode-context';
-import { CopilotPopover } from './copilot-popover';
-import { useCopilotWebChat } from './copilot-web-chat-context';
+import { CopilotPopoverMount } from './copilot-popover';
 import { CopilotWebChatProvider } from './copilot-web-chat-provider';
 import { useCopilotPendingPrompt } from './use-copilot-pending-prompt';
 
@@ -76,20 +74,6 @@ function CopilotPendingPrompt() {
   useCopilotPendingPrompt();
 
   return null;
-}
-
-/** Shows the launcher/popover only once a page (canvas or step editor) registered a workflow context. */
-function CopilotPopoverMount() {
-  const { pageContext } = useCopilotWebChat();
-
-  if (!pageContext?.workflowId) return null;
-
-  return (
-    <>
-      <CopilotLauncher />
-      <CopilotPopover />
-    </>
-  );
 }
 
 /**

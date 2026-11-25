@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { ApiResponse, TriggerWorkflowRequest } from "../types";
 import { NovuApiUtils } from "./api";
@@ -36,6 +37,11 @@ interface ToolConfig<T extends z.ZodObject<z.ZodRawShape>> {
 	description: string;
 	schema: T;
 	handler: (input: z.infer<T>, context: ToolContext) => Promise<ApiResponse>;
+	/** All three hints, plus `title`: OpenAI's app review rejects an annotated tool missing any. */
+	annotations?: Required<
+		Pick<ToolAnnotations, "destructiveHint" | "openWorldHint" | "readOnlyHint">
+	>;
+	title?: string;
 }
 
 interface ApiRequestConfig {
@@ -54,13 +60,14 @@ interface ApiRequestConfig {
  * API as the `Novu-Environment-Id` header for OAuth sessions only — they are
  * organization-bound and default to the Development environment. Legacy API
  * keys are already bound to a single environment, so the header is never sent
- * for them (see `NovuApiUtils.prepareHeaders`).
+ * for them (see `NovuApiUtils.prepareHeaders`). Every tool advertises this, so
+ * the text stays short; `get_environments` carries the full explanation.
  */
 export const environmentIdSchema = z
 	.string()
 	.optional()
 	.describe(
-		"Optional Novu environment ID (_id from get_environments) to run this request against. Only applies to OAuth sessions, which default to the Development environment — pass a different environment ID to target it (e.g. Production). Ignored for environment-bound API keys.",
+		"Novu environment _id from get_environments. Only for OAuth sessions, which default to Development; API keys ignore it.",
 	);
 
 export class ToolFactory {
@@ -79,40 +86,52 @@ export class ToolFactory {
 			idempotencyKey: idempotencyKeySchema,
 		});
 
-		server.tool(
-			config.name,
-			config.description,
-			schemaWithEnvironment.shape,
-			async (rawInput) => {
-				if (!getAuthorization) {
-					const authError = ValidationUtils.validateToken(getToken());
-					if (authError) {
-						return authError;
-					}
+		const callback = async (rawInput: Record<string, unknown>) => {
+			if (!getAuthorization) {
+				const authError = ValidationUtils.validateToken(getToken());
+				if (authError) {
+					return authError;
 				}
+			}
 
-				const parsed = schemaWithEnvironment.parse(rawInput) as z.infer<T> & {
-					environmentId?: string;
-					idempotencyKey?: string;
-				};
-				const { environmentId, idempotencyKey, ...toolInput } = parsed;
+			const parsed = schemaWithEnvironment.parse(rawInput) as z.infer<T> & {
+				environmentId?: string;
+				idempotencyKey?: string;
+			};
+			const { environmentId, idempotencyKey, ...toolInput } = parsed;
 
-				try {
-					return await config.handler(toolInput as z.infer<T>, {
-						apiUrl: getApiUrl(),
-						environmentId,
-						getAuthorization,
-						idempotencyKey,
-						token: getToken() ?? "",
-					});
-				} catch (error) {
-					console.error(`Error in ${config.name}:`, error);
-					return ToolFactory.errorResult({
-						message: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
-					});
-				}
-			},
-		);
+			try {
+				return await config.handler(toolInput as z.infer<T>, {
+					apiUrl: getApiUrl(),
+					environmentId,
+					getAuthorization,
+					idempotencyKey,
+					token: getToken() ?? "",
+				});
+			} catch (error) {
+				console.error(`Error in ${config.name}:`, error);
+				return ToolFactory.errorResult({
+					message: `Error: Failed to execute ${config.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
+				});
+			}
+		};
+
+		if (config.annotations) {
+			server.registerTool(
+				config.name,
+				{
+					annotations: config.annotations,
+					description: config.description,
+					inputSchema: schemaWithEnvironment.shape,
+					title: config.title,
+				},
+				callback,
+			);
+
+			return;
+		}
+
+		server.tool(config.name, config.description, schemaWithEnvironment.shape, callback);
 	}
 
 	/**
@@ -140,10 +159,18 @@ export class ToolFactory {
 		return headers;
 	}
 
-	/** Send one request to the Novu API and unwrap the `data` envelope. */
+	/**
+	 * Send one request to the Novu API and unwrap the `data` envelope. Pass
+	 * `unwrapData: false` for a paginated list, whose cursor or total sits next to `data`.
+	 */
 	static async callApi(
 		context: ToolContext,
-		request: { method: ApiRequestConfig["method"]; endpoint: string; body?: unknown },
+		request: {
+			method: ApiRequestConfig["method"];
+			endpoint: string;
+			body?: unknown;
+			unwrapData?: boolean;
+		},
 		idempotencyKey?: string,
 	): Promise<ApiCallResult> {
 		const response = await fetch(`${context.apiUrl}${request.endpoint}`, {
@@ -163,7 +190,7 @@ export class ToolFactory {
 		const text = response.status === 204 ? "" : await response.text();
 		const json = text ? JSON.parse(text) : undefined;
 		const data =
-			json && typeof json === "object" && "data" in json
+			request.unwrapData !== false && json && typeof json === "object" && "data" in json
 				? (json as { data: unknown }).data
 				: json;
 
@@ -197,8 +224,10 @@ export class ToolFactory {
 	): Promise<ApiResponse> {
 		const url = `${context.apiUrl}${requestConfig.endpoint}`;
 
+		// The query string can carry search values such as an email address, so it stays out of the logs.
+		const loggedEndpoint = requestConfig.endpoint.split("?")[0];
 		console.log(
-			`Making ${requestConfig.method} request to ${requestConfig.endpoint}${requestConfig.identifier ? ` for ${requestConfig.identifier}` : ""}`,
+			`Making ${requestConfig.method} request to ${loggedEndpoint}${requestConfig.identifier ? ` for ${requestConfig.identifier}` : ""}`,
 		);
 
 		const headers = {
@@ -247,13 +276,13 @@ export class ToolFactory {
 		}
 
 		const data = await response.json();
-		const message = requestConfig.formatSuccess
-			? requestConfig.formatSuccess(data)
-			: requestConfig.identifier
-				? `Successfully ${requestConfig.successMessage} ${requestConfig.identifier}`
-				: `Successfully ${requestConfig.successMessage}`;
+		const summary = requestConfig.identifier
+			? `Successfully ${requestConfig.successMessage} ${requestConfig.identifier}`
+			: `Successfully ${requestConfig.successMessage}`;
+		const message = requestConfig.formatSuccess ? requestConfig.formatSuccess(data) : summary;
 
-		console.log(message);
+		// A formatted message embeds the response data, which can hold subscriber details.
+		console.log(summary);
 
 		return {
 			content: [
@@ -400,6 +429,7 @@ export class ToolFactory {
 		successMessage: string,
 		idParamName = "id",
 		idDescription = "The ID to delete",
+		formatSuccess?: (data: unknown, id: string) => string,
 	) {
 		ToolFactory.createTool(server, accessors, {
 			description,
@@ -412,6 +442,9 @@ export class ToolFactory {
 					context,
 					{
 						endpoint,
+						formatSuccess: formatSuccess
+							? (data) => formatSuccess(data, idValue)
+							: undefined,
 						identifier: idValue,
 						method: "DELETE",
 						successMessage,

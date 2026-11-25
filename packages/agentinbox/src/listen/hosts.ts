@@ -34,7 +34,8 @@ export type GatewayPlugin = { install: string; agentInstall?: string; setup: str
  */
 export const GATEWAY_PLUGINS: Partial<Record<ListenHostId, GatewayPlugin>> = {
   hermes: {
-    install: 'hermes plugins install agentinboxhq/hermes-plugin --enable',
+    // From Hermes's plugin catalog: the commit its maintainers reviewed, as the catalog pins it.
+    install: 'hermes plugins install agentinbox --enable',
     setup: 'hermes agentinbox setup <agent> --code <code>',
     restart: 'hermes gateway restart',
   },

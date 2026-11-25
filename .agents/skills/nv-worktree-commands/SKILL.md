@@ -14,19 +14,22 @@ Reference for agents implementing worktree workflows. Prefer `nv-worktree-create
 ## Path naming
 
 ```text
-REPO_ROOT  = $(git rev-parse --show-toplevel)
-REPO_PARENT = $(dirname "$REPO_ROOT")
+MAIN_ROOT  = $(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")   # the main checkout, also when run from a worktree
 BRANCH     = user-provided name (used as git branch)
 DIR_NAME   = sanitize(BRANCH)   # lowercase; `/` → `-`
-WORKTREE   = "$REPO_PARENT/$DIR_NAME"
+WORKTREE   = "$MAIN_ROOT/.claude/worktrees/$DIR_NAME"
 ```
+
+Don't use `git rev-parse --show-toplevel` for `MAIN_ROOT`: inside a worktree it returns that worktree, which would nest the new one inside it.
 
 Examples (repo at `/Users/me/work/novu`):
 
 | Branch | Worktree path |
 |---|---|
-| `more-dcr-oauths` | `/Users/me/work/more-dcr-oauths` |
-| `nv-1234/foo-bar` | `/Users/me/work/nv-1234-foo-bar` |
+| `more-dcr-oauths` | `/Users/me/work/novu/.claude/worktrees/more-dcr-oauths` |
+| `nv-1234/foo-bar` | `/Users/me/work/novu/.claude/worktrees/nv-1234-foo-bar` |
+
+Why `.claude/worktrees/`: Claude Code enters worktrees there without asking, but asks for approval on every entry to a path outside it, and no permission rule turns that off. The folder is gitignored, so the main checkout's `git status`, Biome and Nx skip it.
 
 Abort if `WORKTREE` already exists on disk or in `git worktree list`.
 
@@ -105,5 +108,6 @@ For auditing merged/stale worktrees and batch cleanup, read `nv-worktree-cleanup
 
 - `git worktree add --detach` when the goal is a named feature branch — use `-b`.
 - `cp -r` the entire repo instead of `git worktree add`.
-- Reusing `~/.cursor/worktrees/…` detached paths when a sibling `../<name>` worktree is enough.
+- Reusing `~/.cursor/worktrees/…` detached paths when a `.claude/worktrees/<name>` worktree is enough.
+- Creating worktrees next to the repo (`../<name>`): Claude Code then asks for approval every time it enters one.
 - Running full setup scripts (`pnpm setup:agent`) in Cursor Cloud child worktrees when the parent already ran them.

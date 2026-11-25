@@ -1,5 +1,11 @@
 import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
-import { AiWorkflowToolsEnum, CopilotReviewActionEnum } from '@novu/shared';
+import {
+  AiWorkflowToolsEnum,
+  type CopilotPageEnum,
+  CopilotReviewActionEnum,
+  type CopilotViewing,
+  serializeCopilotViewing,
+} from '@novu/shared';
 
 // The plan branding the API appends to delivered replies (stored history has none), in the shapes it can take.
 // Same pattern as the agents web-chat panel (`agent-message-to-thread-message.ts`), which strips it the same way.
@@ -46,23 +52,47 @@ export type CopilotCardAction = { actionId: string; sourceMessageId: string; val
 export type CopilotPageContext = {
   workflowId?: string;
   stepId?: string;
+  /** A dashboard page outside the workflow editor that `COPILOT_PAGES` turns on, and what it shows. */
+  page?: CopilotPageEnum;
+  viewing?: CopilotViewing;
   /** Human readable ids shown in chips. Not sent to the agent. */
   workflowLabel?: string;
   stepLabel?: string;
+  /** The question about what is open on the page; leads its suggestions. Not sent to the agent. */
+  question?: string;
+};
+
+export type CopilotMessageMetadata = {
+  environmentId?: string;
+  workflowId?: string;
+  stepId?: string;
+  page?: CopilotPageEnum;
+  /** `CopilotViewing` as JSON (`serializeCopilotViewing`): web-chat metadata keeps only scalar values. */
+  viewing?: string;
 };
 
 export function buildCopilotMetadata(
   context: CopilotPageContext | undefined,
   environmentId: string | undefined
-): Record<string, string> {
-  const metadata: Record<string, string> = {};
+): CopilotMessageMetadata {
+  const metadata: CopilotMessageMetadata = {};
 
   // The hosted tenant context is shared across environments, so the agent reads the viewed one from here.
   if (environmentId) metadata.environmentId = environmentId;
   if (context?.workflowId) metadata.workflowId = context.workflowId;
   if (context?.stepId) metadata.stepId = context.stepId;
+  if (context?.page) metadata.page = context.page;
+  const viewing = serializeCopilotViewing(context?.viewing);
+  if (viewing) metadata.viewing = viewing;
 
   return metadata;
+}
+
+/** The composer chip: the open resource on a page, the workflow and step in the editor. */
+export function getCopilotContextLabel(context: CopilotPageContext | undefined): string {
+  if (context?.page) return context.viewing?.resource?.label ?? '';
+
+  return [context?.workflowLabel, context?.stepLabel].filter(Boolean).join(' / ');
 }
 
 const CONVERSATION_STORAGE_PREFIX = 'novu-copilot-conversation:';
@@ -92,6 +122,10 @@ export function writeStoredConversationId(scope: string | undefined, conversatio
 
 /** DOM id of the popover, so the launcher can tell when the focus sits in it while it animates out. */
 export const COPILOT_POPOVER_ID = 'copilot-popover';
+
+/** Over a sheet, the launcher and popover rise clear of its 57px footer, gliding with the sheet's 500ms slide-in. */
+export const COPILOT_SHEET_LIFT_PX = 57;
+export const COPILOT_SHEET_LIFT_TRANSITION = { duration: 0.5, ease: 'easeInOut' } as const;
 
 export type LauncherState = 'idle' | 'working' | 'ready' | 'error' | 'off';
 
@@ -458,4 +492,13 @@ export function getUserMessageText(message: AgentMessage): string {
     .map((part) => (part.type === 'text' ? part.text : ''))
     .join('')
     .trim();
+}
+
+/** Links into the dashboard itself, such as the Copilot's Activity links, open without the external-link prompt. */
+export function isDashboardLink(url: string, origin: string): boolean {
+  try {
+    return new URL(url, origin).origin === origin;
+  } catch {
+    return false;
+  }
 }

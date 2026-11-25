@@ -107,13 +107,14 @@ export class SyncToEnvironmentUseCase {
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
 
-    const layoutsToSync: string[] = [];
+    // Steps sharing a layout must sync it once: concurrent syncs of the same layout race on create.
+    const layoutIds = new Set<string>();
     for (const step of workflowDto.steps) {
       if (step.type === StepTypeEnum.EMAIL && step.controlValues?.layoutId) {
-        const layoutId = step.controlValues?.layoutId as string;
-        layoutsToSync.push(layoutId);
+        layoutIds.add(step.controlValues.layoutId as string);
       }
     }
+    const layoutsToSync = [...layoutIds];
 
     const layoutsToSyncPromises = layoutsToSync.map((layoutId) =>
       this.layoutSyncToEnvironmentUseCase.execute(

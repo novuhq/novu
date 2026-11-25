@@ -1,7 +1,8 @@
 import { BlockList, isIPv4, isIPv6 } from 'node:net';
 
 const PRIVATE_IPV4_BLOCKLIST = new BlockList();
-PRIVATE_IPV4_BLOCKLIST.addAddress('0.0.0.0', 'ipv4');
+/* RFC1122 "this network" (0.0.0.0/8), including the unspecified 0.0.0.0 */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('0.0.0.0', 8, 'ipv4');
 PRIVATE_IPV4_BLOCKLIST.addSubnet('10.0.0.0', 8, 'ipv4');
 PRIVATE_IPV4_BLOCKLIST.addSubnet('127.0.0.0', 8, 'ipv4');
 PRIVATE_IPV4_BLOCKLIST.addSubnet('169.254.0.0', 16, 'ipv4');
@@ -9,12 +10,22 @@ PRIVATE_IPV4_BLOCKLIST.addSubnet('172.16.0.0', 12, 'ipv4');
 PRIVATE_IPV4_BLOCKLIST.addSubnet('192.168.0.0', 16, 'ipv4');
 /* RFC6598 shared address space (100.64.0.0/10) — cloud metadata, CGNAT */
 PRIVATE_IPV4_BLOCKLIST.addSubnet('100.64.0.0', 10, 'ipv4');
+/* RFC6890 IETF protocol assignments (192.0.0.0/24) */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('192.0.0.0', 24, 'ipv4');
+/* RFC2544 benchmarking (198.18.0.0/15) */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('198.18.0.0', 15, 'ipv4');
+/* Multicast (224.0.0.0/4) */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('224.0.0.0', 4, 'ipv4');
+/* Reserved (240.0.0.0/4), including limited broadcast 255.255.255.255 */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('240.0.0.0', 4, 'ipv4');
 
 const PRIVATE_IPV6_BLOCKLIST = new BlockList();
 PRIVATE_IPV6_BLOCKLIST.addAddress('::', 'ipv6');
 PRIVATE_IPV6_BLOCKLIST.addAddress('::1', 'ipv6');
 PRIVATE_IPV6_BLOCKLIST.addSubnet('fc00::', 7, 'ipv6');
 PRIVATE_IPV6_BLOCKLIST.addSubnet('fe80::', 10, 'ipv6');
+/* Multicast (ff00::/8) */
+PRIVATE_IPV6_BLOCKLIST.addSubnet('ff00::', 8, 'ipv6');
 
 type Ipv6Hextets = [number, number, number, number, number, number, number, number];
 
@@ -172,8 +183,10 @@ export function normalizeHostnameForLookup(hostname: string): string {
 
 /**
  * Returns true for IPs that are loopback, RFC1918 private, RFC6598 shared (CGNAT),
- * link-local, unique-local IPv6 (fc00::/7), IPv6 loopback/link-local, IPv4-mapped
- * IPv6 of any of these, or the unspecified 0.0.0.0 address.
+ * link-local, "this network" (0.0.0.0/8), IETF protocol assignments (192.0.0.0/24),
+ * benchmarking (198.18.0.0/15), multicast, reserved/broadcast (240.0.0.0/4),
+ * unique-local IPv6 (fc00::/7), IPv6 loopback/link-local/multicast, or an
+ * IPv4-mapped / transition encoding of any of these.
  *
  * Used to reject SSRF candidates at validation **and** at connect time.
  */

@@ -36,7 +36,10 @@ type TokenClaims = {
   subscriberLogin: SubscriberLoginClaims;
 };
 
-export type TokenVerification = { ok: true; claims: JwtPayload } | { ok: false; reason: 'expired' | 'invalid' };
+export type TokenVerification =
+  | { ok: true; claims: JwtPayload }
+  | { ok: false; reason: 'expired'; claims: JwtPayload }
+  | { ok: false; reason: 'invalid' };
 
 export interface SignedToken {
   token: string;
@@ -162,7 +165,16 @@ export class NovuTokens {
     try {
       claims = jwt.verify(token, publicKey, { algorithms: [ALGORITHM] }) as JwtPayload;
     } catch (error) {
-      return { ok: false, reason: error instanceof TokenExpiredError ? 'expired' : 'invalid' };
+      if (!(error instanceof TokenExpiredError)) {
+        return INVALID;
+      }
+
+      const expiredClaims = jwt.verify(token, publicKey, {
+        algorithms: [ALGORITHM],
+        ignoreExpiration: true,
+      }) as JwtPayload;
+
+      return { ok: false, reason: 'expired', claims: expiredClaims };
     }
 
     const nowSeconds = Math.floor(Date.now() / 1000);

@@ -21,7 +21,7 @@ import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
   FindToolCallParams,
-  ImportInboundMessage,
+  ImportedInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -182,9 +182,14 @@ export class ConversationActivityLedger {
         richContent: params.richContent,
         platformMessageId: params.platformMessageId,
         sequence,
+        accessRefused: params.accessRefused,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       });
+
+      if (params.accessRefused) {
+        return activity;
+      }
 
       // The Human inbox counts unread messages by `createdAt`, so the cursor must come from the stored row.
       await this.conversationRepository.touchActivity(
@@ -261,7 +266,7 @@ export class ConversationActivityLedger {
     });
   }
 
-  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportedInboundMessage[]> {
     if (params.messages.length === 0) {
       return [];
     }
@@ -271,12 +276,15 @@ export class ConversationActivityLedger {
       params.conversationId,
       params.messages.map((message) => message.platformMessageId)
     );
-    const messages = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
+    const unstored = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
 
-    if (messages.length === 0) {
+    if (unstored.length === 0) {
       return [];
     }
 
+    const messages = await Promise.all(
+      unstored.map(async (message) => ({ ...message, accessRefused: await params.isRefused(message.authorUserId) }))
+    );
     const sequences = await this.eventSequenceService.mintRange(
       {
         environmentId: params.environmentId,
@@ -287,7 +295,7 @@ export class ConversationActivityLedger {
     );
 
     return this.activityRepository.withTransaction(async (session) => {
-      const insertedCount = await this.activityRepository.importUserActivities(
+      const admittedCount = await this.activityRepository.importUserActivities(
         {
           ...params,
           messages: messages.map((message, index) => ({
@@ -302,7 +310,7 @@ export class ConversationActivityLedger {
         params.environmentId,
         params.organizationId,
         params.conversationId,
-        insertedCount,
+        admittedCount,
         session
       );
 
@@ -1061,6 +1069,7 @@ export class ConversationActivityLedger {
     richContent?: Record<string, unknown>;
     hasPlatformAttachments?: boolean;
     editedAt?: string;
+    accessRefused?: boolean;
   }): Promise<ConversationActivityEntity | null> {
     const existing = await this.activityRepository.findByPlatformMessageId(
       params.environmentId,
@@ -1074,7 +1083,7 @@ export class ConversationActivityLedger {
     const content = params.content ?? existing.content ?? '';
     const richContent = params.richContent ?? existing.richContent;
 
-    if (params.type === ConversationActivityTypeEnum.EDIT) {
+    if (params.type === ConversationActivityTypeEnum.EDIT && !params.accessRefused) {
       const preview = getInboundActivityPreview(content, {
         richContent,
         hasPlatformAttachments: params.hasPlatformAttachments,
@@ -1109,6 +1118,7 @@ export class ConversationActivityLedger {
       platformMessageId: string;
       type: ConversationActivityTypeEnum.EDIT | ConversationActivityTypeEnum.DELETE;
       editedAt?: string;
+      accessRefused?: boolean;
     },
     content: string,
     richContent?: Record<string, unknown>
@@ -1138,6 +1148,7 @@ export class ConversationActivityLedger {
         platformMessageId: params.platformMessageId,
         type: params.type,
         sequence,
+        accessRefused: params.accessRefused,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       });

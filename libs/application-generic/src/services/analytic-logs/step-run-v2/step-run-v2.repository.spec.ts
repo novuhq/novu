@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PinoLogger } from 'nestjs-pino';
 import { ClickHouseService } from '../clickhouse.service';
+import { ClickHouseBatchService } from '../clickhouse-batch.service';
 import { FIND_BY_WORKFLOW_RUN_IDS_QUERY, StepRunV2Repository } from './step-run-v2.repository';
 import { STEP_RUNS_V2_DDL, StepRunV2Row } from './step-run-v2.schema';
 
@@ -19,7 +20,8 @@ function normalizeSql(sql: string): string {
     .trim();
 }
 
-function buildRepository() {
+function buildRepository({ withBatchService = false } = {}) {
+  const batchService = { add: vi.fn().mockResolvedValue(undefined) };
   const clickhouseService = {
     client: {},
     insert: vi.fn().mockResolvedValue(undefined),
@@ -29,10 +31,11 @@ function buildRepository() {
   const logger = { setContext: vi.fn(), error: vi.fn() };
   const repository = new StepRunV2Repository(
     clickhouseService as unknown as ClickHouseService,
-    logger as unknown as PinoLogger
+    logger as unknown as PinoLogger,
+    withBatchService ? (batchService as unknown as ClickHouseBatchService) : undefined
   );
 
-  return { repository, clickhouseService };
+  return { repository, clickhouseService, batchService };
 }
 
 describe('StepRunV2Repository', () => {
@@ -43,14 +46,69 @@ describe('StepRunV2Repository', () => {
   });
 
   describe('insertMany', () => {
-    it('inserts with async_insert and wait_for_async_insert', async () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('inserts directly without waiting for the flush when no batch service is provided', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
       const { repository, clickhouseService } = buildRepository();
       const rows = [{ step_run_id: 'job-1' } as StepRunV2Row];
 
       await repository.insertMany(rows);
 
+      expect(clickhouseService.insert).toHaveBeenCalledTimes(1);
       expect(clickhouseService.insert).toHaveBeenCalledWith('step_runs_v2', rows, {
         asyncInsert: true,
+        waitForAsyncInsert: false,
+      });
+    });
+
+    it('buffers each row in the batch service instead of inserting', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      const { repository, clickhouseService, batchService } = buildRepository({ withBatchService: true });
+      const rows = [{ step_run_id: 'job-1' }, { step_run_id: 'job-2' }] as StepRunV2Row[];
+
+      await repository.insertMany(rows);
+
+      const batchConfig = {
+        maxBatchSize: 1000,
+        flushIntervalMs: 1000,
+        insertOptions: { asyncInsert: true, waitForAsyncInsert: false },
+      };
+      expect(clickhouseService.insert).not.toHaveBeenCalled();
+      expect(batchService.add.mock.calls).toEqual([
+        ['step_runs_v2', rows[0], batchConfig],
+        ['step_runs_v2', rows[1], batchConfig],
+      ]);
+    });
+
+    it('reads batch size, flush interval and insert options from the environment', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.stubEnv('STEP_RUNS_V2_BATCH_SIZE', '250');
+      vi.stubEnv('STEP_RUNS_V2_FLUSH_INTERVAL_MS', '5000');
+      vi.stubEnv('STEP_RUNS_V2_WAIT_ASYNC_INSERT', 'true');
+      const { repository, batchService } = buildRepository({ withBatchService: true });
+
+      await repository.insertMany([{ step_run_id: 'job-1' } as StepRunV2Row]);
+
+      expect(batchService.add.mock.calls[0][2]).toEqual({
+        maxBatchSize: 250,
+        flushIntervalMs: 5000,
+        insertOptions: { asyncInsert: true, waitForAsyncInsert: true },
+      });
+    });
+
+    it('inserts synchronously under test even with a batch service, so reads see the row at once', async () => {
+      vi.stubEnv('NODE_ENV', 'test');
+      const { repository, clickhouseService, batchService } = buildRepository({ withBatchService: true });
+      const rows = [{ step_run_id: 'job-1' } as StepRunV2Row];
+
+      await repository.insertMany(rows);
+
+      expect(batchService.add).not.toHaveBeenCalled();
+      expect(clickhouseService.insert).toHaveBeenCalledWith('step_runs_v2', rows, {
+        asyncInsert: false,
         waitForAsyncInsert: true,
       });
     });

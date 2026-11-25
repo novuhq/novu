@@ -49,5 +49,6 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
 
       resolveLock();
     };
-  }, [enabled]);
+    // Re-subscribe when the provider swaps the Novu instance, so events keep coming from the live socket
+  }, [enabled, novu]);
 };
