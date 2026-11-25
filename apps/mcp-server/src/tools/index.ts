@@ -1,7 +1,7 @@
 /**
  * `@novu/mcp-server/tools`: the workflow, activity, integration, subscriber reachability,
- * agent, conversation and agent readiness tools without the Worker, for in-process use (e.g. an `McpServer` over
- * `InMemoryTransport`). Nothing reachable from here may import `agents`,
+ * agent, conversation and agent readiness tools without the Worker, for in-process use
+ * (e.g. an `McpServer` over `InMemoryTransport`). Nothing reachable from here may import `agents`,
  * `cloudflare:*` or other Worker-only modules; Biome enforces that for
  * `src/tools` and `src/utils`.
  */

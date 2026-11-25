@@ -54,6 +54,9 @@ function link(providerId: string, identifier: string, overrides: Record<string, 
 
 const CONNECTED = "2026-11-20T10:00:00.000Z";
 
+const NO_BRIDGE_CAVEAT =
+	"the agent has no bridge URL, so only senders whose context sets its own bridge URL get an answer";
+
 function routes(overrides: Routes = {}): Routes {
 	return {
 		[AGENT_PATH]: rawAgent(),
@@ -148,8 +151,29 @@ describe("get_agent_readiness", () => {
 		]);
 	});
 
-	it("blocks an agent on the bridge without a bridge URL, and shows a set one without its secrets", async () => {
+	// `BridgeExecutorService.resolveBridgeUrl` still calls a bridge URL the sender's context sets.
+	it("leaves the channels of a bridge agent without a bridge URL unconfirmed, not blocked", async () => {
 		const noBridge = await readiness({ [AGENT_PATH]: selfHosted() });
+		const inactive = await readiness({ [AGENT_PATH]: selfHosted({ active: false }) });
+
+		expect(noBridge.value?.bridge).toEqual({ status: "no bridge URL" });
+		expect(noBridge.value?.blockedBy).toBeUndefined();
+		expect(
+			noBridge.value?.channels?.map(({ reasons, verdict }) => ({ reasons, verdict })),
+		).toEqual([
+			{ reasons: [NO_BRIDGE_CAVEAT], verdict: "unconfirmed" },
+			{
+				reasons: [NO_BRIDGE_CAVEAT, "no message has arrived on it yet"],
+				verdict: "unconfirmed",
+			},
+		]);
+		expect(inactive.value?.channels?.map((channel) => channel.verdict)).toEqual([
+			"blocked",
+			"blocked",
+		]);
+	});
+
+	it("shows a bridge URL with its secrets marked as redacted", async () => {
 		const withBridge = await readiness({
 			[AGENT_PATH]: selfHosted({
 				bridgeUrl:
@@ -164,17 +188,14 @@ describe("get_agent_readiness", () => {
 			}),
 		});
 
-		expect(noBridge.value?.bridge).toEqual({ status: "no bridge URL" });
-		expect(noBridge.value?.blockedBy).toEqual([
-			"no bridge URL is set, so messages get no answer from the agent",
-		]);
 		expect(withBridge.value?.bridge).toEqual({
 			status: "bridge URL set",
-			url: "https://bridge.acme.dev/api/novu",
+			url: "https://[redacted]@bridge.acme.dev/api/novu?[redacted]",
 		});
+		expect(withBridge.value?.channels?.[0]?.verdict).toBe("ready");
 		expect(local.value?.bridge).toEqual({
 			status: "local bridge",
-			url: "https://tunnel-1.novu.dev/api/novu",
+			url: "https://tunnel-1.novu.dev/api/novu?[redacted]",
 		});
 	});
 
@@ -186,29 +207,58 @@ describe("get_agent_readiness", () => {
 		});
 
 		expect(legacy.value?.bridge).toEqual({ status: "no bridge URL" });
-		expect(legacy.value?.channels?.[0]?.verdict).toBe("blocked");
+		expect(legacy.value?.channels?.[0]?.verdict).toBe("unconfirmed");
 		expect(managedWithoutRuntime.value?.bridge).toEqual({ status: "no bridge URL" });
 	});
 
-	it("blocks a bridge URL the bridge can't call", async () => {
+	it("says when the bridge URL is one the bridge can't call", async () => {
 		const noScheme = await readiness({
 			[AGENT_PATH]: selfHosted({ bridgeUrl: "bridge.acme.dev/api/novu" }),
-		});
-		const badLocal = await readiness({
-			[AGENT_PATH]: selfHosted({ devBridgeActive: true, devBridgeUrl: "http://exa mple" }),
 		});
 
 		expect(noScheme.value?.bridge).toEqual({
 			status: "unusable bridge URL",
 			url: "bridge.acme.dev/api/novu",
 		});
-		expect(noScheme.value?.blockedBy).toEqual([
-			"the bridge URL has no http:// or https:// scheme, so the agent can't be reached",
-		]);
+		expect(noScheme.value?.blockedBy).toBeUndefined();
+		expect(noScheme.value?.channels?.[0]).toMatchObject({
+			reasons: [
+				"the bridge URL can't be read or has no http:// or https:// scheme, so only senders whose context sets its own bridge URL get an answer",
+			],
+			verdict: "unconfirmed",
+		});
+	});
+
+	// The local bridge comes before any bridge URL a context sets, so an unusable one answers no one.
+	it("blocks every channel while a local bridge the bridge can't call is on", async () => {
+		const badLocal = await readiness({
+			[AGENT_PATH]: selfHosted({
+				bridgeUrl: "https://bridge.acme.dev/api/novu",
+				devBridgeActive: true,
+				devBridgeUrl: "http://exa mple",
+			}),
+		});
+		const localOff = await readiness({
+			[AGENT_PATH]: selfHosted({
+				bridgeUrl: "bridge.acme.dev/api/novu",
+				devBridgeActive: true,
+			}),
+		});
+
 		expect(badLocal.value?.bridge).toEqual({
 			status: "unusable bridge URL",
 			url: "[invalid URL]",
 		});
+		expect(badLocal.value?.blockedBy).toEqual([
+			"the local bridge is on, and its URL can't be read or has no http:// or https:// scheme, so no message gets an answer",
+		]);
+		expect(badLocal.value?.channels?.map((channel) => channel.verdict)).toEqual([
+			"blocked",
+			"blocked",
+		]);
+		// On, but without a URL: the executor skips it, as it does here.
+		expect(localOff.value?.blockedBy).toBeUndefined();
+		expect(localOff.value?.channels?.[0]?.verdict).toBe("unconfirmed");
 	});
 
 	it("gives a Human relay no bridge and no plan limits, as the inbound path skips them", async () => {

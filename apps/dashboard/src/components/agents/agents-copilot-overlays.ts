@@ -54,8 +54,11 @@ export function useAgentOverlays(): AgentOverlays {
   return useSyncExternalStore(subscribe, () => overlays);
 }
 
-/** Tells the Agents page Copilot what the agent details page has open: the agent, its channel or conversation, a sheet. */
-export function useRegisterAgentCopilotView({
+/**
+ * Tells the Agents page Copilot what the agent details page has open: the agent, its channel or conversation, a sheet.
+ * A component that renders nothing, so a sheet opening re-renders it and not the whole page.
+ */
+export function AgentCopilotView({
   agent,
   channelIdentifier,
   chatPreviewOpen,
@@ -76,4 +79,6 @@ export function useRegisterAgentCopilotView({
       sheetOpen: openSheets > 0 || chatPreviewOpen,
     })
   );
+
+  return null;
 }

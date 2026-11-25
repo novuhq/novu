@@ -16,7 +16,7 @@ import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
-import { useRegisterAgentCopilotView } from '@/components/agents/agents-copilot-overlays';
+import { AgentCopilotView } from '@/components/agents/agents-copilot-overlays';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import {
@@ -187,12 +187,6 @@ export function AgentDetailsPage() {
   const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
-  useRegisterAgentCopilotView({
-    agent,
-    channelIdentifier: integrationIdentifier,
-    chatPreviewOpen: hasWebChat && isChatPreviewOpen,
-  });
-
   useEffect(() => {
     if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {
       return;
@@ -332,6 +326,11 @@ export function AgentDetailsPage() {
   return (
     <>
       <PageMeta title={pageTitle} />
+      <AgentCopilotView
+        agent={agent}
+        channelIdentifier={integrationIdentifier}
+        chatPreviewOpen={hasWebChat && isChatPreviewOpen}
+      />
       <DashboardLayout headerStartItems={headerStartItems}>
         {isNotFound ? (
           <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">

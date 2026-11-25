@@ -22,14 +22,14 @@ const agentReadinessSchema = z.object({
 
 /**
  * `get_agent_readiness`: whether one agent can reply on each of its channels, and why not. Built
- * from the agent and its channel links; neither read returns a credential,
- * and the bridge URLs lose their user info and query string before the rules run.
+ * from the agent and its channel links; neither read returns a credential, and the agent is
+ * allowlisted, bridge URLs redacted, before the rules run.
  */
 export function registerAgentReadinessTool(server: McpServer, accessors: ToolAccessors) {
 	ToolFactory.createTool(server, accessors, {
 		annotations: READ_ONLY,
 		description:
-			"Check whether one agent can reply on each channel connected to it, and why not: the agent is inactive, past a plan limit, has no bridge URL, the channel has received no message yet, or the email inbox is off. Also returns the bridge (managed, local or URL). Covers setup, not message history: use get_conversations for that. Never returns credentials, tokens or setup links.",
+			"Check whether one agent can reply on each channel connected to it, and why not: the agent is inactive, past a plan limit, has no usable bridge URL (then only senders whose context sets one get an answer), the channel has received no message yet, or the email inbox is off. Also returns the bridge (managed, local or URL). Covers setup, not message history: use get_conversations for that. Never returns credentials, tokens or setup links.",
 		handler: async ({ identifier }, context) => {
 			const [agent, links] = await Promise.all([
 				read(context, agentResourcePath(identifier)),
