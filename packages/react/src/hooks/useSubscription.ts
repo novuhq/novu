@@ -72,9 +72,17 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
   );
 
   useEffect(() => {
-    // A token source tells who the subscriber is only once the session resolves.
+    // A token source tells who the subscriber is only once the session resolves; until then only its failure shows.
     if (identityKey === undefined) {
-      return;
+      return novu.on('session.initialize.resolved', ({ error }) => {
+        if (!error) {
+          return;
+        }
+        const sessionError = new NovuError('Failed to initialize session, please contact the support', error);
+        setError(sessionError);
+        propsRef.current.onError?.(sessionError);
+        setIsLoading(false);
+      });
     }
 
     const listener = ({ data: subscription }: { data?: TopicSubscription }) => {

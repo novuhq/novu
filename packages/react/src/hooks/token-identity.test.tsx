@@ -205,4 +205,29 @@ describe('hooks under a token source', () => {
     expect(await refetchesAfterEventFor('alice')).toEqual(['alice']);
     expect(await refetchesAfterEventFor('bob')).toEqual(['bob']);
   });
+
+  it('reports a failed first sign-in instead of loading forever', async () => {
+    const onError = vi.fn();
+    let state: ReturnType<typeof useSubscription> | undefined;
+    const Probe = () => {
+      state = useSubscription({ topicKey: 'news', onError });
+
+      return null;
+    };
+    render(
+      <NovuProvider
+        applicationIdentifier="app"
+        getToken={async () => {
+          throw new Error('signed out');
+        }}
+      >
+        <Probe />
+      </NovuProvider>
+    );
+    await flush();
+
+    expect(state?.isLoading).toBe(false);
+    expect(state?.error).toBeDefined();
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
 });
