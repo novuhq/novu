@@ -174,6 +174,7 @@ registry is [`src/server/toolsets.ts`](src/server/toolsets.ts).
 | `activity` | yes | `get_workflow_runs`, `get_workflow_run`, `get_trigger_requests`, `get_notifications`, `get_notification` |
 | `integrations` | yes | Integration tools |
 | `agents` | yes | Agent and conversation tools |
+| `agent-setup` | no | `get_agent_readiness` |
 
 - No parameter (or an empty one) loads the default toolsets; `default` stands
   for them in a list, and `all` loads every toolset.
@@ -199,6 +200,7 @@ serves stays within its budget; see [`AGENTS.md`](./AGENTS.md).
 | `update_agent` | Update an agent's name, status, bridge URL, or behavior |
 | `get_conversations` | List agent conversations with optional filters (agent, subscriber, status, provider) |
 | `get_conversation_activities` | Inspect a conversation timeline (compact debug digest; `verbose` for each activity's fields as JSON) |
+| `get_agent_readiness` | Check whether an agent can reply on each of its channels and why not, and its bridge, without credentials (`agent-setup` toolset) |
 | `get_environments` | List all environments with their details and API keys |
 | `get_notifications` | Fetch events with filtering by channel, template, subscriber, date, and more |
 | `get_notification` | Get a specific notification with detailed execution logs |

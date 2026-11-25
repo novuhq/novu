@@ -24,6 +24,30 @@ export const ACTIVITY_TOOL_NAMES = [
 
 export type ActivityToolName = (typeof ACTIVITY_TOOL_NAMES)[number];
 
+/** Every tool `registerAgentTools` registers, by public MCP name. */
+export const AGENT_TOOL_NAMES = {
+	CONNECT_AGENT: "connect_agent",
+	CREATE_AGENT: "create_agent",
+	GET_AGENT: "get_agent",
+	GET_AGENTS: "get_agents",
+	UPDATE_AGENT: "update_agent",
+} as const;
+
+export type AgentToolName = (typeof AGENT_TOOL_NAMES)[keyof typeof AGENT_TOOL_NAMES];
+
+/** Every tool `registerConversationTools` registers, by public MCP name. All are read-only. */
+export const CONVERSATION_TOOL_NAMES = [
+	"get_conversations",
+	"get_conversation_activities",
+] as const;
+
+export type ConversationToolName = (typeof CONVERSATION_TOOL_NAMES)[number];
+
+/** Every tool `registerAgentReadinessTool` registers, by public MCP name. All are read-only. */
+export const AGENT_READINESS_TOOL_NAMES = ["get_agent_readiness"] as const;
+
+export type AgentReadinessToolName = (typeof AGENT_READINESS_TOOL_NAMES)[number];
+
 /** Every tool `registerSubscriberReachabilityTool` registers, by public MCP name. All are read-only. */
 export const SUBSCRIBER_REACHABILITY_TOOL_NAMES = ["get_subscriber_reachability"] as const;
 

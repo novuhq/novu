@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { MCP_CORS_HEADERS } from "../oauth/context";
 import { registerActivityTools } from "../tools/activity";
+import { registerAgentReadinessTool } from "../tools/agent-readiness";
 import { registerAgentTools } from "../tools/agents";
 import { registerAuthTools } from "../tools/auth";
 import { registerConversationTools } from "../tools/conversations";
@@ -28,6 +29,10 @@ import { FEEDBACK_SERVER_INFO, registerFeedbackTool } from "./feedback";
  */
 export const TOOLSETS = {
 	activity: { default: true, description: "workflow runs, trigger requests and notifications" },
+	"agent-setup": {
+		default: false,
+		description: "whether an agent can reply on each of its channels, and its bridge",
+	},
 	agents: { default: true, description: "agents and their conversations" },
 	integrations: { default: true, description: "provider integrations" },
 	subscribers: {
@@ -75,6 +80,7 @@ const TOOL_MODULES: ReadonlyArray<{
 	{ register: (s, c) => registerActivityTools(s, c.accessors), toolset: "activity" },
 	{ register: (s, c) => registerPreferenceTools(s, c.accessors), toolset: "subscribers" },
 	{ register: (s, c) => registerIntegrationTools(s, c.accessors), toolset: "integrations" },
+	{ register: (s, c) => registerAgentReadinessTool(s, c.accessors), toolset: "agent-setup" },
 	{ register: (s, c) => registerFeedbackTool(s, c.feedbackSecretKey), toolset: null },
 ];
 
