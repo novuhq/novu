@@ -288,6 +288,8 @@ export class WebSocketRoom extends DurableObject<IEnv> {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${jwtToken}`,
+          // Lets the API accept the session after it expired: sockets are closed at expiry and reported offline later
+          'X-Novu-Internal-Key': this.env.INTERNAL_API_KEY,
         },
         body: JSON.stringify({
           subscriberId,
