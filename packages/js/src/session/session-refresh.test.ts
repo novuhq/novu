@@ -294,3 +294,32 @@ describe('session refresh after the subscriber token expires', () => {
     expect(api.sessionBodies.map((body) => body.subscriber.subscriberId)).not.toContain('subscriber_2');
   });
 });
+
+describe('the resolved session', () => {
+  it('stays readable after session.initialize.resolved has fired', async () => {
+    const api = createFakeApi();
+    const novu = createNovu();
+
+    expect(novu.session).toBeUndefined();
+
+    await wait();
+
+    expect(novu.session?.token).toBe(api.issuedTokens[0]);
+  });
+
+  it('is cleared when the subscriber changes and holds the new one once it resolves', async () => {
+    const api = createFakeApi();
+    const novu = createNovu();
+    await wait();
+    api.delaySessionResponses(20);
+
+    const change = novu.changeSubscriber({ subscriber: { subscriberId: 'subscriber_2' } });
+
+    expect(novu.session).toBeUndefined();
+
+    await change;
+
+    expect(novu.session?.token).toBe(api.issuedTokens[1]);
+    expect(api.subscriberOf(novu.session?.token ?? '')).toBe('subscriber_2');
+  });
+});
