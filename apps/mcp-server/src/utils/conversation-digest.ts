@@ -8,6 +8,7 @@
 const CONTENT_CAP = 240;
 const VERBOSE_CONTENT_CAP = 2000;
 const TITLE_CAP = 120;
+const NAME_CAP = 80;
 
 /** Message text and titles are what the agent's users wrote, so the model reads them as data. */
 const UNTRUSTED_TEXT_NOTE =
@@ -44,8 +45,14 @@ function truncate(value: string, cap: number): string {
 	return `${value.slice(0, cap)}…`;
 }
 
+/**
+ * Participants' text between « », the marks the model is told to read as data. The marks inside the text become ‹ ›, so
+ * a message can't close the fence and write outside it.
+ */
 function fence(value: string, cap: number): string {
-	return `«${truncate(value.replace(/\s+/g, " ").trim(), cap)}»`;
+	const text = value.replace(/\s+/g, " ").trim().replace(/«/g, "‹").replace(/»/g, "›");
+
+	return `«${truncate(text, cap)}»`;
 }
 
 /** A value that is only a phone number: 7 or more digits, with the usual separators. */
@@ -460,9 +467,10 @@ export function toConversationRow(value: unknown): ConversationRow | undefined {
 		const subscriber = asRecord(participant.subscriber);
 		const subscriberId = asString(subscriber?.subscriberId) ?? asString(participant.id);
 		if (!subscriberId) return [];
+		// Subscribers can set their own names, so a name is participants' text too.
 		const name = joinName(subscriber?.firstName, subscriber?.lastName);
 
-		return [name ? { name, subscriberId } : { subscriberId }];
+		return [name ? { name: fence(name, NAME_CAP), subscriberId } : { subscriberId }];
 	});
 	const platformUsers = participants.flatMap((participant) => {
 		const id = asString(participant.id);
@@ -530,7 +538,7 @@ function toActivityDetail(activity: ActivityRecord): ActivityRecord {
 			: undefined,
 		platform: asString(activity.platform),
 		refusedSender: activity.accessRefused === true ? true : undefined,
-		senderName: senderName ? maskContact(senderName) : undefined,
+		senderName: senderName ? fence(maskContact(senderName), NAME_CAP) : undefined,
 		senderType: asString(activity.senderType),
 		signal: asString(asRecord(activity.signalData)?.type),
 		tool: toolData
