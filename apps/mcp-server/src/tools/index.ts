@@ -9,6 +9,12 @@
 export type { ToolAccessors } from "../utils/tool-accessors";
 export type { ToolErrorDetails } from "../utils/tool-factory";
 export { toSavedControlValues, type WorkflowResponse } from "../utils/workflow-request";
+export {
+	HIDDEN_SECRET,
+	redactHttpRequestControlValues,
+	redactWorkflowSecrets,
+	restoreStepSecrets,
+} from "../utils/workflow-secrets";
 export { registerActivityTools } from "./activity";
 export { registerIntegrationTools } from "./integrations";
 export { registerSubscriberReachabilityTool } from "./subscriber-reachability";

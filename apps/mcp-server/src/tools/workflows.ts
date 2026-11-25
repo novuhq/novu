@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import type { ApiResponse } from "../types";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
@@ -16,6 +17,11 @@ import {
 	updateWorkflowInputSchema,
 	type WorkflowStep,
 } from "../utils/workflow-schemas";
+import {
+	hasHiddenSecret,
+	redactWorkflowSecrets,
+	restoreWorkflowSecrets,
+} from "../utils/workflow-secrets";
 import { WorkflowValidationUtils } from "../utils/workflow-validation";
 import { registerWorkflowStepTools, STEP_SCHEMA_HINT } from "./workflow-steps";
 
@@ -45,6 +51,9 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		"fetched workflow",
 		"workflowId",
 		"The workflow ID to retrieve (obtained from get_workflows)",
+		// HTTP request steps can hold credentials; the write tools put the stored values back.
+		(data, id) =>
+			`Successfully fetched workflow ${id}:\n\n${JSON.stringify(redactWorkflowSecrets(data), null, 2)}`,
 	);
 
 	// Trigger workflow - custom logic using the factory
@@ -62,6 +71,11 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		handler: async (input, context) => {
 			const resolvedPayloadSchema = resolvePayloadSchema(input);
 			const steps = input.steps ?? [];
+			// A new workflow has no stored values for a copied placeholder to stand for.
+			const secrets = restoreWorkflowSecrets(steps);
+			if (!secrets.ok)
+				return ToolFactory.errorResult({ message: secrets.error, status: 400 });
+
 			const stepValidationError = WorkflowValidationUtils.validateWorkflowSteps(steps, {
 				payloadSchema: resolvedPayloadSchema,
 			});
@@ -109,8 +123,11 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		handler: async (input, context) => {
 			console.log(`Updating workflow "${input.workflowId}" with name "${input.name}"`);
 
+			const steps = await withStoredSecrets(context, input.workflowId, input.steps);
+			if (!Array.isArray(steps)) return steps;
+
 			const resolvedPayloadSchema = resolvePayloadSchema(input);
-			const stepValidationError = WorkflowValidationUtils.validateWorkflowSteps(input.steps, {
+			const stepValidationError = WorkflowValidationUtils.validateWorkflowSteps(steps, {
 				payloadSchema: resolvedPayloadSchema,
 			});
 			if (stepValidationError) return stepValidationError;
@@ -121,7 +138,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 				name: input.name,
 				origin: input.origin,
 				preferences: withCriticalPreferences(input.preferences, input.critical),
-				steps: input.steps.map(toStepBody),
+				steps: steps.map(toStepBody),
 			};
 
 			assignOptional(requestBody, {
@@ -247,6 +264,30 @@ function resolvePayloadSchema(input: PayloadInputs): Record<string, unknown> | u
 	}
 
 	return undefined;
+}
+
+/**
+ * `steps` with the stored values back in place of the placeholders get_workflow showed for an HTTP request step's
+ * secrets, or the error to return. Reads the stored workflow only when a placeholder was sent.
+ */
+async function withStoredSecrets(
+	context: ToolContext,
+	workflowId: string,
+	steps: WorkflowStep[],
+): Promise<WorkflowStep[] | ApiResponse> {
+	if (!hasHiddenSecret(steps)) return steps;
+
+	const fetched = await ToolFactory.callApi(context, {
+		endpoint: `/v2/workflows/${encodeURIComponent(workflowId)}`,
+		method: "GET",
+	});
+	if (!fetched.ok) return apiError("fetch workflow", workflowId, fetched);
+
+	const secrets = restoreWorkflowSecrets(steps, (fetched.data as WorkflowResponse).steps);
+
+	return secrets.ok
+		? secrets.value
+		: ToolFactory.errorResult({ message: secrets.error, status: 400 });
 }
 
 /** Request body for one step: email bodies are sent as strings. */

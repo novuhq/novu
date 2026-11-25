@@ -37,6 +37,7 @@ import {
 	workflowStepContentInputSchema,
 	workflowStepInputSchema,
 } from "../utils/workflow-schemas";
+import { restoreStepSecrets } from "../utils/workflow-secrets";
 import { WorkflowValidationUtils } from "../utils/workflow-validation";
 
 export const WORKFLOW_STEP_TOOL_NAMES = {
@@ -177,15 +178,24 @@ export function registerWorkflowStepTools(server: McpServer, accessors: ToolAcce
 					);
 				}
 
+				// Placeholders get_workflow showed for the step's secrets stand for its stored values.
+				const secrets = restoreStepSecrets(
+					{
+						controlValues: input.content.controlValues,
+						stepId: input.stepId,
+						type: current.type,
+					},
+					current,
+				);
+				if (!secrets.ok) return badRequest(secrets.error);
+				const content = { ...input.content, controlValues: secrets.value.controlValues };
+
 				const invalid = WorkflowValidationUtils.validateWorkflowSteps([
-					{ ...input.content, name: current.name } as WorkflowStep,
+					{ ...content, name: current.name } as WorkflowStep,
 				]);
 				if (invalid) return { error: { message: invalid.content[0].text, status: 400 } };
 
-				const controlValues = normalizeControlValues(
-					current.type,
-					input.content.controlValues,
-				);
+				const controlValues = normalizeControlValues(current.type, content.controlValues);
 				delete controlValues.skip;
 				if (current.controlValues.skip !== undefined) {
 					controlValues.skip = current.controlValues.skip;
@@ -498,6 +508,10 @@ function newStep(
 	step: WorkflowStep,
 	stepId: string | undefined,
 ): WorkflowStepRequest | { error: ToolErrorDetails } {
+	// A new step has no stored values for a copied placeholder to stand for.
+	const secrets = restoreStepSecrets(step, undefined);
+	if (!secrets.ok) return badRequest(secrets.error);
+
 	const invalid = WorkflowValidationUtils.validateWorkflowSteps([step]);
 	if (invalid) return { error: { message: invalid.content[0].text, status: 400 } };
 
