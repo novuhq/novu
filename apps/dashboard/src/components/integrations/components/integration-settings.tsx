@@ -52,7 +52,12 @@ import { TelegramQuickSetup } from './telegram-quick-setup';
 import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
-import { isDemoIntegration, isSecureCredential, usesProviderSetupLayout } from './utils/helpers';
+import {
+  isDemoIntegration,
+  isSecureCredential,
+  RESEND_TRACKING_ENABLER,
+  usesProviderSetupLayout,
+} from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 import { WhatsAppManualSetup } from './whatsapp-manual-setup';
@@ -137,7 +142,8 @@ const TELEGRAM_CONNECT_DOCS_URL =
   'https://docs.novu.co/platform/integrations/chat/telegram#from-your-app-with-@novu/react';
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
-  if (providerId === ChatProviderIdEnum.Telegram || providerId === EmailProviderIdEnum.Resend) return '~1 min';
+  if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+  if (providerId === EmailProviderIdEnum.Resend) return '~2 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
 
@@ -260,7 +266,9 @@ export function IntegrationSettings({
           active: true,
           primary: true,
           credentials: {},
-          configurations: {},
+          // Resend's setup turns on activity tracking: Novu adds the delivery webhook once the integration exists.
+          configurations:
+            setupLayout && provider?.id === EmailProviderIdEnum.Resend ? { [RESEND_TRACKING_ENABLER]: true } : {},
           environmentId: currentEnvironment?._id ?? '',
           rules: null,
         },
@@ -333,6 +341,7 @@ export function IntegrationSettings({
   const typedClientId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.ClientId}` });
   const typedSecretKey = useWatch({ control, name: `credentials.${CredentialsKeyEnum.SecretKey}` });
   const typedTenantId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.TenantId}` });
+  const trackingEnabled = useWatch({ control, name: `configurations.${RESEND_TRACKING_ENABLER}` });
   const unusedCredentialKeys = useMemo(
     () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
     [provider.id, authMethod]
@@ -559,7 +568,8 @@ export function IntegrationSettings({
         isReadOnly={isReadOnly}
         hidePrimarySelector={!isChannelSupportPrimary}
         disabledPrimary={!hasOtherProviders && integration?.primary}
-        configurations={provider.configurations}
+        // Resend's activity tracking is step 3 of its setup, so it isn't repeated here.
+        configurations={isResend ? undefined : provider.configurations}
         integrationId={integration?._id}
         isDemo={isDemo}
         provider={provider}
@@ -602,20 +612,20 @@ export function IntegrationSettings({
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {isMsTeams ? (
-                  <SetupTip>
-                    Add <code className="font-code">&lt;MsTeamsConnectButton /&gt;</code> to your app so subscribers can
-                    connect their Teams workspace.{' '}
-                    <a href={TEAMS_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
-                      Read docs
-                    </a>
-                    .
-                  </SetupTip>
-                ) : isResend ? (
+                {isResend ? (
                   <SetupTip>
                     Novu emails each subscriber’s <code className="font-code">email</code>. Set it when you create or
                     identify subscribers.{' '}
                     <a href={SUBSCRIBERS_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : isMsTeams ? (
+                  <SetupTip>
+                    Add <code className="font-code">&lt;MsTeamsConnectButton /&gt;</code> to your app so subscribers can
+                    connect their Teams workspace.{' '}
+                    <a href={TEAMS_CONNECT_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
                       Read docs
                     </a>
                     .
@@ -652,6 +662,19 @@ export function IntegrationSettings({
               </>
             }
           >
+            {isResend && (
+              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
+                <ResendSetup
+                  provider={provider}
+                  credentials={providerCredentials}
+                  control={control}
+                  setValue={setValue}
+                  environmentName={environments?.find((environment) => environment._id === environmentId)?.name}
+                  isTrackingEnabled={Boolean(trackingEnabled) && trackingEnabled !== 'false'}
+                  isReadOnly={isReadOnly}
+                />
+              </Protect>
+            )}
             {isTelegram && (
               <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
                 <TelegramQuickSetup
@@ -659,27 +682,6 @@ export function IntegrationSettings({
                   setValue={setValue}
                   environment={environments?.find((environment) => environment._id === environmentId)}
                   isReadOnly={isReadOnly}
-                />
-              </Protect>
-            )}
-            {isResend && (
-              <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <ResendSetup
-                  setValue={setValue}
-                  isReadOnly={isReadOnly}
-                  credentialFields={
-                    <div className="flex flex-col gap-3">
-                      {providerCredentials.map((credential) => (
-                        <CredentialSection
-                          key={credential.key}
-                          credential={credential}
-                          control={control}
-                          isReadOnly={isReadOnly}
-                          integrationId={integration?._id}
-                        />
-                      ))}
-                    </div>
-                  }
                 />
               </Protect>
             )}

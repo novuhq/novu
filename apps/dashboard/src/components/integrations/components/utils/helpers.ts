@@ -113,6 +113,9 @@ export function hasRoutingConditions(integration: IIntegration) {
 // Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
 export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
 
+/** The switch that has Novu add Resend's delivery webhook once the integration is created. */
+export const RESEND_TRACKING_ENABLER = 'inboundWebhookEnabled';
+
 /** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
 export function usesProviderSetupLayout(providerId?: string) {
   return (

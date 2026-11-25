@@ -1,12 +1,12 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { slackQuickSetup, updateIntegration } from '@/api/integrations';
+import { autoConfigureIntegration, slackQuickSetup, updateIntegration } from '@/api/integrations';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { showErrorToast, showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast, showWarningToast } from '../../../components/primitives/sonner-helpers';
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
 import { QueryKeys } from '../../../utils/query-keys';
 import { buildRoute, ROUTES } from '../../../utils/routes';
@@ -24,7 +24,13 @@ import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { ProviderSetupFooter } from './provider-setup-layout';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { cleanCredentials, usesProviderSetupLayout } from './utils/helpers';
+import { cleanCredentials, RESEND_TRACKING_ENABLER, usesProviderSetupLayout } from './utils/helpers';
+
+function isTrackingOn(data: IntegrationFormData) {
+  const value = data.configurations?.[RESEND_TRACKING_ENABLER];
+
+  return Boolean(value) && value !== 'false';
+}
 
 export type CreateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -40,6 +46,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(isOpened);
+  const [isAddingWebhook, setIsAddingWebhook] = useState(false);
 
   const handleIntegrationSelect = (integrationId: string) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
@@ -291,12 +298,49 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 
+      if (usesSetupLayout && provider.id === EmailProviderIdEnum.Resend && isTrackingOn(data)) {
+        const isWebhookAdded = await addDeliveryWebhook(integration.data._id, data.environmentId);
+        setIsSheetOpen(false);
+
+        if (isWebhookAdded) {
+          showSuccessToast('Resend connected. Delivery tracking is on.');
+          navigate(ROUTES.INTEGRATIONS);
+        } else {
+          // The key can't manage webhooks: the integration's drawer shows the URL to add in Resend.
+          showWarningToast(
+            'Copy the webhook URL from the integration and add it in Resend to track delivery.',
+            'Resend connected'
+          );
+          navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: integration.data._id }));
+        }
+
+        return;
+      }
+
       showSuccessToast('Integration created successfully');
 
       setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
     } catch (error: unknown) {
       handleIntegrationError(error, 'create');
+    }
+  }
+
+  /** Has Novu add the delivery webhook in the provider with the saved API key. False when it couldn't. */
+  async function addDeliveryWebhook(integrationId: string, environmentId: string) {
+    const environment = environments?.find((env) => env._id === environmentId);
+    if (!environment) return false;
+
+    setIsAddingWebhook(true);
+    try {
+      const result = await autoConfigureIntegration(integrationId, environment);
+
+      return result.success;
+    } catch {
+      return false;
+    } finally {
+      setIsAddingWebhook(false);
+      refreshIntegrations();
     }
   }
 
@@ -376,7 +420,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
                 onPickDifferentProvider={onBack}
                 onCancel={handleClose}
                 formId={`integration-configuration-form-${provider.id}`}
-                isSubmitting={isPending || isSettingPrimary || isFinishingQuickSetup}
+                isSubmitting={isPending || isSettingPrimary || isFinishingQuickSetup || isAddingWebhook}
                 canSubmit={
                   formState.isValid &&
                   !isCreatingSlackApp &&
