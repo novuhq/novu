@@ -56,7 +56,7 @@ const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body
 
 const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
-  if (url === TOKEN_ENDPOINT) {
+  if (url.startsWith(TOKEN_ENDPOINT)) {
     tokenEndpointCalls.push(init ?? {});
 
     return json({ token: `login-${tokenEndpointCalls.length}`, expiresAt: new Date().toISOString() });
@@ -163,5 +163,20 @@ describe('NovuProvider with a token source', () => {
 
     expect(instances.size).toBe(1);
     expect(sessionBodies.map((body) => body.subscriberToken)).toEqual(['login-for-first', 'login-for-second']);
+  });
+
+  it('uses the initial token only for the first Novu instance, not one made for a new token endpoint', async () => {
+    const App = ({ endpoint }: { endpoint: string }) => (
+      <NovuProvider applicationIdentifier="app" tokenEndpoint={endpoint} initialToken="server-rendered-for-first">
+        <div />
+      </NovuProvider>
+    );
+
+    const view = render(<App endpoint={`${TOKEN_ENDPOINT}?account=first`} />);
+    await flush();
+    view.rerender(<App endpoint={`${TOKEN_ENDPOINT}?account=second`} />);
+    await flush();
+
+    expect(sessionBodies.map((body) => body.subscriberToken)).toEqual(['server-rendered-for-first', 'login-1']);
   });
 });

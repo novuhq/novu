@@ -1,6 +1,6 @@
 import { GetToken, Novu, NovuError, NovuOptions, StandardNovuOptions, TokenNovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
-import { createContext, ReactNode, useContext, useMemo, useRef } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useDisconnectReleasedNovu } from './internal/useDisconnectReleasedNovu';
 import { useStableValue } from './internal/useStableValue';
@@ -50,8 +50,7 @@ type InternalNovuProviderProps = NovuOptions & {
   children: ReactNode;
 };
 
-type TokenSource = Pick<TokenNovuOptions, 'initialToken'> &
-  ({ getToken: GetToken; tokenEndpoint?: never } | { tokenEndpoint: string; getToken?: never });
+type TokenSource = { getToken: GetToken; tokenEndpoint?: never } | { tokenEndpoint: string; getToken?: never };
 
 /**
  * @internal Should be used internally not to be exposed outside of the library
@@ -79,8 +78,12 @@ export const InternalNovuProvider = (props: InternalNovuProviderProps) => {
   } = props;
   const getTokenRef = useDataRef(props.getToken);
   const hasGetToken = Boolean(props.getToken);
-  // Read once: a server-rendered token is only good for the first session.
+  // A server-rendered token is only good for the first session, so only the first Novu instance gets it.
   const initialToken = useRef(props.initialToken).current;
+  const firstNovuCommitted = useRef(false);
+  useEffect(() => {
+    firstNovuCommitted.current = true;
+  }, []);
   const tokenSource = useMemo((): TokenSource | undefined => {
     if (hasGetToken) {
       const getToken: GetToken = async (args) => {
@@ -92,11 +95,11 @@ export const InternalNovuProvider = (props: InternalNovuProviderProps) => {
         return latest(args);
       };
 
-      return { getToken, initialToken };
+      return { getToken };
     }
 
-    return tokenEndpoint ? { tokenEndpoint, initialToken } : undefined;
-  }, [hasGetToken, tokenEndpoint, initialToken]);
+    return tokenEndpoint ? { tokenEndpoint } : undefined;
+  }, [hasGetToken, tokenEndpoint]);
 
   const value = useMemo(() => {
     const options = {
@@ -113,13 +116,20 @@ export const InternalNovuProvider = (props: InternalNovuProviderProps) => {
       context,
     } satisfies StandardNovuOptions;
 
+    const tokenOptions = tokenSource && {
+      ...options,
+      ...tokenSource,
+      initialToken: firstNovuCommitted.current ? undefined : initialToken,
+    };
+
     return {
       // The subscriber props still reach a token source, so Novu can warn that they are ignored.
-      novu: new Novu(tokenSource ? ({ ...options, ...tokenSource } satisfies TokenNovuOptions) : options),
+      novu: new Novu(tokenOptions ? (tokenOptions satisfies TokenNovuOptions) : options),
       realtime,
     };
   }, [
     tokenSource,
+    initialToken,
     applicationIdentifier,
     subscriberHash,
     subscriberObj,
