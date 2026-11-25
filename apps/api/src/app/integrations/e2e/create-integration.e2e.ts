@@ -438,6 +438,42 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
       return environment;
     }
 
+    it('should not copy secrets from an integration whose environment no longer exists', async () => {
+      const orphaned = await createDevelopmentTypeEnvironment();
+      const sourceId = await createSendGridIntegration(orphaned._id);
+      await envRepository.delete({ _id: orphaned._id, _organizationId: session.organization._id });
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        name: 'Copy of an orphan',
+        credentials: { apiKey: MASKED_SOURCE_API_KEY },
+        secretsSourceIntegrationId: sourceId,
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(404);
+    });
+
+    it('should list an integration whose secret starts with the encryption prefix', async () => {
+      const PASSWORD = 'nvsk.smtp-password';
+      const created = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.CustomSMTP,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: { host: 'smtp.example.com', port: '587', user: 'mailer', password: PASSWORD },
+        active: false,
+        check: false,
+      });
+      expect(created.status).to.equal(201);
+
+      const { status, body } = await session.testAgent.get('/v1/integrations');
+      expect(status).to.equal(200);
+
+      const listed = body.data.find((integration) => integration._id === created.body.data._id);
+      expect(listed.credentials.password).to.equal(maskSecret(PASSWORD));
+    });
+
     async function findProductionEnvironment() {
       const production = await envRepository.findOne({
         name: 'Production',

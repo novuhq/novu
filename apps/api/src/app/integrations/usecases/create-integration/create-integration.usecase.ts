@@ -209,8 +209,13 @@ export class CreateIntegration {
       source._environmentId,
       command.organizationId
     );
+    // An environment being deleted goes before its integrations; without it there is no telling it wasn't live.
+    if (!sourceEnvironment) {
+      throw new NotFoundException(`Integration with id ${command.secretsSourceIntegrationId} not found`);
+    }
+
     const leavesLiveEnvironment =
-      sourceEnvironment?.type === EnvironmentTypeEnum.PROD && targetEnvironment.type !== EnvironmentTypeEnum.PROD;
+      sourceEnvironment.type === EnvironmentTypeEnum.PROD && targetEnvironment.type !== EnvironmentTypeEnum.PROD;
 
     if (leavesLiveEnvironment) {
       return undefined;

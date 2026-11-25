@@ -21,6 +21,7 @@ import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
 import { SavedSecretField } from './saved-secret-field';
+import { useSecretReplacement } from './use-secret-replacement';
 import { credentialValueToInputString, isSecureCredential } from './utils/helpers';
 
 /** The field's explanation for the "i" next to its label: its tooltip and its description, when it has them. */
@@ -148,17 +149,46 @@ function DropdownInput({
   );
 }
 
+function CancelReplaceButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button type="button" variant="secondary" mode="ghost" size="sm" onClick={onClick}>
+      Cancel
+    </Button>
+  );
+}
+
 function TextareaInput({
   credential,
   field,
   isReadOnly,
   tooltip,
+  savedValue,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
   tooltip?: ReactNode;
+  /** The mask of the secret on the server, for a multi-line secret such as a service account file. */
+  savedValue?: string;
 }) {
+  const stringValue = typeof field.value === 'string' ? field.value : undefined;
+  const secret = useSecretReplacement({ value: stringValue, savedValue, onChange: field.onChange });
+
+  if (secret.isSaved) {
+    return (
+      <>
+        <FormLabel credential={credential} tooltip={tooltip} />
+        <SavedSecretField
+          id={credential.key}
+          label={credential.displayName}
+          maskedValue={stringValue ?? ''}
+          isReadOnly={isReadOnly}
+          onReplace={secret.startReplacing}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <FormLabel credential={credential} tooltip={tooltip} />
@@ -166,12 +196,18 @@ function TextareaInput({
         <Textarea
           id={credential.key}
           placeholder={credential.placeholder ?? `Enter ${credential.displayName.toLowerCase()}`}
-          value={credentialValueToInputString(field.value)}
-          onChange={field.onChange}
+          value={secret.canCancel ? secret.inputValue : credentialValueToInputString(field.value)}
+          onChange={(event) => secret.onInputChange(event.target.value)}
           rows={7}
           disabled={isReadOnly}
+          autoFocus={secret.canCancel}
         />
       </FormControl>
+      {secret.canCancel && !isReadOnly && (
+        <div className="flex justify-end">
+          <CancelReplaceButton onClick={secret.cancel} />
+        </div>
+      )}
     </>
   );
 }
@@ -192,18 +228,19 @@ function SecretInputControl({
   /** The mask of the secret on the server, when there is one. */
   savedValue?: string;
 }) {
-  const stringValue = typeof field.value === 'string' ? field.value : '';
+  const stringValue = typeof field.value === 'string' ? field.value : undefined;
+  const secret = useSecretReplacement({ value: stringValue, savedValue, onChange: field.onChange });
 
-  if (isMaskedSecret(stringValue)) {
+  if (secret.isSaved) {
     return (
       <>
         <FormLabel credential={credential} tooltip={tooltip} />
         <SavedSecretField
           id={credential.key}
           label={credential.displayName}
-          maskedValue={stringValue}
+          maskedValue={stringValue ?? ''}
           isReadOnly={isReadOnly}
-          onReplace={() => field.onChange('')}
+          onReplace={secret.startReplacing}
         />
       </>
     );
@@ -217,19 +254,15 @@ function SecretInputControl({
           <SecretInput
             id={credential.key}
             placeholder={`Enter ${credential.displayName.toLowerCase()}`}
-            value={stringValue}
-            onChange={field.onChange}
+            value={secret.inputValue}
+            onChange={secret.onInputChange}
             disabled={isReadOnly}
             hasError={hasError}
             // Replace swaps the saved secret for this input, so typing can start right away.
-            autoFocus={!!savedValue}
+            autoFocus={secret.canCancel}
           />
         </FormControl>
-        {savedValue && !isReadOnly && (
-          <Button type="button" variant="secondary" mode="ghost" size="sm" onClick={() => field.onChange(savedValue)}>
-            Cancel
-          </Button>
-        )}
+        {secret.canCancel && !isReadOnly && <CancelReplaceButton onClick={secret.cancel} />}
       </div>
     </>
   );
@@ -379,7 +412,15 @@ function InputControl({
   }
 
   if (credential.type === 'textarea') {
-    return <TextareaInput credential={credential} field={field} isReadOnly={isReadOnly} tooltip={tooltip} />;
+    return (
+      <TextareaInput
+        credential={credential}
+        field={field}
+        isReadOnly={isReadOnly}
+        tooltip={tooltip}
+        savedValue={savedValue}
+      />
+    );
   }
 
   // A setting the API returns masked (the webhook signing key) is a saved secret too.
