@@ -163,12 +163,14 @@ function StepEditorContent() {
   const isContentStep = isContentStepType(step.type);
   const hasBody = !!step.controlValues?.body;
   const hasStepIssues = Object.keys(step.issues?.controls ?? {}).length > 0;
+  // A code workflow's step can take control overrides here, but the Copilot never changes a code workflow.
+  const isCopilotReadOnly = isReadOnly || isExternalWorkflow;
   const newChatSuggestions = useMemo(
     () =>
-      isReadOnly
+      isCopilotReadOnly
         ? getReadOnlyStepSuggestions()
         : getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
-    [isReadOnly, isContentStep, hasBody, hasStepIssues]
+    [isCopilotReadOnly, isContentStep, hasBody, hasStepIssues]
   );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
@@ -176,7 +178,7 @@ function StepEditorContent() {
     stepId: step.stepId,
     stepLabel: step.stepId,
     suggestions: newChatSuggestions,
-    readOnly: isReadOnly,
+    readOnly: isCopilotReadOnly,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
 

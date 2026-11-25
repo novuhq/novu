@@ -105,6 +105,7 @@ export function useRegisterCopilotContext({
   workflowLabel,
   stepLabel,
   suggestions,
+  readOnly,
   onRefetch,
   enabled = true,
 }: CopilotPageContext & { onRefetch?: () => void; enabled?: boolean }) {
@@ -115,8 +116,8 @@ export function useRegisterCopilotContext({
   useEffect(() => {
     if (!enabled) return;
 
-    return registerPageContext({ workflowId, stepId, workflowLabel, stepLabel, suggestions }, () =>
+    return registerPageContext({ workflowId, stepId, workflowLabel, stepLabel, suggestions, readOnly }, () =>
       onRefetchRef.current?.()
     );
-  }, [enabled, registerPageContext, workflowId, stepId, workflowLabel, stepLabel, suggestions]);
+  }, [enabled, registerPageContext, workflowId, stepId, workflowLabel, stepLabel, suggestions, readOnly]);
 }

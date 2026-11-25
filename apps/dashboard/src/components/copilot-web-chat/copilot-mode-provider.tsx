@@ -1,10 +1,4 @@
-import {
-  AiResourceTypeEnum,
-  CopilotPageEnum,
-  EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
-  ResourceOriginEnum,
-} from '@novu/shared';
+import { AiResourceTypeEnum, CopilotPageEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { type ReactNode, useState } from 'react';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
@@ -17,6 +11,7 @@ import {
   type CopilotMode,
   type EditorCopilotMode,
   getCopilotSurface,
+  getEditorCopilotAccess,
   isPendingCopilotMode,
   isWebChatMode,
   resolveCopilotMode,
@@ -46,18 +41,19 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useFetchWorkflow({ workflowSlug });
   const isWorkflowsPageEnabled = useCopilotPageEnabled(CopilotPageEnum.WORKFLOWS);
-  const isEditable =
-    currentEnvironment?.type === EnvironmentTypeEnum.DEV && workflow?.origin !== ResourceOriginEnum.EXTERNAL;
-  // Outside Development and for a code workflow, the web-chat Copilot only discusses the workflow, once COPILOT_PAGES
-  // lists the Workflows page; the agent holds back its tools that change workflows there.
-  const isReadOnlyCopilot = !isEditable && isWorkflowsPageEnabled && isWebChatMode(liveMode);
   // Read live, so turning AI workflow generation off still removes the Copilot mid-visit.
-  const hasCopilot = isAiWorkflowGenerationEnabled && !!workflow && (isEditable || isReadOnlyCopilot);
+  const { hasCopilot, isReadOnly: isReadOnlyCopilot } = getEditorCopilotAccess({
+    environmentType: currentEnvironment?.type,
+    workflow,
+    isAiWorkflowGenerationEnabled,
+    isWorkflowsPageEnabled,
+    liveMode,
+  });
   const { latestChat, isPending, isFetching, error } = useFetchLatestAiChat({
     resourceType: AiResourceTypeEnum.WORKFLOW,
     // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off. The legacy chat only
     // ever edited workflows in Development, so a read-only visit has none to review.
-    resourceId: hasCopilot && isEditable && isWebChatMode(liveMode) ? workflow._id : undefined,
+    resourceId: workflow && hasCopilot && !isReadOnlyCopilot && isWebChatMode(liveMode) ? workflow._id : undefined,
   });
   const resolvedMode = resolveCopilotMode({
     isFlagsReady: isLaunchDarklyReady && isLaunchDarklyIdentified,
@@ -81,7 +77,15 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
     return null;
   }
 
-  return visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
+  const mode = visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
+
+  // The legacy Copilot edits, so a read-only visit never shows it: one fixed on legacy before its flags flipped to web
+  // chat shows no Copilot until the user opens another workflow or reloads.
+  if (isReadOnlyCopilot && (mode === 'legacy' || mode === 'pending-legacy')) {
+    return null;
+  }
+
+  return mode;
 }
 
 function CopilotPendingPrompt() {

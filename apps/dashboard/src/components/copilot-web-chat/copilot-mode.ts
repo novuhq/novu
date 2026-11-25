@@ -1,3 +1,4 @@
+import { EnvironmentTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import type { CopilotSurface } from './copilot-web-chat-context';
 
 /** Rollout steps of the workflow editor Copilot: the legacy `/ai` sidebar, web chat in that sidebar, then the popover. */
@@ -35,6 +36,43 @@ export function getCopilotSurface(mode: EditorCopilotMode | null): CopilotSurfac
 
 export function isWebChatMode(mode: EditorCopilotMode | null): boolean {
   return getCopilotSurface(mode) !== null;
+}
+
+type EditorCopilotAccessParams = {
+  /** Undefined until the environment loads. */
+  environmentType?: string;
+  /** Undefined until the workflow loads. */
+  workflow?: { origin?: string };
+  isAiWorkflowGenerationEnabled: boolean;
+  /** Whether `COPILOT_PAGES` lists the Workflows page for the organization. */
+  isWorkflowsPageEnabled: boolean;
+  liveMode: CopilotMode;
+};
+
+/**
+ * Whether a workflow visit gets a Copilot, and whether that Copilot only discusses the workflow: outside Development
+ * and for a code workflow, web chat with the Workflows page on reads it, and the agent holds back the tools that
+ * change workflows. No Copilot until the environment and the workflow load, so a Development visit never settles on
+ * read-only web chat before its legacy chat is checked.
+ */
+export function getEditorCopilotAccess({
+  environmentType,
+  workflow,
+  isAiWorkflowGenerationEnabled,
+  isWorkflowsPageEnabled,
+  liveMode,
+}: EditorCopilotAccessParams): { hasCopilot: boolean; isReadOnly: boolean } {
+  if (!isAiWorkflowGenerationEnabled || !environmentType || !workflow) {
+    return { hasCopilot: false, isReadOnly: false };
+  }
+
+  if (environmentType === EnvironmentTypeEnum.DEV && workflow.origin !== ResourceOriginEnum.EXTERNAL) {
+    return { hasCopilot: true, isReadOnly: false };
+  }
+
+  const isReadOnly = isWorkflowsPageEnabled && isWebChatMode(liveMode);
+
+  return { hasCopilot: isReadOnly, isReadOnly };
 }
 
 type ResolveCopilotModeParams = {
