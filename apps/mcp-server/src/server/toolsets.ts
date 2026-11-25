@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { MCP_CORS_HEADERS } from "../oauth/context";
 import { registerActivityTools } from "../tools/activity";
 import { registerAgentTools } from "../tools/agents";
 import { registerAuthTools } from "../tools/auth";
@@ -108,6 +109,32 @@ export function resolveToolsets(
 	}
 
 	return { toolsets: TOOLSET_NAMES.filter((toolset) => selected.has(toolset)) };
+}
+
+/**
+ * The toolsets a request's URL asks for, or the 400 to answer it with. `?toolsets=a,b` and `?toolsets=a&toolsets=b`
+ * ask for the same toolsets. A CORS preflight never gets the 400, so a browser client sees the error on the request
+ * itself rather than a CORS failure.
+ */
+export function readRequestedToolsets(
+	request: Request,
+): { toolsets: ToolsetName[] | undefined } | { rejection: Response } {
+	const resolved = resolveToolsets(
+		new URL(request.url).searchParams.getAll("toolsets").join(","),
+	);
+	if ("toolsets" in resolved) {
+		return { toolsets: resolved.toolsets };
+	}
+	if (request.method === "OPTIONS") {
+		return { toolsets: undefined };
+	}
+
+	return {
+		rejection: new Response(
+			JSON.stringify({ error: "invalid_toolsets", error_description: resolved.error }),
+			{ headers: { "Content-Type": "application/json", ...MCP_CORS_HEADERS }, status: 400 },
+		),
+	};
 }
 
 function isToolsetName(name: string): name is ToolsetName {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_TOOLSETS,
 	getSessionToolsets,
+	readRequestedToolsets,
 	resolveToolsets,
 	TOOLSETS,
 	type ToolsetName,
@@ -54,6 +55,40 @@ describe("resolveToolsets", () => {
 
 		expect(result).toEqual({
 			error: `Unknown toolset "topics". Use a comma-separated list of: ${ALL_TOOLSETS.join(", ")}, default, all.`,
+		});
+	});
+});
+
+describe("readRequestedToolsets", () => {
+	const request = (query: string, method = "POST") =>
+		new Request(`https://mcp.example.com/${query}`, { method });
+
+	it("gives the default toolsets for a plain URL", () => {
+		expect(readRequestedToolsets(request(""))).toEqual({ toolsets: DEFAULT_TOOLSETS });
+	});
+
+	it("reads a repeated parameter like a comma-separated one", () => {
+		expect(readRequestedToolsets(request("?toolsets=subscribers&toolsets=activity"))).toEqual({
+			toolsets: ["activity", "subscribers"],
+		});
+	});
+
+	it("answers an unknown toolset with a 400 a browser client can read", async () => {
+		const requested = readRequestedToolsets(request("?toolsets=topics"));
+
+		expect(requested).toHaveProperty("rejection");
+		const { rejection } = requested as { rejection: Response };
+		expect(rejection.status).toBe(400);
+		expect(rejection.headers.get("Access-Control-Allow-Origin")).toBe("*");
+		expect(await rejection.json()).toEqual({
+			error: "invalid_toolsets",
+			error_description: expect.stringContaining('Unknown toolset "topics"'),
+		});
+	});
+
+	it("lets the CORS preflight of an unknown toolset through, so the request itself gets the 400", () => {
+		expect(readRequestedToolsets(request("?toolsets=topics", "OPTIONS"))).toEqual({
+			toolsets: undefined,
 		});
 	});
 });
