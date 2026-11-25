@@ -4,6 +4,8 @@
  * and the Copilot get the same allowlisted shape instead, built here before the result exists.
  */
 
+import { asRecord, asString, SECRET_LIKE_SEGMENT } from "./activity-format";
+
 type Json = Record<string, unknown>;
 
 /** One agent, as the agent tools return it. */
@@ -21,7 +23,7 @@ export type AgentSummary = {
 		/** Whether an access rule limits who may message the agent; the rule itself stays out. */
 		hasAccessRule?: boolean;
 	};
-	/** Without credentials, query string or fragment. */
+	/** With `[redacted]` in place of credentials, secret-looking path segments, query string and fragment. */
 	bridgeUrl?: string;
 	devBridgeUrl?: string;
 	devBridgeActive?: boolean;
@@ -60,16 +62,6 @@ export type AgentList = {
 	planUsage?: { used?: number; limit?: number };
 };
 
-function asRecord(value: unknown): Json | undefined {
-	return value && typeof value === "object" && !Array.isArray(value)
-		? (value as Json)
-		: undefined;
-}
-
-function asString(value: unknown): string | undefined {
-	return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
 function asBoolean(value: unknown): boolean | undefined {
 	return typeof value === "boolean" ? value : undefined;
 }
@@ -79,7 +71,7 @@ function asNumber(value: unknown): number | undefined {
 }
 
 /** Drops keys whose value is `undefined`, so the JSON the model reads stays short. */
-function compact<T extends Json>(value: T): T {
+export function compact<T extends Json>(value: T): T {
 	return Object.fromEntries(
 		Object.entries(value).filter(([, entry]) => entry !== undefined),
 	) as T;
@@ -93,10 +85,17 @@ export function unwrapRecord(payload: unknown): Json | undefined {
 	return data ?? root;
 }
 
+/** What `redactUrl` puts in place of a URL's secrets; `update_agent` refuses a bridge URL holding it. */
+export const REDACTED_MARK = "[redacted]";
+
+/** What `redactUrl` returns for a URL it can't read; `update_agent` refuses it too. */
+export const INVALID_URL_MARK = "[invalid URL]";
+
 /**
- * A URL without its user info, path parameters (`;jsessionid=…`), query string or fragment, any of
- * which can carry a token. A token written into the path itself stays. Bridge URLs may be saved
- * without a scheme, so one without stays without.
+ * A URL with `[redacted]` in place of its user info, path parameters (`;jsessionid=…`), secret-looking
+ * path segments, query string and fragment, any of which can carry a token. The marks show the URL is
+ * incomplete, so it isn't saved back as the whole one. Bridge URLs may be saved without a scheme, so
+ * one without stays without.
  */
 export function redactUrl(value: unknown): string | undefined {
 	const raw = asString(value)?.trim();
@@ -107,13 +106,26 @@ export function redactUrl(value: unknown): string | undefined {
 	try {
 		url = new URL(hasScheme ? raw : `https://${raw}`);
 	} catch {
-		return "[invalid URL]";
+		return INVALID_URL_MARK;
 	}
 
-	const [pathname] = url.pathname.split(";");
-	const path = pathname === "/" ? "" : pathname;
+	const [pathname, ...pathParameters] = url.pathname.split(";");
+	const path =
+		pathname === "/"
+			? ""
+			: pathname
+					.split("/")
+					.map((segment) => (SECRET_LIKE_SEGMENT.test(segment) ? REDACTED_MARK : segment))
+					.join("/");
+	const userInfo = url.username || url.password ? `${REDACTED_MARK}@` : "";
+	const hidden = [
+		pathParameters.length > 0 ? `;${REDACTED_MARK}` : "",
+		url.search ? `?${REDACTED_MARK}` : "",
+		url.hash ? `#${REDACTED_MARK}` : "",
+	].join("");
+	const origin = `${userInfo}${url.host}${path}${hidden}`;
 
-	return hasScheme ? `${url.protocol}//${url.host}${path}` : `${url.host}${path}`;
+	return hasScheme ? `${url.protocol}//${origin}` : origin;
 }
 
 const AGENTS_DASHBOARD_PATH = "/agents";
