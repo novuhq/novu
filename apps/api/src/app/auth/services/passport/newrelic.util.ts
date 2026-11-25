@@ -12,7 +12,7 @@ try {
   nr = null;
 }
 
-export function addNewRelicTraceAttributes(session: UserSessionData) {
+export function addNewRelicTraceAttributes(session: Pick<UserSessionData, 'organizationId' | 'environmentId'>) {
   if (!nr || typeof nr.addCustomAttributes !== 'function') return;
 
   try {
