@@ -250,23 +250,44 @@ export function restoreHttpRequestSecrets(
 	}
 
 	// A hidden value stays with the request it was written for. An edit that points the step at another host (the
-	// authority compared as written, user info included), or adds a `raw` filter that can rewrite the rendered
-	// control values, would otherwise send the stored credential elsewhere.
+	// authority compared as written, user info included) would otherwise send the stored credential elsewhere.
 	if (originOf(restored.url) !== originOf(saved?.url)) {
 		return {
 			error: `The URL of ${step} now points at another host, so its hidden values ("${HIDDEN_SECRET}") can't move with it. Keep the URL's host, or have the user enter the secrets for the new host in the dashboard.`,
 			ok: false,
 		};
 	}
-	const storedRawTemplates = new Set(stringsWithRawFilter(saved));
-	if (stringsWithRawFilter(controlValues).some((value) => !storedRawTemplates.has(value))) {
+
+	// The worker renders all of a step's control values as one Liquid template over their JSON, and only `{{ }}`
+	// output without `raw` is JSON-escaped. A tag (`{% echo %}`, `{% cycle %}`, a block spanning two fields), an
+	// unbalanced `{{`, or `raw` can rewrite the rendered JSON, the URL included, so a new one never travels with a
+	// hidden value. Strings the step already stored are the user's own.
+	const storedStrings = new Set(stringsOf(saved));
+	if (
+		stringsOf(controlValues).some(
+			(value) => !storedStrings.has(value) && canRewriteRender(value),
+		)
+	) {
 		return {
-			error: `${step} keeps hidden values ("${HIDDEN_SECRET}") next to a Liquid raw filter it didn't have, which can rewrite the request, so they can't be kept. Leave out the raw filter, or have the user make this change in the dashboard.`,
+			error: `${step} keeps hidden values ("${HIDDEN_SECRET}") next to new Liquid that can rewrite the request (a {% %} tag, an unclosed {{ or the raw filter), so they can't be kept. Use only {{ variable }} output, or have the user make this change in the dashboard.`,
 			ok: false,
 		};
 	}
 
 	return { ok: true, value: restored };
+}
+
+/** A complete `{{ }}` output that holds no other opening `{{`. */
+const COMPLETE_OUTPUT_PATTERN = /\{\{(?:(?!\{\{)[\s\S])*?\}\}/g;
+
+/**
+ * Whether a control value's Liquid can write unescaped text into the rendered JSON of a step's control values: a tag,
+ * the raw filter, or a `{{` left open to close in another field. A lone `}}` is ordinary JSON, as in a nested body.
+ */
+function canRewriteRender(value: string): boolean {
+	if (value.includes("{%") || RAW_FILTER_PATTERN.test(value)) return true;
+
+	return value.replace(COMPLETE_OUTPUT_PATTERN, "").includes("{{");
 }
 
 function hiddenValueError(step: string, field: string, hasStoredStep: boolean): string {
@@ -277,13 +298,15 @@ function hiddenValueError(step: string, field: string, hasStoredStep: boolean): 
 	return `The ${field} of ${step} holds the hidden value "${HIDDEN_SECRET}" where no stored value exists, so it can't be saved. ${where} For a new secret, reference an environment variable such as {{env.API_KEY}}, or have the user enter it in the dashboard.`;
 }
 
-/** Every string in `value` that uses Liquid's `raw` filter, which skips the escaping that keeps output inside its JSON string. */
-function stringsWithRawFilter(value: unknown): string[] {
-	if (typeof value === "string") return RAW_FILTER_PATTERN.test(value) ? [value] : [];
-	if (Array.isArray(value)) return value.flatMap(stringsWithRawFilter);
+/** Every string in `value`, at any depth, keys of nested objects included. */
+function stringsOf(value: unknown): string[] {
+	if (typeof value === "string") return [value];
+	if (Array.isArray(value)) return value.flatMap(stringsOf);
 	const record = asRecord(value);
 
-	return record ? Object.values(record).flatMap(stringsWithRawFilter) : [];
+	return record
+		? Object.entries(record).flatMap(([key, entry]) => [key, ...stringsOf(entry)])
+		: [];
 }
 
 function isTemplateOnly(value: string): boolean {

@@ -296,7 +296,75 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 			},
 			saved,
 		);
-		expect(!injected.ok && injected.error).toContain("raw filter");
+		expect(!injected.ok && injected.error).toContain("can rewrite the request");
+	});
+
+	it.each([
+		["an echo tag in a new header", { key: "X-Inject", value: "{% echo payload.x %}" }],
+		["a cycle tag in a new header", { key: "X-Inject", value: "{% cycle payload.x, 'b' %}" }],
+		[
+			"a liquid echo in a new header",
+			{ key: "X-Inject", value: "{% liquid echo payload.x %}" },
+		],
+		["an unclosed output that spans fields", { key: "X-Inject", value: "{{ payload.x" }],
+	])(
+		"refuses to keep hidden values next to %s, which can rewrite the rendered request",
+		(_, header) => {
+			const saved = {
+				headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+				url: "https://api.example.com/hooks",
+			};
+
+			const result = restore(
+				{
+					headers: [{ key: "Authorization", value: HIDDEN_SECRET }, header],
+					url: saved.url,
+				},
+				saved,
+			);
+
+			expect(!result.ok && result.error).toContain("can rewrite the request");
+		},
+	);
+
+	it("refuses a tag spanning the URL path and a response schema key", () => {
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://api.example.com/hooks",
+		};
+
+		const result = restore(
+			{
+				headers: [{ key: "Authorization", value: HIDDEN_SECRET }],
+				responseBodySchema: { properties: { "{% endcomment %}": { type: "string" } } },
+				url: "https://api.example.com/hooks{% comment %}",
+			},
+			saved,
+		);
+
+		expect(result.ok).toBe(false);
+	});
+
+	it("keeps hidden values next to new {{ variable }} output and a new path on the same host", () => {
+		const saved = {
+			body: JSON.stringify({ orderId: "{{payload.orderId}}" }),
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://api.example.com/hooks",
+		};
+
+		const result = restore(
+			{
+				body: JSON.stringify({
+					orderId: "{{payload.orderId}}",
+					total: "{{ payload.total | round }}",
+				}),
+				headers: [{ key: "Authorization", value: HIDDEN_SECRET }],
+				url: "https://api.example.com/hooks/v2/{{payload.region}}",
+			},
+			saved,
+		);
+
+		expect(result.ok && result.value.controlValues?.headers).toEqual(saved.headers);
 	});
 
 	it("tells a new step it can't copy hidden values, rather than blaming a host", () => {
