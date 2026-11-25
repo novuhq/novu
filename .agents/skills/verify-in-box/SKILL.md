@@ -88,6 +88,29 @@ _tracer_, not proof: drive at least one failure case the change handles.
 
 The box skips type checks, so it runs code CI would reject. Run the affected project's typecheck as well.
 
+### Feature flags
+
+The box reads staging's LaunchDarkly, read-only, so a flag that is off there stays off. A change behind a flag is
+still proven on the box: start a second API process inside it with LaunchDarkly unset and the flag set in its
+environment (`FeatureFlagsService` then reads flags from `process.env`), drive that process, then kill it. The box's own
+API, LaunchDarkly and the code stay as they are. Run this through `exec -- sh -c '...'`:
+
+```sh
+cd /data/deploy/api
+API_PID=$(pgrep -f "deploy/api/dist/main.js|pm2-runtime start dist/main.js" | head -1)
+(env $(tr '\0' '\n' < /proc/$API_PID/environ | grep -v -E '^(LAUNCH_DARKLY_SDK_KEY|PORT|PM2[A-Z_]*)=' | xargs) \
+  LAUNCH_DARKLY_SDK_KEY= IS_MY_FLAG_ENABLED=true PORT=3999 node dist/main.js > /tmp/api3999.log 2>&1 &)
+until curl -sf http://127.0.0.1:3999/v1/health-check; do sleep 2; done
+# drive http://127.0.0.1:3999 here, in the same exec, with the key from /data/bridge/secret-key
+for p in $(pgrep -f "node dist/main.js"); do tr '\0' '\n' < /proc/$p/environ | grep -q '^PORT=3999$' && kill $p; done
+```
+
+- Every flag the change reads must be set: with LaunchDarkly unset, a flag missing from the environment is off.
+- The process serves only inside the box, so put the requests in the same `exec` as the start and stop; keep that
+  script in your report, since it is the proof.
+- For a flag the worker reads, start a worker the same way from `/data/deploy/worker`.
+- In the proof, state that the flag was set on the second process and that LaunchDarkly was not changed.
+
 ### Before and after
 
 For a bug fix or a change a user sees, drive the same steps on `next` too, so a reviewer sees what was broken. A
