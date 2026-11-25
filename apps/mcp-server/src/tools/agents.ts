@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { toAgentList, toAgentSummary, unwrapRecord } from "../utils/agent-results";
 import {
 	type AgentRuntimeIntegration,
 	agentResourcePath,
@@ -121,6 +122,11 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 
 				return query ? `/v1/agents?${query}` : "/v1/agents";
 			},
+			formatSuccess: (data) => {
+				const list = toAgentList(data);
+
+				return `Successfully fetched agents (${list.data.length} on this page).\n\n${JSON.stringify(list)}`;
+			},
 		},
 	);
 
@@ -133,6 +139,8 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 		getAgentInputSchema,
 		{
 			buildEndpoint: (input) => agentResourcePath(input.identifier),
+			formatSuccess: (data, input) =>
+				`Successfully fetched agent ${input.identifier}.\n\n${JSON.stringify(toAgentSummary(unwrapRecord(data)) ?? {})}`,
 			getIdentifier: (input) => input.identifier,
 		},
 	);
@@ -207,6 +215,8 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 				{
 					body,
 					endpoint: agentResourcePath(identifier),
+					formatSuccess: (data) =>
+						`Successfully updated agent ${identifier}.\n\n${JSON.stringify(toAgentSummary(unwrapRecord(data)) ?? {})}`,
 					identifier,
 					method: "PATCH",
 					successMessage: "updated agent",
@@ -255,7 +265,7 @@ async function fetchIntegrations(context: ToolContext): Promise<AgentRuntimeInte
 }
 
 function formatCreatedAgent(data: unknown, requestedIdentifier: string): string {
-	const record = unwrapAgentRecord(data);
+	const record = unwrapRecord(data);
 	const returnedIdentifier =
 		typeof record?.identifier === "string" ? record.identifier : requestedIdentifier;
 	const note =
@@ -266,7 +276,7 @@ function formatCreatedAgent(data: unknown, requestedIdentifier: string): string 
 	return [
 		`Successfully created agent "${returnedIdentifier}"${note}.`,
 		`Next: call connect_agent with identifier "${returnedIdentifier}" to connect a channel. Do not ask the user for Slack, Telegram, or other channel tokens.`,
-		JSON.stringify(data, null, 2),
+		JSON.stringify(toAgentSummary(record) ?? {}),
 	].join("\n\n");
 }
 
@@ -293,7 +303,7 @@ async function fetchAgentByIdentifier(
 		}
 
 		const payload: unknown = await response.json();
-		const record = unwrapAgentRecord(payload);
+		const record = unwrapRecord(payload);
 
 		return record ?? { identifier };
 	} catch (error) {
@@ -301,17 +311,4 @@ async function fetchAgentByIdentifier(
 
 		return null;
 	}
-}
-
-function unwrapAgentRecord(data: unknown): Record<string, unknown> | null {
-	if (!data || typeof data !== "object") {
-		return null;
-	}
-
-	const envelope = data as { data?: unknown };
-	if (envelope.data && typeof envelope.data === "object" && !Array.isArray(envelope.data)) {
-		return envelope.data as Record<string, unknown>;
-	}
-
-	return data as Record<string, unknown>;
 }

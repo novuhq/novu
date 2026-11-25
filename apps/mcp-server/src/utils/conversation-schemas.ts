@@ -38,5 +38,7 @@ export const getConversationActivitiesInputSchema = z.object({
 	verbose: z
 		.boolean()
 		.optional()
-		.describe("When true, return the raw JSON payload instead of the compact debug digest"),
+		.describe(
+			"When true, return each activity's fields as JSON instead of the compact debug digest",
+		),
 });
