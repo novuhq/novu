@@ -1,5 +1,5 @@
 import { AiWorkflowSuggestion, StepTypeEnum } from '@novu/shared';
-import { RiListCheck3, RiQuillPenLine } from 'react-icons/ri';
+import { RiListCheck3, RiQuestionLine, RiQuillPenLine, RiTimeLine } from 'react-icons/ri';
 import type { CopilotSuggestion } from '@/components/copilot-web-chat';
 import { Code2 } from '@/components/icons/code-2';
 
@@ -37,6 +37,29 @@ export function getWorkflowNewChatSuggestions({
   if (hasIssues) suggestions.push({ label: AiWorkflowSuggestion.FIX_WORKFLOW_ISSUES, icon: RiListCheck3 });
 
   return suggestions;
+}
+
+/**
+ * A new chat's suggestions on the canvas of a read-only workflow (outside Development, a code workflow, or no Workflow
+ * write): questions only, since the Copilot can't change it there.
+ */
+export function getReadOnlyWorkflowSuggestions({ hasIssues }: { hasIssues: boolean }): Required<CopilotSuggestion>[] {
+  const suggestions: Required<CopilotSuggestion>[] = [
+    { label: 'Explain this workflow', icon: RiQuestionLine },
+    { label: 'Who receives this, and when?', icon: RiTimeLine },
+  ];
+
+  if (hasIssues) suggestions.push({ label: 'Why does this workflow need action?', icon: RiListCheck3 });
+
+  return suggestions;
+}
+
+/** A new chat's suggestions in the step editor of a read-only workflow; questions only, as on its canvas. */
+export function getReadOnlyStepSuggestions(): Required<CopilotSuggestion>[] {
+  return [
+    { label: 'Explain this step', icon: RiQuestionLine },
+    { label: 'When is this step skipped?', icon: RiTimeLine },
+  ];
 }
 
 /** A new chat's suggestions in the step editor; memoize on the same kind of facts as the canvas. */

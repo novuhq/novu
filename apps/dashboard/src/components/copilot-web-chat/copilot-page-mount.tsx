@@ -13,6 +13,8 @@ import { useActiveCopilotPage } from './use-copilot-pages';
 /** What each page shows that the Copilot can change, refetched after every run so the page and its open sheet catch up. */
 const REFETCHED_QUERIES: Partial<Record<CopilotPageEnum, string[]>> = {
   [CopilotPageEnum.INTEGRATIONS]: [QueryKeys.fetchIntegrations],
+  // In Development, the Copilot can still create a workflow from the list.
+  [CopilotPageEnum.WORKFLOWS]: [QueryKeys.fetchWorkflows],
 };
 
 /** Hands the provider the page and what its tab or panel registered in the page-view store. */

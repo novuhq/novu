@@ -26,7 +26,11 @@ import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { getStepNewChatSuggestions, isContentStepType } from '@/components/workflow-editor/new-chat-suggestions';
+import {
+  getReadOnlyStepSuggestions,
+  getStepNewChatSuggestions,
+  isContentStepType,
+} from '@/components/workflow-editor/new-chat-suggestions';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
@@ -142,8 +146,16 @@ function getSidebarCopilot(
 }
 
 function StepEditorContent() {
-  const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale, controlValues } =
-    useStepEditor();
+  const {
+    step,
+    isSubsequentLoad,
+    editorValue,
+    workflow,
+    selectedLocale,
+    setSelectedLocale,
+    controlValues,
+    isReadOnly,
+  } = useStepEditor();
   const stepResolverHint = useStepResolverHint();
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { onBlur } = useSaveForm();
@@ -152,8 +164,11 @@ function StepEditorContent() {
   const hasBody = !!step.controlValues?.body;
   const hasStepIssues = Object.keys(step.issues?.controls ?? {}).length > 0;
   const newChatSuggestions = useMemo(
-    () => getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
-    [isContentStep, hasBody, hasStepIssues]
+    () =>
+      isReadOnly
+        ? getReadOnlyStepSuggestions()
+        : getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
+    [isReadOnly, isContentStep, hasBody, hasStepIssues]
   );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
@@ -161,6 +176,7 @@ function StepEditorContent() {
     stepId: step.stepId,
     stepLabel: step.stepId,
     suggestions: newChatSuggestions,
+    readOnly: isReadOnly,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
 

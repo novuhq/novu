@@ -64,6 +64,11 @@ export type CopilotPageContext = {
   question?: string;
   /** The workflow editor's new-chat suggestions for the open workflow or step. Not sent to the agent. */
   suggestions?: CopilotSuggestion[];
+  /**
+   * The workflow editor shows the workflow read-only (outside Development, a code workflow, or no Workflow write), so
+   * the Copilot only discusses it. Not sent to the agent, which decides that itself.
+   */
+  readOnly?: boolean;
 };
 
 export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };

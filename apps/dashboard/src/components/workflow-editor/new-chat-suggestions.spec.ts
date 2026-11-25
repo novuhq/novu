@@ -1,6 +1,12 @@
 import { AiWorkflowSuggestion, StepTypeEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getStepNewChatSuggestions, getWorkflowNewChatSuggestions, isContentStepType } from './new-chat-suggestions';
+import {
+  getReadOnlyStepSuggestions,
+  getReadOnlyWorkflowSuggestions,
+  getStepNewChatSuggestions,
+  getWorkflowNewChatSuggestions,
+  isContentStepType,
+} from './new-chat-suggestions';
 
 function labels(suggestions: { label: string }[]) {
   return suggestions.map(({ label }) => label);
@@ -58,5 +64,21 @@ describe('getStepNewChatSuggestions', () => {
       AiWorkflowSuggestion.APPLY_CONDITIONS,
       AiWorkflowSuggestion.FIX_STEP_ISSUES,
     ]);
+  });
+});
+
+describe('read-only suggestions', () => {
+  it('only ask about a read-only workflow, and why it needs action when it has issues', () => {
+    expect(labels(getReadOnlyWorkflowSuggestions({ hasIssues: false }))).toEqual([
+      'Explain this workflow',
+      'Who receives this, and when?',
+    ]);
+    expect(labels(getReadOnlyWorkflowSuggestions({ hasIssues: true }))).toContain(
+      'Why does this workflow need action?'
+    );
+  });
+
+  it('only ask about a step of a read-only workflow', () => {
+    expect(labels(getReadOnlyStepSuggestions())).toEqual(['Explain this step', 'When is this step skipped?']);
   });
 });
