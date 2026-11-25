@@ -345,7 +345,7 @@ function SigningSecretInput({
         disabled={isReadOnly}
         onChange={secret.onInputChange}
         onBlur={onBlur}
-        autoFocus={secret.canCancel}
+        autoFocus={secret.isReplacing}
       />
       {secret.canCancel && !isReadOnly && (
         <Button type="button" variant="secondary" mode="ghost" size="2xs" onClick={secret.cancel}>

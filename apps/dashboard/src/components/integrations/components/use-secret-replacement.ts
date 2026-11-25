@@ -17,10 +17,14 @@ export function useSecretReplacement({
 }) {
   const [isReplacing, setIsReplacing] = useState(false);
 
+  const isSaved = isMaskedSecret(value) && !isReplacing;
+
   return {
-    isSaved: isMaskedSecret(value) && !isReplacing,
-    /** A replacement is being typed over a saved secret, so there is something to cancel back to. */
-    canCancel: isReplacing && !!savedValue,
+    isSaved,
+    /** Replace was clicked, as opposed to a value arriving from a pasted credentials block. */
+    isReplacing,
+    /** The field holds, or is waiting for, a replacement of a saved secret, so there is something to cancel back to. */
+    canCancel: !isSaved && !!savedValue,
     inputValue: value && !isMaskedSecret(value) ? value : '',
     startReplacing: () => setIsReplacing(true),
     cancel: () => {

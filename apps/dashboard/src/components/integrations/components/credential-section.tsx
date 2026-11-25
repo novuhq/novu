@@ -200,7 +200,7 @@ function TextareaInput({
           onChange={(event) => secret.onInputChange(event.target.value)}
           rows={7}
           disabled={isReadOnly}
-          autoFocus={secret.canCancel}
+          autoFocus={secret.isReplacing}
         />
       </FormControl>
       {secret.canCancel && !isReadOnly && (
@@ -259,7 +259,7 @@ function SecretInputControl({
             disabled={isReadOnly}
             hasError={hasError}
             // Replace swaps the saved secret for this input, so typing can start right away.
-            autoFocus={secret.canCancel}
+            autoFocus={secret.isReplacing}
           />
         </FormControl>
         {secret.canCancel && !isReadOnly && <CancelReplaceButton onClick={secret.cancel} />}
