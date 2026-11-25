@@ -1,6 +1,6 @@
 /**
- * Hides the values of an HTTP request step that can hold a credential from the models that read a workflow:
- * get_workflow's result, and the Copilot's view of the workflow (enterprise `workflow.prompt.ts`). An author can
+ * Hides the values of an HTTP request step that can hold a credential from the models that read a workflow: the
+ * workflow tools' results, and the Copilot's view of the workflow (enterprise `workflow.prompt.ts`). An author can
  * write a token straight into a header, the body or the URL, and the API returns it as stored.
  *
  * What stays visible is an allow-list, so a value in an unknown shape is hidden:
@@ -20,6 +20,12 @@ type JsonObject = Record<string, unknown>;
 /** The placeholder for a hidden value: `SECRET_MASK` in `@novu/shared`, as the dashboard shows secret variables. */
 export const HIDDEN_SECRET = "••••••••";
 
+/**
+ * The placeholder, or one a caller cut short. A write never saves one: only the exact placeholder, where a stored
+ * value shows as it, is restored.
+ */
+const HIDDEN_PATTERN = /•{4,}/;
+
 const HTTP_REQUEST_STEP_TYPE = "http_request";
 
 const SAFE_HEADER_NAMES = new Set([
@@ -34,18 +40,22 @@ const SAFE_HEADER_NAMES = new Set([
 ]);
 
 /**
- * Liquid output and tags, which resolve at send time, plus the stand-ins `redactUrl` puts in their place. A value made
- * only of these holds nothing written into the step.
+ * Liquid output and tags without quoted text, which resolve at send time, plus the stand-ins `redactUrl` puts in their
+ * place. A quoted string inside a tag is written into the step (`{{ 'sk_live_…' }}`), so a tag that holds one counts as
+ * literal text.
  */
-const TEMPLATE_PATTERN = /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}|\d+/g;
+const TEMPLATE_PATTERN = /\{\{[^'"]*?\}\}|\{%[^'"]*?%\}|\d+/g;
 
 /** Words that may lead a credential's value without being one, as in `Bearer {{env.API_TOKEN}}`. */
 const AUTH_SCHEME_PATTERN = /^(?:basic|bearer|bot|digest|token)$/i;
 
-/** A literal path segment at least this long that mixes letters and digits reads as a token, such as a webhook secret. */
+/**
+ * A literal path segment at least this long reads as a token, such as a webhook secret, when it mixes letters and
+ * digits, or upper and lower case without word separators.
+ */
 const MIN_TOKEN_SEGMENT_LENGTH = 16;
 
-const URL_PATTERN = /^([a-z][a-z\d+.-]*:\/\/)?([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
+const URL_PATTERN = /^((?:[a-z][a-z\d+.-]*:)?\/\/)?([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
 
 type KeyValue = { key: string; value: unknown };
 
@@ -59,9 +69,21 @@ type StepLike = {
 
 export type SecretsRestore<T> = { ok: true; value: T } | { ok: false; error: string };
 
-/** Whether a value holds the placeholder anywhere: a write only needs the stored workflow when it does. */
+/**
+ * Whether a value holds the placeholder anywhere, including inside a JSON body string that spells it with `•`
+ * escapes. A write only needs the stored workflow when it does.
+ */
 export function hasHiddenSecret(value: unknown): boolean {
-	return value !== undefined && JSON.stringify(value).includes(HIDDEN_SECRET);
+	if (typeof value === "string") {
+		if (HIDDEN_PATTERN.test(value)) return true;
+		const parsed = value.includes("\\u") ? parseJsonContainer(value) : undefined;
+
+		return parsed !== undefined && hasHiddenSecret(parsed);
+	}
+	if (Array.isArray(value)) return value.some(hasHiddenSecret);
+	const record = asRecord(value);
+
+	return record ? Object.values(record).some(hasHiddenSecret) : false;
 }
 
 /** A workflow, or one inside the API's `{ data }` envelope, with each HTTP request step's secrets hidden. */
@@ -92,8 +114,9 @@ function redactStep(value: unknown): unknown {
 	// `GET /v2/workflows/:id` repeats the values in the controls metadata.
 	const controls = asRecord(step.controls);
 	const values = asRecord(controls?.values);
-	if (controls && values)
+	if (controls && values) {
 		redacted.controls = { ...controls, values: redactHttpRequestControlValues(values) };
+	}
 
 	return redacted;
 }
@@ -110,7 +133,7 @@ export function redactHttpRequestControlValues<T extends JsonObject>(controlValu
 
 /**
  * `steps` with every placeholder in an HTTP request step's headers, body or URL replaced by the stored value it stands
- * for in `savedSteps`, matched by `_id`, then `stepId`. Refused when a placeholder has no stored value at that place,
+ * for in `savedSteps`, matched by `_id`, else by `stepId`. Refused when a placeholder has no stored value at that place,
  * including any in a new step.
  */
 export function restoreWorkflowSecrets<T extends StepLike>(
@@ -119,11 +142,12 @@ export function restoreWorkflowSecrets<T extends StepLike>(
 ): SecretsRestore<T[]> {
 	const restored: T[] = [];
 	for (const step of steps) {
-		const saved = savedSteps.find(
-			(candidate) =>
-				(step._id !== undefined && candidate._id === step._id) ||
-				(step.stepId !== undefined && candidate.stepId === step.stepId),
-		);
+		const saved =
+			(step._id !== undefined &&
+				savedSteps.find((candidate) => candidate._id === step._id)) ||
+			(step.stepId !== undefined &&
+				savedSteps.find((candidate) => candidate.stepId === step.stepId)) ||
+			undefined;
 		const result = restoreStepSecrets(step, saved);
 		if (!result.ok) return result;
 		restored.push(result.value);
@@ -154,7 +178,8 @@ export function restoreStepSecrets<T extends StepLike>(
 /**
  * An HTTP request step's control values with each placeholder replaced by the stored value it stands for: a header by
  * name, a body value by key or JSON path, and the URL as a whole. A placeholder counts only where the stored value
- * shows as exactly what was sent back. `stepLabel` names the step in the refusal.
+ * shows as exactly what was sent back, and only where that place is unambiguous. `stepLabel` names the step in the
+ * refusal.
  */
 export function restoreHttpRequestSecrets(
 	controlValues: JsonObject,
@@ -272,10 +297,7 @@ function redactUrl(url: unknown): unknown {
 	const redacted = [
 		scheme,
 		redactAuthority(authority),
-		path
-			.split("/")
-			.map((segment) => (looksLikeToken(segment) ? HIDDEN_SECRET : segment))
-			.join("/"),
+		path.split("/").map(redactPathSegment).join("/"),
 		query === undefined ? "" : `?${query.split("&").map(redactQueryPair).join("&")}`,
 		fragment === undefined ? "" : `#${isTemplateOnly(fragment) ? fragment : HIDDEN_SECRET}`,
 	].join("");
@@ -292,6 +314,15 @@ function redactAuthority(authority: string): string {
 	return `${isTemplateOnly(userInfo) ? userInfo : HIDDEN_SECRET}${authority.slice(at)}`;
 }
 
+/** A path segment, with its `;key=value` parameters redacted like query values. */
+function redactPathSegment(segment: string): string {
+	const [name, ...parameters] = segment.split(";");
+
+	return [looksLikeToken(name) ? HIDDEN_SECRET : name, ...parameters.map(redactQueryPair)].join(
+		";",
+	);
+}
+
 function redactQueryPair(pair: string): string {
 	const equals = pair.indexOf("=");
 	if (equals === -1) return looksLikeToken(pair) ? HIDDEN_SECRET : pair;
@@ -304,10 +335,12 @@ function redactQueryPair(pair: string): string {
 function looksLikeToken(segment: string): boolean {
 	if (isTemplateOnly(segment)) return false;
 	const literal = segment.replace(TEMPLATE_PATTERN, "");
+	if (literal.length < MIN_TOKEN_SEGMENT_LENGTH) return false;
 
-	return (
-		literal.length >= MIN_TOKEN_SEGMENT_LENGTH && /[a-z]/i.test(literal) && /\d/.test(literal)
-	);
+	const mixesLettersAndDigits = /[a-z]/i.test(literal) && /\d/.test(literal);
+	const mixesCase = /[a-z]/.test(literal) && /[A-Z]/.test(literal) && !/[-_.~]/.test(literal);
+
+	return mixesLettersAndDigits || mixesCase;
 }
 
 /** A JSON object or array; undefined for anything else, which the body then hides whole. */
@@ -321,7 +354,10 @@ function parseJsonContainer(text: string): unknown {
 	}
 }
 
-/** Each pair whose placeholder value stands for the stored pair with the same key (any case, for headers). */
+/**
+ * Each pair whose placeholder value stands for the stored pair with the same key. Headers match in any case, an exact
+ * match first; a name that two stored headers share in different cases is ambiguous and left unrestored.
+ */
 function restoreKeyValues(
 	pairs: unknown,
 	savedPairs: unknown,
@@ -331,13 +367,21 @@ function restoreKeyValues(
 	if (!Array.isArray(pairs)) return pairs;
 
 	const saved = Array.isArray(savedPairs) ? savedPairs.filter(isKeyValue) : [];
-	const sameKey = (a: string, b: string) =>
-		ignoreCase ? a.toLowerCase() === b.toLowerCase() : a === b;
+	const findStored = (key: string): KeyValue | undefined => {
+		const exact = saved.filter((candidate) => candidate.key === key);
+		if (exact.length > 0 || !ignoreCase) return exact.length === 1 ? exact[0] : undefined;
+
+		const anyCase = saved.filter(
+			(candidate) => candidate.key.toLowerCase() === key.toLowerCase(),
+		);
+
+		return anyCase.length === 1 ? anyCase[0] : undefined;
+	};
 
 	return pairs.map((pair) => {
 		if (!isKeyValue(pair) || !hasHiddenSecret(pair.value)) return pair;
 
-		const stored = saved.find((candidate) => sameKey(candidate.key, pair.key));
+		const stored = findStored(pair.key);
 
 		return stored && redact(stored).value === pair.value
 			? { ...pair, value: stored.value }
@@ -372,7 +416,10 @@ function restoreBody(body: unknown, savedBody: unknown): unknown {
 	return JSON.stringify(restoreJson(parsed, savedParsed));
 }
 
-/** `value` with each string that shows `saved`'s string at the same path replaced by it. */
+/**
+ * `value` with each string that shows `saved`'s string at the same path replaced by it. Array items match by index only
+ * while the array keeps its length: after an item is added or removed, a placeholder could stand for another item.
+ */
 function restoreJson(value: unknown, saved: unknown): unknown {
 	if (typeof value === "string") {
 		return hasHiddenSecret(value) && typeof saved === "string" && redactJson(saved) === value
@@ -380,8 +427,10 @@ function restoreJson(value: unknown, saved: unknown): unknown {
 			: value;
 	}
 	if (Array.isArray(value)) {
+		const sameLength = Array.isArray(saved) && saved.length === value.length;
+
 		return value.map((entry, index) =>
-			restoreJson(entry, Array.isArray(saved) ? saved[index] : undefined),
+			restoreJson(entry, sameLength ? saved[index] : undefined),
 		);
 	}
 	const record = asRecord(value);

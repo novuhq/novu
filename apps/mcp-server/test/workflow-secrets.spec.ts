@@ -134,6 +134,120 @@ describe("redactHttpRequestControlValues", () => {
 	});
 });
 
+describe("redactHttpRequestControlValues: values that look safe and aren't", () => {
+	const urlOf = (url: string) => redactHttpRequestControlValues({ url }).url;
+
+	it("hides a quoted literal inside a Liquid tag", () => {
+		const { headers } = redactHttpRequestControlValues({
+			headers: [
+				{ key: "Authorization", value: "Bearer {{ env.X | default: 'sk_live_abc123' }}" },
+				{ key: "X-Token", value: "{% assign t = 'sk_live_abc' %}{{ t }}" },
+			],
+		});
+
+		expect(JSON.stringify(headers)).not.toContain("sk_live");
+	});
+
+	it("hides a long mixed-case path segment without digits", () => {
+		expect(urlOf("https://hooks.example.com/services/AbCdEfGhIjKlMnOpQrStUvWxYzAbCdEf")).toBe(
+			`https://hooks.example.com/services/${HIDDEN_SECRET}`,
+		);
+	});
+
+	it("hides the user info of a protocol-relative URL and path parameter values", () => {
+		expect(urlOf("//ops:hunter2@example.com/a")).toBe(`//${HIDDEN_SECRET}@example.com/a`);
+		expect(urlOf("https://example.com/a;token=abc123;v=1")).toBe(
+			`https://example.com/a;token=${HIDDEN_SECRET};v=${HIDDEN_SECRET}`,
+		);
+	});
+
+	it("shows a redacted value the same when it is redacted again", () => {
+		const once = redactHttpRequestControlValues(httpControlValues());
+
+		expect(redactHttpRequestControlValues(once)).toEqual(once);
+	});
+});
+
+describe("restoreStepSecrets: ambiguous places are refused, never guessed", () => {
+	const restore = (
+		controlValues: Record<string, unknown>,
+		saved: Record<string, unknown>,
+		_id?: string,
+	) =>
+		restoreStepSecrets(
+			{ _id, controlValues, stepId: "notify-ops", type: "http_request" },
+			{ controlValues: saved, stepId: "notify-ops", type: "http_request" },
+		);
+
+	it("refuses an array item placeholder once the array changed length", () => {
+		const saved = { body: JSON.stringify({ keys: ["secret-A", "secret-B"] }) };
+
+		expect(restore({ body: JSON.stringify({ keys: [HIDDEN_SECRET] }) }, saved).ok).toBe(false);
+		expect(
+			restore({ body: JSON.stringify({ keys: [HIDDEN_SECRET, HIDDEN_SECRET] }) }, saved),
+		).toMatchObject({ ok: true });
+	});
+
+	it("restores a header from its exact-case name first, and refuses a name two headers share", () => {
+		const saved = {
+			headers: [
+				{ key: "x-token", value: "secret-lower" },
+				{ key: "X-Token", value: "secret-upper" },
+			],
+		};
+
+		const exact = restore({ headers: [{ key: "X-Token", value: HIDDEN_SECRET }] }, saved);
+		expect(exact.ok && exact.value.controlValues?.headers).toEqual([
+			{ key: "X-Token", value: "secret-upper" },
+		]);
+		expect(restore({ headers: [{ key: "X-TOKEN", value: HIDDEN_SECRET }] }, saved).ok).toBe(
+			false,
+		);
+	});
+
+	it("catches a placeholder spelled with escapes in a JSON body, and a cut-short one", () => {
+		const saved = { body: JSON.stringify({ apiKey: TOKEN }) };
+		const escaped = `{"apiKey":"${"\\u2022".repeat(8)}"}`;
+
+		const result = restore({ body: escaped }, saved);
+		expect(result.ok && JSON.parse(result.value.controlValues?.body as string)).toEqual({
+			apiKey: TOKEN,
+		});
+		expect(restore({ body: JSON.stringify({ apiKey: "•••••••" }) }, saved).ok).toBe(false);
+	});
+
+	it("matches the stored step by _id before stepId", () => {
+		const result = restoreWorkflowSecrets(
+			[
+				{
+					_id: "id-a",
+					controlValues: { headers: [{ key: "X-Api-Key", value: HIDDEN_SECRET }] },
+					stepId: "step-b",
+					type: "http_request",
+				},
+			],
+			[
+				{
+					_id: "id-b",
+					controlValues: { headers: [{ key: "X-Api-Key", value: "key-b" }] },
+					stepId: "step-b",
+					type: "http_request",
+				},
+				{
+					_id: "id-a",
+					controlValues: { headers: [{ key: "X-Api-Key", value: "key-a" }] },
+					stepId: "step-a",
+					type: "http_request",
+				},
+			],
+		);
+
+		expect(result.ok && result.value[0].controlValues?.headers).toEqual([
+			{ key: "X-Api-Key", value: "key-a" },
+		]);
+	});
+});
+
 describe("redactWorkflowSecrets", () => {
 	it("hides HTTP request step secrets in the control values and the controls metadata", () => {
 		const text = JSON.stringify(redactWorkflowSecrets({ data: workflowWithHttpStep() }));
@@ -315,6 +429,22 @@ describe("workflow tools keep HTTP request step secrets from the caller", () => 
 		const put = api.puts[0].body!;
 		expect(put.steps[0].controlValues).toEqual(httpControlValues());
 		expect(JSON.stringify(put)).not.toContain(HIDDEN_SECRET);
+		// The saved workflow comes back hidden too, in the text and in structuredContent.
+		expect(JSON.stringify(result)).not.toContain(TOKEN);
+		expect(JSON.stringify(result)).toContain(HIDDEN_SECRET);
+	});
+
+	it("a write to another step hides the HTTP request step's secrets in the saved workflow it returns", async () => {
+		fakeWorkflowsApi(workflowWithHttpStep());
+
+		const result = await callTool(await client(), "add_workflow_step", {
+			step: { controlValues: { body: "Shipped" }, name: "SMS", type: "sms" },
+			workflowId: "welcome",
+		});
+
+		expect(result.isError).toBeFalsy();
+		expect(JSON.stringify(result)).not.toContain(TOKEN);
+		expect(JSON.stringify(result)).not.toContain(SLACK_SECRET);
 	});
 
 	it("update_workflow reads the stored workflow only when a placeholder was sent", async () => {

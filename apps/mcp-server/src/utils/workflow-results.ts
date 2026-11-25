@@ -1,11 +1,17 @@
 import type { ApiResponse } from "../types";
 import { type ApiCallResult, ToolFactory } from "./tool-factory";
+import { redactWorkflowSecrets } from "./workflow-secrets";
 
-/** Successful write: the saved workflow as text and as `structuredContent.workflow`. */
+/**
+ * Successful write: the saved workflow as text and as `structuredContent.workflow`, with each HTTP request step's
+ * secrets hidden as get_workflow hides them. A caller that sends the placeholders back keeps the stored values.
+ */
 export function workflowResult(message: string, workflow: unknown): ApiResponse {
+	const shown = redactWorkflowSecrets(workflow);
+
 	return {
-		content: [{ text: `${message}:\n\n${JSON.stringify(workflow, null, 2)}`, type: "text" }],
-		structuredContent: { workflow },
+		content: [{ text: `${message}:\n\n${JSON.stringify(shown, null, 2)}`, type: "text" }],
+		structuredContent: { workflow: shown },
 	};
 }
 
