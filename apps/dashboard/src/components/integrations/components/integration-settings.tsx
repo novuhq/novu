@@ -29,6 +29,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { IntegrationFormData } from '../types';
 import { isIntegrationFailing } from '../utils/integration-health';
 import { CredentialSection } from './credential-section';
+import { EmailProviderSetup } from './email-provider-setup';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
 import { MsTeamsManualSetup } from './msteams-manual-setup';
@@ -43,7 +44,6 @@ import {
   SetupDocsLink,
   SetupTip,
 } from './provider-setup-layout';
-import { ResendSetup } from './resend-setup';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { SlackManualSetup } from './slack-manual-setup';
 import { SlackQuickSetup } from './slack-quick-setup';
@@ -54,9 +54,10 @@ import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-avail
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import {
+  ACTIVITY_TRACKING_ENABLER,
   isDemoIntegration,
+  isEmailSetupProvider,
   isSecureCredential,
-  RESEND_TRACKING_ENABLER,
   usesProviderSetupLayout,
 } from './utils/helpers';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
@@ -144,7 +145,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
-  if (providerId === EmailProviderIdEnum.Resend) return '~2 min';
+  if (isEmailSetupProvider(providerId)) return '~2 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
 
@@ -268,11 +269,11 @@ export function IntegrationSettings({
           active: true,
           primary: true,
           credentials: {},
-          // Resend's setup turns on activity tracking where it is available.
+          // The email setup guides turn on activity tracking where it is available.
           // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:
-            setupLayout && provider?.id === EmailProviderIdEnum.Resend && isTrackingAvailable
-              ? { [RESEND_TRACKING_ENABLER]: 'true' }
+            setupLayout && isEmailSetupProvider(provider?.id) && isTrackingAvailable
+              ? { [ACTIVITY_TRACKING_ENABLER]: 'true' }
               : {},
           environmentId: currentEnvironment?._id ?? '',
           rules: null,
@@ -346,7 +347,7 @@ export function IntegrationSettings({
   const typedClientId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.ClientId}` });
   const typedSecretKey = useWatch({ control, name: `credentials.${CredentialsKeyEnum.SecretKey}` });
   const typedTenantId = useWatch({ control, name: `credentials.${CredentialsKeyEnum.TenantId}` });
-  const trackingEnabled = useWatch({ control, name: `configurations.${RESEND_TRACKING_ENABLER}` });
+  const trackingEnabled = useWatch({ control, name: `configurations.${ACTIVITY_TRACKING_ENABLER}` });
   const unusedCredentialKeys = useMemo(
     () => (provider.id === SmsProviderIdEnum.Twilio ? getUnusedTwilioAuthCredentialKeys(authMethod) : []),
     [provider.id, authMethod]
@@ -563,7 +564,7 @@ export function IntegrationSettings({
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
     const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
     const isMsTeams = provider.id === ChatProviderIdEnum.MsTeams;
-    const isResend = provider.id === EmailProviderIdEnum.Resend;
+    const emailSetupProviderId = isEmailSetupProvider(provider.id) ? provider.id : undefined;
 
     const generalSettings = (
       <GeneralSettings
@@ -573,8 +574,8 @@ export function IntegrationSettings({
         isReadOnly={isReadOnly}
         hidePrimarySelector={!isChannelSupportPrimary}
         disabledPrimary={!hasOtherProviders && integration?.primary}
-        // Resend's activity tracking is step 3 of its setup, so it isn't repeated here.
-        configurations={isResend ? undefined : provider.configurations}
+        // Activity tracking is step 3 of the email setup guides, so it isn't repeated here.
+        configurations={emailSetupProviderId ? undefined : provider.configurations}
         integrationId={integration?._id}
         isDemo={isDemo}
         provider={provider}
@@ -617,7 +618,7 @@ export function IntegrationSettings({
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {isResend ? (
+                {emailSetupProviderId ? (
                   <SetupTip>
                     Novu emails each subscriber’s <code className="font-code">email</code>. Set it when you create or
                     identify subscribers.{' '}
@@ -667,9 +668,10 @@ export function IntegrationSettings({
               </>
             }
           >
-            {isResend && (
+            {emailSetupProviderId && (
               <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <ResendSetup
+                <EmailProviderSetup
+                  providerId={emailSetupProviderId}
                   provider={provider}
                   credentials={providerCredentials}
                   control={control}

@@ -99,18 +99,50 @@ export function SetupCard({
 }
 
 function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange: (mode: ProviderSetupMode) => void }) {
-  const options: { value: ProviderSetupMode; label: string }[] = [
-    { value: 'quick', label: 'Quick setup' },
-    { value: 'manual', label: 'Manual' },
-  ];
+  return (
+    <SegmentedControl
+      value={mode}
+      onValueChange={onChange}
+      aria-label="Setup mode"
+      options={[
+        { value: 'quick', label: 'Quick setup' },
+        { value: 'manual', label: 'Manual' },
+      ]}
+    />
+  );
+}
 
-  // A radio group, so arrow keys move between the modes and only the selected one is in the Tab order.
+/** Two or three options side by side, e.g. Quick setup / Manual or a provider's region. */
+export function SegmentedControl<T extends string>({
+  value,
+  onValueChange,
+  options,
+  disabled,
+  id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+}: {
+  value: T;
+  onValueChange: (value: T) => void;
+  options: { value: T; label: string }[];
+  disabled?: boolean;
+  id?: string;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+}) {
+  // A radio group, so arrow keys move between the options and only the selected one is in the Tab order.
   return (
     <RadioGroupPrimitive.Root
-      value={mode}
-      onValueChange={(value) => onChange(value as ProviderSetupMode)}
+      id={id}
+      value={value}
+      onValueChange={(next) => {
+        const option = options.find((candidate) => candidate.value === next);
+        if (option) onValueChange(option.value);
+      }}
+      disabled={disabled}
       orientation="horizontal"
-      aria-label="Setup mode"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       className="inline-flex w-[188px] gap-px rounded-[7px] bg-[#f4f4f5] p-px"
     >
       {options.map((option) => (
@@ -118,7 +150,7 @@ function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange
           key={option.value}
           value={option.value}
           className={cn(
-            'text-text-sub hover:text-text-strong flex h-7 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-md px-2 text-[13px] font-medium leading-[1.1] transition-colors',
+            'text-text-sub hover:text-text-strong flex h-7 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-md px-2 text-[13px] font-medium leading-[1.1] transition-colors disabled:cursor-not-allowed',
             'data-[state=checked]:bg-bg-white data-[state=checked]:text-text-strong',
             'data-[state=checked]:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]',
             'focus-visible:ring-stroke-strong outline-none focus-visible:ring-2'
