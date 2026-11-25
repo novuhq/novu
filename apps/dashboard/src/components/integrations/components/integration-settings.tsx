@@ -267,8 +267,9 @@ export function IntegrationSettings({
           primary: true,
           credentials: {},
           // Resend's setup turns on activity tracking: Novu adds the delivery webhook once the integration exists.
+          // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:
-            setupLayout && provider?.id === EmailProviderIdEnum.Resend ? { [RESEND_TRACKING_ENABLER]: true } : {},
+            setupLayout && provider?.id === EmailProviderIdEnum.Resend ? { [RESEND_TRACKING_ENABLER]: 'true' } : {},
           environmentId: currentEnvironment?._id ?? '',
           rules: null,
         },
