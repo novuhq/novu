@@ -98,6 +98,15 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     expect(new NovuTokens().verify('subscriberLogin', token)).to.deep.equal({ ok: false, reason: 'invalid' });
   });
 
+  it('should mint a topic grant for a key longer than the v2 topic route allows, as v1 and Inbox topics can have', async () => {
+    const topic = `ticket:${'a'.repeat(150)}`;
+
+    const res = await mint('sub-ada', { topic });
+
+    expect(res.status).to.equal(201);
+    expect(verifyClaims(res.body.data.token, 'subscriberTopicGrant').topic).to.equal(topic);
+  });
+
   it('should mint a topic grant with a shorter lifetime', async () => {
     const res = await mint('sub-ada', { topic: 'ticket:1', expiresIn: 10 });
 
@@ -163,7 +172,6 @@ describe('Create subscriber token - /v2/subscribers/:subscriberId/tokens (POST) 
     ['an invalid topic key', 'topic', { topic: 'ticket 1!' }],
     ['an empty topic key', 'topic', { topic: '' }],
     ['a null topic with a scope', 'topic', { topic: null, scope: ['channels:shared'] }],
-    ['a topic key longer than 100 characters', 'topic', { topic: 'a'.repeat(101) }],
     ['a misspelled field', 'expiresin', { expiresin: 600 }],
   ];
 

@@ -33641,7 +33641,6 @@
           "topic": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 100,
             "description": "Topic key the subscriber may subscribe to. When set, the token is a topic grant instead of a login token: the browser sends it with its subscribe request for this topic, and it lasts at most 60 seconds. Cannot be combined with scope, subscriber, context.",
             "example": "ticket:12345"
           },
@@ -33649,7 +33648,6 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 3600,
-            "default": 3600,
             "description": "Token lifetime in seconds, from 1 to 3600 for a login token (default 3600), or from 1 to 60 for a topic grant (default 60).",
             "example": 600
           }

@@ -9,7 +9,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Length,
   Matches,
   Max,
   Min,
@@ -81,7 +80,6 @@ export class CreateSubscriberTokenRequestDto {
 
   @ApiPropertyOptional({
     type: 'string',
-    maxLength: 100,
     description:
       'Topic key the subscriber may subscribe to. When set, the token is a topic grant instead of a login token: the browser sends it with its subscribe request for this topic, and it lasts at most ' +
       `${TOPIC_GRANT_MAX_SECONDS} seconds. Cannot be combined with ${LOGIN_FIELDS.join(', ')}.`,
@@ -89,7 +87,6 @@ export class CreateSubscriberTokenRequestDto {
   })
   @ValidateIf((request: CreateSubscriberTokenRequestDto) => request.topic !== undefined)
   @IsString()
-  @Length(1, 100)
   @Matches(VALID_ID_REGEX, {
     message:
       'topic must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address',
@@ -101,7 +98,6 @@ export class CreateSubscriberTokenRequestDto {
     type: 'integer',
     minimum: 1,
     maximum: LOGIN_MAX_SECONDS,
-    default: LOGIN_MAX_SECONDS,
     description: `Token lifetime in seconds, from 1 to ${LOGIN_MAX_SECONDS} for a login token (default ${LOGIN_MAX_SECONDS}), or from 1 to ${TOPIC_GRANT_MAX_SECONDS} for a topic grant (default ${TOPIC_GRANT_MAX_SECONDS}).`,
     example: 600,
   })
