@@ -190,6 +190,10 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
   </Tab>
 </Tabs>
 
+<Note>
+  Novu automatically removes APNS device tokens that Apple rejects as unregistered from the subscriber's profile and sends the failure details via the `message.failed` [webhook event](/platform/developer/webhooks/event-types#message-events). See [Automatic removal of stale device tokens](/platform/integrations/push#automatic-removal-of-stale-device-tokens).
+</Note>
+
 ### Triggering workflows
 
 Once subscribers’ devices are registered, push notifications are delivered through [workflows that include a Push step](/platform/workflow/create-a-workflow). A workflow can be triggered using the Novu [SDK](/platform/sdks) or [API](/api-reference/events/trigger-event).
