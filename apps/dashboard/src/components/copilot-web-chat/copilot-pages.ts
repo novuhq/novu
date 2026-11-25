@@ -49,6 +49,15 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       'Turn on activity tracking for my email provider',
     ],
   },
+  [CopilotPageEnum.SUBSCRIBERS]: {
+    routes: [ROUTES.SUBSCRIBERS, ROUTES.CREATE_SUBSCRIBER, ROUTES.EDIT_SUBSCRIBER],
+    emptyState: {
+      title: 'Ask about subscribers',
+      body: 'I check which channels can reach a subscriber and why not. Every answer names the environment it used.',
+    },
+    placeholder: 'Ask about a subscriber…',
+    suggestions: ['Can we reach jane@acme.com on SMS?', "Why didn't user_123 get their last notification?"],
+  },
 };
 
 const CONFIGURED_PAGES = Object.keys(COPILOT_PAGE_CONFIGS) as CopilotPageEnum[];

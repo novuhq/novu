@@ -5,6 +5,7 @@ import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { IconCmd, Kbd } from '@/components/primitives/kbd';
 import { cn } from '@/utils/ui';
 import { useCopilotPageView } from './copilot-page-view-store';
+import { COPILOT_SURFACE_PROPS } from './copilot-surface';
 import { DotGrid } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import {
@@ -102,6 +103,7 @@ export function CopilotLauncher() {
     <motion.button
       ref={buttonRef}
       type="button"
+      {...COPILOT_SURFACE_PROPS}
       initial={false}
       animate={{ bottom: 16 + (isOverSheet ? COPILOT_SHEET_LIFT_PX : 0) }}
       transition={shouldReduceMotion ? { duration: 0 } : COPILOT_SHEET_LIFT_TRANSITION}
