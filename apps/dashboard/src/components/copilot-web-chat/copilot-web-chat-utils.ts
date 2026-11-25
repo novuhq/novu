@@ -6,6 +6,8 @@ import {
   type CopilotViewing,
   serializeCopilotViewing,
 } from '@novu/shared';
+import type { FC, SVGProps } from 'react';
+import type { IconType } from 'react-icons';
 
 // The plan branding the API appends to delivered replies (stored history has none), in the shapes it can take.
 // Same pattern as the agents web-chat panel (`agent-message-to-thread-message.ts`), which strips it the same way.
@@ -60,7 +62,11 @@ export type CopilotPageContext = {
   stepLabel?: string;
   /** The question about what is open on the page; leads its suggestions. Not sent to the agent. */
   question?: string;
+  /** The workflow editor's new-chat suggestions for the open workflow or step. Not sent to the agent. */
+  suggestions?: CopilotSuggestion[];
 };
+
+export type CopilotSuggestion = { label: string; icon?: IconType | FC<SVGProps<SVGSVGElement>> };
 
 export type CopilotMessageMetadata = {
   environmentId?: string;
