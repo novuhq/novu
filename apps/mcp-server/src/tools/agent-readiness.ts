@@ -52,6 +52,7 @@ export function registerAgentReadinessTool(server: McpServer, accessors: ToolAcc
 						? "couldn't check channels: unexpected response"
 						: couldNotCheck("channels", links),
 				},
+				moreLinks: links.ok && hasNextPage(links.data),
 			});
 			if (!result) {
 				return ToolFactory.errorResult({
@@ -93,6 +94,14 @@ function rows(payload: unknown): unknown[] | undefined {
 		payload && typeof payload === "object" ? (payload as { data?: unknown }).data : undefined;
 
 	return Array.isArray(data) ? data : undefined;
+}
+
+/** Whether a paginated list has a next page, which the tool doesn't read. */
+function hasNextPage(payload: unknown): boolean {
+	const next =
+		payload && typeof payload === "object" ? (payload as { next?: unknown }).next : undefined;
+
+	return typeof next === "string" && next.length > 0;
 }
 
 function couldNotCheck(what: string, failure: FailedCall): string {

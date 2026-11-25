@@ -334,6 +334,19 @@ describe("get_agent_readiness", () => {
 		expect(rule.value?.restrictedAccess).toBe(true);
 	});
 
+	it("says when the agent has more channels than the one page it read", async () => {
+		const { value } = await readiness({
+			[LINKS_PATH]: respond(200, {
+				data: [link("slack", "slack-1", { connectedAt: CONNECTED })],
+				next: "cursor-2",
+				previous: null,
+			}),
+		});
+
+		expect(value?.channels).toHaveLength(1);
+		expect(value?.moreChannels).toBe(true);
+	});
+
 	it("reports channels it couldn't read instead of an empty answer", async () => {
 		const forbidden = await readiness({ [LINKS_PATH]: respond(403, { message: "Forbidden" }) });
 		const oddShape = await readiness({ [LINKS_PATH]: respond(200, { items: [] }) });

@@ -90,6 +90,8 @@ export type AgentReadinessResult = {
 	/** Only allowed senders, or senders matching the access rule, get a reply. */
 	restrictedAccess?: true;
 	channels?: AgentChannelReadiness[];
+	/** The agent has more channels than `channels` lists, which holds the first page only. */
+	moreChannels?: true;
 	/** Set instead of `channels` when they couldn't be read. */
 	channelsError?: string;
 	notChecked: string[];
@@ -186,6 +188,8 @@ export type AgentReadinessInput = {
 	agent: unknown;
 	/** `GET /v1/agents/:identifier/integrations` rows; an error message when that read failed. */
 	links: unknown[] | { error: string };
+	/** That read has a next page. */
+	moreLinks?: boolean;
 };
 
 /** The verdict, or `undefined` when the agent record has no identifier. */
@@ -240,6 +244,7 @@ export function buildAgentReadiness(input: AgentReadinessInput): AgentReadinessR
 
 			return channel ? [channel] : [];
 		});
+		if (input.moreLinks) result.moreChannels = true;
 	} else {
 		result.channelsError = input.links.error;
 	}
