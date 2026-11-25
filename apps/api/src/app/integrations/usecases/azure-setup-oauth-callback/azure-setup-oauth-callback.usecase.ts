@@ -30,6 +30,8 @@ const REQUIRED_GRAPH_PERMISSIONS = [
   { id: 'e12dae10-5a57-4817-b79d-dfbec5348930', type: 'Role' }, // AppCatalog.Read.All
   { id: '9f67436c-5415-4e7f-8ac1-3014a7132630', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForTeam.All
   { id: '908de74d-f8b2-4d6b-a9ed-2a17b3b78179', type: 'Role' }, // TeamsAppInstallation.ReadWriteSelfForUser.All
+  // Stores the files chat steps send in the channel's SharePoint folder or the recipient's OneDrive.
+  { id: '75359482-378d-4052-8f01-80520e7db3cd', type: 'Role' }, // Files.ReadWrite.All
 ];
 
 /** Graph resource ID for Microsoft Graph (constant) */

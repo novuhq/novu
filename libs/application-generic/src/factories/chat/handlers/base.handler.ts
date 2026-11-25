@@ -1,6 +1,12 @@
 import { cardToFallbackMarkdown } from '@novu/providers';
 import { ChatProviderIdEnum } from '@novu/shared';
-import { CardElement, IChatOptions, IChatProvider } from '@novu/stateless';
+import {
+  CardElement,
+  IChatFileDeliveryResult,
+  IChatOptions,
+  IChatProvider,
+  IChatSendFilesOptions,
+} from '@novu/stateless';
 import { BaseHandler } from '../../shared/interfaces';
 import { IChatHandler, ResolvedChatCard } from '../interfaces';
 
@@ -21,6 +27,19 @@ export abstract class BaseChatHandler extends BaseHandler<IChatProvider> impleme
     const { bridgeProviderData, ...content } = chatContent;
 
     return await this.provider.sendMessage(content, bridgeProviderData);
+  }
+
+  async sendFiles(options: IChatSendFilesOptions): Promise<IChatFileDeliveryResult[] | null> {
+    if (!this.provider.sendFiles) {
+      return null;
+    }
+
+    // Mirrors `send`: suites never reach a provider API.
+    if (process.env.NODE_ENV === 'test') {
+      return options.files.map((file) => ({ name: file.name, status: 'sent' }));
+    }
+
+    return await this.provider.sendFiles(options);
   }
 
   /**
