@@ -17,6 +17,7 @@ import {
   humanInteractionApproveExtraActions,
   humanInteractionChooseOptions,
 } from '@novu/shared';
+import { parsePositiveIntEnv } from '../../keyless/keyless-abuse.constants';
 import type { ListenAnswerDto, ListenMessageDto } from '../dtos/human-listen.dto';
 import { type InboxRelayAgent, type InboxScope, readAttachments } from './human-inbox.service';
 import type { ListenedTo } from './human-listen-access.service';
@@ -27,7 +28,7 @@ import type { ListenCursor } from './listen-cursor';
  * conversation knows of it, and a reply that answers a question has settled that question, so it goes out
  * marked as the answer. A wait never reads past this, so a row stored a moment late is still read.
  */
-export const LISTEN_SETTLE_MS = 2_000;
+export const LISTEN_SETTLE_MS = parsePositiveIntEnv(process.env.HUMAN_LISTEN_SETTLE_MS, 2_000);
 
 /** Messages older than this never start a host, however far back the cursor is: a computer off for a week doesn't start one for old news. */
 export const LISTEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;

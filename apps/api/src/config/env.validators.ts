@@ -81,6 +81,8 @@ export const envValidators = {
   DASHBOARD_URL: str({ default: '' }),
   HUMAN_DASHBOARD_URL: str({ default: '' }),
   AGENT_INBOX_DASHBOARD_API_SECRET: str({ default: '' }),
+  // How long a message must be stored before the listen wait reads it. 2000 when unset; see LISTEN_SETTLE_MS.
+  HUMAN_LISTEN_SETTLE_MS: num({ default: undefined }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
   /*
    * Standalone Redis. Cluster mode uses ElastiCache for cache, and SQS-only
