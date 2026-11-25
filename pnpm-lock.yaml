@@ -2293,6 +2293,9 @@ importers:
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
+      '@novu/ee-auth':
+        specifier: workspace:*
+        version: link:../auth
       '@novu/shared':
         specifier: workspace:*
         version: link:../../../packages/shared
