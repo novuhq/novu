@@ -742,7 +742,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
           },
         },
         {
-          type: StepTypeEnum.IN_APP,
+          type: StepTypeEnum.CHAT,
           content:
             'Total events in digest:{{step.total_count}} Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
         },
@@ -778,7 +778,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
+      channel: StepTypeEnum.CHAT,
       _templateId: template._id,
       _notificationId: completedJob?._notificationId,
     });
