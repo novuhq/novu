@@ -6,6 +6,7 @@ export const BAKED = `${DATA}/.baked.json`;
 export const APPLIED = `${DATA}/.applied.json`;
 export const APPLYING = `${DATA}/.applying.json`;
 export const MIGRATED = `${DATA}/.migrated`;
+export const FLAGS = `${DATA}/flags.json`;
 export const RUN = `${DATA}/run`;
 export const LOCK = `${RUN}/box.lock`;
 export const PC_SOCKET = `${RUN}/process-compose.sock`;

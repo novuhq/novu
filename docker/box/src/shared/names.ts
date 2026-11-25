@@ -27,6 +27,13 @@ export function isBoxName(box: string): boolean {
   );
 }
 
+// A PR forces flags on in its box with a line in its description: `Box flags: IS_A_ENABLED, IS_B_ENABLED`.
+export function boxFlagsOf(description: string | null | undefined): Array<string> {
+  const line = /^Box flags:(.*)$/im.exec(description ?? '')?.[1] ?? '';
+
+  return line.split(/[\s,`]+/).filter(Boolean);
+}
+
 export function prBox(number: number): string {
   return `pr-${number}`;
 }

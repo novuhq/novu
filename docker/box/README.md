@@ -35,6 +35,7 @@ the `verify-in-box` skill (`.agents/skills/verify-in-box/SKILL.md`).
 | `logs [process]` | The last lines of one process (`api`, `worker`, `bridge`, …) or of all of them. `--errors`, `--follow`, `--tail <n>` |
 | `mail [search \| id]` | What the box sent: email, and SMS, push and chat through the sink. A search (`to:a@b.c`, `subject:Welcome`, `tag:sms`), or one message with its headers, links and an HTML check of which email clients break on what |
 | `exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
+| `flag [key] [value \| --unset]` | Forces a feature flag to a value (`true`, `5`) in this box only, whatever LaunchDarkly serves, and restarts the API and worker. It's kept in `/data/flags.json`, so it outlasts syncs, applies and sleep; a box from `base` has none. `--unset` gives the flag back to LaunchDarkly; no key lists the forced flags, which `doctor` shows too |
 | `user seed \| create \| list \| channels \| team \| delete` | A sign-in link for the seed user, and dashboard test users (below) |
 | `down` | Saves the box to its snapshot and stops it; the next request or `up` wakes it with its data |
 | `delete` | Stops the box, forgets its snapshot, and deletes its test users |
@@ -56,6 +57,8 @@ PRs get none.
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
   older run, and the TesterArmy runs still going on the older head). Other events (draft, ready, a label, a new base
   branch) apply only when the box doesn't run the head healthy yet; re-running the job always applies.
+- A `Box flags: IS_A_ENABLED, IS_B_ENABLED` line in the PR description forces those flags on in the box (`flag
+  --only`) on every apply, before TesterArmy starts; without the line the box forces none.
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems. A healthy box is also a GitHub deployment
   (environment `Novu Box`), so the PR shows View deployment; it's removed while the box applies another head, and
