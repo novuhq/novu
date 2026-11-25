@@ -26,6 +26,8 @@ export type CreateIntegrationData = {
   channel?: ChannelTypeEnum;
   kind?: IntegrationKindEnum;
   credentials: Record<string, unknown>;
+  /** Duplicating: the integration whose stored secrets replace the masked values in `credentials`. */
+  secretsSourceIntegrationId?: string;
   configurations?: Record<string, string>;
   name: string;
   identifier?: string;

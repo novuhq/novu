@@ -19,10 +19,10 @@ import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
+  decryptCredentials,
   FeatureFlagsService,
   GetActiveIntegrations,
   GetActiveIntegrationsCommand,
-  GetDecryptedIntegrations,
   IntegrationResponseDto,
   OtelSpan,
   PinoLogger,
@@ -37,6 +37,7 @@ import {
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  maskSecretCredentials,
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
@@ -200,7 +201,7 @@ export class IntegrationsController {
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
     const canAccessCredentials = await this.canUserAccessCredentials(user);
 
-    return await this.getIntegrationsUsecase.execute(
+    const integrations = await this.getIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -209,6 +210,8 @@ export class IntegrationsController {
         scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
+
+    return canAccessCredentials ? integrations.map(withMaskedSecrets) : integrations;
   }
 
   @Get('/active')
@@ -229,7 +232,7 @@ export class IntegrationsController {
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
     const canAccessCredentials = await this.canUserAccessCredentials(user);
 
-    return await this.getActiveIntegrationsUsecase.execute(
+    const integrations = await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -238,6 +241,8 @@ export class IntegrationsController {
         scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
+
+    return canAccessCredentials ? integrations.map(withMaskedSecrets) : integrations;
   }
 
   @Get('/webhook/provider/:providerOrIntegrationId/status')
@@ -299,6 +304,8 @@ export class IntegrationsController {
           channel: body.channel,
           kind: body.kind,
           credentials: body.credentials,
+          // Only callers who may see an integration's credentials may copy its secrets.
+          secretsSourceIntegrationId: canAccessCredentials ? body.secretsSourceIntegrationId : undefined,
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
@@ -308,7 +315,7 @@ export class IntegrationsController {
       );
 
       if (canAccessCredentials) {
-        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+        return withMaskedSecrets(integration);
       }
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
@@ -365,7 +372,7 @@ export class IntegrationsController {
       );
 
       if (canAccessCredentials) {
-        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+        return withMaskedSecrets(integration);
       }
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
@@ -444,7 +451,7 @@ export class IntegrationsController {
     );
 
     if (canAccessCredentials) {
-      return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+      return withMaskedSecrets(integration);
     }
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
@@ -1255,4 +1262,15 @@ export class IntegrationsController {
 
     return user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE);
   }
+}
+
+/**
+ * What a dashboard member with access to credentials gets back: the settings as stored, and each secret as a
+ * mask of its first and last characters. A full secret never leaves the API.
+ */
+function withMaskedSecrets<T extends { providerId: string; credentials?: object }>(integration: T): T {
+  return {
+    ...integration,
+    credentials: maskSecretCredentials(integration.providerId, decryptCredentials(integration.credentials ?? {})),
+  };
 }

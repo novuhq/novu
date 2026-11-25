@@ -1,6 +1,7 @@
-import { IConfigCredential } from '@novu/shared';
+import { IConfigCredential, isMaskedSecret } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Control, ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
+import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
@@ -19,6 +20,7 @@ import {
 import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
+import { SavedSecretField } from './saved-secret-field';
 import { credentialValueToInputString, isSecureCredential } from './utils/helpers';
 
 /** The field's explanation for the "i" next to its label: its tooltip and its description, when it has them. */
@@ -180,28 +182,55 @@ function SecretInputControl({
   isReadOnly,
   tooltip,
   hasError,
+  savedValue,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
   tooltip?: ReactNode;
   hasError?: boolean;
+  /** The mask of the secret on the server, when there is one. */
+  savedValue?: string;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
+
+  if (isMaskedSecret(stringValue)) {
+    return (
+      <>
+        <FormLabel credential={credential} tooltip={tooltip} />
+        <SavedSecretField
+          id={credential.key}
+          label={credential.displayName}
+          maskedValue={stringValue}
+          isReadOnly={isReadOnly}
+          onReplace={() => field.onChange('')}
+        />
+      </>
+    );
+  }
 
   return (
     <>
       <FormLabel credential={credential} tooltip={tooltip} />
-      <FormControl>
-        <SecretInput
-          id={credential.key}
-          placeholder={`Enter ${credential.displayName.toLowerCase()}`}
-          value={stringValue}
-          onChange={field.onChange}
-          disabled={isReadOnly}
-          hasError={hasError}
-        />
-      </FormControl>
+      <div className="flex items-center gap-1.5">
+        <FormControl>
+          <SecretInput
+            id={credential.key}
+            placeholder={`Enter ${credential.displayName.toLowerCase()}`}
+            value={stringValue}
+            onChange={field.onChange}
+            disabled={isReadOnly}
+            hasError={hasError}
+            // Replace swaps the saved secret for this input, so typing can start right away.
+            autoFocus={!!savedValue}
+          />
+        </FormControl>
+        {savedValue && !isReadOnly && (
+          <Button type="button" variant="secondary" mode="ghost" size="sm" onClick={() => field.onChange(savedValue)}>
+            Cancel
+          </Button>
+        )}
+      </div>
     </>
   );
 }
@@ -315,6 +344,7 @@ function InputControl({
   integrationId,
   tooltip,
   isRejected,
+  savedValue,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -325,6 +355,7 @@ function InputControl({
   integrationId?: string;
   tooltip?: ReactNode;
   isRejected?: boolean;
+  savedValue?: string;
 }) {
   if (credential.type === 'pushResources') {
     return <PushResources credential={credential} integrationId={integrationId} />;
@@ -359,6 +390,7 @@ function InputControl({
         isReadOnly={isReadOnly}
         tooltip={tooltip}
         hasError={!!fieldState.error || isRejected}
+        savedValue={savedValue}
       />
     );
   }
@@ -401,16 +433,22 @@ export function CredentialSection({
       name={`${name}.${credential.key}`}
       rules={{
         required: credential.required ? `${credential.displayName} is required` : false,
-        validate: credential.validation?.validate,
-        pattern: credential.validation?.pattern
-          ? {
-              value: credential.validation.pattern,
-              message: credential.validation.message || 'Invalid format',
-            }
-          : undefined,
+        // A saved secret arrives masked, so there is no value to check until it is replaced.
+        validate: (value) => {
+          if (isMaskedSecret(value)) return true;
+
+          const pattern = credential.validation?.pattern;
+          if (pattern && typeof value === 'string' && value !== '' && !pattern.test(value)) {
+            return credential.validation?.message || 'Invalid format';
+          }
+
+          return credential.validation?.validate?.(value) ?? true;
+        },
       }}
-      render={({ field, fieldState }) => {
+      render={({ field, fieldState, formState }) => {
         const isRejected = !!rejectedMessage && !fieldState.isDirty;
+        const defaultValue = formState.defaultValues?.[name]?.[credential.key];
+        const savedValue = isMaskedSecret(defaultValue) ? defaultValue : undefined;
 
         return (
           <FormItem className="mb-2">
@@ -424,6 +462,7 @@ export function CredentialSection({
               integrationId={integrationId}
               tooltip={getCredentialTooltip(credential)}
               isRejected={isRejected}
+              savedValue={savedValue}
             />
 
             {/* The explanation sits behind the label's "i"; only a validation error shows under the field. */}

@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum } from '@novu/shared';
+import { CredentialsKeyEnum, isMaskedSecret } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiBracesLine, RiCornerDownRightLine } from 'react-icons/ri';
@@ -16,6 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Separator } from '@/components/primitives/separator';
 import type { IntegrationFormData } from '../types';
+import { SavedSecretField } from './saved-secret-field';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
@@ -323,14 +324,24 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
               className="text-text-soft"
             />
           </Label>
-          <SecretInput
-            size="2xs"
-            placeholder="Enter signing secret"
-            value={field.value ?? ''}
-            disabled={isReadOnly}
-            onChange={field.onChange}
-            onBlur={field.onBlur}
-          />
+          {isMaskedSecret(field.value) ? (
+            <SavedSecretField
+              label="Signing secret"
+              size="2xs"
+              maskedValue={field.value}
+              isReadOnly={isReadOnly}
+              onReplace={() => field.onChange('')}
+            />
+          ) : (
+            <SecretInput
+              size="2xs"
+              placeholder="Enter signing secret"
+              value={field.value ?? ''}
+              disabled={isReadOnly}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         </div>
       )}
     />

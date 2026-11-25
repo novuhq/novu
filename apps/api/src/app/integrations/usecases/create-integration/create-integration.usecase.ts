@@ -5,12 +5,14 @@ import {
   areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
+  decryptCredentials,
   encryptCredentials,
   PinoLogger,
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import {
   DalException,
+  EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationQuery,
@@ -22,6 +24,8 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  EnvironmentTypeEnum,
+  ICredentialsDto,
   InAppProviderIdEnum,
   IntegrationKindEnum,
   providers,
@@ -30,6 +34,7 @@ import {
 } from '@novu/shared';
 import shortid from 'shortid';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import { restoreMaskedIntegrationCredentials } from '../../utils/restore-masked-integration-credentials';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -175,6 +180,37 @@ export class CreateIntegration {
     }
   }
 
+  /**
+   * The stored secrets of the integration being duplicated. Secrets of a live environment stay there, so a copy
+   * into a development environment gets none.
+   */
+  private async getSecretsToCopy(
+    command: CreateIntegrationCommand,
+    targetEnvironment: EnvironmentEntity
+  ): Promise<ICredentialsDto | undefined> {
+    if (!command.secretsSourceIntegrationId) {
+      return undefined;
+    }
+
+    const source = await this.integrationRepository.findOne({
+      _id: command.secretsSourceIntegrationId,
+      _organizationId: command.organizationId,
+      providerId: command.providerId,
+    });
+    if (!source) {
+      throw new NotFoundException(`Integration with id ${command.secretsSourceIntegrationId} not found`);
+    }
+
+    const sourceEnvironment = await this.environmentRepository.findByIdAndOrganization(
+      source._environmentId,
+      command.organizationId
+    );
+    const leavesLiveEnvironment =
+      sourceEnvironment?.type === EnvironmentTypeEnum.PROD && targetEnvironment.type !== EnvironmentTypeEnum.PROD;
+
+    return leavesLiveEnvironment ? undefined : decryptCredentials(source.credentials ?? {});
+  }
+
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     const environment = await this.environmentRepository.findByIdAndOrganization(
       command.environmentId,
@@ -182,6 +218,14 @@ export class CreateIntegration {
     );
     if (!environment) {
       throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
+    }
+
+    if (command.credentials) {
+      command.credentials = restoreMaskedIntegrationCredentials(
+        command.providerId,
+        command.credentials,
+        await this.getSecretsToCopy(command, environment)
+      );
     }
 
     await this.validate(command);

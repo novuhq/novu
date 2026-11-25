@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum } from '@novu/shared';
+import { CredentialsKeyEnum, isMaskedSecret } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type Control, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiErrorWarningLine, RiLoader4Line } from 'react-icons/ri';
@@ -47,7 +47,9 @@ function formatExpiryWarning(expiresAt: number | undefined): string | null {
 export function WhatsAppCredentialsValidator({ control }: WhatsAppCredentialsValidatorProps) {
   const credentials = useWatch({ control, name: 'credentials' });
 
-  const apiToken = (credentials?.[CredentialsKeyEnum.ApiToken] ?? '').trim();
+  const typedApiToken = (credentials?.[CredentialsKeyEnum.ApiToken] ?? '').trim();
+  // A saved token arrives masked; there is nothing to validate until a new one is typed.
+  const apiToken = isMaskedSecret(typedApiToken) ? '' : typedApiToken;
   const phoneNumberId = (credentials?.[CredentialsKeyEnum.phoneNumberIdentification] ?? '').trim();
   const businessAccountId = (credentials?.[CredentialsKeyEnum.businessAccountId] ?? '').trim();
 
