@@ -37,6 +37,7 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { assertSubscriberTokensEnabled } from '../shared/utils/assert-subscriber-tokens-enabled';
 import {
   assertEnvironmentScopedAccess,
   isEnvironmentScopedAuthScheme,
@@ -45,6 +46,10 @@ import {
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
+import {
+  SubscriberTokensSettingResponseDto,
+  UpdateSubscriberTokensSettingRequestDto,
+} from './dtos/subscriber-tokens-setting.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 import { BuildDashboardInboxHashesCommand } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.command';
 import { BuildDashboardInboxHashes } from './usecases/build-dashboard-inbox-hashes/build-dashboard-inbox-hashes.usecase';
@@ -63,6 +68,8 @@ import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environ
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
+import { UpdateSubscriberTokensSettingCommand } from './usecases/update-subscriber-tokens-setting/update-subscriber-tokens-setting.command';
+import { UpdateSubscriberTokensSetting } from './usecases/update-subscriber-tokens-setting/update-subscriber-tokens-setting.usecase';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -84,6 +91,7 @@ export class EnvironmentsControllerV1 {
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
     private buildDashboardInboxHashesUsecase: BuildDashboardInboxHashes,
+    private updateSubscriberTokensSettingUsecase: UpdateSubscriberTokensSetting,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -234,6 +242,34 @@ export class EnvironmentsControllerV1 {
         color: payload.color,
         dns: payload.dns,
         bridge: payload.bridge,
+      })
+    );
+  }
+
+  @Put('/:environmentId/subscriber-tokens')
+  @ApiOperation({ summary: 'Require signed subscriber tokens for an environment' })
+  @ApiParam({ name: 'environmentId', description: 'The unique identifier of the environment', type: String })
+  @ApiResponse(SubscriberTokensSettingResponseDto)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
+  async updateSubscriberTokensSetting(
+    @UserSession() user: UserSessionData,
+    @Param('environmentId') environmentId: string,
+    @Body() body: UpdateSubscriberTokensSettingRequestDto
+  ): Promise<SubscriberTokensSettingResponseDto> {
+    assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
+    await assertSubscriberTokensEnabled({
+      featureFlagsService: this.featureFlagService,
+      environmentId,
+      organizationId: user.organizationId,
+    });
+
+    return await this.updateSubscriberTokensSettingUsecase.execute(
+      UpdateSubscriberTokensSettingCommand.create({
+        environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        required: body.required,
       })
     );
   }
