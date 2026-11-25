@@ -50,6 +50,7 @@ import { SlackQuickSetup } from './slack-quick-setup';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { TelegramQuickSetup } from './telegram-quick-setup';
 import { ToolWebhookSettings } from './tool-webhook-settings';
+import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-available';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import {
