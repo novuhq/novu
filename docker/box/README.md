@@ -35,6 +35,7 @@ the `verify-in-box` skill (`.agents/skills/verify-in-box/SKILL.md`).
 | `logs [process]` | The last lines of one process (`api`, `worker`, `bridge`, …) or of all of them. `--errors`, `--follow`, `--tail <n>` |
 | `mail [search \| id]` | What the box sent: email, and SMS, push and chat through the sink. A search (`to:a@b.c`, `subject:Welcome`, `tag:sms`), or one message with its headers, links and an HTML check of which email clients break on what |
 | `exec -- <command>` | Runs a command in the box's checkout (`/data/novu`) |
+| `flag [key] [value \| --unset]` | Forces a feature flag to a value (`true`, `5`) in this box only, whatever LaunchDarkly serves, and restarts the API and worker. It's kept in `/data/flags.json`, so it outlasts syncs, applies and sleep; a box from `base` has none. `--unset` gives the flag back to LaunchDarkly; no key lists the forced flags, which `doctor` shows too |
 | `user seed \| create \| list \| channels \| team \| delete` | A sign-in link for the seed user, and dashboard test users (below) |
 | `down` | Saves the box to its snapshot and stops it; the next request or `up` wakes it with its data |
 | `delete` | Stops the box, forgets its snapshot, and deletes its test users |
@@ -56,6 +57,8 @@ PRs get none.
 - The box starts from `base` and applies the PR's head; every push applies the new head (a newer push cancels the
   older run, and the TesterArmy runs still going on the older head). Other events (draft, ready, a label, a new base
   branch) apply only when the box doesn't run the head healthy yet; re-running the job always applies.
+- A `Box flags: IS_A_ENABLED, IS_B_ENABLED` line in the PR description forces those flags on in the box (`flag
+  --only`) on every apply, before TesterArmy starts; without the line the box forces none.
 - One comment on the PR, edited in place, shows the box's address, the applied commit and what was rebuilt, or what
   failed; ⚠️ when the apply ran but `doctor` then found problems. A healthy box is also a GitHub deployment
   (environment `Novu Box`), so the PR shows View deployment; it's removed while the box applies another head, and
@@ -63,11 +66,9 @@ PRs get none.
 - Once the box is healthy, TesterArmy (project Novu Box) tests it: its exploration agent, which reads the PR and
   tests what it changes, and `PR smoke`, a few minutes of the main flows (sign-in, every channel, the API key,
   the editor, digest, an agent in web chat). They report on the PR as checks. The tests live in TesterArmy, not in
-  this repo. Its other groups run every night after the rebake, on `nightly-<run id>`, a fresh copy of `base` that
-  the next night's cleanup deletes: `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one
-  test at a time) and `Full: account` (sign up, onboard, delete). They start through their group webhooks, so
-  TesterArmy posts their failures to Slack (#eng-feed-deployments; passing runs too if the project's Slack settings
-  say so); it never posts runs started through its API, like the PRs'.
+  this repo. Its other groups, `Full` (everything in the dashboard), `Full: Slack` (the agents in Slack, one test at
+  a time) and `Full: account` (sign up, onboard, delete), no longer run from CI. `ci.ts full` still starts them
+  through their group webhooks on `nightly-<run id>`, a fresh copy of `base`, but no workflow calls it.
 - Closing the PR deletes the box, and so does turning it into a draft, moving it off `next` or removing the label
   when it then no longer gets one; the nightly cleanup deletes any such box an event missed. At most 50 PR boxes
   exist at once. PRs from forks get no box.
@@ -205,10 +206,9 @@ only code on the current image, set `BOX_IMAGE` to the image's reference (from `
 list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
-head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow, then runs the full suite
-on `nightly-<run id>`; next to that it deletes the boxes of PRs that are closed or no longer get one, and those of
-earlier runs (`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
-separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow; next to that it deletes
+the boxes of PRs that are closed or no longer get one, and those of earlier runs (`base-next-*`, `nightly-*`) an
+hour idle. Its Run workflow button does the same by hand. A rebake bakes in a separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
 snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
 A new box restores every byte of base's snapshot chain, so the bake and each refresh drop nx's cache before they save
 (base's bake snapshot is about 3.8 GB; pnpm's store and cache stay, so a lockfile change doesn't download again).

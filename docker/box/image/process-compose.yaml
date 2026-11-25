@@ -144,8 +144,11 @@ processes:
   # NODE_COMPILE_CACHE keeps V8's compiled code on /data, so a restart doesn't recompile the unchanged modules.
   # A fresh PM2_HOME per start: on a restart the old pm2-runtime is still shutting down, and on exit it
   # deletes the sockets in its PM2_HOME, which would orphan a new one sharing the folder.
+  # FEATURE_FLAG_OVERRIDES: the flags this box forces (`box flag`), read at every start.
   api:
-    command: PM2_HOME=$(mktemp -d /data/run/pm2-api.XXXXXX) exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
+    command: >-
+      FEATURE_FLAG_OVERRIDES=$(cat /data/flags.json 2>/dev/null) PM2_HOME=$(mktemp -d /data/run/pm2-api.XXXXXX)
+      exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
     working_dir: /data/deploy/api
     environment:
       - PORT=3000
@@ -166,7 +169,9 @@ processes:
       backoff_seconds: 2
 
   worker:
-    command: PM2_HOME=$(mktemp -d /data/run/pm2-worker.XXXXXX) exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
+    command: >-
+      FEATURE_FLAG_OVERRIDES=$(cat /data/flags.json 2>/dev/null) PM2_HOME=$(mktemp -d /data/run/pm2-worker.XXXXXX)
+      exec pm2-runtime start dist/main.js -i $PM2_INSTANCES
     working_dir: /data/deploy/worker
     environment:
       - PORT=3004

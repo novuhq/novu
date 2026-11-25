@@ -1,5 +1,6 @@
 import type { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
+import type { Session as SessionData } from '../types';
 import { isBrowser } from '../utils/is-browser';
 import { InitializeSessionArgs } from './types';
 
@@ -12,6 +13,8 @@ export class Session {
   #token: string | undefined;
   /** Every token issued for the current subscriber and context; cleared when either changes. */
   #tokens = new Set<string>();
+  /** What the server returned for the current subscriber and context; cleared when either changes. */
+  #data: SessionData | undefined;
 
   constructor(
     options: InitializeSessionArgs,
@@ -45,6 +48,14 @@ export class Session {
 
   public get subscriber() {
     return this.#options.subscriber;
+  }
+
+  /**
+   * The latest session the server returned for the current subscriber and context, or `undefined` until one has
+   * resolved. Lets code that starts after `session.initialize.resolved` has fired read what it missed.
+   */
+  public get data(): SessionData | undefined {
+    return this.#data;
   }
 
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
@@ -89,6 +100,7 @@ export class Session {
     if (options) {
       this.#options = options;
       this.#tokens.clear();
+      this.#data = undefined;
     }
     const requested = this.#options;
 
@@ -179,6 +191,7 @@ export class Session {
       if (options === this.#options) {
         this.#token = response.token;
         this.#tokens.add(response.token);
+        this.#data = response;
       }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {

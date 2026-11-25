@@ -1,11 +1,12 @@
 import { createRoot, createSignal } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import type { Novu } from '../../../novu';
+import type { Session } from '../../../types';
 import { createFakeNovu } from '../../testing/fakes';
 import { NotificationStatus, type Tab } from '../../types';
 import { createInboxStore } from './inbox';
 
-const createFakeNovuWithEmitter = () => {
+const createFakeNovuWithEmitter = (session?: Session) => {
   const handlers = new Map<string, (payload: unknown) => void>();
   const on = vi.fn((event: string, handler: (payload: unknown) => void) => {
     handlers.set(event, handler);
@@ -14,7 +15,7 @@ const createFakeNovuWithEmitter = () => {
   });
 
   return {
-    novu: createFakeNovu({ on: on as Novu['on'] }),
+    novu: createFakeNovu({ on: on as Novu['on'], session }),
     emit: (event: string, payload: unknown) => handlers.get(event)?.(payload),
   };
 };
@@ -23,8 +24,8 @@ const createFakeNovuWithEmitter = () => {
  * Effects created inside a root only run once that root has finished, so the store is created inside its own
  * root and every interaction happens outside of it, the way the engine uses it.
  */
-const createStore = (tabs: Tab[] = [], applicationIdentifier?: string) => {
-  const fake = createFakeNovuWithEmitter();
+const createStore = (tabs: Tab[] = [], applicationIdentifier?: string, session?: Session) => {
+  const fake = createFakeNovuWithEmitter(session);
   const [tabsSignal, setTabs] = createSignal(tabs);
   const { store, dispose } = createRoot((dispose) => ({
     dispose,
@@ -106,6 +107,30 @@ describe('inbox store', () => {
     expect(store.contextKeys()).toEqual(['org']);
     expect(store.isKeyless()).toBe(true);
     expect(store.applicationIdentifier()).toBe('pk_keyless_123');
+    dispose();
+  });
+
+  it('takes the settings of a session that resolved before the Inbox mounted', () => {
+    const session = {
+      token: 'token',
+      totalUnreadCount: 0,
+      unreadCount: { total: 0, severity: {} },
+      removeNovuBranding: true,
+      isDevelopmentMode: true,
+      maxSnoozeDurationHours: 24,
+      contextKeys: ['org'],
+    } as unknown as Session;
+    const { store, emit, dispose } = createStore([], 'app', session);
+
+    expect(store.hideBranding()).toBe(true);
+    expect(store.isDevelopmentMode()).toBe(true);
+    expect(store.isSnoozeEnabled()).toBe(true);
+    expect(store.contextKeys()).toEqual(['org']);
+    expect(store.applicationIdentifier()).toBe('app');
+
+    emit('session.initialize.resolved', { data: { ...session, removeNovuBranding: false } });
+
+    expect(store.hideBranding()).toBe(false);
     dispose();
   });
 });
