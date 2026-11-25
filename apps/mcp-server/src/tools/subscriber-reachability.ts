@@ -3,14 +3,15 @@ import { z } from "zod";
 import type { ApiResponse } from "../types/index";
 import { asRecord, asString } from "../utils/activity-format";
 import {
+	type ConnectionLookup,
 	computeSubscriberReachability,
 	type ReachabilityConnection,
 	type ReachabilityEndpoint,
 	type ReachabilityIntegration,
 	type ReachabilityPreferences,
-	type ReachabilitySource,
 	type ReachabilitySubscriber,
 	type ReadFailure,
+	type ReadFailures,
 	type SubscriberReachabilityResult,
 	subscriberDashboardPath,
 	subscriberDisplayName,
@@ -210,38 +211,33 @@ async function checkReachability(
 
 	const endpointsPage = endpoints.ok ? asRecord(endpoints.data) : undefined;
 	const endpointList = asArray(endpointsPage?.data).map(toEndpoint);
-	const referencedConnectionIds = unique(
+	const connectionIds = unique(
 		endpointList
 			.map((endpoint) => endpoint.connectionIdentifier)
 			.filter((identifier): identifier is string => Boolean(identifier)),
 	);
-	const connectionIds = referencedConnectionIds.slice(0, MAX_CONNECTION_LOOKUPS);
-	const connectionReads = await Promise.all(
-		connectionIds.map((identifier) =>
-			read(context, `/v1/channel-connections/${encodeURIComponent(identifier)}`),
+	// A capped number of lookups: the connections past the cap are reported as not checked.
+	const connectionLookups = await Promise.all(
+		connectionIds.map(
+			async (identifier, index): Promise<[string, ConnectionLookup]> => [
+				identifier,
+				index < MAX_CONNECTION_LOOKUPS
+					? await lookUpConnection(context, identifier)
+					: { status: "unchecked" },
+			],
 		),
 	);
 
-	const failures: Partial<Record<ReachabilitySource, ReadFailure>> = {};
+	const failures: ReadFailures = {};
 	const sources = { criticalPreferences, endpoints, integrations, preferences };
 	for (const [source, response] of Object.entries(sources) as Array<
-		[ReachabilitySource, ApiCallResult]
+		[keyof ReadFailures, ApiCallResult]
 	>) {
 		if (!response.ok) failures[source] = toReadFailure(response);
 	}
-	// A deleted connection is a finding ("no connection"), not a failed read.
-	const connectionFailures: Record<string, ReadFailure> = {};
-	connectionReads.forEach((response, index) => {
-		if (!response.ok && response.status !== 404) {
-			connectionFailures[connectionIds[index]] = toReadFailure(response);
-		}
-	});
 
 	return computeSubscriberReachability({
-		connectionFailures,
-		connections: connectionReads.flatMap((response) =>
-			response.ok ? [toConnection(asRecord(response.data) ?? {})] : [],
-		),
+		connections: Object.fromEntries(connectionLookups),
 		criticalPreferences: criticalPreferences.ok
 			? toPreferences(criticalPreferences.data)
 			: undefined,
@@ -257,14 +253,29 @@ async function checkReachability(
 					)
 					.map(toIntegration)
 			: [],
-		// One page of endpoints and a capped number of connection lookups: what's left over is "not checked".
-		limits: {
-			endpointsTruncated: Boolean(endpointsPage?.next),
-			uncheckedConnectionIds: referencedConnectionIds.slice(MAX_CONNECTION_LOOKUPS),
-		},
+		// One page of endpoints: what's left over is "not checked".
+		limits: { endpointsTruncated: Boolean(endpointsPage?.next) },
 		preferences: preferences.ok ? toPreferences(preferences.data) : undefined,
 		subscriber,
 	});
+}
+
+/** A deleted connection (404) is a finding ("no connection"), not a failed read. */
+async function lookUpConnection(
+	context: ToolContext,
+	identifier: string,
+): Promise<ConnectionLookup> {
+	const response = await read(
+		context,
+		`/v1/channel-connections/${encodeURIComponent(identifier)}`,
+	);
+	if (response.ok) {
+		return { connection: toConnection(asRecord(response.data) ?? {}), status: "found" };
+	}
+
+	return response.status === 404
+		? { status: "missing" }
+		: { failure: toReadFailure(response), status: "failed" };
 }
 
 /** One GET that never throws: a network error comes back as a failed call with status 0. */
@@ -365,7 +376,6 @@ function toConnection(raw: Json): ReachabilityConnection {
 	return {
 		contextKeys: contextKeysOf(raw),
 		hasWorkspaceId: Boolean(asRecord(raw.workspace)?.id),
-		identifier: String(raw.identifier ?? ""),
 	};
 }
 

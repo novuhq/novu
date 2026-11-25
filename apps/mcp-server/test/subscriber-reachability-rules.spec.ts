@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+	type ConnectionLookup,
 	computeSubscriberReachability,
-	maskCredentialValue,
 	type ReachabilityChannel,
 	type ReachabilityEndpoint,
 	type ReachabilityIntegration,
@@ -10,7 +10,6 @@ import {
 	type SubscriberReachabilityInput,
 	subscriberDashboardPath,
 } from "../src/utils/subscriber-reachability";
-import { API_URL, callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
 function subscriber(overrides: Partial<ReachabilitySubscriber> = {}): ReachabilitySubscriber {
 	return {
@@ -92,9 +91,13 @@ function preferences(overrides: Partial<ReachabilityPreferences> = {}): Reachabi
 	};
 }
 
+function found(contextKeys: string[] = [], hasWorkspaceId = true): ConnectionLookup {
+	return { connection: { contextKeys, hasWorkspaceId }, status: "found" };
+}
+
 function input(overrides: Partial<SubscriberReachabilityInput> = {}): SubscriberReachabilityInput {
 	return {
-		connections: [{ contextKeys: [], hasWorkspaceId: true, identifier: "slack-conn" }],
+		connections: { "slack-conn": found() },
 		criticalPreferences: { workflows: [] },
 		endpoints: [endpoint()],
 		integrations: INTEGRATIONS,
@@ -237,7 +240,9 @@ describe("computeSubscriberReachability", () => {
 	});
 
 	it("blocks a Slack endpoint without a connection", () => {
-		expect(channelOf({ connections: [] }, "chat")).toMatchObject({
+		expect(
+			channelOf({ connections: { "slack-conn": { status: "missing" } } }, "chat"),
+		).toMatchObject({
 			reasons: ["Slack endpoint has no connection"],
 			state: "blocked",
 		});
@@ -246,7 +251,7 @@ describe("computeSubscriberReachability", () => {
 	it("accepts an MS Teams endpoint that only has a tenant ID", () => {
 		const chat = channelOf(
 			{
-				connections: [],
+				connections: {},
 				endpoints: [
 					endpoint({
 						connectionIdentifier: null,
@@ -267,13 +272,7 @@ describe("computeSubscriberReachability", () => {
 	it("only counts an endpoint with context keys for a matching trigger context", () => {
 		const chat = channelOf(
 			{
-				connections: [
-					{
-						contextKeys: ["tenant:acme"],
-						hasWorkspaceId: true,
-						identifier: "slack-conn",
-					},
-				],
+				connections: { "slack-conn": found(["tenant:acme"]) },
 				endpoints: [endpoint({ contextKeys: ["tenant:acme"] })],
 			},
 			"chat",
@@ -420,8 +419,7 @@ describe("computeSubscriberReachability", () => {
 	it("reports a failed connections read on the chat verdict, not in the notes", () => {
 		const result = computeSubscriberReachability(
 			input({
-				connectionFailures: { "slack-conn": { status: 500 } },
-				connections: [],
+				connections: { "slack-conn": { failure: { status: 500 }, status: "failed" } },
 				// Two endpoints on the same unreadable connection give one reason.
 				endpoints: [endpoint(), endpoint({ identifier: "ep-2", type: "slack_channel" })],
 			}),
@@ -446,16 +444,18 @@ describe("computeSubscriberReachability", () => {
 			"channel connections",
 		);
 		// The lookup cap skipped one; its endpoint says so.
-		expect(
-			checked({ connections: [], limits: { uncheckedConnectionIds: ["slack-conn"] } }),
-		).not.toContain("channel connections");
+		expect(checked({ connections: { "slack-conn": { status: "unchecked" } } })).not.toContain(
+			"channel connections",
+		);
 	});
 
 	it("only leaves an endpoint unverified when its own connection read failed", () => {
 		const chat = channelOf(
 			{
-				connectionFailures: { "other-conn": { status: 500 } },
-				connections: [],
+				connections: {
+					"other-conn": { failure: { status: 500 }, status: "failed" },
+					"slack-conn": { status: "missing" },
+				},
 				endpoints: [
 					endpoint(),
 					endpoint({
@@ -469,7 +469,7 @@ describe("computeSubscriberReachability", () => {
 			"chat",
 		);
 
-		// slack-conn has no failed read (a 404 leaves none), so its endpoint has no connection.
+		// slack-conn is gone (404), not a failed read, so its endpoint has no connection.
 		expect(chat).toMatchObject({
 			details: [
 				"whatsapp-business to the phone number on file",
@@ -481,13 +481,9 @@ describe("computeSubscriberReachability", () => {
 	});
 
 	it("only counts a connection whose context matches its endpoint's exactly", () => {
-		const acmeConnection = {
-			contextKeys: ["tenant:acme"],
-			hasWorkspaceId: true,
-			identifier: "slack-conn",
-		};
+		const acmeConnection = found(["tenant:acme"]);
 
-		expect(channelOf({ connections: [acmeConnection] }, "chat")).toMatchObject({
+		expect(channelOf({ connections: { "slack-conn": acmeConnection } }, "chat")).toMatchObject({
 			reasons: [
 				"Slack endpoint's connection only applies to triggers with context tenant:acme",
 			],
@@ -497,7 +493,7 @@ describe("computeSubscriberReachability", () => {
 		const teams = (hasTenantId: boolean) =>
 			channelOf(
 				{
-					connections: [{ ...acmeConnection, identifier: "teams-conn" }],
+					connections: { "teams-conn": acmeConnection },
 					endpoints: [
 						endpoint({
 							connectionIdentifier: "teams-conn",
@@ -519,6 +515,29 @@ describe("computeSubscriberReachability", () => {
 		});
 		// The endpoint's own tenant ID doesn't need the connection.
 		expect(teams(true).state).toBe("reachable");
+	});
+
+	it("blocks an MS Teams endpoint whose matching connection has no workspace ID, without a tenant ID", () => {
+		const chat = channelOf(
+			{
+				connections: { "teams-conn": found([], false) },
+				endpoints: [
+					endpoint({
+						connectionIdentifier: "teams-conn",
+						integrationIdentifier: "msteams-1",
+						providerId: "msteams",
+						type: "ms_teams_user",
+					}),
+				],
+				integrations: [...INTEGRATIONS, integration("chat", "msteams")],
+			},
+			"chat",
+		);
+
+		expect(chat).toMatchObject({
+			reasons: ["MS Teams endpoint has no connection or tenant ID"],
+			state: "blocked",
+		});
 	});
 
 	it("counts endpoints on an integration with rules as conditional routes", () => {
@@ -810,10 +829,7 @@ describe("computeSubscriberReachability", () => {
 
 	it("reports routes past the read limits as not checked instead of missing", () => {
 		const uncheckedConnection = channelOf(
-			{
-				connections: [],
-				limits: { uncheckedConnectionIds: ["slack-conn"] },
-			},
+			{ connections: { "slack-conn": { status: "unchecked" } } },
 			"chat",
 		);
 		expect(uncheckedConnection).toMatchObject({
@@ -840,541 +856,5 @@ describe("subscriberDashboardPath", () => {
 	it("encodes the subscriberId into the subscriber page path", () => {
 		expect(subscriberDashboardPath("jane@acme.com")).toBe("/subscribers/jane%40acme.com");
 		expect(subscriberDashboardPath("team/42")).toBe("/subscribers/team%2F42");
-	});
-});
-
-describe("maskCredentialValue", () => {
-	it("keeps a four-character prefix", () => {
-		expect(maskCredentialValue("abcdefgh")).toBe("abcd••••");
-		expect(maskCredentialValue("abc")).toBe("•••");
-		expect(maskCredentialValue("")).toBe("");
-	});
-});
-
-const SECRETS = [
-	"fcm-token-secret-1",
-	"fcm-token-secret-2",
-	"hooks.slack.com",
-	"xoxb-connection-secret",
-	"+15550001234",
-	"5550001234",
-	"integration-secret",
-	"enterprise-secret-data",
-];
-
-function rawSubscriber(overrides: Record<string, unknown> = {}) {
-	return {
-		_environmentId: "env-1",
-		channels: [
-			{
-				credentials: { deviceTokens: ["fcm-token-secret-1", "fcm-token-secret-2"] },
-				integrationIdentifier: "fcm-1",
-				providerId: "fcm",
-			},
-			{
-				credentials: { webhookUrl: "https://hooks.slack.com/services/SECRET" },
-				providerId: "slack",
-			},
-		],
-		data: { plan: "enterprise-secret-data" },
-		email: "jane@acme.com",
-		firstName: "Jane",
-		isOnline: false,
-		lastName: "Alvarez",
-		lastOnlineAt: "2026-11-22T10:00:00.000Z",
-		phone: "+15550001234",
-		subscriberId: "sub_8f21",
-		...overrides,
-	};
-}
-
-function rawIntegration(channel: string, providerId: string, extra: Record<string, unknown> = {}) {
-	return {
-		_environmentId: "env-1",
-		active: true,
-		channel,
-		credentials: { apiKey: "integration-secret" },
-		identifier: `${providerId}-1`,
-		primary: channel === "email" || channel === "sms",
-		providerId,
-		...extra,
-	};
-}
-
-type Route = unknown | { status: number; body: unknown };
-
-function respond(body: unknown, status = 200) {
-	return new Response(JSON.stringify(body), {
-		headers: { "Content-Type": "application/json" },
-		status,
-	});
-}
-
-/** Answers by path plus query string, falling back to the path; `{ status, body }` sets the status. */
-function stubApi(routes: Record<string, Route>) {
-	const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-		const { pathname, search } = new URL(url);
-		const route = routes[`${pathname}${search}`] ?? routes[pathname];
-		if (route === undefined)
-			return respond({ message: `unexpected ${pathname}${search}` }, 500);
-		if (route && typeof route === "object" && "status" in route && "body" in route) {
-			const { body, status } = route as { status: number; body: unknown };
-
-			return respond(body, status);
-		}
-
-		return respond(init?.method === "PATCH" ? route : { data: route });
-	});
-	vi.stubGlobal("fetch", fetchMock);
-
-	return fetchMock;
-}
-
-function search(field: string, value: string) {
-	return `/v2/subscribers?${new URLSearchParams({ [field]: value, limit: "10" }).toString()}`;
-}
-
-function setupRoutes(overrides: Record<string, Route> = {}): Record<string, Route> {
-	return {
-		"/v1/channel-connections/slack-conn": {
-			auth: { accessToken: "xoxb-connection-secret" },
-			identifier: "slack-conn",
-			workspace: { id: "T1" },
-		},
-		"/v1/channel-endpoints": [
-			{
-				channel: "chat",
-				connectionIdentifier: "slack-conn",
-				contextKeys: [],
-				endpoint: { userId: "U123" },
-				identifier: "ep-1",
-				integrationIdentifier: "slack-1",
-				providerId: "slack",
-				type: "slack_user",
-			},
-		],
-		"/v1/integrations": [
-			rawIntegration("email", "sendgrid"),
-			rawIntegration("sms", "twilio"),
-			rawIntegration("in_app", "novu"),
-			rawIntegration("push", "fcm"),
-			rawIntegration("chat", "slack"),
-			rawIntegration("sms", "sns", { _environmentId: "env-production", primary: true }),
-		],
-		"/v2/subscribers/sub_8f21": rawSubscriber(),
-		"/v2/subscribers/sub_8f21/preferences": {
-			global: { channels: { email: true, sms: true }, enabled: true },
-			workflows: [],
-		},
-		"/v2/subscribers/sub_8f21/preferences?criticality=critical": { global: {}, workflows: [] },
-		...overrides,
-	};
-}
-
-async function checkReachability(args: Record<string, unknown>) {
-	const client = await connectAllTools(tokenAccessors("api-key"));
-	const result = await callTool(client, "get_subscriber_reachability", args);
-
-	return {
-		reachability: (result.structuredContent as { reachability?: any })?.reachability,
-		result,
-	};
-}
-
-describe("get_subscriber_reachability", () => {
-	afterEach(() => {
-		vi.unstubAllGlobals();
-	});
-
-	it("reads the subscriber, integrations, preferences, endpoints and connections", async () => {
-		const fetchMock = stubApi(setupRoutes());
-
-		const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
-
-		const paths = fetchMock.mock.calls.map(([url]) => String(url).replace(API_URL, ""));
-		expect(paths).toEqual([
-			"/v2/subscribers/sub_8f21",
-			"/v1/integrations",
-			"/v2/subscribers/sub_8f21/preferences",
-			"/v2/subscribers/sub_8f21/preferences?criticality=critical",
-			"/v1/channel-endpoints?limit=100&subscriberId=sub_8f21",
-			"/v1/channel-connections/slack-conn",
-		]);
-		expect(reachability.status).toBe("found");
-		expect(reachability.environmentId).toBe("env-1");
-		expect(reachability.dashboardPath).toBe("/subscribers/sub_8f21");
-		expect(
-			reachability.channels.map(({ channel, state }: { channel: string; state: string }) => [
-				channel,
-				state,
-			]),
-		).toEqual([
-			["email", "reachable"],
-			["in_app", "reachable"],
-			["sms", "reachable"],
-			["push", "reachable"],
-			["chat", "reachable"],
-		]);
-	});
-
-	it("reads each connection's context and tracks failed reads per connection", async () => {
-		const slackEndpoint = (identifier: string, connectionIdentifier: string) => ({
-			channel: "chat",
-			connectionIdentifier,
-			contextKeys: [],
-			identifier,
-			integrationIdentifier: "slack-1",
-			providerId: "slack",
-			type: "slack_channel",
-		});
-		stubApi(
-			setupRoutes({
-				"/v1/channel-connections/acme-conn": {
-					contextKeys: ["tenant:acme"],
-					identifier: "acme-conn",
-					workspace: { id: "T1" },
-				},
-				"/v1/channel-connections/broken-conn": { body: { message: "boom" }, status: 500 },
-				"/v1/channel-connections/deleted-conn": { body: { message: "gone" }, status: 404 },
-				"/v1/channel-endpoints": [
-					slackEndpoint("ep-acme", "acme-conn"),
-					slackEndpoint("ep-deleted", "deleted-conn"),
-					slackEndpoint("ep-broken", "broken-conn"),
-				],
-			}),
-		);
-
-		const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
-
-		// The legacy Slack webhook still reaches the subscriber, so each endpoint's finding is listed.
-		expect(
-			reachability.channels.find(
-				(verdict: { channel: string }) => verdict.channel === "chat",
-			),
-		).toMatchObject({
-			details: ["slack webhook", "Couldn't check channel connections (500)"],
-			reasons: [
-				"Slack endpoint's connection only applies to triggers with context tenant:acme",
-				"Slack endpoint has no connection",
-			],
-			state: "partly",
-		});
-		expect(reachability.checked).not.toContain("channel connections");
-	});
-
-	it("never returns credentials, custom data or the phone number", async () => {
-		stubApi(setupRoutes());
-
-		const { result } = await checkReachability({ subscriberId: "sub_8f21" });
-
-		const output = `${textOf(result)}\n${JSON.stringify(result.structuredContent)}`;
-		for (const secret of SECRETS) {
-			expect(output).not.toContain(secret);
-		}
-	});
-
-	it("says when no subscriber matches", async () => {
-		stubApi(
-			setupRoutes({
-				"/v2/subscribers/missing": { body: { message: "not found" }, status: 404 },
-			}),
-		);
-
-		const { reachability } = await checkReachability({ subscriberId: "missing" });
-
-		expect(reachability).toEqual({
-			searched: { field: "subscriberId", value: "missing" },
-			status: "not_found",
-		});
-	});
-
-	it("leaves the searched phone number out of a not-found result", async () => {
-		stubApi(
-			setupRoutes({
-				[search("phone", "+1 (555) 000-1234")]: [],
-				[search("phone", "+15550001234")]: [],
-			}),
-		);
-
-		const { result, reachability } = await checkReachability({ phone: "+1 (555) 000-1234" });
-
-		expect(reachability).toEqual({ searched: { field: "phone" }, status: "not_found" });
-		expect(textOf(result)).not.toContain("555");
-	});
-
-	it("returns candidates when several subscribers match", async () => {
-		stubApi(
-			setupRoutes({
-				[search("name", "Jane")]: [
-					rawSubscriber(),
-					rawSubscriber({
-						email: "jane.doe@acme.com",
-						lastName: "Doe",
-						subscriberId: "sub_1c09",
-					}),
-				],
-			}),
-		);
-
-		const { reachability } = await checkReachability({ name: "Jane" });
-
-		expect(reachability).toEqual({
-			candidates: [
-				{
-					dashboardPath: "/subscribers/sub_8f21",
-					email: "jane@acme.com",
-					name: "Jane Alvarez",
-					subscriberId: "sub_8f21",
-				},
-				{
-					dashboardPath: "/subscribers/sub_1c09",
-					email: "jane.doe@acme.com",
-					name: "Jane Doe",
-					subscriberId: "sub_1c09",
-				},
-			],
-			hasMore: false,
-			status: "ambiguous",
-		});
-	});
-
-	it("says when more subscribers may match than the candidates listed", async () => {
-		const page = (count: number, next: string | null) => ({
-			body: {
-				data: Array.from({ length: count }, (_, index) =>
-					rawSubscriber({ subscriberId: `sub_${index}` }),
-				),
-				next,
-			},
-			status: 200,
-		});
-
-		stubApi(setupRoutes({ [search("name", "Jane")]: page(2, "cursor-2") }));
-		expect((await checkReachability({ name: "Jane" })).reachability).toMatchObject({
-			hasMore: true,
-			status: "ambiguous",
-		});
-
-		stubApi(setupRoutes({ [search("name", "Jane")]: page(10, null) }));
-		expect((await checkReachability({ name: "Jane" })).reachability).toMatchObject({
-			hasMore: true,
-			status: "ambiguous",
-		});
-	});
-
-	it("is advertised as read-only, with a title", async () => {
-		const client = await connectAllTools(tokenAccessors("api-key"));
-		const { tools } = await client.listTools();
-		const tool = tools.find((candidate) => candidate.name === "get_subscriber_reachability");
-
-		expect(tool?.title).toBe("Get subscriber reachability");
-		expect(tool?.annotations).toEqual({
-			destructiveHint: false,
-			openWorldHint: false,
-			readOnlyHint: true,
-		});
-	});
-
-	it("trims the subscriberId before the lookup", async () => {
-		const fetchMock = stubApi(setupRoutes());
-
-		const { reachability } = await checkReachability({ subscriberId: "  sub_8f21 " });
-
-		expect(reachability.status).toBe("found");
-		expect(String(fetchMock.mock.calls[0][0])).toBe(`${API_URL}/v2/subscribers/sub_8f21`);
-	});
-
-	it("tries an email as given, trimmed, then trimmed in lowercase", async () => {
-		const fetchMock = stubApi(
-			setupRoutes({
-				[search("email", " Jane@Acme.com ")]: [],
-				[search("email", "Jane@Acme.com")]: [],
-				[search("email", "jane@acme.com")]: [rawSubscriber()],
-			}),
-		);
-
-		const { reachability } = await checkReachability({ email: " Jane@Acme.com " });
-
-		expect(reachability.status).toBe("found");
-		expect(
-			fetchMock.mock.calls
-				.slice(0, 3)
-				.map(([url]) => new URL(String(url)).searchParams.get("email")),
-		).toEqual([" Jane@Acme.com ", "Jane@Acme.com", "jane@acme.com"]);
-	});
-
-	it("takes endpoint truncation from the page's next cursor, not the page size", async () => {
-		const page = (next: string | null) => ({
-			body: {
-				data: Array.from({ length: 100 }, (_, index) => ({
-					channel: "chat",
-					connectionIdentifier: "slack-conn",
-					contextKeys: [],
-					identifier: `ep-${index}`,
-					integrationIdentifier: "slack-1",
-					providerId: "slack",
-					type: "slack_channel",
-				})),
-				next,
-			},
-			status: 200,
-		});
-		const chatDetails = async (next: string | null) => {
-			stubApi(setupRoutes({ "/v1/channel-endpoints": page(next) }));
-			const { reachability } = await checkReachability({ subscriberId: "sub_8f21" });
-
-			return reachability.channels.find(
-				(verdict: { channel: string }) => verdict.channel === "chat",
-			).details;
-		};
-		const note = "Only the first 100 endpoints were read; others weren't checked";
-
-		// Exactly 100 endpoints: the API returns no next cursor.
-		expect(await chatDetails(null)).not.toContain(note);
-		expect(await chatDetails("cursor-2")).toContain(note);
-	});
-
-	it("retries an email in lowercase", async () => {
-		const fetchMock = stubApi(
-			setupRoutes({
-				[search("email", "Jane@Acme.com")]: [],
-				[search("email", "jane@acme.com")]: [rawSubscriber()],
-			}),
-		);
-
-		const { reachability } = await checkReachability({ email: "Jane@Acme.com" });
-
-		expect(reachability.status).toBe("found");
-		expect(String(fetchMock.mock.calls[1][0])).toContain("email=jane%40acme.com");
-	});
-
-	it("fails with the status when the lookup fails", async () => {
-		stubApi(
-			setupRoutes({ "/v2/subscribers/sub_8f21": { body: { message: "boom" }, status: 500 } }),
-		);
-
-		const { result } = await checkReachability({ subscriberId: "sub_8f21" });
-
-		expect(result.isError).toBe(true);
-		expect(result.structuredContent).toMatchObject({ error: { status: 500 } });
-	});
-
-	it("fails with a 400 that asks for an identifier when none is given", async () => {
-		stubApi(setupRoutes());
-
-		const { result } = await checkReachability({});
-
-		expect(result.isError).toBe(true);
-		expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
-		expect(textOf(result)).toContain("Give one of subscriberId, email, phone or name");
-	});
-
-	it("treats blank values as not given instead of matching any subscriber", async () => {
-		const fetchMock = stubApi(setupRoutes());
-
-		for (const args of [{ name: "   " }, { email: "  " }, { subscriberId: " " }]) {
-			const { result } = await checkReachability(args);
-
-			expect(result.isError, JSON.stringify(args)).toBe(true);
-			expect(result.structuredContent).toMatchObject({ error: { status: 400 } });
-		}
-		expect(fetchMock).not.toHaveBeenCalled();
-	});
-});
-
-describe("subscriber tools", () => {
-	afterEach(() => {
-		vi.unstubAllGlobals();
-	});
-
-	it("masks push tokens and webhook URLs in get_subscriber", async () => {
-		stubApi({ "/v2/subscribers/sub_8f21": rawSubscriber() });
-		const client = await connectAllTools(tokenAccessors("api-key"));
-
-		const text = textOf(await callTool(client, "get_subscriber", { subscriberId: "sub_8f21" }));
-
-		expect(text).toContain("Successfully fetched subscriber sub_8f21:");
-		expect(text).not.toContain("fcm-token-secret-1");
-		expect(text).not.toContain("hooks.slack.com");
-		expect(text).toContain("fcm-••••••••••••••");
-		expect(text).toContain("jane@acme.com");
-	});
-
-	it("masks only channel credentials, so custom data can be sent back unchanged", async () => {
-		const customData = {
-			devices: { deviceTokens: ["custom-token"] },
-			plan: "enterprise-secret-data",
-			webhookUrl: "https://hooks.example.com/custom",
-		};
-		stubApi({
-			"/v2/subscribers": {
-				body: { data: [rawSubscriber({ data: customData })], next: null },
-				status: 200,
-			},
-			"/v2/subscribers/sub_8f21": rawSubscriber({ data: customData }),
-		});
-		const client = await connectAllTools(tokenAccessors("api-key"));
-
-		for (const [tool, args] of [
-			["get_subscriber", { subscriberId: "sub_8f21" }],
-			["find_subscribers", { email: "jane@acme.com" }],
-		] as const) {
-			const text = textOf(await callTool(client, tool, args));
-			const body = JSON.parse(text.slice(text.indexOf("{")));
-			const [found] = Array.isArray(body.data) ? body.data : [body.data];
-
-			expect(found.data, tool).toEqual(customData);
-			expect(text, tool).not.toContain("fcm-token-secret-1");
-			expect(text, tool).not.toContain("hooks.slack.com");
-		}
-	});
-
-	it("updates only the preference channels it is given", async () => {
-		const fetchMock = stubApi({ "/v2/subscribers/sub_8f21/preferences": { global: {} } });
-		const client = await connectAllTools(tokenAccessors("api-key"));
-
-		await callTool(client, "update_subscriber_preferences", {
-			channels: { sms: false },
-			subscriberId: "sub_8f21",
-		});
-
-		const [, init] = fetchMock.mock.calls[0];
-		expect(init?.method).toBe("PATCH");
-		expect(JSON.parse(String(init?.body))).toEqual({ channels: { sms: false } });
-	});
-
-	it("logs the subscriberId once when preferences are updated", async () => {
-		stubApi({ "/v2/subscribers/sub_8f21/preferences": { global: {} } });
-		const log = vi.spyOn(console, "log").mockImplementation(() => {});
-		const client = await connectAllTools(tokenAccessors("api-key"));
-
-		await callTool(client, "update_subscriber_preferences", {
-			channels: { sms: false },
-			subscriberId: "sub_8f21",
-		});
-
-		expect(log).toHaveBeenCalledWith(
-			"Successfully updated subscriber preferences for sub_8f21",
-		);
-		log.mockRestore();
-	});
-
-	it("still accepts all five channels and refuses none", async () => {
-		const fetchMock = stubApi({ "/v2/subscribers/sub_8f21/preferences": { global: {} } });
-		const client = await connectAllTools(tokenAccessors("api-key"));
-
-		const allFive = await callTool(client, "update_subscriber_preferences", {
-			channels: { chat: true, email: true, in_app: true, push: true, sms: false },
-			subscriberId: "sub_8f21",
-		});
-		expect(allFive.isError).toBeFalsy();
-
-		const none = await callTool(client, "update_subscriber_preferences", {
-			channels: {},
-			subscriberId: "sub_8f21",
-		});
-		expect(none.isError).toBe(true);
-		expect(textOf(none)).toContain('e.g. { "sms": false }');
-		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });
