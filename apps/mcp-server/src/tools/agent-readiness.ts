@@ -14,7 +14,6 @@ const READ_ONLY = { destructiveHint: false, openWorldHint: false, readOnlyHint: 
 /** The dashboard reads an agent's channels in one page of this size. */
 const LINKS_READ_LIMIT = 100;
 
-type Json = Record<string, unknown>;
 type FailedCall = Extract<ApiCallResult, { ok: false }>;
 
 const agentReadinessSchema = z.object({
@@ -23,7 +22,7 @@ const agentReadinessSchema = z.object({
 
 /**
  * `get_agent_readiness`: whether one agent can reply on each of its channels, and why not. Built
- * from the agent, its plan usage and its channel links; none of those reads returns a credential,
+ * from the agent and its channel links; neither read returns a credential,
  * and the bridge URLs lose their user info and query string before the rules run.
  */
 export function registerAgentReadinessTool(server: McpServer, accessors: ToolAccessors) {
@@ -32,13 +31,8 @@ export function registerAgentReadinessTool(server: McpServer, accessors: ToolAcc
 		description:
 			"Check whether one agent can reply on each channel connected to it, and why not: the agent is inactive, past a plan limit, has no bridge URL, the channel has received no message yet, or the email inbox is off. Also returns the bridge (managed, local or URL). Covers setup, not message history: use get_conversations for that. Never returns credentials, tokens or setup links.",
 		handler: async ({ identifier }, context) => {
-			const [agent, listed, links] = await Promise.all([
+			const [agent, links] = await Promise.all([
 				read(context, agentResourcePath(identifier)),
-				read(
-					context,
-					`/v1/agents?${new URLSearchParams({ identifier, limit: String(LINKS_READ_LIMIT) })}`,
-					{ unwrapData: false },
-				),
 				read(
 					context,
 					`${agentResourcePath(identifier)}/integrations?${new URLSearchParams({ limit: String(LINKS_READ_LIMIT) })}`,
@@ -50,16 +44,14 @@ export function registerAgentReadinessTool(server: McpServer, accessors: ToolAcc
 				return agentError(identifier, agent);
 			}
 
+			const linkRows = links.ok ? rows(links.data) : undefined;
 			const result = buildAgentReadiness({
 				agent: agent.data,
-				links: links.ok ? rows(links.data) : { error: couldNotCheck("channels", links) },
-				planLimit: listed.ok
-					? {
-							exceeded:
-								findListed(rows(listed.data), identifier)?.exceedsPlanLimit ===
-								true,
-						}
-					: { error: couldNotCheck("the agent's plan limit", listed) },
+				links: linkRows ?? {
+					error: links.ok
+						? "couldn't check channels: unexpected response"
+						: couldNotCheck("channels", links),
+				},
 			});
 			if (!result) {
 				return ToolFactory.errorResult({
@@ -95,19 +87,12 @@ async function read(
 	}
 }
 
-function rows(payload: unknown): unknown[] {
+/** A paginated list's rows, or `undefined` for a response without them. */
+function rows(payload: unknown): unknown[] | undefined {
 	const data =
 		payload && typeof payload === "object" ? (payload as { data?: unknown }).data : undefined;
 
-	return Array.isArray(data) ? data : [];
-}
-
-/** The list matches identifiers by substring, so only an exact match counts. */
-function findListed(agents: unknown[], identifier: string): Json | undefined {
-	return agents.find(
-		(agent): agent is Json =>
-			!!agent && typeof agent === "object" && (agent as Json).identifier === identifier,
-	);
+	return Array.isArray(data) ? data : undefined;
 }
 
 function couldNotCheck(what: string, failure: FailedCall): string {

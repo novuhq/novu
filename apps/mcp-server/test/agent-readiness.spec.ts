@@ -14,7 +14,6 @@ const SECRETS = [
 ];
 
 const AGENT_PATH = "/v1/agents/support-bot";
-const LIST_PATH = "/v1/agents?identifier=support-bot&limit=100";
 const LINKS_PATH = "/v1/agents/support-bot/integrations?limit=100";
 
 function rawAgent(overrides: Record<string, unknown> = {}) {
@@ -28,6 +27,10 @@ function rawAgent(overrides: Record<string, unknown> = {}) {
 		runtime: "managed",
 		...overrides,
 	};
+}
+
+function selfHosted(overrides: Record<string, unknown> = {}) {
+	return rawAgent({ managedRuntime: undefined, runtime: "self-hosted", ...overrides });
 }
 
 function link(providerId: string, identifier: string, overrides: Record<string, unknown> = {}) {
@@ -50,19 +53,16 @@ function link(providerId: string, identifier: string, overrides: Record<string, 
 	};
 }
 
+const CONNECTED = "2026-11-20T10:00:00.000Z";
+
 function routes(overrides: Routes = {}): Routes {
 	return {
 		[AGENT_PATH]: rawAgent(),
 		[LINKS_PATH]: respond(200, {
 			data: [
-				link("slack", "slack-1", { connectedAt: "2026-11-20T10:00:00.000Z" }),
+				link("slack", "slack-1", { connectedAt: CONNECTED }),
 				link("whatsapp-business", "whatsapp-1"),
 			],
-			next: null,
-			previous: null,
-		}),
-		[LIST_PATH]: respond(200, {
-			data: [rawAgent({ identifier: "support-bot-old" }), rawAgent()],
 			next: null,
 			previous: null,
 		}),
@@ -70,8 +70,7 @@ function routes(overrides: Routes = {}): Routes {
 	};
 }
 
-async function readiness(routeOverrides: Routes = {}) {
-	stubApi(routes(routeOverrides));
+async function callReadiness() {
 	const client = await connectAllTools(tokenAccessors("key"), "us", [
 		...DEFAULT_TOOLSETS,
 		"agent-setup",
@@ -87,6 +86,12 @@ async function readiness(routeOverrides: Routes = {}) {
 		text,
 		value: result.isError ? undefined : (JSON.parse(text) as AgentReadinessResult),
 	};
+}
+
+async function readiness(routeOverrides: Routes = {}) {
+	stubApi(routes(routeOverrides));
+
+	return callReadiness();
 }
 
 afterEach(() => {
@@ -134,9 +139,7 @@ describe("get_agent_readiness", () => {
 
 	it("blocks every channel of an inactive agent or one past the plan's agent limit", async () => {
 		const inactive = await readiness({ [AGENT_PATH]: rawAgent({ active: false }) });
-		const overLimit = await readiness({
-			[LIST_PATH]: respond(200, { data: [rawAgent({ exceedsPlanLimit: true })] }),
-		});
+		const overLimit = await readiness({ [AGENT_PATH]: rawAgent({ exceedsPlanLimit: true }) });
 
 		expect(inactive.value?.agent.status).toBe("Inactive");
 		expect(inactive.value?.blockedBy).toEqual(["the agent is inactive"]);
@@ -149,34 +152,19 @@ describe("get_agent_readiness", () => {
 		]);
 	});
 
-	it("ignores another agent's plan limit when the list matches by substring", async () => {
-		const { value } = await readiness({
-			[LIST_PATH]: respond(200, {
-				data: [
-					rawAgent({ exceedsPlanLimit: true, identifier: "support-bot-old" }),
-					rawAgent(),
-				],
-			}),
-		});
-
-		expect(value?.blockedBy).toBeUndefined();
-	});
-
-	it("blocks a self-hosted agent without a bridge URL, and shows a set bridge without its secrets", async () => {
-		const noBridge = await readiness({ [AGENT_PATH]: rawAgent({ runtime: "self-hosted" }) });
+	it("blocks an agent on the bridge without a bridge URL, and shows a set one without its secrets", async () => {
+		const noBridge = await readiness({ [AGENT_PATH]: selfHosted() });
 		const withBridge = await readiness({
-			[AGENT_PATH]: rawAgent({
+			[AGENT_PATH]: selfHosted({
 				bridgeUrl:
 					"https://user:bridge-password@bridge.acme.dev/api/novu?token=bridge-query-secret",
-				runtime: "self-hosted",
 			}),
 		});
 		const local = await readiness({
-			[AGENT_PATH]: rawAgent({
+			[AGENT_PATH]: selfHosted({
 				bridgeUrl: "https://bridge.acme.dev/api/novu",
 				devBridgeActive: true,
 				devBridgeUrl: "https://tunnel-1.novu.dev/api/novu?key=dev-query-secret",
-				runtime: "self-hosted",
 			}),
 		});
 
@@ -194,20 +182,75 @@ describe("get_agent_readiness", () => {
 		});
 	});
 
+	// `RuntimeResolver` sends every agent to the bridge but a Human relay or a managed one with its runtime.
+	it("treats an agent saved before runtime existed, or managed without its runtime, as a bridge agent", async () => {
+		const legacy = await readiness({ [AGENT_PATH]: selfHosted({ runtime: undefined }) });
+		const managedWithoutRuntime = await readiness({
+			[AGENT_PATH]: rawAgent({ managedRuntime: undefined }),
+		});
+
+		expect(legacy.value?.bridge).toEqual({ status: "no bridge URL" });
+		expect(legacy.value?.channels?.[0]?.verdict).toBe("blocked");
+		expect(managedWithoutRuntime.value?.bridge).toEqual({ status: "no bridge URL" });
+	});
+
+	it("blocks a bridge URL the bridge can't call", async () => {
+		const noScheme = await readiness({
+			[AGENT_PATH]: selfHosted({ bridgeUrl: "bridge.acme.dev/api/novu" }),
+		});
+		const badLocal = await readiness({
+			[AGENT_PATH]: selfHosted({ devBridgeActive: true, devBridgeUrl: "http://exa mple" }),
+		});
+
+		expect(noScheme.value?.bridge).toEqual({
+			status: "unusable bridge URL",
+			url: "bridge.acme.dev/api/novu",
+		});
+		expect(noScheme.value?.blockedBy).toEqual([
+			"the bridge URL has no http:// or https:// scheme, so the agent can't be reached",
+		]);
+		expect(badLocal.value?.bridge).toEqual({
+			status: "unusable bridge URL",
+			url: "[invalid URL]",
+		});
+	});
+
+	it("gives a Human relay no bridge and no plan limits, as the inbound path skips them", async () => {
+		const { value } = await readiness({
+			[AGENT_PATH]: rawAgent({
+				exceedsPlanLimit: true,
+				managedRuntime: undefined,
+				runtime: "human_relay",
+			}),
+			[LINKS_PATH]: respond(200, {
+				data: [
+					link("telegram", "telegram-1", {
+						connectedAt: CONNECTED,
+						exceedsPlanLimit: true,
+					}),
+				],
+			}),
+		});
+
+		expect(value?.bridge).toBeUndefined();
+		expect(value?.blockedBy).toBeUndefined();
+		expect(value?.channels?.[0]?.verdict).toBe("ready");
+	});
+
 	it("blocks a channel past the plan's channel limit and a turned-off email inbox, not other inactive integrations", async () => {
 		const { value } = await readiness({
 			[LINKS_PATH]: respond(200, {
 				data: [
 					link("telegram", "telegram-1", {
-						connectedAt: "2026-11-20T10:00:00.000Z",
+						connectedAt: CONNECTED,
 						exceedsPlanLimit: true,
 					}),
 					link("novu-email-agent", "email-1", {
-						connectedAt: "2026-11-20T10:00:00.000Z",
+						connectedAt: CONNECTED,
 						integration: { active: false },
 					}),
 					link("slack", "slack-1", {
-						connectedAt: "2026-11-20T10:00:00.000Z",
+						connectedAt: CONNECTED,
 						integration: { active: false },
 					}),
 				],
@@ -233,15 +276,39 @@ describe("get_agent_readiness", () => {
 		]);
 	});
 
-	it("reports reads it couldn't make instead of an empty answer", async () => {
-		const { value } = await readiness({
-			[LINKS_PATH]: respond(403, { message: "Forbidden" }),
-			[LIST_PATH]: respond(500, { message: "boom" }),
+	it("says when only some senders get a reply", async () => {
+		const restricted = await readiness({
+			[AGENT_PATH]: rawAgent({ behavior: { subscriberAccess: "restricted" } }),
+		});
+		const rule = await readiness({
+			[AGENT_PATH]: rawAgent({ behavior: { subscriberAccess: "rule" } }),
 		});
 
-		expect(value?.channels).toBeUndefined();
-		expect(value?.channelsError).toBe("couldn't check channels: status 403");
-		expect(value?.planLimitError).toBe("couldn't check the agent's plan limit: status 500");
+		expect(restricted.value?.restrictedAccess).toBe(true);
+		expect(rule.value?.restrictedAccess).toBe(true);
+	});
+
+	it("reports channels it couldn't read instead of an empty answer", async () => {
+		const forbidden = await readiness({ [LINKS_PATH]: respond(403, { message: "Forbidden" }) });
+		const oddShape = await readiness({ [LINKS_PATH]: respond(200, { items: [] }) });
+
+		expect(forbidden.value?.channels).toBeUndefined();
+		expect(forbidden.value?.channelsError).toBe("couldn't check channels: status 403");
+		expect(oddShape.value?.channelsError).toBe("couldn't check channels: unexpected response");
+	});
+
+	it("reports a network failure on the channels read", async () => {
+		const fetchMock = stubApi(routes());
+		const answer = fetchMock.getMockImplementation();
+		fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+			if (url.includes("/integrations")) throw new TypeError("fetch failed");
+
+			return (answer as NonNullable<typeof answer>)(url, init);
+		});
+
+		const { value } = await callReadiness();
+
+		expect(value?.channelsError).toBe("couldn't check channels: network error");
 	});
 
 	it("fails with the status when the agent isn't found", async () => {

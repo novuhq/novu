@@ -1,12 +1,14 @@
 import { agentDashboardPath, redactUrl } from "./agent-results";
 
 /*
- * Whether an agent can reply on each of its channels, from what the API returns for the agent, its
- * plan usage and its channel links. The rules mirror the inbound path:
+ * Whether an agent can reply on each of its channels, from what the API returns for the agent and its
+ * channel links. The rules mirror the inbound path:
  * - an inactive agent replies nowhere (`AgentConfigResolver.resolve`);
- * - an agent or channel past the plan's limit posts an upgrade card instead (`PlanLimitGateService`);
+ * - an agent or channel past the plan's limit posts an upgrade card instead (`PlanLimitGateService`),
+ *   except a Human relay, which the gate skips;
  * - a turned-off Novu email inbox drops email (`AgentConfigResolver.resolve`);
- * - a self-hosted agent without a bridge URL gets no answer (`BridgeExecutorService.resolveBridgeUrl`).
+ * - every agent but a Human relay or a managed one runs on its bridge (`RuntimeResolver`), and gets no
+ *   answer without a bridge URL `new URL` can read (`BridgeExecutorService.resolveBridgeUrl`).
  * Credentials never reach this module, so it can't tell whether a provider is fully configured.
  */
 
@@ -52,8 +54,9 @@ export type AgentChannelReadiness = {
 
 export type AgentBridgeReadiness =
 	| { status: "managed by Novu" }
-	| { status: "local bridge"; url?: string }
-	| { status: "bridge URL set"; url?: string }
+	| { status: "local bridge"; url: string }
+	| { status: "bridge URL set"; url: string }
+	| { status: "unusable bridge URL"; url: string }
 	| { status: "no bridge URL" };
 
 export type AgentReadinessResult = {
@@ -68,13 +71,11 @@ export type AgentReadinessResult = {
 	/** Why the agent replies on no channel at all. */
 	blockedBy?: string[];
 	bridge?: AgentBridgeReadiness;
-	/** Only allowed senders get a reply. */
+	/** Only allowed senders, or senders matching the access rule, get a reply. */
 	restrictedAccess?: true;
 	channels?: AgentChannelReadiness[];
 	/** Set instead of `channels` when they couldn't be read. */
 	channelsError?: string;
-	/** Set when the agent's plan limit couldn't be read. */
-	planLimitError?: string;
 	notChecked: string[];
 	/** The agent's channels tab, as a path under `/env/<environment>`. */
 	dashboardPath: string;
@@ -101,23 +102,40 @@ export function agentChannelDashboardPath(agentIdentifier: string, integrationId
 	return `${agentDashboardPath(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}`;
 }
 
+function isHumanRelay(agent: Json): boolean {
+	return agent.runtime === "human_relay";
+}
+
+/**
+ * The bridge an agent's messages go to. As `RuntimeResolver` decides, every agent but a Human relay or a
+ * managed one with its runtime runs on the bridge, including one saved before `runtime` existed. The dev
+ * bridge wins while it is on.
+ */
 function toBridge(agent: Json): AgentBridgeReadiness | undefined {
-	const runtime = asString(agent.runtime);
-	if (runtime === "managed") return { status: "managed by Novu" };
-	if (runtime !== "self-hosted") return undefined;
+	if (isHumanRelay(agent)) return undefined;
+	if (agent.runtime === "managed" && asRecord(agent.managedRuntime))
+		return { status: "managed by Novu" };
 
-	const devUrl = redactUrl(agent.devBridgeUrl);
-	if (agent.devBridgeActive === true && devUrl) return { status: "local bridge", url: devUrl };
+	const devUrl = asString(agent.devBridgeUrl);
+	if (agent.devBridgeActive === true && devUrl) return toBridgeUrl("local bridge", devUrl);
 
-	const url = redactUrl(agent.bridgeUrl);
+	const url = asString(agent.bridgeUrl);
 
-	return url ? { status: "bridge URL set", url } : { status: "no bridge URL" };
+	return url ? toBridgeUrl("bridge URL set", url) : { status: "no bridge URL" };
+}
+
+/** The bridge executor reads the URL with `new URL`, so one without an http(s) scheme can't be called. */
+function toBridgeUrl(status: "local bridge" | "bridge URL set", raw: string): AgentBridgeReadiness {
+	const url = redactUrl(raw) ?? "[invalid URL]";
+	const usable = /^https?:\/\//i.test(raw.trim()) && url !== "[invalid URL]";
+
+	return usable ? { status, url } : { status: "unusable bridge URL", url };
 }
 
 function toChannel(
 	agentIdentifier: string,
 	link: Json,
-	agentBlocked: boolean,
+	{ agentBlocked, humanRelay }: { agentBlocked: boolean; humanRelay: boolean },
 ): AgentChannelReadiness | undefined {
 	const integration = asRecord(link.integration);
 	const integrationIdentifier = asString(integration?.identifier);
@@ -127,7 +145,7 @@ function toChannel(
 	const connected = hasConnectedAt(link.connectedAt);
 	const reasons: string[] = [];
 
-	if (link.exceedsPlanLimit === true) {
+	if (link.exceedsPlanLimit === true && !humanRelay) {
 		reasons.push(
 			"past the plan's active channel limit: it replies with an upgrade message instead",
 		);
@@ -157,10 +175,8 @@ function toChannel(
 }
 
 export type AgentReadinessInput = {
-	/** `GET /v1/agents/:identifier`, unwrapped. */
+	/** `GET /v1/agents/:identifier`, unwrapped; its `exceedsPlanLimit` is the runtime gate's own check. */
 	agent: unknown;
-	/** Whether the agent is past the plan's agent limit, from its `GET /v1/agents` row, or why that read failed. */
-	planLimit: { exceeded: boolean } | { error: string };
 	/** `GET /v1/agents/:identifier/integrations` rows; an error message when that read failed. */
 	links: unknown[] | { error: string };
 };
@@ -171,17 +187,23 @@ export function buildAgentReadiness(input: AgentReadinessInput): AgentReadinessR
 	const identifier = asString(agent?.identifier);
 	if (!agent || !identifier) return undefined;
 
-	const planLimitError = "error" in input.planLimit ? input.planLimit.error : undefined;
 	const active = agent.active !== false;
+	const humanRelay = isHumanRelay(agent);
 	const bridge = toBridge(agent);
 	const blockedBy: string[] = [];
+	const access = asRecord(agent.behavior)?.subscriberAccess;
 
 	if (!active) blockedBy.push("the agent is inactive");
-	if ("exceeded" in input.planLimit && input.planLimit.exceeded) {
+	if (agent.exceedsPlanLimit === true && !humanRelay) {
 		blockedBy.push("past the plan's agent limit: it replies with an upgrade message instead");
 	}
 	if (bridge?.status === "no bridge URL") {
 		blockedBy.push("no bridge URL is set, so messages get no answer from the agent");
+	}
+	if (bridge?.status === "unusable bridge URL") {
+		blockedBy.push(
+			"the bridge URL has no http:// or https:// scheme, so the agent can't be reached",
+		);
 	}
 
 	const result: AgentReadinessResult = {
@@ -196,15 +218,15 @@ export function buildAgentReadiness(input: AgentReadinessInput): AgentReadinessR
 		bridge,
 		dashboardPath: `${agentDashboardPath(identifier)}/integrations`,
 		notChecked: AGENT_READINESS_NOT_CHECKED,
-		planLimitError,
-		restrictedAccess:
-			asRecord(agent.behavior)?.subscriberAccess === "restricted" ? true : undefined,
+		restrictedAccess: access === "restricted" || access === "rule" ? true : undefined,
 	};
 
 	if (Array.isArray(input.links)) {
 		result.channels = input.links.flatMap((link) => {
 			const record = asRecord(link);
-			const channel = record && toChannel(identifier, record, blockedBy.length > 0);
+			const channel =
+				record &&
+				toChannel(identifier, record, { agentBlocked: blockedBy.length > 0, humanRelay });
 
 			return channel ? [channel] : [];
 		});
