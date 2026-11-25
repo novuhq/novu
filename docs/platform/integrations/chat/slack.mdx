@@ -86,11 +86,12 @@ Your app needs permission to perform actions like sending messages or reading ch
     - `groups:read`
     - `users:read`
     - `users:read.email`
+    - `files:write`
     - (optional) `incoming-webhook` if you want Slack's built-in channel picker.
   </Step>
 </Steps>
 
-These scopes are required for Novu to send messages, read channels and read users (for DMs and pickers). If you remove some of them, then certain features like channel or user selection might not work.
+Novu asks for these scopes, except `incoming-webhook`, when a workspace connects. They let Novu send messages and [file attachments](#file-attachments), read channels and read users (for DMs and pickers). If you remove some of them, then certain features like channel or user selection might not work.
 
 ### Set the redirect URL
 
@@ -1679,11 +1680,36 @@ For [digest workflows](/platform/workflow/add-and-configure-steps/configure-acti
 
 ## File attachments
 
-Novu does not upload files such as PDFs or CSVs to Slack. Novu sends workflow notifications with [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) or an incoming webhook, and neither accepts a file. Novu does not call Slack's file upload APIs.
+Novu uploads files, such as PDFs or CSVs, to Slack when you pass them in the trigger's `payload.attachments` with `chat` in their `channels` list. See [Chat file attachments](/platform/integrations/chat#file-attachments) for the payload format.
 
-The `attachments` field in Slack overrides is Slack's legacy format for secondary message content. It does not carry files.
+```typescript
+await novu.trigger({
+  workflowId: 'workflowId',
+  to: { subscriberId: 'subscriberId' },
+  payload: {
+    attachments: [
+      { file: csvBuffer, name: 'report.csv', mime: 'text/csv', channels: ['chat'] },
+    ],
+  },
+});
+```
 
-To share a file in a Slack notification:
+Novu sends the message with [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage), then uploads the files with Slack's [external upload flow](https://docs.slack.dev/messaging/working-with-files) and shares them right below the message. The files land in the same channel or direct message, and in the same thread when the message is a thread reply.
+
+To send files, your Slack app needs:
+
+- **The `files:write` bot scope.** Add it under **OAuth & Permissions** in your Slack app settings. Novu asks for it by default when a workspace connects. If you pass your own `scope` when you [generate the OAuth URL](#generate-the-oauth-url), include `files:write` in the list. Workspaces that connected without it must reconnect, so their bot token includes it. Slack apps created with Novu's quick setup or app manifest already have it.
+- **Membership in the channel.** Slack shares files only in channels the app is a member of. Invite the app with `/invite @your-app`. Direct messages need no invite.
+
+Incoming webhooks can't carry files. For an incoming webhook destination, Novu sends the message and skips the files.
+
+The step's activity log shows **Chat files sent** when every file was delivered, or **Chat files not sent** with the reason for each file, such as a missing `files:write` scope.
+
+<Note>
+  The `attachments` field in Slack overrides is Slack's legacy format for secondary message content. It does not carry files. Pass files in `payload.attachments` instead.
+</Note>
+
+You can also share a file without uploading it:
 
 - **Link to the file.** Host the file yourself and add the URL to the message as a link or a button.
 - **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or a Block Kit [`image` block](https://api.slack.com/reference/block-kit/blocks#image) with a public `image_url` in a Slack override.

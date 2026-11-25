@@ -2,9 +2,11 @@ import { IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import {
   CardElement,
+  IChatFileDeliveryResult,
   IChatOptions,
   IChatProvider,
   IChatRenderValidation,
+  IChatSendFilesOptions,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { IHandler } from '../../shared/interfaces';
@@ -30,6 +32,11 @@ export interface IChatHandler extends IHandler {
    * for this provider (native render for rich providers, markdown degradation otherwise).
    */
   resolveCardContent(card: CardElement): Promise<ResolvedChatCard>;
+  /**
+   * Upload files right after `send` delivered the message. Resolves `null` when the provider
+   * has no native file upload, so the caller can report the files as skipped.
+   */
+  sendFiles(options: IChatSendFilesOptions): Promise<IChatFileDeliveryResult[] | null>;
 }
 
 export interface IChatFactory {

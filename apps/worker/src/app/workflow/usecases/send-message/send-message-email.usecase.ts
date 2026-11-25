@@ -53,6 +53,7 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
+import { isEmailAttachment } from './attachment-channels';
 import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
@@ -327,7 +328,7 @@ export class SendMessageEmail extends SendMessageBase {
       })
     );
 
-    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.filter(isEmailAttachment).map(
       (attachment) =>
         <IAttachmentOptions>{
           file: attachment.file,
