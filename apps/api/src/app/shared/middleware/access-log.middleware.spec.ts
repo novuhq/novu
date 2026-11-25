@@ -21,17 +21,25 @@ const USER_SESSION = {
 
 type RequestParts = {
   method?: string;
+  url?: string;
   headers?: Record<string, string>;
   routePath?: string;
   authScheme?: string;
   user?: Record<string, unknown>;
 };
 
-function buildRequest({ method = 'GET', headers = {}, routePath, authScheme, user }: RequestParts = {}) {
+function buildRequest({
+  method = 'GET',
+  url = '/v1/environments/env-id/api-keys?token=query-secret',
+  headers = {},
+  routePath,
+  authScheme,
+  user,
+}: RequestParts = {}) {
   return {
     method,
-    url: '/v1/environments/env-id/api-keys?token=query-secret',
-    originalUrl: '/v1/environments/env-id/api-keys?token=query-secret',
+    url,
+    originalUrl: url,
     headers,
     socket: { remoteAddress: '10.0.0.5' },
     route: routePath === undefined ? undefined : { path: routePath },
@@ -266,8 +274,6 @@ describe('accessLogMiddleware', () => {
   });
 
   for (const [method, routePath] of [
-    ['GET', '/v1/health-check'],
-    ['HEAD', '/v1/health-check'],
     ['POST', '/v1/internal/subscriber-online-state'],
     ['POST', '/v1/events/trigger'],
     ['POST', '/v1/events/trigger/bulk'],
@@ -295,6 +301,25 @@ describe('accessLogMiddleware', () => {
     });
   }
 
+  for (const [method, url] of [
+    ['GET', '/v1/health-check'],
+    ['HEAD', '/v1/health-check'],
+    ['GET', '/api/v1/health-check/?probe=uptime'],
+  ]) {
+    it(`leaves the health check ${method} ${url} alone`, () => {
+      handle(buildRequest({ method, url })).close('/v1/health-check');
+
+      expect(info.called).to.equal(false);
+      expect(addCustomAttributes.called).to.equal(false);
+    });
+  }
+
+  it('writes a line for a POST to the health-check path, which no route answers', () => {
+    handle(buildRequest({ method: 'POST', url: '/v1/health-check' })).close(undefined, 404);
+
+    expect(info.calledOnce).to.equal(true);
+  });
+
   for (const value of ['false', 'f', 'no', 'off', '0']) {
     it(`writes no line when IS_API_ACCESS_LOG_ENABLED is ${value}`, () => {
       process.env.IS_API_ACCESS_LOG_ENABLED = value;
@@ -313,7 +338,7 @@ describe('accessLogMiddleware', () => {
     expect(info.calledOnce).to.equal(true);
   });
 
-  it('adds the caller to the New Relic transaction on every route, whatever the flag says', () => {
+  it('adds the caller to the New Relic transaction of a request without a line, whatever the flag says', () => {
     process.env.IS_API_ACCESS_LOG_ENABLED = 'false';
 
     handle(

@@ -79,6 +79,14 @@ class InboxTestController {
   }
 }
 
+@Controller('health-check')
+class HealthCheckTestController {
+  @Get()
+  check() {
+    return { status: 'ok' };
+  }
+}
+
 /*
  * Boots Nest with the URI versioning and the middleware order `bootstrap.ts` uses, for what only a running app can
  * show: what a guard, the router and the body parser leave on a request they reject, with and without an API context
@@ -106,7 +114,12 @@ describe('Access log in a Nest app', () => {
 
       before(async () => {
         const moduleRef = await Test.createTestingModule({
-          controllers: [EnvironmentsTestController, EventsTestController, InboxTestController],
+          controllers: [
+            EnvironmentsTestController,
+            EventsTestController,
+            InboxTestController,
+            HealthCheckTestController,
+          ],
           providers: [SessionGuard, DenyGuard],
         }).compile();
 
@@ -179,6 +192,15 @@ describe('Access log in a Nest app', () => {
         expect(await call('GET', 'v1/inbox/notifications')).to.equal(200);
         // Responses close in order, so once this line is in, the two calls above have had their turn.
         expect(await call('GET', 'v1/environments/env-id/api-keys?next=/v1/inbox/')).to.equal(200);
+        const lines = await accessLines(1);
+
+        expect(lines.map((line) => line.route)).to.deep.equal(['/v1/environments/:environmentId/api-keys']);
+      });
+
+      it('writes no line for a health check, with GET or HEAD', async () => {
+        expect(await call('GET', 'v1/health-check')).to.equal(200);
+        expect(await call('HEAD', 'v1/health-check')).to.equal(200);
+        expect(await call('GET', 'v1/environments/env-id/api-keys')).to.equal(200);
         const lines = await accessLines(1);
 
         expect(lines.map((line) => line.route)).to.deep.equal(['/v1/environments/:environmentId/api-keys']);

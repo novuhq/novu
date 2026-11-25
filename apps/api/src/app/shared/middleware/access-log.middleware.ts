@@ -29,20 +29,24 @@ const MIN_API_KEY_LENGTH = 16;
 const DISABLED_VALUES: ReadonlySet<string> = new Set(['false', 'f', 'no', 'off', '0']);
 
 /*
- * Requests that get no access line, all of which still get the New Relic attributes. Health checks and the socket
- * service's presence calls say nothing about a caller. A trigger and every Inbox and widget call run once per
- * notification or per Inbox render, and the worker calls the bridge of a dashboard workflow once per subscriber and
- * step, so a line per call would be most of the API's traffic. Cancelling a trigger and a broadcast are rare and keep
- * their line.
+ * Requests that get no access line, all of which still get the New Relic attributes. The socket service's presence
+ * calls say nothing about a caller. A trigger and every Inbox and widget call run once per notification or per Inbox
+ * render, and the worker calls the bridge of a dashboard workflow once per subscriber and step, so a line per call
+ * would be most of the API's traffic. Cancelling a trigger and a broadcast are rare and keep their line.
  */
 const REQUESTS_WITHOUT_ACCESS_LOG: ReadonlySet<string> = new Set([
-  'GET /v1/health-check',
   'POST /v1/internal/subscriber-online-state',
   'POST /v1/events/trigger',
   'POST /v1/events/trigger/bulk',
   'POST /v1/environments/:environmentId/bridge',
 ]);
 const ROUTE_PREFIXES_WITHOUT_ACCESS_LOG: readonly string[] = ['/v1/inbox/', '/v1/widgets/'];
+
+/*
+ * Load balancer and uptime probes, which the middleware leaves alone: no line and no New Relic attributes. They name
+ * no caller, and Terminus logs a failed check itself.
+ */
+const HEALTH_CHECK_PATH = '/v1/health-check';
 
 /**
  * What one access line says about a request: who called which route, from where, and how it ended. Only the fields
@@ -88,6 +92,12 @@ export function buildAccessLog(
  * `authorization`, and the query string.
  */
 export function accessLogMiddleware(req: AccessLogRequest, res: ServerResponse, next: () => void) {
+  if (isHealthCheck(req)) {
+    next();
+
+    return;
+  }
+
   const startedAt = Date.now();
   // Read once, now: the signature on an Agent Inbox visitor's IP can be too old by the time a long response closes.
   const clientIp = getClientIp(req);
@@ -132,13 +142,24 @@ function hasAccessLog(req: AccessLogRequest): boolean {
     return true;
   }
 
-  // Express answers HEAD with the GET handler, so an uptime check with HEAD matches the GET entry.
-  const method = req.method === 'HEAD' ? 'GET' : req.method;
-
   return (
-    !REQUESTS_WITHOUT_ACCESS_LOG.has(`${method} ${route}`) &&
+    !REQUESTS_WITHOUT_ACCESS_LOG.has(`${req.method} ${route}`) &&
     !ROUTE_PREFIXES_WITHOUT_ACCESS_LOG.some((prefix) => route.startsWith(prefix))
   );
+}
+
+/**
+ * Decided on the path, because no route is matched yet when the request arrives. Only a GET or HEAD on that path
+ * matches (Express answers HEAD with the GET handler), with or without the API context path in front.
+ */
+function isHealthCheck(req: AccessLogRequest): boolean {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return false;
+  }
+
+  const path = req.url?.split('?')[0];
+
+  return path !== undefined && normalizeRoutePath(path) === HEALTH_CHECK_PATH;
 }
 
 /** A header value, cut short because the caller writes it. */
