@@ -1,8 +1,10 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
+import { CopilotPageEnum, JobStatusEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
+import { useSearchParams } from 'react-router-dom';
+import { buildWorkflowRunsViewing } from '@/components/activity/activity-copilot';
 import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
 import { ActivityHeader } from '@/components/activity/activity-header';
@@ -12,6 +14,13 @@ import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
 import { ActivityTable } from '@/components/activity/activity-table';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { defaultActivityFilters } from '@/components/activity/constants';
+import { getActivityStatus } from '@/components/activity/helpers';
+import {
+  getWorkflowRunQuestion,
+  useActiveCopilotPage,
+  useCopilotEntry,
+  useRegisterCopilotPageView,
+} from '@/components/copilot-web-chat';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -40,6 +49,7 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, isPlaceholderData, error } = usePullActivity(activityItemId);
+  const [searchParams] = useSearchParams();
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const onListStateChange = useCallback((hasActivities: boolean) => setShowDetailPanel(hasActivities), []);
 
@@ -136,6 +146,23 @@ export function ActivityFeedContent({
     setLastUpdated(new Date());
   };
 
+  // Only on the Activity page: inside the workflow editor these register nothing and the button stays hidden.
+  const openRun = activity && activity._id === activityItemId ? activity : undefined;
+  const runQuestion = activityItemId
+    ? getWorkflowRunQuestion(!!openRun && getActivityStatus(openRun.jobs) === JobStatusEnum.FAILED)
+    : undefined;
+  useRegisterCopilotPageView(CopilotPageEnum.ACTIVITY, {
+    viewing: buildWorkflowRunsViewing(
+      searchParams,
+      activityItemId ? { id: activityItemId, workflowName: openRun?.template?.name } : undefined
+    ),
+    question: runQuestion,
+  });
+  const openCopilot = useCopilotEntry();
+  const isActivityCopilotShown = useActiveCopilotPage() === CopilotPageEnum.ACTIVITY;
+  const handleAskCopilot =
+    isActivityCopilotShown && openCopilot && runQuestion ? () => openCopilot({ prefill: runQuestion }) : undefined;
+
   return (
     <div className={cn('p-2.5', className)}>
       <div className="flex items-center justify-between pb-2.5 gap-2">
@@ -196,6 +223,7 @@ export function ActivityFeedContent({
                             activity={activity}
                             isPlaceholder={isPlaceholderData}
                             onTransactionIdChange={handleTransactionIdChange}
+                            onAskCopilot={handleAskCopilot}
                           />
                           <ActivityOverview activity={activity} />
                           <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />

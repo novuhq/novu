@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
+import { REGION_DASHBOARD_URLS } from "../regions";
 // Import all tool registration functions
+import { registerActivityTools } from "../tools/activity";
 import { registerAgentTools } from "../tools/agents";
 import { registerAuthTools } from "../tools/auth";
 import { registerConversationTools } from "../tools/conversations";
@@ -43,6 +45,7 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 
 	private getAccessors = (): ToolAccessors => ({
 		getApiUrl: () => this.props?.apiUrl ?? "https://api.novu.co",
+		getDashboardUrl: () => REGION_DASHBOARD_URLS[this.getRegion()] ?? REGION_DASHBOARD_URLS.us,
 		getToken: () => this.props?.token ?? null,
 	});
 
@@ -59,6 +62,7 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 		registerEnvironmentTools(this.server, accessors);
 		registerSubscriberTools(this.server, accessors);
 		registerNotificationTools(this.server, accessors);
+		registerActivityTools(this.server, accessors);
 		registerPreferenceTools(this.server, accessors);
 		registerIntegrationTools(this.server, accessors);
 		registerFeedbackTool(this.server, this.env.CLERK_SECRET_KEY);

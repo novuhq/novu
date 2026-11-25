@@ -38,6 +38,7 @@ A single MCP server that unlocks your entire Novu workspace for AI agents:
 - **Agents** — create, list, inspect, update Novu agents, and hand off channel connect to the Novu CLI playbook
 - **Conversations** — list agent threads and inspect activity timelines (messages, approvals, MCP connections)
 - **Notifications** — fetch and filter events with full execution logs and delivery status
+- **Activity** — find out why a subscriber did or didn't get a notification: workflow runs, step errors and trigger requests
 - **Subscribers** — search and manage recipients by email, phone, name, or ID
 - **Workflows** — list, inspect, create, update, and trigger notification workflows
 - **Preferences** — read and update subscriber channel preferences (email, SMS, in-app, push, chat)
@@ -104,7 +105,7 @@ How requests map to a Novu environment depends on how you authenticate:
 - **OAuth** — the token is bound to your **organization**, and the Novu API
   defaults to the **Development** environment.
 
-For OAuth sessions, every tool except `whoami`, `get_step_schema` and `submit_feedback` accepts an optional `environmentId` parameter to
+For OAuth sessions, every tool except `whoami`, `get_step_schema`, `get_integration_setup_link` and `submit_feedback` accepts an optional `environmentId` parameter to
 target a specific environment (forwarded to the Novu API as the
 `Novu-Environment-Id` header). Call `get_environments` first to list your
 environments, then pass the `_id` of the one you want — for example, to inspect
@@ -175,6 +176,9 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_environments` | List all environments with their details and API keys |
 | `get_notifications` | Fetch events with filtering by channel, template, subscriber, date, and more |
 | `get_notification` | Get a specific notification with detailed execution logs |
+| `get_workflow_runs` | List workflow runs filtered by workflow, subscriber, status, channel, topic, transaction or date (read-only) |
+| `get_workflow_run` | Get one run's step statuses, error codes and messages, trimmed execution details and its trigger request (read-only) |
+| `get_trigger_requests` | List trigger API requests with status code, workflow and error; matches workflow and subscriber in request bodies, scanning at most 500 (read-only) |
 | `find_subscribers` | Search subscribers by email, name, phone, or ID |
 | `get_subscriber` | Get a single subscriber by ID |
 | `create_subscriber` | Create a subscriber |
@@ -200,8 +204,11 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `bulk_trigger_workflow` | Trigger several workflows in one call |
 | `submit_feedback` | Report a missing, broken or confusing tool to the Novu team (hosted only; registered when `CLERK_SECRET_KEY` is set) |
 | `cancel_triggered_event` | Cancel a pending (delayed or digested) event by `transactionId` |
-| `get_integrations` | List configured provider integrations across channels |
+| `get_integrations` | List configured provider integrations across channels, with each one's environment name; never credentials or webhook signing keys |
 | `get_active_integrations` | List only the active integrations |
+| `update_integration` | Rename an integration, change its identifier, or turn it on or off |
+| `set_activity_tracking` | Turn delivery event tracking on or off, setting up the provider's webhook when Novu can |
+| `get_integration_setup_link` | Get the dashboard link where the user enters an integration's credentials (calls no API) |
 | `set_primary_integration` | Make an integration the primary one for its channel |
 | `delete_integration` | Delete an integration |
 
@@ -346,9 +353,10 @@ Add new tools by creating a `register*Tools` function under `src/tools/` and wir
 ### In-process use (`@novu/mcp-server/tools`)
 
 `pnpm build` compiles `src/tools/index.ts` to `dist/tools` (CommonJS). It exports
-`registerWorkflowTools(server, accessors)`, the `ToolAccessors` type and the
-`WORKFLOW_TOOL_NAMES` constants, so a Node service can register the workflow
-tools on its own `McpServer`. Pass `getAuthorization()` in the accessors to send
+`registerWorkflowTools(server, accessors)`, `registerActivityTools(server, accessors)`,
+the `ToolAccessors` type and the `WORKFLOW_TOOL_NAMES` and `ACTIVITY_TOOL_NAMES`
+constants, so a Node service can register the workflow and activity tools on its
+own `McpServer`. Pass `getAuthorization()` in the accessors to send
 a custom `Authorization` header; it is called before every request. Write tools
 return `structuredContent.workflow`; failures return `isError` with
 `structuredContent.error.status`. Code under `src/tools` and `src/utils` must not

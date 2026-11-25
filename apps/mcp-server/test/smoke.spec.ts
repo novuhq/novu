@@ -1,6 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { registerWorkflowTools, WORKFLOW_TOOL_NAMES } from "../src/tools/index";
+import {
+	ACTIVITY_TOOL_NAMES,
+	INTEGRATION_TOOL_NAMES,
+	registerActivityTools,
+	registerIntegrationTools,
+	registerWorkflowTools,
+	WORKFLOW_TOOL_NAMES,
+} from "../src/tools/index";
 import { API_URL, callTool, connect, connectAllTools, textOf, tokenAccessors } from "./support";
 
 function stubFetch(body: unknown = { data: [] }, status = 200) {
@@ -45,21 +52,27 @@ describe("the Novu MCP server tools", () => {
 			  "get_conversation_activities",
 			  "get_conversations",
 			  "get_environments",
+			  "get_integration_setup_link",
 			  "get_integrations",
 			  "get_notification",
 			  "get_notifications",
 			  "get_step_schema",
 			  "get_subscriber",
 			  "get_subscriber_preferences",
+			  "get_trigger_requests",
 			  "get_workflow",
+			  "get_workflow_run",
+			  "get_workflow_runs",
 			  "get_workflows",
 			  "insert_workflow_step",
 			  "move_workflow_step",
 			  "remove_workflow_step",
+			  "set_activity_tracking",
 			  "set_primary_integration",
 			  "submit_feedback",
 			  "trigger_workflow",
 			  "update_agent",
+			  "update_integration",
 			  "update_subscriber",
 			  "update_subscriber_preferences",
 			  "update_workflow",
@@ -80,6 +93,26 @@ describe("the Novu MCP server tools", () => {
 
 		expect(tools.map((tool) => tool.name).sort()).toEqual(
 			Object.values(WORKFLOW_TOOL_NAMES).sort(),
+		);
+	});
+
+	it("exports a name for every activity tool the ./tools entry registers", async () => {
+		const server = new McpServer({ name: "tools", version: "1.0.0" });
+		registerActivityTools(server, tokenAccessors("api-key"));
+
+		const { tools } = await (await connect(server)).listTools();
+
+		expect(tools.map((tool) => tool.name).sort()).toEqual([...ACTIVITY_TOOL_NAMES].sort());
+	});
+
+	it("exports a name for every integration tool the ./tools entry registers", async () => {
+		const server = new McpServer({ name: "tools", version: "1.0.0" });
+		registerIntegrationTools(server, tokenAccessors("api-key"));
+
+		const { tools } = await (await connect(server)).listTools();
+
+		expect(tools.map((tool) => tool.name).sort()).toEqual(
+			Object.values(INTEGRATION_TOOL_NAMES).sort(),
 		);
 	});
 

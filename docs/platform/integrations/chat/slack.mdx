@@ -966,7 +966,7 @@ Every [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argum
 | --- | --- |
 | `text` | Falls back to the rendered step body when omitted. |
 | `blocks` | [Block Kit](https://api.slack.com/block-kit) layout blocks. |
-| `attachments` | Legacy secondary attachments. |
+| `attachments` | Legacy secondary attachments. These are formatted message sections, not files. See [File attachments](#file-attachments). |
 | `thread_ts` | Post as a threaded reply. |
 | `reply_broadcast` | Also surface a threaded reply in the channel. |
 | `unfurl_links` | Toggle link previews. |
@@ -1676,6 +1676,17 @@ An override sent at trigger time replaces the saved value for the same field. Fi
 Trigger overrides are set when you call the trigger API. They work well when each trigger carries the data you need to build the message.
 
 For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but trigger `overrides` are fixed when you call the API and are not re-evaluated against that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#providers-overrides-object) in a code-first workflow.
+
+## File attachments
+
+Novu does not upload files such as PDFs or CSVs to Slack. Novu sends workflow notifications with [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) or an incoming webhook, and neither accepts a file. Novu does not call Slack's file upload APIs.
+
+The `attachments` field in Slack overrides is Slack's legacy format for secondary message content. It does not carry files.
+
+To share a file in a Slack notification:
+
+- **Link to the file.** Host the file yourself and add the URL to the message as a link or a button.
+- **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or a Block Kit [`image` block](https://api.slack.com/reference/block-kit/blocks#image) with a public `image_url` in a Slack override.
 
 ## Token rotation
 

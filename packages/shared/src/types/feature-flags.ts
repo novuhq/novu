@@ -338,6 +338,13 @@ export enum FeatureFlagsKeysEnum {
    * variable when self-hosted.
    */
   API_KEY_REVOCATION_POLICY = 'API_KEY_REVOCATION_POLICY',
+  /**
+   * Organization-scoped JSON list (a JSON flag, or a string holding JSON) of the dashboard pages the Copilot opens on
+   * outside the workflow editor, such as `["activity", "subscribers"]` (`CopilotPageEnum`). Each name turns on that
+   * page's launcher and its tool group in the Copilot session. Read with `parseCopilotPages`; missing or invalid
+   * keeps every page off. Only applies while `IS_COPILOT_WEB_CHAT_ENABLED` is on.
+   */
+  COPILOT_PAGES = 'COPILOT_PAGES',
 
   // Numeric flags
   MAX_WORKFLOW_LIMIT_NUMBER = 'MAX_WORKFLOW_LIMIT_NUMBER',
