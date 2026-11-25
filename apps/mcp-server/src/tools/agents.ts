@@ -1,5 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { toAgentList, toAgentSummary, unwrapRecord } from "../utils/agent-results";
+import {
+	INVALID_URL_MARK,
+	REDACTED_MARK,
+	toAgentList,
+	toAgentSummary,
+	unwrapRecord,
+} from "../utils/agent-results";
 import {
 	type AgentRuntimeIntegration,
 	agentResourcePath,
@@ -134,7 +140,7 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 		server,
 		accessors,
 		"get_agent",
-		"Retrieve a single agent by its identifier (slug), including runtime config when managed.",
+		"Retrieve a single agent by its identifier (slug): settings, bridge and, when managed, its provider, tools and MCP servers. Never returns the system prompt.",
 		"fetched agent",
 		getAgentInputSchema,
 		{
@@ -208,6 +214,19 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 						},
 					],
 				};
+			}
+
+			// Agent results show bridge URLs with these marks in place of their secrets, or of a URL that can't be read.
+			for (const field of ["bridgeUrl", "devBridgeUrl"] as const) {
+				const mark = [REDACTED_MARK, INVALID_URL_MARK].find((each) =>
+					fields[field]?.includes(each),
+				);
+				if (mark) {
+					return ToolFactory.errorResult({
+						message: `Error: ${field} contains ${mark}, which agent results show in place of a URL's secrets or an unreadable URL, so it isn't the whole URL. Ask the user for the full URL and pass it.`,
+						status: 400,
+					});
+				}
 			}
 
 			return ToolFactory.makeApiRequest(
