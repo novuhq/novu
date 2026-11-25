@@ -49,7 +49,7 @@ function integrationsFixture(): Json[] {
 	];
 }
 
-/** A fake integrations API: the list, the environments, updates and auto-configure. */
+/** A fake integrations API: the list, the environments, updates, deletes and auto-configure. */
 function fakeIntegrationsApi(
 	autoConfigure: Json = { success: true, webhookUrl: "https://api.novu.co/v2/hook" },
 	integrations: Json[] = integrationsFixture(),
@@ -78,6 +78,11 @@ function fakeIntegrationsApi(
 
 			return json({ data: { ...integration, ...body } });
 		}
+		// Like the API, a delete answers with the environment's remaining integrations.
+		if (method === "DELETE")
+			return json({
+				data: integrations.filter((integration) => !pathname.endsWith(integration._id)),
+			});
 		if (method === "POST" && pathname.endsWith("/auto-configure"))
 			return json({ data: autoConfigure });
 		if (method === "POST" && pathname.endsWith("/set-primary"))
@@ -161,6 +166,18 @@ describe("integration tools", () => {
 		expect(text).toContain("Successfully set integration as primary");
 		expect(text).not.toContain(SIGNING_KEY);
 		expect(text).not.toContain("SG.planted");
+	});
+
+	it("delete_integration confirms without echoing the remaining integrations", async () => {
+		const { requests } = fakeIntegrationsApi();
+		const client = await connectAllTools(tokenAccessors("api-key"));
+
+		const text = textOf(
+			await callTool(client, "delete_integration", { integrationId: FCM_ID }),
+		);
+
+		expect(requests).toEqual([{ method: "DELETE", path: `/v1/integrations/${FCM_ID}` }]);
+		expect(text).toBe(`Successfully deleted integration ${FCM_ID}`);
 	});
 
 	describe("update_integration", () => {

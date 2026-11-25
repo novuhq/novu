@@ -429,6 +429,7 @@ export class ToolFactory {
 		successMessage: string,
 		idParamName = "id",
 		idDescription = "The ID to delete",
+		formatSuccess?: (data: unknown, id: string) => string,
 	) {
 		ToolFactory.createTool(server, accessors, {
 			description,
@@ -441,6 +442,9 @@ export class ToolFactory {
 					context,
 					{
 						endpoint,
+						formatSuccess: formatSuccess
+							? (data) => formatSuccess(data, idValue)
+							: undefined,
 						identifier: idValue,
 						method: "DELETE",
 						successMessage,
