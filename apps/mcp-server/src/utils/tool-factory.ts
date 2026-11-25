@@ -60,13 +60,14 @@ interface ApiRequestConfig {
  * API as the `Novu-Environment-Id` header for OAuth sessions only — they are
  * organization-bound and default to the Development environment. Legacy API
  * keys are already bound to a single environment, so the header is never sent
- * for them (see `NovuApiUtils.prepareHeaders`).
+ * for them (see `NovuApiUtils.prepareHeaders`). Every tool advertises this, so
+ * the text stays short; `get_environments` carries the full explanation.
  */
 export const environmentIdSchema = z
 	.string()
 	.optional()
 	.describe(
-		"Optional Novu environment ID (_id from get_environments) to run this request against. Only applies to OAuth sessions, which default to the Development environment — pass a different environment ID to target it (e.g. Production). Ignored for environment-bound API keys.",
+		"Novu environment _id from get_environments. Only for OAuth sessions, which default to Development; API keys ignore it.",
 	);
 
 export class ToolFactory {
@@ -223,8 +224,10 @@ export class ToolFactory {
 	): Promise<ApiResponse> {
 		const url = `${context.apiUrl}${requestConfig.endpoint}`;
 
+		// The query string can carry search values such as an email address, so it stays out of the logs.
+		const loggedEndpoint = requestConfig.endpoint.split("?")[0];
 		console.log(
-			`Making ${requestConfig.method} request to ${requestConfig.endpoint}${requestConfig.identifier ? ` for ${requestConfig.identifier}` : ""}`,
+			`Making ${requestConfig.method} request to ${loggedEndpoint}${requestConfig.identifier ? ` for ${requestConfig.identifier}` : ""}`,
 		);
 
 		const headers = {
@@ -273,13 +276,13 @@ export class ToolFactory {
 		}
 
 		const data = await response.json();
-		const message = requestConfig.formatSuccess
-			? requestConfig.formatSuccess(data)
-			: requestConfig.identifier
-				? `Successfully ${requestConfig.successMessage} ${requestConfig.identifier}`
-				: `Successfully ${requestConfig.successMessage}`;
+		const summary = requestConfig.identifier
+			? `Successfully ${requestConfig.successMessage} ${requestConfig.identifier}`
+			: `Successfully ${requestConfig.successMessage}`;
+		const message = requestConfig.formatSuccess ? requestConfig.formatSuccess(data) : summary;
 
-		console.log(message);
+		// A formatted message embeds the response data, which can hold subscriber details.
+		console.log(summary);
 
 		return {
 			content: [

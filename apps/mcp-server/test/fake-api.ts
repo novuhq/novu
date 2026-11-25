@@ -63,6 +63,40 @@ export function fakeWorkflowsApi(initial: Json = workflowResponseFixture()) {
 	};
 }
 
+/** A whole response for `stubApi`, made with `respond`. */
+class CannedResponse {
+	constructor(
+		readonly status: number,
+		readonly body: unknown,
+	) {}
+}
+
+/** A route that answers with this status and body, without the `{ data }` envelope. */
+export function respond(status: number, body: unknown): CannedResponse {
+	return new CannedResponse(status, body);
+}
+
+/**
+ * Canned answers by path plus query string, or by path: data the API wraps in `{ data }`, or a
+ * `respond(status, body)`.
+ */
+export type Routes = Record<string, unknown>;
+
+/** Stubs `fetch` with canned answers; any other request gets a 500. */
+export function stubApi(routes: Routes) {
+	const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+		const { pathname, search } = new URL(url);
+		const route = routes[`${pathname}${search}`] ?? routes[pathname];
+		if (route === undefined) return json({ message: `unexpected ${pathname}${search}` }, 500);
+		if (route instanceof CannedResponse) return json(route.body, route.status);
+
+		return json({ data: route });
+	});
+	vi.stubGlobal("fetch", fetchMock);
+
+	return fetchMock;
+}
+
 function saved(body: Json, previous: Json): Json {
 	return {
 		...previous,

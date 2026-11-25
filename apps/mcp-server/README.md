@@ -180,12 +180,13 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_workflow_run` | Get one run's step statuses, error codes and messages, trimmed execution details and its trigger request (read-only) |
 | `get_trigger_requests` | List trigger API requests with status code, workflow and error; matches workflow and subscriber in request bodies, scanning at most 500 (read-only) |
 | `find_subscribers` | Search subscribers by email, name, phone, or ID |
-| `get_subscriber` | Get a single subscriber by ID |
+| `get_subscriber` | Get a single subscriber by ID (push tokens and webhook URLs masked) |
+| `get_subscriber_reachability` | Check which channels can reach a subscriber and why not, without phone numbers or credentials |
 | `create_subscriber` | Create a subscriber |
 | `update_subscriber` | Update a subscriber's profile fields |
 | `delete_subscriber` | Delete a subscriber |
 | `get_subscriber_preferences` | Get a subscriber's preferences across all channels and workflows |
-| `update_subscriber_preferences` | Update a subscriber's channel preferences globally or per workflow |
+| `update_subscriber_preferences` | Update some of a subscriber's channel preferences, globally or per workflow |
 | `get_workflows` | List all workflows with their basic information |
 | `get_workflow` | Get a workflow's full definition, steps, and payload schema |
 | `create_workflow` | Create a workflow with steps, payload schema, preferences, and optional agent assignment |

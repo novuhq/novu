@@ -5,7 +5,9 @@ import {
 	INTEGRATION_TOOL_NAMES,
 	registerActivityTools,
 	registerIntegrationTools,
+	registerSubscriberReachabilityTool,
 	registerWorkflowTools,
+	SUBSCRIBER_REACHABILITY_TOOL_NAMES,
 	WORKFLOW_TOOL_NAMES,
 } from "../src/tools/index";
 import { API_URL, callTool, connect, connectAllTools, textOf, tokenAccessors } from "./support";
@@ -59,6 +61,7 @@ describe("the Novu MCP server tools", () => {
 			  "get_step_schema",
 			  "get_subscriber",
 			  "get_subscriber_preferences",
+			  "get_subscriber_reachability",
 			  "get_trigger_requests",
 			  "get_workflow",
 			  "get_workflow_run",
@@ -113,6 +116,17 @@ describe("the Novu MCP server tools", () => {
 
 		expect(tools.map((tool) => tool.name).sort()).toEqual(
 			Object.values(INTEGRATION_TOOL_NAMES).sort(),
+		);
+	});
+
+	it("exports a name for every subscriber reachability tool the ./tools entry registers", async () => {
+		const server = new McpServer({ name: "tools", version: "1.0.0" });
+		registerSubscriberReachabilityTool(server, tokenAccessors("api-key"));
+
+		const { tools } = await (await connect(server)).listTools();
+
+		expect(tools.map((tool) => tool.name).sort()).toEqual(
+			[...SUBSCRIBER_REACHABILITY_TOOL_NAMES].sort(),
 		);
 	});
 
