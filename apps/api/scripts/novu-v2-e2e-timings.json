@@ -92,7 +92,6 @@
   "src/app/events/e2e/delay-events.e2e.ts": 10.9,
   "src/app/events/e2e/digest-events.e2e.ts": 26,
   "src/app/events/e2e/process-subscriber.e2e.ts": 4.1,
-  "src/app/events/e2e/send-message-email.e2e.ts": 0,
   "src/app/events/e2e/send-message-push.e2e.ts": 2.5,
   "src/app/events/e2e/step-runs-v2.e2e.ts": 7,
   "src/app/events/e2e/throttle-events.e2e.ts": 9.1,
