@@ -203,9 +203,9 @@ only code on the current image, set `BOX_IMAGE` to the image's reference (from `
 list`).
 
 **`base`:** the box new boxes start from. `novu-box-base.yml` refreshes it on every push to `next` (applies the new
-head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow; next to that it deletes the boxes of PRs that are closed or no longer get one, and those of
-earlier runs (`base-next-*`, `nightly-*`) an hour idle. Its Run workflow button does the same by hand. A rebake bakes in a
-separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
+head, about 4 min). At 04:17 UTC `novu-box-nightly.yml` rebakes it through that workflow; next to that it deletes
+the boxes of PRs that are closed or no longer get one, and those of earlier runs (`base-next-*`, `nightly-*`) an
+hour idle. Its Run workflow button does the same by hand. A rebake bakes in a separate box (`base-next-<run id>`, a fresh name every run, see where boxes live above) and `base` takes over its
 snapshot only once it's saved, so `base` is never missing; a refresh that fails keeps the last good snapshot.
 A new box restores every byte of base's snapshot chain, so the bake and each refresh drop nx's cache before they save
 (base's bake snapshot is about 3.8 GB; pnpm's store and cache stay, so a lockfile change doesn't download again).
