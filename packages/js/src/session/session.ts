@@ -204,6 +204,11 @@ export class Session {
     );
   }
 
+  /** Whether `token` was issued for the current subscriber and context. */
+  public isCurrentToken(token: string): boolean {
+    return this.#tokens.has(token);
+  }
+
   /**
    * Asks the server for a new token for the current subscriber and context, for example after the old one expired.
    * Callers that ask while a session request is already running share that request.

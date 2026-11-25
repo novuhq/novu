@@ -1,3 +1,5 @@
+import { NovuError } from '../utils/errors';
+
 export type HttpClientOptions = {
   apiVersion?: string;
   apiUrl?: string;
@@ -15,6 +17,11 @@ export type SessionGuard = {
   /** Resolves to the token to send a request with; rejects when the request must not go out at all. */
   tokenForRequest: (currentToken: string | undefined) => Promise<string | undefined>;
   refresh: SessionRefresher;
+  /**
+   * False when `token` belongs to a subscriber or context that has been replaced since it was issued. A response
+   * to a request sent with it is the previous subscriber's data and must not reach caches or listeners.
+   */
+  isCurrentToken: (token: string) => boolean;
 };
 
 export type HttpRequestOptions = RequestInit & {
@@ -139,16 +146,19 @@ export class HttpClient {
     options,
     unwrapEnvelope = true,
     allowSessionRefresh = true,
+    isRetry = false,
   }: {
     path: string;
     searchParams?: URLSearchParams;
     options?: Omit<RequestInit, 'body'> & { body?: unknown };
     unwrapEnvelope?: boolean;
     allowSessionRefresh?: boolean;
+    isRetry?: boolean;
   }): Promise<T> {
     const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
     const currentToken = this.headers.Authorization?.replace(/^Bearer /, '');
-    const token = allowSessionRefresh && this.session ? await this.session.tokenForRequest(currentToken) : currentToken;
+    const token =
+      allowSessionRefresh && !isRetry && this.session ? await this.session.tokenForRequest(currentToken) : currentToken;
     const headers: Record<string, string> = {
       ...this.headers,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -162,8 +172,20 @@ export class HttpClient {
 
     const response = await fetch(fullUrl, reqInit);
 
-    if (response.status === 401 && allowSessionRefresh && (await this.refreshSessionAfter401(headers.Authorization))) {
-      return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, allowSessionRefresh: false });
+    if (
+      response.status === 401 &&
+      allowSessionRefresh &&
+      !isRetry &&
+      (await this.refreshSessionAfter401(headers.Authorization))
+    ) {
+      return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, isRetry: true });
+    }
+
+    if (allowSessionRefresh && token && this.session && !this.session.isCurrentToken(token)) {
+      throw new NovuError(
+        'The subscriber or context changed while the request was running, so its response was dropped',
+        undefined
+      );
     }
 
     if (!response.ok) {

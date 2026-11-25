@@ -529,6 +529,26 @@ describe('when the token endpoint signs in another user', () => {
     await novu.socket.disconnect();
   });
 
+  it('drops a response to the previous user that arrives after the new user signed in', async () => {
+    const { backend, novu } = await switchToBob();
+    novu.notifications.cache.clearAll();
+    backend.state.apiDelayMs = 100;
+    const aliceList = novu.notifications.list();
+    await wait(10);
+    backend.state.apiDelayMs = 0;
+    backend.advanceTime(10 * MINUTE_MS);
+    await novu.notifications.count({});
+    expect(novu.subscriberId).toBe('bob');
+
+    const { error } = await aliceList;
+    const { data } = await novu.notifications.list();
+
+    expect(error).toBeInstanceOf(NovuError);
+    expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
+
+    await novu.socket.disconnect();
+  });
+
   it('treats a renewal into a different subscriber and context pair as another user, even if they read alike', async () => {
     const backend = createFakeBackend({ subscriberId: 'alice:x', contextKeys: ['tenant:org'] });
     const novu = createNovu();

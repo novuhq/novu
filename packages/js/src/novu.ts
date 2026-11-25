@@ -147,6 +147,7 @@ export class Novu {
     this.#httpClient.setSession({
       tokenForRequest: (currentToken) => this.#session.tokenForRequest(currentToken),
       refresh: refreshSession,
+      isCurrentToken: (token) => this.#session.isCurrentToken(token),
     });
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
