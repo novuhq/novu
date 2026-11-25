@@ -73,6 +73,20 @@ describe('findOrgCatalogTeamsAppIds', () => {
     expect(axiosGet.thirdCall.args[0]).to.equal(nextLink);
   });
 
+  it('stops at the first page with a match, so a failing later page cannot lose it', async () => {
+    axiosGet.onFirstCall().resolves({ data: { value: [] } });
+    axiosGet.onSecondCall().resolves({
+      data: {
+        value: [appWithBot('portal-app', BOT_APP_ID)],
+        '@odata.nextLink': `${GRAPH_TEAMS_APPS}?$skiptoken=page-2`,
+      },
+    });
+    axiosGet.onThirdCall().rejects(new Error('Graph is unavailable'));
+
+    expect(await findOrgCatalogTeamsAppIds('graph-token', BOT_APP_ID)).to.deep.equal(['portal-app']);
+    expect(axiosGet.calledTwice).to.equal(true);
+  });
+
   it('does not follow a next page link outside Microsoft Graph', async () => {
     axiosGet.onFirstCall().resolves({ data: { value: [] } });
     axiosGet.onSecondCall().resolves({

@@ -32,7 +32,7 @@ function isPublishedDefinition(definition: OrgCatalogAppDefinition): boolean {
  * `externalId` matches. Apps built in the Teams Developer Portal get a manifest ID of their own and
  * carry the bot's app ID only in `bots[].botId`, which Graph returns as `appDefinitions[].bot.id`.
  * Graph doesn't document filtering on the bot ID, so that lookup lists the org catalog with the bot
- * expanded and matches here.
+ * expanded, matches here and stops at the first page with a match.
  *
  * Only `distributionMethod eq 'organization'` apps with a published definition count, so sideloaded
  * copies and submissions still waiting for admin approval are ignored.
@@ -55,22 +55,21 @@ export async function findOrgCatalogTeamsAppIds(graphToken: string, botAppId: st
   }
 
   const wantedBotId = botAppId.toLowerCase();
-  const botIdMatches: string[] = [];
   let pageUrl: string | undefined =
     `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=${encodeURIComponent(ORG_CATALOG_FILTER)}` +
     `&$expand=${encodeURIComponent('appDefinitions($expand=bot)')}`;
 
   for (let page = 0; pageUrl && page < MAX_CATALOG_PAGES; page += 1) {
     const response = await axios.get<OrgCatalogPage>(pageUrl, { headers, timeout: 10_000 });
-
-    for (const app of response.data.value) {
-      const usesBot = app.appDefinitions?.some(
+    const botIdMatches = response.data.value.filter((app) =>
+      app.appDefinitions?.some(
         (definition) => isPublishedDefinition(definition) && definition.bot?.id?.toLowerCase() === wantedBotId
-      );
+      )
+    );
 
-      if (usesBot) {
-        botIdMatches.push(app.id);
-      }
+    // Stop at the first page with a match, so an error on a later page can't lose it.
+    if (botIdMatches.length > 0) {
+      return botIdMatches.map((app) => app.id);
     }
 
     // Follow Graph's own paging only; never send the token anywhere else.
@@ -78,5 +77,5 @@ export async function findOrgCatalogTeamsAppIds(graphToken: string, botAppId: st
     pageUrl = nextLink?.startsWith(`${MS_GRAPH_BASE_URL}/`) ? nextLink : undefined;
   }
 
-  return botIdMatches;
+  return [];
 }
