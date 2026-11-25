@@ -23,6 +23,7 @@ import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { ProviderSetupFooter } from './provider-setup-layout';
+import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-available';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { cleanCredentials, RESEND_TRACKING_ENABLER, usesProviderSetupLayout } from './utils/helpers';
 
@@ -71,6 +72,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const queryClient = useQueryClient();
   const { environments } = useEnvironment();
   const usesSetupLayout = step === 'configure' && usesProviderSetupLayout(provider?.id);
+  const isTrackingAvailable = useIsActivityTrackingAvailable();
 
   /**
    * The integration "Create app" made, with the environment it lives in. "Connect provider" then saves the
@@ -298,7 +300,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 
-      if (usesSetupLayout && provider.id === EmailProviderIdEnum.Resend && isTrackingOn(data)) {
+      if (usesSetupLayout && provider.id === EmailProviderIdEnum.Resend && isTrackingAvailable && isTrackingOn(data)) {
         const isWebhookAdded = await addDeliveryWebhook(integration.data._id, data.environmentId);
         setIsSheetOpen(false);
 

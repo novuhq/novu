@@ -43,13 +43,15 @@ type ResendSetupProps = {
   setValue: UseFormSetValue<IntegrationFormData>;
   /** The environment the integration is created in, which names the API key. */
   environmentName?: string;
+  /** False hides the tracking step. */
+  isTrackingAvailable: boolean;
   isTrackingEnabled: boolean;
   isReadOnly?: boolean;
 };
 
 /**
- * Setup for Resend: create a sending-only API key, enter it with the sender, and choose whether Novu adds the
- * delivery webhook in Resend once the integration is created. Pasting a block of environment variables into any
+ * Setup for Resend: create a sending-only API key, enter it with the sender, and choose whether to track delivery
+ * through Resend's webhook once the integration is created. Pasting a block of environment variables into any
  * credential field fills in everything Novu finds in it.
  */
 export function ResendSetup({
@@ -58,6 +60,7 @@ export function ResendSetup({
   control,
   setValue,
   environmentName,
+  isTrackingAvailable,
   isTrackingEnabled,
   isReadOnly,
 }: ResendSetupProps) {
@@ -85,7 +88,9 @@ export function ResendSetup({
     setFoundFields(found);
   };
 
-  const trackingGroup = provider.configurations?.find((group) => group.groupType === 'inboundWebhook');
+  const trackingGroup = isTrackingAvailable
+    ? provider.configurations?.find((group) => group.groupType === 'inboundWebhook')
+    : undefined;
   const signingKeyConfig = trackingGroup?.configurations.find((config) => config.key === RESEND_SIGNING_KEY);
 
   return (
@@ -126,7 +131,7 @@ export function ResendSetup({
           index={3}
           status="current"
           title="Track delivery and opens (optional)"
-          description="After you connect, Novu adds the delivery webhook in Resend with your API key. Delivered, opened, clicked and bounced then show in the Activity Feed. If the key can’t, you get a URL to paste."
+          description="After you connect, Novu gives you a webhook URL to add in Resend. Delivered, opened, clicked and bounced then show in the Activity Feed."
           extraContent={
             <div className="flex flex-col gap-4">
               <TrackingToggle control={control} isReadOnly={isReadOnly} />
@@ -161,7 +166,7 @@ function TrackingToggle({ control, isReadOnly }: { control: Control<IntegrationF
           <label htmlFor={switchId} className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-label-sm text-text-strong">Email Activity Tracking</span>
             <span className="text-paragraph-xs text-text-sub">
-              Novu sets up the provider’s delivery webhook for you.
+              Shows delivery events sent by the provider’s webhook.
             </span>
           </label>
           <FormControl>

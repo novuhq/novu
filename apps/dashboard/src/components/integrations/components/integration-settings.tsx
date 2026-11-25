@@ -246,6 +246,7 @@ export function IntegrationSettings({
   const { currentEnvironment, environments } = useEnvironment();
 
   const isFailing = !!integration && isIntegrationFailing(integration);
+  const isTrackingAvailable = useIsActivityTrackingAvailable();
   const form = useForm<IntegrationFormData>({
     mode: 'all',
     reValidateMode: 'onChange',
@@ -266,10 +267,12 @@ export function IntegrationSettings({
           active: true,
           primary: true,
           credentials: {},
-          // Resend's setup turns on activity tracking: Novu adds the delivery webhook once the integration exists.
+          // Resend's setup turns on activity tracking where it is available.
           // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:
-            setupLayout && provider?.id === EmailProviderIdEnum.Resend ? { [RESEND_TRACKING_ENABLER]: 'true' } : {},
+            setupLayout && provider?.id === EmailProviderIdEnum.Resend && isTrackingAvailable
+              ? { [RESEND_TRACKING_ENABLER]: 'true' }
+              : {},
           environmentId: currentEnvironment?._id ?? '',
           rules: null,
         },
@@ -671,6 +674,7 @@ export function IntegrationSettings({
                   control={control}
                   setValue={setValue}
                   environmentName={environments?.find((environment) => environment._id === environmentId)?.name}
+                  isTrackingAvailable={isTrackingAvailable}
                   isTrackingEnabled={Boolean(trackingEnabled) && trackingEnabled !== 'false'}
                   isReadOnly={isReadOnly}
                 />
