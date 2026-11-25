@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -21,8 +20,6 @@ import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/updat
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
-import { NovuTokens } from '../shared/services/novu-tokens.service';
-import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
 import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
@@ -33,7 +30,8 @@ import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/d
 import { DeleteTopicSubscription } from './usecases/delete-subscription/delete-subscription.usecase';
 import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';
 import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
-import { assertTopicGrant } from './utils/topic-grant';
+import { SubscribeToTopicCommand } from './usecases/subscribe-to-topic/subscribe-to-topic.command';
+import { SubscribeToTopic } from './usecases/subscribe-to-topic/subscribe-to-topic.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -44,10 +42,9 @@ export class InboxTopicController {
   constructor(
     private getTopicSubscriptionsUsecase: GetTopicSubscriptions,
     private getTopicSubscriptionUsecase: GetSubscription,
-    private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
+    private subscribeToTopicUsecase: SubscribeToTopic,
     private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
-    private deleteTopicSubscriptionUsecase: DeleteTopicSubscription,
-    private novuTokens: NovuTokens
+    private deleteTopicSubscriptionUsecase: DeleteTopicSubscription
   ) {}
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -110,49 +107,17 @@ export class InboxTopicController {
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
   ): Promise<SubscriptionDetailsResponseDto> {
-    if (body.topicGrant !== undefined) {
-      assertTopicGrant(this.novuTokens.verify('subscriberTopicGrant', body.topicGrant), {
-        environmentId: subscriberSession._environmentId,
-        subscriberId: subscriberSession.subscriberId,
-        topicKey,
-      });
-    }
-
-    const result = await this.createSubscriptionsUsecase.execute(
-      CreateSubscriptionsCommand.create({
+    return await this.subscribeToTopicUsecase.execute(
+      SubscribeToTopicCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
-        userId: subscriberSession._id,
+        subscriberId: subscriberSession.subscriberId,
+        _subscriberId: subscriberSession._id,
         topicKey,
-        subscriptions: [
-          {
-            subscriberId: subscriberSession.subscriberId,
-            identifier: body.identifier,
-            name: body.name,
-          },
-        ],
-        name: body.topicGrant === undefined ? body.topic?.name : undefined,
-        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         contextKeys: subscriberSession.contextKeys,
+        request: body,
       })
     );
-
-    if (result.errors && result.errors.length > 0) {
-      throw new BadRequestException(result.errors[0].message);
-    }
-
-    if (result.meta.failed > 0 || result.data.length === 0) {
-      throw new BadRequestException('Failed to create subscription');
-    }
-
-    const subscription = result.data[0];
-
-    return {
-      id: subscription._id,
-      identifier: subscription.identifier,
-      name: subscription.name,
-      preferences: subscription.preferences,
-    };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
