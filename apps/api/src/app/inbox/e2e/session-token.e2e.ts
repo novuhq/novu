@@ -255,17 +255,23 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
     const BROWSER_CONTEXT: ContextPayload = { tenant: 'globex' };
     let slackIdentifier: string;
 
-    beforeEach(async () => {
-      slackIdentifier = `slack-token-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    async function createChatIntegration(providerId: ChatProviderIdEnum) {
+      const identifier = `${providerId}-token-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
-        providerId: ChatProviderIdEnum.Slack,
+        providerId,
         channel: ChannelTypeEnum.CHAT,
         credentials: { clientId: 'test-client-id' },
         active: true,
-        identifier: slackIdentifier,
+        identifier,
       });
+
+      return identifier;
+    }
+
+    beforeEach(async () => {
+      slackIdentifier = await createChatIntegration(ChatProviderIdEnum.Slack);
     });
 
     async function oauthState(path: string, sessionToken: string, body: Record<string, unknown>) {
@@ -311,6 +317,21 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
       expect(state.contextKeys).to.have.members(CONTEXT_KEYS);
     });
 
+    it("should carry the token's context into a Webex link-user state", async () => {
+      const token = await tokenSession('sub-webex', { context: CONTEXT });
+      const webexIdentifier = await createChatIntegration(ChatProviderIdEnum.WebexMessaging);
+
+      const state = await oauthState('/v1/inbox/channel-endpoints/oauth', token, {
+        integrationIdentifier: webexIdentifier,
+        subscriberId: 'sub-webex',
+        connectionIdentifier: 'webex-connection',
+        context: BROWSER_CONTEXT,
+      });
+
+      expect(state.context).to.equal(undefined);
+      expect(state.contextKeys).to.have.members(CONTEXT_KEYS);
+    });
+
     it('should keep using the browser context for a session without a token', async () => {
       await setHmac(session, false);
       const hashSession = await exchange({
@@ -325,6 +346,23 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
 
       expect(state.context).to.deep.equal(BROWSER_CONTEXT);
     });
+  });
+
+  it('should refuse a token session on the legacy widget routes', async () => {
+    const tokenSession = await exchange({ subscriberToken: await mint('sub-widget', { context: CONTEXT }) });
+    expect(tokenSession.status).to.equal(201);
+    await setHmac(session, false);
+    const hashSession = await exchange({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: 'sub-widget-hash',
+    });
+    expect(hashSession.status).to.equal(201);
+
+    const feed = (token: string) =>
+      session.testAgent.get('/v1/widgets/notifications/feed').set('Authorization', `Bearer ${token}`);
+
+    expect((await feed(tokenSession.body.data.token)).status).to.equal(401);
+    expect((await feed(hashSession.body.data.token)).status).to.equal(200);
   });
 
   it('should count a token session as token in the session stats', async () => {
