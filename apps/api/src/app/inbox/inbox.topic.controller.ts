@@ -21,6 +21,7 @@ import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/updat
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
+import { NovuTokens } from '../shared/services/novu-tokens.service';
 import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subscriptions/usecases/create-subscriptions';
 import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
@@ -32,6 +33,7 @@ import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/d
 import { DeleteTopicSubscription } from './usecases/delete-subscription/delete-subscription.usecase';
 import { GetTopicSubscriptionsCommand } from './usecases/get-topic-subscriptions/get-topic-subscriptions.command';
 import { GetTopicSubscriptions } from './usecases/get-topic-subscriptions/get-topic-subscriptions.usecase';
+import { assertTopicGrant } from './utils/topic-grant';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -44,7 +46,8 @@ export class InboxTopicController {
     private getTopicSubscriptionUsecase: GetSubscription,
     private createSubscriptionsUsecase: CreateSubscriptionsUsecase,
     private updateSubscriptionUsecase: UpdateSubscriptionUsecase,
-    private deleteTopicSubscriptionUsecase: DeleteTopicSubscription
+    private deleteTopicSubscriptionUsecase: DeleteTopicSubscription,
+    private novuTokens: NovuTokens
   ) {}
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -107,6 +110,14 @@ export class InboxTopicController {
     @Param('topicKey') topicKey: string,
     @Body() body: CreateTopicSubscriptionRequestDto
   ): Promise<SubscriptionDetailsResponseDto> {
+    if (body.topicGrant !== undefined) {
+      assertTopicGrant(this.novuTokens.verify('subscriberTopicGrant', body.topicGrant), {
+        environmentId: subscriberSession._environmentId,
+        subscriberId: subscriberSession.subscriberId,
+        topicKey,
+      });
+    }
+
     const result = await this.createSubscriptionsUsecase.execute(
       CreateSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -120,7 +131,7 @@ export class InboxTopicController {
             name: body.name,
           },
         ],
-        name: body.topic?.name,
+        name: body.topicGrant === undefined ? body.topic?.name : undefined,
         preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         contextKeys: subscriberSession.contextKeys,
       })
