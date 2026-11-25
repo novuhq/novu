@@ -1,5 +1,5 @@
 import { EnvironmentRepository, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, maskSecret, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -24,8 +24,8 @@ describe('Get Integrations - /integrations (GET) #novu-v2', () => {
 
     for (const emailIntegration of emailIntegrations) {
       expect(emailIntegration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
-      expect(emailIntegration.credentials.apiKey).to.equal('SG.123');
-      expect(emailIntegration.credentials.secretKey).to.equal('abc');
+      expect(emailIntegration.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(emailIntegration.credentials.secretKey).to.equal(maskSecret('abc'));
       expect(emailIntegration.active).to.equal(true);
     }
 

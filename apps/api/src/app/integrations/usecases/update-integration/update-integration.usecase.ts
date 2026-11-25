@@ -18,6 +18,10 @@ import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum, IntegrationHealthStatusE
 import { isEqual } from 'lodash';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import {
+  restoreMaskedIntegrationConfigurations,
+  restoreMaskedIntegrationCredentials,
+} from '../../utils/restore-masked-integration-credentials';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -334,6 +338,21 @@ export class UpdateIntegration {
       _organization: command.organizationId,
       active: command.active,
     });
+
+    if (command.credentials) {
+      command.credentials = restoreMaskedIntegrationCredentials(
+        existingIntegration.providerId,
+        command.credentials,
+        decryptCredentials(existingIntegration.credentials ?? {})
+      );
+    }
+
+    if (command.configurations) {
+      command.configurations = restoreMaskedIntegrationConfigurations(
+        command.configurations,
+        existingIntegration.configurations
+      );
+    }
 
     const environmentId = command.environmentId ?? existingIntegration._environmentId;
     const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};

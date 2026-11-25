@@ -29,6 +29,7 @@ export type WhatsAppSetupGuideProps = {
   embedded?: boolean;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing setup guide with two flows; splitting it is out of scope here
 export function WhatsAppSetupGuide({
   agent,
   integrationId,
@@ -150,6 +151,7 @@ export function WhatsAppSetupGuide({
           isConnectSubscriberReady && isCredentialsSaved && selectedIntegration?.credentials ? (
             <EmbeddedSignupInboundTestPanel
               connectSubscriberId={connectSubscriberId}
+              integrationId={selectedIntegration._id}
               credentials={selectedIntegration.credentials}
               agentName={agent.name}
             />

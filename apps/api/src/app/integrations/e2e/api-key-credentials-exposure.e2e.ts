@@ -1,5 +1,5 @@
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, maskSecret, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -9,8 +9,8 @@ import { expect } from 'chai';
  * from the integrations endpoints, regardless of RBAC state. OAuth tokens are
  * gated the same way.
  *
- * Session-token (JWT/dashboard) callers must keep receiving decrypted credentials
- * so dashboard flows continue to work.
+ * Session-token (JWT/dashboard) callers receive the credentials with every secret masked:
+ * non-secret settings as stored, secrets as a mask of their first and last characters.
  */
 describe('Integration credentials exposure to API-key auth - /integrations #novu-v2', () => {
   let session: UserSession;
@@ -34,7 +34,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       }
     });
 
-    it('should still return decrypted credentials when authenticated via session token', async () => {
+    it('should return credentials with masked secrets when authenticated via session token', async () => {
       const { body } = await session.testAgent.get('/v1/integrations');
 
       const sendgrid = body.data.find(
@@ -45,8 +45,9 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
 
       expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
       expect(sendgrid.credentials).to.exist;
-      expect(sendgrid.credentials.apiKey).to.equal('SG.123');
-      expect(sendgrid.credentials.secretKey).to.equal('abc');
+      expect(sendgrid.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(sendgrid.credentials.secretKey).to.equal(maskSecret('abc'));
+      expect(JSON.stringify(sendgrid.credentials)).to.not.contain('SG.123');
     });
   });
 
@@ -62,7 +63,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       }
     });
 
-    it('should still return decrypted credentials when authenticated via session token', async () => {
+    it('should return credentials with masked secrets when authenticated via session token', async () => {
       const { body } = await session.testAgent.get('/v1/integrations/active');
 
       const smsIntegration = body.data.find(
@@ -75,7 +76,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(smsIntegration, 'Expected active Twilio integration fixture').to.exist;
       expect(smsIntegration.credentials).to.exist;
       expect(smsIntegration.credentials.accountSid).to.equal('AC123');
-      expect(smsIntegration.credentials.token).to.equal('123');
+      expect(smsIntegration.credentials.token).to.equal(maskSecret('123'));
     });
   });
 
@@ -110,7 +111,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(stored, 'Integration should still be persisted').to.exist;
     });
 
-    it('should still return decrypted credentials when created via session token', async () => {
+    it('should return credentials with masked secrets when created via session token', async () => {
       await integrationRepository.deleteMany({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -128,8 +129,10 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.post('/v1/integrations').send(payload);
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal(payload.credentials.apiKey);
-      expect(body.data.credentials.secretKey).to.equal(payload.credentials.secretKey);
+      expect(body.data.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.apiKey);
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.secretKey);
     });
   });
 
@@ -159,7 +162,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(body.data).to.not.have.property('credentials');
     });
 
-    it('should still return decrypted credentials when updated via session token', async () => {
+    it('should return credentials with masked secrets when updated via session token', async () => {
       const { body: listBody } = await session.testAgent.get('/v1/integrations');
       const target = listBody.data.find(
         (integration) =>
@@ -177,8 +180,10 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.put(`/v1/integrations/${target._id}`).send(payload);
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal(payload.credentials.apiKey);
-      expect(body.data.credentials.secretKey).to.equal(payload.credentials.secretKey);
+      expect(body.data.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.apiKey);
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.secretKey);
     });
   });
 
@@ -203,7 +208,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(body.data).to.not.have.property('credentials');
     });
 
-    it('should still return decrypted credentials when called via session token', async () => {
+    it('should return credentials with masked secrets when called via session token', async () => {
       const { body: listBody } = await session.testAgent.get('/v1/integrations');
       const target = listBody.data.find(
         (integration) =>
@@ -215,8 +220,8 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.post(`/v1/integrations/${target._id}/set-primary`).send({});
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal('SG.123');
-      expect(body.data.credentials.secretKey).to.equal('abc');
+      expect(body.data.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret('abc'));
       expect(body.data.primary).to.equal(true);
     });
   });

@@ -14,6 +14,7 @@ export * from './in-app-redirect-url';
 export * from './issues';
 export * from './locales';
 export * from './managed-integration-credentials';
+export * from './mask-secret-credentials';
 export * from './normalize-human-to';
 export * from './normalizeEmail';
 export * from './novu-connect-cli';

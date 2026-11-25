@@ -766,7 +766,13 @@ export type WhatsAppValidateTokenResponse = {
 
 export async function validateWhatsAppToken(
   environment: IEnvironment,
-  body: { accessToken: string; phoneNumberIdentification?: string; businessAccountId?: string },
+  body: {
+    accessToken: string;
+    /** The saved integration the token belongs to; lets the API use the stored token for a masked one. */
+    integrationId?: string;
+    phoneNumberIdentification?: string;
+    businessAccountId?: string;
+  },
   signal?: AbortSignal
 ): Promise<WhatsAppValidateTokenResponse> {
   const response = await post<{ data: WhatsAppValidateTokenResponse }>('/integrations/whatsapp/validate-token', {
