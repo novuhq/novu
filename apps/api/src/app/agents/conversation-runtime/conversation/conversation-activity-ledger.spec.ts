@@ -289,8 +289,8 @@ describe('ConversationActivityLedger', () => {
   });
 
   describe('importInboundMessages', () => {
-    it('bulk imports one sequenced batch, returns the new rows, and increments messageCount', async () => {
-      const importUserActivities = sinon.stub().resolves(2);
+    it('checks access only for unstored messages, flags the refused ones, and counts only admitted rows', async () => {
+      const importUserActivities = sinon.stub().resolves(1);
       const findExistingPlatformMessageIds = sinon.stub().resolves(new Set(['agent-reply']));
       const activityRepository = makeActivityRepository({ findExistingPlatformMessageIds, importUserActivities });
       const incrementMessageCount = sinon.stub().resolves(undefined);
@@ -298,6 +298,7 @@ describe('ConversationActivityLedger', () => {
       const eventSequenceService = {
         mintRange: sinon.stub().resolves([4, 5]),
       };
+      const isRefused = sinon.stub().callsFake(async (authorUserId: string) => authorUserId === 'U2');
       const ledger = makeLedger(activityRepository, eventSequenceService, undefined, conversationRepository);
 
       const inserted = await ledger.importInboundMessages({
@@ -312,7 +313,7 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Ada',
             content: 'oldest',
             platformMessageId: '1',
-            accessRefused: false,
+            authorUserId: 'U1',
           },
           {
             identifier: 'slack_hist_conv-1_2',
@@ -320,7 +321,7 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Bob',
             content: 'newest',
             platformMessageId: '2',
-            accessRefused: true,
+            authorUserId: 'U2',
           },
           {
             identifier: 'slack_hist_conv-1_agent-reply',
@@ -328,24 +329,21 @@ describe('ConversationActivityLedger', () => {
             senderName: 'Agent',
             content: 'already persisted outbound',
             platformMessageId: 'agent-reply',
-            accessRefused: false,
+            authorUserId: 'B1',
           },
         ],
+        isRefused,
         environmentId: 'env-1',
         organizationId: 'org-1',
       });
 
-      expect(inserted.map((message) => message.platformMessageId)).to.deep.equal(['1', '2']);
-      expect(importUserActivities.calledOnce).to.equal(true);
-      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
-      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.platformMessageId)).to.deep.equal(
-        ['1', '2']
-      );
-      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.accessRefused)).to.deep.equal([
-        false,
-        true,
+      expect(isRefused.args.map(([author]) => author)).to.deep.equal(['U1', 'U2']);
+      expect(inserted.map((message) => [message.platformMessageId, message.accessRefused])).to.deep.equal([
+        ['1', false],
+        ['2', true],
       ]);
-      expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 2, null)).to.equal(true);
+      expect(importUserActivities.firstCall.args[0].messages.map((message) => message.sequence)).to.deep.equal([4, 5]);
+      expect(incrementMessageCount.calledOnceWithExactly('env-1', 'org-1', 'conv-1', 1, null)).to.equal(true);
     });
   });
 

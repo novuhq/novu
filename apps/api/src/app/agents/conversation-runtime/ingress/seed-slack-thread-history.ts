@@ -99,16 +99,15 @@ export async function seedSlackThreadHistory(params: {
       platform: config.platform,
       integrationId: config.integrationId,
       platformThreadId,
-      messages: await Promise.all(
-        prior.map(async (msg) => ({
-          senderId: `${config.platform}:${msg.author.userId}`,
-          senderName: msg.author.fullName,
-          content: msg.text,
-          platformMessageId: msg.id,
-          identifier: `slack_hist_${conversation._id}_${msg.id}`,
-          accessRefused: await isRefused(msg.author.userId),
-        }))
-      ),
+      messages: prior.map((msg) => ({
+        senderId: `${config.platform}:${msg.author.userId}`,
+        senderName: msg.author.fullName,
+        content: msg.text,
+        platformMessageId: msg.id,
+        identifier: `slack_hist_${conversation._id}_${msg.id}`,
+        authorUserId: msg.author.userId,
+      })),
+      isRefused,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });

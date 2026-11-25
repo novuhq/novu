@@ -865,7 +865,9 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       ...(session ? { session } : {}),
     });
 
-    return result.upsertedCount;
+    // How many new rows the agent reads: refused ones are stored but not counted.
+    return Object.keys(result.upsertedIds ?? {}).filter((index) => !params.messages[Number(index)]?.accessRefused)
+      .length;
   }
 
   async createAgentActivity(params: {

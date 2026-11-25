@@ -21,7 +21,7 @@ import type {
   ConversationActivityContext,
   DeleteInboundMessageParams,
   FindToolCallParams,
-  ImportInboundMessage,
+  ImportedInboundMessage,
   ImportInboundMessagesParams,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
@@ -266,7 +266,7 @@ export class ConversationActivityLedger {
     });
   }
 
-  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportInboundMessage[]> {
+  async importInboundMessages(params: ImportInboundMessagesParams): Promise<ImportedInboundMessage[]> {
     if (params.messages.length === 0) {
       return [];
     }
@@ -276,12 +276,15 @@ export class ConversationActivityLedger {
       params.conversationId,
       params.messages.map((message) => message.platformMessageId)
     );
-    const messages = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
+    const unstored = params.messages.filter((message) => !existingPlatformMessageIds.has(message.platformMessageId));
 
-    if (messages.length === 0) {
+    if (unstored.length === 0) {
       return [];
     }
 
+    const messages = await Promise.all(
+      unstored.map(async (message) => ({ ...message, accessRefused: await params.isRefused(message.authorUserId) }))
+    );
     const sequences = await this.eventSequenceService.mintRange(
       {
         environmentId: params.environmentId,
@@ -292,7 +295,7 @@ export class ConversationActivityLedger {
     );
 
     return this.activityRepository.withTransaction(async (session) => {
-      const insertedCount = await this.activityRepository.importUserActivities(
+      const admittedCount = await this.activityRepository.importUserActivities(
         {
           ...params,
           messages: messages.map((message, index) => ({
@@ -307,7 +310,7 @@ export class ConversationActivityLedger {
         params.environmentId,
         params.organizationId,
         params.conversationId,
-        insertedCount,
+        admittedCount,
         session
       );
 

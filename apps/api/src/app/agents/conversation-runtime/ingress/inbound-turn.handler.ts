@@ -1929,6 +1929,15 @@ export class AgentInboundHandler implements OnModuleInit {
       emailSenderUnverified: false,
     });
 
+    // The agent gets the version it already read, never the platform's copy of a refused one.
+    const stored = message.id
+      ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, message.id)
+      : null;
+    const previousForAgent =
+      previousMessage && !stored?.accessRefused
+        ? withText(previousMessage, agentVisibleText(stored, previousMessage.text))
+        : null;
+
     if (message.id) {
       await this.conversationService.updateInboundMessage({
         conversationId: conversation._id,
@@ -1976,7 +1985,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId: thread.id,
       message,
-      previousMessage: previousMessage ?? null,
+      previousMessage: previousForAgent,
       event,
       resolution,
       platformUserId,
@@ -2213,6 +2222,11 @@ export class AgentInboundHandler implements OnModuleInit {
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
+    }
+
+    // A reaction from an admitted sender must not carry what a refused sender wrote.
+    if (sourceActivity?.accessRefused) {
+      return { emoji: event.emoji.name, added: event.added, messageId: event.messageId };
     }
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
@@ -2698,14 +2712,30 @@ function eventToThread(event: MessageDeletedEvent, conversation: ConversationEnt
   return { id: event.threadId, channelId: event.channelId, isDM: conversation.isDirectMessage !== false } as Thread;
 }
 
+/** A stored message's text as the agent may read it: never refused text, never a refused edit's text. */
+function agentVisibleText(stored: ConversationActivityEntity | null, platformText: string | undefined): string {
+  if (!stored) {
+    return platformText ?? '';
+  }
+
+  return stored.accessRefused ? '' : stored.content;
+}
+
+/** A copy of a platform message with other text. `Message` is a class, so a spread would drop its methods. */
+function withText(message: Message, text: string): Message {
+  return Object.assign(Object.create(Object.getPrototypeOf(message)), message, { text });
+}
+
 function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
+  const text = agentVisibleText(existing, event.previousMessage?.text);
+
   if (event.previousMessage) {
-    return event.previousMessage;
+    return withText(event.previousMessage, text);
   }
 
   return {
     id: event.messageId,
-    text: existing?.content ?? '',
+    text,
     author: {
       userId: existing?.senderId ?? '',
       fullName: existing?.senderName ?? '',

@@ -62,6 +62,11 @@ export interface ImportInboundMessage {
   senderName?: string;
   content: string;
   platformMessageId: string;
+  /** The author's platform user id, for the access check. */
+  authorUserId: string;
+}
+
+export interface ImportedInboundMessage extends ImportInboundMessage {
   accessRefused: boolean;
 }
 
@@ -71,6 +76,8 @@ export interface ImportInboundMessagesParams {
   integrationId: string;
   platformThreadId: string;
   messages: ImportInboundMessage[];
+  /** Runs only for messages that are not stored yet. */
+  isRefused: (authorUserId: string) => Promise<boolean>;
   environmentId: string;
   organizationId: string;
 }
