@@ -11,6 +11,7 @@ import { registerEnvironmentTools } from "../src/tools/environments";
 import { registerIntegrationTools } from "../src/tools/integrations";
 import { registerNotificationTools } from "../src/tools/notifications";
 import { registerPreferenceTools } from "../src/tools/preferences";
+import { registerSubscriberReachabilityTool } from "../src/tools/subscriber-reachability";
 import { registerSubscriberTools } from "../src/tools/subscribers";
 import { registerWorkflowTools } from "../src/tools/workflows";
 import type { ToolAccessors } from "../src/utils/tool-accessors";
@@ -30,6 +31,7 @@ export async function connectAllTools(accessors: ToolAccessors, region = "us"): 
 	registerWorkflowTools(server, accessors);
 	registerEnvironmentTools(server, accessors);
 	registerSubscriberTools(server, accessors);
+	registerSubscriberReachabilityTool(server, accessors);
 	registerNotificationTools(server, accessors);
 	registerActivityTools(server, accessors);
 	registerPreferenceTools(server, accessors);

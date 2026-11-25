@@ -26,7 +26,7 @@ export class RemoveIntegration {
     this.logger.setContext(RemoveIntegration.name);
   }
 
-  async execute(command: RemoveIntegrationCommand) {
+  async execute(command: RemoveIntegrationCommand): Promise<void> {
     try {
       const existingIntegration = await this.integrationRepository.findOne({
         _id: command.integrationId,
@@ -104,10 +104,5 @@ export class RemoveIntegration {
       }
       throw e;
     }
-
-    return await this.integrationRepository.find({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
   }
 }

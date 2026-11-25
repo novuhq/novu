@@ -18,9 +18,23 @@ describe('matchCopilotPage', () => {
     expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.ACTIVITY);
   });
 
+  it.each(['/env/dev-env/subscribers', '/env/dev-env/subscribers/create', '/env/dev-env/subscribers/sub_8f21'])(
+    'matches %s to Subscribers',
+    (pathname) => {
+      expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.SUBSCRIBERS);
+    }
+  );
+
+  it.each(['/integrations', '/integrations/connect', '/integrations/connect/sendgrid', '/integrations/int_123/update'])(
+    'matches %s to Integrations',
+    (pathname) => {
+      expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.INTEGRATIONS);
+    }
+  );
+
   it.each([
     '/env/dev-env/workflows',
-    '/env/dev-env/subscribers',
+    '/env/dev-env/topics',
     '/env/dev-env/activity/unknown-tab',
     '/env/dev-env/workflows/welcome_wf_123/activity',
   ])('matches no page at %s', (pathname) => {
@@ -81,8 +95,25 @@ describe('getCopilotPageCopy', () => {
     ]);
   });
 
+  it('leads the Subscribers suggestions with the question about the open subscriber', () => {
+    expect(getCopilotPageCopy(CopilotPageEnum.SUBSCRIBERS, 'Can this subscriber be reached on every channel?')).toEqual(
+      {
+        emptyState: {
+          title: 'Ask about subscribers',
+          body: 'I check which channels can reach a subscriber and why not. Every answer names the environment it used.',
+        },
+        placeholder: 'Ask about a subscriber…',
+        suggestions: [
+          'Can this subscriber be reached on every channel?',
+          'Can we reach jane@acme.com on SMS?',
+          "Why didn't user_123 get their last notification?",
+        ],
+      }
+    );
+  });
+
   it('returns nothing for a page without an entry', () => {
-    expect(getCopilotPageCopy(CopilotPageEnum.SUBSCRIBERS)).toBeUndefined();
+    expect(getCopilotPageCopy('unknown' as CopilotPageEnum)).toBeUndefined();
   });
 });
 

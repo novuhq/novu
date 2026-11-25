@@ -5,7 +5,7 @@ import {
   WEBHOOK_FILTER_REQUEST_FAILED_DATA,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-import { JobEntity, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobStatusEnum, SubscriberEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -285,5 +285,63 @@ describe('RunJob - attachment lifecycle across a trigger -> email chain', () => 
     expect(storage.has(ATTACHMENT_STORAGE_PATH)).to.equal(false);
 
     sandbox.restore();
+  });
+});
+
+describe('RunJob - extend to subscriber schedule', () => {
+  type ScheduleTestDouble = {
+    shouldExtendToSubscriberSchedule: (
+      job: JobEntity,
+      critical: boolean,
+      subscriber: SubscriberEntity | null
+    ) => Promise<boolean>;
+    executeBridgeJob: { execute: sinon.SinonStub };
+  };
+
+  let sandbox: sinon.SinonSandbox;
+  let usecase: ScheduleTestDouble;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    usecase = Object.create(RunJob.prototype) as ScheduleTestDouble;
+    usecase.executeBridgeJob = {
+      execute: sandbox.stub().resolves({ outputs: { extendToSchedule: true } }),
+    };
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('sends the job payload and subscriber to the bridge, so payload validation passes', async () => {
+    const payload = { name: 'Novu' };
+    const subscriber = { _id: 'subscriber-id', subscriberId: 'subscriber-id' } as SubscriberEntity;
+    const delayJob = buildJob({ type: StepTypeEnum.DELAY, payload });
+
+    const extend = await usecase.shouldExtendToSubscriberSchedule(delayJob, false, subscriber);
+
+    expect(extend).to.equal(true);
+    sinon.assert.calledOnce(usecase.executeBridgeJob.execute);
+    const { variables } = usecase.executeBridgeJob.execute.firstCall.args[0];
+    expect(variables.payload).to.equal(payload);
+    expect(variables.subscriber).to.equal(subscriber);
+  });
+
+  it('leaves the subscriber out when it was not found', async () => {
+    const digestJob = buildJob({ type: StepTypeEnum.DIGEST, payload: { name: 'Novu' } });
+
+    await usecase.shouldExtendToSubscriberSchedule(digestJob, false, null);
+
+    const { variables } = usecase.executeBridgeJob.execute.firstCall.args[0];
+    expect(variables).to.not.have.property('subscriber');
+  });
+
+  it('does not call the bridge for a critical workflow', async () => {
+    const delayJob = buildJob({ type: StepTypeEnum.DELAY, payload: { name: 'Novu' } });
+
+    const extend = await usecase.shouldExtendToSubscriberSchedule(delayJob, true, null);
+
+    expect(extend).to.equal(false);
+    sinon.assert.notCalled(usecase.executeBridgeJob.execute);
   });
 });

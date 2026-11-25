@@ -33,6 +33,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   RUNNING_CLAIM_RENEW_INTERVAL_MS,
+  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import {
@@ -239,7 +240,7 @@ export class RunJob {
 
       if (
         isOutsideSubscriberSchedule &&
-        (await this.shouldExtendToSubscriberSchedule(job, notification.critical ?? false, workflow))
+        (await this.shouldExtendToSubscriberSchedule(job, notification.critical ?? false, subscriber, workflow))
       ) {
         this.logger.info(
           {
@@ -1132,10 +1133,16 @@ export class RunJob {
   private async shouldExtendToSubscriberSchedule(
     job: JobEntity,
     critical: boolean,
+    subscriber: SubscriberEntity | null,
     workflow?: NotificationTemplateEntity
   ): Promise<boolean> {
     // should only extend to schedule for delay and digest when the workflow is not critical
     if ((job.type === StepTypeEnum.DELAY || job.type === StepTypeEnum.DIGEST) && !critical) {
+      /*
+       * Send the same payload and subscriber the step's bridge call in AddJob sends: the
+       * framework validates the payload against the workflow's `payloadSchema` before it
+       * runs the step, so an empty payload fails any schema with a required field.
+       */
       const bridgeResponse = await this.executeBridgeJob.execute(
         ExecuteBridgeJobCommand.create({
           environmentId: job._environmentId,
@@ -1144,7 +1151,10 @@ export class RunJob {
           identifier: job.identifier,
           jobId: job._id,
           job: job,
-          variables: {},
+          variables: {
+            payload: job.payload,
+            ...(subscriber && { subscriber }),
+          },
           workflow,
         })
       );
