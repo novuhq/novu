@@ -162,6 +162,12 @@ describe("redactHttpRequestControlValues: values that look safe and aren't", () 
 		);
 	});
 
+	it("hides a short id that mixes letters and digits, such as a catch hook's", () => {
+		expect(urlOf("https://hooks.zapier.com/hooks/catch/123456/abc1d2e/")).toBe(
+			`https://hooks.zapier.com/hooks/catch/123456/${HIDDEN_SECRET}/`,
+		);
+	});
+
 	it("shows a redacted value the same when it is redacted again", () => {
 		const once = redactHttpRequestControlValues(httpControlValues());
 
@@ -250,6 +256,73 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 		expect(restore({ headers, url: "https://api.example.com/hooks/v2" }, saved).ok).toBe(true);
 	});
 
+	it("refuses a host change hidden in the user info or behind a backslash", () => {
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://api.stripe.com/v1/charges",
+		};
+		const headers = [{ key: "Authorization", value: HIDDEN_SECRET }];
+
+		for (const url of [
+			"https://{{payload.host}}@api.stripe.com/v1/charges",
+			"https://evil.example\\@api.stripe.com/v1/charges",
+		]) {
+			const result = restore({ headers, url }, saved);
+			expect(!result.ok && result.error).toContain("now points at another host");
+		}
+	});
+
+	it("refuses to keep hidden values next to a raw filter the step didn't have", () => {
+		const saved = {
+			headers: [
+				{ key: "Authorization", value: `Bearer ${TOKEN}` },
+				{ key: "X-Trace", value: "{{ payload.trace | raw }}" },
+			],
+			url: "https://api.example.com/hooks",
+		};
+		const kept = [
+			{ key: "Authorization", value: HIDDEN_SECRET },
+			{ key: "X-Trace", value: "{{ payload.trace | raw }}" },
+		];
+
+		expect(restore({ headers: kept, url: saved.url }, saved).ok).toBe(true);
+		const injected = restore(
+			{
+				headers: [
+					...kept,
+					{ key: "X-Inject", value: "{{ payload.x | url_decode | raw }}" },
+				],
+				url: saved.url,
+			},
+			saved,
+		);
+		expect(!injected.ok && injected.error).toContain("raw filter");
+	});
+
+	it("tells a new step it can't copy hidden values, rather than blaming a host", () => {
+		const result = restoreStepSecrets(
+			{
+				controlValues: {
+					headers: [{ key: "X-Api-Key", value: HIDDEN_SECRET }],
+					url: "https://a.example",
+				},
+				name: "Copy",
+				type: "http_request",
+			},
+			undefined,
+		);
+
+		expect(!result.ok && result.error).toContain("A new step can't copy hidden values");
+		expect(!result.ok && result.error).not.toContain("another host");
+	});
+
+	it("refuses a placeholder spelled with escapes in a body that isn't valid JSON", () => {
+		const saved = { body: `{"n": {{payload.n}}, "key": "${TOKEN}"}` };
+		const escaped = `{"n": {{payload.n}}, "key": "${"\\u2022".repeat(8)}"}`;
+
+		expect(restore({ body: escaped }, saved).ok).toBe(false);
+	});
+
 	it("matches the stored step by _id before stepId", () => {
 		const result = restoreWorkflowSecrets(
 			[
@@ -289,6 +362,39 @@ describe("redactWorkflowSecrets", () => {
 		expect(text).not.toContain(TOKEN);
 		expect(text).not.toContain(SLACK_SECRET);
 		expect(text).toContain(HIDDEN_SECRET);
+	});
+
+	it("hides the text of a header, body or URL issue, which can quote the broken value", () => {
+		const step = {
+			...httpStep(),
+			issues: {
+				controls: {
+					"headers.1.value": [
+						{
+							issueType: "ILLEGAL_VARIABLE_IN_CONTROL_VALUE",
+							message: `Content compilation error: output "{{ '${TOKEN}' | appen..." not closed`,
+							variableName: "{{}}",
+						},
+					],
+					timeout: [
+						{
+							issueType: "INVALID",
+							message: "Timeout must be at least 100",
+							variableName: "timeout",
+						},
+					],
+				},
+			},
+		};
+
+		const redacted = redactStepSecrets(step);
+
+		expect(JSON.stringify(redacted)).not.toContain(TOKEN);
+		expect(redacted.issues.controls["headers.1.value"][0]).toMatchObject({
+			issueType: "ILLEGAL_VARIABLE_IN_CONTROL_VALUE",
+			variableName: "headers.1.value",
+		});
+		expect(redacted.issues.controls.timeout).toEqual(step.issues.controls.timeout);
 	});
 
 	it("hides one step's secrets, in its control values and controls metadata", () => {

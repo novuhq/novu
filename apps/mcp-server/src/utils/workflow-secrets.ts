@@ -26,6 +26,12 @@ export const HIDDEN_SECRET = "••••••••";
  */
 const HIDDEN_PATTERN = /•{4,}/;
 
+/** A bullet as a JSON escape (backslash, "u2022"): a body that isn't valid JSON can still spell the placeholder with it. */
+const ESCAPED_BULLET = `${"\\u"}2022`;
+
+/** Liquid's `raw` filter, which the worker's JSON render doesn't escape (`defaultOutputEscape` in `@novu/framework`). */
+const RAW_FILTER_PATTERN = /\|\s*raw\b/;
+
 const HTTP_REQUEST_STEP_TYPE = "http_request";
 
 const SAFE_HEADER_NAMES = new Set([
@@ -49,13 +55,15 @@ const TEMPLATE_PATTERN = /\{\{[^'"]*?\}\}|\{%[^'"]*?%\}|\d+/g;
 /** Words that may lead a credential's value without being one, as in `Bearer {{env.API_TOKEN}}`. */
 const AUTH_SCHEME_PATTERN = /^(?:basic|bearer|bot|digest|token)$/i;
 
-/**
- * A literal path segment at least this long reads as a token, such as a webhook secret, when it mixes letters and
- * digits, or upper and lower case without word separators.
- */
-const MIN_TOKEN_SEGMENT_LENGTH = 16;
+/** A literal path segment this long that mixes letters and digits reads as a token, such as a webhook id. */
+const MIN_ALPHANUMERIC_TOKEN_LENGTH = 6;
 
-const URL_PATTERN = /^((?:[a-z][a-z\d+.-]*:)?\/\/)?([^/?#]*)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
+/** A literal path segment this long that mixes upper and lower case without word separators reads as a token. */
+const MIN_MIXED_CASE_TOKEN_LENGTH = 16;
+
+/** Scheme, authority, path, query, fragment. A backslash ends the authority, as WHATWG URL parsing treats it. */
+const URL_PATTERN =
+	/^((?:[a-z][a-z\d+.-]*:)?[/\\]{2})?([^/\\?#]*)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/i;
 
 /** `shown` is how a stored pair reads once redacted, when that isn't the pair's own redaction (`toBodyPairs`). */
 type KeyValue = { key: string; value: unknown; shown?: unknown };
@@ -71,12 +79,13 @@ type StepLike = {
 export type SecretsRestore<T> = { ok: true; value: T } | { ok: false; error: string };
 
 /**
- * Whether a value holds the placeholder anywhere, including inside a JSON body string that spells it with `•`
- * escapes. A write only needs the stored workflow when it does.
+ * Whether a value holds the placeholder anywhere, including inside a body string that spells it with JSON escapes. A
+ * write only needs the stored workflow when it does.
  */
 export function hasHiddenSecret(value: unknown): boolean {
 	if (typeof value === "string") {
 		if (HIDDEN_PATTERN.test(value)) return true;
+		if (value.toLowerCase().split(ESCAPED_BULLET).length > 4) return true;
 		const parsed = value.includes("\\u") ? parseJsonContainer(value) : undefined;
 
 		return parsed !== undefined && hasHiddenSecret(parsed);
@@ -120,7 +129,35 @@ export function redactStepSecrets<T>(value: T): T {
 		redacted.controls = { ...controls, values: redactHttpRequestControlValues(values) };
 	}
 
+	// The API's Liquid errors quote part of the broken value, which can be a secret.
+	const issues = asRecord(step.issues);
+	const controlIssues = asRecord(issues?.controls);
+	if (issues && controlIssues) {
+		redacted.issues = { ...issues, controls: redactControlIssues(controlIssues) };
+	}
+
 	return redacted as T;
+}
+
+const HIDDEN_FIELDS = new Set(["headers", "body", "url"]);
+
+/** The issues of an HTTP request step's headers, body and URL, keyed by control path, with their text hidden. */
+function redactControlIssues(controls: JsonObject): JsonObject {
+	return Object.fromEntries(
+		Object.entries(controls).map(([path, list]) => {
+			if (!HIDDEN_FIELDS.has(path.split(".")[0]) || !Array.isArray(list)) return [path, list];
+
+			return [
+				path,
+				list.map((issue) => ({
+					...asRecord(issue),
+					message:
+						"This value has a template error. Its details are hidden because the value can hold a secret: open the step in the dashboard to see them.",
+					variableName: path,
+				})),
+			];
+		}),
+	);
 }
 
 /** An HTTP request step's control values with its headers, body and URL redacted; the other values are kept. */
@@ -204,33 +241,49 @@ export function restoreHttpRequestSecrets(
 		restored.url = saved?.url;
 	}
 
-	// A hidden header or body value stays with the host it was written for: an edit that points the step at another
-	// host would otherwise send the stored credential there.
-	const keepsHiddenValues =
-		hasHiddenSecret(controlValues.headers) || hasHiddenSecret(controlValues.body);
-	if (keepsHiddenValues && originOf(restored.url) !== originOf(saved?.url)) {
-		const step = stepLabel ? `HTTP request step "${stepLabel}"` : "the HTTP request step";
-
-		return {
-			error: `The URL of ${step} now points at another host, so its hidden header and body values ("${HIDDEN_SECRET}") can't move with it. Keep the URL's host, or have the user enter the secrets for the new host in the dashboard.`,
-			ok: false,
-		};
-	}
-
+	const step = stepLabel ? `HTTP request step "${stepLabel}"` : "the HTTP request step";
 	const field = (["headers", "body", "url"] as const).find((key) =>
 		hasHiddenSecret(restored[key]),
 	);
 	if (field) {
-		return { error: hiddenValueError(stepLabel, field), ok: false };
+		return { error: hiddenValueError(step, field, saved !== undefined), ok: false };
+	}
+
+	// A hidden value stays with the request it was written for. An edit that points the step at another host (the
+	// authority compared as written, user info included), or adds a `raw` filter that can rewrite the rendered
+	// control values, would otherwise send the stored credential elsewhere.
+	if (originOf(restored.url) !== originOf(saved?.url)) {
+		return {
+			error: `The URL of ${step} now points at another host, so its hidden values ("${HIDDEN_SECRET}") can't move with it. Keep the URL's host, or have the user enter the secrets for the new host in the dashboard.`,
+			ok: false,
+		};
+	}
+	const storedRawTemplates = new Set(stringsWithRawFilter(saved));
+	if (stringsWithRawFilter(controlValues).some((value) => !storedRawTemplates.has(value))) {
+		return {
+			error: `${step} keeps hidden values ("${HIDDEN_SECRET}") next to a Liquid raw filter it didn't have, which can rewrite the request, so they can't be kept. Leave out the raw filter, or have the user make this change in the dashboard.`,
+			ok: false,
+		};
 	}
 
 	return { ok: true, value: restored };
 }
 
-function hiddenValueError(stepLabel: string, field: string): string {
-	const step = stepLabel ? `HTTP request step "${stepLabel}"` : "the HTTP request step";
+function hiddenValueError(step: string, field: string, hasStoredStep: boolean): string {
+	const where = hasStoredStep
+		? "To keep a hidden value, send it back unchanged in the same header, body field or URL of the same step."
+		: "A new step can't copy hidden values, and an existing step must be sent with its _id so its stored values can be found.";
 
-	return `The ${field} of ${step} holds the hidden value "${HIDDEN_SECRET}" where no stored value exists, so it can't be saved. To keep a hidden value, send it back unchanged in the same header, body field or URL of the same step. For a new secret, reference an environment variable such as {{env.API_KEY}}, or have the user enter it in the dashboard.`;
+	return `The ${field} of ${step} holds the hidden value "${HIDDEN_SECRET}" where no stored value exists, so it can't be saved. ${where} For a new secret, reference an environment variable such as {{env.API_KEY}}, or have the user enter it in the dashboard.`;
+}
+
+/** Every string in `value` that uses Liquid's `raw` filter, which skips the escaping that keeps output inside its JSON string. */
+function stringsWithRawFilter(value: unknown): string[] {
+	if (typeof value === "string") return RAW_FILTER_PATTERN.test(value) ? [value] : [];
+	if (Array.isArray(value)) return value.flatMap(stringsWithRawFilter);
+	const record = asRecord(value);
+
+	return record ? Object.values(record).flatMap(stringsWithRawFilter) : [];
 }
 
 function isTemplateOnly(value: string): boolean {
@@ -329,7 +382,10 @@ function redactAuthority(authority: string): string {
 	return `${isTemplateOnly(userInfo) ? userInfo : HIDDEN_SECRET}${authority.slice(at)}`;
 }
 
-/** The scheme and host a URL sends to, without its user info; a templated host compares as written. */
+/**
+ * The scheme and the whole authority as written, user info and templates included: a template or `@` there can change
+ * the host the rendered URL sends to, so any change to them counts as another host.
+ */
 function originOf(url: unknown): string | undefined {
 	if (typeof url !== "string") return undefined;
 	const match = URL_PATTERN.exec(url.trim());
@@ -337,7 +393,7 @@ function originOf(url: unknown): string | undefined {
 
 	const [, scheme = "", authority = ""] = match;
 
-	return `${scheme}${authority.slice(authority.lastIndexOf("@") + 1)}`.toLowerCase();
+	return `${scheme}${authority}`.toLowerCase();
 }
 
 /** A path segment, with its `;key=value` parameters redacted like query values. */
@@ -361,10 +417,15 @@ function redactQueryPair(pair: string): string {
 function looksLikeToken(segment: string): boolean {
 	if (isTemplateOnly(segment)) return false;
 	const literal = segment.replace(TEMPLATE_PATTERN, "");
-	if (literal.length < MIN_TOKEN_SEGMENT_LENGTH) return false;
-
-	const mixesLettersAndDigits = /[a-z]/i.test(literal) && /\d/.test(literal);
-	const mixesCase = /[a-z]/.test(literal) && /[A-Z]/.test(literal) && !/[-_.~]/.test(literal);
+	const mixesLettersAndDigits =
+		literal.length >= MIN_ALPHANUMERIC_TOKEN_LENGTH &&
+		/[a-z]/i.test(literal) &&
+		/\d/.test(literal);
+	const mixesCase =
+		literal.length >= MIN_MIXED_CASE_TOKEN_LENGTH &&
+		/[a-z]/.test(literal) &&
+		/[A-Z]/.test(literal) &&
+		!/[-_.~]/.test(literal);
 
 	return mixesLettersAndDigits || mixesCase;
 }
