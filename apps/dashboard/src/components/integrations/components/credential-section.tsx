@@ -291,7 +291,7 @@ function TextInputControl({
           size={'md'}
           id={credential.key}
           type="text"
-          placeholder={`Enter ${credential.displayName.toLowerCase()}`}
+          placeholder={credential.placeholder ?? `Enter ${credential.displayName.toLowerCase()}`}
           value={stringValue}
           onChange={field.onChange}
           onBlur={field.onBlur}

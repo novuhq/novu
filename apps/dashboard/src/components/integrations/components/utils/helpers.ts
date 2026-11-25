@@ -113,13 +113,25 @@ export function hasRoutingConditions(integration: IIntegration) {
 // Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
 export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
 
+/** The switch that turns on an email provider's activity tracking; Novu adds the webhook once the integration exists. */
+export const ACTIVITY_TRACKING_ENABLER = 'inboundWebhookEnabled';
+
+/** Email providers set up with the API key / credentials / activity tracking guide. */
+const EMAIL_SETUP_PROVIDERS = [EmailProviderIdEnum.Resend, EmailProviderIdEnum.SendGrid] as const;
+export type EmailSetupProviderId = (typeof EMAIL_SETUP_PROVIDERS)[number];
+
+export function isEmailSetupProvider(providerId?: string): providerId is EmailSetupProviderId {
+  return EMAIL_SETUP_PROVIDERS.some((id) => id === providerId);
+}
+
 /** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
 export function usesProviderSetupLayout(providerId?: string) {
   return (
     providerId === ChatProviderIdEnum.Slack ||
     providerId === ChatProviderIdEnum.Telegram ||
     providerId === ChatProviderIdEnum.MsTeams ||
-    providerId === ChatProviderIdEnum.WhatsAppBusiness
+    providerId === ChatProviderIdEnum.WhatsAppBusiness ||
+    isEmailSetupProvider(providerId)
   );
 }
 
