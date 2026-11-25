@@ -71,7 +71,7 @@ const createClient = () => {
   });
   emitSession(emitter, oldToken);
 
-  return { client, refreshSession };
+  return { client, emitter, refreshSession };
 };
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -162,5 +162,30 @@ describe('Socket (socket.io)', () => {
 
     expect(refreshSession).toHaveBeenCalledTimes(1);
     expect(socket.connect).not.toHaveBeenCalled();
+  });
+
+  it('emits a received notification whose message has no populated subscriber', async () => {
+    const { client, emitter } = createClient();
+    const received = vi.fn();
+    emitter.on('notifications.notification_received', received);
+    await client.connect();
+
+    fakeSocketIo.current!.handlers.get('notification_received')?.({
+      message: {
+        _id: 'message_1',
+        transactionId: 'tx_1',
+        content: 'Hello',
+        read: false,
+        seen: false,
+        archived: false,
+        createdAt: new Date(now).toISOString(),
+        channel: 'in_app',
+        cta: {},
+        severity: 'none',
+      },
+    });
+
+    expect(received).toHaveBeenCalledTimes(1);
+    expect(received.mock.calls[0][0].result).toMatchObject({ id: 'message_1', body: 'Hello' });
   });
 });

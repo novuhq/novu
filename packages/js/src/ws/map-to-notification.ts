@@ -26,7 +26,8 @@ export type SocketMessage = {
   firstSeenDate?: string | null;
   archivedAt?: string | null;
   channel: ChannelType;
-  subscriber: {
+  /** Unpopulated on self-hosted socket servers. */
+  subscriber?: {
     _id?: string;
     subscriberId: string;
     firstName?: string;
@@ -78,16 +79,16 @@ export const mapToNotification = ({
   severity,
 }: SocketMessage): InboxNotification => {
   const to: Subscriber = {
-    id: subscriber._id,
-    subscriberId: subscriber.subscriberId,
-    firstName: subscriber.firstName,
-    lastName: subscriber.lastName,
-    avatar: subscriber.avatar,
-    locale: subscriber.locale,
-    data: subscriber.data,
-    timezone: subscriber.timezone,
-    email: subscriber.email,
-    phone: subscriber.phone,
+    id: subscriber?._id,
+    subscriberId: subscriber?.subscriberId as string,
+    firstName: subscriber?.firstName,
+    lastName: subscriber?.lastName,
+    avatar: subscriber?.avatar,
+    locale: subscriber?.locale,
+    data: subscriber?.data,
+    timezone: subscriber?.timezone,
+    email: subscriber?.email,
+    phone: subscriber?.phone,
   };
   const primaryCta = cta.action?.buttons?.find((button) => button.type === ActionTypeEnum.PRIMARY);
   const secondaryCta = cta.action?.buttons?.find((button) => button.type === ActionTypeEnum.SECONDARY);
