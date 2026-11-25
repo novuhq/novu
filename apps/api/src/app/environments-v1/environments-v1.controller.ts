@@ -258,11 +258,14 @@ export class EnvironmentsControllerV1 {
     @Body() body: UpdateSubscriberTokensSettingRequestDto
   ): Promise<SubscriberTokensSettingResponseDto> {
     assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
-    await assertSubscriberTokensEnabled({
-      featureFlagsService: this.featureFlagService,
-      environmentId,
-      organizationId: user.organizationId,
-    });
+    // Turning off is always allowed, so an environment can be cleared while the flag is off.
+    if (body.required) {
+      await assertSubscriberTokensEnabled({
+        featureFlagsService: this.featureFlagService,
+        environmentId,
+        organizationId: user.organizationId,
+      });
+    }
 
     return await this.updateSubscriberTokensSettingUsecase.execute(
       UpdateSubscriberTokensSettingCommand.create({

@@ -1,7 +1,6 @@
 import { EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Types } from 'mongoose';
 
 describe('Require signed subscriber tokens - PUT /v1/environments/:environmentId/subscriber-tokens #novu-v2', () => {
   let session: UserSession;
@@ -16,8 +15,11 @@ describe('Require signed subscriber tokens - PUT /v1/environments/:environmentId
     return owner.testAgent.put(`/v1/environments/${environmentId}/subscriber-tokens`).send({ required });
   }
 
-  function findStored(environmentId = session.environment._id) {
-    return environmentRepository._model.collection.findOne({ _id: new Types.ObjectId(environmentId) });
+  function findStored(owner = session) {
+    return environmentRepository.findOne(
+      { _id: owner.environment._id, _organizationId: owner.organization._id },
+      'subscriberTokens'
+    );
   }
 
   function getRequirement() {
@@ -50,16 +52,14 @@ describe('Require signed subscriber tokens - PUT /v1/environments/:environmentId
     const stored = await findStored();
 
     expect(first.body.data.required).to.equal(true);
-    expect(stored?.subscriberTokens?.requiredAt).to.be.instanceOf(Date);
-    expect(new Date(first.body.data.requiredAt).getTime()).to.equal(stored?.subscriberTokens?.requiredAt.getTime());
+    const firstRequiredAt = new Date(first.body.data.requiredAt).getTime();
+    expect(new Date(stored?.subscriberTokens?.requiredAt ?? 0).getTime()).to.equal(firstRequiredAt);
 
     const second = await setRequired(true).expect(200);
     const storedAfterSecond = await findStored();
 
     expect(second.body.data.requiredAt).to.equal(first.body.data.requiredAt);
-    expect(storedAfterSecond?.subscriberTokens?.requiredAt.getTime()).to.equal(
-      stored?.subscriberTokens?.requiredAt.getTime()
-    );
+    expect(new Date(storedAfterSecond?.subscriberTokens?.requiredAt ?? 0).getTime()).to.equal(firstRequiredAt);
   });
 
   it('should return the setting on the current environment', async () => {
@@ -92,14 +92,25 @@ describe('Require signed subscriber tokens - PUT /v1/environments/:environmentId
     expect(stored).to.not.have.property('subscriberTokens');
   });
 
+  it('should still turn the setting off when the flag is off', async () => {
+    await setRequired(true).expect(200);
+    setFlag(false);
+
+    const { body } = await setRequired(false).expect(200);
+    const stored = await findStored();
+
+    expect(body.data).to.deep.equal({ required: false });
+    expect(stored).to.not.have.property('subscriberTokens');
+  });
+
   it("should not change another organization's environment", async () => {
     const otherSession = new UserSession();
     await otherSession.initialize();
 
     const { status } = await setRequired(true, otherSession.environment._id);
-    const stored = await findStored(otherSession.environment._id);
+    const stored = await findStored(otherSession);
 
-    expect(status).to.be.oneOf([401, 404]);
+    expect(status).to.equal(404);
     expect(stored).to.not.have.property('subscriberTokens');
   });
 

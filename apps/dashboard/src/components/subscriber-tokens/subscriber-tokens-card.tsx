@@ -21,8 +21,8 @@ export function SubscriberTokensCard({ environment }: { environment: IEnvironmen
       await updateSetting.mutateAsync({ environment, required: nextRequired });
       showSuccessToast(
         nextRequired
-          ? 'Subscribers now need a signed subscriber token'
-          : 'Subscribers can connect with a subscriber hash again'
+          ? 'Signed subscriber tokens are now required. This takes effect within about a minute.'
+          : 'Subscribers can connect with a subscriber hash again within about a minute.'
       );
       setIsConfirmOpen(false);
     } catch (error) {
@@ -80,8 +80,9 @@ export function SubscriberTokensCard({ environment }: { environment: IEnvironmen
         title="Require signed subscriber tokens?"
         description={
           <span>
-            Subscribers in the {environment.name} environment who still connect with a subscriberHash or with no hash
-            lose access immediately. Only sessions opened with a signed subscriber token keep working.
+            Within about a minute, subscribers in the {environment.name} environment who still connect with a
+            subscriberHash or with no hash lose access. Only sessions opened with a signed subscriber token keep
+            working.
           </span>
         }
         confirmButtonText="Require tokens"

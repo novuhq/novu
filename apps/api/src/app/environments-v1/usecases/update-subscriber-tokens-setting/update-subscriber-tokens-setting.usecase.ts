@@ -24,6 +24,7 @@ export class UpdateSubscriberTokensSetting {
 
     const previousRequiredAt = previous.subscriberTokens?.requiredAt;
     let requiredAt: Date | undefined;
+    let changed: boolean;
 
     if (command.required) {
       // Only an environment that is still off gets a timestamp, so repeated or concurrent turn-ons keep the first one.
@@ -32,9 +33,16 @@ export class UpdateSubscriberTokensSetting {
         { $set: { 'subscriberTokens.requiredAt': new Date() } },
         { new: true, projection: { subscriberTokens: 1 } }
       );
-      requiredAt = turnedOn?.subscriberTokens?.requiredAt ?? previousRequiredAt;
+      // A null result means it was already on, possibly set by a concurrent request after the read above.
+      const current = turnedOn ?? (await this.environmentRepository.findOne(scope, 'subscriberTokens'));
+      requiredAt = current?.subscriberTokens?.requiredAt;
+      changed = Boolean(turnedOn);
     } else {
-      await this.environmentRepository.update(scope, { $unset: { subscriberTokens: '' } });
+      const { modified } = await this.environmentRepository.update(
+        { ...scope, subscriberTokens: { $exists: true } },
+        { $unset: { subscriberTokens: '' } }
+      );
+      changed = modified > 0;
     }
 
     this.inMemoryLRUCacheService.invalidate(
@@ -49,6 +57,8 @@ export class UpdateSubscriberTokensSetting {
         environmentId: command.environmentId,
         userId: command.userId,
         required: command.required,
+        changed,
+        requiredAt: requiredAt ?? null,
         previousRequiredAt: previousRequiredAt ?? null,
       },
       'Updated the require signed subscriber tokens setting'
