@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_TOOLSETS } from "../src/server/toolsets";
 import type { AgentReadinessResult } from "../src/utils/agent-readiness";
 import { type Routes, respond, stubApi } from "./fake-api";
 import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
@@ -71,10 +70,7 @@ function routes(overrides: Routes = {}): Routes {
 }
 
 async function callReadiness() {
-	const client = await connectAllTools(tokenAccessors("key"), "us", [
-		...DEFAULT_TOOLSETS,
-		"agent-setup",
-	]);
+	const client = await connectAllTools(tokenAccessors("key"));
 	const result = await callTool(client, "get_agent_readiness", { identifier: "support-bot" });
 	const text = textOf(result);
 	for (const secret of SECRETS) {
@@ -321,16 +317,5 @@ describe("get_agent_readiness", () => {
 		expect(result.structuredContent).toEqual({
 			error: expect.objectContaining({ status: 404 }),
 		});
-	});
-
-	it("is only listed for sessions that ask for the agent-setup toolset", async () => {
-		const plain = await connectAllTools(tokenAccessors("key"));
-		const withToolset = await connectAllTools(tokenAccessors("key"), "us", ["agent-setup"]);
-
-		const plainNames = (await plain.listTools()).tools.map((tool) => tool.name);
-		const toolsetNames = (await withToolset.listTools()).tools.map((tool) => tool.name);
-
-		expect(plainNames).not.toContain("get_agent_readiness");
-		expect(toolsetNames).toContain("get_agent_readiness");
 	});
 });

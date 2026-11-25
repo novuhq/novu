@@ -30,7 +30,7 @@ describe("the Novu MCP server tools", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("lists the tools of the default toolsets, which a plain server URL loads", async () => {
+	it("lists every tool the hosted server registers", async () => {
 		const client = await connectAllTools(tokenAccessors("api-key"));
 
 		const { tools } = await client.listTools();
@@ -50,6 +50,7 @@ describe("the Novu MCP server tools", () => {
 			  "find_subscribers",
 			  "get_active_integrations",
 			  "get_agent",
+			  "get_agent_readiness",
 			  "get_agents",
 			  "get_conversation_activities",
 			  "get_conversations",
