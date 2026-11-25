@@ -150,4 +150,67 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
     expect(delayedJobs?.[0]?.status).to.equal(JobStatusEnum.CANCELED);
     expect(delayedJobs?.[1]?.status).to.equal(JobStatusEnum.CANCELED);
   });
+
+  it('should promote the next merged trigger when the main digest is cancelled', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    // One trigger at a time, so the first digest is the main one and the merge order is fixed.
+    const transactionIds: string[] = [];
+    for (const expectedStatus of [JobStatusEnum.DELAYED, JobStatusEnum.MERGED, JobStatusEnum.MERGED]) {
+      const { result } = await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+      });
+      const digestJob = await pollForJobStatusChange({
+        jobRepository,
+        query: {
+          _environmentId: session.environment._id,
+          transactionId: result.transactionId,
+          type: StepTypeEnum.DIGEST,
+        },
+        timeout: 15000,
+      });
+
+      expect(digestJob?.status).to.equal(expectedStatus);
+      transactionIds.push(result.transactionId!);
+    }
+
+    const [mainTransactionId, followerTransactionId, lastTransactionId] = transactionIds;
+
+    await cancelEvent(mainTransactionId);
+
+    const findJob = (transactionId: string, type: StepTypeEnum) =>
+      jobRepository.findOne({ _environmentId: session.environment._id, transactionId, type });
+    const [mainDigest, mainInApp, followerDigest, followerInApp, lastDigest] = await Promise.all([
+      findJob(mainTransactionId, StepTypeEnum.DIGEST),
+      findJob(mainTransactionId, StepTypeEnum.IN_APP),
+      findJob(followerTransactionId, StepTypeEnum.DIGEST),
+      findJob(followerTransactionId, StepTypeEnum.IN_APP),
+      findJob(lastTransactionId, StepTypeEnum.DIGEST),
+    ]);
+
+    expect(mainDigest?.status).to.equal(JobStatusEnum.CANCELED);
+    expect(mainInApp?.status).to.equal(JobStatusEnum.CANCELED);
+    expect(followerDigest?.status).to.equal(JobStatusEnum.DELAYED);
+    expect(followerDigest?._mergedDigestId).to.not.exist;
+    expect(followerInApp?.status).to.equal(JobStatusEnum.PENDING);
+    expect(lastDigest?.status).to.equal(JobStatusEnum.MERGED);
+    expect(lastDigest?._mergedDigestId).to.equal(followerDigest?._id);
+  });
 });
