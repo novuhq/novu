@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { isWebLocksSupported, requestLock } from '../../utils/requestLock';
 import { useNovu } from '../NovuProvider';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';
+import { useIdentityKey } from './useIdentityKey';
 
 export const useWebSocketEvent = <E extends SocketEventNames>({
   event: webSocketEvent,
@@ -14,12 +15,14 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   enabled?: boolean;
 }) => {
   const novu = useNovu();
-  const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:c=${novu.contextKey}:e=${webSocketEvent}`;
+  const identityKey = useIdentityKey(novu);
+  const isListening = enabled && identityKey !== undefined;
+  const channelName = `nv_ws_connection:${identityKey}:e=${webSocketEvent}`;
 
   const { postMessage } = useBrowserTabsChannel({
     channelName,
     onMessage,
-    enabled,
+    enabled: isListening,
   });
 
   // When Web Locks are unavailable, requestLock runs the callback in every tab,
@@ -35,7 +38,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   };
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!isListening) return;
 
     let cleanup: () => void;
     const resolveLock = requestLock(channelName, () => {
@@ -50,5 +53,5 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
       resolveLock();
     };
     // Re-subscribe when the provider swaps the Novu instance, so events keep coming from the live socket
-  }, [enabled, novu]);
+  }, [isListening, novu, channelName]);
 };

@@ -1,6 +1,7 @@
-import { Novu, NovuOptions } from '@novu/js';
+import { GetToken, Novu, NovuError, NovuOptions, StandardNovuOptions, TokenNovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
-import { createContext, ReactNode, useContext, useMemo } from 'react';
+import { createContext, ReactNode, useContext, useMemo, useRef } from 'react';
+import { useDataRef } from './internal/useDataRef';
 import { useDisconnectReleasedNovu } from './internal/useDisconnectReleasedNovu';
 import { useStableValue } from './internal/useStableValue';
 
@@ -44,10 +45,18 @@ export const NovuProvider = (props: NovuProviderProps) => {
   );
 };
 
+type InternalNovuProviderProps = NovuOptions & {
+  realtime?: boolean;
+  children: ReactNode;
+};
+
+type TokenSource = Pick<TokenNovuOptions, 'initialToken'> &
+  ({ getToken: GetToken; tokenEndpoint?: never } | { tokenEndpoint: string; getToken?: never });
+
 /**
  * @internal Should be used internally not to be exposed outside of the library
  */
-export const InternalNovuProvider = (props: NovuProviderProps) => {
+export const InternalNovuProvider = (props: InternalNovuProviderProps) => {
   const applicationIdentifier = props.applicationIdentifier || '';
   // Compared by value: inline objects would otherwise create a new Novu instance, session and socket on every render
   const subscriberObj = useStableValue(
@@ -66,39 +75,63 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
     useCache,
     defaultSchedule,
     realtime = true,
+    tokenEndpoint,
   } = props;
+  const getTokenRef = useDataRef(props.getToken);
+  const hasGetToken = Boolean(props.getToken);
+  // Read once: a server-rendered token is only good for the first session.
+  const initialToken = useRef(props.initialToken).current;
+  const tokenSource = useMemo((): TokenSource | undefined => {
+    if (hasGetToken) {
+      const getToken: GetToken = async (args) => {
+        const latest = getTokenRef.current;
+        if (!latest) {
+          throw new NovuError('getToken was removed from the Novu provider', undefined);
+        }
 
-  const value = useMemo(
-    () => ({
-      novu: new Novu({
-        applicationIdentifier,
-        subscriberHash,
-        contextHash,
-        backendUrl,
-        apiUrl,
-        socketUrl,
-        socketOptions,
-        useCache,
-        subscriber: subscriberObj,
-        defaultSchedule,
-        context,
-      }),
-      realtime,
-    }),
-    [
+        return latest(args);
+      };
+
+      return { getToken, initialToken };
+    }
+
+    return tokenEndpoint ? { tokenEndpoint, initialToken } : undefined;
+  }, [hasGetToken, tokenEndpoint, initialToken]);
+
+  const value = useMemo(() => {
+    const options = {
       applicationIdentifier,
       subscriberHash,
-      subscriberObj,
-      context,
       contextHash,
       backendUrl,
       apiUrl,
       socketUrl,
       socketOptions,
       useCache,
+      subscriber: subscriberObj,
+      defaultSchedule,
+      context,
+    } satisfies StandardNovuOptions;
+
+    return {
+      // The subscriber props still reach a token source, so Novu can warn that they are ignored.
+      novu: new Novu(tokenSource ? ({ ...options, ...tokenSource } satisfies TokenNovuOptions) : options),
       realtime,
-    ]
-  );
+    };
+  }, [
+    tokenSource,
+    applicationIdentifier,
+    subscriberHash,
+    subscriberObj,
+    context,
+    contextHash,
+    backendUrl,
+    apiUrl,
+    socketUrl,
+    socketOptions,
+    useCache,
+    realtime,
+  ]);
 
   useDisconnectReleasedNovu(value.novu);
 
