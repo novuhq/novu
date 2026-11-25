@@ -450,8 +450,12 @@ export function IntegrationSettings({
             {providerCredentials.map((credential) => (
               <div
                 key={`${credential.key}-${integration?._id || 'no-id'}`}
-                // Short text fields pair up two per row in the manage drawer; the rest take the full width.
-                className={cn(layout === 'manage' && credential.type !== 'string' && 'col-span-2')}
+                // Short text fields pair up two per row in the manage drawer; secrets and the rest take the full width.
+                className={cn(
+                  layout === 'manage' &&
+                    (credential.type !== 'string' || isSecureCredential(credential)) &&
+                    'col-span-2'
+                )}
               >
                 <CredentialSection
                   credential={

@@ -15,10 +15,12 @@ const WHATSAPP_GREEN = '#25D366';
 
 export function EmbeddedSignupInboundTestPanel({
   connectSubscriberId,
+  integrationId,
   credentials,
   agentName,
 }: {
   connectSubscriberId: string;
+  integrationId: string;
   credentials: ICredentials | undefined;
   agentName: string;
 }) {
@@ -44,6 +46,7 @@ export function EmbeddedSignupInboundTestPanel({
     queryKey: [
       'whatsapp-display-phone',
       currentEnvironment?._id,
+      integrationId,
       phoneNumberIdentification,
       businessAccountId,
       apiToken.length,
@@ -53,6 +56,7 @@ export function EmbeddedSignupInboundTestPanel({
         requireEnvironment(currentEnvironment, 'No environment selected'),
         {
           accessToken: apiToken,
+          integrationId,
           phoneNumberIdentification,
           businessAccountId: businessAccountId || undefined,
         },

@@ -142,6 +142,8 @@ export function useDuplicateIntegration({
           name: integration.name,
           identifier: integration.identifier,
           credentials,
+          // The API only returns secrets masked, so it copies the stored ones from the source itself.
+          ...(copySecrets ? { secretsSourceIntegrationId: integration._id } : {}),
           // The request type says strings, but configurations also hold flags like inboundWebhookEnabled.
           configurations: configurations as Record<string, string>,
           // Without its secrets the copy can't send, so it waits paused instead of failing every step.

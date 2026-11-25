@@ -8,11 +8,14 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
+  VerifyCredentialsStatusEnum,
 } from '@novu/stateless';
 import { CreateEmailOptions, Resend } from 'resend';
 import { Webhook } from 'svix';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { verifyCredentialsResponse } from '../../../utils/verify-credentials';
 
 export type EmailSentWebhook = {
   type:
@@ -67,6 +70,41 @@ function isResendError(response: ResendResponse | unknown): response is ResendRe
     'error' in response.error &&
     typeof response.error.error === 'string'
   );
+}
+
+type ResendApiError = { name?: string; message?: string; statusCode?: number | null };
+
+/** Resend answers an unknown key with `invalid_api_key`, or with a `validation_error` that says so. */
+function isRejectedResendKey(error: ResendApiError): boolean {
+  return (
+    error.name === 'invalid_api_key' ||
+    error.name === 'missing_api_key' ||
+    /api key is invalid/i.test(error.message ?? '')
+  );
+}
+
+/**
+ * Reads the outcome of a read-only Resend call. The SDK never throws: a refusal comes back as `error`.
+ * - `restricted_api_key` means Resend knows the key and it is limited to sending, which is all Novu needs.
+ * - `application_error` is the SDK's own name for a request that got no usable answer.
+ */
+export function classifyResendVerification(error: ResendApiError | null | undefined): VerifyCredentialsStatusEnum {
+  if (!error) return VerifyCredentialsStatusEnum.VALID;
+  if (error.name === 'restricted_api_key') return VerifyCredentialsStatusEnum.VALID;
+  if (isRejectedResendKey(error)) return VerifyCredentialsStatusEnum.INVALID;
+
+  const statusCode = error.statusCode ?? undefined;
+  if (
+    error.name === 'application_error' ||
+    error.name === 'internal_server_error' ||
+    error.name === 'rate_limit_exceeded' ||
+    statusCode === 429 ||
+    (statusCode !== undefined && statusCode >= 500)
+  ) {
+    return VerifyCredentialsStatusEnum.UNREACHABLE;
+  }
+
+  return VerifyCredentialsStatusEnum.INCONCLUSIVE;
 }
 
 export class ResendEmailProvider extends BaseProvider implements IEmailProvider {
@@ -125,9 +163,21 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     };
   }
 
+  /** Lists the domains: a read-only call that tells a known key from an unknown one without sending an email. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    try {
+      const { error } = await this.resendClient.domains.list();
+
+      return verifyCredentialsResponse(classifyResendVerification(error));
+    } catch {
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.UNREACHABLE);
+    }
+  }
+
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
-      await this.resendClient.emails.send({
+      // The SDK returns a refusal as `error` instead of throwing, so the response has to be read.
+      const response = await this.resendClient.emails.send({
         from: options.from || this.config.from,
         to: options.to,
         subject: options.subject,
@@ -141,6 +191,16 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
         })),
         bcc: options.bcc,
       });
+
+      if (response.error) {
+        return {
+          success: false,
+          message: response.error.message,
+          code: isRejectedResendKey(response.error)
+            ? CheckIntegrationResponseEnum.BAD_CREDENTIALS
+            : CheckIntegrationResponseEnum.FAILED,
+        };
+      }
 
       return {
         success: true,
@@ -197,6 +257,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
     headers = {},
     body: _body,
   }: {
+    // biome-ignore lint/suspicious/noExplicitAny: pre-existing; mirrors the untyped provider webhook body contract
     rawBody: any;
     headers?: Record<string, string>;
     body?: Record<string, unknown>;

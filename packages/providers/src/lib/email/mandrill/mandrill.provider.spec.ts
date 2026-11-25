@@ -1,3 +1,4 @@
+import { CheckIntegrationResponseEnum } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { MandrillProvider } from './mandrill.provider';
 
@@ -192,4 +193,46 @@ test('should check provider integration correctly', async () => {
   const response = await provider.checkIntegration();
   expect(spy).toHaveBeenCalled();
   expect(response.success).toBe(true);
+});
+
+/** The Mailchimp client resolves with the request error instead of throwing. */
+function mandrillRefusal(status: number, data: Record<string, unknown>) {
+  return Object.assign(new Error(`Request failed with status code ${status}`), { response: { status, data } });
+}
+
+test('verifyCredentials should accept only the ping reply', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = vi.spyOn(provider['transporter'].users, 'ping');
+
+  spy.mockResolvedValueOnce('PONG!');
+  expect((await provider.verifyCredentials()).status).toBe('valid');
+
+  spy.mockResolvedValueOnce(
+    mandrillRefusal(401, { status: 'error', code: 401, name: 'Invalid_Key', message: 'Invalid API key' }) as any
+  );
+  expect((await provider.verifyCredentials()).status).toBe('invalid');
+
+  // Older Mandrill answers used HTTP 500 for a bad key; the error name is what identifies it.
+  spy.mockResolvedValueOnce(mandrillRefusal(500, { status: 'error', code: -1, name: 'Invalid_Key' }) as any);
+  expect((await provider.verifyCredentials()).status).toBe('invalid');
+
+  spy.mockResolvedValueOnce(mandrillRefusal(503, {}) as any);
+  expect((await provider.verifyCredentials()).status).toBe('unreachable');
+
+  spy.mockResolvedValueOnce(new Error('getaddrinfo ENOTFOUND mandrillapp.com') as any);
+  expect((await provider.verifyCredentials()).status).toBe('unreachable');
+});
+
+test('checkIntegration should fail when the ping resolves with an error', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = vi.spyOn(provider['transporter'].users, 'ping');
+
+  spy.mockResolvedValueOnce(mandrillRefusal(401, { name: 'Invalid_Key' }) as any);
+  expect(await provider.checkIntegration()).toMatchObject({
+    success: false,
+    code: CheckIntegrationResponseEnum.BAD_CREDENTIALS,
+  });
+
+  spy.mockResolvedValueOnce('PONG!');
+  expect(await provider.checkIntegration()).toMatchObject({ success: true });
 });

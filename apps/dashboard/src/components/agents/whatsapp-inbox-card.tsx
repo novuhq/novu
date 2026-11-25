@@ -45,6 +45,7 @@ function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppInboxCard
     queryFn: () =>
       validateWhatsAppToken(requireEnvironment(currentEnvironment, 'No environment selected'), {
         accessToken: apiToken,
+        integrationId: whatsappIntegration._id,
         phoneNumberIdentification: phoneNumberIdentification || undefined,
         businessAccountId: businessAccountId || undefined,
       }),
