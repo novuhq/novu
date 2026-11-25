@@ -258,14 +258,16 @@ export class Session {
 
       let subscriberChanged = false;
       if (identity === this.#identity) {
-        const previousSubscriber = this.#session && this.#subscriberKey();
+        const previous = this.#session && { subscriberId: this.subscriberId, contextKey: this.contextKey };
         this.#session = response;
         this.#claims = identity.kind === 'token' ? this.#readClaims(response.token) : undefined;
         /*
          * A token source can sign in someone else on renewal (a logout and login in the same tab). The old
          * tokens then belong to the previous subscriber: a request sent with one must not be resent as the new one.
          */
-        subscriberChanged = previousSubscriber !== undefined && previousSubscriber !== this.#subscriberKey();
+        subscriberChanged =
+          previous !== undefined &&
+          (previous.subscriberId !== this.subscriberId || previous.contextKey !== this.contextKey);
         if (subscriberChanged) {
           this.#tokens.clear();
         }
@@ -307,10 +309,6 @@ export class Session {
 
   #expiresSoon({ expiresAt, clockOffsetMs }: Pick<TokenSessionClaims, 'expiresAt' | 'clockOffsetMs'>): boolean {
     return expiresAt !== undefined && Date.now() + clockOffsetMs >= expiresAt - EXPIRY_SKEW_MS;
-  }
-
-  #subscriberKey(): string {
-    return `${this.subscriberId}:${this.contextKey}`;
   }
 
   #eventArgs(identity: SessionIdentity): InitializeSessionArgs {

@@ -117,6 +117,10 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
   const state = {
     /** The user whose cookie the token endpoint sees. */
     signedInUser: subscriberId,
+    /** The context keys the session endpoint returns for the next session. */
+    contextKeys,
+    /** How long the API takes to answer a request it already authorized. */
+    apiDelayMs: 0,
     apiCalls: [] as Array<{ path: string; subscriberId: string }>,
     loginTokens: [] as string[],
     sessionTokens: [] as string[],
@@ -173,7 +177,7 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
       const token = createJwt(
         {
           subscriberId: claimsOf(loginToken).sub,
-          contextKeys,
+          contextKeys: state.contextKeys,
           iat: Math.floor(now / 1000),
           n: state.sessionTokens.length + 1,
         },
@@ -181,7 +185,7 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
       );
       state.sessionTokens.push(token);
 
-      return json(200, { data: { token, contextKeys, unreadCount: { total: 0, severity: {} } } });
+      return json(200, { data: { token, contextKeys: state.contextKeys, unreadCount: { total: 0, severity: {} } } });
     }
 
     const token = ((init.headers as Record<string, string>).Authorization ?? '').replace(/^Bearer /, '');
@@ -191,6 +195,7 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
     }
     const caller = claimsOf(token).subscriberId as string;
     state.apiCalls.push({ path: new URL(url).pathname, subscriberId: caller });
+    await wait(state.apiDelayMs);
 
     return json(200, { data: [{ id: `${caller}_notification` }], hasMore: false, filter: {} });
   });
@@ -522,6 +527,21 @@ describe('when the token endpoint signs in another user', () => {
     expect(novu.subscriberId).toBe('bob');
 
     await novu.socket.disconnect();
+  });
+
+  it('treats a renewal into a different subscriber and context pair as another user, even if they read alike', async () => {
+    const backend = createFakeBackend({ subscriberId: 'alice:x', contextKeys: ['tenant:org'] });
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.signedInUser = 'alice';
+    backend.state.contextKeys = ['x:tenant:org'];
+    backend.advanceTime(10 * MINUTE_MS);
+
+    const { error } = await novu.notifications.readAll();
+
+    expect(error).toBeInstanceOf(NovuError);
+    expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
+    expect(novu.subscriberId).toBe('alice');
   });
 
   it('does not resend a request rejected for the previous user with the new user token', async () => {
