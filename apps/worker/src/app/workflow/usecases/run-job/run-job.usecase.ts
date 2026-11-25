@@ -878,11 +878,10 @@ export class RunJob {
   private assignLogger(job: JobEntity) {
     try {
       if (this.logger) {
+        // The standard worker binds the environment and organization ids when the job starts.
         this.logger.assign({
           transactionId: job.transactionId,
           jobId: job._id,
-          environmentId: job._environmentId,
-          organizationId: job._organizationId,
         });
       }
     } catch (e) {
