@@ -35,7 +35,8 @@ export function IntegrationChannelGroup({
   }
 
   return (
-    <div className={variant === 'connectSheet' ? 'space-y-3' : 'space-y-4'}>
+    // Columns follow the page's own width rather than the window's, which a docked Copilot narrows.
+    <div className={variant === 'connectSheet' ? 'space-y-3' : '@container space-y-4'}>
       <h2
         className={cn(
           'font-medium',
@@ -50,7 +51,7 @@ export function IntegrationChannelGroup({
         className={cn(
           variant === 'connectSheet'
             ? 'flex flex-wrap gap-4 p-1.5'
-            : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+            : 'grid grid-cols-1 gap-4 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4'
         )}
       >
         {visibleIntegrations.map((integration) => {
