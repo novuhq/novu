@@ -200,6 +200,8 @@ export function CopilotHistoryPanel() {
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     enabled: isAvailable,
     refetchOnWindowFocus: false,
+    // The panel shows the failure with its own Retry.
+    meta: { showError: false },
   });
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = conversationsQuery;
 
@@ -358,7 +360,7 @@ export function CopilotHistoryPanel() {
           mode="outline"
           size="2xs"
           leadingIcon={RiAddLine}
-          disabled={!isAvailable || isBusy}
+          disabled={!isAvailable || !!chat?.isRunning}
           onClick={startNewConversation}
         >
           {conversationsQuery.isSuccess && items.length === 0 ? 'Start a chat' : 'New chat'}
