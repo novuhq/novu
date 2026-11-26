@@ -556,7 +556,7 @@ overrides:
   # and the enterprise auth package pick up the fix. enterprise/packages/auth
   # declares `mongoose: ^8.22.1`, which semver-allows 8.24.x.
   mongoose@>=8.0.0 <8.24.8: ^8.24.8
-  newrelic: 13.19.2
+  newrelic: 14.13.0
   # GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc / GHSA-fph4-wmhf-6fwf /
   # GHSA-jqff-g426-hqxp: fast-uri vulnerable to host confusion and SSRF via
   # scheme/hostname normalization. Patched in 3.1.6.
@@ -745,7 +745,6 @@ allowBuilds:
   '@fortawesome/free-solid-svg-icons': true
   '@nestjs/core': true
   '@newrelic/fn-inspect': true
-  '@newrelic/native-metrics': true
   '@novu/thalamus': true
   '@scarf/scarf': false
   '@sentry/cli': true
