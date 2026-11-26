@@ -37,6 +37,7 @@ Pass `agentId` (and optional `conversationId` and `agentHash`), or pass `convers
 | `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Same as `run.typing`. Absent when the agent is not typing. |
 | `run` | `{ isRunning: boolean; typing?: AgentConversationTyping }` | Current agent-run snapshot. |
 | `conversationStatus` | `'active' \| 'resolved'` | Conversation lifecycle. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. See [State](/agents/channels/web-chat/messages#state). |
+| `title` | `string \| undefined` | Conversation title. Novu starts it from the first message, and the agent can rename it with `ctx.setTitle()`. A new title arrives live. Undefined on a new chat until the agent sets one. See [Conversation title](/agents/conversations#conversation-title). |
 | `pagination` | `{ status, hasMore, fetchMore }` | Older history pages. Not a top-level `hasMore` or `fetchMore`. See [Pagination](#pagination). |
 | `isRecovering` | `boolean` | True while reconnect recovery is in progress. |
 | `catchUpError` | `NovuError \| undefined` | Set when reconnect recovery fails. Separate from send and fetch `error`. |

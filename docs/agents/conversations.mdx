@@ -19,6 +19,20 @@ Every agent conversation follows the same state machine, regardless of agent typ
 | **Resolved** | The conversation has been closed. For custom code agents, this happens when the handler calls `ctx.resolve()` and the `onResolve` handler fires. For managed agents, the platform can resolve the conversation based on its reasoning. An optional summary is stored. |
 | **Reopened** | If a user sends a new message after the conversation was resolved, it automatically reopens and becomes active again. |
 
+## Conversation title
+
+Novu starts each conversation's title from its first message. A custom code agent can rename the conversation with `ctx.setTitle()`, for example after a short summary of what it is about:
+
+```ts
+onMessage: async (message, ctx) => {
+  await ctx.setTitle('Refund for order #123');
+
+  await ctx.reply('Looking into your refund…');
+},
+```
+
+The call posts at once. Novu stores the title on one line, up to 200 characters. Web Chat clients get the new title live, as `title` on [`useWebChat`](/platform/sdks/react/hooks/use-web-chat). `ctx.conversation.title` holds the title the turn started with.
+
 ## What the dashboard shows
 
 View an agent conversation history from the agent's detail page, or from the Activity Feed by switching to the **Agent Conversations** tab. The list shows status, the last message, the message count, and the last activity time. Open a row for the full timeline.
