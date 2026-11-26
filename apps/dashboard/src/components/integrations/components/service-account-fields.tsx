@@ -103,6 +103,8 @@ export function ServiceAccountPaste({
           <button
             type="button"
             aria-label={isMasked ? 'Show the service account JSON' : 'Hide the service account JSON'}
+            // Keeps focus in the textarea, so its blur doesn't hide it first and the click show it again.
+            onMouseDown={(event) => event.preventDefault()}
             onClick={isMasked ? reveal : () => setIsRevealed(false)}
             className="text-text-soft hover:text-text-sub absolute right-2 top-2"
           >
@@ -142,6 +144,8 @@ export function ServiceAccountPaste({
                     placeholder='{ "type": "service_account", "project_id": … }'
                     value={value}
                     onChange={field.onChange}
+                    // While the field has focus it stays a textarea, so typing isn't cut off; it masks on blur.
+                    onFocus={() => setIsRevealed(true)}
                     onBlur={() => {
                       field.onBlur();
                       setIsRevealed(false);
@@ -184,7 +188,15 @@ export function ServiceAccountUpload({
   const readFile = async (file: File | undefined) => {
     if (!file || isReadOnly) return;
 
-    const text = await file.text();
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      setFileError('Couldn’t read this file. Choose it again.');
+
+      return;
+    }
+
     const parsed = parseServiceAccount(text);
     if ('error' in parsed) {
       setFileError(parsed.error);
