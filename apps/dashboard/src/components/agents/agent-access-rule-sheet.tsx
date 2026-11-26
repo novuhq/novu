@@ -38,7 +38,6 @@ type AgentAccessRuleSheetProps = {
   readOnly: boolean;
 };
 
-/** Saving switches the agent to `rule` access with the edited rule; closing without saving changes nothing. */
 export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: AgentAccessRuleSheetProps) {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();

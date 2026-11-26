@@ -60,7 +60,6 @@ function getRuleSchema(options: ConditionsSchemaOptions): z.ZodType<RuleType | R
         if (valueIssue) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: valueIssue, path: ['value'] });
 
-          // A relative date rule without a value skips the field check, as before
           if (isRelativeDateOperator(operator) && !value) return;
         }
 
@@ -77,7 +76,6 @@ function getRuleSchema(options: ConditionsSchemaOptions): z.ZodType<RuleType | R
   ]);
 }
 
-/** Form schema for `{ query }` edited by `ConditionsEditor`. Issues land on `query.rules.N.field|value`, where the editor shows them. An operator issue lands on the value. */
 export function getConditionsSchema(options: ConditionsSchemaOptions) {
   return z.object({
     query: z

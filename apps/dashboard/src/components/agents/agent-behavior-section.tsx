@@ -158,10 +158,6 @@ type SubscriberAccessSettingProps = {
   onAccessChange: (access: Exclude<AgentSubscriberAccess, 'rule'>) => void;
 };
 
-/**
- * Open and Restricted apply at once. Rule applies only when the rule sheet saves. Leaving Rule asks first,
- * because the API deletes the saved rule.
- */
 function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: SubscriberAccessSettingProps) {
   const access = agent.behavior.subscriberAccess;
   const [isRuleSheetOpen, setIsRuleSheetOpen] = useState(false);
