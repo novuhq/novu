@@ -4,4 +4,6 @@ export enum WebSocketEventEnum {
   UNSEEN = 'unseen_count_changed',
   /** Live agent `AgentEventEnvelope` fan-out over the shared WS bus. */
   AGENT_EVENT = 'agent_event',
+  /** Sent right before the server disconnects a socket whose session expired. */
+  SESSION_EXPIRED = 'session_expired',
 }

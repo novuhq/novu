@@ -2,7 +2,9 @@ import { CopilotPageEnum, CopilotViewingResourceEnum } from '@novu/shared';
 import {
   RiBarChart2Line,
   RiBarChartBoxLine,
+  RiBarChartGroupedLine,
   RiGroup2Line,
+  RiLineChartLine,
   RiPlugLine,
   RiStore3Line,
   RiUser3Line,
@@ -40,11 +42,16 @@ describe('matchCopilotPage', () => {
     }
   );
 
+  it.each(['/env/dev-env/analytics', '/env/dev-env/analytics/'])('matches %s to Usage', (pathname) => {
+    expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.USAGE);
+  });
+
   it.each([
     '/env/dev-env/workflows',
     '/env/dev-env/topics',
     '/env/dev-env/activity/unknown-tab',
     '/env/dev-env/workflows/welcome_wf_123/activity',
+    '/env/dev-env/analytics/unknown-tab',
   ])('matches no page at %s', (pathname) => {
     expect(matchCopilotPage(pathname)).toBeUndefined();
   });
@@ -96,6 +103,18 @@ describe('getCopilotPanelCopy', () => {
 
     expect(copy.chip).toEqual({ label: 'Integrations', icon: RiStore3Line });
     expect(copy.suggestions.map(({ icon }) => icon)).toEqual([RiPlugLine, RiPlugLine, RiPlugLine]);
+  });
+
+  it('names Usage in the chip with its navigation icon, with suggestions the usage tool can answer', () => {
+    const copy = getCopilotPanelCopy({ page: CopilotPageEnum.USAGE });
+
+    expect(copy.chip).toEqual({ label: 'Usage', icon: RiLineChartLine });
+    expect(copy.emptyState.title).toBe('Ask about usage');
+    expect(copy.suggestions).toEqual([
+      { label: 'How did email do in this period?', icon: RiBarChartGroupedLine },
+      { label: 'Which workflows ran the most in this period?', icon: RiBarChartGroupedLine },
+      { label: 'How many active subscribers did we have in this period?', icon: RiBarChartGroupedLine },
+    ]);
   });
 
   it('names the open resource in the chip, still led by the page icon', () => {

@@ -21,7 +21,7 @@ export class SubscriberOnlineService {
     const lastOnlineAt = new Date().toISOString();
     let isOnline = false;
 
-    if (activeConnections > 1) {
+    if (activeConnections > 0) {
       isOnline = true;
     }
 
