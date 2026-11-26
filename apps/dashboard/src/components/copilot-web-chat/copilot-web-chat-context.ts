@@ -1,4 +1,4 @@
-import type { UseWebChatResult } from '@novu/react';
+import type { ListConversationsArgs, ListConversationsResult, UseWebChatResult } from '@novu/react';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { CopilotCardAction, CopilotPageContext } from './copilot-web-chat-utils';
 
@@ -31,7 +31,16 @@ export type CopilotWebChatContextValue = {
   sendCardAction: (action: CopilotCardAction) => Promise<void>;
   /** The `sourceMessageId` of the review card whose click the agent has not answered yet. */
   pendingReviewMessageId?: string;
+  /** Also leaves the chat history. */
   startNewConversation: () => void;
+  /** Switches to an earlier chat from the history and leaves the history. */
+  resumeConversation: (conversationId: string) => void;
+  /** One page of the subscriber's web-chat conversations, of every agent; rejects when the list fails to load. */
+  listConversations: (args: ListConversationsArgs) => Promise<ListConversationsResult>;
+  /** True while the chat history shows in place of the conversation. */
+  isHistoryOpen: boolean;
+  openHistory: () => void;
+  closeHistory: () => void;
   /** Unsent composer text, kept here so minimizing the popover does not discard it. */
   draft: string;
   setDraft: (value: string) => void;
@@ -60,6 +69,11 @@ export const CopilotWebChatContext = createContext<CopilotWebChatContextValue>({
   stop: async () => {},
   sendCardAction: async () => {},
   startNewConversation: noop,
+  resumeConversation: noop,
+  listConversations: async () => ({ conversations: [], next: null, previous: null }),
+  isHistoryOpen: false,
+  openHistory: noop,
+  closeHistory: noop,
   draft: '',
   setDraft: noop,
   isRevealPending: false,
