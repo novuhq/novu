@@ -127,13 +127,11 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
       }),
     onSuccess: (result) => handleConnectionResult(result),
     onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: testToastId }),
-    // A valid or invalid answer updates the card's health.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] }),
   });
 
   /**
-   * Shows the outcome. Rejected credentials turn the card to Error (saved by the API) so the user can reconnect;
-   * the integration is never paused.
+   * Shows the outcome. It never changes the integration: rejected credentials are reported so the user can
+   * fix them in Edit configuration, or pause the integration themselves.
    */
   const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
     const toastOptions = { id: testToastId, duration: 8_000 };

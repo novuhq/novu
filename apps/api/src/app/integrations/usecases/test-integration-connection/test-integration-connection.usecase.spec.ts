@@ -31,17 +31,15 @@ function buildHarness(integration: Record<string, unknown> = {}) {
     }),
   };
   const msTeamsTokenService = { verifyGraphCredentials: sinon.stub() };
-  const integrationHealthService = { recordCheckResult: sinon.stub().resolves() };
   const logger = { setContext: sinon.stub(), info: sinon.stub(), warn: sinon.stub() };
 
   const usecase = new TestIntegrationConnection(
     integrationRepository as any,
     msTeamsTokenService as any,
-    integrationHealthService as any,
     logger as any
   );
 
-  return { usecase, integrationRepository, msTeamsTokenService, integrationHealthService };
+  return { usecase, integrationRepository, msTeamsTokenService };
 }
 
 const command = {
@@ -115,7 +113,7 @@ describe('TestIntegrationConnection', () => {
   });
 
   it('reports valid after one attempt', async () => {
-    const { usecase, integrationHealthService } = buildHarness();
+    const { usecase } = buildHarness();
     const verify = stubProviderAnswers(VALID);
 
     const result = await usecase.execute(command);
@@ -123,12 +121,10 @@ describe('TestIntegrationConnection', () => {
     expect(result.status).to.equal(IntegrationConnectionStatusEnum.VALID);
     expect(result.attempts).to.equal(1);
     expect(verify.callCount).to.equal(1);
-    expect(integrationHealthService.recordCheckResult.calledOnce).to.equal(true);
-    expect(integrationHealthService.recordCheckResult.firstCall.args[1]).to.equal(true);
   });
 
-  it('reports invalid only after every attempt was rejected, and records it as the integration health', async () => {
-    const { usecase, integrationHealthService } = buildHarness();
+  it('reports invalid only after every attempt was rejected', async () => {
+    const { usecase } = buildHarness();
     const verify = stubProviderAnswers(INVALID, INVALID, INVALID);
 
     const result = await usecase.execute(command);
@@ -136,7 +132,6 @@ describe('TestIntegrationConnection', () => {
     expect(result.status).to.equal(IntegrationConnectionStatusEnum.INVALID);
     expect(result.attempts).to.equal(3);
     expect(verify.callCount).to.equal(3);
-    expect(integrationHealthService.recordCheckResult.firstCall.args[1]).to.equal(false);
   });
 
   it('recovers from a transient failure', async () => {
@@ -150,13 +145,12 @@ describe('TestIntegrationConnection', () => {
   });
 
   it('treats a mix of rejections and outages as unreachable, never invalid', async () => {
-    const { usecase, integrationHealthService } = buildHarness();
+    const { usecase } = buildHarness();
     stubProviderAnswers(INVALID, UNREACHABLE, INVALID);
 
     const result = await usecase.execute(command);
 
     expect(result.status).to.equal(IntegrationConnectionStatusEnum.UNREACHABLE);
-    expect(integrationHealthService.recordCheckResult.called).to.equal(false);
   });
 
   it('stops retrying on an inconclusive answer', async () => {

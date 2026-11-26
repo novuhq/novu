@@ -3022,9 +3022,6 @@ importers:
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
-      nock:
-        specifier: ^13.3.0
-        version: 13.3.0
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5

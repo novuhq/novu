@@ -28,7 +28,6 @@ import { cn } from '../../../utils/ui';
 import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { IntegrationFormData } from '../types';
-import { isIntegrationFailing } from '../utils/integration-health';
 import { CredentialSection } from './credential-section';
 import { GuidedCredentialsSetup } from './guided-credentials-setup';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
@@ -283,7 +282,6 @@ export function IntegrationSettings({
     ? linkedEnvironmentId
     : currentEnvironment?._id;
 
-  const isFailing = !!integration && isIntegrationFailing(integration);
   const isTrackingAvailable = useIsActivityTrackingAvailable();
   const form = useForm<IntegrationFormData>({
     mode: 'all',
@@ -538,11 +536,6 @@ export function IntegrationSettings({
                   control={control}
                   isReadOnly={isReadOnly}
                   integrationId={integration?._id}
-                  rejectedMessage={
-                    isFailing && isSecureCredential(credential)
-                      ? `${provider.displayName} rejected this ${credential.displayName.toLowerCase()}. Paste a new one to reconnect.`
-                      : undefined
-                  }
                 />
               </div>
             ))}

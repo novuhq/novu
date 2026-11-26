@@ -684,14 +684,10 @@ export class SendMessageEmail extends SendMessageBase {
         }
       );
 
-      await this.recordIntegrationSendSuccess(integration);
-
       return {
         status: SendMessageStatus.SUCCESS,
       };
     } catch (error) {
-      await this.recordIntegrationSendFailure(integration, error);
-
       await this.sendErrorStatus(
         message,
         'error',

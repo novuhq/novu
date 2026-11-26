@@ -6,7 +6,6 @@ import {
   CompileTemplate,
   CreateOrUpdateSubscriberUseCase,
   GetNovuProviderCredentials,
-  IntegrationHealthService,
   MsTeamsTokenService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -34,7 +33,6 @@ const PROVIDERS = [
   GetNovuProviderCredentials,
   CalculateLimitNovuIntegration,
   MsTeamsTokenService,
-  IntegrationHealthService,
 ];
 
 @Module({

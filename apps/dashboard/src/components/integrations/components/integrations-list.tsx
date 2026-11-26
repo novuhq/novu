@@ -14,7 +14,6 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { isChannelVisibleInUi } from '@/utils/channels';
 import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
-import { compareByAttention } from '../utils/integration-health';
 import { IntegrationChannelGroup } from './integration-channel-group';
 import { IntegrationEmptyChannel } from './integration-empty-channel';
 import { IntegrationSearchEmptyState } from './integration-search-empty-state';
@@ -242,8 +241,8 @@ export function IntegrationsList({
         // The store shows the environment picked in the sidebar; the connect sheet keeps every environment.
         .filter((i) => variant !== 'default' || i._environmentId === currentEnvironment?._id)
         .filter(matchesSearch)
-        // In the store, cards that need attention and the primary lead their channel.
-        .sort((a, b) => (variant === 'default' ? compareByAttention(a, b) : 0))
+        // In the store, the primary leads its channel.
+        .sort((a, b) => (variant === 'default' ? Number(!!b.primary) - Number(!!a.primary) : 0))
         .reduce(addToChannelGroup, {} as Record<ChannelTypeEnum, IIntegration[]>)
     );
   }, [

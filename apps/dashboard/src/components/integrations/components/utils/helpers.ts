@@ -169,7 +169,7 @@ const SECURE_CREDENTIALS = [
   CredentialsKeyEnum.SigningSecret,
 ];
 
-/** Secrets: masked in the form, and the fields a Reconnect asks the user to replace. */
+/** Secrets: masked in the form. */
 export function isSecureCredential(credential: IConfigCredential) {
   return SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum);
 }

@@ -382,14 +382,10 @@ export class SendMessageSms extends SendMessageBase {
         environment: command.environment,
       });
 
-      await this.recordIntegrationSendSuccess(integration);
-
       return {
         status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
-      await this.recordIntegrationSendFailure(integration, e);
-
       await this.sendErrorStatus(
         message,
         'error',

@@ -3,7 +3,6 @@ import {
   ChannelFactory,
   GetDecryptedIntegrations,
   InstrumentUsecase,
-  IntegrationHealthService,
   MsTeamsTokenService,
   PinoLogger,
 } from '@novu/application-generic';
@@ -45,8 +44,8 @@ const MESSAGES: Record<IntegrationConnectionStatusEnum, string> = {
  *
  * A single failure is never trusted. The check runs up to `RETRY_DELAYS_MS.length + 1` times and stops early on a
  * conclusive answer (valid / inconclusive / unsupported). It reports INVALID only when *every* attempt was rejected,
- * so a flaky network or a provider blip isn't reported as bad credentials. A VALID or INVALID answer is recorded as
- * the integration's health (Healthy / Error); every other answer leaves it alone.
+ * so a flaky network or a provider blip isn't reported as bad credentials. It only reports: it never changes the
+ * integration.
  *
  * Runs only on an explicit user click, never on the trigger → worker → provider path.
  */
@@ -64,7 +63,6 @@ export class TestIntegrationConnection {
   constructor(
     private integrationRepository: IntegrationRepository,
     private msTeamsTokenService: MsTeamsTokenService,
-    private integrationHealthService: IntegrationHealthService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -117,13 +115,6 @@ export class TestIntegrationConnection {
     }
 
     const status = this.conclude(statuses);
-
-    if (status === IntegrationConnectionStatusEnum.VALID || status === IntegrationConnectionStatusEnum.INVALID) {
-      await this.integrationHealthService.recordCheckResult(
-        encryptedIntegration,
-        status === IntegrationConnectionStatusEnum.VALID
-      );
-    }
 
     this.logger.info(
       {

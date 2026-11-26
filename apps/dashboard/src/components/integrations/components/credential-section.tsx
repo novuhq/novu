@@ -386,7 +386,6 @@ function InputControl({
   integrationId,
   integrationEnvironmentId,
   tooltip,
-  isRejected,
   savedValue,
 }: {
   credential: IConfigCredential;
@@ -398,7 +397,6 @@ function InputControl({
   integrationId?: string;
   integrationEnvironmentId?: string;
   tooltip?: ReactNode;
-  isRejected?: boolean;
   savedValue?: string;
 }) {
   if (credential.type === 'pushResources') {
@@ -448,7 +446,7 @@ function InputControl({
         field={field}
         isReadOnly={isReadOnly}
         tooltip={tooltip}
-        hasError={!!fieldState.error || isRejected}
+        hasError={!!fieldState.error}
         savedValue={savedValue}
       />
     );
@@ -473,7 +471,6 @@ export function CredentialSection({
   disabledSwitchMessage,
   name = 'credentials',
   integrationId,
-  rejectedMessage,
 }: {
   credential: IConfigCredential;
   control: Control<IntegrationFormData>;
@@ -482,8 +479,6 @@ export function CredentialSection({
   disabledSwitchMessage?: string;
   name?: 'credentials' | 'configurations';
   integrationId?: string;
-  /** The provider rejected this stored secret; shown until the user types a new one. */
-  rejectedMessage?: string;
 }) {
   const integrationEnvironmentId = useWatch({ control, name: 'environmentId' });
 
@@ -507,7 +502,6 @@ export function CredentialSection({
         },
       }}
       render={({ field, fieldState, formState }) => {
-        const isRejected = !!rejectedMessage && !fieldState.isDirty;
         const defaultValue = formState.defaultValues?.[name]?.[credential.key];
         const savedValue = isMaskedSecret(defaultValue) ? defaultValue : undefined;
 
@@ -523,13 +517,11 @@ export function CredentialSection({
               integrationId={integrationId}
               integrationEnvironmentId={integrationEnvironmentId}
               tooltip={getCredentialTooltip(credential)}
-              isRejected={isRejected}
               savedValue={savedValue}
             />
 
             {/* The explanation sits behind the label's "i"; only a validation error shows under the field. */}
             {fieldState.error?.message && <FormMessage>{fieldState.error.message}</FormMessage>}
-            {!fieldState.error && isRejected && <p className="text-paragraph-xs text-error-base">{rejectedMessage}</p>}
           </FormItem>
         );
       }}

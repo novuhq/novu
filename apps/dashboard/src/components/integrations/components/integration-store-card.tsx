@@ -27,7 +27,6 @@ import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { TableIntegration } from '../types';
-import { getHealthReason, isIntegrationFailing } from '../utils/integration-health';
 import { IntegrationCardActions } from './integration-card-actions';
 import { MakePrimaryModal } from './modals/make-primary-modal';
 import { ProviderIcon } from './provider-icon';
@@ -38,22 +37,19 @@ import {
   isDemoIntegration,
 } from './utils/helpers';
 
-type CardStatus = 'active' | 'setup' | 'inactive' | 'error';
+type CardStatus = 'active' | 'setup' | 'inactive';
 
 // Tinted halo + dot, per the design's status/dot.
 const STATUS_DOT: Record<CardStatus, { halo: string; dot: string }> = {
   active: { halo: 'bg-success/15', dot: 'bg-success' },
   setup: { halo: 'bg-warning/15', dot: 'bg-warning' },
   inactive: { halo: 'bg-neutral-alpha-100', dot: 'bg-text-soft' },
-  error: { halo: 'bg-error-base/15', dot: 'bg-error-base' },
 };
 
 function getCardStatus(integration: IIntegration): CardStatus {
   if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) return 'setup';
 
-  if (!integration.active) return 'inactive';
-
-  return isIntegrationFailing(integration) ? 'error' : 'active';
+  return integration.active ? 'active' : 'inactive';
 }
 
 /** The API returns the stored `updatedAt`, but the shared type doesn't declare it. */
@@ -158,28 +154,19 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
   );
 }
 
-const FOOTER_ACTIONS: Record<Exclude<CardStatus, 'inactive'>, string> = {
-  active: 'Manage',
-  setup: 'Finish setup',
-  error: 'Reconnect',
-};
-
 /** Status dot and line on the left; the one action that fits the status on the right. */
 function CardFooter({ status, integration }: { status: CardStatus; integration: IIntegration }) {
   const updatedAt = getUpdatedAt(integration);
   const updatedLabel = updatedAt ? `Updated ${formatDateSimple(updatedAt)}` : undefined;
   let label = 'Setup incomplete';
   if (status === 'inactive') label = 'Paused';
-  else if (status === 'error') label = getHealthReason(integration);
   else if (status === 'active') label = updatedLabel ?? 'Active';
 
   return (
     <div className="bg-bg-weak border-stroke-soft mt-auto flex h-10 items-center justify-between gap-2 border-t pl-3 pr-2.5">
       <div className="flex min-w-0 items-center gap-1.5">
         <StatusDot status={status} />
-        <span className={cn('text-label-xs truncate', status === 'error' ? 'text-error-base' : 'text-text-sub')}>
-          {label}
-        </span>
+        <span className="text-label-xs text-text-sub truncate">{label}</span>
       </div>
       {status === 'inactive' ? (
         // Paused keeps the "Updated …" meta on the right, quieter, in place of an action.
@@ -187,14 +174,13 @@ function CardFooter({ status, integration }: { status: CardStatus; integration: 
       ) : (
         <span
           className={cn(
-            'text-label-xs flex shrink-0 items-center gap-0.5',
-            status === 'error' ? 'text-error-base' : 'text-text-strong',
-            // "Finish setup" and "Reconnect" are fixes, so they always show; "Manage" only on hover.
+            'text-label-xs text-text-strong flex shrink-0 items-center gap-0.5',
+            // "Finish setup" is the fix, so it always shows; "Manage" only on hover.
             status === 'active' &&
               'opacity-0 transition-opacity group-focus-visible:opacity-100 group-hover:opacity-100'
           )}
         >
-          {FOOTER_ACTIONS[status]}
+          {status === 'setup' ? 'Finish setup' : 'Manage'}
           <RiArrowRightSLine className="size-3.5" />
         </span>
       )}

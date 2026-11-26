@@ -647,12 +647,8 @@ export class SendMessagePush extends SendMessageBase {
         environment: command.environment,
       });
 
-      await this.recordIntegrationSendSuccess(integration);
-
       return { success: true, error: undefined };
     } catch (e) {
-      await this.recordIntegrationSendFailure(integration, e);
-
       Logger.log(
         {
           jobId: command.jobId,
