@@ -7,10 +7,12 @@ import {
   getCopilotContextLabel,
   getCopilotTypingLabel,
   getOpenReviewActions,
+  getReplyAfter,
   getTryAgainPrompt,
   isDashboardLink,
   loadTryAgainPrompt,
   orderStoppedTurns,
+  splitChoices,
 } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
@@ -294,6 +296,119 @@ describe('buildAssistantBlocks (Powered by footer)', () => {
     expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
       { kind: 'text', key: 'act_1:0', text, streaming: false },
     ]);
+  });
+});
+
+const CHOICES_REPLY = [
+  'In Development, 3 subscribers match "Naveen". Which one should I check?',
+  '```choices',
+  'Naveen M · naveen@novu.co · connect:67cace',
+  '- Naveen M · agent-quickstart:69fc10',
+  '',
+  '2. Naveen M · 67cace',
+  '```',
+].join('\n');
+
+describe('splitChoices', () => {
+  it('splits the options out of a reply, one per line, without list markers or blank lines', () => {
+    expect(splitChoices(CHOICES_REPLY)).toEqual([
+      { kind: 'text', text: 'In Development, 3 subscribers match "Naveen". Which one should I check?' },
+      {
+        kind: 'choices',
+        choices: [
+          'Naveen M · naveen@novu.co · connect:67cace',
+          'Naveen M · agent-quickstart:69fc10',
+          'Naveen M · 67cace',
+        ],
+      },
+    ]);
+  });
+
+  it('keeps the text after the block, and leaves other code blocks in the text', () => {
+    const text = 'Pick one:\n```choices\nEmail\nSMS\n```\nOr describe another channel.\n```json\n{"a": 1}\n```';
+
+    expect(splitChoices(text)).toEqual([
+      { kind: 'text', text: 'Pick one:' },
+      { kind: 'choices', choices: ['Email', 'SMS'] },
+      { kind: 'text', text: 'Or describe another channel.\n```json\n{"a": 1}\n```' },
+    ]);
+  });
+
+  it('runs a block whose closing fence has not streamed in yet to the end of the text', () => {
+    expect(splitChoices('Which one?\n```choices\nNaveen M · connect:1\nNaveen')).toEqual([
+      { kind: 'text', text: 'Which one?' },
+      { kind: 'choices', choices: ['Naveen M · connect:1', 'Naveen'] },
+    ]);
+  });
+
+  it('leaves a reply without choices as one text segment', () => {
+    expect(splitChoices('In Development, SMS can reach Jane.')).toEqual([
+      { kind: 'text', text: 'In Development, SMS can reach Jane.' },
+    ]);
+  });
+});
+
+describe('buildAssistantBlocks (choices)', () => {
+  it('renders the options as a choices block after the question, without the footer', () => {
+    const blocks = buildAssistantBlocks(assistantMessage('act_1', `${CHOICES_REPLY}\n\n${POWERED_BY_FOOTER}`));
+
+    expect(blocks).toEqual([
+      {
+        kind: 'text',
+        key: 'act_1:0',
+        text: 'In Development, 3 subscribers match "Naveen". Which one should I check?',
+        streaming: false,
+      },
+      {
+        kind: 'choices',
+        key: 'act_1:0:1',
+        choices: [
+          'Naveen M · naveen@novu.co · connect:67cace',
+          'Naveen M · agent-quickstart:69fc10',
+          'Naveen M · 67cace',
+        ],
+        streaming: false,
+      },
+    ]);
+  });
+
+  it('marks only the last block as streaming while the reply streams', () => {
+    const message: AgentMessage = {
+      ...assistantMessage('act_1', ''),
+      parts: [{ type: 'text', text: 'Which one?\n```choices\nEmail\nSM', state: 'streaming' }],
+    };
+
+    expect(buildAssistantBlocks(message).map(({ kind, streaming }) => ({ kind, streaming }))).toEqual([
+      { kind: 'text', streaming: false },
+      { kind: 'choices', streaming: true },
+    ]);
+  });
+
+  it('shows nothing for a block that has no option yet', () => {
+    const message: AgentMessage = {
+      ...assistantMessage('act_1', ''),
+      parts: [{ type: 'text', text: 'Which one?\n```choices\n', state: 'streaming' }],
+    };
+
+    expect(buildAssistantBlocks(message).map((block) => block.kind)).toEqual(['text']);
+  });
+});
+
+describe('getReplyAfter', () => {
+  const messages = [
+    userMessage('msg_1', 'Can we reach Naveen on SMS?'),
+    assistantMessage('act_1', CHOICES_REPLY),
+    userMessage('msg_2', 'Naveen M · naveen@novu.co · connect:67cace'),
+    assistantMessage('act_2', 'In Development, SMS cannot reach Naveen M.'),
+  ];
+
+  it('returns the first user message after the reply', () => {
+    expect(getReplyAfter(messages, 'act_1')).toBe('Naveen M · naveen@novu.co · connect:67cace');
+  });
+
+  it('returns nothing before the user replies, or for a message not in the thread', () => {
+    expect(getReplyAfter(messages, 'act_2')).toBeUndefined();
+    expect(getReplyAfter(messages, 'act_missing')).toBeUndefined();
   });
 });
 

@@ -241,13 +241,75 @@ export function summarizeToolGroup(rows: readonly ToolRow[]): ToolGroupSummary {
 
 export type AssistantBlock =
   | { kind: 'text'; key: string; text: string; streaming: boolean }
+  | { kind: 'choices'; key: string; choices: string[]; streaming: boolean }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
   | { kind: 'tools'; key: string; rows: ToolRow[] }
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
+// The Copilot's web-chat prompt (`buildWebChatDeliveryContext` in the enterprise agents package) asks for this fence.
+const CHOICES_FENCE_OPEN = /^ {0,3}```choices\s*$/;
+const FENCE_CLOSE = /^ {0,3}```\s*$/;
+const LIST_MARKER = /^(?:[-*•]|\d+[.)])\s+/;
+
+export type ReplySegment = { kind: 'text'; text: string } | { kind: 'choices'; choices: string[] };
+
 /**
- * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
- * Novu" footer the API appends to replies (it is in the saved text, so restored threads carry it too).
+ * Splits a reply around its ```choices blocks, where each line is one option the user can pick. A block whose closing
+ * fence hasn't streamed in yet runs to the end of the text.
+ */
+export function splitChoices(text: string): ReplySegment[] {
+  const segments: ReplySegment[] = [];
+  let textLines: string[] = [];
+  let choices: string[] | undefined;
+
+  const flushText = () => {
+    const segmentText = textLines.join('\n');
+    if (segmentText.trim()) segments.push({ kind: 'text', text: segmentText });
+    textLines = [];
+  };
+
+  for (const line of text.split('\n')) {
+    if (!choices) {
+      if (CHOICES_FENCE_OPEN.test(line)) {
+        flushText();
+        choices = [];
+      } else {
+        textLines.push(line);
+      }
+    } else if (FENCE_CLOSE.test(line)) {
+      segments.push({ kind: 'choices', choices });
+      choices = undefined;
+    } else {
+      const choice = line.trim().replace(LIST_MARKER, '').trim();
+      if (choice) choices.push(choice);
+    }
+  }
+
+  flushText();
+  if (choices) segments.push({ kind: 'choices', choices });
+
+  return segments;
+}
+
+function pushTextBlocks(blocks: AssistantBlock[], key: string, text: string, streaming: boolean): void {
+  const segments = splitChoices(text);
+
+  segments.forEach((segment, index) => {
+    const segmentKey = index === 0 ? key : `${key}:${index}`;
+    const isStreaming = streaming && index === segments.length - 1;
+
+    if (segment.kind === 'text') {
+      blocks.push({ kind: 'text', key: segmentKey, text: segment.text, streaming: isStreaming });
+    } else if (segment.choices.length > 0) {
+      blocks.push({ kind: 'choices', key: segmentKey, choices: segment.choices, streaming: isStreaming });
+    }
+  });
+}
+
+/**
+ * Groups consecutive tool parts into one block, splits choices out of the text and drops parts this UI does not render,
+ * including the "Powered by Novu" footer the API appends to replies (it is in the saved text, so restored threads carry
+ * it too).
  */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   const blocks: AssistantBlock[] = [];
@@ -258,7 +320,7 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     if (part.type === 'text') {
       const text = stripPoweredBy(part.text);
       if (!text.trim()) return;
-      blocks.push({ kind: 'text', key, text, streaming: part.state === 'streaming' });
+      pushTextBlocks(blocks, key, text, part.state === 'streaming');
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
@@ -450,13 +512,13 @@ function isCardMessage(message: AgentMessage): boolean {
   return message.role === 'assistant' && message.parts.some((part) => part.type === 'card');
 }
 
-/** An assistant reply that shows text (a "Powered by" footer alone does not count) and holds no card. */
+/** An assistant reply that shows text or choices (a "Powered by" footer alone does not count) and holds no card. */
 function isTextReply(message: AgentMessage): boolean {
   return (
     message.role === 'assistant' &&
     !message.stopped &&
     !isCardMessage(message) &&
-    buildAssistantBlocks(message).some((block) => block.kind === 'text')
+    buildAssistantBlocks(message).some((block) => block.kind === 'text' || block.kind === 'choices')
   );
 }
 
@@ -498,6 +560,16 @@ export function getUserMessageText(message: AgentMessage): string {
     .map((part) => (part.type === 'text' ? part.text : ''))
     .join('')
     .trim();
+}
+
+/** The text of the first user message after the message `messageId`, once the user has replied to it. */
+export function getReplyAfter(messages: readonly AgentMessage[], messageId: string): string | undefined {
+  const index = messages.findIndex((message) => message.id === messageId);
+  if (index === -1) return undefined;
+
+  const reply = messages.slice(index + 1).find((message) => message.role === 'user');
+
+  return reply ? getUserMessageText(reply) : undefined;
 }
 
 /** Links into the dashboard itself, such as the Copilot's Activity links, open without the external-link prompt. */
