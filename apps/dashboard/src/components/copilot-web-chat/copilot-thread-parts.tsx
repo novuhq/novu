@@ -4,6 +4,7 @@ import {
   RiArrowDownSLine,
   RiArrowRightSLine,
   RiCheckboxCircleFill,
+  RiCheckLine,
   RiCloseCircleFill,
   RiLoader4Line,
   RiRefreshLine,
@@ -12,9 +13,11 @@ import { MessageResponse } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { cn } from '@/utils/ui';
 import { CopilotCardBlock } from './copilot-card';
+import { useCopilotWebChat } from './copilot-web-chat-context';
 import {
   type AssistantBlock,
   buildAssistantBlocks,
+  getReplyAfter,
   getUserMessageText,
   isDashboardLink,
   summarizeToolGroup,
@@ -189,6 +192,56 @@ function ToolGroup({ block }: { block: Extract<AssistantBlock, { kind: 'tools' }
   );
 }
 
+/** The options the Copilot asked the user to pick from: a click sends the option as the user's reply. */
+function ChoicesBlock({
+  block,
+  messageId,
+}: {
+  block: Extract<AssistantBlock, { kind: 'choices' }>;
+  messageId: string;
+}) {
+  const { chat, sendMessage, isBusy } = useCopilotWebChat();
+  const reply = getReplyAfter(chat?.messages ?? [], messageId);
+  // Once the user has replied, typed or picked, the options stay as a record of what was asked.
+  const isLocked = block.streaming || isBusy || reply !== undefined;
+
+  return (
+    <fieldset
+      aria-label="Choices"
+      className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-stroke-soft"
+    >
+      {block.choices.map((choice, index) => {
+        const isChosen = choice === reply;
+
+        return (
+          <button
+            key={`${index}:${choice}`}
+            type="button"
+            title={choice}
+            disabled={isLocked}
+            onClick={() => void sendMessage(choice)}
+            className={cn(
+              'flex items-center gap-2 border-t border-stroke-weak py-2 pl-3 pr-2.5 text-left outline-none first:border-t-0 enabled:hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-stroke-strong',
+              isChosen && 'bg-bg-weak'
+            )}
+          >
+            <span
+              className={cn(
+                'min-w-0 flex-1 break-words text-xs leading-4',
+                isLocked && !isChosen ? 'text-text-soft' : 'text-text-strong'
+              )}
+            >
+              {choice}
+            </span>
+            {isChosen && <RiCheckLine className="size-3.5 shrink-0 text-text-sub" aria-label="Chosen" />}
+            {!isLocked && <RiArrowRightSLine className="size-3.5 shrink-0 text-text-sub" aria-hidden />}
+          </button>
+        );
+      })}
+    </fieldset>
+  );
+}
+
 export function CopilotAssistantMessage({ message }: { message: AgentMessage }) {
   const blocks = buildAssistantBlocks(message);
 
@@ -212,6 +265,8 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
             </div>
           );
         }
+
+        if (block.kind === 'choices') return <ChoicesBlock key={block.key} block={block} messageId={message.id} />;
 
         if (block.kind === 'thinking') return <ThinkingBlock key={block.key} block={block} />;
 
