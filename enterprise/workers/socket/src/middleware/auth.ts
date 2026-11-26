@@ -4,6 +4,22 @@ import type { Context, Next } from 'hono';
 // Other tokens signed with JWT_SECRET, such as Community dashboard user tokens, carry no audience
 const SUBSCRIBER_SESSION_AUDIENCE = 'widget_user';
 
+let cachedKey: { secret: string; key: Promise<CryptoKey> } | undefined;
+
+// The library imports a string secret byte-per-char, which breaks for a non-ASCII JWT_SECRET the API encodes as UTF-8
+function getVerifyKey(secret: string): Promise<CryptoKey> {
+  if (cachedKey?.secret !== secret) {
+    cachedKey = {
+      secret,
+      key: crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
+        'verify',
+      ]),
+    };
+  }
+
+  return cachedKey.key;
+}
+
 interface ISubscriberSessionPayload {
   _id?: string;
   subscriberId?: string;
@@ -21,7 +37,9 @@ export async function authenticateJWT(context: Context, next: Next) {
 
   try {
     // verify() throws instead of returning undefined when the token cannot be decoded
-    const verified = await jwt.verify<ISubscriberSessionPayload>(token, context.env.JWT_SECRET).catch(() => undefined);
+    const verified = await jwt
+      .verify<ISubscriberSessionPayload>(token, await getVerifyKey(context.env.JWT_SECRET))
+      .catch(() => undefined);
     if (!verified) {
       return context.json({ error: 'Unauthorized: Invalid JWT token' }, 401);
     }
