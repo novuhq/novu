@@ -19,7 +19,7 @@ import {
   RiStarLine,
 } from 'react-icons/ri';
 import { put } from '@/api/api.client';
-import { deleteIntegration, setAsPrimaryIntegration, testIntegrationConnection } from '@/api/integrations';
+import { deleteIntegration, setAsPrimaryIntegration } from '@/api/integrations';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import {
   DropdownMenu,
@@ -35,16 +35,14 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
+import { canVerifyIntegration, useVerifyIntegration } from './hooks/use-integration-verification';
+import { useMakePrimary } from './hooks/use-make-primary';
 import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { MakePrimaryModal } from './modals/make-primary-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { hasRoutingConditions, isDemoIntegration } from './utils/helpers';
-
-const MENU_CLASS =
-  'bg-bg-weak min-w-[220px] rounded-xl border-0 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
-const ITEM_CLASS =
-  'text-text-sub focus:text-text-strong h-7 gap-2 rounded px-2 py-0 text-[13px] leading-[1.1] focus:bg-[#f4f4f5] [&>svg]:size-[15px]';
+import { MENU_CLASS, MENU_ITEM_CLASS } from './utils/store-styles';
 
 /** Pauses or resumes an integration. Sends only `active`, so credentials and settings stay as they are. */
 function setIntegrationActive(integrationId: string, active: boolean, environment: IEnvironment) {
@@ -65,7 +63,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   const { integrations = [] } = useFetchIntegrations();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPauseOpen, setIsPauseOpen] = useState(false);
-  const [isMakePrimaryOpen, setIsMakePrimaryOpen] = useState(false);
+  const makePrimary = useMakePrimary(integration);
   // Setting primary clears an integration's routing conditions; this holds the action awaiting that confirmation.
   const [conditionsLossAction, setConditionsLossAction] = useState<{ run: () => void } | null>(null);
 
@@ -73,8 +71,8 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   const supportsPrimary = !!integration.channel && CHANNELS_WITH_PRIMARY.includes(integration.channel);
   // Same rule as the settings sheet: Inbox and Novu's demo providers can't be deleted.
   const canDelete = integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
-  // Inbox has no provider credentials, and Novu owns the demo providers' credentials.
-  const canTestConnection = canWrite && canDelete;
+  // Same rule as the drawer: only an active integration with provider credentials of its own.
+  const canTestConnection = canWrite && integration.active && canVerifyIntegration(integration);
   // One toast per card, so the "Testing…" toast is replaced by its result instead of stacking.
   const testToastId = `test-connection-${useId()}`;
 
@@ -91,7 +89,6 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     setConditionsLossAction(null);
     setIsDeleteOpen(false);
     setIsPauseOpen(false);
-    setIsMakePrimaryOpen(false);
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
     queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
   };
@@ -109,12 +106,9 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     onSettled: settle,
   });
 
+  const verifyIntegration = useVerifyIntegration();
   const { mutate: testConnection, isPending: isTestingConnection } = useMutation({
-    mutationFn: async () => {
-      if (!currentEnvironment) throw new Error('No environment selected');
-
-      return testIntegrationConnection(integration._id, currentEnvironment);
-    },
+    mutationFn: () => verifyIntegration(integration),
     onMutate: () =>
       showToast({
         children: () => (
@@ -162,17 +156,6 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
         return showWarningToast(`${message} Nothing was changed.`, 'Verification inconclusive', toastOptions);
     }
   };
-
-  const { mutate: makePrimary, isPending: isMakingPrimary } = useMutation({
-    mutationFn: async () => {
-      if (!currentEnvironment) throw new Error('No environment selected');
-
-      return setAsPrimaryIntegration(integration._id, currentEnvironment);
-    },
-    onSuccess: () => showSuccessToast(`${integration.name} is now the primary integration.`),
-    onError: () => showErrorToast(`Couldn't make ${integration.name} the primary integration.`),
-    onSettled: settle,
-  });
 
   const { mutate: remove, isPending: isDeleting } = useMutation({
     mutationFn: async (newPrimaryId?: string) => {
@@ -228,33 +211,37 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
             <RiMoreFill className="size-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className={MENU_CLASS}>
-          <DropdownMenuItem className={cn(ITEM_CLASS, 'text-text-strong')} onSelect={onEdit}>
+        <DropdownMenuContent align="end" className={cn(MENU_CLASS, 'min-w-[220px]')}>
+          <DropdownMenuItem className={cn(MENU_ITEM_CLASS, 'text-text-strong')} onSelect={onEdit}>
             <RiEditBoxLine />
             Edit configuration
           </DropdownMenuItem>
 
           {canTestConnection && (
-            <DropdownMenuItem className={ITEM_CLASS} disabled={isTestingConnection} onSelect={() => testConnection()}>
+            <DropdownMenuItem
+              className={MENU_ITEM_CLASS}
+              disabled={isTestingConnection}
+              onSelect={() => testConnection()}
+            >
               <RiFlashlightLine />
               {isTestingConnection ? 'Verifying integration…' : 'Verify integration'}
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem className={ITEM_CLASS} onSelect={copyIdentifier}>
+          <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={copyIdentifier}>
             <RiStackLine />
             Copy identifier
           </DropdownMenuItem>
 
           {canWrite && supportsPrimary && integration.active && !integration.primary && (
-            <DropdownMenuItem className={ITEM_CLASS} onSelect={() => setIsMakePrimaryOpen(true)}>
+            <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={makePrimary.open}>
               <RiStarLine />
               Make primary
             </DropdownMenuItem>
           )}
           {canWrite && (
             <DropdownMenuItem
-              className={ITEM_CLASS}
+              className={MENU_ITEM_CLASS}
               onSelect={() => (integration.active ? requestPause() : setActive({ active: true }))}
             >
               <RiShutDownLine />
@@ -265,7 +252,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
             <>
               <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
               <DropdownMenuItem
-                className={cn(ITEM_CLASS, 'text-error-base focus:text-error-base')}
+                className={cn(MENU_ITEM_CLASS, 'text-error-base focus:text-error-base')}
                 onSelect={() => setIsDeleteOpen(true)}
               >
                 <RiDeleteBin2Line />
@@ -277,7 +264,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
       </DropdownMenu>
 
       <MakePrimaryModal
-        isOpen={isMakePrimaryOpen}
+        isOpen={makePrimary.isOpen}
         newPrimaryName={integration.name}
         currentPrimaryName={otherInChannel.find((other) => other.primary)?.name}
         channel={integration.channel}
@@ -285,10 +272,10 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
         environments={environments}
         // The modal says the conditions go, so it doesn't need the separate "Remove conditions?" step.
         removesConditions={hasRoutingConditions(integration)}
-        isLoading={isMakingPrimary}
+        isLoading={makePrimary.isPending}
         centerOn="page"
-        onCancel={() => setIsMakePrimaryOpen(false)}
-        onConfirm={() => makePrimary()}
+        onCancel={makePrimary.close}
+        onConfirm={makePrimary.confirm}
       />
 
       <DeleteIntegrationModal

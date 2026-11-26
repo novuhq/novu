@@ -17,9 +17,8 @@ import {
 } from '@/api/integrations';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import type { IntegrationFormData } from '../../types';
+import type { IntegrationFormData, QuickSetupResult } from '../../types';
 import { cleanCredentials } from '../utils/helpers';
-import type { QuickSetupResult } from './use-whatsapp-store-signup';
 
 const HEALTH_POLL_INTERVAL_MS = 5000;
 /** How many polls in a row find nothing saved, with the sign-in tab gone, before the setup counts as stalled. */

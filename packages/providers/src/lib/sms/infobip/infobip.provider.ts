@@ -8,10 +8,9 @@ import {
   IVerifyCredentialsResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
-import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
+import { verifyInfobipCredentials } from '../../../utils/verify-infobip-credentials';
 
 export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -37,15 +36,8 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
     });
   }
 
-  /** Reads the account balance (`GET /account/1/balance`) on the same safe-checked base URL the sends use. */
   async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
-    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl).replace(/\/+$/, '');
-
-    return verifyCredentialsWith(() =>
-      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(`${baseUrl}/account/1/balance`, {
-        headers: { Authorization: `App ${this.config.apiKey}` },
-      })
-    );
+    return verifyInfobipCredentials(this.config);
   }
 
   async sendMessage(

@@ -10,10 +10,9 @@ import {
   IVerifyCredentialsResponse,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { createProviderHttpClient } from '../../../utils/http';
 import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
-import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
+import { verifyInfobipCredentials } from '../../../utils/verify-infobip-credentials';
 
 export class InfobipEmailProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
@@ -39,15 +38,8 @@ export class InfobipEmailProvider extends BaseProvider implements IEmailProvider
     });
   }
 
-  /** Reads the account balance, as the Infobip SMS provider does: read-only, and no email is sent. */
   async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
-    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl).replace(/\/+$/, '');
-
-    return verifyCredentialsWith(() =>
-      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(`${baseUrl}/account/1/balance`, {
-        headers: { Authorization: `App ${this.config.apiKey}` },
-      })
-    );
+    return verifyInfobipCredentials(this.config);
   }
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {

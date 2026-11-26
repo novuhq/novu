@@ -8,13 +8,9 @@ import {
   type IProviderConfig,
   PermissionsEnum,
 } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { RiArrowRightSLine, RiLockStarLine, RiStarFill, RiStarLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { setAsPrimaryIntegration } from '@/api/integrations';
 import { Badge } from '@/components/primitives/badge';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -22,41 +18,38 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
-import { QueryKeys } from '@/utils/query-keys';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { TableIntegration } from '../types';
+import { useMakePrimary } from './hooks/use-make-primary';
 import { IntegrationCardActions } from './integration-card-actions';
 import { MakePrimaryModal } from './modals/make-primary-modal';
 import { ProviderIcon } from './provider-icon';
+import { StatusDot, type StatusTone } from './status-dot';
 import {
   CHANNEL_LABELS,
+  channelNoun,
   getDemoIntegrationTooltipMessage,
+  getIntegrationTimestamp,
   hasRoutingConditions,
   isDemoIntegration,
 } from './utils/helpers';
+import { CARD_HOVER_SHADOW, CARD_SHADOW } from './utils/store-styles';
 
 type CardStatus = 'active' | 'setup' | 'inactive';
 
 // Tinted halo + dot, per the design's status/dot.
-const STATUS_DOT: Record<CardStatus, { halo: string; dot: string }> = {
-  active: { halo: 'bg-success/15', dot: 'bg-success' },
-  setup: { halo: 'bg-warning/15', dot: 'bg-warning' },
-  inactive: { halo: 'bg-neutral-alpha-100', dot: 'bg-text-soft' },
+const STATUS_TONE: Record<CardStatus, StatusTone> = {
+  active: 'success',
+  setup: 'warning',
+  inactive: 'neutral',
 };
 
 function getCardStatus(integration: IIntegration): CardStatus {
   if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) return 'setup';
 
   return integration.active ? 'active' : 'inactive';
-}
-
-/** The API returns the stored `updatedAt`, but the shared type doesn't declare it. */
-function getUpdatedAt(integration: IIntegration): string | undefined {
-  const { updatedAt } = integration as IIntegration & { updatedAt?: unknown };
-
-  return typeof updatedAt === 'string' ? updatedAt : undefined;
 }
 
 type IntegrationStoreCardProps = {
@@ -99,8 +92,8 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
       tabIndex={0}
       className={cn(
         'bg-bg-white group relative flex cursor-pointer flex-col overflow-hidden rounded-xl text-left transition-shadow',
-        'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]',
-        'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_8px_0_rgba(0,0,0,0.1)]'
+        CARD_SHADOW,
+        CARD_HOVER_SHADOW
       )}
       onClick={(event) => {
         // Menus and dialogs render in portals but still bubble React events here.
@@ -137,7 +130,7 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
-            {supportsPrimary && <PrimaryStarButton integration={integration} provider={provider} />}
+            {supportsPrimary && <PrimaryStarButton integration={integration} />}
             <IntegrationCardActions integration={integration} onEdit={open} />
           </div>
         </div>
@@ -156,7 +149,7 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
 
 /** Status dot and line on the left; the one action that fits the status on the right. */
 function CardFooter({ status, integration }: { status: CardStatus; integration: IIntegration }) {
-  const updatedAt = getUpdatedAt(integration);
+  const updatedAt = getIntegrationTimestamp(integration, 'updatedAt');
   const updatedLabel = updatedAt ? `Updated ${formatDateSimple(updatedAt)}` : undefined;
   let label = 'Setup incomplete';
   if (status === 'inactive') label = 'Paused';
@@ -165,7 +158,7 @@ function CardFooter({ status, integration }: { status: CardStatus; integration: 
   return (
     <div className="bg-bg-weak border-stroke-soft mt-auto flex h-10 items-center justify-between gap-2 border-t pl-3 pr-2.5">
       <div className="flex min-w-0 items-center gap-1.5">
-        <StatusDot status={status} />
+        <StatusDot tone={STATUS_TONE[status]} />
         <span className="text-label-xs text-text-sub truncate">{label}</span>
       </div>
       {status === 'inactive' ? (
@@ -185,16 +178,6 @@ function CardFooter({ status, integration }: { status: CardStatus; integration: 
         </span>
       )}
     </div>
-  );
-}
-
-function StatusDot({ status }: { status: CardStatus }) {
-  const style = STATUS_DOT[status];
-
-  return (
-    <span className={cn('flex size-4 shrink-0 items-center justify-center rounded-full', style.halo)}>
-      <span className={cn('size-1.5 rounded-full', style.dot)} />
-    </span>
   );
 }
 
@@ -236,12 +219,11 @@ function IntegrationTitleTags({ integration, provider }: { integration: IIntegra
 }
 
 /** Filled for the primary integration; clicking asks to make this one primary, then does. */
-function PrimaryStarButton({ integration, provider }: { integration: IIntegration; provider: IProviderConfig }) {
+function PrimaryStarButton({ integration }: { integration: IIntegration }) {
   const has = useHasPermission();
-  const queryClient = useQueryClient();
   const { currentEnvironment, environments = [] } = useEnvironment();
   const { integrations = [] } = useFetchIntegrations();
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const makePrimary = useMakePrimary(integration);
   // The primary this one takes over from, in the same environment and channel.
   const currentPrimary = integrations.find(
     (other) =>
@@ -253,22 +235,8 @@ function PrimaryStarButton({ integration, provider }: { integration: IIntegratio
   const canSetPrimary = has({ permission: PermissionsEnum.INTEGRATION_WRITE });
   const isPrimary = integration.primary;
 
-  const { mutate: setPrimary, isPending } = useMutation({
-    mutationFn: async () => {
-      if (!currentEnvironment) throw new Error('No environment selected');
-
-      return setAsPrimaryIntegration(integration._id, currentEnvironment);
-    },
-    onSuccess: () => showSuccessToast(`${integration.name} is now the primary ${provider.channel} integration.`),
-    onError: () => showErrorToast(`Couldn't make ${integration.name} the primary integration.`),
-    onSettled: () => {
-      setIsConfirmOpen(false);
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
-    },
-  });
-
   let tooltip = 'Set as primary';
-  if (isPrimary) tooltip = `Primary ${provider.channel} integration`;
+  if (isPrimary) tooltip = `Primary ${channelNoun(integration.channel)} integration`;
   else if (!canSetPrimary) tooltip = "Your role can't change the primary integration";
 
   return (
@@ -278,11 +246,11 @@ function PrimaryStarButton({ integration, provider }: { integration: IIntegratio
           <button
             type="button"
             className="flex size-6 shrink-0 items-center justify-center rounded-md disabled:cursor-default"
-            disabled={isPrimary || !canSetPrimary || isPending || !currentEnvironment}
+            disabled={isPrimary || !canSetPrimary || makePrimary.isPending || !currentEnvironment}
             aria-label={isPrimary ? 'Primary integration' : 'Set as primary integration'}
             onClick={(event) => {
               event.stopPropagation();
-              setIsConfirmOpen(true);
+              makePrimary.open();
             }}
           >
             {isPrimary ? (
@@ -295,17 +263,17 @@ function PrimaryStarButton({ integration, provider }: { integration: IIntegratio
         <TooltipContent>{tooltip}</TooltipContent>
       </Tooltip>
       <MakePrimaryModal
-        isOpen={isConfirmOpen}
+        isOpen={makePrimary.isOpen}
         newPrimaryName={integration.name}
         currentPrimaryName={currentPrimary?.name}
         channel={integration.channel}
         environment={currentEnvironment}
         environments={environments}
         removesConditions={hasRoutingConditions(integration)}
-        isLoading={isPending}
+        isLoading={makePrimary.isPending}
         centerOn="page"
-        onCancel={() => setIsConfirmOpen(false)}
-        onConfirm={() => setPrimary()}
+        onCancel={makePrimary.close}
+        onConfirm={makePrimary.confirm}
       />
     </>
   );

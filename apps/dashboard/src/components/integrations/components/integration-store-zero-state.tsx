@@ -15,14 +15,15 @@ import { Button } from '@/components/primitives/button';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildCursorPromptLink } from '@/utils/cursor-prompt-link';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ProviderIcon } from './provider-icon';
-import { buildCursorPromptLink, buildInboxSetupPrompt } from './utils/inbox-setup-prompt';
+import { buildInboxSetupPrompt } from './utils/inbox-setup-prompt';
+import { CARD_SHADOW } from './utils/store-styles';
 
 const INBOX_DOCS_URL = 'https://docs.novu.co/platform/inbox/overview';
-const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]';
 
 /**
  * Getting-started cards, shown above the channel list while the environment has no real (non-demo)

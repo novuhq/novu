@@ -6,6 +6,9 @@ import { requireEnvironment } from '@/context/environment/hooks';
 /** A new setup link is fetched every 5 minutes, before the current one expires. */
 export const LINK_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
+/** First segment of every Telegram mobile setup link's query key. */
+export const TELEGRAM_MOBILE_LINK_QUERY_KEY = 'telegramMobileLink';
+
 /**
  * A mobile setup link for the integration store, renewed every 5 minutes. Finishing setup on the phone creates the
  * Telegram integration in `environment`.
@@ -18,7 +21,7 @@ export function useIntegrationStoreTelegramMobileLink({
   enabled?: boolean;
 }) {
   return useQuery<IntegrationStoreTelegramMobileLink>({
-    queryKey: ['telegramMobileLink', 'integration-store', environment?._id],
+    queryKey: [TELEGRAM_MOBILE_LINK_QUERY_KEY, 'integration-store', environment?._id],
     queryFn: () =>
       requestIntegrationStoreTelegramMobileLink(requireEnvironment(environment, 'No environment selected')),
     enabled: enabled && Boolean(environment?._id),

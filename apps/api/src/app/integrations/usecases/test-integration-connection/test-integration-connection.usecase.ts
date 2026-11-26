@@ -7,6 +7,7 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { VERIFY_CREDENTIALS_MESSAGES } from '@novu/providers';
 import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
@@ -33,10 +34,10 @@ const NOVU_MANAGED_PROVIDERS: ReadonlySet<string> = new Set([
 const AZURE_AD_INVALID_CREDENTIAL_ERRORS = new Set(['invalid_client', 'unauthorized_client']);
 
 const MESSAGES: Record<IntegrationConnectionStatusEnum, string> = {
-  [IntegrationConnectionStatusEnum.VALID]: 'The provider accepted these credentials.',
-  [IntegrationConnectionStatusEnum.INVALID]: 'The provider rejected these credentials.',
-  [IntegrationConnectionStatusEnum.UNREACHABLE]: "Couldn't reach the provider to check these credentials.",
-  [IntegrationConnectionStatusEnum.INCONCLUSIVE]: "The provider answered, but these credentials couldn't be confirmed.",
+  [IntegrationConnectionStatusEnum.VALID]: VERIFY_CREDENTIALS_MESSAGES[VerifyCredentialsStatusEnum.VALID],
+  [IntegrationConnectionStatusEnum.INVALID]: VERIFY_CREDENTIALS_MESSAGES[VerifyCredentialsStatusEnum.INVALID],
+  [IntegrationConnectionStatusEnum.UNREACHABLE]: VERIFY_CREDENTIALS_MESSAGES[VerifyCredentialsStatusEnum.UNREACHABLE],
+  [IntegrationConnectionStatusEnum.INCONCLUSIVE]: VERIFY_CREDENTIALS_MESSAGES[VerifyCredentialsStatusEnum.INCONCLUSIVE],
   [IntegrationConnectionStatusEnum.UNSUPPORTED]: "Connection testing isn't available for this provider yet.",
 };
 

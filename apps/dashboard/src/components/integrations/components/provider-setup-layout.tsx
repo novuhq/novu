@@ -6,14 +6,13 @@ import { Button } from '@/components/primitives/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
 import { cn } from '@/utils/ui';
+import { CARD_SHADOW } from './utils/store-styles';
 
 /**
  * Building blocks of the provider setup layout in the "Connect {provider}" sheet: environment pills, the
  * setup card with Quick setup / Manual, Advanced settings and the footer. Slack uses them first; other
  * providers move to them one at a time.
  */
-
-const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]';
 
 export type ProviderSetupMode = 'quick' | 'manual';
 

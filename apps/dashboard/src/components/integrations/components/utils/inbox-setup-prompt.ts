@@ -61,13 +61,3 @@ Use the app's existing auth (Clerk, NextAuth, Firebase, Supabase or custom) to p
 - Keep any \`backendUrl\` and \`socketUrl\` props shown above; they point the Inbox at this Novu server.
 - Use TypeScript and follow the framework's conventions. No comments, empty props or unused imports.`;
 }
-
-/** Cursor deep link that opens the prompt in a new chat. */
-export function buildCursorPromptLink(prompt: string): string {
-  const encoded = encodeURIComponent(prompt).replace(
-    /[!'()*~]/g,
-    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
-  );
-
-  return `https://cursor.com/link/prompt?text=${encoded}`;
-}

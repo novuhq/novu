@@ -1,12 +1,11 @@
 import { CredentialsKeyEnum } from '@novu/shared';
-import { type DragEvent, useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Control, UseFormSetValue } from 'react-hook-form';
-import { RiInformationFill, RiLinkM, RiUploadCloud2Line } from 'react-icons/ri';
 import { z } from 'zod';
 import { SetupButton } from '@/components/agents/setup-guide-primitives';
-import { FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { cn } from '@/utils/ui';
+import { FormField, FormItem } from '@/components/primitives/form/form';
 import type { IntegrationFormData } from '../types';
+import { FILE_READ_ERROR, FileDropZone, readFileText } from './file-drop-zone';
 import { MaskedSecretTextarea } from './masked-secret-textarea';
 
 const FIELD = `credentials.${CredentialsKeyEnum.ServiceAccount}` as const;
@@ -108,19 +107,13 @@ export function ServiceAccountUpload({
   isReadOnly?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const labelId = useId();
   const [fileName, setFileName] = useState<string>();
   const [fileError, setFileError] = useState<string>();
-  const [isDragging, setIsDragging] = useState(false);
 
-  const readFile = async (file: File | undefined) => {
-    if (!file || isReadOnly) return;
-
-    let text: string;
-    try {
-      text = await file.text();
-    } catch {
-      setFileError('Couldn’t read this file. Choose it again.');
+  const readFile = async (file: File) => {
+    const text = await readFileText(file);
+    if (text === undefined) {
+      setFileError(FILE_READ_ERROR);
 
       return;
     }
@@ -139,12 +132,6 @@ export function ServiceAccountUpload({
 
   const openPicker = () => inputRef.current?.click();
 
-  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    void readFile(event.dataTransfer.files[0]);
-  };
-
   return (
     <FormField
       control={control}
@@ -158,63 +145,18 @@ export function ServiceAccountUpload({
         return (
           <FormItem className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <span id={labelId} className="text-label-xs text-text-sub">
-                Service account file <span className="text-primary-base">*</span>
-              </span>
-              <input
-                ref={inputRef}
-                type="file"
+              <FileDropZone
+                inputRef={inputRef}
+                label="Service account file"
                 accept="application/json,.json"
-                className="hidden"
-                aria-labelledby={labelId}
+                fileLabel={hasFile ? (fileName ?? 'Service account JSON') : undefined}
+                emptyText="Drop the JSON file here, or click to choose it"
+                detectedText={hasFile ? `Project ${projectId} detected` : undefined}
+                error={error}
                 disabled={isReadOnly}
-                onChange={(event) => {
-                  void readFile(event.target.files?.[0]);
-                  // Choosing the same file again should read it again.
-                  event.target.value = '';
-                }}
-              />
-              <button
-                type="button"
-                aria-labelledby={labelId}
-                disabled={isReadOnly}
-                onClick={openPicker}
+                onFile={(file) => void readFile(file)}
                 onBlur={field.onBlur}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                className={cn(
-                  'bg-bg-weak border-stroke-soft flex w-full items-center gap-2 rounded-md border border-dashed p-2 text-left shadow-xs transition-colors disabled:cursor-not-allowed',
-                  isDragging && 'border-stroke-strong bg-bg-white',
-                  error && 'border-error-base'
-                )}
-              >
-                {hasFile ? (
-                  <>
-                    <RiLinkM className="text-text-sub size-5 shrink-0" />
-                    <span className="text-text-strong font-code min-w-0 flex-1 truncate text-[12px] font-medium leading-4">
-                      {fileName ?? 'Service account JSON'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <RiUploadCloud2Line className="text-text-soft size-5 shrink-0" />
-                    <span className="text-label-xs text-text-soft min-w-0 flex-1">
-                      Drop the JSON file here, or click to choose it
-                    </span>
-                  </>
-                )}
-              </button>
-              {hasFile && !error && (
-                <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
-                  <RiInformationFill className="text-text-soft size-4 shrink-0" />
-                  Project {projectId} detected
-                </p>
-              )}
-              {error && <FormMessage>{error}</FormMessage>}
+              />
             </div>
             {hasFile && !isReadOnly && (
               <SetupButton onClick={openPicker} className="self-start">

@@ -8,10 +8,13 @@ type VerifyCredentialsClassifier = (
   error: unknown
 ) => VerifyCredentialsStatusEnum | undefined;
 
-const INVALID_MESSAGE = 'The provider rejected these credentials.';
-const UNREACHABLE_MESSAGE = "Couldn't reach the provider to check these credentials.";
-const INCONCLUSIVE_MESSAGE =
-  "The provider answered, but these credentials can't be confirmed with a read-only check (the key may be restricted to sending).";
+/** What a credentials check says for each outcome, for every provider and channel. */
+export const VERIFY_CREDENTIALS_MESSAGES: Record<VerifyCredentialsStatusEnum, string> = {
+  [VerifyCredentialsStatusEnum.VALID]: 'The provider accepted these credentials.',
+  [VerifyCredentialsStatusEnum.INVALID]: 'The provider rejected these credentials.',
+  [VerifyCredentialsStatusEnum.UNREACHABLE]: "Couldn't reach the provider to check these credentials.",
+  [VerifyCredentialsStatusEnum.INCONCLUSIVE]: "The provider answered, but these credentials couldn't be confirmed.",
+};
 
 /**
  * Reads the HTTP status off the error shapes our provider SDKs throw:
@@ -56,16 +59,7 @@ export function classifyHttpStatus(httpStatus: number | undefined): VerifyCreden
 }
 
 export function verifyCredentialsResponse(status: VerifyCredentialsStatusEnum): IVerifyCredentialsResponse {
-  switch (status) {
-    case VerifyCredentialsStatusEnum.VALID:
-      return { status, message: 'The provider accepted these credentials.' };
-    case VerifyCredentialsStatusEnum.INVALID:
-      return { status, message: INVALID_MESSAGE };
-    case VerifyCredentialsStatusEnum.UNREACHABLE:
-      return { status, message: UNREACHABLE_MESSAGE };
-    default:
-      return { status, message: INCONCLUSIVE_MESSAGE };
-  }
+  return { status, message: VERIFY_CREDENTIALS_MESSAGES[status] };
 }
 
 /**

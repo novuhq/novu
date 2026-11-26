@@ -9,8 +9,7 @@ import { cn } from '@/utils/ui';
 import { ChannelSectionHeader } from './integration-channel-group';
 import { ProviderIcon } from './provider-icon';
 import { EMPTY_CHANNEL_CONTENT } from './utils/empty-channel-content';
-
-const FLYOUT_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
+import { POPOVER_SHADOW } from './utils/store-styles';
 
 /** Section for a channel with no installed provider: header, art, copy and the way to add one. */
 export function IntegrationEmptyChannel({ channel }: { channel: ChannelTypeEnum }) {
@@ -75,7 +74,7 @@ function EmptyChannelArt({ providers }: { providers: [string, ...string[]] }) {
       <span
         className={cn(
           'absolute left-[130px] top-[72px] flex size-6 items-center justify-center rounded-full bg-gradient-to-r from-[#de2666] to-[#fa5940] text-white',
-          FLYOUT_SHADOW
+          POPOVER_SHADOW
         )}
       >
         <RiAddLine className="size-3.5" />
@@ -101,7 +100,7 @@ function ProviderTile({ providerId, className }: { providerId: string; className
     <div
       className={cn(
         'absolute flex size-10 items-center justify-center rounded-[10px] bg-white',
-        FLYOUT_SHADOW,
+        POPOVER_SHADOW,
         className
       )}
     >

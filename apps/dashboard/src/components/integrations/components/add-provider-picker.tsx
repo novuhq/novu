@@ -20,8 +20,9 @@ import { useIntegrationList } from './hooks/use-integration-list';
 import { ChannelSectionIcon } from './integration-channel-group';
 import { ProviderDeprecatedBadge } from './provider-deprecation';
 import { ProviderIcon } from './provider-icon';
-import { ProviderRequestDialog } from './provider-request-dialog';
-import { CHANNEL_LABELS, GITHUB_NEW_ISSUE_URL } from './utils/helpers';
+import { ProviderRequestDialog, useProviderRequest } from './provider-request-dialog';
+import { CHANNEL_LABELS } from './utils/helpers';
+import { CARD_HOVER_SHADOW, CARD_SHADOW } from './utils/store-styles';
 
 /** Three rows of two; the rest of the channel sits behind "Show all". */
 const SECTION_PREVIEW_COUNT = 6;
@@ -31,9 +32,6 @@ const HTTP_STEP_DOCS_URL =
 
 type ChannelFilter = 'all' | ChannelTypeEnum;
 
-const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]';
-const CARD_SHADOW_HOVER =
-  'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_8px_0_rgba(0,0,0,0.1)]';
 /** The design's compact 28px buttons: 13px label, 6px corners. */
 const COMPACT_BUTTON = 'text-text-strong shrink-0 rounded-md text-[13px] leading-[1.1]';
 const NEUTRAL_BUTTON_SHADOW = 'shadow-[0_1px_2px_0_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.08)] ring-0';
@@ -121,9 +119,7 @@ export function AddProviderPicker({
     [showSuggestions, channels, allProvidersByChannel, installedProviderIds]
   );
 
-  const [isRequestOpen, setIsRequestOpen] = useState(false);
-  const requestProvider = () =>
-    IS_CLOUD ? setIsRequestOpen(true) : window.open(GITHUB_NEW_ISSUE_URL, '_blank', 'noopener,noreferrer');
+  const { isOpen: isRequestOpen, setIsOpen: setIsRequestOpen, requestProvider } = useProviderRequest();
   const hasNoMatches = isSearching && sections.length === 0;
 
   // The fade hints at more providers below, so it goes away once the list is scrolled to the end.
@@ -354,7 +350,7 @@ function NoProvidersMatch({
         className={cn(
           'bg-bg-white mt-3 flex w-[400px] max-w-full flex-col gap-3 rounded-[10px] py-3 pl-3 pr-3.5 text-left transition-shadow',
           CARD_SHADOW,
-          CARD_SHADOW_HOVER,
+          CARD_HOVER_SHADOW,
           'focus-visible:ring-stroke-strong outline-none focus-visible:ring-2'
         )}
       >
@@ -420,7 +416,7 @@ function ChannelChip({
         'text-label-sm flex h-7 items-center gap-1.5 rounded-full px-2.5 transition-shadow',
         isActive
           ? 'bg-bg-strong text-text-white'
-          : 'bg-bg-white text-text-sub shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)] hover:text-text-strong hover:shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_8px_0_rgba(0,0,0,0.1)]',
+          : cn('bg-bg-white text-text-sub hover:text-text-strong', CARD_SHADOW, CARD_HOVER_SHADOW),
         // The chip holds a channel tile; tighten the left side so the tile sits like an icon.
         !isActive && 'has-[span]:pl-1.5'
       )}
@@ -449,7 +445,7 @@ function ProviderCard({
       className={cn(
         'bg-bg-white flex min-w-0 items-center gap-2.5 rounded-[10px] py-2.5 pl-2.5 pr-3 text-left transition-shadow',
         CARD_SHADOW,
-        CARD_SHADOW_HOVER,
+        CARD_HOVER_SHADOW,
         'focus-visible:ring-stroke-strong outline-none focus-visible:ring-2'
       )}
     >

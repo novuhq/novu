@@ -1,14 +1,13 @@
 import { CredentialsKeyEnum, type IConfigCredential } from '@novu/shared';
-import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
-import { RiInformationFill, RiLinkM, RiUploadCloud2Line } from 'react-icons/ri';
 import { SetupButton } from '@/components/agents/setup-guide-primitives';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { cn } from '@/utils/ui';
 import type { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
+import { FILE_READ_ERROR, FileDropZone, readFileText } from './file-drop-zone';
 import { hasTemporaryAwsKey, isAwsAccessKeyId, parseAwsCredentials } from './parse-aws-credentials';
 
 const KEY_ID_FIELD = `credentials.${CredentialsKeyEnum.ApiKey}` as const;
@@ -43,10 +42,8 @@ export function AwsAccessKeyUpload({
   isReadOnly?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const labelId = useId();
   const [fileName, setFileName] = useState<string>();
   const [fileError, setFileError] = useState<string>();
-  const [isDragging, setIsDragging] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const keyId = useWatch({ control, name: KEY_ID_FIELD });
   const secret = useWatch({ control, name: SECRET_FIELD });
@@ -58,14 +55,10 @@ export function AwsAccessKeyUpload({
     setFileError(undefined);
   }, [keyId, secret]);
 
-  const readFile = async (file: File | undefined) => {
-    if (!file || isReadOnly) return;
-
-    let text: string;
-    try {
-      text = await file.text();
-    } catch {
-      setFileError('Couldn’t read this file. Choose it again.');
+  const readFile = async (file: File) => {
+    const text = await readFileText(file);
+    if (text === undefined) {
+      setFileError(FILE_READ_ERROR);
 
       return;
     }
@@ -94,12 +87,6 @@ export function AwsAccessKeyUpload({
   };
 
   const openPicker = () => inputRef.current?.click();
-
-  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    void readFile(event.dataTransfer.files[0]);
-  };
 
   if (isTyping) {
     return (
@@ -133,63 +120,18 @@ export function AwsAccessKeyUpload({
 
         return (
           <FormItem className="flex flex-col gap-1">
-            <span id={labelId} className="text-label-xs text-text-sub">
-              Access key file <span className="text-primary-base">*</span>
-            </span>
-            <input
-              ref={inputRef}
-              type="file"
+            <FileDropZone
+              inputRef={inputRef}
+              label="Access key file"
               accept=".csv,text/csv,text/plain"
-              className="hidden"
-              aria-labelledby={labelId}
+              fileLabel={hasKey ? (fileName ?? 'Access key') : undefined}
+              emptyText="Drop the .csv file here, click to choose it, or paste the key"
+              detectedText={hasKey ? `Access key ${shortenKeyId(keyId)} and its secret detected` : undefined}
+              error={error}
               disabled={isReadOnly}
-              onChange={(event) => {
-                void readFile(event.target.files?.[0]);
-                // Choosing the same file again should read it again.
-                event.target.value = '';
-              }}
-            />
-            <button
-              type="button"
-              aria-labelledby={labelId}
-              disabled={isReadOnly}
-              onClick={openPicker}
+              onFile={(file) => void readFile(file)}
               onBlur={field.onBlur}
-              onDragOver={(event) => {
-                event.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              className={cn(
-                'bg-bg-weak border-stroke-soft flex w-full items-center gap-2 rounded-md border border-dashed p-2 text-left shadow-xs transition-colors disabled:cursor-not-allowed',
-                isDragging && 'border-stroke-strong bg-bg-white',
-                error && 'border-error-base'
-              )}
-            >
-              {hasKey ? (
-                <>
-                  <RiLinkM className="text-text-sub size-5 shrink-0" />
-                  <span className="text-text-strong font-code min-w-0 flex-1 truncate text-[12px] font-medium leading-4">
-                    {fileName ?? 'Access key'}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <RiUploadCloud2Line className="text-text-soft size-5 shrink-0" />
-                  <span className="text-label-xs text-text-soft min-w-0 flex-1">
-                    Drop the .csv file here, click to choose it, or paste the key
-                  </span>
-                </>
-              )}
-            </button>
-            {hasKey && !error && (
-              <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
-                <RiInformationFill className="text-text-soft size-4 shrink-0" />
-                Access key {shortenKeyId(keyId)} and its secret detected
-              </p>
-            )}
-            {error && <FormMessage>{error}</FormMessage>}
+            />
             {!isReadOnly && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {hasKey && <SetupButton onClick={openPicker}>Choose another file</SetupButton>}

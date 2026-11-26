@@ -1,3 +1,4 @@
+import { verifyCredentialsResponse } from '@novu/providers';
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   CheckIntegrationResponseEnum,
@@ -38,13 +39,6 @@ const EMAIL_PROVIDERS_WITH_RELIABLE_BAD_CREDENTIALS: ReadonlySet<string> = new S
   EmailProviderIdEnum.Postmark,
   EmailProviderIdEnum.MailerSend,
 ]);
-
-const EMAIL_CHECK_MESSAGES = {
-  valid: 'The provider accepted these credentials.',
-  invalid: 'The provider rejected these credentials.',
-  unreachable: "Couldn't reach the provider to check these credentials.",
-  inconclusive: 'The provider returned an error, so these credentials could not be confirmed.',
-};
 
 export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> implements IMailHandler {
   protected provider: IEmailProvider;
@@ -133,21 +127,21 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     try {
       result = await this.provider.checkIntegration(CHECK_INTEGRATION_MAIL);
     } catch {
-      return { status: VerifyCredentialsStatusEnum.UNREACHABLE, message: EMAIL_CHECK_MESSAGES.unreachable };
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.UNREACHABLE);
     }
 
     if (result?.success) {
-      return { status: VerifyCredentialsStatusEnum.VALID, message: EMAIL_CHECK_MESSAGES.valid };
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.VALID);
     }
 
     if (
       result?.code === CheckIntegrationResponseEnum.BAD_CREDENTIALS &&
       EMAIL_PROVIDERS_WITH_RELIABLE_BAD_CREDENTIALS.has(this.providerId)
     ) {
-      return { status: VerifyCredentialsStatusEnum.INVALID, message: EMAIL_CHECK_MESSAGES.invalid };
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.INVALID);
     }
 
-    return { status: VerifyCredentialsStatusEnum.INCONCLUSIVE, message: EMAIL_CHECK_MESSAGES.inconclusive };
+    return verifyCredentialsResponse(VerifyCredentialsStatusEnum.INCONCLUSIVE);
   }
 
   async check() {

@@ -8,19 +8,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/primitives/radio-group'
 import { useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
 import { ProviderIcon } from '../provider-icon';
-import { CHANNEL_LABELS } from '../utils/helpers';
+import { CHANNEL_LABELS, channelNoun } from '../utils/helpers';
+import { CARD_SHADOW } from '../utils/store-styles';
 
-const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]';
 /** The design's compact 28px buttons: 13px label, 6px corners. */
 const COMPACT_BUTTON = 'h-7 shrink-0 rounded-md px-2 text-[13px] leading-[1.1]';
 
 /** "email", "push", but "SMS". */
-function channelNoun(channel: ChannelTypeEnum) {
-  const label = CHANNEL_LABELS[channel];
-
-  return label === label.toUpperCase() ? label : label.toLowerCase();
-}
-
 export type DeleteIntegrationModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;

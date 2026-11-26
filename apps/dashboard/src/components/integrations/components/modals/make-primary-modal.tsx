@@ -1,15 +1,9 @@
 import { type ChannelTypeEnum, EnvironmentTypeEnum, type IEnvironment } from '@novu/shared';
 import { RiStarLine } from 'react-icons/ri';
-import { CHANNEL_LABELS } from '../utils/helpers';
+import { CHANNEL_LABELS, channelNoun } from '../utils/helpers';
 import { DrawerConfirmDialog } from './drawer-confirm-dialog';
 
 /** "email", "push", but "SMS". */
-function channelNoun(channel?: ChannelTypeEnum) {
-  if (!channel) return '';
-  const label = CHANNEL_LABELS[channel];
-
-  return label === label.toUpperCase() ? label : label.toLowerCase();
-}
 
 /** "Production", "Production and Staging", "Production, Staging and Preview". */
 function listNames(names: string[]) {

@@ -1,5 +1,4 @@
 import { EmailProviderIdEnum, FeatureFlagsKeysEnum, SmsProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
-import { useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
@@ -8,19 +7,14 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ProviderIcon } from './provider-icon';
-import { ProviderRequestDialog } from './provider-request-dialog';
-import { GITHUB_NEW_ISSUE_URL } from './utils/helpers';
-
-const TILE_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
+import { ProviderRequestDialog, useProviderRequest } from './provider-request-dialog';
+import { POPOVER_SHADOW } from './utils/store-styles';
 
 /** Shown when a search matches nothing installed and nothing in the store. */
 export function IntegrationSearchEmptyState({ query }: { query: string }) {
   const navigate = useNavigate();
-  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const { isOpen: isRequestOpen, setIsOpen: setIsRequestOpen, requestProvider } = useProviderRequest();
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
-
-  const requestProvider = () =>
-    IS_CLOUD ? setIsRequestOpen(true) : window.open(GITHUB_NEW_ISSUE_URL, '_blank', 'noopener,noreferrer');
 
   return (
     <div className="flex flex-col items-center px-4 pb-10 pt-24 text-center antialiased [font-feature-settings:'cv09'_1,'ss11'_1,'calt'_0,'liga'_0]">
@@ -66,7 +60,7 @@ function SearchEmptyArt() {
       <span
         className={cn(
           'absolute left-[33px] top-[21px] flex size-11 -rotate-[8deg] items-center justify-center rounded-[10px] bg-white',
-          TILE_SHADOW
+          POPOVER_SHADOW
         )}
       >
         <ProviderIcon providerId={EmailProviderIdEnum.SendGrid} providerDisplayName="SendGrid" className="size-[60%]" />
@@ -75,7 +69,7 @@ function SearchEmptyArt() {
         className={cn(
           'absolute left-[101px] top-[21px] flex size-11 rotate-[10deg] items-center justify-center rounded-[10px]',
           'bg-[#F22F46] bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0)_100%)]',
-          TILE_SHADOW
+          POPOVER_SHADOW
         )}
       >
         <ProviderIcon
@@ -87,7 +81,7 @@ function SearchEmptyArt() {
       <span
         className={cn(
           'text-text-sub absolute left-[54px] top-2.5 flex size-[52px] items-center justify-center rounded-xl bg-white',
-          TILE_SHADOW
+          POPOVER_SHADOW
         )}
       >
         <RiSearchLine className="size-[22px]" />

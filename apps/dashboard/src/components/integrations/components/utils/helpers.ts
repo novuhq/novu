@@ -20,6 +20,21 @@ export const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.TOOL]: 'Tool',
 };
 
+/** A channel as a noun in a sentence: "email", "push", but "SMS". Empty without a channel. */
+export function channelNoun(channel?: ChannelTypeEnum): string {
+  if (!channel) return '';
+  const label = CHANNEL_LABELS[channel];
+
+  return label === label.toUpperCase() ? label : label.toLowerCase();
+}
+
+/** The API returns the stored `createdAt` and `updatedAt`, but the shared type doesn't declare them. */
+export function getIntegrationTimestamp(integration: IIntegration, field: 'createdAt' | 'updatedAt') {
+  const value = (integration as IIntegration & Partial<Record<'createdAt' | 'updatedAt', unknown>>)[field];
+
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function isDemoIntegration(providerId: string) {
   return (
     providerId === EmailProviderIdEnum.Novu ||

@@ -9,6 +9,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Textarea } from '@/components/primitives/textarea';
+import { IS_CLOUD } from '@/config';
+import { GITHUB_NEW_ISSUE_URL } from './utils/helpers';
 
 type ProviderRequestBody = { providerName: string; useCase?: string };
 
@@ -149,4 +151,16 @@ export function ProviderRequestDialog({ open, onOpenChange, defaultProviderName 
       </DialogContent>
     </Dialog>
   );
+}
+
+/**
+ * "Request a provider": a form that emails the team on Cloud, a GitHub issue elsewhere. Render
+ * `<ProviderRequestDialog open={isOpen} onOpenChange={setIsOpen} />` next to the trigger.
+ */
+export function useProviderRequest() {
+  const [isOpen, setIsOpen] = useState(false);
+  const requestProvider = () =>
+    IS_CLOUD ? setIsOpen(true) : window.open(GITHUB_NEW_ISSUE_URL, '_blank', 'noopener,noreferrer');
+
+  return { isOpen, setIsOpen, requestProvider };
 }

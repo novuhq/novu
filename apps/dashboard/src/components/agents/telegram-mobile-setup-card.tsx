@@ -7,14 +7,15 @@ import { Button } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
-import { useIntegrationStoreTelegramMobileLink } from './use-integration-store-telegram-mobile-link';
+import {
+  LINK_REFRESH_INTERVAL_MS,
+  TELEGRAM_MOBILE_LINK_QUERY_KEY,
+  useIntegrationStoreTelegramMobileLink,
+} from './use-integration-store-telegram-mobile-link';
 
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 /** Don't expose the manual refresh control until the current token has been visible long enough to actually scan it. */
 const MIN_MANUAL_REFRESH_AGE_MS = 60 * 1000;
-
-const MOBILE_LINK_QUERY_KEY = 'telegramMobileLink' as const;
 
 type CardLayout = 'stacked' | 'inline';
 
@@ -140,7 +141,7 @@ export function AgentTelegramMobileSetupCard({
   const environmentId = currentEnvironment?._id;
 
   const linkQuery = useQuery<TelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, integrationIdentifier, testSubscriberId],
+    queryKey: [TELEGRAM_MOBILE_LINK_QUERY_KEY, environmentId, integrationIdentifier, testSubscriberId],
     queryFn: () =>
       requestTelegramMobileLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
@@ -148,9 +149,9 @@ export function AgentTelegramMobileSetupCard({
         testSubscriberId ?? undefined
       ),
     enabled: !disabled && Boolean(environmentId && integrationIdentifier),
-    refetchInterval: REFRESH_INTERVAL_MS,
+    refetchInterval: LINK_REFRESH_INTERVAL_MS,
     refetchOnWindowFocus: true,
-    staleTime: REFRESH_INTERVAL_MS,
+    staleTime: LINK_REFRESH_INTERVAL_MS,
     meta: { showError: false },
   });
 
@@ -271,7 +272,7 @@ function ExpiresCountdown({ expiresAtMs }: { expiresAtMs: number }) {
   const minutes = Math.floor(remainingMs / 60_000);
   const seconds = Math.floor((remainingMs % 60_000) / 1000);
   const padded = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  const nearExpiry = remainingMs < TOKEN_TTL_MS - REFRESH_INTERVAL_MS;
+  const nearExpiry = remainingMs < TOKEN_TTL_MS - LINK_REFRESH_INTERVAL_MS;
 
   return (
     <div className={cn('text-text-soft flex items-center gap-1 text-label-xs', nearExpiry && 'text-warning-base')}>

@@ -3,7 +3,7 @@ import { RiDeleteBin2Line } from 'react-icons/ri';
 import { ToastClose } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { ToastProgress } from './toast-progress';
-import { CHANNEL_LABELS } from './utils/helpers';
+import { channelNoun } from './utils/helpers';
 
 const TOAST_DURATION_MS = 6_000;
 
@@ -15,8 +15,7 @@ export function showIntegrationDeletedToast({
   integration: IIntegration;
   newPrimary?: IIntegration;
 }) {
-  const label = integration.channel ? CHANNEL_LABELS[integration.channel] : undefined;
-  const noun = label && label !== label.toUpperCase() ? label.toLowerCase() : label;
+  const noun = channelNoun(integration.channel);
   const description =
     newPrimary && noun
       ? `${newPrimary.name} is now your primary ${noun} provider.`

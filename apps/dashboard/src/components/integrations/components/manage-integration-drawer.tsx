@@ -38,13 +38,9 @@ import { cn } from '@/utils/ui';
 import type { DuplicateTarget } from './hooks/use-duplicate-integration';
 import type { IntegrationVerification } from './hooks/use-integration-verification';
 import { ProviderIcon } from './provider-icon';
-import { CHANNEL_LABELS } from './utils/helpers';
-
-const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]';
-const MENU_CLASS =
-  'bg-bg-weak min-w-[200px] rounded-xl border-0 p-1 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]';
-const ITEM_CLASS =
-  'text-text-sub focus:text-text-strong h-7 gap-2 rounded px-2 py-0 text-[13px] leading-[1.1] focus:bg-[#f4f4f5] [&>svg]:size-[15px]';
+import { StatusDot } from './status-dot';
+import { CHANNEL_LABELS, getIntegrationTimestamp } from './utils/helpers';
+import { CARD_SHADOW, MENU_CLASS, MENU_ITEM_CLASS, POPOVER_SHADOW } from './utils/store-styles';
 
 const TONE_TEXT: Record<IntegrationVerification['tone'], string> = {
   success: 'text-success-base',
@@ -52,20 +48,7 @@ const TONE_TEXT: Record<IntegrationVerification['tone'], string> = {
   warning: 'text-warning-base',
   neutral: 'text-text-soft',
 };
-const TONE_DOT: Record<IntegrationVerification['tone'], { halo: string; dot: string }> = {
-  success: { halo: 'bg-success/15', dot: 'bg-success' },
-  error: { halo: 'bg-error-base/15', dot: 'bg-error-base' },
-  warning: { halo: 'bg-warning/15', dot: 'bg-warning' },
-  neutral: { halo: 'bg-neutral-alpha-100', dot: 'bg-text-soft' },
-};
-
 /** The API returns the stored timestamps, but the shared type doesn't declare them. */
-function getTimestamp(integration: IIntegration, field: 'createdAt' | 'updatedAt') {
-  const value = (integration as IIntegration & Partial<Record<'createdAt' | 'updatedAt', unknown>>)[field];
-
-  return typeof value === 'string' ? value : undefined;
-}
-
 /** "Oct 3 2026 11:20:05 UTC" */
 function formatUtc(value?: string) {
   if (!value) return '—';
@@ -75,16 +58,6 @@ function formatUtc(value?: string) {
   const time = date.toLocaleTimeString('en-GB', { hour12: false, timeZone: 'UTC' });
 
   return `${month} ${date.getUTCDate()} ${date.getUTCFullYear()} ${time} UTC`;
-}
-
-function VerificationDot({ tone }: { tone: IntegrationVerification['tone'] }) {
-  const style = TONE_DOT[tone];
-
-  return (
-    <span className={cn('flex size-4 shrink-0 items-center justify-center rounded-full', style.halo)}>
-      <span className={cn('size-1.5 rounded-full', style.dot)} />
-    </span>
-  );
 }
 
 /** "Duplicate to…": the other environments, live ones under their own heading, and what gets copied. */
@@ -120,7 +93,7 @@ function DuplicateSubmenu({
   return (
     <DropdownMenuSubContent
       sideOffset={6}
-      className="bg-bg-white flex w-64 flex-col gap-0.5 rounded-xl border-0 p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_4px_8px_0_rgba(0,0,0,0.08),0_8px_16px_0_rgba(0,0,0,0.08)]"
+      className={cn('bg-bg-white flex w-64 flex-col gap-0.5 rounded-xl border-0 p-1.5', POPOVER_SHADOW)}
     >
       {development.map(renderRow)}
       {live.length > 0 && (
@@ -181,9 +154,9 @@ export function ManageIntegrationHeader({
         <DropdownMenuTrigger asChild>
           <CompactButton icon={RiMoreFill} variant="ghost" size="md" className="ml-auto" aria-label="More actions" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className={MENU_CLASS}>
+        <DropdownMenuContent align="end" className={cn(MENU_CLASS, 'min-w-[200px]')}>
           {canVerify && (
-            <DropdownMenuItem className={ITEM_CLASS} onSelect={onVerify}>
+            <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={onVerify}>
               <RiFlashlightLine />
               Verify integration
             </DropdownMenuItem>
@@ -192,7 +165,7 @@ export function ManageIntegrationHeader({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger
                 className={cn(
-                  ITEM_CLASS,
+                  MENU_ITEM_CLASS,
                   // The design has no submenu chevron.
                   'data-[state=open]:text-text-strong data-[state=open]:bg-[#f4f4f5] [&>svg:last-child]:hidden'
                 )}
@@ -209,18 +182,18 @@ export function ManageIntegrationHeader({
               />
             </DropdownMenuSub>
           )}
-          <DropdownMenuItem className={ITEM_CLASS} onSelect={onCopyIdentifier}>
+          <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={onCopyIdentifier}>
             <RiStackLine />
             Copy identifier
           </DropdownMenuItem>
           {onMakePrimary && (
-            <DropdownMenuItem className={ITEM_CLASS} onSelect={onMakePrimary}>
+            <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={onMakePrimary}>
               <RiStarLine />
               Make primary
             </DropdownMenuItem>
           )}
           {onViewActivity && (
-            <DropdownMenuItem className={ITEM_CLASS} onSelect={onViewActivity}>
+            <DropdownMenuItem className={MENU_ITEM_CLASS} onSelect={onViewActivity}>
               <RiBarChartBoxLine />
               View activity
             </DropdownMenuItem>
@@ -228,7 +201,10 @@ export function ManageIntegrationHeader({
           {canDelete && (
             <>
               <DropdownMenuSeparator className="bg-stroke-soft -mx-1 my-[3.5px]" />
-              <DropdownMenuItem className={cn(ITEM_CLASS, 'text-error-base focus:text-error-base')} onSelect={onDelete}>
+              <DropdownMenuItem
+                className={cn(MENU_ITEM_CLASS, 'text-error-base focus:text-error-base')}
+                onSelect={onDelete}
+              >
                 <RiDeleteBin2Line />
                 Delete
               </DropdownMenuItem>
@@ -362,7 +338,7 @@ export function IntegrationDetailsPanel({
           </span>
         )}
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          {verification && <VerificationDot tone={verification.tone} />}
+          {verification && <StatusDot tone={verification.tone} />}
           <RiArrowRightSLine className="text-text-soft size-4" />
         </span>
       </button>
@@ -396,12 +372,12 @@ export function IntegrationDetailsPanel({
         </DetailRow>
         <DetailRow label="Created at">
           <span className="text-code-xs font-code text-text-soft">
-            {formatUtc(getTimestamp(integration, 'createdAt'))}
+            {formatUtc(getIntegrationTimestamp(integration, 'createdAt'))}
           </span>
         </DetailRow>
         <DetailRow label="Last updated at">
           <span className="text-code-xs font-code text-text-soft">
-            {formatUtc(getTimestamp(integration, 'updatedAt'))}
+            {formatUtc(getIntegrationTimestamp(integration, 'updatedAt'))}
           </span>
         </DetailRow>
       </div>
@@ -452,7 +428,7 @@ export function ManageIntegrationFooter({
   return (
     <div className="bg-bg-weak border-stroke-soft flex items-center gap-2 border-t px-5 py-3">
       <span className="flex min-w-0 flex-1 items-center gap-2">
-        <VerificationDot tone={verification.tone} />
+        <StatusDot tone={verification.tone} />
         <span className="text-label-xs text-text-sub truncate">{verification.label}</span>
       </span>
       <Button

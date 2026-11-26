@@ -3,10 +3,7 @@ import { SetupButton, SetupStep, SetupStepperRail } from '@/components/agents/se
 import { Input } from '@/components/primitives/input';
 import { SecretInput } from '@/components/primitives/secret-input';
 import { useAuth } from '@/context/auth/hooks';
-
-const SLACK_APPS_URL = 'https://api.slack.com/apps';
-/** Slack's limit for an app name in a manifest. */
-const SLACK_APP_NAME_MAX_LENGTH = 35;
+import { SLACK_APP_NAME_MAX_LENGTH, SLACK_APPS_URL } from './utils/slack-app';
 
 type SlackQuickSetupProps = {
   /** The Slack app Novu created, once "Create app" has run. */
