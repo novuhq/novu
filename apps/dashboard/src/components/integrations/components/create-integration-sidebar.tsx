@@ -17,6 +17,7 @@ import { IntegrationFormData, type QuickSetupResult } from '../types';
 import { AddProviderPicker } from './add-provider-picker';
 import { useIntegrationList } from './hooks/use-integration-list';
 import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { useIsActivityTrackingAvailable } from './hooks/use-is-activity-tracking-available';
 import { useMsTeamsStoreSetup } from './hooks/use-msteams-store-setup';
 import { useSidebarNavigationManager } from './hooks/use-sidebar-navigation-manager';
 import { useWhatsAppStoreSignup } from './hooks/use-whatsapp-store-signup';
@@ -24,7 +25,6 @@ import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { ProviderSetupFooter } from './provider-setup-layout';
-import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-available';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import {
   ACTIVITY_TRACKING_ENABLER,

@@ -108,8 +108,8 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
   }
 
   /**
-   * Prefers the provider's read-only `verifyCredentials`. Until an email provider has one, falls back to the
-   * existing `checkIntegration`, which sends a test email to `no-reply@novu.co`.
+   * Prefers the provider's read-only `verifyCredentials`. Until an email provider has one, falls back to its
+   * existing `checkIntegration`, which for most providers sends a test email to `no-reply@novu.co`.
    * - Providers whose check never calls the provider are unsupported (`null`).
    * - `BAD_CREDENTIALS` counts as invalid only where it reliably means a rejected key; otherwise it's inconclusive.
    * - Messages are fixed strings: `checkIntegration` copies raw provider errors, which must not reach the user.

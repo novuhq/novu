@@ -16,9 +16,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Separator } from '@/components/primitives/separator';
 import type { IntegrationFormData } from '../types';
+import { useSecretReplacement } from './hooks/use-secret-replacement';
 import { SavedSecretField } from './saved-secret-field';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
-import { useSecretReplacement } from './use-secret-replacement';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';

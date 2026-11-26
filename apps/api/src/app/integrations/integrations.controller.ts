@@ -615,7 +615,7 @@ export class IntegrationsController {
   }
 
   /**
-   * "Test connection" from the integration store: checks the stored credentials against the provider
+   * "Verify integration" from the integration store: checks the stored credentials against the provider
    * with a read-only call (retrying transient failures) and reports the outcome. It changes nothing itself.
    */
   @Post('/:integrationId/test-connection')

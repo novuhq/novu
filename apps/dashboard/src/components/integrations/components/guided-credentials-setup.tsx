@@ -19,7 +19,7 @@ import { AwsAccessKeyUpload, AwsRegionField } from './aws-access-key-fields';
 import { CredentialSection } from './credential-section';
 import { isLikelyAwsCredentialsBlock, parseAwsCredentials } from './parse-aws-credentials';
 import { isLikelyResendCredentialsBlock, parseResendCredentials } from './parse-resend-credentials';
-import { type ProviderSetupMode, SegmentedControl } from './provider-setup-layout';
+import { type ProviderSetupMode, SetupSegmentedControl } from './provider-setup-layout';
 import { ServiceAccountPaste, ServiceAccountUpload } from './service-account-fields';
 import { ACTIVITY_TRACKING_ENABLER, configurationToCredential, type GuidedSetupProviderId } from './utils/helpers';
 
@@ -566,7 +566,7 @@ function ChoiceField({
             {credential.required && <span className="text-primary-base"> *</span>}
           </span>
           <FormControl>
-            <SegmentedControl
+            <SetupSegmentedControl
               aria-labelledby={labelId}
               value={typeof field.value === 'string' && field.value ? field.value : fallback}
               onValueChange={(value) => field.onChange(value === NO_VALUE ? '' : value)}

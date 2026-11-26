@@ -7,7 +7,7 @@ import type { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 import { FILE_READ_ERROR, FileDropZone, readFileText } from './file-drop-zone';
 import { MaskedSecretTextarea } from './masked-secret-textarea';
-import { SegmentedControl } from './provider-setup-layout';
+import { SetupSegmentedControl } from './provider-setup-layout';
 
 const KEY_FIELD = `credentials.${CredentialsKeyEnum.SecretKey}` as const;
 const KEY_ID_FIELD = `credentials.${CredentialsKeyEnum.ApiKey}` as const;
@@ -213,7 +213,7 @@ export function ApnsEnvironmentField({
               {label}
             </span>
             <FormControl>
-              <SegmentedControl
+              <SetupSegmentedControl
                 aria-labelledby={labelId}
                 value={isProduction ? 'production' : 'sandbox'}
                 onValueChange={(next) => field.onChange(next === 'production' ? 'true' : 'false')}

@@ -30,6 +30,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { IntegrationFormData } from '../types';
 import { CredentialSection } from './credential-section';
 import { GuidedCredentialsSetup } from './guided-credentials-setup';
+import { useIsActivityTrackingAvailable } from './hooks/use-is-activity-tracking-available';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
 import { MsTeamsManualSetup } from './msteams-manual-setup';
@@ -50,7 +51,6 @@ import { SlackQuickSetup } from './slack-quick-setup';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { TelegramQuickSetup } from './telegram-quick-setup';
 import { ToolWebhookSettings } from './tool-webhook-settings';
-import { useIsActivityTrackingAvailable } from './use-is-activity-tracking-available';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import {

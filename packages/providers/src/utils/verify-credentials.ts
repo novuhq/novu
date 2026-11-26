@@ -1,6 +1,6 @@
 import { IVerifyCredentialsResponse, VerifyCredentialsStatusEnum } from '@novu/stateless';
 
-/** Credential checks are interactive (a user clicked "Test connection"), so they get a short cap. */
+/** Credential checks are interactive (a user clicked "Verify integration"), so they get a short cap. */
 export const VERIFY_CREDENTIALS_TIMEOUT_MS = 10_000;
 
 type VerifyCredentialsClassifier = (

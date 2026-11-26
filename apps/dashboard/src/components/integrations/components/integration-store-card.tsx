@@ -39,7 +39,7 @@ import { CARD_HOVER_SHADOW, CARD_SHADOW } from './utils/store-styles';
 
 type CardStatus = 'active' | 'setup' | 'inactive';
 
-// Tinted halo + dot, per the design's status/dot.
+// The card's status as a dot colour.
 const STATUS_TONE: Record<CardStatus, StatusTone> = {
   active: 'success',
   setup: 'warning',
@@ -107,7 +107,7 @@ export function IntegrationStoreCard({ integration, provider, onClick }: Integra
           open();
         }
       }}
-      data-test-id={`integration-${integration._id}-row`}
+      data-test-id={`integration-${integration._id}-card`}
     >
       <div className="flex flex-col gap-3 py-3.5 pl-3.5 pr-3">
         <div className="flex items-start gap-3">

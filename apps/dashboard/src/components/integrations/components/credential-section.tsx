@@ -20,8 +20,8 @@ import {
 import { InlineToast } from '../../primitives/inline-toast';
 import { IntegrationFormData } from '../types';
 import { DescriptionWithLinks } from './description-with-links';
+import { useSecretReplacement } from './hooks/use-secret-replacement';
 import { SavedSecretField } from './saved-secret-field';
-import { useSecretReplacement } from './use-secret-replacement';
 import { credentialValueToInputString, isSecureCredential } from './utils/helpers';
 
 /** The field's explanation for the "i" next to its label: its tooltip and its description, when it has them. */

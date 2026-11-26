@@ -10,8 +10,8 @@ import { CARD_SHADOW } from './utils/store-styles';
 
 /**
  * Building blocks of the provider setup layout in the "Connect {provider}" sheet: environment pills, the
- * setup card with Quick setup / Manual, Advanced settings and the footer. Slack uses them first; other
- * providers move to them one at a time.
+ * setup card with Quick setup / Manual, Advanced settings and the footer. Providers listed in
+ * `usesProviderSetupLayout` use them.
  */
 
 export type ProviderSetupMode = 'quick' | 'manual';
@@ -99,7 +99,7 @@ export function SetupCard({
 
 function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange: (mode: ProviderSetupMode) => void }) {
   return (
-    <SegmentedControl
+    <SetupSegmentedControl
       value={mode}
       onValueChange={onChange}
       aria-label="Setup mode"
@@ -112,7 +112,7 @@ function SetupModeSwitch({ mode, onChange }: { mode: ProviderSetupMode; onChange
 }
 
 /** Two or three options side by side, e.g. Quick setup / Manual or a provider's region. */
-export function SegmentedControl<T extends string>({
+export function SetupSegmentedControl<T extends string>({
   value,
   onValueChange,
   options,

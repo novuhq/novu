@@ -72,9 +72,9 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   // Same rule as the settings sheet: Inbox and Novu's demo providers can't be deleted.
   const canDelete = integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
   // Same rule as the drawer: only an active integration with provider credentials of its own.
-  const canTestConnection = canWrite && integration.active && canVerifyIntegration(integration);
-  // One toast per card, so the "Testing…" toast is replaced by its result instead of stacking.
-  const testToastId = `test-connection-${useId()}`;
+  const canVerify = canWrite && integration.active && canVerifyIntegration(integration);
+  // One toast per card, so the "Verifying…" toast is replaced by its result instead of stacking.
+  const verifyToastId = `verify-integration-${useId()}`;
 
   /** The other integrations on the channel in this environment; the active ones can take over as primary. */
   const otherInChannel = integrations.filter(
@@ -107,7 +107,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
   });
 
   const verifyIntegration = useVerifyIntegration();
-  const { mutate: testConnection, isPending: isTestingConnection } = useMutation({
+  const { mutate: verify, isPending: isVerifying } = useMutation({
     mutationFn: () => verifyIntegration(integration),
     onMutate: () =>
       showToast({
@@ -117,15 +117,15 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
             <span className="text-sm">Verifying {integration.name}…</span>
           </>
         ),
-        options: { id: testToastId, duration: Number.POSITIVE_INFINITY },
+        options: { id: verifyToastId, duration: Number.POSITIVE_INFINITY },
       }),
     onSuccess: (result) => handleConnectionResult(result),
-    onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: testToastId }),
+    onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: verifyToastId }),
   });
 
   /** Shows the outcome of the check. */
   const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
-    const toastOptions = { id: testToastId, duration: 8_000 };
+    const toastOptions = { id: verifyToastId, duration: 8_000 };
 
     switch (status) {
       case IntegrationConnectionStatusEnum.VALID:
@@ -134,7 +134,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
         return showErrorToast(
           `${message} ${integration.name} didn't pass verification. Update its credentials in Edit configuration.`,
           'Verification failed',
-          { id: testToastId, duration: 10_000 }
+          { id: verifyToastId, duration: 10_000 }
         );
       case IntegrationConnectionStatusEnum.UNREACHABLE:
         return showWarningToast(
@@ -217,14 +217,10 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
             Edit configuration
           </DropdownMenuItem>
 
-          {canTestConnection && (
-            <DropdownMenuItem
-              className={MENU_ITEM_CLASS}
-              disabled={isTestingConnection}
-              onSelect={() => testConnection()}
-            >
+          {canVerify && (
+            <DropdownMenuItem className={MENU_ITEM_CLASS} disabled={isVerifying} onSelect={() => verify()}>
               <RiFlashlightLine />
-              {isTestingConnection ? 'Verifying integration…' : 'Verify integration'}
+              {isVerifying ? 'Verifying integration…' : 'Verify integration'}
             </DropdownMenuItem>
           )}
 

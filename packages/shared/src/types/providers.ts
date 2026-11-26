@@ -199,7 +199,7 @@ export enum ToolProviderIdEnum {
 }
 
 /**
- * Result of "Test connection" on an integration.
+ * Result of "Verify integration" on an integration.
  * - VALID: the provider accepted the stored credentials.
  * - INVALID: the provider rejected them on every attempt.
  * - UNREACHABLE: the provider couldn't be reached reliably (timeouts, 429, 5xx), so nothing is concluded.
