@@ -334,6 +334,24 @@ describe('splitChoices', () => {
     ]);
   });
 
+  it('leaves a choices fence inside another code block as code', () => {
+    const inFourBackticks = 'Use this template:\n````markdown\n```choices\nEmail\nSMS\n```\n````\nDone.';
+    const inTildes = '~~~\n```choices\nEmail\n```\n~~~';
+    // An info string can't close a block, so the ```choices line stays inside the ```markdown block.
+    const inThreeBackticks = '```markdown\n```choices\nEmail\n```';
+
+    expect(splitChoices(inFourBackticks)).toEqual([{ kind: 'text', text: inFourBackticks }]);
+    expect(splitChoices(inTildes)).toEqual([{ kind: 'text', text: inTildes }]);
+    expect(splitChoices(inThreeBackticks)).toEqual([{ kind: 'text', text: inThreeBackticks }]);
+  });
+
+  it('finds the options after a code block has closed', () => {
+    expect(splitChoices('```json\n{"a": 1}\n```\nWhich one?\n```choices\nEmail\nSMS\n````')).toEqual([
+      { kind: 'text', text: '```json\n{"a": 1}\n```\nWhich one?' },
+      { kind: 'choices', choices: ['Email', 'SMS'] },
+    ]);
+  });
+
   it('runs a block whose closing fence has not streamed in yet to the end of the text', () => {
     expect(splitChoices('Which one?\n```choices\nNaveen M · connect:1\nNaveen')).toEqual([
       { kind: 'text', text: 'Which one?' },

@@ -247,20 +247,45 @@ export type AssistantBlock =
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
 // The Copilot's web-chat prompt (`buildWebChatDeliveryContext` in the enterprise agents package) asks for this fence.
-const CHOICES_FENCE_OPEN = /^ {0,3}```choices\s*$/;
-const FENCE_CLOSE = /^ {0,3}```\s*$/;
+const CHOICES_FENCE = { marker: '```', info: 'choices' };
+const CODE_FENCE = /^ {0,3}(`{3,}|~{3,})\s*(.*?)\s*$/;
 const LIST_MARKER = /^(?:[-*•]|\d+[.)])\s+/;
+
+type CodeFence = { marker: string; info: string };
+
+function readCodeFence(line: string): CodeFence | undefined {
+  const match = CODE_FENCE.exec(line);
+
+  return match ? { marker: match[1], info: match[2] } : undefined;
+}
+
+/** Whether `fence` closes a code block opened with `marker`: the same character, at least as many, no info string. */
+function closesCodeBlock(fence: CodeFence | undefined, marker: string): boolean {
+  return !!fence && !fence.info && fence.marker[0] === marker[0] && fence.marker.length >= marker.length;
+}
+
+/** The marker of the code block open after a line with `fence`, given the one open before it. */
+function nextOpenCodeMarker(openMarker: string | undefined, fence: CodeFence | undefined): string | undefined {
+  if (openMarker) return closesCodeBlock(fence, openMarker) ? undefined : openMarker;
+
+  return fence?.marker;
+}
+
+function isChoicesFence(fence: CodeFence | undefined): boolean {
+  return fence?.marker === CHOICES_FENCE.marker && fence.info === CHOICES_FENCE.info;
+}
 
 export type ReplySegment = { kind: 'text'; text: string } | { kind: 'choices'; choices: string[] };
 
 /**
  * Splits a reply around its ```choices blocks, where each line is one option the user can pick. A block whose closing
- * fence hasn't streamed in yet runs to the end of the text.
+ * fence hasn't streamed in yet runs to the end of the text. Inside another code block, a ```choices line is code.
  */
 export function splitChoices(text: string): ReplySegment[] {
   const segments: ReplySegment[] = [];
   let textLines: string[] = [];
   let choices: string[] | undefined;
+  let openCodeMarker: string | undefined;
 
   const flushText = () => {
     const segmentText = textLines.join('\n');
@@ -269,19 +294,22 @@ export function splitChoices(text: string): ReplySegment[] {
   };
 
   for (const line of text.split('\n')) {
-    if (!choices) {
-      if (CHOICES_FENCE_OPEN.test(line)) {
-        flushText();
-        choices = [];
+    const fence = readCodeFence(line);
+
+    if (choices) {
+      if (closesCodeBlock(fence, CHOICES_FENCE.marker)) {
+        segments.push({ kind: 'choices', choices });
+        choices = undefined;
       } else {
-        textLines.push(line);
+        const choice = line.trim().replace(LIST_MARKER, '').trim();
+        if (choice) choices.push(choice);
       }
-    } else if (FENCE_CLOSE.test(line)) {
-      segments.push({ kind: 'choices', choices });
-      choices = undefined;
+    } else if (!openCodeMarker && isChoicesFence(fence)) {
+      flushText();
+      choices = [];
     } else {
-      const choice = line.trim().replace(LIST_MARKER, '').trim();
-      if (choice) choices.push(choice);
+      textLines.push(line);
+      openCodeMarker = nextOpenCodeMarker(openCodeMarker, fence);
     }
   }
 
