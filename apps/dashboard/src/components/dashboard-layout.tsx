@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { ApiKeyRotationBanner } from '@/components/api-key-rotation-banner';
 import { UsageNoticeBanner } from '@/components/billing/usage-limits/usage-notice-banner';
+import { CopilotDockSlot } from '@/components/copilot-web-chat/copilot-dock-slot';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
@@ -34,7 +35,10 @@ export const DashboardLayout = ({
           showMobileNav={showSideNavigation}
         />
 
-        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-2">{children}</div>
+        <div className="flex min-h-0 flex-1">
+          <div className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-2">{children}</div>
+          <CopilotDockSlot />
+        </div>
       </div>
       <MobileDesktopPrompt />
     </div>

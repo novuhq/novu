@@ -70,7 +70,7 @@ function LauncherIcon({ state }: { state: LauncherState }) {
   }
 }
 
-export function CopilotLauncher() {
+export function CopilotLauncher({ isHiddenWhileOpen }: { isHiddenWhileOpen: boolean }) {
   const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
   // Over a sheet it stays visible above it, as the design shows, rising clear of the sheet's footer so its buttons stay usable.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
@@ -117,6 +117,8 @@ export function CopilotLauncher() {
       className={cn(
         'fixed right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
         isOverSheet && !isModalDialogOpen ? 'z-[51]' : 'z-40',
+        // Kept mounted, so closing the panel can still hand the focus back to it.
+        isOpen && isHiddenWhileOpen && 'invisible',
         isOpen ? 'pl-2.5' : 'pl-3',
         isOff
           ? 'cursor-not-allowed bg-bg-weak'
