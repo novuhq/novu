@@ -375,6 +375,12 @@ export enum FeatureFlagsKeysEnum {
   USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER = 'USAGE_ALERTS_ALLOWANCE_OVERRIDE_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
+  /**
+   * Shows the redesigned Integration Store (tabs, new cards, the manage drawer, connection tests) in place of the
+   * previous one, on the same routes. Create the boolean in LaunchDarkly for cloud, or set
+   * `VITE_IS_INTEGRATION_STORE_V_2_ENABLED=true` when self-hosted. Default off.
+   */
+  IS_INTEGRATION_STORE_V_2_ENABLED = 'IS_INTEGRATION_STORE_V_2_ENABLED',
 }
 
 export type FeatureFlags = {

@@ -11,6 +11,9 @@ import { IntegrationSettings } from '@/components/integrations/components/integr
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
 import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
+import { useIsIntegrationStoreV2Enabled } from '@/components/integrations/integration-store-routes';
+import { IntegrationSettings as LegacyIntegrationSettings } from '@/components/integrations/legacy/integration-settings';
+import { IntegrationSheet as LegacyIntegrationSheet } from '@/components/integrations/legacy/integration-sheet';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -403,6 +406,7 @@ export function ListeningStatus({
     let confettiFired = false;
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing; untouched by the integration store flag
     async function tick() {
       if (cancelled) {
         return;
@@ -534,6 +538,7 @@ export function IntegrationCredentialsSidebar({
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
+  const isIntegrationStoreV2Enabled = useIsIntegrationStoreV2Enabled();
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
@@ -587,10 +592,13 @@ export function IntegrationCredentialsSidebar({
 
   if (!integration || !provider) return null;
 
+  const Sheet = isIntegrationStoreV2Enabled ? IntegrationSheet : LegacyIntegrationSheet;
+  const Settings = isIntegrationStoreV2Enabled ? IntegrationSettings : LegacyIntegrationSettings;
+
   return (
-    <IntegrationSheet isOpened={isOpen} onClose={onClose} provider={provider} mode="update">
+    <Sheet isOpened={isOpen} onClose={onClose} provider={provider} mode="update">
       <div className="scrollbar-custom flex-1 overflow-y-auto">
-        <IntegrationSettings
+        <Settings
           provider={provider}
           integration={integration}
           onSubmit={onSubmit}
@@ -612,6 +620,6 @@ export function IntegrationCredentialsSidebar({
           {submitLabel ?? 'Save Changes'}
         </Button>
       </div>
-    </IntegrationSheet>
+    </Sheet>
   );
 }
