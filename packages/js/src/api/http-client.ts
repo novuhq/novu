@@ -181,15 +181,19 @@ export class HttpClient {
       return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, isRetry: true });
     }
 
-    if (allowSessionRefresh && token && this.session && !this.session.isCurrentToken(token)) {
-      throw new NovuError(
-        'The subscriber or context changed while the request was running, so its response was dropped',
-        undefined
-      );
-    }
+    // The subscriber or context can change until the body has been read; a response for the replaced one is dropped
+    const dropIfReplaced = () => {
+      if (allowSessionRefresh && token && this.session && !this.session.isCurrentToken(token)) {
+        throw new NovuError(
+          'The subscriber or context changed while the request was running, so its response was dropped',
+          undefined
+        );
+      }
+    };
 
     if (!response.ok) {
       const errorData = await response.json();
+      dropIfReplaced();
       throw new HttpError(
         `${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${errorData.message}`,
         response.status,
@@ -197,10 +201,13 @@ export class HttpClient {
       );
     }
     if (response.status === 204) {
+      dropIfReplaced();
+
       return undefined as T;
     }
 
     const res = await response.json();
+    dropIfReplaced();
 
     return (unwrapEnvelope ? res.data : res) as T;
   }

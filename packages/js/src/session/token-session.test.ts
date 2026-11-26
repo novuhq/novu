@@ -121,6 +121,8 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
     contextKeys,
     /** How long the API takes to answer a request it already authorized. */
     apiDelayMs: 0,
+    /** How long the API takes to stream the body after the status and headers arrived. */
+    apiBodyDelayMs: 0,
     apiCalls: [] as Array<{ path: string; subscriberId: string }>,
     loginTokens: [] as string[],
     sessionTokens: [] as string[],
@@ -196,8 +198,18 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
     const caller = claimsOf(token).subscriberId as string;
     state.apiCalls.push({ path: new URL(url).pathname, subscriberId: caller });
     await wait(state.apiDelayMs);
+    const bodyDelayMs = state.apiBodyDelayMs;
+    const body = { data: [{ id: `${caller}_notification` }], hasMore: false, filter: {} };
 
-    return json(200, { data: [{ id: `${caller}_notification` }], hasMore: false, filter: {} });
+    return {
+      ok: true,
+      status: 200,
+      json: async () => {
+        await wait(bodyDelayMs);
+
+        return body;
+      },
+    } as unknown as Response;
   });
   vi.stubGlobal('fetch', fetchMock);
 
@@ -536,6 +548,26 @@ describe('when the token endpoint signs in another user', () => {
     const aliceList = novu.notifications.list();
     await wait(10);
     backend.state.apiDelayMs = 0;
+    backend.advanceTime(10 * MINUTE_MS);
+    await novu.notifications.count({});
+    expect(novu.subscriberId).toBe('bob');
+
+    const { error } = await aliceList;
+    const { data } = await novu.notifications.list();
+
+    expect(error).toBeInstanceOf(NovuError);
+    expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
+
+    await novu.socket.disconnect();
+  });
+
+  it('drops a response to the previous user whose body arrives after the new user signed in', async () => {
+    const { backend, novu } = await switchToBob();
+    novu.notifications.cache.clearAll();
+    backend.state.apiBodyDelayMs = 100;
+    const aliceList = novu.notifications.list();
+    await wait(10);
+    backend.state.apiBodyDelayMs = 0;
     backend.advanceTime(10 * MINUTE_MS);
     await novu.notifications.count({});
     expect(novu.subscriberId).toBe('bob');
