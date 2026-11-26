@@ -7,7 +7,7 @@ import {
 	restoreStepSecrets,
 } from "../src/tools/index";
 import { restoreWorkflowSecrets } from "../src/utils/workflow-secrets";
-import { fakeWorkflowsApi } from "./fake-api";
+import { fakeWorkflowsApi, stubApi } from "./fake-api";
 import { workflowResponseFixture } from "./fixtures/workflow-response";
 import { callTool, connectAllTools, textOf, tokenAccessors } from "./support";
 
@@ -238,10 +238,11 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 			saved,
 		);
 
-		expect(result.ok && result.value.controlValues?.body).toEqual([
-			{ key: "auth", value: JSON.stringify({ key: TOKEN }) },
-			{ key: "orderId", value: "{{payload.orderId}}" },
-		]);
+		// Back as the stored JSON body, with the nested object as an object, not its JSON text.
+		expect(result.ok && JSON.parse(result.value.controlValues?.body as string)).toEqual({
+			auth: { key: TOKEN },
+			orderId: "{{payload.orderId}}",
+		});
 	});
 
 	it("refuses to keep hidden header or body values on a URL moved to another host", () => {
@@ -254,6 +255,23 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 		const moved = restore({ headers, url: "https://attacker.example/collect" }, saved);
 		expect(!moved.ok && moved.error).toContain("now points at another host");
 		expect(restore({ headers, url: "https://api.example.com/hooks/v2" }, saved).ok).toBe(true);
+	});
+
+	it("refuses a host change inside a Liquid expression that holds a slash", () => {
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://{{ payload.host | remove: '/' | default: 'api.example.com' }}/hook",
+		};
+
+		const result = restore(
+			{
+				headers: [{ key: "Authorization", value: HIDDEN_SECRET }],
+				url: "https://{{ payload.host | remove: '/' | default: 'attacker.example' }}/hook",
+			},
+			saved,
+		);
+
+		expect(!result.ok && result.error).toContain("now points at another host");
 	});
 
 	it("refuses a host change hidden in the user info or behind a backslash", () => {
@@ -550,10 +568,10 @@ describe("restoreStepSecrets", () => {
 			saved,
 		);
 
-		expect(result.ok && result.value.controlValues?.body).toEqual([
-			{ key: "apiKey", value: TOKEN },
-			{ key: "orderId", value: "{{payload.orderId}}" },
-		]);
+		expect(result.ok && JSON.parse(String(result.value.controlValues?.body))).toEqual({
+			apiKey: TOKEN,
+			orderId: "{{payload.orderId}}",
+		});
 	});
 
 	it("refuses a placeholder with no stored value at that place", () => {
@@ -628,6 +646,43 @@ describe("workflow tools keep HTTP request step secrets from the caller", () => 
 		expect(text).not.toContain(TOKEN);
 		expect(text).not.toContain(SLACK_SECRET);
 		expect(text).toContain(HIDDEN_SECRET);
+	});
+
+	it("get_workflows hides a listed HTTP request step's issue text", async () => {
+		stubApi({
+			"/v2/workflows": {
+				totalCount: 1,
+				workflows: [
+					{
+						name: "Welcome",
+						slug: "welcome_wf_1",
+						steps: [
+							{
+								issues: {
+									controls: {
+										"headers.0.value": [
+											{
+												issueType: "ILLEGAL_VARIABLE_IN_CONTROL_VALUE",
+												message: `output "{{ '${TOKEN}' | ap..." not closed`,
+											},
+										],
+									},
+								},
+								slug: "notify_st_1",
+								type: "http_request",
+							},
+						],
+						workflowId: "welcome",
+					},
+				],
+			},
+		});
+
+		const text = textOf(await callTool(await client(), "get_workflows", {}));
+
+		expect(text).toContain("Successfully fetched workflows:");
+		expect(text).not.toContain(TOKEN);
+		expect(text).toContain("headers.0.value");
 	});
 
 	it("update_workflow saves the stored values for the placeholders get_workflow showed", async () => {

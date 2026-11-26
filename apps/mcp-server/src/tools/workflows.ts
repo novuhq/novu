@@ -20,6 +20,7 @@ import {
 } from "../utils/workflow-schemas";
 import {
 	hasHiddenSecret,
+	redactWorkflowListSecrets,
 	redactWorkflowSecrets,
 	restoreWorkflowSecrets,
 } from "../utils/workflow-secrets";
@@ -32,7 +33,9 @@ const AGENT_ASSIGNMENT_GUIDE = [
 ].join(" ");
 
 export function registerWorkflowTools(server: McpServer, accessors: ToolAccessors) {
-	// Get all workflows - simple GET endpoint, with a dashboard link on the list and on each workflow
+	// Get all workflows - simple GET endpoint, with a dashboard link on the list and on each workflow; a listed HTTP
+	// request step's issue text can quote a secret
+
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
@@ -43,7 +46,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		{
 			buildEndpoint: () => "/v2/workflows",
 			formatSuccess: (data) =>
-				`Successfully fetched workflows:\n\n${JSON.stringify(withWorkflowListLinks(data), null, 2)}`,
+				`Successfully fetched workflows:\n\n${JSON.stringify(withWorkflowListLinks(redactWorkflowListSecrets(data)), null, 2)}`,
 		},
 	);
 

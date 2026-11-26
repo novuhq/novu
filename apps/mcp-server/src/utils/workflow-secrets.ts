@@ -106,6 +106,17 @@ export function redactWorkflowSecrets<T>(value: T): T {
 	return redactWorkflow(value) as T;
 }
 
+/** `GET /v2/workflows`' response, in its `{ data }` envelope or not, with each listed HTTP request step's issues hidden. */
+export function redactWorkflowListSecrets<T>(value: T): T {
+	const envelope = asRecord(value);
+	const list = asRecord(envelope && "data" in envelope ? envelope.data : value);
+	if (!list || !Array.isArray(list.workflows)) return value;
+
+	const redacted = { ...list, workflows: list.workflows.map(redactWorkflow) };
+
+	return (envelope && "data" in envelope ? { ...envelope, data: redacted } : redacted) as T;
+}
+
 function redactWorkflow(value: unknown): unknown {
 	const workflow = asRecord(value);
 	if (!workflow || !Array.isArray(workflow.steps)) return value;
@@ -411,13 +422,33 @@ function redactAuthority(authority: string): string {
  */
 function originOf(url: unknown): string | undefined {
 	if (typeof url !== "string") return undefined;
-	const match = URL_PATTERN.exec(url.trim());
+
+	// Every Liquid expression, quoted text included, is set aside first: a "/" inside one must not end the authority.
+	const expressions: string[] = [];
+	const marked = url
+		.trim()
+		.replace(
+			LIQUID_EXPRESSION_PATTERN,
+			(expression) => `${STAND_IN_OPEN}${expressions.push(expression) - 1}${STAND_IN_CLOSE}`,
+		);
+	const match = URL_PATTERN.exec(marked);
 	if (!match) return undefined;
 
 	const [, scheme = "", authority = ""] = match;
+	const restored = authority.replace(
+		STAND_IN_PATTERN,
+		(_, index: string) => expressions[Number(index)],
+	);
 
-	return `${scheme}${authority}`.toLowerCase();
+	return `${scheme}${restored}`.toLowerCase();
 }
+
+/** Any Liquid output or tag, quoted text included. */
+const LIQUID_EXPRESSION_PATTERN = /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g;
+/** Private-use characters, which no URL holds, around the index of a set-aside expression. */
+const STAND_IN_OPEN = String.fromCharCode(0xe002);
+const STAND_IN_CLOSE = String.fromCharCode(0xe003);
+const STAND_IN_PATTERN = new RegExp(`${STAND_IN_OPEN}(\\d+)${STAND_IN_CLOSE}`, "g");
 
 /** A path segment, with its `;key=value` parameters redacted like query values. */
 function redactPathSegment(segment: string): string {
@@ -529,8 +560,36 @@ function sameJson(a: unknown, b: unknown): boolean {
 	return normalize(a) === normalize(b);
 }
 
+/**
+ * Pairs sent back for a stored JSON body, as that JSON body again: a value that is the JSON text of a stored object,
+ * array, number or boolean goes back as that value, so a restore never turns `{"auth":{…}}` into a string.
+ */
+function toJsonBody(pairs: unknown, stored: JsonObject): unknown {
+	if (!Array.isArray(pairs) || !pairs.every(isKeyValue)) return pairs;
+
+	return JSON.stringify(
+		Object.fromEntries(
+			pairs.map(({ key, value }) => {
+				const storedValue = stored[key];
+				const isStoredValue =
+					storedValue !== undefined &&
+					typeof storedValue !== "string" &&
+					sameJson(JSON.stringify(storedValue), value);
+
+				return [key, isStoredValue ? storedValue : value];
+			}),
+		),
+	);
+}
+
 function restoreBody(body: unknown, savedBody: unknown): unknown {
-	if (Array.isArray(body)) return restoreKeyValues(body, toBodyPairs(savedBody), redactBodyPair);
+	if (Array.isArray(body)) {
+		const restored = restoreKeyValues(body, toBodyPairs(savedBody), redactBodyPair);
+		const storedJson =
+			typeof savedBody === "string" ? asRecord(parseJsonContainer(savedBody)) : undefined;
+
+		return storedJson ? toJsonBody(restored, storedJson) : restored;
+	}
 	if (typeof body !== "string") return body;
 	// Sent back as shown: keep the stored text as it was written.
 	if (body === redactBody(savedBody)) return savedBody;
