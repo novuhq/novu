@@ -1,4 +1,5 @@
 import type { UseWebChatResult } from '@novu/react';
+import type { CopilotWorkflowChangeEnum } from '@novu/shared';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { CopilotCardAction, CopilotPageContext } from './copilot-web-chat-utils';
 
@@ -93,6 +94,18 @@ export const CopilotSidebarControlContext = createContext<CopilotSidebarControlV
 
 export function useCopilotWebChat(): CopilotWebChatContextValue {
   return useContext(CopilotWebChatContext);
+}
+
+/**
+ * What the Copilot did to each step the canvas marks, by step id (`getCanvasChanges`). Kept apart from the chat
+ * context and only replaced when the marks change, so canvas nodes do not re-render on every streamed message.
+ */
+export const CopilotCanvasChangesContext = createContext<ReadonlyMap<string, CopilotWorkflowChangeEnum>>(new Map());
+
+export function useCopilotStepChange(stepId: string | undefined): CopilotWorkflowChangeEnum | undefined {
+  const changes = useContext(CopilotCanvasChangesContext);
+
+  return stepId ? changes.get(stepId) : undefined;
 }
 
 /**

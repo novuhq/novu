@@ -8,6 +8,8 @@ import { COPILOT_REVIEW_LABELS } from './copilot-review-labels';
 type CopilotCanvasToastBarProps = {
   isVisible: boolean;
   variant: 'running' | 'reviewing';
+  /** The steps the review changed; `0` when the agent named none (older replies, workflow-level edits). */
+  changeCount?: number;
   isCancelDisabled?: boolean;
   isActionPending?: boolean;
   onCancel: () => void;
@@ -15,10 +17,17 @@ type CopilotCanvasToastBarProps = {
   onKeepAll?: () => void;
 };
 
+function getReviewingLabel(changeCount: number): string {
+  if (changeCount === 0) return 'Reviewing changes. Discard reverts them.';
+
+  return `Reviewing ${changeCount} ${changeCount === 1 ? 'change' : 'changes'}. Discard reverts them.`;
+}
+
 /** The bar centred above the bottom of the workflow canvas while the web-chat Copilot edits or waits for a review. */
 export function CopilotCanvasToastBar({
   isVisible,
   variant,
+  changeCount = 0,
   isCancelDisabled,
   isActionPending,
   onCancel,
@@ -65,9 +74,7 @@ export function CopilotCanvasToastBar({
                   <span className="flex size-6 shrink-0 items-center justify-center">
                     <ScanEye className="size-5 text-text-sub" strokeWidth={1.5} />
                   </span>
-                  <span className="truncate text-label-xs text-text-strong">
-                    Reviewing changes. Discard reverts them.
-                  </span>
+                  <span className="truncate text-label-xs text-text-strong">{getReviewingLabel(changeCount)}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {onDiscard && (

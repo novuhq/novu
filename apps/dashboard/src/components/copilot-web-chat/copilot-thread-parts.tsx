@@ -6,10 +6,12 @@ import {
   RiCheckboxCircleFill,
   RiCloseCircleFill,
   RiLoader4Line,
+  RiPlayLine,
   RiRefreshLine,
 } from 'react-icons/ri';
 import { MessageResponse } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
+import { LinkButton } from '@/components/primitives/button-link';
 import { cn } from '@/utils/ui';
 import { CopilotCardBlock } from './copilot-card';
 import {
@@ -189,7 +191,31 @@ function ToolGroup({ block }: { block: Extract<AssistantBlock, { kind: 'tools' }
   );
 }
 
-export function CopilotAssistantMessage({ message }: { message: AgentMessage }) {
+function StoppedNote({ onResume }: { onResume?: () => void }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs leading-4 text-text-soft">
+      <span>Stopped</span>
+      {onResume && (
+        <>
+          <span aria-hidden="true">·</span>
+          <LinkButton
+            type="button"
+            variant="black"
+            size="sm"
+            className="text-label-xs"
+            trailingIcon={RiPlayLine}
+            onClick={onResume}
+          >
+            Resume
+          </LinkButton>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** `onResume` offers to pick a stopped reply back up; only the thread's last turn gets it. */
+export function CopilotAssistantMessage({ message, onResume }: { message: AgentMessage; onResume?: () => void }) {
   const blocks = buildAssistantBlocks(message);
 
   // A stopped reply with nothing to show still says it was stopped.
@@ -221,7 +247,7 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
 
         return <ToolGroup key={block.key} block={block} />;
       })}
-      {message.stopped && <span className="text-xs leading-4 text-text-soft">Stopped</span>}
+      {message.stopped && <StoppedNote onResume={onResume} />}
     </div>
   );
 }

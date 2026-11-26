@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
@@ -6,18 +6,24 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { type CopilotPanelCopy, getCopilotPanelCopy } from './copilot-pages';
+import { collectTurnSteps, groupCopilotTurns } from './copilot-steps';
 import {
   CopilotAssistantMessage,
   CopilotErrorNotice,
   CopilotThinkingIndicator,
   CopilotUserMessage,
 } from './copilot-thread-parts';
+import { CopilotTurnSteps } from './copilot-turn-steps';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
-
-// The raised white surface of the hero's icon tile and the suggestions list.
-const RAISED_SURFACE_SHADOW =
-  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
+import {
+  buildResumePrompt,
+  getCopilotTypingLabel,
+  getFailedSend,
+  getUserMessageText,
+  hasPendingReplyGap,
+  orderStoppedTurns,
+  RAISED_SURFACE_SHADOW,
+} from './copilot-web-chat-utils';
 
 /** A faint 24px grid and glow behind the icon tile, fading out from the middle. */
 function EmptyHeroBackdrop() {
@@ -250,13 +256,21 @@ function Composer({
 }
 
 function Thread() {
-  const { chat, retry, hasRunError, isBusy } = useCopilotWebChat();
+  const { chat, retry, hasRunError, isBusy, pendingReviewMessageId, sendMessage } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
+  const turns = groupCopilotTurns(orderStoppedTurns(messages));
+  const lastPrompt = turns.at(-1)?.prompt;
   const isStopping = !!chat?.isStopping;
+  const typingLabel = getCopilotTypingLabel(chat?.typing?.status);
+  // The turn the Copilot is answering lists the step it is on in its checklist. A review click is answered by a note.
+  const isAnswering =
+    isBusy && !isStopping && !pendingReviewMessageId && !!lastPrompt && lastPrompt.status !== 'failed';
+  const activeLabel =
+    isAnswering && (typingLabel || hasPendingReplyGap(messages)) ? (typingLabel ?? 'Working…') : undefined;
   // A stop only lands once the agent's current step ends (seconds when it is saving changes), so say so meanwhile.
-  const showThinking = (isBusy || !!chat?.typing) && (isStopping || hasPendingReplyGap(messages));
-  const thinkingLabel = isStopping ? 'Stopping…' : getCopilotTypingLabel(chat?.typing?.status);
+  const showThinking = (isBusy || !!chat?.typing) && (isStopping || (!activeLabel && hasPendingReplyGap(messages)));
+  const thinkingLabel = isStopping ? 'Stopping…' : typingLabel;
   const lastMessage = messages[messages.length - 1];
   // Snapshots are deep-cloned on every update, so scroll on what the newest message shows, not its identity.
   const tailKey = lastMessage
@@ -269,7 +283,7 @@ function Thread() {
   useEffect(() => {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [tailKey, hasRunError, showThinking]);
+  }, [tailKey, hasRunError, showThinking, activeLabel]);
 
   // The step editor keeps this tab mounted but hidden (0px tall, scroll reset), so it would reopen at the top.
   useEffect(() => {
@@ -300,13 +314,26 @@ function Thread() {
             {pagination.status === 'loading' ? 'Loading…' : 'Load earlier messages'}
           </button>
         )}
-        {orderStoppedTurns(messages).map((message) =>
-          message.role === 'user' ? (
-            <CopilotUserMessage key={message.id} message={message} />
-          ) : (
-            <CopilotAssistantMessage key={message.id} message={message} />
-          )
-        )}
+        {turns.map((turn, index) => {
+          const isLastTurn = index === turns.length - 1;
+          const resume =
+            isLastTurn && !isBusy
+              ? () => void sendMessage(buildResumePrompt(turn.prompt && getUserMessageText(turn.prompt)))
+              : undefined;
+
+          return (
+            <Fragment key={turn.key}>
+              {turn.prompt && <CopilotUserMessage message={turn.prompt} />}
+              <CopilotTurnSteps
+                steps={collectTurnSteps(turn.replies)}
+                activeLabel={isLastTurn ? activeLabel : undefined}
+              />
+              {turn.replies.map((message) => (
+                <CopilotAssistantMessage key={message.id} message={message} onResume={resume} />
+              ))}
+            </Fragment>
+          );
+        })}
         {showThinking && <CopilotThinkingIndicator label={thinkingLabel} />}
         {/* A failed send is surfaced by the composer strip instead. */}
         {hasRunError && !chat?.isRunning && !getFailedSend(messages) && (

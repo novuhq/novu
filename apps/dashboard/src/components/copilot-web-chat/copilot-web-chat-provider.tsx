@@ -1,6 +1,11 @@
 import type { AgentEventEnvelope } from '@novu/js';
 import { useWebChat } from '@novu/react';
-import { COPILOT_TRY_AGAIN_READY_EVENT, CopilotReviewActionEnum } from '@novu/shared';
+import {
+  COPILOT_TRY_AGAIN_READY_EVENT,
+  CopilotReviewActionEnum,
+  type CopilotWorkflowChangeEnum,
+  type CopilotWorkflowStepChange,
+} from '@novu/shared';
 import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
@@ -12,7 +17,9 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
+import { getCanvasChanges } from './copilot-steps';
 import {
+  CopilotCanvasChangesContext,
   CopilotRegisterContext,
   CopilotSidebarControlContext,
   type CopilotSurface,
@@ -171,6 +178,11 @@ export function CopilotWebChatProvider({
     () => ({ isGenerating: isBusy, isRevealPending, registerSidebar }),
     [isBusy, isRevealPending, registerSidebar]
   );
+  const canvasChanges = useStableCanvasChanges(
+    getCanvasChanges(connected?.chat?.messages ?? [], {
+      isAnswering: isBusy && !connected?.pendingReviewMessageId,
+    })
+  );
 
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
@@ -217,24 +229,34 @@ export function CopilotWebChatProvider({
   return (
     <CopilotRegisterContext.Provider value={registerPageContext}>
       <CopilotSidebarControlContext.Provider value={sidebarControl}>
-        <CopilotWebChatContext.Provider value={value}>
-          {children}
-          {surface && (
-            <CopilotConnectProvider>
-              <CopilotWebChatBridge
-                key={conversationScope}
-                shell={bridgeShell}
-                surface={surface}
-                conversationScope={conversationScope}
-                onConnected={setConnected}
-                onMountedChange={setIsBridgeMounted}
-              />
-            </CopilotConnectProvider>
-          )}
-        </CopilotWebChatContext.Provider>
+        <CopilotCanvasChangesContext.Provider value={canvasChanges}>
+          <CopilotWebChatContext.Provider value={value}>
+            {children}
+            {surface && (
+              <CopilotConnectProvider>
+                <CopilotWebChatBridge
+                  key={conversationScope}
+                  shell={bridgeShell}
+                  surface={surface}
+                  conversationScope={conversationScope}
+                  onConnected={setConnected}
+                  onMountedChange={setIsBridgeMounted}
+                />
+              </CopilotConnectProvider>
+            )}
+          </CopilotWebChatContext.Provider>
+        </CopilotCanvasChangesContext.Provider>
       </CopilotSidebarControlContext.Provider>
     </CopilotRegisterContext.Provider>
   );
+}
+
+/** The canvas marks by step id, replaced only when one of them changes. */
+function useStableCanvasChanges(changes: CopilotWorkflowStepChange[]): ReadonlyMap<string, CopilotWorkflowChangeEnum> {
+  const key = changes.map((change) => `${change.stepId}:${change.kind}`).join('|');
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` is what the map holds; `changes` is new every render
+  return useMemo(() => new Map(changes.map((change) => [change.stepId, change.kind])), [key]);
 }
 
 const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
@@ -258,6 +280,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const [awaitingReply, setAwaitingReply] = useState(false);
   const [pendingReviewMessageId, setPendingReviewMessageId] = useState<string>();
   const [isStopPending, setIsStopPending] = useState(false);
+  // The run a review click starts only answers with a note: the user already acted, so it is no answer to come back to.
+  const isReviewAnswerRunRef = useRef(false);
   // A Try again click records its card; the agent's ready event names the prompt to resend in `readyPrompt`, which is sent once the run settles.
   const tryAgainCardRef = useRef<string | undefined>(undefined);
   const readyPromptLookupRef = useRef(0);
@@ -291,6 +315,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         tryAgainCardRef.current = undefined;
         // A failed revert answers in plain text, so the review card is still the latest card and can be clicked again.
         setPendingReviewMessageId(undefined);
+        const isReviewAnswer = isReviewAnswerRunRef.current;
+        isReviewAnswerRunRef.current = false;
         track(TelemetryEvent.COPILOT_GENERATION_COMPLETED, {
           outcome: event.outcome,
           agentId: NOVU_COPILOT_AGENT_ID,
@@ -298,9 +324,10 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
           page: pageContextRef.current?.page,
         });
         // A stopped run has no answer to come back to.
-        if (event.outcome === 'completed' && !isOpenRef.current) setUnseenAnswer(true);
+        if (event.outcome === 'completed' && !isOpenRef.current && !isReviewAnswer) setUnseenAnswer(true);
       } else if (event.type === 'run-error') {
         setAwaitingReply(false);
+        isReviewAnswerRunRef.current = false;
         tryAgainCardRef.current = undefined;
         readyPromptLookupRef.current++;
         setReadyPrompt(undefined);
@@ -374,6 +401,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       // A newer request replaces a Try again prompt still being looked up, so it is not resent after this one.
       readyPromptLookupRef.current++;
       setReadyPrompt(undefined);
+      isReviewAnswerRunRef.current = false;
 
       const isNewChat = chatRef.current.messages.length === 0;
       const page = pageContextRef.current?.page;
@@ -477,6 +505,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
   const sendCardAction = useCallback(async (action: CopilotCardAction) => {
     if (isCopilotReviewActionId(action.actionId)) {
+      // Acting on the review, from the chat or the canvas, is seeing the answer that asked for it.
+      setUnseenAnswer(false);
+      isReviewAnswerRunRef.current = true;
       setPendingReviewMessageId(action.sourceMessageId);
       tryAgainCardRef.current =
         action.actionId === CopilotReviewActionEnum.TRY_AGAIN ? action.sourceMessageId : undefined;
@@ -493,12 +524,14 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     // The click never reached the agent, so the card stays the user's way to try it again.
     setAwaitingReply(false);
     setPendingReviewMessageId(undefined);
+    isReviewAnswerRunRef.current = false;
     tryAgainCardRef.current = undefined;
     showErrorToast("Couldn't reach the Copilot. Try again.");
   }, []);
 
   const startNewConversation = useCallback(() => {
     lastSentRef.current = null;
+    isReviewAnswerRunRef.current = false;
     tryAgainCardRef.current = undefined;
     readyPromptLookupRef.current++;
     setReadyPrompt(undefined);

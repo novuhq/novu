@@ -2,9 +2,9 @@ import type { AgentCardChild, AgentCardElement } from '@novu/js';
 import { Button, type ButtonProps } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
-import { getCardButtonLabel } from './copilot-review-labels';
+import { CopilotReviewBlock } from './copilot-review-block';
 import { useCopilotWebChat } from './copilot-web-chat-context';
-import { getLastCardSourceMessageId, isCopilotReviewActionId } from './copilot-web-chat-utils';
+import { getReviewCardState, isCopilotReviewActionId, listEnabledReviewButtons } from './copilot-web-chat-utils';
 
 type CardButtonChild = Extract<AgentCardChild, { type: 'button' }>;
 type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
@@ -24,12 +24,10 @@ const TEXT_STYLES: Record<CardTextStyle, string> = {
 };
 
 type CardContext = {
-  /** Review buttons stay locked while the agent works on, or has not yet answered, a click. */
-  isReviewLocked: boolean;
   onButtonClick: (button: CardButtonChild) => void;
 };
 
-/** Drops the Keep / Revert / Try again buttons, and the containers left empty without them. */
+/** Drops the Keep / Revert / Try again buttons, which `CopilotReviewBlock` draws, and the containers left empty. */
 function withoutReviewButtons(children: AgentCardChild[]): AgentCardChild[] {
   return children.flatMap((child): AgentCardChild[] => {
     if (child.type === 'button') return isCopilotReviewActionId(child.id) ? [] : [child];
@@ -64,10 +62,10 @@ function CardActions({ actions, context }: { actions: CardActionChild[]; context
               size="2xs"
               {...BUTTON_APPEARANCE[action.style ?? 'default']}
               title={action.tooltip}
-              disabled={action.disabled || (isCopilotReviewActionId(action.id) && context.isReviewLocked)}
+              disabled={action.disabled}
               onClick={() => context.onButtonClick(action)}
             >
-              {getCardButtonLabel(action)}
+              {action.label}
             </Button>
           );
         }
@@ -119,22 +117,22 @@ function CardChildren({ items, context }: { items: AgentCardChild[]; context: Ca
 }
 
 /**
- * A card the agent posted. Text-only cards (the Keep / Revert / Try again resolution notes) read as plain text;
- * the review buttons only show on the newest card of the thread and lock while their click is being answered.
+ * A card the agent posted. Text-only cards (the Keep / Revert / Try again resolution notes) read as plain text; the
+ * review buttons are drawn by `CopilotReviewBlock` for where the review stands, and not at all once a click on them
+ * was answered.
  */
 export function CopilotCardBlock({ card, sourceMessageId }: { card: AgentCardElement; sourceMessageId: string }) {
-  const { chat, sendCardAction, pendingReviewMessageId, isBusy, open } = useCopilotWebChat();
-  const isLastCard = getLastCardSourceMessageId(chat?.messages ?? []) === sourceMessageId;
-  const children = isLastCard ? card.children : withoutReviewButtons(card.children);
+  const { chat, sendCardAction, open } = useCopilotWebChat();
+  const reviewState = getReviewCardState(chat?.messages ?? [], sourceMessageId);
+  const review = reviewState && reviewState !== 'answered' ? reviewState : undefined;
+  const children = withoutReviewButtons(card.children);
   const hasHeader = !!card.title || !!card.subtitle;
 
-  if (children.length === 0 && !hasHeader) return null;
+  if (children.length === 0 && !hasHeader && !review) return null;
 
   const context: CardContext = {
-    isReviewLocked: isBusy || pendingReviewMessageId === sourceMessageId,
     onButtonClick: (button) => {
       void sendCardAction({ actionId: button.id, sourceMessageId, value: button.value });
-      // The clicked button locks, so hand the focus back to the composer.
       open();
     },
   };
@@ -143,7 +141,14 @@ export function CopilotCardBlock({ card, sourceMessageId }: { card: AgentCardEle
     <div className={cn('flex flex-col gap-2', hasHeader && 'rounded-lg border border-stroke-soft bg-bg-weak p-3')}>
       {card.title && <p className="text-xs font-medium leading-4 text-text-strong">{card.title}</p>}
       {card.subtitle && <p className="text-xs leading-4 text-text-soft">{card.subtitle}</p>}
-      <CardChildren items={children} context={context} />
+      {children.length > 0 && <CardChildren items={children} context={context} />}
+      {review && (
+        <CopilotReviewBlock
+          state={review}
+          buttons={listEnabledReviewButtons(card.children)}
+          sourceMessageId={sourceMessageId}
+        />
+      )}
     </div>
   );
 }

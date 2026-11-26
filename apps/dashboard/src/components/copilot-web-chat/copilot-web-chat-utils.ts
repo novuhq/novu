@@ -18,6 +18,20 @@ function stripPoweredBy(text: string): string {
   return text.replace(POWERED_BY, '').trimEnd();
 }
 
+// The `reasoning` tool's arguments on a line of their own: the model sometimes writes them as reply text instead of
+// calling the tool, and the bridge streams the text of every model call into the reply.
+const REASONING_JSON =
+  /^[ \t]*\{\s*"label"\s*:\s*"(?:[^"\\]|\\.)*"\s*,\s*"thought"\s*:\s*"(?:[^"\\]|\\.)*"\s*\}[ \t]*$/gm;
+// The line still streaming when it opens an object that may turn out to be one.
+const STREAMING_OBJECT_LINE = /(^|\n)[ \t]*\{[^\n]*$/;
+
+/** Drops the reasoning JSON from a reply. While it streams, an unfinished object is held back so it never flashes. */
+function stripReasoningJson(text: string, streaming: boolean): string {
+  const stripped = text.replace(REASONING_JSON, '');
+
+  return (streaming ? stripped.replace(STREAMING_OBJECT_LINE, '$1') : stripped).trimStart();
+}
+
 /** The tools the Copilot agent emits (the same camelCase names on the direct and the MCP-backed suites). */
 const WORKFLOW_WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   AiWorkflowToolsEnum.SET_WORKFLOW_METADATA,
@@ -125,6 +139,10 @@ export function writeStoredConversationId(scope: string | undefined, conversatio
     // Storage can be unavailable (private mode, blocked site data); resuming is best-effort.
   }
 }
+
+/** The raised white surface of the empty state's icon tile and suggestions, and of the Suggested card's rows. */
+export const RAISED_SURFACE_SHADOW =
+  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
 
 /** DOM id of the popover, so the launcher can tell when the focus sits in it while it animates out. */
 export const COPILOT_POPOVER_ID = 'copilot-popover';
@@ -246,8 +264,9 @@ export type AssistantBlock =
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
 /**
- * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
- * Novu" footer the API appends to replies (it is in the saved text, so restored threads carry it too).
+ * Groups consecutive tool parts into one block and drops what this UI does not render: the "Powered by Novu" footer
+ * the API appends to replies and the reasoning JSON the model can write as text (both are in the saved text, so
+ * restored threads carry them too). The turn's checklist reads the `copilot.step` data parts itself.
  */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   const blocks: AssistantBlock[] = [];
@@ -256,9 +275,10 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     const key = `${message.id}:${index}`;
 
     if (part.type === 'text') {
-      const text = stripPoweredBy(part.text);
+      const streaming = part.state === 'streaming';
+      const text = stripReasoningJson(stripPoweredBy(part.text), streaming);
       if (!text.trim()) return;
-      blocks.push({ kind: 'text', key, text, streaming: part.state === 'streaming' });
+      blocks.push({ kind: 'text', key, text, streaming });
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
@@ -288,11 +308,6 @@ function getLastCardPart(messages: readonly AgentMessage[]): AgentCardPart | und
   return undefined;
 }
 
-/** The `sourceMessageId` of the newest card in the thread; review buttons are only offered on that card. */
-export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
-  return getLastCardPart(messages)?.sourceMessageId;
-}
-
 type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
 type CardButtonChild = Extract<AgentCardChild, { type: 'button' }>;
 
@@ -301,7 +316,7 @@ function isEnabledReviewButton(child: AgentCardChild | CardActionChild): child i
 }
 
 /** Walks the containers the card renderer draws (`actions`, `section`, a bare `button`) for enabled review buttons. */
-function listEnabledReviewButtons(children: readonly AgentCardChild[]): CardButtonChild[] {
+export function listEnabledReviewButtons(children: readonly AgentCardChild[]): CardButtonChild[] {
   return children.flatMap((child) => {
     if (child.type === 'actions') return child.children.filter(isEnabledReviewButton);
     if (child.type === 'section') return listEnabledReviewButtons(child.children);
@@ -310,13 +325,50 @@ function listEnabledReviewButtons(children: readonly AgentCardChild[]): CardButt
   });
 }
 
+function findCardPart(message: AgentMessage, sourceMessageId?: string): AgentCardPart | undefined {
+  return message.parts.find(
+    (part): part is AgentCardPart =>
+      part.type === 'card' && (sourceMessageId === undefined || part.sourceMessageId === sourceMessageId)
+  );
+}
+
+function hasReviewButtons(card: AgentCardPart): boolean {
+  return listEnabledReviewButtons(card.card.children).length > 0;
+}
+
+/**
+ * Where a review card stands, like Cursor's review: `open` offers Keep all · Discard · Try again; `applied` once the
+ * user sent another message instead, which keeps the changes and leaves them a Revert; `replaced` once a newer turn's
+ * card follows, whose first change retired this card's snapshot; `answered` once a click was answered (a buttonless
+ * note card follows). A plain-text reply (a revert that failed) leaves the card open. `undefined` for other cards.
+ */
+export type CopilotReviewCardState = 'open' | 'applied' | 'replaced' | 'answered';
+
+export function getReviewCardState(
+  messages: readonly AgentMessage[],
+  sourceMessageId: string
+): CopilotReviewCardState | undefined {
+  const index = messages.findIndex((message) => !!findCardPart(message, sourceMessageId));
+  const card = index >= 0 ? findCardPart(messages[index], sourceMessageId) : undefined;
+  if (!card || !hasReviewButtons(card)) return undefined;
+
+  let hasLaterPrompt = false;
+  for (const later of messages.slice(index + 1)) {
+    const laterCard = findCardPart(later);
+    if (laterCard) return hasReviewButtons(laterCard) ? 'replaced' : 'answered';
+    if (later.role === 'user') hasLaterPrompt = true;
+  }
+
+  return hasLaterPrompt ? 'applied' : 'open';
+}
+
 export type OpenReviewActions = { keep?: CopilotCardAction; revert?: CopilotCardAction };
 
 /**
  * The clicks `CopilotCardBlock` sends for the Keep / Revert buttons the user can click now, each with its button's
- * own `value`. Only the thread's newest card offers them (answering a click, or a stopped run's follow-up, posts a
- * newer buttonless card that supersedes it), and not while a click on it is still waiting for the agent. Mirrors when
- * the card renders those buttons enabled, minus its `isBusy` lock.
+ * own `value`. Only an `open` card offers them (answering a click, or a stopped run's follow-up, posts a newer
+ * buttonless card that supersedes it, and a newer message applies its changes), and not while a click on it is still
+ * waiting for the agent. Mirrors when the card renders those buttons enabled, minus its `isBusy` lock.
  */
 export function getOpenReviewActions(
   messages: readonly AgentMessage[],
@@ -325,6 +377,7 @@ export function getOpenReviewActions(
   const card = getLastCardPart(messages);
 
   if (!card || card.sourceMessageId === pendingReviewMessageId) return {};
+  if (getReviewCardState(messages, card.sourceMessageId) !== 'open') return {};
 
   const buttons = listEnabledReviewButtons(card.card.children);
   const toAction = (actionId: CopilotReviewActionEnum): CopilotCardAction | undefined => {
@@ -491,6 +544,20 @@ export function orderStoppedTurns(messages: readonly AgentMessage[]): AgentMessa
   }
 
   return ordered;
+}
+
+const RESUME_PREFIX = 'Continue where you left off';
+
+/**
+ * The message Resume sends after a stopped turn. The Copilot's input guard reads a message without the thread, so it
+ * carries the stopped request: "Continue" alone could be turned away as off topic.
+ */
+export function buildResumePrompt(stoppedPrompt: string | undefined): string {
+  const prompt = stoppedPrompt?.trim();
+  if (!prompt) return `${RESUME_PREFIX}.`;
+  if (prompt.startsWith(RESUME_PREFIX)) return prompt;
+
+  return `${RESUME_PREFIX}: ${prompt}`;
 }
 
 export function getUserMessageText(message: AgentMessage): string {

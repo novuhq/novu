@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildAssistantBlocks,
   buildCopilotMetadata,
+  buildResumePrompt,
   getCopilotContextLabel,
   getCopilotTypingLabel,
   getOpenReviewActions,
+  getReviewCardState,
   getTryAgainPrompt,
   isDashboardLink,
   loadTryAgainPrompt,
@@ -145,6 +147,106 @@ describe('getOpenReviewActions (click state)', () => {
 
     expect(actions.keep?.sourceMessageId).toBe('card_review_2');
     expect(actions.revert?.sourceMessageId).toBe('card_review_2');
+  });
+});
+
+describe('getOpenReviewActions (a newer message)', () => {
+  it('offers nothing once the user sent another message, which applied the changes', () => {
+    expect(
+      getOpenReviewActions([
+        userMessage('msg_1', 'Add SMS'),
+        reviewCardMessage('card_review'),
+        userMessage('msg_2', 'Hi'),
+      ])
+    ).toEqual({});
+  });
+});
+
+describe('getReviewCardState', () => {
+  const turn = [userMessage('msg_1', 'Add SMS'), reviewCardMessage('card_review')];
+
+  it('is open while the review card is the newest card and no message followed it', () => {
+    expect(getReviewCardState(turn, 'card_review')).toBe('open');
+    expect(getReviewCardState([...turn, assistantMessage('act_failed', "Couldn't revert")], 'card_review')).toBe(
+      'open'
+    );
+  });
+
+  it('is applied once the user sent another message', () => {
+    expect(getReviewCardState([...turn, userMessage('msg_2', 'Make it shorter')], 'card_review')).toBe('applied');
+  });
+
+  it('is replaced by a newer turn’s review card, and answered by a note', () => {
+    expect(
+      getReviewCardState(
+        [...turn, userMessage('msg_2', 'Make it shorter'), reviewCardMessage('card_review_2')],
+        'card_review'
+      )
+    ).toBe('replaced');
+    expect(getReviewCardState([...turn, noteCardMessage('card_note')], 'card_review')).toBe('answered');
+  });
+
+  it('reads no state for cards without review buttons or that are not in the thread', () => {
+    expect(getReviewCardState([...turn, noteCardMessage('card_note')], 'card_note')).toBeUndefined();
+    expect(getReviewCardState(turn, 'card_missing')).toBeUndefined();
+  });
+});
+
+describe('buildResumePrompt', () => {
+  it('carries the stopped request, once', () => {
+    expect(buildResumePrompt('Add a digest step')).toBe('Continue where you left off: Add a digest step');
+    expect(buildResumePrompt('Continue where you left off: Add a digest step')).toBe(
+      'Continue where you left off: Add a digest step'
+    );
+    expect(buildResumePrompt(undefined)).toBe('Continue where you left off.');
+  });
+});
+
+/** A reply as history saved it: the model wrote the reasoning tool's arguments as text before its answer. */
+const REASONING_REPLY =
+  '{"label":"Updating email subject","thought":"I’ll update only the email subject and keep the preheader, sender details, reply-to, and body unchanged."}\n\nDone — I updated the subject to **“Your order shipped”** and left everything else unchanged.';
+
+function streamingReply(text: string): AgentMessage {
+  return { ...assistantMessage('act_1', ''), parts: [{ type: 'text', text, state: 'streaming' }] };
+}
+
+describe('buildAssistantBlocks (reasoning JSON)', () => {
+  it('strips the reasoning object the model wrote as text before its reply', () => {
+    expect(buildAssistantBlocks(assistantMessage('act_1', REASONING_REPLY))).toEqual([
+      {
+        kind: 'text',
+        key: 'act_1:0',
+        text: 'Done — I updated the subject to **“Your order shipped”** and left everything else unchanged.',
+        streaming: false,
+      },
+    ]);
+  });
+
+  it('strips one written between paragraphs, escaped quotes included', () => {
+    const blocks = buildAssistantBlocks(
+      assistantMessage('act_1', 'Sure.\n\n{"label":"Plan","thought":"Add a \\"Welcome\\" email."}\n\nDone.')
+    );
+
+    expect(blocks).toEqual([
+      expect.objectContaining({ kind: 'text', text: expect.stringMatching(/^Sure\.\n+Done\.$/) }),
+    ]);
+  });
+
+  it('holds back the object while it streams, then shows the reply that follows it', () => {
+    const reasoning = REASONING_REPLY.slice(0, REASONING_REPLY.indexOf('}') + 1);
+
+    expect(buildAssistantBlocks(streamingReply('{"label":"Updating email sub'))).toEqual([]);
+    expect(buildAssistantBlocks(streamingReply(`${reasoning}\n\nDone`))).toEqual([
+      { kind: 'text', key: 'act_1:0', text: 'Done', streaming: true },
+    ]);
+  });
+
+  it('keeps JSON that is not the reasoning object', () => {
+    const text = '{"name":"Order shipped","steps":1}';
+
+    expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
+      { kind: 'text', key: 'act_1:0', text, streaming: false },
+    ]);
   });
 });
 

@@ -1,10 +1,13 @@
 import { Slug } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { FileCode2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { ComponentProps, ComponentType, KeyboardEventHandler, useCallback, useState } from 'react';
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
+import { CopilotChangeBadge } from '@/components/copilot-web-chat/copilot-change-row';
+import { useCopilotStepChange } from '@/components/copilot-web-chat/copilot-web-chat-context';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
@@ -12,7 +15,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { AnimationStepWrapper } from './animation-step-wrapper';
-import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, type NodeIconProps, NodeName } from './base-node';
 import { ConditionBadge } from './condition-badge';
 import { useCanvasContext } from './drag-context';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
@@ -22,6 +25,7 @@ export type NodeData = {
   content?: string;
   error?: string;
   name?: string;
+  stepId?: string;
   stepSlug?: Slug;
   controlValues?: Record<string, unknown>;
   isPending?: boolean;
@@ -67,7 +71,7 @@ const StepNodeIcon = ({
   }
 
   return (
-    <NodeIcon variant={color as any}>
+    <NodeIcon variant={color as NodeIconProps['variant']}>
       <Icon />
     </NodeIcon>
   );
@@ -129,6 +133,7 @@ const StepNode = (props: StepNodeProps) => {
     selectedNodeId,
     selectNode,
   } = useCanvasContext();
+  const copilotChange = useCopilotStepChange(data.stepId);
   const isAnyNodeDragging = draggedNodeId !== null;
   const isAnimating = id ? animatingNodeIds.has(id) : false;
   const areActionsVisible = !isAnyNodeDragging && isHovered && !showStepPreview && !!type;
@@ -198,6 +203,17 @@ const StepNode = (props: StepNodeProps) => {
           {rest.children}
         </Node>
       </AnimationStepWrapper>
+      {copilotChange && (
+        <motion.div
+          key={copilotChange}
+          initial={{ opacity: 0, x: -4 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+          className="pointer-events-none absolute left-full top-3 ml-2"
+        >
+          <CopilotChangeBadge kind={copilotChange} />
+        </motion.div>
+      )}
       {hasConditions && (
         <ConditionBadge
           isReadOnly={!areConditionsClickable}
