@@ -164,6 +164,24 @@ describe('WebChatService', () => {
     );
   });
 
+  it('returns the conversation title with the events page', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: { events: [], olderCursor: null, conversation: { title: 'Welcome email flow' } },
+      }),
+    } as Response) as unknown as typeof fetch;
+
+    const service = new WebChatService({ httpClient: new HttpClient({ apiUrl: 'https://test.novu.co' }) });
+
+    await expect(service.getEvents({ conversationId: 'conv_abcdefghijkl' })).resolves.toEqual({
+      events: [],
+      olderCursor: null,
+      title: 'Welcome email flow',
+    });
+  });
+
   it('POSTs approval decision by echoing actionId', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

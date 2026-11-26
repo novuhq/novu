@@ -88,4 +88,28 @@ describe('validateHistoryPageResponse', () => {
     expect(warnSpy).toHaveBeenCalledWith('[novu web-chat] skipping history envelope:', 'invalid-schema');
     warnSpy.mockRestore();
   });
+
+  it('returns the conversation title the page carries', () => {
+    const known = envelope(1, { type: 'run-start' });
+    const result = validateHistoryPageResponse({
+      events: [known],
+      olderCursor: null,
+      conversation: { title: 'Welcome email flow' },
+    });
+
+    expect(result).toEqual({ ok: true, events: [known], olderCursor: null, title: 'Welcome email flow' });
+  });
+
+  it('leaves the title out when the page has none or it is not a string', () => {
+    expect(validateHistoryPageResponse({ events: [], olderCursor: null, conversation: { title: 42 } })).toEqual({
+      ok: true,
+      events: [],
+      olderCursor: null,
+    });
+    expect(validateHistoryPageResponse({ events: [], olderCursor: null, conversation: null })).toEqual({
+      ok: true,
+      events: [],
+      olderCursor: null,
+    });
+  });
 });

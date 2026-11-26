@@ -43,6 +43,8 @@ export type WebChatMessagesUpdated = {
   isStopping: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
+  /** Conversation title. Absent until the history page or a live `title` event brings it. */
+  title?: string;
   hasMore: boolean;
   pagination: WebChatPagination;
   error?: NovuError;

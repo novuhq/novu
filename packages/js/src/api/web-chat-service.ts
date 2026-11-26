@@ -39,6 +39,8 @@ export type WebChatGetEventsResponse = {
   events: AgentEventEnvelope[];
   /** Cursor for older history. */
   olderCursor: string | null;
+  /** The conversation's title when the page was read. Absent on servers that do not send it. */
+  title?: string;
 };
 
 export type WebChatRespondToActionArgs = AgentHashFields & {
@@ -216,6 +218,7 @@ export class WebChatService {
     return {
       events: validated.events,
       olderCursor: validated.olderCursor,
+      title: validated.title,
     };
   }
 }

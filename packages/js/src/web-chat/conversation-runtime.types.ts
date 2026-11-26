@@ -40,6 +40,11 @@ export type AgentConversationSnapshot = {
   run: AgentConversationRunSnapshot;
   /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. */
   conversationStatus: AgentConversationStatus;
+  /**
+   * Conversation title. Novu starts it from the first message and the agent can change it with `ctx.setTitle()`.
+   * Absent until history loads or the agent sets one, so a new chat has none at first.
+   */
+  title?: string;
   pagination: WebChatPagination;
   messages: readonly AgentMessage[];
   pendingActions: readonly AgentPendingAction[];

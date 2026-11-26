@@ -86,6 +86,7 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
     hasActedSinceStop: next.hasActedSinceStop,
     typing: next.typing,
     status: next.status,
+    title: next.title,
     lastSequence: next.lastSequence,
     error: next.error,
     activeAssistantMessageId: next.activeAssistantMessageId,
@@ -345,11 +346,13 @@ export class WebChatStore {
   /**
    * Rebuild this session's timeline from the newest history page.
    * Server message ids win. Unconfirmed local messages stay at the end.
+   * `title` is the conversation's title when the page was read; a server that does not send it keeps the known one.
    */
   absorbHistoryPage(
     entry: ConversationEntry,
     envelopes: AgentEventEnvelope[],
-    olderCursor: string | null
+    olderCursor: string | null,
+    title?: string
   ): ConversationEntry {
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
@@ -361,6 +364,7 @@ export class WebChatStore {
 
     applyState(entry, {
       ...folded,
+      title: title ?? folded.title ?? entry.title,
       messages: this.#overlayMessages(entry, [...folded.messages, ...localOnly]),
     });
     entry.catchUpError = undefined;
@@ -465,6 +469,18 @@ export class WebChatStore {
     entry.openRunIds = [];
     entry.isStopping = false;
     entry.typing = undefined;
+    this.#publish(entry, { kind: 'local' }, []);
+
+    return entry;
+  }
+
+  /** Title read with reconnect catch-up: a title change is not part of the event history it replays. */
+  setTitle(entry: ConversationEntry, title: string): ConversationEntry {
+    if (entry.title === title) {
+      return entry;
+    }
+
+    entry.title = title;
     this.#publish(entry, { kind: 'local' }, []);
 
     return entry;

@@ -564,6 +564,40 @@ describe('WebChat', () => {
     await waitForMessageIds(messageIds(1, 6), 'conv_abcdefghijkl');
   });
 
+  it('loadConversation takes the title of the history page, and a live title event replaces it', async () => {
+    getEvents.mockResolvedValueOnce({ ...messagePage(1, 2, null), title: 'hello, can you help me with emails' });
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    const titles: Array<string | undefined> = [];
+    emitter.on('web_chat.messages.updated', ({ data }) => {
+      titles.push(data.title);
+    });
+
+    expect(webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.title).toBe(
+      'hello, can you help me with emails'
+    );
+
+    emitter.emit(
+      'web_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'title', title: 'Welcome email flow' } })
+    );
+
+    const conversation = webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(conversation?.title).toBe('Welcome email flow');
+    expect(conversation?.messages.map((message) => message.id)).toEqual(messageIds(1, 2));
+    expect(titles).toEqual(['Welcome email flow']);
+  });
+
+  it('loadConversation keeps the known title when the history page has none', async () => {
+    getEvents.mockResolvedValueOnce({ ...messagePage(1, 2, null), title: 'Welcome email flow' });
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    getEvents.mockResolvedValueOnce(messagePage(1, 3, null));
+    await webChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(webChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.title).toBe(
+      'Welcome email flow'
+    );
+  });
+
   it('loadConversation dedupes when history already contains the ack’d messageId', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_shared00001' });
     await webChat.sendMessage({
@@ -1097,6 +1131,29 @@ describe('WebChat', () => {
     await waitForMessageIds(['msg_user0000001', 'msg_asst_missed1']);
 
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('on reconnect catch-up takes the title of the newest page, since a title change is not replayed', async () => {
+    await openClaimedConversation();
+
+    getEvents
+      .mockResolvedValueOnce({
+        ...historyPage(
+          [{ sequence: 12, messageId: 'msg_asst_newer', role: 'assistant', markdown: 'newer page' }],
+          'cursor_older'
+        ),
+        title: 'Welcome email flow',
+      })
+      .mockResolvedValueOnce({
+        ...historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null),
+        title: 'stale title from an older read',
+      });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_newer']);
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+    expect(webChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.title).toBe('Welcome email flow');
   });
 
   it('catch-up completes with zero lastSequence when history spans multiple pages', async () => {

@@ -49,7 +49,7 @@ export function parseAgentEventEnvelope(value: unknown): ParseEnvelopeResult {
 }
 
 export type ValidateHistoryPageResult =
-  | { ok: true; events: AgentEventEnvelope[]; olderCursor: string | null }
+  | { ok: true; events: AgentEventEnvelope[]; olderCursor: string | null; title?: string }
   | { ok: false; error: AgentConversationError };
 
 export function validateHistoryPageResponse(value: unknown): ValidateHistoryPageResult {
@@ -96,5 +96,7 @@ export function validateHistoryPageResponse(value: unknown): ValidateHistoryPage
     console.warn('[novu web-chat] skipping history envelope:', parsed.reason);
   }
 
-  return { ok: true, events, olderCursor };
+  const { title } = (candidate.conversation ?? {}) as { title?: unknown };
+
+  return { ok: true, events, olderCursor, title: typeof title === 'string' ? title : undefined };
 }

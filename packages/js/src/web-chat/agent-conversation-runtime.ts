@@ -129,6 +129,7 @@ export class AgentConversationRuntime {
           isStopping: data.isStopping,
           typing: data.typing,
           status: data.status,
+          title: data.title,
           pagination: data.pagination,
           isRecovering: data.isRecovering,
           catchUpError: data.catchUpError,
@@ -230,6 +231,7 @@ export class AgentConversationRuntime {
           isStopping: store?.isStopping ?? this.#snapshot.run.isStopping,
           typing: store?.typing ?? this.#snapshot.run.typing,
           status: store?.status ?? this.#snapshot.conversationStatus,
+          title: store?.title ?? this.#snapshot.title,
           pagination: store?.pagination ?? storePagination(response.data.hasMore),
           isRecovering: store?.isRecovering ?? false,
           catchUpError: store?.catchUpError,
@@ -277,6 +279,7 @@ export class AgentConversationRuntime {
         isStopping: store?.isStopping ?? this.#snapshot.run.isStopping,
         typing: store?.typing ?? this.#snapshot.run.typing,
         status: store?.status ?? this.#snapshot.conversationStatus,
+        title: store?.title ?? this.#snapshot.title,
         pagination: store?.pagination ?? storePagination(response.data.hasMore),
         isRecovering: store?.isRecovering ?? this.#snapshot.isRecovering,
         catchUpError: store?.catchUpError,
@@ -456,6 +459,7 @@ export class AgentConversationRuntime {
       isStopping: boolean;
       typing?: AgentConversationRunSnapshot['typing'];
       status: AgentConversationSnapshot['conversationStatus'];
+      title?: string;
       pagination: WebChatPagination;
       isRecovering: boolean;
       catchUpError?: NovuError;
@@ -476,6 +480,7 @@ export class AgentConversationRuntime {
           typing: args.typing,
         },
         conversationStatus: args.status,
+        title: args.title,
         pagination: args.pagination,
         messages: args.messages,
         pendingActions: derivePendingActions([...args.messages]),

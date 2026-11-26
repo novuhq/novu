@@ -196,6 +196,33 @@ describe('AgentConversationRuntime', () => {
     runtime.dispose();
   });
 
+  it('puts the loaded title in the snapshot and follows a live title event', async () => {
+    getEvents.mockResolvedValue({ events: [], olderCursor: null, title: 'hello, can you help me with emails' });
+
+    const runtime = webChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(runtime.getSnapshot().title).toBeUndefined();
+    await runtime.load();
+    expect(runtime.getSnapshot().title).toBe('hello, can you help me with emails');
+
+    emitter.emit('web_chat.agent_event', {
+      result: {
+        version: 1,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'title', title: 'Welcome email flow' },
+      },
+    });
+
+    expect(runtime.getSnapshot().title).toBe('Welcome email flow');
+
+    runtime.dispose();
+  });
+
   describe('stop', () => {
     function emitRunEvent(sequence: number, event: AgentEvent) {
       emitter.emit('web_chat.agent_event', {

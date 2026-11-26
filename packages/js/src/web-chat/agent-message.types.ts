@@ -180,6 +180,8 @@ export type AgentConversationState = {
   hasActedSinceStop?: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
+  /** Conversation title, from the newest history page or a live `title` event. Absent until one of them arrives. */
+  title?: string;
   lastSequence: number;
   error?: AgentConversationError;
   /** Assistant message that receives tool and thinking parts when events omit `messageId`. */

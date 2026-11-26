@@ -43,6 +43,9 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'resolve':
       return { ...state, status: 'resolved' };
 
+    case 'title':
+      return { ...state, title: event.title };
+
     case 'message-start': {
       const next = withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,

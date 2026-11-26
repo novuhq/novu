@@ -92,6 +92,11 @@ export type UseWebChatResult = {
   typing?: AgentConversationRunSnapshot['typing'];
   /** `'active'` or `'resolved'`. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. */
   conversationStatus: AgentConversationStatus;
+  /**
+   * Conversation title. Novu starts it from the first message and the agent can change it with `ctx.setTitle()`;
+   * a change arrives live. Absent until history loads or the agent sets one, so a new chat has none at first.
+   */
+  title?: string;
   /** Current agent-run snapshot. */
   run: AgentConversationRunSnapshot;
   /** Older-history control. Not a top-level `hasMore` or `fetchMore`. */
@@ -560,6 +565,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
     isStopping: snapshot.run.isStopping,
     typing: snapshot.run.typing,
     conversationStatus: snapshot.conversationStatus,
+    title: snapshot.title,
     run: snapshot.run,
     pagination: paginationWithFetch,
     isRecovering: snapshot.isRecovering,

@@ -205,6 +205,7 @@ export class WebChat extends BaseModule {
         isStopping: boolean;
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
+        title?: string;
         hasMore: boolean;
         pagination: WebChatPagination;
         isRecovering: boolean;
@@ -230,6 +231,7 @@ export class WebChat extends BaseModule {
       isStopping: entry.isStopping,
       typing: entry.typing,
       status: entry.status,
+      title: entry.title,
       hasMore: entry.olderCursor != null,
       pagination: entryPagination(entry),
       isRecovering: entry.isRecovering,
@@ -426,7 +428,7 @@ export class WebChat extends BaseModule {
       conversationId: args.conversationId,
     });
 
-    return this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+    return this.#store.absorbHistoryPage(entry, page.events, page.olderCursor, page.title);
   }
 
   /** @internal Prefer {@link AgentConversationRuntime.fetchMore}. */
@@ -818,6 +820,7 @@ export class WebChat extends BaseModule {
         isStopping: entry.isStopping,
         typing: entry.typing,
         status: entry.status,
+        title: entry.title,
         hasMore: entry.olderCursor != null,
         pagination: entryPagination(entry),
         error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
@@ -859,8 +862,11 @@ export class WebChat extends BaseModule {
 
       for (const entry of this.#currentHolders(conversationId, activeHolders)) {
         this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
-        for (const envelope of missed) {
+        for (const envelope of missed.events) {
           this.#store.applyLiveEnvelope(entry, envelope);
+        }
+        if (missed.title !== undefined) {
+          this.#store.setTitle(entry, missed.title);
         }
       }
     } catch (error) {
@@ -885,10 +891,15 @@ export class WebChat extends BaseModule {
   /**
    * Page toward older events until reaching already-known sequences.
    * One newest page is not enough when the offline gap exceeds the server page size.
-   * Returns missed events oldest first, or null when the safety page limit is hit first.
+   * Returns missed events oldest first with the title the newest page read, or null when the safety page limit is
+   * hit first.
    */
-  async #fetchEventsSince(conversationId: string, knownThrough: number): Promise<AgentEventEnvelope[] | null> {
+  async #fetchEventsSince(
+    conversationId: string,
+    knownThrough: number
+  ): Promise<{ events: AgentEventEnvelope[]; title?: string } | null> {
     const missed: AgentEventEnvelope[] = [];
+    let title: string | undefined;
     let before: string | undefined;
 
     for (let pageIndex = 0; knownThrough <= 0 || pageIndex < CATCH_UP_PAGE_LIMIT; pageIndex += 1) {
@@ -896,6 +907,9 @@ export class WebChat extends BaseModule {
         conversationId,
         ...(before ? { before } : {}),
       });
+      if (pageIndex === 0) {
+        title = page.title;
+      }
       const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
       missed.push(...envelopes);
 
@@ -903,7 +917,7 @@ export class WebChat extends BaseModule {
       const reachedKnown = knownThrough > 0 && oldestInPage != null && oldestInPage <= knownThrough;
       if (page.olderCursor == null || oldestInPage == null || reachedKnown) {
         // Apply oldest→newest so message order stays chronological across pages.
-        return missed.sort((left, right) => left.sequence - right.sequence);
+        return { events: missed.sort((left, right) => left.sequence - right.sequence), title };
       }
 
       before = page.olderCursor;

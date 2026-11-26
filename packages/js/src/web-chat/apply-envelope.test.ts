@@ -35,6 +35,18 @@ function assistantMessages(messages: AgentMessage[]): AgentMessage[] {
 }
 
 describe('applyEnvelope', () => {
+  it('takes the title of a title event without touching the timeline', () => {
+    const afterRun = applyEnvelope(createInitialAgentConversationState(), envelope(1, { type: 'run-start' }));
+    const named = applyEnvelope(afterRun, envelope(2, { type: 'title', title: 'Welcome email flow' }));
+    const renamed = applyEnvelope(named, envelope(3, { type: 'title', title: 'SMS reminder' }));
+
+    expect(named.title).toBe('Welcome email flow');
+    expect(renamed.title).toBe('SMS reminder');
+    expect(renamed.messages).toEqual(afterRun.messages);
+    expect(renamed.isRunning).toBe(true);
+    expect(renamed.lastSequence).toBe(3);
+  });
+
   it('appends custom data parts onto the active assistant message', () => {
     const afterRun = applyEnvelope(createInitialAgentConversationState(), envelope(1, { type: 'run-start' }));
     const afterFirst = applyEnvelope(
