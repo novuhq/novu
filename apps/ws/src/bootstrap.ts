@@ -50,4 +50,6 @@ export async function bootstrap(tlsConfig?: NovuTlsConfig) {
   await app.listen(process.env.PORT as string);
 
   app.get(Logger).log(`[@novu/ws]: Listening on port ${process.env.PORT} over ${tlsConfig ? 'https' : 'http'}`);
+
+  return app;
 }
