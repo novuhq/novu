@@ -592,6 +592,29 @@ describe("get_workflow_run", () => {
 		expect(result.structuredContent?.error).toMatchObject({ status: 404 });
 		expect(textOf(result)).toContain("Workflow run not found");
 	});
+
+	it("reports a run older than the plan's retention without a date range to change", async () => {
+		fakeApi(
+			path(
+				"/v1/activity/workflow-runs/old-run",
+				{
+					message:
+						"This activity is older than your plan's retention period. The earliest accessible date for your plan is 2026-11-25. Please upgrade your plan to access older activities.",
+					statusCode: 402,
+				},
+				402,
+			),
+		);
+
+		const result = await callTool(await client(), "get_workflow_run", {
+			workflowRunId: "old-run",
+		});
+
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent?.error).toMatchObject({ status: 402 });
+		expect(textOf(result)).toContain("older than your plan's retention period");
+		expect(textOf(result)).not.toContain("createdAfter");
+	});
 });
 
 describe("get_trigger_requests", () => {
@@ -859,6 +882,52 @@ describe("get_trigger_requests", () => {
 
 		expect(result.isError).toBe(true);
 		expect(result.structuredContent?.error).toMatchObject({ status: 403 });
+	});
+
+	it("explains a createdAfter outside the plan's retention and what to send instead", async () => {
+		fakeApi(
+			path(
+				"/v1/activity/requests",
+				{
+					message:
+						"Requested date range exceeds your plan's retention period. The earliest accessible date for your plan is 2026-11-25. Please upgrade your plan to access older activities.",
+					statusCode: 402,
+				},
+				402,
+			),
+		);
+
+		const result = await callTool(await client(), "get_trigger_requests", {
+			createdAfter: "2025-01-01",
+		});
+
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent?.error).toMatchObject({ status: 402 });
+		expect(textOf(result)).toContain("2026-11-25");
+		expect(textOf(result)).toContain("Send a later createdAfter");
+	});
+
+	it("reports a request older than the plan's retention without a date range to change", async () => {
+		fakeApi(
+			path(
+				"/v1/activity/requests/old-req",
+				{
+					message:
+						"This activity is older than your plan's retention period. The earliest accessible date for your plan is 2026-11-25. Please upgrade your plan to access older activities.",
+					statusCode: 402,
+				},
+				402,
+			),
+		);
+
+		const result = await callTool(await client(), "get_trigger_requests", {
+			requestId: "old-req",
+		});
+
+		expect(result.isError).toBe(true);
+		expect(result.structuredContent?.error).toMatchObject({ status: 402 });
+		expect(textOf(result)).toContain("older than your plan's retention period");
+		expect(textOf(result)).not.toContain("createdAfter");
 	});
 });
 

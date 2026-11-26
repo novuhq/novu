@@ -121,18 +121,26 @@ const getTriggerRequestsSchema = z.object({
 		.describe("Workflow trigger identifier, matched against the body's name"),
 });
 
-/** Any non-2xx is an error result; a 402 says how to stay inside the plan's retention window. */
-function activityError(operation: string, result: FailedApiCall): ApiResponse {
-	const message =
-		result.status === 402
-			? `Error: The requested date range is outside your plan's activity retention period. ${apiMessage(result)} Send a later createdAfter, or omit createdAfter and createdBefore to search the whole retention window.`
-			: `Error: Failed to ${operation}. Status: ${result.status}, Message: ${apiMessage(result)}`;
-
+/** Any non-2xx is an error result. */
+function activityError(operation: string, result: FailedApiCall, message?: string): ApiResponse {
 	return ToolFactory.errorResult({
-		message,
+		message:
+			message ??
+			`Error: Failed to ${operation}. Status: ${result.status}, Message: ${apiMessage(result)}`,
 		retryAfter: result.retryAfter,
 		status: result.status,
 	});
+}
+
+/** A 402 on a list says how to stay inside the plan's retention window. */
+function activityListError(operation: string, result: FailedApiCall): ApiResponse {
+	if (result.status !== 402) return activityError(operation, result);
+
+	return activityError(
+		operation,
+		result,
+		`Error: The requested date range is outside your plan's activity retention period. ${apiMessage(result)} Send a later createdAfter, or omit createdAfter and createdBefore to search the whole retention window.`,
+	);
 }
 
 function json(value: unknown): ApiResponse {
@@ -222,7 +230,7 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 				method: "GET",
 				unwrapData: false,
 			});
-			if (!result.ok) return activityError("list workflow runs", result);
+			if (!result.ok) return activityListError("list workflow runs", result);
 
 			const runs = listRows(result.data).map(toRunSummary);
 
@@ -309,7 +317,7 @@ export function registerActivityTools(server: McpServer, accessors: ToolAccessor
 					method: "GET",
 					unwrapData: false,
 				});
-				if (!result.ok) return activityError("list trigger requests", result);
+				if (!result.ok) return activityListError("list trigger requests", result);
 
 				const rows = listRows(result.data);
 				const reportedTotal = asRecord(result.data)?.total;
