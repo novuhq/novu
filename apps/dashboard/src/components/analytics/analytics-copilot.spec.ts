@@ -39,11 +39,11 @@ describe('buildUsagePageView', () => {
 });
 
 describe('the Usage page URL filters', () => {
-  it('reads the period and the comma-separated workflow ids, without blanks, repeats or values that are no _id', () => {
+  it('reads the period and the comma-separated workflow ids, lowercased, without blanks, repeats or values that are no _id', () => {
     expect(
       readAnalyticsUrlFilters(
         new URLSearchParams(
-          `period=7d&workflows=${WORKFLOW_ID},,${WORKFLOW_ID}, ${'c'.repeat(24)} ,b,${'x'.repeat(500)}`
+          `period=7d&workflows=${WORKFLOW_ID},,${WORKFLOW_ID.toUpperCase()}, ${'C'.repeat(24)} ,b,${'x'.repeat(500)}`
         )
       )
     ).toEqual({ period: '7d', workflowIds: [WORKFLOW_ID, 'c'.repeat(24)] });

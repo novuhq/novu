@@ -6,7 +6,7 @@
 
 const PERIOD_PARAM = 'period';
 const WORKFLOWS_PARAM = 'workflows';
-const OBJECT_ID = /^[a-f\d]{24}$/i;
+const OBJECT_ID = /^[a-f\d]{24}$/;
 
 export type AnalyticsUrlFilters = {
   period?: string;
@@ -19,7 +19,7 @@ export function readAnalyticsUrlFilters(searchParams: URLSearchParams): Analytic
   const workflowIds = searchParams
     .getAll(WORKFLOWS_PARAM)
     .flatMap((value) => value.split(','))
-    .map((value) => value.trim())
+    .map((value) => value.trim().toLowerCase())
     .filter((value) => OBJECT_ID.test(value));
 
   return { period, workflowIds: [...new Set(workflowIds)] };
