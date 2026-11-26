@@ -34,6 +34,7 @@ export class Session {
   #claims: TokenSessionClaims | undefined;
   /** Every token issued for the current subscriber and context; cleared when either changes. */
   #tokens = new Set<string>();
+  #error: unknown;
   #onSubscriberChange: () => void;
 
   constructor(
@@ -102,6 +103,11 @@ export class Session {
     return this.#session;
   }
 
+  /** Why the latest session request failed, or `undefined` once one succeeded. Read it the same way as `data`. */
+  public get error(): unknown {
+    return this.#error;
+  }
+
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
     if (typeof window === 'undefined' || !window.localStorage) {
       return null;
@@ -156,6 +162,7 @@ export class Session {
     this.#identity = identity;
     this.#tokens.clear();
     this.#session = undefined;
+    this.#error = undefined;
 
     // Let a request that is already running finish first, so its token cannot overwrite the new one.
     while (this.#inFlight) {
@@ -277,6 +284,7 @@ export class Session {
           this.#tokens.clear();
         }
         this.#tokens.add(response.token);
+        this.#error = undefined;
       }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
@@ -292,6 +300,9 @@ export class Session {
 
       return identity === this.#identity && !subscriberChanged;
     } catch (error) {
+      if (identity === this.#identity) {
+        this.#error = error;
+      }
       this.#emitter.emit('session.initialize.resolved', { args, error });
 
       return false;

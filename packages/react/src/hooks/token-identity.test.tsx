@@ -230,4 +230,32 @@ describe('hooks under a token source', () => {
     expect(state?.error).toBeDefined();
     expect(onError).toHaveBeenCalledTimes(1);
   });
+
+  it('reports a sign-in that failed before the hook mounted', async () => {
+    const onError = vi.fn();
+    let state: ReturnType<typeof useSubscription> | undefined;
+    const Probe = () => {
+      state = useSubscription({ topicKey: 'news', onError });
+
+      return null;
+    };
+    const App = ({ showProbe }: { showProbe: boolean }) => (
+      <NovuProvider
+        applicationIdentifier="app"
+        getToken={async () => {
+          throw new Error('signed out');
+        }}
+      >
+        {showProbe && <Probe />}
+      </NovuProvider>
+    );
+    const { rerender } = render(<App showProbe={false} />);
+    await flush();
+    rerender(<App showProbe />);
+    await flush();
+
+    expect(state?.isLoading).toBe(false);
+    expect(state?.error).toBeDefined();
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
 });

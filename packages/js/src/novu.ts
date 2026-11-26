@@ -70,6 +70,14 @@ export class Novu {
   }
 
   /**
+   * Why the latest session request failed, or `undefined` once one succeeded. Read it when you start listening after
+   * a failed `session.initialize.resolved` may already have fired.
+   */
+  public get sessionError(): unknown {
+    return this.#session.error;
+  }
+
+  /**
    * True after `loadWebChat` has resolved on this instance.
    */
   public get isWebChatLoaded(): boolean {

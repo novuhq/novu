@@ -74,14 +74,21 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
   useEffect(() => {
     // A token source tells who the subscriber is only once the session resolves; until then only its failure shows.
     if (identityKey === undefined) {
-      return novu.on('session.initialize.resolved', ({ error }) => {
-        if (!error) {
-          return;
-        }
+      const reportSessionError = (error: unknown) => {
         const sessionError = new NovuError('Failed to initialize session, please contact the support', error);
         setError(sessionError);
         propsRef.current.onError?.(sessionError);
         setIsLoading(false);
+      };
+      // The first session may have failed before this hook mounted.
+      if (novu.sessionError !== undefined) {
+        reportSessionError(novu.sessionError);
+      }
+
+      return novu.on('session.initialize.resolved', ({ error }) => {
+        if (error) {
+          reportSessionError(error);
+        }
       });
     }
 
