@@ -107,7 +107,7 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
     fieldOverrides: {
       [CredentialsKeyEnum.AccountSid]: { placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
       [CredentialsKeyEnum.AuthMethod]: { description: undefined },
-      [CredentialsKeyEnum.Region]: { description: undefined },
+      // The region keeps its hint: EU accounts need credentials created in that region.
       [CredentialsKeyEnum.From]: { placeholder: '+1 415 555 0132' },
     },
     segmentedFields: [CredentialsKeyEnum.AuthMethod],
