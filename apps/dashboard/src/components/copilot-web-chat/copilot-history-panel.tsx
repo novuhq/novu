@@ -221,8 +221,9 @@ export function CopilotHistoryPanel() {
   }, []);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (event.key !== '/' || target.closest('input, textarea, [contenteditable="true"]')) return;
+    const isTyping =
+      event.target instanceof Element && !!event.target.closest('input, textarea, [contenteditable="true"]');
+    if (event.key !== '/' || isTyping) return;
 
     event.preventDefault();
     searchRef.current?.focus();
