@@ -10,6 +10,7 @@ import { GetEnvironment } from './get-environment';
 import { GetMyEnvironments } from './get-my-environments/get-my-environments.usecase';
 import { RegenerateApiKeys } from './regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironment } from './update-environment/update-environment.usecase';
+import { UpdateSubscriberTokensSetting } from './update-subscriber-tokens-setting/update-subscriber-tokens-setting.usecase';
 
 export const USE_CASES = [
   GetMxRecord,
@@ -24,4 +25,5 @@ export const USE_CASES = [
   GetMyEnvironments,
   DeleteEnvironment,
   BuildDashboardInboxHashes,
+  UpdateSubscriberTokensSetting,
 ];

@@ -8,6 +8,7 @@ import {
   DeferReasonEnum,
   DetailEnum,
   DurationUtils,
+  getCachedEnvironment,
   getDigestType,
   getEffectiveJobOverrides,
   getEffectiveJobPayload,
@@ -68,12 +69,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import _ from 'lodash';
-import {
-  buildWorkflowEnvVariables,
-  getCachedEnvironment,
-  getCachedEnvironmentVariables,
-  WorkflowEnvVariables,
-} from '../../../shared/utils';
+import { buildWorkflowEnvVariables, getCachedEnvironmentVariables, WorkflowEnvVariables } from '../../../shared/utils';
 import type { ExecuteBridgeJobResult } from '../execute-bridge-job';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddJobCommand } from './add-job.command';

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { ApiKeyDto } from './api-key.dto';
+import { SubscriberTokensSettingsDto } from './subscriber-tokens-setting.dto';
 
 export class EnvironmentResponseDto {
   @ApiProperty({
@@ -59,4 +60,10 @@ export class EnvironmentResponseDto {
     example: 'production',
   })
   slug?: string;
+
+  @ApiPropertyOptional({
+    type: SubscriberTokensSettingsDto,
+    description: 'Present while the environment requires signed subscriber tokens',
+  })
+  subscriberTokens?: SubscriberTokensSettingsDto;
 }
