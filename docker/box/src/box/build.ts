@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { log } from '../node/main.ts';
 import { Applied, Baked, fromJson, NestConfig, NxGraph, PackageJson, PnpmPackages } from '../shared/contracts.ts';
 import { messageOf } from '../shared/errors.ts';
-import { APPLIED, BAKED, BULLMQ_PRO, DATA, DEPLOY, NX, REPO, RUN } from './paths.ts';
+import { APPLIED, BAKED, BULLMQ_PRO, DATA, DEPLOY, FLAGS, NX, REPO, RUN } from './paths.ts';
 import { DEPLOYED_APPS } from './processes.ts';
 import { allSettled, output, readJson, run, step, vars } from './runtime.ts';
 
@@ -489,6 +489,7 @@ export function prepareDashboard(): void {
   execFileSync('cp', ['-R', '--reflink=auto', `${REPO}/apps/dashboard/dist`, target]);
 
   const viteEnv = Object.fromEntries(Object.entries(vars).filter(([key]) => key.startsWith('VITE_')));
+  if (fs.existsSync(FLAGS)) viteEnv.VITE_FEATURE_FLAG_OVERRIDES = fs.readFileSync(FLAGS, 'utf8');
   const script = `<script>window._env_ = ${JSON.stringify(viteEnv).replace(/</g, '\\u003c')};</script>`;
   const indexFile = `${target}/index.html`;
   const html = fs.readFileSync(indexFile, 'utf8').replace('<script type="module"', `${script}\n<script type="module"`);

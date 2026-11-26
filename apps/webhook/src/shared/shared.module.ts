@@ -20,7 +20,7 @@ const PROVIDERS = [
   {
     provide: AnalyticsService,
     useFactory: async () => {
-      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
+      const analyticsService = new AnalyticsService(process.env.MIXPANEL_TOKEN);
 
       await analyticsService.initialize();
 

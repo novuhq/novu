@@ -48,7 +48,7 @@ const CONTEXT_SUFFIX = /\s*\| Context: [\s\S]*$/;
  * (`bot<id>:<token>`), as `workflow-secrets.ts` hides them in a step's URL: 6+ characters mixing letters and digits,
  * or 16+ letters and digits mixing upper and lower case.
  */
-const SECRET_LIKE_SEGMENT =
+export const SECRET_LIKE_SEGMENT =
 	/^(?:(?=[^/]*\d)(?=[^/]*[A-Za-z])[^/]{6,}|(?=[^/]*[a-z])(?=[^/]*[A-Z])[A-Za-z\d]{16,})$/;
 
 const ATTENTION_STATUSES = new Set(["Failed", "Warning"]);
@@ -95,7 +95,8 @@ function redactUrl(text: string): string {
 	}
 }
 
-function scrub(value: string): string {
+/** Error text with URL secrets, credential values and long tokens redacted, capped at 200 characters. */
+export function scrub(value: string): string {
 	return truncate(
 		value
 			.replace(CONTEXT_SUFFIX, "")

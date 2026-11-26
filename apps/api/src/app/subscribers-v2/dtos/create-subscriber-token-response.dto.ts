@@ -3,7 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateSubscriberTokenResponseDto {
   @ApiProperty({
     type: String,
-    description: 'Novu-signed login token for the subscriber. Exchange it in the browser for an Inbox session.',
+    description:
+      'Novu-signed token for the subscriber. Exchange a login token in the browser for an Inbox session; send a topic grant with the subscribe request for its topic.',
   })
   token: string;
 
