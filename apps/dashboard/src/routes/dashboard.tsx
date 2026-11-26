@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { CommandPalette } from '@/components/command-palette';
 import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
-import { CopilotPageMount, useActiveCopilotPage } from '@/components/copilot-web-chat';
+import { CopilotPageMount, useActiveCopilotPage, useCopilotDockShown } from '@/components/copilot-web-chat';
 import { HelpPanelProvider } from '@/components/help-panel';
 import { Toaster } from '@/components/primitives/sonner';
 import { useAuth } from '@/context/auth/hooks';
@@ -26,11 +26,21 @@ function DashboardProvisioningDismiss() {
 // The page Copilot's launcher sits at bottom-4 and is 38px tall, so toasts stack 8px above it. Sonner applies one
 // offset to every edge of the screen.
 const ABOVE_COPILOT_LAUNCHER_OFFSET = 62;
+// Sonner's own right edge, moved left of a docked Copilot so toasts don't cover its composer.
+const BESIDE_COPILOT_DOCK = {
+  right: 'calc(max(var(--offset), env(safe-area-inset-right)) + var(--copilot-dock-width, 0px))',
+};
 
 function DashboardToaster() {
   const copilotPage = useActiveCopilotPage();
+  const isCopilotDocked = useCopilotDockShown();
 
-  return <Toaster offset={copilotPage ? ABOVE_COPILOT_LAUNCHER_OFFSET : undefined} />;
+  return (
+    <Toaster
+      offset={copilotPage ? ABOVE_COPILOT_LAUNCHER_OFFSET : undefined}
+      style={isCopilotDocked ? BESIDE_COPILOT_DOCK : undefined}
+    />
+  );
 }
 
 export const DashboardRoute = () => {

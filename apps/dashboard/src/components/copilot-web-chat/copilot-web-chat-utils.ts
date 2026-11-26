@@ -133,6 +133,9 @@ export const COPILOT_POPOVER_ID = 'copilot-popover';
 export const COPILOT_SHEET_LIFT_PX = 57;
 export const COPILOT_SHEET_LIFT_TRANSITION = { duration: 0.5, ease: 'easeInOut' } as const;
 
+/** The docked panel slides in from the right edge while the page narrows to make room for it. */
+export const COPILOT_DOCK_TRANSITION = { duration: 0.2, ease: 'easeOut' } as const;
+
 export type LauncherState = 'idle' | 'working' | 'ready' | 'error' | 'off';
 
 export function deriveLauncherState(input: {
