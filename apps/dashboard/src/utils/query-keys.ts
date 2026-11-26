@@ -8,6 +8,7 @@ export const QueryKeys = Object.freeze({
   fetchTags: 'fetchTags',
   getApiKeys: 'getApiKeys',
   dashboardInboxHashes: 'dashboardInboxHashes',
+  subscriberSessionStats: 'subscriberSessionStats',
   agentWebChatHash: 'agentWebChatHash',
   fetchIntegrations: 'fetchIntegrations',
   fetchActivity: 'fetchActivity',
