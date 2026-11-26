@@ -13,7 +13,7 @@ export type AppEnv = { Bindings: Env; Variables: { token: string | null } };
 // Scopes the 401 challenge asks for, and the protected resource metadata
 // lists. user:org:read first so clients that truncate scope lists still pick
 // it up: it makes the consent screen ask which organization to act for.
-export const OAUTH_SCOPES = ["user:org:read", "email", "profile", "offline_access"] as const;
+const OAUTH_SCOPES = ["user:org:read", "email", "profile", "offline_access"] as const;
 
 /**
  * OAuth is on when the deployment has the keys of the Clerk instance that
@@ -22,7 +22,7 @@ export const OAUTH_SCOPES = ["user:org:read", "email", "profile", "offline_acces
  * deployment is API-key only (self-hosted mode): the discovery endpoints 404
  * and the 401 challenge carries no OAuth metadata.
  */
-export function isOAuthEnabled(env: Env): boolean {
+function isOAuthEnabled(env: Env): boolean {
 	return Boolean(env.CLERK_PUBLISHABLE_KEY && env.CLERK_SECRET_KEY);
 }
 
