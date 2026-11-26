@@ -210,6 +210,16 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /** Returns `false` when the conversation already had this title. */
+  async updateTitle(environmentId: string, organizationId: string, id: string, title: string): Promise<boolean> {
+    const result = await this.update(
+      { _id: id, _environmentId: environmentId, _organizationId: organizationId, title: { $ne: title } },
+      { $set: { title } }
+    );
+
+    return result.modified > 0;
+  }
+
   async updateParticipants(
     environmentId: string,
     organizationId: string,

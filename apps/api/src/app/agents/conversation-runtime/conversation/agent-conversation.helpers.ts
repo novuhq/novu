@@ -1,5 +1,6 @@
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
+export const MAX_CONVERSATION_TITLE_LENGTH = 200;
 
 /** Default number of recent activities loaded as conversation history for every runtime. */
 export const AGENT_HISTORY_LIMIT = 50;
@@ -11,7 +12,18 @@ export function getConversationTitle(firstMessageText: string): string {
     return DEFAULT_CONVERSATION_TITLE;
   }
 
-  return trimmed.slice(0, 200);
+  return trimmed.slice(0, MAX_CONVERSATION_TITLE_LENGTH);
+}
+
+/** A title an agent set, on one line and cut to the stored length; `undefined` when it has no text. */
+export function normalizeAgentConversationTitle(title: unknown): string | undefined {
+  if (typeof title !== 'string') {
+    return undefined;
+  }
+
+  const singleLine = title.replace(/\s+/g, ' ').trim();
+
+  return singleLine ? singleLine.slice(0, MAX_CONVERSATION_TITLE_LENGTH).trim() : undefined;
 }
 
 export function getInboundActivityPreview(

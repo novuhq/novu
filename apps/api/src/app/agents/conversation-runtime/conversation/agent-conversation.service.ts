@@ -44,6 +44,7 @@ export {
   getConversationTitle,
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
+  normalizeAgentConversationTitle,
 } from './agent-conversation.helpers';
 
 export type {

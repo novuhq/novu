@@ -1,17 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentRepository, ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
 import { AgentConversationService } from '../../../conversation-runtime/conversation/agent-conversation.service';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { type EventMapContext, mapNewestFirstEventActivities } from '../../activity-to-events';
+import type { ListWebChatConversationEventsResponseDto } from '../../dtos/list-web-chat-conversation-events.dto';
 import { withWebChatContextFilter } from '../../web-chat-context-query.util';
 import { ListWebChatConversationEventsCommand } from './list-web-chat-conversation-events.command';
-
-interface EventPageResult {
-  events: AgentEventEnvelope[];
-  /** Cursor toward older history. Send it as `before`. Null when the beginning is reached. */
-  olderCursor: string | null;
-}
 
 @Injectable()
 export class ListWebChatConversationEvents {
@@ -21,7 +15,7 @@ export class ListWebChatConversationEvents {
     private readonly agentRepository: AgentRepository
   ) {}
 
-  async execute(command: ListWebChatConversationEventsCommand): Promise<EventPageResult> {
+  async execute(command: ListWebChatConversationEventsCommand): Promise<ListWebChatConversationEventsResponseDto> {
     const conversation = await this.conversationRepository.findOne(
       withWebChatContextFilter(
         this.conversationRepository,
@@ -87,6 +81,7 @@ export class ListWebChatConversationEvents {
     return {
       events,
       olderCursor: page.hasMore && oldestInPage ? oldestInPage._id : null,
+      conversation: { title: conversation.title },
     };
   }
 }

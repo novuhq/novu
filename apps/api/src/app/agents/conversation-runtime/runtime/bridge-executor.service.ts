@@ -688,6 +688,7 @@ export class BridgeExecutorService {
     return {
       identifier: conversation.identifier,
       status: conversation.status,
+      title: conversation.title,
       metadata: conversation.metadata ?? {},
       messageCount: conversation.messageCount ?? 0,
       createdAt: conversation.createdAt,

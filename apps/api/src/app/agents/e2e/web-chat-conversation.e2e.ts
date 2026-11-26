@@ -1507,4 +1507,70 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     ]);
     expect(historyCustom[0].sequence).to.be.lessThan(historyCustom[1].sequence);
   });
+
+  it('should save an agent title, push each change live once, and return the title with every history page', async () => {
+    await linkWebChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const firstMessage = 'Please help me build an onboarding flow with a welcome email and an SMS reminder';
+    const createRes = await createConversation({ agentId: ctx.agentIdentifier, text: firstMessage });
+    expect(createRes.status).to.equal(201);
+    const identifier = createRes.body.data.identifier;
+    const conversation = await waitForConversation(identifier);
+
+    const initialHistory = await getEvents(identifier);
+    expect(initialHistory.status).to.equal(200);
+    expect(initialHistory.body.data.conversation).to.deep.equal({ title: firstMessage });
+
+    addStub.resetHistory();
+
+    const titleEnvelope = (sequence: number, title: string): AgentEventEnvelope => ({
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-title',
+      sequence,
+      event: { type: 'title', title },
+    });
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [
+        titleEnvelope(1, '  Onboarding\n   flow  '),
+        titleEnvelope(2, 'Onboarding flow'),
+        titleEnvelope(3, '   '),
+        titleEnvelope(4, 'x'.repeat(300)),
+      ],
+    });
+    expect(ingestRes.status).to.equal(200);
+
+    const saved = await conversationRepository.findOne(
+      { _id: conversation._id, _environmentId: ctx.session.environment._id },
+      ['title']
+    );
+    expect(saved?.title).to.equal('x'.repeat(200));
+
+    const liveTitles = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'title'
+      )
+      .map((job) => job.data.payload as AgentEventEnvelope);
+    expect(liveTitles.map((envelope) => envelope.event)).to.deep.equal([
+      { type: 'title', title: 'Onboarding flow' },
+      { type: 'title', title: 'x'.repeat(200) },
+    ]);
+    expect(liveTitles[0].conversationIdentifier).to.equal(identifier);
+    expect(liveTitles[0].agentId).to.equal(ctx.agentIdentifier);
+
+    const historyRes = await getEvents(identifier);
+    expect(historyRes.status).to.equal(200);
+    expect(historyRes.body.data.conversation).to.deep.equal({ title: 'x'.repeat(200) });
+    expect(
+      historyRes.body.data.events.some((envelope: AgentEventEnvelope) => envelope.event.type === 'title')
+    ).to.equal(false);
+
+    const getRes = await getConversation(identifier);
+    expect(getRes.body.data.title).to.equal('x'.repeat(200));
+  });
 });

@@ -16,8 +16,14 @@ export class ListWebChatConversationEventsQueryDto {
   limit?: number;
 }
 
+export class WebChatConversationEventsSummaryDto {
+  title: string;
+}
+
 export class ListWebChatConversationEventsResponseDto {
   events: AgentEventEnvelope[];
   /** Cursor toward older history. Send it as `before`. Null when the beginning is reached. */
   olderCursor: string | null;
+  /** The conversation as it is now: a title change is not part of the event history. */
+  conversation: WebChatConversationEventsSummaryDto;
 }

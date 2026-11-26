@@ -171,6 +171,18 @@ describe('BridgeExecutorService', () => {
       );
     });
 
+    it('sends the conversation title so the agent can tell whether to rename it', async () => {
+      const { service } = makeService();
+      const params = makeExecutionParams();
+
+      const payload = await (service as any).buildPayload({
+        ...params,
+        conversation: { ...params.conversation, title: 'Welcome email flow' },
+      });
+
+      expect(payload.conversation.title).to.equal('Welcome email flow');
+    });
+
     describe('reply origin scheme', () => {
       let originalEnv: NodeJS.ProcessEnv;
 

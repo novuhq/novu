@@ -8,6 +8,7 @@ import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.servi
 import {
   AgentConversationService,
   type ConversationActivityContext,
+  normalizeAgentConversationTitle,
 } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
@@ -168,6 +169,11 @@ export class AgentEventSink {
 
       case 'resolve':
         return this.handleResolve(event, baseFields, context, envelope.runId);
+
+      case 'title':
+        await this.handleTitle(event, context, envelope);
+
+        return 'accepted';
 
       case 'tool-use-start':
         await this.handleToolUseStart(event, baseFields, context.sessionId);
@@ -608,6 +614,52 @@ export class AgentEventSink {
       'resolve',
       runId
     );
+  }
+
+  /** Saves the agent's title and shows it to Web Chat clients; the title the conversation already has changes nothing. */
+  private async handleTitle(
+    event: Extract<AgentEvent, { type: 'title' }>,
+    context: AgentEventContext,
+    envelope: AgentEventEnvelope
+  ): Promise<void> {
+    const title = normalizeAgentConversationTitle(event.title);
+    if (!title) {
+      this.logger.warn(
+        { runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping agent title event: no title text'
+      );
+
+      return;
+    }
+
+    const isChanged = await this.conversationRepository.updateTitle(
+      context.environmentId,
+      context.organizationId,
+      context.conversationId,
+      title
+    );
+    if (!isChanged || !context.platform || !usesProtocolEventApprovals(context.platform)) {
+      return;
+    }
+
+    const conversation = await this.conversationService.getConversation(
+      context.conversationId,
+      context.environmentId,
+      context.organizationId
+    );
+    if (!conversation) {
+      return;
+    }
+
+    await this.webChatLiveActivityPublisher.emitEphemeralEvent({
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      conversation,
+      event: { type: 'title', title },
+      runId: envelope.runId,
+      turnId: envelope.turnId,
+    });
   }
 
   private async handleToolUseStart(

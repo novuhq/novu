@@ -7,6 +7,7 @@ import {
   getConversationTitle,
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
+  normalizeAgentConversationTitle,
 } from './agent-conversation.service';
 import { ConversationActivityLedger } from './conversation-activity-ledger';
 
@@ -95,6 +96,19 @@ describe('AgentConversationService', () => {
     it('returns default title when preview text is empty', () => {
       expect(getConversationTitle('')).to.equal(DEFAULT_CONVERSATION_TITLE);
       expect(getConversationTitle('   ')).to.equal(DEFAULT_CONVERSATION_TITLE);
+    });
+  });
+
+  describe('normalizeAgentConversationTitle', () => {
+    it('keeps the title on one line and cuts it to 200 characters', () => {
+      expect(normalizeAgentConversationTitle('  Welcome\n\temail   flow ')).to.equal('Welcome email flow');
+      expect(normalizeAgentConversationTitle(`${'a'.repeat(199)} b c`)).to.equal('a'.repeat(199));
+    });
+
+    it('returns undefined for a title without text', () => {
+      expect(normalizeAgentConversationTitle('  \n ')).to.equal(undefined);
+      expect(normalizeAgentConversationTitle(42)).to.equal(undefined);
+      expect(normalizeAgentConversationTitle(undefined)).to.equal(undefined);
     });
   });
 
