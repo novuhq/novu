@@ -19,6 +19,7 @@ import {
 } from "../utils/workflow-schemas";
 import {
 	hasHiddenSecret,
+	redactWorkflowListSecrets,
 	redactWorkflowSecrets,
 	restoreWorkflowSecrets,
 } from "../utils/workflow-secrets";
@@ -31,14 +32,19 @@ const AGENT_ASSIGNMENT_GUIDE = [
 ].join(" ");
 
 export function registerWorkflowTools(server: McpServer, accessors: ToolAccessors) {
-	// Get all workflows - simple GET endpoint
-	ToolFactory.createGetTool(
+	// Get all workflows - simple GET endpoint; a listed HTTP request step's issue text can quote a secret
+	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
 		"get_workflows",
 		"Get all available workflows from your Novu application with their basic information and identifiers",
-		"/v2/workflows",
 		"fetched workflows",
+		z.object({}),
+		{
+			buildEndpoint: () => "/v2/workflows",
+			formatSuccess: (data) =>
+				`Successfully fetched workflows:\n\n${JSON.stringify(redactWorkflowListSecrets(data), null, 2)}`,
+		},
 	);
 
 	// Get specific workflow by ID - simple GET by ID
