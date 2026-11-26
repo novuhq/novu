@@ -43,7 +43,7 @@ export function getErrorHttpStatus(error: unknown): number | undefined {
  * Default mapping from an HTTP status to a verification outcome:
  * - 401 → INVALID (the key is unknown or revoked)
  * - no status (timeout / DNS / network), 408, 429, 5xx → UNREACHABLE (transient, retry)
- * - anything else, 403 included → INCONCLUSIVE (never pause on an answer we can't interpret)
+ * - anything else, 403 included → INCONCLUSIVE (an answer we can't interpret)
  */
 export function classifyHttpStatus(httpStatus: number | undefined): VerifyCredentialsStatusEnum {
   if (httpStatus === undefined || httpStatus === 408 || httpStatus === 429 || httpStatus >= 500) {

@@ -16,8 +16,6 @@ export type IntegrationHealth = {
   label: string;
   /** What the provider said, when the check didn't pass. */
   message?: string;
-  /** True when the credentials were rejected, so saving new ones is a reconnect. */
-  needsReconnect: boolean;
 };
 
 export function getIntegrationHealthQueryKey(integrationId: string) {
@@ -34,22 +32,22 @@ function toHealth(
   result: ITestIntegrationConnectionResponse | undefined,
   isChecking: boolean
 ): IntegrationHealth {
-  if (!integration.active) return { tone: 'neutral', label: 'Paused', needsReconnect: false };
-  if (isChecking) return { tone: 'neutral', label: 'Verifying…', needsReconnect: false };
+  if (!integration.active) return { tone: 'neutral', label: 'Paused' };
+  if (isChecking) return { tone: 'neutral', label: 'Verifying…' };
 
   switch (result?.status) {
     case IntegrationConnectionStatusEnum.VALID:
-      return { tone: 'success', label: 'Connected', needsReconnect: false };
+      return { tone: 'success', label: 'Connected' };
     case IntegrationConnectionStatusEnum.INVALID:
-      return { tone: 'error', label: 'Verification failed', message: result.message, needsReconnect: true };
+      return { tone: 'error', label: 'Verification failed', message: result.message };
     case IntegrationConnectionStatusEnum.UNREACHABLE:
-      return { tone: 'warning', label: 'Provider unreachable', message: result.message, needsReconnect: false };
+      return { tone: 'warning', label: 'Provider unreachable', message: result.message };
     case IntegrationConnectionStatusEnum.INCONCLUSIVE:
-      return { tone: 'neutral', label: 'Verification inconclusive', needsReconnect: false };
+      return { tone: 'neutral', label: 'Verification inconclusive' };
     default:
       // Not verified yet, the provider can't be verified, or the check couldn't run: the integration is on,
       // which is all we know, so it isn't shown as delivering.
-      return { tone: 'neutral', label: 'Active', needsReconnect: false };
+      return { tone: 'neutral', label: 'Active' };
   }
 }
 

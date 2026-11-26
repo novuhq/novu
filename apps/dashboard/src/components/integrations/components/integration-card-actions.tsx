@@ -129,10 +129,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
     onError: () => showErrorToast(`Couldn't verify ${integration.name}. Try again.`, undefined, { id: testToastId }),
   });
 
-  /**
-   * Shows the outcome. It never changes the integration: rejected credentials are reported so the user can
-   * fix them in Edit configuration, or pause the integration themselves.
-   */
+  /** Shows the outcome of the check. */
   const handleConnectionResult = ({ status, message }: ITestIntegrationConnectionResponse) => {
     const toastOptions = { id: testToastId, duration: 8_000 };
 
@@ -142,7 +139,7 @@ export function IntegrationCardActions({ integration, onEdit }: IntegrationCardA
       case IntegrationConnectionStatusEnum.INVALID:
         return showErrorToast(
           `${message} ${integration.name} didn't pass verification. Update its credentials in Edit configuration.`,
-          'Credentials rejected',
+          'Verification failed',
           { id: testToastId, duration: 10_000 }
         );
       case IntegrationConnectionStatusEnum.UNREACHABLE:

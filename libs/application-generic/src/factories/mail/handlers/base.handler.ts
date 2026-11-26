@@ -32,7 +32,7 @@ const EMAIL_PROVIDERS_WITHOUT_REAL_CHECK: ReadonlySet<string> = new Set([
 /**
  * Providers whose `BAD_CREDENTIALS` only means the API key was rejected. Others also use it for request errors
  * (SendGrid maps 400, Anypost includes permission errors, Mailjet returns it for every exception), so for them it
- * is treated as inconclusive and never pauses an integration.
+ * is reported as inconclusive rather than invalid.
  */
 const EMAIL_PROVIDERS_WITH_RELIABLE_BAD_CREDENTIALS: ReadonlySet<string> = new Set([
   EmailProviderIdEnum.Postmark,

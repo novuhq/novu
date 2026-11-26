@@ -59,13 +59,6 @@ const TONE_DOT: Record<IntegrationHealth['tone'], { halo: string; dot: string }>
   neutral: { halo: 'bg-neutral-alpha-100', dot: 'bg-text-soft' },
 };
 
-/** "email", "push", but "SMS". */
-function channelNoun(integration: IIntegration) {
-  const label = integration.channel ? CHANNEL_LABELS[integration.channel] : 'channel';
-
-  return label === label.toUpperCase() ? label : label.toLowerCase();
-}
-
 /** The API returns the stored timestamps, but the shared type doesn't declare them. */
 function getTimestamp(integration: IIntegration, field: 'createdAt' | 'updatedAt') {
   const value = (integration as IIntegration & Partial<Record<'createdAt' | 'updatedAt', unknown>>)[field];
@@ -248,7 +241,7 @@ export function ManageIntegrationHeader({
   );
 }
 
-/** Environment name on the left and how the integration is doing on the right. */
+/** Environment name on the left and the last "Verify integration" result on the right. */
 export function EnvironmentTitle({ environment, health }: { environment?: IEnvironment; health: IntegrationHealth }) {
   return (
     <div className="flex items-center gap-2">
@@ -259,22 +252,14 @@ export function EnvironmentTitle({ environment, health }: { environment?: IEnvir
   );
 }
 
-/** Why the integration isn't delivering, and what happens until it's fixed. */
-export function HealthBanner({
-  integration,
-  environment,
-  health,
-}: {
-  integration: IIntegration;
-  environment?: IEnvironment;
-  health: IntegrationHealth;
-}) {
+/** Why the last "Verify integration" didn't pass, and what to do next. */
+export function HealthBanner({ health }: { health: IntegrationHealth }) {
   if (health.tone !== 'error' && health.tone !== 'warning') return null;
 
-  const where = environment ? ` in ${environment.name}` : '';
-  const consequence = health.needsReconnect
-    ? `${integration.channel ? CHANNEL_LABELS[integration.channel] : 'Its'} steps${where} may be skipped until you reconnect.`
-    : 'Nothing was changed. Verify again in a few minutes.';
+  const nextStep =
+    health.tone === 'error'
+      ? 'Update the credentials, save, and verify again.'
+      : 'Nothing was changed. Verify again in a few minutes.';
 
   return (
     <div className="bg-bg-weak border-stroke-weak flex items-stretch gap-3 rounded-lg border px-3 py-2.5">
@@ -284,7 +269,7 @@ export function HealthBanner({
       />
       <p className="text-label-xs text-text-strong">
         {health.message ? `${health.message} ` : ''}
-        {consequence}
+        {nextStep}
       </p>
     </div>
   );
@@ -444,8 +429,6 @@ export function IntegrationDetailsPanel({
 
 /** Status on the left; Cancel and the save action on the right. */
 export function ManageIntegrationFooter({
-  integration,
-  environment,
   health,
   formId,
   isSaving,
@@ -453,8 +436,6 @@ export function ManageIntegrationFooter({
   isReadOnly,
   onCancel,
 }: {
-  integration: IIntegration;
-  environment?: IEnvironment;
   health: IntegrationHealth;
   formId: string;
   isSaving: boolean;
@@ -462,16 +443,11 @@ export function ManageIntegrationFooter({
   isReadOnly: boolean;
   onCancel: () => void;
 }) {
-  const where = environment ? `${environment.name} ` : '';
-  let status = health.label;
-  if (health.tone === 'error') status = `${where}${channelNoun(integration)} steps are failing`;
-  else if (health.tone === 'success') status = `${where}${channelNoun(integration)} steps are sending`;
-
   return (
     <div className="bg-bg-weak border-stroke-soft flex items-center gap-2 border-t px-5 py-3">
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <HealthDot tone={health.tone} />
-        <span className="text-label-xs text-text-sub truncate">{status}</span>
+        <span className="text-label-xs text-text-sub truncate">{health.label}</span>
       </span>
       <Button
         type="button"
@@ -494,7 +470,7 @@ export function ManageIntegrationFooter({
           disabled={!canSave}
           isLoading={isSaving}
         >
-          {health.needsReconnect ? 'Reconnect' : 'Save changes'}
+          Save changes
         </Button>
       )}
     </div>

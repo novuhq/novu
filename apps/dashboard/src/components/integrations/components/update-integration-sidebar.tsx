@@ -307,7 +307,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const isIntegrationDeletionAllowed =
     !isDemoIntegration(integration?.providerId) && integration?.channel !== ChannelTypeEnum.IN_APP && !isReadOnly;
 
-  const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '', needsReconnect: false };
+  const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '' };
   const formId = `integration-configuration-form-${provider.id}`;
   const onMakePrimary = canMakePrimary(integration, isReadOnly, isChannelSupportPrimary) ? makePrimary.open : undefined;
 
@@ -374,7 +374,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           />
           <div className="scrollbar-custom flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
             <EnvironmentTitle environment={environment} health={health} />
-            <HealthBanner integration={integration} environment={environment} health={health} />
+            <HealthBanner health={health} />
             <IntegrationSettings
               // Switching environments shows another integration, so the form starts again from its values.
               key={integration._id}
@@ -395,8 +395,6 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         </div>
 
         <ManageIntegrationFooter
-          integration={integration}
-          environment={environment}
           health={health}
           formId={formId}
           isSaving={isUpdating || isSettingPrimary}
