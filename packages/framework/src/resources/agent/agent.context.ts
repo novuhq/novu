@@ -369,6 +369,10 @@ class EventOutboxTransport {
     await this.outbox.emit({ type: 'custom', name, data });
   }
 
+  async setTitle(title: string): Promise<void> {
+    await this.outbox.emit({ type: 'title', title });
+  }
+
   queueRunStart(): void {
     this.outbox.enqueue({ type: 'run-start' });
   }
@@ -660,6 +664,15 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   async emit(event: { name: string; data: unknown }): Promise<void> {
     await this._transport.emitCustom(event.name, event.data);
+  }
+
+  async setTitle(title: string): Promise<void> {
+    const trimmed = typeof title === 'string' ? title.trim() : '';
+    if (!trimmed) {
+      throw new Error('ctx.setTitle() requires a non-empty title');
+    }
+
+    await this._transport.setTitle(trimmed);
   }
 
   resolve(summary?: string): void {

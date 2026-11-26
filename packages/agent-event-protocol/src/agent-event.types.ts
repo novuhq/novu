@@ -174,6 +174,8 @@ export type AgentEvent =
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
+  /** The conversation's new title: from the agent (`ctx.setTitle()`), then from Novu to Web Chat clients once saved. */
+  | { type: 'title'; title: string }
   | { type: 'signal'; signal: AgentSignal }
   // Channel operations: imperative events that only the framework SDK emits.
   | { type: 'channel.typing'; state: 'on' | 'off'; status?: string }

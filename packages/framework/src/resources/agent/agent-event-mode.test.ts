@@ -236,6 +236,53 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(eventBatches[4][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
+  it('setTitle posts a trimmed title event right away, and ctx.conversation.title keeps the turn start title', async () => {
+    const { eventBatches } = stubEventModeFetch();
+    const titles: Array<string | undefined> = [];
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          titles.push(ctx.conversation.title);
+          await ctx.setTitle('  Refund for order #123  ');
+          titles.push(ctx.conversation.title);
+          await ctx.reply('Done');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge({
+        conversation: { ...createMockBridgeRequest().conversation, title: 'Hello bot!' },
+      }),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(titles).toEqual(['Hello bot!', 'Hello bot!']);
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event).toEqual({ type: 'title', title: 'Refund for order #123' });
+    expect(eventBatches[1][0].event.type).toBe('message');
+    expect(eventBatches[2][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+  });
+
+  it('setTitle rejects a blank title without posting it', async () => {
+    const { eventBatches } = stubEventModeFetch();
+    let error: unknown;
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          error = await ctx.setTitle('   ').catch((err: unknown) => err);
+          await ctx.reply('Done');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(error).toBeInstanceOf(Error);
+    expect(flattenEventTypes(eventBatches).some((event) => event.type === 'title')).toBe(false);
+  });
+
   it('batches queued signal then message in one flush on reply', async () => {
     const { eventBatches } = stubEventModeFetch();
 

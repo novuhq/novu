@@ -206,6 +206,11 @@ export interface AgentConversation {
   /** Lifecycle status (e.g. `'open'`, `'resolved'`). */
   status: string;
   /**
+   * Human-readable title as the turn started. Novu starts it from the first message; change it with `ctx.setTitle()`.
+   * Absent on Novu versions that do not send it.
+   */
+  title?: string;
+  /**
    * Key/value store for this conversation.
    * Values are written via `ctx.metadata.set()` and readable on subsequent messages.
    */
@@ -809,6 +814,15 @@ export interface AgentHandlerContext {
    * Emit a custom AgentEvent (event mode only — no-op when the bridge omits `eventsUrl`).
    */
   emit(event: { name: string; data: unknown }): Promise<void>;
+  /**
+   * Rename the conversation, e.g. with a few words on what it is about. Posts immediately (like `emit()`).
+   * Novu saves the title, cut to 200 characters, and Web Chat clients show the new one.
+   * `ctx.conversation.title` keeps the title the turn started with.
+   *
+   * @example
+   *   await ctx.setTitle('Refund for order #123');
+   */
+  setTitle(title: string): Promise<void>;
   /**
    * Control the typing / "Thinking…" status for the current turn.
    * Posts immediately (like `reply()`), updating the indicator Novu already shows on inbound.
