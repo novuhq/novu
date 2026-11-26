@@ -114,6 +114,7 @@ export const ChatBody = ({
   onSubmit,
   messages,
   isSubmitDisabled,
+  composerPlaceholder,
   isReviewingChanges,
   isActionPending,
   lastUserMessageId,
@@ -134,6 +135,8 @@ export const ChatBody = ({
   onSubmit: (message: string) => void;
   messages: UIMessage[];
   isSubmitDisabled: boolean;
+  /** Replaces the default composer placeholder and locks the composer while set. */
+  composerPlaceholder?: string;
   isReviewingChanges?: boolean;
   isActionPending?: boolean;
   lastUserMessageId?: string;
@@ -247,7 +250,8 @@ export const ChatBody = ({
                   }
                 }
               }}
-              placeholder="Ask for changes… eg: Make the workflow high severity.."
+              disabled={!!composerPlaceholder}
+              placeholder={composerPlaceholder ?? 'Ask for changes… eg: Make the workflow high severity..'}
             />
           </PromptInputBody>
           <PromptInputFooter>

@@ -10,6 +10,13 @@ import type { CopilotPageContext } from './copilot-web-chat-utils';
 /** `null` is no Copilot, which is also what a page outside `CopilotModeProvider` (the local editor) gets. */
 export const CopilotModeContext = createContext<EditorCopilotMode | null>(null);
 
+/** Whether this visit shows the legacy Copilot only until its unreviewed changes are kept or discarded. */
+export const LegacyCopilotMigrationContext = createContext(false);
+
+export function useIsLegacyCopilotMigrationPending(): boolean {
+  return useContext(LegacyCopilotMigrationContext);
+}
+
 /** The Copilot mode the flags ask for right now; LaunchDarkly can change it mid-visit. */
 export function useLiveCopilotMode(): CopilotMode {
   const isWebChatEnabled =

@@ -1,8 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
+import { useIsLegacyCopilotMigrationPending } from '../copilot-web-chat/copilot-mode-context';
 import { BroomSparkle } from '../icons/broom-sparkle';
 import { Badge } from '../primitives/badge';
 import { useAiChat } from './ai-chat-context';
 import { ChatBody, ChatBodySkeleton } from './chat-body';
+import { LegacyCopilotMigrationBanner } from './legacy-copilot-migration-banner';
 
 const FADE_TRANSITION = { duration: 0.4, ease: 'easeInOut' } as const;
 
@@ -29,6 +31,8 @@ export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
     handleDiscard,
     handleSuggestionClick,
   } = useAiChat();
+  const isMigrationPending = useIsLegacyCopilotMigrationPending();
+  const isMigrationBannerVisible = isMigrationPending && isReviewingChanges;
 
   return (
     <motion.div
@@ -61,6 +65,15 @@ export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
           </div>
         </div>
       )}
+      {isMigrationBannerVisible && !isLoading && (
+        <LegacyCopilotMigrationBanner
+          canResolve={!!lastUserMessageId}
+          isActionPending={isActionPending}
+          isGenerating={isGenerating}
+          onKeepAll={handleKeepAll}
+          onDiscard={() => lastUserMessageId && handleDiscard(lastUserMessageId)}
+        />
+      )}
       <AnimatePresence mode="wait">
         {isLoading ? (
           <motion.div
@@ -92,7 +105,8 @@ export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
               stop={handleStop}
               onSubmit={handleSendMessage}
               messages={messages}
-              isSubmitDisabled={isCreatingChat}
+              isSubmitDisabled={isCreatingChat || isMigrationBannerVisible}
+              composerPlaceholder={isMigrationBannerVisible ? 'Keep or discard the changes to continue' : undefined}
               isReviewingChanges={isReviewingChanges}
               isActionPending={isActionPending}
               onKeepAll={handleKeepAll}
