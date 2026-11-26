@@ -11,6 +11,7 @@ import {
   isDashboardLink,
   loadTryAgainPrompt,
   orderStoppedTurns,
+  toDashboardPath,
 } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
@@ -539,5 +540,22 @@ describe('isDashboardLink', () => {
     expect(isDashboardLink('https://dashboard.novu.co.evil.com/env', origin)).toBe(false);
     expect(isDashboardLink('javascript:alert(1)', origin)).toBe(false);
     expect(isDashboardLink('http://[invalid', origin)).toBe(false);
+  });
+});
+
+describe('toDashboardPath', () => {
+  const origin = 'https://dashboard.novu.co';
+
+  it('keeps the path, query and hash of a dashboard link', () => {
+    expect(toDashboardPath(`${origin}/env/dev_env_1/workflows/welcome/trigger?tab=payload#top`, origin)).toBe(
+      '/env/dev_env_1/workflows/welcome/trigger?tab=payload#top'
+    );
+    expect(toDashboardPath('/integrations', origin)).toBe('/integrations');
+  });
+
+  it('has none for another origin or an invalid link', () => {
+    expect(toDashboardPath('https://dashboard.novu.co.evil.com/integrations', origin)).toBeUndefined();
+    expect(toDashboardPath('javascript:alert(1)', origin)).toBeUndefined();
+    expect(toDashboardPath('http://[invalid', origin)).toBeUndefined();
   });
 });

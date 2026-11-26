@@ -508,3 +508,15 @@ export function isDashboardLink(url: string, origin: string): boolean {
     return false;
   }
 }
+
+/** The in-app path of a dashboard link, for the router; `undefined` for a link out of the dashboard. */
+export function toDashboardPath(url: string, origin: string): string | undefined {
+  try {
+    const parsed = new URL(url, origin);
+    if (parsed.origin !== origin) return undefined;
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return undefined;
+  }
+}

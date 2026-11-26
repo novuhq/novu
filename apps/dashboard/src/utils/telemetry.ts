@@ -123,6 +123,11 @@ export enum TelemetryEvent {
   COPILOT_SUGGESTION_CLICKED = 'Copilot suggestion clicked - [AI Copilot]',
   COPILOT_TAB_SWITCHED = 'Copilot tab switched - [AI Copilot]',
   COPILOT_SUGGESTIONS_REFRESHED = 'Copilot suggestions refreshed - [AI Copilot]',
+  COPILOT_FOLLOW_UP_USED = 'Copilot follow-up used - [AI Copilot]',
+  COPILOT_ANSWER_FEEDBACK = 'Copilot answer feedback - [AI Copilot]',
+  COPILOT_ANSWER_COPIED = 'Copilot answer copied - [AI Copilot]',
+  COPILOT_ANSWER_RETRIED = 'Copilot answer retried - [AI Copilot]',
+  COPILOT_RESULT_ACTION_CLICKED = 'Copilot result action clicked - [AI Copilot]',
 
   STEP_RESOLVER_CUSTOM_CODE_CLICKED = 'Custom code clicked - [Workflow Editor]',
 

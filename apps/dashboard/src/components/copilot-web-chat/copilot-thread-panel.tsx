@@ -1,19 +1,18 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import type { CopilotFollowUp } from '@novu/shared';
+import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { CopilotTurnView } from './copilot-answer';
+import { type CopilotTurn, getSettledCopilotFollowUps, groupCopilotTurns } from './copilot-answers';
 import { type CopilotPanelCopy, getCopilotPanelCopy } from './copilot-pages';
-import {
-  CopilotAssistantMessage,
-  CopilotErrorNotice,
-  CopilotThinkingIndicator,
-  CopilotUserMessage,
-} from './copilot-thread-parts';
+import { CopilotErrorNotice, CopilotThinkingIndicator } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
+import { useCopilotFollowUp } from './use-copilot-follow-up';
 
 // The raised white surface of the hero's icon tile and the suggestions list.
 const RAISED_SURFACE_SHADOW =
@@ -128,10 +127,13 @@ function Composer({
   hasMessages,
   placeholder,
   chip,
+  ghostFollowUp,
 }: {
   hasMessages: boolean;
   placeholder: string;
   chip: CopilotPanelCopy['chip'];
+  /** The newest answer's top follow-up, shown in the empty input and filled in with Tab. */
+  ghostFollowUp?: { followUp: CopilotFollowUp; index: number };
 }) {
   const {
     isAvailable,
@@ -146,12 +148,15 @@ function Composer({
     completeReveal,
   } = useCopilotWebChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const applyFollowUp = useCopilotFollowUp();
   const failedSend = getFailedSend(chat?.messages ?? []);
   const [dismissedFailureId, setDismissedFailureId] = useState<string>();
   // The failure stays until retried, dismissed or a new chat starts: the strip is the only place it can be retried.
   const showFailureStrip = !!failedSend && failedSend.id !== dismissedFailureId;
   const canSend = isAvailable && value.trim().length > 0 && !isBusy && !chat?.isLoading;
   const ChipIcon = chip?.icon;
+  const ghost = value ? undefined : ghostFollowUp;
+  const idlePlaceholder = hasMessages ? 'Ask a follow-up…' : placeholder;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -182,6 +187,9 @@ function Composer({
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       submit();
+    } else if (event.key === 'Tab' && !event.shiftKey && ghost) {
+      event.preventDefault();
+      applyFollowUp(ghost.followUp, ghost.index, 'tab');
     }
   };
 
@@ -197,17 +205,29 @@ function Composer({
       ) : (
         <CopilotSlackConnectBanner />
       )}
-      <div className="flex flex-col rounded-md bg-bg-white shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
+      <div className="relative flex flex-col rounded-md bg-bg-white shadow-[0_1px_3px_rgba(14,18,27,0.12)] ring-1 ring-stroke-soft">
         <textarea
           ref={textareaRef}
           value={value}
           rows={2}
           aria-label="Message Copilot"
+          aria-keyshortcuts={ghost ? 'Tab' : undefined}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={hasMessages ? 'Ask a follow-up…' : placeholder}
-          className="w-full resize-none bg-transparent px-3 pt-3 text-label-xs text-text-strong outline-none placeholder:text-text-soft"
+          placeholder={ghost?.followUp.text ?? idlePlaceholder}
+          className={cn(
+            'w-full resize-none bg-transparent px-3 pt-3 text-label-xs text-text-strong outline-none placeholder:text-text-soft',
+            ghost && 'pr-12'
+          )}
         />
+        {ghost && (
+          <kbd
+            aria-hidden
+            className="pointer-events-none absolute right-2.5 top-2.5 rounded border border-stroke-soft bg-bg-weak px-1 font-code text-[10px] leading-4 text-text-soft"
+          >
+            Tab
+          </kbd>
+        )}
         <div className="flex items-center justify-between gap-2 p-1.5">
           {chip ? (
             <span className="flex min-w-0 max-w-[260px] items-center gap-1 rounded-md bg-bg-weak py-1 pl-1.5 pr-2 text-label-xs text-text-sub">
@@ -249,7 +269,7 @@ function Composer({
   );
 }
 
-function Thread() {
+function Thread({ turns, followUps }: { turns: CopilotTurn[]; followUps: CopilotFollowUp[] }) {
   const { chat, retry, hasRunError, isBusy } = useCopilotWebChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = chat?.messages ?? [];
@@ -264,12 +284,13 @@ function Thread() {
     : '';
   const pagination = chat?.pagination;
 
-  // Keyed on the newest message's content, so loading older pages keeps the reader's place.
+  // Keyed on the newest message's content, so loading older pages keeps the reader's place. The follow-ups appear once
+  // the run ends, after the newest message settled.
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the newest message changes while streaming
   useEffect(() => {
     const element = scrollRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [tailKey, hasRunError, showThinking]);
+  }, [tailKey, hasRunError, showThinking, followUps.length]);
 
   // The step editor keeps this tab mounted but hidden (0px tall, scroll reset), so it would reopen at the top.
   useEffect(() => {
@@ -300,13 +321,18 @@ function Thread() {
             {pagination.status === 'loading' ? 'Loading…' : 'Load earlier messages'}
           </button>
         )}
-        {orderStoppedTurns(messages).map((message) =>
-          message.role === 'user' ? (
-            <CopilotUserMessage key={message.id} message={message} />
-          ) : (
-            <CopilotAssistantMessage key={message.id} message={message} />
-          )
-        )}
+        {turns.map((turn, index) => {
+          const isLatest = index === turns.length - 1;
+
+          return (
+            <CopilotTurnView
+              key={turn.key}
+              turn={turn}
+              isLatest={isLatest}
+              followUps={isLatest ? followUps : undefined}
+            />
+          );
+        })}
         {showThinking && <CopilotThinkingIndicator label={thinkingLabel} />}
         {/* A failed send is surfaced by the composer strip instead. */}
         {hasRunError && !chat?.isRunning && !getFailedSend(messages) && (
@@ -326,15 +352,19 @@ function ThreadBody({
   hasMessages,
   emptyState,
   suggestions,
+  turns,
+  followUps,
 }: {
   hasMessages: boolean;
   emptyState: CopilotPanelCopy['emptyState'];
   suggestions: CopilotPanelCopy['suggestions'];
+  turns: CopilotTurn[];
+  followUps: CopilotFollowUp[];
 }) {
   const { isAvailable, isConnecting, chat, sendMessage, hasRunError, surface, pageContext } = useCopilotWebChat();
   const track = useTelemetry();
 
-  if (hasMessages || hasRunError) return <Thread />;
+  if (hasMessages || hasRunError) return <Thread turns={turns} followUps={followUps} />;
 
   if (isConnecting) {
     return (
@@ -377,14 +407,29 @@ function ThreadBody({
  * page's copy and suggestions replace the workflow editor's.
  */
 export function CopilotThreadPanel() {
-  const { chat, pageContext } = useCopilotWebChat();
-  const hasMessages = (chat?.messages.length ?? 0) > 0;
+  const { chat, pageContext, isBusy, hasRunError } = useCopilotWebChat();
+  const messages = chat?.messages;
+  const hasMessages = (messages?.length ?? 0) > 0;
   const copy = getCopilotPanelCopy(pageContext);
+  const turns = useMemo(() => groupCopilotTurns(orderStoppedTurns(messages ?? [])), [messages]);
+  const followUps = getSettledCopilotFollowUps(turns, { isBusy, hasRunError });
+  const ghostIndex = followUps.findIndex((followUp) => !followUp.url);
 
   return (
     <>
-      <ThreadBody hasMessages={hasMessages} emptyState={copy.emptyState} suggestions={copy.suggestions} />
-      <Composer hasMessages={hasMessages} placeholder={copy.placeholder} chip={copy.chip} />
+      <ThreadBody
+        hasMessages={hasMessages}
+        emptyState={copy.emptyState}
+        suggestions={copy.suggestions}
+        turns={turns}
+        followUps={followUps}
+      />
+      <Composer
+        hasMessages={hasMessages}
+        placeholder={copy.placeholder}
+        chip={copy.chip}
+        ghostFollowUp={ghostIndex >= 0 ? { followUp: followUps[ghostIndex], index: ghostIndex } : undefined}
+      />
     </>
   );
 }
