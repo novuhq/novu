@@ -44,7 +44,7 @@ const URL_IN_TEXT = /\bhttps?:\/\/[^\s"'<>]+/gi;
 // A failed context lookup on trigger appends the whole trigger context, data included, to its error message.
 const CONTEXT_SUFFIX = /\s*\| Context: [\s\S]*$/;
 /** A path segment that reads like an id or secret, such as the last parts of a chat webhook URL. */
-const SECRET_LIKE_SEGMENT = /^(?=[^/]*\d)(?=[^/]*[A-Za-z])[\w\-.~]{16,}$/;
+export const SECRET_LIKE_SEGMENT = /^(?=[^/]*\d)(?=[^/]*[A-Za-z])[\w\-.~]{16,}$/;
 
 const ATTENTION_STATUSES = new Set(["Failed", "Warning"]);
 
@@ -90,7 +90,8 @@ function redactUrl(text: string): string {
 	}
 }
 
-function scrub(value: string): string {
+/** Error text with URL secrets, credential values and long tokens redacted, capped at 200 characters. */
+export function scrub(value: string): string {
 	return truncate(
 		value
 			.replace(CONTEXT_SUFFIX, "")

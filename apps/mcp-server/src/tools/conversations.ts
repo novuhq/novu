@@ -22,7 +22,7 @@ const LIST_CONVERSATIONS_DESCRIPTION = [
 const GET_ACTIVITIES_DESCRIPTION = [
 	"List the activity timeline for a conversation (messages, approvals, MCP connection rows).",
 	"Default output is a compact debug digest with a diagnosis header for the current page.",
-	"Pass verbose:true for raw JSON. Use after get_conversations.",
+	"Pass verbose:true for each activity's fields as JSON. Use after get_conversations.",
 	"A 404 means the conversation was not found or Conversations is unavailable (Community Edition / flag off).",
 ].join(" ");
 

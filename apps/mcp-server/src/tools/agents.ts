@@ -1,5 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
+	INVALID_URL_MARK,
+	REDACTED_MARK,
+	systemPromptNote,
+	toAgentList,
+	toAgentSummary,
+	unwrapRecord,
+} from "../utils/agent-results";
+import {
 	type AgentRuntimeIntegration,
 	agentResourcePath,
 	buildCreateAgentBody,
@@ -121,6 +129,11 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 
 				return query ? `/v1/agents?${query}` : "/v1/agents";
 			},
+			formatSuccess: (data) => {
+				const list = toAgentList(data);
+
+				return `Successfully fetched agents (${list.data.length} on this page).\n\n${JSON.stringify(list)}`;
+			},
 		},
 	);
 
@@ -128,11 +141,25 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 		server,
 		accessors,
 		"get_agent",
-		"Retrieve a single agent by its identifier (slug), including runtime config when managed.",
+		"Retrieve a single agent by its identifier (slug): settings, bridge and, when managed, its provider, tools and MCP servers.",
 		"fetched agent",
 		getAgentInputSchema,
 		{
 			buildEndpoint: (input) => agentResourcePath(input.identifier),
+			formatSuccess: (data, input) => {
+				const record = unwrapRecord(data);
+				const agent = toAgentSummary(record, {
+					includeSystemPrompt: input.includeSystemPrompt,
+				});
+
+				return [
+					`Successfully fetched agent ${input.identifier}.`,
+					input.includeSystemPrompt ? systemPromptNote(record) : undefined,
+					JSON.stringify(agent ?? {}),
+				]
+					.filter(Boolean)
+					.join("\n\n");
+			},
 			getIdentifier: (input) => input.identifier,
 		},
 	);
@@ -202,11 +229,26 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 				};
 			}
 
+			// Agent results show bridge URLs with these marks in place of their secrets, or of a URL that can't be read.
+			for (const field of ["bridgeUrl", "devBridgeUrl"] as const) {
+				const mark = [REDACTED_MARK, INVALID_URL_MARK].find((each) =>
+					fields[field]?.includes(each),
+				);
+				if (mark) {
+					return ToolFactory.errorResult({
+						message: `Error: ${field} contains ${mark}, which agent results show in place of a URL's secrets or an unreadable URL, so it isn't the whole URL. Ask the user for the full URL and pass it.`,
+						status: 400,
+					});
+				}
+			}
+
 			return ToolFactory.makeApiRequest(
 				context,
 				{
 					body,
 					endpoint: agentResourcePath(identifier),
+					formatSuccess: (data) =>
+						`Successfully updated agent ${identifier}.\n\n${JSON.stringify(toAgentSummary(unwrapRecord(data)) ?? {})}`,
 					identifier,
 					method: "PATCH",
 					successMessage: "updated agent",
@@ -255,7 +297,7 @@ async function fetchIntegrations(context: ToolContext): Promise<AgentRuntimeInte
 }
 
 function formatCreatedAgent(data: unknown, requestedIdentifier: string): string {
-	const record = unwrapAgentRecord(data);
+	const record = unwrapRecord(data);
 	const returnedIdentifier =
 		typeof record?.identifier === "string" ? record.identifier : requestedIdentifier;
 	const note =
@@ -266,7 +308,7 @@ function formatCreatedAgent(data: unknown, requestedIdentifier: string): string 
 	return [
 		`Successfully created agent "${returnedIdentifier}"${note}.`,
 		`Next: call connect_agent with identifier "${returnedIdentifier}" to connect a channel. Do not ask the user for Slack, Telegram, or other channel tokens.`,
-		JSON.stringify(data, null, 2),
+		JSON.stringify(toAgentSummary(record) ?? {}),
 	].join("\n\n");
 }
 
@@ -293,7 +335,7 @@ async function fetchAgentByIdentifier(
 		}
 
 		const payload: unknown = await response.json();
-		const record = unwrapAgentRecord(payload);
+		const record = unwrapRecord(payload);
 
 		return record ?? { identifier };
 	} catch (error) {
@@ -301,17 +343,4 @@ async function fetchAgentByIdentifier(
 
 		return null;
 	}
-}
-
-function unwrapAgentRecord(data: unknown): Record<string, unknown> | null {
-	if (!data || typeof data !== "object") {
-		return null;
-	}
-
-	const envelope = data as { data?: unknown };
-	if (envelope.data && typeof envelope.data === "object" && !Array.isArray(envelope.data)) {
-		return envelope.data as Record<string, unknown>;
-	}
-
-	return data as Record<string, unknown>;
 }
