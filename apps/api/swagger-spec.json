@@ -18890,7 +18890,7 @@
     },
     "/v2/subscribers/{subscriberId}/tokens": {
       "post": {
-        "description": "Create a short-lived, Novu-signed login token for the subscriber identified by **subscriberId**.\n    Call it from your backend with your secret key, then pass the token to the browser, which exchanges it for an Inbox session.\n    Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.",
+        "description": "Create a short-lived, Novu-signed login token for the subscriber identified by **subscriberId**.\n    Call it from your backend with your secret key, then pass the token to the browser, which exchanges it for an Inbox session.\n    Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.\n    Set **topic** to create a topic grant instead: a token of at most 60 seconds that lets the subscriber's Inbox session subscribe to that topic.",
         "operationId": "SubscribersController_createSubscriberToken",
         "parameters": [
           {
@@ -19376,7 +19376,7 @@
             "secretKey": []
           }
         ],
-        "summary": "Create a subscriber login token",
+        "summary": "Create a subscriber token",
         "tags": ["Subscribers"],
         "x-speakeasy-group": "Subscribers.Tokens",
         "x-speakeasy-name-override": "create"
@@ -33638,12 +33638,17 @@
               "$ref": "#/components/schemas/SubscriberTokenScopeEnum"
             }
           },
+          "topic": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Topic key the subscriber may subscribe to. When set, the token is a topic grant instead of a login token: the browser sends it with its subscribe request for this topic, and it lasts at most 60 seconds. Cannot be combined with scope, subscriber, context.",
+            "example": "ticket:12345"
+          },
           "expiresIn": {
             "type": "integer",
             "minimum": 1,
             "maximum": 3600,
-            "default": 3600,
-            "description": "Token lifetime in seconds, from 1 to 3600.",
+            "description": "Token lifetime in seconds, from 1 to 3600 for a login token (default 3600), or from 1 to 60 for a topic grant (default 60).",
             "example": 600
           }
         }
@@ -33653,7 +33658,7 @@
         "properties": {
           "token": {
             "type": "string",
-            "description": "Novu-signed login token for the subscriber. Exchange it in the browser for an Inbox session."
+            "description": "Novu-signed token for the subscriber. Exchange a login token in the browser for an Inbox session; send a topic grant with the subscribe request for its topic."
           },
           "expiresAt": {
             "type": "string",
