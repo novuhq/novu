@@ -21,6 +21,8 @@ run-name: >
 description: |
   This workflow deploys the Novu Cloud application to different environments and services based on the selected options.
   It builds Docker images, pushes them to Amazon ECR, and deploys them to Amazon ECS.
+  `production` deploys every production region: prod-us first, then the other regions once the
+  `prod-rollout-approval` environment is approved. A single region (`production-us`, `production-eu`, ...) deploys without approval.
   Optionally deploys the thalamus-observer, socket and MCP server Cloudflare Workers via Wrangler.
   Additionally, it creates Sentry releases and New Relic deployment markers.
 
@@ -56,13 +58,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy to"
+        description: "Environment to deploy to. production = all regions: US first, the rest after approval"
         required: true
         type: choice
         default: staging
         options:
           - staging
           - staging-sg
+          - production
           - production-us
           - production-eu
           - production-sg
@@ -70,8 +73,6 @@ on:
           - production-uk
           - production-jp
           - production-kr
-          - production-us-and-eu
-          - production-sg-au-uk-jp-kr
       runner:
         description: "Build runner"
         required: true
@@ -97,27 +98,27 @@ on:
         type: boolean
         default: false
       deploy_webhook:
-        description: "Deploy Webhook (staging / production-us / production-eu only)"
+        description: "Deploy Webhook (staging, US and EU only)"
         required: true
         type: boolean
         default: false
       deploy_inbound_mail:
-        description: "Deploy Inbound Mail (staging / production-us / production-eu only)"
+        description: "Deploy Inbound Mail (staging, US and EU only)"
         required: true
         type: boolean
         default: false
       deploy_thalamus_observer:
-        description: "Deploy thalamus-observer Cloudflare Worker (staging / production-us / production-us-and-eu only)"
+        description: "Deploy thalamus-observer Cloudflare Worker (staging and US only)"
         required: true
         type: boolean
         default: false
       deploy_socket_worker:
-        description: "Deploy socket Cloudflare Worker (staging / production-us / production-eu / production-us-and-eu only)"
+        description: "Deploy socket Cloudflare Worker (staging, US and EU only)"
         required: true
         type: boolean
         default: false
       deploy_mcp_server:
-        description: "Deploy MCP server Cloudflare Worker (staging / production-us / production-eu / production-us-and-eu only)"
+        description: "Deploy MCP server Cloudflare Worker (staging, US and EU only)"
         required: true
         type: boolean
         default: false
@@ -125,94 +126,28 @@ on:
 jobs:
   prepare-matrix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
-      env_matrix: ${{ steps.set-matrix.outputs.env_matrix }}
-      service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
-      deploy_matrix: ${{ steps.set-matrix.outputs.deploy_matrix }}
-      nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
-      has_ecs_services: ${{ steps.set-matrix.outputs.has_ecs_services }}
-      deploy_thalamus_observer: ${{ steps.set-matrix.outputs.deploy_thalamus_observer }}
-      thalamus_wrangler_env: ${{ steps.set-matrix.outputs.thalamus_wrangler_env }}
-      thalamus_gh_environment: ${{ steps.set-matrix.outputs.thalamus_gh_environment }}
-      socket_worker_matrix: ${{ steps.set-matrix.outputs.socket_worker_matrix }}
-      mcp_server_matrix: ${{ steps.set-matrix.outputs.mcp_server_matrix }}
+      wave_1: ${{ steps.plan.outputs.wave_1 }}
+      wave_2: ${{ steps.plan.outputs.wave_2 }}
+      staged: ${{ steps.plan.outputs.staged }}
+      build_environment: ${{ steps.plan.outputs.build_environment }}
+      build_services: ${{ steps.plan.outputs.build_services }}
+      has_ecs_services: ${{ steps.plan.outputs.has_ecs_services }}
+      first_environment: ${{ steps.plan.outputs.first_environment }}
     steps:
-      - name: Validate Selected Services
-        env:
-          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
-          INPUT_DEPLOY_API: ${{ github.event.inputs.deploy_api }}
-          INPUT_DEPLOY_WORKER: ${{ github.event.inputs.deploy_worker }}
-          INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
-          INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
-          INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
-          INPUT_DEPLOY_THALAMUS_OBSERVER: ${{ github.event.inputs.deploy_thalamus_observer }}
-          INPUT_DEPLOY_SOCKET_WORKER: ${{ github.event.inputs.deploy_socket_worker }}
-          INPUT_DEPLOY_MCP_SERVER: ${{ github.event.inputs.deploy_mcp_server }}
-        run: |
-          if [ "$INPUT_DEPLOY_API" != "true" ] && \
-             [ "$INPUT_DEPLOY_WORKER" != "true" ] && \
-             [ "$INPUT_DEPLOY_WS" != "true" ] && \
-             [ "$INPUT_DEPLOY_WEBHOOK" != "true" ] && \
-             [ "$INPUT_DEPLOY_INBOUND_MAIL" != "true" ] && \
-             [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" != "true" ] && \
-             [ "$INPUT_DEPLOY_SOCKET_WORKER" != "true" ] && \
-             [ "$INPUT_DEPLOY_MCP_SERVER" != "true" ]; then
-            echo "Error: At least one service must be selected for deployment."
-            exit 1
-          fi
+      - name: Checkout deploy scripts
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          sparse-checkout: .github/workflows/scripts
+          sparse-checkout-cone-mode: false
 
-          # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
-          # Fail fast if someone selects them with an unsupported environment.
-          if [ "$INPUT_DEPLOY_WEBHOOK" = "true" ] || \
-             [ "$INPUT_DEPLOY_INBOUND_MAIL" = "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging|production-us|production-eu|production-us-and-eu) ;;
-              *)
-                echo "Error: webhook and inbound-mail can only deploy to staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: $INPUT_ENVIRONMENT"
-                exit 1
-                ;;
-            esac
-          fi
-
-          # thalamus-observer is a single CF Worker (staging + one production).
-          if [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" = "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging|production-us|production-us-and-eu) ;;
-              *)
-                echo "Error: thalamus-observer can only deploy to staging, production-us, or production-us-and-eu."
-                echo "Selected environment: $INPUT_ENVIRONMENT"
-                exit 1
-                ;;
-            esac
-          fi
-
-          # The socket worker has one CF Worker per region: staging, production-us, production-eu.
-          if [ "$INPUT_DEPLOY_SOCKET_WORKER" = "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging|production-us|production-eu|production-us-and-eu) ;;
-              *)
-                echo "Error: socket-worker can only deploy to staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: $INPUT_ENVIRONMENT"
-                exit 1
-                ;;
-            esac
-          fi
-
-          # The MCP server has one CF Worker per region: staging, production-us, production-eu.
-          if [ "$INPUT_DEPLOY_MCP_SERVER" = "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging|production-us|production-eu|production-us-and-eu) ;;
-              *)
-                echo "Error: mcp-server can only deploy to staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: $INPUT_ENVIRONMENT"
-                exit 1
-                ;;
-            esac
-          fi
-
-      - name: Generate Environment, Service, and Deploy Matrices
-        id: set-matrix
+      # Validates the selection and works out what is deployed where, in which
+      # wave. See .github/workflows/scripts/deploy-plan.mjs.
+      - name: Plan the deploy
+        id: plan
         env:
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
           API_SERVICE: ${{ vars.API_SERVICE }}
@@ -225,548 +160,92 @@ jobs:
           INPUT_DEPLOY_THALAMUS_OBSERVER: ${{ github.event.inputs.deploy_thalamus_observer }}
           INPUT_DEPLOY_SOCKET_WORKER: ${{ github.event.inputs.deploy_socket_worker }}
           INPUT_DEPLOY_MCP_SERVER: ${{ github.event.inputs.deploy_mcp_server }}
-        run: |
-          envs=()
-          services=()
-          deploy_matrix=()
-          nr=()
-          has_ecs_services=false
-          deploy_thalamus_observer=false
-          thalamus_wrangler_env=""
-          thalamus_gh_environment=""
+        run: node .github/workflows/scripts/deploy-plan.mjs
 
-          # Collect selected environments
-          if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
-            envs+=("\"staging-eu\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "staging-sg" ]; then
-            envs+=("\"staging-apse1\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-us" ]; then
-            envs+=("\"prod-us\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-eu" ]; then
-            envs+=("\"prod-eu\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-sg" ]; then
-            envs+=("\"prod-apse1\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-au" ]; then
-            envs+=("\"prod-apse2\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-uk" ]; then
-            envs+=("\"prod-ew2\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-jp" ]; then
-            envs+=("\"prod-apne1\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-kr" ]; then
-            envs+=("\"prod-apne2\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-us-and-eu" ]; then
-            envs+=("\"prod-us\"")
-            envs+=("\"prod-eu\"")
-          fi
-          if [ "$INPUT_ENVIRONMENT" == "production-sg-au-uk-jp-kr" ]; then
-            envs+=("\"prod-apse1\"")
-            envs+=("\"prod-apse2\"")
-            envs+=("\"prod-ew2\"")
-            envs+=("\"prod-apne1\"")
-            envs+=("\"prod-apne2\"")
-          fi
-
-          # Collect selected services
-          if [ "$INPUT_DEPLOY_API" == "true" ]; then
-            services+=("\"api\"")
-            nr+=("\"api\"")
-          fi
-          if [ "$INPUT_DEPLOY_WORKER" == "true" ]; then
-            services+=("\"worker\"")
-            nr+=("\"worker\"")
-          fi
-          if [ "$INPUT_DEPLOY_WS" == "true" ]; then
-            services+=("\"ws\"")
-          fi
-          if [ "$INPUT_DEPLOY_WEBHOOK" == "true" ]; then
-            services+=("\"webhook\"")
-          fi
-          if [ "$INPUT_DEPLOY_INBOUND_MAIL" == "true" ]; then
-            services+=("\"inbound-mail\"")
-          fi
-
-          if [ ${#services[@]} -gt 0 ]; then
-            has_ecs_services=true
-          fi
-
-          if [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" == "true" ]; then
-            deploy_thalamus_observer=true
-            if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
-              thalamus_wrangler_env="staging"
-              thalamus_gh_environment="staging-eu"
-            else
-              # production-us and production-us-and-eu share one CF production Worker
-              thalamus_wrangler_env="production"
-              thalamus_gh_environment="prod-us"
-            fi
-          fi
-
-          # Pairs of Wrangler env (enterprise/workers/socket/wrangler.jsonc) and GitHub environment
-          socket_workers=()
-          if [ "$INPUT_DEPLOY_SOCKET_WORKER" == "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging)
-                socket_workers+=("{\"wrangler_env\": \"staging\", \"gh_environment\": \"staging-eu\"}")
-                ;;
-              production-us)
-                socket_workers+=("{\"wrangler_env\": \"production-us\", \"gh_environment\": \"prod-us\"}")
-                ;;
-              production-eu)
-                socket_workers+=("{\"wrangler_env\": \"production-eu\", \"gh_environment\": \"prod-eu\"}")
-                ;;
-              production-us-and-eu)
-                socket_workers+=("{\"wrangler_env\": \"production-us\", \"gh_environment\": \"prod-us\"}")
-                socket_workers+=("{\"wrangler_env\": \"production-eu\", \"gh_environment\": \"prod-eu\"}")
-                ;;
-            esac
-          fi
-
-          # Pairs of Wrangler env (apps/mcp-server/wrangler.jsonc) and GitHub environment
-          mcp_servers=()
-          if [ "$INPUT_DEPLOY_MCP_SERVER" == "true" ]; then
-            case "$INPUT_ENVIRONMENT" in
-              staging)
-                mcp_servers+=("{\"wrangler_env\": \"staging\", \"gh_environment\": \"staging-eu\"}")
-                ;;
-              production-us)
-                mcp_servers+=("{\"wrangler_env\": \"us\", \"gh_environment\": \"prod-us\"}")
-                ;;
-              production-eu)
-                mcp_servers+=("{\"wrangler_env\": \"eu\", \"gh_environment\": \"prod-eu\"}")
-                ;;
-              production-us-and-eu)
-                mcp_servers+=("{\"wrangler_env\": \"us\", \"gh_environment\": \"prod-us\"}")
-                mcp_servers+=("{\"wrangler_env\": \"eu\", \"gh_environment\": \"prod-eu\"}")
-                ;;
-            esac
-          fi
-
-          # Parse service secrets and generate deploy_matrix
-          for service in "${services[@]}"; do
-            if [ "$service" == "\"worker\"" ]; then
-              IFS=',' read -r -a worker_services <<< "$WORKER_SERVICE"
-              for worker_service in $(echo "$WORKER_SERVICE" | jq -c '.[]'); do
-                cluster_name=$(echo "$worker_service" | jq -r '.cluster_name')
-                container_name=$(echo "$worker_service" | jq -r '.container_name')
-                service_name=$(echo "$worker_service" | jq -r '.service')
-                task_name=$(echo "$worker_service" | jq -r '.task_name')
-                image=$(echo "$worker_service" | jq -r '.image')
-                
-                # Check if service has environments filter, otherwise deploy to all
-                allowed_envs=$(echo "$worker_service" | jq -r '.environments // empty')
-                should_deploy=false
-                
-                if [ -z "$allowed_envs" ]; then
-                  # No environment filter, deploy to all environments
-                  should_deploy=true
-                else
-                  # Check if any of the selected environments match the allowed environments
-                  for env in "${envs[@]}"; do
-                    env_clean=$(echo "$env" | tr -d '"')
-                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
-                      should_deploy=true
-                      break
-                    fi
-                  done
-                fi
-                
-                if [ "$should_deploy" == "true" ]; then
-                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-                fi
-              done
-            elif [ "$service" == "\"api\"" ]; then
-              for api_service in $(echo "$API_SERVICE" | jq -c '.[]'); do
-                cluster_name=$(echo "$api_service" | jq -r '.cluster_name')
-                container_name=$(echo "$api_service" | jq -r '.container_name')
-                service_name=$(echo "$api_service" | jq -r '.service')
-                task_name=$(echo "$api_service" | jq -r '.task_name')
-                image=$(echo "$api_service" | jq -r '.image')
-                
-                # Check if service has environments filter, otherwise deploy to all
-                allowed_envs=$(echo "$api_service" | jq -r '.environments // empty')
-                should_deploy=false
-                
-                if [ -z "$allowed_envs" ]; then
-                  # No environment filter, deploy to all environments
-                  should_deploy=true
-                else
-                  # Check if any of the selected environments match the allowed environments
-                  for env in "${envs[@]}"; do
-                    env_clean=$(echo "$env" | tr -d '"')
-                    if echo "$allowed_envs" | jq -e --arg env "$env_clean" 'index($env) != null' > /dev/null; then
-                      should_deploy=true
-                      break
-                    fi
-                  done
-                fi
-                
-                if [ "$should_deploy" == "true" ]; then
-                  deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-                fi
-              done
-            elif [ "$service" == "\"ws\"" ]; then
-              cluster_name=ws-cluster
-              container_name=ws-container
-              service_name=ws-service
-              task_name=ws-task
-              image=ws
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-            elif [ "$service" == "\"webhook\"" ]; then
-              cluster_name=webhook-cluster
-              container_name=webhook-container
-              service_name=webhook-service
-              task_name=webhook-task
-              image=webhook
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-            elif [ "$service" == "\"inbound-mail\"" ]; then
-              cluster_name=inbound-mail-cluster
-              container_name=inbound-mail-container
-              service_name=inbound-mail-service
-              task_name=inbound-mail-task
-              image=inbound-mail
-              deploy_matrix+=("{\"cluster_name\": \"$cluster_name\", \"container_name\": \"$container_name\", \"service_name\": \"$service_name\", \"task_name\": \"$task_name\", \"image\": \"$image\"}")
-            fi
-          done
-
-          env_matrix="{\"environment\": [$(
-            IFS=','; echo "${envs[*]}"
-          )]}"
-          service_matrix="{\"service\": [$(
-            IFS=','; echo "${services[*]}"
-          )]}"
-          deploy_matrix="[$(
-            IFS=','; echo "${deploy_matrix[*]}"
-          )]"
-          nr_matrix="[$(
-            IFS=','; echo "${nr[*]}"
-          )]"
-          echo "env_matrix=$env_matrix" >> $GITHUB_OUTPUT
-          echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
-          echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
-          echo "nr_matrix=$nr_matrix" >> $GITHUB_OUTPUT
-          echo "has_ecs_services=$has_ecs_services" >> $GITHUB_OUTPUT
-          echo "deploy_thalamus_observer=$deploy_thalamus_observer" >> $GITHUB_OUTPUT
-          echo "thalamus_wrangler_env=$thalamus_wrangler_env" >> $GITHUB_OUTPUT
-          echo "thalamus_gh_environment=$thalamus_gh_environment" >> $GITHUB_OUTPUT
-          socket_worker_matrix="[$(
-            IFS=','; echo "${socket_workers[*]}"
-          )]"
-          echo "socket_worker_matrix=$socket_worker_matrix" >> $GITHUB_OUTPUT
-          mcp_server_matrix="[$(
-            IFS=','; echo "${mcp_servers[*]}"
-          )]"
-          echo "mcp_server_matrix=$mcp_server_matrix" >> $GITHUB_OUTPUT
-
-  run-clickhouse-migrations:
-    needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
-    environment: ${{ matrix.env }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          submodules: true
-          fetch-depth: 0
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-
-      - name: Whitelist Runner IP
-        id: whitelist
-        uses: novuhq/clickhouse-cloud-whitelist-ip-action@7594062e821f1f28af7673bf82e4df9ca2e78636 # v1.0.0
-        with:
-          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
-          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
-          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
-          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 11.28.2
-          run_install: false
-
-      - name: Setup Node Version
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: "22.23.5"
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        shell: bash
-        run: pnpm ci
-      - name: Run ClickHouse Migrations
-        working-directory: apps/api
+      # An environment without required reviewers lets its job start right away.
+      # Refuse to deploy anything if the gate in front of wave 2 is not a gate.
+      - name: Check that the approval environment requires reviewers
+        if: steps.plan.outputs.staged == 'true'
         env:
-          CH_MIGRATIONS_HOST: ${{ secrets.CLICK_HOUSE_URL }}
-          CH_MIGRATIONS_USER: ${{ secrets.CLICK_HOUSE_USER }}
-          CH_MIGRATIONS_PASSWORD: ${{ secrets.CLICK_HOUSE_PASSWORD }}
-          CH_MIGRATIONS_DB: ${{ secrets.CLICK_HOUSE_DATABASE }}
-        run: pnpm run clickhouse:migrate:prod
+          GH_TOKEN: ${{ github.token }}
+          APPROVAL_ENVIRONMENT: prod-rollout-approval
+        run: |
+          if ! reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/$APPROVAL_ENVIRONMENT" \
+            --jq '[.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]?] | length'); then
+            echo "::error::Could not read the $APPROVAL_ENVIRONMENT environment."
+            exit 1
+          fi
 
-  # Builds run alongside the ClickHouse migrations; `deploy` still waits for both.
-  build:
+          if [ "${reviewers:-0}" -lt 1 ]; then
+            echo "::error::The $APPROVAL_ENVIRONMENT environment has no required reviewers, so the remaining regions would deploy without approval."
+            exit 1
+          fi
+
+          echo "$APPROVAL_ENVIRONMENT has $reviewers required reviewer(s)."
+
+  # Wave 1: everything for staging or a single region; prod-us only for `production`.
+  wave-1:
+    name: Wave 1
     needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
-    timeout-minutes: 60
-    runs-on: ${{ github.event.inputs.runner == 'github' && 'ubuntu-latest' || 'blacksmith-8vcpu-ubuntu-2404' }}
-    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     permissions:
       contents: read
       id-token: write
-    strategy:
-      matrix:
-        service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
+    uses: ./.github/workflows/reusable-cloud-deploy.yml
+    with:
+      wave: ${{ needs.prepare-matrix.outputs.wave_1 }}
+      build_environment: ${{ needs.prepare-matrix.outputs.build_environment }}
+      build_services: ${{ needs.prepare-matrix.outputs.build_services }}
+      runner: ${{ github.event.inputs.runner }}
+    secrets: inherit
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          submodules: true
-          fetch-depth: 0
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 11.28.2
-          run_install: false
-
-      - name: Setup Node Version
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: "22.23.5"
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        shell: bash
-        run: pnpm ci
-
-      - name: Set Up Docker Buildx (Blacksmith)
-        if: github.event.inputs.runner != 'github'
-        uses: useblacksmith/setup-docker-builder@a592b831ebb20e68f7cf47329cf2c3c67b8a7655 # v1
-
-      - name: Set Up Docker Buildx (GitHub)
-        if: github.event.inputs.runner == 'github'
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-          role-session-name: gha-build-${{ github.run_id }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ vars.ECR_PREFIX }}
-          SERVICE: ${{ matrix.service }}
-          IMAGE_TAG: ${{ github.sha }}
-          DOCKER_BUILD_ARGUMENTS: >
-            --platform=linux/amd64
-            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
-        run: |
-          cd apps/$SERVICE && pnpm run docker:build
-          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:latest
-          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY/$SERVICE:latest
-          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
-
-  deploy:
-    needs: [build, prepare-matrix, run-clickhouse-migrations]
-    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
+  # Waits for a reviewer of the `prod-rollout-approval` environment. Approve
+  # once prod-us looks healthy; rejecting leaves the other regions untouched.
+  approve-remaining-regions:
+    name: Approve remaining regions
+    needs: [prepare-matrix, wave-1]
+    # Results are checked explicitly throughout: the default `success()` also
+    # skips a job when something upstream was skipped, and every wave has
+    # skipped jobs (services that were not selected).
+    if: |
+      !cancelled() &&
+      needs.prepare-matrix.outputs.staged == 'true' &&
+      needs.wave-1.result == 'success'
     runs-on: ubuntu-latest
+    environment: prod-rollout-approval
+    permissions: {}
+    steps:
+      - name: Approved
+        run: echo "Remaining production regions approved."
+
+  # Wave 2: the other production regions, with the images built in wave 1.
+  wave-2:
+    name: Wave 2
+    needs: [prepare-matrix, wave-1, approve-remaining-regions]
+    if: |
+      !cancelled() &&
+      needs.prepare-matrix.outputs.staged == 'true' &&
+      needs.wave-1.result == 'success' &&
+      needs.approve-remaining-regions.result == 'success'
     permissions:
       contents: read
       id-token: write
-    strategy:
-      matrix:
-        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
-        service: ${{ fromJson(needs.prepare-matrix.outputs.deploy_matrix) }}
-
-    environment: ${{ matrix.env }}
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-          role-session-name: gha-deploy-${{ github.run_id }}
-
-      - name: Download task definition
-        env:
-          ECS_PREFIX: ${{ vars.ECS_PREFIX }}
-          TASK_NAME: ${{ matrix.service.task_name }}
-        run: |
-          aws ecs describe-task-definition --task-definition ${ECS_PREFIX}-${TASK_NAME} \
-          --query taskDefinition > task-definition.json
-
-      - name: Render Amazon ECS task definition
-        id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
-          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.service.image }}:${{ github.sha }}
-
-      - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
-        with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
-          cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
-          wait-for-service-stability: true
-
-  deploy_thalamus_observer:
-    needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.deploy_thalamus_observer == 'true'
-    name: Deploy thalamus-observer (${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: ${{ needs.prepare-matrix.outputs.thalamus_gh_environment }}
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 11.28.2
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --filter @novu/thalamus-observer-worker...
-
-      - name: Deploy with Wrangler
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          pnpm --filter @novu/thalamus-observer-worker exec wrangler deploy \
-            --env "${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }}" \
-            --message "GitHub Actions"
-
-  deploy_socket_worker:
-    needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.socket_worker_matrix != '[]'
-    name: Deploy socket-worker (${{ matrix.target.wrangler_env }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: ${{ matrix.target.gh_environment }}
-    permissions:
-      contents: read
-    strategy:
-      # Don't cancel one region's deploy halfway because the other failed
-      fail-fast: false
-      matrix:
-        target: ${{ fromJson(needs.prepare-matrix.outputs.socket_worker_matrix) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 11.28.2
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --filter @novu/socket-worker...
-
-      - name: Deploy with Wrangler
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          WRANGLER_ENV: ${{ matrix.target.wrangler_env }}
-        run: |
-          pnpm --filter @novu/socket-worker exec wrangler deploy \
-            --env "$WRANGLER_ENV" \
-            --message "GitHub Actions"
-
-  deploy_mcp_server:
-    needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.mcp_server_matrix != '[]'
-    name: Deploy mcp-server (${{ matrix.target.wrangler_env }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: ${{ matrix.target.gh_environment }}
-    # Runs that target the same Worker queue here, whatever services they selected
-    concurrency:
-      group: cf-worker-mcp-server-${{ matrix.target.wrangler_env }}
-      cancel-in-progress: false
-    permissions:
-      contents: read
-    strategy:
-      # Don't cancel one region's deploy halfway because the other failed
-      fail-fast: false
-      matrix:
-        target: ${{ fromJson(needs.prepare-matrix.outputs.mcp_server_matrix) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          version: 11.28.2
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --filter @novu/mcp-server...
-
-      - name: Deploy with Wrangler
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          WRANGLER_ENV: ${{ matrix.target.wrangler_env }}
-        run: |
-          pnpm --filter @novu/mcp-server exec wrangler deploy \
-            --env "$WRANGLER_ENV" \
-            --message "GitHub Actions"
+    uses: ./.github/workflows/reusable-cloud-deploy.yml
+    with:
+      wave: ${{ needs.prepare-matrix.outputs.wave_2 }}
+      runner: ${{ github.event.inputs.runner }}
+    secrets: inherit
 
   sentry_release:
-    needs: [deploy, prepare-matrix]
+    needs: [prepare-matrix, wave-1]
+    if: |
+      !cancelled() &&
+      needs.wave-1.result == 'success' &&
+      needs.prepare-matrix.outputs.has_ecs_services == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
-    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+        service: ${{ fromJson(needs.prepare-matrix.outputs.build_services) }}
+    environment: ${{ needs.prepare-matrix.outputs.first_environment }}
 
     steps:
       - name: Checkout
@@ -791,32 +270,14 @@ jobs:
           ignore_empty: true
           ignore_missing: true
 
-  new_relic_release:
-    needs: [deploy, prepare-matrix]
-    if: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) != '[]' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
-        nr: ${{ fromJson(needs.prepare-matrix.outputs.nr_matrix) }}
-    environment: ${{ matrix.env }}
-
-    steps:
-      - name: New Relic Application Deployment Marker
-        uses: newrelic/deployment-marker-action@8c1d1c009e7ee18ed2bda1e068d59867fdaa91c4 # v2.3.0
-        with:
-          region: EU
-          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
-          guid: ${{ matrix.nr == 'api' && secrets.NEW_RELIC_API_GUID || matrix.nr == 'worker' && secrets.NEW_RELIC_Worker_GUID }}
-          version: "${{ github.sha }}"
-          user: "${{ github.actor }}"
-          description: "Novu Cloud Deployment"
-
   sync_novu_state:
-    needs: [deploy, prepare-matrix]
+    needs: [prepare-matrix, wave-1]
     runs-on: ubuntu-latest
-    if: github.event.inputs.deploy_api == 'true'
-    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+    if: |
+      !cancelled() &&
+      needs.wave-1.result == 'success' &&
+      github.event.inputs.deploy_api == 'true'
+    environment: ${{ needs.prepare-matrix.outputs.first_environment }}
     steps:
       - name: Sync State to Novu
         uses: novuhq/actions-novu-sync@dceec32b0c93c5d7f741e38094204fd5ebd9f308 # v2
@@ -833,11 +294,15 @@ jobs:
     # on the release via the `version` field (the Linear Release Action has no
     # `description` input — see https://github.com/linear/linear-release-action).
     name: Linear Release (Cloud)
-    needs: [deploy, prepare-matrix]
+    needs: [prepare-matrix, wave-1, wave-2]
     runs-on: ubuntu-latest
+    # Only once every wave has shipped: a `production` rollout that is still
+    # waiting for approval, or was rejected, is not a completed release.
     if: |
       always() &&
-      needs.deploy.result == 'success' &&
+      needs.prepare-matrix.outputs.has_ecs_services == 'true' &&
+      needs.wave-1.result == 'success' &&
+      (needs.prepare-matrix.outputs.staged != 'true' || needs.wave-2.result == 'success') &&
       (
         github.event.inputs.environment == 'staging' ||
         github.event.inputs.environment == 'staging-sg' ||

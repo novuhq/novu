@@ -19,3 +19,16 @@ jobs:
 
       - name: Run security lint
         run: python3 .github/workflows/scripts/check-workflow-security.py
+
+  deploy-plan-tests:
+    name: Test the Deploy to Novu Cloud plan script
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Run deploy plan tests
+        run: node --test .github/workflows/scripts/deploy-plan.test.mjs
