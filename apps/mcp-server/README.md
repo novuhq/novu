@@ -351,8 +351,9 @@ Novu API trusts; leave them unset for API-key-only.
 
 ```text
 src/
-├── index.ts            # Worker entry — auth extraction and routing
-├── oauth/              # OAuth discovery, DCR, 401 bootstrap, initialize-time probe
+├── index.ts            # Worker entry — wires the app to the Durable Object
+├── app.ts              # Hono app — routing, CORS, OAuth discovery, forwarding
+├── auth.ts             # Clerk token verification (`@clerk/mcp-tools`), API-key probe
 ├── server/NovuMCP.ts   # Durable Object hosting the MCP agent
 ├── tools/              # One file per tool group (workflows, subscribers, …)
 ├── utils/              # API client, validation, tool factory
@@ -375,17 +376,19 @@ import Worker-only modules (Biome enforces this).
 
 ## 🔒 Security
 
-- The server is a **pure OAuth pass-through**: it does not mint, exchange, or
-  re-sign tokens. It never validates tokens itself — it advertises Novu's Clerk
-  authorization server and forwards the caller's `Authorization` header verbatim
-  to the Novu API, which validates it and resolves the org/permissions.
+- The server does not mint, exchange, or re-sign tokens. It advertises Novu's
+  Clerk authorization server and verifies every OAuth access token with Clerk,
+  including that the token was issued for this server's URL, before forwarding
+  the caller's token to the Novu API, which validates it again and resolves the
+  org/permissions. API keys are checked against the Novu API when a session
+  starts.
 - OAuth access tokens (Clerk opaque `oat_…` tokens) are short-lived and revocable
   from the Novu side, so they are far safer than a long-lived API key.
 - Whether OAuth token or legacy API key, the credential is scoped to your MCP
   session: it is handed to the session's Durable Object via the runtime's props
   channel — never placed in URLs, where it would leak into request logs — and is
   discarded with the session. The server holds no ambient credentials.
-- Never commit API keys or issuer config. Use `.dev.vars` for local values
+- Never commit API keys or Clerk keys. Use `.dev.vars` for local values
   (already gitignored).
 - Treat your Novu API key like a password — rotate it from the dashboard if you
   suspect it has been exposed.

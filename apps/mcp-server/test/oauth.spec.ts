@@ -281,6 +281,101 @@ describe("the MCP server's OAuth", () => {
 			expect(response.status).toBe(204);
 			expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
 		});
+
+		describe("on a request that continues a session", () => {
+			/** An initialized session's Durable Object, recording the credentials it is handed. */
+			function sessionEnv() {
+				const updateSessionProps = vi.fn(async () => {});
+				const env = {
+					...OAUTH_ENV,
+					MCP_OBJECT: {
+						get: () => ({
+							getInitializeRequest: async () => ({ method: "initialize" }),
+							updateSessionProps,
+						}),
+						idFromName: (name: string) => name,
+					},
+				} as unknown as Env;
+
+				return { env, updateSessionProps };
+			}
+
+			function sessionRequest(method: string, token: string): Request {
+				return new Request(`${ORIGIN}/`, {
+					body:
+						method === "POST"
+							? JSON.stringify({ id: 2, jsonrpc: "2.0", method: "tools/list" })
+							: undefined,
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+						"mcp-session-id": "session-1",
+					},
+					method,
+				});
+			}
+
+			it("verifies a refreshed OAuth token again and stores it on the session", async () => {
+				routes[CLERK_VERIFY_URL] = () => json(clerkToken([ORIGIN]));
+				const { env, updateSessionProps } = sessionEnv();
+
+				const response = await app().fetch(
+					sessionRequest("POST", "oat_refreshed"),
+					env,
+					ctx,
+				);
+
+				expect(response.status).toBe(200);
+				expect(calledUrls()).toEqual([CLERK_VERIFY_URL]);
+				expect(updateSessionProps).toHaveBeenCalledWith({
+					apiUrl: API_URL,
+					region: "us",
+					token: "oat_refreshed",
+				});
+				expect(serveMcp).toHaveBeenCalledOnce();
+			});
+
+			it.each(["POST", "GET", "DELETE"])(
+				"rejects a revoked OAuth token on a %s without touching the session",
+				async (method) => {
+					routes[CLERK_VERIFY_URL] = () =>
+						json(
+							{ errors: [{ code: "resource_not_found", message: "not found" }] },
+							404,
+						);
+					const { env, updateSessionProps } = sessionEnv();
+
+					const response = await app().fetch(
+						sessionRequest(method, "oat_revoked"),
+						env,
+						ctx,
+					);
+
+					expect(response.status).toBe(401);
+					expect(response.headers.get("WWW-Authenticate")).toContain(
+						'error="invalid_token"',
+					);
+					expect(updateSessionProps).not.toHaveBeenCalled();
+					expect(serveMcp).not.toHaveBeenCalled();
+				},
+			);
+
+			it("forwards an API key's later requests without probing the API again", async () => {
+				const { env, updateSessionProps } = sessionEnv();
+
+				const response = await app().fetch(
+					sessionRequest("POST", "novu-api-key"),
+					env,
+					ctx,
+				);
+
+				expect(response.status).toBe(200);
+				expect(calledUrls()).toEqual([]);
+				expect(updateSessionProps).toHaveBeenCalledWith(
+					expect.objectContaining({ token: "novu-api-key" }),
+				);
+			});
+		});
 	});
 
 	describe("without Clerk keys (self-hosted)", () => {
