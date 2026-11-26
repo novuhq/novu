@@ -1,26 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthIndicatorResult } from '@nestjs/terminus';
 
-import { IHealthIndicator } from '@novu/application-generic';
+import { IHealthIndicator, toHealthIndicatorResult } from '@novu/application-generic';
 
 import { WSGateway } from '../ws.gateway';
 
 @Injectable()
-export class WSServerHealthIndicator extends HealthIndicator implements IHealthIndicator {
+export class WSServerHealthIndicator implements IHealthIndicator {
   private static KEY = 'ws-server';
 
-  constructor(private wsGateway: WSGateway) {
-    super();
-  }
+  constructor(private wsGateway: WSGateway) {}
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const isHealthy = !!this.wsGateway.server;
-    const result = this.getStatus(WSServerHealthIndicator.KEY, isHealthy);
-
-    if (isHealthy) {
-      return result;
-    }
-
-    throw new HealthCheckError('WS server health check failed', result);
+    return toHealthIndicatorResult(
+      WSServerHealthIndicator.KEY,
+      !!this.wsGateway.server,
+      'WS server health check failed'
+    );
   }
 }

@@ -1,6 +1,6 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthGuard, IAuthModuleOptions } from '@nestjs/passport';
+import { AuthGuard, AuthGuardAuthenticateOptions } from '@nestjs/passport';
 import { PinoLogger } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, NONE_AUTH_SCHEME, PassportStrategyEnum } from '@novu/shared';
 
@@ -14,7 +14,7 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
     this.logger.setContext(this.constructor.name);
   }
 
-  getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions {
+  getAuthenticateOptions(context: ExecutionContext): AuthGuardAuthenticateOptions {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
 
@@ -23,21 +23,20 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
 
     this.logger.assign({ authScheme });
 
+    /*
+     * The strategies come from the AuthGuard([...]) list above, which passport tries in order.
+     * A `defaultStrategy` returned here was never read when that list is set, and
+     * @nestjs/passport 12 no longer allows it in these options.
+     */
     switch (authScheme) {
       case ApiAuthSchemeEnum.BEARER: {
-        return {
-          session: false,
-          defaultStrategy: PassportStrategyEnum.JWT,
-        };
+        return { session: false };
       }
       case ApiAuthSchemeEnum.API_KEY: {
         const apiEnabled = this.reflector.get<boolean>('external_api_accessible', context.getHandler());
         if (!apiEnabled) throw new UnauthorizedException('API endpoint not accessible');
 
-        return {
-          session: false,
-          defaultStrategy: PassportStrategyEnum.HEADER_API_KEY,
-        };
+        return { session: false };
       }
       case NONE_AUTH_SCHEME:
         throw new UnauthorizedException('Missing authorization header');

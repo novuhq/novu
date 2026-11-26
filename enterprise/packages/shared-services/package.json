@@ -40,7 +40,7 @@
     "typescript": "6.0.3"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.27",
+    "@nestjs/common": "12.6.0",
     "@novu/dal": "workspace:*"
   }
 }

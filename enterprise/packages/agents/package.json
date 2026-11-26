@@ -25,7 +25,7 @@
     "langchain": "^1.2.16"
   },
   "devDependencies": {
-    "@nestjs/testing": "11.1.27",
+    "@nestjs/testing": "12.6.0",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^10.0.8",
     "@types/node": "^22.0.0",
@@ -38,7 +38,7 @@
     "typescript": "6.0.3"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.27",
-    "@nestjs/core": "11.1.27"
+    "@nestjs/common": "12.6.0",
+    "@nestjs/core": "12.6.0"
   }
 }

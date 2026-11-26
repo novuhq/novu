@@ -1,23 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthIndicatorResult } from '@nestjs/terminus';
 import { CacheService } from '../services/cache';
+import { IHealthIndicator, toHealthIndicatorResult } from './health-indicator.interface';
 
 @Injectable()
-export class CacheServiceHealthIndicator extends HealthIndicator {
+export class CacheServiceHealthIndicator implements IHealthIndicator {
   private static KEY = 'cacheService';
 
-  constructor(private cacheService: CacheService) {
-    super();
-  }
+  constructor(private cacheService: CacheService) {}
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const isHealthy = this.cacheService.cacheEnabled();
-    const result = this.getStatus(CacheServiceHealthIndicator.KEY, isHealthy);
-
-    if (isHealthy) {
-      return result;
-    }
-
-    throw new HealthCheckError('Cache health check failed', result);
+    return toHealthIndicatorResult(
+      CacheServiceHealthIndicator.KEY,
+      this.cacheService.cacheEnabled(),
+      'Cache health check failed'
+    );
   }
 }

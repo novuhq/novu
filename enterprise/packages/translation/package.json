@@ -40,9 +40,9 @@
     "liquidjs": "^10.27.1"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.27",
-    "@nestjs/platform-express": "11.1.27",
-    "@nestjs/swagger": "11.4.7",
+    "@nestjs/common": "12.6.0",
+    "@nestjs/platform-express": "12.6.0",
+    "@nestjs/swagger": "12.1.2",
     "@novu/dal": "workspace:*"
   }
 }

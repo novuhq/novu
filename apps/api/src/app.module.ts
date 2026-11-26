@@ -1,6 +1,4 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
-import { Type } from '@nestjs/common/interfaces/type.interface';
+import { DynamicModule, ForwardReference, Module, Provider, Type } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { cacheService, TracingModule } from '@novu/application-generic';

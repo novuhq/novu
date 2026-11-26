@@ -6,8 +6,8 @@ import {
   Module,
   NestModule,
   RequestMethod,
+  Type,
 } from '@nestjs/common';
-import { Type } from '@nestjs/common/interfaces/type.interface';
 import { AuthGuard } from '@nestjs/passport';
 import { isBetterAuthEnabled, isClerkEnabled } from '@novu/shared';
 import { AuthModule } from '../auth/auth.module';

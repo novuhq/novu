@@ -49,10 +49,10 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
     private featureFlagService: FeatureFlagsService,
-    private logger: PinoLogger
+    private readonly pinoLogger: PinoLogger
   ) {
     super(options, storageService, reflector);
-    this.logger.setContext(this.constructor.name);
+    this.pinoLogger.setContext(this.constructor.name);
   }
 
   /**
@@ -76,7 +76,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const isAllowedRoute = this.isAllowedRoute(context);
 
     if (!isAllowedAuthScheme && !isAllowedEnvironment && !isAllowedRoute) {
-      this.logger.debug(
+      this.pinoLogger.debug(
         {
           _nv: {
             isAllowedAuthScheme,
@@ -110,7 +110,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     });
 
     if (!isEnabled) {
-      this.logger.debug({
+      this.pinoLogger.debug({
         message: 'Rate limiting skipped - feature flag disabled',
         _event: {
           organizationId,
@@ -174,7 +174,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
-    this.logger.debug({
+    this.pinoLogger.debug({
       message: 'Rate limit evaluated',
       _event: {
         success,
@@ -238,7 +238,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     if (isDryRun || isKeylessDryRun) {
       if (!success) {
-        this.logger.warn({
+        this.pinoLogger.warn({
           message: `${isKeylessRequest ? '[Dry run] [Keyless]' : '[Dry run]'} Rate limit would be exceeded`,
           _event: {
             limit,
@@ -258,7 +258,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     } else {
       res.header(HttpResponseHeaderKeysEnum.RETRY_AFTER, secondsToReset);
 
-      this.logger.debug({
+      this.pinoLogger.debug({
         message: 'Rate limit exceeded',
         _event: {
           limit,

@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
-import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
+import {
+  ArgumentsHost,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  InternalServerErrorException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { CommandValidationException, PinoLogger, RequestLogRepository } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { captureException } from '@sentry/node';
@@ -10,6 +15,9 @@ import { ZodError } from 'zod';
 import { RequestWithReqId } from './app/shared/middleware/request-id.middleware';
 import { buildLog } from './app/shared/utils/mappers';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
+
+// Not exported from the @nestjs/common root entry point in NestJS 12.
+type HttpArgumentsHost = ReturnType<ArgumentsHost['switchToHttp']>;
 
 const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
 

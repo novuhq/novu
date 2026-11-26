@@ -78,6 +78,13 @@ export async function bootstrap(
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    /*
+     * NestJS 12: log routes registered twice (same method, path and version) at bootstrap.
+     * Shadowed patterns (e.g. `/x/me` vs `/x/:id`) stay off until the existing ones are reviewed.
+     */
+    routeConflictPolicy: { duplicate: 'warn', shadow: 'off' },
+    // NestJS 12: during shutdown, answer new requests on kept-alive sockets with 503 while in-flight ones drain.
+    return503OnClosing: true,
     ...nestOptions,
     ...(bootstrapOptions?.tlsConfig && { httpsOptions: toNovuTlsServerOptions(bootstrapOptions.tlsConfig) }),
   });
