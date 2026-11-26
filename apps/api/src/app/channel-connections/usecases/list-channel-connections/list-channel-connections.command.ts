@@ -11,12 +11,6 @@ export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
   @IsString()
   subscriberId?: string;
 
-  /**
-   * Read-time scoping over `subscriberId` (only applied when `subscriberId` is set):
-   * - `'subscriber'` returns only the subscriber's own connections;
-   * - `'shared'` returns only shared connections (`subscriberId` null);
-   * - omitted returns both (subscriber-owned and shared).
-   */
   @IsOptional()
   @IsString()
   @IsIn(['subscriber', 'shared'])
