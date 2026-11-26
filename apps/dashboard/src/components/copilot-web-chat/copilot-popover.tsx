@@ -4,7 +4,7 @@ import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { cn } from '@/utils/ui';
 import { CopilotLauncher } from './copilot-launcher';
 import { useCopilotPageView } from './copilot-page-view-store';
-import { useCopilotPopoverTitle } from './copilot-popover-title';
+import { getCopilotPopoverTitle } from './copilot-popover-title';
 import { COPILOT_SURFACE_PROPS } from './copilot-surface';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
@@ -43,7 +43,7 @@ function HeaderButton({
 
 export function CopilotPopover() {
   const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
-  const title = useCopilotPopoverTitle(chat);
+  const title = getCopilotPopoverTitle(chat);
   // Above a sheet (z-50) and its overlay, with the launcher, as the design shows it.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
   // Back under a modal dialog opened over the sheet, which dims and blocks everything else.
