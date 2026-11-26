@@ -1,3 +1,4 @@
+import type { AgentMessage } from '@novu/js';
 import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
@@ -21,6 +22,7 @@ import {
   getFailedSend,
   getUserMessageText,
   hasPendingReplyGap,
+  loadStoppedPrompt,
   orderStoppedTurns,
   RAISED_SURFACE_SHADOW,
 } from './copilot-web-chat-utils';
@@ -278,6 +280,21 @@ function Thread() {
     : '';
   const pagination = chat?.pagination;
 
+  // A turn without its prompt is the oldest one loaded, and its prompt is on an older page.
+  const resume = async (prompt: AgentMessage | undefined, stoppedMessageId: string) => {
+    let stoppedPrompt = prompt && getUserMessageText(prompt);
+    if (!prompt && pagination) {
+      stoppedPrompt = await loadStoppedPrompt({
+        messages,
+        hasMore: pagination.hasMore,
+        fetchMore: pagination.fetchMore,
+        stoppedMessageId,
+      });
+    }
+
+    await sendMessage(buildResumePrompt(stoppedPrompt));
+  };
+
   // Keyed on the newest message's content, so loading older pages keeps the reader's place.
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the newest message changes while streaming
   useEffect(() => {
@@ -316,10 +333,6 @@ function Thread() {
         )}
         {turns.map((turn, index) => {
           const isLastTurn = index === turns.length - 1;
-          const resume =
-            isLastTurn && !isBusy
-              ? () => void sendMessage(buildResumePrompt(turn.prompt && getUserMessageText(turn.prompt)))
-              : undefined;
 
           return (
             <Fragment key={turn.key}>
@@ -329,7 +342,11 @@ function Thread() {
                 activeLabel={isLastTurn ? activeLabel : undefined}
               />
               {turn.replies.map((message) => (
-                <CopilotAssistantMessage key={message.id} message={message} onResume={resume} />
+                <CopilotAssistantMessage
+                  key={message.id}
+                  message={message}
+                  onResume={isLastTurn && !isBusy ? () => void resume(turn.prompt, message.id) : undefined}
+                />
               ))}
             </Fragment>
           );

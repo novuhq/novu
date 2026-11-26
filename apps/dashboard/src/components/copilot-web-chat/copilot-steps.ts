@@ -85,9 +85,11 @@ function mergeChangeKind(
     // A step the turn added and then removed again was never there for the user.
     return later === CopilotWorkflowChangeEnum.REMOVED ? undefined : earlier;
   }
-  if (later === CopilotWorkflowChangeEnum.REMOVED || earlier === CopilotWorkflowChangeEnum.REMOVED) {
-    return CopilotWorkflowChangeEnum.REMOVED;
+  if (earlier === CopilotWorkflowChangeEnum.REMOVED) {
+    // Removed and added back under its id: the step is still there, replaced.
+    return later === CopilotWorkflowChangeEnum.ADDED ? CopilotWorkflowChangeEnum.EDITED : earlier;
   }
+  if (later === CopilotWorkflowChangeEnum.REMOVED) return later;
   if (earlier === CopilotWorkflowChangeEnum.EDITED || later === CopilotWorkflowChangeEnum.EDITED) {
     return CopilotWorkflowChangeEnum.EDITED;
   }
@@ -125,15 +127,43 @@ export function getThoughtSeconds(steps: readonly CopilotStepEventData[]): numbe
   return Math.max(1, Math.round(elapsedMs / 1000));
 }
 
-/** The steps of the turn a card ends: what the agent listed since the user message before the card. */
+/** Where the replies to the user message before `index` start: right after it, or at 0 when there is none. */
+function findRepliesStart(messages: readonly AgentMessage[], index: number): number {
+  let start = index;
+  while (start > 0 && messages[start - 1].role !== 'user') start--;
+
+  return start;
+}
+
+function hasCard(message: AgentMessage): boolean {
+  return message.parts.some((part) => part.type === 'card');
+}
+
+function hasText(message: AgentMessage): boolean {
+  return message.parts.some((part) => part.type === 'text' && part.text.trim().length > 0);
+}
+
+/**
+ * The steps of the turn a card ends: what the agent listed since the user message before the card. A card only lands
+ * after a newer message when it is a stopped turn's, which the agent posts once the stop settled; so a card that the
+ * newer turn has not replied (or stopped) before goes to the stopped turn ahead of it, when that one has no card yet.
+ */
 export function getCardTurnSteps(messages: readonly AgentMessage[], sourceMessageId: string): CopilotStepEventData[] {
   const cardIndex = messages.findIndex((message) =>
     message.parts.some((part) => part.type === 'card' && part.sourceMessageId === sourceMessageId)
   );
   if (cardIndex < 0) return [];
 
-  let start = cardIndex;
-  while (start > 0 && messages[start - 1].role !== 'user') start--;
+  const start = findRepliesStart(messages, cardIndex);
+  const repliesBefore = messages.slice(start, cardIndex);
+  const promptIndex = start - 1;
+  if (promptIndex > 0 && !repliesBefore.some((message) => message.stopped || hasText(message))) {
+    const earlierTurn = messages.slice(findRepliesStart(messages, promptIndex), promptIndex);
+    const isLateStoppedCard =
+      earlierTurn.some((message) => message.stopped) && !earlierTurn.some((message) => hasCard(message));
+
+    if (isLateStoppedCard) return collectTurnSteps(earlierTurn);
+  }
 
   return collectTurnSteps(messages.slice(start, cardIndex + 1));
 }

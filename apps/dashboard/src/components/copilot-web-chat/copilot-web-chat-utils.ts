@@ -356,7 +356,8 @@ export function getReviewCardState(
   for (const later of messages.slice(index + 1)) {
     const laterCard = findCardPart(later);
     if (laterCard) return hasReviewButtons(laterCard) ? 'replaced' : 'answered';
-    if (later.role === 'user') hasLaterPrompt = true;
+    // A send the server never accepted reached no agent, so it applied nothing.
+    if (later.role === 'user' && later.status !== 'failed') hasLaterPrompt = true;
   }
 
   return hasLaterPrompt ? 'applied' : 'open';
@@ -470,6 +471,49 @@ export async function loadTryAgainPrompt({
   }
 
   return getTryAgainPrompt(loaded, readyEventData, cardSourceMessageId);
+}
+
+function findPromptBefore(messages: readonly AgentMessage[], messageId: string): AgentMessage | undefined {
+  for (let index = messages.findIndex((message) => message.id === messageId) - 1; index >= 0; index--) {
+    if (messages[index].role === 'user') return messages[index];
+  }
+
+  return undefined;
+}
+
+/**
+ * The text of the user message a stopped reply answers, for Resume. A resumed chat holds only the newest page of
+ * history, and a long turn's events can push its prompt onto an older one, so older pages load until it shows.
+ */
+export async function loadStoppedPrompt({
+  messages,
+  hasMore,
+  fetchMore,
+  stoppedMessageId,
+}: {
+  messages: readonly AgentMessage[];
+  hasMore: boolean;
+  fetchMore: () => Promise<OlderHistoryPage>;
+  stoppedMessageId: string;
+}): Promise<string | undefined> {
+  let loaded = messages;
+  let canLoadMore = hasMore && messages.some((message) => message.id === stoppedMessageId);
+
+  for (
+    let page = 0;
+    !findPromptBefore(loaded, stoppedMessageId) && canLoadMore && page < MAX_TRY_AGAIN_HISTORY_PAGES;
+    page++
+  ) {
+    const { data, error } = await fetchMore();
+    if (error || !data) break;
+
+    loaded = data.messages;
+    canLoadMore = data.hasMore;
+  }
+
+  const prompt = findPromptBefore(loaded, stoppedMessageId);
+
+  return prompt ? getUserMessageText(prompt) || undefined : undefined;
 }
 
 /** The last message is a user send the server never accepted (it stays in the thread and can be retried). */

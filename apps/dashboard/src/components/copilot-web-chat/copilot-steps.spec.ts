@@ -179,6 +179,15 @@ describe('collectChangeRows', () => {
     expect(rows).toEqual([{ ...EMAIL_EDITED, kind: CopilotWorkflowChangeEnum.REMOVED }]);
   });
 
+  it('reads a step removed and added back under its id as edited, not removed', () => {
+    const rows = collectChangeRows([
+      step('1', { ...EMAIL_EDITED, kind: CopilotWorkflowChangeEnum.REMOVED }),
+      step('2', { ...EMAIL_EDITED, kind: CopilotWorkflowChangeEnum.ADDED }),
+    ]);
+
+    expect(rows).toEqual([EMAIL_EDITED]);
+  });
+
   it('reads a step moved and edited as edited', () => {
     const moved = { ...EMAIL_EDITED, kind: CopilotWorkflowChangeEnum.MOVED };
 
@@ -231,6 +240,45 @@ describe('getCardTurnSteps', () => {
 
     expect(getCardTurnSteps(messages, 'card_2').map((step) => step.id)).toEqual(['new']);
     expect(getCardTurnSteps(messages, 'card_missing')).toEqual([]);
+  });
+
+  it('gives a stopped turn the card that lands after the next message, before that turn replied', () => {
+    const stoppedReply = { ...assistantMessage('run_1', [stepPart({ id: 'stopped', label: 'Added' })]), stopped: true };
+    const messages = [
+      userMessage('msg_1'),
+      stoppedReply,
+      userMessage('msg_2'),
+      assistantMessage('run_2', [stepPart({ id: 'next', label: 'Read workflow' })]),
+      reviewCard('card_late'),
+      assistantMessage('msg_reply', [{ type: 'text', text: 'Done.', state: 'done' }]),
+    ];
+
+    expect(getCardTurnSteps(messages, 'card_late').map((step) => step.id)).toEqual(['stopped']);
+  });
+
+  it('keeps a card with its own turn once that turn replied, or when the stopped turn already has a card', () => {
+    const stoppedReply = { ...assistantMessage('run_1', [stepPart({ id: 'stopped', label: 'Added' })]), stopped: true };
+    const replied = [
+      userMessage('msg_1'),
+      stoppedReply,
+      userMessage('msg_2'),
+      assistantMessage('msg_reply', [
+        stepPart({ id: 'next', label: 'Added' }),
+        { type: 'text', text: 'Done.', state: 'done' },
+      ]),
+      reviewCard('card_2'),
+    ];
+    const stoppedWithCard = [
+      userMessage('msg_1'),
+      stoppedReply,
+      reviewCard('card_1'),
+      userMessage('msg_2'),
+      assistantMessage('run_2', [stepPart({ id: 'next', label: 'Added' })]),
+      reviewCard('card_2'),
+    ];
+
+    expect(getCardTurnSteps(replied, 'card_2').map((step) => step.id)).toEqual(['next']);
+    expect(getCardTurnSteps(stoppedWithCard, 'card_2').map((step) => step.id)).toEqual(['next']);
   });
 });
 

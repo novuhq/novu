@@ -11,6 +11,7 @@ import {
   getReviewCardState,
   getTryAgainPrompt,
   isDashboardLink,
+  loadStoppedPrompt,
   loadTryAgainPrompt,
   orderStoppedTurns,
 } from './copilot-web-chat-utils';
@@ -176,6 +177,12 @@ describe('getReviewCardState', () => {
     expect(getReviewCardState([...turn, userMessage('msg_2', 'Make it shorter')], 'card_review')).toBe('applied');
   });
 
+  it('stays open after a send the server never accepted', () => {
+    const failedSend = { ...userMessage('msg_2', 'Make it shorter'), status: 'failed' as const };
+
+    expect(getReviewCardState([...turn, failedSend], 'card_review')).toBe('open');
+  });
+
   it('is replaced by a newer turn’s review card, and answered by a note', () => {
     expect(
       getReviewCardState(
@@ -189,6 +196,57 @@ describe('getReviewCardState', () => {
   it('reads no state for cards without review buttons or that are not in the thread', () => {
     expect(getReviewCardState([...turn, noteCardMessage('card_note')], 'card_note')).toBeUndefined();
     expect(getReviewCardState(turn, 'card_missing')).toBeUndefined();
+  });
+});
+
+describe('loadStoppedPrompt', () => {
+  const stopped = { ...assistantMessage('act_stopped', 'Adding the'), stopped: true };
+
+  it('reads the prompt before the stopped reply without loading more history', async () => {
+    const fetchMore = vi.fn();
+    const prompt = await loadStoppedPrompt({
+      messages: [userMessage('msg_1', 'Add a digest'), stopped],
+      hasMore: true,
+      fetchMore,
+      stoppedMessageId: 'act_stopped',
+    });
+
+    expect(prompt).toBe('Add a digest');
+    expect(fetchMore).not.toHaveBeenCalled();
+  });
+
+  it('loads older pages until the prompt of a long stopped turn shows', async () => {
+    const fetchMore = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { messages: [assistantMessage('act_0', 'Step'), stopped], hasMore: true } })
+      .mockResolvedValueOnce({
+        data: {
+          messages: [userMessage('msg_1', 'Add a digest'), assistantMessage('act_0', 'Step'), stopped],
+          hasMore: false,
+        },
+      });
+
+    const prompt = await loadStoppedPrompt({
+      messages: [stopped],
+      hasMore: true,
+      fetchMore,
+      stoppedMessageId: 'act_stopped',
+    });
+
+    expect(prompt).toBe('Add a digest');
+    expect(fetchMore).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up without the prompt when history has no more pages or the reply is not in it', async () => {
+    const fetchMore = vi.fn();
+
+    expect(
+      await loadStoppedPrompt({ messages: [stopped], hasMore: false, fetchMore, stoppedMessageId: 'act_stopped' })
+    ).toBeUndefined();
+    expect(
+      await loadStoppedPrompt({ messages: [stopped], hasMore: true, fetchMore, stoppedMessageId: 'act_missing' })
+    ).toBeUndefined();
+    expect(fetchMore).not.toHaveBeenCalled();
   });
 });
 
