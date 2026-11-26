@@ -1,18 +1,28 @@
-import { AgentReplyPolicyEnum } from '@novu/shared';
+import { AgentReplyPolicyEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
+import type { RQBJsonLogic } from 'react-querybuilder';
 import {
   type AgentBehavior,
   type AgentEmojiEntry,
   type AgentReplyPolicy,
   type AgentResponse,
+  type AgentSubscriberAccess,
   getAgentDetailQueryKey,
   getAgentEmojiQueryKey,
   listAgentEmoji,
   updateAgent,
 } from '@/api/agents';
-import { SUBSCRIBER_ACCESS_SETTING_LABEL, SUBSCRIBER_ACCESS_TOOLTIP } from '@/components/agents/subscriber-access-copy';
+import { AgentAccessRuleSheet } from '@/components/agents/agent-access-rule-sheet';
+import {
+  SUBSCRIBER_ACCESS_MODE_SETTING_LABEL,
+  SUBSCRIBER_ACCESS_MODES,
+  SUBSCRIBER_ACCESS_SETTING_LABEL,
+  SUBSCRIBER_ACCESS_TOOLTIP,
+} from '@/components/agents/subscriber-access-copy';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Button } from '@/components/primitives/button';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
@@ -20,6 +30,8 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { countConditions } from '@/utils/conditions';
 
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
 const PROD_READ_ONLY_TOOLTIP =
@@ -126,6 +138,117 @@ function ReplyPolicySelect({ value, disabled, readOnly, onValueChange }: ReplyPo
   }
 
   return select;
+}
+
+const SUBSCRIBER_ACCESS_MODE_TOOLTIP = (
+  <ul className="flex flex-col gap-1.5">
+    {Object.values(SUBSCRIBER_ACCESS_MODES).map(({ label, description }) => (
+      <li key={label}>
+        <span className="font-medium">{label}</span>
+        <span className="block opacity-80">{description}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+type SubscriberAccessSettingProps = {
+  agent: AgentResponse;
+  disabled: boolean;
+  readOnly: boolean;
+  onAccessChange: (access: Exclude<AgentSubscriberAccess, 'rule'>) => void;
+};
+
+/**
+ * Open and Restricted apply at once. Rule applies only when the rule sheet saves. Leaving Rule asks first,
+ * because the API deletes the saved rule.
+ */
+function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: SubscriberAccessSettingProps) {
+  const access = agent.behavior.subscriberAccess;
+  const [isRuleSheetOpen, setIsRuleSheetOpen] = useState(false);
+  const [pendingAccess, setPendingAccess] = useState<Exclude<AgentSubscriberAccess, 'rule'> | null>(null);
+  const conditionsCount = countConditions(agent.behavior.accessRule as RQBJsonLogic | undefined);
+
+  const handleValueChange = (next: AgentSubscriberAccess) => {
+    if (next === access) return;
+
+    if (next === 'rule') {
+      setIsRuleSheetOpen(true);
+    } else if (access === 'rule') {
+      setPendingAccess(next);
+    } else {
+      onAccessChange(next);
+    }
+  };
+
+  const select = (
+    <Select value={access} onValueChange={handleValueChange} disabled={disabled || readOnly}>
+      <SelectTrigger size="2xs" className="w-[11.5rem] shrink-0">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent align="end">
+        {(Object.keys(SUBSCRIBER_ACCESS_MODES) as AgentSubscriberAccess[]).map((mode) => (
+          <SelectItem key={mode} value={mode}>
+            {SUBSCRIBER_ACCESS_MODES[mode].label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  return (
+    <>
+      <ToggleRow label={SUBSCRIBER_ACCESS_MODE_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_MODE_TOOLTIP}>
+        {readOnly ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">{select}</span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+          </Tooltip>
+        ) : (
+          select
+        )}
+      </ToggleRow>
+      <p className="text-text-soft text-paragraph-xs -mt-1">{SUBSCRIBER_ACCESS_MODES[access].description}</p>
+      {access === 'rule' && (
+        <Button
+          type="button"
+          variant="secondary"
+          mode="outline"
+          size="2xs"
+          className="self-start"
+          trailingIcon={RiArrowRightSLine}
+          onClick={() => setIsRuleSheetOpen(true)}
+        >
+          {readOnly ? 'View rule' : 'Edit rule'}
+          <span className="text-text-soft">
+            {conditionsCount} condition{conditionsCount === 1 ? '' : 's'}
+          </span>
+        </Button>
+      )}
+
+      <AgentAccessRuleSheet
+        agent={agent}
+        open={isRuleSheetOpen}
+        onOpenChange={setIsRuleSheetOpen}
+        readOnly={readOnly}
+      />
+      <ConfirmationModal
+        open={pendingAccess !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingAccess(null);
+        }}
+        onConfirm={() => {
+          if (pendingAccess) onAccessChange(pendingAccess);
+          setPendingAccess(null);
+        }}
+        title="Delete the access rule?"
+        description={`Switching to ${pendingAccess ? SUBSCRIBER_ACCESS_MODES[pendingAccess].label : ''} deletes this agent's access rule. To use a rule again, you will need to write it again.`}
+        confirmButtonText="Switch and delete rule"
+        confirmButtonVariant="error"
+      />
+    </>
+  );
 }
 
 function useAgentEmoji() {
@@ -248,6 +371,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
   const { emojiList, unicodeMap } = useAgentEmoji();
+  const isSubscriberTokensEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SUBSCRIBER_TOKENS_ENABLED);
 
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
   const reactionOnResolved =
@@ -327,15 +451,24 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             />
           </ToggleRow>
 
-          <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
-            <BehaviorSwitch
-              checked={subscriberAccessOpen}
+          {isSubscriberTokensEnabled ? (
+            <SubscriberAccessSetting
+              agent={agent}
               disabled={isPending}
-              readOnly={readOnly || hasAccessRule}
-              readOnlyTooltip={hasAccessRule ? ACCESS_RULE_READ_ONLY_TOOLTIP : undefined}
-              onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
+              readOnly={readOnly}
+              onAccessChange={(subscriberAccess) => mutate({ subscriberAccess })}
             />
-          </ToggleRow>
+          ) : (
+            <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
+              <BehaviorSwitch
+                checked={subscriberAccessOpen}
+                disabled={isPending}
+                readOnly={readOnly || hasAccessRule}
+                readOnlyTooltip={hasAccessRule ? ACCESS_RULE_READ_ONLY_TOOLTIP : undefined}
+                onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
+              />
+            </ToggleRow>
+          )}
         </div>
       </div>
     </div>

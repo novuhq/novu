@@ -41,18 +41,21 @@ function getRuleValueIssue(operator: string, value: string | null): string | nul
   return null;
 }
 
-export type IsRuleFieldAllowed = (field: string) => boolean;
+export type ConditionsSchemaOptions = {
+  getFieldIssue: (field: string) => string | null;
+  getOperatorIssue?: (operator: string) => string | null;
+};
 
-function getRuleSchema(isFieldAllowed: IsRuleFieldAllowed): z.ZodType<RuleType | RuleGroupType> {
+function getRuleSchema(options: ConditionsSchemaOptions): z.ZodType<RuleType | RuleGroupType> {
   return z.union([
     z
       .looseObject({
-        field: z.string().min(1),
+        field: z.string().min(1, 'Field is required'),
         operator: z.string(),
         value: z.string().nullable(),
       })
       .superRefine(({ field, operator, value }, ctx) => {
-        const valueIssue = getRuleValueIssue(operator, value);
+        const valueIssue = options.getOperatorIssue?.(operator) ?? getRuleValueIssue(operator, value);
 
         if (valueIssue) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: valueIssue, path: ['value'] });
@@ -61,24 +64,26 @@ function getRuleSchema(isFieldAllowed: IsRuleFieldAllowed): z.ZodType<RuleType |
           if (isRelativeDateOperator(operator) && !value) return;
         }
 
-        if (!isFieldAllowed(field)) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
+        const fieldIssue = options.getFieldIssue(field);
+
+        if (fieldIssue) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: fieldIssue, path: ['field'] });
         }
       }),
     z.looseObject({
       combinator: z.string(),
-      rules: z.array(z.lazy(() => getRuleSchema(isFieldAllowed))),
+      rules: z.array(z.lazy(() => getRuleSchema(options))),
     }),
   ]);
 }
 
-/** Form schema for `{ query }` edited by `ConditionsEditor`. Issue paths match the editor's `query.rules.N.field|value`. */
-export function getConditionsSchema(isFieldAllowed: IsRuleFieldAllowed) {
+/** Form schema for `{ query }` edited by `ConditionsEditor`. Issues land on `query.rules.N.field|value`, where the editor shows them. An operator issue lands on the value. */
+export function getConditionsSchema(options: ConditionsSchemaOptions) {
   return z.object({
     query: z
       .object({
         combinator: z.string(),
-        rules: z.array(getRuleSchema(isFieldAllowed)),
+        rules: z.array(getRuleSchema(options)),
       })
       .passthrough(),
   });

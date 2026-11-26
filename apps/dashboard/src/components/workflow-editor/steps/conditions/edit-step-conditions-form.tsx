@@ -107,13 +107,16 @@ export const EditStepConditionsForm = () => {
   const form = useForm({
     mode: 'onSubmit',
     resolver: standardSchemaResolver(
-      getConditionsSchema((field) =>
-        isRuleFieldAllowed(
-          field,
-          fields.map(({ value }) => value),
-          isAllowedVariable
-        )
-      )
+      getConditionsSchema({
+        getFieldIssue: (field) =>
+          isRuleFieldAllowed(
+            field,
+            fields.map(({ value }) => value),
+            isAllowedVariable
+          )
+            ? null
+            : 'Value is not valid',
+      })
     ),
     defaultValues: {
       query: { ...query },
