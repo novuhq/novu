@@ -138,6 +138,12 @@ export const getAgentInputSchema = z.object({
 	identifier: agentIdentifierSchema.describe(
 		"The agent identifier (slug) to retrieve — not the Mongo _id",
 	),
+	includeSystemPrompt: z
+		.boolean()
+		.optional()
+		.describe(
+			"Also return a managed agent's system prompt. Set only when the user asks for it.",
+		),
 });
 
 export type CreateAgentInput = z.infer<typeof createAgentInputSchema>;

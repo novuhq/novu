@@ -5,12 +5,15 @@
  * digests instead, built before the result exists.
  */
 
+import { scrub } from "./activity-format";
 import { compact } from "./agent-results";
 
 const CONTENT_CAP = 240;
 const VERBOSE_CONTENT_CAP = 2000;
 const TITLE_CAP = 120;
 const NAME_CAP = 80;
+/** How much of a failed tool call's error text `scrub` reads; its result is cut to 200 characters anyway. */
+const TOOL_ERROR_SCAN_CAP = 2000;
 
 /** Message text and titles are what the agent's users wrote, so the model reads them as data. */
 const UNTRUSTED_TEXT_NOTE =
@@ -171,6 +174,27 @@ function readMcpConnection(activity: ActivityRecord): ActivityRecord | null {
 	return asRecord(richContent?.mcpConnection);
 }
 
+/**
+ * Why a tool call failed, fenced: the text parts of its result, else a text output. Only failed calls: a
+ * successful output can hold anything the tool read. The text can echo an upstream response, so URL
+ * secrets, credentials and long tokens are redacted first.
+ */
+function readToolError(toolData: ActivityRecord | null): string | undefined {
+	if (toolData?.isError !== true) return undefined;
+
+	const parts = Array.isArray(toolData.content) ? toolData.content : [];
+	const text = parts
+		.flatMap((part) => {
+			const record = asRecord(part);
+
+			return record?.type === "text" ? (asString(record.text) ?? []) : [];
+		})
+		.join(" ");
+	const message = asString(text) ?? asString(toolData.output);
+
+	return message ? fence(scrub(message.slice(0, TOOL_ERROR_SCAN_CAP)), CONTENT_CAP) : undefined;
+}
+
 /** `label=value` for a value that is set, with the value through `plain`. */
 function labeled(label: string, value: unknown): string | undefined {
 	const text = plain(value);
@@ -212,9 +236,10 @@ function formatActivityLine(activity: ActivityRecord): string {
 				typeof toolData.approved === "boolean"
 					? `approved=${toolData.approved}`
 					: undefined,
-				// Tool output can hold anything the tool read, so only its presence reaches the model.
+				// Tool output can hold anything the tool read, so only its presence reaches the model. A failed call adds its reason.
 				toolData.output !== undefined ? "output=present" : undefined,
 				toolData.isError === true ? "error=true" : undefined,
+				readToolError(toolData),
 			]),
 		);
 	}
@@ -328,6 +353,15 @@ export function diagnoseActivities(activities: ActivityRecord[]): string[] {
 		if (type === "tool_result" && isDeniedToolOutput(toolData?.output)) {
 			const toolName = plain(toolData?.toolName) ?? "unknown tool";
 			findings.push(`Tool result marked execution-denied for ${toolName}`);
+		} else if (type === "tool_result" && toolData?.isError === true) {
+			const toolName =
+				plain(toolData.toolName) ?? plain(toolData.toolCallId) ?? "unknown tool";
+			const reason = readToolError(toolData);
+			findings.push(
+				reason
+					? `Tool call failed for ${toolName}: ${reason}`
+					: `Tool call failed for ${toolName}`,
+			);
 		}
 
 		if (type === "mcp_connection_request") {
@@ -592,6 +626,7 @@ function toActivityDetail(activity: ActivityRecord): ActivityRecord {
 					approved:
 						typeof toolData.approved === "boolean" ? toolData.approved : undefined,
 					callId: plain(toolData.toolCallId),
+					error: readToolError(toolData),
 					hasOutput: toolData.output !== undefined ? true : undefined,
 					isError: toolData.isError === true ? true : undefined,
 					mcpServerName: plain(toolData.mcpServerName),

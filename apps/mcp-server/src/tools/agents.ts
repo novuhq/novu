@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
 	INVALID_URL_MARK,
 	REDACTED_MARK,
+	systemPromptNote,
 	toAgentList,
 	toAgentSummary,
 	unwrapRecord,
@@ -141,13 +142,25 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 		server,
 		accessors,
 		AGENT_TOOL_NAMES.GET_AGENT,
-		"Retrieve a single agent by its identifier (slug): settings, bridge and, when managed, its provider, tools and MCP servers. Never returns the system prompt.",
+		"Retrieve a single agent by its identifier (slug): settings, bridge and, when managed, its provider, tools and MCP servers.",
 		"fetched agent",
 		getAgentInputSchema,
 		{
 			buildEndpoint: (input) => agentResourcePath(input.identifier),
-			formatSuccess: (data, input) =>
-				`Successfully fetched agent ${input.identifier}.\n\n${JSON.stringify(toAgentSummary(unwrapRecord(data)) ?? {})}`,
+			formatSuccess: (data, input) => {
+				const record = unwrapRecord(data);
+				const agent = toAgentSummary(record, {
+					includeSystemPrompt: input.includeSystemPrompt,
+				});
+
+				return [
+					`Successfully fetched agent ${input.identifier}.`,
+					input.includeSystemPrompt ? systemPromptNote(record) : undefined,
+					JSON.stringify(agent ?? {}),
+				]
+					.filter(Boolean)
+					.join("\n\n");
+			},
 			getIdentifier: (input) => input.identifier,
 		},
 	);

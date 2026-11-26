@@ -90,7 +90,8 @@ function redactUrl(text: string): string {
 	}
 }
 
-function scrub(value: string): string {
+/** Error text with URL secrets, credential values and long tokens redacted, capped at 200 characters. */
+export function scrub(value: string): string {
 	return truncate(
 		value
 			.replace(CONTEXT_SUFFIX, "")
